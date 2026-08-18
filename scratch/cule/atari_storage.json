@@ -1,0 +1,41 @@
+{
+ "node": "gb-west-a1-gpu-015",
+ "n_frames": 500,
+ "cpus": 8,
+ "cv2": "5.0.0",
+ "games": {
+  "pong": {
+   "ale_replay_frames_per_s_1core_with_getScreen": 5638.267816825917,
+   "png_rgb_decode_frames_per_s_1core": 2990.7524678138725,
+   "png_indexed_decode_frames_per_s_1core": 5294.92493627835,
+   "png_rgb_encode_frames_per_s_1core": 1746.7082017307048,
+   "bytes_raw_rgb": 100800,
+   "bytes_raw_indexed": 33600,
+   "bytes_png_rgb_mean": 1622.112,
+   "bytes_png_indexed_mean": 824.514,
+   "bytes_replay_per_step": 1
+  },
+  "breakout": {
+   "ale_replay_frames_per_s_1core_with_getScreen": 5011.268840143387,
+   "png_rgb_decode_frames_per_s_1core": 3291.2701113114585,
+   "png_indexed_decode_frames_per_s_1core": 5238.070624166333,
+   "png_rgb_encode_frames_per_s_1core": 1720.9217360585342,
+   "bytes_raw_rgb": 100800,
+   "bytes_raw_indexed": 33600,
+   "bytes_png_rgb_mean": 2068.412,
+   "bytes_png_indexed_mean": 1162.898,
+   "bytes_replay_per_step": 1
+  },
+  "space_invaders": {
+   "ale_replay_frames_per_s_1core_with_getScreen": 6973.173532409477,
+   "png_rgb_decode_frames_per_s_1core": 2911.5225110366146,
+   "png_indexed_decode_frames_per_s_1core": 5024.272208877557,
+   "png_rgb_encode_frames_per_s_1core": 1464.9445365043932,
+   "bytes_raw_rgb": 100800,
+   "bytes_raw_indexed": 33600,
+   "bytes_png_rgb_mean": 4687.232,
+   "bytes_png_indexed_mean": 2176.28,
+   "bytes_replay_per_step": 1
+  }
+ }
+}

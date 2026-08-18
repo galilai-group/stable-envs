@@ -1,0 +1,170 @@
+{
+  "have_triton": true,
+  "device": "NVIDIA H200",
+  "blit_parity": {
+    "frames": 512,
+    "frame_shape": [
+      192,
+      224,
+      3
+    ],
+    "atlas_tiles": 33,
+    "atlas_bytes": 101376,
+    "max_abs": 0,
+    "exact_frames": 512,
+    "pixel_exact_frac": 1.0,
+    "reference_distinct_colors": 47
+  },
+  "blit_throughput": {
+    "rows": [
+      {
+        "batch": 1,
+        "fps": 33994.26975571878,
+        "gbps": 8.772153321923719
+      },
+      {
+        "batch": 2,
+        "fps": 69060.6780948471,
+        "gbps": 17.820969861019105
+      },
+      {
+        "batch": 4,
+        "fps": 127043.34328140362,
+        "gbps": 32.78328064707964
+      },
+      {
+        "batch": 8,
+        "fps": 276083.62608537846,
+        "gbps": 71.24282754407974
+      },
+      {
+        "batch": 16,
+        "fps": 557450.0629782624,
+        "gbps": 143.84887385141468
+      },
+      {
+        "batch": 32,
+        "fps": 1116102.7646320474,
+        "gbps": 288.0080862077706
+      },
+      {
+        "batch": 64,
+        "fps": 2233467.9677528027,
+        "gbps": 576.3419421426752
+      },
+      {
+        "batch": 128,
+        "fps": 4404350.054618981,
+        "gbps": 1136.5337228943185
+      },
+      {
+        "batch": 256,
+        "fps": 7967372.503353563,
+        "gbps": 2055.9645397453805
+      },
+      {
+        "batch": 512,
+        "fps": 8134711.385274323,
+        "gbps": 2099.1460035472683
+      },
+      {
+        "batch": 1024,
+        "fps": 8328010.026307114,
+        "gbps": 2149.0263312684983
+      },
+      {
+        "batch": 2048,
+        "fps": 8421430.402105989,
+        "gbps": 2173.133272402646
+      },
+      {
+        "batch": 4096,
+        "fps": 8458860.129703375,
+        "gbps": 2182.7919387496963
+      },
+      {
+        "batch": 8192,
+        "fps": 8547026.383320803,
+        "gbps": 2205.5430641631665
+      }
+    ],
+    "best_fps": 8547026.383320803,
+    "best_batch": 8192,
+    "best_gbps": 2205.5430641631665,
+    "decode_fps_per_core": 5179.902699410507,
+    "jpeg_bytes": 5105,
+    "cores_of_decode_replaced": 1650.0360874140526,
+    "crossover_batch_vs_decode": 1
+  },
+  "same_picture": {
+    "ok": true,
+    "overcooked_ai_version": "1.1.0",
+    "reference_tile_size": 75,
+    "reference_unscaled_tile_size": 15,
+    "reference_font_size": 20,
+    "reference_font_color": "(255, 0, 0)",
+    "reference_shape_t75": [
+      300,
+      375,
+      3
+    ],
+    "reference_shape_t15": [
+      60,
+      75,
+      3
+    ],
+    "reference_distinct_colors_t75": 33,
+    "jaxmarl_shape_t15": [
+      90,
+      105,
+      3
+    ],
+    "jaxmarl_shape_t75": [
+      450,
+      525,
+      3
+    ],
+    "jaxmarl_distinct_colors_t75": 48,
+    "graphics_assets": [
+      "arrow.png",
+      "chefs.json",
+      "chefs.png",
+      "interact.png",
+      "objects.json",
+      "objects.png",
+      "soups.json",
+      "soups.png",
+      "stay.png",
+      "terrain.json",
+      "terrain.png"
+    ],
+    "n_graphics_assets": 11,
+    "graphics_bytes": 44093,
+    "compare_t75": {
+      "shape_a": [
+        300,
+        375,
+        3
+      ],
+      "shape_b": [
+        450,
+        525,
+        3
+      ],
+      "same_shape": false
+    },
+    "compare_t15": {
+      "shape_a": [
+        60,
+        75,
+        3
+      ],
+      "shape_b": [
+        90,
+        105,
+        3
+      ],
+      "same_shape": false
+    }
+  }
+}

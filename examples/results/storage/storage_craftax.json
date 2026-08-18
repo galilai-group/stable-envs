@@ -1,0 +1,14 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    8.48974609375,
+    8.34033203125
+  ],
+  "registry_size": 60,
+  "envs": {}
+}

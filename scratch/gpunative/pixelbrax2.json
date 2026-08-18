@@ -1,0 +1,85 @@
+{
+ "brax_version": "0.9.4",
+ "jax_version": "0.4.30",
+ "gpu_kind": "NVIDIA H200",
+ "backends_that_build": {
+  "halfcheetah": [
+   "spring"
+  ],
+  "halfcheetah_errors": [
+   "positional: AttributeError('Physics backend needs to be spring.')",
+   "generalized: AttributeError('Physics backend needs to be spring.')"
+  ],
+  "walker2d": [
+   "spring"
+  ],
+  "walker2d_errors": [
+   "positional: AttributeError('Physics backend needs to be generalized.')",
+   "generalized: AttributeError('Physics backend needs to be generalized.')"
+  ],
+  "ant": [
+   "spring",
+   "positional",
+   "generalized"
+  ],
+  "hopper_errors": [
+   "spring: AttributeError('Physics backend needs to be positional.')",
+   "generalized: AttributeError('Physics backend needs to be positional.')"
+  ],
+  "hopper": [
+   "positional"
+  ],
+  "humanoid": [
+   "spring",
+   "positional",
+   "generalized"
+  ],
+  "reacher_errors": [
+   "spring: AttributeError('Physics backend needs to be generalized.')",
+   "positional: AttributeError('Physics backend needs to be generalized.')"
+  ],
+  "reacher": [
+   "generalized"
+  ]
+ },
+ "pixels_shape": [
+  8,
+  84,
+  84,
+  9
+ ],
+ "pixels_dtype": "uint8",
+ "pixels_blank_env0": false,
+ "pixels_unique_values_env0": 158,
+ "pixels_bytes_per_env_as_shipped": 63504,
+ "single_frame_bytes": 21168,
+ "G1_render_twice_pixel_mismatch": 0,
+ "G1_render_after_other_rollout_mismatch": 0,
+ "G4_step_plus_render_sps": {
+  "1": 253.93974180217785,
+  "16": 2651.406057367108,
+  "64": 5077.773801771819,
+  "256": 7842.879750345124,
+  "1024": 9099.782941328152,
+  "2048": 9392.024836512086
+ },
+ "G4_physics_only_sps": {
+  "1": 644.5338262181309,
+  "16": 8992.063323895376,
+  "64": 30152.622677183845,
+  "256": 107941.39148525045,
+  "1024": 399417.1319758591,
+  "2048": 760657.9956492202
+ },
+ "render_share_of_step": {
+  "1": 0.6060102178155713,
+  "16": 0.7051393031984882,
+  "64": 0.8315976074076595,
+  "256": 0.9273413132587159,
+  "1024": 0.9772173444431067,
+  "2048": 0.9876527626210042
+ },
+ "decode_jpeg_fps_one_core_84px": 6570.332560198038,
+ "decode_jpeg_bytes": 7676,
+ "cores_of_decode_replaced": 1.4294595822146632
+}

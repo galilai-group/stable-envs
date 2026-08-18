@@ -1,0 +1,118 @@
+[
+ {
+  "env": "MujocoReacher",
+  "size": 240,
+  "n": 256,
+  "by_ss": {
+   "2": {
+    "interior_px": 12383020,
+    "interior_bad": 0,
+    "interior_exact_frac": 1.0,
+    "bad_inside_mover": 0,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 0,
+    "all_exact": 0.996278,
+    "mean_abs": 0.020354
+   },
+   "4": {
+    "interior_px": 12383020,
+    "interior_bad": 0,
+    "interior_exact_frac": 1.0,
+    "bad_inside_mover": 0,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 0,
+    "all_exact": 0.996363,
+    "mean_abs": 0.015263
+   }
+  }
+ },
+ {
+  "env": "MujocoPusher",
+  "size": 240,
+  "n": 256,
+  "by_ss": {
+   "2": {
+    "interior_px": 12112519,
+    "interior_bad": 0,
+    "interior_exact_frac": 1.0,
+    "bad_inside_mover": 0,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 0,
+    "all_exact": 0.984581,
+    "mean_abs": 0.068876
+   },
+   "4": {
+    "interior_px": 12112519,
+    "interior_bad": 0,
+    "interior_exact_frac": 1.0,
+    "bad_inside_mover": 0,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 0,
+    "all_exact": 0.984175,
+    "mean_abs": 0.059429
+   }
+  }
+ },
+ {
+  "env": "MujocoInvertedPendulum",
+  "size": 240,
+  "n": 256,
+  "by_ss": {
+   "2": {
+    "interior_px": 13401944,
+    "interior_bad": 5,
+    "interior_exact_frac": 0.999999627,
+    "bad_inside_mover": 5,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 1,
+    "all_exact": 0.968452,
+    "mean_abs": 0.103202
+   },
+   "4": {
+    "interior_px": 13401944,
+    "interior_bad": 5,
+    "interior_exact_frac": 0.999999627,
+    "bad_inside_mover": 5,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 1,
+    "all_exact": 0.969539,
+    "mean_abs": 0.091415
+   }
+  }
+ },
+ {
+  "env": "MujocoInvertedDoublePendulum",
+  "size": 240,
+  "n": 256,
+  "by_ss": {
+   "2": {
+    "interior_px": 14445239,
+    "interior_bad": 0,
+    "interior_exact_frac": 1.0,
+    "bad_inside_mover": 0,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 0,
+    "all_exact": 0.996559,
+    "mean_abs": 0.01543
+   },
+   "4": {
+    "interior_px": 14445239,
+    "interior_bad": 0,
+    "interior_exact_frac": 1.0,
+    "bad_inside_mover": 0,
+    "bad_within_1px_of_mover": 0,
+    "bad_elsewhere": 0,
+    "max_bad_diff": 0,
+    "all_exact": 0.997109,
+    "mean_abs": 0.010321
+   }
+  }
+ }
+]

@@ -1,0 +1,4 @@
+- policy=pusht/lewm
+- renderer=official
+- seed=42
+- eval.num_eval=50

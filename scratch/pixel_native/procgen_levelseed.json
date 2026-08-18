@@ -1,0 +1,226 @@
+[
+  {
+    "env_name": "bigfish",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 1,
+    "n_levels": 5
+  },
+  {
+    "env_name": "bossfight",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 1,
+    "n_levels": 5
+  },
+  {
+    "env_name": "caveflyer",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "chaser",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "climber",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "coinrun",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "dodgeball",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 1,
+    "n_levels": 5
+  },
+  {
+    "env_name": "fruitbot",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 1,
+    "n_levels": 5
+  },
+  {
+    "env_name": "heist",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "jumper",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "leaper",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "maze",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "miner",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "ninja",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 5,
+    "n_levels": 5
+  },
+  {
+    "env_name": "plunder",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 1.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 1,
+    "n_levels": 5
+  },
+  {
+    "env_name": "starpilot",
+    "levels": [
+      0,
+      1,
+      7,
+      42,
+      1234
+    ],
+    "grid_same_across_rand_seed": 0.0,
+    "frame_same_across_rand_seed": 1.0,
+    "distinct_grids_across_levels": 0,
+    "n_levels": 5
+  }
+]

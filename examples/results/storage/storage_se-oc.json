@@ -1,0 +1,180 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    19.9404296875,
+    22.46142578125
+  ],
+  "registry_size": 65,
+  "envs": {
+    "OvercookedAsymmAdvantages": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: OvercookedAsymmAdvantages: size 256 is not a whole tile size for a 11x7 grid; use a multiple of 7 that is at least 28",
+      "frame_shape": [
+        224,
+        352
+      ],
+      "state_bytes": 308,
+      "gpu": {
+        "fps": 2380420.845675885,
+        "seconds_per_batch": 0.0004301760345697403,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0034833418598517,
+        "loadavg": 21.546875
+      },
+      "storage": {
+        "local": {
+          "fps": 2929.6347068349414,
+          "bytes_on_disk": 4342112,
+          "bytes_per_frame": 8480.6875
+        },
+        "shared": {
+          "fps": 1296.1636798036989,
+          "bytes_on_disk": 4342112,
+          "bytes_per_frame": 8480.6875
+        },
+        "memory_one_frame": {
+          "fps": 1841.7963883178584
+        }
+      }
+    },
+    "OvercookedCoordRing": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: OvercookedCoordRing: size 256 is not a whole tile size for a 7x7 grid; use a multiple of 7 that is at least 28",
+      "frame_shape": [
+        224,
+        224
+      ],
+      "state_bytes": 196,
+      "gpu": {
+        "fps": 3541083.1438044584,
+        "seconds_per_batch": 0.000289177056401968,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0051087403276362,
+        "loadavg": 22.3056640625
+      },
+      "storage": {
+        "local": {
+          "fps": 2762.61528969808,
+          "bytes_on_disk": 3237993,
+          "bytes_per_frame": 6324.205078125
+        },
+        "shared": {
+          "fps": 1794.41568188349,
+          "bytes_on_disk": 3237993,
+          "bytes_per_frame": 6324.205078125
+        },
+        "memory_one_frame": {
+          "fps": 2885.4592261249754
+        }
+      }
+    },
+    "OvercookedCounterCircuit": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: OvercookedCounterCircuit: size 256 is not a whole tile size for a 10x7 grid; use a multiple of 7 that is at least 28",
+      "frame_shape": [
+        224,
+        320
+      ],
+      "state_bytes": 280,
+      "gpu": {
+        "fps": 3509699.4611048335,
+        "seconds_per_batch": 0.0002917628735303879,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0047038509380566,
+        "loadavg": 22.521484375
+      },
+      "storage": {
+        "local": {
+          "fps": 3088.3629951175308,
+          "bytes_on_disk": 3809461,
+          "bytes_per_frame": 7440.353515625
+        },
+        "shared": {
+          "fps": 1940.1194846271696,
+          "bytes_on_disk": 3809461,
+          "bytes_per_frame": 7440.353515625
+        },
+        "memory_one_frame": {
+          "fps": 3553.8059020434775
+        }
+      }
+    },
+    "OvercookedCrampedRoom": {
+      "size": 192,
+      "requested_size": 256,
+      "size_note": "ValueError: OvercookedCrampedRoom: size 256 is not a whole tile size for a 7x6 grid; use a multiple of 6 that is at least 24",
+      "frame_shape": [
+        192,
+        224
+      ],
+      "state_bytes": 168,
+      "gpu": {
+        "fps": 3895965.6286133416,
+        "seconds_per_batch": 0.0002628359943628311,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0078101323504314,
+        "loadavg": 22.64013671875
+      },
+      "storage": {
+        "local": {
+          "fps": 3169.0170168289437,
+          "bytes_on_disk": 2895214,
+          "bytes_per_frame": 5654.71484375
+        },
+        "shared": {
+          "fps": 1877.4988607800617,
+          "bytes_on_disk": 2895214,
+          "bytes_per_frame": 5654.71484375
+        },
+        "memory_one_frame": {
+          "fps": 3514.1688207161765
+        }
+      }
+    },
+    "OvercookedForcedCoord": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: OvercookedForcedCoord: size 256 is not a whole tile size for a 7x7 grid; use a multiple of 7 that is at least 28",
+      "frame_shape": [
+        224,
+        224
+      ],
+      "state_bytes": 196,
+      "gpu": {
+        "fps": 3589896.2476300243,
+        "seconds_per_batch": 0.00028524501249194145,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0047783238849048,
+        "loadavg": 22.46142578125
+      },
+      "storage": {
+        "local": {
+          "fps": 2633.8387481319314,
+          "bytes_on_disk": 3130421,
+          "bytes_per_frame": 6114.103515625
+        },
+        "shared": {
+          "fps": 1735.8768201554478,
+          "bytes_on_disk": 3130421,
+          "bytes_per_frame": 6114.103515625
+        },
+        "memory_one_frame": {
+          "fps": 2733.3364292820283
+        }
+      }
+    }
+  }
+}

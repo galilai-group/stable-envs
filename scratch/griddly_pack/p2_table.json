@@ -1,0 +1,596 @@
+{
+  "sokoban": {
+    "game": "sokoban",
+    "yaml": "Single-Player/GVGAI/sokoban.yaml",
+    "tile_size": 24,
+    "grid": [
+      13,
+      9
+    ],
+    "n_frames": 200,
+    "n_codes": 6,
+    "alphabet": [
+      "(('avatar', 'NONE', 1, 0), ('hole', 'NONE', 0, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('box', 'NONE', 0, 0),)",
+      "(('hole', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "load_state_arbitrary": {
+      "placed": 5,
+      "read_back": 77,
+      "exact": false,
+      "extra": [
+        "(0, 0)",
+        "(0, 1)",
+        "(0, 2)",
+        "(0, 3)",
+        "(0, 4)",
+        "(0, 5)"
+      ]
+    },
+    "neighbour_classes": [
+      [
+        "(('avatar', 'NONE', 1, 0),)",
+        "(('hole', 'NONE', 0, 0),)",
+        "()"
+      ],
+      [
+        "(('avatar', 'NONE', 1, 0), ('hole', 'NONE', 0, 0))",
+        "(('box', 'NONE', 0, 0),)",
+        "(('wall', 'NONE', 0, 0),)"
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_shape": [
+      6,
+      16
+    ],
+    "atlas_tiles": 2,
+    "atlas_bytes": 3456,
+    "n_renders_enumeration": 96,
+    "recon_oob_class_0": {
+      "frames": 200,
+      "max_abs": 217,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.4825445156695157
+    },
+    "recon_oob_class_1": {
+      "frames": 200,
+      "max_abs": 217,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.4825445156695157
+    },
+    "oob_class": 0,
+    "recon": {
+      "frames": 200,
+      "max_abs": 217,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.4825445156695157
+    },
+    "seconds": 1.8
+  },
+  "labyrinth": {
+    "game": "labyrinth",
+    "yaml": "Single-Player/GVGAI/labyrinth.yaml",
+    "tile_size": 24,
+    "grid": [
+      16,
+      14
+    ],
+    "n_frames": 200,
+    "n_codes": 5,
+    "alphabet": [
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('exit', 'NONE', 0, 0),)",
+      "(('trap', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "load_state_arbitrary": {
+      "placed": 4,
+      "read_back": 137,
+      "exact": false,
+      "extra": [
+        "(0, 0)",
+        "(0, 1)",
+        "(0, 10)",
+        "(0, 11)",
+        "(0, 12)",
+        "(0, 13)"
+      ]
+    },
+    "neighbour_classes": [
+      [
+        "(('avatar', 'NONE', 1, 0),)",
+        "()"
+      ],
+      [
+        "(('exit', 'NONE', 0, 0),)"
+      ],
+      [
+        "(('trap', 'NONE', 0, 0),)"
+      ],
+      [
+        "(('wall', 'NONE', 0, 0),)"
+      ]
+    ],
+    "m": 4,
+    "live_positions": [
+      [
+        -1,
+        -1
+      ],
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "n_live": 8,
+    "table_shape": [
+      5,
+      65536
+    ],
+    "atlas_tiles": 7,
+    "atlas_bytes": 12096,
+    "n_renders_enumeration": 327680,
+    "recon_oob_class_0": {
+      "frames": 200,
+      "max_abs": 222,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.3638101050967262
+    },
+    "recon_oob_class_1": {
+      "frames": 200,
+      "max_abs": 222,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.31423793247767856
+    },
+    "recon_oob_class_2": {
+      "frames": 200,
+      "max_abs": 222,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.2938463774181548
+    },
+    "recon_oob_class_3": {
+      "frames": 200,
+      "max_abs": 222,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.29163748604910716
+    },
+    "oob_class": 0,
+    "recon": {
+      "frames": 200,
+      "max_abs": 222,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.3638101050967262
+    },
+    "seconds": 83.0
+  },
+  "butterflies": {
+    "game": "butterflies",
+    "yaml": "Single-Player/GVGAI/butterflies.yaml",
+    "tile_size": 24,
+    "grid": [
+      28,
+      11
+    ],
+    "n_frames": 200,
+    "n_codes": 5,
+    "alphabet": [
+      "(('butterfly', 'NONE', 0, 0),)",
+      "(('catcher', 'NONE', 1, 0),)",
+      "(('cocoon', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "load_state_arbitrary": {
+      "placed": 4,
+      "read_back": 136,
+      "exact": false,
+      "extra": [
+        "(0, 0)",
+        "(0, 1)",
+        "(0, 10)",
+        "(0, 2)",
+        "(0, 3)",
+        "(0, 4)"
+      ]
+    },
+    "neighbour_classes": [
+      [
+        "()"
+      ],
+      [
+        "(('butterfly', 'NONE', 0, 0),)"
+      ],
+      [
+        "(('catcher', 'NONE', 1, 0),)"
+      ],
+      [
+        "(('cocoon', 'NONE', 0, 0),)"
+      ],
+      [
+        "(('wall', 'NONE', 0, 0),)"
+      ]
+    ],
+    "m": 5,
+    "live_positions": [
+      [
+        -1,
+        -1
+      ],
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "n_live": 8,
+    "table_shape": [
+      5,
+      390625
+    ],
+    "atlas_tiles": 4,
+    "atlas_bytes": 6912,
+    "n_renders_enumeration": 1953125,
+    "recon_oob_class_0": {
+      "frames": 200,
+      "max_abs": 226,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.43381462504509377
+    },
+    "recon_oob_class_1": {
+      "frames": 200,
+      "max_abs": 226,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.4387300084175084
+    },
+    "recon_oob_class_2": {
+      "frames": 200,
+      "max_abs": 226,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.45784740071849445
+    },
+    "recon_oob_class_3": {
+      "frames": 200,
+      "max_abs": 226,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.45406543109668107
+    },
+    "recon_oob_class_4": {
+      "frames": 200,
+      "max_abs": 226,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.4238133192039442
+    },
+    "oob_class": 0,
+    "recon": {
+      "frames": 200,
+      "max_abs": 226,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.43381462504509377
+    },
+    "seconds": 686.7
+  },
+  "zelda": {
+    "game": "zelda",
+    "yaml": "Single-Player/GVGAI/zelda.yaml",
+    "tile_size": 24,
+    "grid": [
+      13,
+      9
+    ],
+    "n_frames": 200,
+    "n_codes": 14,
+    "alphabet": [
+      "(('attack_fire', 'NONE', 1, 0),)",
+      "(('avatar', 'DOWN', 1, 0),)",
+      "(('avatar', 'DOWN', 1, 1),)",
+      "(('avatar', 'LEFT', 1, 0),)",
+      "(('avatar', 'LEFT', 1, 1),)",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('avatar', 'RIGHT', 1, 0),)",
+      "(('avatar', 'UP', 1, 0),)",
+      "(('avatar', 'UP', 1, 1),)",
+      "(('goal', 'NONE', 0, 0),)",
+      "(('key', 'NONE', 0, 0),)",
+      "(('spider', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "load_state_arbitrary": {
+      "placed": 12,
+      "read_back": 46,
+      "exact": false,
+      "extra": [
+        "(0, 0)",
+        "(0, 1)",
+        "(0, 2)",
+        "(0, 3)",
+        "(0, 4)",
+        "(0, 5)"
+      ]
+    },
+    "neighbour_classes": [
+      [
+        "(('attack_fire', 'NONE', 1, 0),)",
+        "(('avatar', 'DOWN', 1, 0),)",
+        "(('avatar', 'DOWN', 1, 1),)",
+        "(('avatar', 'LEFT', 1, 0),)",
+        "(('avatar', 'LEFT', 1, 1),)",
+        "(('avatar', 'NONE', 1, 0),)",
+        "(('avatar', 'RIGHT', 1, 0),)",
+        "(('avatar', 'UP', 1, 0),)",
+        "(('avatar', 'UP', 1, 1),)",
+        "(('goal', 'NONE', 0, 0),)",
+        "(('key', 'NONE', 0, 0),)",
+        "(('spider', 'NONE', 0, 0),)",
+        "(('wall', 'NONE', 0, 0),)",
+        "()"
+      ]
+    ],
+    "m": 1,
+    "live_positions": [],
+    "n_live": 0,
+    "table_shape": [
+      14,
+      1
+    ],
+    "atlas_tiles": 1,
+    "atlas_bytes": 1728,
+    "n_renders_enumeration": 14,
+    "recon_oob_class_0": {
+      "frames": 200,
+      "max_abs": 213,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.6272189577397911
+    },
+    "oob_class": 0,
+    "recon": {
+      "frames": 200,
+      "max_abs": 213,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.6272189577397911
+    },
+    "seconds": 1.1
+  },
+  "drunkdwarf": {
+    "game": "drunkdwarf",
+    "yaml": "Single-Player/Mini-Grid/minigrid-drunkdwarf.yaml",
+    "tile_size": 24,
+    "grid": [
+      6,
+      6
+    ],
+    "n_frames": 200,
+    "n_codes": 10,
+    "alphabet": [
+      "(('coffin_bed', 'NONE', 0, 0),)",
+      "(('door', 'NONE', 0, 0),)",
+      "(('drunk_dwarf', 'DOWN', 1, 0),)",
+      "(('drunk_dwarf', 'LEFT', 1, 0),)",
+      "(('drunk_dwarf', 'NONE', 1, 0),)",
+      "(('drunk_dwarf', 'RIGHT', 1, 0),)",
+      "(('drunk_dwarf', 'UP', 1, 0),)",
+      "(('key', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "load_state_arbitrary": {
+      "placed": 4,
+      "read_back": 27,
+      "exact": false,
+      "extra": [
+        "(0, 0)",
+        "(0, 1)",
+        "(0, 2)",
+        "(0, 3)",
+        "(0, 4)",
+        "(0, 5)"
+      ]
+    },
+    "neighbour_classes": [
+      [
+        "(('door', 'NONE', 0, 0),)",
+        "(('drunk_dwarf', 'LEFT', 1, 0),)",
+        "(('drunk_dwarf', 'RIGHT', 1, 0),)",
+        "(('key', 'NONE', 0, 0),)",
+        "()"
+      ],
+      [
+        "(('coffin_bed', 'NONE', 0, 0),)",
+        "(('drunk_dwarf', 'DOWN', 1, 0),)",
+        "(('drunk_dwarf', 'NONE', 1, 0),)",
+        "(('drunk_dwarf', 'UP', 1, 0),)",
+        "(('wall', 'NONE', 0, 0),)"
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        -1,
+        1
+      ],
+      [
+        1,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_shape": [
+      10,
+      16
+    ],
+    "atlas_tiles": 3,
+    "atlas_bytes": 5184,
+    "n_renders_enumeration": 160,
+    "recon_oob_class_0": {
+      "frames": 200,
+      "max_abs": 255,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.35669311021090533
+    },
+    "recon_oob_class_1": {
+      "frames": 200,
+      "max_abs": 255,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.34084305877057613
+    },
+    "oob_class": 0,
+    "recon": {
+      "frames": 200,
+      "max_abs": 255,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.35669311021090533
+    },
+    "seconds": 1.0
+  },
+  "foragers": {
+    "game": "foragers",
+    "yaml": "Multi-Agent/foragers.yaml",
+    "tile_size": 24,
+    "grid": [
+      9,
+      10
+    ],
+    "n_frames": 200,
+    "n_codes": 9,
+    "alphabet": [
+      "(('fixed_wall', 'NONE', 0, 0),)",
+      "(('harvester', 'NONE', 1, 0),)",
+      "(('harvester', 'NONE', 2, 0),)",
+      "(('harvester', 'NONE', 3, 0),)",
+      "(('harvester', 'NONE', 4, 0),)",
+      "(('potion1', 'NONE', 0, 0),)",
+      "(('potion2', 'NONE', 0, 0),)",
+      "(('potion3', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "load_state_arbitrary": {
+      "placed": 8,
+      "read_back": 50,
+      "exact": false,
+      "extra": [
+        "(0, 0)",
+        "(0, 1)",
+        "(0, 2)",
+        "(0, 3)",
+        "(0, 4)",
+        "(0, 5)"
+      ]
+    },
+    "neighbour_classes": [
+      [
+        "(('fixed_wall', 'NONE', 0, 0),)",
+        "(('harvester', 'NONE', 1, 0),)",
+        "(('harvester', 'NONE', 2, 0),)",
+        "(('harvester', 'NONE', 3, 0),)",
+        "(('harvester', 'NONE', 4, 0),)",
+        "(('potion1', 'NONE', 0, 0),)",
+        "(('potion2', 'NONE', 0, 0),)",
+        "(('potion3', 'NONE', 0, 0),)",
+        "()"
+      ]
+    ],
+    "m": 1,
+    "live_positions": [],
+    "n_live": 0,
+    "table_shape": [
+      9,
+      1
+    ],
+    "atlas_tiles": 5,
+    "atlas_bytes": 8640,
+    "n_renders_enumeration": 9,
+    "recon_oob_class_0": {
+      "frames": 200,
+      "max_abs": 243,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.2378472222222222
+    },
+    "oob_class": 0,
+    "recon": {
+      "frames": 200,
+      "max_abs": 243,
+      "exact_frames": 0,
+      "pixel_exact_frac": 0.2378472222222222
+    },
+    "seconds": 1.8
+  }
+}

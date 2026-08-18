@@ -1,0 +1,1443 @@
+{
+  "sokoban": {
+    "game": "sokoban",
+    "yaml": "Single-Player/GVGAI/sokoban.yaml",
+    "tile_size": 24,
+    "grid": [
+      13,
+      9
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 4,
+    "n_frames": 200,
+    "n_codes": 6,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "box"
+      ],
+      [
+        "hole"
+      ],
+      [
+        "wall"
+      ],
+      [
+        "avatar",
+        "hole"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 5,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "avatar"
+        ],
+        [
+          "box"
+        ],
+        [
+          "hole"
+        ],
+        [
+          "avatar",
+          "hole"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 96,
+    "atlas_tiles": 21,
+    "atlas_bytes": 36288,
+    "table_shape": [
+      6,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 96,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 1.2
+  },
+  "sokoban2": {
+    "game": "sokoban2",
+    "yaml": "Single-Player/GVGAI/sokoban2.yaml",
+    "tile_size": 24,
+    "grid": [
+      8,
+      7
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 5,
+    "n_frames": 200,
+    "n_codes": 8,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "box"
+      ],
+      [
+        "box_in_place"
+      ],
+      [
+        "hole"
+      ],
+      [
+        "wall"
+      ],
+      [
+        "avatar",
+        "hole"
+      ],
+      [
+        "box_in_place",
+        "hole"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 7,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "avatar"
+        ],
+        [
+          "box"
+        ],
+        [
+          "box_in_place"
+        ],
+        [
+          "hole"
+        ],
+        [
+          "avatar",
+          "hole"
+        ],
+        [
+          "box_in_place",
+          "hole"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 128,
+    "atlas_tiles": 22,
+    "atlas_bytes": 38016,
+    "table_shape": [
+      8,
+      16
+    ],
+    "canvas_loads": 5,
+    "enumeration_configs": 128,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 0.8
+  },
+  "labyrinth": {
+    "game": "labyrinth",
+    "yaml": "Single-Player/GVGAI/labyrinth.yaml",
+    "tile_size": 24,
+    "grid": [
+      16,
+      14
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 4,
+    "n_frames": 200,
+    "n_codes": 5,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "exit"
+      ],
+      [
+        "trap"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 4,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "avatar"
+        ],
+        [
+          "exit"
+        ],
+        [
+          "trap"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 80,
+    "atlas_tiles": 20,
+    "atlas_bytes": 34560,
+    "table_shape": [
+      5,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 80,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 1.4
+  },
+  "butterflies": {
+    "game": "butterflies",
+    "yaml": "Single-Player/GVGAI/butterflies.yaml",
+    "tile_size": 24,
+    "grid": [
+      28,
+      11
+    ],
+    "avatar": "catcher",
+    "n_map_chars": 5,
+    "n_frames": 200,
+    "n_codes": 6,
+    "alphabet": [
+      [],
+      [
+        "butterfly"
+      ],
+      [
+        "catcher"
+      ],
+      [
+        "cocoon"
+      ],
+      [
+        "spider"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 5,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "butterfly"
+        ],
+        [
+          "catcher"
+        ],
+        [
+          "cocoon"
+        ],
+        [
+          "spider"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 96,
+    "atlas_tiles": 21,
+    "atlas_bytes": 36288,
+    "table_shape": [
+      6,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 96,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 2.0
+  },
+  "zelda": {
+    "game": "zelda",
+    "yaml": "Single-Player/GVGAI/zelda.yaml",
+    "tile_size": 24,
+    "grid": [
+      13,
+      9
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 6,
+    "n_frames": 200,
+    "n_codes": 7,
+    "alphabet": [
+      [],
+      [
+        "attack_fire"
+      ],
+      [
+        "avatar"
+      ],
+      [
+        "goal"
+      ],
+      [
+        "key"
+      ],
+      [
+        "spider"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 6,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "attack_fire"
+        ],
+        [
+          "avatar"
+        ],
+        [
+          "goal"
+        ],
+        [
+          "key"
+        ],
+        [
+          "spider"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 112,
+    "atlas_tiles": 22,
+    "atlas_bytes": 38016,
+    "table_shape": [
+      7,
+      16
+    ],
+    "canvas_loads": 5,
+    "enumeration_configs": 112,
+    "recon_oob0": {
+      "max_abs": 253,
+      "exact_frames": 83
+    },
+    "recon_oob1": {
+      "max_abs": 253,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 1.3
+  },
+  "bait": {
+    "game": "bait",
+    "yaml": "Single-Player/GVGAI/bait.yaml",
+    "tile_size": 24,
+    "grid": [
+      5,
+      6
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 7,
+    "n_frames": 200,
+    "n_codes": 8,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "box"
+      ],
+      [
+        "goal"
+      ],
+      [
+        "hole"
+      ],
+      [
+        "key"
+      ],
+      [
+        "mushroom"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 7,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "avatar"
+        ],
+        [
+          "box"
+        ],
+        [
+          "goal"
+        ],
+        [
+          "hole"
+        ],
+        [
+          "key"
+        ],
+        [
+          "mushroom"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 128,
+    "atlas_tiles": 23,
+    "atlas_bytes": 39744,
+    "table_shape": [
+      8,
+      16
+    ],
+    "canvas_loads": 5,
+    "enumeration_configs": 128,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 0.8
+  },
+  "clusters": {
+    "game": "clusters",
+    "yaml": "Single-Player/GVGAI/clusters.yaml",
+    "tile_size": 24,
+    "grid": [
+      13,
+      10
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 9,
+    "n_frames": 200,
+    "n_codes": 10,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "blue_block"
+      ],
+      [
+        "blue_box"
+      ],
+      [
+        "green_block"
+      ],
+      [
+        "green_box"
+      ],
+      [
+        "red_block"
+      ],
+      [
+        "red_box"
+      ],
+      [
+        "spike"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 9,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "avatar"
+        ],
+        [
+          "blue_block"
+        ],
+        [
+          "blue_box"
+        ],
+        [
+          "green_block"
+        ],
+        [
+          "green_box"
+        ],
+        [
+          "red_block"
+        ],
+        [
+          "red_box"
+        ],
+        [
+          "spike"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 160,
+    "atlas_tiles": 25,
+    "atlas_bytes": 43200,
+    "table_shape": [
+      10,
+      16
+    ],
+    "canvas_loads": 5,
+    "enumeration_configs": 160,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 1.1
+  },
+  "cookmepasta": {
+    "game": "cookmepasta",
+    "yaml": "Single-Player/GVGAI/cookmepasta.yaml",
+    "tile_size": 24,
+    "grid": [
+      14,
+      11
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 8,
+    "n_frames": 200,
+    "n_codes": 9,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "boiling_water"
+      ],
+      [
+        "key"
+      ],
+      [
+        "lock"
+      ],
+      [
+        "raw_pasta"
+      ],
+      [
+        "tomato"
+      ],
+      [
+        "tuna"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 8,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "avatar"
+        ],
+        [
+          "boiling_water"
+        ],
+        [
+          "key"
+        ],
+        [
+          "lock"
+        ],
+        [
+          "raw_pasta"
+        ],
+        [
+          "tomato"
+        ],
+        [
+          "tuna"
+        ],
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 1,
+    "live_positions": [],
+    "n_live": 0,
+    "table_entries": 9,
+    "atlas_tiles": 9,
+    "atlas_bytes": 15552,
+    "table_shape": [
+      9,
+      1
+    ],
+    "canvas_loads": 3,
+    "enumeration_configs": 9,
+    "recon_oob0": {
+      "max_abs": 0,
+      "exact_frames": 200
+    },
+    "oob_class": 0,
+    "verdict": "OK",
+    "seconds": 1.1
+  },
+  "zenpuzzle": {
+    "game": "zenpuzzle",
+    "yaml": "Single-Player/GVGAI/zenpuzzle.yaml",
+    "tile_size": 24,
+    "grid": [
+      12,
+      12
+    ],
+    "avatar": "avatar",
+    "n_map_chars": 3,
+    "n_frames": 200,
+    "n_codes": 6,
+    "alphabet": [
+      [],
+      [
+        "avatar"
+      ],
+      [
+        "ground"
+      ],
+      [
+        "rock"
+      ],
+      [
+        "walked"
+      ],
+      [
+        "avatar",
+        "walked"
+      ]
+    ],
+    "no_map_character": [
+      "walked"
+    ],
+    "verdict": "REFUSED: an object in the alphabet has no MapCharacter",
+    "seconds": 0.7
+  },
+  "spider-nest": {
+    "game": "spider-nest",
+    "yaml": "Single-Player/GVGAI/spider-nest.yaml",
+    "tile_size": 24,
+    "grid": [
+      36,
+      33
+    ],
+    "avatar": "gnome",
+    "n_map_chars": 6,
+    "n_frames": 200,
+    "n_codes": 7,
+    "alphabet": [
+      [],
+      [
+        "gem"
+      ],
+      [
+        "gnome"
+      ],
+      [
+        "lava"
+      ],
+      [
+        "nest"
+      ],
+      [
+        "spider"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 6,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "gem"
+        ],
+        [
+          "gnome"
+        ],
+        [
+          "lava"
+        ],
+        [
+          "nest"
+        ],
+        [
+          "spider"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 112,
+    "atlas_tiles": 22,
+    "atlas_bytes": 38016,
+    "table_shape": [
+      7,
+      16
+    ],
+    "canvas_loads": 5,
+    "enumeration_configs": 112,
+    "recon_oob0": {
+      "max_abs": 230,
+      "exact_frames": 32
+    },
+    "recon_oob1": {
+      "max_abs": 230,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 6.6
+  },
+  "drunkdwarf": {
+    "game": "drunkdwarf",
+    "yaml": "Single-Player/Mini-Grid/minigrid-drunkdwarf.yaml",
+    "tile_size": 24,
+    "grid": [
+      6,
+      6
+    ],
+    "avatar": "drunk_dwarf",
+    "n_map_chars": 9,
+    "n_frames": 200,
+    "n_codes": 10,
+    "alphabet": [
+      [],
+      [
+        "bookshelf"
+      ],
+      [
+        "chair"
+      ],
+      [
+        "coffin_bed"
+      ],
+      [
+        "doggo"
+      ],
+      [
+        "door"
+      ],
+      [
+        "drunk_dwarf"
+      ],
+      [
+        "key"
+      ],
+      [
+        "table"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 9,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "bookshelf"
+        ],
+        [
+          "chair"
+        ],
+        [
+          "coffin_bed"
+        ],
+        [
+          "doggo"
+        ],
+        [
+          "door"
+        ],
+        [
+          "drunk_dwarf"
+        ],
+        [
+          "key"
+        ],
+        [
+          "table"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 160,
+    "atlas_tiles": 25,
+    "atlas_bytes": 43200,
+    "table_shape": [
+      10,
+      16
+    ],
+    "canvas_loads": 5,
+    "enumeration_configs": 160,
+    "recon_oob0": {
+      "max_abs": 255,
+      "exact_frames": 41
+    },
+    "recon_oob1": {
+      "max_abs": 255,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 0.9
+  },
+  "doggo": {
+    "game": "doggo",
+    "yaml": "Single-Player/Mini-Grid/minigrid-doggo.yaml",
+    "tile_size": 24,
+    "grid": [
+      6,
+      6
+    ],
+    "avatar": "doggo",
+    "n_map_chars": 3,
+    "n_frames": 200,
+    "n_codes": 4,
+    "alphabet": [
+      [],
+      [
+        "doggo"
+      ],
+      [
+        "stick"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 3,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "doggo"
+        ],
+        [
+          "stick"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 64,
+    "atlas_tiles": 19,
+    "atlas_bytes": 32832,
+    "table_shape": [
+      4,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 64,
+    "recon_oob0": {
+      "max_abs": 177,
+      "exact_frames": 41
+    },
+    "recon_oob1": {
+      "max_abs": 177,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 0.8
+  },
+  "eyeball": {
+    "game": "eyeball",
+    "yaml": "Single-Player/Mini-Grid/minigrid-eyeball.yaml",
+    "tile_size": 24,
+    "grid": [
+      19,
+      19
+    ],
+    "avatar": "eyeball",
+    "n_map_chars": 3,
+    "n_frames": 200,
+    "n_codes": 4,
+    "alphabet": [
+      [],
+      [
+        "eye_drops"
+      ],
+      [
+        "eyeball"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 3,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "eye_drops"
+        ],
+        [
+          "eyeball"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 64,
+    "atlas_tiles": 19,
+    "atlas_bytes": 32832,
+    "table_shape": [
+      4,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 64,
+    "recon_oob0": {
+      "max_abs": 217,
+      "exact_frames": 41
+    },
+    "recon_oob1": {
+      "max_abs": 255,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 2.4
+  },
+  "spiders": {
+    "game": "spiders",
+    "yaml": "Single-Player/Mini-Grid/minigrid-spiders.yaml",
+    "tile_size": 24,
+    "grid": [
+      6,
+      6
+    ],
+    "avatar": "gnome",
+    "n_map_chars": 4,
+    "n_frames": 200,
+    "n_codes": 5,
+    "alphabet": [
+      [],
+      [
+        "gem"
+      ],
+      [
+        "gnome"
+      ],
+      [
+        "spider"
+      ],
+      [
+        "wall"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 4,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "gem"
+        ],
+        [
+          "gnome"
+        ],
+        [
+          "spider"
+        ]
+      ],
+      [
+        [
+          "wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 80,
+    "atlas_tiles": 20,
+    "atlas_bytes": 34560,
+    "table_shape": [
+      5,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 80,
+    "recon_oob0": {
+      "max_abs": 230,
+      "exact_frames": 38
+    },
+    "recon_oob1": {
+      "max_abs": 230,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 0.9
+  },
+  "foragers": {
+    "game": "foragers",
+    "yaml": "Multi-Agent/foragers.yaml",
+    "tile_size": 24,
+    "grid": [
+      9,
+      10
+    ],
+    "avatar": "harvester",
+    "n_map_chars": 5,
+    "n_frames": 200,
+    "n_codes": 6,
+    "alphabet": [
+      [],
+      [
+        "fixed_wall"
+      ],
+      [
+        "harvester"
+      ],
+      [
+        "potion1"
+      ],
+      [
+        "potion2"
+      ],
+      [
+        "potion3"
+      ]
+    ],
+    "no_map_character": [],
+    "level_string_roundtrip": {
+      "placed": 5,
+      "wrong": 0,
+      "examples": []
+    },
+    "neighbour_classes": [
+      [
+        [],
+        [
+          "harvester"
+        ],
+        [
+          "potion1"
+        ],
+        [
+          "potion2"
+        ],
+        [
+          "potion3"
+        ]
+      ],
+      [
+        [
+          "fixed_wall"
+        ]
+      ]
+    ],
+    "m": 2,
+    "live_positions": [
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "n_live": 4,
+    "table_entries": 96,
+    "atlas_tiles": 21,
+    "atlas_bytes": 36288,
+    "table_shape": [
+      6,
+      16
+    ],
+    "canvas_loads": 4,
+    "enumeration_configs": 96,
+    "recon_oob0": {
+      "max_abs": 153,
+      "exact_frames": 0
+    },
+    "recon_oob1": {
+      "max_abs": 153,
+      "exact_frames": 0
+    },
+    "verdict": "REFUSED: the (code, neighbour-class) table does not reproduce the frames",
+    "seconds": 2.3
+  }
+}

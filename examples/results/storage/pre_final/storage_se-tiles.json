@@ -1,0 +1,246 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    10.75537109375,
+    11.84130859375
+  ],
+  "registry_size": 71,
+  "envs": {
+    "GriddlyBait": {
+      "size": 144,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlyBait: size 256 is not a whole tile size for a 5x6 grid; use a multiple of 6 that is at least 24",
+      "frame_shape": [
+        144,
+        120
+      ],
+      "state_bytes": 120,
+      "gpu": {
+        "fps": 2455799.8455531537,
+        "seconds_per_batch": 0.0004169720923528075,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.00268979374018,
+        "loadavg": 10.85546875
+      },
+      "storage": {
+        "local": {
+          "fps": 3887.608715581828,
+          "bytes_on_disk": 3960181,
+          "bytes_per_frame": 7734.728515625
+        },
+        "shared": {
+          "fps": 1569.0287550304545,
+          "bytes_on_disk": 3960181,
+          "bytes_per_frame": 7734.728515625
+        },
+        "memory_one_frame": {
+          "fps": 4447.701266271127
+        }
+      }
+    },
+    "GriddlyButterflies": {
+      "size": 264,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlyButterflies: size 256 is not a whole tile size for a 28x11 grid; use a multiple of 11 that is at least 44",
+      "frame_shape": [
+        264,
+        672
+      ],
+      "state_bytes": 1232,
+      "gpu": {
+        "fps": 1625515.410485979,
+        "seconds_per_batch": 0.0006299540400505066,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0056599530902628,
+        "loadavg": 10.947265625
+      },
+      "storage": {
+        "local": {
+          "fps": 791.8411815889465,
+          "bytes_on_disk": 26850614,
+          "bytes_per_frame": 52442.60546875
+        },
+        "shared": {
+          "fps": 638.1870494253906,
+          "bytes_on_disk": 26850614,
+          "bytes_per_frame": 52442.60546875
+        },
+        "memory_one_frame": {
+          "fps": 780.8800935129498
+        }
+      }
+    },
+    "GriddlyClusters": {
+      "size": 240,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlyClusters: size 256 is not a whole tile size for a 13x10 grid; use a multiple of 10 that is at least 40",
+      "frame_shape": [
+        240,
+        312
+      ],
+      "state_bytes": 520,
+      "gpu": {
+        "fps": 2245929.4930135887,
+        "seconds_per_batch": 0.0004559359513223171,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0087097737446098,
+        "loadavg": 11.18310546875
+      },
+      "storage": {
+        "local": {
+          "fps": 2181.485220393047,
+          "bytes_on_disk": 11685756,
+          "bytes_per_frame": 22823.7421875
+        },
+        "shared": {
+          "fps": 1524.0054762086945,
+          "bytes_on_disk": 11685756,
+          "bytes_per_frame": 22823.7421875
+        },
+        "memory_one_frame": {
+          "fps": 2359.704941292168
+        }
+      }
+    },
+    "GriddlyCookMePasta": {
+      "size": 264,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlyCookMePasta: size 256 is not a whole tile size for a 14x11 grid; use a multiple of 11 that is at least 44",
+      "frame_shape": [
+        264,
+        336
+      ],
+      "state_bytes": 616,
+      "gpu": {
+        "fps": 3026372.105032856,
+        "seconds_per_batch": 0.0003383589209988713,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0116124621926263,
+        "loadavg": 11.16796875
+      },
+      "storage": {
+        "local": {
+          "fps": 1742.6391771336903,
+          "bytes_on_disk": 14619764,
+          "bytes_per_frame": 28554.2265625
+        },
+        "shared": {
+          "fps": 1295.9834088202338,
+          "bytes_on_disk": 14619764,
+          "bytes_per_frame": 28554.2265625
+        },
+        "memory_one_frame": {
+          "fps": 1887.9781023368316
+        }
+      }
+    },
+    "GriddlyLabyrinth": {
+      "size": 336,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlyLabyrinth: size 256 is not a whole tile size for a 16x14 grid; use a multiple of 14 that is at least 56",
+      "frame_shape": [
+        336,
+        384
+      ],
+      "state_bytes": 896,
+      "gpu": {
+        "fps": 1414921.5089132194,
+        "seconds_per_batch": 0.0007237150566652417,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0093316244450325,
+        "loadavg": 11.23486328125
+      },
+      "storage": {
+        "local": {
+          "fps": 973.7433601717568,
+          "bytes_on_disk": 25663988,
+          "bytes_per_frame": 50124.9765625
+        },
+        "shared": {
+          "fps": 808.6783188329746,
+          "bytes_on_disk": 25663988,
+          "bytes_per_frame": 50124.9765625
+        },
+        "memory_one_frame": {
+          "fps": 1024.4580619434107
+        }
+      }
+    },
+    "GriddlySokoban": {
+      "size": 216,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlySokoban: size 256 is not a whole tile size for a 13x9 grid; use a multiple of 9 that is at least 36",
+      "frame_shape": [
+        216,
+        312
+      ],
+      "state_bytes": 468,
+      "gpu": {
+        "fps": 2311272.516592848,
+        "seconds_per_batch": 0.0004430459812283516,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0125764751835296,
+        "loadavg": 11.9072265625
+      },
+      "storage": {
+        "local": {
+          "fps": 1928.4203216390956,
+          "bytes_on_disk": 14118375,
+          "bytes_per_frame": 27574.951171875
+        },
+        "shared": {
+          "fps": 1384.088941961757,
+          "bytes_on_disk": 14118375,
+          "bytes_per_frame": 27574.951171875
+        },
+        "memory_one_frame": {
+          "fps": 1942.307628826899
+        }
+      }
+    },
+    "GriddlySokoban2": {
+      "size": 168,
+      "requested_size": 256,
+      "size_note": "ValueError: GriddlySokoban2: size 256 is not a whole tile size for a 8x7 grid; use a multiple of 7 that is at least 28",
+      "frame_shape": [
+        168,
+        192
+      ],
+      "state_bytes": 224,
+      "gpu": {
+        "fps": 2450452.5522931796,
+        "seconds_per_batch": 0.00041788199450820684,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.013733288765613,
+        "loadavg": 11.9150390625
+      },
+      "storage": {
+        "local": {
+          "fps": 2443.549857963777,
+          "bytes_on_disk": 6806205,
+          "bytes_per_frame": 13293.369140625
+        },
+        "shared": {
+          "fps": 1649.9690388174863,
+          "bytes_on_disk": 6806205,
+          "bytes_per_frame": 13293.369140625
+        },
+        "memory_one_frame": {
+          "fps": 2716.623359736315
+        }
+      }
+    }
+  }
+}

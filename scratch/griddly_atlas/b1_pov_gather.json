@@ -1,0 +1,1103 @@
+{
+  "sokoban2_po": {
+    "game": "sokoban2_po",
+    "yaml": "Single-Player/GVGAI/sokoban2_partially_observable.yaml",
+    "n_records": 1200,
+    "uniform_frames": 0,
+    "V": 5,
+    "T": 24,
+    "levels_used": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "grid_sizes": [
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        7
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        12,
+        6
+      ]
+    ],
+    "pov_shape": [
+      120,
+      120,
+      3
+    ],
+    "orientations_seen": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "atlas_tiles_global": 25,
+    "atlas_tiles_pov_norot": 24,
+    "atlas_tiles_pov_rot": 24,
+    "atlas_tiles_union": 31,
+    "rot_multiplier": 1.24,
+    "atlas_bytes_union": 53568,
+    "saturation_frames_global_norot_rot": [
+      [
+        25,
+        18,
+        12,
+        14
+      ],
+      [
+        50,
+        19,
+        14,
+        14
+      ],
+      [
+        100,
+        23,
+        21,
+        19
+      ],
+      [
+        200,
+        24,
+        23,
+        23
+      ],
+      [
+        400,
+        25,
+        24,
+        24
+      ],
+      [
+        600,
+        25,
+        24,
+        24
+      ],
+      [
+        900,
+        25,
+        24,
+        24
+      ],
+      [
+        1200,
+        25,
+        24,
+        24
+      ]
+    ],
+    "window_center": [
+      2,
+      2
+    ],
+    "unrotated_pov_equals_global_crop_frac": 1.0,
+    "rotation_fit": {
+      "DOWN": {
+        "collisions_by_k": {
+          "0": 985,
+          "1": 1095,
+          "2": 0,
+          "3": 1025
+        },
+        "chosen": 2,
+        "n": 132
+      },
+      "LEFT": {
+        "collisions_by_k": {
+          "0": 1020,
+          "1": 873,
+          "2": 1017,
+          "3": 0
+        },
+        "chosen": 3,
+        "n": 143
+      },
+      "NONE": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 94,
+          "2": 91,
+          "3": 75
+        },
+        "chosen": 0,
+        "n": 21
+      },
+      "RIGHT": {
+        "collisions_by_k": {
+          "0": 1209,
+          "1": 0,
+          "2": 1191,
+          "3": 1099
+        },
+        "chosen": 1,
+        "n": 151
+      },
+      "UP": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 1130,
+          "2": 985,
+          "3": 1085
+        },
+        "chosen": 0,
+        "n": 153
+      }
+    },
+    "k_of_orientation": {
+      "DOWN": 2,
+      "LEFT": 3,
+      "NONE": 0,
+      "RIGHT": 1,
+      "UP": 0
+    },
+    "index_keys_half": 2185,
+    "index_collisions_half": 0,
+    "index_keys_half_withpos": 3139,
+    "index_collisions_half_withpos": 0,
+    "index_keys_all": 2987,
+    "index_collisions_all": 0,
+    "recon_heldout": {
+      "frames": 600,
+      "exact_frames": 366,
+      "pixel_exact_frac": 0.8052864969135802,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 0.8049333333333333,
+      "max_abs": 255,
+      "misses": 2926
+    },
+    "recon_full_table": {
+      "frames": 1200,
+      "exact_frames": 1200,
+      "pixel_exact_frac": 1.0,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 1.0,
+      "max_abs": 0,
+      "misses": 0
+    }
+  },
+  "zelda_po": {
+    "game": "zelda_po",
+    "yaml": "Single-Player/GVGAI/zelda_partially_observable.yaml",
+    "n_records": 1200,
+    "uniform_frames": 0,
+    "V": 5,
+    "T": 24,
+    "levels_used": [
+      0,
+      1,
+      2
+    ],
+    "grid_sizes": [
+      [
+        13,
+        9
+      ],
+      [
+        15,
+        16
+      ],
+      [
+        30,
+        9
+      ]
+    ],
+    "pov_shape": [
+      120,
+      120,
+      3
+    ],
+    "orientations_seen": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "atlas_tiles_global": 21,
+    "atlas_tiles_pov_norot": 14,
+    "atlas_tiles_pov_rot": 20,
+    "atlas_tiles_union": 29,
+    "rot_multiplier": 1.380952380952381,
+    "atlas_bytes_union": 50112,
+    "saturation_frames_global_norot_rot": [
+      [
+        25,
+        14,
+        5,
+        8
+      ],
+      [
+        50,
+        15,
+        7,
+        11
+      ],
+      [
+        100,
+        20,
+        11,
+        15
+      ],
+      [
+        200,
+        21,
+        11,
+        17
+      ],
+      [
+        400,
+        21,
+        13,
+        20
+      ],
+      [
+        600,
+        21,
+        13,
+        20
+      ],
+      [
+        900,
+        21,
+        14,
+        20
+      ],
+      [
+        1200,
+        21,
+        14,
+        20
+      ]
+    ],
+    "window_center": [
+      2,
+      4
+    ],
+    "unrotated_pov_equals_global_crop_frac": 1.0,
+    "rotation_fit": {
+      "DOWN": {
+        "collisions_by_k": {
+          "0": 474,
+          "1": 574,
+          "2": 0,
+          "3": 456
+        },
+        "chosen": 2,
+        "n": 145
+      },
+      "LEFT": {
+        "collisions_by_k": {
+          "0": 590,
+          "1": 999,
+          "2": 871,
+          "3": 0
+        },
+        "chosen": 3,
+        "n": 143
+      },
+      "NONE": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 218,
+          "2": 431,
+          "3": 189
+        },
+        "chosen": 0,
+        "n": 48
+      },
+      "RIGHT": {
+        "collisions_by_k": {
+          "0": 507,
+          "1": 0,
+          "2": 545,
+          "3": 821
+        },
+        "chosen": 1,
+        "n": 128
+      },
+      "UP": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 724,
+          "2": 909,
+          "3": 887
+        },
+        "chosen": 0,
+        "n": 136
+      }
+    },
+    "k_of_orientation": {
+      "DOWN": 2,
+      "LEFT": 3,
+      "NONE": 0,
+      "RIGHT": 1,
+      "UP": 0
+    },
+    "index_keys_half": 955,
+    "index_collisions_half": 0,
+    "index_keys_half_withpos": 1763,
+    "index_collisions_half_withpos": 0,
+    "index_keys_all": 1384,
+    "index_collisions_all": 0,
+    "recon_heldout": {
+      "frames": 600,
+      "exact_frames": 151,
+      "pixel_exact_frac": 0.8566793981481482,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 0.8518,
+      "max_abs": 255,
+      "misses": 2223
+    },
+    "recon_full_table": {
+      "frames": 1200,
+      "exact_frames": 1200,
+      "pixel_exact_frac": 1.0,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 1.0,
+      "max_abs": 0,
+      "misses": 0
+    }
+  },
+  "labyrinth_po": {
+    "game": "labyrinth_po",
+    "yaml": "Single-Player/GVGAI/labyrinth_partially_observable.yaml",
+    "n_records": 1200,
+    "uniform_frames": 0,
+    "V": 5,
+    "T": 24,
+    "levels_used": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "grid_sizes": [
+      [
+        16,
+        14
+      ]
+    ],
+    "pov_shape": [
+      120,
+      120,
+      3
+    ],
+    "orientations_seen": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "atlas_tiles_global": 22,
+    "atlas_tiles_pov_norot": 20,
+    "atlas_tiles_pov_rot": 21,
+    "atlas_tiles_union": 25,
+    "rot_multiplier": 1.1363636363636365,
+    "atlas_bytes_union": 43200,
+    "saturation_frames_global_norot_rot": [
+      [
+        25,
+        21,
+        9,
+        11
+      ],
+      [
+        50,
+        21,
+        10,
+        12
+      ],
+      [
+        100,
+        22,
+        15,
+        14
+      ],
+      [
+        200,
+        22,
+        17,
+        16
+      ],
+      [
+        400,
+        22,
+        18,
+        20
+      ],
+      [
+        600,
+        22,
+        18,
+        20
+      ],
+      [
+        900,
+        22,
+        20,
+        21
+      ],
+      [
+        1200,
+        22,
+        20,
+        21
+      ]
+    ],
+    "window_center": [
+      2,
+      4
+    ],
+    "unrotated_pov_equals_global_crop_frac": 1.0,
+    "rotation_fit": {
+      "DOWN": {
+        "collisions_by_k": {
+          "0": 788,
+          "1": 892,
+          "2": 0,
+          "3": 862
+        },
+        "chosen": 2,
+        "n": 129
+      },
+      "LEFT": {
+        "collisions_by_k": {
+          "0": 992,
+          "1": 942,
+          "2": 1261,
+          "3": 0
+        },
+        "chosen": 3,
+        "n": 152
+      },
+      "NONE": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 213,
+          "2": 105,
+          "3": 145
+        },
+        "chosen": 0,
+        "n": 22
+      },
+      "RIGHT": {
+        "collisions_by_k": {
+          "0": 1414,
+          "1": 0,
+          "2": 1455,
+          "3": 1258
+        },
+        "chosen": 1,
+        "n": 142
+      },
+      "UP": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 1860,
+          "2": 1543,
+          "3": 1661
+        },
+        "chosen": 0,
+        "n": 155
+      }
+    },
+    "k_of_orientation": {
+      "DOWN": 2,
+      "LEFT": 3,
+      "NONE": 0,
+      "RIGHT": 1,
+      "UP": 0
+    },
+    "index_keys_half": 726,
+    "index_collisions_half": 0,
+    "index_keys_half_withpos": 1530,
+    "index_collisions_half_withpos": 0,
+    "index_keys_all": 923,
+    "index_collisions_all": 0,
+    "recon_heldout": {
+      "frames": 600,
+      "exact_frames": 394,
+      "pixel_exact_frac": 0.9144666666666666,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 0.9144666666666666,
+      "max_abs": 255,
+      "misses": 1283
+    },
+    "recon_full_table": {
+      "frames": 1200,
+      "exact_frames": 1200,
+      "pixel_exact_frac": 1.0,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 1.0,
+      "max_abs": 0,
+      "misses": 0
+    }
+  },
+  "clusters_po": {
+    "game": "clusters_po",
+    "yaml": "Single-Player/GVGAI/clusters_partially_observable.yaml",
+    "n_records": 1200,
+    "uniform_frames": 0,
+    "V": 5,
+    "T": 24,
+    "levels_used": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "grid_sizes": [
+      [
+        13,
+        10
+      ]
+    ],
+    "pov_shape": [
+      120,
+      120,
+      3
+    ],
+    "orientations_seen": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "atlas_tiles_global": 18,
+    "atlas_tiles_pov_norot": 15,
+    "atlas_tiles_pov_rot": 32,
+    "atlas_tiles_union": 37,
+    "rot_multiplier": 2.0555555555555554,
+    "atlas_bytes_union": 63936,
+    "saturation_frames_global_norot_rot": [
+      [
+        25,
+        16,
+        10,
+        14
+      ],
+      [
+        50,
+        16,
+        10,
+        15
+      ],
+      [
+        100,
+        18,
+        12,
+        25
+      ],
+      [
+        200,
+        18,
+        13,
+        29
+      ],
+      [
+        400,
+        18,
+        13,
+        32
+      ],
+      [
+        600,
+        18,
+        13,
+        32
+      ],
+      [
+        900,
+        18,
+        15,
+        32
+      ],
+      [
+        1200,
+        18,
+        15,
+        32
+      ]
+    ],
+    "window_center": [
+      2,
+      4
+    ],
+    "unrotated_pov_equals_global_crop_frac": 1.0,
+    "rotation_fit": {
+      "DOWN": {
+        "collisions_by_k": {
+          "0": 609,
+          "1": 668,
+          "2": 0,
+          "3": 735
+        },
+        "chosen": 2,
+        "n": 133
+      },
+      "LEFT": {
+        "collisions_by_k": {
+          "0": 1059,
+          "1": 1099,
+          "2": 1468,
+          "3": 0
+        },
+        "chosen": 3,
+        "n": 158
+      },
+      "NONE": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 136,
+          "2": 168,
+          "3": 150
+        },
+        "chosen": 0,
+        "n": 34
+      },
+      "RIGHT": {
+        "collisions_by_k": {
+          "0": 1006,
+          "1": 0,
+          "2": 1239,
+          "3": 887
+        },
+        "chosen": 1,
+        "n": 133
+      },
+      "UP": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 828,
+          "2": 1164,
+          "3": 835
+        },
+        "chosen": 0,
+        "n": 142
+      }
+    },
+    "k_of_orientation": {
+      "DOWN": 2,
+      "LEFT": 3,
+      "NONE": 0,
+      "RIGHT": 1,
+      "UP": 0
+    },
+    "index_keys_half": 1502,
+    "index_collisions_half": 0,
+    "index_keys_half_withpos": 2943,
+    "index_collisions_half_withpos": 0,
+    "index_keys_all": 2109,
+    "index_collisions_all": 0,
+    "recon_heldout": {
+      "frames": 600,
+      "exact_frames": 242,
+      "pixel_exact_frac": 0.8532980709876543,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 0.8439333333333333,
+      "max_abs": 255,
+      "misses": 2341
+    },
+    "recon_full_table": {
+      "frames": 1200,
+      "exact_frames": 1200,
+      "pixel_exact_frac": 1.0,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 1.0,
+      "max_abs": 0,
+      "misses": 0
+    }
+  },
+  "cookmepasta_po": {
+    "game": "cookmepasta_po",
+    "yaml": "Single-Player/GVGAI/cookmepasta_partially_observable.yaml",
+    "n_records": 1200,
+    "uniform_frames": 0,
+    "V": 5,
+    "T": 24,
+    "levels_used": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "grid_sizes": [
+      [
+        14,
+        11
+      ]
+    ],
+    "pov_shape": [
+      120,
+      120,
+      3
+    ],
+    "orientations_seen": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "atlas_tiles_global": 12,
+    "atlas_tiles_pov_norot": 12,
+    "atlas_tiles_pov_rot": 30,
+    "atlas_tiles_union": 33,
+    "rot_multiplier": 2.75,
+    "atlas_bytes_union": 57024,
+    "saturation_frames_global_norot_rot": [
+      [
+        25,
+        10,
+        7,
+        8
+      ],
+      [
+        50,
+        10,
+        7,
+        11
+      ],
+      [
+        100,
+        10,
+        8,
+        13
+      ],
+      [
+        200,
+        12,
+        8,
+        16
+      ],
+      [
+        400,
+        12,
+        9,
+        24
+      ],
+      [
+        600,
+        12,
+        11,
+        28
+      ],
+      [
+        900,
+        12,
+        12,
+        30
+      ],
+      [
+        1200,
+        12,
+        12,
+        30
+      ]
+    ],
+    "window_center": [
+      2,
+      4
+    ],
+    "unrotated_pov_equals_global_crop_frac": 1.0,
+    "rotation_fit": {
+      "DOWN": {
+        "collisions_by_k": {
+          "0": 883,
+          "1": 853,
+          "2": 0,
+          "3": 1348
+        },
+        "chosen": 2,
+        "n": 132
+      },
+      "LEFT": {
+        "collisions_by_k": {
+          "0": 359,
+          "1": 516,
+          "2": 365,
+          "3": 0
+        },
+        "chosen": 3,
+        "n": 143
+      },
+      "NONE": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 85,
+          "2": 100,
+          "3": 63
+        },
+        "chosen": 0,
+        "n": 21
+      },
+      "RIGHT": {
+        "collisions_by_k": {
+          "0": 692,
+          "1": 0,
+          "2": 643,
+          "3": 635
+        },
+        "chosen": 1,
+        "n": 151
+      },
+      "UP": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 510,
+          "2": 1078,
+          "3": 1196
+        },
+        "chosen": 0,
+        "n": 153
+      }
+    },
+    "k_of_orientation": {
+      "DOWN": 2,
+      "LEFT": 3,
+      "NONE": 0,
+      "RIGHT": 1,
+      "UP": 0
+    },
+    "index_keys_half": 1063,
+    "index_collisions_half": 0,
+    "index_keys_half_withpos": 2345,
+    "index_collisions_half_withpos": 0,
+    "index_keys_all": 1512,
+    "index_collisions_all": 0,
+    "recon_heldout": {
+      "frames": 600,
+      "exact_frames": 293,
+      "pixel_exact_frac": 0.8679899305555555,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 0.8677333333333334,
+      "max_abs": 255,
+      "misses": 1984
+    },
+    "recon_full_table": {
+      "frames": 1200,
+      "exact_frames": 1200,
+      "pixel_exact_frac": 1.0,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 1.0,
+      "max_abs": 0,
+      "misses": 0
+    }
+  },
+  "drunkdwarf": {
+    "game": "drunkdwarf",
+    "yaml": "Single-Player/Mini-Grid/minigrid-drunkdwarf.yaml",
+    "n_records": 1200,
+    "uniform_frames": 0,
+    "V": 7,
+    "T": 24,
+    "levels_used": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "grid_sizes": [
+      [
+        6,
+        6
+      ],
+      [
+        7,
+        7
+      ],
+      [
+        8,
+        8
+      ],
+      [
+        10,
+        10
+      ],
+      [
+        19,
+        18
+      ]
+    ],
+    "pov_shape": [
+      168,
+      168,
+      3
+    ],
+    "orientations_seen": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "atlas_tiles_global": 22,
+    "atlas_tiles_pov_norot": 16,
+    "atlas_tiles_pov_rot": 34,
+    "atlas_tiles_union": 42,
+    "rot_multiplier": 1.9090909090909092,
+    "atlas_bytes_union": 72576,
+    "saturation_frames_global_norot_rot": [
+      [
+        25,
+        18,
+        10,
+        20
+      ],
+      [
+        50,
+        18,
+        13,
+        22
+      ],
+      [
+        100,
+        18,
+        14,
+        23
+      ],
+      [
+        200,
+        20,
+        14,
+        24
+      ],
+      [
+        400,
+        22,
+        16,
+        33
+      ],
+      [
+        600,
+        22,
+        16,
+        34
+      ],
+      [
+        900,
+        22,
+        16,
+        34
+      ],
+      [
+        1200,
+        22,
+        16,
+        34
+      ]
+    ],
+    "window_center": [
+      3,
+      6
+    ],
+    "unrotated_pov_equals_global_crop_frac": 1.0,
+    "rotation_fit": {
+      "DOWN": {
+        "collisions_by_k": {
+          "0": 2041,
+          "1": 1972,
+          "2": 0,
+          "3": 1491
+        },
+        "chosen": 2,
+        "n": 132
+      },
+      "LEFT": {
+        "collisions_by_k": {
+          "0": 769,
+          "1": 1072,
+          "2": 962,
+          "3": 0
+        },
+        "chosen": 3,
+        "n": 143
+      },
+      "NONE": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 188,
+          "2": 133,
+          "3": 116
+        },
+        "chosen": 0,
+        "n": 21
+      },
+      "RIGHT": {
+        "collisions_by_k": {
+          "0": 2587,
+          "1": 0,
+          "2": 2499,
+          "3": 2928
+        },
+        "chosen": 1,
+        "n": 151
+      },
+      "UP": {
+        "collisions_by_k": {
+          "0": 0,
+          "1": 1319,
+          "2": 1997,
+          "3": 1359
+        },
+        "chosen": 0,
+        "n": 153
+      }
+    },
+    "k_of_orientation": {
+      "DOWN": 2,
+      "LEFT": 3,
+      "NONE": 0,
+      "RIGHT": 1,
+      "UP": 0
+    },
+    "index_keys_half": 821,
+    "index_collisions_half": 0,
+    "index_keys_half_withpos": 2711,
+    "index_collisions_half_withpos": 0,
+    "index_keys_all": 972,
+    "index_collisions_all": 0,
+    "recon_heldout": {
+      "frames": 600,
+      "exact_frames": 451,
+      "pixel_exact_frac": 0.9812534643487024,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 0.9810544217687075,
+      "max_abs": 255,
+      "misses": 557
+    },
+    "recon_full_table": {
+      "frames": 1200,
+      "exact_frames": 1200,
+      "pixel_exact_frac": 1.0,
+      "covered_pixel_exact_frac": 1.0,
+      "covered_cell_frac": 1.0,
+      "max_abs": 0,
+      "misses": 0
+    }
+  }
+}

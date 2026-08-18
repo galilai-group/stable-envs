@@ -1,0 +1,325 @@
+[
+ {
+  "backend": "nvdiffrast",
+  "scene": "antmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 1,
+  "res": 224,
+  "nvert": 4262,
+  "ntri": 5898,
+  "ms_per_batch": 0.6417430529836565,
+  "fps": 1558.2560580137163,
+  "mpix_s": 78.18705596689624,
+  "out_shape": [
+   1,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "antmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 8,
+  "res": 224,
+  "nvert": 4262,
+  "ntri": 5898,
+  "ms_per_batch": 0.7379507005680352,
+  "fps": 10840.832583859634,
+  "mpix_s": 543.949615727741,
+  "out_shape": [
+   8,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "antmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 64,
+  "res": 224,
+  "nvert": 4262,
+  "ntri": 5898,
+  "ms_per_batch": 1.476658001774922,
+  "fps": 43341.11210793082,
+  "mpix_s": 2174.6836411275367,
+  "out_shape": [
+   64,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "antmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 256,
+  "res": 224,
+  "nvert": 4262,
+  "ntri": 5898,
+  "ms_per_batch": 5.1332792500033975,
+  "fps": 49870.655293072276,
+  "mpix_s": 2502.3099999851943,
+  "out_shape": [
+   256,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "antmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 1024,
+  "res": 224,
+  "nvert": 4262,
+  "ntri": 5898,
+  "ms_per_batch": 19.703095400473103,
+  "fps": 51971.52930475138,
+  "mpix_s": 2607.723454395205,
+  "out_shape": [
+   1024,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "antmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 4096,
+  "res": 224,
+  "nvert": 4262,
+  "ntri": 5898,
+  "ms_per_batch": 78.04772934759967,
+  "fps": 52480.70679619293,
+  "mpix_s": 2633.2719442057764,
+  "out_shape": [
+   4096,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "cube_single.xml",
+  "label": "raster+shade",
+  "batch": 1,
+  "res": 224,
+  "nvert": 394305,
+  "ntri": 193139,
+  "ms_per_batch": 0.9014195005875081,
+  "fps": 1109.3614009329078,
+  "mpix_s": 55.66331765320958,
+  "out_shape": [
+   1,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "cube_single.xml",
+  "label": "raster+shade",
+  "batch": 8,
+  "res": 224,
+  "nvert": 394305,
+  "ntri": 193139,
+  "ms_per_batch": 1.4165241969749331,
+  "fps": 5647.626787515843,
+  "mpix_s": 283.3753216903949,
+  "out_shape": [
+   8,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "cube_single.xml",
+  "label": "raster+shade",
+  "batch": 64,
+  "res": 224,
+  "nvert": 394305,
+  "ntri": 193139,
+  "ms_per_batch": 6.437872047536075,
+  "fps": 9941.173034728812,
+  "mpix_s": 498.8082981905529,
+  "out_shape": [
+   64,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "cube_single.xml",
+  "label": "raster+shade",
+  "batch": 256,
+  "res": 224,
+  "nvert": 394305,
+  "ntri": 193139,
+  "ms_per_batch": 24.842977250227705,
+  "fps": 10304.723037882006,
+  "mpix_s": 517.0497831487675,
+  "out_shape": [
+   256,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "cube_single.xml",
+  "label": "raster+shade",
+  "batch": 1024,
+  "res": 224,
+  "nvert": 394305,
+  "ntri": 193139,
+  "ms_per_batch": 89.13738349801861,
+  "fps": 11487.88487854551,
+  "mpix_s": 576.4161116658995,
+  "out_shape": [
+   1024,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 1,
+  "res": 224,
+  "nvert": 5702,
+  "ntri": 8330,
+  "ms_per_batch": 0.6090756040066481,
+  "fps": 1641.8323003281625,
+  "mpix_s": 82.38057750126589,
+  "out_shape": [
+   1,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 8,
+  "res": 224,
+  "nvert": 5702,
+  "ntri": 8330,
+  "ms_per_batch": 0.7570729474537075,
+  "fps": 10567.01342572959,
+  "mpix_s": 530.210465649408,
+  "out_shape": [
+   8,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 64,
+  "res": 224,
+  "nvert": 5702,
+  "ntri": 8330,
+  "ms_per_batch": 1.46715824957937,
+  "fps": 43621.74292946832,
+  "mpix_s": 2188.764573229002,
+  "out_shape": [
+   64,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 256,
+  "res": 224,
+  "nvert": 5702,
+  "ntri": 8330,
+  "ms_per_batch": 5.185982648981735,
+  "fps": 49363.83658172583,
+  "mpix_s": 2476.879864324675,
+  "out_shape": [
+   256,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 1024,
+  "res": 224,
+  "nvert": 5702,
+  "ntri": 8330,
+  "ms_per_batch": 20.078738598385826,
+  "fps": 50999.21964631392,
+  "mpix_s": 2558.9368449734475,
+  "out_shape": [
+   1024,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ },
+ {
+  "backend": "nvdiffrast",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "raster+shade",
+  "batch": 4096,
+  "res": 224,
+  "nvert": 5702,
+  "ntri": 8330,
+  "ms_per_batch": 79.60089604603127,
+  "fps": 51456.70719122788,
+  "mpix_s": 2581.89174002705,
+  "out_shape": [
+   4096,
+   224,
+   224,
+   3
+  ],
+  "out_dtype": "torch.uint8"
+ }
+]

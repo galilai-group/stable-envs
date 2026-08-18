@@ -1,0 +1,279 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    9.88525390625,
+    10.33740234375
+  ],
+  "registry_size": 68,
+  "envs": {
+    "JumanjiConnector": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiConnector renders at (200,) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 400,
+      "gpu": {
+        "fps": 428330.36593557155,
+        "seconds_per_batch": 0.0023906780406832695,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.001113181021809,
+        "loadavg": 10.34130859375
+      },
+      "storage": {
+        "local": {
+          "fps": 3383.7630913501243,
+          "bytes_on_disk": 5134295,
+          "bytes_per_frame": 10027.919921875
+        },
+        "shared": {
+          "fps": 1171.4313784556143,
+          "bytes_on_disk": 5134295,
+          "bytes_per_frame": 10027.919921875
+        },
+        "memory_one_frame": {
+          "fps": 4000.5341112312385
+        }
+      }
+    },
+    "JumanjiMaze": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiMaze renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 400,
+      "gpu": {
+        "fps": 519336.4597621233,
+        "seconds_per_batch": 0.0019717467948794365,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0008764812848536,
+        "loadavg": 10.21484375
+      },
+      "storage": {
+        "local": {
+          "fps": 3664.8789460987573,
+          "bytes_on_disk": 4027698,
+          "bytes_per_frame": 7866.59765625
+        },
+        "shared": {
+          "fps": 865.686960245066,
+          "bytes_on_disk": 4027698,
+          "bytes_per_frame": 7866.59765625
+        },
+        "memory_one_frame": {
+          "fps": 4498.587494371609
+        }
+      }
+    },
+    "JumanjiMinesweeper": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiMinesweeper renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 400,
+      "gpu": {
+        "fps": 994043.6016418046,
+        "seconds_per_batch": 0.0010301358997821808,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0015682381478788,
+        "loadavg": 9.87353515625
+      },
+      "storage": {
+        "local": {
+          "fps": 3617.6022741478123,
+          "bytes_on_disk": 4854600,
+          "bytes_per_frame": 9481.640625
+        },
+        "shared": {
+          "fps": 1056.6781375843736,
+          "bytes_on_disk": 4854600,
+          "bytes_per_frame": 9481.640625
+        },
+        "memory_one_frame": {
+          "fps": 4434.749813244355
+        }
+      }
+    },
+    "JumanjiRubiksCube": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiRubiksCube renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 216,
+      "gpu": {
+        "fps": 542086.1085807453,
+        "seconds_per_batch": 0.0018889987841248512,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0009701327285956,
+        "loadavg": 9.8837890625
+      },
+      "storage": {
+        "local": {
+          "fps": 3004.3439478884006,
+          "bytes_on_disk": 5768556,
+          "bytes_per_frame": 11266.7109375
+        },
+        "shared": {
+          "fps": 913.9028698741869,
+          "bytes_on_disk": 5768556,
+          "bytes_per_frame": 11266.7109375
+        },
+        "memory_one_frame": {
+          "fps": 3549.1764386215855
+        }
+      }
+    },
+    "JumanjiRubiksCubePartlyScrambled": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiRubiksCubePartlyScrambled renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 216,
+      "gpu": {
+        "fps": 543308.641889024,
+        "seconds_per_batch": 0.0018847482278943062,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0013458745459978,
+        "loadavg": 10.22265625
+      },
+      "storage": {
+        "local": {
+          "fps": 3038.1324439978775,
+          "bytes_on_disk": 5657599,
+          "bytes_per_frame": 11049.998046875
+        },
+        "shared": {
+          "fps": 1279.8402455185108,
+          "bytes_on_disk": 5657599,
+          "bytes_per_frame": 11049.998046875
+        },
+        "memory_one_frame": {
+          "fps": 3504.1574253690565
+        }
+      }
+    },
+    "JumanjiSokoban": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiSokoban renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 400,
+      "gpu": {
+        "fps": 383975.1282351614,
+        "seconds_per_batch": 0.002666839398443699,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0005411578840704,
+        "loadavg": 10.0224609375
+      },
+      "storage": {
+        "local": {
+          "fps": 2395.6530953558768,
+          "bytes_on_disk": 8847411,
+          "bytes_per_frame": 17280.099609375
+        },
+        "shared": {
+          "fps": 907.3159932873486,
+          "bytes_on_disk": 8847411,
+          "bytes_per_frame": 17280.099609375
+        },
+        "memory_one_frame": {
+          "fps": 2756.2523444843114
+        }
+      }
+    },
+    "JumanjiSudoku": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiSudoku renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 324,
+      "gpu": {
+        "fps": 1045404.6208164053,
+        "seconds_per_batch": 0.0009795250371098518,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.002360462529068,
+        "loadavg": 10.0205078125
+      },
+      "storage": {
+        "local": {
+          "fps": 3220.270894394701,
+          "bytes_on_disk": 4761067,
+          "bytes_per_frame": 9298.958984375
+        },
+        "shared": {
+          "fps": 929.716301289403,
+          "bytes_on_disk": 4761067,
+          "bytes_per_frame": 9298.958984375
+        },
+        "memory_one_frame": {
+          "fps": 3777.8543297178394
+        }
+      }
+    },
+    "JumanjiSudokuVeryEasy": {
+      "size": 200,
+      "requested_size": 256,
+      "size_note": "ValueError: JumanjiSudokuVeryEasy renders at (200, 400) px, not 256. The atlas is exact only where the official viewer's cells provably separate, and that was measured per size rather than assumed \u2014 at an unverified size there is no atlas that is right, only one that would be silently wrong. See docs/research/jumanji.md",
+      "frame_shape": [
+        200,
+        200
+      ],
+      "state_bytes": 324,
+      "gpu": {
+        "fps": 1046049.1041138455,
+        "seconds_per_batch": 0.000978921540081501,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0024620359110736,
+        "loadavg": 10.0185546875
+      },
+      "storage": {
+        "local": {
+          "fps": 2870.5207538361524,
+          "bytes_on_disk": 5444171,
+          "bytes_per_frame": 10633.146484375
+        },
+        "shared": {
+          "fps": 927.5014244533489,
+          "bytes_on_disk": 5444171,
+          "bytes_per_frame": 10633.146484375
+        },
+        "memory_one_frame": {
+          "fps": 3581.8871125175374
+        }
+      }
+    }
+  }
+}

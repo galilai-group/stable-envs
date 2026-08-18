@@ -1,0 +1,4 @@
+scratch/mwfast/train.py MetaWorldAssembly,MetaWorldButtonPress,MetaWorldDoorLock,MetaWorldPlateSlide,MetaWorldSoccer,MetaWorldSweepInto --net unet_112t128_w48_d2_u2 --tag r112 --epochs 200 --out multi6_unet_112t128_w48_d2_u2_r112
+scratch/mwfast/train.py MetaWorldAssembly,MetaWorldButtonPress,MetaWorldDoorLock,MetaWorldPlateSlide,MetaWorldSoccer,MetaWorldSweepInto --net unet_112t128_w64_d3_u2 --tag r112 --epochs 200 --out multi6_unet_112t128_w64_d3_u2_r112
+scratch/mwfast/train.py MetaWorldAssembly,MetaWorldButtonPress,MetaWorldDoorLock,MetaWorldPlateSlide,MetaWorldSoccer,MetaWorldSweepInto --net unet_96t128_w48_d2_u2 --tag r96 --epochs 200 --out multi6_unet_96t128_w48_d2_u2_r96
+scratch/mwfast/train.py MetaWorldAssembly,MetaWorldButtonPress,MetaWorldDoorLock,MetaWorldPlateSlide,MetaWorldSoccer,MetaWorldSweepInto --net unet_96t128_w64_d3_u2 --tag r96 --epochs 200 --out multi6_unet_96t128_w64_d3_u2_r96

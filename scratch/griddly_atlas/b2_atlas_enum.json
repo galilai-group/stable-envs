@@ -1,0 +1,1358 @@
+{
+  "summary": {
+    "n_games_ok": 32,
+    "n_games_failed": 0,
+    "family_distinct_tiles": 385,
+    "family_bytes": 647616,
+    "family_MB": 0.647616,
+    "sum_per_game_tiles": 700,
+    "sum_per_game_bytes": 1185216,
+    "note_prediction_MB": 1.79
+  },
+  "per_game": {
+    "Multi-Agent/foragers.yaml": {
+      "game": "Multi-Agent/foragers.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 3,
+      "players": 4,
+      "tiles_global": 23,
+      "tiles_pov": 0,
+      "tiles_union": 23,
+      "bytes_union": 39744,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          14,
+          0
+        ],
+        [
+          50,
+          14,
+          0
+        ],
+        [
+          100,
+          18,
+          0
+        ],
+        [
+          200,
+          23,
+          0
+        ],
+        [
+          260,
+          23,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 23
+    },
+    "Multi-Agent/robot_tag_12.yaml": {
+      "game": "Multi-Agent/robot_tag_12.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 4,
+      "players": 12,
+      "tiles_global": 36,
+      "tiles_pov": 31,
+      "tiles_union": 38,
+      "bytes_union": 65664,
+      "pov_multiplier": 1.0555555555555556,
+      "saturation": [
+        [
+          25,
+          19,
+          15
+        ],
+        [
+          50,
+          19,
+          19
+        ],
+        [
+          100,
+          34,
+          25
+        ],
+        [
+          200,
+          36,
+          28
+        ],
+        [
+          260,
+          36,
+          31
+        ]
+      ],
+      "new_tiles_added_to_family": 38
+    },
+    "Multi-Agent/robot_tag_4.yaml": {
+      "game": "Multi-Agent/robot_tag_4.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 4,
+      "players": 4,
+      "tiles_global": 20,
+      "tiles_pov": 13,
+      "tiles_union": 22,
+      "bytes_union": 38016,
+      "pov_multiplier": 1.1,
+      "saturation": [
+        [
+          25,
+          11,
+          7
+        ],
+        [
+          50,
+          11,
+          9
+        ],
+        [
+          100,
+          16,
+          9
+        ],
+        [
+          200,
+          20,
+          12
+        ],
+        [
+          260,
+          20,
+          13
+        ]
+      ],
+      "new_tiles_added_to_family": 0
+    },
+    "Multi-Agent/robot_tag_8.yaml": {
+      "game": "Multi-Agent/robot_tag_8.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 4,
+      "players": 8,
+      "tiles_global": 28,
+      "tiles_pov": 22,
+      "tiles_union": 30,
+      "bytes_union": 51840,
+      "pov_multiplier": 1.0714285714285714,
+      "saturation": [
+        [
+          25,
+          15,
+          13
+        ],
+        [
+          50,
+          15,
+          15
+        ],
+        [
+          100,
+          25,
+          17
+        ],
+        [
+          200,
+          28,
+          20
+        ],
+        [
+          260,
+          28,
+          22
+        ]
+      ],
+      "new_tiles_added_to_family": 8
+    },
+    "RTS/GriddlyRTS.yaml": {
+      "game": "RTS/GriddlyRTS.yaml",
+      "tile_size": 16,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 4,
+      "players": 2,
+      "tiles_global": 11,
+      "tiles_pov": 0,
+      "tiles_union": 11,
+      "bytes_union": 8448,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          6,
+          0
+        ],
+        [
+          50,
+          6,
+          0
+        ],
+        [
+          100,
+          11,
+          0
+        ],
+        [
+          200,
+          11,
+          0
+        ],
+        [
+          260,
+          11,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 11
+    },
+    "RTS/Stratega/heal-or-die.yaml": {
+      "game": "RTS/Stratega/heal-or-die.yaml",
+      "tile_size": 16,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 2,
+      "players": 2,
+      "tiles_global": 7,
+      "tiles_pov": 0,
+      "tiles_union": 7,
+      "bytes_union": 5376,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          7,
+          0
+        ],
+        [
+          50,
+          7,
+          0
+        ],
+        [
+          100,
+          7,
+          0
+        ],
+        [
+          200,
+          7,
+          0
+        ],
+        [
+          260,
+          7,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 7
+    },
+    "RTS/Stratega/kill-the-king.yaml": {
+      "game": "RTS/Stratega/kill-the-king.yaml",
+      "tile_size": 16,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 1,
+      "players": 2,
+      "tiles_global": 13,
+      "tiles_pov": 0,
+      "tiles_union": 13,
+      "bytes_union": 9984,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          13,
+          0
+        ],
+        [
+          50,
+          13,
+          0
+        ],
+        [
+          100,
+          13,
+          0
+        ],
+        [
+          200,
+          13,
+          0
+        ],
+        [
+          260,
+          13,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 6
+    },
+    "RTS/Stratega/push-mania.yaml": {
+      "game": "RTS/Stratega/push-mania.yaml",
+      "tile_size": 32,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 2,
+      "players": 2,
+      "tiles_global": 4,
+      "tiles_pov": 0,
+      "tiles_union": 4,
+      "bytes_union": 12288,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          4,
+          0
+        ],
+        [
+          50,
+          4,
+          0
+        ],
+        [
+          100,
+          4,
+          0
+        ],
+        [
+          200,
+          4,
+          0
+        ],
+        [
+          260,
+          4,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 4
+    },
+    "Single-Player/GVGAI/bait.yaml": {
+      "game": "Single-Player/GVGAI/bait.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 23,
+      "tiles_pov": 0,
+      "tiles_union": 23,
+      "bytes_union": 39744,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          16,
+          0
+        ],
+        [
+          50,
+          16,
+          0
+        ],
+        [
+          100,
+          23,
+          0
+        ],
+        [
+          200,
+          23,
+          0
+        ],
+        [
+          260,
+          23,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 23
+    },
+    "Single-Player/GVGAI/bait_keys.yaml": {
+      "game": "Single-Player/GVGAI/bait_keys.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 24,
+      "tiles_pov": 0,
+      "tiles_union": 24,
+      "bytes_union": 41472,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          16,
+          0
+        ],
+        [
+          50,
+          16,
+          0
+        ],
+        [
+          100,
+          23,
+          0
+        ],
+        [
+          200,
+          23,
+          0
+        ],
+        [
+          260,
+          24,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 1
+    },
+    "Single-Player/GVGAI/bait_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/bait_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 26,
+      "tiles_pov": 37,
+      "tiles_union": 40,
+      "bytes_union": 69120,
+      "pov_multiplier": 1.5384615384615385,
+      "saturation": [
+        [
+          25,
+          19,
+          20
+        ],
+        [
+          50,
+          19,
+          22
+        ],
+        [
+          100,
+          26,
+          33
+        ],
+        [
+          200,
+          26,
+          34
+        ],
+        [
+          260,
+          26,
+          37
+        ]
+      ],
+      "new_tiles_added_to_family": 17
+    },
+    "Single-Player/GVGAI/butterflies.yaml": {
+      "game": "Single-Player/GVGAI/butterflies.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 10,
+      "players": 1,
+      "tiles_global": 19,
+      "tiles_pov": 0,
+      "tiles_union": 19,
+      "bytes_union": 32832,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          19,
+          0
+        ],
+        [
+          50,
+          19,
+          0
+        ],
+        [
+          100,
+          19,
+          0
+        ],
+        [
+          200,
+          19,
+          0
+        ],
+        [
+          260,
+          19,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 4
+    },
+    "Single-Player/GVGAI/clusters.yaml": {
+      "game": "Single-Player/GVGAI/clusters.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 15,
+      "tiles_pov": 0,
+      "tiles_union": 15,
+      "bytes_union": 25920,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          13,
+          0
+        ],
+        [
+          50,
+          13,
+          0
+        ],
+        [
+          100,
+          15,
+          0
+        ],
+        [
+          200,
+          15,
+          0
+        ],
+        [
+          260,
+          15,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 15
+    },
+    "Single-Player/GVGAI/clusters_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/clusters_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 18,
+      "tiles_pov": 33,
+      "tiles_union": 38,
+      "bytes_union": 65664,
+      "pov_multiplier": 2.111111111111111,
+      "saturation": [
+        [
+          25,
+          16,
+          16
+        ],
+        [
+          50,
+          16,
+          21
+        ],
+        [
+          100,
+          18,
+          26
+        ],
+        [
+          200,
+          18,
+          32
+        ],
+        [
+          260,
+          18,
+          33
+        ]
+      ],
+      "new_tiles_added_to_family": 23
+    },
+    "Single-Player/GVGAI/cookmepasta.yaml": {
+      "game": "Single-Player/GVGAI/cookmepasta.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 6,
+      "players": 1,
+      "tiles_global": 9,
+      "tiles_pov": 0,
+      "tiles_union": 9,
+      "bytes_union": 15552,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          7,
+          0
+        ],
+        [
+          50,
+          7,
+          0
+        ],
+        [
+          100,
+          7,
+          0
+        ],
+        [
+          200,
+          9,
+          0
+        ],
+        [
+          260,
+          9,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 9
+    },
+    "Single-Player/GVGAI/cookmepasta_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/cookmepasta_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 6,
+      "players": 1,
+      "tiles_global": 12,
+      "tiles_pov": 21,
+      "tiles_union": 26,
+      "bytes_union": 44928,
+      "pov_multiplier": 2.1666666666666665,
+      "saturation": [
+        [
+          25,
+          10,
+          8
+        ],
+        [
+          50,
+          10,
+          9
+        ],
+        [
+          100,
+          10,
+          15
+        ],
+        [
+          200,
+          12,
+          17
+        ],
+        [
+          260,
+          12,
+          21
+        ]
+      ],
+      "new_tiles_added_to_family": 17
+    },
+    "Single-Player/GVGAI/labyrinth.yaml": {
+      "game": "Single-Player/GVGAI/labyrinth.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 19,
+      "tiles_pov": 0,
+      "tiles_union": 19,
+      "bytes_union": 32832,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          18,
+          0
+        ],
+        [
+          50,
+          18,
+          0
+        ],
+        [
+          100,
+          19,
+          0
+        ],
+        [
+          200,
+          19,
+          0
+        ],
+        [
+          260,
+          19,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 19
+    },
+    "Single-Player/GVGAI/labyrinth_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/labyrinth_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 22,
+      "tiles_pov": 18,
+      "tiles_union": 23,
+      "bytes_union": 39744,
+      "pov_multiplier": 1.0454545454545454,
+      "saturation": [
+        [
+          25,
+          21,
+          12
+        ],
+        [
+          50,
+          21,
+          12
+        ],
+        [
+          100,
+          22,
+          14
+        ],
+        [
+          200,
+          22,
+          16
+        ],
+        [
+          260,
+          22,
+          18
+        ]
+      ],
+      "new_tiles_added_to_family": 4
+    },
+    "Single-Player/GVGAI/random_butterflies.yaml": {
+      "game": "Single-Player/GVGAI/random_butterflies.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 10,
+      "players": 1,
+      "tiles_global": 19,
+      "tiles_pov": 0,
+      "tiles_union": 19,
+      "bytes_union": 32832,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          19,
+          0
+        ],
+        [
+          50,
+          19,
+          0
+        ],
+        [
+          100,
+          19,
+          0
+        ],
+        [
+          200,
+          19,
+          0
+        ],
+        [
+          260,
+          19,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 0
+    },
+    "Single-Player/GVGAI/sokoban.yaml": {
+      "game": "Single-Player/GVGAI/sokoban.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 6,
+      "players": 1,
+      "tiles_global": 21,
+      "tiles_pov": 0,
+      "tiles_union": 21,
+      "bytes_union": 36288,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          11,
+          0
+        ],
+        [
+          50,
+          11,
+          0
+        ],
+        [
+          100,
+          19,
+          0
+        ],
+        [
+          200,
+          21,
+          0
+        ],
+        [
+          260,
+          21,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 21
+    },
+    "Single-Player/GVGAI/sokoban2.yaml": {
+      "game": "Single-Player/GVGAI/sokoban2.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 19,
+      "tiles_pov": 0,
+      "tiles_union": 19,
+      "bytes_union": 32832,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          15,
+          0
+        ],
+        [
+          50,
+          15,
+          0
+        ],
+        [
+          100,
+          18,
+          0
+        ],
+        [
+          200,
+          19,
+          0
+        ],
+        [
+          260,
+          19,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 1
+    },
+    "Single-Player/GVGAI/sokoban2_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/sokoban2_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 25,
+      "tiles_pov": 24,
+      "tiles_union": 31,
+      "bytes_union": 53568,
+      "pov_multiplier": 1.24,
+      "saturation": [
+        [
+          25,
+          17,
+          18
+        ],
+        [
+          50,
+          17,
+          18
+        ],
+        [
+          100,
+          20,
+          19
+        ],
+        [
+          200,
+          25,
+          24
+        ],
+        [
+          260,
+          25,
+          24
+        ]
+      ],
+      "new_tiles_added_to_family": 12
+    },
+    "Single-Player/GVGAI/spider-nest.yaml": {
+      "game": "Single-Player/GVGAI/spider-nest.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 1,
+      "players": 1,
+      "tiles_global": 28,
+      "tiles_pov": 9,
+      "tiles_union": 30,
+      "bytes_union": 51840,
+      "pov_multiplier": 1.0714285714285714,
+      "saturation": [
+        [
+          25,
+          27,
+          6
+        ],
+        [
+          50,
+          28,
+          8
+        ],
+        [
+          100,
+          28,
+          8
+        ],
+        [
+          200,
+          28,
+          9
+        ],
+        [
+          260,
+          28,
+          9
+        ]
+      ],
+      "new_tiles_added_to_family": 15
+    },
+    "Single-Player/GVGAI/zelda.yaml": {
+      "game": "Single-Player/GVGAI/zelda.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 3,
+      "players": 1,
+      "tiles_global": 19,
+      "tiles_pov": 0,
+      "tiles_union": 19,
+      "bytes_union": 32832,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          14,
+          0
+        ],
+        [
+          50,
+          14,
+          0
+        ],
+        [
+          100,
+          18,
+          0
+        ],
+        [
+          200,
+          19,
+          0
+        ],
+        [
+          260,
+          19,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 8
+    },
+    "Single-Player/GVGAI/zelda_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/zelda_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 3,
+      "players": 1,
+      "tiles_global": 23,
+      "tiles_pov": 20,
+      "tiles_union": 32,
+      "bytes_union": 55296,
+      "pov_multiplier": 1.391304347826087,
+      "saturation": [
+        [
+          25,
+          14,
+          6
+        ],
+        [
+          50,
+          16,
+          14
+        ],
+        [
+          100,
+          22,
+          17
+        ],
+        [
+          200,
+          23,
+          19
+        ],
+        [
+          260,
+          23,
+          20
+        ]
+      ],
+      "new_tiles_added_to_family": 11
+    },
+    "Single-Player/GVGAI/zelda_sequential.yaml": {
+      "game": "Single-Player/GVGAI/zelda_sequential.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 3,
+      "players": 1,
+      "tiles_global": 23,
+      "tiles_pov": 0,
+      "tiles_union": 23,
+      "bytes_union": 39744,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          14,
+          0
+        ],
+        [
+          50,
+          16,
+          0
+        ],
+        [
+          100,
+          20,
+          0
+        ],
+        [
+          200,
+          23,
+          0
+        ],
+        [
+          260,
+          23,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 2
+    },
+    "Single-Player/GVGAI/zenpuzzle.yaml": {
+      "game": "Single-Player/GVGAI/zenpuzzle.yaml",
+      "tile_size": 24,
+      "rotates": false,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 6,
+      "tiles_pov": 0,
+      "tiles_union": 6,
+      "bytes_union": 10368,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          6,
+          0
+        ],
+        [
+          50,
+          6,
+          0
+        ],
+        [
+          100,
+          6,
+          0
+        ],
+        [
+          200,
+          6,
+          0
+        ],
+        [
+          260,
+          6,
+          0
+        ]
+      ],
+      "new_tiles_added_to_family": 5
+    },
+    "Single-Player/GVGAI/zenpuzzle_partially_observable.yaml": {
+      "game": "Single-Player/GVGAI/zenpuzzle_partially_observable.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 12,
+      "tiles_pov": 17,
+      "tiles_union": 23,
+      "bytes_union": 39744,
+      "pov_multiplier": 1.9166666666666667,
+      "saturation": [
+        [
+          25,
+          7,
+          6
+        ],
+        [
+          50,
+          7,
+          6
+        ],
+        [
+          100,
+          7,
+          6
+        ],
+        [
+          200,
+          12,
+          17
+        ],
+        [
+          260,
+          12,
+          17
+        ]
+      ],
+      "new_tiles_added_to_family": 17
+    },
+    "Single-Player/Mini-Grid/minigrid-doggo.yaml": {
+      "game": "Single-Player/Mini-Grid/minigrid-doggo.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 12,
+      "tiles_pov": 9,
+      "tiles_union": 14,
+      "bytes_union": 24192,
+      "pov_multiplier": 1.1666666666666667,
+      "saturation": [
+        [
+          25,
+          12,
+          8
+        ],
+        [
+          50,
+          12,
+          8
+        ],
+        [
+          100,
+          12,
+          9
+        ],
+        [
+          200,
+          12,
+          9
+        ],
+        [
+          260,
+          12,
+          9
+        ]
+      ],
+      "new_tiles_added_to_family": 8
+    },
+    "Single-Player/Mini-Grid/minigrid-drunkdwarf.yaml": {
+      "game": "Single-Player/Mini-Grid/minigrid-drunkdwarf.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 22,
+      "tiles_pov": 30,
+      "tiles_union": 39,
+      "bytes_union": 67392,
+      "pov_multiplier": 1.7727272727272727,
+      "saturation": [
+        [
+          25,
+          18,
+          19
+        ],
+        [
+          50,
+          18,
+          19
+        ],
+        [
+          100,
+          18,
+          23
+        ],
+        [
+          200,
+          22,
+          30
+        ],
+        [
+          260,
+          22,
+          30
+        ]
+      ],
+      "new_tiles_added_to_family": 32
+    },
+    "Single-Player/Mini-Grid/minigrid-eyeball.yaml": {
+      "game": "Single-Player/Mini-Grid/minigrid-eyeball.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 1,
+      "players": 1,
+      "tiles_global": 21,
+      "tiles_pov": 14,
+      "tiles_union": 21,
+      "bytes_union": 36288,
+      "pov_multiplier": 1.0,
+      "saturation": [
+        [
+          25,
+          21,
+          9
+        ],
+        [
+          50,
+          21,
+          9
+        ],
+        [
+          100,
+          21,
+          14
+        ],
+        [
+          200,
+          21,
+          14
+        ],
+        [
+          260,
+          21,
+          14
+        ]
+      ],
+      "new_tiles_added_to_family": 21
+    },
+    "Single-Player/Mini-Grid/minigrid-spiders.yaml": {
+      "game": "Single-Player/Mini-Grid/minigrid-spiders.yaml",
+      "tile_size": 24,
+      "rotates": true,
+      "frames": 260,
+      "uniform_frames": 0,
+      "n_levels": 5,
+      "players": 1,
+      "tiles_global": 16,
+      "tiles_pov": 13,
+      "tiles_union": 19,
+      "bytes_union": 32832,
+      "pov_multiplier": 1.1875,
+      "saturation": [
+        [
+          25,
+          16,
+          12
+        ],
+        [
+          50,
+          16,
+          12
+        ],
+        [
+          100,
+          16,
+          12
+        ],
+        [
+          200,
+          16,
+          13
+        ],
+        [
+          260,
+          16,
+          13
+        ]
+      ],
+      "new_tiles_added_to_family": 3
+    }
+  }
+}

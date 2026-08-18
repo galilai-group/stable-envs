@@ -1,0 +1,1450 @@
+{
+ "flat": [
+  {
+   "env": "Reacher-v5",
+   "scn_nlight": 1,
+   "lights": [
+    {
+     "pos": [
+      0.021327156573534012,
+      -0.8764686584472656,
+      0.8868123888969421
+     ],
+     "dir": [
+      4.329780301713277e-17,
+      0.7071067690849304,
+      -0.7071067690849304
+     ],
+     "type": 1,
+     "headlight": 1,
+     "castshadow": 0,
+     "ambient": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "diffuse": [
+      0.4000000059604645,
+      0.4000000059604645,
+      0.4000000059604645
+     ],
+     "specular": [
+      0.5,
+      0.5,
+      0.5
+     ],
+     "attenuation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 0.0,
+     "exponent": 0.0
+    }
+   ],
+   "flags": {
+    "0": 1,
+    "1": 0,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 0,
+    "6": 1,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 1
+   },
+   "offsamples": 4,
+   "headlight": {
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ],
+    "active": 1
+   },
+   "geoms": [
+    {
+     "i": 0,
+     "objid": 0,
+     "type": 0,
+     "matid": -1,
+     "name": "ground",
+     "rgba": [
+      0.8999999761581421,
+      0.8999999761581421,
+      0.8999999761581421,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      1.0,
+      1.0,
+      10.0
+     ],
+     "category": 1
+    },
+    {
+     "i": 1,
+     "objid": 1,
+     "type": 3,
+     "matid": -1,
+     "name": "sideS",
+     "rgba": [
+      0.8999999761581421,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.30000001192092896
+     ],
+     "category": 1
+    },
+    {
+     "i": 2,
+     "objid": 2,
+     "type": 3,
+     "matid": -1,
+     "name": "sideE",
+     "rgba": [
+      0.8999999761581421,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.30000001192092896
+     ],
+     "category": 1
+    },
+    {
+     "i": 3,
+     "objid": 3,
+     "type": 3,
+     "matid": -1,
+     "name": "sideN",
+     "rgba": [
+      0.8999999761581421,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.30000001192092896
+     ],
+     "category": 1
+    },
+    {
+     "i": 4,
+     "objid": 4,
+     "type": 3,
+     "matid": -1,
+     "name": "sideW",
+     "rgba": [
+      0.8999999761581421,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.30000001192092896
+     ],
+     "category": 1
+    },
+    {
+     "i": 5,
+     "objid": 5,
+     "type": 5,
+     "matid": -1,
+     "name": "root",
+     "rgba": [
+      0.8999999761581421,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.010999999940395355,
+      0.010999999940395355,
+      0.009999999776482582
+     ],
+     "category": 1
+    },
+    {
+     "i": 6,
+     "objid": 6,
+     "type": 3,
+     "matid": -1,
+     "name": "link0",
+     "rgba": [
+      0.0,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 7,
+     "objid": 7,
+     "type": 3,
+     "matid": -1,
+     "name": "link1",
+     "rgba": [
+      0.0,
+      0.4000000059604645,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 8,
+     "objid": 8,
+     "type": 2,
+     "matid": -1,
+     "name": "fingertip",
+     "rgba": [
+      0.0,
+      0.800000011920929,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.009999999776482582
+     ],
+     "category": 2
+    },
+    {
+     "i": 9,
+     "objid": 9,
+     "type": 2,
+     "matid": -1,
+     "name": "target",
+     "rgba": [
+      0.8999999761581421,
+      0.20000000298023224,
+      0.20000000298023224,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.008999999612569809,
+      0.008999999612569809,
+      0.008999999612569809
+     ],
+     "category": 2
+    }
+   ],
+   "background_unique": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     22,
+     22,
+     22
+    ]
+   ],
+   "background_n_unique": 2,
+   "background_frac": 0.0703125
+  },
+  {
+   "env": "Pusher-v5",
+   "scn_nlight": 2,
+   "lights": [
+    {
+     "pos": [
+      0.375,
+      -3.428427219390869,
+      2.8284270763397217
+     ],
+     "dir": [
+      4.329780301713277e-17,
+      0.7071067690849304,
+      -0.7071067690849304
+     ],
+     "type": 1,
+     "headlight": 1,
+     "castshadow": 0,
+     "ambient": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "diffuse": [
+      0.4000000059604645,
+      0.4000000059604645,
+      0.4000000059604645
+     ],
+     "specular": [
+      0.5,
+      0.5,
+      0.5
+     ],
+     "attenuation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 0.0,
+     "exponent": 0.0
+    },
+    {
+     "pos": [
+      0.0,
+      0.0,
+      3.0
+     ],
+     "dir": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "type": 0,
+     "headlight": 0,
+     "castshadow": 1,
+     "ambient": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "diffuse": [
+      0.5,
+      0.5,
+      0.5
+     ],
+     "specular": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896
+     ],
+     "attenuation": [
+      1.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 45.0,
+     "exponent": 10.0
+    }
+   ],
+   "flags": {
+    "0": 1,
+    "1": 0,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 0,
+    "6": 1,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 1
+   },
+   "offsamples": 4,
+   "headlight": {
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ],
+    "active": 1
+   },
+   "geoms": [
+    {
+     "i": 0,
+     "objid": 0,
+     "type": 0,
+     "matid": -1,
+     "name": "table",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      1.0,
+      1.0,
+      0.10000000149011612
+     ],
+     "category": 1
+    },
+    {
+     "i": 1,
+     "objid": 1,
+     "type": 2,
+     "matid": -1,
+     "name": "e1",
+     "rgba": [
+      0.6000000238418579,
+      0.6000000238418579,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 2,
+     "objid": 2,
+     "type": 2,
+     "matid": -1,
+     "name": "e2",
+     "rgba": [
+      0.6000000238418579,
+      0.6000000238418579,
+      0.6000000238418579,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 3,
+     "objid": 3,
+     "type": 2,
+     "matid": -1,
+     "name": "e1p",
+     "rgba": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.029999999329447746,
+      0.029999999329447746,
+      0.029999999329447746
+     ],
+     "category": 2
+    },
+    {
+     "i": 4,
+     "objid": 4,
+     "type": 2,
+     "matid": -1,
+     "name": "e2p",
+     "rgba": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.029999999329447746,
+      0.029999999329447746,
+      0.029999999329447746
+     ],
+     "category": 2
+    },
+    {
+     "i": 5,
+     "objid": 5,
+     "type": 3,
+     "matid": -1,
+     "name": "sp",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.30000001192092896
+     ],
+     "category": 2
+    },
+    {
+     "i": 6,
+     "objid": 6,
+     "type": 3,
+     "matid": -1,
+     "name": "sl",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "category": 2
+    },
+    {
+     "i": 7,
+     "objid": 7,
+     "type": 3,
+     "matid": -1,
+     "name": "uar",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.10000000149011612
+     ],
+     "category": 2
+    },
+    {
+     "i": 8,
+     "objid": 8,
+     "type": 3,
+     "matid": -1,
+     "name": "ua",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.05999999865889549,
+      0.05999999865889549,
+      0.20000000298023224
+     ],
+     "category": 2
+    },
+    {
+     "i": 9,
+     "objid": 9,
+     "type": 3,
+     "matid": -1,
+     "name": "ef",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.05999999865889549,
+      0.05999999865889549,
+      0.019999999552965164
+     ],
+     "category": 2
+    },
+    {
+     "i": 10,
+     "objid": 10,
+     "type": 3,
+     "matid": -1,
+     "name": "fr",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.10000000149011612
+     ],
+     "category": 2
+    },
+    {
+     "i": 11,
+     "objid": 11,
+     "type": 3,
+     "matid": -1,
+     "name": "fa",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.05000000074505806,
+      0.05000000074505806,
+      0.14550000429153442
+     ],
+     "category": 2
+    },
+    {
+     "i": 12,
+     "objid": 12,
+     "type": 3,
+     "matid": -1,
+     "name": "wf",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.019999999552965164
+     ],
+     "category": 2
+    },
+    {
+     "i": 13,
+     "objid": 13,
+     "type": 3,
+     "matid": -1,
+     "name": "",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.10000000149011612
+     ],
+     "category": 2
+    },
+    {
+     "i": 14,
+     "objid": 14,
+     "type": 3,
+     "matid": -1,
+     "name": "",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 15,
+     "objid": 15,
+     "type": 3,
+     "matid": -1,
+     "name": "",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 16,
+     "objid": 16,
+     "type": 2,
+     "matid": -1,
+     "name": "tip_arml",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.009999999776482582
+     ],
+     "category": 2
+    },
+    {
+     "i": 17,
+     "objid": 17,
+     "type": 2,
+     "matid": -1,
+     "name": "tip_armr",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.009999999776482582
+     ],
+     "category": 2
+    },
+    {
+     "i": 18,
+     "objid": 18,
+     "type": 5,
+     "matid": -1,
+     "name": "",
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806
+     ],
+     "category": 2
+    },
+    {
+     "i": 19,
+     "objid": 19,
+     "type": 5,
+     "matid": -1,
+     "name": "",
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.07999999821186066,
+      0.07999999821186066,
+      0.0010000000474974513
+     ],
+     "category": 2
+    }
+   ],
+   "background_unique": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     5,
+     5,
+     5
+    ],
+    [
+     7,
+     7,
+     7
+    ],
+    [
+     8,
+     8,
+     8
+    ],
+    [
+     10,
+     10,
+     10
+    ],
+    [
+     14,
+     14,
+     14
+    ]
+   ],
+   "background_n_unique": 18,
+   "background_frac": 0.84307861328125
+  },
+  {
+   "env": "InvertedPendulum-v5",
+   "scn_nlight": 1,
+   "lights": [
+    {
+     "pos": [
+      0.0018579550087451935,
+      -1.4424978494644165,
+      1.4424978494644165
+     ],
+     "dir": [
+      4.329780301713277e-17,
+      0.7071067690849304,
+      -0.7071067690849304
+     ],
+     "type": 1,
+     "headlight": 1,
+     "castshadow": 0,
+     "ambient": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "diffuse": [
+      0.4000000059604645,
+      0.4000000059604645,
+      0.4000000059604645
+     ],
+     "specular": [
+      0.5,
+      0.5,
+      0.5
+     ],
+     "attenuation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 0.0,
+     "exponent": 0.0
+    }
+   ],
+   "flags": {
+    "0": 1,
+    "1": 0,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 0,
+    "6": 1,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 1
+   },
+   "offsamples": 4,
+   "headlight": {
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ],
+    "active": 1
+   },
+   "geoms": [
+    {
+     "i": 0,
+     "objid": 0,
+     "type": 3,
+     "matid": -1,
+     "name": "rail",
+     "rgba": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.699999988079071,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      1.0
+     ],
+     "category": 1
+    },
+    {
+     "i": 1,
+     "objid": 1,
+     "type": 3,
+     "matid": -1,
+     "name": "cart",
+     "rgba": [
+      0.699999988079071,
+      0.699999988079071,
+      0.0,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "category": 2
+    },
+    {
+     "i": 2,
+     "objid": 2,
+     "type": 3,
+     "matid": -1,
+     "name": "cpole",
+     "rgba": [
+      0.0,
+      0.699999988079071,
+      0.699999988079071,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.04899999871850014,
+      0.04899999871850014,
+      0.3000004291534424
+     ],
+     "category": 2
+    }
+   ],
+   "background_unique": [
+    [
+     0,
+     0,
+     0
+    ],
+    [
+     0,
+     4,
+     4
+    ],
+    [
+     0,
+     5,
+     5
+    ],
+    [
+     0,
+     6,
+     6
+    ],
+    [
+     0,
+     7,
+     7
+    ],
+    [
+     0,
+     8,
+     8
+    ]
+   ],
+   "background_n_unique": 23,
+   "background_frac": 0.93133544921875
+  },
+  {
+   "env": "InvertedDoublePendulum-v5",
+   "scn_nlight": 1,
+   "lights": [
+    {
+     "pos": [
+      0.0,
+      -5.830095291137695,
+      5.830095291137695
+     ],
+     "dir": [
+      4.329780301713277e-17,
+      0.7071067690849304,
+      -0.7071067690849304
+     ],
+     "type": 1,
+     "headlight": 1,
+     "castshadow": 0,
+     "ambient": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "diffuse": [
+      0.4000000059604645,
+      0.4000000059604645,
+      0.4000000059604645
+     ],
+     "specular": [
+      0.5,
+      0.5,
+      0.5
+     ],
+     "attenuation": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 0.0,
+     "exponent": 0.0
+    }
+   ],
+   "flags": {
+    "0": 1,
+    "1": 0,
+    "2": 1,
+    "3": 0,
+    "4": 1,
+    "5": 0,
+    "6": 1,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 1
+   },
+   "offsamples": 4,
+   "headlight": {
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ],
+    "active": 1
+   },
+   "geoms": [
+    {
+     "i": 0,
+     "objid": 0,
+     "type": 0,
+     "matid": -1,
+     "name": "floor",
+     "rgba": [
+      0.800000011920929,
+      0.8999999761581421,
+      0.800000011920929,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      40.0,
+      40.0,
+      40.0
+     ],
+     "category": 1
+    },
+    {
+     "i": 1,
+     "objid": 1,
+     "type": 3,
+     "matid": -1,
+     "name": "rail",
+     "rgba": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.699999988079071,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.019999999552965164,
+      0.019999999552965164,
+      1.0
+     ],
+     "category": 1
+    },
+    {
+     "i": 2,
+     "objid": 2,
+     "type": 3,
+     "matid": -1,
+     "name": "cart",
+     "rgba": [
+      0.699999988079071,
+      0.699999988079071,
+      0.0,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+     ],
+     "category": 2
+    },
+    {
+     "i": 3,
+     "objid": 3,
+     "type": 3,
+     "matid": -1,
+     "name": "cpole",
+     "rgba": [
+      0.0,
+      0.699999988079071,
+      0.699999988079071,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.04500000178813934,
+      0.04500000178813934,
+      0.30000001192092896
+     ],
+     "category": 2
+    },
+    {
+     "i": 4,
+     "objid": 4,
+     "type": 3,
+     "matid": -1,
+     "name": "cpole2",
+     "rgba": [
+      0.0,
+      0.699999988079071,
+      0.699999988079071,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.04500000178813934,
+      0.04500000178813934,
+      0.30000001192092896
+     ],
+     "category": 2
+    },
+    {
+     "i": 5,
+     "objid": 0,
+     "type": 2,
+     "matid": -1,
+     "name": "floor",
+     "rgba": [
+      0.5,
+      0.5,
+      0.5,
+      1.0
+     ],
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "reflectance": 0.0,
+     "texcoord": 0,
+     "size": [
+      0.009999999776482582,
+      0.009999999776482582,
+      0.009999999776482582
+     ],
+     "category": 2
+    }
+   ],
+   "background_unique": [],
+   "background_n_unique": 0,
+   "background_frac": 0.0
+  }
+ ],
+ "track": [
+  {
+   "env": "HalfCheetah-v5",
+   "floor_frac": 0.43536376953125,
+   "floor_n_unique_colors": 708,
+   "floor_pixels": 7133,
+   "reflectance": 0.5,
+   "mirror_frac_pixels_changed": 0.0120849609375,
+   "mirror_mean_abs": 0.60528564453125,
+   "mirror_max_abs": 99,
+   "sky_frac": 0.5225830078125,
+   "sky_maxdiff_across_states": 91,
+   "floor_maxdiff_across_states": 255
+  },
+  {
+   "env": "Hopper-v5",
+   "floor_frac": 0.4241943359375,
+   "floor_n_unique_colors": 550,
+   "floor_pixels": 6950,
+   "reflectance": 0.5,
+   "mirror_frac_pixels_changed": 0.010986328125,
+   "mirror_mean_abs": 0.4864501953125,
+   "mirror_max_abs": 88,
+   "sky_frac": 0.54351806640625,
+   "sky_maxdiff_across_states": 124,
+   "floor_maxdiff_across_states": 233
+  },
+  {
+   "env": "Walker2d-v5",
+   "floor_frac": 0.4505615234375,
+   "floor_n_unique_colors": 827,
+   "floor_pixels": 7382,
+   "reflectance": 0.5,
+   "mirror_frac_pixels_changed": 0.01666259765625,
+   "mirror_mean_abs": 0.76763916015625,
+   "mirror_max_abs": 78,
+   "sky_frac": 0.5220947265625,
+   "sky_maxdiff_across_states": 143,
+   "floor_maxdiff_across_states": 255
+  },
+  {
+   "env": "Ant-v5",
+   "floor_frac": 0.3673095703125,
+   "floor_n_unique_colors": 975,
+   "floor_pixels": 6018,
+   "reflectance": 0.5,
+   "mirror_frac_pixels_changed": 0.0174560546875,
+   "mirror_mean_abs": 0.4400634765625,
+   "mirror_max_abs": 101,
+   "sky_frac": 0.519775390625,
+   "sky_maxdiff_across_states": 131,
+   "floor_maxdiff_across_states": 249
+  },
+  {
+   "env": "Humanoid-v5",
+   "floor_frac": 0.41748046875,
+   "floor_n_unique_colors": 634,
+   "floor_pixels": 6840,
+   "reflectance": 0.5,
+   "mirror_frac_pixels_changed": 0.00457763671875,
+   "mirror_mean_abs": 0.14190673828125,
+   "mirror_max_abs": 68,
+   "sky_frac": 0.5609130859375,
+   "sky_maxdiff_across_states": 141,
+   "floor_maxdiff_across_states": 226
+  },
+  {
+   "env": "Swimmer-v5",
+   "floor_frac": 0.94891357421875,
+   "floor_n_unique_colors": 843,
+   "floor_pixels": 15547,
+   "reflectance": 0.5,
+   "mirror_frac_pixels_changed": 0.03741455078125,
+   "mirror_mean_abs": 0.68084716796875,
+   "mirror_max_abs": 72,
+   "sky_frac": 0.0,
+   "sky_maxdiff_across_states": -1,
+   "floor_maxdiff_across_states": 255
+  }
+ ]
+}

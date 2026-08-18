@@ -1,0 +1,968 @@
+{
+ "jax_devices": [
+  "cuda:0"
+ ],
+ "gpu": true,
+ "gpu_kind": "NVIDIA H200",
+ "yaml_knobs": {
+  "total_leaves": 93,
+  "visual_leaves": 81,
+  "physics_or_task_leaves": 12,
+  "top_level_sections": [
+   "H",
+   "W",
+   "background",
+   "character",
+   "dist_to_success",
+   "distractors",
+   "effects",
+   "episode_length",
+   "filters",
+   "forward_reward_scale",
+   "idle_penalty",
+   "jump_penalty",
+   "layout",
+   "npc",
+   "physics",
+   "timestep_penalty"
+  ],
+  "visual_leaf_names": [
+   "H",
+   "W",
+   "background.mode",
+   "background.image_dir",
+   "background.parallax_factor",
+   "background.tile_horizontal",
+   "background.switch_frequency",
+   "background.color_names",
+   "character.width",
+   "character.height",
+   "character.use_sprites",
+   "character.sprite_dir",
+   "character.enable_animation",
+   "character.animation_fps",
+   "character.idle_sprite_idx",
+   "character.use_shape",
+   "character.shape_types",
+   "character.shape_colors",
+   "character.shape_rotate",
+   "character.shape_rotation_speed",
+   "npc.enabled",
+   "npc.min_npc_count",
+   "npc.max_npc_count",
+   "npc.spawn_y_offset",
+   "npc.animation_fps",
+   "npc.sprite_dir",
+   "npc.sticky_enabled",
+   "npc.min_sticky_count",
+   "npc.max_sticky_count",
+   "npc.sticky_sprite_dir",
+   "npc.sticky_can_jump",
+   "npc.sticky_jump_probability",
+   "npc.sticky_y_min_offset",
+   "npc.sticky_y_max_offset",
+   "npc.sticky_x_offsets",
+   "npc.sticky_x_min",
+   "npc.sticky_x_max",
+   "distractors.enabled",
+   "distractors.count",
+   "distractors.shape_types",
+   "distractors.shape_colors",
+   "distractors.can_move",
+   "distractors.min_speed",
+   "distractors.max_speed",
+   "distractors.can_rotate",
+   "distractors.min_rotation_speed",
+   "distractors.max_rotation_speed",
+   "distractors.min_size",
+   "distractors.max_size",
+   "filters.brightness",
+   "filters.contrast",
+   "filters.gamma",
+   "filters.saturation",
+   "filters.hue_shift",
+   "filters.color_temp",
+   "filters.color_jitter_std",
+   "filters.gaussian_noise_std",
+   "filters.poisson_noise_scale",
+   "filters.blur_sigma",
+   "filters.sharpen_amount",
+   "filters.pixelate_factor",
+   "filters.vignette_strength",
+   "filters.radial_light_strength",
+   "filters.pop_filter_list",
+   "effects.point_light_enabled",
+   "effects.point_light_intensity",
+   "effects.point_light_radius",
+   "effects.point_light_falloff",
+   "effects.point_light_count",
+   "effects.point_light_color_names",
+   "layout.length",
+   "layout.height_px",
+   "layout.base_ground_y",
+   "layout.pix_per_unit",
+   "layout.ground_thickness",
+   "layout.run_width",
+   "layout.p_change",
+   "layout.p_up_given_change",
+   "layout.min_step_height",
+   "layout.max_step_height",
+   "layout.layout_colors"
+  ]
+ },
+ "python_defaults": {
+  "background_mode": "black",
+  "frame_bytes": 49152,
+  "envstate_bytes": 279000,
+  "ratio_envstate_over_frame": 5.67626953125,
+  "fields": {
+   "x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "y": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vx": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vy": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "grounded": {
+    "shape": [],
+    "dtype": "bool",
+    "bytes": 1
+   },
+   "coyote_timer": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "camera_x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "t": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "x_max": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "episode_return": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "jump_count": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "initial_x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "success_once": {
+    "shape": [],
+    "dtype": "bool",
+    "bytes": 1
+   },
+   "vx_mean": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vy_mean": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "layout_solid_mask": {
+    "shape": [
+     128,
+     2048
+    ],
+    "dtype": "bool",
+    "bytes": 262144
+   },
+   "layout_ground_top": {
+    "shape": [
+     2048
+    ],
+    "dtype": "int32",
+    "bytes": 8192
+   },
+   "layout_ground_bottom": {
+    "shape": [
+     2048
+    ],
+    "dtype": "int32",
+    "bytes": 8192
+   },
+   "layout_color": {
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "bytes": 3
+   },
+   "bg_image": {
+    "bytes": 0
+   },
+   "filter_key": {
+    "shape": [
+     2
+    ],
+    "dtype": "uint32",
+    "bytes": 8
+   },
+   "selected_filter_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "light_positions": {
+    "shape": [
+     5,
+     2
+    ],
+    "dtype": "float32",
+    "bytes": 40
+   },
+   "light_radii": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "light_intensities": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "sprite_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "animation_timer": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "shape_angle": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "shape_type_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "shape_color_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "char_skin_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "npc_x": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_y": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_types": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_sprite_indices": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_animation_timers": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "sticky_x_offsets": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_y": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_types": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_vy": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "sticky_on_ground": {
+    "shape": [
+     3
+    ],
+    "dtype": "bool",
+    "bytes": 3
+   },
+   "sticky_home_y": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_sprite_indices": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_animation_timers": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "actual_sticky_count": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "dist_x": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_y": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_vx": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_vy": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_angles": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_rot_speeds": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_shape_indices": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "dist_color_indices": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "dist_sizes": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   }
+  },
+  "biggest_fields": [
+   [
+    262144,
+    "layout_solid_mask"
+   ],
+   [
+    8192,
+    "layout_ground_top"
+   ],
+   [
+    8192,
+    "layout_ground_bottom"
+   ],
+   [
+    40,
+    "light_positions"
+   ],
+   [
+    20,
+    "npc_y"
+   ],
+   [
+    20,
+    "npc_x"
+   ],
+   [
+    20,
+    "npc_types"
+   ],
+   [
+    20,
+    "npc_sprite_indices"
+   ]
+  ],
+  "render_slice": {
+   "layout_window_bool_bytes": 16384,
+   "layout_window_bitpacked_bytes": 2048,
+   "non_layout_non_bg_scalars_bytes": 472,
+   "bg_image_bytes": 0,
+   "slice_bytes_with_bg": 2520,
+   "slice_bytes_without_bg": 2520,
+   "ratio_slice_with_bg_over_frame": 0.05126953125,
+   "ratio_slice_without_bg_over_frame": 0.05126953125
+  },
+  "atlas": {
+   "character_sprites": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "npc_sprite_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "sticky_npc_sprite_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "character_skin_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "background_images": null
+  },
+  "atlas_total_bytes": 0,
+  "bg_image_present": false,
+  "layout_distinct_across_8_resets": 8,
+  "atlas_identical_across_resets": true,
+  "G1": {
+   "frames": 150,
+   "blank_frames": 0,
+   "rerender_after_other_rollout_mismatch": 0,
+   "mean_distinct_pixel_values": 3.0
+  },
+  "G4_step_sps": {
+   "1": 14118.404667294139,
+   "64": 515613.81359395466,
+   "256": 1743175.5670186346,
+   "1024": 5711984.798727558,
+   "4096": 16081629.842433399,
+   "16384": 26585145.600636363,
+   "32768": 33273885.90190669,
+   "65536": 38117978.35808769
+  }
+ },
+ "shipped_yaml_rich": {
+  "background_mode": "image",
+  "frame_bytes": 49152,
+  "envstate_bytes": 328582,
+  "ratio_envstate_over_frame": 6.685017903645833,
+  "fields": {
+   "x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "y": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vx": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vy": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "grounded": {
+    "shape": [],
+    "dtype": "bool",
+    "bytes": 1
+   },
+   "coyote_timer": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "camera_x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "t": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "x_max": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "episode_return": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "jump_count": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "initial_x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "success_once": {
+    "shape": [],
+    "dtype": "bool",
+    "bytes": 1
+   },
+   "vx_mean": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vy_mean": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "layout_solid_mask": {
+    "shape": [
+     128,
+     2048
+    ],
+    "dtype": "bool",
+    "bytes": 262144
+   },
+   "layout_ground_top": {
+    "shape": [
+     2048
+    ],
+    "dtype": "int32",
+    "bytes": 8192
+   },
+   "layout_ground_bottom": {
+    "shape": [
+     2048
+    ],
+    "dtype": "int32",
+    "bytes": 8192
+   },
+   "layout_color": {
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "bytes": 3
+   },
+   "bg_image": {
+    "shape": [
+     128,
+     128,
+     3
+    ],
+    "dtype": "uint8",
+    "bytes": 49152
+   },
+   "filter_key": {
+    "shape": [
+     2
+    ],
+    "dtype": "uint32",
+    "bytes": 8
+   },
+   "selected_filter_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "light_positions": {
+    "shape": [
+     5,
+     2
+    ],
+    "dtype": "float32",
+    "bytes": 40
+   },
+   "light_radii": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "light_intensities": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "sprite_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "animation_timer": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "shape_angle": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "shape_type_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "shape_color_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "char_skin_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "npc_x": {
+    "shape": [
+     20
+    ],
+    "dtype": "int32",
+    "bytes": 80
+   },
+   "npc_y": {
+    "shape": [
+     20
+    ],
+    "dtype": "int32",
+    "bytes": 80
+   },
+   "npc_types": {
+    "shape": [
+     20
+    ],
+    "dtype": "int32",
+    "bytes": 80
+   },
+   "npc_sprite_indices": {
+    "shape": [
+     20
+    ],
+    "dtype": "int32",
+    "bytes": 80
+   },
+   "npc_animation_timers": {
+    "shape": [
+     20
+    ],
+    "dtype": "float32",
+    "bytes": 80
+   },
+   "sticky_x_offsets": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "sticky_y": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "sticky_types": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "sticky_vy": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "sticky_on_ground": {
+    "shape": [
+     5
+    ],
+    "dtype": "bool",
+    "bytes": 5
+   },
+   "sticky_home_y": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "sticky_sprite_indices": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "sticky_animation_timers": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "actual_sticky_count": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "dist_x": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "dist_y": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "dist_vx": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "dist_vy": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "dist_angles": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "dist_rot_speeds": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "dist_shape_indices": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "dist_color_indices": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "dist_sizes": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   }
+  },
+  "biggest_fields": [
+   [
+    262144,
+    "layout_solid_mask"
+   ],
+   [
+    49152,
+    "bg_image"
+   ],
+   [
+    8192,
+    "layout_ground_top"
+   ],
+   [
+    8192,
+    "layout_ground_bottom"
+   ],
+   [
+    80,
+    "npc_y"
+   ],
+   [
+    80,
+    "npc_x"
+   ],
+   [
+    80,
+    "npc_types"
+   ],
+   [
+    80,
+    "npc_sprite_indices"
+   ]
+  ],
+  "render_slice": {
+   "layout_window_bool_bytes": 16384,
+   "layout_window_bitpacked_bytes": 2048,
+   "non_layout_non_bg_scalars_bytes": 902,
+   "bg_image_bytes": 49152,
+   "slice_bytes_with_bg": 52102,
+   "slice_bytes_without_bg": 2950,
+   "ratio_slice_with_bg_over_frame": 1.0600179036458333,
+   "ratio_slice_without_bg_over_frame": 0.060017903645833336
+  },
+  "atlas": {
+   "character_sprites": {
+    "bytes": 3072,
+    "n_arrays": 2
+   },
+   "npc_sprite_sets": {
+    "bytes": 84620,
+    "n_arrays": 59
+   },
+   "sticky_npc_sprite_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "character_skin_sets": {
+    "bytes": 84620,
+    "n_arrays": 59
+   },
+   "background_images": {
+    "bytes": 6291456,
+    "n_arrays": 1
+   }
+  },
+  "atlas_total_bytes": 6463768,
+  "bg_image_present": true,
+  "bg_image_bytes": 49152,
+  "bg_image_distinct_across_8_resets": 8,
+  "bg_image_blank": false,
+  "layout_distinct_across_8_resets": 8,
+  "atlas_identical_across_resets": true,
+  "G1": {
+   "frames": 150,
+   "blank_frames": 0,
+   "rerender_after_other_rollout_mismatch": 0,
+   "mean_distinct_pixel_values": 240.42857142857142
+  },
+  "G4_step_sps": {
+   "1": 12214.963076829006,
+   "64": 468899.2893344558,
+   "256": 1459294.8671202976,
+   "1024": 5100586.578480104,
+   "4096": 13983064.467541452,
+   "16384": 24640118.485356405,
+   "32768": 30880586.275415193,
+   "65536": 36006157.59528152
+  }
+ },
+ "decode_jpeg_fps_one_core_128px": 3906.2072960526266
+}

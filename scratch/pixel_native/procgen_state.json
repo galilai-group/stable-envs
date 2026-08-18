@@ -1,0 +1,274 @@
+[
+  {
+    "env_name": "bigfish",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 22129,
+    "state_bytes_max": 23256,
+    "state_bytes_mean": 22629.79296875,
+    "state_bytes_p50": 22636.0,
+    "ratio_state_over_frame_mean": 1.841617266337077,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "bossfight",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 22597,
+    "state_bytes_max": 38721,
+    "state_bytes_mean": 28116.80859375,
+    "state_bytes_p50": 26682.0,
+    "ratio_state_over_frame_mean": 2.288151741027832,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "caveflyer",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 27414,
+    "state_bytes_max": 28034,
+    "state_bytes_mean": 27594.671875,
+    "state_bytes_p50": 27538.0,
+    "ratio_state_over_frame_mean": 2.245660146077474,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "chaser",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 22979,
+    "state_bytes_max": 23475,
+    "state_bytes_mean": 23050.1015625,
+    "state_bytes_p50": 23094.0,
+    "ratio_state_over_frame_mean": 1.8758220672607422,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "climber",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 25794,
+    "state_bytes_max": 26299,
+    "state_bytes_mean": 25900.984375,
+    "state_bytes_p50": 25795.0,
+    "ratio_state_over_frame_mean": 2.1078275044759116,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "coinrun",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 37439,
+    "state_bytes_max": 37440,
+    "state_bytes_mean": 37439.7265625,
+    "state_bytes_p50": 37440.0,
+    "ratio_state_over_frame_mean": 3.0468527475992837,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "dodgeball",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 23245,
+    "state_bytes_max": 23889,
+    "state_bytes_mean": 23442.6875,
+    "state_bytes_p50": 23374.0,
+    "ratio_state_over_frame_mean": 1.9077707926432292,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "fruitbot",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 33260,
+    "state_bytes_max": 34511,
+    "state_bytes_mean": 33830.79296875,
+    "state_bytes_p50": 33768.0,
+    "ratio_state_over_frame_mean": 2.7531569798787436,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "heist",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 22469,
+    "state_bytes_max": 22470,
+    "state_bytes_mean": 22469.9453125,
+    "state_bytes_p50": 22470.0,
+    "ratio_state_over_frame_mean": 1.8286088307698567,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "jumper",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 27205,
+    "state_bytes_max": 28455,
+    "state_bytes_mean": 28167.81640625,
+    "state_bytes_p50": 28307.0,
+    "ratio_state_over_frame_mean": 2.2923027674357095,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "leaper",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 23061,
+    "state_bytes_max": 23699,
+    "state_bytes_mean": 23275.421875,
+    "state_bytes_p50": 23187.0,
+    "ratio_state_over_frame_mean": 1.8941586812337239,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "maze",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 23037,
+    "state_bytes_max": 23037,
+    "state_bytes_mean": 23037.0,
+    "state_bytes_p50": 23037.0,
+    "ratio_state_over_frame_mean": 1.874755859375,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "miner",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 22249,
+    "state_bytes_max": 22258,
+    "state_bytes_mean": 22249.17578125,
+    "state_bytes_p50": 22249.0,
+    "ratio_state_over_frame_mean": 1.8106425603230794,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "ninja",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 37060,
+    "state_bytes_max": 37690,
+    "state_bytes_mean": 37468.921875,
+    "state_bytes_p50": 37442.0,
+    "ratio_state_over_frame_mean": 3.0492286682128906,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "plunder",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 22771,
+    "state_bytes_max": 23640,
+    "state_bytes_mean": 23252.36328125,
+    "state_bytes_p50": 23268.0,
+    "ratio_state_over_frame_mean": 1.8922821680704753,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  },
+  {
+    "env_name": "starpilot",
+    "frame_shape": [
+      64,
+      64,
+      3
+    ],
+    "frame_bytes": 12288,
+    "state_bytes_min": 28248,
+    "state_bytes_max": 30106,
+    "state_bytes_mean": 29090.1484375,
+    "state_bytes_p50": 29099.0,
+    "ratio_state_over_frame_mean": 2.3673623402913413,
+    "roundtrip_exact_frac": 1.0,
+    "n_steps": 256,
+    "n_actions": 15
+  }
+]

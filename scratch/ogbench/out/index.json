@@ -1,0 +1,801 @@
+{
+ "point-medium": {
+  "counts": {
+   "nq": 2,
+   "nv": 2,
+   "nu": 2,
+   "nbody": 2,
+   "njnt": 2,
+   "ngeom": 40,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 7,
+   "nlight": 1,
+   "ncam": 0,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 38,
+   "sphere": 1
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    10.0,
+    10.0,
+    0.0
+   ],
+   "distance": 30.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    9.965999603271484,
+    10.0,
+    30.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.14083261787891388",
+   "frustum_top": "0.14083261787891388",
+   "frustum_near": "0.3400000035762787",
+   "frustum_far": "1700.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 38,
+   "2": 1
+  },
+  "scene_ngeom": 40
+ },
+ "point-large": {
+  "counts": {
+   "nq": 2,
+   "nv": 2,
+   "nu": 2,
+   "nbody": 2,
+   "njnt": 2,
+   "ngeom": 64,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 7,
+   "nlight": 1,
+   "ncam": 0,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 62,
+   "sphere": 1
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    18.0,
+    12.0,
+    0.0
+   ],
+   "distance": 50.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    17.965999603271484,
+    12.0,
+    50.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.2071067839860916",
+   "frustum_top": "0.2071067839860916",
+   "frustum_near": "0.5",
+   "frustum_far": "2500.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 62,
+   "2": 1
+  },
+  "scene_ngeom": 64
+ },
+ "point-giant": {
+  "counts": {
+   "nq": 2,
+   "nv": 2,
+   "nu": 2,
+   "nbody": 2,
+   "njnt": 2,
+   "ngeom": 108,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 7,
+   "nlight": 1,
+   "ncam": 0,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 106,
+   "sphere": 1
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    26.0,
+    18.0,
+    0.0
+   ],
+   "distance": 70.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    25.965999603271484,
+    18.0,
+    70.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.27338093519210815",
+   "frustum_top": "0.27338093519210815",
+   "frustum_near": "0.6599999666213989",
+   "frustum_far": "3300.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 106,
+   "2": 1
+  },
+  "scene_ngeom": 108
+ },
+ "point-teleport": {
+  "counts": {
+   "nq": 2,
+   "nv": 2,
+   "nu": 2,
+   "nbody": 2,
+   "njnt": 2,
+   "ngeom": 70,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 7,
+   "nlight": 1,
+   "ncam": 0,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 63,
+   "cylinder": 5,
+   "sphere": 1
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    18.0,
+    12.0,
+    0.0
+   ],
+   "distance": 50.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    17.965999603271484,
+    12.0,
+    50.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.2071067839860916",
+   "frustum_top": "0.2071067839860916",
+   "frustum_near": "0.5",
+   "frustum_far": "2500.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 63,
+   "5": 5,
+   "2": 1
+  },
+  "scene_ngeom": 70
+ },
+ "ant-medium": {
+  "counts": {
+   "nq": 15,
+   "nv": 14,
+   "nu": 8,
+   "nbody": 14,
+   "njnt": 9,
+   "ngeom": 52,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 8,
+   "nlight": 1,
+   "ncam": 1,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 38,
+   "sphere": 1,
+   "capsule": 12
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    10.0,
+    10.0,
+    0.0
+   ],
+   "distance": 30.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    9.965999603271484,
+    10.0,
+    30.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.14083261787891388",
+   "frustum_top": "0.14083261787891388",
+   "frustum_near": "0.3400000035762787",
+   "frustum_far": "1700.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 38,
+   "2": 1,
+   "3": 12
+  },
+  "scene_ngeom": 52
+ },
+ "ant-large": {
+  "counts": {
+   "nq": 15,
+   "nv": 14,
+   "nu": 8,
+   "nbody": 14,
+   "njnt": 9,
+   "ngeom": 76,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 8,
+   "nlight": 1,
+   "ncam": 1,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 62,
+   "sphere": 1,
+   "capsule": 12
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    18.0,
+    12.0,
+    0.0
+   ],
+   "distance": 50.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    17.965999603271484,
+    12.0,
+    50.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.2071067839860916",
+   "frustum_top": "0.2071067839860916",
+   "frustum_near": "0.5",
+   "frustum_far": "2500.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 62,
+   "2": 1,
+   "3": 12
+  },
+  "scene_ngeom": 76
+ },
+ "ant-giant": {
+  "counts": {
+   "nq": 15,
+   "nv": 14,
+   "nu": 8,
+   "nbody": 14,
+   "njnt": 9,
+   "ngeom": 120,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 8,
+   "nlight": 1,
+   "ncam": 1,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 106,
+   "sphere": 1,
+   "capsule": 12
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    26.0,
+    18.0,
+    0.0
+   ],
+   "distance": 70.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    25.965999603271484,
+    18.0,
+    70.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.27338093519210815",
+   "frustum_top": "0.27338093519210815",
+   "frustum_near": "0.6599999666213989",
+   "frustum_far": "3300.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 106,
+   "2": 1,
+   "3": 12
+  },
+  "scene_ngeom": 120
+ },
+ "ant-teleport": {
+  "counts": {
+   "nq": 15,
+   "nv": 14,
+   "nu": 8,
+   "nbody": 14,
+   "njnt": 9,
+   "ngeom": 82,
+   "nsite": 0,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 5,
+   "nmat": 8,
+   "nlight": 1,
+   "ncam": 1,
+   "nsensor": 0,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 63,
+   "cylinder": 5,
+   "sphere": 1,
+   "capsule": 12
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    18.0,
+    12.0,
+    0.0
+   ],
+   "distance": 50.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    17.965999603271484,
+    12.0,
+    50.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.2071067839860916",
+   "frustum_top": "0.2071067839860916",
+   "frustum_near": "0.5",
+   "frustum_far": "2500.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 63,
+   "5": 5,
+   "2": 1,
+   "3": 12
+  },
+  "scene_ngeom": 82
+ },
+ "humanoid-medium": {
+  "counts": {
+   "nq": 28,
+   "nv": 27,
+   "nu": 21,
+   "nbody": 17,
+   "njnt": 22,
+   "ngeom": 58,
+   "nsite": 25,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 1,
+   "nmat": 13,
+   "nlight": 1,
+   "ncam": 2,
+   "nsensor": 34,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 38,
+   "capsule": 16,
+   "sphere": 3
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    10.0,
+    10.0,
+    0.0
+   ],
+   "distance": 30.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    9.965999603271484,
+    10.0,
+    30.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.14083261787891388",
+   "frustum_top": "0.14083261787891388",
+   "frustum_near": "0.3400000035762787",
+   "frustum_far": "1700.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 38,
+   "3": 16,
+   "2": 3
+  },
+  "scene_ngeom": 58
+ },
+ "humanoid-large": {
+  "counts": {
+   "nq": 28,
+   "nv": 27,
+   "nu": 21,
+   "nbody": 17,
+   "njnt": 22,
+   "ngeom": 82,
+   "nsite": 25,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 1,
+   "nmat": 13,
+   "nlight": 1,
+   "ncam": 2,
+   "nsensor": 34,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 62,
+   "capsule": 16,
+   "sphere": 3
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    18.0,
+    12.0,
+    0.0
+   ],
+   "distance": 50.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    17.965999603271484,
+    12.0,
+    50.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.2071067839860916",
+   "frustum_top": "0.2071067839860916",
+   "frustum_near": "0.5",
+   "frustum_far": "2500.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 62,
+   "3": 16,
+   "2": 3
+  },
+  "scene_ngeom": 82
+ },
+ "humanoid-giant": {
+  "counts": {
+   "nq": 28,
+   "nv": 27,
+   "nu": 21,
+   "nbody": 17,
+   "njnt": 22,
+   "ngeom": 126,
+   "nsite": 25,
+   "nmesh": 0,
+   "nhfield": 0,
+   "ntex": 1,
+   "nmat": 13,
+   "nlight": 1,
+   "ncam": 2,
+   "nsensor": 34,
+   "nskin": 0,
+   "nflex": 0
+  },
+  "geom_type_hist": {
+   "plane": 1,
+   "box": 106,
+   "capsule": 16,
+   "sphere": 3
+  },
+  "camera": {
+   "kind": "MjvCamera",
+   "lookat": [
+    26.0,
+    18.0,
+    0.0
+   ],
+   "distance": 70.0,
+   "azimuth": 90.0,
+   "elevation": -90.0,
+   "type": 0,
+   "fixedcamid": -1,
+   "trackbodyid": -1,
+   "orthographic": 0
+  },
+  "scene_camera": {
+   "pos": [
+    25.965999603271484,
+    18.0,
+    70.0
+   ],
+   "forward": [
+    3.7493993930529855e-33,
+    6.123234262925839e-17,
+    -1.0
+   ],
+   "up": [
+    6.123234262925839e-17,
+    1.0,
+    6.123234262925839e-17
+   ],
+   "frustum_center": "0.0",
+   "frustum_bottom": "-0.27338093519210815",
+   "frustum_top": "0.27338093519210815",
+   "frustum_near": "0.6599999666213989",
+   "frustum_far": "3300.0",
+   "frustum_width": "0.0",
+   "orthographic": "0"
+  },
+  "nlight_scene": 2,
+  "scene_geom_type_hist": {
+   "0": 1,
+   "6": 106,
+   "3": 16,
+   "2": 3
+  },
+  "scene_ngeom": 126
+ }
+}

@@ -1,0 +1,812 @@
+[
+ {
+  "env": "PointmazeMediumNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 1,
+  "whole_frame": {
+   "mean_abs": 0.091256,
+   "exact_frac": 0.996799,
+   "within8_frac": 0.998954,
+   "max_abs": 194,
+   "interior_frac": 0.224276,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 4393,
+   "per_frame": 137.3,
+   "exact": 0.04803,
+   "le1": 0.285,
+   "le2": 0.44457,
+   "le8": 0.83565,
+   "mean": 8.0016,
+   "max": 120
+  },
+  "agent_interior": {
+   "n": 3266,
+   "per_frame": 102.1,
+   "exact": 0.06093,
+   "le1": 0.37201,
+   "le2": 0.57195,
+   "le8": 0.97306,
+   "mean": 2.771,
+   "max": 16
+  },
+  "non_agent": {
+   "n": 1601239,
+   "exact": 0.999402,
+   "mean": 0.06955,
+   "max": 194
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 41503.4,
+  "fps_end_to_end_B1024": 142644.4
+ },
+ {
+  "env": "PointmazeMediumNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 2,
+  "whole_frame": {
+   "mean_abs": 0.070773,
+   "exact_frac": 0.996924,
+   "within8_frac": 0.999185,
+   "max_abs": 175,
+   "interior_frac": 0.224276,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 4393,
+   "per_frame": 137.3,
+   "exact": 0.0972,
+   "le1": 0.3847,
+   "le2": 0.52948,
+   "le8": 0.88937,
+   "mean": 5.751,
+   "max": 102
+  },
+  "agent_interior": {
+   "n": 3266,
+   "per_frame": 102.1,
+   "exact": 0.124,
+   "le1": 0.46785,
+   "le2": 0.60778,
+   "le8": 0.97734,
+   "mean": 2.4807,
+   "max": 17
+  },
+  "non_agent": {
+   "n": 1601239,
+   "exact": 0.999392,
+   "mean": 0.05519,
+   "max": 175
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 17570.4,
+  "fps_end_to_end_B1024": 60762.8
+ },
+ {
+  "env": "PointmazeMediumNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 4,
+  "whole_frame": {
+   "mean_abs": 0.06965,
+   "exact_frac": 0.996909,
+   "within8_frac": 0.998994,
+   "max_abs": 159,
+   "interior_frac": 0.224276,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 4393,
+   "per_frame": 137.3,
+   "exact": 0.12133,
+   "le1": 0.40815,
+   "le2": 0.53608,
+   "le8": 0.86365,
+   "mean": 5.3162,
+   "max": 83
+  },
+  "agent_interior": {
+   "n": 3266,
+   "per_frame": 102.1,
+   "exact": 0.15095,
+   "le1": 0.47826,
+   "le2": 0.60808,
+   "le8": 0.97765,
+   "mean": 2.4385,
+   "max": 18
+  },
+  "non_agent": {
+   "n": 1601239,
+   "exact": 0.999311,
+   "mean": 0.05526,
+   "max": 159
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 4759.2,
+  "fps_end_to_end_B1024": 16998.8
+ },
+ {
+  "env": "PointmazeLargeNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 1,
+  "whole_frame": {
+   "mean_abs": 0.039317,
+   "exact_frac": 0.998795,
+   "within8_frac": 0.999504,
+   "max_abs": 201,
+   "interior_frac": 0.296847,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 1554,
+   "per_frame": 48.6,
+   "exact": 0.01223,
+   "le1": 0.14479,
+   "le2": 0.33655,
+   "le8": 0.74453,
+   "mean": 11.9118,
+   "max": 117
+  },
+  "agent_interior": {
+   "n": 916,
+   "per_frame": 28.6,
+   "exact": 0.02074,
+   "le1": 0.24017,
+   "le2": 0.55786,
+   "le8": 0.98144,
+   "mean": 2.7271,
+   "max": 14
+  },
+  "non_agent": {
+   "n": 1604078,
+   "exact": 0.999751,
+   "mean": 0.02782,
+   "max": 201
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 41652.8,
+  "fps_end_to_end_B1024": 140502.6
+ },
+ {
+  "env": "PointmazeLargeNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 2,
+  "whole_frame": {
+   "mean_abs": 0.02663,
+   "exact_frac": 0.998893,
+   "within8_frac": 0.999658,
+   "max_abs": 181,
+   "interior_frac": 0.296847,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 1554,
+   "per_frame": 48.6,
+   "exact": 0.11647,
+   "le1": 0.56049,
+   "le2": 0.69562,
+   "le8": 0.85457,
+   "mean": 7.1969,
+   "max": 104
+  },
+  "agent_interior": {
+   "n": 916,
+   "per_frame": 28.6,
+   "exact": 0.18341,
+   "le1": 0.80895,
+   "le2": 0.90066,
+   "le8": 0.99345,
+   "mean": 1.3439,
+   "max": 14
+  },
+  "non_agent": {
+   "n": 1604078,
+   "exact": 0.999748,
+   "mean": 0.01968,
+   "max": 181
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 17576.5,
+  "fps_end_to_end_B1024": 60564.2
+ },
+ {
+  "env": "PointmazeLargeNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 4,
+  "whole_frame": {
+   "mean_abs": 0.026105,
+   "exact_frac": 0.998953,
+   "within8_frac": 0.99953,
+   "max_abs": 162,
+   "interior_frac": 0.296847,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 1554,
+   "per_frame": 48.6,
+   "exact": 0.22716,
+   "le1": 0.6435,
+   "le2": 0.713,
+   "le8": 0.79408,
+   "mean": 6.5637,
+   "max": 87
+  },
+  "agent_interior": {
+   "n": 916,
+   "per_frame": 28.6,
+   "exact": 0.31223,
+   "le1": 0.83515,
+   "le2": 0.90175,
+   "le8": 0.99236,
+   "mean": 1.19,
+   "max": 16
+  },
+  "non_agent": {
+   "n": 1604078,
+   "exact": 0.999701,
+   "mean": 0.01977,
+   "max": 162
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 4414.6,
+  "fps_end_to_end_B1024": 15747.9
+ },
+ {
+  "env": "PointmazeGiantNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 1,
+  "whole_frame": {
+   "mean_abs": 0.022335,
+   "exact_frac": 0.999372,
+   "within8_frac": 0.999652,
+   "max_abs": 200,
+   "interior_frac": 0.284824,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 767,
+   "per_frame": 24.0,
+   "exact": 0.0,
+   "le1": 0.02608,
+   "le2": 0.08475,
+   "le8": 0.5854,
+   "mean": 16.4433,
+   "max": 121
+  },
+  "agent_interior": {
+   "n": 340,
+   "per_frame": 10.6,
+   "exact": 0.0,
+   "le1": 0.05588,
+   "le2": 0.18529,
+   "le8": 0.92353,
+   "mean": 4.7647,
+   "max": 26
+  },
+  "non_agent": {
+   "n": 1604865,
+   "exact": 0.99985,
+   "mean": 0.01449,
+   "max": 200
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 41030.7,
+  "fps_end_to_end_B1024": 141738.7
+ },
+ {
+  "env": "PointmazeGiantNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 2,
+  "whole_frame": {
+   "mean_abs": 0.013912,
+   "exact_frac": 0.999389,
+   "within8_frac": 0.99978,
+   "max_abs": 182,
+   "interior_frac": 0.284824,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 767,
+   "per_frame": 24.0,
+   "exact": 0.04172,
+   "le1": 0.38331,
+   "le2": 0.59844,
+   "le8": 0.78227,
+   "mean": 10.6271,
+   "max": 120
+  },
+  "agent_interior": {
+   "n": 340,
+   "per_frame": 10.6,
+   "exact": 0.07647,
+   "le1": 0.69118,
+   "le2": 0.91765,
+   "le8": 1.0,
+   "mean": 1.3853,
+   "max": 8
+  },
+  "non_agent": {
+   "n": 1604865,
+   "exact": 0.999847,
+   "mean": 0.00884,
+   "max": 182
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 17245.5,
+  "fps_end_to_end_B1024": 60570.5
+ },
+ {
+  "env": "PointmazeGiantNavigate",
+  "state_dim": 2,
+  "size": 224,
+  "supersample": 4,
+  "whole_frame": {
+   "mean_abs": 0.013173,
+   "exact_frac": 0.999408,
+   "within8_frac": 0.999696,
+   "max_abs": 164,
+   "interior_frac": 0.284824,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 767,
+   "per_frame": 24.0,
+   "exact": 0.17601,
+   "le1": 0.6206,
+   "le2": 0.67927,
+   "le8": 0.71969,
+   "mean": 9.2608,
+   "max": 115
+  },
+  "agent_interior": {
+   "n": 340,
+   "per_frame": 10.6,
+   "exact": 0.24706,
+   "le1": 0.87059,
+   "le2": 0.96176,
+   "le8": 1.0,
+   "mean": 0.9441,
+   "max": 5
+  },
+  "non_agent": {
+   "n": 1604865,
+   "exact": 0.999802,
+   "mean": 0.00875,
+   "max": 164
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 4751.5,
+  "fps_end_to_end_B1024": 16981.4
+ },
+ {
+  "env": "AntmazeLargeNavigate",
+  "state_dim": 15,
+  "size": 224,
+  "supersample": 1,
+  "whole_frame": {
+   "mean_abs": 0.078484,
+   "exact_frac": 0.999008,
+   "within8_frac": 0.999013,
+   "max_abs": 212,
+   "interior_frac": 0.296838,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 782,
+   "per_frame": 24.4,
+   "exact": 0.0,
+   "le1": 0.0,
+   "le2": 0.0,
+   "le8": 0.00767,
+   "mean": 61.0908,
+   "max": 212
+  },
+  "agent_interior": {
+   "n": 23,
+   "per_frame": 0.7,
+   "exact": 0.0,
+   "le1": 0.0,
+   "le2": 0.0,
+   "le8": 0.04348,
+   "mean": 17.0435,
+   "max": 42
+  },
+  "non_agent": {
+   "n": 1604850,
+   "exact": 0.999495,
+   "mean": 0.04875,
+   "max": 184
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 202
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 9483.6,
+  "fps_end_to_end_B1024": 16473.5
+ },
+ {
+  "env": "AntmazeLargeNavigate",
+  "state_dim": 15,
+  "size": 224,
+  "supersample": 2,
+  "whole_frame": {
+   "mean_abs": 0.051318,
+   "exact_frac": 0.999007,
+   "within8_frac": 0.999225,
+   "max_abs": 174,
+   "interior_frac": 0.296838,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 782,
+   "per_frame": 24.4,
+   "exact": 0.00512,
+   "le1": 0.0243,
+   "le2": 0.05115,
+   "le8": 0.30691,
+   "mean": 25.8171,
+   "max": 114
+  },
+  "agent_interior": {
+   "n": 23,
+   "per_frame": 0.7,
+   "exact": 0.0,
+   "le1": 0.0,
+   "le2": 0.13043,
+   "le8": 0.95652,
+   "mean": 5.6087,
+   "max": 37
+  },
+  "non_agent": {
+   "n": 1604850,
+   "exact": 0.999492,
+   "mean": 0.03876,
+   "max": 174
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 4019.1,
+  "fps_end_to_end_B1024": 4984.4
+ },
+ {
+  "env": "AntmazeLargeNavigate",
+  "state_dim": 15,
+  "size": 224,
+  "supersample": 4,
+  "whole_frame": {
+   "mean_abs": 0.049295,
+   "exact_frac": 0.998912,
+   "within8_frac": 0.999096,
+   "max_abs": 163,
+   "interior_frac": 0.296838,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 782,
+   "per_frame": 24.4,
+   "exact": 0.00639,
+   "le1": 0.05882,
+   "le2": 0.10102,
+   "le8": 0.24169,
+   "mean": 22.757,
+   "max": 98
+  },
+  "agent_interior": {
+   "n": 23,
+   "per_frame": 0.7,
+   "exact": 0.0,
+   "le1": 0.26087,
+   "le2": 0.34783,
+   "le8": 0.95652,
+   "mean": 3.8696,
+   "max": 21
+  },
+  "non_agent": {
+   "n": 1604850,
+   "exact": 0.999396,
+   "mean": 0.03823,
+   "max": 163
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 1040.8,
+  "fps_end_to_end_B1024": 1295.4
+ },
+ {
+  "env": "HumanoidmazeLargeNavigate",
+  "state_dim": 28,
+  "size": 224,
+  "supersample": 1,
+  "whole_frame": {
+   "mean_abs": 0.024286,
+   "exact_frac": 0.999682,
+   "within8_frac": 0.999685,
+   "max_abs": 223,
+   "interior_frac": 0.341069,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 248,
+   "per_frame": 7.8,
+   "exact": 0.0,
+   "le1": 0.00403,
+   "le2": 0.00806,
+   "le8": 0.02016,
+   "mean": 82.1089,
+   "max": 223
+  },
+  "agent_interior": {
+   "n": 1,
+   "per_frame": 0.0,
+   "exact": 0.0,
+   "le1": 0.0,
+   "le2": 0.0,
+   "le8": 0.0,
+   "mean": 61.0,
+   "max": 61
+  },
+  "non_agent": {
+   "n": 1605384,
+   "exact": 0.999836,
+   "mean": 0.01161,
+   "max": 190
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 183
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 7307.5,
+  "fps_end_to_end_B1024": 12753.1
+ },
+ {
+  "env": "HumanoidmazeLargeNavigate",
+  "state_dim": 28,
+  "size": 224,
+  "supersample": 2,
+  "whole_frame": {
+   "mean_abs": 0.013904,
+   "exact_frac": 0.999671,
+   "within8_frac": 0.999722,
+   "max_abs": 175,
+   "interior_frac": 0.341069,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 248,
+   "per_frame": 7.8,
+   "exact": 0.00403,
+   "le1": 0.01613,
+   "le2": 0.03226,
+   "le8": 0.12903,
+   "mean": 40.8992,
+   "max": 135
+  },
+  "agent_interior": {
+   "n": 1,
+   "per_frame": 0.0,
+   "exact": 1.0,
+   "le1": 1.0,
+   "le2": 1.0,
+   "le8": 1.0,
+   "mean": 0.0,
+   "max": 0
+  },
+  "non_agent": {
+   "n": 1605384,
+   "exact": 0.999824,
+   "mean": 0.00759,
+   "max": 175
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 3172.6,
+  "fps_end_to_end_B1024": 3780.5
+ },
+ {
+  "env": "HumanoidmazeLargeNavigate",
+  "state_dim": 28,
+  "size": 224,
+  "supersample": 4,
+  "whole_frame": {
+   "mean_abs": 0.012038,
+   "exact_frac": 0.999637,
+   "within8_frac": 0.999678,
+   "max_abs": 164,
+   "interior_frac": 0.341069,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0
+  },
+  "agent_all": {
+   "n": 248,
+   "per_frame": 7.8,
+   "exact": 0.00403,
+   "le1": 0.00806,
+   "le2": 0.01613,
+   "le8": 0.09274,
+   "mean": 31.6532,
+   "max": 108
+  },
+  "agent_interior": {
+   "n": 1,
+   "per_frame": 0.0,
+   "exact": 0.0,
+   "le1": 0.0,
+   "le2": 0.0,
+   "le8": 0.0,
+   "mean": 29.0,
+   "max": 29
+  },
+  "non_agent": {
+   "n": 1605384,
+   "exact": 0.999791,
+   "mean": 0.00715,
+   "max": 164
+  },
+  "roundtrip": {
+   "max_abs_err": 0.0
+  },
+  "dead_dims": [],
+  "batch_invariance": {
+   "max_abs_diff": 0
+  },
+  "determinism": {
+   "identical": true
+  },
+  "inert_variations": [],
+  "fps_end_to_end_B256": 845.5,
+  "fps_end_to_end_B1024": 991.3
+ }
+]

@@ -1,0 +1,4 @@
+Figures are crops/rescales of committed repository artifacts.
+
+logo.png            <- docs/assets/brand/logo.png (alpha flattened onto white)
+parity.png          <- docs/assets/media/PushT/parity.png (row 1 of 4) beside docs/assets/media/MiniGridDoorKey/parity.png (row 1 of 4, label strip removed, rescaled to height 122)

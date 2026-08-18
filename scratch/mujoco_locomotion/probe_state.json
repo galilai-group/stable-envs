@@ -1,0 +1,1009 @@
+[
+ {
+  "env": "HalfCheetah-v5",
+  "nq": 9,
+  "nv": 9,
+  "ngeom": 9,
+  "nmesh": 0,
+  "ntex": 3,
+  "nmat": 2,
+  "ncam": 1,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": 0,
+  "cam_type": 2,
+  "cam_fixedcamid": 0,
+  "cam_lookat": [
+   0.027392337464290872,
+   0.0,
+   0.3621572252385095
+  ],
+  "cam_distance": 4.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 8.0,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 8
+  },
+  "textured_geoms": [
+   [
+    0,
+    "floor",
+    "plane"
+   ]
+  ],
+  "joint_names": [
+   [
+    "rootx",
+    2
+   ],
+   [
+    "rootz",
+    2
+   ],
+   [
+    "rooty",
+    3
+   ],
+   [
+    "bthigh",
+    3
+   ],
+   [
+    "bshin",
+    3
+   ],
+   [
+    "bfoot",
+    3
+   ],
+   [
+    "fthigh",
+    3
+   ],
+   [
+    "fshin",
+    3
+   ],
+   [
+    "ffoot",
+    3
+   ]
+  ],
+  "reflectance": [
+   [
+    0,
+    0.5
+   ]
+  ],
+  "skybox": true,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 8,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 204,
+  "plate_frac_pixels_differing": 0.32389068603515625,
+  "frac_sky": 0.520263671875,
+  "frac_movers": 0.0380859375,
+  "frac_textured": 0.441650390625,
+  "frac_static_geoms": 0.441650390625
+ },
+ {
+  "env": "Hopper-v5",
+  "nq": 6,
+  "nv": 6,
+  "ngeom": 5,
+  "nmesh": 0,
+  "ntex": 3,
+  "nmat": 2,
+  "ncam": 1,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": 0,
+  "cam_type": 2,
+  "cam_fixedcamid": 0,
+  "cam_lookat": [
+   0.0,
+   0.0,
+   1.15
+  ],
+  "cam_distance": 3.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -20.0,
+  "stat_extent": 4.0,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 4
+  },
+  "textured_geoms": [
+   [
+    0,
+    "floor",
+    "plane"
+   ],
+   [
+    1,
+    "torso_geom",
+    "capsule"
+   ],
+   [
+    2,
+    "thigh_geom",
+    "capsule"
+   ],
+   [
+    3,
+    "leg_geom",
+    "capsule"
+   ],
+   [
+    4,
+    "foot_geom",
+    "capsule"
+   ]
+  ],
+  "joint_names": [
+   [
+    "rootx",
+    2
+   ],
+   [
+    "rootz",
+    2
+   ],
+   [
+    "rooty",
+    3
+   ],
+   [
+    "thigh_joint",
+    3
+   ],
+   [
+    "leg_joint",
+    3
+   ],
+   [
+    "foot_joint",
+    3
+   ]
+  ],
+  "reflectance": [
+   [
+    0,
+    0.5
+   ]
+  ],
+  "skybox": true,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 4,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 202,
+  "plate_frac_pixels_differing": 0.32003021240234375,
+  "frac_sky": 0.53729248046875,
+  "frac_movers": 0.02496337890625,
+  "frac_textured": 0.46270751953125,
+  "frac_static_geoms": 0.437744140625
+ },
+ {
+  "env": "Walker2d-v5",
+  "nq": 9,
+  "nv": 9,
+  "ngeom": 8,
+  "nmesh": 0,
+  "ntex": 3,
+  "nmat": 2,
+  "ncam": 1,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": 0,
+  "cam_type": 2,
+  "cam_fixedcamid": 0,
+  "cam_lookat": [
+   0.0,
+   0.0,
+   1.15
+  ],
+  "cam_distance": 4.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -20.0,
+  "stat_extent": 8.0,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 7
+  },
+  "textured_geoms": [
+   [
+    0,
+    "floor",
+    "plane"
+   ]
+  ],
+  "joint_names": [
+   [
+    "rootx",
+    2
+   ],
+   [
+    "rootz",
+    2
+   ],
+   [
+    "rooty",
+    3
+   ],
+   [
+    "thigh_joint",
+    3
+   ],
+   [
+    "leg_joint",
+    3
+   ],
+   [
+    "foot_joint",
+    3
+   ],
+   [
+    "thigh_left_joint",
+    3
+   ],
+   [
+    "leg_left_joint",
+    3
+   ],
+   [
+    "foot_left_joint",
+    3
+   ]
+  ],
+  "reflectance": [
+   [
+    0,
+    0.5
+   ]
+  ],
+  "skybox": true,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 7,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 204,
+  "plate_frac_pixels_differing": 0.33635711669921875,
+  "frac_sky": 0.51519775390625,
+  "frac_movers": 0.04071044921875,
+  "frac_textured": 0.444091796875,
+  "frac_static_geoms": 0.444091796875
+ },
+ {
+  "env": "Ant-v5",
+  "nq": 15,
+  "nv": 14,
+  "ngeom": 14,
+  "nmesh": 0,
+  "ntex": 3,
+  "nmat": 2,
+  "ncam": 1,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": 0,
+  "cam_type": 2,
+  "cam_fixedcamid": 0,
+  "cam_lookat": [
+   0.013696168732145436,
+   -0.02302132862361297,
+   0.6563962146358409
+  ],
+  "cam_distance": 4.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 8.0,
+  "geom_types": {
+   "plane": 1,
+   "sphere": 1,
+   "capsule": 12
+  },
+  "textured_geoms": [
+   [
+    0,
+    "floor",
+    "plane"
+   ]
+  ],
+  "joint_names": [
+   [
+    "root",
+    0
+   ],
+   [
+    "hip_1",
+    3
+   ],
+   [
+    "ankle_1",
+    3
+   ],
+   [
+    "hip_2",
+    3
+   ],
+   [
+    "ankle_2",
+    3
+   ],
+   [
+    "hip_3",
+    3
+   ],
+   [
+    "ankle_3",
+    3
+   ],
+   [
+    "hip_4",
+    3
+   ],
+   [
+    "ankle_4",
+    3
+   ]
+  ],
+  "reflectance": [
+   [
+    0,
+    0.5
+   ]
+  ],
+  "skybox": true,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 13,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 202,
+  "plate_frac_pixels_differing": 0.3382720947265625,
+  "frac_sky": 0.4915771484375,
+  "frac_movers": 0.08782958984375,
+  "frac_textured": 0.42059326171875,
+  "frac_static_geoms": 0.42059326171875
+ },
+ {
+  "env": "Humanoid-v5",
+  "nq": 24,
+  "nv": 23,
+  "ngeom": 18,
+  "nmesh": 0,
+  "ntex": 3,
+  "nmat": 2,
+  "ncam": 2,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 2,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": 0,
+  "cam_type": 2,
+  "cam_fixedcamid": 0,
+  "cam_lookat": [
+   0.0,
+   0.0,
+   2.0
+  ],
+  "cam_distance": 4.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -20.0,
+  "stat_extent": 4.0,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 12,
+   "sphere": 5
+  },
+  "textured_geoms": [
+   [
+    0,
+    "floor",
+    "plane"
+   ],
+   [
+    1,
+    "torso1",
+    "capsule"
+   ],
+   [
+    2,
+    "head",
+    "sphere"
+   ],
+   [
+    3,
+    "uwaist",
+    "capsule"
+   ],
+   [
+    4,
+    "lwaist",
+    "capsule"
+   ],
+   [
+    5,
+    "butt",
+    "capsule"
+   ],
+   [
+    6,
+    "right_thigh1",
+    "capsule"
+   ],
+   [
+    7,
+    "right_shin1",
+    "capsule"
+   ],
+   [
+    8,
+    "right_foot",
+    "sphere"
+   ],
+   [
+    9,
+    "left_thigh1",
+    "capsule"
+   ],
+   [
+    10,
+    "left_shin1",
+    "capsule"
+   ],
+   [
+    11,
+    "left_foot",
+    "sphere"
+   ],
+   [
+    12,
+    "right_uarm1",
+    "capsule"
+   ],
+   [
+    13,
+    "right_larm",
+    "capsule"
+   ],
+   [
+    14,
+    "right_hand",
+    "sphere"
+   ],
+   [
+    15,
+    "left_uarm1",
+    "capsule"
+   ],
+   [
+    16,
+    "left_larm",
+    "capsule"
+   ],
+   [
+    17,
+    "left_hand",
+    "sphere"
+   ]
+  ],
+  "joint_names": [
+   [
+    "root",
+    0
+   ],
+   [
+    "abdomen_z",
+    3
+   ],
+   [
+    "abdomen_y",
+    3
+   ],
+   [
+    "abdomen_x",
+    3
+   ],
+   [
+    "right_hip_x",
+    3
+   ],
+   [
+    "right_hip_z",
+    3
+   ],
+   [
+    "right_hip_y",
+    3
+   ],
+   [
+    "right_knee",
+    3
+   ],
+   [
+    "left_hip_x",
+    3
+   ],
+   [
+    "left_hip_z",
+    3
+   ],
+   [
+    "left_hip_y",
+    3
+   ],
+   [
+    "left_knee",
+    3
+   ],
+   [
+    "right_shoulder1",
+    3
+   ],
+   [
+    "right_shoulder2",
+    3
+   ],
+   [
+    "right_elbow",
+    3
+   ],
+   [
+    "left_shoulder1",
+    3
+   ],
+   [
+    "left_shoulder2",
+    3
+   ],
+   [
+    "left_elbow",
+    3
+   ]
+  ],
+  "reflectance": [
+   [
+    0,
+    0.5
+   ]
+  ],
+  "skybox": true,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 17,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 202,
+  "plate_frac_pixels_differing": 0.2910919189453125,
+  "frac_sky": 0.56927490234375,
+  "frac_movers": 0.031494140625,
+  "frac_textured": 0.43072509765625,
+  "frac_static_geoms": 0.39923095703125
+ },
+ {
+  "env": "Swimmer-v5",
+  "nq": 5,
+  "nv": 5,
+  "ngeom": 4,
+  "nmesh": 0,
+  "ntex": 3,
+  "nmat": 2,
+  "ncam": 1,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": 0,
+  "cam_type": 2,
+  "cam_fixedcamid": 0,
+  "cam_lookat": [
+   0.01707176642800573,
+   0.0009059359922388502,
+   0.0
+  ],
+  "cam_distance": 8.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 8.0,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 3
+  },
+  "textured_geoms": [
+   [
+    0,
+    "floor",
+    "plane"
+   ],
+   [
+    1,
+    "geom1",
+    "capsule"
+   ],
+   [
+    2,
+    "geom2",
+    "capsule"
+   ],
+   [
+    3,
+    "geom3",
+    "capsule"
+   ]
+  ],
+  "joint_names": [
+   [
+    "slider1",
+    2
+   ],
+   [
+    "slider2",
+    2
+   ],
+   [
+    "free_body_rot",
+    3
+   ],
+   [
+    "motor1_rot",
+    3
+   ],
+   [
+    "motor2_rot",
+    3
+   ]
+  ],
+  "reflectance": [
+   [
+    0,
+    0.5
+   ]
+  ],
+  "skybox": true,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 3,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 255,
+  "plate_frac_pixels_differing": 0.5698776245117188,
+  "frac_sky": 0.0,
+  "frac_movers": 0.048828125,
+  "frac_textured": 1.0,
+  "frac_static_geoms": 0.951171875
+ },
+ {
+  "env": "Reacher-v5",
+  "nq": 4,
+  "nv": 4,
+  "ngeom": 10,
+  "nmesh": 0,
+  "ntex": 0,
+  "nmat": 0,
+  "ncam": 0,
+  "nlight": 0,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": -1,
+  "cam_type": 0,
+  "cam_fixedcamid": -1,
+  "cam_lookat": [
+   0.021327155153435973,
+   0.00034373747700298636,
+   0.01
+  ],
+  "cam_distance": 1.24,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 1.24,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 6,
+   "cylinder": 1,
+   "sphere": 2
+  },
+  "textured_geoms": [],
+  "joint_names": [
+   [
+    "joint0",
+    3
+   ],
+   [
+    "joint1",
+    3
+   ],
+   [
+    "target_x",
+    2
+   ],
+   [
+    "target_y",
+    2
+   ]
+  ],
+  "reflectance": [],
+  "skybox": false,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 4,
+  "n_static_geoms": 6,
+  "plate_maxdiff_across_states": 0,
+  "plate_frac_pixels_differing": 0.0,
+  "frac_sky": 0.0703125,
+  "frac_movers": 0.004150390625,
+  "frac_textured": 0.0,
+  "frac_static_geoms": 0.925537109375
+ },
+ {
+  "env": "Pusher-v5",
+  "nq": 11,
+  "nv": 11,
+  "ngeom": 20,
+  "nmesh": 0,
+  "ntex": 0,
+  "nmat": 0,
+  "ncam": 0,
+  "nlight": 1,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": -1,
+  "cam_type": 0,
+  "cam_fixedcamid": -1,
+  "cam_lookat": [
+   0.375,
+   -0.6,
+   0.0
+  ],
+  "cam_distance": 4.0,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 1.6,
+  "geom_types": {
+   "plane": 1,
+   "sphere": 6,
+   "capsule": 11,
+   "cylinder": 2
+  },
+  "textured_geoms": [],
+  "joint_names": [
+   [
+    "r_shoulder_pan_joint",
+    3
+   ],
+   [
+    "r_shoulder_lift_joint",
+    3
+   ],
+   [
+    "r_upper_arm_roll_joint",
+    3
+   ],
+   [
+    "r_elbow_flex_joint",
+    3
+   ],
+   [
+    "r_forearm_roll_joint",
+    3
+   ],
+   [
+    "r_wrist_flex_joint",
+    3
+   ],
+   [
+    "r_wrist_roll_joint",
+    3
+   ],
+   [
+    "obj_slidey",
+    2
+   ],
+   [
+    "obj_slidex",
+    2
+   ],
+   [
+    "goal_slidey",
+    2
+   ],
+   [
+    "goal_slidex",
+    2
+   ]
+  ],
+  "reflectance": [],
+  "skybox": false,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 19,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 0,
+  "plate_frac_pixels_differing": 0.0,
+  "frac_sky": 0.83990478515625,
+  "frac_movers": 0.0185546875,
+  "frac_textured": 0.0,
+  "frac_static_geoms": 0.14154052734375
+ },
+ {
+  "env": "InvertedPendulum-v5",
+  "nq": 2,
+  "nv": 2,
+  "ngeom": 3,
+  "nmesh": 0,
+  "ntex": 0,
+  "nmat": 0,
+  "ncam": 0,
+  "nlight": 0,
+  "nsite": 0,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": -1,
+  "cam_type": 0,
+  "cam_fixedcamid": -1,
+  "cam_lookat": [
+   0.001857953609552751,
+   0.0,
+   0.0
+  ],
+  "cam_distance": 2.04,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 2.04,
+  "geom_types": {
+   "capsule": 3
+  },
+  "textured_geoms": [],
+  "joint_names": [
+   [
+    "slider",
+    2
+   ],
+   [
+    "hinge",
+    3
+   ]
+  ],
+  "reflectance": [],
+  "skybox": false,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [
+   1
+  ],
+  "n_mover_geoms": 2,
+  "n_static_geoms": 1,
+  "plate_maxdiff_across_states": 0,
+  "plate_frac_pixels_differing": 0.0,
+  "frac_sky": 0.96875,
+  "frac_movers": 0.0,
+  "frac_textured": 0.0,
+  "frac_static_geoms": 0.03125
+ },
+ {
+  "env": "InvertedDoublePendulum-v5",
+  "nq": 3,
+  "nv": 3,
+  "ngeom": 5,
+  "nmesh": 0,
+  "ntex": 0,
+  "nmat": 0,
+  "ncam": 0,
+  "nlight": 0,
+  "nsite": 1,
+  "ntendon": 0,
+  "default_size": [
+   128,
+   128
+  ],
+  "camera_id": -1,
+  "cam_type": 0,
+  "cam_fixedcamid": -1,
+  "cam_lookat": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "cam_distance": 8.245,
+  "cam_azimuth": 90.0,
+  "cam_elevation": -45.0,
+  "stat_extent": 8.245,
+  "geom_types": {
+   "plane": 1,
+   "capsule": 4
+  },
+  "textured_geoms": [],
+  "joint_names": [
+   [
+    "slider",
+    2
+   ],
+   [
+    "hinge",
+    3
+   ],
+   [
+    "hinge2",
+    3
+   ]
+  ],
+  "reflectance": [],
+  "skybox": false,
+  "fog": true,
+  "rerender_maxdiff": 0,
+  "qvel_x100_maxdiff": 0,
+  "history_maxdiff": 0,
+  "dead_qpos_dims": [],
+  "n_mover_geoms": 3,
+  "n_static_geoms": 2,
+  "plate_maxdiff_across_states": 0,
+  "plate_frac_pixels_differing": 0.0,
+  "frac_sky": 0.0,
+  "frac_movers": 0.00347900390625,
+  "frac_textured": 0.0,
+  "frac_static_geoms": 0.99652099609375
+ }
+]

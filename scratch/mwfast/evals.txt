@@ -1,0 +1,6 @@
+scratch/mwfast/eval.py multi6_unet_96t128_w48_d2_u2_r96 --envs MetaWorldAssembly,MetaWorldButtonPress,MetaWorldDoorLock,MetaWorldPlateSlide,MetaWorldSoccer,MetaWorldSweepInto,MetaWorldHammer --sbs --no-fps
+scratch/mwfast/eval.py multi6_unet_112t128_w64_d3_u2_r112 --envs MetaWorldAssembly,MetaWorldButtonPress,MetaWorldDoorLock,MetaWorldPlateSlide,MetaWorldSoccer,MetaWorldSweepInto,MetaWorldHammer --sbs --no-fps
+scratch/mwfast/eval.py pt_MetaWorldDoorLock_unet_96t128_w48_d2_u2_r96 --envs MetaWorldDoorLock,MetaWorldSoccer,MetaWorldHammer --sbs
+scratch/mwfast/eval.py pt_MetaWorldSoccer_unet_96t128_w48_d2_u2_r96 --envs MetaWorldSoccer,MetaWorldDoorLock --no-fps
+scratch/mwfast/eval.py pt_MetaWorldWindowOpen_unet_112t128_w48_d2_u2_r112_noblend --envs MetaWorldWindowOpen,MetaWorldWindowClose --sbs --no-fps
+scratch/mwfast/eval.py pt_MetaWorldAssembly_unet_112t128_w64_d3_u2_r112 --envs MetaWorldAssembly,MetaWorldSweepInto --sbs --no-fps

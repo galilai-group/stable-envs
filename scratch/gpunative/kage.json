@@ -1,0 +1,430 @@
+{
+ "jax_devices": [
+  "cuda:0"
+ ],
+ "jax_version": "0.10.2",
+ "gpu": true,
+ "config": {
+  "H": 128,
+  "W": 128,
+  "frame_bytes_uint8": 49152,
+  "background_mode": "black",
+  "world_length": 2048
+ },
+ "G2": {
+  "envstate_bytes": 279000,
+  "fields": {
+   "x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "y": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vx": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vy": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "grounded": {
+    "shape": [],
+    "dtype": "bool",
+    "bytes": 1
+   },
+   "coyote_timer": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "camera_x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "t": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "x_max": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "episode_return": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "jump_count": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "initial_x": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "success_once": {
+    "shape": [],
+    "dtype": "bool",
+    "bytes": 1
+   },
+   "vx_mean": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "vy_mean": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "layout_solid_mask": {
+    "shape": [
+     128,
+     2048
+    ],
+    "dtype": "bool",
+    "bytes": 262144
+   },
+   "layout_ground_top": {
+    "shape": [
+     2048
+    ],
+    "dtype": "int32",
+    "bytes": 8192
+   },
+   "layout_ground_bottom": {
+    "shape": [
+     2048
+    ],
+    "dtype": "int32",
+    "bytes": 8192
+   },
+   "layout_color": {
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "bytes": 3
+   },
+   "bg_image": {
+    "bytes": 0,
+    "shape": null,
+    "dtype": null
+   },
+   "filter_key": {
+    "shape": [
+     2
+    ],
+    "dtype": "uint32",
+    "bytes": 8
+   },
+   "selected_filter_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "light_positions": {
+    "shape": [
+     5,
+     2
+    ],
+    "dtype": "float32",
+    "bytes": 40
+   },
+   "light_radii": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "light_intensities": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "sprite_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "animation_timer": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "shape_angle": {
+    "shape": [],
+    "dtype": "float32",
+    "bytes": 4
+   },
+   "shape_type_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "shape_color_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "char_skin_idx": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "npc_x": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_y": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_types": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_sprite_indices": {
+    "shape": [
+     5
+    ],
+    "dtype": "int32",
+    "bytes": 20
+   },
+   "npc_animation_timers": {
+    "shape": [
+     5
+    ],
+    "dtype": "float32",
+    "bytes": 20
+   },
+   "sticky_x_offsets": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_y": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_types": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_vy": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "sticky_on_ground": {
+    "shape": [
+     3
+    ],
+    "dtype": "bool",
+    "bytes": 3
+   },
+   "sticky_home_y": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_sprite_indices": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "sticky_animation_timers": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "actual_sticky_count": {
+    "shape": [],
+    "dtype": "int32",
+    "bytes": 4
+   },
+   "dist_x": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_y": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_vx": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_vy": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_angles": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_rot_speeds": {
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "bytes": 12
+   },
+   "dist_shape_indices": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "dist_color_indices": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   },
+   "dist_sizes": {
+    "shape": [
+     3
+    ],
+    "dtype": "int32",
+    "bytes": 12
+   }
+  },
+  "frame_bytes": 49152,
+  "ratio_envstate_over_frame": 5.67626953125,
+  "obs_shape": [
+   128,
+   128,
+   3
+  ],
+  "obs_dtype": "uint8",
+  "biggest_fields": [
+   [
+    262144,
+    "layout_solid_mask"
+   ],
+   [
+    8192,
+    "layout_ground_top"
+   ],
+   [
+    8192,
+    "layout_ground_bottom"
+   ],
+   [
+    40,
+    "light_positions"
+   ],
+   [
+    20,
+    "npc_y"
+   ],
+   [
+    20,
+    "npc_x"
+   ],
+   [
+    20,
+    "npc_types"
+   ],
+   [
+    20,
+    "npc_sprite_indices"
+   ]
+  ]
+ },
+ "G3": {
+  "atlas": {
+   "character_sprites": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "npc_sprite_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "sticky_npc_sprite_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "character_skin_sets": {
+    "bytes": 0,
+    "n_arrays": 0
+   },
+   "background_images": null
+  },
+  "bg_image_present": false,
+  "layout_distinct_across_6_resets": 6,
+  "layout_shape": [
+   128,
+   2048
+  ],
+  "layout_bytes": 262144
+ },
+ "G1": {
+  "frames": 200,
+  "blank_frames": 0,
+  "checkpoints": 16,
+  "rerender_mismatch": 0,
+  "rerender_after_other_rollout_mismatch": 0,
+  "step_obs_vs_render_mismatch": 0,
+  "obs_checks": 50
+ }
+}

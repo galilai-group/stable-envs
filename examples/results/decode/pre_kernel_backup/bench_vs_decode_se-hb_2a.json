@@ -1,0 +1,933 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "cpu_count": 16,
+  "torch": "2.11.0+cu130",
+  "jpeg_quality": 90,
+  "loadavg": [
+    4.13818359375,
+    20.33447265625
+  ],
+  "registry_size": 147,
+  "registry": [
+    "Acrobot",
+    "AntmazeGiantNavigate",
+    "AntmazeGiantStitch",
+    "AntmazeLargeExplore",
+    "AntmazeLargeNavigate",
+    "AntmazeLargeStitch",
+    "AntmazeMediumExplore",
+    "AntmazeMediumNavigate",
+    "AntmazeMediumStitch",
+    "AntmazeTeleportExplore",
+    "AntmazeTeleportNavigate",
+    "AntmazeTeleportStitch",
+    "BabyAIGoToLocal",
+    "CartPole",
+    "CraftaxClassic",
+    "Crafter",
+    "FetchPickAndPlace",
+    "FetchPickAndPlaceDense",
+    "FetchPickAndPlaceDict",
+    "FetchPush",
+    "FetchPushDense",
+    "FetchPushDict",
+    "FetchReach",
+    "FetchReachDense",
+    "FetchReachDict",
+    "FetchSlide",
+    "FetchSlideDense",
+    "FetchSlideDict",
+    "Highway",
+    "HumanoidBenchH1BalanceSimple",
+    "HumanoidBenchH1HandBalanceSimple",
+    "HumanoidBenchH1HandRun",
+    "HumanoidBenchH1HandSitHard",
+    "HumanoidBenchH1HandSitSimple",
+    "HumanoidBenchH1HandSlide",
+    "HumanoidBenchH1HandSpoon",
+    "HumanoidBenchH1HandStair",
+    "HumanoidBenchH1HandStand",
+    "HumanoidBenchH1HandWalk",
+    "HumanoidBenchH1Run",
+    "HumanoidBenchH1SitHard",
+    "HumanoidBenchH1SitSimple",
+    "HumanoidBenchH1Slide",
+    "HumanoidBenchH1Stair",
+    "HumanoidBenchH1Stand",
+    "HumanoidBenchH1Walk",
+    "HumanoidmazeGiantNavigate",
+    "HumanoidmazeGiantStitch",
+    "HumanoidmazeLargeNavigate",
+    "HumanoidmazeLargeStitch",
+    "HumanoidmazeMediumNavigate",
+    "HumanoidmazeMediumStitch",
+    "Intersection",
+    "Merge",
+    "MetaWorldAssembly",
+    "MetaWorldBasketball",
+    "MetaWorldBinPicking",
+    "MetaWorldBoxClose",
+    "MetaWorldButtonPress",
+    "MetaWorldButtonPressTopdown",
+    "MetaWorldButtonPressTopdownWall",
+    "MetaWorldButtonPressWall",
+    "MetaWorldCoffeeButton",
+    "MetaWorldCoffeePull",
+    "MetaWorldCoffeePush",
+    "MetaWorldDialTurn",
+    "MetaWorldDisassemble",
+    "MetaWorldDoorClose",
+    "MetaWorldDoorLock",
+    "MetaWorldDoorOpen",
+    "MetaWorldDoorUnlock",
+    "MetaWorldDrawerClose",
+    "MetaWorldDrawerOpen",
+    "MetaWorldFaucetClose",
+    "MetaWorldFaucetOpen",
+    "MetaWorldHammer",
+    "MetaWorldHandInsert",
+    "MetaWorldHandlePress",
+    "MetaWorldHandlePressSide",
+    "MetaWorldHandlePull",
+    "MetaWorldHandlePullSide",
+    "MetaWorldLeverPull",
+    "MetaWorldPegInsertSide",
+    "MetaWorldPegUnplugSide",
+    "MetaWorldPickOutOfHole",
+    "MetaWorldPickPlace",
+    "MetaWorldPickPlaceWall",
+    "MetaWorldPlateSlide",
+    "MetaWorldPlateSlideBack",
+    "MetaWorldPlateSlideBackSide",
+    "MetaWorldPlateSlideSide",
+    "MetaWorldPush",
+    "MetaWorldPushBack",
+    "MetaWorldPushWall",
+    "MetaWorldReach",
+    "MetaWorldReachWall",
+    "MetaWorldShelfPlace",
+    "MetaWorldSoccer",
+    "MetaWorldStickPull",
+    "MetaWorldStickPush",
+    "MetaWorldSweep",
+    "MetaWorldSweepInto",
+    "MetaWorldWindowClose",
+    "MetaWorldWindowOpen",
+    "MiniGridDoorKey",
+    "MiniGridEmpty",
+    "MiniGridFourRooms",
+    "MiniGridKeyCorridor",
+    "MiniGridLavaCrossing",
+    "MiniGridPOVFetch",
+    "MiniHack",
+    "MountainCar",
+    "MountainCarContinuous",
+    "MujocoInvertedDoublePendulum",
+    "MujocoInvertedPendulum",
+    "MujocoPusher",
+    "MujocoReacher",
+    "Parking",
+    "Pendulum",
+    "Piecewise",
+    "PiecewiseZones",
+    "PointMazeLarge",
+    "PointMazeMedium",
+    "PointMazeOpen",
+    "PointMazeUMaze",
+    "PointmazeGiantNavigate",
+    "PointmazeGiantStitch",
+    "PointmazeLargeNavigate",
+    "PointmazeLargeStitch",
+    "PointmazeMediumNavigate",
+    "PointmazeMediumStitch",
+    "PointmazeTeleportNavigate",
+    "PointmazeTeleportStitch",
+    "ProcgenChaser",
+    "ProcgenHeist",
+    "ProcgenMaze",
+    "ProcgenMiner",
+    "PushT",
+    "Racetrack",
+    "RoboCasaCounterToSink",
+    "RoboCasaCounterToSinkL45S33",
+    "RoboCasaCounterToSinkRight",
+    "RoboCasaCounterToSinkWrist",
+    "Roundabout",
+    "SimplePointMaze",
+    "TwoRoom",
+    "TwoRoomTarget"
+  ],
+  "import_errors": {
+    "carracing": "ImportError: CarRacing-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+    "dmcontrol": "ImportError: dm_control is installed but cannot compile a model with mujoco 3.11.0: 'MjModel' object has no attribute 'flex_bandwidth'. This is a version skew, not a missing package \u2014 no dm_control release works with mujoco 3.9. Consistent pairs: mujoco==3.11.0 with dm_control==1.0.44, mujoco==3.10.0 with dm_control==1.0.43, mujoco==3.8.1 with dm_control==1.0.41. See docs/research/dmcontrol.md.",
+    "griddly": "ImportError: griddly is not importable (ModuleNotFoundError: No module named 'griddly'). The atlas is composed of tiles griddly's own Vulkan renderer draws, so there is no degraded mode. `pip install griddly==1.6.7` \u2014 the only release, from 2023-03-15; upstream's last commit is 2024-04-07 and there is no successor.",
+    "jumanji": "ImportError: the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so it cannot render without the reference package: missing jumanji. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-jumanji, built with a CLEAN `python -m venv` \u2014 a --system-site-packages venv breaks jax's CUDA plugin discovery. See docs/research/jumanji.md",
+    "lunarlander": "ImportError: LunarLander-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+    "overcooked": "ImportError: jaxmarl is not importable (ModuleNotFoundError: No module named 'jaxmarl'). The atlas IS jaxmarl's own `_render_tile` output \u2014 nothing here re-derives it \u2014 so there is no degraded mode. `pip install jaxmarl` (measured against jaxmarl 0.1.0 / jax 0.4.38) INTO A CLEAN VENV: a `python -m venv --system-site-packages` venv breaks jax's CUDA plugin discovery.",
+    "pgx": "ImportError: the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter cannot provide them: ModuleNotFoundError: No module named 'pgx'. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-pgx, built with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin discovery. See docs/research/pgx.md",
+    "sokoban": "ImportError: gym-sokoban is not installed. The seven 16x16 tile images ARE this env -- the frame is a gather from them and nothing here re-derives them -- so there is no degraded mode to fall back to. `pip install gym-sokoban`."
+  },
+  "envs": {
+    "MetaWorldHandlePullSide": {
+      "size": 480,
+      "state_bytes": 48,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 35111,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 937.1259961400632,
+        "decode_MBps_raw": 647.7414885320117,
+        "load_decode_fps_per_core": 915.0157524942754
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.0024169719545170665,
+          "fps": 413.74083722035135,
+          "us_per_frame": 2416.9719545170665,
+          "gb_per_s": 0.2859776666867068,
+          "peak_gb": 0.01107456
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.02944825601298362,
+          "fps": 2173.303572604865,
+          "us_per_frame": 460.12900020286907,
+          "gb_per_s": 1.5021874293844828,
+          "peak_gb": 0.622679552
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.11250328994356096,
+          "fps": 2275.4890112851494,
+          "us_per_frame": 439.465976342035,
+          "gb_per_s": 1.572818004600295,
+          "peak_gb": 1.04530432
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.44236019090749323,
+          "fps": 2314.855678806188,
+          "us_per_frame": 431.99237393309886,
+          "gb_per_s": 1.600028245190837,
+          "peak_gb": 1.580254208
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.761063167010434,
+          "fps": 2325.8677353143075,
+          "us_per_frame": 429.94706225840673,
+          "gb_per_s": 1.6076397786492493,
+          "peak_gb": 3.703548928
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2325.8677353143075
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.004644656200738003,
+          "fps": 215.30118845849282,
+          "us_per_frame": 4644.6562007380035,
+          "gb_per_s": 0.14881618146251022
+        }
+      }
+    },
+    "MetaWorldLeverPull": {
+      "size": 480,
+      "state_bytes": 56,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 36849,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 937.5618320187631,
+        "decode_MBps_raw": 648.0427382913691,
+        "load_decode_fps_per_core": 707.7022467712121
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.0024635849986225367,
+          "fps": 405.91252201938624,
+          "us_per_frame": 2463.5849986225367,
+          "gb_per_s": 0.28056673521979975,
+          "peak_gb": 0.1450368
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.029200469027273357,
+          "fps": 2191.7456168332,
+          "us_per_frame": 456.2573285511462,
+          "gb_per_s": 1.514934570355108,
+          "peak_gb": 0.681419776
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.11154138902202249,
+          "fps": 2295.1121753509447,
+          "us_per_frame": 435.70855086727533,
+          "gb_per_s": 1.586381535602573,
+          "peak_gb": 1.104059904
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.4379722150042653,
+          "fps": 2338.047859931086,
+          "us_per_frame": 427.70724121510284,
+          "gb_per_s": 1.6160586807843667,
+          "peak_gb": 1.638760448
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.744723669020459,
+          "fps": 2347.6497010553076,
+          "us_per_frame": 425.957927006948,
+          "gb_per_s": 1.6226954733694285,
+          "peak_gb": 3.76164352
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2347.6497010553076
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.006160590716172009,
+          "fps": 162.3220963819144,
+          "us_per_frame": 6160.59071617201,
+          "gb_per_s": 0.11219703301917924
+        }
+      }
+    },
+    "MetaWorldPegInsertSide": {
+      "size": 480,
+      "state_bytes": 80,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 35576,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 811.8029635348951,
+        "decode_MBps_raw": 561.1182083953195,
+        "load_decode_fps_per_core": 794.9476035217249
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.002538772067055106,
+          "fps": 393.8912094459775,
+          "us_per_frame": 2538.772067055106,
+          "gb_per_s": 0.2722576039690596,
+          "peak_gb": 0.143454208
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.02830185496713966,
+          "fps": 2261.3358761928594,
+          "us_per_frame": 442.2164838615572,
+          "gb_per_s": 1.5630353576245044,
+          "peak_gb": 0.578662912
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.10811134800314903,
+          "fps": 2367.929035465762,
+          "us_per_frame": 422.3099531373009,
+          "gb_per_s": 1.6367125493139345,
+          "peak_gb": 0.942329856
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.4242505179718137,
+          "fps": 2413.6682375672017,
+          "us_per_frame": 414.3071464568493,
+          "gb_per_s": 1.6683274858064499,
+          "peak_gb": 1.477526016
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.68949162599165,
+          "fps": 2424.397929522643,
+          "us_per_frame": 412.47354150186766,
+          "gb_per_s": 1.675743848886051,
+          "peak_gb": 3.600556544
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2424.397929522643
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.00987594913264426,
+          "fps": 101.25609058622729,
+          "us_per_frame": 9875.94913264426,
+          "gb_per_s": 0.0699882098132003
+        }
+      }
+    },
+    "MetaWorldPegUnplugSide": {
+      "size": 480,
+      "state_bytes": 88,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 35258,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 659.2440417871809,
+        "decode_MBps_raw": 455.66948168329947,
+        "load_decode_fps_per_core": 642.3448238678278
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.00247754598967731,
+          "fps": 403.6252017788965,
+          "us_per_frame": 2477.54598967731,
+          "gb_per_s": 0.2789857394695732,
+          "peak_gb": 0.14506752
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.02860253199469298,
+          "fps": 2237.5641433378973,
+          "us_per_frame": 446.91456241707783,
+          "gb_per_s": 1.5466043358751547,
+          "peak_gb": 0.681424896
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.10945090948371217,
+          "fps": 2338.9481294177494,
+          "us_per_frame": 427.54261517075065,
+          "gb_per_s": 1.6166809470535486,
+          "peak_gb": 1.104077312
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.429411701974459,
+          "fps": 2384.6578826137966,
+          "us_per_frame": 419.3473652094326,
+          "gb_per_s": 1.6482755284626562,
+          "peak_gb": 1.638827008
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.7103812189307064,
+          "fps": 2394.7877553056455,
+          "us_per_frame": 417.5735397780045,
+          "gb_per_s": 1.6552772964672622,
+          "peak_gb": 3.761906688
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2394.7877553056455
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.015128063484250257,
+          "fps": 66.10231382497135,
+          "us_per_frame": 15128.063484250257,
+          "gb_per_s": 0.0456899193158202
+        }
+      }
+    },
+    "MetaWorldPickOutOfHole": {
+      "size": 480,
+      "state_bytes": 76,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 36028,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 939.3435617017591,
+        "decode_MBps_raw": 649.2742698482559,
+        "load_decode_fps_per_core": 617.7375657396702
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.0024319039657711983,
+          "fps": 411.2004479103199,
+          "us_per_frame": 2431.9039657711983,
+          "gb_per_s": 0.28422174959561314,
+          "peak_gb": 0.143456256
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.028172257938422263,
+          "fps": 2271.7383938443454,
+          "us_per_frame": 440.19153028784785,
+          "gb_per_s": 1.5702255778252114,
+          "peak_gb": 0.578661888
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.10754969948902726,
+          "fps": 2380.2948889328914,
+          "us_per_frame": 420.11601362901274,
+          "gb_per_s": 1.6452598272304146,
+          "peak_gb": 0.942326784
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.42151648306753486,
+          "fps": 2429.3237420941755,
+          "us_per_frame": 411.6371904956395,
+          "gb_per_s": 1.6791485705354943,
+          "peak_gb": 1.4775168
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.67835690791253,
+          "fps": 2440.482105259979,
+          "us_per_frame": 409.7551044708325,
+          "gb_per_s": 1.6868612311556974,
+          "peak_gb": 3.600522752
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2440.482105259979
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.004793411250769471,
+          "fps": 208.61969643006807,
+          "us_per_frame": 4793.411250769471,
+          "gb_per_s": 0.14419793417246304
+        }
+      }
+    },
+    "MetaWorldPickPlace": {
+      "size": 480,
+      "state_bytes": 76,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 34959,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 961.1336979415751,
+        "decode_MBps_raw": 664.3356120172167,
+        "load_decode_fps_per_core": 811.4640549548728
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.002402766956947744,
+          "fps": 416.1868453819212,
+          "us_per_frame": 2402.766956947744,
+          "gb_per_s": 0.2876683475279839,
+          "peak_gb": 0.143455232
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.02733827696647495,
+          "fps": 2341.0400033068463,
+          "us_per_frame": 427.1605776011711,
+          "gb_per_s": 1.6181268502856923,
+          "peak_gb": 0.578663936
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.1041666345554404,
+          "fps": 2457.6007575991107,
+          "us_per_frame": 406.90091623218905,
+          "gb_per_s": 1.698693643652505,
+          "peak_gb": 0.942328832
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.40835587005130947,
+          "fps": 2507.6167017541234,
+          "us_per_frame": 398.7850293469819,
+          "gb_per_s": 1.73326466425245,
+          "peak_gb": 1.477518848
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.6260220259428024,
+          "fps": 2519.0310676296353,
+          "us_per_frame": 396.978033677442,
+          "gb_per_s": 1.7411542739456038,
+          "peak_gb": 3.6005248
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2519.0310676296353
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.10849878726682315,
+          "fps": 9.21669287916346,
+          "us_per_frame": 108498.78726682314,
+          "gb_per_s": 0.006370578118077784
+        }
+      }
+    },
+    "MetaWorldPickPlaceWall": {
+      "size": 480,
+      "state_bytes": 76,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 35295,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 672.416916266404,
+        "decode_MBps_raw": 464.77457252333846,
+        "load_decode_fps_per_core": 662.1513710223851
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.0024224029621109366,
+          "fps": 412.8132336531563,
+          "us_per_frame": 2422.4029621109366,
+          "gb_per_s": 0.2853365071010616,
+          "peak_gb": 0.143454208
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.0274478419451043,
+          "fps": 2331.6951521361875,
+          "us_per_frame": 428.8725303922547,
+          "gb_per_s": 1.6116676891565327,
+          "peak_gb": 0.578662912
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.10456732346210629,
+          "fps": 2448.1835388353493,
+          "us_per_frame": 408.4661072738527,
+          "gb_per_s": 1.6921844620429933,
+          "peak_gb": 0.942327808
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.4103710410417989,
+          "fps": 2495.302781113395,
+          "us_per_frame": 400.7529697673817,
+          "gb_per_s": 1.7247532823055787,
+          "peak_gb": 1.477517824
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.6333781760185957,
+          "fps": 2507.6862542538147,
+          "us_per_frame": 398.77396875453996,
+          "gb_per_s": 1.7333127389402365,
+          "peak_gb": 3.600523776
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2507.6862542538147
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.006712915300158784,
+          "fps": 148.9665749210848,
+          "us_per_frame": 6712.915300158784,
+          "gb_per_s": 0.10296569658545382
+        }
+      }
+    },
+    "MetaWorldPlateSlide": {
+      "size": 480,
+      "state_bytes": 60,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 37378,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 932.8554526667805,
+        "decode_MBps_raw": 644.7896888832787,
+        "load_decode_fps_per_core": 892.02591258293
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.00249785790219903,
+          "fps": 400.34302956930964,
+          "us_per_frame": 2497.85790219903,
+          "gb_per_s": 0.27671710203830685,
+          "peak_gb": 0.143687168
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.030761108035221696,
+          "fps": 2080.549241812731,
+          "us_per_frame": 480.642313050339,
+          "gb_per_s": 1.4380756359409594,
+          "peak_gb": 0.593340416
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.11778514599427581,
+          "fps": 2173.4489339805314,
+          "us_per_frame": 460.0982265401399,
+          "gb_per_s": 1.5022879031673433,
+          "peak_gb": 1.015981568
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.4631017689825967,
+          "fps": 2211.1770426825597,
+          "us_per_frame": 452.2478212720671,
+          "gb_per_s": 1.5283655719021851,
+          "peak_gb": 1.551081472
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.844200371997431,
+          "fps": 2221.016795243172,
+          "us_per_frame": 450.2442314446853,
+          "gb_per_s": 1.5351668088720807,
+          "peak_gb": 3.67398912
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2221.016795243172
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.004667702899314463,
+          "fps": 214.23814273759115,
+          "us_per_frame": 4667.702899314463,
+          "gb_per_s": 0.14808140426022298
+        }
+      }
+    },
+    "MetaWorldPlateSlideBack": {
+      "size": 480,
+      "state_bytes": 48,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 37222,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 804.7599317310675,
+        "decode_MBps_raw": 556.2500648125139,
+        "load_decode_fps_per_core": 916.9941285877807
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.0024956200504675508,
+          "fps": 400.70202185330714,
+          "us_per_frame": 2495.6200504675508,
+          "gb_per_s": 0.2769652375050059,
+          "peak_gb": 0.143686144
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.030950689921155572,
+          "fps": 2067.8052787525876,
+          "us_per_frame": 483.6045300180558,
+          "gb_per_s": 1.4292670086737884,
+          "peak_gb": 0.593340416
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.11865678802132607,
+          "fps": 2157.482974796093,
+          "us_per_frame": 463.50307820830494,
+          "gb_per_s": 1.4912522321790596,
+          "peak_gb": 1.015977472
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.46589084598235786,
+          "fps": 2197.939729510754,
+          "us_per_frame": 454.97152927964635,
+          "gb_per_s": 1.5192159410378332,
+          "peak_gb": 1.551058944
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.855517857009545,
+          "fps": 2207.4699979451234,
+          "us_per_frame": 453.00728930897094,
+          "gb_per_s": 1.5258032625796694,
+          "peak_gb": 3.673892864
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2207.4699979451234
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.00460632376683255,
+          "fps": 217.09285986374132,
+          "us_per_frame": 4606.32376683255,
+          "gb_per_s": 0.15005458473781802
+        }
+      }
+    },
+    "MetaWorldPlateSlideBackSide": {
+      "size": 480,
+      "state_bytes": 48,
+      "decode": {
+        "h": 480,
+        "w": 480,
+        "jpeg_quality": 90,
+        "jpeg_bytes": 38627,
+        "raw_bytes": 691200,
+        "n": 300,
+        "decode_fps_per_core": 915.6066322841286,
+        "decode_MBps_raw": 632.8673042347897,
+        "load_decode_fps_per_core": 889.176921622132
+      },
+      "gpu": [
+        {
+          "batch": 1,
+          "size": 480,
+          "seconds_per_batch": 0.002505960059352219,
+          "fps": 399.0486585243087,
+          "us_per_frame": 2505.960059352219,
+          "gb_per_s": 0.27582243277200214,
+          "peak_gb": 0.14368512
+        },
+        {
+          "batch": 64,
+          "size": 480,
+          "seconds_per_batch": 0.030564879067242146,
+          "fps": 2093.906534333122,
+          "us_per_frame": 477.5762354256585,
+          "gb_per_s": 1.4473081965310541,
+          "peak_gb": 0.593339392
+        },
+        {
+          "batch": 256,
+          "size": 480,
+          "seconds_per_batch": 0.11688579502515495,
+          "fps": 2190.1720388256444,
+          "us_per_frame": 456.5851368170115,
+          "gb_per_s": 1.5138469132362855,
+          "peak_gb": 1.015976448
+        },
+        {
+          "batch": 1024,
+          "size": 480,
+          "seconds_per_batch": 0.4598046309547499,
+          "fps": 2227.0328114654712,
+          "us_per_frame": 449.02795991674793,
+          "gb_per_s": 1.5393250792849336,
+          "peak_gb": 1.55105792
+        },
+        {
+          "batch": 4096,
+          "size": 480,
+          "seconds_per_batch": 1.8320867270231247,
+          "fps": 2235.7020219536257,
+          "us_per_frame": 447.28679858963005,
+          "gb_per_s": 1.545317237574346,
+          "peak_gb": 3.67389184
+        }
+      ],
+      "gpu_best": {
+        "batch": 4096,
+        "fps": 2235.7020219536257
+      },
+      "cpu": {
+        "size": 480,
+        "frames": 60,
+        "set_state_render": {
+          "seconds_per_frame": 0.004659546366504704,
+          "fps": 214.61316646369946,
+          "us_per_frame": 4659.546366504704,
+          "gb_per_s": 0.14834062065970907
+        }
+      }
+    }
+  }
+}

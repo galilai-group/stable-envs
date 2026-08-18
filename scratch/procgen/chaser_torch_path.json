@@ -1,0 +1,16 @@
+{
+ "triton_available": true,
+ "device": "cuda",
+ "fused_vs_torch": {
+  "frames": 64,
+  "max_abs_diff": 0,
+  "pixels_exact_frac": 1.0
+ },
+ "torch_vs_official": {
+  "max_abs_diff": 0,
+  "pixels_exact_frac": 1.0
+ },
+ "per_env_style_fused_vs_torch": {
+  "skipped": "no sample_variation on this env"
+ }
+}

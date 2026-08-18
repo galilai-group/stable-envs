@@ -1,0 +1,107 @@
+{
+ "sprite_sizes": {
+  "misc_assets/fishTile_072.png": [
+   108,
+   76
+  ],
+  "misc_assets/fishTile_074.png": [
+   78,
+   46
+  ],
+  "misc_assets/fishTile_078.png": [
+   112,
+   88
+  ],
+  "misc_assets/fishTile_080.png": [
+   108,
+   58
+  ]
+ },
+ "fish_sprites_same_size": false,
+ "bg_sizes": {
+  "water_backgrounds/water1.png": [
+   342,
+   192
+  ],
+  "water_backgrounds/water2.png": [
+   342,
+   192
+  ],
+  "water_backgrounds/water3.png": [
+   342,
+   192
+  ],
+  "water_backgrounds/water4.png": [
+   342,
+   192
+  ],
+  "water_backgrounds/underwater1.png": [
+   980,
+   581
+  ],
+  "water_backgrounds/underwater2.png": [
+   2100,
+   1500
+  ],
+  "water_backgrounds/underwater3.png": [
+   2048,
+   1536
+  ]
+ },
+ "all_backgrounds_square": false,
+ "fish_count": {
+  "max": 24,
+  "p99": 13,
+  "histogram_tail": {
+   "13": 106,
+   "14": 41,
+   "15": 18,
+   "16": 4,
+   "17": 2,
+   "20": 1,
+   "21": 1,
+   "24": 1
+  },
+  "samples": 12800,
+  "steps": 2000,
+  "envs": 32
+ },
+ "bg_index_seen": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6
+ ],
+ "bg_pct_x_seen": [
+  0.00051,
+  0.00249,
+  0.00255,
+  0.00282,
+  0.00369,
+  0.00802,
+  0.00884,
+  0.00895
+ ],
+ "aspect_ratio_per_theme": [
+  [
+   0,
+   1.69565
+  ],
+  [
+   1,
+   1.27273
+  ],
+  [
+   2,
+   1.86207
+  ]
+ ],
+ "z0_order": {
+  "frames": 166,
+  "changed_when_reversed": 4,
+  "frames_with_world_overlap": 22
+ }
+}

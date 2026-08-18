@@ -1,0 +1,102 @@
+{
+  "MujocoInvertedDoublePendulum": {
+    "cpu": {
+      "size": 240,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0004966167665164297,
+        "fps": 2013.6251279122223,
+        "us_per_frame": 496.6167665164297,
+        "gb_per_s": 0.347954422103232
+      }
+    },
+    "decode": {
+      "h": 240,
+      "w": 240,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 2012,
+      "raw_bytes": 172800,
+      "n": 694,
+      "decode_fps_per_core": 2952.4375748799584,
+      "decode_MBps_raw": 510.1812129392568,
+      "load_decode_fps_per_core": 3408.328846168543
+    },
+    "state_bytes": 12,
+    "size": 240
+  },
+  "MujocoInvertedPendulum": {
+    "cpu": {
+      "size": 240,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.00038589438336202877,
+        "fps": 2591.3826246645444,
+        "us_per_frame": 385.89438336202875,
+        "gb_per_s": 0.44779091754203326
+      }
+    },
+    "decode": {
+      "h": 240,
+      "w": 240,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 3143,
+      "raw_bytes": 172800,
+      "n": 694,
+      "decode_fps_per_core": 4654.794192022614,
+      "decode_MBps_raw": 804.3484363815077,
+      "load_decode_fps_per_core": 4423.766487524822
+    },
+    "state_bytes": 8,
+    "size": 240
+  },
+  "MujocoPusher": {
+    "cpu": {
+      "size": 240,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.002139033783168998,
+        "fps": 467.50079772863194,
+        "us_per_frame": 2139.0337831689976,
+        "gb_per_s": 0.0807841378475076
+      }
+    },
+    "decode": {
+      "h": 240,
+      "w": 240,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 3379,
+      "raw_bytes": 172800,
+      "n": 694,
+      "decode_fps_per_core": 3378.2060173938985,
+      "decode_MBps_raw": 583.7539998056658,
+      "load_decode_fps_per_core": 3261.326487552966
+    },
+    "state_bytes": 44,
+    "size": 240
+  },
+  "MujocoReacher": {
+    "cpu": {
+      "size": 240,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.00048215646675089376,
+        "fps": 2074.0155301425216,
+        "us_per_frame": 482.15646675089374,
+        "gb_per_s": 0.3583898836086277
+      }
+    },
+    "decode": {
+      "h": 240,
+      "w": 240,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 4971,
+      "raw_bytes": 172800,
+      "n": 694,
+      "decode_fps_per_core": 3236.7230289529766,
+      "decode_MBps_raw": 559.3057394030744,
+      "load_decode_fps_per_core": 3132.252218422943
+    },
+    "state_bytes": 16,
+    "size": 240
+  }
+}

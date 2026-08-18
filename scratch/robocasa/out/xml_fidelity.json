@@ -1,0 +1,27 @@
+{
+  "live": {
+    "ntex": 76,
+    "nmat": 234,
+    "texdata_MB": 388.691328,
+    "n_mat_with_texture": 170,
+    "n_geom_with_material": 360,
+    "n_tex_named": 75,
+    "n_mesh_with_texcoord": 163
+  },
+  "dumped": {
+    "ntex": 76,
+    "nmat": 234,
+    "texdata_MB": 388.691328,
+    "n_mat_with_texture": 170,
+    "n_geom_with_material": 360,
+    "n_tex_named": 75,
+    "n_mesh_with_texcoord": 163
+  },
+  "same_shape": true,
+  "pixels": {
+    "mean": 15.78106689453125,
+    "max": 252,
+    "exact": 0.79241943359375,
+    "within8": 0.79412841796875
+  }
+}

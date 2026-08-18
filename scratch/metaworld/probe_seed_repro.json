@@ -1,0 +1,37 @@
+[
+ {
+  "task": "reach-v3",
+  "reset_seed_frame_maxdiff": 143,
+  "reset_seed_target_maxdiff": 0.03634615901381105,
+  "explicit_seed_frame_maxdiff": 144,
+  "explicit_seed_target_maxdiff": 0.07496336387003423
+ },
+ {
+  "task": "pick-place-v3",
+  "reset_seed_frame_maxdiff": 129,
+  "reset_seed_target_maxdiff": 0.06672774675087507,
+  "explicit_seed_frame_maxdiff": 130,
+  "explicit_seed_target_maxdiff": 0.08552004717144937
+ },
+ {
+  "task": "door-open-v3",
+  "reset_seed_frame_maxdiff": 203,
+  "reset_seed_target_maxdiff": 0.03702286725978021,
+  "explicit_seed_frame_maxdiff": 158,
+  "explicit_seed_target_maxdiff": 0.03951927506731684
+ },
+ {
+  "task": "button-press-v3",
+  "reset_seed_frame_maxdiff": 157,
+  "reset_seed_target_maxdiff": 0.030554844573749268,
+  "explicit_seed_frame_maxdiff": 151,
+  "explicit_seed_target_maxdiff": 0.037301023715718015
+ },
+ {
+  "task": "drawer-open-v3",
+  "reset_seed_frame_maxdiff": 165,
+  "reset_seed_target_maxdiff": 0.019377089964834893,
+  "explicit_seed_frame_maxdiff": 163,
+  "explicit_seed_target_maxdiff": 0.0014798910249823882
+ }
+]

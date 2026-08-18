@@ -1,0 +1,42 @@
+{
+ "sprite_sizes": {
+  "misc_assets/enemyFloating_1b.png": [
+   46,
+   46
+  ],
+  "misc_assets/yellowCrystal.png": [
+   36,
+   34
+  ],
+  "misc_assets/enemyWalking_1b.png": [
+   48,
+   48
+  ],
+  "misc_assets/enemySpikey_1b.png": [
+   44,
+   44
+  ],
+  "misc_assets/tileStone_slope.png": [
+   16,
+   16
+  ],
+  "misc_assets/enemyFlying_1.png": [
+   64,
+   64
+  ],
+  "misc_assets/enemyFlying_2.png": [
+   64,
+   64
+  ],
+  "misc_assets/enemyFlying_3.png": [
+   64,
+   64
+  ]
+ },
+ "enemy_sprites_same_size": false,
+ "z0_order": {
+  "frames": 360,
+  "changed_when_reversed": 0,
+  "frames_with_world_overlap": 0
+ }
+}

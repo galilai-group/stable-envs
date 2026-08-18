@@ -1,0 +1,277 @@
+{
+  "AntmazeGiantNavigate": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0028055096006331342,
+        "fps": 356.4414820659764,
+        "us_per_frame": 2805.509600633134,
+        "gb_per_s": 0.0536544234124273
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 9498,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 3067.7643622474775,
+      "decode_MBps_raw": 461.78443392038827,
+      "load_decode_fps_per_core": 3882.4077078827754
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeGiantStitch": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0025673066168868295,
+        "fps": 389.51327177765046,
+        "us_per_frame": 2567.3066168868295,
+        "gb_per_s": 0.05863265377414617
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 9498,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 4063.3620595481234,
+      "decode_MBps_raw": 611.6497640996599,
+      "load_decode_fps_per_core": 3864.8133124657056
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeLargeExplore": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0026296596333850175,
+        "fps": 380.2773512223536,
+        "us_per_frame": 2629.6596333850175,
+        "gb_per_s": 0.05724238912479845
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 9437,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 3121.7802722868764,
+      "decode_MBps_raw": 469.9153408267989,
+      "load_decode_fps_per_core": 3024.7666066928086
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeLargeNavigate": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.002274798466047893,
+        "fps": 439.5993820662908,
+        "us_per_frame": 2274.7984660478933,
+        "gb_per_s": 0.06617201578367463
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 9437,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 3132.8391737062975,
+      "decode_MBps_raw": 471.58001513966155,
+      "load_decode_fps_per_core": 3017.1695384863024
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeLargeStitch": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0022902668337337674,
+        "fps": 436.6303459801336,
+        "us_per_frame": 2290.2668337337673,
+        "gb_per_s": 0.06572509271969755
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 9437,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 3118.3507491904484,
+      "decode_MBps_raw": 469.39910157413976,
+      "load_decode_fps_per_core": 3007.6574999343966
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeMediumExplore": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0024449399672448633,
+        "fps": 409.00799749569023,
+        "us_per_frame": 2444.9399672448635,
+        "gb_per_s": 0.06156715584703126
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 7952,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 4230.570462758221,
+      "decode_MBps_raw": 636.8193106180694,
+      "load_decode_fps_per_core": 4073.667072658787
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeMediumNavigate": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.002162000915268436,
+        "fps": 462.5344942908311,
+        "us_per_frame": 2162.000915268436,
+        "gb_per_s": 0.06962439235661022
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 7952,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 4210.518285820274,
+      "decode_MBps_raw": 633.8008965279543,
+      "load_decode_fps_per_core": 4033.646930485897
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeMediumStitch": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0021662884663480025,
+        "fps": 461.6190389850672,
+        "us_per_frame": 2166.2884663480027,
+        "gb_per_s": 0.0694865907003442
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 7952,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 4210.329198196392,
+      "decode_MBps_raw": 633.7724335461064,
+      "load_decode_fps_per_core": 3992.5259301065844
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeTeleportExplore": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0026937436836306007,
+        "fps": 371.2305688461829,
+        "us_per_frame": 2693.7436836306006,
+        "gb_per_s": 0.05588059506727822
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 10244,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 4007.4647058573655,
+      "decode_MBps_raw": 603.2356472432974,
+      "load_decode_fps_per_core": 3835.947785065954
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeTeleportNavigate": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.0023727615674336753,
+        "fps": 421.4498471844253,
+        "us_per_frame": 2372.7615674336753,
+        "gb_per_s": 0.06344000259697719
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 10244,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 3050.766142076519,
+      "decode_MBps_raw": 459.2257258344943,
+      "load_decode_fps_per_core": 2945.911660644007
+    },
+    "state_bytes": 60,
+    "size": 224
+  },
+  "AntmazeTeleportStitch": {
+    "cpu": {
+      "size": 224,
+      "frames": 60,
+      "set_state_render": {
+        "seconds_per_frame": 0.002378957784579446,
+        "fps": 420.3521418001038,
+        "us_per_frame": 2378.9577845794456,
+        "gb_per_s": 0.06327476720088603
+      }
+    },
+    "decode": {
+      "h": 224,
+      "w": 224,
+      "jpeg_quality": 90,
+      "jpeg_bytes": 10244,
+      "raw_bytes": 150528,
+      "n": 797,
+      "decode_fps_per_core": 3096.3908496519753,
+      "decode_MBps_raw": 466.09352181641253,
+      "load_decode_fps_per_core": 2977.793773761405
+    },
+    "state_bytes": 60,
+    "size": 224
+  }
+}

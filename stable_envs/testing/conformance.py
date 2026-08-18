@@ -1,0 +1,958 @@
+"""The env contract, asserted over the registry. Add an env, re-run pytest, get covered.
+
+These checks are the repo's whole warrant. The claim "you never need to store frames again" is only
+worth making if the regenerated frame is the frame you would have stored, and that is an empirical
+question with a number attached, not a design intention. Each check below corresponds to a way the claim
+can be false:
+
+  render parity        the GPU frame must match the OFFICIAL renderer on states the env actually
+                       reaches. Reported as interior-pixel agreement (pixels whose neighbourhood in the
+                       reference is uniform) separately from all-pixel agreement, because edge pixels
+                       are anti-aliasing artifacts of two different rasterizers and neither is ground
+                       truth there — folding them together lets a real geometry error hide inside a
+                       plausible-looking aggregate.
+  state round-trip     set_state(get_state()) must be the identity, and rendering must depend on every
+                       state dimension. A dimension the render ignores means the state is not minimal or
+                       the renderer is wrong; both are silent.
+  batch invariance     frame i of a batch must equal the frame rendered alone. Batching is the entire
+                       performance story, so a batch-dependent render would make every fast number a lie.
+  backend agreement    the fused kernel must agree with the readable torch implementation. The kernel is
+                       the thing that is fast; the torch path is the thing that is obviously correct.
+  variation coverage   every declared variation must actually change the picture. A knob wired into the
+                       space but not into ``scene()`` looks supported and does nothing.
+  determinism          the same states must render identically twice.
+  simulator agreement  where an env ALSO ships a batched GPU ``step``, how far it drifts from the
+                       official simulator on identical actions from identical states. This is a
+                       different claim from render parity and its strength differs by env: exact for a
+                       finite discrete transition (MiniGrid), a few ulps for a published closed form
+                       (classic control), a distribution for a contact solver (PushT).
+                       ``check_step_matches_reference`` reports all three in the same shape so they can
+                       be compared — and never in the same words.
+
+Helpers here are plain functions returning numbers so they can be used from a benchmark or a report,
+not only from pytest.
+
+ONE RULE FOR ENV AUTHORS, learned three times at increasing cost:
+
+    In this process an EGL context is created and NEVER released. Anything that wants to bound how
+    many exist must bound how many are CREATED.
+
+Releasing one corrupts rendering in every other live context, and the corruption is silent — it shows
+up as pixel differences in unrelated environments, which reads exactly like a state-sufficiency
+violation or a broken renderer. It has appeared as: a reference-env pool that closed the oldest entry;
+this suite building two reference envs per env for `test_state_is_sufficient` (now one, driven through
+two histories); and a bake path that constructed and closed a ``mujoco.Renderer`` per baked plate,
+~175 releases across 25 envs. Cache renderers by content and keep them; do not close them.
+
+WHAT THAT RULE IS AND IS NOT, now measured rather than inferred (H200, driver 590.48.01, MuJoCo 3.9,
+``scratch``-run probe): **96 simultaneous live EGL contexts were held with zero pixel difference, and
+closing one of 96 changed nothing (0/255) in the survivors.** So the "~22 contexts for the whole
+package" figure that used to appear in this file was an assumption, not a measurement, and it was low
+by more than 4x. Two things follow, and they point in opposite directions:
+
+  * a test is not obliged to keep the context count in the low tens, so bounding distinct static-scene
+    style values is a COST argument (each distinct value re-bakes a plate through MuJoCo) rather than a
+    correctness one;
+  * the failures that produced the rule were real, and on a healthy node they do not reproduce. Every
+    instance traced back to a node whose EGL rasterizer was already returning different pixels for the
+    same scene. ``check_reference_renderer_is_stable`` below turns that into a one-line diagnosis
+    instead of 25 confusing parity failures followed by SIGABRT.
+
+The rule is therefore kept as written — do not close contexts, do not scale creation with batch — but
+it is now a cheap invariant rather than a scarce budget, and a suite that trips it should suspect its
+NODE first.
+"""
+from __future__ import annotations
+
+import hashlib
+
+import numpy as np
+import torch
+
+
+#: ``(env class, output size)`` -> the OFFICIAL reference env. Built once per process, never dropped.
+_REFERENCE_ENVS: dict = {}
+
+
+def reference_env(cls, size: int):
+    """The reference env for ``cls`` at ``size``, built once per process and kept alive forever.
+
+    Not a speed optimisation, though it is worth about two minutes on the full run. ``reference_env()``
+    returns a LIVE renderer, and for the MuJoCo families that renderer owns an EGL context. A caller
+    that binds one to a local drops it the moment the function returns, and CPython frees it there and
+    then — so the conformance suite was RELEASING contexts while other tests were still using theirs,
+    which is the one thing the module docstring says must never happen. Measured on the full 44-env
+    run with ``GLContext.__init__``/``free`` instrumented: **83 contexts created and 50 released
+    mid-run**, most of them a parity test's reference env being collected while the next env's was
+    being built.
+
+    Keying on the CLASS and not on ``reference_id`` is deliberate. MiniGrid registers a top-down and a
+    POV class against the same official id, and they drive it differently (``get_full_render`` versus
+    ``get_pov_render``, and a different ``_se_tile``), so sharing one env between them would compare a
+    frame against the wrong reference and the mistake would look like a renderer bug.
+
+    Failures are not cached: a missing optional dependency should keep raising ``ImportError`` so the
+    caller can skip with the reason, rather than being turned into a ``KeyError`` on the second call.
+    """
+    key = (cls, int(size))
+    hit = _REFERENCE_ENVS.get(key)
+    if hit is None:
+        hit = _REFERENCE_ENVS[key] = cls.reference_env(size=int(size))
+    return hit
+
+
+def frames_digest(frames) -> str:
+    """sha256 of a uint8 frame stack. The unit of comparison across a process boundary.
+
+    Shipping pixels between processes to compare them costs more than the render does; a digest is 32
+    bytes and any difference at all changes it. ``.contiguous()`` first, because a strided view hashes
+    its buffer rather than its logical contents and two equal frames would then digest differently.
+    """
+    if torch.is_tensor(frames):
+        frames = frames.detach().cpu().contiguous().numpy()
+    a = np.ascontiguousarray(frames)
+    h = hashlib.sha256()
+    h.update(str(a.shape).encode())
+    h.update(str(a.dtype).encode())
+    h.update(a.tobytes())
+    return h.hexdigest()
+
+
+def check_reference_renderer_is_stable(cls, size: int, n: int = 4) -> dict:
+    """Is THIS MACHINE's offscreen rasterizer deterministic at all? Ask before blaming the code.
+
+    Every EGL incident recorded in this repo — frames 69-90/255 apart on identical states, then
+    ``SIGABRT`` — was first diagnosed as a state-sufficiency violation or a context-budget problem, and
+    at least one of them was neither: the node's own rasterizer was returning different pixels for the
+    same scene. The measured context budget (96 live, and closing one harmless) does not support the
+    scarcity reading, and the same suite passes on a healthy node and fails on a flagged one.
+
+    So this asks the cheapest possible question first: render the same states twice through the SAME
+    reference env and diff. It costs two frames and it converts "25 envs failed and then the
+    interpreter aborted" into one line naming the node.
+    """
+    ref = reference_env(cls, size)
+    env = cls(batch=1, size=size, device="cuda")
+    st = env.sample_states(n, rng=np.random.default_rng(0))
+    a = cls.reference_render(ref, st)
+    b = cls.reference_render(ref, st)
+    return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
+
+
+def interior_mask(frames: np.ndarray) -> np.ndarray:
+    """(N,H-1,W-1) bool: pixels whose 3x3 neighbourhood in ``frames`` is a single flat colour.
+
+    A disagreement at an interior pixel is a real error — wrong colour, wrong shape, wrong place. A
+    disagreement at an edge pixel is a sub-pixel coverage rule landing on a different side of a
+    rounding, which two independent rasterizers are entitled to disagree about.
+
+    WHERE THIS PREMISE FAILS, measured rather than assumed. "Flat 3x3 in the reference" implies "no
+    rounding ambiguity here" only for a renderer that fills flat-coloured primitives. For a renderer
+    whose output is a smooth per-pixel function it is false: the quantisation contour of a slow ramp
+    can sit arbitrarily far from any 3x3 non-flatness, so a pixel on the contour is classified
+    interior while being exactly where two implementations may round apart. The swm nav family is the
+    worked example — a normalised Gaussian alpha with a 41 px tail, where the reference is constant
+    over a 7x7 patch around pixels whose underlying float is still moving — and it costs those envs a
+    declared ``parity_interior_min`` of 0.999995 (about 2 pixels in 2.3 million, one in eight draws).
+    See ``stable_envs.envs.swm_nav``.
+
+    The mask is deliberately NOT widened to compensate. Doing so would relax the strong claim for
+    every flat-shaded env in the registry — where the 3x3 test is exactly right — in order to
+    accommodate one family, and this repo's rule is that such a family declares a floor and names its
+    mechanism instead.
+    """
+    import scipy.ndimage as ndi
+    out = []
+    for f in frames:
+        g = f.astype(np.int16)
+        flat = (np.abs(np.diff(g, axis=0)).sum(-1)[:, :-1]
+                + np.abs(np.diff(g, axis=1)).sum(-1)[:-1]) == 0
+        out.append(ndi.minimum_filter(flat, size=3))
+    return np.stack(out)
+
+
+def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
+    """Agreement between two uint8 frame stacks, split into all-pixel and interior-pixel."""
+    d = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1)
+    res = {"mean_abs": float(d.mean()), "exact_frac": float((d == 0).mean()),
+           "within8_frac": float((d <= 8).mean()), "max_abs": int(d.max())}
+    try:
+        m = interior_mask(b)
+        di = d[:, :-1, :-1][m]
+        if di.size == 0:
+            # No flat 3x3 neighbourhood anywhere, so "interior agreement" is undefined — NOT zero.
+            # Reporting 0.0 (or the NaN that ``empty.mean()`` yields) makes a BIT-EXACT renderer fail
+            # the parity assertion, because NaN >= floor is False and no tolerance can rescue it. This
+            # is reachable: Craftax's dithered pixel art has no flat neighbourhood at 7px or 16px, and
+            # it reported interior_frac 0.000 alongside exact_frac 1.0. None is the honest value, and
+            # the test skips the interior check on it and falls back to all-pixel agreement.
+            res.update(interior_frac=float(m.mean()), interior_exact_frac=None,
+                       interior_mean_abs=None, interior_px=0, interior_bad_px=0)
+        else:
+            # The COUNTS, not only the fraction. An interior disagreement is reported as a number
+            # like 0.9999996, and nobody can act on that: the decision an env author has to make is
+            # whether this is a geometry error or a handful of pixels on a quantisation boundary, and
+            # that is a question about how many pixels, not about how many nines. Measured on the two
+            # families where it came up, MujocoPusher and the swm nav envs, the answer was 1-2 pixels
+            # of ~3 million, on about a fifth of draws — which reads as a rounding boundary at a
+            # glance and as a passing test with 0.9999996 in it.
+            res.update(interior_frac=float(m.mean()), interior_exact_frac=float((di == 0).mean()),
+                       interior_mean_abs=float(di.mean()), interior_px=int(di.size),
+                       interior_bad_px=int((di != 0).sum()))
+    except ImportError:                       # scipy is optional; the coarse numbers still stand
+        res.update(interior_frac=None, interior_exact_frac=None, interior_mean_abs=None,
+                   interior_px=None, interior_bad_px=None)
+    return res
+
+
+def ssim(a: np.ndarray, b: np.ndarray, win: int = 7) -> float:
+    """Mean SSIM over a uint8 frame stack, on luminance, with the standard 8-bit constants.
+
+    Written out rather than taken from ``skimage``, which is not a dependency of this repo and would
+    be one for eight lines of uniform filtering. Luminance rather than per-channel because the visual
+    tier's residual is a colour-and-texture error that lands in luma, and averaging three channels
+    would report the same disagreement three times.
+
+    It exists for the VISUAL tier and for nothing else. A parity env is scored by counting pixels that
+    are bit-identical, which is a statement no perceptual metric can make; SSIM is here because
+    "6.6/255 mean" does not by itself say whether a picture reads as the same picture, and the visual
+    tier's whole claim is that it does.
+    """
+    import scipy.ndimage as ndi
+    f = lambda x: ndi.uniform_filter(x, size=win, mode="nearest")
+    x = a.astype(np.float64) @ [0.299, 0.587, 0.114]
+    y = b.astype(np.float64) @ [0.299, 0.587, 0.114]
+    c1, c2 = (0.01 * 255) ** 2, (0.03 * 255) ** 2
+    ux, uy = f(x), f(y)
+    vx, vy = f(x * x) - ux * ux, f(y * y) - uy * uy
+    vxy = f(x * y) - ux * uy
+    s = ((2 * ux * uy + c1) * (2 * vxy + c2)) / ((ux ** 2 + uy ** 2 + c1) * (vx + vy + c2))
+    return float(s.mean())
+
+
+def reference_accepts_style(cls) -> bool:
+    """Can this family's official renderer be driven at a NON-DEFAULT appearance?
+
+    ``mujoco.Renderer`` takes no appearance argument, so an env that wants to be measured under its
+    own declared variation has to write the drawn camera and lights into the reference MODEL, and
+    whether it does is a per-family fact. It matters because measuring one side at a drawn camera and
+    the other at the default reports mean 41.6/255 and SSIM 0.22 — a number about the harness, which
+    looks exactly like a catastrophic renderer regression.
+    """
+    import inspect
+    fn = getattr(cls, "reference_render", None)
+    if fn is None:
+        return False
+    try:
+        return "style" in inspect.signature(fn).parameters
+    except (TypeError, ValueError):                                  # pragma: no cover
+        return False
+
+
+def check_visual_fidelity_under_variation(env, n: int = 64, seed: int = 0) -> dict:
+    """``check_visual_fidelity`` with a DRAWN appearance per state, from the env's own space.
+
+    The declaration every visual-tier env carries is measured at the DEFAULT appearance, which is the
+    right thing for a renderer: a rasterizer that agrees with the official one at one camera agrees at
+    another, because it is the same arithmetic pointed somewhere else. That reasoning does not survive
+    a LEARNED decoder, and the difference is measured: a corrector fitted at one camera pose scores
+    3.25/255 there and 9.06 under the env's own declared camera variation — worse than not correcting
+    at all (8.91) and worse than the render it replaces (7.93). A default-appearance declaration would
+    have said 3.25 and the frames a consumer got, using the variation knobs this family exists for,
+    would have been the worst of the three.
+
+    So this is a separate measurement and it is asserted separately. It is meaningful for any visual
+    env whose reference can be driven at an appearance, and it is where a corrector's training
+    distribution shows up.
+    """
+    cls = type(env)
+    if not reference_accepts_style(cls):
+        return {"skipped": f"{cls.__name__}.reference_render does not take a style, so the official "
+                           f"renderer cannot be driven at this env's declared appearance and the two "
+                           f"sides would be pictures of different scenes"}
+    ref = reference_env(cls, env.size)
+    rng = np.random.default_rng(int(seed))
+    states = env.sample_states(int(n), rng=rng)
+    style = env.sample_style(int(n), rng=rng)
+    official = cls.reference_render(ref, states, style=style)
+    ours = env.render(states, style=style).cpu().numpy()
+    if ours.shape != official.shape:
+        raise AssertionError(f"shape {ours.shape} vs official {official.shape}")
+    out = pixel_agreement(ours, official)
+    out["ssim"] = ssim(ours, official)
+    out["n_states"] = int(n)
+    out["seed"] = int(seed)
+    return out
+
+
+def check_visual_fidelity(env, n: int = 64) -> dict:
+    """How close is a VISUAL-tier env's frame to the official one? Measured the way the env declares.
+
+    Deliberately a different function from ``pixel_agreement``, and deliberately reporting different
+    headline numbers. A parity env is judged by how many interior pixels are bit-identical, because
+    that is a claim about identity. A visual env is a different render of the same scene and will
+    never be bit-identical, so it is judged by how far off it is (``mean_abs``), how much of the frame
+    is close (``within8_frac``) and whether it reads as the same picture (``ssim``) -- and the
+    interior-exact number is still reported, because it is the honest reminder of what the tier gave
+    up rather than a threshold anyone should pass.
+    """
+    cls = type(env)
+    ref = reference_env(cls, env.size)
+    states = env.sample_states(int(n))
+    official = cls.reference_render(ref, states)
+    ours = env.render(states).cpu().numpy()
+    if ours.shape != official.shape:
+        raise AssertionError(f"shape {ours.shape} vs official {official.shape}")
+    out = pixel_agreement(ours, official)
+    out["ssim"] = ssim(ours, official)
+    out["n_states"] = int(n)
+    return out
+
+
+def check_state_roundtrip(env, n: int = 64) -> dict:
+    """set_state(get_state()) is the identity, to float32."""
+    st = env.sample_states(env.B)
+    env.set_state(st)
+    back = env.get_state().cpu().numpy()
+    return {"max_abs_err": float(np.abs(back - st).max())}
+
+
+def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4) -> dict:
+    """Every state dimension must change the frame. A dead dimension is a wrong contract.
+
+    Substitution first, additive nudge second, and a dimension is only declared dead if EVERY attempt
+    leaves the frame bit-identical. A single fixed nudge is not a sound probe: it was ``+25.0``, and any
+    integer dimension whose renderer wraps it modulo a period dividing 25 is invariant to exactly that
+    step. Measured on a 25x25 MiniGrid: ``agent_x``/``agent_y`` were reported dead while being
+    demonstrably live, and a 22x22 grid of the same env family reported nothing — the probe's verdict
+    depended on the grid width, which is a property of the probe, not of the env.
+
+    Substituting the value from ANOTHER sampled state is the robust form, because it lands somewhere the
+    env genuinely reaches: it respects integer alphabets, bounded ranges and wrap-around without knowing
+    anything about them. Several donors are tried since one may coincide with the original value.
+    """
+    st = env.sample_states(env.B)
+    base = env.render(st).cpu().numpy()
+    pool = [env.sample_states(env.B) for _ in range(max(1, donors))]
+    dead = []
+    for d in range(env.state_dim):
+        alive = False
+        for donor in pool:
+            pert = st.copy()
+            pert[:, d] = donor[:, d]
+            if np.array_equal(pert[:, d], st[:, d]):
+                continue                      # donor happened to match; proves nothing either way
+            if not np.array_equal(env.render(pert).cpu().numpy(), base):
+                alive = True
+                break
+        if not alive:                          # fall back to an additive nudge
+            for step in (eps, -eps, 1.0, 0.5):
+                pert = st.copy()
+                pert[:, d] = pert[:, d] + step
+                if not np.array_equal(env.render(pert).cpu().numpy(), base):
+                    alive = True
+                    break
+        if not alive:
+            dead.append(env.state_names[d] if env.state_names else str(d))
+    return {"dead_dims": dead}
+
+
+def check_batch_invariance(env, n: int = 8) -> dict:
+    """Frame i of a batch equals the frame rendered on its own."""
+    st = env.sample_states(env.B)
+    batched = env.render(st).cpu().numpy()
+    worst = 0
+    for i in range(min(n, env.B)):
+        one = env.render(st[i:i + 1]).cpu().numpy()[0]
+        worst = max(worst, int(np.abs(one.astype(np.int16) - batched[i].astype(np.int16)).max()))
+    return {"max_abs_diff": worst}
+
+
+def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
+    """The fused kernel agrees with the readable torch reference implementation.
+
+    Deliberately run on a few environments at a reduced resolution. ``render_torch`` allocates a
+    ``(B, 3, R, R)`` float canvas and touches it once per primitive, so on highway-env's 604-primitive
+    roundabout at 600x600 it took minutes and pushed the whole suite past 17. What this check is for is
+    whether the two implementations draw the same picture, and that is a property of the arithmetic, not
+    of the resolution — a disagreement in an edge rule or a normal direction shows up at 96px on four
+    scenes just as surely as at 600px on sixteen, and shows up in seconds.
+    """
+    from ..render.raster2d import HAVE_TRITON, render_torch, render_triton
+    if not HAVE_TRITON:
+        return {"skipped": "triton unavailable"}
+    b_n = min(int(n), env.B)
+    st = env.sample_states(env.B)[:b_n]
+    try:
+        sc = env.scene(torch.as_tensor(st, device=env.device))
+    except NotImplementedError:
+        return {"skipped": "env renders without a Scene2D (tilemap path)"}
+    size = min(int(env.size), int(max_size))
+    a = render_triton(sc, size, env.ss).cpu().numpy()
+    b = render_torch(sc, size, env.ss).cpu().numpy()
+    return pixel_agreement(a, b)
+
+
+def check_variations_do_something(env) -> dict:
+    """Every declared variation leaf must change the picture when moved off its default."""
+    st = env.sample_states(env.B)
+    base = env.render(st).cpu().numpy()
+    inert = []
+    for path in env.variation_space.names():
+        node = env.variation_space
+        for part in path.split("."):
+            node = node[part]
+        default = node.value
+        try:
+            if hasattr(node, "n"):                        # Discrete: flip it
+                alt = 0 if int(default) != 0 else 1
+            else:                                          # Box/RGBBox: go to the far end of the range
+                lo = np.broadcast_to(node.low, node.shape).astype(np.float64)
+                hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
+                d = np.asarray(default, np.float64)
+                alt = np.where(np.abs(d - lo) > np.abs(d - hi), lo, hi).astype(node.dtype)
+            frames = env.render(st, variation={path: alt}).cpu().numpy()
+            if np.array_equal(frames, base):
+                inert.append(path)
+        except Exception as e:                             # a variation that cannot be set is inert too
+            inert.append(f"{path} ({type(e).__name__}: {e})")
+    return {"inert_variations": inert}
+
+
+def check_per_env_variation(env) -> dict:
+    """A variation given one value PER ENVIRONMENT must produce that many different frames.
+
+    Separate from ``check_variations_do_something``, which only moves a knob for the whole batch. Both
+    passed while per-env values were silently collapsing to environment 0: a batch of 8 different
+    backgrounds rendered as 1 unique frame. That is the repo's headline capability — domain
+    randomisation as a tensor rather than a loop — so it gets its own check.
+    """
+    if env.B < 2:
+        return {"skipped": "batch too small"}
+    st = env.sample_states(env.B)
+    collapsed = []
+    for path in env.variation_space.names():
+        node = env.variation_space
+        for part in path.split("."):
+            node = node[part]
+        if not hasattr(node, "low"):
+            continue                                   # Discrete: nothing continuous to spread
+        lo = np.broadcast_to(node.low, node.shape).astype(np.float64)
+        hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
+        # TWO distinct values, not a B-wide ramp. What is being tested is whether per-environment
+        # values stay per-environment, and two groups already falsify a collapse to environment 0.
+        # A ramp of B distinct values is not merely wasteful: envs that bake a static plate per
+        # distinct value (the OGBench mazes) then run B MuJoCo bakes for ONE knob and thrash the plate
+        # cache, which is minutes of wall time per env. It used to be justified by an EGL context
+        # budget; that budget was never measured and the measurement does not support it (96 live
+        # contexts held, and closing one of them harmless — see the module docstring). The cost
+        # argument stands on its own and is the reason this stays at two values.
+        half = np.zeros((env.B, 1))
+        half[env.B // 2:] = 1.0
+        ramp = half * (hi - lo).reshape(1, -1) + lo.reshape(1, -1)
+        try:
+            f = env.render(st, variation={path: ramp.astype(node.dtype)}).cpu().numpy()
+        except Exception:
+            continue                                   # env may not accept a per-env form for this leaf
+        if len(np.unique(f.reshape(env.B, -1), axis=0)) < 2:
+            collapsed.append(path)
+    return {"collapsed_variations": collapsed}
+
+
+def check_style_is_state(env) -> dict:
+    """``(state, style)`` must fully determine the frame — the claim that lets a dataset store states.
+
+    A fresh env handed the stored pair must reproduce the frame bit-for-bit. If it does not, the frame
+    depends on something the dataset did not record, and "regenerate live from states" is false: it
+    would reproduce whatever appearance happened to be configured at render time, which is a
+    coincidence dressed as reproduction.
+    """
+    if env.style_dim == 0:
+        return {"skipped": "env declares no style"}
+    st = env.sample_states(env.B)
+    sty = env.sample_style(env.B)
+    a = env.render(st, style=sty).cpu().numpy()
+    fresh = type(env)(batch=env.B, size=env.size, supersample=env.ss, device=str(env.device))
+    fresh.set_state(st, style=sty)
+    b = fresh.render().cpu().numpy()
+    return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
+
+
+def check_default_style_is_official(env) -> dict:
+    """Rendering with ``default_style()`` must equal rendering with no style at all.
+
+    The default is what parity against the official renderer is measured under, so if the two paths
+    disagree then every parity number describes an appearance nobody gets by default.
+    """
+    if env.style_dim == 0:
+        return {"skipped": "env declares no style"}
+    st = env.sample_states(env.B)
+    a = env.render(st).cpu().numpy()
+    b = env.render(st, style=env.default_style()).cpu().numpy()
+    return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
+
+
+def check_colors_apply_exactly(env) -> dict:
+    """An RGB knob set to a colour must put THAT colour in the frame, not merely change it.
+
+    ``check_variations_do_something`` only asks whether a knob moves pixels; a knob wired to the wrong
+    primitive, or scaled, or with its channels swapped, passes that and is still wrong. This asks
+    whether the requested colour is literally present.
+    """
+    layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+    st = env.sample_states(env.B)
+    wrong = []
+    for path, (off, w) in layout.items():
+        node = env.variation_space
+        for part in path.split("."):
+            node = node[part]
+        if w != 3 or not hasattr(node, "high") or int(np.max(node.high)) != 255:
+            continue                                   # only RGB leaves have a checkable answer
+        for target in ([17, 33, 200], [200, 17, 33]):   # two, so a channel swap cannot pass both
+            sty = np.tile(env.default_style(), (env.B, 1))
+            sty[:, off:off + w] = np.asarray(target, np.float32)
+            f = env.render(st, style=sty).cpu().numpy()
+            if not (np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1) == 0).any():
+                wrong.append(f"{path}->{target}")
+    return {"colors_not_applied": wrong}
+
+
+def check_determinism(env) -> dict:
+    st = env.sample_states(env.B)
+    return {"identical": bool(np.array_equal(env.render(st).cpu().numpy(),
+                                             env.render(st).cpu().numpy()))}
+
+
+#: How an env declares the reference the step checker should drive. Every entry is optional except
+#: ``reference_sim_state``, because there is no defensible guess for "where does this reference keep
+#: its state" — a guessed attribute name gives a silent mismatch, which costs more than writing four
+#: lines. The rest fall back to the shapes that are actually common.
+STEP_REFERENCE_HOOKS = """
+    sim_state_names        tuple[str, ...]        the FULL dynamical state being compared, which is
+                                                  usually a SUPERSET of state_names (velocities are
+                                                  not drawn, so they are not in the render state).
+                                                  Defaults to state_names.
+    sim_state()            -> (B, D) tensor       read it off the GPU env. Defaults to get_state().
+    set_sim_state(v)       (B, D)                 write it. Defaults to set_state(v).
+    reference_sim_state(ref) -> (D,) float64      REQUIRED. Read it off the reference.
+    reference_step(ref, a)                        advance the reference one control step.
+                                                  Defaults to ref.step(a).
+    step_reference_reset(ref, seed) -> (D,)       reset and read. Defaults to reset(seed=)+read.
+    step_reference_actions(rng, steps, hold)      the action sequence, (steps, action_dim). Defaults
+                                                  to uniform over [action_low, action_high), resampled
+                                                  every ``hold`` steps.
+    step_reference_groups  ((name, dims, metric),...)  how the error is reported. metric is 'abs'
+                                                  (max |diff| over the dims), 'euclidean' (vector
+                                                  distance) or 'angle' (wrapped). Defaults to one
+                                                  'abs' group per dimension, named after it.
+    step_reference_control str                    the group that must agree to FLOAT PRECISION over
+                                                  every step because nothing chaotic acts on it.
+                                                  Defaults to none, and then the control is the
+                                                  first-step error, which no divergence can inflate.
+    step_reference_gate    str                    the group whose motion makes an episode informative;
+                                                  episodes where it never moved are excluded from the
+                                                  final-step statistics and counted. Defaults to none.
+    step_reference_hold    int                    default ``hold``.
+    step_reference_exact   bool                   the env CLAIMS bit-exactness, so exact_frac is the
+                                                  headline number and anything below 1.0 is a failure.
+"""
+
+
+def _wrap_pi(d: np.ndarray) -> np.ndarray:
+    return np.abs(np.angle(np.exp(1j * d)))
+
+
+def _group_error(diff: np.ndarray, dims, metric: str) -> np.ndarray:
+    """``(episodes, steps, D)`` signed differences -> ``(episodes, steps)`` error for one group."""
+    d = diff[..., list(dims)]
+    if metric == "euclidean":
+        return np.linalg.norm(d, axis=-1)
+    if metric == "angle":
+        return _wrap_pi(d).max(-1)
+    return np.abs(d).max(-1)
+
+
+def _default_actions(cls, rng, steps: int, hold: int) -> np.ndarray:
+    adim = int(getattr(cls, "action_dim", 1))
+    lo = np.broadcast_to(np.asarray(getattr(cls, "action_low", -1.0), np.float64), (adim,))
+    hi = np.broadcast_to(np.asarray(getattr(cls, "action_high", 1.0), np.float64), (adim,))
+    out = np.empty((int(steps), adim), np.float32)
+    a = None
+    for i in range(int(steps)):
+        if i % max(1, int(hold)) == 0:
+            a = rng.uniform(lo, hi).astype(np.float32)
+        out[i] = a
+    return out
+
+
+def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed: int = 0,
+                                 hold: int | None = None) -> dict:
+    """How far a batched GPU ``step`` drifts from the official CPU simulator on identical actions.
+
+    Rendering parity is a bit-exactness claim; simulation parity is only sometimes one, and the two
+    must never be stated in the same words. Three regimes show up in this repo and this function
+    reports all three the same way, so they can be compared:
+
+      * **exact.** A deterministic discrete transition (MiniGrid's grid) can be bit-identical to the
+        reference, and then the number to quote is ``exact_frac == 1.0`` over many (state, action)
+        pairs — not a tolerance.
+      * **near-exact.** A published closed-form integrator (the classic-control family) reimplemented
+        in the same float64 arithmetic differs only where CUDA's ``sin``/``cos`` differ from glibc's by
+        an ulp. The number to quote is a max deviation, and it is tiny.
+      * **not exact, and cannot be.** Contact is chaotic (PushT), so two solvers that disagree by a
+        micron at first touch disagree by centimetres later. The number to quote is a distribution over
+        episodes plus a control that chaos cannot inflate.
+
+    The reference is whatever the env DECLARES, through the hooks in ``STEP_REFERENCE_HOOKS``; this
+    function knows nothing about any particular env. Returned keys:
+
+      ``<group>_max_err``          max over every step and episode. The strongest statement.
+      ``<group>_mean_err``         mean at the final step, over the episodes the gate kept.
+      ``<group>_median_err``       median at the final step, ``<group>_p90_err`` its 90th percentile,
+                                   ``<group>_median_err_at_25`` the same median a quarter of the way in.
+      ``first_step_max_err``       the INTEGRATOR check: one step from a state the reference itself
+                                   produced, so no amount of divergence can be hiding in it.
+      ``control_max_err``          the declared control group over all steps, or the first-step error
+                                   when an env declares no control.
+      ``exact_frac``               fraction of compared numbers that are bit-identical.
+      ``<gate>_touched``           episodes where the gate group actually moved. One that never moved
+                                   agrees trivially and is evidence of nothing.
+
+    ``agent_max_err`` and ``block_median_err`` are also always present. They are PushT's own group
+    names, and the shared pytest asserts on them, so they are aliased to ``control_max_err`` and the
+    overall final-step median for envs that have no such groups — one env's vocabulary should not
+    decide whether another env can be checked at all.
+    """
+    cls = type(env)
+    if not hasattr(env, "step"):
+        raise ValueError(f"{cls.__name__} has no step(); there is no solver to compare. Envs that ship "
+                         f"a renderer alone are covered by the render-parity checks instead.")
+    if not hasattr(cls, "reference_sim_state"):
+        raise ValueError(
+            f"{cls.__name__} ships a step() but declares no reference_sim_state(ref), so this check "
+            f"cannot read the reference's state. Guessing an attribute name is what this function used "
+            f"to do and it produces a silent mismatch rather than an error. Declare:\n"
+            f"{STEP_REFERENCE_HOOKS}")
+
+    names = tuple(getattr(cls, "sim_state_names", None) or cls.state_names)
+    D = len(names)
+    groups = tuple(getattr(cls, "step_reference_groups", None)
+                   or tuple((n, (i,), "abs") for i, n in enumerate(names)))
+    control = str(getattr(cls, "step_reference_control", "") or "")
+    gate = str(getattr(cls, "step_reference_gate", "") or "")
+    hold = int(getattr(cls, "step_reference_hold", 8) if hold is None else hold)
+    steps, episodes = int(steps), int(episodes)
+
+    read = cls.reference_sim_state
+    advance = getattr(cls, "reference_step", None) or (lambda ref, a: ref.step(a))
+    reset = getattr(cls, "step_reference_reset", None) or (
+        lambda ref, sd: (ref.reset(seed=sd), np.asarray(read(ref), np.float64))[1])
+    make_acts = getattr(cls, "step_reference_actions", None) or (
+        lambda rng, n, h: _default_actions(cls, rng, n, h))
+
+    ref = reference_env(cls, env.size)
+    rng = np.random.default_rng(seed)
+    dev = env.device
+    single = cls(batch=1, size=env.size, device=str(dev))
+    get_sim = getattr(single, "sim_state", single.get_state)
+    set_sim = getattr(single, "set_sim_state", single.set_state)
+
+    diffs, exact, touched = [], [], []
+    for ep in range(episodes):
+        s0 = np.asarray(reset(ref, seed + ep), np.float64).reshape(D)
+        acts = np.asarray(make_acts(rng, steps, hold), np.float32).reshape(steps, -1)
+
+        cpu = np.empty((steps, D), np.float64)
+        for i, a in enumerate(acts):
+            advance(ref, a)
+            cpu[i] = np.asarray(read(ref), np.float64).reshape(D)
+
+        set_sim(torch.as_tensor(s0[None], dtype=torch.float64, device=dev))
+        gpu = np.empty((steps, D), np.float64)
+        for i, a in enumerate(acts):
+            single.step(torch.as_tensor(a, dtype=torch.float32, device=dev).view(1, -1))
+            gpu[i] = np.asarray(get_sim().detach().cpu().numpy(), np.float64).reshape(D)
+
+        diffs.append(gpu - cpu)
+        exact.append(gpu == cpu)
+        if gate:
+            g_dims = list(dict((n, d) for n, d, _ in groups)[gate])
+            touched.append(bool(np.linalg.norm(cpu[-1, g_dims] - s0[g_dims]) > 1e-6))
+    # The reference is NOT closed. It comes from the process-wide cache above, so closing it here
+    # would (a) release an EGL context while other envs hold live ones, which the module docstring
+    # forbids, and (b) hand the next caller a closed env out of the cache.
+
+    diff = np.stack(diffs)                                   # (episodes, steps, D)
+    m = np.array(touched, bool) if gate else np.ones(episodes, bool)
+    sel = m if m.any() else np.ones_like(m)
+    at25 = min(24, steps - 1)
+
+    out = {"env": cls.__name__, "episodes": episodes, "steps": steps,
+           "exact_claim": bool(getattr(cls, "step_reference_exact", False)),
+           "exact_frac": float(np.stack(exact).mean())}
+    if gate:
+        out[f"{gate}_touched"] = int(m.sum())
+    per_group, first = {}, 0.0
+    for name, dims, metric in groups:
+        e = _group_error(diff, dims, metric)                 # (episodes, steps)
+        per_group[name] = e
+        first = max(first, float(e[:, 0].max()))
+        out[f"{name}_max_err"] = float(e.max())
+        out[f"{name}_mean_err"] = float(e[sel][:, -1].mean())
+        out[f"{name}_median_err"] = float(np.median(e[sel][:, -1]))
+        out[f"{name}_p90_err"] = float(np.percentile(e[sel][:, -1], 90))
+        out[f"{name}_median_err_at_25"] = float(np.median(e[sel][:, at25]))
+    allg = np.stack(list(per_group.values())).max(0)         # worst group, per (episode, step)
+    out["first_step_max_err"] = first
+    out["max_err"] = float(allg.max())
+    out["median_err"] = float(np.median(allg[sel][:, -1]))
+    out["control_max_err"] = float(per_group[control].max()) if control else first
+    # PushT's group names, which the shared pytest asserts on. Present for every env so that adding a
+    # steppable env does not require the test to know its vocabulary.
+    out.setdefault("agent_max_err", out["control_max_err"])
+    out.setdefault("block_median_err", out["median_err"])
+    return out
+
+
+# ===================================================================== reproducibility
+#
+# Everything below asks the same question from a different angle: is the frame a function of
+# ``(state, style, size)`` and NOTHING ELSE? The parity checks above compare our pixels against the
+# official renderer's, which is a statement about correctness on one machine, in one process, at one
+# batch size. The claim the repo actually makes to a user is stronger and different — delete your
+# frames, keep the states, and get the same pixels back later, on another machine, in another process,
+# in whatever batch your loader happens to produce. Each check here is one way that can be false while
+# every parity number stays perfect.
+
+
+def uniform_style(env, n: int, groups: int = 2, seed: int = 0):
+    """``(n, style_dim)`` style with at most ``groups`` DISTINCT rows, or None if the env has no style.
+
+    Bounded on purpose. Envs that bake a static plate per distinct appearance (the OGBench mazes) pay
+    a full MuJoCo render per distinct row, so an n-wide ramp turns a one-second check into minutes and
+    evicts the plate cache for everything after it. Two groups already falsify every property these
+    checks are about: a batch that collapses to environment 0, an index that is permuted, a group that
+    is scattered back into the wrong rows.
+    """
+    if env.style_dim == 0:
+        return None
+    rng = np.random.default_rng(seed)
+    base = env.sample_style(int(groups), rng=rng)
+    idx = np.arange(n) % int(groups)
+    return base[idx]
+
+
+def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64),
+                                probes: int = 4) -> dict:
+    """Frame ``i`` must not depend on how many other environments were rendered beside it.
+
+    ``check_batch_invariance`` already compares a batch against single renders. This extends it to the
+    sizes a real loader produces — including odd ones, because a kernel whose grid is computed as
+    ``cdiv(H*W, BLOCK)`` and indexed with a 32-bit offset is exactly the kind of thing that is correct
+    at 1, 64 and 1024 and wrong at 7. ``states`` is the full stack; every probe row is re-rendered
+    inside a window of each size and compared against its row in the full-batch render.
+    """
+    n = len(states)
+    full = env.render(states, style=style).detach().cpu().numpy()
+    idx = np.linspace(0, n - 1, min(int(probes), n)).astype(int)
+    worst, where = 0, ""
+    for b in sizes:
+        b = min(int(b), n)
+        for i in idx:
+            lo = max(0, min(int(i) - b // 2, n - b))
+            sub = states[lo:lo + b]
+            k = None if style is None else style[lo:lo + b]
+            got = env.render(sub, style=k).detach().cpu().numpy()[int(i) - lo]
+            d = int(np.abs(got.astype(np.int16) - full[int(i)].astype(np.int16)).max())
+            if d > worst:
+                worst, where = d, f"row {int(i)} in a batch of {b}"
+    return {"max_abs_diff": worst, "worst_case": where, "batch_sizes": tuple(sizes), "n": n}
+
+
+def check_chunked_render_matches(env, states, style=None, chunks=(1, 7, 64, 4096)) -> dict:
+    """``render_states(..., chunk=c)`` must not depend on ``c``. The dataset path, not the env path.
+
+    This is the entry point ``StateDataset`` and ``TrajectoryDataset.all_frames`` go through, and the
+    chunk boundary is where a stale ``out`` view, a style row that is sliced with the wrong index, or a
+    non-blocking copy that is read before it lands would show up — none of which the single-call render
+    can reach.
+    """
+    from ..data import render_states
+    ref = None
+    worst, where = 0, ""
+    for c in chunks:
+        got = render_states(env, states, size=env.size, chunk=int(c), style=style,
+                            device=str(env.device)).detach().cpu().numpy()
+        if ref is None:
+            ref = got
+            continue
+        d = int(np.abs(got.astype(np.int16) - ref.astype(np.int16)).max())
+        if d > worst:
+            worst, where = d, f"chunk={c} vs chunk={chunks[0]}"
+    return {"max_abs_diff": worst, "worst_case": where, "chunks": tuple(chunks)}
+
+
+def _box_downsample(frames: np.ndarray, f: int) -> np.ndarray:
+    """``(N, f*H, f*W, 3)`` uint8 -> ``(N,H,W,3)`` by an exact ``f x f`` box average, rounded once."""
+    n, H, W, c = frames.shape
+    x = frames.astype(np.float64).reshape(n, H // f, f, W // f, f, c)
+    return np.clip(np.rint(x.mean(axis=(2, 4))), 0, 255).astype(np.uint8)
+
+
+def check_resolution_consistency(env, states, style=None, factor: int = 2) -> dict:
+    """Render at ``factor x S`` and box-downsample to ``S``; how far is that from rendering at ``S``?
+
+    These will NOT be identical and it would be wrong to assert that they are. Rendering at S asks
+    "what colour covers this pixel's centre"; rendering at 2S and averaging asks "what is the mean
+    colour over this pixel's area". They differ exactly where a shape edge crosses a pixel, which is
+    the same place two rasterizers are entitled to disagree, and the difference is a real property of
+    point sampling rather than a defect. The tile-atlas families differ for a second reason: their
+    atlas is resampled from the source art at the requested tile size, so 2S is a genuinely different
+    picture and not a supersampled one.
+
+    What is worth asserting is that the disagreement stays where geometry is, so the numbers returned
+    are the ones a bound can be written against: the fraction of pixels that agree exactly, the mean
+    absolute difference, and the worst single channel. A regression that moves a shape shows up in
+    ``exact_frac`` immediately; anti-aliasing does not move it at all.
+    """
+    S = int(env.size)
+    a = env.render(states, size=S, style=style).detach().cpu().numpy()
+    big = env.render(states, size=S * int(factor), style=style).detach().cpu().numpy()
+    # A render at S, deliberately last. No env stores the requested size any more — the highway family
+    # did, and one differently-sized call there rewrote every later frame and cascaded into four
+    # unrelated dataset round-trip failures — so this is now a belt rather than a repair, and it is
+    # kept because the cost is one frame and the failure it guards against is invisible at the point
+    # where it lands.
+    env.render(states[:1], size=S, style=None if style is None else style[:1])
+    if big.shape[-3] != a.shape[-3] * factor or big.shape[-2] != a.shape[-2] * factor:
+        return {"skipped": f"size={S*factor} is not a {factor}x frame ({big.shape} vs {a.shape})"}
+    d = np.abs(_box_downsample(big, factor).astype(np.int16) - a.astype(np.int16))
+    return {"exact_frac": float((d.max(-1) == 0).mean()), "mean_abs": float(d.mean()),
+            "max_abs": int(d.max()), "size": S, "factor": int(factor)}
+
+
+def check_input_form_invariance(env, states, style=None) -> dict:
+    """numpy or torch, CPU or CUDA, float32 or float64, contiguous or not — one answer.
+
+    Every one of these is a real call site. A loader hands numpy; a training step hands a CUDA tensor;
+    a corpus loaded from parquet is float64 until someone narrows it; and ``frames[:, t]`` — a strided
+    view into a ``(B, T, ...)`` buffer — is how a rollout indexes time, which has already crashed this
+    repo once. The states are generated in float32 and widened, never narrowed, so float64 carries the
+    same values exactly and a difference is the code path, not the arithmetic.
+    """
+    ref = env.render(states, style=style).detach().cpu().numpy()
+    dev = env.device
+    st32 = np.ascontiguousarray(np.asarray(states, np.float32))
+    n, D = st32.shape
+
+    # a non-contiguous numpy view with a real gap between rows, and its torch equivalent
+    pad = np.zeros((n, 2, D), np.float32)
+    pad[:, 0] = st32
+    np_strided = pad[:, 0]
+    t_pad = torch.zeros((n, 2, D), dtype=torch.float32, device=dev)
+    t_pad[:, 0] = torch.as_tensor(st32, device=dev)
+    cuda_strided = t_pad[:, 0]
+
+    forms = {
+        "numpy_f32": st32,
+        "numpy_f64": st32.astype(np.float64),
+        "numpy_strided": np_strided,
+        "list": st32.tolist(),
+        "torch_cpu_f32": torch.as_tensor(st32),
+        "torch_cpu_f64": torch.as_tensor(st32).double(),
+        "torch_cuda_f32": torch.as_tensor(st32, device=dev),
+        "torch_cuda_f64": torch.as_tensor(st32, device=dev).double(),
+        "torch_cuda_strided": cuda_strided,
+        "torch_cuda_transposed": torch.as_tensor(st32, device=dev).t().contiguous().t(),
+    }
+    bad = {}
+    for name, s in forms.items():
+        try:
+            got = env.render(s, style=style).detach().cpu().numpy()
+        except Exception as e:                                          # noqa: BLE001
+            bad[name] = f"{type(e).__name__}: {e}"
+            continue
+        d = int(np.abs(got.astype(np.int16) - ref.astype(np.int16)).max())
+        if d:
+            bad[name] = f"differs by {d}/255"
+    return {"disagreements": bad, "forms": tuple(forms)}
+
+
+def check_order_independence(env, states, style=None, seed: int = 0) -> dict:
+    """``render(x[perm]) == render(x)[perm]``, and a duplicated row renders the same twice.
+
+    A rasterizer that reads its geometry with the wrong batch stride, a grouped path that scatters
+    results back with a stale index, an ``out`` buffer left partly unwritten — all three are invisible
+    when every environment in the batch is asking for the same picture, and all three are caught here.
+    Run with two distinct style groups so the grouping path is exercised: the OGBench renderer splits
+    the batch by plate and writes each group back through an index, which is precisely the code an
+    unpermuted batch never reaches.
+    """
+    n = len(states)
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(n)
+    base = env.render(states, style=style).detach().cpu().numpy()
+    permuted = env.render(np.asarray(states)[perm],
+                          style=None if style is None else np.asarray(style)[perm]
+                          ).detach().cpu().numpy()
+    d_perm = int(np.abs(permuted.astype(np.int16) - base[perm].astype(np.int16)).max())
+
+    # the same state twice in one batch must give the same frame twice
+    dup = np.concatenate([np.asarray(states)[:1], np.asarray(states)[:1]], 0)
+    kdup = None if style is None else np.concatenate([np.asarray(style)[:1]] * 2, 0)
+    f = env.render(dup, style=kdup).detach().cpu().numpy()
+    d_dup = int(np.abs(f[0].astype(np.int16) - f[1].astype(np.int16)).max())
+    return {"permutation_max_abs_diff": d_perm, "duplicate_max_abs_diff": d_dup}
+
+
+def check_render_is_pure(env, states, style=None) -> dict:
+    """Rendering must not change the env, and restoring a state twice must be the same as once.
+
+    The env holds ``_state`` and ``_style`` buffers that ``render`` reads. If a render writes to either
+    — to normalise something, to cache something — then the second render of the same states differs
+    from the first, every downstream comparison in this file becomes order-dependent, and a training
+    loop that renders twice per step silently drifts. ``set_state(get_state())`` applied twice is the
+    same claim from the other side: it is the operation a dataset performs on every batch.
+    """
+    env.set_state(np.asarray(states)[:env.B] if len(states) >= env.B else
+                  np.repeat(np.asarray(states)[:1], env.B, 0),
+                  style=None if style is None else (
+                      np.asarray(style)[:env.B] if len(style) >= env.B else
+                      np.repeat(np.asarray(style)[:1], env.B, 0)))
+    s0 = env.get_state().detach().cpu().numpy().copy()
+    k0 = env.get_style().detach().cpu().numpy().copy()
+    f0 = env.render().detach().cpu().numpy()
+
+    env.render(states, style=style)                      # an unrelated render, with explicit arguments
+    s1 = env.get_state().detach().cpu().numpy().copy()
+    k1 = env.get_style().detach().cpu().numpy().copy()
+
+    env.set_state(env.get_state())
+    env.set_state(env.get_state())
+    s2 = env.get_state().detach().cpu().numpy().copy()
+    f2 = env.render().detach().cpu().numpy()
+    return {"state_changed_by_render": float(np.abs(s1 - s0).max()),
+            "style_changed_by_render": float(np.abs(k1 - k0).max()),
+            "state_changed_by_double_set": float(np.abs(s2 - s0).max()),
+            "frame_changed_by_double_set": int(np.abs(f2.astype(np.int16)
+                                                      - f0.astype(np.int16)).max())}
+
+
+def check_set_state_copies(env) -> dict:
+    """``set_state`` must COPY. Two consequences, both silent, both expensive.
+
+    A caller that keeps the array it passed and then mutates it would otherwise be mutating the env's
+    state — the corpus and the env alias. And PushT captures its whole control step into a CUDA graph
+    that reads ``_state`` at a fixed address, so a ``set_state`` that rebound the attribute instead of
+    writing through it would leave the graph replaying against dead memory: every ``set_state`` would
+    be silently ignored, and the env would look like it had frozen.
+    """
+    st = env.sample_states(env.B, rng=np.random.default_rng(0))
+    buf = np.array(st, np.float32)
+    before = env.get_state().data_ptr()
+    env.set_state(buf)
+    stored = env.get_state().detach().cpu().numpy().copy()
+    buf[:] = 0.0
+    after = env.get_state().detach().cpu().numpy()
+    return {"aliased_caller_buffer": float(np.abs(after - stored).max()),
+            "state_tensor_rebound": bool(env.get_state().data_ptr() != before)}

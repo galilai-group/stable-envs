@@ -1,0 +1,1247 @@
+[
+ {
+  "env": "pointmaze-medium",
+  "img": 224,
+  "flag_ablation": {
+   "mjRND_SHADOW": {
+    "default_on": true,
+    "frac": 0.6576251594387755,
+    "mean": 25.865021789965986,
+    "max": 54.0
+   },
+   "mjRND_REFLECTION": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_SKYBOX": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_FOG": {
+    "default_on": false,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_HAZE": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_CULL_FACE": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_WIREFRAME": {
+    "default_on": false,
+    "frac": 0.8969626913265306,
+    "mean": 100.61017883715986,
+    "max": 255.0
+   },
+   "mjRND_ADDITIVE": {
+    "default_on": false,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   }
+  },
+  "base_colours": {
+   "floor": [
+    0.2353,
+    0.251,
+    0.2824
+   ],
+   "block_0_1": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "block_0_2": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "pointbody": [
+    0.7,
+    0.5,
+    0.3
+   ]
+  },
+  "by_class": {
+   "floor": {
+    "n": 31870,
+    "obs_mean": [
+     97.31,
+     103.8,
+     116.79
+    ],
+    "obs_std": [
+     4.121,
+     4.392,
+     4.921
+    ],
+    "obs_uniq": 47,
+    "frac_saturated": 0.0,
+    "shade_scalar_mean": [
+     1.62176,
+     1.62193,
+     1.62207
+    ],
+    "shade_scalar_p01": [
+     1.53333,
+     1.53125,
+     1.54167
+    ],
+    "shade_scalar_p50": [
+     1.6,
+     1.60938,
+     1.61111
+    ],
+    "shade_scalar_p99": [
+     1.75,
+     1.75,
+     1.75
+    ],
+    "shade_scalar_modes": [
+     [
+      1.583,
+      4443
+     ],
+     [
+      1.567,
+      4419
+     ],
+     [
+      1.55,
+      3200
+     ],
+     [
+      1.6,
+      3061
+     ],
+     [
+      1.65,
+      2222
+     ],
+     [
+      1.667,
+      2044
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "noshadow_scalar_modes": [
+     [
+      1.0,
+      31867
+     ],
+     [
+      0.25,
+      3
+     ]
+    ]
+   },
+   "wall_top": {
+    "n": 14198,
+    "obs_mean": [
+     254.69,
+     254.69,
+     254.69
+    ],
+    "obs_std": [
+     0.924,
+     0.924,
+     0.924
+    ],
+    "obs_uniq": 7,
+    "frac_saturated": 0.8708973094802085,
+    "shade_scalar_mean": [
+     1.65104,
+     1.65104,
+     1.65104
+    ],
+    "shade_scalar_p01": [
+     1.62745,
+     1.62745,
+     1.62745
+    ],
+    "shade_scalar_p50": [
+     1.65359,
+     1.65359,
+     1.65359
+    ],
+    "shade_scalar_p99": [
+     1.66013,
+     1.66013,
+     1.66013
+    ],
+    "shade_scalar_modes": [
+     [
+      1.654,
+      550
+     ],
+     [
+      1.66,
+      527
+     ],
+     [
+      1.647,
+      479
+     ],
+     [
+      1.641,
+      123
+     ],
+     [
+      1.634,
+      97
+     ],
+     [
+      1.627,
+      57
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.65359,
+     1.65359,
+     1.65359
+    ],
+    "noshadow_scalar_modes": [
+     [
+      1.66,
+      990
+     ],
+     [
+      1.654,
+      567
+     ],
+     [
+      1.647,
+      458
+     ],
+     [
+      1.641,
+      264
+     ]
+    ]
+   },
+   "wall_side": {
+    "n": 3964,
+    "obs_mean": [
+     15.0,
+     15.0,
+     15.0
+    ],
+    "obs_std": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "obs_uniq": 1,
+    "frac_saturated": 0.0,
+    "shade_scalar_mean": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p01": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p50": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p99": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_modes": [
+     [
+      0.098,
+      3964
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "noshadow_scalar_modes": [
+     [
+      0.098,
+      3964
+     ]
+    ]
+   },
+   "agent": {
+    "n": 144,
+    "obs_mean": [
+     171.43,
+     125.61,
+     77.5
+    ],
+    "obs_std": [
+     70.204,
+     52.962,
+     33.614
+    ],
+    "obs_uniq": 120,
+    "frac_saturated": 0.11805555555555555,
+    "shade_scalar_mean": [
+     0.89773,
+     0.9048,
+     0.92388
+    ],
+    "shade_scalar_p01": [
+     0.10084,
+     0.10196,
+     0.10458
+    ],
+    "shade_scalar_p50": [
+     0.98599,
+     0.98039,
+     0.99346
+    ],
+    "shade_scalar_p99": [
+     1.41591,
+     1.41757,
+     1.46405
+    ],
+    "shade_scalar_modes": [
+     [
+      0.101,
+      5
+     ],
+     [
+      0.521,
+      3
+     ],
+     [
+      0.689,
+      3
+     ],
+     [
+      1.12,
+      3
+     ],
+     [
+      1.283,
+      3
+     ],
+     [
+      1.333,
+      3
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.0028,
+     1.00392,
+     1.00654
+    ],
+    "noshadow_scalar_modes": [
+     [
+      0.101,
+      5
+     ],
+     [
+      0.336,
+      4
+     ],
+     [
+      0.941,
+      3
+     ],
+     [
+      1.216,
+      3
+     ]
+    ]
+   }
+  },
+  "analytic_lit_frac": 0.9992825255102041,
+  "observed_shadow_frac": 0.0005381058673469387,
+  "shadow_mask_agreement": 0.9997807716836735,
+  "shadow_by_class": {
+   "agent": {
+    "observed": 0.006944444444444444,
+    "analytic": 0.013888888888888888
+   },
+   "floor": {
+    "observed": 0.000815814245371823,
+    "analytic": 0.0009099466582993411
+   },
+   "wall_side": {
+    "observed": 0.0,
+    "analytic": 0.0012613521695257316
+   },
+   "wall_top": {
+    "observed": 0.0,
+    "analytic": 0.0
+   }
+  }
+ },
+ {
+  "env": "pointmaze-large",
+  "img": 224,
+  "flag_ablation": {
+   "mjRND_SHADOW": {
+    "default_on": true,
+    "frac": 0.4321388711734694,
+    "mean": 16.97007201318027,
+    "max": 54.0
+   },
+   "mjRND_REFLECTION": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_SKYBOX": {
+    "default_on": true,
+    "frac": 0.09821428571428571,
+    "mean": 2.0856983418367347,
+    "max": 27.0
+   },
+   "mjRND_FOG": {
+    "default_on": false,
+    "frac": 0.09821428571428571,
+    "mean": 2.0856983418367347,
+    "max": 27.0
+   },
+   "mjRND_HAZE": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_CULL_FACE": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_WIREFRAME": {
+    "default_on": false,
+    "frac": 0.7362683354591837,
+    "mean": 85.74095184948979,
+    "max": 255.0
+   },
+   "mjRND_ADDITIVE": {
+    "default_on": false,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   }
+  },
+  "base_colours": {
+   "floor": [
+    0.2353,
+    0.251,
+    0.2824
+   ],
+   "block_0_1": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "block_0_2": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "pointbody": [
+    0.7,
+    0.5,
+    0.3
+   ]
+  },
+  "by_class": {
+   "floor": {
+    "n": 20349,
+    "obs_mean": [
+     98.33,
+     104.9,
+     118.01
+    ],
+    "obs_std": [
+     3.547,
+     3.779,
+     4.23
+    ],
+    "obs_uniq": 43,
+    "frac_saturated": 0.0,
+    "shade_scalar_mean": [
+     1.63886,
+     1.63904,
+     1.6391
+    ],
+    "shade_scalar_p01": [
+     1.55,
+     1.54688,
+     1.55556
+    ],
+    "shade_scalar_p50": [
+     1.63333,
+     1.64063,
+     1.63889
+    ],
+    "shade_scalar_p99": [
+     1.75,
+     1.75,
+     1.75
+    ],
+    "shade_scalar_modes": [
+     [
+      1.583,
+      2795
+     ],
+     [
+      1.6,
+      2341
+     ],
+     [
+      1.633,
+      2148
+     ],
+     [
+      1.65,
+      2054
+     ],
+     [
+      1.617,
+      1796
+     ],
+     [
+      1.667,
+      1661
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "noshadow_scalar_modes": [
+     [
+      1.0,
+      20349
+     ]
+    ]
+   },
+   "wall_top": {
+    "n": 21850,
+    "obs_mean": [
+     253.05,
+     253.05,
+     253.05
+    ],
+    "obs_std": [
+     3.886,
+     3.886,
+     3.886
+    ],
+    "obs_uniq": 17,
+    "frac_saturated": 0.7275514874141876,
+    "shade_scalar_mean": [
+     1.61985,
+     1.61985,
+     1.61985
+    ],
+    "shade_scalar_p01": [
+     1.56863,
+     1.56863,
+     1.56863
+    ],
+    "shade_scalar_p50": [
+     1.62091,
+     1.62091,
+     1.62091
+    ],
+    "shade_scalar_p99": [
+     1.66013,
+     1.66013,
+     1.66013
+    ],
+    "shade_scalar_modes": [
+     [
+      1.654,
+      573
+     ],
+     [
+      1.66,
+      570
+     ],
+     [
+      1.647,
+      544
+     ],
+     [
+      1.627,
+      543
+     ],
+     [
+      1.621,
+      501
+     ],
+     [
+      1.588,
+      478
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.62091,
+     1.62091,
+     1.62091
+    ],
+    "noshadow_scalar_modes": [
+     [
+      1.66,
+      661
+     ],
+     [
+      1.654,
+      480
+     ],
+     [
+      1.634,
+      461
+     ],
+     [
+      1.647,
+      455
+     ]
+    ]
+   },
+   "wall_side": {
+    "n": 3001,
+    "obs_mean": [
+     15.0,
+     15.0,
+     15.0
+    ],
+    "obs_std": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "obs_uniq": 1,
+    "frac_saturated": 0.0,
+    "shade_scalar_mean": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p01": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p50": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p99": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_modes": [
+     [
+      0.098,
+      3001
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "noshadow_scalar_modes": [
+     [
+      0.098,
+      3001
+     ]
+    ]
+   },
+   "agent": {
+    "n": 48,
+    "obs_mean": [
+     174.44,
+     127.08,
+     77.1
+    ],
+    "obs_std": [
+     70.522,
+     53.739,
+     33.75
+    ],
+    "obs_uniq": 46,
+    "frac_saturated": 0.125,
+    "shade_scalar_mean": [
+     0.91277,
+     0.91261,
+     0.91223
+    ],
+    "shade_scalar_p01": [
+     0.10084,
+     0.10196,
+     0.10458
+    ],
+    "shade_scalar_p50": [
+     1.03081,
+     1.02745,
+     1.02614
+    ],
+    "shade_scalar_p99": [
+     1.41176,
+     1.41176,
+     1.40641
+    ],
+    "shade_scalar_modes": [
+     [
+      0.101,
+      2
+     ],
+     [
+      0.728,
+      2
+     ],
+     [
+      1.182,
+      2
+     ],
+     [
+      1.048,
+      2
+     ],
+     [
+      1.412,
+      2
+     ],
+     [
+      1.311,
+      2
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.04482,
+     1.04314,
+     1.04575
+    ],
+    "noshadow_scalar_modes": [
+     [
+      0.101,
+      2
+     ],
+     [
+      1.266,
+      2
+     ],
+     [
+      1.182,
+      2
+     ],
+     [
+      1.401,
+      2
+     ]
+    ]
+   },
+   "bg": {
+    "n": 4928,
+    "obs_mean": [
+     21.24,
+     21.24,
+     21.24
+    ],
+    "obs_std": [
+     2.794,
+     2.794,
+     2.794
+    ],
+    "obs_uniq": 11,
+    "frac_saturated": 0.0
+   }
+  },
+  "analytic_lit_frac": 0.9997807716836735,
+  "observed_shadow_frac": 0.0002192283163265306,
+  "shadow_mask_agreement": 1.0,
+  "shadow_by_class": {
+   "agent": {
+    "observed": 0.0,
+    "analytic": 0.0
+   },
+   "bg": {
+    "observed": 0.0,
+    "analytic": 0.0
+   },
+   "floor": {
+    "observed": 0.0005405671040345963,
+    "analytic": 0.0005405671040345963
+   },
+   "wall_side": {
+    "observed": 0.0,
+    "analytic": 0.0
+   },
+   "wall_top": {
+    "observed": 0.0,
+    "analytic": 0.0
+   }
+  }
+ },
+ {
+  "env": "antmaze-large",
+  "img": 224,
+  "flag_ablation": {
+   "mjRND_SHADOW": {
+    "default_on": true,
+    "frac": 0.4321787308673469,
+    "mean": 16.98394318664966,
+    "max": 54.0
+   },
+   "mjRND_REFLECTION": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_SKYBOX": {
+    "default_on": true,
+    "frac": 0.09821428571428571,
+    "mean": 2.0856983418367347,
+    "max": 27.0
+   },
+   "mjRND_FOG": {
+    "default_on": false,
+    "frac": 0.09821428571428571,
+    "mean": 2.0856983418367347,
+    "max": 27.0
+   },
+   "mjRND_HAZE": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_CULL_FACE": {
+    "default_on": true,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "mjRND_WIREFRAME": {
+    "default_on": false,
+    "frac": 0.7360889668367347,
+    "mean": 85.75518176020408,
+    "max": 255.0
+   },
+   "mjRND_ADDITIVE": {
+    "default_on": false,
+    "frac": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   }
+  },
+  "base_colours": {
+   "floor": [
+    0.2353,
+    0.251,
+    0.2824
+   ],
+   "block_0_1": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "block_0_2": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "torso_geom": [
+    0.7,
+    0.5,
+    0.3
+   ],
+   "aux_1_geom": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "left_leg_geom": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "left_ankle_geom": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "aux_2_geom": [
+    0.7,
+    0.5,
+    0.3
+   ],
+   "right_leg_geom": [
+    0.7,
+    0.5,
+    0.3
+   ],
+   "right_ankle_geom": [
+    0.7,
+    0.5,
+    0.3
+   ]
+  },
+  "by_class": {
+   "floor": {
+    "n": 20369,
+    "obs_mean": [
+     98.33,
+     104.9,
+     118.02
+    ],
+    "obs_std": [
+     3.459,
+     3.683,
+     4.12
+    ],
+    "obs_uniq": 42,
+    "frac_saturated": 0.0,
+    "shade_scalar_mean": [
+     1.63889,
+     1.63908,
+     1.63914
+    ],
+    "shade_scalar_p01": [
+     1.55,
+     1.54688,
+     1.55556
+    ],
+    "shade_scalar_p50": [
+     1.63333,
+     1.64063,
+     1.63889
+    ],
+    "shade_scalar_p99": [
+     1.75,
+     1.75,
+     1.75
+    ],
+    "shade_scalar_modes": [
+     [
+      1.583,
+      2791
+     ],
+     [
+      1.6,
+      2341
+     ],
+     [
+      1.633,
+      2148
+     ],
+     [
+      1.65,
+      2054
+     ],
+     [
+      1.617,
+      1796
+     ],
+     [
+      1.667,
+      1661
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "noshadow_scalar_modes": [
+     [
+      1.0,
+      20369
+     ]
+    ]
+   },
+   "wall_top": {
+    "n": 21850,
+    "obs_mean": [
+     253.05,
+     253.05,
+     253.05
+    ],
+    "obs_std": [
+     3.886,
+     3.886,
+     3.886
+    ],
+    "obs_uniq": 17,
+    "frac_saturated": 0.7275514874141876,
+    "shade_scalar_mean": [
+     1.61985,
+     1.61985,
+     1.61985
+    ],
+    "shade_scalar_p01": [
+     1.56863,
+     1.56863,
+     1.56863
+    ],
+    "shade_scalar_p50": [
+     1.62091,
+     1.62091,
+     1.62091
+    ],
+    "shade_scalar_p99": [
+     1.66013,
+     1.66013,
+     1.66013
+    ],
+    "shade_scalar_modes": [
+     [
+      1.654,
+      573
+     ],
+     [
+      1.66,
+      570
+     ],
+     [
+      1.647,
+      544
+     ],
+     [
+      1.627,
+      543
+     ],
+     [
+      1.621,
+      501
+     ],
+     [
+      1.588,
+      478
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     1.62091,
+     1.62091,
+     1.62091
+    ],
+    "noshadow_scalar_modes": [
+     [
+      1.66,
+      661
+     ],
+     [
+      1.654,
+      480
+     ],
+     [
+      1.634,
+      461
+     ],
+     [
+      1.647,
+      455
+     ]
+    ]
+   },
+   "wall_side": {
+    "n": 3005,
+    "obs_mean": [
+     15.0,
+     15.0,
+     15.0
+    ],
+    "obs_std": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "obs_uniq": 1,
+    "frac_saturated": 0.0,
+    "shade_scalar_mean": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p01": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p50": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_p99": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "shade_scalar_modes": [
+     [
+      0.098,
+      3005
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     0.09804,
+     0.09804,
+     0.09804
+    ],
+    "noshadow_scalar_modes": [
+     [
+      0.098,
+      3005
+     ]
+    ]
+   },
+   "agent": {
+    "n": 24,
+    "obs_mean": [
+     192.25,
+     155.46,
+     113.25
+    ],
+    "obs_std": [
+     51.252,
+     51.92,
+     57.511
+    ],
+    "obs_uniq": 23,
+    "frac_saturated": 0.20833333333333334,
+    "shade_scalar_mean": [
+     0.96366,
+     0.96336,
+     0.96268
+    ],
+    "shade_scalar_p01": [
+     0.3772,
+     0.3778,
+     0.37686
+    ],
+    "shade_scalar_p50": [
+     0.96919,
+     0.96471,
+     0.96732
+    ],
+    "shade_scalar_p99": [
+     1.37412,
+     1.36973,
+     1.37856
+    ],
+    "shade_scalar_modes": [
+     [
+      0.333,
+      1
+     ],
+     [
+      0.577,
+      1
+     ],
+     [
+      0.637,
+      1
+     ],
+     [
+      0.812,
+      1
+     ],
+     [
+      0.814,
+      1
+     ],
+     [
+      0.868,
+      1
+     ]
+    ],
+    "noshadow_scalar_p50": [
+     0.97969,
+     0.97745,
+     0.97876
+    ],
+    "noshadow_scalar_modes": [
+     [
+      0.333,
+      1
+     ],
+     [
+      0.583,
+      1
+     ],
+     [
+      0.637,
+      1
+     ],
+     [
+      0.812,
+      1
+     ]
+    ]
+   },
+   "bg": {
+    "n": 4928,
+    "obs_mean": [
+     21.24,
+     21.24,
+     21.24
+    ],
+    "obs_std": [
+     2.794,
+     2.794,
+     2.794
+    ],
+    "obs_uniq": 11,
+    "frac_saturated": 0.0
+   }
+  },
+  "analytic_lit_frac": 0.9998405612244898,
+  "observed_shadow_frac": 0.00015943877551020407,
+  "shadow_mask_agreement": 1.0,
+  "shadow_by_class": {
+   "agent": {
+    "observed": 0.0,
+    "analytic": 0.0
+   },
+   "bg": {
+    "observed": 0.0,
+    "analytic": 0.0
+   },
+   "floor": {
+    "observed": 0.00039275369433943737,
+    "analytic": 0.00039275369433943737
+   },
+   "wall_side": {
+    "observed": 0.0,
+    "analytic": 0.0
+   },
+   "wall_top": {
+    "observed": 0.0,
+    "analytic": 0.0
+   }
+  }
+ }
+]

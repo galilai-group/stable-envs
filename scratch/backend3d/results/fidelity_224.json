@@ -1,0 +1,86 @@
+[
+ {
+  "scene": "antmaze_medium.xml",
+  "backend": "mjwarp",
+  "mae": 3.5438190901360542,
+  "psnr": 27.777348716491744,
+  "lum_corr": 0.9944252491658361
+ },
+ {
+  "scene": "antmaze_medium.xml",
+  "backend": "mjwarp_shadow",
+  "mae": 3.14469068877551,
+  "psnr": 30.417616962160317,
+  "lum_corr": 0.997460212585173
+ },
+ {
+  "scene": "antmaze_medium.xml",
+  "backend": "mjwarp_notex",
+  "mae": 52.13089923469388,
+  "psnr": 8.277388238505669,
+  "lum_corr": 0.1901871441505545
+ },
+ {
+  "scene": "antmaze_medium.xml",
+  "backend": "nvdiffrast",
+  "mae": 67.02362351190476,
+  "psnr": 9.173632611040269,
+  "lum_corr": 0.10615571513391561
+ },
+ {
+  "scene": "cube_single.xml",
+  "backend": "mjwarp",
+  "mae": 10.560693027210885,
+  "psnr": 24.87619387729453,
+  "lum_corr": 0.8256409539867537
+ },
+ {
+  "scene": "cube_single.xml",
+  "backend": "mjwarp_shadow",
+  "mae": 9.286690848214286,
+  "psnr": 26.043899789195347,
+  "lum_corr": 0.8758626826630206
+ },
+ {
+  "scene": "cube_single.xml",
+  "backend": "mjwarp_notex",
+  "mae": 131.67610677083334,
+  "psnr": 3.8417893238623844,
+  "lum_corr": 0.36355064572110785
+ },
+ {
+  "scene": "cube_single.xml",
+  "backend": "nvdiffrast",
+  "mae": 69.28102412840136,
+  "psnr": 9.720800210551285,
+  "lum_corr": 0.5101305008948738
+ },
+ {
+  "scene": "humanoidmaze_medium.xml",
+  "backend": "mjwarp",
+  "mae": 14.157950680272108,
+  "psnr": 19.946340686110958,
+  "lum_corr": 0.8920193222676652
+ },
+ {
+  "scene": "humanoidmaze_medium.xml",
+  "backend": "mjwarp_shadow",
+  "mae": 12.55961681547619,
+  "psnr": 21.39437737632782,
+  "lum_corr": 0.9168687292801423
+ },
+ {
+  "scene": "humanoidmaze_medium.xml",
+  "backend": "mjwarp_notex",
+  "mae": 88.5582815157313,
+  "psnr": 6.272491232434234,
+  "lum_corr": 0.15815567303120243
+ },
+ {
+  "scene": "humanoidmaze_medium.xml",
+  "backend": "nvdiffrast",
+  "mae": 105.85878374787416,
+  "psnr": 7.13723774288524,
+  "lum_corr": -0.4417627837664725
+ }
+]

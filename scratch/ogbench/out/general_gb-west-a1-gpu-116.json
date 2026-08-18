@@ -1,0 +1,393 @@
+{
+ "baked": [
+  {
+   "env": "pointmaze-medium",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.996708,
+    "le1": 0.9974,
+    "le2": 0.998232,
+    "le8": 0.999134,
+    "mean": 0.054924,
+    "max": 84.125
+   },
+   "interior": {
+    "agent_px": 146.875,
+    "boundary_px": 77.375,
+    "exact_nonboundary": 0.9976,
+    "bad_nonboundary": 119.8125,
+    "max_nonboundary": 72.0
+   }
+  },
+  {
+   "env": "pointmaze-large",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.998859,
+    "le1": 0.999089,
+    "le2": 0.999373,
+    "le8": 0.999715,
+    "mean": 0.018486,
+    "max": 74.25
+   },
+   "interior": {
+    "agent_px": 50.8125,
+    "boundary_px": 45.375,
+    "exact_nonboundary": 0.9994,
+    "bad_nonboundary": 30.5625,
+    "max_nonboundary": 69.875
+   }
+  },
+  {
+   "env": "pointmaze-giant",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.999494,
+    "le1": 0.999594,
+    "le2": 0.999742,
+    "le8": 0.999899,
+    "mean": 0.006082,
+    "max": 68.125
+   },
+   "interior": {
+    "agent_px": 24.1875,
+    "boundary_px": 31.5,
+    "exact_nonboundary": 0.9998,
+    "bad_nonboundary": 9.75,
+    "max_nonboundary": 28.625
+   }
+  },
+  {
+   "env": "pointmaze-teleport",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.998824,
+    "le1": 0.99901,
+    "le2": 0.999326,
+    "le8": 0.99969,
+    "mean": 0.01982,
+    "max": 74.9375
+   },
+   "interior": {
+    "agent_px": 51.4375,
+    "boundary_px": 45.375,
+    "exact_nonboundary": 0.9994,
+    "bad_nonboundary": 31.6875,
+    "max_nonboundary": 69.75
+   }
+  },
+  {
+   "env": "antmaze-large",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.999436,
+    "le1": 0.999572,
+    "le2": 0.999662,
+    "le8": 0.999761,
+    "mean": 0.015654,
+    "max": 76.25
+   },
+   "interior": {
+    "agent_px": 21.25,
+    "boundary_px": 53.9375,
+    "exact_nonboundary": 0.9999,
+    "bad_nonboundary": 2.75,
+    "max_nonboundary": 63.875
+   }
+  },
+  {
+   "env": "antmaze-giant",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.999696,
+    "le1": 0.999783,
+    "le2": 0.999823,
+    "le8": 0.999859,
+    "mean": 0.009392,
+    "max": 72.0
+   },
+   "interior": {
+    "agent_px": 11.1875,
+    "boundary_px": 33.9375,
+    "exact_nonboundary": 1.0,
+    "bad_nonboundary": 0.8125,
+    "max_nonboundary": 36.0
+   }
+  },
+  {
+   "env": "humanoidmaze-large",
+   "mode": "baked_static+analytic_agent",
+   "nstates": 16,
+   "vs_mujoco_noaa": {
+    "exact": 0.999586,
+    "le1": 0.999699,
+    "le2": 0.999765,
+    "le8": 0.999867,
+    "mean": 0.007618,
+    "max": 95.875
+   },
+   "interior": {
+    "agent_px": 23.5,
+    "boundary_px": 40.0625,
+    "exact_nonboundary": 0.9999,
+    "bad_nonboundary": 5.25,
+    "max_nonboundary": 30.875
+   }
+  }
+ ],
+ "back": [
+  {
+   "env": "antmaze-large",
+   "camera": "back",
+   "img": 64,
+   "per_state": [
+    {
+     "cam_pos": [
+      -0.402,
+      -2.021,
+      5.423
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.447,
+      -0.894
+     ],
+     "id_all": 0.999267578125,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      -0.342,
+      -1.847,
+      5.481
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.447,
+      -0.894
+     ],
+     "id_all": 0.999267578125,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      -0.264,
+      -2.047,
+      5.496
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.447,
+      -0.894
+     ],
+     "id_all": 0.9990234375,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      -0.436,
+      -2.258,
+      5.536
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.447,
+      -0.894
+     ],
+     "id_all": 0.999267578125,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      -0.508,
+      -2.345,
+      5.419
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.447,
+      -0.894
+     ],
+     "id_all": 0.998779296875,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      -0.237,
+      -2.18,
+      5.447
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.447,
+      -0.894
+     ],
+     "id_all": 0.999267578125,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    }
+   ],
+   "id_interior_mean": 1.0,
+   "interior_bad_mean": 0.0
+  },
+  {
+   "env": "humanoidmaze-large",
+   "camera": "back",
+   "img": 64,
+   "per_state": [
+    {
+     "cam_pos": [
+      0.285,
+      -1.106,
+      2.89
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.371,
+      -0.928
+     ],
+     "id_all": 0.999755859375,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      0.256,
+      -1.124,
+      1.888
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.371,
+      -0.928
+     ],
+     "id_all": 0.998779296875,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      0.427,
+      -1.181,
+      1.848
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.371,
+      -0.928
+     ],
+     "id_all": 0.99951171875,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      0.517,
+      -1.237,
+      1.86
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.371,
+      -0.928
+     ],
+     "id_all": 0.999755859375,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      0.511,
+      -1.271,
+      1.831
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.371,
+      -0.928
+     ],
+     "id_all": 0.9990234375,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    },
+    {
+     "cam_pos": [
+      0.533,
+      -1.294,
+      1.843
+     ],
+     "cam_fwd": [
+      -0.0,
+      0.371,
+      -0.928
+     ],
+     "id_all": 0.999755859375,
+     "id_interior": 1.0,
+     "interior_bad": 0,
+     "bg_frac": 0.0
+    }
+   ],
+   "id_interior_mean": 1.0,
+   "interior_bad_mean": 0.0
+  }
+ ],
+ "determinism": {
+  "host": "gb-west-a1-gpu-116",
+  "env": "pointmaze-large",
+  "hashes": [
+   "7bb9f43cca14fa7f",
+   "5d8b2ae0f4fc2726",
+   "5d8b2ae0f4fc2726",
+   "87206333170dba6f",
+   "5d8b2ae0f4fc2726",
+   "5d8b2ae0f4fc2726",
+   "5d8b2ae0f4fc2726",
+   "5cdd8a7b70b8e796"
+  ]
+ },
+ "fk": [
+  {
+   "env": "pointmaze-large",
+   "fk_us": 0.9322166442871094,
+   "render_ms": 2.1703195571899414,
+   "fk_fps": 1072712.0204603581,
+   "render_fps": 460.7616406934872
+  },
+  {
+   "env": "antmaze-large",
+   "fk_us": 1.7299652099609375,
+   "render_ms": 2.1869587898254395,
+   "fk_fps": 578046.3065049613,
+   "render_fps": 457.25598701373735
+  },
+  {
+   "env": "humanoidmaze-large",
+   "fk_us": 2.6159286499023438,
+   "render_ms": 2.1599340438842773,
+   "fk_fps": 382273.42325920524,
+   "render_fps": 462.9771000792545
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    8.48974609375,
+    8.34033203125
+  ],
+  "registry_size": 60,
+  "envs": {
+    "CraftaxClassic": {
+      "size": 16,
+      "requested_size": 256,
+      "size_note": "size=256 produced a 1792x2304 frame \u2014 its SHORT edge alone is 1792: this env reads size per tile, not as the output edge; measured at its native size instead",
+      "frame_shape": [
+        112,
+        144
+      ],
+      "state_bytes": 508,
+      "gpu": {
+        "fps": 519583.84008611913,
+        "seconds_per_batch": 0.001970808021724224,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0011362345815786,
+        "loadavg": 8.3701171875
+      },
+      "storage": {
+        "local": {
+          "fps": 5034.7453063922985,
+          "bytes_on_disk": 4169851,
+          "bytes_per_frame": 8144.240234375
+        },
+        "shared": {
+          "fps": 2547.0850070577194,
+          "bytes_on_disk": 4169851,
+          "bytes_per_frame": 8144.240234375
+        },
+        "memory_one_frame": {
+          "fps": 6046.920969421119
+        }
+      }
+    }
+  }
+}

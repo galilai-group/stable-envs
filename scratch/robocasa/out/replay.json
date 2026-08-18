@@ -1,0 +1,80 @@
+{
+  "reference": {
+    "xml_sha": "8a1c12a438dfe8f2",
+    "nq": 91,
+    "ngeom": 1251,
+    "layout": 52,
+    "style": 3
+  },
+  "descriptor_sizes": {
+    "ep_meta_json_bytes": 6387,
+    "ep_meta_gzip_bytes": 1662,
+    "model_xml_bytes": 385001,
+    "model_xml_gzip_bytes": 31705,
+    "qpos_float32_bytes_per_step": 364
+  },
+  "A_ep_meta_only": {
+    "nq": 91,
+    "nq_matches": true,
+    "xml_matches": false,
+    "px_maxdiff": 208,
+    "px_meandiff": 2.786411830357143,
+    "px_exact_frac": 0.9494778380102041
+  },
+  "B_ep_meta_plus_xml": {
+    "nq": 91,
+    "nq_matches": true,
+    "xml_matches": false,
+    "px_maxdiff": 43,
+    "px_meandiff": 0.004198554421768708,
+    "px_exact_frac": 0.9990234375
+  },
+  "pinned_layout_style_resets": [
+    {
+      "nq": 91,
+      "ngeom": 1231,
+      "nmesh": 219,
+      "nmeshface": 474369,
+      "ntex": 72,
+      "texdata_MB": 376.894848,
+      "xml_sha": "ed671702aa25311d",
+      "layout": 52,
+      "style": 3
+    },
+    {
+      "nq": 91,
+      "ngeom": 1215,
+      "nmesh": 201,
+      "nmeshface": 477692,
+      "ntex": 72,
+      "texdata_MB": 376.108416,
+      "xml_sha": "7ba7b43079c2e621",
+      "layout": 52,
+      "style": 3
+    },
+    {
+      "nq": 91,
+      "ngeom": 1201,
+      "nmesh": 189,
+      "nmeshface": 484109,
+      "ntex": 74,
+      "texdata_MB": 377.68128,
+      "xml_sha": "06b203ed645966b5",
+      "layout": 52,
+      "style": 3
+    },
+    {
+      "nq": 91,
+      "ngeom": 1238,
+      "nmesh": 226,
+      "nmeshface": 487005,
+      "ntex": 72,
+      "texdata_MB": 378.467712,
+      "xml_sha": "7bff0d5690de91e8",
+      "layout": 52,
+      "style": 3
+    }
+  ],
+  "pinned_model_shape_stable": false,
+  "pinned_model_identical": false
+}

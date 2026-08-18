@@ -1,0 +1,2652 @@
+[
+ {
+  "task": "assembly-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 50,
+  "nmesh": 16,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 14,
+   "cylinder": 10,
+   "sphere": 1,
+   "capsule": 8
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom38",
+   "geom49"
+  ],
+  "frac_mesh_pixels": 0.182861328125,
+  "frac_background": 0.39349365234375,
+  "same_qpos_across_episodes_maxdiff": [
+   71,
+   70,
+   63
+  ],
+  "target_pos_per_episode": [
+   [
+    0.02623420806973345,
+    0.8230020874263135,
+    0.1
+   ],
+   [
+    0.09448032584314292,
+    0.8067109854698403,
+    0.1
+   ],
+   [
+    -0.01664977883363339,
+    0.8350034679460928,
+    0.1
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "basketball-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 56,
+  "nmesh": 20,
+  "ntex": 5,
+  "nmat": 11,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 39,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 19,
+   "cylinder": 9,
+   "sphere": 2,
+   "capsule": 8
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.19329833984375,
+  "frac_background": 0.3802490234375,
+  "same_qpos_across_episodes_maxdiff": [
+   130,
+   221,
+   221
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.016947379174216556,
+    0.7943111477901862,
+    0.25
+   ],
+   [
+    -0.009620561047688186,
+    0.7737484332278067,
+    0.25
+   ],
+   [
+    0.08376586535202571,
+    0.7855800771540913,
+    0.25
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "bin-picking-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 50,
+  "nmesh": 14,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 7,
+  "nbody": 39,
+  "geom_types": {
+   "plane": 1,
+   "box": 27,
+   "mesh": 14,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2056884765625,
+  "frac_background": 0.3935546875,
+  "same_qpos_across_episodes_maxdiff": [
+   0,
+   0,
+   0
+  ],
+  "target_pos_per_episode": [
+   [
+    0.12,
+    0.7,
+    0.0
+   ],
+   [
+    0.12,
+    0.7,
+    0.0
+   ],
+   [
+    0.12,
+    0.7,
+    0.0
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "box-close-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 52,
+  "nmesh": 16,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 25,
+   "mesh": 15,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 3
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.20770263671875,
+  "frac_background": 0.3944091796875,
+  "same_qpos_across_episodes_maxdiff": [
+   124,
+   126,
+   59
+  ],
+  "target_pos_per_episode": [
+   [
+    0.013669905139789273,
+    0.7922492497767329,
+    0.133
+   ],
+   [
+    0.0592466507813659,
+    0.7945974358426554,
+    0.133
+   ],
+   [
+    0.07798346713231394,
+    0.7589797585194126,
+    0.133
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "button-press-topdown-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 48,
+  "nmesh": 18,
+  "ntex": 5,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 19,
+   "mesh": 17,
+   "cylinder": 10,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2320556640625,
+  "frac_background": 0.36761474609375,
+  "same_qpos_across_episodes_maxdiff": [
+   156,
+   161,
+   154
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.03732000677784804,
+    0.8830482210078454,
+    0.21499996829318346
+   ],
+   [
+    -0.04837664441170029,
+    0.8031460981332693,
+    0.21499996829318346
+   ],
+   [
+    0.019729949784207876,
+    0.872054604520337,
+    0.21499996829318346
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "button-press-topdown-wall-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 50,
+  "nmesh": 18,
+  "ntex": 6,
+  "nmat": 12,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 38,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 17,
+   "cylinder": 10,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom48"
+  ],
+  "frac_mesh_pixels": 0.2357177734375,
+  "frac_background": 0.363525390625,
+  "same_qpos_across_episodes_maxdiff": [
+   156,
+   150,
+   156
+  ],
+  "target_pos_per_episode": [
+   [
+    0.09099324122509533,
+    0.8081654822015493,
+    0.21499996829318346
+   ],
+   [
+    0.020604328669707184,
+    0.8899786215866137,
+    0.21499996829318346
+   ],
+   [
+    0.07433059268888026,
+    0.8294323604929077,
+    0.21499996829318346
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "button-press-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 48,
+  "nmesh": 18,
+  "ntex": 5,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 19,
+   "mesh": 17,
+   "cylinder": 10,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.23614501953125,
+  "frac_background": 0.36346435546875,
+  "same_qpos_across_episodes_maxdiff": [
+   174,
+   89,
+   164
+  ],
+  "target_pos_per_episode": [
+   [
+    0.04899228506796155,
+    0.7797197264403797,
+    0.115
+   ],
+   [
+    -0.08650133437558,
+    0.7678482183227263,
+    0.115
+   ],
+   [
+    -0.05001404212679877,
+    0.7635905831298593,
+    0.115
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "button-press-wall-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 50,
+  "nmesh": 18,
+  "ntex": 6,
+  "nmat": 12,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 38,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 17,
+   "cylinder": 10,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom48"
+  ],
+  "frac_mesh_pixels": 0.23199462890625,
+  "frac_background": 0.36297607421875,
+  "same_qpos_across_episodes_maxdiff": [
+   150,
+   169,
+   165
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.01855232186588105,
+    0.7791246728610642,
+    0.1150110518265768
+   ],
+   [
+    0.02233857041769348,
+    0.7514059244056135,
+    0.1149047056382005
+   ],
+   [
+    0.009415784351917776,
+    0.7814967593559157,
+    0.11506302637292629
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "coffee-button-v3",
+  "nq": 17,
+  "nv": 16,
+  "ngeom": 56,
+  "nmesh": 22,
+  "ntex": 4,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 39,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 19,
+   "cylinder": 14,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.25213623046875,
+  "frac_background": 0.34112548828125,
+  "same_qpos_across_episodes_maxdiff": [
+   150,
+   156,
+   154
+  ],
+  "target_pos_per_episode": [
+   [
+    0.04156475572438534,
+    0.6310496125175474,
+    0.299603087423961
+   ],
+   [
+    0.07354347856919954,
+    0.631996494207156,
+    0.30038055964036153
+   ],
+   [
+    -0.0395952246350902,
+    0.6883704521981991,
+    0.30031612074609076
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "coffee-pull-v3",
+  "nq": 17,
+  "nv": 16,
+  "ngeom": 56,
+  "nmesh": 22,
+  "ntex": 4,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 39,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 19,
+   "cylinder": 14,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.24273681640625,
+  "frac_background": 0.341796875,
+  "same_qpos_across_episodes_maxdiff": [
+   154,
+   154,
+   162
+  ],
+  "target_pos_per_episode": [
+   [
+    0.04592963088107313,
+    0.5678795211627979,
+    -0.0006858000958212232
+   ],
+   [
+    0.09208124922123806,
+    0.5593710935753755,
+    -0.00019061253025829533
+   ],
+   [
+    0.06457366568614062,
+    0.581744760971861,
+    9.958494227311088e-05
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "coffee-push-v3",
+  "nq": 17,
+  "nv": 16,
+  "ngeom": 56,
+  "nmesh": 22,
+  "ntex": 4,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 39,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 19,
+   "cylinder": 14,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.24456787109375,
+  "frac_background": 0.3408203125,
+  "same_qpos_across_episodes_maxdiff": [
+   120,
+   153,
+   155
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.03602819140017366,
+    0.7335461710500876,
+    -0.00029746622445352535
+   ],
+   [
+    -0.014359542524497296,
+    0.7093908058011477,
+    -0.0003780794726864705
+   ],
+   [
+    -0.0005140085083289586,
+    0.7209711197597116,
+    -0.00010132618400031216
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "dial-turn-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 41,
+  "nmesh": 15,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 35,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 14,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.18121337890625,
+  "frac_background": 0.3935546875,
+  "same_qpos_across_episodes_maxdiff": [
+   100,
+   105,
+   96
+  ],
+  "target_pos_per_episode": [
+   [
+    0.054255859641405335,
+    0.799560799126235,
+    0.03
+   ],
+   [
+    -0.03086097414835183,
+    0.791268689784367,
+    0.03
+   ],
+   [
+    -0.029976675694942695,
+    0.823386316530689,
+    0.03
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "disassemble-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 50,
+  "nmesh": 16,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 14,
+   "cylinder": 10,
+   "sphere": 1,
+   "capsule": 8
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom38",
+   "geom49"
+  ],
+  "frac_mesh_pixels": 0.19744873046875,
+  "frac_background": 0.37640380859375,
+  "same_qpos_across_episodes_maxdiff": [
+   63,
+   71,
+   63
+  ],
+  "target_pos_per_episode": [
+   [
+    0.06589837537917913,
+    0.6215437488730573,
+    0.17500338579551034
+   ],
+   [
+    0.0357485013299671,
+    0.6652124831477152,
+    0.1750098464647655
+   ],
+   [
+    0.09472639337751114,
+    0.6354497272676466,
+    0.17500900897876015
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "door-close-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 52,
+  "nmesh": 19,
+  "ntex": 6,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 16,
+   "cylinder": 13,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom45",
+   "geom46"
+  ],
+  "frac_mesh_pixels": 0.29290771484375,
+  "frac_background": 0.32379150390625,
+  "same_qpos_across_episodes_maxdiff": [
+   150,
+   136,
+   204
+  ],
+  "target_pos_per_episode": [
+   [
+    0.2550355430366699,
+    0.7394560336766594,
+    0.15
+   ],
+   [
+    0.2985036280798341,
+    0.7295566527542103,
+    0.15
+   ],
+   [
+    0.2186981351502587,
+    0.7201497350136998,
+    0.15
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "door-lock-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 56,
+  "nmesh": 19,
+  "ntex": 6,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 27,
+   "mesh": 18,
+   "cylinder": 9,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom46",
+   "geom47"
+  ],
+  "frac_mesh_pixels": 0.25836181640625,
+  "frac_background": 0.3607177734375,
+  "same_qpos_across_episodes_maxdiff": [
+   96,
+   104,
+   110
+  ],
+  "target_pos_per_episode": [
+   [
+    0.044508476393102486,
+    0.6895898365666085,
+    0.11099999999999999
+   ],
+   [
+    0.06689610667822199,
+    0.6907722913129727,
+    0.11099999999999999
+   ],
+   [
+    -0.08012784031433284,
+    0.6527193933957324,
+    0.11099999999999999
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "door-open-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 52,
+  "nmesh": 19,
+  "ntex": 6,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 16,
+   "cylinder": 13,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom45",
+   "geom46"
+  ],
+  "frac_mesh_pixels": 0.2462158203125,
+  "frac_background": 0.3651123046875,
+  "same_qpos_across_episodes_maxdiff": [
+   153,
+   204,
+   135
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.2751486096459718,
+    0.4382669744750611,
+    0.15
+   ],
+   [
+    -0.22347141560644534,
+    0.4669641062637892,
+    0.15
+   ],
+   [
+    -0.252661903562169,
+    0.4385814438630257,
+    0.15
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "door-unlock-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 56,
+  "nmesh": 19,
+  "ntex": 6,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 27,
+   "mesh": 18,
+   "cylinder": 9,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom46",
+   "geom47"
+  ],
+  "frac_mesh_pixels": 0.25042724609375,
+  "frac_background": 0.366455078125,
+  "same_qpos_across_episodes_maxdiff": [
+   157,
+   157,
+   157
+  ],
+  "target_pos_per_episode": [
+   [
+    0.021771865261463158,
+    0.6570650296781404,
+    0.211
+   ],
+   [
+    0.02718910858166554,
+    0.6476322781179198,
+    0.211
+   ],
+   [
+    0.0979025638222919,
+    0.6869250197891881,
+    0.211
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "drawer-close-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 52,
+  "nmesh": 16,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 25,
+   "mesh": 15,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 3
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.21063232421875,
+  "frac_background": 0.38946533203125,
+  "same_qpos_across_episodes_maxdiff": [
+   154,
+   153,
+   156
+  ],
+  "target_pos_per_episode": [
+   [
+    0.01804306590809386,
+    0.74,
+    0.09
+   ],
+   [
+    -0.017439274766242227,
+    0.74,
+    0.09
+   ],
+   [
+    0.08503909901547976,
+    0.74,
+    0.09
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "drawer-open-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 52,
+  "nmesh": 16,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 25,
+   "mesh": 15,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 3
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.20733642578125,
+  "frac_background": 0.38946533203125,
+  "same_qpos_across_episodes_maxdiff": [
+   166,
+   166,
+   166
+  ],
+  "target_pos_per_episode": [
+   [
+    0.0020535557567982893,
+    0.54,
+    0.09
+   ],
+   [
+    0.005569734771171661,
+    0.54,
+    0.09
+   ],
+   [
+    0.03293483332513131,
+    0.54,
+    0.09
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "faucet-close-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 45,
+  "nmesh": 16,
+  "ntex": 5,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 15,
+   "mesh": 15,
+   "cylinder": 11,
+   "sphere": 1,
+   "capsule": 2
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.19757080078125,
+  "frac_background": 0.376708984375,
+  "same_qpos_across_episodes_maxdiff": [
+   108,
+   87,
+   91
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.23698354466591787,
+    0.8262887023036355,
+    0.125
+   ],
+   [
+    -0.24985991606612265,
+    0.8353873315406878,
+    0.125
+   ],
+   [
+    -0.23082039110580418,
+    0.8278038155275838,
+    0.125
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "faucet-open-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 45,
+  "nmesh": 16,
+  "ntex": 5,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 15,
+   "mesh": 15,
+   "cylinder": 11,
+   "sphere": 1,
+   "capsule": 2
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.19781494140625,
+  "frac_background": 0.37652587890625,
+  "same_qpos_across_episodes_maxdiff": [
+   91,
+   98,
+   90
+  ],
+  "target_pos_per_episode": [
+   [
+    0.16409918440231297,
+    0.8215075589771311,
+    0.125
+   ],
+   [
+    0.20989576587643408,
+    0.800950029684151,
+    0.125
+   ],
+   [
+    0.18628304876930024,
+    0.8274615686932051,
+    0.125
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "hammer-v3",
+  "nq": 17,
+  "nv": 16,
+  "ngeom": 56,
+  "nmesh": 16,
+  "ntex": 6,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 38,
+  "geom_types": {
+   "plane": 1,
+   "box": 19,
+   "mesh": 14,
+   "cylinder": 19,
+   "sphere": 1,
+   "capsule": 2
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "HammerHead",
+   "geom38",
+   "geom39",
+   "geom40",
+   "geom41"
+  ],
+  "frac_mesh_pixels": 0.2220458984375,
+  "frac_background": 0.36956787109375,
+  "same_qpos_across_episodes_maxdiff": [
+   0,
+   0,
+   0
+  ],
+  "target_pos_per_episode": [
+   [
+    0.24,
+    0.74,
+    0.11
+   ],
+   [
+    0.24,
+    0.74,
+    0.11
+   ],
+   [
+    0.24,
+    0.74,
+    0.11
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "hand-insert-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 42,
+  "nmesh": 14,
+  "ntex": 4,
+  "nmat": 7,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 33,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 12,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom2",
+   "geom3",
+   "geom4",
+   "geom5",
+   "objGeom"
+  ],
+  "frac_mesh_pixels": 0.17242431640625,
+  "frac_background": 0.396728515625,
+  "same_qpos_across_episodes_maxdiff": [
+   0,
+   0,
+   0
+  ],
+  "target_pos_per_episode": [
+   [
+    0.0014098060114963243,
+    0.8582620438237718,
+    -0.01991842055031052
+   ],
+   [
+    0.01809816661780452,
+    0.829090308772018,
+    -0.02006503364742978
+   ],
+   [
+    0.019784785924378136,
+    0.8519223166696768,
+    -0.019935034153069665
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "handle-press-side-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 46,
+  "nmesh": 20,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 12,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 19,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2275390625,
+  "frac_background": 0.390625,
+  "same_qpos_across_episodes_maxdiff": [
+   118,
+   34,
+   122
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.09983719256397544,
+    0.6716301000563416,
+    0.07534384174448394
+   ],
+   [
+    -0.05919755054914838,
+    0.6597289634480983,
+    0.07438226429648413
+   ],
+   [
+    -0.10297589834086657,
+    0.6760572005347157,
+    0.07469145541803171
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "handle-press-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 46,
+  "nmesh": 20,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 12,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 19,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2147216796875,
+  "frac_background": 0.3868408203125,
+  "same_qpos_across_episodes_maxdiff": [
+   254,
+   156,
+   192
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.02066252597368952,
+    0.6503691170674748,
+    0.07409144551185685
+   ],
+   [
+    0.033885940023779204,
+    0.6682666035618906,
+    0.074638115133185
+   ],
+   [
+    -0.05693183845577665,
+    0.6279472163936478,
+    0.0752792368295233
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "handle-pull-side-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 46,
+  "nmesh": 20,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 12,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 19,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.228759765625,
+  "frac_background": 0.39129638671875,
+  "same_qpos_across_episodes_maxdiff": [
+   103,
+   102,
+   104
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.11132816400779283,
+    0.7203768763113604,
+    0.172
+   ],
+   [
+    -0.12842042081064448,
+    0.7325667432185451,
+    0.172
+   ],
+   [
+    -0.13264063290833922,
+    0.7280473249742228,
+    0.172
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "handle-pull-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 46,
+  "nmesh": 20,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 12,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 19,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.21075439453125,
+  "frac_background": 0.3853759765625,
+  "same_qpos_across_episodes_maxdiff": [
+   144,
+   168,
+   135
+  ],
+  "target_pos_per_episode": [
+   [
+    0.08490347892957967,
+    0.6399989046618817,
+    0.17137304266452622
+   ],
+   [
+    -0.039562597730889486,
+    0.6374880870862742,
+    0.17160374849539686
+   ],
+   [
+    -0.05105090668317065,
+    0.594132350482336,
+    0.17121523331431607
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "lever-pull-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 48,
+  "nmesh": 18,
+  "ntex": 5,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 9,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 17,
+   "cylinder": 11,
+   "sphere": 2
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.22747802734375,
+  "frac_background": 0.36248779296875,
+  "same_qpos_across_episodes_maxdiff": [
+   146,
+   157,
+   146
+  ],
+  "target_pos_per_episode": [
+   [
+    0.15352996409520697,
+    0.7179702361557815,
+    0.45
+   ],
+   [
+    0.06708018611009298,
+    0.7611256921705598,
+    0.45
+   ],
+   [
+    0.17180216980725768,
+    0.7100834459594644,
+    0.45
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "peg-insert-side-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 46,
+  "nmesh": 15,
+  "ntex": 6,
+  "nmat": 12,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 16,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 23,
+   "mesh": 14,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.23333740234375,
+  "frac_background": 0.39361572265625,
+  "same_qpos_across_episodes_maxdiff": [
+   135,
+   135,
+   155
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.29155557616747085,
+    0.44828973933464134,
+    0.13061800933356937
+   ],
+   [
+    -0.27945943385032435,
+    0.4433060007755127,
+    0.13085833987903311
+   ],
+   [
+    -0.2271872595320837,
+    0.5465027615529334,
+    0.13081195080956984
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "peg-unplug-side-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 51,
+  "nmesh": 17,
+  "ntex": 5,
+  "nmat": 11,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 11,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 15,
+   "cylinder": 10,
+   "sphere": 4
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.19708251953125,
+  "frac_background": 0.39202880859375,
+  "same_qpos_across_episodes_maxdiff": [
+   141,
+   150,
+   149
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.02681892956456547,
+    0.6890625308744012,
+    0.13147277646290256
+   ],
+   [
+    -0.01076965082511036,
+    0.6719009583490637,
+    0.1306480281948077
+   ],
+   [
+    0.029791532340502178,
+    0.7196901934568315,
+    0.13194457674840662
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "pick-out-of-hole-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 45,
+  "nmesh": 15,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 35,
+  "geom_types": {
+   "plane": 1,
+   "box": 23,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "geom37",
+   "geom38",
+   "geom39",
+   "geom40"
+  ],
+  "frac_mesh_pixels": 0.18994140625,
+  "frac_background": 0.39398193359375,
+  "same_qpos_across_episodes_maxdiff": [
+   104,
+   229,
+   89
+  ],
+  "target_pos_per_episode": [
+   [
+    0.055315141142058516,
+    0.5670837185149091,
+    0.18432607153688596
+   ],
+   [
+    -0.06012371466961617,
+    0.5228965505619668,
+    0.2654834309095075
+   ],
+   [
+    0.057648292140963314,
+    0.5914514727971273,
+    0.1837680498085017
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "pick-place-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 37,
+  "nmesh": 14,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 34,
+  "geom_types": {
+   "plane": 1,
+   "box": 15,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom"
+  ],
+  "frac_mesh_pixels": 0.17767333984375,
+  "frac_background": 0.39422607421875,
+  "same_qpos_across_episodes_maxdiff": [
+   130,
+   136,
+   129
+  ],
+  "target_pos_per_episode": [
+   [
+    0.021388095670564072,
+    0.885522757486918,
+    0.08704521952847948
+   ],
+   [
+    0.04796057492247974,
+    0.8367107637475807,
+    0.09262056610035586
+   ],
+   [
+    -0.0931850337776688,
+    0.896135244524087,
+    0.15537886203599893
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "pick-place-wall-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 39,
+  "nmesh": 14,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 35,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom",
+   "geom37"
+  ],
+  "frac_mesh_pixels": 0.177734375,
+  "frac_background": 0.39410400390625,
+  "same_qpos_across_episodes_maxdiff": [
+   129,
+   131,
+   134
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.03932643713856391,
+    0.8757165565661428,
+    0.25782101419923636
+   ],
+   [
+    -0.03439424296925511,
+    0.8603610134266466,
+    0.09980450887465157
+   ],
+   [
+    0.046359308080117984,
+    0.8694314984245961,
+    0.09601094931175606
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "plate-slide-back-side-v3",
+  "nq": 11,
+  "nv": 11,
+  "ngeom": 50,
+  "nmesh": 20,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 19,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 6
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.212646484375,
+  "frac_background": 0.393798828125,
+  "same_qpos_across_episodes_maxdiff": [
+   124,
+   139,
+   144
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.020856785081163377,
+    0.6,
+    0.015
+   ],
+   [
+    0.029547111795391073,
+    0.6,
+    0.015
+   ],
+   [
+    0.11792774253519557,
+    0.6,
+    0.015
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "plate-slide-back-v3",
+  "nq": 11,
+  "nv": 11,
+  "ngeom": 50,
+  "nmesh": 20,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 19,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 6
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.19927978515625,
+  "frac_background": 0.392578125,
+  "same_qpos_across_episodes_maxdiff": [
+   118,
+   115,
+   63
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.06132536764265102,
+    0.6,
+    0.015
+   ],
+   [
+    0.09431182714323061,
+    0.6,
+    0.015
+   ],
+   [
+    0.08328570522445583,
+    0.6,
+    0.015
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "plate-slide-side-v3",
+  "nq": 11,
+  "nv": 11,
+  "ngeom": 50,
+  "nmesh": 20,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 19,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 6
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2169189453125,
+  "frac_background": 0.3935546875,
+  "same_qpos_across_episodes_maxdiff": [
+   53,
+   80,
+   95
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.2682780710296771,
+    0.6119519143929167,
+    0.0
+   ],
+   [
+    -0.29487617885130935,
+    0.5998897547812424,
+    0.0
+   ],
+   [
+    -0.27329816611088187,
+    0.5884188698009196,
+    0.0
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "plate-slide-v3",
+  "nq": 11,
+  "nv": 11,
+  "ngeom": 50,
+  "nmesh": 20,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 19,
+   "cylinder": 7,
+   "sphere": 1,
+   "capsule": 6
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2010498046875,
+  "frac_background": 0.39154052734375,
+  "same_qpos_across_episodes_maxdiff": [
+   203,
+   194,
+   203
+  ],
+  "target_pos_per_episode": [
+   [
+    0.028422629121698795,
+    0.8580213856977739,
+    0.0
+   ],
+   [
+    -0.041771257103669385,
+    0.8540904985138158,
+    0.0
+   ],
+   [
+    -0.018600481334553984,
+    0.864884202612244,
+    0.0
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "push-back-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 37,
+  "nmesh": 14,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 34,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 12,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom"
+  ],
+  "frac_mesh_pixels": 0.1776123046875,
+  "frac_background": 0.39410400390625,
+  "same_qpos_across_episodes_maxdiff": [
+   172,
+   163,
+   163
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.023268670992364335,
+    0.6306797197845617,
+    0.019968024365056614
+   ],
+   [
+    0.04351303339264723,
+    0.638478111218635,
+    0.019968024365056614
+   ],
+   [
+    0.03256257315995656,
+    0.6966469904617401,
+    0.019968024365056614
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "push-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 37,
+  "nmesh": 14,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 34,
+  "geom_types": {
+   "plane": 1,
+   "box": 15,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom"
+  ],
+  "frac_mesh_pixels": 0.177490234375,
+  "frac_background": 0.39410400390625,
+  "same_qpos_across_episodes_maxdiff": [
+   166,
+   118,
+   160
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.024459314129125137,
+    0.8491598256876771,
+    0.019973283961679866
+   ],
+   [
+    -0.08711781371913654,
+    0.8433045136117355,
+    0.019973283961679866
+   ],
+   [
+    0.026301145493204642,
+    0.8039577117672423,
+    0.019973283961679866
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "push-wall-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 39,
+  "nmesh": 14,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 35,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom",
+   "geom37"
+  ],
+  "frac_mesh_pixels": 0.17779541015625,
+  "frac_background": 0.3941650390625,
+  "same_qpos_across_episodes_maxdiff": [
+   161,
+   49,
+   152
+  ],
+  "target_pos_per_episode": [
+   [
+    0.009252907632569952,
+    0.8983750743653859,
+    0.019973283961679866
+   ],
+   [
+    0.0369999360093292,
+    0.8800202657221148,
+    0.019973283961679866
+   ],
+   [
+    0.017154421491826236,
+    0.8959418962275582,
+    0.019973283961679866
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "reach-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 37,
+  "nmesh": 14,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 34,
+  "geom_types": {
+   "plane": 1,
+   "box": 15,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom"
+  ],
+  "frac_mesh_pixels": 0.17755126953125,
+  "frac_background": 0.3935546875,
+  "same_qpos_across_episodes_maxdiff": [
+   130,
+   126,
+   126
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.07332628215834786,
+    0.8077588523986714,
+    0.16604434631997705
+   ],
+   [
+    -0.08015159568407071,
+    0.8991795493684982,
+    0.1399165128176496
+   ],
+   [
+    0.028179107353743793,
+    0.8741226943516656,
+    0.24238815122818802
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "reach-wall-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 39,
+  "nmesh": 14,
+  "ntex": 6,
+  "nmat": 10,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 35,
+  "geom_types": {
+   "plane": 1,
+   "box": 17,
+   "mesh": 12,
+   "cylinder": 8,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7",
+   "objGeom",
+   "geom37"
+  ],
+  "frac_mesh_pixels": 0.1778564453125,
+  "frac_background": 0.3939208984375,
+  "same_qpos_across_episodes_maxdiff": [
+   143,
+   128,
+   128
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.029249545163448423,
+    0.8937722831765016,
+    0.0704480841551794
+   ],
+   [
+    0.018163722518929212,
+    0.8530559945164166,
+    0.17446972706694902
+   ],
+   [
+    0.01647433954739616,
+    0.8593591279659076,
+    0.17779126622860736
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "shelf-place-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 46,
+  "nmesh": 15,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 36,
+  "geom_types": {
+   "plane": 1,
+   "box": 23,
+   "mesh": 14,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.267333984375,
+  "frac_background": 0.3270263671875,
+  "same_qpos_across_episodes_maxdiff": [
+   151,
+   148,
+   150
+  ],
+  "target_pos_per_episode": [
+   [
+    -0.056627211440185614,
+    0.865487789265779,
+    0.29942035568530345
+   ],
+   [
+    0.04223645952871863,
+    0.8929089275093836,
+    0.300876036010122
+   ],
+   [
+    0.048332789542459065,
+    0.8685735063230423,
+    0.30093709365444105
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "soccer-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 45,
+  "nmesh": 21,
+  "ntex": 4,
+  "nmat": 9,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 15,
+   "mesh": 20,
+   "cylinder": 7,
+   "sphere": 2
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.190185546875,
+  "frac_background": 0.39385986328125,
+  "same_qpos_across_episodes_maxdiff": [
+   206,
+   161,
+   205
+  ],
+  "target_pos_per_episode": [
+   [
+    0.09039329523498044,
+    0.8331524647325025,
+    0.0
+   ],
+   [
+    -0.09528376071665044,
+    0.8868560574840216,
+    0.0
+   ],
+   [
+    -0.009045335434988158,
+    0.8268671111426774,
+    0.0
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "stick-pull-v3",
+  "nq": 18,
+  "nv": 17,
+  "ngeom": 50,
+  "nmesh": 19,
+  "ntex": 5,
+  "nmat": 12,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 19,
+   "mesh": 20,
+   "cylinder": 9,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.1961669921875,
+  "frac_background": 0.39117431640625,
+  "same_qpos_across_episodes_maxdiff": [
+   159,
+   159,
+   128
+  ],
+  "target_pos_per_episode": [
+   [
+    0.38105530702251744,
+    0.49713833999966617,
+    0.02
+   ],
+   [
+    0.35762769077711776,
+    0.5123767677654263,
+    0.02
+   ],
+   [
+    0.3748951149186734,
+    0.5233110522472515,
+    0.02
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "stick-push-v3",
+  "nq": 18,
+  "nv": 17,
+  "ngeom": 50,
+  "nmesh": 19,
+  "ntex": 5,
+  "nmat": 12,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 19,
+   "mesh": 20,
+   "cylinder": 9,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.2003173828125,
+  "frac_background": 0.39208984375,
+  "same_qpos_across_episodes_maxdiff": [
+   114,
+   21,
+   135
+  ],
+  "target_pos_per_episode": [
+   [
+    0.39982009743376273,
+    0.5719971427063468,
+    0.132
+   ],
+   [
+    0.4003784569964321,
+    0.551423014416342,
+    0.132
+   ],
+   [
+    0.4003287243179848,
+    0.5829058603013065,
+    0.132
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "sweep-into-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 42,
+  "nmesh": 14,
+  "ntex": 4,
+  "nmat": 7,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 8,
+  "nbody": 33,
+  "geom_types": {
+   "plane": 1,
+   "box": 21,
+   "mesh": 12,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom2",
+   "geom3",
+   "geom4",
+   "geom5",
+   "objGeom"
+  ],
+  "frac_mesh_pixels": 0.17230224609375,
+  "frac_background": 0.39715576171875,
+  "same_qpos_across_episodes_maxdiff": [
+   0,
+   0,
+   0
+  ],
+  "target_pos_per_episode": [
+   [
+    0.0,
+    0.84,
+    0.02
+   ],
+   [
+    0.0,
+    0.84,
+    0.02
+   ],
+   [
+    0.0,
+    0.84,
+    0.02
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "sweep-v3",
+  "nq": 16,
+  "nv": 15,
+  "ngeom": 38,
+  "nmesh": 14,
+  "ntex": 5,
+  "nmat": 8,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 35,
+  "geom_types": {
+   "plane": 1,
+   "box": 16,
+   "mesh": 13,
+   "cylinder": 7,
+   "sphere": 1
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.1788330078125,
+  "frac_background": 0.3935546875,
+  "same_qpos_across_episodes_maxdiff": [
+   0,
+   0,
+   0
+  ],
+  "target_pos_per_episode": [
+   [
+    0.5,
+    0.6292652389638542,
+    0.01
+   ],
+   [
+    0.5,
+    0.6100122776557032,
+    0.01
+   ],
+   [
+    0.5,
+    0.6781717668683007,
+    0.01
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "window-close-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 69,
+  "nmesh": 25,
+  "ntex": 4,
+  "nmat": 11,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 32,
+   "mesh": 18,
+   "cylinder": 11,
+   "sphere": 1,
+   "capsule": 6
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.27093505859375,
+  "frac_background": 0.33489990234375,
+  "same_qpos_across_episodes_maxdiff": [
+   66,
+   153,
+   127
+  ],
+  "target_pos_per_episode": [
+   [
+    0.0,
+    0.7693488637023074,
+    0.2
+   ],
+   [
+    0.0,
+    0.7829092987523107,
+    0.2
+   ],
+   [
+    0.0,
+    0.8945973331344206,
+    0.2
+   ]
+  ],
+  "model_body_pos_changes": null
+ },
+ {
+  "task": "window-open-v3",
+  "nq": 10,
+  "nv": 10,
+  "ngeom": 69,
+  "nmesh": 25,
+  "ntex": 4,
+  "nmat": 11,
+  "ncam": 7,
+  "nlight": 3,
+  "nsite": 10,
+  "nbody": 37,
+  "geom_types": {
+   "plane": 1,
+   "box": 32,
+   "mesh": 18,
+   "cylinder": 11,
+   "sphere": 1,
+   "capsule": 6
+  },
+  "textured_nonmesh": [
+   "geom1",
+   "geom4",
+   "geom5",
+   "geom6",
+   "geom7"
+  ],
+  "frac_mesh_pixels": 0.27044677734375,
+  "frac_background": 0.34576416015625,
+  "same_qpos_across_episodes_maxdiff": [
+   134,
+   166,
+   167
+  ],
+  "target_pos_per_episode": [
+   [
+    0.23199718214429088,
+    0.7842046134343716,
+    0.16
+   ],
+   [
+    0.2536378267615008,
+    0.7712486652216507,
+    0.16
+   ],
+   [
+    0.1941647451117252,
+    0.7975908503712205,
+    0.16
+   ]
+  ],
+  "model_body_pos_changes": null
+ }
+]

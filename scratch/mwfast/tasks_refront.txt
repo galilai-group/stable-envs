@@ -1,0 +1,17 @@
+MetaWorldHandlePressSide
+MetaWorldHandlePull
+MetaWorldHandlePullSide
+MetaWorldLeverPull
+MetaWorldPegInsertSide
+MetaWorldPegUnplugSide
+MetaWorldPickOutOfHole
+MetaWorldPickPlaceWall
+MetaWorldPlateSlideBack
+MetaWorldPlateSlideBackSide
+MetaWorldPlateSlideSide
+MetaWorldPush
+MetaWorldPushBack
+MetaWorldPushWall
+MetaWorldReach
+MetaWorldReachWall
+MetaWorldShelfPlace

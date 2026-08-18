@@ -1,0 +1,47 @@
+{
+  "visible": {
+    "ngeom_total": 1251,
+    "ngeom_group1_rendered": 517,
+    "ngeom_group0_collision_hidden": 730,
+    "n_mesh_geoms_rendered": 166,
+    "n_unique_meshes_rendered": 165,
+    "triangles_rendered": 523772,
+    "triangles_all_groups": 554430,
+    "n_materials_used": 230,
+    "n_textures_used": 71,
+    "texture_MB_used": 376.994496,
+    "texture_MB_total": 388.691328
+  },
+  "baseline_matches_robosuite": {
+    "mean": 0.0,
+    "max": 0,
+    "exact": 1.0
+  },
+  "ablations_corrected": {
+    "shadows": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "reflections": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "skybox": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "haze": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "textures": {
+      "mean": 61.176638233418366,
+      "max": 209,
+      "frac_changed": 0.8204918686224489
+    }
+  }
+}

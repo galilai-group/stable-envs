@@ -1,0 +1,102 @@
+{
+ "pong": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "amidar": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   250,
+   160
+  ]
+ },
+ "bank_heist": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   250,
+   160
+  ]
+ },
+ "breakout": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "seaquest": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "hero": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "kangaroo": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "freeway": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "up_n_down": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ },
+ "krull": {
+  "ale_dims": [
+   210,
+   160
+  ],
+  "cule_dims": [
+   210,
+   160
+  ]
+ }
+}

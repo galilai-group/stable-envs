@@ -1,0 +1,62 @@
+{
+  "craftax_full": {
+    "env_name": "Craftax-Pixels-v1",
+    "block_pixel_size": 10,
+    "frame_shape": [
+      130,
+      110,
+      3
+    ],
+    "n_steps": 40,
+    "frac_bit_exact_vs_env_obs": 0.0,
+    "worst_abs_diff": 1.1920928955078125e-07,
+    "frac_bit_exact_as_uint8": 0.95,
+    "frac_renderer_equals_get_obs": 0.0,
+    "frac_get_obs_equals_step_obs": 0.975,
+    "batch_timings": {
+      "1": {
+        "ms": 1.4102540000749286,
+        "frames_per_s": 709.0921209561318
+      },
+      "64": {
+        "ms": 23.46196179933031,
+        "frames_per_s": 2727.8196319383146
+      },
+      "256": {
+        "ms": 103.47712699949625,
+        "frames_per_s": 2473.9766885994645
+      }
+    },
+    "device": "cpu:0"
+  },
+  "craftax_classic": {
+    "env_name": "Craftax-Classic-Pixels-v1",
+    "block_pixel_size": 7,
+    "frame_shape": [
+      63,
+      63,
+      3
+    ],
+    "n_steps": 40,
+    "frac_bit_exact_vs_env_obs": 0.0,
+    "worst_abs_diff": 5.960464477539063e-08,
+    "frac_bit_exact_as_uint8": 0.975,
+    "frac_renderer_equals_get_obs": 0.0,
+    "frac_get_obs_equals_step_obs": 1.0,
+    "batch_timings": {
+      "1": {
+        "ms": 0.3032070002518594,
+        "frames_per_s": 3298.076888625092
+      },
+      "64": {
+        "ms": 3.9567861997056752,
+        "frames_per_s": 16174.74302876426
+      },
+      "256": {
+        "ms": 13.947960800578585,
+        "frames_per_s": 18353.93744362837
+      }
+    },
+    "device": "cpu:0"
+  }
+}

@@ -1,0 +1,9 @@
+MetaWorldDoorUnlock
+MetaWorldDoorOpen
+MetaWorldHandlePress
+MetaWorldPegUnplugSide
+MetaWorldPlateSlideBack
+MetaWorldFaucetOpen
+MetaWorldStickPull
+MetaWorldCoffeeButton
+MetaWorldPickPlace

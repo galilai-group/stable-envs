@@ -1,0 +1,170 @@
+{
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "node": "gb-west-a1-gpu-114",
+  "chunk": 256,
+  "workers": 8,
+  "loadavg": 19.00390625,
+  "cpu_count": 32,
+  "gpu": "NVIDIA H200",
+  "envs": {
+    "DMCCheetahRun": {
+      "meta": {
+        "env": "DMCCheetahRun",
+        "size": 256,
+        "requested_size": 256,
+        "size_note": null,
+        "h": 256,
+        "w": 256,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 36,
+        "state_dim": 9,
+        "jpeg_bytes_total": 13942321,
+        "raw_bytes_per_frame": 196608
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 27231.095703125,
+      "raw_bytes_per_frame": 196608,
+      "local_1": {
+        "fps": 2032.0512577891864,
+        "read_fps": 65972.800219703,
+        "decode_fps": 2096.6302998135798,
+        "read_frac": 0.03080134920788624
+      },
+      "local_n": {
+        "fps": 10596.432669379275,
+        "workers": 8,
+        "slowest_worker_s": 1.5461807299870998,
+        "frames": 16384,
+        "per_worker_fps": [
+          1328.4796352286146,
+          1328.9186965301087,
+          1327.7565466582403,
+          1328.9620742190477,
+          1324.5540836724094,
+          1332.097268504284,
+          1375.7543645200576,
+          1350.0050537759605
+        ]
+      },
+      "local_gpu": {
+        "fps": 24115.675316561224,
+        "read_fps": 107463.68999882812,
+        "decode_fps": 31108.999129282613,
+        "read_frac": 0.2244076610139127
+      },
+      "shared_1": {
+        "fps": 1711.0274146464383,
+        "read_fps": 71503.04793726293,
+        "decode_fps": 1754.7152386795321,
+        "read_frac": 0.02392943327601504
+      }
+    },
+    "MiniGridEmpty": {
+      "meta": {
+        "env": "MiniGridEmpty",
+        "size": 256,
+        "requested_size": 256,
+        "size_note": null,
+        "h": 256,
+        "w": 256,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 268,
+        "state_dim": 67,
+        "jpeg_bytes_total": 3721778,
+        "raw_bytes_per_frame": 196608
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 7269.09765625,
+      "raw_bytes_per_frame": 196608,
+      "local_1": {
+        "fps": 3126.8008098069668,
+        "read_fps": 156141.73767599222,
+        "decode_fps": 3190.6957700274816,
+        "read_frac": 0.020025400359610143
+      },
+      "local_n": {
+        "fps": 16641.74785583195,
+        "workers": 8,
+        "slowest_worker_s": 0.9845119720557705,
+        "frames": 16384,
+        "per_worker_fps": [
+          2083.474084166562,
+          2093.7104862008096,
+          2114.5148342727834,
+          2108.6035106940103,
+          2080.2184819789936,
+          2106.1319048285436,
+          2109.14733445658,
+          2081.148138406888
+        ]
+      },
+      "local_gpu": {
+        "fps": 28464.464466595233,
+        "read_fps": 179393.81972816781,
+        "decode_fps": 33895.81848175005,
+        "read_frac": 0.15867026249692948
+      },
+      "shared_1": {
+        "fps": 3373.114654089922,
+        "read_fps": 97880.99264039754,
+        "decode_fps": 3500.5840844283175,
+        "read_frac": 0.03446138584313628
+      }
+    },
+    "PushT": {
+      "meta": {
+        "env": "PushT",
+        "size": 256,
+        "requested_size": 256,
+        "size_note": null,
+        "h": 256,
+        "w": 256,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 20,
+        "state_dim": 5,
+        "jpeg_bytes_total": 3834327,
+        "raw_bytes_per_frame": 196608
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 7488.919921875,
+      "raw_bytes_per_frame": 196608,
+      "local_1": {
+        "fps": 3267.263936135154,
+        "read_fps": 145023.18569452083,
+        "decode_fps": 3371.9319865172847,
+        "read_frac": 0.02252925227430441
+      },
+      "local_n": {
+        "fps": 16165.851039803321,
+        "workers": 8,
+        "slowest_worker_s": 1.0134944309247658,
+        "frames": 16384,
+        "per_worker_fps": [
+          2075.867236867099,
+          2056.0550045968835,
+          2020.7313799754152,
+          2035.176422511886,
+          2036.2632901166949,
+          2041.0954862022536,
+          2042.661074407151,
+          2031.3645785387785
+        ]
+      },
+      "local_gpu": {
+        "fps": 28380.688666608683,
+        "read_fps": 171950.55911115246,
+        "decode_fps": 34071.622868959894,
+        "read_frac": 0.16505144742369118
+      },
+      "shared_1": {
+        "fps": 3272.156365339409,
+        "read_fps": 94786.34313293353,
+        "decode_fps": 3398.650893524154,
+        "read_frac": 0.0345213904997934
+      }
+    }
+  }
+}

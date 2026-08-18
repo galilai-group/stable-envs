@@ -1,0 +1,1043 @@
+{
+  "sokoban": {
+    "game": "sokoban",
+    "yaml": "Single-Player/GVGAI/sokoban.yaml",
+    "tile_size": 24,
+    "levels": 6,
+    "players": 1,
+    "level0_shape": [
+      216,
+      312,
+      3
+    ],
+    "grid": [
+      13,
+      9
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        72,
+        104,
+        3
+      ],
+      "16": [
+        144,
+        208,
+        3
+      ],
+      "32": [
+        288,
+        416,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0), ('hole', 'NONE', 0, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('box', 'NONE', 0, 0),)",
+      "(('hole', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 7,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0), ('hole', 'NONE', 0, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 78,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "sokoban2": {
+    "game": "sokoban2",
+    "yaml": "Single-Player/GVGAI/sokoban2.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      168,
+      192,
+      3
+    ],
+    "grid": [
+      8,
+      7
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        56,
+        64,
+        3
+      ],
+      "16": [
+        112,
+        128,
+        3
+      ],
+      "32": [
+        224,
+        256,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0), ('hole', 'NONE', 0, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('box', 'NONE', 0, 0),)",
+      "(('box_in_place', 'NONE', 0, 0), ('hole', 'NONE', 0, 0))",
+      "(('hole', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 8,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0), ('hole', 'NONE', 0, 0))",
+      "(('box_in_place', 'NONE', 0, 0), ('hole', 'NONE', 0, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 39,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "labyrinth": {
+    "game": "labyrinth",
+    "yaml": "Single-Player/GVGAI/labyrinth.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      336,
+      384,
+      3
+    ],
+    "grid": [
+      16,
+      14
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        112,
+        128,
+        3
+      ],
+      "16": [
+        224,
+        256,
+        3
+      ],
+      "32": [
+        448,
+        512,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('exit', 'NONE', 0, 0),)",
+      "(('trap', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 6,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 138,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "butterflies": {
+    "game": "butterflies",
+    "yaml": "Single-Player/GVGAI/butterflies.yaml",
+    "tile_size": 24,
+    "levels": 10,
+    "players": 1,
+    "level0_shape": [
+      264,
+      672,
+      3
+    ],
+    "grid": [
+      28,
+      11
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        88,
+        224,
+        3
+      ],
+      "16": [
+        176,
+        448,
+        3
+      ],
+      "32": [
+        352,
+        896,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('butterfly', 'NONE', 0, 0),)",
+      "(('catcher', 'NONE', 1, 0),)",
+      "(('cocoon', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 6,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 137,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "zelda": {
+    "game": "zelda",
+    "yaml": "Single-Player/GVGAI/zelda.yaml",
+    "tile_size": 24,
+    "levels": 3,
+    "players": 1,
+    "level0_shape": [
+      216,
+      312,
+      3
+    ],
+    "grid": [
+      13,
+      9
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        72,
+        104,
+        3
+      ],
+      "16": [
+        144,
+        208,
+        3
+      ],
+      "32": [
+        288,
+        416,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('attack_fire', 'NONE', 1, 0),)",
+      "(('avatar', 'DOWN', 1, 0),)",
+      "(('avatar', 'DOWN', 1, 1),)",
+      "(('avatar', 'LEFT', 1, 0),)",
+      "(('avatar', 'LEFT', 1, 1),)",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('avatar', 'RIGHT', 1, 0),)",
+      "(('avatar', 'UP', 1, 0),)",
+      "(('avatar', 'UP', 1, 1),)",
+      "(('goal', 'NONE', 0, 0),)",
+      "(('key', 'NONE', 0, 0),)",
+      "(('spider', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 15,
+    "orientations": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "render_tile_ids": [
+      0,
+      1
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 45,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "bait": {
+    "game": "bait",
+    "yaml": "Single-Player/GVGAI/bait.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      144,
+      120,
+      3
+    ],
+    "grid": [
+      5,
+      6
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        48,
+        40,
+        3
+      ],
+      "16": [
+        96,
+        80,
+        3
+      ],
+      "32": [
+        192,
+        160,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('box', 'NONE', 0, 0),)",
+      "(('goal', 'NONE', 0, 0),)",
+      "(('key', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 7,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 27,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "clusters": {
+    "game": "clusters",
+    "yaml": "Single-Player/GVGAI/clusters.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      240,
+      312,
+      3
+    ],
+    "grid": [
+      13,
+      10
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        80,
+        104,
+        3
+      ],
+      "16": [
+        160,
+        208,
+        3
+      ],
+      "32": [
+        320,
+        416,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('blue_block', 'NONE', 0, 0),)",
+      "(('blue_box', 'NONE', 0, 0),)",
+      "(('red_block', 'NONE', 0, 0),)",
+      "(('red_box', 'NONE', 0, 0),)",
+      "(('spike', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 9,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 55,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "cookmepasta": {
+    "game": "cookmepasta",
+    "yaml": "Single-Player/GVGAI/cookmepasta.yaml",
+    "tile_size": 24,
+    "levels": 6,
+    "players": 1,
+    "level0_shape": [
+      264,
+      336,
+      3
+    ],
+    "grid": [
+      14,
+      11
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        88,
+        112,
+        3
+      ],
+      "16": [
+        176,
+        224,
+        3
+      ],
+      "32": [
+        352,
+        448,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('boiling_water', 'NONE', 0, 0),)",
+      "(('raw_pasta', 'NONE', 0, 0),)",
+      "(('tomato', 'NONE', 0, 0),)",
+      "(('tuna', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 8,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 52,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "zenpuzzle": {
+    "game": "zenpuzzle",
+    "yaml": "Single-Player/GVGAI/zenpuzzle.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      288,
+      288,
+      3
+    ],
+    "grid": [
+      12,
+      12
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        96,
+        96,
+        3
+      ],
+      "16": [
+        192,
+        192,
+        3
+      ],
+      "32": [
+        384,
+        384,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0), ('walked', 'NONE', 0, 0))",
+      "(('avatar', 'NONE', 1, 0),)",
+      "(('ground', 'NONE', 0, 0),)",
+      "(('rock', 'NONE', 0, 0),)",
+      "(('walked', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 7,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('avatar', 'NONE', 1, 0), ('walked', 'NONE', 0, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 38,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "spider-nest": {
+    "game": "spider-nest",
+    "yaml": "Single-Player/GVGAI/spider-nest.yaml",
+    "tile_size": 24,
+    "levels": 1,
+    "players": 1,
+    "level0_shape": [
+      792,
+      864,
+      3
+    ],
+    "grid": [
+      36,
+      33
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        264,
+        288,
+        3
+      ],
+      "16": [
+        528,
+        576,
+        3
+      ],
+      "32": [
+        1056,
+        1152,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('gem', 'NONE', 0, 0),)",
+      "(('gnome', 'DOWN', 1, 0),)",
+      "(('gnome', 'LEFT', 1, 0),)",
+      "(('gnome', 'NONE', 1, 0),)",
+      "(('gnome', 'RIGHT', 1, 0),)",
+      "(('gnome', 'UP', 1, 0),)",
+      "(('lava', 'NONE', 0, 0),)",
+      "(('nest', 'NONE', 0, 0),)",
+      "(('spider', 'DOWN', 0, 0),)",
+      "(('spider', 'LEFT', 0, 0),)",
+      "(('spider', 'NONE', 0, 0),)",
+      "(('spider', 'RIGHT', 0, 0),)",
+      "(('spider', 'UP', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 16,
+    "orientations": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 319,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "drunkdwarf": {
+    "game": "drunkdwarf",
+    "yaml": "Single-Player/Mini-Grid/minigrid-drunkdwarf.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      144,
+      144,
+      3
+    ],
+    "grid": [
+      6,
+      6
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        48,
+        48,
+        3
+      ],
+      "16": [
+        96,
+        96,
+        3
+      ],
+      "32": [
+        192,
+        192,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('coffin_bed', 'NONE', 0, 0),)",
+      "(('door', 'NONE', 0, 0),)",
+      "(('drunk_dwarf', 'DOWN', 1, 0),)",
+      "(('drunk_dwarf', 'LEFT', 1, 0),)",
+      "(('drunk_dwarf', 'NONE', 1, 0),)",
+      "(('drunk_dwarf', 'RIGHT', 1, 0),)",
+      "(('drunk_dwarf', 'UP', 1, 0),)",
+      "(('key', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 11,
+    "orientations": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 28,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "doggo": {
+    "game": "doggo",
+    "yaml": "Single-Player/Mini-Grid/minigrid-doggo.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      144,
+      144,
+      3
+    ],
+    "grid": [
+      6,
+      6
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        48,
+        48,
+        3
+      ],
+      "16": [
+        96,
+        96,
+        3
+      ],
+      "32": [
+        192,
+        192,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('doggo', 'DOWN', 1, 0),)",
+      "(('doggo', 'LEFT', 1, 0),)",
+      "(('doggo', 'NONE', 1, 0),)",
+      "(('doggo', 'RIGHT', 1, 0),)",
+      "(('doggo', 'UP', 1, 0),)",
+      "(('stick', 'NONE', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 9,
+    "orientations": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 23,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "eyeball": {
+    "game": "eyeball",
+    "yaml": "Single-Player/Mini-Grid/minigrid-eyeball.yaml",
+    "tile_size": 24,
+    "levels": 1,
+    "players": 1,
+    "level0_shape": [
+      456,
+      456,
+      3
+    ],
+    "grid": [
+      19,
+      19
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        152,
+        152,
+        3
+      ],
+      "16": [
+        304,
+        304,
+        3
+      ],
+      "32": [
+        608,
+        608,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('eye_drops', 'NONE', 0, 0),)",
+      "(('eyeball', 'DOWN', 1, 0),)",
+      "(('eyeball', 'LEFT', 1, 0),)",
+      "(('eyeball', 'NONE', 1, 0),)",
+      "(('eyeball', 'RIGHT', 1, 0),)",
+      "(('eyeball', 'UP', 1, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 9,
+    "orientations": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 104,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "spiders": {
+    "game": "spiders",
+    "yaml": "Single-Player/Mini-Grid/minigrid-spiders.yaml",
+    "tile_size": 24,
+    "levels": 5,
+    "players": 1,
+    "level0_shape": [
+      144,
+      144,
+      3
+    ],
+    "grid": [
+      6,
+      6
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        48,
+        48,
+        3
+      ],
+      "16": [
+        96,
+        96,
+        3
+      ],
+      "32": [
+        192,
+        192,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))",
+      "(('gem', 'NONE', 0, 0),)",
+      "(('gnome', 'DOWN', 1, 0),)",
+      "(('gnome', 'LEFT', 1, 0),)",
+      "(('gnome', 'NONE', 1, 0),)",
+      "(('gnome', 'RIGHT', 1, 0),)",
+      "(('gnome', 'UP', 1, 0),)",
+      "(('spider', 'DOWN', 0, 0),)",
+      "(('spider', 'LEFT', 0, 0),)",
+      "(('spider', 'NONE', 0, 0),)",
+      "(('spider', 'RIGHT', 0, 0),)",
+      "(('spider', 'UP', 0, 0),)",
+      "(('wall', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 14,
+    "orientations": [
+      "DOWN",
+      "LEFT",
+      "NONE",
+      "RIGHT",
+      "UP"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 24,
+      "placed": 3,
+      "matches": false
+    }
+  },
+  "foragers": {
+    "game": "foragers",
+    "yaml": "Multi-Agent/foragers.yaml",
+    "tile_size": 24,
+    "levels": 3,
+    "players": 4,
+    "level0_shape": [
+      240,
+      216,
+      3
+    ],
+    "grid": [
+      9,
+      10
+    ],
+    "shapes_by_tile_size": {
+      "8": [
+        80,
+        72,
+        3
+      ],
+      "16": [
+        160,
+        144,
+        3
+      ],
+      "32": [
+        320,
+        288,
+        3
+      ]
+    },
+    "tile_size_scales": true,
+    "n_frames": 240,
+    "alphabet": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_boundary', 'NONE', 2, 0), ('_boundary', 'NONE', 3, 0), ('_boundary', 'NONE', 4, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0), ('_empty', 'NONE', 2, 0), ('_empty', 'NONE', 3, 0), ('_empty', 'NONE', 4, 0))",
+      "(('fixed_wall', 'NONE', 0, 0),)",
+      "(('harvester', 'NONE', 1, 0),)",
+      "(('harvester', 'NONE', 2, 0),)",
+      "(('harvester', 'NONE', 3, 0),)",
+      "(('harvester', 'NONE', 4, 0),)",
+      "(('potion1', 'NONE', 0, 0),)",
+      "(('potion2', 'NONE', 0, 0),)",
+      "(('potion3', 'NONE', 0, 0),)",
+      "()"
+    ],
+    "n_codes": 10,
+    "orientations": [
+      "NONE"
+    ],
+    "render_tile_ids": [
+      0
+    ],
+    "stacked_codes": [
+      "(('_boundary', 'NONE', 0, 0), ('_boundary', 'NONE', 1, 0), ('_boundary', 'NONE', 2, 0), ('_boundary', 'NONE', 3, 0), ('_boundary', 'NONE', 4, 0), ('_empty', 'NONE', 0, 0), ('_empty', 'NONE', 1, 0), ('_empty', 'NONE', 2, 0), ('_empty', 'NONE', 3, 0), ('_empty', 'NONE', 4, 0))"
+    ],
+    "load_state": {
+      "ok": true,
+      "codes_match": true,
+      "n_differ": 0
+    },
+    "load_state_arbitrary": {
+      "ok": true,
+      "n_cells": 51,
+      "placed": 3,
+      "matches": false
+    }
+  }
+}

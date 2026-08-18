@@ -1,0 +1,840 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    8.10107421875,
+    8.04931640625
+  ],
+  "registry_size": 147,
+  "envs": {
+    "MetaWorldSweep": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 64,
+      "gpu": {
+        "fps": 8002.910748872069,
+        "seconds_per_batch": 0.12795344495680183,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.000144655050194,
+        "loadavg": 7.8525390625
+      },
+      "storage": {
+        "local": {
+          "fps": 2207.672235407277,
+          "bytes_on_disk": 6705626,
+          "bytes_per_frame": 13096.92578125
+        },
+        "shared": {
+          "fps": 1522.1066260581774,
+          "bytes_on_disk": 6705626,
+          "bytes_per_frame": 13096.92578125
+        },
+        "memory_one_frame": {
+          "fps": 3081.2534044391664
+        }
+      }
+    },
+    "MetaWorldSweepInto": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 64,
+      "gpu": {
+        "fps": 8045.281672117464,
+        "seconds_per_batch": 0.127279571024701,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.000121370300057,
+        "loadavg": 7.33984375
+      },
+      "storage": {
+        "local": {
+          "fps": 1648.8813453792507,
+          "bytes_on_disk": 6852559,
+          "bytes_per_frame": 13383.904296875
+        },
+        "shared": {
+          "fps": 1751.8958465833662,
+          "bytes_on_disk": 6852559,
+          "bytes_per_frame": 13383.904296875
+        },
+        "memory_one_frame": {
+          "fps": 3060.2400797274986
+        }
+      }
+    },
+    "MetaWorldWindowClose": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 48,
+      "gpu": {
+        "fps": 3187.6661631178613,
+        "seconds_per_batch": 0.32123815594241023,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 0.9998896645240922,
+        "loadavg": 7.68359375
+      },
+      "storage": {
+        "local": {
+          "fps": 2539.2559410537237,
+          "bytes_on_disk": 7570599,
+          "bytes_per_frame": 14786.326171875
+        },
+        "shared": {
+          "fps": 1686.256554383743,
+          "bytes_on_disk": 7570599,
+          "bytes_per_frame": 14786.326171875
+        },
+        "memory_one_frame": {
+          "fps": 2894.2805949499507
+        }
+      }
+    },
+    "MetaWorldWindowOpen": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 56,
+      "gpu": {
+        "fps": 3171.9770603371726,
+        "seconds_per_batch": 0.32282705092802644,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 0.999826514584521,
+        "loadavg": 7.49755859375
+      },
+      "storage": {
+        "local": {
+          "fps": 2075.872196648203,
+          "bytes_on_disk": 7514133,
+          "bytes_per_frame": 14676.041015625
+        },
+        "shared": {
+          "fps": 1490.4252578413596,
+          "bytes_on_disk": 7514133,
+          "bytes_per_frame": 14676.041015625
+        },
+        "memory_one_frame": {
+          "fps": 2347.5647144588834
+        }
+      }
+    },
+    "MiniGridDoorKey": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 268,
+      "gpu": {
+        "fps": 361025.46492241276,
+        "seconds_per_batch": 0.002836365019902587,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0002040120509907,
+        "loadavg": 7.5380859375
+      },
+      "storage": {
+        "local": {
+          "fps": 3615.0244412184998,
+          "bytes_on_disk": 3319897,
+          "bytes_per_frame": 6484.173828125
+        },
+        "shared": {
+          "fps": 2139.8290344426423,
+          "bytes_on_disk": 3319897,
+          "bytes_per_frame": 6484.173828125
+        },
+        "memory_one_frame": {
+          "fps": 4009.8223115486753
+        }
+      }
+    },
+    "MiniGridEmpty": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 268,
+      "gpu": {
+        "fps": 397111.1696903184,
+        "seconds_per_batch": 0.002578623010776937,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0002023573378742,
+        "loadavg": 7.5751953125
+      },
+      "storage": {
+        "local": {
+          "fps": 3712.836761563221,
+          "bytes_on_disk": 3246356,
+          "bytes_per_frame": 6340.5390625
+        },
+        "shared": {
+          "fps": 2166.9822334942405,
+          "bytes_on_disk": 3246356,
+          "bytes_per_frame": 6340.5390625
+        },
+        "memory_one_frame": {
+          "fps": 4031.388930412917
+        }
+      }
+    },
+    "MiniGridFourRooms": {
+      "size": 608,
+      "requested_size": 256,
+      "size_note": "ValueError: MiniGridFourRooms: size 256 is not a whole tile size for a 19x19 grid; use a multiple of 19 that is at least 57",
+      "frame_shape": [
+        608,
+        608
+      ],
+      "state_bytes": 1456,
+      "gpu": {
+        "fps": 299155.9348855018,
+        "seconds_per_batch": 0.003422964015044272,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0001396215727527,
+        "loadavg": 7.52880859375
+      },
+      "storage": {
+        "local": {
+          "fps": 788.8465892491866,
+          "bytes_on_disk": 20705439,
+          "bytes_per_frame": 40440.310546875
+        },
+        "shared": {
+          "fps": 663.0201069698996,
+          "bytes_on_disk": 20705439,
+          "bytes_per_frame": 40440.310546875
+        },
+        "memory_one_frame": {
+          "fps": 806.0984966483243
+        }
+      }
+    },
+    "MiniGridKeyCorridor": {
+      "size": 320,
+      "requested_size": 256,
+      "size_note": "ValueError: MiniGridKeyCorridor: size 256 is not a whole tile size for a 10x10 grid; use a multiple of 10 that is at least 30",
+      "frame_shape": [
+        320,
+        320
+      ],
+      "state_bytes": 412,
+      "gpu": {
+        "fps": 360061.44648890995,
+        "seconds_per_batch": 0.0028439590241760015,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0003137046485173,
+        "loadavg": 7.521484375
+      },
+      "storage": {
+        "local": {
+          "fps": 2444.2684705810043,
+          "bytes_on_disk": 5777821,
+          "bytes_per_frame": 11284.806640625
+        },
+        "shared": {
+          "fps": 1624.143625636487,
+          "bytes_on_disk": 5777821,
+          "bytes_per_frame": 11284.806640625
+        },
+        "memory_one_frame": {
+          "fps": 2722.8751633495776
+        }
+      }
+    },
+    "MiniGridLavaCrossing": {
+      "size": 288,
+      "requested_size": 256,
+      "size_note": "ValueError: MiniGridLavaCrossing: size 256 is not a whole tile size for a 9x9 grid; use a multiple of 9 that is at least 27",
+      "frame_shape": [
+        288,
+        288
+      ],
+      "state_bytes": 336,
+      "gpu": {
+        "fps": 359592.74313085375,
+        "seconds_per_batch": 0.002847665920853615,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 0.9998982920599703,
+        "loadavg": 7.521484375
+      },
+      "storage": {
+        "local": {
+          "fps": 2544.881887233295,
+          "bytes_on_disk": 6989907,
+          "bytes_per_frame": 13652.162109375
+        },
+        "shared": {
+          "fps": 1682.4445291650145,
+          "bytes_on_disk": 6989907,
+          "bytes_per_frame": 13652.162109375
+        },
+        "memory_one_frame": {
+          "fps": 2877.630138631474
+        }
+      }
+    },
+    "MiniGridPOVFetch": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: MiniGridPOVFetch: size 256 is not a whole tile size for a 7x7 grid; use a multiple of 7 that is at least 21",
+      "frame_shape": [
+        224,
+        224
+      ],
+      "state_bytes": 196,
+      "gpu": {
+        "fps": 2063525.9510295468,
+        "seconds_per_batch": 0.0004962380044162273,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0044578774477373,
+        "loadavg": 7.3994140625
+      },
+      "storage": {
+        "local": {
+          "fps": 4521.894327990167,
+          "bytes_on_disk": 1949084,
+          "bytes_per_frame": 3806.8046875
+        },
+        "shared": {
+          "fps": 2405.738321169941,
+          "bytes_on_disk": 1949084,
+          "bytes_per_frame": 3806.8046875
+        },
+        "memory_one_frame": {
+          "fps": 5243.936931777883
+        }
+      }
+    },
+    "MiniHack": {
+      "size": 16,
+      "requested_size": 256,
+      "size_note": "OutOfMemoryError: CUDA out of memory. Tried to allocate 155.53 GiB. GPU 0 has a total capacity of 139.80 GiB of which 137.58 GiB is free. Including non-PyTorch memory, this process has 2.21 GiB memory in use. Of the allocated memory 270.85 MiB is allocated by PyTorch, and 13.15 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "frame_shape": [
+        336,
+        1264
+      ],
+      "state_bytes": 6636,
+      "gpu": {
+        "fps": 238588.30513060064,
+        "seconds_per_batch": 0.00429191195871681,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0001565243245878,
+        "loadavg": 7.3671875
+      },
+      "storage": {
+        "local": {
+          "fps": 640.2634379502605,
+          "bytes_on_disk": 11737526,
+          "bytes_per_frame": 22924.85546875
+        },
+        "shared": {
+          "fps": 560.392057021593,
+          "bytes_on_disk": 11737526,
+          "bytes_per_frame": 22924.85546875
+        },
+        "memory_one_frame": {
+          "fps": 643.3069539950437
+        }
+      }
+    },
+    "MountainCar": {
+      "size": 600,
+      "requested_size": 256,
+      "size_note": "ValueError: MountainCar renders at its reference's native 400x600 and nothing else (got size=256). The official renderer hardcodes every primitive in pixels, so a resized frame has no reference to be exact against; resample the output if you want one.",
+      "frame_shape": [
+        400,
+        600
+      ],
+      "state_bytes": 4,
+      "gpu": {
+        "fps": 14774.113114771812,
+        "seconds_per_batch": 0.06931042100768536,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0000784548711075,
+        "loadavg": 7.31005859375
+      },
+      "storage": {
+        "local": {
+          "fps": 1068.8074455836813,
+          "bytes_on_disk": 5601334,
+          "bytes_per_frame": 10940.10546875
+        },
+        "shared": {
+          "fps": 882.0751721201124,
+          "bytes_on_disk": 5601334,
+          "bytes_per_frame": 10940.10546875
+        },
+        "memory_one_frame": {
+          "fps": 1111.0161926740261
+        }
+      }
+    },
+    "MountainCarContinuous": {
+      "size": 600,
+      "requested_size": 256,
+      "size_note": "ValueError: MountainCarContinuous renders at its reference's native 400x600 and nothing else (got size=256). The official renderer hardcodes every primitive in pixels, so a resized frame has no reference to be exact against; resample the output if you want one.",
+      "frame_shape": [
+        400,
+        600
+      ],
+      "state_bytes": 4,
+      "gpu": {
+        "fps": 14734.90375482938,
+        "seconds_per_batch": 0.06949485500808805,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 0.9997053163944599,
+        "loadavg": 7.56396484375
+      },
+      "storage": {
+        "local": {
+          "fps": 1303.103384216291,
+          "bytes_on_disk": 5596714,
+          "bytes_per_frame": 10931.08203125
+        },
+        "shared": {
+          "fps": 1027.1533527577392,
+          "bytes_on_disk": 5596714,
+          "bytes_per_frame": 10931.08203125
+        },
+        "memory_one_frame": {
+          "fps": 1375.4578515438022
+        }
+      }
+    },
+    "MujocoInvertedDoublePendulum": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 12,
+      "gpu": {
+        "fps": 9472.50181318847,
+        "seconds_per_batch": 0.10810238099656999,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9996719030386759,
+        "loadavg": 7.236328125
+      },
+      "storage": {
+        "local": {
+          "fps": 4187.009918829254,
+          "bytes_on_disk": 1116735,
+          "bytes_per_frame": 2181.123046875
+        },
+        "shared": {
+          "fps": 2203.3187510463335,
+          "bytes_on_disk": 1116735,
+          "bytes_per_frame": 2181.123046875
+        },
+        "memory_one_frame": {
+          "fps": 4453.0236253905205
+        }
+      }
+    },
+    "MujocoInvertedPendulum": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 9372.390588081935,
+        "seconds_per_batch": 0.10925707698334008,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.000124604253797,
+        "loadavg": 6.97705078125
+      },
+      "storage": {
+        "local": {
+          "fps": 2072.979007091961,
+          "bytes_on_disk": 1763450,
+          "bytes_per_frame": 3444.23828125
+        },
+        "shared": {
+          "fps": 1354.8381786929972,
+          "bytes_on_disk": 1763450,
+          "bytes_per_frame": 3444.23828125
+        },
+        "memory_one_frame": {
+          "fps": 2191.2367276133587
+        }
+      }
+    },
+    "MujocoPusher": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 44,
+      "gpu": {
+        "fps": 4913.051512962877,
+        "seconds_per_batch": 0.2084244379075244,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9996069782801569,
+        "loadavg": 7.7568359375
+      },
+      "storage": {
+        "local": {
+          "fps": 3936.019023769048,
+          "bytes_on_disk": 1880575,
+          "bytes_per_frame": 3672.998046875
+        },
+        "shared": {
+          "fps": 2221.6654366074754,
+          "bytes_on_disk": 1880575,
+          "bytes_per_frame": 3672.998046875
+        },
+        "memory_one_frame": {
+          "fps": 4194.4607698593445
+        }
+      }
+    },
+    "MujocoReacher": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 9612.59261823335,
+        "seconds_per_batch": 0.1065269319806248,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9998609855043112,
+        "loadavg": 7.69580078125
+      },
+      "storage": {
+        "local": {
+          "fps": 2239.1112133889096,
+          "bytes_on_disk": 2737755,
+          "bytes_per_frame": 5347.177734375
+        },
+        "shared": {
+          "fps": 1564.399617922733,
+          "bytes_on_disk": 2737755,
+          "bytes_per_frame": 5347.177734375
+        },
+        "memory_one_frame": {
+          "fps": 2385.5904604060456
+        }
+      }
+    },
+    "Parking": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        512
+      ],
+      "state_bytes": 28,
+      "gpu": {
+        "fps": 58902.94756653142,
+        "seconds_per_batch": 0.01738452899735421,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0001845938838134,
+        "loadavg": 7.96044921875
+      },
+      "storage": {
+        "local": {
+          "fps": 2125.074223570765,
+          "bytes_on_disk": 4600859,
+          "bytes_per_frame": 8986.052734375
+        },
+        "shared": {
+          "fps": 1480.9945102511683,
+          "bytes_on_disk": 4600859,
+          "bytes_per_frame": 8986.052734375
+        },
+        "memory_one_frame": {
+          "fps": 2343.838874452597
+        }
+      }
+    },
+    "Pendulum": {
+      "size": 500,
+      "requested_size": 256,
+      "size_note": "ValueError: Pendulum renders at its reference's native 500x500 and nothing else (got size=256). The official renderer hardcodes every primitive in pixels, so a resized frame has no reference to be exact against; resample the output if you want one.",
+      "frame_shape": [
+        500,
+        500
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 20156.20269105971,
+        "seconds_per_batch": 0.0508032200159505,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 0.9997364219672729,
+        "loadavg": 8.2041015625
+      },
+      "storage": {
+        "local": {
+          "fps": 988.5532045365899,
+          "bytes_on_disk": 3906306,
+          "bytes_per_frame": 7629.50390625
+        },
+        "shared": {
+          "fps": 818.0912991436279,
+          "bytes_on_disk": 3906306,
+          "bytes_per_frame": 7629.50390625
+        },
+        "memory_one_frame": {
+          "fps": 1024.120026827302
+        }
+      }
+    },
+    "Piecewise": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: Piecewise renders at 224px only, and asking for 256 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re-sample. Resize the frames afterwards if a different size is wanted; that is what stable_worldmodel's own pipeline does.",
+      "frame_shape": [
+        224,
+        224
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 186882.59569718633,
+        "seconds_per_batch": 0.00547937594819814,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0004001909945524,
+        "loadavg": 8.1875
+      },
+      "storage": {
+        "local": {
+          "fps": 4691.978442505223,
+          "bytes_on_disk": 1535631,
+          "bytes_per_frame": 2999.279296875
+        },
+        "shared": {
+          "fps": 2495.434099578399,
+          "bytes_on_disk": 1535631,
+          "bytes_per_frame": 2999.279296875
+        },
+        "memory_one_frame": {
+          "fps": 5075.400779612552
+        }
+      }
+    },
+    "PiecewiseZones": {
+      "size": 224,
+      "requested_size": 256,
+      "size_note": "ValueError: PiecewiseZones renders at 224px only, and asking for 256 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re-sample. Resize the frames afterwards if a different size is wanted; that is what stable_worldmodel's own pipeline does.",
+      "frame_shape": [
+        224,
+        224
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 140308.43638154815,
+        "seconds_per_batch": 0.00729820691049099,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0000891394841336,
+        "loadavg": 8.09228515625
+      },
+      "storage": {
+        "local": {
+          "fps": 3312.6629003237717,
+          "bytes_on_disk": 2124215,
+          "bytes_per_frame": 4148.857421875
+        },
+        "shared": {
+          "fps": 2023.9230070978344,
+          "bytes_on_disk": 2124215,
+          "bytes_per_frame": 4148.857421875
+        },
+        "memory_one_frame": {
+          "fps": 3611.1097955665787
+        }
+      }
+    },
+    "PointMazeLarge": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 66154.57994465546,
+        "seconds_per_batch": 0.015478898072615266,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9999549651221831,
+        "loadavg": 8.08447265625
+      },
+      "storage": {
+        "local": {
+          "fps": 2779.9296739109154,
+          "bytes_on_disk": 6297240,
+          "bytes_per_frame": 12299.296875
+        },
+        "shared": {
+          "fps": 1801.0640599752608,
+          "bytes_on_disk": 6297240,
+          "bytes_per_frame": 12299.296875
+        },
+        "memory_one_frame": {
+          "fps": 3189.673651653663
+        }
+      }
+    },
+    "PointMazeMedium": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 66061.84831847825,
+        "seconds_per_batch": 0.015500625944696367,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0001992537951212,
+        "loadavg": 8.158203125
+      },
+      "storage": {
+        "local": {
+          "fps": 2392.3776984476453,
+          "bytes_on_disk": 5243906,
+          "bytes_per_frame": 10242.00390625
+        },
+        "shared": {
+          "fps": 1626.257559636928,
+          "bytes_on_disk": 5243906,
+          "bytes_per_frame": 10242.00390625
+        },
+        "memory_one_frame": {
+          "fps": 2666.456349329511
+        }
+      }
+    },
+    "PointMazeOpen": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 66155.02475047199,
+        "seconds_per_batch": 0.015478793997317553,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.000188693229451,
+        "loadavg": 8.1455078125
+      },
+      "storage": {
+        "local": {
+          "fps": 2105.8380033782532,
+          "bytes_on_disk": 4175485,
+          "bytes_per_frame": 8155.244140625
+        },
+        "shared": {
+          "fps": 1472.3107787196864,
+          "bytes_on_disk": 4175485,
+          "bytes_per_frame": 8155.244140625
+        },
+        "memory_one_frame": {
+          "fps": 2228.12618529797
+        }
+      }
+    },
+    "PointMazeUMaze": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 66307.99033369987,
+        "seconds_per_batch": 0.015443086042068899,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9997778752365554,
+        "loadavg": 8.0537109375
+      },
+      "storage": {
+        "local": {
+          "fps": 1880.8329653017354,
+          "bytes_on_disk": 4281403,
+          "bytes_per_frame": 8362.115234375
+        },
+        "shared": {
+          "fps": 1334.3624637407977,
+          "bytes_on_disk": 4281403,
+          "bytes_per_frame": 8362.115234375
+        },
+        "memory_one_frame": {
+          "fps": 2022.5550205574448
+        }
+      }
+    }
+  }
+}

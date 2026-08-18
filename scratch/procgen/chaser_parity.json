@@ -1,0 +1,56 @@
+{
+ "own_obs_vs_set_state": {
+  "frames": 240,
+  "identical": 240
+ },
+ "parity": {
+  "frames": 240,
+  "pixels_exact_frac": 1.0,
+  "max_abs_diff": 0,
+  "frames_exact": 240
+ },
+ "coverage": {
+  "enemy_sprite_values": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "orb_cells_per_frame": [
+   79,
+   106
+  ],
+  "wall_cells_per_frame": [
+   56,
+   63
+  ],
+  "slots_present_min_max": {
+   "orb": [
+    2,
+    3
+   ],
+   "egg": [
+    0,
+    3
+   ],
+   "enemy": [
+    0,
+    3
+   ]
+  }
+ },
+ "pool": {
+  "enemy_sprite_values": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "orb_cells": [
+   80,
+   108
+  ],
+  "parity_pixels_exact_frac": 1.0,
+  "parity_max_abs": 0
+ }
+}

@@ -1,0 +1,134 @@
+[
+ {
+  "backend": "mujoco_egl",
+  "scene": "antmaze_medium.xml",
+  "label": "threads=1",
+  "batch": 256,
+  "res": 224,
+  "threads": 1,
+  "ms_per_batch": 1393.6802619937225,
+  "fps": 183.6863210172615,
+  "mpix_s": 9.216644843362113
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "antmaze_medium.xml",
+  "label": "threads=2",
+  "batch": 256,
+  "res": 224,
+  "threads": 2,
+  "ms_per_batch": 1674.3599799956428,
+  "fps": 152.89424201399402,
+  "mpix_s": 7.671621487294163
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "antmaze_medium.xml",
+  "label": "threads=4",
+  "batch": 256,
+  "res": 224,
+  "threads": 4,
+  "ms_per_batch": 3477.4718529952224,
+  "fps": 73.61669937874598,
+  "mpix_s": 3.693791508027958
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "antmaze_medium.xml",
+  "label": "threads=8",
+  "batch": 256,
+  "res": 224,
+  "threads": 8,
+  "ms_per_batch": 3756.097038000007,
+  "fps": 68.15585364544022,
+  "mpix_s": 3.4197881125136083
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "cube_single.xml",
+  "label": "threads=1",
+  "batch": 256,
+  "res": 224,
+  "threads": 1,
+  "ms_per_batch": 1263.6123139964184,
+  "fps": 202.59378384051234,
+  "mpix_s": 10.165345697981548
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "cube_single.xml",
+  "label": "threads=2",
+  "batch": 256,
+  "res": 224,
+  "threads": 2,
+  "ms_per_batch": 1385.30192199687,
+  "fps": 184.79726039142707,
+  "mpix_s": 9.272387337400245
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "cube_single.xml",
+  "label": "threads=4",
+  "batch": 256,
+  "res": 224,
+  "threads": 4,
+  "ms_per_batch": 2390.2242929980275,
+  "fps": 107.10291948330192,
+  "mpix_s": 5.373996087994158
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "cube_single.xml",
+  "label": "threads=8",
+  "batch": 256,
+  "res": 224,
+  "threads": 8,
+  "ms_per_batch": 2884.2373820007197,
+  "fps": 88.75829763444072,
+  "mpix_s": 4.453536342105698
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "threads=1",
+  "batch": 256,
+  "res": 224,
+  "threads": 1,
+  "ms_per_batch": 1434.7563890041783,
+  "fps": 178.4275030673897,
+  "mpix_s": 8.952778393909345
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "threads=2",
+  "batch": 256,
+  "res": 224,
+  "threads": 2,
+  "ms_per_batch": 1627.7139329977217,
+  "fps": 157.2757932522768,
+  "mpix_s": 7.89147020222624
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "threads=4",
+  "batch": 256,
+  "res": 224,
+  "threads": 4,
+  "ms_per_batch": 3765.8816580005805,
+  "fps": 67.97876918307573,
+  "mpix_s": 3.410902722530008
+ },
+ {
+  "backend": "mujoco_egl",
+  "scene": "humanoidmaze_medium.xml",
+  "label": "threads=8",
+  "batch": 256,
+  "res": 224,
+  "threads": 8,
+  "ms_per_batch": 3983.7546199996723,
+  "fps": 64.26098603433087,
+  "mpix_s": 3.2243592352585857
+ }
+]

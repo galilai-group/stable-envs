@@ -1,0 +1,6 @@
+scratch/mwfast/train.py MetaWorldDoorLock --net espcn_112t128_w48_d4_u2 --tag r112 --epochs 120
+scratch/mwfast/train.py MetaWorldDoorLock --net espcn_112t128_w64_d6_u2 --tag r112 --epochs 120
+scratch/mwfast/train.py MetaWorldDoorLock --net unet_112t128_w48_d2_u2 --tag r112 --epochs 120
+scratch/mwfast/train.py MetaWorldSoccer --net espcn_112t128_w48_d4_u2 --tag r112 --epochs 120
+scratch/mwfast/train.py MetaWorldSoccer --net espcn_112t128_w64_d6_u2 --tag r112 --epochs 120
+scratch/mwfast/train.py MetaWorldSoccer --net unet_112t128_w48_d2_u2 --tag r112 --epochs 120

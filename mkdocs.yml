@@ -1,0 +1,141 @@
+site_name: stable-envs
+site_description: Famous research environments as GPU-batched, state-driven renderers
+repo_url: https://github.com/galilai-group/stable-envs
+repo_name: galilai-group/stable-envs
+edit_uri: ""
+
+theme:
+  name: material
+  logo: assets/brand/mark.svg
+  favicon: assets/brand/mark.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - content.code.copy
+    - toc.follow
+  font: false
+
+# Anchors and links are validated, so a heading rename cannot quietly leave a dead cross-reference.
+# omitted_files stays at its default (info) on purpose: research notes are added by separate work and a
+# new file appearing before it reaches the nav should not break someone else's build.
+validation:
+  links:
+    anchors: warn
+    unrecognized_links: warn
+    absolute_links: warn
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: null
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            separate_signature: true
+            signature_crossrefs: true
+            merge_init_into_class: true
+            heading_level: 2
+            filters: ["!^_"]
+
+nav:
+  - Home: index.md
+  - Concepts:
+      - The Scene2D IR: concepts/scene-ir.md
+      - The fused rasterizer: concepts/rasterizer.md
+      - Writing a bit-exact Triton kernel: concepts/bit-exact-triton.md
+      - Variation spaces: concepts/variation-spaces.md
+      - Fidelity tiers: concepts/fidelity-tiers.md
+      - Why physics is separate: concepts/physics.md
+  - Adding an environment: adding-an-env.md
+  - Testing and conformance: testing.md
+  - Measured:
+      - Throughput: benchmarks.md
+      - Gallery: gallery.md
+  - API reference:
+      - stable_envs.core.env: api/env.md
+      - stable_envs.core.style: api/style.md
+      - stable_envs.data: api/data.md
+      - stable_envs.rollout: api/rollout.md
+      - stable_envs.render.scene: api/scene.md
+      - stable_envs.render.raster2d: api/raster2d.md
+      - stable_envs.render.gfxdraw: api/gfxdraw.md
+      - stable_envs.render.tilemap: api/tilemap.md
+      - stable_envs.render.raycast3d: api/raycast3d.md
+      - stable_envs.render.mjwarp: api/mjwarp.md
+      - stable_envs.render.rendernet: api/rendernet.md
+      - stable_envs.spaces: api/spaces.md
+      - stable_envs.envs: api/envs.md
+      - stable_envs.compat.worldmodel: api/compat.md
+      - stable_envs.testing: api/testing.md
+  - Research notes:
+      - When does this pay off: research/when_does_this_pay_off.md
+      - Classic 2-D control: research/classic_control.md
+      - LunarLander: research/lunarlander.md
+      - MiniGrid and BabyAI: research/minigrid.md
+      - Crafter: research/crafter.md
+      - OGBench mazes: research/ogbench.md
+      - D4RL maze2d / PointMaze: research/maze2d.md
+      - Overcooked (JaxMARL): research/overcooked.md
+      - Griddly: research/griddly.md
+      - Sokoban and Boxoban: research/sokoban.md
+      - CarRacing: research/carracing.md
+      - highway-env: research/highway.md
+      - Jumanji: research/jumanji.md
+      - PGX board games: research/pgx.md
+      - Pixel-native families: research/pixel_native.md
+      - GPU-native families: research/gpu_native.md
+      - RoboCasa: research/robocasa.md
+      - DM Control: research/dmcontrol.md
+      - Fetch (gymnasium-robotics): research/fetch.md
+      - Gymnasium MuJoCo: research/mujoco_locomotion.md
+      - Meta-World: research/metaworld.md
+      - HumanoidBench: research/humanoidbench.md
+      - Choosing a 3-D backend: research/backend3d.md
+      - nvdiffrast backend: research/nvdiffrast.md
+      - stable_worldmodel coverage: research/swm_coverage.md
+      # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
+      # readers ask far more often than "why is this one here" -- and until now all three of them were
+      # orphaned: built by mkdocs, linked from nothing, findable only by guessing the URL.
+      - 'NO-GO: Adroit hand': research/adroit.md
+      - 'NO-GO: Franka Kitchen': research/kitchen.md
+      - 'NO-GO: MiniWorld': research/miniworld.md

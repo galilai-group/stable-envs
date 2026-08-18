@@ -1,0 +1,13 @@
+renderer                                  seeds     succ/n    SR %           95% CI
+official                      42,43,44,45,46,47    264/300    88.0     [83.8, 91.2]
+stable_envs                   42,43,44,45,46,47    263/300    87.7     [83.5, 90.9]
+stable_envs_resize512                        42      47/50    94.0     [83.8, 97.9]
+stable_envs_live              42,43,44,45,46,47    264/300    88.0     [83.8, 91.2]
+stable_envs_dataset           42,43,44,45,46,47    259/300    86.3     [82.0, 89.8]
+blank                                        42       2/50     4.0      [1.1, 13.5]
+
+official vs stable_envs              paired n= 300  official-only wins= 12  stable_envs-only wins= 11  delta= -0.3 pts  McNemar p=1.000
+official vs stable_envs_resize512    paired n=  50  official-only wins=  2  stable_envs_resize512-only wins=  1  delta= -2.0 pts  McNemar p=1.000
+official vs stable_envs_live         paired n= 300  official-only wins=  2  stable_envs_live-only wins=  2  delta= +0.0 pts  McNemar p=1.000
+official vs stable_envs_dataset      paired n= 300  official-only wins= 17  stable_envs_dataset-only wins= 12  delta= -1.7 pts  McNemar p=0.458
+official vs blank                    paired n=  50  official-only wins= 46  blank-only wins=  0  delta=-92.0 pts  McNemar p=0.000

@@ -1,0 +1,27 @@
+{
+  "env": "PushT",
+  "world_size": 1,
+  "batch_per_rank": 128,
+  "steps": 400,
+  "frames_total": 51200.0,
+  "frames_per_s": 15040.528826596308,
+  "render_frac_of_step": 0.6651870457279808,
+  "render_fps_per_rank": [
+    22610.97675186376
+  ],
+  "loss_first5": [
+    1.0019117593765259
+  ],
+  "loss_last5": [
+    0.5680151462554932
+  ],
+  "per_rank": [
+    {
+      "rank": 0,
+      "frames": 51200.0,
+      "render_s": 2.2643869197636377,
+      "step_s": 1.139748705405509,
+      "peak_gb": 0.201164288
+    }
+  ]
+}

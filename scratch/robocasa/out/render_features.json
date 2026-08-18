@@ -1,0 +1,96 @@
+{
+  "lights": {
+    "nlight": 1,
+    "n_castshadow": 0,
+    "n_directional": 1,
+    "headlight_ambient": [
+      0.10000000149011612,
+      0.10000000149011612,
+      0.10000000149011612
+    ],
+    "headlight_diffuse": [
+      0.4000000059604645,
+      0.4000000059604645,
+      0.4000000059604645
+    ],
+    "headlight_specular": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "headlight_active": 1
+  },
+  "quality": {
+    "shadowsize": 4096,
+    "offsamples": 4,
+    "numslices": 28,
+    "numquads": 4,
+    "shadowclip": 1.0,
+    "shadowscale": 0.6000000238418579
+  },
+  "textures": {
+    "ntex": 76,
+    "by_type": {
+      "skybox": 1,
+      "2d": 72,
+      "cube": 3
+    },
+    "total_MB": 388.691328,
+    "has_skybox": true,
+    "n_nearest_filtered": null
+  },
+  "materials": {
+    "nmat": 234,
+    "n_with_texture": 170,
+    "n_reflective": 49,
+    "max_reflectance": 0.800000011920929,
+    "n_specular_gt0": 224,
+    "shininess_range": [
+      0.0,
+      1.0
+    ],
+    "n_texuniform": 39,
+    "texrepeat_unique": 4,
+    "n_emission_gt0": 0
+  },
+  "geoms": {
+    "ngeom": 1251,
+    "n_with_material": 360,
+    "n_plain_rgba": 891,
+    "n_transparent": 532
+  },
+  "scene_default_rnd_flags": {
+    "mjRND_SHADOW": 1,
+    "mjRND_WIREFRAME": 0,
+    "mjRND_REFLECTION": 1,
+    "mjRND_ADDITIVE": 0,
+    "mjRND_SKYBOX": 1,
+    "mjRND_FOG": 0,
+    "mjRND_HAZE": 1,
+    "mjRND_SEGMENT": 0,
+    "mjRND_IDCOLOR": 0,
+    "mjRND_CULL_FACE": 1
+  },
+  "ablations": {
+    "shadows_off": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "reflections_off": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "skybox_off": {
+      "mean": 0.0,
+      "max": 0,
+      "frac_changed": 0.0
+    },
+    "textures_off": {
+      "mean": 37.8701171875,
+      "max": 167,
+      "frac_changed": 0.7975924744897959
+    }
+  }
+}

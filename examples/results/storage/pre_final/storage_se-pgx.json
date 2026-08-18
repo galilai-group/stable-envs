@@ -1,0 +1,147 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    10.23388671875,
+    10.22265625
+  ],
+  "registry_size": 64,
+  "envs": {
+    "PgxConnectFour": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 168,
+      "gpu": {
+        "fps": 89952.56639656366,
+        "seconds_per_batch": 0.011383777484297752,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0003090044111105,
+        "loadavg": 10.23388671875
+      },
+      "storage": {
+        "local": {
+          "fps": 2017.4723029597108,
+          "bytes_on_disk": 7205845,
+          "bytes_per_frame": 14073.916015625
+        },
+        "shared": {
+          "fps": 985.21729808586,
+          "bytes_on_disk": 7205845,
+          "bytes_per_frame": 14073.916015625
+        },
+        "memory_one_frame": {
+          "fps": 2301.486618153335
+        }
+      }
+    },
+    "PgxGo9x9": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 324,
+      "gpu": {
+        "fps": 93763.7672472767,
+        "seconds_per_batch": 0.010921062901616096,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0002370637635727,
+        "loadavg": 10.037109375
+      },
+      "storage": {
+        "local": {
+          "fps": 1720.6318844867824,
+          "bytes_on_disk": 11592725,
+          "bytes_per_frame": 22642.041015625
+        },
+        "shared": {
+          "fps": 1046.066488314169,
+          "bytes_on_disk": 11592725,
+          "bytes_per_frame": 22642.041015625
+        },
+        "memory_one_frame": {
+          "fps": 1710.100437524142
+        }
+      }
+    },
+    "PgxOthello": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 256,
+      "gpu": {
+        "fps": 93326.85875946278,
+        "seconds_per_batch": 0.010972189716994762,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0001638048606614,
+        "loadavg": 9.87353515625
+      },
+      "storage": {
+        "local": {
+          "fps": 1949.1609869437093,
+          "bytes_on_disk": 10652329,
+          "bytes_per_frame": 20805.330078125
+        },
+        "shared": {
+          "fps": 1255.5672287350624,
+          "bytes_on_disk": 10652329,
+          "bytes_per_frame": 20805.330078125
+        },
+        "memory_one_frame": {
+          "fps": 2629.8572909244185
+        }
+      }
+    },
+    "PgxTicTacToe": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 36,
+      "gpu": {
+        "fps": 95599.39865405817,
+        "seconds_per_batch": 0.010711364448070526,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0002027446927158,
+        "loadavg": 9.8837890625
+      },
+      "storage": {
+        "local": {
+          "fps": 3100.5060400292614,
+          "bytes_on_disk": 5360477,
+          "bytes_per_frame": 10469.681640625
+        },
+        "shared": {
+          "fps": 732.842128552491,
+          "bytes_on_disk": 5360477,
+          "bytes_per_frame": 10469.681640625
+        },
+        "memory_one_frame": {
+          "fps": 3643.2780424303833
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "env": "MiniHack-Room-5x5-v0",
+  "glyph_grid_shape": [
+    21,
+    79
+  ],
+  "glyph_dtype": "int16",
+  "glyph_bytes": 3318,
+  "glyph_bytes_as_uint16": 3318,
+  "frame_shape": [
+    336,
+    1264,
+    3
+  ],
+  "frame_bytes": 1274112,
+  "compression_frame_over_glyphs": 384.0,
+  "atlas_shape": [
+    1082,
+    16,
+    16,
+    3
+  ],
+  "atlas_n_tiles": 1082,
+  "atlas_bytes": 830976,
+  "n_glyphs": 5976,
+  "n_distinct_tiles": 1023,
+  "tile_px": [
+    16,
+    16
+  ],
+  "n_steps": 40,
+  "frac_frames_bit_exact_from_glyphs": 1.0,
+  "worst_abs_diff": 0,
+  "distinct_glyphs_seen": null
+}

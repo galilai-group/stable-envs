@@ -1,0 +1,12 @@
+MetaWorldWindowOpen
+MetaWorldWindowClose
+MetaWorldSoccer
+MetaWorldPlateSlide
+MetaWorldDoorLock
+MetaWorldButtonPress
+MetaWorldAssembly
+MetaWorldDialTurn
+MetaWorldSweepInto
+MetaWorldHammer
+MetaWorldPickPlace
+MetaWorldDrawerOpen

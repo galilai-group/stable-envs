@@ -1,0 +1,167 @@
+{
+  "n": 24,
+  "size": 224,
+  "stored_interior_frac": 0.7579363483413434,
+  "cv2_linear": {
+    "mean_abs": 0.6864345835990646,
+    "exact_frac": 0.8470317814625851,
+    "within8_frac": 0.98337020355017,
+    "max_abs": 180,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "cv2_area": {
+    "mean_abs": 0.8880698275403912,
+    "exact_frac": 0.8302832363414115,
+    "within8_frac": 0.9645630713222789,
+    "max_abs": 180,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "cv2_nearest": {
+    "mean_abs": 1.7401895328443877,
+    "exact_frac": 0.8299211774553571,
+    "within8_frac": 0.9539213634672619,
+    "max_abs": 190,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "cv2_cubic": {
+    "mean_abs": 0.7235472802402211,
+    "exact_frac": 0.8469819568452381,
+    "within8_frac": 0.9822773836096939,
+    "max_abs": 208,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "pil_bilinear": {
+    "mean_abs": 0.8930531196853742,
+    "exact_frac": 0.8302990141369048,
+    "within8_frac": 0.9635300409226191,
+    "max_abs": 164,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "pil_bicubic": {
+    "mean_abs": 0.9322626023065477,
+    "exact_frac": 0.83017196136267,
+    "within8_frac": 0.9642118077699829,
+    "max_abs": 172,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "pil_nearest": {
+    "mean_abs": 1.2423170440051021,
+    "exact_frac": 0.8299244990965136,
+    "within8_frac": 0.9636595849277211,
+    "max_abs": 186,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "pil_box": {
+    "mean_abs": 0.9346425581951531,
+    "exact_frac": 0.8302990141369048,
+    "within8_frac": 0.9637417955463435,
+    "max_abs": 180,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "pil_lanczos": {
+    "mean_abs": 1.0310407366071428,
+    "exact_frac": 0.8287453164859694,
+    "within8_frac": 0.9641744393069728,
+    "max_abs": 177,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9944881350086338,
+    "interior_mean_abs": 0.005553872787128811
+  },
+  "ours_cv2_linear": {
+    "mean_abs": 1.1160182823129252,
+    "exact_frac": 0.8382859002976191,
+    "within8_frac": 0.9709356398809523,
+    "max_abs": 180,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_cv2_area": {
+    "mean_abs": 1.1861181972789117,
+    "exact_frac": 0.8215531329719388,
+    "within8_frac": 0.9610662135948129,
+    "max_abs": 180,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_cv2_nearest": {
+    "mean_abs": 1.3754725034545068,
+    "exact_frac": 0.8299228382759354,
+    "within8_frac": 0.9630334555697279,
+    "max_abs": 190,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_cv2_cubic": {
+    "mean_abs": 1.1983293805803572,
+    "exact_frac": 0.8382668008609694,
+    "within8_frac": 0.9705926804315477,
+    "max_abs": 208,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_pil_bilinear": {
+    "mean_abs": 1.179464119632228,
+    "exact_frac": 0.8217283495429422,
+    "within8_frac": 0.9523427535076531,
+    "max_abs": 163,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_pil_bicubic": {
+    "mean_abs": 1.2016219573767006,
+    "exact_frac": 0.8137157206632653,
+    "within8_frac": 0.9604915696747449,
+    "max_abs": 176,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_pil_nearest": {
+    "mean_abs": 1.3748148185055271,
+    "exact_frac": 0.8299228382759354,
+    "within8_frac": 0.9625119579081632,
+    "max_abs": 186,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_pil_box": {
+    "mean_abs": 1.1992021417942176,
+    "exact_frac": 0.8299261599170918,
+    "within8_frac": 0.9613444010416666,
+    "max_abs": 180,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9999181953450941,
+    "interior_mean_abs": 0.00012381245066847668
+  },
+  "ours_pil_lanczos": {
+    "mean_abs": 1.2444470463966837,
+    "exact_frac": 0.8131751235650511,
+    "within8_frac": 0.9603711601828231,
+    "max_abs": 183,
+    "interior_frac": 0.7579363483413434,
+    "interior_exact_frac": 0.9944881350086338,
+    "interior_mean_abs": 0.005553872787128811
+  }
+}

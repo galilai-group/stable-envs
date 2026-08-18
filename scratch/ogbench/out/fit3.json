@@ -1,0 +1,257 @@
+[
+ {
+  "env": "pointmaze-medium",
+  "marker": 1.0,
+  "fit": {
+   "ambient": 0.097658,
+   "diffuse": 1.384067,
+   "specular": 0.260014,
+   "exponent": 52,
+   "rms": 0.0077872
+  },
+  "n": {
+   "floor": 30158,
+   "wall_top": 1710,
+   "wall_side": 2801,
+   "agent": 4544
+  },
+  "floor": {
+   "n": 30158,
+   "exact": 0.40961,
+   "le1": 0.99894,
+   "le2": 0.99894,
+   "mean": 0.6658,
+   "max": 73.0
+  },
+  "wall_top": {
+   "n": 1710,
+   "exact": 0.14094,
+   "le1": 0.97719,
+   "le2": 1.0,
+   "mean": 0.8819,
+   "max": 2.0
+  },
+  "wall_side": {
+   "n": 2801,
+   "exact": 1.0,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.0,
+   "max": 0.0
+  },
+  "agent": {
+   "n": 4544,
+   "exact": 0.08715,
+   "le1": 0.57086,
+   "le2": 0.85453,
+   "mean": 1.664,
+   "max": 23.0
+  },
+  "agent_exact_rint": 0.08715,
+  "agent_exact_floor+.5": 0.08715
+ },
+ {
+  "env": "pointmaze-medium",
+  "marker": 3.0,
+  "fit": {
+   "ambient": 0.086131,
+   "diffuse": 1.404265,
+   "specular": 0.244762,
+   "exponent": 51,
+   "rms": 0.0072905
+  },
+  "n": {
+   "floor": 29245,
+   "wall_top": 1710,
+   "wall_side": 2714,
+   "agent": 47578
+  },
+  "floor": {
+   "n": 29245,
+   "exact": 0.16789,
+   "le1": 0.9986,
+   "le2": 0.9986,
+   "mean": 0.9327,
+   "max": 73.0
+  },
+  "wall_top": {
+   "n": 1710,
+   "exact": 0.41345,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.5865,
+   "max": 1.0
+  },
+  "wall_side": {
+   "n": 2714,
+   "exact": 0.0,
+   "le1": 0.0,
+   "le2": 1.0,
+   "mean": 2.0,
+   "max": 2.0
+  },
+  "agent": {
+   "n": 47578,
+   "exact": 0.16354,
+   "le1": 0.73242,
+   "le2": 0.87885,
+   "mean": 1.3526,
+   "max": 23.0
+  },
+  "agent_exact_rint": 0.16354,
+  "agent_exact_floor+.5": 0.16354
+ },
+ {
+  "env": "pointmaze-large",
+  "marker": 1.0,
+  "fit": {
+   "ambient": 0.098528,
+   "diffuse": 1.380465,
+   "specular": 0.262259,
+   "exponent": 51,
+   "rms": 0.0054152
+  },
+  "n": {
+   "floor": 18428,
+   "wall_top": 5217,
+   "wall_side": 1757,
+   "agent": 1223
+  },
+  "floor": {
+   "n": 18428,
+   "exact": 0.3868,
+   "le1": 0.99946,
+   "le2": 0.99946,
+   "mean": 0.6522,
+   "max": 73.0
+  },
+  "wall_top": {
+   "n": 5217,
+   "exact": 0.66245,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.3376,
+   "max": 1.0
+  },
+  "wall_side": {
+   "n": 1757,
+   "exact": 1.0,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.0,
+   "max": 0.0
+  },
+  "agent": {
+   "n": 1223,
+   "exact": 0.0695,
+   "le1": 0.45053,
+   "le2": 0.78986,
+   "mean": 1.8528,
+   "max": 9.0
+  },
+  "agent_exact_rint": 0.0695,
+  "agent_exact_floor+.5": 0.0695
+ },
+ {
+  "env": "antmaze-large",
+  "marker": 3.0,
+  "fit": {
+   "ambient": 0.098885,
+   "diffuse": 1.383154,
+   "specular": 0.260663,
+   "exponent": 52,
+   "rms": 0.0089843
+  },
+  "n": {
+   "floor": 18383,
+   "wall_top": 5217,
+   "wall_side": 1757,
+   "agent": 2396
+  },
+  "floor": {
+   "n": 18383,
+   "exact": 0.36697,
+   "le1": 0.9994,
+   "le2": 0.9994,
+   "mean": 0.6756,
+   "max": 73.0
+  },
+  "wall_top": {
+   "n": 5217,
+   "exact": 0.60303,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.397,
+   "max": 1.0
+  },
+  "wall_side": {
+   "n": 1757,
+   "exact": 1.0,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.0,
+   "max": 0.0
+  },
+  "agent": {
+   "n": 2396,
+   "exact": 0.16277,
+   "le1": 0.63689,
+   "le2": 0.86603,
+   "mean": 2.0935,
+   "max": 237.0
+  },
+  "agent_exact_rint": 0.16277,
+  "agent_exact_floor+.5": 0.16277
+ },
+ {
+  "env": "humanoidmaze-large",
+  "marker": 4.0,
+  "fit": {
+   "ambient": 0.099063,
+   "diffuse": 1.377991,
+   "specular": 0.26507,
+   "exponent": 51,
+   "rms": 0.0079407
+  },
+  "n": {
+   "floor": 18223,
+   "wall_top": 5217,
+   "wall_side": 1740,
+   "agent": 8520
+  },
+  "floor": {
+   "n": 18223,
+   "exact": 0.43094,
+   "le1": 0.99863,
+   "le2": 0.99863,
+   "mean": 0.6671,
+   "max": 73.0
+  },
+  "wall_top": {
+   "n": 5217,
+   "exact": 0.65402,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.346,
+   "max": 1.0
+  },
+  "wall_side": {
+   "n": 1740,
+   "exact": 1.0,
+   "le1": 1.0,
+   "le2": 1.0,
+   "mean": 0.0,
+   "max": 0.0
+  },
+  "agent": {
+   "n": 8520,
+   "exact": 0.29554,
+   "le1": 0.66784,
+   "le2": 0.80939,
+   "mean": 1.6971,
+   "max": 28.0
+  },
+  "agent_exact_rint": 0.29554,
+  "agent_exact_floor+.5": 0.29554
+ }
+]

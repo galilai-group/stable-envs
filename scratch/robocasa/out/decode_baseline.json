@@ -1,0 +1,38 @@
+{
+  "64": {
+    "jpeg_bytes": 1484,
+    "raw_bytes": 12288,
+    "decode_fps_per_core": 11842.260359747403,
+    "decode_MBps_raw": 145.5176953005761
+  },
+  "96": {
+    "jpeg_bytes": 2256,
+    "raw_bytes": 27648,
+    "decode_fps_per_core": 8340.958293808086,
+    "decode_MBps_raw": 230.61081490720596
+  },
+  "128": {
+    "jpeg_bytes": 3418,
+    "raw_bytes": 49152,
+    "decode_fps_per_core": 7483.319480553653,
+    "decode_MBps_raw": 367.8201191081732
+  },
+  "224": {
+    "jpeg_bytes": 4478,
+    "raw_bytes": 150528,
+    "decode_fps_per_core": 6761.708230487454,
+    "decode_MBps_raw": 1017.8264165188154
+  },
+  "256": {
+    "jpeg_bytes": 7091,
+    "raw_bytes": 196608,
+    "decode_fps_per_core": 5486.375735184553,
+    "decode_MBps_raw": 1078.6653605431648
+  },
+  "608": {
+    "jpeg_bytes": 17366,
+    "raw_bytes": 1108992,
+    "decode_fps_per_core": 370.9984071427054,
+    "decode_MBps_raw": 411.43426553400315
+  }
+}

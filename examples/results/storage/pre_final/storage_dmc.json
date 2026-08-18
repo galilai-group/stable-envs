@@ -1,0 +1,741 @@
+{
+  "device": "NVIDIA H200",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8558",
+  "size": 256,
+  "batch": 1024,
+  "n_frames": 512,
+  "jpeg_quality": 90,
+  "loadavg": [
+    6.857421875,
+    11.5810546875
+  ],
+  "registry_size": 98,
+  "envs": {
+    "DMCAcrobotSwingup": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 9110.638679000529,
+        "seconds_per_batch": 0.11239607189781964,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0002218940357805,
+        "loadavg": 7.18115234375
+      },
+      "storage": {
+        "local": {
+          "fps": 1272.102488743856,
+          "bytes_on_disk": 8499794,
+          "bytes_per_frame": 16601.16015625
+        },
+        "shared": {
+          "fps": 1579.7902082859594,
+          "bytes_on_disk": 8499794,
+          "bytes_per_frame": 16601.16015625
+        },
+        "memory_one_frame": {
+          "fps": 1392.2825178917524
+        }
+      }
+    },
+    "DMCBallInCupCatch": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 2597.689236866729,
+        "seconds_per_batch": 0.3941964979749173,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9999855908667166,
+        "loadavg": 7.3876953125
+      },
+      "storage": {
+        "local": {
+          "fps": 1609.9735760972294,
+          "bytes_on_disk": 7878349,
+          "bytes_per_frame": 15387.400390625
+        },
+        "shared": {
+          "fps": 1215.5189044256492,
+          "bytes_on_disk": 7878349,
+          "bytes_per_frame": 15387.400390625
+        },
+        "memory_one_frame": {
+          "fps": 1739.164095942922
+        }
+      }
+    },
+    "DMCCartpoleBalance": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 10591.133024548479,
+        "seconds_per_batch": 0.09668465098366141,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0002387745036119,
+        "loadavg": 8.4892578125
+      },
+      "storage": {
+        "local": {
+          "fps": 1339.155990748894,
+          "bytes_on_disk": 8179173,
+          "bytes_per_frame": 15974.947265625
+        },
+        "shared": {
+          "fps": 1083.9579546492039,
+          "bytes_on_disk": 8179173,
+          "bytes_per_frame": 15974.947265625
+        },
+        "memory_one_frame": {
+          "fps": 1407.585874595111
+        }
+      }
+    },
+    "DMCCartpoleSwingup": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 9659.551183922516,
+        "seconds_per_batch": 0.10600906610488892,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0002033520465727,
+        "loadavg": 9.189453125
+      },
+      "storage": {
+        "local": {
+          "fps": 1941.4587680256438,
+          "bytes_on_disk": 8244298,
+          "bytes_per_frame": 16102.14453125
+        },
+        "shared": {
+          "fps": 1390.6102260028597,
+          "bytes_on_disk": 8244298,
+          "bytes_per_frame": 16102.14453125
+        },
+        "memory_one_frame": {
+          "fps": 2120.5271159161216
+        }
+      }
+    },
+    "DMCCheetahRun": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 36,
+      "gpu": {
+        "fps": 69327.44047552635,
+        "seconds_per_batch": 0.01477048615925014,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0001859397806092,
+        "loadavg": 9.6953125
+      },
+      "storage": {
+        "local": {
+          "fps": 2167.25942249163,
+          "bytes_on_disk": 10145292,
+          "bytes_per_frame": 19815.0234375
+        },
+        "shared": {
+          "fps": 1504.1841422152036,
+          "bytes_on_disk": 10145292,
+          "bytes_per_frame": 19815.0234375
+        },
+        "memory_one_frame": {
+          "fps": 2409.5606801549175
+        }
+      }
+    },
+    "DMCFingerSpin": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 12,
+      "gpu": {
+        "fps": 6472.853341959474,
+        "seconds_per_batch": 0.1581991659477353,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0000536793528887,
+        "loadavg": 9.9599609375
+      },
+      "storage": {
+        "local": {
+          "fps": 1371.2493753644771,
+          "bytes_on_disk": 8387057,
+          "bytes_per_frame": 16380.970703125
+        },
+        "shared": {
+          "fps": 1061.4467483918538,
+          "bytes_on_disk": 8387057,
+          "bytes_per_frame": 16380.970703125
+        },
+        "memory_one_frame": {
+          "fps": 1464.9121718943952
+        }
+      }
+    },
+    "DMCFingerTurnEasy": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 20,
+      "gpu": {
+        "fps": 5671.611896842285,
+        "seconds_per_batch": 0.18054832005873322,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0001096350584742,
+        "loadavg": 10.7939453125
+      },
+      "storage": {
+        "local": {
+          "fps": 2314.9155510547084,
+          "bytes_on_disk": 8467697,
+          "bytes_per_frame": 16538.470703125
+        },
+        "shared": {
+          "fps": 1588.2432767319774,
+          "bytes_on_disk": 8467697,
+          "bytes_per_frame": 16538.470703125
+        },
+        "memory_one_frame": {
+          "fps": 2653.2889640606195
+        }
+      }
+    },
+    "DMCFingerTurnHard": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 20,
+      "gpu": {
+        "fps": 5913.475012005652,
+        "seconds_per_batch": 0.17316383309662342,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0001543000216278,
+        "loadavg": 10.8994140625
+      },
+      "storage": {
+        "local": {
+          "fps": 2345.6961351012474,
+          "bytes_on_disk": 8446052,
+          "bytes_per_frame": 16496.1953125
+        },
+        "shared": {
+          "fps": 1583.0592625652914,
+          "bytes_on_disk": 8446052,
+          "bytes_per_frame": 16496.1953125
+        },
+        "memory_one_frame": {
+          "fps": 2621.7360896893324
+        }
+      }
+    },
+    "DMCHopperHop": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 28,
+      "gpu": {
+        "fps": 73752.27184283413,
+        "seconds_per_batch": 0.013884318061172962,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.000207450404909,
+        "loadavg": 10.8271484375
+      },
+      "storage": {
+        "local": {
+          "fps": 2191.8894685229507,
+          "bytes_on_disk": 9850062,
+          "bytes_per_frame": 19238.40234375
+        },
+        "shared": {
+          "fps": 1011.9321104310505,
+          "bytes_on_disk": 9850062,
+          "bytes_per_frame": 19238.40234375
+        },
+        "memory_one_frame": {
+          "fps": 1382.815230154056
+        }
+      }
+    },
+    "DMCHumanoidStand": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 112,
+      "gpu": {
+        "fps": 45278.57654456996,
+        "seconds_per_batch": 0.022615551948547363,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 0.9990508497729631,
+        "loadavg": 10.64990234375
+      },
+      "storage": {
+        "local": {
+          "fps": 2577.060384251625,
+          "bytes_on_disk": 6039349,
+          "bytes_per_frame": 11795.603515625
+        },
+        "shared": {
+          "fps": 1708.5368250279105,
+          "bytes_on_disk": 6039349,
+          "bytes_per_frame": 11795.603515625
+        },
+        "memory_one_frame": {
+          "fps": 3038.5296820517547
+        }
+      }
+    },
+    "DMCPendulumSwingup": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 4,
+      "gpu": {
+        "fps": 7515.576591636652,
+        "seconds_per_batch": 0.13625035784207284,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0002153709406696,
+        "loadavg": 11.15869140625
+      },
+      "storage": {
+        "local": {
+          "fps": 3036.907242217855,
+          "bytes_on_disk": 4087296,
+          "bytes_per_frame": 7983.0
+        },
+        "shared": {
+          "fps": 1903.5118551961925,
+          "bytes_on_disk": 4087296,
+          "bytes_per_frame": 7983.0
+        },
+        "memory_one_frame": {
+          "fps": 3437.5874134757337
+        }
+      }
+    },
+    "DMCPointMassEasy": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 8,
+      "gpu": {
+        "fps": 8085.268373809705,
+        "seconds_per_batch": 0.12665009405463934,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0001599247747026,
+        "loadavg": 11.50927734375
+      },
+      "storage": {
+        "local": {
+          "fps": 1514.062892623374,
+          "bytes_on_disk": 3301386,
+          "bytes_per_frame": 6448.01953125
+        },
+        "shared": {
+          "fps": 1152.3374770756898,
+          "bytes_on_disk": 3301386,
+          "bytes_per_frame": 6448.01953125
+        },
+        "memory_one_frame": {
+          "fps": 1584.826112733762
+        }
+      }
+    },
+    "DMCReacherEasy": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 4075.6314313067646,
+        "seconds_per_batch": 0.25124941184185445,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 1.0000190098695025,
+        "loadavg": 11.7451171875
+      },
+      "storage": {
+        "local": {
+          "fps": 3053.6886183341053,
+          "bytes_on_disk": 3851888,
+          "bytes_per_frame": 7523.21875
+        },
+        "shared": {
+          "fps": 1924.9541811494594,
+          "bytes_on_disk": 3851888,
+          "bytes_per_frame": 7523.21875
+        },
+        "memory_one_frame": {
+          "fps": 3590.3418525916445
+        }
+      }
+    },
+    "DMCReacherHard": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 16,
+      "gpu": {
+        "fps": 4875.613810177511,
+        "seconds_per_batch": 0.2100248378701508,
+        "batch": 1024,
+        "supersample": 2,
+        "cpu_frac": 0.9999628170635874,
+        "loadavg": 12.0185546875
+      },
+      "storage": {
+        "local": {
+          "fps": 3106.0598376848206,
+          "bytes_on_disk": 3676121,
+          "bytes_per_frame": 7179.923828125
+        },
+        "shared": {
+          "fps": 1939.857705480878,
+          "bytes_on_disk": 3676121,
+          "bytes_per_frame": 7179.923828125
+        },
+        "memory_one_frame": {
+          "fps": 3593.9702556589873
+        }
+      }
+    },
+    "DMCSwimmerSwimmer6": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 48,
+      "gpu": {
+        "fps": 26433.694903572607,
+        "seconds_per_batch": 0.038738436065614223,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0001780335671397,
+        "loadavg": 12.17578125
+      },
+      "storage": {
+        "local": {
+          "fps": 2349.6492701542984,
+          "bytes_on_disk": 3657773,
+          "bytes_per_frame": 7144.087890625
+        },
+        "shared": {
+          "fps": 1578.1975364971618,
+          "bytes_on_disk": 3657773,
+          "bytes_per_frame": 7144.087890625
+        },
+        "memory_one_frame": {
+          "fps": 2700.108692225677
+        }
+      }
+    },
+    "DMCWalkerWalk": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 36,
+      "gpu": {
+        "fps": 58470.83720863388,
+        "seconds_per_batch": 0.017513003898784518,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.0004684608353775,
+        "loadavg": 12.322265625
+      },
+      "storage": {
+        "local": {
+          "fps": 1305.5050712312811,
+          "bytes_on_disk": 8937905,
+          "bytes_per_frame": 17456.845703125
+        },
+        "shared": {
+          "fps": 1011.3436250276031,
+          "bytes_on_disk": 8937905,
+          "bytes_per_frame": 17456.845703125
+        },
+        "memory_one_frame": {
+          "fps": 1469.9869783005124
+        }
+      }
+    },
+    "MujocoAnt": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 60,
+      "gpu": {
+        "fps": 8834.068828949199,
+        "seconds_per_batch": 0.1159148768056184,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.7192650683746435,
+        "loadavg": 12.20703125
+      },
+      "storage": {
+        "local": {
+          "fps": 1478.9889353259525,
+          "bytes_on_disk": 6486448,
+          "bytes_per_frame": 12668.84375
+        },
+        "shared": {
+          "fps": 1124.5339814402953,
+          "bytes_on_disk": 6486448,
+          "bytes_per_frame": 12668.84375
+        },
+        "memory_one_frame": {
+          "fps": 1603.7175477052501
+        }
+      }
+    },
+    "MujocoHalfCheetah": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 36,
+      "gpu": {
+        "fps": 9400.47654462485,
+        "seconds_per_batch": 0.10893064783886075,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.7529034895299551,
+        "loadavg": 12.1689453125
+      },
+      "storage": {
+        "local": {
+          "fps": 2197.8395475241737,
+          "bytes_on_disk": 6149963,
+          "bytes_per_frame": 12011.646484375
+        },
+        "shared": {
+          "fps": 1544.43587438448,
+          "bytes_on_disk": 6149963,
+          "bytes_per_frame": 12011.646484375
+        },
+        "memory_one_frame": {
+          "fps": 2527.9646208804534
+        }
+      }
+    },
+    "MujocoHopper": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 24,
+      "gpu": {
+        "fps": 9113.302381042642,
+        "seconds_per_batch": 0.11236321995966136,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 2.1089662956663275,
+        "loadavg": 12.07568359375
+      },
+      "storage": {
+        "local": {
+          "fps": 2032.9014694944196,
+          "bytes_on_disk": 7132170,
+          "bytes_per_frame": 13930.01953125
+        },
+        "shared": {
+          "fps": 1473.6394263951026,
+          "bytes_on_disk": 7132170,
+          "bytes_per_frame": 13930.01953125
+        },
+        "memory_one_frame": {
+          "fps": 2382.11221971908
+        }
+      }
+    },
+    "MujocoHumanoid": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 96,
+      "gpu": {
+        "fps": 8411.987619483078,
+        "seconds_per_batch": 0.12173103983514011,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.683666555719897,
+        "loadavg": 11.240234375
+      },
+      "storage": {
+        "local": {
+          "fps": 1355.4636782643306,
+          "bytes_on_disk": 7508277,
+          "bytes_per_frame": 14664.603515625
+        },
+        "shared": {
+          "fps": 1038.2421025074086,
+          "bytes_on_disk": 7508277,
+          "bytes_per_frame": 14664.603515625
+        },
+        "memory_one_frame": {
+          "fps": 1404.8869093088163
+        }
+      }
+    },
+    "MujocoSwimmer": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 20,
+      "gpu": {
+        "fps": 9343.915778479643,
+        "seconds_per_batch": 0.10959002887830138,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.7240484474430209,
+        "loadavg": 11.302734375
+      },
+      "storage": {
+        "local": {
+          "fps": 2898.116024878346,
+          "bytes_on_disk": 5566949,
+          "bytes_per_frame": 10872.947265625
+        },
+        "shared": {
+          "fps": 1806.070427902074,
+          "bytes_on_disk": 5566949,
+          "bytes_per_frame": 10872.947265625
+        },
+        "memory_one_frame": {
+          "fps": 3494.242542394792
+        }
+      }
+    },
+    "MujocoWalker2d": {
+      "size": 256,
+      "requested_size": 256,
+      "size_note": null,
+      "frame_shape": [
+        256,
+        256
+      ],
+      "state_bytes": 36,
+      "gpu": {
+        "fps": 9410.78790154798,
+        "seconds_per_batch": 0.10881129303015769,
+        "batch": 1024,
+        "supersample": 1,
+        "cpu_frac": 1.7244278953785617,
+        "loadavg": 11.54443359375
+      },
+      "storage": {
+        "local": {
+          "fps": 1466.980170301588,
+          "bytes_on_disk": 6009838,
+          "bytes_per_frame": 11737.96484375
+        },
+        "shared": {
+          "fps": 1115.0092053922813,
+          "bytes_on_disk": 6009838,
+          "bytes_per_frame": 11737.96484375
+        },
+        "memory_one_frame": {
+          "fps": 1535.0218801840906
+        }
+      }
+    }
+  }
+}
