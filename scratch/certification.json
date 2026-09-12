@@ -1,0 +1,611 @@
+{
+  "schema_version": 1,
+  "frozen_on": "2026-09-09",
+  "what_this_is": "Frozen certification thresholds for stable-envs renderers. Normative prose lives in docs/research/certification.md; this file is the machine-readable copy so a later step can map a benchmark JSON to a certification label without re-reading the document. Every number here was derived from the committed benchmark corpus BEFORE any fresh RTX 3090 or Apple-M5 measurement; a later result is not a reason to change it.",
+  "derived_from": [
+    "examples/results/bench_gpu_vs_cpu.json",
+    "examples/results/decode/ALL.json",
+    "examples/results/dino/dino_agreement.json",
+    "examples/lewm_pusht/results/",
+    "docs/research/when_does_this_pay_off.md",
+    "scratch/swm_matrix.json"
+  ],
+  "no_benchmark_was_run": true,
+  "backend_classes": {
+    "assignment": "from the `backends` field that scratch/census/census.py records per class",
+    "S": {
+      "label": "3-D scene",
+      "backends": [
+        "mjwarp",
+        "raycast3d",
+        "nvdiff"
+      ],
+      "corpus_rows": 138
+    },
+    "R": {
+      "label": "2-D raster/tile",
+      "backends": [
+        "scene",
+        "raster2d",
+        "tilemap",
+        "gfxdraw",
+        "atlas"
+      ],
+      "corpus_rows": 58
+    }
+  },
+  "device_scaling": {
+    "factor_h200_to_rtx3090": 5.13,
+    "basis": "memory bandwidth; the fused rasterizer is documented output-bandwidth-bound",
+    "h200_gb_s": 4800,
+    "rtx3090_gb_s": 936,
+    "status": "PREDICTION, pre-registered. Knowingly pessimistic for HOST_BOUND rows. Step 3 reports the factor it measures; the thresholds do not move."
+  },
+  "gpu": {
+    "metrics": {
+      "R": "stable-envs GPU fps at best certified batch / official CPU renderer fps, same host",
+      "cores": "stable-envs GPU fps at best certified batch / one-core JPEG-q90 decode fps of this env's own frame, same host"
+    },
+    "required_batches": [
+      1,
+      16,
+      64,
+      256,
+      1024,
+      4096
+    ],
+    "optional_batches": [
+      8192,
+      16384
+    ],
+    "headline_batch": 4096,
+    "batch_4096_feasible": {
+      "worst_peak_gb_in_corpus": 10.7,
+      "rows_over_24gb": 0,
+      "note": "every currently-measured env fits B=4096 on a 24 GB RTX 3090"
+    },
+    "never_certify_on_batch": 1,
+    "batch_1_median_speedup_in_corpus": 0.6,
+    "tiers": {
+      "S": {
+        "GPU_REGRESSION": {
+          "R_lt": 1
+        },
+        "GPU_PARITY": {
+          "R_gte": 1,
+          "R_lt": 2
+        },
+        "GPU_FASTER": {
+          "R_gte": 2,
+          "R_lt": 4
+        },
+        "GPU_FAST": {
+          "R_gte": 4,
+          "cores_gte": 1
+        },
+        "GPU_EXCEPTIONAL": {
+          "R_gte": 40,
+          "cores_gte": 10
+        }
+      },
+      "R": {
+        "GPU_REGRESSION": {
+          "R_lt": 1
+        },
+        "GPU_PARITY": {
+          "R_gte": 1,
+          "R_lt": 10
+        },
+        "GPU_FASTER": {
+          "R_gte": 10,
+          "R_lt": 500
+        },
+        "GPU_FAST": {
+          "R_gte": 500,
+          "cores_gte": 1
+        },
+        "GPU_EXCEPTIONAL": {
+          "R_gte": 5000,
+          "cores_gte": 10
+        }
+      }
+    },
+    "tier_anchors": {
+      "rule": "GPU_FASTER floor = class p25, GPU_FAST floor = class median, GPU_EXCEPTIONAL floor = class p75, of the PREDICTED RTX 3090 R distribution, rounded down to a round number",
+      "predicted_rtx3090_R": {
+        "S": {
+          "p25": 2.54,
+          "median": 4.91,
+          "p75": 41.4
+        },
+        "R": {
+          "p25": 77.6,
+          "median": 610.0,
+          "p75": 7804.0
+        }
+      },
+      "measured_h200_R": {
+        "S": {
+          "min": 5.5,
+          "p05": 12.1,
+          "p25": 13.0,
+          "median": 25.2,
+          "p75": 212.0,
+          "max": 596.0
+        },
+        "R": {
+          "min": 55.5,
+          "p05": 76.0,
+          "p25": 398.0,
+          "median": 3129.0,
+          "p75": 40035.0,
+          "max": 132228.0
+        }
+      },
+      "cores_conjunct_basis": "docs/research/when_does_this_pay_off.md G4: regeneration must beat decode. cores >= 1 is the G4 bar; cores >= 10 is one order past it."
+    },
+    "no_reference_fallback": {
+      "when": "no installable official renderer in any interpreter; R is undefined and must not be fabricated",
+      "qualifier": "NO_REFERENCE",
+      "GPU_FASTER": {
+        "cores_gte": 1
+      },
+      "GPU_FAST": {
+        "cores_gte": 10
+      },
+      "GPU_EXCEPTIONAL": {
+        "cores_gte": 100
+      },
+      "may_contribute_to_parity_claim": false
+    },
+    "qualifiers": {
+      "BATCH_SCALES": {
+        "condition": "fps(4096) >= 20 * fps(1)",
+        "factor": 20,
+        "required_above_tier": "GPU_PARITY",
+        "basis": "set below the observed minimum across 129 corpus rows (22.8x) so it fails only a renderer that is not actually batching; a per-frame loop scores about 1x"
+      },
+      "NO_LARGE_BATCH_REGRESSION": {
+        "condition": "fps(4096) >= 0.9 * fps(256)",
+        "factor": 0.9,
+        "required": true,
+        "basis": "1 of 129 corpus rows sits between 0.9 and 1.0 (Roundabout, 0.93)"
+      },
+      "HOST_BOUND": {
+        "condition": "cpu_frac >= 1.5 at the certified batch",
+        "threshold": 1.5,
+        "consequence": "the row measures this node's processor under this node's load, not the device; report thread count and load average; never quote as a device capability or compare across nodes"
+      },
+      "BELOW_G4": {
+        "condition": "cores < 1",
+        "consequence": "capped at GPU_FASTER regardless of R"
+      }
+    }
+  },
+  "cpu": {
+    "metrics": {
+      "S_cpu": "stable-envs CPU fps / official CPU renderer fps, same host, same thread budget, same resolution and supersample; reported at the 1-thread budget",
+      "cores_cpu": "stable-envs CPU fps / one-core JPEG-q90 decode fps of this env's own frame"
+    },
+    "required_batches": [
+      1,
+      16,
+      64,
+      256,
+      1024
+    ],
+    "optional_batches": [
+      4096
+    ],
+    "required_thread_budgets": [
+      "1",
+      "all_physical_cores"
+    ],
+    "tier_from_thread_budget": "1",
+    "tiers": {
+      "CPU_REGRESSION": {
+        "S_cpu_lt": 1
+      },
+      "CPU_PARITY": {
+        "S_cpu_gte": 1,
+        "S_cpu_lt": 2
+      },
+      "CPU_FASTER": {
+        "S_cpu_gte": 2,
+        "S_cpu_lt": 5
+      },
+      "CPU_FAST": {
+        "S_cpu_gte": 5,
+        "cores_cpu_gte": 1
+      },
+      "CPU_EXCEPTIONAL": {
+        "S_cpu_gte": 20,
+        "cores_cpu_gte": 10
+      }
+    },
+    "tier_anchors": {
+      "rule": "percentiles of the G4-on-CPU break-even distribution = (one-core decode fps / official CPU renderer fps), over the 187 rows of examples/results/decode/ALL.json carrying both",
+      "break_even_distribution": {
+        "all": {
+          "min": 1.11,
+          "p10": 2.27,
+          "p25": 3.62,
+          "median": 7.03,
+          "p75": 21.2,
+          "p90": 76.4,
+          "max": 999.0
+        },
+        "S": {
+          "min": 1.11,
+          "p10": 2.05,
+          "p25": 3.54,
+          "median": 5.04,
+          "p75": 10.29,
+          "p90": 45.17,
+          "max": 101.5
+        },
+        "R": {
+          "min": 2.28,
+          "p10": 3.08,
+          "p25": 4.72,
+          "median": 10.35,
+          "p75": 46.43,
+          "p90": 335.22,
+          "max": 999.0
+        }
+      },
+      "mapping": {
+        "CPU_PARITY_floor_1": "slower than the renderer you replaced is a regression by definition",
+        "CPU_FASTER_floor_2": "approx p10 (2.27)",
+        "CPU_FAST_floor_5": "approx the 3-D-class median (5.04)",
+        "CPU_EXCEPTIONAL_floor_20": "approx p75 (21.2)"
+      }
+    },
+    "no_stable_envs_cpu_measurement_exists": true,
+    "critical_rule": "device=\"cpu\" returning a frame assigns NO tier. Support (Gate A) and speed (Gate C) are different claims. The tier stays CPU_UNMEASURED.",
+    "no_reference_fallback": {
+      "when": "no installable official renderer in any interpreter; S_cpu is undefined and must not be fabricated",
+      "qualifier": "NO_REFERENCE",
+      "CPU_FASTER": {
+        "cores_cpu_gte": 1
+      },
+      "CPU_FAST": {
+        "cores_cpu_gte": 3
+      },
+      "CPU_EXCEPTIONAL": {
+        "cores_cpu_gte": 10
+      },
+      "basis": "the primary ladder's own spacing applied from the G4 bar: CPU_FAST is 2.5x the CPU_FASTER floor and CPU_EXCEPTIONAL is 4x CPU_FAST, so 1 -> 2.5 -> 10, rounded to 1 / 3 / 10. Far below the GPU NO_REFERENCE ladder of 1 / 10 / 100 because on GPU a whole device competes with one core of decode, while here one core competes with one core.",
+      "needed_because": "section 12.2 makes CPU_FAST mandatory for ENVIRONMENT_DONE, so without this an env whose upstream package cannot be installed could never be finished",
+      "may_contribute_to_parity_claim": false
+    }
+  },
+  "representation_tripwire": {
+    "metric": "A = dino_cos(ours, official) / dino_cos(blank, official)",
+    "source": "examples/dino_agreement.py",
+    "bounds": {
+      "parity": 0.1,
+      "visual": 0.25
+    },
+    "corpus_today": {
+      "parity": {
+        "n": 159,
+        "median": 0.014,
+        "p90": 0.033,
+        "max": 0.087
+      },
+      "visual": {
+        "n": 33,
+        "median": 0.104,
+        "p90": 0.16,
+        "max": 0.224
+      }
+    },
+    "purpose": "regression detector for optimization passes; never a substitute for the downstream gate",
+    "jpeg95_reference_median_cos": 0.0099
+  },
+  "physics": {
+    "harness": "stable_envs.testing.conformance.check_step_matches_reference, 16 episodes x 100 steps",
+    "classes": {
+      "n/a": {
+        "requirement": null
+      },
+      "reference_only": {
+        "requirement": null,
+        "certifiable": true
+      },
+      "exact_fast_step": {
+        "exact_frac_eq": 1.0,
+        "max_err_eq": 0.0
+      },
+      "near_exact_fast_step": {
+        "first_step_max_err_lte": 1e-12,
+        "max_err_lte": 1e-09,
+        "basis": "classic control measures 3.3e-16 to 4.4e-13 over 100 steps and <= 2.2e-16 after one; the bounds sit ~2000x above the worst observed value and far below anything physically meaningful"
+      },
+      "approximate_fast_step": {
+        "control_max_err_lt": 0.001,
+        "gate_median_err_lt": 2.0,
+        "gate_touched_frac_gte": 0.75,
+        "explicitly_selectable": true,
+        "task_level_validation_required_before_default": true,
+        "basis": "PushT measures control 9.5e-05 and block median 0.68 px against a mean of 20.7"
+      }
+    },
+    "renderer_certification_never_waits_on_a_fast_step": true
+  },
+  "variations": {
+    "states": [
+      "VARIATIONS_NONE",
+      "VARIATIONS_UNMAPPED",
+      "VARIATIONS_PARTIAL",
+      "VARIATIONS_COMPLETE"
+    ],
+    "blocks_other_gates": false,
+    "complete_requires": [
+      "every SWM leaf classified as identical / renamed / scaled / swm_only",
+      "stable-envs-only leaves listed explicitly",
+      "check_variations_do_something and check_colors_apply_exactly pass on every visual leaf",
+      "check_per_env_variation passes"
+    ],
+    "coupled_high_risk": {
+      "definition": "one leaf changes both visual geometry and physics/collision geometry",
+      "extra_requirements": [
+        "applied to reference simulator and renderer from the same value in the same call, no independent default on either side",
+        "state-sufficiency check after the variation is applied, not only at the default"
+      ]
+    }
+  },
+  "downstream": {
+    "design": "paired: same checkpoint, episodes, seeds, start steps, goal offsets, planner seed and reference physics; only render() differs",
+    "test": "TOST-style equivalence on the paired success-rate difference; a non-significant p-value is NOT evidence of equivalence",
+    "min_paired_episodes": 300,
+    "min_seeds": 6,
+    "min_episodes_per_seed": 50,
+    "equivalence_margin_points": 5.0,
+    "ci_z": 1.96,
+    "ci_formula": "delta +/- 1.96 * sqrt(b + c) / n, in percentage points",
+    "pass_condition": "the two-sided 95% CI on delta lies entirely within +/- 5 points AND the control arm degraded",
+    "control_arm_required": true,
+    "control_max_delta_points": -20.0,
+    "control_max_p": 0.01,
+    "outcome_without_control_degradation": "INCONCLUSIVE",
+    "power_guard": {
+      "max_discordance_at_n300": 0.19,
+      "required_n_formula": "n >= 3.8416 * discordance / (margin/100)^2"
+    },
+    "margin_justification": [
+      "seed-to-seed spread of the OFFICIAL PushT arm alone is 80-96% (16 points); 5 is under a third of that",
+      "at n=300 and the observed 23/300 discordance the 95% half-width is 3.13 points, so a real 5-point degradation is detected rather than absorbed"
+    ],
+    "validated_against_existing_evidence": {
+      "env": "swm/PushT-v1",
+      "b": 12,
+      "c": 11,
+      "n": 300,
+      "delta_points": -0.33,
+      "ci": [
+        -3.47,
+        2.8
+      ],
+      "mcnemar_p": 1.0,
+      "verdict": "PASS",
+      "control": {
+        "delta_points": -84.0,
+        "mcnemar_p": 2.84e-14,
+        "verdict": "PASS"
+      }
+    }
+  },
+  "representative_environments": {
+    "required": [
+      "swm/PushT-v1",
+      "swm/ReacherDMControl-v0"
+    ],
+    "conditional": {
+      "env": "swm/WalkerDMControl-v0",
+      "when": "any visual-tier renderer is to be advertised as downstream-certified",
+      "rationale": "neither required arm is visual tier, so the pair cannot license a semantic claim about visual renderers"
+    },
+    "pushT_why": "class R, parity, approximate_fast_step available separately, contact-heavy, VariationMap complete, evaluation demonstrated pixel-sensitive by the blank-frame control",
+    "reacher_why": "class S complement: mjwarp+raycast3d, 3-D MuJoCo, reference_only physics, parity tier; registered default is reacher-hard (measured, not assumed); 3 wrapper tasks collapse to 2 render-distinct configs and both are covered; cpu_frac 2.95 makes it HOST_BOUND and therefore a good methodology stress case"
+  },
+  "ladder": {
+    "shared_rungs": [
+      "RENDERER_EXISTS",
+      "CONFORMANCE_VALIDATED",
+      "SWM_RENDER_COMPATIBLE",
+      "PERFORMANCE_MEASURED"
+    ],
+    "forks_by_device_at": "PERFORMANCE_MEASURED",
+    "per_backend_states": [
+      "BACKEND_CERTIFIED(cpu)",
+      "BACKEND_CERTIFIED(gpu)",
+      "BACKEND_CERTIFIED_PARTIAL(cpu)",
+      "BACKEND_CERTIFIED_PARTIAL(gpu)"
+    ],
+    "environment_state": "ENVIRONMENT_DONE",
+    "backend_certified_requires": {
+      "cpu": [
+        "gate_a_mandatory",
+        "gate_a_family_specific_where_applicable",
+        "gate_f",
+        "cpu_sweep_complete",
+        "cpu_tier_at_least_CPU_FAST",
+        "registered_default_coverage == full"
+      ],
+      "gpu": [
+        "gate_a_mandatory",
+        "gate_a_family_specific_where_applicable",
+        "gate_f",
+        "gpu_sweep_complete",
+        "gpu_tier_at_least_GPU_FAST",
+        "BATCH_SCALES",
+        "NO_LARGE_BATCH_REGRESSION",
+        "registered_default_coverage == full"
+      ]
+    },
+    "environment_done_requires": [
+      "registered_default_coverage == full",
+      "BACKEND_CERTIFIED(cpu)",
+      "BACKEND_CERTIFIED(gpu)"
+    ],
+    "environment_done_min_tiers": {
+      "cpu": "CPU_FAST",
+      "gpu": "GPU_FAST"
+    },
+    "advertised_target_exemption": false,
+    "advertised_target_exemption_note": "There is no exemption. An env does not become ENVIRONMENT_DONE by declining to advertise CPU; CPU is a first-class target, so CPU_REGRESSION means half-finished, not finished. The only relief is the NO_REFERENCE fallback of the GPU/CPU spec, which changes the metric and not the bar.",
+    "performance_measured_accepts_a_failing_tier": true,
+    "terminal_states": [
+      "RENDERER_ABSENT",
+      "NOT_APPLICABLE_SYMBOLIC"
+    ],
+    "badges": [
+      "CPU_UNMEASURED",
+      "CPU_REGRESSION",
+      "CPU_PARITY",
+      "CPU_FASTER",
+      "CPU_FAST",
+      "CPU_EXCEPTIONAL",
+      "GPU_UNMEASURED",
+      "GPU_REGRESSION",
+      "GPU_PARITY",
+      "GPU_FASTER",
+      "GPU_FAST",
+      "GPU_EXCEPTIONAL",
+      "HOST_BOUND",
+      "BELOW_G4",
+      "NO_REFERENCE",
+      "VARIATIONS_NONE",
+      "VARIATIONS_UNMAPPED",
+      "VARIATIONS_PARTIAL",
+      "VARIATIONS_COMPLETE",
+      "PHYSICS_REFERENCE_ONLY",
+      "PHYSICS_EXACT",
+      "PHYSICS_NEAR_EXACT",
+      "PHYSICS_APPROX_VALIDATED",
+      "DOWNSTREAM_DIRECT",
+      "DOWNSTREAM_INHERITED",
+      "TIER_PARITY",
+      "TIER_VISUAL",
+      "COVERAGE_FULL",
+      "COVERAGE_PARTIAL"
+    ],
+    "no_single_overall_score": true,
+    "legal_example": [
+      "BACKEND_CERTIFIED(gpu)",
+      "GPU_FAST",
+      "CPU_REGRESSION",
+      "VARIATIONS_UNMAPPED",
+      "PHYSICS_REFERENCE_ONLY"
+    ],
+    "legal_example_is_environment_done": false,
+    "registered_default_coverage_values": [
+      "full",
+      "partial",
+      "absent"
+    ],
+    "backend_certified_partial_requires": {
+      "note": "identical to BACKEND_CERTIFIED(device) except that registered_default_coverage == partial",
+      "cpu": [
+        "gate_a_mandatory",
+        "gate_a_family_specific_where_applicable",
+        "gate_f",
+        "cpu_sweep_complete",
+        "cpu_tier_at_least_CPU_FAST",
+        "registered_default_coverage == partial"
+      ],
+      "gpu": [
+        "gate_a_mandatory",
+        "gate_a_family_specific_where_applicable",
+        "gate_f",
+        "gpu_sweep_complete",
+        "gpu_tier_at_least_GPU_FAST",
+        "BATCH_SCALES",
+        "NO_LARGE_BATCH_REGRESSION",
+        "registered_default_coverage == partial"
+      ],
+      "is_a_passing_state": true,
+      "is_terminal": true,
+      "terminal_note": "benchmarkable, conformance-tested, SWM-usable, may carry any performance tier including GPU_EXCEPTIONAL; there is simply no edge from here to ENVIRONMENT_DONE"
+    },
+    "partial_coverage_exemption": false,
+    "invariant": "Gate A = partial can never produce ENVIRONMENT_DONE.",
+    "invariant_note": "BACKEND_CERTIFIED_PARTIAL(cpu) + BACKEND_CERTIFIED_PARTIAL(gpu) does not compose into ENVIRONMENT_DONE. No throughput number retires a declared exclusion from the registered default observation."
+  },
+  "recertification": {
+    "pure_implementation": {
+      "required": [
+        "gate_a_conformance",
+        "performance_both_devices_full_sweep"
+      ],
+      "downstream_required": false,
+      "downstream_waiver_condition": "outputs bit-identical or within the existing declared fidelity contract, render-model signature unchanged, and the representation tripwire unmoved"
+    },
+    "visual_approximation": {
+      "required": [
+        "gate_a_conformance",
+        "fidelity_floors_reasserted",
+        "representation_tripwire",
+        "representative_downstream_gate_if_a_representative_family_is_touched"
+      ],
+      "note": "lowering a declared parity_interior_min or visual_fidelity floor is a TIER CHANGE, not an optimization"
+    },
+    "physics_approximation": {
+      "required": [
+        "physics_conformance_for_the_new_class",
+        "task_level_validation"
+      ],
+      "inheritance_across_a_different_solver": false
+    },
+    "config_changes_that_void_gate_a": [
+      "default_size",
+      "default_supersample",
+      "default style",
+      "the registered SWM default the env is certified against"
+    ]
+  },
+  "modes": {
+    "render_quality": {
+      "values": [
+        "reference",
+        "balanced",
+        "fast"
+      ],
+      "default": "reference",
+      "implement_now": false,
+      "fast_requires_downstream_gate_under_fast": true
+    },
+    "physics_mode": {
+      "values": [
+        "reference",
+        "fast"
+      ],
+      "default": "reference",
+      "never_silently_switched": true
+    },
+    "mode_is_part_of_certification_identity": "GPU_FAST earned under render_quality=fast is recorded as GPU_FAST@fast and does not transfer to reference"
+  },
+  "coverage_target": {
+    "denominator": 40,
+    "denominator_label": "pixel-producing swm ids",
+    "components": {
+      "fully_covered_today": 33,
+      "partial_to_upgrade": 1,
+      "renderer_gaps_to_implement": 6
+    },
+    "excluded_from_denominator": {
+      "symbolic_ids": 2,
+      "terminal_state": "NOT_APPLICABLE_SYMBOLIC",
+      "why": "they produce no frame, so there is nothing for a renderer to cover"
+    },
+    "partial_row": "swm/CraftaxClassicPixels-v1",
+    "partial_row_exclusions": [
+      "inventory strip (rows 49-63)",
+      "night frames (light_level < 0.5)",
+      "sleeping-player desaturation"
+    ],
+    "every_row_in_the_denominator_must_be": "full"
+  }
+}

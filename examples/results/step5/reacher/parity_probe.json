@@ -1,0 +1,46 @@
+{
+  "task": "qpos_match",
+  "size": 224,
+  "n": 32,
+  "reference_target_drawn": false,
+  "reference_target_move_delta": 0,
+  "our_state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+  ],
+  "slots": [
+    [
+      "geom_pos",
+      "target",
+      0
+    ],
+    [
+      "geom_pos",
+      "target",
+      1
+    ]
+  ],
+  "modes": {
+    "as_placed": {
+      "exact_frac": 0.9840835259885204,
+      "interior_exact_frac": 0.9998668941566535,
+      "interior_px": 82641,
+      "mean_abs": 0.45865055006377553,
+      "max_abs": 216,
+      "within8_frac": 0.9924310178172832,
+      "ssim": 0.996950830471017
+    },
+    "offscreen": {
+      "exact_frac": 0.9858516770966199,
+      "interior_exact_frac": 0.9998668941566535,
+      "interior_px": 82641,
+      "mean_abs": 0.1709302006935587,
+      "max_abs": 116,
+      "within8_frac": 0.9943087830835459,
+      "ssim": 0.9995590149587127
+    }
+  },
+  "closest_mode": "offscreen"
+}

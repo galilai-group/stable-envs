@@ -1,0 +1,2033 @@
+{
+ "probe_env": {
+  "python": "/private/tmp/claude-501/-Users-samib-stable-envs/ec2cb6e1-a3b7-4e3c-8f7b-12ef98f5d4b3/scratchpad/swmprobe/bin/python",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "stable_worldmodel": "unknown",
+  "gymnasium": "1.3.0",
+  "mujoco_gl": "glfw",
+  "probed_at": "2026-09-09T06:12:47+00:00"
+ },
+ "ids": [
+  "swm/AcrobotControl-v1",
+  "swm/AcrobotDMControl-v0",
+  "swm/BallInCupDMControl-v0",
+  "swm/CartPoleControl-v1",
+  "swm/CartpoleDMControl-v0",
+  "swm/CheetahDMControl-v0",
+  "swm/CraftaxClassicPixels-v1",
+  "swm/CraftaxClassicSymbolic-v1",
+  "swm/CraftaxPixels-v1",
+  "swm/CraftaxSymbolic-v1",
+  "swm/FetchPickAndPlace-v3",
+  "swm/FetchPickAndPlaceDense-v3",
+  "swm/FetchPickAndPlaceDict-v3",
+  "swm/FetchPush-v3",
+  "swm/FetchPushDense-v3",
+  "swm/FetchPushDict-v3",
+  "swm/FetchReach-v3",
+  "swm/FetchReachDense-v3",
+  "swm/FetchReachDict-v3",
+  "swm/FetchSlide-v3",
+  "swm/FetchSlideDense-v3",
+  "swm/FetchSlideDict-v3",
+  "swm/FingerDMControl-v0",
+  "swm/HopperDMControl-v0",
+  "swm/HumanoidDMControl-v0",
+  "swm/ManipulatorDMControl-v0",
+  "swm/MountainCarContinuousControl-v0",
+  "swm/MountainCarControl-v0",
+  "swm/OGBCube-v0",
+  "swm/OGBMaze-v0",
+  "swm/OGBScene-v0",
+  "swm/PFRocketLanding-v0",
+  "swm/PendulumControl-v1",
+  "swm/PendulumDMControl-v0",
+  "swm/Piecewise-v0",
+  "swm/PushT-Discrete-v1",
+  "swm/PushT-v1",
+  "swm/QuadrupedDMControl-v0",
+  "swm/ReacherDMControl-v0",
+  "swm/SimplePointMaze-v0",
+  "swm/TwoRoom-v1",
+  "swm/WalkerDMControl-v0"
+ ],
+ "WORLDS": [
+  "swm/AcrobotControl-v1",
+  "swm/AcrobotDMControl-v0",
+  "swm/BallInCupDMControl-v0",
+  "swm/CartPoleControl-v1",
+  "swm/CartpoleDMControl-v0",
+  "swm/CheetahDMControl-v0",
+  "swm/CraftaxClassicPixels-v1",
+  "swm/CraftaxClassicSymbolic-v1",
+  "swm/CraftaxPixels-v1",
+  "swm/CraftaxSymbolic-v1",
+  "swm/FetchPickAndPlace-v3",
+  "swm/FetchPickAndPlaceDense-v3",
+  "swm/FetchPickAndPlaceDict-v3",
+  "swm/FetchPush-v3",
+  "swm/FetchPushDense-v3",
+  "swm/FetchPushDict-v3",
+  "swm/FetchReach-v3",
+  "swm/FetchReachDense-v3",
+  "swm/FetchReachDict-v3",
+  "swm/FetchSlide-v3",
+  "swm/FetchSlideDense-v3",
+  "swm/FetchSlideDict-v3",
+  "swm/FingerDMControl-v0",
+  "swm/HopperDMControl-v0",
+  "swm/HumanoidDMControl-v0",
+  "swm/ManipulatorDMControl-v0",
+  "swm/MountainCarContinuousControl-v0",
+  "swm/MountainCarControl-v0",
+  "swm/OGBCube-v0",
+  "swm/OGBMaze-v0",
+  "swm/OGBScene-v0",
+  "swm/PFRocketLanding-v0",
+  "swm/PendulumControl-v1",
+  "swm/PendulumDMControl-v0",
+  "swm/Piecewise-v0",
+  "swm/PushT-Discrete-v1",
+  "swm/PushT-v1",
+  "swm/QuadrupedDMControl-v0",
+  "swm/ReacherDMControl-v0",
+  "swm/SimplePointMaze-v0",
+  "swm/TwoRoom-v1",
+  "swm/WalkerDMControl-v0"
+ ],
+ "DISCRETE_WORLDS": [
+  "swm/AcrobotControl-v1",
+  "swm/CartPoleControl-v1",
+  "swm/CraftaxClassicPixels-v1",
+  "swm/CraftaxClassicSymbolic-v1",
+  "swm/CraftaxPixels-v1",
+  "swm/CraftaxSymbolic-v1",
+  "swm/MountainCarControl-v0",
+  "swm/PushT-Discrete-v1"
+ ],
+ "entry_points": {
+  "swm/AcrobotControl-v1": "stable_worldmodel.envs.gymnasium_control.acrobot:AcrobotWrapper",
+  "swm/AcrobotDMControl-v0": "stable_worldmodel.envs.dmcontrol.acrobot:AcrobotDMControlWrapper",
+  "swm/BallInCupDMControl-v0": "stable_worldmodel.envs.dmcontrol.ball_in_cup:BallInCupDMControlWrapper",
+  "swm/CartPoleControl-v1": "stable_worldmodel.envs.gymnasium_control.cartpole:CartPoleWrapper",
+  "swm/CartpoleDMControl-v0": "stable_worldmodel.envs.dmcontrol.cartpole:CartpoleDMControlWrapper",
+  "swm/CheetahDMControl-v0": "stable_worldmodel.envs.dmcontrol.cheetah:CheetahDMControlWrapper",
+  "swm/CraftaxClassicPixels-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxClassicPixelsWrapper",
+  "swm/CraftaxClassicSymbolic-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxClassicSymbolicWrapper",
+  "swm/CraftaxPixels-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxPixelsWrapper",
+  "swm/CraftaxSymbolic-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxSymbolicWrapper",
+  "swm/FetchPickAndPlace-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPickAndPlaceDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPickAndPlaceDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPush-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPushDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPushDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchReach-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchReachDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchReachDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchSlide-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchSlideDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchSlideDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FingerDMControl-v0": "stable_worldmodel.envs.dmcontrol.finger:FingerDMControlWrapper",
+  "swm/HopperDMControl-v0": "stable_worldmodel.envs.dmcontrol.hopper:HopperDMControlWrapper",
+  "swm/HumanoidDMControl-v0": "stable_worldmodel.envs.dmcontrol.humanoid:HumanoidDMControlWrapper",
+  "swm/ManipulatorDMControl-v0": "stable_worldmodel.envs.dmcontrol.manipulator:ManipulatorDMControlWrapper",
+  "swm/MountainCarContinuousControl-v0": "stable_worldmodel.envs.gymnasium_control.mountain_car:MountainCarContinuousWrapper",
+  "swm/MountainCarControl-v0": "stable_worldmodel.envs.gymnasium_control.mountain_car:MountainCarWrapper",
+  "swm/OGBCube-v0": "stable_worldmodel.envs.ogbench.cube_env:CubeEnv",
+  "swm/OGBMaze-v0": "stable_worldmodel.envs.ogbench.maze_env:MazeEnv",
+  "swm/OGBScene-v0": "stable_worldmodel.envs.ogbench.scene_env:SceneEnv",
+  "swm/PFRocketLanding-v0": "stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding:RocketLandingEnv",
+  "swm/PendulumControl-v1": "stable_worldmodel.envs.gymnasium_control.pendulum:PendulumWrapper",
+  "swm/PendulumDMControl-v0": "stable_worldmodel.envs.dmcontrol.pendulum:PendulumDMControlWrapper",
+  "swm/Piecewise-v0": "stable_worldmodel.envs.piecewise.piecewise_env:PiecewiseEnv",
+  "swm/PushT-Discrete-v1": "stable_worldmodel.envs.pusht:PushTDiscrete",
+  "swm/PushT-v1": "stable_worldmodel.envs.pusht.env:PushT",
+  "swm/QuadrupedDMControl-v0": "stable_worldmodel.envs.dmcontrol.quadruped:QuadrupedDMControlWrapper",
+  "swm/ReacherDMControl-v0": "stable_worldmodel.envs.dmcontrol.reacher:ReacherDMControlWrapper",
+  "swm/SimplePointMaze-v0": "stable_worldmodel.envs.simple_point_maze:SimplePointMazeEnv",
+  "swm/TwoRoom-v1": "stable_worldmodel.envs.two_room.env:TwoRoomEnv",
+  "swm/WalkerDMControl-v0": "stable_worldmodel.envs.dmcontrol.walker:WalkerDMControlWrapper"
+ },
+ "kwargs": {
+  "swm/AcrobotControl-v1": {},
+  "swm/AcrobotDMControl-v0": {},
+  "swm/BallInCupDMControl-v0": {},
+  "swm/CartPoleControl-v1": {},
+  "swm/CartpoleDMControl-v0": {},
+  "swm/CheetahDMControl-v0": {},
+  "swm/CraftaxClassicPixels-v1": {},
+  "swm/CraftaxClassicSymbolic-v1": {},
+  "swm/CraftaxPixels-v1": {},
+  "swm/CraftaxSymbolic-v1": {},
+  "swm/FetchPickAndPlace-v3": {
+   "env_id": "FetchPickAndPlace-v4"
+  },
+  "swm/FetchPickAndPlaceDense-v3": {
+   "env_id": "FetchPickAndPlaceDense-v4"
+  },
+  "swm/FetchPickAndPlaceDict-v3": {
+   "env_id": "FetchPickAndPlace-v4",
+   "flatten": "False"
+  },
+  "swm/FetchPush-v3": {
+   "env_id": "FetchPush-v4"
+  },
+  "swm/FetchPushDense-v3": {
+   "env_id": "FetchPushDense-v4"
+  },
+  "swm/FetchPushDict-v3": {
+   "env_id": "FetchPush-v4",
+   "flatten": "False"
+  },
+  "swm/FetchReach-v3": {
+   "env_id": "FetchReach-v4"
+  },
+  "swm/FetchReachDense-v3": {
+   "env_id": "FetchReachDense-v4"
+  },
+  "swm/FetchReachDict-v3": {
+   "env_id": "FetchReach-v4",
+   "flatten": "False"
+  },
+  "swm/FetchSlide-v3": {
+   "env_id": "FetchSlide-v4"
+  },
+  "swm/FetchSlideDense-v3": {
+   "env_id": "FetchSlideDense-v4"
+  },
+  "swm/FetchSlideDict-v3": {
+   "env_id": "FetchSlide-v4",
+   "flatten": "False"
+  },
+  "swm/FingerDMControl-v0": {},
+  "swm/HopperDMControl-v0": {},
+  "swm/HumanoidDMControl-v0": {},
+  "swm/ManipulatorDMControl-v0": {},
+  "swm/MountainCarContinuousControl-v0": {},
+  "swm/MountainCarControl-v0": {},
+  "swm/OGBCube-v0": {},
+  "swm/OGBMaze-v0": {},
+  "swm/OGBScene-v0": {},
+  "swm/PFRocketLanding-v0": {},
+  "swm/PendulumControl-v1": {},
+  "swm/PendulumDMControl-v0": {},
+  "swm/Piecewise-v0": {},
+  "swm/PushT-Discrete-v1": {},
+  "swm/PushT-v1": {},
+  "swm/QuadrupedDMControl-v0": {},
+  "swm/ReacherDMControl-v0": {},
+  "swm/SimplePointMaze-v0": {},
+  "swm/TwoRoom-v1": {},
+  "swm/WalkerDMControl-v0": {}
+ },
+ "dmc_index_available": true,
+ "probe": {
+  "swm/AcrobotControl-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.link_com_pos_1",
+    "physics.link_com_pos_2",
+    "physics.link_length_1",
+    "physics.link_length_2",
+    "physics.link_mass_1",
+    "physics.link_mass_2",
+    "physics.link_moi",
+    "visuals.bg",
+    "visuals.joint",
+    "visuals.line",
+    "visuals.link"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "AcrobotEnv",
+   "obs_space": "Box([ -1.        -1.        -1.        -1.       -12.566371 -28.274334], [ 1.        1.        1.        1.       12.566371 28.274334], (6,), float32)",
+   "act_space": "Discrete(3)",
+   "variation_space_holder": "AcrobotWrapper",
+   "mro": [
+    "AcrobotEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "AcrobotEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ]
+  },
+  "swm/AcrobotDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.lower_arm_density",
+    "agent.upper_arm_density",
+    "agent.upper_arm_locked",
+    "floor.color",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity",
+    "target.color",
+    "target.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "AcrobotDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (6,), float32)",
+   "act_space": "Box(-1.0, 1.0, (1,), float64)",
+   "variation_space_holder": "AcrobotDMControlWrapper",
+   "mro": [
+    "AcrobotDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Acrobot",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/acrobot-swingup_sparse",
+    "how": "exact",
+    "signature": "('Balance', (('_sparse', True),))"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "AcrobotDMControlWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "qpos",
+    "qvel",
+    "score",
+    "success"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/BallInCupDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.density",
+    "ball.color",
+    "ball.density",
+    "ball.size",
+    "floor.color",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity",
+    "rendering.render_target",
+    "target.color",
+    "target.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "BallInCupDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (8,), float32)",
+   "act_space": "Box(-1.0, 1.0, (2,), float64)",
+   "variation_space_holder": "BallInCupDMControlWrapper",
+   "mro": [
+    "BallInCupDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "BallInCup",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/ball_in_cup-catch",
+    "how": "exact",
+    "signature": "('BallInCup', ())"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "BallInCupDMControlWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "qpos",
+    "qvel",
+    "score",
+    "success"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/CartPoleControl-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.force_mag",
+    "physics.gravity",
+    "physics.length",
+    "physics.masscart",
+    "physics.masspole",
+    "physics.tau",
+    "visuals.axle",
+    "visuals.bg",
+    "visuals.cart",
+    "visuals.pole"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CartPoleEnv",
+   "obs_space": "Box([-4.8               -inf -0.41887903        -inf], [4.8               inf 0.41887903        inf], (4,), float32)",
+   "act_space": "Discrete(2)",
+   "variation_space_holder": "CartPoleWrapper",
+   "mro": [
+    "CartPoleEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CartPoleEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    400,
+    600,
+    3
+   ]
+  },
+  "swm/CartpoleDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.cart_mass",
+    "agent.cart_shape",
+    "agent.color",
+    "agent.pole_density",
+    "floor.color",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CartpoleDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (5,), float32)",
+   "act_space": "Box(-1.0, 1.0, (1,), float64)",
+   "variation_space_holder": "CartpoleDMControlWrapper",
+   "mro": [
+    "CartpoleDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Cartpole",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/cartpole-swingup_sparse",
+    "how": "exact",
+    "signature": "('Balance', (('_sparse', True), ('_swing_up', True)))"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CartpoleDMControlWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "qpos",
+    "qvel",
+    "score",
+    "success"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/CheetahDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.back_foot_density",
+    "agent.back_foot_locked",
+    "agent.color",
+    "agent.torso_density",
+    "floor.color",
+    "floor.friction",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CheetahDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (17,), float32)",
+   "act_space": "Box(-1.0, 1.0, (6,), float64)",
+   "variation_space_holder": "CheetahDMControlWrapper",
+   "mro": [
+    "CheetahDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Cheetah",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/cheetah-run",
+    "how": "by_class",
+    "signature": "('Cheetah', (('_goal', 'run'), ('_move_speed', 10)))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "run",
+    "tasks": [
+     "flip",
+     "flip-backward",
+     "jump",
+     "legs-up",
+     "lie-down",
+     "run",
+     "run-back",
+     "run-backward",
+     "run-front",
+     "stand-back",
+     "stand-front"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.cheetah._TASKS and CheetahDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "flip": "09b93adb9a63",
+     "flip-backward": "09b93adb9a63",
+     "jump": "09b93adb9a63",
+     "legs-up": "09b93adb9a63",
+     "lie-down": "09b93adb9a63",
+     "run": "09b93adb9a63",
+     "run-back": "09b93adb9a63",
+     "run-backward": "09b93adb9a63",
+     "run-front": "09b93adb9a63",
+     "stand-back": "09b93adb9a63",
+     "stand-front": "09b93adb9a63"
+    },
+    "render_equivalence_classes": [
+     [
+      "flip",
+      "flip-backward",
+      "jump",
+      "legs-up",
+      "lie-down",
+      "run",
+      "run-back",
+      "run-backward",
+      "run-front",
+      "stand-back",
+      "stand-front"
+     ]
+    ],
+    "distinct_render_configs": 1
+   },
+   "reset": "ok",
+   "info_keys": [
+    "angmomentum",
+    "bfoot_height",
+    "env_name",
+    "ffoot_height",
+    "qpos",
+    "qvel",
+    "score",
+    "speed",
+    "success",
+    "torso_height"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/CraftaxClassicPixels-v1": {
+   "variation_space_status": "absent",
+   "variation_names": null,
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CraftaxClassicPixelsWrapper",
+   "obs_space": "Box(0.0, 1.0, (63, 63, 3), float32)",
+   "act_space": "Discrete(17)",
+   "variation_space_holder": null,
+   "mro": [
+    "CraftaxClassicPixelsWrapper",
+    "CraftaxWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "CraftaxClassicPixelsWrapper",
+   "inner_env": {
+    "attr": "craftax_env",
+    "class": "CraftaxClassicPixelsEnvNoAutoReset",
+    "module": "craftax.craftax_classic.envs.craftax_pixels_env",
+    "name": "Craftax-Classic-Pixels-NoAutoReset-v1"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CraftaxClassicPixelsWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name"
+   ],
+   "frame_shape": [
+    63,
+    63,
+    3
+   ]
+  },
+  "swm/CraftaxClassicSymbolic-v1": {
+   "variation_space_status": "absent",
+   "variation_names": null,
+   "frame_status_probe": "symbolic_no_frame",
+   "make": "ok",
+   "class": "CraftaxClassicSymbolicWrapper",
+   "obs_space": "Box(0.0, 1.0, (1345,), float32)",
+   "act_space": "Discrete(17)",
+   "variation_space_holder": null,
+   "mro": [
+    "CraftaxClassicSymbolicWrapper",
+    "CraftaxWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "CraftaxClassicSymbolicWrapper",
+   "inner_env": {
+    "attr": "craftax_env",
+    "class": "CraftaxClassicSymbolicEnvNoAutoReset",
+    "module": "craftax.craftax_classic.envs.craftax_symbolic_env",
+    "name": "Craftax-Classic-Symbolic-NoAutoReset-v1"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CraftaxClassicSymbolicWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ERR NotImplementedError: render is only supported for Pixels variants; symbolic envs do not produce a frame.",
+   "info_keys": [
+    "env_name"
+   ]
+  },
+  "swm/CraftaxPixels-v1": {
+   "variation_space_status": "absent",
+   "variation_names": null,
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CraftaxPixelsWrapper",
+   "obs_space": "Box(0.0, 1.0, (130, 110, 3), float32)",
+   "act_space": "Discrete(43)",
+   "variation_space_holder": null,
+   "mro": [
+    "CraftaxPixelsWrapper",
+    "CraftaxWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "CraftaxPixelsWrapper",
+   "inner_env": {
+    "attr": "craftax_env",
+    "class": "CraftaxPixelsEnvNoAutoReset",
+    "module": "craftax.craftax.envs.craftax_pixels_env",
+    "name": "Craftax-Pixels-NoAutoReset-v1"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CraftaxPixelsWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name"
+   ],
+   "frame_shape": [
+    130,
+    110,
+    3
+   ]
+  },
+  "swm/CraftaxSymbolic-v1": {
+   "variation_space_status": "absent",
+   "variation_names": null,
+   "frame_status_probe": "symbolic_no_frame",
+   "make": "ok",
+   "class": "CraftaxSymbolicWrapper",
+   "obs_space": "Box(0.0, 1.0, (8268,), float32)",
+   "act_space": "Discrete(43)",
+   "variation_space_holder": null,
+   "mro": [
+    "CraftaxSymbolicWrapper",
+    "CraftaxWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "CraftaxSymbolicWrapper",
+   "inner_env": {
+    "attr": "craftax_env",
+    "class": "CraftaxSymbolicEnvNoAutoReset",
+    "module": "craftax.craftax.envs.craftax_symbolic_env",
+    "name": "Craftax-Symbolic-NoAutoReset-v1"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CraftaxSymbolicWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ERR NotImplementedError: render is only supported for Pixels variants; symbolic envs do not produce a frame.",
+   "info_keys": [
+    "env_name"
+   ]
+  },
+  "swm/FetchPickAndPlace-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchPickAndPlaceDense-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchPickAndPlaceDict-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchPush-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchPushDense-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchPushDict-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchReach-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchReachDense-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchReachDict-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchSlide-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchSlideDense-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FetchSlideDict-v3": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR AssertionError: "
+  },
+  "swm/FingerDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.fingertip_density",
+    "agent.proximal_density",
+    "floor.color",
+    "light.intensity",
+    "rendering.render_target",
+    "spinner.color",
+    "spinner.density",
+    "spinner.friction",
+    "target.color",
+    "target.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "FingerDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (12,), float32)",
+   "act_space": "Box(-1.0, 1.0, (2,), float64)",
+   "variation_space_holder": "FingerDMControlWrapper",
+   "mro": [
+    "FingerDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Finger",
+   "task_name": "turn_hard",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/finger-turn_hard",
+    "how": "exact",
+    "signature": "('Turn', (('_target_radius', 0.03),))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "turn_hard",
+    "tasks": [
+     "spin",
+     "turn_easy",
+     "turn_hard"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.finger._TASKS and FingerDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "spin": "91c9901bbd3d",
+     "turn_easy": "8313be6f7278",
+     "turn_hard": "350210da3ec3"
+    },
+    "render_equivalence_classes": [
+     [
+      "turn_hard"
+     ],
+     [
+      "turn_easy"
+     ],
+     [
+      "spin"
+     ]
+    ],
+    "distinct_render_configs": 3
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "hinge_velocity",
+    "qpos",
+    "qvel",
+    "score",
+    "success",
+    "target_position",
+    "tip_position"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/HopperDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.foot_density",
+    "agent.foot_locked",
+    "agent.torso_density",
+    "floor.color",
+    "floor.friction",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "HopperDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (15,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float64)",
+   "variation_space_holder": "HopperDMControlWrapper",
+   "mro": [
+    "HopperDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Hopper",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/hopper-hop",
+    "how": "by_class",
+    "signature": "('Hopper', (('_goal', 'hop'), ('_hopping', True)))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "hop",
+    "tasks": [
+     "flip",
+     "flip-backward",
+     "hop",
+     "hop-backward",
+     "stand"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.hopper._TASKS and HopperDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "flip": "0697af34793a",
+     "flip-backward": "0697af34793a",
+     "hop": "0697af34793a",
+     "hop-backward": "0697af34793a",
+     "stand": "0697af34793a"
+    },
+    "render_equivalence_classes": [
+     [
+      "flip",
+      "flip-backward",
+      "hop",
+      "hop-backward",
+      "stand"
+     ]
+    ],
+    "distinct_render_configs": 1
+   },
+   "reset": "ok",
+   "info_keys": [
+    "angmomentum",
+    "env_name",
+    "height",
+    "qpos",
+    "qvel",
+    "score",
+    "speed",
+    "success"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/HumanoidDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.left_knee_locked",
+    "agent.right_lower_arm_density",
+    "agent.torso_density",
+    "floor.color",
+    "floor.friction",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "HumanoidDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (67,), float32)",
+   "act_space": "Box(-1.0, 1.0, (21,), float64)",
+   "variation_space_holder": "HumanoidDMControlWrapper",
+   "mro": [
+    "HumanoidDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Humanoid",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/humanoid-walk",
+    "how": "exact",
+    "signature": "('Humanoid', (('_move_speed', 1), ('_pure_state', False)))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "walk",
+    "tasks": [
+     "run",
+     "stand",
+     "walk"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.humanoid._TASKS and HumanoidDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "run": "649f944787e9",
+     "stand": "649f944787e9",
+     "walk": "649f944787e9"
+    },
+    "render_equivalence_classes": [
+     [
+      "run",
+      "stand",
+      "walk"
+     ]
+    ],
+    "distinct_render_configs": 1
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "head_height",
+    "qpos",
+    "qvel",
+    "score",
+    "speed",
+    "success",
+    "torso_upright"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/ManipulatorDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.hand_density",
+    "agent.upper_arm_density",
+    "agent.upper_arm_length",
+    "floor.color",
+    "light.intensity",
+    "rendering.render_target",
+    "target.color",
+    "target.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "ManipulatorDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (44,), float32)",
+   "act_space": "Box(-1.0, 1.0, (5,), float64)",
+   "variation_space_holder": "ManipulatorDMControlWrapper",
+   "mro": [
+    "ManipulatorDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Manipulator",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/manipulator-bring_ball",
+    "how": "exact",
+    "signature": "('Bring', (('_fully_observable', True), ('_insert', False), ('_object', 'ball'), ('_receptacle', 'cup'), ('_target', 'target_ball'), ('_use_peg', False)))"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "ManipulatorDMControlWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "qpos",
+    "qvel",
+    "score",
+    "success"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/MountainCarContinuousControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.max_speed",
+    "physics.power",
+    "visuals.bg",
+    "visuals.fg"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "Continuous_MountainCarEnv",
+   "obs_space": "Box([-1.2  -0.07], [0.6  0.07], (2,), float32)",
+   "act_space": "Box(-1.0, 1.0, (1,), float32)",
+   "variation_space_holder": "MountainCarContinuousWrapper",
+   "mro": [
+    "Continuous_MountainCarEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "Continuous_MountainCarEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    400,
+    600,
+    3
+   ]
+  },
+  "swm/MountainCarControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.force",
+    "physics.gravity",
+    "physics.max_speed",
+    "visuals.bg",
+    "visuals.fg"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MountainCarEnv",
+   "obs_space": "Box([-1.2  -0.07], [0.6  0.07], (2,), float32)",
+   "act_space": "Discrete(3)",
+   "variation_space_holder": "MountainCarWrapper",
+   "mro": [
+    "MountainCarEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "MountainCarEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    400,
+    600,
+    3
+   ]
+  },
+  "swm/OGBCube-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.ee_start_position",
+    "camera.angle_delta",
+    "cube.color",
+    "cube.goal_position",
+    "cube.goal_yaw",
+    "cube.size",
+    "cube.start_position",
+    "cube.start_yaw",
+    "floor.color",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CubeEnv",
+   "obs_space": "Box(-inf, inf, (28,), float64)",
+   "act_space": "Box(-1.0, 1.0, (5,), float32)",
+   "variation_space_holder": "CubeEnv",
+   "mro": [
+    "CubeEnv",
+    "ManipSpaceEnv",
+    "CustomMuJoCoEnv",
+    "Env",
+    "Generic",
+    "ABC",
+    "object"
+   ],
+   "env_name": "Cube",
+   "env_type": "single",
+   "ob_type": "states",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "CubeEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "control",
+    "env_name",
+    "prev_qpos",
+    "prev_qvel",
+    "privileged/block_0_pos",
+    "privileged/block_0_quat",
+    "privileged/block_0_yaw",
+    "proprio/effector_pos",
+    "proprio/effector_yaw",
+    "proprio/gripper_contact",
+    "proprio/gripper_opening",
+    "proprio/gripper_vel",
+    "proprio/joint_pos",
+    "proprio/joint_vel",
+    "qpos",
+    "qvel",
+    "success",
+    "target",
+    "time"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/OGBMaze-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "floor.color",
+    "floor.pixel_encoding",
+    "light.intensity",
+    "wall.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MazeEnv",
+   "obs_space": "Box(-inf, inf, (2,), float64)",
+   "act_space": "Box(-1.0, 1.0, (2,), float32)",
+   "variation_space_holder": "MazeEnv",
+   "mro": [
+    "MazeEnv",
+    "PointEnv",
+    "MujocoEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "camera_id": "None",
+   "maze_type": "large",
+   "ob_type": "states",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "MazeEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/OGBScene-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.ee_start_position",
+    "camera.angle_delta",
+    "cube.color",
+    "cube.goal_position",
+    "cube.goal_yaw",
+    "cube.size",
+    "cube.start_position",
+    "cube.start_yaw",
+    "floor.color",
+    "light.intensity",
+    "lock_color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "SceneEnv",
+   "obs_space": "Box(-inf, inf, (40,), float64)",
+   "act_space": "Box(-1.0, 1.0, (5,), float32)",
+   "variation_space_holder": "SceneEnv",
+   "mro": [
+    "SceneEnv",
+    "ManipSpaceEnv",
+    "CustomMuJoCoEnv",
+    "Env",
+    "Generic",
+    "ABC",
+    "object"
+   ],
+   "env_name": "Scene",
+   "env_type": "scene",
+   "ob_type": "states",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "SceneEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "button_states",
+    "control",
+    "env_name",
+    "prev_button_states",
+    "prev_qpos",
+    "prev_qvel",
+    "privileged/block_0_pos",
+    "privileged/block_0_quat",
+    "privileged/block_0_yaw",
+    "privileged/button_0_pos",
+    "privileged/button_0_state",
+    "privileged/button_0_vel",
+    "privileged/button_1_pos",
+    "privileged/button_1_state",
+    "privileged/button_1_vel",
+    "privileged/drawer_handle_pos",
+    "privileged/drawer_handle_yaw",
+    "privileged/drawer_pos",
+    "privileged/drawer_vel",
+    "privileged/window_handle_pos",
+    "privileged/window_handle_yaw",
+    "privileged/window_pos",
+    "privileged/window_vel",
+    "proprio/effector_pos",
+    "proprio/effector_yaw",
+    "proprio/gripper_contact",
+    "proprio/gripper_opening",
+    "proprio/gripper_vel",
+    "proprio/joint_pos",
+    "proprio/joint_vel",
+    "qpos",
+    "qvel",
+    "success",
+    "target",
+    "time"
+   ],
+   "frame_shape": [
+    200,
+    200,
+    3
+   ]
+  },
+  "swm/PFRocketLanding-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "environment.sky_color",
+    "environment.start_height_ratio",
+    "environment.start_horizontal_offset",
+    "environment.start_tilt",
+    "pad.color",
+    "rocket.body_color",
+    "rocket.booster_color",
+    "rocket.fin_color",
+    "rocket.leg_color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "RocketLandingEnv",
+   "obs_space": "Box([-inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf\n -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf\n -inf   0.], [inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf\n inf inf inf inf inf inf inf inf inf inf inf  1.], (30,), float64)",
+   "act_space": "Box([-1. -1. -1.  0.  0. -1. -1.], 1.0, (7,), float64)",
+   "variation_space_holder": "RocketLandingEnv",
+   "mro": [
+    "RocketLandingEnv",
+    "RocketBaseEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "RocketLandingEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_complete",
+    "fatal_collision",
+    "goal",
+    "out_of_bounds"
+   ],
+   "frame_shape": [
+    480,
+    480,
+    3
+   ]
+  },
+  "swm/PendulumControl-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.dt",
+    "physics.g",
+    "physics.l",
+    "physics.m",
+    "physics.max_speed",
+    "physics.max_torque",
+    "visuals.bg",
+    "visuals.hub",
+    "visuals.rod"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PendulumEnv",
+   "obs_space": "Box([-1. -1. -8.], [1. 1. 8.], (3,), float32)",
+   "act_space": "Box(-2.0, 2.0, (1,), float32)",
+   "variation_space_holder": "PendulumWrapper",
+   "mro": [
+    "PendulumEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "PendulumEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ]
+  },
+  "swm/PendulumDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.mass_density",
+    "agent.mass_shape",
+    "agent.pole_density",
+    "floor.color",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PendulumDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (3,), float32)",
+   "act_space": "Box(-1.0, 1.0, (1,), float64)",
+   "variation_space_holder": "PendulumDMControlWrapper",
+   "mro": [
+    "PendulumDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Pendulum",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/pendulum-swingup",
+    "how": "exact",
+    "signature": "('SwingUp', ())"
+   },
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "PendulumDMControlWrapper.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "qpos",
+    "qvel",
+    "score",
+    "success"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/Piecewise-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "border.color",
+    "rendering.render_bias_field",
+    "rendering.render_target",
+    "rendering.render_zones",
+    "target.color",
+    "target.position",
+    "target.radius",
+    "task.min_steps",
+    "zones.bias_0",
+    "zones.bias_1",
+    "zones.bias_2",
+    "zones.bias_3",
+    "zones.color_0",
+    "zones.color_1",
+    "zones.color_2",
+    "zones.color_3"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PiecewiseEnv",
+   "obs_space": "Box(0.0, 224.0, (4,), float32)",
+   "act_space": "Box(-1.0, 1.0, (2,), float32)",
+   "variation_space_holder": "PiecewiseEnv",
+   "mro": [
+    "PiecewiseEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Piecewise",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "PiecewiseEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "distance_to_target",
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/PushT-Discrete-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.angle",
+    "agent.color",
+    "agent.scale",
+    "agent.shape",
+    "agent.start_position",
+    "agent.velocity",
+    "background.color",
+    "block.angle",
+    "block.color",
+    "block.scale",
+    "block.shape",
+    "block.start_position",
+    "goal.angle",
+    "goal.color",
+    "goal.position",
+    "goal.scale",
+    "rendering.render_goal"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PushTDiscrete",
+   "obs_space": "Dict('proprio': Box([   0.    0. -512. -512.], 512.0, (4,), float64), 'state': Box([   0.    0.    0.    0.    0. -512. -512.], [512.         512.         512.         512.           6.28318531\n 512.         512.        ], (7,), float64))",
+   "act_space": "MultiDiscrete([16 16])",
+   "variation_space_holder": "PushTDiscrete",
+   "mro": [
+    "PushTDiscrete",
+    "PushT",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "PushT",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "PushTDiscrete.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "block_pose",
+    "env_name",
+    "goal",
+    "goal_pose",
+    "goal_proprio",
+    "goal_state",
+    "n_contacts",
+    "pos_agent",
+    "vel_agent"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/PushT-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.angle",
+    "agent.color",
+    "agent.scale",
+    "agent.shape",
+    "agent.start_position",
+    "agent.velocity",
+    "background.color",
+    "block.angle",
+    "block.color",
+    "block.scale",
+    "block.shape",
+    "block.start_position",
+    "goal.angle",
+    "goal.color",
+    "goal.position",
+    "goal.scale",
+    "rendering.render_goal"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PushT",
+   "obs_space": "Dict('proprio': Box([   0.    0. -512. -512.], 512.0, (4,), float64), 'state': Box([   0.    0.    0.    0.    0. -512. -512.], [512.         512.         512.         512.           6.28318531\n 512.         512.        ], (7,), float64))",
+   "act_space": "Box(-1.0, 1.0, (2,), float32)",
+   "variation_space_holder": "PushT",
+   "mro": [
+    "PushT",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "PushT",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "PushT.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "block_pose",
+    "env_name",
+    "goal",
+    "goal_pose",
+    "goal_proprio",
+    "goal_state",
+    "n_contacts",
+    "pos_agent",
+    "vel_agent"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/QuadrupedDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.foot_back_left_density",
+    "agent.knee_back_left_locked",
+    "agent.torso_density",
+    "floor.color",
+    "floor.friction",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "QuadrupedDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (78,), float32)",
+   "act_space": "Box(-1.0, 1.0, (12,), float64)",
+   "variation_space_holder": "QuadrupedDMControlWrapper",
+   "mro": [
+    "QuadrupedDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Quadruped",
+   "camera_id": "2",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/quadruped-walk",
+    "how": "exact",
+    "signature": "('Move', (('_desired_speed', 0.5),))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "walk",
+    "tasks": [
+     "run",
+     "walk"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.quadruped._TASKS and QuadrupedDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "run": "1ff6e5cf88e4",
+     "walk": "5182dd91d00a"
+    },
+    "render_equivalence_classes": [
+     [
+      "run"
+     ],
+     [
+      "walk"
+     ]
+    ],
+    "distinct_render_configs": 2
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "qpos",
+    "qvel",
+    "score",
+    "success",
+    "torso_velocity"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/ReacherDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.arm_density",
+    "agent.color",
+    "agent.finger_density",
+    "agent.finger_locked",
+    "floor.color",
+    "light.intensity",
+    "rendering.render_target",
+    "target.color",
+    "target.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "ReacherDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (6,), float32)",
+   "act_space": "Box(-1.0, 1.0, (2,), float64)",
+   "variation_space_holder": "ReacherDMControlWrapper",
+   "mro": [
+    "ReacherDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Reacher",
+   "task_name": "hard",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/reacher-hard",
+    "how": "exact",
+    "signature": "('Reacher', (('_target_size', 0.015),))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "hard",
+    "tasks": [
+     "easy",
+     "hard",
+     "qpos_match"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.reacher._TASKS and ReacherDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "easy": "5d15d2f6c64e",
+     "hard": "a43b4f5e4ac1",
+     "qpos_match": "a43b4f5e4ac1"
+    },
+    "render_equivalence_classes": [
+     [
+      "easy"
+     ],
+     [
+      "hard",
+      "qpos_match"
+     ]
+    ],
+    "distinct_render_configs": 2
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "finger_pos",
+    "qpos",
+    "qvel",
+    "score",
+    "success",
+    "target_pos"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/SimplePointMaze-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "goal.color",
+    "goal.position",
+    "goal.radius",
+    "walls.color",
+    "walls.number",
+    "walls.positions",
+    "walls.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "SimplePointMazeEnv",
+   "obs_space": "Box(0.0, 5.0, (2,), float32)",
+   "act_space": "Box(-0.2, 0.2, (2,), float32)",
+   "variation_space_holder": "SimplePointMazeEnv",
+   "mro": [
+    "SimplePointMazeEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "SimplePointMazeEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "goal"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ]
+  },
+  "swm/TwoRoom-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "door.color",
+    "door.number",
+    "door.position",
+    "door.size",
+    "rendering.render_target",
+    "target.color",
+    "target.position",
+    "target.radius",
+    "task.min_steps",
+    "wall.axis",
+    "wall.border_color",
+    "wall.color",
+    "wall.thickness"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "TwoRoomEnv",
+   "obs_space": "Box(0.0, 224.0, (10,), float32)",
+   "act_space": "Box(-1.0, 1.0, (2,), float32)",
+   "variation_space_holder": "TwoRoomEnv",
+   "mro": [
+    "TwoRoomEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "TwoRoom",
+   "swm_task_space": {
+    "accepts_task": false,
+    "why": "TwoRoomEnv.__init__ takes no `task` argument; it is one fixed task"
+   },
+   "reset": "ok",
+   "info_keys": [
+    "distance_to_target",
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/WalkerDMControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.left_foot_density",
+    "agent.right_knee_locked",
+    "agent.torso_density",
+    "floor.color",
+    "floor.friction",
+    "floor.rotation_y",
+    "gravity.x",
+    "gravity.y",
+    "gravity.z",
+    "light.intensity"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "WalkerDMControlWrapper",
+   "obs_space": "Box(-inf, inf, (24,), float32)",
+   "act_space": "Box(-1.0, 1.0, (6,), float64)",
+   "variation_space_holder": "WalkerDMControlWrapper",
+   "mro": [
+    "WalkerDMControlWrapper",
+    "DMControlWrapper",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Walker",
+   "camera_id": "0",
+   "action_repeat": "2",
+   "inner_env": {
+    "attr": "dmc_env",
+    "class": "Wrapper",
+    "module": "dm_control.suite.wrappers.action_scale"
+   },
+   "dmc_reference": {
+    "reference_id": "dm_control/walker-walk",
+    "how": "by_class",
+    "signature": "('PlanarWalker', (('_goal', 'walk'), ('_move_speed', 1)))"
+   },
+   "swm_task_space": {
+    "accepts_task": true,
+    "default_task": "walk",
+    "tasks": [
+     "arabesque",
+     "flip",
+     "legs_up",
+     "lie_down",
+     "run",
+     "stand",
+     "walk",
+     "walk-backward"
+    ],
+    "source": "stable_worldmodel.envs.dmcontrol.walker._TASKS and WalkerDMControlWrapper.__init__ default",
+    "render_signature_by_task": {
+     "arabesque": "903888e90d2d",
+     "flip": "903888e90d2d",
+     "legs_up": "903888e90d2d",
+     "lie_down": "903888e90d2d",
+     "run": "903888e90d2d",
+     "stand": "903888e90d2d",
+     "walk": "903888e90d2d",
+     "walk-backward": "903888e90d2d"
+    },
+    "render_equivalence_classes": [
+     [
+      "arabesque",
+      "flip",
+      "legs_up",
+      "lie_down",
+      "run",
+      "stand",
+      "walk",
+      "walk-backward"
+     ]
+    ],
+    "distinct_render_configs": 1
+   },
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "left_foot_height",
+    "left_thigh_height",
+    "qpos",
+    "qvel",
+    "right_foot_height",
+    "right_thigh_height",
+    "score",
+    "speed",
+    "success",
+    "torso_height",
+    "torso_upright"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  }
+ }
+}

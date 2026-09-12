@@ -1,5 +1,17 @@
 # stable_worldmodel coverage: every registered env, and what we do about it
 
+!!! warning "The counts below are out of date. [`swm_matrix.md`](swm_matrix.md) is generated and current."
+
+    This note was written by hand and has drifted: it records nine DM Control ids as gaps, and seven
+    of those nine have had a renderer since. The generated matrix rebuilds the coverage answer from
+    the live registries, the class declarations and the committed result files on every run, and it
+    also keeps CPU speed, GPU speed, render fidelity, physics fidelity and `stable_worldmodel`
+    variation mapping as *independent* columns, which the table below collapses into one status.
+
+    **Read that page for what is covered. Read this one for why** — the per-family investigation,
+    the parity measurements, and the gate that rejected each no-go are here and are not
+    reproducible by a generator.
+
 `stable_worldmodel` is the library stable-envs is meant to feed. This note answers two questions with
 measurements rather than with directory listings: **which of its environments can we render**, and
 **what happens to the ones we cannot**.

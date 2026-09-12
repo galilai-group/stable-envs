@@ -1,0 +1,2949 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024,
+  4096
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.99333108108282,
+     "fps": 8.112154887604682,
+     "gb_per_s": 0.0060841161657035105,
+     "loadavg": 7.98,
+     "peak_gb": 0.003272192,
+     "seconds_per_batch": 0.12327180802822113,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 123271.80802822113
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9933843592830965,
+     "fps": 128.6652668657783,
+     "gb_per_s": 0.09649895014933373,
+     "loadavg": 7.98,
+     "peak_gb": 0.0425216,
+     "seconds_per_batch": 0.12435368448495865,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7772.1052803099155
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933389595319728,
+     "fps": 512.1874847048786,
+     "gb_per_s": 0.3841406135286589,
+     "loadavg": 7.98,
+     "peak_gb": 0.162280448,
+     "seconds_per_batch": 0.12495424412190914,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1952.4100644048303
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9933713278232091,
+     "fps": 1959.5735008268155,
+     "gb_per_s": 1.4696801256201115,
+     "loadavg": 7.98,
+     "peak_gb": 0.644732928,
+     "seconds_per_batch": 0.13064067251980305,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 510.31512703048065
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9936060362413658,
+     "fps": 7025.190794854714,
+     "gb_per_s": 5.268893096141036,
+     "loadavg": 7.98,
+     "peak_gb": 2.561340416,
+     "seconds_per_batch": 0.1457611657679081,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 142.34488844522275
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9948429468565322,
+     "fps": 15216.081997969039,
+     "gb_per_s": 11.41206149847678,
+     "loadavg": 7.99,
+     "peak_gb": 10.244055552,
+     "seconds_per_batch": 0.2691888753324747,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 65.71994026671746
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 740.4470221608717,
+    "decode_fps_per_core": 987.2626962144956,
+    "h": 500,
+    "jpeg_bytes": 10025,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 956.3090775285561,
+    "n": 160,
+    "raw_bytes": 750000,
+    "w": 500
+   },
+   "device": "cuda",
+   "env": "Acrobot",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 340.05491465514666,
+     "gb_per_s": 0.25504118599136,
+     "seconds_per_frame": 0.0029407015070319177,
+     "us_per_frame": 2940.7015070319176
+    },
+    "size": 500
+   },
+   "projected_to": [
+    "swm/AcrobotControl-v1"
+   ],
+   "reference_id": "Acrobot-v1",
+   "renderer_class": "Acrobot",
+   "seconds": 15.86,
+   "shape": "500x500",
+   "size": 500,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9930934841881653,
+     "fps": 8.252852699519257,
+     "gb_per_s": 0.005942053943653866,
+     "loadavg": 7.99,
+     "peak_gb": 0.003141632,
+     "seconds_per_batch": 0.12117022275924683,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 121170.22275924683
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.993354035335025,
+     "fps": 130.85391945205092,
+     "gb_per_s": 0.09421482200547665,
+     "loadavg": 7.99,
+     "peak_gb": 0.039143424,
+     "seconds_per_batch": 0.1222737543284893,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7642.1096455305815
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9932900479314034,
+     "fps": 519.7749612631584,
+     "gb_per_s": 0.37423797210947407,
+     "loadavg": 7.99,
+     "peak_gb": 0.154529792,
+     "seconds_per_batch": 0.12313020974397659,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1923.9095272496343
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9933297239695666,
+     "fps": 1990.8845571787224,
+     "gb_per_s": 1.4334368811686802,
+     "loadavg": 7.91,
+     "peak_gb": 0.615919104,
+     "seconds_per_batch": 0.12858605943620205,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 502.28929467266425
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9936774781886599,
+     "fps": 7159.64400670357,
+     "gb_per_s": 5.154943684826571,
+     "loadavg": 7.91,
+     "peak_gb": 2.461477888,
+     "seconds_per_batch": 0.14302387088537216,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 139.67174891149625
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9946358789542514,
+     "fps": 17444.05559002375,
+     "gb_per_s": 12.5597200248171,
+     "loadavg": 8.08,
+     "peak_gb": 9.833229824,
+     "seconds_per_batch": 0.23480778187513351,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 57.32611862185877
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 774.0035954807234,
+    "decode_fps_per_core": 1075.004993723227,
+    "h": 400,
+    "jpeg_bytes": 7260,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 1040.4055018886531,
+    "n": 166,
+    "raw_bytes": 720000,
+    "w": 600
+   },
+   "device": "cuda",
+   "env": "CartPole",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 380.54846509591766,
+     "gb_per_s": 0.41099234230359105,
+     "seconds_per_frame": 0.002627786186834176,
+     "us_per_frame": 2627.786186834176
+    },
+    "size": 600
+   },
+   "projected_to": [
+    "swm/CartPoleControl-v1"
+   ],
+   "reference_id": "CartPole-v1",
+   "renderer_class": "CartPole",
+   "seconds": 13.62,
+   "shape": "400x600",
+   "size": 600,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9944018464503688,
+     "fps": 1110.412072274803,
+     "gb_per_s": 0.053726177704944075,
+     "loadavg": 8.08,
+     "peak_gb": 0.001193984,
+     "seconds_per_batch": 0.000900566577911377,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 900.566577911377
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9926805419327048,
+     "fps": 17575.88911759771,
+     "gb_per_s": 0.8503918190658477,
+     "loadavg": 8.08,
+     "peak_gb": 0.016465408,
+     "seconds_per_batch": 0.0009103380143642426,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 56.89612589776516
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9932532674200453,
+     "fps": 62869.817441932806,
+     "gb_per_s": 3.041893247110477,
+     "loadavg": 8.08,
+     "peak_gb": 0.066121216,
+     "seconds_per_batch": 0.001017976552248001,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 15.905883628875017
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9937593062787811,
+     "fps": 119167.27372612128,
+     "gb_per_s": 5.765789371964652,
+     "loadavg": 8.08,
+     "peak_gb": 0.264941056,
+     "seconds_per_batch": 0.002148240804672241,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 8.391565643250942
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9955275569813772,
+     "fps": 140274.81935754174,
+     "gb_per_s": 6.7870568597953005,
+     "loadavg": 8.08,
+     "peak_gb": 1.048754688,
+     "seconds_per_batch": 0.0072999559342861176,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7.128863217076287
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9961844046482056,
+     "fps": 144737.98131629475,
+     "gb_per_s": 7.003002488007606,
+     "loadavg": 8.08,
+     "peak_gb": 4.171426304,
+     "seconds_per_batch": 0.02829941362142563,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6.909036528668366
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 197.29063416931845,
+    "decode_fps_per_core": 4077.600739279895,
+    "h": 112,
+    "jpeg_bytes": 7845,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 3615.663583313619,
+    "n": 2480,
+    "raw_bytes": 48384,
+    "w": 144
+   },
+   "device": "cuda",
+   "env": "CraftaxClassic",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'jax'"
+   },
+   "projected_to": [
+    "swm/CraftaxClassicPixels-v1"
+   ],
+   "reference_id": "Craftax-Classic-Pixels-v1",
+   "renderer_class": "CraftaxClassic",
+   "seconds": 2.72,
+   "shape": "112x144",
+   "size": 16,
+   "state_dim": 127,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9929102925964312,
+     "fps": 127.5198741311362,
+     "gb_per_s": 0.0026993406956078913,
+     "loadavg": 8.15,
+     "peak_gb": 0.001097728,
+     "seconds_per_batch": 0.007841914892196655,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7841.914892196655
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9933349188273867,
+     "fps": 1681.1054814632735,
+     "gb_per_s": 0.03558564083161458,
+     "loadavg": 8.06,
+     "peak_gb": 0.007507968,
+     "seconds_per_batch": 0.009517546743154526,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 594.8466714471579
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933730839467702,
+     "fps": 5890.361363049598,
+     "gb_per_s": 0.1246871693330339,
+     "loadavg": 8.06,
+     "peak_gb": 0.030659072,
+     "seconds_per_batch": 0.010865207761526108,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 169.76887127384543
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.99410351750902,
+     "fps": 15755.500994355765,
+     "gb_per_s": 0.33351244504852284,
+     "loadavg": 8.06,
+     "peak_gb": 0.117352448,
+     "seconds_per_batch": 0.016248293220996857,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 63.46989539451897
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9948785972622476,
+     "fps": 26177.43469890721,
+     "gb_per_s": 0.5541239377064678,
+     "loadavg": 8.06,
+     "peak_gb": 0.466222592,
+     "seconds_per_batch": 0.039117660373449326,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 38.20084020844661
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9952585317109338,
+     "fps": 27807.717089124522,
+     "gb_per_s": 0.588633755342588,
+     "loadavg": 8.06,
+     "peak_gb": 1.114567168,
+     "seconds_per_batch": 0.147297240793705,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 35.96124042815063
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 124.0819837062794,
+    "decode_fps_per_core": 5861.771717038898,
+    "h": 84,
+    "jpeg_bytes": 2211,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4980.485006049103,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCAcrobotSwingup",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 282.93107104566815,
+     "gb_per_s": 0.005989084911894703,
+     "seconds_per_frame": 0.003534429768721263,
+     "us_per_frame": 3534.429768721263
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/AcrobotDMControl-v0"
+   ],
+   "reference_id": "dm_control/acrobot-swingup",
+   "renderer_class": "DMCAcrobotSwingup",
+   "seconds": 18.18,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9935626002206376,
+     "fps": 130.3027809464635,
+     "gb_per_s": 0.0027582492670747394,
+     "loadavg": 8.05,
+     "peak_gb": 0.00165888,
+     "seconds_per_batch": 0.0076744332909584045,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7674.4332909584045
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9933896671486017,
+     "fps": 1070.1591985430773,
+     "gb_per_s": 0.022653129914759863,
+     "loadavg": 8.29,
+     "peak_gb": 0.008293888,
+     "seconds_per_batch": 0.01495104655623436,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 934.4404097646475
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9934160564533567,
+     "fps": 1906.5223407167803,
+     "gb_per_s": 0.040357264908292806,
+     "loadavg": 8.29,
+     "peak_gb": 0.032247808,
+     "seconds_per_batch": 0.03356897458434105,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 524.5152278803289
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.993038729429452,
+     "fps": 2335.5337852981347,
+     "gb_per_s": 0.04943857916719092,
+     "loadavg": 8.29,
+     "peak_gb": 0.12391424,
+     "seconds_per_batch": 0.10961091704666615,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 428.16764471353963
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9935149910816251,
+     "fps": 2446.964410568716,
+     "gb_per_s": 0.05179734264291859,
+     "loadavg": 8.35,
+     "peak_gb": 0.48923136,
+     "seconds_per_batch": 0.4184776842594147,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 408.66961353458464
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9934874407322329,
+     "fps": 2458.654682160358,
+     "gb_per_s": 0.052044802311970464,
+     "loadavg": 8.35,
+     "peak_gb": 1.164983808,
+     "seconds_per_batch": 1.6659517213702202,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 406.7264944751514
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 126.28722604404383,
+    "decode_fps_per_core": 5965.949832012653,
+    "h": 84,
+    "jpeg_bytes": 2082,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5088.867995295166,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCBallInCupCatch",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 262.1958118384038,
+     "gb_per_s": 0.005550160944995332,
+     "seconds_per_frame": 0.0038139434531331063,
+     "us_per_frame": 3813.9434531331062
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/BallInCupDMControl-v0"
+   ],
+   "reference_id": "dm_control/ball_in_cup-catch",
+   "renderer_class": "DMCBallInCupCatch",
+   "seconds": 31.06,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9934817163535457,
+     "fps": 126.97909426290188,
+     "gb_per_s": 0.0026878934673571072,
+     "loadavg": 8.32,
+     "peak_gb": 0.002277376,
+     "seconds_per_batch": 0.007875312119722366,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7875.312119722366
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.993156029555354,
+     "fps": 1960.4543432039957,
+     "gb_per_s": 0.041498897536942185,
+     "loadavg": 8.32,
+     "peak_gb": 0.008544768,
+     "seconds_per_batch": 0.008161373436450958,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 510.0858397781849
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9928726087244694,
+     "fps": 7218.144311046408,
+     "gb_per_s": 0.15279367877623037,
+     "loadavg": 8.32,
+     "peak_gb": 0.028831232,
+     "seconds_per_batch": 0.00886654481291771,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 138.5397627018392
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9939289677453825,
+     "fps": 21230.61146789232,
+     "gb_per_s": 0.4494095835523446,
+     "loadavg": 8.32,
+     "peak_gb": 0.10974976,
+     "seconds_per_batch": 0.012058060616254807,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 47.10179928224534
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.994717876306383,
+     "fps": 38837.4376285472,
+     "gb_per_s": 0.8221108797210872,
+     "loadavg": 8.32,
+     "peak_gb": 0.434894336,
+     "seconds_per_batch": 0.02636631205677986,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.748351617949083
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9952398478059047,
+     "fps": 43642.173674644466,
+     "gb_per_s": 0.9238175323448742,
+     "loadavg": 8.32,
+     "peak_gb": 1.040412672,
+     "seconds_per_batch": 0.09385417029261589,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 22.913615794095676
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 126.33295727869428,
+    "decode_fps_per_core": 5968.110226695686,
+    "h": 84,
+    "jpeg_bytes": 2167,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5047.652505563602,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCCartpoleBalance",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 286.5380309780281,
+     "gb_per_s": 0.006065437039742899,
+     "seconds_per_frame": 0.0034899381299813587,
+     "us_per_frame": 3489.9381299813585
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/CartpoleDMControl-v0"
+   ],
+   "reference_id": "dm_control/cartpole-balance",
+   "renderer_class": "DMCCartpoleBalance",
+   "seconds": 8.04,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9935149041409146,
+     "fps": 111.52890165605191,
+     "gb_per_s": 0.002360843790255307,
+     "loadavg": 8.21,
+     "peak_gb": 0.00279296,
+     "seconds_per_batch": 0.008966285735368729,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 8966.285735368729
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9934309545733867,
+     "fps": 1721.4973958896983,
+     "gb_per_s": 0.036440656876193134,
+     "loadavg": 8.21,
+     "peak_gb": 0.009032192,
+     "seconds_per_batch": 0.009294234216213226,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 580.8896385133266
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933502858451299,
+     "fps": 6382.179238813455,
+     "gb_per_s": 0.13509797012720323,
+     "loadavg": 8.21,
+     "peak_gb": 0.029195776,
+     "seconds_per_batch": 0.010027922689914703,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 156.68629202991724
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9937669350768444,
+     "fps": 19281.954073694553,
+     "gb_per_s": 0.4081604038319663,
+     "loadavg": 8.21,
+     "peak_gb": 0.109657088,
+     "seconds_per_batch": 0.013276662677526474,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 51.86196358408779
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9945183620603035,
+     "fps": 36885.90656501137,
+     "gb_per_s": 0.7808008701681607,
+     "loadavg": 8.21,
+     "peak_gb": 0.432,
+     "seconds_per_batch": 0.02776128053665161,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 27.11062552407384
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9951449773618972,
+     "fps": 42389.13134026462,
+     "gb_per_s": 0.8972931322107215,
+     "loadavg": 8.12,
+     "peak_gb": 1.035277312,
+     "seconds_per_batch": 0.09662854298949242,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 23.590952878294047
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 137.8995990437199,
+    "decode_fps_per_core": 6514.531322927054,
+    "h": 84,
+    "jpeg_bytes": 2208,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5455.328240465079,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCCartpoleSwingup",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 287.2642639999422,
+     "gb_per_s": 0.006080809940350777,
+     "seconds_per_frame": 0.0034811152145266533,
+     "us_per_frame": 3481.1152145266533
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/CartpoleDMControl-v0"
+   ],
+   "reference_id": "dm_control/cartpole-swingup",
+   "renderer_class": "DMCCartpoleSwingup",
+   "seconds": 7.3,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9932516992062322,
+     "fps": 1069.3872789999123,
+     "gb_per_s": 0.022636789921870147,
+     "loadavg": 7.96,
+     "peak_gb": 0.002415616,
+     "seconds_per_batch": 0.0009351149201393127,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 935.1149201393127
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9937507892700392,
+     "fps": 17065.326711114994,
+     "gb_per_s": 0.3612388358208823,
+     "loadavg": 7.96,
+     "peak_gb": 0.00305152,
+     "seconds_per_batch": 0.0009375736117362976,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 58.5983507335186
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9934779311937896,
+     "fps": 68192.75588950943,
+     "gb_per_s": 1.4435042566691356,
+     "loadavg": 7.96,
+     "peak_gb": 0.005087744,
+     "seconds_per_batch": 0.0009385161101818085,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 14.664314221590757
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9934721231402306,
+     "fps": 74520.365551636,
+     "gb_per_s": 1.577447097997031,
+     "loadavg": 7.96,
+     "peak_gb": 0.009170432,
+     "seconds_per_batch": 0.0034353025257587433,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.419150491245091
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9931878316819985,
+     "fps": 75943.04641020774,
+     "gb_per_s": 1.6075624064112777,
+     "loadavg": 7.96,
+     "peak_gb": 0.025542144,
+     "seconds_per_batch": 0.013483788818120956,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.167762517696247
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9931314398247458,
+     "fps": 76589.25216356255,
+     "gb_per_s": 1.621241289798292,
+     "loadavg": 7.96,
+     "peak_gb": 0.090861056,
+     "seconds_per_batch": 0.05348008871078491,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.056662282906473
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 113.82420497138231,
+    "decode_fps_per_core": 5377.182774536202,
+    "h": 84,
+    "jpeg_bytes": 3542,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4626.951166261207,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCCheetahRun",
+   "fidelity_tier": "visual",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 279.92987104800324,
+     "gb_per_s": 0.005925555510344132,
+     "seconds_per_frame": 0.0035723232974608737,
+     "us_per_frame": 3572.3232974608736
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/CheetahDMControl-v0"
+   ],
+   "reference_id": "dm_control/cheetah-run",
+   "renderer_class": "DMCCheetahRun",
+   "seconds": 21.61,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9935437561028748,
+     "fps": 142.25702831251076,
+     "gb_per_s": 0.003011296775319228,
+     "loadavg": 7.96,
+     "peak_gb": 0.003372032,
+     "seconds_per_batch": 0.00702952966094017,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 7029.52966094017
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9934715787224823,
+     "fps": 1901.0479505927376,
+     "gb_per_s": 0.04024138301814707,
+     "loadavg": 7.96,
+     "peak_gb": 0.011585536,
+     "seconds_per_batch": 0.00841641053557396,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 526.0256584733725
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9930324973867967,
+     "fps": 6447.404162247647,
+     "gb_per_s": 0.1364786513064582,
+     "loadavg": 7.96,
+     "peak_gb": 0.04218112,
+     "seconds_per_batch": 0.009926475584506989,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 155.1011810079217
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9940661419063616,
+     "fps": 15533.198675689793,
+     "gb_per_s": 0.32880674956700157,
+     "loadavg": 7.96,
+     "peak_gb": 0.159481856,
+     "seconds_per_batch": 0.016480829566717148,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 64.37824049498886
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.995100432875623,
+     "fps": 21323.706376967802,
+     "gb_per_s": 0.4513802165876544,
+     "loadavg": 7.97,
+     "peak_gb": 0.627332096,
+     "seconds_per_batch": 0.048021670430898666,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 46.89616253017448
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9954120451310664,
+     "fps": 22042.026026596253,
+     "gb_per_s": 0.46658560693098955,
+     "loadavg": 7.97,
+     "peak_gb": 1.500130816,
+     "seconds_per_batch": 0.18582683801651,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 45.367880375124514
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 127.15418976251921,
+    "decode_fps_per_core": 6006.906167919464,
+    "h": 84,
+    "jpeg_bytes": 2836,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5072.557531826887,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCFingerTurnHard",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 281.5246391104129,
+     "gb_per_s": 0.0059593135606892216,
+     "seconds_per_frame": 0.003552086961766084,
+     "us_per_frame": 3552.086961766084
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/FingerDMControl-v0"
+   ],
+   "reference_id": "dm_control/finger-turn_hard",
+   "renderer_class": "DMCFingerTurnHard",
+   "seconds": 10.37,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9936209086066772,
+     "fps": 1070.453391182288,
+     "gb_per_s": 0.022659357384546674,
+     "loadavg": 8.05,
+     "peak_gb": 0.002972672,
+     "seconds_per_batch": 0.0009341835975646973,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 934.1835975646973
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9932493338686972,
+     "fps": 17070.888630979825,
+     "gb_per_s": 0.36135657054058096,
+     "loadavg": 8.05,
+     "peak_gb": 0.003607552,
+     "seconds_per_batch": 0.0009372681379318237,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 58.57925862073898
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9928068991964293,
+     "fps": 68580.66946101091,
+     "gb_per_s": 1.451715611150679,
+     "loadavg": 8.05,
+     "peak_gb": 0.005643776,
+     "seconds_per_batch": 0.0009332075715065002,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 14.581368304789066
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9932208001675451,
+     "fps": 74551.57163330154,
+     "gb_per_s": 1.5781076683337272,
+     "loadavg": 8.05,
+     "peak_gb": 0.009723392,
+     "seconds_per_batch": 0.003433864563703537,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.413533451966941
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9933161459085451,
+     "fps": 76119.93271442955,
+     "gb_per_s": 1.611306735699045,
+     "loadavg": 8.05,
+     "peak_gb": 0.026082816,
+     "seconds_per_batch": 0.013452455401420593,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.137163477949798
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9932388560862745,
+     "fps": 76734.79004662244,
+     "gb_per_s": 1.6243220357069037,
+     "loadavg": 8.05,
+     "peak_gb": 0.091352576,
+     "seconds_per_batch": 0.05337865650653839,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.0318985611666
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 110.8805313602187,
+    "decode_fps_per_core": 5238.120340146386,
+    "h": 84,
+    "jpeg_bytes": 3290,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4512.325097962,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCHopperHop",
+   "fidelity_tier": "visual",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 287.28540537646126,
+     "gb_per_s": 0.006081257461008932,
+     "seconds_per_frame": 0.003480859038730462,
+     "us_per_frame": 3480.859038730462
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/HopperDMControl-v0"
+   ],
+   "reference_id": "dm_control/hopper-hop",
+   "renderer_class": "DMCHopperHop",
+   "seconds": 5.46,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9938006928370039,
+     "fps": 938.2148172225659,
+     "gb_per_s": 0.019860131250967278,
+     "loadavg": 7.96,
+     "peak_gb": 0.002972672,
+     "seconds_per_batch": 0.0010658539831638336,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1065.8539831638336
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9930731911021818,
+     "fps": 15018.943581494563,
+     "gb_per_s": 0.3179209977330769,
+     "loadavg": 7.96,
+     "peak_gb": 0.003610624,
+     "seconds_per_batch": 0.0010653212666511536,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 66.5825791656971
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9913226889174913,
+     "fps": 58447.851341282934,
+     "gb_per_s": 1.2372241171922773,
+     "loadavg": 7.96,
+     "peak_gb": 0.005654016,
+     "seconds_per_batch": 0.0010949932038784027,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 17.109268810600042
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9931490378860974,
+     "fps": 63296.13711565633,
+     "gb_per_s": 1.3398526304642133,
+     "loadavg": 7.96,
+     "peak_gb": 0.0097664,
+     "seconds_per_batch": 0.004044480621814728,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 15.79875242896378
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9931326012333617,
+     "fps": 64347.829951698965,
+     "gb_per_s": 1.3621148644175638,
+     "loadavg": 7.96,
+     "peak_gb": 0.026254848,
+     "seconds_per_batch": 0.01591351255774498,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 15.540539607172832
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9931766285811023,
+     "fps": 64493.40149301672,
+     "gb_per_s": 1.365196322804178,
+     "loadavg": 7.89,
+     "peak_gb": 0.092040704,
+     "seconds_per_batch": 0.06351037323474884,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 15.505462215514854
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 114.07077751143915,
+    "decode_fps_per_core": 5388.831137161713,
+    "h": 84,
+    "jpeg_bytes": 3034,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4633.7587353098625,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCHumanoidStand",
+   "fidelity_tier": "visual",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 263.98496428535896,
+     "gb_per_s": 0.005588033723992479,
+     "seconds_per_frame": 0.003788094532986482,
+     "us_per_frame": 3788.0945329864817
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/HumanoidDMControl-v0"
+   ],
+   "reference_id": "dm_control/humanoid-stand",
+   "renderer_class": "DMCHumanoidStand",
+   "seconds": 7.76,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9933140096280231,
+     "fps": 110.84326627320577,
+     "gb_per_s": 0.00234633026047122,
+     "loadavg": 7.89,
+     "peak_gb": 0.004246016,
+     "seconds_per_batch": 0.00902174785733223,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 9021.74785733223
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9930912252335852,
+     "fps": 1699.0499868663821,
+     "gb_per_s": 0.035965490121987576,
+     "loadavg": 7.82,
+     "peak_gb": 0.01208064,
+     "seconds_per_batch": 0.009417027235031128,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 588.5642021894455
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9932753050142901,
+     "fps": 6261.003919899356,
+     "gb_per_s": 0.1325329309764296,
+     "loadavg": 7.82,
+     "peak_gb": 0.039217664,
+     "seconds_per_batch": 0.010222002863883972,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 159.71879474818707
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9935793479786333,
+     "fps": 18646.313142684725,
+     "gb_per_s": 0.3947051566043503,
+     "loadavg": 7.82,
+     "peak_gb": 0.142742528,
+     "seconds_per_batch": 0.013729255646467209,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 53.629904869012535
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9944439357605583,
+     "fps": 33261.232127487514,
+     "gb_per_s": 0.7040737616746559,
+     "loadavg": 7.82,
+     "peak_gb": 0.558081024,
+     "seconds_per_batch": 0.03078659251332283,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 30.065031751291826
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.994780509898328,
+     "fps": 36126.64041883985,
+     "gb_per_s": 0.7647287243860021,
+     "loadavg": 7.82,
+     "peak_gb": 1.323850752,
+     "seconds_per_batch": 0.11337893456220627,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 27.68040394585114
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 145.04110335119384,
+    "decode_fps_per_core": 6851.903975396534,
+    "h": 84,
+    "jpeg_bytes": 1959,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5677.292335034153,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCPendulumSwingup",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 289.3509273690361,
+     "gb_per_s": 0.0061249804305477575,
+     "seconds_per_frame": 0.0034560110419988633,
+     "us_per_frame": 3456.011041998863
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/PendulumDMControl-v0"
+   ],
+   "reference_id": "dm_control/pendulum-swingup",
+   "renderer_class": "DMCPendulumSwingup",
+   "seconds": 7.24,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9933226326708943,
+     "fps": 109.21186867176607,
+     "gb_per_s": 0.0023117968360439442,
+     "loadavg": 7.75,
+     "peak_gb": 0.005228544,
+     "seconds_per_batch": 0.009156513959169388,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 9156.513959169388
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.993412020879932,
+     "fps": 1662.292152295761,
+     "gb_per_s": 0.03518740027979667,
+     "loadavg": 7.75,
+     "peak_gb": 0.015354368,
+     "seconds_per_batch": 0.009625263512134552,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 601.5789695084095
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933967938160408,
+     "fps": 6123.383620786443,
+     "gb_per_s": 0.12961978448480746,
+     "loadavg": 7.75,
+     "peak_gb": 0.057385984,
+     "seconds_per_batch": 0.01045173779129982,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 163.3084029890597
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9936599537955942,
+     "fps": 17265.16340752402,
+     "gb_per_s": 0.3654689790104685,
+     "loadavg": 7.75,
+     "peak_gb": 0.20854784,
+     "seconds_per_batch": 0.01482754573225975,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 57.92010051663965
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9948954652217888,
+     "fps": 24681.12032954862,
+     "gb_per_s": 0.5224499551358852,
+     "loadavg": 7.77,
+     "peak_gb": 0.802713088,
+     "seconds_per_batch": 0.04148920252919197,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 40.516799344914034
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9955530035970184,
+     "fps": 25206.64306145484,
+     "gb_per_s": 0.5335742203248761,
+     "loadavg": 7.77,
+     "peak_gb": 1.886614528,
+     "seconds_per_batch": 0.16249684616923332,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 39.67208158428548
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 141.34735205620385,
+    "decode_fps_per_core": 6677.40703213359,
+    "h": 84,
+    "jpeg_bytes": 1795,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5562.972557969159,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCReacherHard",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 280.87642797486177,
+     "gb_per_s": 0.0059455922273718735,
+     "seconds_per_frame": 0.003560284525156021,
+     "us_per_frame": 3560.284525156021
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/ReacherDMControl-v0"
+   ],
+   "reference_id": "dm_control/reacher-hard",
+   "renderer_class": "DMCReacherHard",
+   "seconds": 9.14,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9920600168663852,
+     "fps": 1045.4437525071369,
+     "gb_per_s": 0.022129953353071073,
+     "loadavg": 7.79,
+     "peak_gb": 0.004667392,
+     "seconds_per_batch": 0.0009565316140651703,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 956.5316140651703
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9932038506711097,
+     "fps": 16600.896323810775,
+     "gb_per_s": 0.3514077733824265,
+     "loadavg": 7.79,
+     "peak_gb": 0.005303296,
+     "seconds_per_batch": 0.0009638033807277679,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 60.2377112954855
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9934187314566303,
+     "fps": 65930.61185455244,
+     "gb_per_s": 1.3956191917371659,
+     "loadavg": 7.79,
+     "peak_gb": 0.00733952,
+     "seconds_per_batch": 0.0009707175195217133,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 15.16746124252677
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.99319708817817,
+     "fps": 71597.10768820431,
+     "gb_per_s": 1.5155675755439089,
+     "loadavg": 7.79,
+     "peak_gb": 0.011422208,
+     "seconds_per_batch": 0.003575563430786133,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.967044651508331
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9928358353408092,
+     "fps": 73004.12535515684,
+     "gb_per_s": 1.5453513255179598,
+     "loadavg": 7.79,
+     "peak_gb": 0.02779392,
+     "seconds_per_batch": 0.01402660459280014,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.697856047656387
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9932350191067314,
+     "fps": 73503.10227449084,
+     "gb_per_s": 1.5559136689464221,
+     "loadavg": 7.79,
+     "peak_gb": 0.093112832,
+     "seconds_per_batch": 0.05572553910315037,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 13.60486794510507
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 131.67660043828116,
+    "decode_fps_per_core": 6220.549907326208,
+    "h": 84,
+    "jpeg_bytes": 3155,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5241.025189378608,
+    "n": 5668,
+    "raw_bytes": 21168,
+    "w": 84
+   },
+   "device": "cuda",
+   "env": "DMCWalkerWalk",
+   "fidelity_tier": "visual",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 284.3488096531932,
+     "gb_per_s": 0.006019095602738794,
+     "seconds_per_frame": 0.003516807407140732,
+     "us_per_frame": 3516.807407140732
+    },
+    "size": 84
+   },
+   "projected_to": [
+    "swm/WalkerDMControl-v0"
+   ],
+   "reference_id": "dm_control/walker-walk",
+   "renderer_class": "DMCWalkerWalk",
+   "seconds": 5.34,
+   "shape": "84x84",
+   "size": 84,
+   "state_dim": 0,
+   "supersample": 1
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchPickAndPlace",
+   "projected_to": [
+    "swm/FetchPickAndPlace-v3"
+   ],
+   "seconds": 0.01
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchPickAndPlaceDense",
+   "projected_to": [
+    "swm/FetchPickAndPlaceDense-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchPickAndPlaceDict",
+   "projected_to": [
+    "swm/FetchPickAndPlaceDict-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchPush",
+   "projected_to": [
+    "swm/FetchPush-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchPushDense",
+   "projected_to": [
+    "swm/FetchPushDense-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchPushDict",
+   "projected_to": [
+    "swm/FetchPushDict-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchReach",
+   "projected_to": [
+    "swm/FetchReach-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchReachDense",
+   "projected_to": [
+    "swm/FetchReachDense-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchReachDict",
+   "projected_to": [
+    "swm/FetchReachDict-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchSlide",
+   "projected_to": [
+    "swm/FetchSlide-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchSlideDense",
+   "projected_to": [
+    "swm/FetchSlideDense-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 154, in measure_env\n    probe = make_env(name, 1, None, ss)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_gpu_vs_cpu.py\", line 93, in make_env\n    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 550, in __init__\n    b = _build_bundle(self.SCENE)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 263, in _build_bundle\n    xml = os.path.join(_asset_dir(), SCENE_XML[scene])\n                       ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 198, in _asset_dir\n    import gymnasium_robotics as gr\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+   },
+   "device": "cuda",
+   "env": "FetchSlideDict",
+   "projected_to": [
+    "swm/FetchSlideDict-v3"
+   ],
+   "seconds": 0.0
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9932667593617006,
+     "fps": 9.143571870580502,
+     "gb_per_s": 0.006583371746817962,
+     "loadavg": 7.81,
+     "peak_gb": 0.00822016,
+     "seconds_per_batch": 0.10936645045876503,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 109366.45045876503
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9933019306006934,
+     "fps": 144.6230052269745,
+     "gb_per_s": 0.10412856376342164,
+     "loadavg": 7.81,
+     "peak_gb": 0.043746304,
+     "seconds_per_batch": 0.11063246801495552,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6914.52925093472
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933264192269091,
+     "fps": 572.367613128254,
+     "gb_per_s": 0.4121046814523429,
+     "loadavg": 8.06,
+     "peak_gb": 0.159182848,
+     "seconds_per_batch": 0.11181624978780746,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1747.1289029344916
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9924354359516706,
+     "fps": 2191.5927392668546,
+     "gb_per_s": 1.5779467722721352,
+     "loadavg": 8.06,
+     "peak_gb": 0.620722688,
+     "seconds_per_batch": 0.11681002378463745,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 456.28915540874004
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9938593060678216,
+     "fps": 7546.451592183554,
+     "gb_per_s": 5.43344514637216,
+     "loadavg": 7.98,
+     "peak_gb": 2.466886656,
+     "seconds_per_batch": 0.13569291308522224,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 132.51261043478735
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9951044406348398,
+     "fps": 15182.425619963893,
+     "gb_per_s": 10.931346446374004,
+     "loadavg": 7.98,
+     "peak_gb": 9.837454848,
+     "seconds_per_batch": 0.269785612821579,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 65.8656281302683
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 610.8883807791656,
+    "decode_fps_per_core": 848.4560844155078,
+    "h": 400,
+    "jpeg_bytes": 11132,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 827.8144791217926,
+    "n": 166,
+    "raw_bytes": 720000,
+    "w": 600
+   },
+   "device": "cuda",
+   "env": "MountainCar",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 359.09509287259175,
+     "gb_per_s": 0.3878227003023991,
+     "seconds_per_frame": 0.0027847776810328165,
+     "us_per_frame": 2784.7776810328164
+    },
+    "size": 600
+   },
+   "projected_to": [
+    "swm/MountainCarControl-v0"
+   ],
+   "reference_id": "MountainCar-v0",
+   "renderer_class": "MountainCar",
+   "seconds": 13.64,
+   "shape": "400x600",
+   "size": 600,
+   "state_dim": 1,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9933132335487583,
+     "fps": 9.168367796440755,
+     "gb_per_s": 0.0066012248134373445,
+     "loadavg": 8.14,
+     "peak_gb": 0.00822016,
+     "seconds_per_batch": 0.1090706679970026,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 109070.6679970026
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9934487661973993,
+     "fps": 144.409998405762,
+     "gb_per_s": 0.10397519885214865,
+     "loadavg": 8.14,
+     "peak_gb": 0.043746304,
+     "seconds_per_batch": 0.1107956524938345,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6924.728280864656
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9934666970260027,
+     "fps": 572.165456722897,
+     "gb_per_s": 0.4119591288404859,
+     "loadavg": 8.14,
+     "peak_gb": 0.159182848,
+     "seconds_per_batch": 0.11185575649142265,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1747.746195178479
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9935050911597594,
+     "fps": 2191.1071535123615,
+     "gb_per_s": 1.5775971505289004,
+     "loadavg": 8.05,
+     "peak_gb": 0.620722688,
+     "seconds_per_batch": 0.11683591082692146,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 456.39027666766196
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9937186314959946,
+     "fps": 7578.85630619728,
+     "gb_per_s": 5.456776540462042,
+     "loadavg": 8.05,
+     "peak_gb": 2.466886656,
+     "seconds_per_batch": 0.13511273451149464,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 131.94602979638148
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9950099133688991,
+     "fps": 15160.337944364437,
+     "gb_per_s": 10.915443319942396,
+     "loadavg": 7.96,
+     "peak_gb": 9.837454848,
+     "seconds_per_batch": 0.27017867378890514,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 65.96159028049442
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 597.7153990561943,
+    "decode_fps_per_core": 830.1602764669366,
+    "h": 400,
+    "jpeg_bytes": 11128,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 808.7496292906765,
+    "n": 166,
+    "raw_bytes": 720000,
+    "w": 600
+   },
+   "device": "cuda",
+   "env": "MountainCarContinuous",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 364.41198193231355,
+     "gb_per_s": 0.3935649404868986,
+     "seconds_per_frame": 0.002744146871070067,
+     "us_per_frame": 2744.146871070067
+    },
+    "size": 600
+   },
+   "projected_to": [
+    "swm/MountainCarContinuousControl-v0"
+   ],
+   "reference_id": "MountainCarContinuous-v0",
+   "renderer_class": "MountainCarContinuous",
+   "seconds": 13.53,
+   "shape": "400x600",
+   "size": 600,
+   "state_dim": 1,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9927547401244089,
+     "fps": 15.424658098627027,
+     "gb_per_s": 0.011568493573970271,
+     "loadavg": 7.96,
+     "peak_gb": 0.020454912,
+     "seconds_per_batch": 0.06483125872910023,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 64831.25872910023
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9932658279182814,
+     "fps": 243.49783798352547,
+     "gb_per_s": 0.18262337848764412,
+     "loadavg": 8.13,
+     "peak_gb": 0.059703296,
+     "seconds_per_batch": 0.06570900231599808,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 4106.81264474988
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9932727842882064,
+     "fps": 960.2657230875517,
+     "gb_per_s": 0.7201992923156638,
+     "loadavg": 8.13,
+     "peak_gb": 0.179461632,
+     "seconds_per_batch": 0.066648218780756,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1041.3784184493124
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9933023295229402,
+     "fps": 3523.291481503822,
+     "gb_per_s": 2.6424686111278666,
+     "loadavg": 8.13,
+     "peak_gb": 0.661904384,
+     "seconds_per_batch": 0.0726593304425478,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 283.82550954120234
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.994102637405455,
+     "fps": 10172.994854304732,
+     "gb_per_s": 7.629746140728549,
+     "loadavg": 8.12,
+     "peak_gb": 2.578471936,
+     "seconds_per_batch": 0.10065865702927113,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 98.29946975514758
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.99512846711529,
+     "fps": 17646.852039138394,
+     "gb_per_s": 13.235139029353796,
+     "loadavg": 8.12,
+     "peak_gb": 10.261027328,
+     "seconds_per_batch": 0.23210938647389412,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 56.66733068210306
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 648.3053921728551,
+    "decode_fps_per_core": 864.4071895638068,
+    "h": 500,
+    "jpeg_bytes": 7653,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 841.1032766166907,
+    "n": 160,
+    "raw_bytes": 750000,
+    "w": 500
+   },
+   "device": "cuda",
+   "env": "Pendulum",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 205.36600526865595,
+     "gb_per_s": 0.15402450395149198,
+     "seconds_per_frame": 0.004869355075061321,
+     "us_per_frame": 4869.355075061321
+    },
+    "size": 500
+   },
+   "projected_to": [
+    "swm/PendulumControl-v1"
+   ],
+   "reference_id": "Pendulum-v1",
+   "renderer_class": "Pendulum",
+   "seconds": 11.76,
+   "shape": "500x500",
+   "size": 500,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9937749572755967,
+     "fps": 1211.307606223602,
+     "gb_per_s": 0.18233571134962637,
+     "loadavg": 8.12,
+     "peak_gb": 0.02049792,
+     "seconds_per_batch": 0.0008255541324615479,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 825.5541324615479
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9935034491304517,
+     "fps": 19057.23557496051,
+     "gb_per_s": 2.8686475566276557,
+     "loadavg": 8.12,
+     "peak_gb": 0.068063232,
+     "seconds_per_batch": 0.0008395761251449585,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 52.473507821559906
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9929247949950019,
+     "fps": 44266.03415055204,
+     "gb_per_s": 6.663277588614298,
+     "loadavg": 8.12,
+     "peak_gb": 0.216487424,
+     "seconds_per_batch": 0.0014458037912845612,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 22.590684238821268
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9953236552128552,
+     "fps": 53269.09526806838,
+     "gb_per_s": 8.018490372511797,
+     "loadavg": 8.12,
+     "peak_gb": 0.817987584,
+     "seconds_per_batch": 0.0048057883977890015,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.772610928863287
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9953424317980454,
+     "fps": 54557.95118407613,
+     "gb_per_s": 8.212499275836613,
+     "loadavg": 8.11,
+     "peak_gb": 0.934684672,
+     "seconds_per_batch": 0.0187690332531929,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.329134036321193
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9955720784172498,
+     "fps": 54746.718208003265,
+     "gb_per_s": 8.240913998414316,
+     "loadavg": 8.11,
+     "peak_gb": 1.396230144,
+     "seconds_per_batch": 0.07481727004051208,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.265935068484396
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 350.69756584670347,
+    "decode_fps_per_core": 2329.7829363753153,
+    "h": 224,
+    "jpeg_bytes": 3030,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2180.239656131574,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "Piecewise",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'stable_worldmodel'"
+   },
+   "projected_to": [
+    "swm/Piecewise-v0"
+   ],
+   "reference_id": "swm/Piecewise-v0",
+   "renderer_class": "Piecewise",
+   "seconds": 3.26,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9934164009977744,
+     "fps": 808.2045896585155,
+     "gb_per_s": 0.12165742047211701,
+     "loadavg": 8.11,
+     "peak_gb": 0.020899328,
+     "seconds_per_batch": 0.0012373104691505432,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1237.3104691505432
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9937791176037878,
+     "fps": 13028.989482689058,
+     "gb_per_s": 1.9612277288502187,
+     "loadavg": 8.11,
+     "peak_gb": 0.068465152,
+     "seconds_per_batch": 0.0012280307710170746,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 76.75192318856716
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9929818462374719,
+     "fps": 34582.24050339887,
+     "gb_per_s": 5.205595498495625,
+     "loadavg": 8.11,
+     "peak_gb": 0.216891904,
+     "seconds_per_batch": 0.001850660890340805,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 28.91657641157508
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9948385612353368,
+     "fps": 45870.13868346626,
+     "gb_per_s": 6.904740235744811,
+     "loadavg": 8.11,
+     "peak_gb": 0.81840128,
+     "seconds_per_batch": 0.005580972880125046,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.80067531298846
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9953204310550449,
+     "fps": 46845.84959007013,
+     "gb_per_s": 7.051612047094077,
+     "loadavg": 8.11,
+     "peak_gb": 0.935135232,
+     "seconds_per_batch": 0.021858926862478256,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.346608264138922
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9953911145000648,
+     "fps": 46951.02851453769,
+     "gb_per_s": 7.06744442023633,
+     "loadavg": 8.1,
+     "peak_gb": 1.39682816,
+     "seconds_per_batch": 0.0872398354113102,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.298787942214403
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 382.9928003628192,
+    "decode_fps_per_core": 2544.3292966279973,
+    "h": 224,
+    "jpeg_bytes": 4181,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2355.155296537433,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "PiecewiseZones",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'stable_worldmodel'"
+   },
+   "projected_to": [
+    "swm/Piecewise-v0"
+   ],
+   "reference_id": "swm/Piecewise-v0",
+   "renderer_class": "PiecewiseZones",
+   "seconds": 3.44,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9923544664053925,
+     "fps": 201.90828978286444,
+     "gb_per_s": 0.03039285104443502,
+     "loadavg": 8.1,
+     "peak_gb": 0.022600192,
+     "seconds_per_batch": 0.004952743649482727,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 4952.743649482727
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9926244915555165,
+     "fps": 3211.2145107626975,
+     "gb_per_s": 0.4833776978760873,
+     "loadavg": 8.1,
+     "peak_gb": 0.033424384,
+     "seconds_per_batch": 0.0049825385212898254,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 311.4086575806141
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9928946872943762,
+     "fps": 12676.727832713143,
+     "gb_per_s": 1.908202487202644,
+     "loadavg": 8.1,
+     "peak_gb": 0.06916352,
+     "seconds_per_batch": 0.005048621445894241,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 78.88471009209752
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9923392034993813,
+     "fps": 47386.82739327022,
+     "gb_per_s": 7.13304435385418,
+     "loadavg": 8.1,
+     "peak_gb": 0.212128256,
+     "seconds_per_batch": 0.005402345210313797,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 21.10291097778827
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9941914001865954,
+     "fps": 82412.44943069677,
+     "gb_per_s": 12.405381187903924,
+     "loadavg": 8.1,
+     "peak_gb": 0.78504192,
+     "seconds_per_batch": 0.012425307184457779,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 12.13408904732205
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9955519837065208,
+     "fps": 95961.76125943789,
+     "gb_per_s": 14.444931998860667,
+     "loadavg": 8.01,
+     "peak_gb": 3.071453696,
+     "seconds_per_batch": 0.042683668434619904,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 10.420817488920875
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 331.3428026645327,
+    "decode_fps_per_core": 2201.203780456345,
+    "h": 224,
+    "jpeg_bytes": 9442,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2062.5124216973013,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "PointmazeLargeNavigate",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 1391.4865781701103,
+     "gb_per_s": 0.20945769163879036,
+     "seconds_per_frame": 0.0007186558718482654,
+     "us_per_frame": 718.6558718482654
+    },
+    "size": 224
+   },
+   "projected_to": [
+    "swm/OGBMaze-v0"
+   ],
+   "reference_id": "ogbench/pointmaze-large-v0",
+   "renderer_class": "PointmazeLargeNavigate",
+   "seconds": 6.19,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "supersample": 2
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9931916378540814,
+     "fps": 201.76153943864486,
+     "gb_per_s": 0.030370761008620333,
+     "loadavg": 8.01,
+     "peak_gb": 0.022600192,
+     "seconds_per_batch": 0.00495634600520134,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 4956.34600520134
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9930674619689244,
+     "fps": 3201.2695578934813,
+     "gb_per_s": 0.48188070401059,
+     "loadavg": 8.01,
+     "peak_gb": 0.033424384,
+     "seconds_per_batch": 0.004998017102479935,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 312.3760689049959
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9929483550478126,
+     "fps": 12614.605580573652,
+     "gb_per_s": 1.8988513488325909,
+     "loadavg": 8.01,
+     "peak_gb": 0.06916352,
+     "seconds_per_batch": 0.005073484033346176,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 79.273188021034
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.993152348067563,
+     "fps": 47165.76141575233,
+     "gb_per_s": 7.099767734390367,
+     "loadavg": 8.01,
+     "peak_gb": 0.212128256,
+     "seconds_per_batch": 0.005427666008472443,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 21.20182034559548
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9942089231712365,
+     "fps": 81858.04006274004,
+     "gb_per_s": 12.321927054564133,
+     "loadavg": 8.01,
+     "peak_gb": 0.78504192,
+     "seconds_per_batch": 0.012509461492300034,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 12.216270988574252
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9955659996481877,
+     "fps": 96012.726444079,
+     "gb_per_s": 14.452603686174326,
+     "loadavg": 8.01,
+     "peak_gb": 3.071453696,
+     "seconds_per_batch": 0.04266101121902466,
+     "size": null,
+     "supersample": 2,
+     "us_per_frame": 10.415285942144692
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 323.3864061057426,
+    "decode_fps_per_core": 2148.347191922716,
+    "h": 224,
+    "jpeg_bytes": 9442,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2021.2248860753173,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "PointmazeLargeStitch",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 1383.4064822551563,
+     "gb_per_s": 0.20824141096090418,
+     "seconds_per_frame": 0.0007228533426920573,
+     "us_per_frame": 722.8533426920574
+    },
+    "size": 224
+   },
+   "projected_to": [
+    "swm/OGBMaze-v0"
+   ],
+   "reference_id": "ogbench/pointmaze-large-v0",
+   "renderer_class": "PointmazeLargeStitch",
+   "seconds": 3.6,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "supersample": 2
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9922501368209049,
+     "fps": 296.82990818728774,
+     "gb_per_s": 0.008206753301562132,
+     "loadavg": 8.01,
+     "peak_gb": 0.029144064,
+     "seconds_per_batch": 0.003368932753801346,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 3368.932753801346
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9927254147251294,
+     "fps": 3726.9890697295027,
+     "gb_per_s": 0.1030437937998813,
+     "loadavg": 8.01,
+     "peak_gb": 0.029581312,
+     "seconds_per_batch": 0.004293009638786316,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 268.31310242414474
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.992486860773965,
+     "fps": 14790.647198192737,
+     "gb_per_s": 0.4089318137356328,
+     "loadavg": 8.01,
+     "peak_gb": 0.030972928,
+     "seconds_per_batch": 0.004327058792114258,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 67.61029362678528
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9925107190934183,
+     "fps": 56761.666697778994,
+     "gb_per_s": 1.5693465608601935,
+     "loadavg": 8.01,
+     "peak_gb": 0.036549632,
+     "seconds_per_batch": 0.00451008602976799,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 17.61752355378121
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9927728420926589,
+     "fps": 201546.5907322177,
+     "gb_per_s": 5.5723601405643555,
+     "loadavg": 8.01,
+     "peak_gb": 0.059951104,
+     "seconds_per_batch": 0.005080711096525192,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 4.961631930200383
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9934005338135442,
+     "fps": 679732.1579311137,
+     "gb_per_s": 18.793234702479435,
+     "loadavg": 8.01,
+     "peak_gb": 0.1486976,
+     "seconds_per_batch": 0.0060259029269218445,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1.4711677067680284
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 179.5475393224057,
+    "decode_fps_per_core": 6494.05162479766,
+    "h": 96,
+    "jpeg_bytes": 2393,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5467.936648281632,
+    "n": 4340,
+    "raw_bytes": 27648,
+    "w": 96
+   },
+   "device": "cuda",
+   "env": "PushT",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "render_only": {
+     "fps": 370.0910640626794,
+     "gb_per_s": 0.01023227773920496,
+     "seconds_per_frame": 0.002702037679652373,
+     "us_per_frame": 2702.037679652373
+    },
+    "set_state_render": {
+     "fps": 364.40442136311606,
+     "gb_per_s": 0.010075053441847434,
+     "seconds_per_frame": 0.002744203805923462,
+     "us_per_frame": 2744.203805923462
+    },
+    "size": 96
+   },
+   "projected_to": [
+    "swm/PushT-Discrete-v1",
+    "swm/PushT-v1"
+   ],
+   "reference_id": "gym_pusht/PushT-v0",
+   "renderer_class": "PushT",
+   "seconds": 3.46,
+   "shape": "96x96",
+   "size": 96,
+   "state_dim": 5,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9931370969632457,
+     "fps": 155.25860735692098,
+     "gb_per_s": 0.11644395551769073,
+     "loadavg": 7.93,
+     "peak_gb": 0.030621696,
+     "seconds_per_batch": 0.0064408667385578156,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6440.866738557816
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9931554304644042,
+     "fps": 1967.1518840603605,
+     "gb_per_s": 1.4753639130452705,
+     "loadavg": 7.93,
+     "peak_gb": 0.04247552,
+     "seconds_per_batch": 0.00813358649611473,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 508.3491560071707
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9935764385378876,
+     "fps": 6364.762651080907,
+     "gb_per_s": 4.77357198831068,
+     "loadavg": 7.93,
+     "peak_gb": 0.07820288,
+     "seconds_per_batch": 0.010055363178253174,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 157.11504966020584
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9939073105615144,
+     "fps": 18732.86081094932,
+     "gb_per_s": 14.049645608211991,
+     "loadavg": 7.93,
+     "peak_gb": 0.223993344,
+     "seconds_per_batch": 0.013665825128555298,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 53.38212940841913
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9952220873304767,
+     "fps": 33991.945517500644,
+     "gb_per_s": 25.493959138125483,
+     "loadavg": 7.93,
+     "peak_gb": 0.80043264,
+     "seconds_per_batch": 0.030124783515930176,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 29.418733902275562
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9959198133521547,
+     "fps": 41250.12433154965,
+     "gb_per_s": 30.937593248662235,
+     "loadavg": 7.93,
+     "peak_gb": 3.110265344,
+     "seconds_per_batch": 0.09929667040705681,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 24.242351173597854
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 623.3032640712763,
+    "decode_fps_per_core": 831.0710187617017,
+    "h": 500,
+    "jpeg_bytes": 10773,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 811.5156086721391,
+    "n": 160,
+    "raw_bytes": 750000,
+    "w": 500
+   },
+   "device": "cuda",
+   "env": "SimplePointMaze",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'stable_worldmodel'"
+   },
+   "projected_to": [
+    "swm/SimplePointMaze-v0"
+   ],
+   "reference_id": "swm/SimplePointMaze-v0",
+   "renderer_class": "SimplePointMaze",
+   "seconds": 5.55,
+   "shape": "500x500",
+   "size": 500,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.993282584876881,
+     "fps": 565.4510709290373,
+     "gb_per_s": 0.08511621880480612,
+     "loadavg": 7.85,
+     "peak_gb": 0.033160192,
+     "seconds_per_batch": 0.0017684996128082275,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1768.4996128082275
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9929330839015976,
+     "fps": 8880.982138647765,
+     "gb_per_s": 1.3368364793663707,
+     "loadavg": 7.85,
+     "peak_gb": 0.079824896,
+     "seconds_per_batch": 0.00180160254240036,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 112.6001589000225
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933571907982872,
+     "fps": 26507.766748391856,
+     "gb_per_s": 3.9901611131019292,
+     "loadavg": 7.85,
+     "peak_gb": 0.229562368,
+     "seconds_per_batch": 0.0024143867194652557,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 37.72479249164462
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9949292684067217,
+     "fps": 38186.906512495305,
+     "gb_per_s": 5.748198663512893,
+     "loadavg": 7.85,
+     "peak_gb": 0.830662144,
+     "seconds_per_batch": 0.006703868508338928,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 26.18698636069894
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9949815841876832,
+     "fps": 39265.91646558349,
+     "gb_per_s": 5.910619873731353,
+     "loadavg": 7.85,
+     "peak_gb": 0.947396096,
+     "seconds_per_batch": 0.026078596711158752,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.46737960074097
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9954534581698923,
+     "fps": 39448.16662686313,
+     "gb_per_s": 5.938053626008453,
+     "loadavg": 7.85,
+     "peak_gb": 1.409089024,
+     "seconds_per_batch": 0.10383245535194874,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.34972054490936
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 472.79649453450486,
+    "decode_fps_per_core": 3140.920589754098,
+    "h": 224,
+    "jpeg_bytes": 4102,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2842.4604864180983,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "TwoRoom",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'stable_worldmodel'"
+   },
+   "projected_to": [
+    "swm/TwoRoom-v1"
+   ],
+   "reference_id": "swm/TwoRoom-v1",
+   "renderer_class": "TwoRoom",
+   "seconds": 3.66,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9930597496145029,
+     "fps": 436.1300938758136,
+     "gb_per_s": 0.06564979077093847,
+     "loadavg": 7.85,
+     "peak_gb": 0.033160192,
+     "seconds_per_batch": 0.0022928938269615173,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 2292.8938269615173
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9935958960120975,
+     "fps": 6781.541586403339,
+     "gb_per_s": 1.020811891918122,
+     "loadavg": 7.85,
+     "peak_gb": 0.079825408,
+     "seconds_per_batch": 0.002359345555305481,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 147.45909720659256
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9933845975852216,
+     "fps": 18109.46420033141,
+     "gb_per_s": 2.7259814271474867,
+     "loadavg": 7.85,
+     "peak_gb": 0.229564416,
+     "seconds_per_batch": 0.003534063696861267,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 55.2197452634573
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9951670542848446,
+     "fps": 23323.32674084573,
+     "gb_per_s": 3.510813727646026,
+     "loadavg": 7.85,
+     "peak_gb": 0.832767488,
+     "seconds_per_batch": 0.010976135730743408,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 42.87553019821644
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.995384430430335,
+     "fps": 23671.138059166326,
+     "gb_per_s": 3.563169069770189,
+     "loadavg": 7.78,
+     "peak_gb": 0.949526016,
+     "seconds_per_batch": 0.043259432539343834,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 42.24553958920296
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9953083092589068,
+     "fps": 23744.181528275974,
+     "gb_per_s": 3.5741641570883265,
+     "loadavg": 7.78,
+     "peak_gb": 1.411317248,
+     "seconds_per_batch": 0.17250541970133781,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 42.11558098177193
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 465.78601273538845,
+    "decode_fps_per_core": 3094.347980012944,
+    "h": 224,
+    "jpeg_bytes": 4170,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2809.987072352915,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "TwoRoomTarget",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'stable_worldmodel'"
+   },
+   "projected_to": [
+    "swm/TwoRoom-v1"
+   ],
+   "reference_id": "swm/TwoRoom-v1",
+   "renderer_class": "TwoRoomTarget",
+   "seconds": 4.89,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 4,
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "cuda": "12.6",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "device_total_gb": 25.3,
+  "driver": "575.57.08",
+  "git_commit": null,
+  "git_dirty": false,
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "loadavg_end": 7.78,
+  "loadavg_start": 7.98,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6107219",
+  "slurm_nodelist": "gpu2107",
+  "timestamp": "2026-09-09T03:56:02-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

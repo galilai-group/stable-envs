@@ -1,0 +1,137 @@
+{
+  "note": "The official-renderer arm, before stable-envs enters the comparison. The number to reach is the 79% stable_worldmodel records for DINO-WM under the same 50-step budget; the floor to clear is the 8% a random policy scored on the same episodes. The trained official rows differ only in ARITHMETIC -- precision, and how many environments the solver plans for at once -- and they span eight points, which is why the campaign is frozen at the committed fp32 batch_size 1 configuration rather than a faster one. The LeWM rows are the fallback instrument, kept because its 52% against a recorded 86% is the reason the gate rests on DINO-WM.",
+  "runs": [
+    {
+      "policy": "random",
+      "precision": "",
+      "arm": "blank",
+      "seed": 42,
+      "successes": 9,
+      "n": 50,
+      "rate": 18.0,
+      "seconds": 6.6,
+      "reference": "random-action floor, measured here",
+      "source": "examples/results/step5/reacher/runs_random/seed42_n50_blank.json"
+    },
+    {
+      "policy": "random",
+      "precision": "",
+      "arm": "official",
+      "seed": 42,
+      "successes": 4,
+      "n": 50,
+      "rate": 8.0,
+      "seconds": 18.0,
+      "reference": "random-action floor, measured here",
+      "source": "examples/results/step5/reacher/runs_random/seed42_n50_official.json"
+    },
+    {
+      "policy": "random",
+      "precision": "",
+      "arm": "stable_envs (offscreen)",
+      "seed": 42,
+      "successes": 3,
+      "n": 50,
+      "rate": 6.0,
+      "seconds": 28.6,
+      "reference": "random-action floor, measured here",
+      "source": "examples/results/step5/reacher/runs_random/seed42_n50_stable_envs.json"
+    },
+    {
+      "policy": "reacher/lewm_tf5/weights.pt",
+      "precision": "fp32 bs1",
+      "arm": "blank",
+      "seed": 42,
+      "successes": 6,
+      "n": 50,
+      "rate": 12.0,
+      "seconds": 77.3,
+      "reference": "86 % (LeWM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/runs_lewm/seed42_n50_blank.json"
+    },
+    {
+      "policy": "reacher/lewm_tf5/weights.pt",
+      "precision": "fp32 bs1",
+      "arm": "official",
+      "seed": 42,
+      "successes": 26,
+      "n": 50,
+      "rate": 52.0,
+      "seconds": 76.8,
+      "reference": "86 % (LeWM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/runs_lewm/seed42_n50_official.json"
+    },
+    {
+      "policy": "reacher/lewm_tf5/weights.pt",
+      "precision": "fp32 bs1",
+      "arm": "official_regen",
+      "seed": 42,
+      "successes": 12,
+      "n": 50,
+      "rate": 24.0,
+      "seconds": 93.0,
+      "reference": "86 % (LeWM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/runs_lewm/seed42_n50_official_regen_dataset.json"
+    },
+    {
+      "policy": "reacher/lewm_tf5/weights.pt",
+      "precision": "fp32 bs1",
+      "arm": "stable_envs (offscreen)",
+      "seed": 42,
+      "successes": 11,
+      "n": 50,
+      "rate": 22.0,
+      "seconds": 98.5,
+      "reference": "86 % (LeWM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/runs_lewm/seed42_n50_stable_envs.json"
+    },
+    {
+      "policy": "reacher/lewm_tf5/weights.pt",
+      "precision": "fp32 bs1",
+      "arm": "stable_envs (offscreen)",
+      "seed": 42,
+      "successes": 9,
+      "n": 50,
+      "rate": 18.0,
+      "seconds": 101.9,
+      "reference": "86 % (LeWM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/runs_lewm/seed42_n50_stable_envs_dataset.json"
+    },
+    {
+      "policy": "reacher/lewm_tf5/weights.pt",
+      "precision": "fp32 bs1",
+      "arm": "stable_envs (offscreen)",
+      "seed": 42,
+      "successes": 26,
+      "n": 50,
+      "rate": 52.0,
+      "seconds": 92.2,
+      "reference": "86 % (LeWM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/runs_lewm/seed42_n50_stable_envs_live.json"
+    },
+    {
+      "policy": "reacher/prejepa/weights_epoch_3.pt",
+      "precision": "tf32 bs1",
+      "arm": "official",
+      "seed": 42,
+      "successes": 39,
+      "n": 50,
+      "rate": 78.0,
+      "seconds": 8809.6,
+      "reference": "79 % (DINO-WM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/precision/tf32_bs1/seed42_n50_official.json"
+    },
+    {
+      "policy": "reacher/prejepa/weights_epoch_3.pt",
+      "precision": "fp32 bs2",
+      "arm": "official",
+      "seed": 42,
+      "successes": 35,
+      "n": 50,
+      "rate": 70.0,
+      "seconds": 10871.1,
+      "reference": "79 % (DINO-WM, swm docs/baselines.md)",
+      "source": "examples/results/step5/reacher/batching/bs2/seed42_n50_official.json"
+    }
+  ]
+}

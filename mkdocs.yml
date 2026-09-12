@@ -132,7 +132,27 @@ nav:
       - HumanoidBench: research/humanoidbench.md
       - Choosing a 3-D backend: research/backend3d.md
       - nvdiffrast backend: research/nvdiffrast.md
-      - stable_worldmodel coverage: research/swm_coverage.md
+      # The matrix is GENERATED (scratch/swm_matrix.py) and is the current answer to "what is
+      # covered"; the older note keeps the per-family investigation and the reasoning behind each
+      # gap, which no generator can produce. Listed first because it is the one that cannot drift.
+      - stable_worldmodel coverage matrix: research/swm_matrix.md
+      # Frozen policy, not a measurement: the thresholds an env must clear to be called finished,
+      # chosen from the committed benchmark corpus BEFORE the fresh 3090/M5 sweep so a result cannot
+      # move the bar it is judged against. scratch/certification.json is the machine-readable copy.
+      - 'Certification: what "done" means': research/certification.md
+      # GENERATED (scratch/step3/certify.py) from the raw shards under examples/results/step3/.
+      # Measurements only: every label in it is computed from the frozen certification.json, so
+      # this page can disagree with the bar but can never move it.
+      - 'Step 3: the implementation measured': research/step3_benchmarks.md
+      # GENERATED (scratch/step4/certify.py) from the raw shards under examples/results/step4/.
+      # Gate A per render-distinct configuration, and the frozen state corpora a Step 6 rewrite is
+      # replayed against. Every bound on the page is extracted from the test module that declares it.
+      - 'Step 4: the fidelity baseline': research/step4_fidelity_baseline.md
+      # GENERATED (scratch/step5/report.py) from examples/results/step5/. The paired renderer-swap
+      # experiment: same checkpoint, same episodes, same planner, only render() differs -- judged by
+      # the equivalence rule Step 2 froze before any of these numbers existed.
+      - 'Step 5: downstream semantics': research/step5_downstream_semantics.md
+      - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
       # readers ask far more often than "why is this one here" -- and until now all three of them were
       # orphaned: built by mkdocs, linked from nothing, findable only by guessing the URL.

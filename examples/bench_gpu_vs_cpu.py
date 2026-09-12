@@ -90,7 +90,34 @@ def make_env(name: str, batch: int, size: int, ss: int | None):
     ball_in_cup A/B measured 1,149 against 356.
     """
     kw = {} if ss is None else {"supersample": int(ss)}
-    return se.make(name, batch=batch, size=size, device="cuda", **kw)
+    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)
+
+
+#: The device every timed render in this file runs on. It was ``"cuda"`` as a literal in three places
+#: until Step 3 needed the SAME measurement on a CPU: the repo had never timed its own renderer there,
+#: so every ``cpu`` column in every committed result file is the OFFICIAL renderer and the stable-envs
+#: CPU throughput was simply unknown. Making it a variable is the whole change -- the timing loop, the
+#: warm-up, the supersample resolution and the output-budget arithmetic are identical on both devices,
+#: and duplicating them into a second script is how two files come to describe different pictures.
+DEVICE = "cuda"
+
+
+def set_device(dev: str) -> None:
+    global DEVICE
+    DEVICE = str(dev)
+
+
+def _sync() -> None:
+    """Block until queued work has actually finished, on devices where that is a distinct step.
+
+    On CUDA the launch is asynchronous and timing without this measures how fast Python can enqueue,
+    which for this kernel is about two orders of magnitude off. On CPU the call would raise if CUDA is
+    absent, and there is nothing to wait for anyway -- ``render`` has already returned.
+    """
+    if DEVICE == "cuda":
+        torch.cuda.synchronize()
+    elif DEVICE == "mps":
+        torch.mps.synchronize()
 
 
 def parse_ss(tok: str) -> int | None:
@@ -135,15 +162,15 @@ def _median_and_cpu(fn, reps: int) -> tuple[float, float]:
     """
     for _ in range(2):
         fn()
-    torch.cuda.synchronize()
+    _sync()
     ts = []
     spent = 0.0
     cpu0, wall0 = time.process_time(), time.perf_counter()
     for i in range(reps):
-        torch.cuda.synchronize()
+        _sync()
         t0 = time.perf_counter()
         fn()
-        torch.cuda.synchronize()
+        _sync()
         dt = time.perf_counter() - t0
         ts.append(dt)
         spent += dt
@@ -187,12 +214,13 @@ def gpu_throughput(name: str, batch: int, size: int, ss: int, reps: int, max_out
     env = st = out = None
     try:
         env = make_env(name, batch, size, ss)
-        st = torch.as_tensor(states_for(pool, batch), device="cuda")
-        out = torch.empty((batch, fh, fw, 3), dtype=torch.uint8, device="cuda")
+        st = torch.as_tensor(states_for(pool, batch), device=DEVICE)
+        out = torch.empty((batch, fh, fw, 3), dtype=torch.uint8, device=DEVICE)
         for _ in range(5):                       # warm up: JIT, autotune, and any static-prefix bake
             env.render(st, out=out)
-        torch.cuda.synchronize()
-        torch.cuda.reset_peak_memory_stats()
+        _sync()
+        if DEVICE == "cuda":
+            torch.cuda.reset_peak_memory_stats()
         dt, cpu_frac = _median_and_cpu(lambda: env.render(st, out=out), reps)
         # The RESOLVED supersample, read off the object rather than off the flag. A row that does not
         # carry it cannot be compared with a row from another script, which is exactly how this table
@@ -201,14 +229,35 @@ def gpu_throughput(name: str, batch: int, size: int, ss: int, reps: int, max_out
                 "seconds_per_batch": dt, "fps": batch / dt, "cpu_frac": cpu_frac,
                 "loadavg": os.getloadavg()[0],
                 "us_per_frame": dt / batch * 1e6, "gb_per_s": out_gb / dt,
-                "peak_gb": torch.cuda.max_memory_allocated() / 1e9}
+                "peak_gb": _peak_gb()}
     except torch.OutOfMemoryError:
         return {"batch": batch, "size": size, "skipped": "OOM"}
+    except MemoryError as e:
+        return {"batch": batch, "size": size, "skipped": f"host OOM: {e}"}
     except Exception as e:
         return {"batch": batch, "size": size, **_err(e)}
     finally:
         del env, st, out
-        torch.cuda.empty_cache()
+        if DEVICE == "cuda":
+            torch.cuda.empty_cache()
+
+
+def _peak_gb() -> float:
+    """Peak bytes for the timed cell: device allocator on CUDA, process RSS on the CPU.
+
+    They are not the same quantity and the field does not pretend they are -- the row carries its own
+    ``device``, so a reader can tell which one this is. The CPU number is a high-water mark for the
+    whole process rather than for this cell, which is the honest limit of what ``resource`` can report.
+    """
+    if DEVICE == "cuda":
+        return torch.cuda.max_memory_allocated() / 1e9
+    try:
+        import resource
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        # Linux reports kilobytes, macOS bytes.
+        return peak / 1e9 if platform.system() == "Darwin" else peak * 1024 / 1e9
+    except Exception:
+        return float("nan")
 
 
 def gpu_breakdown(name: str, batch: int, size: int, ss: int, reps: int, max_out_gb: float,

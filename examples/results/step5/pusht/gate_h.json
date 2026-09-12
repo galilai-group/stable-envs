@@ -1,0 +1,292 @@
+{
+  "env": "swm/PushT-v1",
+  "model_family": "lewm",
+  "checkpoint": "pusht/lewm",
+  "arms": {
+    "blank": 50,
+    "official": 300,
+    "stable_envs": 300,
+    "stable_envs_dataset": 300,
+    "stable_envs_live": 300,
+    "stable_envs_resize512": 50
+  },
+  "pairing": {
+    "pairs_checked": 20,
+    "problems": [],
+    "paired": true
+  },
+  "gate_h": {
+    "official": {
+      "successes": 264,
+      "n": 300,
+      "success_rate": 88.0,
+      "wilson_ci": [
+        83.83413318338599,
+        91.20496613678611
+      ]
+    },
+    "stable_envs": {
+      "successes": 263,
+      "n": 300,
+      "success_rate": 87.66666666666667,
+      "wilson_ci": [
+        83.46254157811882,
+        90.91832002871844
+      ]
+    },
+    "equivalence": {
+      "n": 300,
+      "b": 12,
+      "c": 11,
+      "delta_points": -0.3333333333333333,
+      "ci": [
+        -3.46660992856431,
+        2.799943261897643
+      ],
+      "half_width_points": 3.1332765952309765,
+      "mcnemar_p": 1.0,
+      "discordance": 0.07666666666666666,
+      "inside_margin": true,
+      "required_n_for_margin": 118
+    },
+    "margin_points": 5.0,
+    "design": {
+      "min_paired_episodes": 300,
+      "min_seeds": 6,
+      "min_episodes_per_seed": 50,
+      "paired_episodes": 300,
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "n_seeds": 6,
+      "episodes_per_seed": [
+        50
+      ],
+      "met": true
+    },
+    "control": {
+      "present": true,
+      "arm": {
+        "successes": 2,
+        "n": 50,
+        "success_rate": 4.0,
+        "wilson_ci": [
+          1.1038652660826578,
+          13.460337877954668
+        ]
+      },
+      "paired": {
+        "n": 50,
+        "b": 46,
+        "c": 0,
+        "delta_points": -92.0,
+        "ci": [
+          -118.58673353385106,
+          -65.41326646614894
+        ],
+        "half_width_points": 26.586733533851053,
+        "mcnemar_p": 2.842170943040401e-14,
+        "discordance": 0.92,
+        "inside_margin": false,
+        "required_n_for_margin": 1414
+      },
+      "max_delta_points": -20.0,
+      "max_p": 0.01,
+      "degraded": true,
+      "measured_on_seeds": [
+        42
+      ],
+      "official_baseline_on_those_seeds": {
+        "successes": 48,
+        "n": 50,
+        "success_rate": 96.0,
+        "wilson_ci": [
+          86.53966212204534,
+          98.89613473391734
+        ]
+      }
+    },
+    "power_guard": {
+      "max_discordance_at_n300": 0.19,
+      "observed_discordance": 0.07666666666666666,
+      "underpowered": false,
+      "required_n": 118
+    },
+    "verdict": "PASS",
+    "verdict_reason": "95% CI [-3.47, 2.80] lies inside +/-5.0 points"
+  },
+  "secondary_arms": {
+    "stable_envs_dataset": {
+      "arm": {
+        "successes": 259,
+        "n": 300,
+        "success_rate": 86.33333333333333,
+        "wilson_ci": [
+          81.98437047874653,
+          89.76354027475134
+        ]
+      },
+      "paired": {
+        "n": 300,
+        "b": 17,
+        "c": 12,
+        "delta_points": -1.6666666666666667,
+        "ci": [
+          -5.184974340661209,
+          1.8516410073278757
+        ],
+        "half_width_points": 3.5183076739945425,
+        "mcnemar_p": 0.45825831964612007,
+        "discordance": 0.09666666666666666,
+        "inside_margin": false,
+        "required_n_for_margin": 149
+      },
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ]
+    },
+    "stable_envs_live": {
+      "arm": {
+        "successes": 264,
+        "n": 300,
+        "success_rate": 88.0,
+        "wilson_ci": [
+          83.83413318338599,
+          91.20496613678611
+        ]
+      },
+      "paired": {
+        "n": 300,
+        "b": 2,
+        "c": 2,
+        "delta_points": 0.0,
+        "ci": [
+          -1.3066666666666666,
+          1.3066666666666666
+        ],
+        "half_width_points": 1.3066666666666666,
+        "mcnemar_p": 1.0,
+        "discordance": 0.013333333333333334,
+        "inside_margin": true,
+        "required_n_for_margin": 21
+      },
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ]
+    },
+    "stable_envs_resize512": {
+      "arm": {
+        "successes": 47,
+        "n": 50,
+        "success_rate": 94.0,
+        "wilson_ci": [
+          83.78265662912298,
+          97.93854036353696
+        ]
+      },
+      "paired": {
+        "n": 50,
+        "b": 2,
+        "c": 1,
+        "delta_points": -2.0,
+        "ci": [
+          -8.78963916567,
+          4.789639165669999
+        ],
+        "half_width_points": 6.789639165669999,
+        "mcnemar_p": 1.0,
+        "discordance": 0.06,
+        "inside_margin": false,
+        "required_n_for_margin": 93
+      },
+      "seeds": [
+        42
+      ]
+    }
+  },
+  "provenance": {
+    "recorded_in_artifact": {
+      "checkpoint": [
+        "pusht/lewm"
+      ],
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "goal_offset": [
+        25
+      ],
+      "eval_budget": [
+        50
+      ],
+      "episodes_per_run": [
+        50
+      ],
+      "runtime_seconds": {
+        "seed42_n50_off25_blank.json": 43.4,
+        "seed42_n50_off25_official.json": 31.7,
+        "seed42_n50_off25_stable_envs.json": 34.6,
+        "seed42_n50_off25_stable_envs_dataset.json": 33.7,
+        "seed42_n50_off25_stable_envs_live.json": 35.3,
+        "seed42_n50_off25_stable_envs_resize512.json": 35.1,
+        "seed43_n50_off25_official.json": 30.2,
+        "seed43_n50_off25_stable_envs.json": 38.7,
+        "seed43_n50_off25_stable_envs_dataset.json": 34.8,
+        "seed43_n50_off25_stable_envs_live.json": 31.4,
+        "seed44_n50_off25_official.json": 33.5,
+        "seed44_n50_off25_stable_envs.json": 35.4,
+        "seed44_n50_off25_stable_envs_dataset.json": 35.1,
+        "seed44_n50_off25_stable_envs_live.json": 32.5,
+        "seed45_n50_off25_official.json": 32.7,
+        "seed45_n50_off25_stable_envs.json": 35.1,
+        "seed45_n50_off25_stable_envs_dataset.json": 36.1,
+        "seed45_n50_off25_stable_envs_live.json": 30.9,
+        "seed46_n50_off25_official.json": 33.2,
+        "seed46_n50_off25_stable_envs.json": 36.9,
+        "seed46_n50_off25_stable_envs_dataset.json": 35.8,
+        "seed46_n50_off25_stable_envs_live.json": 33.6,
+        "seed47_n50_off25_official.json": 33.4,
+        "seed47_n50_off25_stable_envs.json": 33.9,
+        "seed47_n50_off25_stable_envs_dataset.json": 33.2,
+        "seed47_n50_off25_stable_envs_live.json": 33.3
+      },
+      "episode_ids_and_start_steps": "recorded per run"
+    },
+    "recorded_in_readme_only": [
+      "checkpoint source quentinll/lewm-pusht at ~/.stable_worldmodel/checkpoints/pusht/lewm/",
+      "dataset pusht_expert_train.h5 (quentinll/lewm-pusht)",
+      "planner CEM 300 samples x 30 iterations, top 30, horizon 5, receding 5, action block 5",
+      "image size 224, ImageNet normalisation, StandardScaler fitted over 2.34M corpus rows",
+      "success criterion PushT.eval_state: within 20 px and pi/9"
+    ],
+    "not_recorded": [
+      "stable-envs git commit at run time",
+      "stable-worldmodel git commit at run time",
+      "checkpoint file hash",
+      "dependency versions",
+      "GPU model"
+    ],
+    "why_not_recovered": "these runs were executed on the open_research cluster referenced by examples/lewm_pusht/run_eval.sbatch, which this checkout has no access to; the per-episode outcomes are committed and are what the audit reads"
+  },
+  "episodes_file": "examples/results/step5/pusht/episodes.jsonl",
+  "episodes_sha256": "53025102733c"
+}

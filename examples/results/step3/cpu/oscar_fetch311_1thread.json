@@ -1,0 +1,218 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024
+ ],
+ "envs": [
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchPickAndPlace",
+   "projected_to": [
+    "swm/FetchPickAndPlace-v3"
+   ],
+   "seconds": 10.72,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchPickAndPlace.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchPickAndPlaceDense",
+   "projected_to": [
+    "swm/FetchPickAndPlaceDense-v3"
+   ],
+   "seconds": 0.01,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchPickAndPlaceDense.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchPickAndPlaceDict",
+   "projected_to": [
+    "swm/FetchPickAndPlaceDict-v3"
+   ],
+   "seconds": 0.01,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchPickAndPlaceDict.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchPush",
+   "projected_to": [
+    "swm/FetchPush-v3"
+   ],
+   "seconds": 9.18,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchPush.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchPushDense",
+   "projected_to": [
+    "swm/FetchPushDense-v3"
+   ],
+   "seconds": 0.0,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchPushDense.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchPushDict",
+   "projected_to": [
+    "swm/FetchPushDict-v3"
+   ],
+   "seconds": 0.0,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchPushDict.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchReach",
+   "projected_to": [
+    "swm/FetchReach-v3"
+   ],
+   "seconds": 7.86,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchReach.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchReachDense",
+   "projected_to": [
+    "swm/FetchReachDense-v3"
+   ],
+   "seconds": 0.0,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchReachDense.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchReachDict",
+   "projected_to": [
+    "swm/FetchReachDict-v3"
+   ],
+   "seconds": 0.0,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchReachDict.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchSlide",
+   "projected_to": [
+    "swm/FetchSlide-v3"
+   ],
+   "seconds": 10.18,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchSlide.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchSlideDense",
+   "projected_to": [
+    "swm/FetchSlideDense-v3"
+   ],
+   "seconds": 0.0,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchSlideDense.npy"
+  },
+  {
+   "blocked": {
+    "kind": "blocked_environment",
+    "reason": "RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!",
+    "stage": "construct",
+    "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/stable-envs/examples/bench_step3.py\", line 172, in measure_env\n    frame0 = probe.render(torch.as_tensor(pool[:1], device=device))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/core/env.py\", line 135, in render\n    return fn(self, *args, **kw)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 749, in render\n    self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)\n  File \"/oscar/scratch/sboughan/stable-envs/stable_envs/envs/fetch.py\", line 811, in _upload\n    mat[:n, self._idx(\"arm.mats\", m0 + np.asarray(info[\"arm\"], np.int64)), :3] = (\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!\n"
+   },
+   "device": "cpu",
+   "env": "FetchSlideDict",
+   "projected_to": [
+    "swm/FetchSlideDict-v3"
+   ],
+   "seconds": 0.0,
+   "states_source": "/oscar/scratch/sboughan/step3-out/states/fetch/FetchSlideDict.npy"
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "device": "cpu",
+  "git_commit": null,
+  "git_dirty": false,
+  "host": "gpu2101.oscar.ccv.brown.edu",
+  "loadavg_end": 14.1,
+  "loadavg_start": 14.54,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6113848",
+  "slurm_nodelist": "gpu2101",
+  "timestamp": "2026-09-09T09:39:23-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "states_in": "/oscar/scratch/sboughan/step3-out/states/fetch",
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

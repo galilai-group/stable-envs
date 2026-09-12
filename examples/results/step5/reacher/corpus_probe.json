@@ -1,0 +1,49 @@
+{
+  "dataset": "dmc/reacher_random.h5",
+  "n": 32,
+  "size": 224,
+  "stored_red_px_per_frame": 294.96875,
+  "comparisons": {
+    "ours_as_placed": {
+      "exact_frac": 0.5013365453603317,
+      "interior_exact_frac": 0.9789563790705139,
+      "interior_px": 84111,
+      "mean_abs": 18.698826381138392,
+      "max_abs": 217,
+      "within8_frac": 0.5227773238201531,
+      "ssim": 0.886872496385034,
+      "red_px_per_frame": 418.3125
+    },
+    "ours_offscreen": {
+      "exact_frac": 0.5021013532366071,
+      "interior_exact_frac": 0.9789563790705139,
+      "interior_px": 84111,
+      "mean_abs": 18.473961654974488,
+      "max_abs": 115,
+      "within8_frac": 0.5236012984295281,
+      "ssim": 0.8987488635040891,
+      "red_px_per_frame": 331.25
+    },
+    "official_default": {
+      "exact_frac": 0.5148004025829082,
+      "interior_exact_frac": 0.9790752695842398,
+      "interior_px": 84111,
+      "mean_abs": 18.31623871472417,
+      "max_abs": 48,
+      "within8_frac": 0.5281272421077806,
+      "ssim": 0.8999662499797854,
+      "red_px_per_frame": 294.875
+    },
+    "official_target_on": {
+      "exact_frac": 0.5138450155452806,
+      "interior_exact_frac": 0.9790752695842398,
+      "interior_px": 84111,
+      "mean_abs": 18.536403111049108,
+      "max_abs": 217,
+      "within8_frac": 0.527214205994898,
+      "ssim": 0.8883368932690956,
+      "red_px_per_frame": 376.71875
+    }
+  },
+  "closest_to_stored": "official_default"
+}

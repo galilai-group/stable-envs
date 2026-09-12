@@ -1,0 +1,1172 @@
+{
+ "probe_env": {
+  "python": "/private/tmp/claude-501/-Users-samib-stable-envs/ec2cb6e1-a3b7-4e3c-8f7b-12ef98f5d4b3/scratchpad/swmprobe_fetch/bin/python",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "stable_worldmodel": "unknown",
+  "gymnasium": "1.3.0",
+  "mujoco_gl": "glfw",
+  "probed_at": "2026-09-09T05:36:22+00:00"
+ },
+ "ids": [
+  "swm/AcrobotControl-v1",
+  "swm/AcrobotDMControl-v0",
+  "swm/BallInCupDMControl-v0",
+  "swm/CartPoleControl-v1",
+  "swm/CartpoleDMControl-v0",
+  "swm/CheetahDMControl-v0",
+  "swm/CraftaxClassicPixels-v1",
+  "swm/CraftaxClassicSymbolic-v1",
+  "swm/CraftaxPixels-v1",
+  "swm/CraftaxSymbolic-v1",
+  "swm/FetchPickAndPlace-v3",
+  "swm/FetchPickAndPlaceDense-v3",
+  "swm/FetchPickAndPlaceDict-v3",
+  "swm/FetchPush-v3",
+  "swm/FetchPushDense-v3",
+  "swm/FetchPushDict-v3",
+  "swm/FetchReach-v3",
+  "swm/FetchReachDense-v3",
+  "swm/FetchReachDict-v3",
+  "swm/FetchSlide-v3",
+  "swm/FetchSlideDense-v3",
+  "swm/FetchSlideDict-v3",
+  "swm/FingerDMControl-v0",
+  "swm/HopperDMControl-v0",
+  "swm/HumanoidDMControl-v0",
+  "swm/ManipulatorDMControl-v0",
+  "swm/MountainCarContinuousControl-v0",
+  "swm/MountainCarControl-v0",
+  "swm/OGBCube-v0",
+  "swm/OGBMaze-v0",
+  "swm/OGBScene-v0",
+  "swm/PFRocketLanding-v0",
+  "swm/PendulumControl-v1",
+  "swm/PendulumDMControl-v0",
+  "swm/Piecewise-v0",
+  "swm/PushT-Discrete-v1",
+  "swm/PushT-v1",
+  "swm/QuadrupedDMControl-v0",
+  "swm/ReacherDMControl-v0",
+  "swm/SimplePointMaze-v0",
+  "swm/TwoRoom-v1",
+  "swm/WalkerDMControl-v0"
+ ],
+ "WORLDS": [
+  "swm/AcrobotControl-v1",
+  "swm/AcrobotDMControl-v0",
+  "swm/BallInCupDMControl-v0",
+  "swm/CartPoleControl-v1",
+  "swm/CartpoleDMControl-v0",
+  "swm/CheetahDMControl-v0",
+  "swm/CraftaxClassicPixels-v1",
+  "swm/CraftaxClassicSymbolic-v1",
+  "swm/CraftaxPixels-v1",
+  "swm/CraftaxSymbolic-v1",
+  "swm/FetchPickAndPlace-v3",
+  "swm/FetchPickAndPlaceDense-v3",
+  "swm/FetchPickAndPlaceDict-v3",
+  "swm/FetchPush-v3",
+  "swm/FetchPushDense-v3",
+  "swm/FetchPushDict-v3",
+  "swm/FetchReach-v3",
+  "swm/FetchReachDense-v3",
+  "swm/FetchReachDict-v3",
+  "swm/FetchSlide-v3",
+  "swm/FetchSlideDense-v3",
+  "swm/FetchSlideDict-v3",
+  "swm/FingerDMControl-v0",
+  "swm/HopperDMControl-v0",
+  "swm/HumanoidDMControl-v0",
+  "swm/ManipulatorDMControl-v0",
+  "swm/MountainCarContinuousControl-v0",
+  "swm/MountainCarControl-v0",
+  "swm/OGBCube-v0",
+  "swm/OGBMaze-v0",
+  "swm/OGBScene-v0",
+  "swm/PFRocketLanding-v0",
+  "swm/PendulumControl-v1",
+  "swm/PendulumDMControl-v0",
+  "swm/Piecewise-v0",
+  "swm/PushT-Discrete-v1",
+  "swm/PushT-v1",
+  "swm/QuadrupedDMControl-v0",
+  "swm/ReacherDMControl-v0",
+  "swm/SimplePointMaze-v0",
+  "swm/TwoRoom-v1",
+  "swm/WalkerDMControl-v0"
+ ],
+ "DISCRETE_WORLDS": [
+  "swm/AcrobotControl-v1",
+  "swm/CartPoleControl-v1",
+  "swm/CraftaxClassicPixels-v1",
+  "swm/CraftaxClassicSymbolic-v1",
+  "swm/CraftaxPixels-v1",
+  "swm/CraftaxSymbolic-v1",
+  "swm/MountainCarControl-v0",
+  "swm/PushT-Discrete-v1"
+ ],
+ "entry_points": {
+  "swm/AcrobotControl-v1": "stable_worldmodel.envs.gymnasium_control.acrobot:AcrobotWrapper",
+  "swm/AcrobotDMControl-v0": "stable_worldmodel.envs.dmcontrol.acrobot:AcrobotDMControlWrapper",
+  "swm/BallInCupDMControl-v0": "stable_worldmodel.envs.dmcontrol.ball_in_cup:BallInCupDMControlWrapper",
+  "swm/CartPoleControl-v1": "stable_worldmodel.envs.gymnasium_control.cartpole:CartPoleWrapper",
+  "swm/CartpoleDMControl-v0": "stable_worldmodel.envs.dmcontrol.cartpole:CartpoleDMControlWrapper",
+  "swm/CheetahDMControl-v0": "stable_worldmodel.envs.dmcontrol.cheetah:CheetahDMControlWrapper",
+  "swm/CraftaxClassicPixels-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxClassicPixelsWrapper",
+  "swm/CraftaxClassicSymbolic-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxClassicSymbolicWrapper",
+  "swm/CraftaxPixels-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxPixelsWrapper",
+  "swm/CraftaxSymbolic-v1": "stable_worldmodel.envs.craftax.craftax:CraftaxSymbolicWrapper",
+  "swm/FetchPickAndPlace-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPickAndPlaceDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPickAndPlaceDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPush-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPushDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchPushDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchReach-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchReachDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchReachDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchSlide-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchSlideDense-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FetchSlideDict-v3": "stable_worldmodel.envs.gymnasium_robotics.fetch:FetchWrapper",
+  "swm/FingerDMControl-v0": "stable_worldmodel.envs.dmcontrol.finger:FingerDMControlWrapper",
+  "swm/HopperDMControl-v0": "stable_worldmodel.envs.dmcontrol.hopper:HopperDMControlWrapper",
+  "swm/HumanoidDMControl-v0": "stable_worldmodel.envs.dmcontrol.humanoid:HumanoidDMControlWrapper",
+  "swm/ManipulatorDMControl-v0": "stable_worldmodel.envs.dmcontrol.manipulator:ManipulatorDMControlWrapper",
+  "swm/MountainCarContinuousControl-v0": "stable_worldmodel.envs.gymnasium_control.mountain_car:MountainCarContinuousWrapper",
+  "swm/MountainCarControl-v0": "stable_worldmodel.envs.gymnasium_control.mountain_car:MountainCarWrapper",
+  "swm/OGBCube-v0": "stable_worldmodel.envs.ogbench.cube_env:CubeEnv",
+  "swm/OGBMaze-v0": "stable_worldmodel.envs.ogbench.maze_env:MazeEnv",
+  "swm/OGBScene-v0": "stable_worldmodel.envs.ogbench.scene_env:SceneEnv",
+  "swm/PFRocketLanding-v0": "stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding:RocketLandingEnv",
+  "swm/PendulumControl-v1": "stable_worldmodel.envs.gymnasium_control.pendulum:PendulumWrapper",
+  "swm/PendulumDMControl-v0": "stable_worldmodel.envs.dmcontrol.pendulum:PendulumDMControlWrapper",
+  "swm/Piecewise-v0": "stable_worldmodel.envs.piecewise.piecewise_env:PiecewiseEnv",
+  "swm/PushT-Discrete-v1": "stable_worldmodel.envs.pusht:PushTDiscrete",
+  "swm/PushT-v1": "stable_worldmodel.envs.pusht.env:PushT",
+  "swm/QuadrupedDMControl-v0": "stable_worldmodel.envs.dmcontrol.quadruped:QuadrupedDMControlWrapper",
+  "swm/ReacherDMControl-v0": "stable_worldmodel.envs.dmcontrol.reacher:ReacherDMControlWrapper",
+  "swm/SimplePointMaze-v0": "stable_worldmodel.envs.simple_point_maze:SimplePointMazeEnv",
+  "swm/TwoRoom-v1": "stable_worldmodel.envs.two_room.env:TwoRoomEnv",
+  "swm/WalkerDMControl-v0": "stable_worldmodel.envs.dmcontrol.walker:WalkerDMControlWrapper"
+ },
+ "kwargs": {
+  "swm/AcrobotControl-v1": {},
+  "swm/AcrobotDMControl-v0": {},
+  "swm/BallInCupDMControl-v0": {},
+  "swm/CartPoleControl-v1": {},
+  "swm/CartpoleDMControl-v0": {},
+  "swm/CheetahDMControl-v0": {},
+  "swm/CraftaxClassicPixels-v1": {},
+  "swm/CraftaxClassicSymbolic-v1": {},
+  "swm/CraftaxPixels-v1": {},
+  "swm/CraftaxSymbolic-v1": {},
+  "swm/FetchPickAndPlace-v3": {
+   "env_id": "FetchPickAndPlace-v4"
+  },
+  "swm/FetchPickAndPlaceDense-v3": {
+   "env_id": "FetchPickAndPlaceDense-v4"
+  },
+  "swm/FetchPickAndPlaceDict-v3": {
+   "env_id": "FetchPickAndPlace-v4",
+   "flatten": "False"
+  },
+  "swm/FetchPush-v3": {
+   "env_id": "FetchPush-v4"
+  },
+  "swm/FetchPushDense-v3": {
+   "env_id": "FetchPushDense-v4"
+  },
+  "swm/FetchPushDict-v3": {
+   "env_id": "FetchPush-v4",
+   "flatten": "False"
+  },
+  "swm/FetchReach-v3": {
+   "env_id": "FetchReach-v4"
+  },
+  "swm/FetchReachDense-v3": {
+   "env_id": "FetchReachDense-v4"
+  },
+  "swm/FetchReachDict-v3": {
+   "env_id": "FetchReach-v4",
+   "flatten": "False"
+  },
+  "swm/FetchSlide-v3": {
+   "env_id": "FetchSlide-v4"
+  },
+  "swm/FetchSlideDense-v3": {
+   "env_id": "FetchSlideDense-v4"
+  },
+  "swm/FetchSlideDict-v3": {
+   "env_id": "FetchSlide-v4",
+   "flatten": "False"
+  },
+  "swm/FingerDMControl-v0": {},
+  "swm/HopperDMControl-v0": {},
+  "swm/HumanoidDMControl-v0": {},
+  "swm/ManipulatorDMControl-v0": {},
+  "swm/MountainCarContinuousControl-v0": {},
+  "swm/MountainCarControl-v0": {},
+  "swm/OGBCube-v0": {},
+  "swm/OGBMaze-v0": {},
+  "swm/OGBScene-v0": {},
+  "swm/PFRocketLanding-v0": {},
+  "swm/PendulumControl-v1": {},
+  "swm/PendulumDMControl-v0": {},
+  "swm/Piecewise-v0": {},
+  "swm/PushT-Discrete-v1": {},
+  "swm/PushT-v1": {},
+  "swm/QuadrupedDMControl-v0": {},
+  "swm/ReacherDMControl-v0": {},
+  "swm/SimplePointMaze-v0": {},
+  "swm/TwoRoom-v1": {},
+  "swm/WalkerDMControl-v0": {}
+ },
+ "dmc_index_available": false,
+ "probe": {
+  "swm/AcrobotControl-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.link_com_pos_1",
+    "physics.link_com_pos_2",
+    "physics.link_length_1",
+    "physics.link_length_2",
+    "physics.link_mass_1",
+    "physics.link_mass_2",
+    "physics.link_moi",
+    "visuals.bg",
+    "visuals.joint",
+    "visuals.line",
+    "visuals.link"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "AcrobotEnv",
+   "obs_space": "Box([ -1.        -1.        -1.        -1.       -12.566371 -28.274334], [ 1.        1.        1.        1.       12.566371 28.274334], (6,), float32)",
+   "act_space": "Discrete(3)",
+   "variation_space_holder": "AcrobotWrapper",
+   "mro": [
+    "AcrobotEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ]
+  },
+  "swm/AcrobotDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/BallInCupDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/CartPoleControl-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.force_mag",
+    "physics.gravity",
+    "physics.length",
+    "physics.masscart",
+    "physics.masspole",
+    "physics.tau",
+    "visuals.axle",
+    "visuals.bg",
+    "visuals.cart",
+    "visuals.pole"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "CartPoleEnv",
+   "obs_space": "Box([-4.8               -inf -0.41887903        -inf], [4.8               inf 0.41887903        inf], (4,), float32)",
+   "act_space": "Discrete(2)",
+   "variation_space_holder": "CartPoleWrapper",
+   "mro": [
+    "CartPoleEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    400,
+    600,
+    3
+   ]
+  },
+  "swm/CartpoleDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/CheetahDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/CraftaxClassicPixels-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'jax'"
+  },
+  "swm/CraftaxClassicSymbolic-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'jax'"
+  },
+  "swm/CraftaxPixels-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'jax'"
+  },
+  "swm/CraftaxSymbolic-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'jax'"
+  },
+  "swm/FetchPickAndPlace-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchPickAndPlaceEnv",
+   "obs_space": "Box(-inf, inf, (28,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchPickAndPlaceEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchPickAndPlaceDense-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchPickAndPlaceEnv",
+   "obs_space": "Box(-inf, inf, (28,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchPickAndPlaceEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchPickAndPlaceDict-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchPickAndPlaceEnv",
+   "obs_space": "Dict('achieved_goal': Box(-inf, inf, (3,), float64), 'desired_goal': Box(-inf, inf, (3,), float64), 'observation': Box(-inf, inf, (25,), float64))",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchPickAndPlaceEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchPush-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchPushEnv",
+   "obs_space": "Box(-inf, inf, (28,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchPushEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchPushDense-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchPushEnv",
+   "obs_space": "Box(-inf, inf, (28,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchPushEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchPushDict-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchPushEnv",
+   "obs_space": "Dict('achieved_goal': Box(-inf, inf, (3,), float64), 'desired_goal': Box(-inf, inf, (3,), float64), 'observation': Box(-inf, inf, (25,), float64))",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchPushEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchReach-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchReachEnv",
+   "obs_space": "Box(-inf, inf, (13,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchReachEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchReachDense-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchReachEnv",
+   "obs_space": "Box(-inf, inf, (13,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchReachEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchReachDict-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchReachEnv",
+   "obs_space": "Dict('achieved_goal': Box(-inf, inf, (3,), float64), 'desired_goal': Box(-inf, inf, (3,), float64), 'observation': Box(-inf, inf, (10,), float64))",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchReachEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchSlide-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchSlideEnv",
+   "obs_space": "Box(-inf, inf, (28,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchSlideEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchSlideDense-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchSlideEnv",
+   "obs_space": "Box(-inf, inf, (28,), float32)",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchSlideEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FetchSlideDict-v3": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.start_position",
+    "background.color",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "light.intensity",
+    "object.color",
+    "rendering.transparent_arm",
+    "table.color"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MujocoFetchSlideEnv",
+   "obs_space": "Dict('achieved_goal': Box(-inf, inf, (3,), float64), 'desired_goal': Box(-inf, inf, (3,), float64), 'observation': Box(-inf, inf, (25,), float64))",
+   "act_space": "Box(-1.0, 1.0, (4,), float32)",
+   "variation_space_holder": "FetchWrapper",
+   "mro": [
+    "MujocoFetchSlideEnv",
+    "MujocoFetchEnv",
+    "BaseFetchEnv",
+    "MujocoRobotEnv",
+    "BaseRobotEnv",
+    "GoalEnv",
+    "Env",
+    "Generic",
+    "EzPickle",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/FingerDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/HopperDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/HumanoidDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/ManipulatorDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/MountainCarContinuousControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.max_speed",
+    "physics.power",
+    "visuals.bg",
+    "visuals.fg"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "Continuous_MountainCarEnv",
+   "obs_space": "Box([-1.2  -0.07], [0.6  0.07], (2,), float32)",
+   "act_space": "Box(-1.0, 1.0, (1,), float32)",
+   "variation_space_holder": "MountainCarContinuousWrapper",
+   "mro": [
+    "Continuous_MountainCarEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    400,
+    600,
+    3
+   ]
+  },
+  "swm/MountainCarControl-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.force",
+    "physics.gravity",
+    "physics.max_speed",
+    "visuals.bg",
+    "visuals.fg"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "MountainCarEnv",
+   "obs_space": "Box([-1.2  -0.07], [0.6  0.07], (2,), float32)",
+   "act_space": "Discrete(3)",
+   "variation_space_holder": "MountainCarWrapper",
+   "mro": [
+    "MountainCarEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    400,
+    600,
+    3
+   ]
+  },
+  "swm/OGBCube-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'dm_control'"
+  },
+  "swm/OGBMaze-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'dm_control'"
+  },
+  "swm/OGBScene-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'dm_control'"
+  },
+  "swm/PFRocketLanding-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'cvxpy'"
+  },
+  "swm/PendulumControl-v1": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "physics.dt",
+    "physics.g",
+    "physics.l",
+    "physics.m",
+    "physics.max_speed",
+    "physics.max_torque",
+    "visuals.bg",
+    "visuals.hub",
+    "visuals.rod"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PendulumEnv",
+   "obs_space": "Box([-1. -1. -8.], [1. 1. 8.], (3,), float32)",
+   "act_space": "Box(-2.0, 2.0, (1,), float32)",
+   "variation_space_holder": "PendulumWrapper",
+   "mro": [
+    "PendulumEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "env_name",
+    "state"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ]
+  },
+  "swm/PendulumDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/Piecewise-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "border.color",
+    "rendering.render_bias_field",
+    "rendering.render_target",
+    "rendering.render_zones",
+    "target.color",
+    "target.position",
+    "target.radius",
+    "task.min_steps",
+    "zones.bias_0",
+    "zones.bias_1",
+    "zones.bias_2",
+    "zones.bias_3",
+    "zones.color_0",
+    "zones.color_1",
+    "zones.color_2",
+    "zones.color_3"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "PiecewiseEnv",
+   "obs_space": "Box(0.0, 224.0, (4,), float32)",
+   "act_space": "Box(-1.0, 1.0, (2,), float32)",
+   "variation_space_holder": "PiecewiseEnv",
+   "mro": [
+    "PiecewiseEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "env_name": "Piecewise",
+   "reset": "ok",
+   "info_keys": [
+    "distance_to_target",
+    "env_name",
+    "goal_state",
+    "proprio",
+    "state"
+   ],
+   "frame_shape": [
+    224,
+    224,
+    3
+   ]
+  },
+  "swm/PushT-Discrete-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'pymunk'"
+  },
+  "swm/PushT-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'pymunk'"
+  },
+  "swm/QuadrupedDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/ReacherDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/SimplePointMaze-v0": {
+   "variation_space_status": "present",
+   "variation_names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "goal.color",
+    "goal.position",
+    "goal.radius",
+    "walls.color",
+    "walls.number",
+    "walls.positions",
+    "walls.shape"
+   ],
+   "frame_status_probe": "pixels",
+   "make": "ok",
+   "class": "SimplePointMazeEnv",
+   "obs_space": "Box(0.0, 5.0, (2,), float32)",
+   "act_space": "Box(-0.2, 0.2, (2,), float32)",
+   "variation_space_holder": "SimplePointMazeEnv",
+   "mro": [
+    "SimplePointMazeEnv",
+    "Env",
+    "Generic",
+    "object"
+   ],
+   "reset": "ok",
+   "info_keys": [
+    "goal"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ]
+  },
+  "swm/TwoRoom-v1": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  },
+  "swm/WalkerDMControl-v0": {
+   "variation_space_status": "unknown_probe_failed",
+   "variation_names": null,
+   "frame_status_probe": "unknown_probe_failed",
+   "make": "ERR ModuleNotFoundError: No module named 'torchvision'"
+  }
+ }
+}

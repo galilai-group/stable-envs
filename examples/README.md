@@ -1,16 +1,18 @@
 # Examples
 
-Eleven scripts. Five are the training-facing surface — states in the dataset, frames in the forward
-pass — five are the measurement harnesses, driven from `stable_envs.REGISTRY` so a newly registered env
+Fifteen scripts. Five are the training-facing surface — states in the dataset, frames in the forward
+pass — nine are the measurement harnesses, driven from `stable_envs.REGISTRY` so a newly registered env
 is covered without editing them, and one draws the media.
 
-Four subdirectories carry longer studies rather than scripts:
+Five subdirectories carry longer studies rather than scripts:
 [`lewm_pusht/`](lewm_pusht/) swaps our pixels into an official pretrained world model's own evaluation
-and reports the paired test, [`swm_compat/`](swm_compat/) runs a real `stable_worldmodel` workflow on a
-stable-envs renderer through `stable_envs.compat.worldmodel`, [`robocasa_visual/`](robocasa_visual/)
-puts the official RoboCasa renderer and the batched one side by side so the
-[visual tier](../docs/concepts/fidelity-tiers.md)'s quality can be judged rather than asserted, and
-[`paper/`](paper/) builds the write-up and its figures.
+and reports the paired test, [`downstream_step5/`](downstream_step5/) generalises that swap into the
+Step 5 semantic gate — PushT with LeWM and Reacher with DINO-WM, both against the frozen Step 2
+equivalence rule and both with a blank-frame control, [`swm_compat/`](swm_compat/) runs a real
+`stable_worldmodel` workflow on a stable-envs renderer through `stable_envs.compat.worldmodel`,
+[`robocasa_visual/`](robocasa_visual/) puts the official RoboCasa renderer and the batched one side
+by side so the [visual tier](../docs/concepts/fidelity-tiers.md)'s quality can be judged rather than
+asserted, and [`paper/`](paper/) builds the write-up and its figures.
 
 | script | what it produces |
 |---|---|
@@ -22,6 +24,9 @@ puts the official RoboCasa renderer and the batched one side by side so the
 | [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) | GPU vs the official CPU renderer: frames/s, µs/frame, GB/s, speedup, across batch sizes and resolutions, plus a `scene()` / rasterize split. Markdown + JSON. |
 | [`dino_agreement.py`](dino_agreement.py) | do our frames and the official ones look the same to a *frozen* encoder? Embeds both renders of the same state with DINOv2 ViT-B/14 and reports the distance against three controls: a JPEG-q95 round-trip of the official frame (what a stored corpus would have held), two *different* states through the same renderer (the scale of a real difference), and a blank frame (the broken-renderer floor). Split by fidelity tier, because the visual tier is a different render by design. `results/dino/dino_agreement.json`. |
 | [`bench_vs_decode.py`](bench_vs_decode.py) | one GPU regenerating frames against one CPU core decoding a JPEG of *that env's own* frame, from memory and from a warm local file. The ratio is CPU cores of decode replaced by one GPU. `results/bench_vs_decode<tag>.{json,md}`; the merged pass is [`results/decode/`](results/decode/). |
+| [`bench_step3.py`](bench_step3.py) | the Step 3 sweep: the same renderer on **either device**, over the frozen batch list, against the official renderer and one core of decode on the same host. One shard per interpreter, because no single one imports every family; `scratch/step3/certify.py` merges them and applies the frozen Step 2 bars. `results/step3/{cpu,gpu}/*.json`. |
+| [`bench_step3_pipeline.py`](bench_step3_pipeline.py) | Step 3 product C: `states -> sampler -> collate -> transfer -> renderer`, comparing per-item `default_collate`, a `BatchSampler`, `collate_batched` and the no-loader ceiling. Deliberately **not** a renderer certification number. `results/step3/pipeline/*.json`. |
+| [`fidelity_step4.py`](fidelity_step4.py) | the Step 4 baseline: every applicable conformance check plus the parity/visual measurement, per render-distinct configuration, on a **frozen state corpus** that is written once and thereafter read. Freezes the digests a Step 6 rewrite is replayed against; applies no threshold itself. `results/step4/{states,conformance,comparisons}/`. |
 | [`bench_storage.py`](bench_storage.py) | the same question pinned to one operating point — 256 px, batch 1,024, `--frames` *distinct* JPEGs read back through the page cache from node-local disk and from the shared filesystem — so the column is like-for-like across envs. `results/storage/storage<tag>.json`. |
 | [`dump_frames.py`](dump_frames.py) | phase 1 of that comparison, run inside each env's own interpreter: renders real frames and encodes them the way a corpus does (JPEG quality 95), one `.npz` of blobs plus metadata per env, written to `--out`. |
 | [`bench_lance.py`](bench_lance.py) | phase 2: the strongest disk baseline in use today — those JPEG blobs in a LanceDB table, fetched a chunk of rows at a time and batch-decoded with `torchvision.io.decode_jpeg` — read local and shared, one process and `--workers`, CPU and nvJPEG. `results/storage/lance.json`. |
@@ -42,6 +47,7 @@ python examples/bench_gpu_vs_cpu.py --out examples/results --envs PushT --sizes 
 python examples/bench_gpu_vs_cpu.py --out examples/results --sizes native   # whole registry
 python examples/dino_agreement.py --out examples/results/dino
 python examples/bench_vs_decode.py --out examples/results --tag se-envs
+python examples/fidelity_step4.py --shard raster --out examples/results/step4/conformance/raster.json
 python examples/bench_storage.py --out examples/results/storage --tag se-envs
 python examples/dump_frames.py                # renders + encodes, in the env's interpreter
 python examples/bench_lance.py --workers 8    # reads them back, in the one with lancedb

@@ -1,0 +1,340 @@
+{
+  "env": "swm/ReacherDMControl-v0",
+  "task": "qpos_match",
+  "model_family": "prejepa",
+  "arms": {
+    "blank": 300,
+    "official": 300,
+    "stable_envs": 300
+  },
+  "comparability": {
+    "arm_runs_checked": 12,
+    "problems": [],
+    "benign_differences": [],
+    "comparable": true
+  },
+  "gate_h": {
+    "official": {
+      "successes": 221,
+      "n": 300,
+      "success_rate": 73.66666666666667,
+      "wilson_ci": [
+        68.40594845533765,
+        78.32892919143619
+      ]
+    },
+    "stable_envs": {
+      "successes": 200,
+      "n": 300,
+      "success_rate": 66.66666666666667,
+      "wilson_ci": [
+        61.151141645767716,
+        71.76074402097443
+      ]
+    },
+    "equivalence": {
+      "n": 300,
+      "b": 63,
+      "c": 42,
+      "delta_points": -7.0,
+      "ci": [
+        -13.694674500426938,
+        -0.30532549957306276
+      ],
+      "half_width_points": 6.694674500426937,
+      "mcnemar_p": 0.05044215663996967,
+      "discordance": 0.35,
+      "inside_margin": false,
+      "required_n_for_margin": 538
+    },
+    "margin_points": 5.0,
+    "design": {
+      "min_paired_episodes": 300,
+      "min_seeds": 6,
+      "min_episodes_per_seed": 50,
+      "paired_episodes": 300,
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "n_seeds": 6,
+      "episodes_per_seed": [
+        50
+      ],
+      "met": true
+    },
+    "control": {
+      "present": true,
+      "arm": {
+        "successes": 26,
+        "n": 300,
+        "success_rate": 8.666666666666666,
+        "wilson_ci": [
+          5.982848995477099,
+          12.395674551002385
+        ]
+      },
+      "paired": {
+        "n": 300,
+        "b": 199,
+        "c": 4,
+        "delta_points": -65.0,
+        "ci": [
+          -74.30856714119967,
+          -55.691432858800326
+        ],
+        "half_width_points": 9.30856714119967,
+        "mcnemar_p": 1.0902638444955705e-53,
+        "discordance": 0.6766666666666666,
+        "inside_margin": false,
+        "required_n_for_margin": 1040
+      },
+      "max_delta_points": -20.0,
+      "max_p": 0.01,
+      "degraded": true,
+      "measured_on_seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "official_baseline_on_those_seeds": {
+        "successes": 221,
+        "n": 300,
+        "success_rate": 73.66666666666667,
+        "wilson_ci": [
+          68.40594845533765,
+          78.32892919143619
+        ]
+      }
+    },
+    "power_guard": {
+      "max_discordance_at_n300": 0.19,
+      "observed_discordance": 0.35,
+      "underpowered": true,
+      "required_n": 538
+    },
+    "verdict": "INCONCLUSIVE",
+    "verdict_reason": "discordance 0.350 exceeds 0.19; 538 paired episodes would be needed to resolve the margin"
+  },
+  "secondary_arms": {},
+  "runs": [
+    {
+      "path": "examples/results/step5/reacher/runs/seed42_n50_blank.json",
+      "arm": "blank",
+      "seed": 42,
+      "success_rate": 14.000000000000002,
+      "seconds": 12973.9,
+      "render_calls": {
+        "live": 2374,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed42_n50_official.json",
+      "arm": "official",
+      "seed": 42,
+      "success_rate": 72.0,
+      "seconds": 10703.4,
+      "render_calls": null
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed42_n50_stable_envs.json",
+      "arm": "stable_envs",
+      "seed": 42,
+      "success_rate": 70.0,
+      "seconds": 11104.9,
+      "render_calls": {
+        "live": 1729,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed43_n50_blank.json",
+      "arm": "blank",
+      "seed": 43,
+      "success_rate": 6.0,
+      "seconds": 13313.4,
+      "render_calls": {
+        "live": 2453,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed43_n50_official.json",
+      "arm": "official",
+      "seed": 43,
+      "success_rate": 70.0,
+      "seconds": 11706.9,
+      "render_calls": null
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed43_n50_stable_envs.json",
+      "arm": "stable_envs",
+      "seed": 43,
+      "success_rate": 66.0,
+      "seconds": 11687.7,
+      "render_calls": {
+        "live": 1844,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed44_n50_blank.json",
+      "arm": "blank",
+      "seed": 44,
+      "success_rate": 10.0,
+      "seconds": 13277.9,
+      "render_calls": {
+        "live": 2411,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed44_n50_official.json",
+      "arm": "official",
+      "seed": 44,
+      "success_rate": 80.0,
+      "seconds": 10981.8,
+      "render_calls": null
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed44_n50_stable_envs.json",
+      "arm": "stable_envs",
+      "seed": 44,
+      "success_rate": 56.00000000000001,
+      "seconds": 11683.8,
+      "render_calls": {
+        "live": 1932,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed45_n50_blank.json",
+      "arm": "blank",
+      "seed": 45,
+      "success_rate": 8.0,
+      "seconds": 13319.3,
+      "render_calls": {
+        "live": 2409,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed45_n50_official.json",
+      "arm": "official",
+      "seed": 45,
+      "success_rate": 66.0,
+      "seconds": 10709.9,
+      "render_calls": null
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed45_n50_stable_envs.json",
+      "arm": "stable_envs",
+      "seed": 45,
+      "success_rate": 72.0,
+      "seconds": 10325.0,
+      "render_calls": {
+        "live": 1585,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed46_n50_blank.json",
+      "arm": "blank",
+      "seed": 46,
+      "success_rate": 8.0,
+      "seconds": 13087.3,
+      "render_calls": {
+        "live": 2399,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed46_n50_official.json",
+      "arm": "official",
+      "seed": 46,
+      "success_rate": 76.0,
+      "seconds": 10553.2,
+      "render_calls": null
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed46_n50_stable_envs.json",
+      "arm": "stable_envs",
+      "seed": 46,
+      "success_rate": 74.0,
+      "seconds": 11084.5,
+      "render_calls": {
+        "live": 1846,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed47_n50_blank.json",
+      "arm": "blank",
+      "seed": 47,
+      "success_rate": 6.0,
+      "seconds": 13584.7,
+      "render_calls": {
+        "live": 2456,
+        "dataset": 2
+      }
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed47_n50_official.json",
+      "arm": "official",
+      "seed": 47,
+      "success_rate": 78.0,
+      "seconds": 11949.6,
+      "render_calls": null
+    },
+    {
+      "path": "examples/results/step5/reacher/runs/seed47_n50_stable_envs.json",
+      "arm": "stable_envs",
+      "seed": 47,
+      "success_rate": 62.0,
+      "seconds": 11534.0,
+      "render_calls": {
+        "live": 1851,
+        "dataset": 2
+      }
+    }
+  ],
+  "provenance": {
+    "stable_envs_commit": "d148f1a582d9ae9062112049a8c20fd00a9bde7b",
+    "stable_worldmodel_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+    "checkpoint": {
+      "policy": "reacher/prejepa/weights_epoch_3.pt",
+      "dir": "/oscar/scratch/sboughan/.stable_worldmodel/checkpoints/reacher/prejepa/weights_epoch_3.pt",
+      "files": {
+        "weights_epoch_3.pt": {
+          "bytes": 181288119,
+          "sha256": "17c55ffe3290ef39"
+        }
+      }
+    },
+    "versions": {
+      "torch": "2.14.0+cu126",
+      "torchvision": "0.29.0+cu126",
+      "mujoco": "3.12.0",
+      "dm-control": "1.0.45",
+      "stable-worldmodel": "0.0.6",
+      "stable-pretraining": "0.1.8",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.0",
+      "hydra-core": "1.3.6"
+    },
+    "host": "gpu2108.oscar.ccv.brown.edu",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "slurm_job": "6275038",
+    "mujoco_gl": "egl"
+  },
+  "episodes_file": "examples/results/step5/reacher/episodes.jsonl",
+  "episodes_sha256": "b46da8e1da82"
+}

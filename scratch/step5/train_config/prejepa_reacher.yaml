@@ -1,0 +1,122 @@
+# DINO-WM / PreJEPA on the DeepMind Control Reacher corpus.
+#
+# Built by taking scripts/train/config/prejepa.yaml -- the repository's own PushT DINO-WM config --
+# and changing only what the environment forces:
+#
+#   dataset_name    the Reacher corpus instead of PushT's
+#   wm.encoding     action only. PushT's config also encodes `proprio`; the Reacher corpus has no
+#                   such column (scripts/train/config/data/dmc.yaml loads pixels, action and
+#                   observation), the plan config caches only `action`, and the published Reacher
+#                   checkpoint for this task carries an action encoder and nothing else. A model
+#                   with a proprioceptive channel would also weaken the experiment it is built for:
+#                   a planner that can partly succeed without looking is a planner whose blank-frame
+#                   control degrades less, and the control is what makes the null result mean
+#                   anything.
+#   trainer         epochs and precision sized to a 6-hour allocation, with resume.
+#   predictor       _target_ corrected. The committed config names
+#                   `stable_worldmodel.wm.prejepa.CausalPredictor`, which does not resolve: the
+#                   class lives in `...prejepa.module`, and the package's __init__ re-exports only
+#                   from `.prejepa`. hydra raises InstantiationException before the dataset is even
+#                   opened, so the repository's own DINO-WM config cannot instantiate against the
+#                   current code -- which is corroboration, of a sort, that the recorded 79%
+#                   checkpoint was not produced from it recently.
+#
+# frameskip stays 5 because the evaluation's action_block is 5: the model must predict the same
+# temporal stride the planner will ask it to predict.
+defaults:
+  - _self_
+  - launcher: local
+
+hydra:
+  job:
+    chdir: true
+
+# --- Run ---
+output_model_name: reacher/prejepa
+subdir: reacher_prejepa
+seed: 42
+
+# --- Data ---
+dataset_name: dmc/reacher_random.h5
+cache_dir: null
+n_steps: ${eval:'${wm.num_preds} + ${wm.history_size}'}
+frameskip: 5
+
+batch_size: 32
+num_workers: 8
+train_split: 0.9
+
+# --- Backbone ---
+backbone:
+  name: dinov2_small
+  type: dinov2_small
+  is_video_encoder: false
+  interpolate_pos_encoding: true
+
+image_size: 224
+patch_size: 14
+
+# --- World model ---
+wm:
+  history_size: 3
+  num_preds: 1
+  encoding:
+    action: 10
+
+predictor:
+  size: small
+  depth: 6
+  heads: 16
+  mlp_dim: 2048
+  dim_head: 64
+  dropout: 0.1
+  emb_dropout: 0.0
+
+model:
+  _target_: stable_worldmodel.wm.PreJEPA
+  history_size: ${wm.history_size}
+  num_pred: ${wm.num_preds}
+  interpolate_pos_encoding: ${backbone.interpolate_pos_encoding}
+  encoder:
+    _target_: stable_worldmodel.wm.prejepa.module.create_backbone
+    name: ${backbone.name}
+  predictor:
+    _target_: stable_worldmodel.wm.prejepa.module.CausalPredictor
+    num_patches: ???
+    num_frames: ${wm.history_size}
+    dim: ???
+    depth: ${predictor.depth}
+    heads: ${predictor.heads}
+    mlp_dim: ${predictor.mlp_dim}
+    dim_head: ${predictor.dim_head}
+    dropout: ${predictor.dropout}
+    emb_dropout: ${predictor.emb_dropout}
+
+# --- Optimizer ---
+optimizer:
+  type: AdamW
+  lr: 5e-4
+  weight_decay: 0.0
+
+# --- Trainer ---
+# The corpus holds 1.76M valid windows, so an unbounded epoch is ~55k optimiser steps and about
+# four hours on one 3090 -- three of them would not fit in any allocation this queue grants, and
+# the checkpoint callback only writes at max_epochs, so a preempted job would leave nothing behind.
+# limit_train_batches bounds the epoch instead: 3 x 6000 steps of batch 32 is 576k samples through
+# a frozen encoder and a six-layer predictor. Sized to the allocation, and recorded here rather
+# than discovered from a wall-clock graph later.
+trainer:
+  max_epochs: 3
+  limit_train_batches: 6000
+  limit_val_batches: 200
+  strategy: auto
+  devices: 1
+  accelerator: gpu
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+
+wandb:
+  enabled: false
+  config: {}
+
+dump_object: true
