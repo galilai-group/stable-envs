@@ -99,6 +99,27 @@ at batch 4096 on a 500x500 frame against 1.0.
 
 ## Measurements
 
+### Where the time went, and where it goes now
+
+Both arms on the same laptop in the same minute, batch 64, one thread, frozen states, phase timers
+at the renderer's own seams (`scratch/step6/gfxdraw/phase_profile.py`). Milliseconds per batch.
+
+| phase | Acrobot before | Acrobot after | CartPole before | CartPole after |
+|---|---|---|---|---|
+| opaque write (`StyleCanvas.paint`) | 390.8 (4 calls) | **6.2** (2) | 277.9 (3) | **3.3** (2) |
+| scanline mask (`fill_polygon_mask`) | 47.6 | 19.5 | 44.2 | 10.4 |
+| background fill | 27.9 | 1.5 | 26.4 | 1.4 |
+| circle mask (`fill_circle_mask`) | 13.3 | — drawn as offsets | 6.3 | — |
+| Wu scatters (`blend_at`) | 18.0 (42 calls) | 6.7 (42) | 14.0 (41) | 5.4 (41) |
+| `clip_line` | 5.3 (8 calls) | 1.4 (**2**) | 5.3 (8) | 1.4 (**2**) |
+| interleave + flip (`rgb`) | 1.5 | 19.3 | 1.4 | 18.6 |
+| **whole render** | **506.7** | **56.6** | **377.7** | **42.0** |
+
+The last two rows are the trade, stated plainly. Going planar costs one transpose per FRAME — 1.5 ms
+becomes 19.3 — and saves 385 ms of per-PRIMITIVE writes. It is now the single largest line in the
+after column, and it is the reason CPU_FAST is out of reach for a torch-op renderer (below).
+
+
 Renderer throughput is the thing this patch changed and it is reported first, because on a shared
 node it is also the only number that is not a ratio of two independently noisy measurements.
 
@@ -148,6 +169,27 @@ planar surface is the same bytes as an interleaved one, the windows cut the mask
 
 `aten::where` was the top operator in every baseline note (1,396 calls on Acrobot, 709 on
 Pendulum). It is not in the top eight of any after-note.
+
+### Operator count per render, CUDA, batch 4096, both arms on `gpu2104`
+
+| config | before | after | profiled f/s before -> after |
+|---|---|---|---|
+| Acrobot | 44,307 | 20,859 | 15,728 -> 33,156 |
+| CartPole | 43,812 | 20,317 | 18,005 -> 37,836 |
+| MountainCar | 39,029 | 19,532 | 15,827 -> 34,830 |
+| MountainCarContinuous | 39,029 | 19,532 | 15,767 -> 34,985 |
+| Pendulum | 23,148 | 11,537 | 18,346 -> 43,729 |
+
+(These are under `torch.profiler`, so they are lower than the sweep's numbers; the ratio is the
+point. The before arm's notes record `stable_envs_file` under `se6/baseline`.)
+
+### A wider bit-exactness sweep than the frozen 64
+
+512 states per configuration, half drawn from the reachable set and half deliberately outside it —
+CartPole `x` in [-8, 8] and `theta` over four turns, Acrobot and Pendulum angles over 12 turns,
+MountainCar positions in [-5, 4]. All five frame-stack digests are **byte-identical** between
+89fa5ca and this branch. That is the check the static windows and the per-edge `kmax` need, because
+both are bounds and a corpus chosen for coverage of the reachable set cannot test a bound.
 
 ### Tiers, computed by the frozen evaluator
 

@@ -1,0 +1,616 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.9, pytest-9.1.1, pluggy-1.6.0 -- /oscar/scratch/sboughan/venvs/se-step6/bin/python
+cachedir: .pytest_cache
+rootdir: /oscar/scratch/sboughan/se6/gfxdraw
+configfile: pyproject.toml
+plugins: timeout-2.4.0
+timeout: 900s
+timeout method: signal
+timeout func_only: False
+collecting ... collected 3124 items / 2673 deselected / 451 selected
+
+tests/gpu/test_conformance.py::test_describe_is_complete[Acrobot] PASSED [  0%]
+tests/gpu/test_conformance.py::test_state_roundtrip[Acrobot] PASSED      [  0%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[Acrobot] PASSED [  0%]
+tests/gpu/test_conformance.py::test_batch_invariance[Acrobot] PASSED     [  0%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[Acrobot] PASSED [  1%]
+tests/gpu/test_conformance.py::test_style_is_state[Acrobot] PASSED       [  1%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[Acrobot] PASSED [  1%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[Acrobot] PASSED [  1%]
+tests/gpu/test_conformance.py::test_determinism[Acrobot] PASSED          [  1%]
+tests/gpu/test_conformance.py::test_backend_agreement[Acrobot] SKIPPED   [  2%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[Acrobot] PASSED [  2%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[Acrobot] PASSED [  2%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[Acrobot] PASSED [  2%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[Acrobot] SKIPPED [  3%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[Acrobot] SKIPPED [  3%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[Acrobot] SKIPPED [  3%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[Acrobot] PASSED [  3%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[Acrobot] PASSED  [  3%]
+tests/gpu/test_conformance.py::test_describe_is_complete[CartPole] PASSED [  4%]
+tests/gpu/test_conformance.py::test_state_roundtrip[CartPole] PASSED     [  4%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[CartPole] PASSED [  4%]
+tests/gpu/test_conformance.py::test_batch_invariance[CartPole] PASSED    [  4%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[CartPole] PASSED [  5%]
+tests/gpu/test_conformance.py::test_style_is_state[CartPole] PASSED      [  5%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[CartPole] PASSED [  5%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[CartPole] PASSED [  5%]
+tests/gpu/test_conformance.py::test_determinism[CartPole] PASSED         [  5%]
+tests/gpu/test_conformance.py::test_backend_agreement[CartPole] SKIPPED  [  6%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[CartPole] PASSED [  6%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[CartPole] PASSED [  6%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[CartPole] PASSED [  6%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[CartPole] SKIPPED [  7%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[CartPole] SKIPPED [  7%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[CartPole] SKIPPED [  7%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[CartPole] PASSED [  7%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[CartPole] PASSED [  7%]
+tests/gpu/test_conformance.py::test_describe_is_complete[DMCAcrobotSwingup] PASSED [  8%]
+tests/gpu/test_conformance.py::test_state_roundtrip[DMCAcrobotSwingup] PASSED [  8%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[DMCAcrobotSwingup] PASSED [  8%]
+tests/gpu/test_conformance.py::test_batch_invariance[DMCAcrobotSwingup] PASSED [  8%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[DMCAcrobotSwingup] PASSED [  9%]
+tests/gpu/test_conformance.py::test_style_is_state[DMCAcrobotSwingup] PASSED [  9%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[DMCAcrobotSwingup] PASSED [  9%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[DMCAcrobotSwingup] PASSED [  9%]
+tests/gpu/test_conformance.py::test_determinism[DMCAcrobotSwingup] PASSED [  9%]
+tests/gpu/test_conformance.py::test_backend_agreement[DMCAcrobotSwingup] SKIPPED [ 10%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[DMCAcrobotSwingup] PASSED [ 10%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[DMCAcrobotSwingup] PASSED [ 10%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[DMCAcrobotSwingup] PASSED [ 10%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCAcrobotSwingup] SKIPPED [ 11%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[DMCAcrobotSwingup] SKIPPED [ 11%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[DMCAcrobotSwingup] SKIPPED [ 11%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[DMCAcrobotSwingup] SKIPPED [ 11%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[DMCAcrobotSwingup] PASSED [ 11%]
+tests/gpu/test_conformance.py::test_describe_is_complete[DMCCartpoleBalance] PASSED [ 12%]
+tests/gpu/test_conformance.py::test_state_roundtrip[DMCCartpoleBalance] PASSED [ 12%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[DMCCartpoleBalance] PASSED [ 12%]
+tests/gpu/test_conformance.py::test_batch_invariance[DMCCartpoleBalance] PASSED [ 12%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[DMCCartpoleBalance] PASSED [ 13%]
+tests/gpu/test_conformance.py::test_style_is_state[DMCCartpoleBalance] PASSED [ 13%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[DMCCartpoleBalance] PASSED [ 13%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[DMCCartpoleBalance] PASSED [ 13%]
+tests/gpu/test_conformance.py::test_determinism[DMCCartpoleBalance] PASSED [ 13%]
+tests/gpu/test_conformance.py::test_backend_agreement[DMCCartpoleBalance] SKIPPED [ 14%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[DMCCartpoleBalance] PASSED [ 14%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[DMCCartpoleBalance] PASSED [ 14%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[DMCCartpoleBalance] PASSED [ 14%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCCartpoleBalance] SKIPPED [ 15%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[DMCCartpoleBalance] SKIPPED [ 15%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[DMCCartpoleBalance] SKIPPED [ 15%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[DMCCartpoleBalance] SKIPPED [ 15%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[DMCCartpoleBalance] PASSED [ 15%]
+tests/gpu/test_conformance.py::test_describe_is_complete[DMCCartpoleSwingup] PASSED [ 16%]
+tests/gpu/test_conformance.py::test_state_roundtrip[DMCCartpoleSwingup] PASSED [ 16%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[DMCCartpoleSwingup] PASSED [ 16%]
+tests/gpu/test_conformance.py::test_batch_invariance[DMCCartpoleSwingup] PASSED [ 16%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[DMCCartpoleSwingup] PASSED [ 17%]
+tests/gpu/test_conformance.py::test_style_is_state[DMCCartpoleSwingup] PASSED [ 17%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[DMCCartpoleSwingup] PASSED [ 17%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[DMCCartpoleSwingup] PASSED [ 17%]
+tests/gpu/test_conformance.py::test_determinism[DMCCartpoleSwingup] PASSED [ 17%]
+tests/gpu/test_conformance.py::test_backend_agreement[DMCCartpoleSwingup] SKIPPED [ 18%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[DMCCartpoleSwingup] PASSED [ 18%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[DMCCartpoleSwingup] PASSED [ 18%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[DMCCartpoleSwingup] PASSED [ 18%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCCartpoleSwingup] SKIPPED [ 19%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[DMCCartpoleSwingup] SKIPPED [ 19%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[DMCCartpoleSwingup] SKIPPED [ 19%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[DMCCartpoleSwingup] SKIPPED [ 19%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[DMCCartpoleSwingup] PASSED [ 19%]
+tests/gpu/test_conformance.py::test_describe_is_complete[DMCPendulumSwingup] PASSED [ 20%]
+tests/gpu/test_conformance.py::test_state_roundtrip[DMCPendulumSwingup] PASSED [ 20%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[DMCPendulumSwingup] PASSED [ 20%]
+tests/gpu/test_conformance.py::test_batch_invariance[DMCPendulumSwingup] PASSED [ 20%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[DMCPendulumSwingup] PASSED [ 21%]
+tests/gpu/test_conformance.py::test_style_is_state[DMCPendulumSwingup] PASSED [ 21%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[DMCPendulumSwingup] PASSED [ 21%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[DMCPendulumSwingup] PASSED [ 21%]
+tests/gpu/test_conformance.py::test_determinism[DMCPendulumSwingup] PASSED [ 21%]
+tests/gpu/test_conformance.py::test_backend_agreement[DMCPendulumSwingup] SKIPPED [ 22%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[DMCPendulumSwingup] PASSED [ 22%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[DMCPendulumSwingup] PASSED [ 22%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[DMCPendulumSwingup] PASSED [ 22%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCPendulumSwingup] SKIPPED [ 23%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[DMCPendulumSwingup] SKIPPED [ 23%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[DMCPendulumSwingup] SKIPPED [ 23%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[DMCPendulumSwingup] SKIPPED [ 23%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[DMCPendulumSwingup] PASSED [ 23%]
+tests/gpu/test_conformance.py::test_describe_is_complete[MountainCar] PASSED [ 24%]
+tests/gpu/test_conformance.py::test_state_roundtrip[MountainCar] PASSED  [ 24%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MountainCar] PASSED [ 24%]
+tests/gpu/test_conformance.py::test_batch_invariance[MountainCar] PASSED [ 24%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MountainCar] PASSED [ 25%]
+tests/gpu/test_conformance.py::test_style_is_state[MountainCar] PASSED   [ 25%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MountainCar] PASSED [ 25%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MountainCar] PASSED [ 25%]
+tests/gpu/test_conformance.py::test_determinism[MountainCar] PASSED      [ 25%]
+tests/gpu/test_conformance.py::test_backend_agreement[MountainCar] SKIPPED [ 26%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[MountainCar] PASSED [ 26%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MountainCar] PASSED [ 26%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[MountainCar] PASSED [ 26%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MountainCar] SKIPPED [ 27%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[MountainCar] SKIPPED [ 27%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[MountainCar] SKIPPED [ 27%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[MountainCar] PASSED [ 27%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[MountainCar] PASSED [ 27%]
+tests/gpu/test_conformance.py::test_describe_is_complete[MountainCarContinuous] PASSED [ 28%]
+tests/gpu/test_conformance.py::test_state_roundtrip[MountainCarContinuous] PASSED [ 28%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MountainCarContinuous] PASSED [ 28%]
+tests/gpu/test_conformance.py::test_batch_invariance[MountainCarContinuous] PASSED [ 28%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MountainCarContinuous] PASSED [ 29%]
+tests/gpu/test_conformance.py::test_style_is_state[MountainCarContinuous] PASSED [ 29%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MountainCarContinuous] PASSED [ 29%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MountainCarContinuous] PASSED [ 29%]
+tests/gpu/test_conformance.py::test_determinism[MountainCarContinuous] PASSED [ 29%]
+tests/gpu/test_conformance.py::test_backend_agreement[MountainCarContinuous] SKIPPED [ 30%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[MountainCarContinuous] PASSED [ 30%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MountainCarContinuous] PASSED [ 30%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[MountainCarContinuous] PASSED [ 30%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MountainCarContinuous] SKIPPED [ 31%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[MountainCarContinuous] SKIPPED [ 31%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[MountainCarContinuous] SKIPPED [ 31%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[MountainCarContinuous] PASSED [ 31%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[MountainCarContinuous] PASSED [ 31%]
+tests/gpu/test_conformance.py::test_describe_is_complete[MujocoInvertedDoublePendulum] PASSED [ 32%]
+tests/gpu/test_conformance.py::test_state_roundtrip[MujocoInvertedDoublePendulum] PASSED [ 32%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoInvertedDoublePendulum] PASSED [ 32%]
+tests/gpu/test_conformance.py::test_batch_invariance[MujocoInvertedDoublePendulum] PASSED [ 32%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoInvertedDoublePendulum] PASSED [ 33%]
+tests/gpu/test_conformance.py::test_style_is_state[MujocoInvertedDoublePendulum] PASSED [ 33%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoInvertedDoublePendulum] PASSED [ 33%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoInvertedDoublePendulum] PASSED [ 33%]
+tests/gpu/test_conformance.py::test_determinism[MujocoInvertedDoublePendulum] PASSED [ 33%]
+tests/gpu/test_conformance.py::test_backend_agreement[MujocoInvertedDoublePendulum] SKIPPED [ 34%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoInvertedDoublePendulum] PASSED [ 34%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoInvertedDoublePendulum] PASSED [ 34%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[MujocoInvertedDoublePendulum] PASSED [ 34%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoInvertedDoublePendulum] SKIPPED [ 35%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[MujocoInvertedDoublePendulum] SKIPPED [ 35%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[MujocoInvertedDoublePendulum] SKIPPED [ 35%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[MujocoInvertedDoublePendulum] SKIPPED [ 35%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoInvertedDoublePendulum] PASSED [ 35%]
+tests/gpu/test_conformance.py::test_describe_is_complete[MujocoInvertedPendulum] PASSED [ 36%]
+tests/gpu/test_conformance.py::test_state_roundtrip[MujocoInvertedPendulum] PASSED [ 36%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoInvertedPendulum] PASSED [ 36%]
+tests/gpu/test_conformance.py::test_batch_invariance[MujocoInvertedPendulum] PASSED [ 36%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoInvertedPendulum] PASSED [ 37%]
+tests/gpu/test_conformance.py::test_style_is_state[MujocoInvertedPendulum] PASSED [ 37%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoInvertedPendulum] PASSED [ 37%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoInvertedPendulum] PASSED [ 37%]
+tests/gpu/test_conformance.py::test_determinism[MujocoInvertedPendulum] PASSED [ 37%]
+tests/gpu/test_conformance.py::test_backend_agreement[MujocoInvertedPendulum] SKIPPED [ 38%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoInvertedPendulum] PASSED [ 38%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoInvertedPendulum] PASSED [ 38%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[MujocoInvertedPendulum] PASSED [ 38%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoInvertedPendulum] SKIPPED [ 39%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[MujocoInvertedPendulum] SKIPPED [ 39%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[MujocoInvertedPendulum] SKIPPED [ 39%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[MujocoInvertedPendulum] SKIPPED [ 39%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoInvertedPendulum] PASSED [ 39%]
+tests/gpu/test_conformance.py::test_describe_is_complete[Pendulum] PASSED [ 40%]
+tests/gpu/test_conformance.py::test_state_roundtrip[Pendulum] PASSED     [ 40%]
+tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[Pendulum] PASSED [ 40%]
+tests/gpu/test_conformance.py::test_batch_invariance[Pendulum] PASSED    [ 40%]
+tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[Pendulum] PASSED [ 41%]
+tests/gpu/test_conformance.py::test_style_is_state[Pendulum] PASSED      [ 41%]
+tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[Pendulum] PASSED [ 41%]
+tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[Pendulum] PASSED [ 41%]
+tests/gpu/test_conformance.py::test_determinism[Pendulum] PASSED         [ 41%]
+tests/gpu/test_conformance.py::test_backend_agreement[Pendulum] SKIPPED  [ 42%]
+tests/gpu/test_conformance.py::test_variations_all_do_something[Pendulum] PASSED [ 42%]
+tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[Pendulum] PASSED [ 42%]
+tests/gpu/test_conformance.py::test_render_parity_with_official_renderer[Pendulum] PASSED [ 42%]
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[Pendulum] SKIPPED [ 43%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replaces[Pendulum] SKIPPED [ 43%]
+tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[Pendulum] SKIPPED [ 43%]
+tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[Pendulum] PASSED [ 43%]
+tests/gpu/test_conformance.py::test_state_is_sufficient[Pendulum] PASSED [ 43%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[Acrobot] PASSED [ 44%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[Acrobot] PASSED [ 44%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[Acrobot] PASSED [ 44%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[Acrobot] PASSED [ 44%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[Acrobot] PASSED [ 45%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[Acrobot] SKIPPED [ 45%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[Acrobot] PASSED [ 45%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[Acrobot] PASSED [ 45%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[Acrobot] PASSED [ 45%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[Acrobot] PASSED [ 46%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[Acrobot] PASSED [ 46%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[Acrobot] PASSED [ 46%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[Acrobot] PASSED [ 46%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[Acrobot] PASSED [ 47%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[Acrobot] PASSED [ 47%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[Acrobot] PASSED [ 47%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[Acrobot] SKIPPED [ 47%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[Acrobot] PASSED [ 47%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[Acrobot] PASSED [ 48%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[Acrobot] SKIPPED [ 48%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[Acrobot] PASSED [ 48%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[Acrobot] PASSED [ 48%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[Acrobot] PASSED [ 49%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[CartPole] PASSED [ 49%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[CartPole] PASSED [ 49%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[CartPole] PASSED [ 49%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[CartPole] PASSED [ 49%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[CartPole] PASSED [ 50%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[CartPole] SKIPPED [ 50%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[CartPole] PASSED [ 50%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[CartPole] PASSED [ 50%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[CartPole] PASSED [ 50%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[CartPole] PASSED [ 51%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[CartPole] PASSED [ 51%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[CartPole] PASSED [ 51%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[CartPole] PASSED [ 51%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[CartPole] PASSED [ 52%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[CartPole] PASSED [ 52%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[CartPole] PASSED [ 52%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[CartPole] SKIPPED [ 52%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[CartPole] PASSED [ 52%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[CartPole] PASSED [ 53%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[CartPole] SKIPPED [ 53%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[CartPole] PASSED [ 53%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[CartPole] PASSED [ 53%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[CartPole] PASSED [ 54%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCAcrobotSwingup] PASSED [ 54%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCAcrobotSwingup] PASSED [ 54%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCAcrobotSwingup] SKIPPED [ 54%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[DMCAcrobotSwingup] PASSED [ 54%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[DMCAcrobotSwingup] PASSED [ 55%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCAcrobotSwingup] SKIPPED [ 55%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[DMCAcrobotSwingup] PASSED [ 55%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[DMCAcrobotSwingup] PASSED [ 55%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[DMCAcrobotSwingup] PASSED [ 56%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[DMCAcrobotSwingup] PASSED [ 56%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[DMCAcrobotSwingup] PASSED [ 56%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[DMCAcrobotSwingup] PASSED [ 56%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[DMCAcrobotSwingup] PASSED [ 56%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[DMCAcrobotSwingup] PASSED [ 57%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[DMCAcrobotSwingup] PASSED [ 57%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[DMCAcrobotSwingup] PASSED [ 57%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[DMCAcrobotSwingup] SKIPPED [ 57%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[DMCAcrobotSwingup] PASSED [ 58%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[DMCAcrobotSwingup] PASSED [ 58%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCAcrobotSwingup] SKIPPED [ 58%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[DMCAcrobotSwingup] PASSED [ 58%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[DMCAcrobotSwingup] SKIPPED [ 58%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[DMCAcrobotSwingup] PASSED [ 59%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCCartpoleBalance] PASSED [ 59%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCCartpoleBalance] PASSED [ 59%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCCartpoleBalance] SKIPPED [ 59%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[DMCCartpoleBalance] PASSED [ 60%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[DMCCartpoleBalance] PASSED [ 60%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCCartpoleBalance] SKIPPED [ 60%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[DMCCartpoleBalance] PASSED [ 60%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[DMCCartpoleBalance] PASSED [ 60%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[DMCCartpoleBalance] PASSED [ 61%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[DMCCartpoleBalance] PASSED [ 61%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[DMCCartpoleBalance] PASSED [ 61%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[DMCCartpoleBalance] PASSED [ 61%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[DMCCartpoleBalance] PASSED [ 62%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[DMCCartpoleBalance] PASSED [ 62%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[DMCCartpoleBalance] PASSED [ 62%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[DMCCartpoleBalance] PASSED [ 62%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[DMCCartpoleBalance] SKIPPED [ 62%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[DMCCartpoleBalance] PASSED [ 63%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[DMCCartpoleBalance] PASSED [ 63%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCCartpoleBalance] SKIPPED [ 63%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[DMCCartpoleBalance] PASSED [ 63%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[DMCCartpoleBalance] SKIPPED [ 64%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[DMCCartpoleBalance] PASSED [ 64%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCCartpoleSwingup] PASSED [ 64%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCCartpoleSwingup] PASSED [ 64%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCCartpoleSwingup] SKIPPED [ 64%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[DMCCartpoleSwingup] PASSED [ 65%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[DMCCartpoleSwingup] PASSED [ 65%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCCartpoleSwingup] PASSED [ 65%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[DMCCartpoleSwingup] PASSED [ 65%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[DMCCartpoleSwingup] PASSED [ 66%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[DMCCartpoleSwingup] PASSED [ 66%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[DMCCartpoleSwingup] PASSED [ 66%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[DMCCartpoleSwingup] PASSED [ 66%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[DMCCartpoleSwingup] PASSED [ 66%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[DMCCartpoleSwingup] PASSED [ 67%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[DMCCartpoleSwingup] PASSED [ 67%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[DMCCartpoleSwingup] PASSED [ 67%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[DMCCartpoleSwingup] PASSED [ 67%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[DMCCartpoleSwingup] PASSED [ 68%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[DMCCartpoleSwingup] PASSED [ 68%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[DMCCartpoleSwingup] PASSED [ 68%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCCartpoleSwingup] SKIPPED [ 68%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[DMCCartpoleSwingup] PASSED [ 68%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[DMCCartpoleSwingup] SKIPPED [ 69%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[DMCCartpoleSwingup] PASSED [ 69%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCPendulumSwingup] PASSED [ 69%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCPendulumSwingup] PASSED [ 69%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCPendulumSwingup] SKIPPED [ 70%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[DMCPendulumSwingup] PASSED [ 70%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[DMCPendulumSwingup] PASSED [ 70%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCPendulumSwingup] SKIPPED [ 70%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[DMCPendulumSwingup] PASSED [ 70%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[DMCPendulumSwingup] PASSED [ 71%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[DMCPendulumSwingup] PASSED [ 71%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[DMCPendulumSwingup] PASSED [ 71%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[DMCPendulumSwingup] PASSED [ 71%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[DMCPendulumSwingup] PASSED [ 72%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[DMCPendulumSwingup] PASSED [ 72%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[DMCPendulumSwingup] PASSED [ 72%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[DMCPendulumSwingup] PASSED [ 72%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[DMCPendulumSwingup] PASSED [ 72%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[DMCPendulumSwingup] SKIPPED [ 73%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[DMCPendulumSwingup] PASSED [ 73%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[DMCPendulumSwingup] PASSED [ 73%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[DMCPendulumSwingup] SKIPPED [ 73%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[DMCPendulumSwingup] PASSED [ 74%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[DMCPendulumSwingup] SKIPPED [ 74%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[DMCPendulumSwingup] PASSED [ 74%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MountainCar] PASSED [ 74%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MountainCar] PASSED [ 74%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[MountainCar] PASSED [ 75%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MountainCar] PASSED [ 75%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MountainCar] PASSED [ 75%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MountainCar] SKIPPED [ 75%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MountainCar] PASSED [ 76%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MountainCar] PASSED [ 76%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MountainCar] PASSED [ 76%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MountainCar] PASSED [ 76%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MountainCar] PASSED [ 76%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MountainCar] PASSED [ 77%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MountainCar] PASSED [ 77%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MountainCar] PASSED [ 77%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MountainCar] PASSED [ 77%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MountainCar] PASSED [ 78%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MountainCar] SKIPPED [ 78%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MountainCar] PASSED [ 78%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MountainCar] PASSED [ 78%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[MountainCar] SKIPPED [ 78%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MountainCar] PASSED [ 79%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[MountainCar] PASSED [ 79%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MountainCar] PASSED [ 79%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MountainCarContinuous] PASSED [ 79%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MountainCarContinuous] PASSED [ 80%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[MountainCarContinuous] PASSED [ 80%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MountainCarContinuous] PASSED [ 80%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MountainCarContinuous] PASSED [ 80%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MountainCarContinuous] SKIPPED [ 80%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MountainCarContinuous] PASSED [ 81%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MountainCarContinuous] PASSED [ 81%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MountainCarContinuous] PASSED [ 81%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MountainCarContinuous] PASSED [ 81%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MountainCarContinuous] PASSED [ 82%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MountainCarContinuous] PASSED [ 82%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MountainCarContinuous] PASSED [ 82%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MountainCarContinuous] PASSED [ 82%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MountainCarContinuous] PASSED [ 82%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MountainCarContinuous] PASSED [ 83%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MountainCarContinuous] SKIPPED [ 83%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MountainCarContinuous] PASSED [ 83%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MountainCarContinuous] PASSED [ 83%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[MountainCarContinuous] SKIPPED [ 84%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MountainCarContinuous] PASSED [ 84%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[MountainCarContinuous] PASSED [ 84%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MountainCarContinuous] PASSED [ 84%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoInvertedDoublePendulum] PASSED [ 84%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoInvertedDoublePendulum] PASSED [ 85%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[MujocoInvertedDoublePendulum] SKIPPED [ 85%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoInvertedDoublePendulum] PASSED [ 85%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoInvertedDoublePendulum] PASSED [ 85%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoInvertedDoublePendulum] SKIPPED [ 86%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoInvertedDoublePendulum] PASSED [ 86%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoInvertedDoublePendulum] PASSED [ 86%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoInvertedDoublePendulum] PASSED [ 86%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoInvertedDoublePendulum] PASSED [ 86%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoInvertedDoublePendulum] PASSED [ 87%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoInvertedDoublePendulum] PASSED [ 87%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoInvertedDoublePendulum] PASSED [ 87%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoInvertedDoublePendulum] PASSED [ 87%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoInvertedDoublePendulum] PASSED [ 88%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoInvertedDoublePendulum] PASSED [ 88%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoInvertedDoublePendulum] SKIPPED [ 88%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoInvertedDoublePendulum] PASSED [ 88%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoInvertedDoublePendulum] PASSED [ 88%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[MujocoInvertedDoublePendulum] SKIPPED [ 89%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoInvertedDoublePendulum] PASSED [ 89%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[MujocoInvertedDoublePendulum] SKIPPED [ 89%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoInvertedDoublePendulum] PASSED [ 89%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoInvertedPendulum] PASSED [ 90%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoInvertedPendulum] PASSED [ 90%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[MujocoInvertedPendulum] SKIPPED [ 90%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoInvertedPendulum] PASSED [ 90%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoInvertedPendulum] PASSED [ 90%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoInvertedPendulum] SKIPPED [ 91%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoInvertedPendulum] PASSED [ 91%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoInvertedPendulum] PASSED [ 91%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoInvertedPendulum] PASSED [ 91%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoInvertedPendulum] PASSED [ 92%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoInvertedPendulum] PASSED [ 92%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoInvertedPendulum] PASSED [ 92%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoInvertedPendulum] PASSED [ 92%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoInvertedPendulum] PASSED [ 92%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoInvertedPendulum] PASSED [ 93%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoInvertedPendulum] PASSED [ 93%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoInvertedPendulum] SKIPPED [ 93%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoInvertedPendulum] PASSED [ 93%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoInvertedPendulum] PASSED [ 94%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[MujocoInvertedPendulum] SKIPPED [ 94%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoInvertedPendulum] PASSED [ 94%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[MujocoInvertedPendulum] SKIPPED [ 94%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoInvertedPendulum] PASSED [ 94%]
+tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[Pendulum] PASSED [ 95%]
+tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[Pendulum] PASSED [ 95%]
+tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[Pendulum] PASSED [ 95%]
+tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[Pendulum] PASSED [ 95%]
+tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[Pendulum] PASSED [ 96%]
+tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[Pendulum] SKIPPED [ 96%]
+tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[Pendulum] PASSED [ 96%]
+tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[Pendulum] PASSED [ 96%]
+tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[Pendulum] PASSED [ 96%]
+tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[Pendulum] PASSED [ 97%]
+tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[Pendulum] PASSED [ 97%]
+tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[Pendulum] PASSED [ 97%]
+tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[Pendulum] PASSED [ 97%]
+tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[Pendulum] PASSED [ 98%]
+tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[Pendulum] PASSED [ 98%]
+tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[Pendulum] PASSED [ 98%]
+tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[Pendulum] SKIPPED [ 98%]
+tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[Pendulum] PASSED [ 98%]
+tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[Pendulum] PASSED [ 99%]
+tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates_identical_frames[Pendulum] SKIPPED [ 99%]
+tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[Pendulum] PASSED [ 99%]
+tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[Pendulum] PASSED [ 99%]
+tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[Pendulum] PASSED [100%]
+
+=============================== warnings summary ===============================
+../../venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: 122 warnings
+tests/gpu/test_conformance.py: 31482 warnings
+tests/gpu/test_reproducibility.py: 106586 warnings
+  /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    key_item.shape = original_shape
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 13 EGL contexts created, 0 released, 13 live (peak 13); renderers 5 created / 0 closed
+node: gpu2104 slurm=mix reason=none reference-renderer={'env': 'DMCAcrobotSwingup', 'size': 84, 'max_abs_diff': 0}
+= 358 passed, 93 skipped, 2673 deselected, 138190 warnings in 285.48s (0:04:45) =
+Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
