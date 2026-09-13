@@ -91,6 +91,9 @@ def render_torch_baseline(scene, out_size, supersample: int = 1) -> torch.Tensor
 
 
 def random_scene(gen: torch.Generator, device: str):
+    # Always drawn on the CPU and then moved: one generator, one stream of numbers, so
+    # --device cuda fuzzes the SAME scenes the cpu run did rather than a different sample.
+    device_out, device = device, "cpu"
     B = int(torch.randint(1, 5, (1,), generator=gen).item())
     N = int(torch.randint(1, 7, (1,), generator=gen).item())
     V = int(torch.randint(3, 6, (1,), generator=gen).item())
@@ -127,7 +130,7 @@ def random_scene(gen: torch.Generator, device: str):
                    fill=rnd(B, N, 3) * 255, line=rnd(B, N, 3) * 255, line_w=lw,
                    background=rnd(B, 3) * 255, world=world,
                    flip_y=bool(torch.rand(1, generator=gen).item() < 0.5),
-                   static_prefix=0).validate()
+                   static_prefix=0).validate().to(device=torch.device(device_out))
 
 
 def main() -> None:
@@ -137,7 +140,7 @@ def main() -> None:
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--size", type=int, default=24)
     a = ap.parse_args()
-    gen = torch.Generator(device=a.device).manual_seed(a.seed)
+    gen = torch.Generator().manual_seed(a.seed)
     bad = 0
     for c in range(a.cases):
         sc = random_scene(gen, a.device)
