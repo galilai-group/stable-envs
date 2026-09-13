@@ -583,9 +583,15 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
     states = np.asarray(states)
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
     cls = type(env)
-    official = None
+    official, why_ref = None, "no official renderer is declared"
     if getattr(cls, "reference_id", None) and hasattr(cls, "reference_env"):
-        official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
+        try:
+            # through the process-wide cache, never cls.reference_env directly: a reference env bound
+            # to a local here is dropped on return, and for the MuJoCo families that RELEASES an EGL
+            # context while other envs still hold live ones. Same rule the parity test follows.
+            official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
+        except ImportError as e:                      # the package is absent HERE, not broken
+            why_ref = f"the official renderer is not installed in this interpreter ({e})"
 
     out: dict = {"n_states": int(len(states)), "tol": int(PRESENCE_TOL), "objects": {}}
     for path in paths:
@@ -635,7 +641,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
             row["reference_id"] = cls.reference_id
         else:
             row["presence_margin"] = None
-            row["why_no_reference"] = ("no official renderer is declared" if official is None
+            row["why_no_reference"] = (why_ref if official is None
                                        else "the object has an empty footprint on these states")
         out["objects"][path] = row
     return out
