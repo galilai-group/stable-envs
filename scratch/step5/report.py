@@ -81,6 +81,20 @@ FINDINGS: tuple[tuple[str, str, str], ...] = (
      "verified against the task instead, where the checkpoint has a recorded 86% and a random "
      "policy scored 8% on the same episodes.",
      "scratch/step5/remap_lewm.py"),
+    ("MuJoCo 3.12 stopped rendering dm_control's floor texture, and 3.11 renders it",
+     "The cause of the corpus mismatch, isolated: `suite.load('reacher','hard')` rendered under "
+     "mujoco 3.11.0 shows the checkerboard floor the published corpus has; the same model under "
+     "3.12.0 shows a smooth floor. Quadrant contrast 40.68 against 7.49. The texture declaration is "
+     "byte-identical across both -- `builtin=\"checker\"`, 300x300, `texrepeat` [1,1], "
+     "`texuniform` 1, the same `mat_texid` -- so nothing in dm_control, stable_worldmodel or "
+     "stable-envs changed. This is upstream. Consequences: the published corpus is a faithful "
+     "record of a pre-3.12 renderer rather than a corrupted file; our frames match the CURRENT "
+     "reference to 0.104/255; and any downstream arm that regenerates those stored frames is "
+     "measuring the version change. Step 4 recorded that DMCCheetahRun, DMCHopperHop and "
+     "DMCWalkerWalk declared their visual contracts under 3.11 and were measured under 3.12 with "
+     "the residual in the SKYBOX -- also a texture -- so one upstream change may account for three "
+     "of the five frozen Step 4 failures as well. That is a hypothesis under test, not a result.",
+     "examples/results/step6/texture/"),
     ("the corpus and the environment that published it no longer agree",
      "Every re-render of a stored reacher state -- MuJoCo's included -- sits ~18/255 from the "
      "stored frame, with barely half its pixels exact and nothing off by more than 48. The stored "
@@ -217,7 +231,21 @@ def main() -> None:
     def complete(v) -> bool:
         return bool(v) and not ({"official", "stable_envs", "blank"} - set(v.get("arms") or {}))
 
-    verdicts = {k: v["gate_h"]["verdict"]
+    def gate_of(v) -> dict:
+        """The gate that answers "can a world model tell the renderers apart".
+
+        For PushT that is the all-surface arm: its corpus and its environment still agree, so
+        swapping every surface changes only the renderer. For Reacher they do not agree -- MuJoCo
+        3.12 stopped painting a floor texture 3.11 painted, so the published corpus records an older
+        renderer -- and swapping the STORED surfaces additionally replaces stale bytes with current
+        ones. The official_regen control prices that substitution with MuJoCo doing the rendering
+        and finds it costs about the same, so the all-surface arm there is not a renderer test. The
+        live-observation arm is, and it is reported beside the all-surface arm rather than instead
+        of it.
+        """
+        return v.get("gate_h_renderer_arm") or v["gate_h"]
+
+    verdicts = {k: gate_of(v)["verdict"]
                 for k, v in (("PushT", pusht), ("Reacher", reacher)) if complete(v)}
     overall = project_verdict(verdicts)
     A("## The conclusion")
@@ -372,6 +400,12 @@ def main() -> None:
         # _esc escapes the pipes itself; pre-escaping here doubled the backslashes.
         L.extend(_tbl(rows, ["re-render of the stored state", "all exact", "mean |d|",
                              "max |d|", "SSIM"]))
+        A("**The cause is upstream, and it is now isolated.** `suite.load('reacher','hard')` under")
+        A("mujoco **3.11** renders the checkerboard the corpus has; under **3.12** it does not —")
+        A("quadrant contrast 40.68 against 7.49, with a byte-identical texture declaration on both")
+        A("sides. Nothing in dm_control, stable_worldmodel or stable-envs is implicated. See")
+        A("`examples/results/step6/texture/` and the panel in `stored_vs_official_vs_ours.png`.")
+        A("")
         A("**MuJoCo cannot reproduce the corpus either.** `official_default` is the live environment")
         A("rendering the same `qpos` and target position the frame was stored with, and it lands")
         A("18.3/255 away with barely half its pixels exact. Ours lands at 18.5. The contact sheet")
@@ -406,6 +440,22 @@ def main() -> None:
         L.extend(_tbl(rows, ["arm", "successes", "rate", "delta (pts)"]))
         A("The live-surface row is the one that answers Step 5's question for this environment, and")
         A("it is exact rather than approximate: the same episode count, not merely a similar rate.")
+        A("")
+    if reacher and reacher.get("gate_h_renderer_arm"):
+        A("### The renderer arm — the Gate H answer for this environment")
+        A("")
+        A("Only the LIVE observation is ours; the two stored corpus frames are left exactly as the")
+        A("official arm reads them off disk. Nothing but `render()` differs, which is the")
+        A("comparison Gate H describes.")
+        A("")
+        L.extend(gate_block(reacher["gate_h_renderer_arm"], "Arms (live observation surface)"))
+        A("### The all-surface arm — and why it is not the renderer's verdict")
+        A("")
+        A("Reported in full because it fails, and because the reason is worth more than the number.")
+        A("Swapping the two STORED surfaces does not only change the renderer: it replaces frames")
+        A("recorded months ago with frames rendered now. On this environment those are not the same")
+        A("picture — see the corpus section below — and the `official_regen` control prices the")
+        A("substitution with **MuJoCo itself** doing the regenerating.")
         A("")
     if reacher:
         # A gate computed while the campaign is still running is a progress note, not a verdict.

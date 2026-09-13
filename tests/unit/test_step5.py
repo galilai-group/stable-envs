@@ -433,3 +433,22 @@ def test_an_unknown_placement_is_refused_on_either_surface(SW):
     for kwargs in ({"target_mode": "wherever"}, {"dataset_target_mode": "wherever"}):
         with pytest.raises(ValueError):
             SW.Renderer(size=84, mode="blank", **kwargs)
+
+
+def test_the_power_guard_is_about_n_not_about_a_constant(S):
+    """0.19 is the discordance a 300-episode run can resolve -- 3.8416*0.19/0.05^2 = 292 -- not a
+    universal ceiling. Comparing against it at any n turns a powered FAIL into an INCONCLUSIVE,
+    which is the comfortable answer rather than the true one."""
+    off, ours = _arms(600, 132, 78)                      # discordance 0.35, required n = 538
+    g = S.gate_h(off, ours, [0] * 600, seeds=[i // 50 for i in range(600)], per_seed_n=[50] * 12)
+    assert g["power_guard"]["required_n"] == 538
+    assert g["power_guard"]["underpowered"] is False, "600 >= 538 is powered"
+    assert g["verdict"] == "FAIL"
+
+
+def test_the_same_discordance_at_half_the_episodes_is_underpowered(S):
+    """The identical effect at n=300 cannot resolve the margin, and must not be called a failure."""
+    off, ours = _arms(300, 66, 39)
+    g = S.gate_h(off, ours, [0] * 300, seeds=[i // 50 for i in range(300)], per_seed_n=[50] * 6)
+    assert g["power_guard"]["underpowered"] is True
+    assert g["verdict"] == "INCONCLUSIVE"

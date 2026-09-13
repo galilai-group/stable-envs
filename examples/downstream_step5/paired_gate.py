@@ -171,8 +171,28 @@ def main() -> None:
         secondary[a] = ({"error": "not aligned with official"} if (ss, se) != (os_, oe)
                         else {"arm": S.arm(sa), "paired": S.paired(oa, sa), "seeds": sorted(set(ss))})
 
+    # THE RENDERER ARM, gated in its own right.
+    #
+    # `stable_envs` swaps all three pixel surfaces, and on this environment that changes more than
+    # render(): two of the three are STORED corpus frames, so swapping them also replaces
+    # months-old bytes with freshly rendered ones. The official_regen control measures that
+    # substitution with MuJoCo doing the rendering and finds it costs about the same, so the
+    # all-surface arm is not a clean test of the rasteriser. The live-observation arm is, and it
+    # gets the same frozen rule applied to it rather than being demoted to a footnote.
+    gate_live = None
+    xl, sl, el = series(rows, "stable_envs_live")
+    if xl:
+        seeds_l = sorted({s for s in sl})
+        ol, osl, oel = series(rows, "official", seeds=seeds_l)
+        if (sl, el) == (osl, oel):
+            cl, cs2, ce2 = series(rows, args.control, seeds=seeds_l)
+            oc2, ocs2, oce2 = series(rows, "official", seeds=sorted({s for s in cs2}))
+            gate_live = S.gate_h(ol, xl, cl if (cs2, ce2) == (ocs2, oce2) else None,
+                                 seeds=sl, per_seed_n=[sl.count(sd) for sd in seeds_l])
+
     out = {
         "env": runs[0]["env"], "task": runs[0].get("task"),
+        "gate_h_renderer_arm": gate_live,
         "model_family": runs[0].get("model_family"),
         "arms": {a: sum(1 for r in rows if r["arm"] == a) for a in sorted({r["arm"] for r in rows})},
         "comparability": comp,

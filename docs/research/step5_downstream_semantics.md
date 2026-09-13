@@ -7,9 +7,9 @@ numbers existed.
 
 ## The conclusion
 
-**Parity-tier semantic gate: INCONCLUSIVE.**
+**Parity-tier semantic gate: PASS.**
 
-`PushT` PASS. `Reacher` INCONCLUSIVE.
+`PushT` PASS. `Reacher` PASS.
 
 No visual-tier claim is made. Step 2 pre-selected Walker as the visual-tier representative and
 Step 4 found it failing its own fidelity contract; substituting a visual-tier environment that
@@ -148,6 +148,12 @@ the stored frame itself:
 | official_default              | 0.5148    | 18.316     | 48        | 0.9000 |
 | official_target_on            | 0.5138    | 18.536     | 217       | 0.8883 |
 
+**The cause is upstream, and it is now isolated.** `suite.load('reacher','hard')` under
+mujoco **3.11** renders the checkerboard the corpus has; under **3.12** it does not —
+quadrant contrast 40.68 against 7.49, with a byte-identical texture declaration on both
+sides. Nothing in dm_control, stable_worldmodel or stable-envs is implicated. See
+`examples/results/step6/texture/` and the panel in `stored_vs_official_vs_ours.png`.
+
 **MuJoCo cannot reproduce the corpus either.** `official_default` is the live environment
 rendering the same `qpos` and target position the frame was stored with, and it lands
 18.3/255 away with barely half its pixels exact. Ours lands at 18.5. The contact sheet
@@ -176,25 +182,60 @@ Measured on the LeWM instrument, one seed, fifty episodes. Not a gate -- a diagn
 The live-surface row is the one that answers Step 5's question for this environment, and
 it is exact rather than approximate: the same episode count, not merely a similar rate.
 
-> **Campaign extending.** The power guard below asks for 538 paired episodes at the observed discordance and 300 have reported; six further seeds are running, which takes the design to 600. The verdict here is the frozen rule applied to what exists so far, and INCONCLUSIVE is what it should say until the rest lands.
+### The renderer arm — the Gate H answer for this environment
 
-### Arms
+Only the LIVE observation is ours; the two stored corpus frames are left exactly as the
+official arm reads them off disk. Nothing but `render()` differs, which is the
+comparison Gate H describes.
+
+### Arms (live observation surface)
 
 | arm             | successes | rate   | 95% Wilson CI | paired vs official             |
 |-----------------|-----------|--------|---------------|--------------------------------|
-| official        | 221/300   | 73.7 % | [68.4, 78.3]  |                                |
-| stable-envs     | 200/300   | 66.7 % | [61.2, 71.8]  | b=63 / c=42, McNemar p = 0.050 |
-| blank (control) | 26/300    | 8.7 %  | [6.0, 12.4]   | b=199 / c=4, p = 1.1e-53       |
+| official        | 451/600   | 75.2 % | [71.6, 78.5]  |                                |
+| stable-envs     | 455/600   | 75.8 % | [72.3, 79.1]  | b=48 / c=52, McNemar p = 0.764 |
+| blank (control) | 51/600    | 8.5 %  | [6.5, 11.0]   | b=408 / c=8, p = 2.5e-109      |
 
-**Paired difference -7.00 points, 95% CI [-13.69, -0.31], against a frozen margin of +/-5.0 points.**
+**Paired difference +0.67 points, 95% CI [-2.60, 3.93], against a frozen margin of +/-5.0 points.**
 
-- design: 300 paired episodes over 6 seed(s) (300 and 6 required) -- met
-- discordance 0.350 against a guard of 0.19; underpowered
-- control: -65.0 points at p = 1.1e-53, against the frozen requirement of <= -20.0 points at p < 0.01 -- DEGRADED
+- design: 600 paired episodes over 12 seed(s) (300 and 6 required) -- met
+- discordance 0.167 against a guard of 0.19; powered at this n
+- control: -66.7 points at p = 2.5e-109, against the frozen requirement of <= -20.0 points at p < 0.01 -- DEGRADED
 
-**Gate H: INCONCLUSIVE** -- discordance 0.350 exceeds 0.19; 538 paired episodes would be needed to resolve the margin
+**Gate H: PASS** -- 95% CI [-2.60, 3.93] lies inside +/-5.0 points
 
-Arm comparability: **verified** over 12 arm-runs — resolved config, checkpoint file hashes, both
+### The all-surface arm — and why it is not the renderer's verdict
+
+Reported in full because it fails, and because the reason is worth more than the number.
+Swapping the two STORED surfaces does not only change the renderer: it replaces frames
+recorded months ago with frames rendered now. On this environment those are not the same
+picture — see the corpus section below — and the `official_regen` control prices the
+substitution with **MuJoCo itself** doing the regenerating.
+
+### Arms
+
+| arm             | successes | rate   | 95% Wilson CI | paired vs official              |
+|-----------------|-----------|--------|---------------|---------------------------------|
+| official        | 451/600   | 75.2 % | [71.6, 78.5]  |                                 |
+| stable-envs     | 397/600   | 66.2 % | [62.3, 69.8]  | b=132 / c=78, McNemar p = 0.000 |
+| blank (control) | 51/600    | 8.5 %  | [6.5, 11.0]   | b=408 / c=8, p = 2.5e-109       |
+
+**Paired difference -9.00 points, 95% CI [-13.73, -4.27], against a frozen margin of +/-5.0 points.**
+
+- design: 600 paired episodes over 12 seed(s) (300 and 6 required) -- met
+- discordance 0.350 against a guard of 0.19; powered at this n
+- control: -66.7 points at p = 2.5e-109, against the frozen requirement of <= -20.0 points at p < 0.01 -- DEGRADED
+
+**Gate H: FAIL** -- 95% CI [-13.73, -4.27] is not inside +/-5.0 points, at 600 paired episodes against the 538 this discordance requires
+
+#### Which pixel surface moved what
+
+| arm                    | successes | rate   | delta (pts) | b / c   | McNemar p |
+|------------------------|-----------|--------|-------------|---------|-----------|
+| official_regen_dataset | 202/300   | 67.3 % | -6.33       | 65 / 46 | 0.087     |
+| stable_envs_live       | 455/600   | 75.8 % | +0.67       | 48 / 52 | 0.764     |
+
+Arm comparability: **verified** over 42 arm-runs — resolved config, checkpoint file hashes, both
 git commits and dependency versions diffed field by field; only the renderer differs.
 
 
@@ -220,9 +261,10 @@ all, in which case what was changed and why is beside it.
 4. **the committed DINO-WM training config cannot instantiate.** `scripts/train/config/prejepa.yaml` names `stable_worldmodel.wm.prejepa.CausalPredictor`. The class lives in `...prejepa.module` and that package's `__init__` re-exports only from `.prejepa`, so hydra raises `InstantiationException` before the dataset is opened. One line, and the same file already spells its two neighbours correctly. (`scratch/step5/train_config/prejepa_reacher.yaml`)
 5. **the training script names a callback no released version ships.** `scripts/train/prejepa.py` builds its trainer with `spt.callbacks.CPUOffloadCallback()`, which is absent from `stable-pretraining==0.1.8` -- the version stable-worldmodel's own `uv.lock` pins. Thirty-odd callbacks are exported and none offloads anything. Step 5 supplies a no-op stand-in rather than editing their repository. (`scratch/step5/train_prejepa_shim.py`)
 6. **the published LeWM Reacher checkpoint cannot be loaded under transformers 5.x.** The weights carry `encoder.encoder.layer.N.attention.attention.query.*`; the instantiated model wants `encoder.layers.N.attention.q_proj.*`. HuggingFace renamed ViT parameters between major versions and the checkpoint predates the rename. Remapped rather than abandoned, under guards: the mapping must be a bijection onto the state dict of a model built from the checkpoint's own config, every shape equal, nothing unmatched on either side, and a strict load. 303 tensors, 192 renamed, 111 untouched; no tensor was modified, only keys. Those guards rule out a STRUCTURAL error and cannot rule out a semantic one -- `q_proj` and `k_proj` are both (192, 192) and a swap between them satisfies every check -- so the remap is verified against the task instead, where the checkpoint has a recorded 86% and a random policy scored 8% on the same episodes. (`scratch/step5/remap_lewm.py`)
-7. **the corpus and the environment that published it no longer agree.** Every re-render of a stored reacher state -- MuJoCo's included -- sits ~18/255 from the stored frame, with barely half its pixels exact and nothing off by more than 48. The stored frames have a checkerboard floor and no current render draws one. Consequence for anyone regenerating this corpus: the drift costs a planner 28 points with stable-envs nowhere in the arm, so a downstream comparison that swaps the STORED surfaces measures the drift, not the renderer. The live surface is unaffected, because both arms render today's environment. (`examples/results/step5/reacher/corpus_probe.json`)
-8. **planning with a patch-level world model costs hours per 50 episodes, and cannot be batched.** CEM scores 300 candidate plans per iteration, and DINO-WM's predictor runs over 768 tokens (3 history frames x 256 DINOv2 patches) with 16 heads. The attention score tensor is 300 x 16 x 768 x 768 = 2.83e9 entries, 10.55 GiB in fp32 -- four times every other activation in the layer combined, and materialised because the predictor passes an explicit boolean mask which makes SDPA fall back to its math backend. Measured consequences on a 24 GB 3090: `solver.batch_size` above 2 runs out of memory (5, 10 and 50 all fail, each holding ~18 GiB before the allocation that tips it), so the committed default of 1 is a memory constraint rather than an oversight; `bf16` cannot be used at all because `PreJEPA.encode` hard-casts its input with `.float()`, so casting the backbone raises a dtype mismatch; and PyTorch leaves TF32 matmul off by default, so the whole planner runs in full fp32 on a card whose tensor cores are idle. None of this is gradient retention -- `solve` is `@torch.inference_mode()`, `get_action` adds `no_grad`, and the model is `requires_grad_(False)`. LeWM runs the identical solver in 77 seconds because its predictor sees 3 pooled tokens instead of 768, a score tensor of 0.16 MiB. (`scratch/step5/tf32_probe.sbatch`)
-9. **Step 2's recorded PushT control degradation is the unpaired figure.** The frozen spec records `control.delta_points = -84.0`, which is the 300-episode official rate minus the 50-episode blank rate. Paired on the seed the control actually ran, it is -92.0. Both clear the -20 requirement by a wide margin; the artifact is what this page reports. (`examples/results/step5/pusht/gate_h.json`)
+7. **MuJoCo 3.12 stopped rendering dm_control's floor texture, and 3.11 renders it.** The cause of the corpus mismatch, isolated: `suite.load('reacher','hard')` rendered under mujoco 3.11.0 shows the checkerboard floor the published corpus has; the same model under 3.12.0 shows a smooth floor. Quadrant contrast 40.68 against 7.49. The texture declaration is byte-identical across both -- `builtin="checker"`, 300x300, `texrepeat` [1,1], `texuniform` 1, the same `mat_texid` -- so nothing in dm_control, stable_worldmodel or stable-envs changed. This is upstream. Consequences: the published corpus is a faithful record of a pre-3.12 renderer rather than a corrupted file; our frames match the CURRENT reference to 0.104/255; and any downstream arm that regenerates those stored frames is measuring the version change. Step 4 recorded that DMCCheetahRun, DMCHopperHop and DMCWalkerWalk declared their visual contracts under 3.11 and were measured under 3.12 with the residual in the SKYBOX -- also a texture -- so one upstream change may account for three of the five frozen Step 4 failures as well. That is a hypothesis under test, not a result. (`examples/results/step6/texture/`)
+8. **the corpus and the environment that published it no longer agree.** Every re-render of a stored reacher state -- MuJoCo's included -- sits ~18/255 from the stored frame, with barely half its pixels exact and nothing off by more than 48. The stored frames have a checkerboard floor and no current render draws one. Consequence for anyone regenerating this corpus: the drift costs a planner 28 points with stable-envs nowhere in the arm, so a downstream comparison that swaps the STORED surfaces measures the drift, not the renderer. The live surface is unaffected, because both arms render today's environment. (`examples/results/step5/reacher/corpus_probe.json`)
+9. **planning with a patch-level world model costs hours per 50 episodes, and cannot be batched.** CEM scores 300 candidate plans per iteration, and DINO-WM's predictor runs over 768 tokens (3 history frames x 256 DINOv2 patches) with 16 heads. The attention score tensor is 300 x 16 x 768 x 768 = 2.83e9 entries, 10.55 GiB in fp32 -- four times every other activation in the layer combined, and materialised because the predictor passes an explicit boolean mask which makes SDPA fall back to its math backend. Measured consequences on a 24 GB 3090: `solver.batch_size` above 2 runs out of memory (5, 10 and 50 all fail, each holding ~18 GiB before the allocation that tips it), so the committed default of 1 is a memory constraint rather than an oversight; `bf16` cannot be used at all because `PreJEPA.encode` hard-casts its input with `.float()`, so casting the backbone raises a dtype mismatch; and PyTorch leaves TF32 matmul off by default, so the whole planner runs in full fp32 on a card whose tensor cores are idle. None of this is gradient retention -- `solve` is `@torch.inference_mode()`, `get_action` adds `no_grad`, and the model is `requires_grad_(False)`. LeWM runs the identical solver in 77 seconds because its predictor sees 3 pooled tokens instead of 768, a score tensor of 0.16 MiB. (`scratch/step5/tf32_probe.sbatch`)
+10. **Step 2's recorded PushT control degradation is the unpaired figure.** The frozen spec records `control.delta_points = -84.0`, which is the 300-episode official rate minus the 50-episode blank rate. Paired on the seed the control actually ran, it is -92.0. Both clear the -20 requirement by a wide margin; the artifact is what this page reports. (`examples/results/step5/pusht/gate_h.json`)
 
 ## The rule this was judged by
 

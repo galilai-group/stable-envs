@@ -138,12 +138,19 @@ def gate_h(official: list[int], ours: list[int], control: list[int] | None,
                              and cp["mcnemar_p"] < SPEC["control_max_p"]),
         }
 
-    underpowered = eq["discordance"] > SPEC["power_guard"]["max_discordance_at_n300"]
+    # The guard is about whether THIS n can resolve the margin at THIS discordance, which is what
+    # `required_n_formula` computes. `max_discordance_at_n300` is, by its own name, the ceiling for
+    # a 300-episode run -- 3.8416 * 0.19 / 0.05^2 = 292, i.e. it IS that formula evaluated at 300.
+    # Testing discordance against it regardless of n turns an adequately powered FAIL at n=600 into
+    # an INCONCLUSIVE, which is the comfortable answer rather than the true one.
+    required = eq["required_n_for_margin"]
+    underpowered = eq["n"] < required
     out["power_guard"] = {
         "max_discordance_at_n300": SPEC["power_guard"]["max_discordance_at_n300"],
         "observed_discordance": eq["discordance"],
         "underpowered": bool(underpowered),
-        "required_n": eq["required_n_for_margin"],
+        "required_n": required,
+        "n": eq["n"],
     }
 
     if not out["control"]["degraded"]:
@@ -158,11 +165,12 @@ def gate_h(official: list[int], ours: list[int], control: list[int] | None,
             f"+/-{SPEC['equivalence_margin_points']} points")
     elif underpowered:
         verdict, why = "INCONCLUSIVE", (
-            f"discordance {eq['discordance']:.3f} exceeds {SPEC['power_guard']['max_discordance_at_n300']}; "
-            f"{eq['required_n_for_margin']} paired episodes would be needed to resolve the margin")
+            f"discordance {eq['discordance']:.3f} needs {required} paired episodes to resolve a "
+            f"+/-{SPEC['equivalence_margin_points']} point margin and {eq['n']} were run")
     else:
         verdict, why = "FAIL", (
             f"95% CI [{eq['ci'][0]:.2f}, {eq['ci'][1]:.2f}] is not inside "
-            f"+/-{SPEC['equivalence_margin_points']} points")
+            f"+/-{SPEC['equivalence_margin_points']} points, at {eq['n']} paired episodes against "
+            f"the {required} this discordance requires")
     out["verdict"], out["verdict_reason"] = verdict, why
     return out

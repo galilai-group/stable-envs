@@ -1,0 +1,269 @@
+{
+  "env": "swm/ReacherDMControl-v0",
+  "task": "qpos_match",
+  "model_family": "prejepa",
+  "arm": "official_regen",
+  "renderer_target_mode": null,
+  "renderer_dataset_target_mode": null,
+  "renderer_surfaces": "dataset",
+  "tf32": false,
+  "seed": 46,
+  "num_eval": 50,
+  "success_rate": 57.99999999999999,
+  "episode_successes": [
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "episodes_idx": [
+    70,
+    551,
+    664,
+    772,
+    849,
+    1050,
+    1377,
+    1626,
+    1811,
+    2193,
+    2346,
+    2379,
+    2469,
+    2489,
+    2516,
+    2677,
+    2725,
+    3228,
+    3260,
+    3437,
+    3900,
+    4590,
+    4991,
+    5026,
+    5114,
+    5150,
+    5492,
+    5721,
+    6218,
+    6236,
+    6292,
+    6382,
+    7253,
+    7303,
+    7484,
+    7662,
+    7728,
+    7753,
+    7755,
+    7857,
+    7948,
+    8023,
+    8085,
+    8429,
+    8716,
+    8804,
+    9055,
+    9311,
+    9340,
+    9638
+  ],
+  "start_steps": [
+    125,
+    125,
+    121,
+    43,
+    79,
+    102,
+    90,
+    68,
+    3,
+    151,
+    108,
+    143,
+    153,
+    112,
+    147,
+    25,
+    110,
+    144,
+    152,
+    141,
+    161,
+    22,
+    68,
+    20,
+    59,
+    59,
+    66,
+    38,
+    62,
+    105,
+    29,
+    163,
+    128,
+    88,
+    166,
+    158,
+    166,
+    119,
+    99,
+    26,
+    165,
+    12,
+    73,
+    42,
+    163,
+    135,
+    139,
+    20,
+    11,
+    153
+  ],
+  "goal_offset": 25,
+  "eval_budget": 50,
+  "eval_seconds": 11381.240185499191,
+  "render_calls": {
+    "live": 0,
+    "dataset": 2
+  },
+  "config": {
+    "cache_dir": null,
+    "solver": {
+      "_target_": "stable_worldmodel.solver.CEMSolver",
+      "model": "???",
+      "batch_size": 1,
+      "num_samples": 300,
+      "var_scale": 1.0,
+      "n_steps": 30,
+      "topk": 30,
+      "device": "cuda",
+      "seed": 46
+    },
+    "world": {
+      "env_name": "swm/ReacherDMControl-v0",
+      "num_envs": 50,
+      "max_episode_steps": 100,
+      "task": "qpos_match"
+    },
+    "dataset": {
+      "stats": "dmc/reacher_random.h5",
+      "keys_to_cache": [
+        "action"
+      ]
+    },
+    "seed": 46,
+    "policy": "reacher/prejepa/weights_epoch_3.pt",
+    "plan_config": {
+      "horizon": 5,
+      "receding_horizon": 5,
+      "action_block": 5
+    },
+    "eval": {
+      "num_eval": 50,
+      "goal_offset_steps": 25,
+      "eval_budget": 50,
+      "img_size": 224,
+      "dataset_name": "dmc/reacher_random.h5",
+      "callables": [
+        {
+          "method": "set_state",
+          "args": {
+            "qpos": {
+              "value": "qpos"
+            },
+            "qvel": {
+              "value": "qvel"
+            }
+          }
+        },
+        {
+          "method": "set_target_qpos",
+          "args": {
+            "target_qpos": {
+              "value": "goal_qpos"
+            }
+          }
+        }
+      ]
+    },
+    "output": {
+      "filename": "dmc_results.txt"
+    }
+  },
+  "provenance": {
+    "stable_envs_commit": "d148f1a582d9ae9062112049a8c20fd00a9bde7b",
+    "stable_worldmodel_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+    "checkpoint": {
+      "policy": "reacher/prejepa/weights_epoch_3.pt",
+      "dir": "/oscar/scratch/sboughan/.stable_worldmodel/checkpoints/reacher/prejepa/weights_epoch_3.pt",
+      "files": {
+        "weights_epoch_3.pt": {
+          "bytes": 181288119,
+          "sha256": "17c55ffe3290ef39"
+        }
+      }
+    },
+    "versions": {
+      "torch": "2.14.0+cu126",
+      "torchvision": "0.29.0+cu126",
+      "mujoco": "3.12.0",
+      "dm-control": "1.0.45",
+      "stable-worldmodel": "0.0.6",
+      "stable-pretraining": "0.1.8",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.0",
+      "hydra-core": "1.3.6"
+    },
+    "host": "gpu2116.oscar.ccv.brown.edu",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "slurm_job": "6275042",
+    "mujoco_gl": "egl"
+  }
+}
