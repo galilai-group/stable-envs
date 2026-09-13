@@ -5,8 +5,11 @@ decision is (§8, §10).
 
 - Baseline SHA: `89fa5ca81341dc4df7186ec325cb691431a2ef17` (`sami/pre-step6-baseline`)
 - Branch: `step6/texture-fidelity` (HEAD = the commit carrying this file)
-- Authorization: diagnosis only. **Nothing under `stable_envs/` was modified.** Only scripts under
-  `scratch/step6/texture-fidelity/` and artifacts under `examples/results/step6/texture-fidelity/`.
+- The diagnosis (this part, commit `60f81ac`) modified nothing under `stable_envs/`: only scripts under
+  `scratch/step6/texture-fidelity/` and artifacts under `examples/results/step6/texture-fidelity/`. The
+  TEXTURE-2 follow-up below (authorized afterwards) changes four library files -- `stable_envs/core/env.py`,
+  `stable_envs/envs/dmcontrol.py`, `stable_envs/testing/provenance.py` (new), `stable_envs/testing/conformance.py`
+  -- plus `examples/fidelity_step4.py` and `scratch/step4/certify.py`; no renderer pixel and no threshold number.
 
 ## Verdict in one paragraph
 
@@ -18,14 +21,15 @@ anchored to the bottom-left corner instead of the center. This will cause the mo
 common procedural checker textures will be phase shifted."*). `mujoco_warp` — the renderer stable-envs draws
 these scenes with — implements the pre-3.12 mapping in both 3.11.0 and 3.12.0 (`sample_texture`, PLANE branch,
 byte-identical across the two releases; its own comment says it replicates `render_gl3.c settexture`), and our
-frames are pixel-identical across the two arms (mean |diff| 0.000). The compiled texture bytes, the material
+frames agree across the two arms to within mujoco_warp's run-to-run noise (mean |diff| 0.0001-0.0003/255, 99.98%
+of pixels exact, max 1 level except one pixel). The compiled texture bytes, the material
 table, the suite XMLs and dm_control's render engine are identical across the two versions. Replaying the
 frozen Step-4 corpora under the declaration's own stack (mujoco 3.11.0 + dm_control 1.0.44 + mujoco-warp
 3.11.0, RTX 3090) puts all three back inside their declared numbers — cheetah 4.99 / 0.882 / 0.661 against a
 declared 5.01 / 0.882 / 0.661 — and replaying under 3.12 on two different 3090 nodes reproduces Step 4's
 failure to 0.03/255. Per surface, the skybox residual is the same under both versions (4.0–4.2/255, 91–92%
-within 8: exactly what the declaration's note measured), and the floor goes from 5–12/255 under 3.11 to 19–33
-under 3.12. The three failing domains are the ones whose floor plane shifts by a non-integer number of checker
+within 8: exactly what the declaration's note measured; the reference's own skybox moves by only 0.01–0.06/255
+between versions, on ~1% of its pixels), and the floor goes from 5–12/255 under 3.11 to 19–33 under 3.12. The three failing domains are the ones whose floor plane shifts by a non-integer number of checker
 periods (long thin planes, half-width 0.8–1.0); the control `DMCHumanoidStand` has a square 100×100 floor,
 shifts by whole periods, and passes under both. `check_resolution_consistency` is a separate, smaller finding:
 that check never reads the reference, gives the same number under both MuJoCo versions, reproduces its
@@ -64,7 +68,7 @@ inside both Oscar arms (`localize*/localize.json` → `textures`; `cross.json` �
 | dm_control `mujoco/engine.py` (the `physics.render` path) | 1.0.44 | **byte-identical** in 1.0.45 |
 | segmentation buffer at the frozen states (which pixel is sky / floor / body) | — | **identical** across arms |
 | `mujoco_warp/_src/render.py::sample_texture` PLANE branch (`uv = (0.5·x, −0.5·y)`, offset −0.5, `× texrepeat`; comment: "Replicate MuJoCo's OBJECT_PLANE texgen … render_gl3.c settexture") | 3.11.0 | **identical** in 3.12.0 (the only 3.11→3.12 diff in `render.py` is the Gaussian-splat path) |
-| our frames (mujoco_warp 3.11 vs 3.12, same node) | — | mean 0.000, 99.98% exact (the residual is mujoco_warp's known run-to-run 1-level noise) |
+| our frames (mujoco_warp 3.11 vs 3.12, same node) | — | mean 0.00009–0.00026/255, 99.98–99.99% exact, max 1 level (one pixel at 24 on humanoid's check draw) — mujoco_warp's run-to-run noise, not a version effect (§5) |
 | MuJoCo classic renderer, finite-plane texture mapping | GL texgen, centred | **explicit texcoords anchored bottom-left** (3.12.0 item 15, `cc7fb98c`) |
 | official frames (3.11 vs 3.12, same node, frozen states) | — | cheetah 1.99, hopper 2.41, walker 10.02, humanoid 0.79 /255 — all of it floor (§5) |
 
@@ -149,15 +153,24 @@ frame and carries ~4/255 everywhere, in both arms); the *change* since the decla
 
 | config | official 3.11 vs 3.12: whole / skybox / floor / bodies | ours 3.11 vs 3.12 | ours(3.11) vs official(3.12) |
 |---|---|---|---|
-| DMCCheetahRun | 1.99 / **0.04** / **14.75** / 0.16 | 0.000 | 6.51 (= arm 3.12) |
-| DMCHopperHop | 2.41 / **0.02** / **16.90** / 0.09 | 0.000 | 6.55 |
-| DMCWalkerWalk | 10.02 / **0.04** / **25.21** / 0.70 | 0.000 | 15.95 |
-| DMCHumanoidStand | 0.79 / — / 0.82 / 0.10 | 0.000 | 6.33 |
+| DMCCheetahRun | 1.99 / **0.04** (1.2% of sky pixels, max 12) / **14.75** / 0.16 | 0.00018, 99.98% exact, max 1 | 6.51 (= arm 3.12) |
+| DMCHopperHop | 2.41 / **0.02** (0.8%, max 4) / **16.90** / 0.09 | 0.00011, 99.99%, max 1 | 6.55 |
+| DMCWalkerWalk | 10.02 / **0.04** (1.1%, max 17) / **25.21** / 0.70 | 0.00016, 99.98%, max 1 | 15.95 |
+| DMCHumanoidStand | 0.79 / — / 0.82 / 0.10 | 0.00019, 99.98%, max 1 (check draw: max 24, one pixel) | 6.33 |
 
-The reference's skybox does not move between versions; its floor moves by 15–25/255 on the three failing
-domains and by 0.8 on the control, and the sheets (`cross/*_cross.png`, `local/official_3110_vs_3120_appleGL.png`)
-show the checker's light and dark cells swapped with only the `mark="edge"` lines staying put. Our renderer
-draws the same frame under both. The Apple-GL run of the same comparison (`local/official_drift_frozen_corpus_appleGL.json`)
+The reference's skybox moves by 0.01–0.06/255 between versions (about 1% of its pixels, by up to 17 levels —
+speck edges, not the gradient); its floor moves by 15–25/255 on the three failing domains and by 0.8 on the
+control, and the sheets (`cross/*_cross.png`, `local/official_3110_vs_3120_appleGL.png`) show the checker's
+light and dark cells swapped with only the `mark="edge"` lines staying put. Our renderer draws the same
+picture under both to within its own run-to-run noise.
+
+**`digest_ours` is not run-to-run reproducible for these five cells.** The oracle digest differs between every
+run of the same frozen corpus: Step 4's `1fc511ea…` (cheetah, gpu2105, 3.12), this work's `d314a7ea…`
+(gpu2108 and gpu2113, 3.12 — identical to each other only within the same job) and `7430abd1…` (3.11); the
+per-pixel difference is 1–2 pixels in 10,000 by one level, the same non-bit-reproducibility of
+`mujoco_warp`'s batched render that `stable_envs/envs/humanoidbench.py` documents. Consequence: for the five
+visual-tier DMC cells the digest cannot serve as a regression detector, and `check_visual_fidelity` (plus the
+self-consistency checks) is the sole gating detector — which is why its reference-version provenance matters. The Apple-GL run of the same comparison (`local/official_drift_frozen_corpus_appleGL.json`)
 gives the same split (floor carries 97.7–99.6% of the drift; skybox 0.01–0.06), so this is a property of
 libmujoco, not of one GL driver.
 
@@ -269,8 +282,10 @@ Blockers: none remaining. The 3.11 arm cost one extra job because the `se-vis311
 
 Artifacts (`examples/results/step6/texture-fidelity/`): `gate.json` (frozen bounds applied per arm),
 `visual311/`, `visual312/` (replay shards + `comparisons/*.png`), `localize311/`, `localize312/`,
-`localize312_nolightspec/` (per-surface JSON + `sheets/*.png`; the `frames/*.npz` stacks stay on Oscar and
-in the local worktree, not committed), `cross/` (same-card cross-arm JSON + sheets), `resprobe311.json`,
+`localize312_nolightspec/` (per-surface JSON + `sheets/*.png`; the 3 × 4.6 MB `frames/*.npz` stacks are
+deliberately untracked — regenerate with `scratch/step6/texture-fidelity/arms_rerun.sbatch`, or
+`localize.py --configs <ids> --out <dir>` under either venv, ~10 s per config), `cross/` (same-card cross-arm
+JSON + sheets), `resprobe311.json`,
 `resprobe312.json`, `local/` (Mac evidence: texture-byte digests, official drift on the frozen corpus,
 reset-frame probes, side-by-side sheet). Scripts (`scratch/step6/texture-fidelity/`):
 `visual311_normgpu.sbatch`, `arms_rerun.sbatch`, `resprobe.sbatch`, `localize.py`, `cross.py`, `gate.py`,
@@ -280,3 +295,112 @@ Report-format items not covered above: profile-before — not applicable (diagno
 claim); intervention — none implemented; tests run — none needed for a no-code-change finding (the replay
 harness is `examples/fidelity_step4.py` itself, run under both arms); Step-4 replay — done (§4); tiers
 before/after — unchanged; pixels changed — no; semantic follow-up — none (no renderer change).
+
+---
+
+# TEXTURE-2 follow-up (authorized by the coordinator after the FINDING above; revised after review)
+
+**Classification: PATCH** (provenance and certifier machinery only; renderer pixels and every threshold
+number untouched). Branch `step6/texture-fidelity`; commits on top of the FINDING commit `60f81ac`, in order:
+
+| commit | item | what |
+|---|---|---|
+| `8682223` | 1 | `stable_envs/core/env.py`: `REFERENCE_VERSIONS_KEY = "reference_versions"`, `reference_versions_of(cls)` (visual_fidelity's entry overrides the class attribute), shape validation in `check_fidelity_declaration` for both tiers, a `reference_versions` class attribute for the parity tier, published by `describe()`. `stable_envs/envs/dmcontrol.py`: the field populated from the `_AT` / `_SWIMMER_AT` text; `measured_at` unchanged. |
+| `83a27de` | 2 | `stable_envs/testing/provenance.py` (library): `reference_version_mismatch`, `block_on_reference_mismatch`, `REFERENCE_JUDGED_CHECKS` = parity / visual / visual-under-variation; an unrecorded or `"present"` version cannot confirm a match. `scratch/step4/certify.py`: `verdict(row, J, provenance)` applies it — `blocked_environment` with `reference_version_mismatch`, `declared_reference_versions`, `recorded_reference_packages`, `judged_against_wrong_reference` (the verdict it would have received); the observed numbers are kept. `examples/fidelity_step4.py`: declaration evidence carries `reference_versions`; `reference_packages` records distribution versions via `importlib.metadata` (dm_control was `"present"`). `stable_envs/testing/gate.py` is the exclusion list, not the certifier — untouched. |
+| review 1 | 1 | `reference_versions` names the **reference side only**: `{"mujoco": "3.11.0"}` (dm_control deliberately absent — `_AT` names no dm_control version). Our renderer's versions moved to a new, validated, **never compared** `measured_with` field (`MEASURED_WITH_KEY`): `{"mujoco_warp": "3.11.0"}`, swimmer `{"warp": "1.16.0"}`. Test: no declared reference version may name a package on our side (`mujoco_warp`, `warp`, `nvdiffrast`, `torch`, `triton`). |
+| review 2 | 2 | `certify.py` reads the versions with `reference_versions_of`'s precedence (visual_fidelity over class attribute); test added. |
+| review 7 | 3 | `fidelity_step4.provenance()` records the SHA from `STABLE_ENVS_GIT_COMMIT` / a `GIT_COMMIT` file when the copy is not a checkout, with `git_commit_source`; `certify_arms.sbatch` stamps it. The record below carries `git_commit 5fefffea…` where Step 4's carried `null`. |
+| record | 3 | `certify311/`, `certify312/` (each: `conformance/dmc.json`, `merged.json`, `certification.json`, `report.md`), `downsample_all/` (the 18-config table for item 4), this section. **Independent of the downsample-protocol commit**, which comes last. |
+| last | 4 | held for Sami's sign-off (contract change) — see "Item 4" below. |
+
+## Item 3 — the Step-6 certification record (job 6346226, gpu2105 = Step 4's node, RTX 3090, driver 575.57.08, one card, commit `5fefffea…`)
+
+Judged with the corpus-based downsample check (i.e. without item 4), so the record depends only on items 1–2:
+
+| config | arm 3.11 (mujoco 3.11.0 / mujoco_warp 3.11.0 / dm_control 1.0.44) | arm 3.12 (3.12.0 / 3.12.0 / 1.0.45) |
+|---|---|---|
+| DMCCheetahRun | **PASS** — visual 4.99 / 0.882 / 0.661; downsample (corpus) 0.5304 ≥ 0.5289 | **BLOCKED** — visual `blocked_environment`, `mujoco: declared 3.11.0, interpreter had 3.12.0` (would be fail: 6.51 / 0.797 / 0.584); downsample pass |
+| DMCHopperHop | **PASS** — 4.37 / 0.904 / 0.684; 0.5526 ≥ 0.5452 | **BLOCKED** — would be fail (6.55 / 0.792 / 0.546) |
+| DMCWalkerWalk | visual **pass** 7.86 / 0.714 / 0.824; gate_a **FAIL** on `check_resolution_consistency` alone (corpus 0.6188 < 0.6240) | visual **BLOCKED** (would be fail 15.95 / 0.553 / 0.533); gate_a **FAIL** on the same downsample check |
+| DMCHumanoidStand | **PASS** — 6.27 / 0.732 / 0.867; 0.6095 ≥ 0.5987 | **BLOCKED** — would be pass (6.33 / 0.729 / 0.865) |
+
+So against the declared reference the three drift failures are gone and the only remaining FAIL is Walker's
+corpus-based downsample number, which item 4 addresses; against the drifted reference the visual check
+is BLOCKED, never FAIL, on all four (Humanoid included, by design: a comparison against a reference the
+declaration does not name is unconfirmed even when its numbers land inside the bound). Cheetah's corpus
+downsample number on gpu2105 is 0.530395 — Step 4's 0.5208 on the same node is now known not to be a node
+effect either (open question stands: `git_commit: null` on the Step-4 shard).
+
+## Item 4 — `check_resolution_consistency` on the bound's own protocol (last commit, held)
+
+What it does: `stable_envs.testing.conformance` carries the protocol `DOWNSAMPLE_EXACT_FRAC` was measured
+under (`DOWNSAMPLE_PROTOCOL_N = 8`, `downsample_protocol(states)` with the sha256 of the drawn states,
+`downsample_protocol_states(env)` = `render_worker.sample_inputs(env, 8)`); `examples/fidelity_step4.py::_resolution`
+draws those states outside the ValueError-to-not_applicable mapping, judges on them, and records the frozen-corpus
+number beside them as `frozen_corpus`; the certifier's downsample judge writes `protocol` / `frozen_corpus`
+into the verdict and marks older shards "not recorded". No floor value and no margin changes.
+
+The evidence Sami asked for — every config with a bound, protocol vs corpus, one job (6346226), RTX 3090
+(`downsample_all/table.md`, `downsample_all/table.json`, per-venv JSON):
+
+| config | bound | protocol (8, STATE_SEED) | corpus (64) | protocol − bound | corpus − bound | verdict protocol / corpus |
+|---|---|---|---|---|---|---|
+| DMCCheetahRun | 0.533850 | **0.533854** | 0.530395 | +0.000004 | −0.003455 | pass / pass |
+| DMCHopperHop | 0.550220 | **0.550223** | 0.552615 | +0.000003 | +0.002395 | pass / pass |
+| DMCHumanoidStand | 0.603650 | **0.603653** | 0.609543 | +0.000003 | +0.005893 | pass / pass |
+| DMCWalkerWalk | 0.628950 | **0.628951** | 0.618771 | +0.000001 | −0.010179 | pass / **FAIL** |
+| DMCCartpoleSwingup | 0.282065 | 0.277618 | 0.277461 | −0.004447 | −0.004604 | pass / pass |
+| CraftaxClassic | 1.000000 | 1.000000 | 1.000000 | 0 | 0 | pass / pass |
+| PushT | 0.897163 | **0.897163** | 0.897546 | −0.000000 | +0.000383 | pass / pass |
+| AntmazeGiantNavigate | 0.708287 | 0.705290 | 0.705220 | −0.002997 | −0.003067 | pass / pass |
+| AntmazeLargeExplore | 0.722699 | 0.720643 | 0.720633 | −0.002056 | −0.002066 | pass / pass |
+| AntmazeMediumExplore | 0.722771 | 0.721074 | 0.720991 | −0.001697 | −0.001780 | pass / pass |
+| AntmazeTeleportExplore | 0.717594 | 0.715805 | 0.715892 | −0.001789 | −0.001702 | pass / pass |
+| HumanoidmazeGiantNavigate | 0.712624 | 0.709627 | 0.709592 | −0.002997 | −0.003032 | pass / pass |
+| HumanoidmazeLargeNavigate | 0.725895 | 0.723827 | 0.723839 | −0.002068 | −0.002056 | pass / pass |
+| HumanoidmazeMediumNavigate | 0.723503 | 0.721799 | 0.721773 | −0.001704 | −0.001730 | pass / pass |
+| PointmazeGiantNavigate | 0.708274 | 0.705287 | 0.705225 | −0.002987 | −0.003049 | pass / pass |
+| PointmazeLargeNavigate | 0.722781 | 0.720726 | 0.720705 | −0.002055 | −0.002076 | pass / pass |
+| PointmazeMediumNavigate | 0.723306 | 0.721602 | 0.721455 | −0.001704 | −0.001851 | pass / pass |
+| PointmazeTeleportNavigate | 0.717602 | 0.715815 | 0.716019 | −0.001787 | −0.001583 | pass / pass |
+
+Reading: (a) on the seven configs whose 2S render is a re-render of the same renderer (five mujoco_warp
+cells, CraftaxClassic, PushT) the protocol draw reproduces the recorded bound to ≤4e-6 — the bound is
+exactly this draw; (b) on the eleven OGBench mazes and Cartpole the number sits 0.0017–0.0044 below the
+bound on **both** state sets (their 2S plate is re-baked by MuJoCo's rasterizer, and these bounds were
+recorded on an H200; the 3090 lands 0.002–0.004 lower whatever the states — a hardware offset the 0.005
+margin was sized for, not a draw effect); (c) the protocol-minus-corpus difference exceeds 0.0002 only on
+the five mujoco_warp cells (up to 0.0102 on Walker), which is where the draw matters. Verdict changes:
+Walker FAIL→PASS and nothing else; the thinnest remaining slack is Cartpole's +0.0006 on either protocol.
+DMC venvs: `se-step5` (3.12) measured the five DMC cells; the 3.11 arm gave the same numbers to 1e-6
+(`resprobe311.json`).
+
+## Tests run (`/Users/samib/se6-venv/bin/python -m pytest tests/unit --ignore=tests/unit/test_nvdiff_texgen.py`)
+
+See the report accompanying the final HEAD: every failure is named there, pre-existing or not. Known
+pre-existing at the baseline: `tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves`
+(`scratch/carracing/logs/`, `scratch/robocasa/out/corpus`, `scratch/step6/report.py` are cited and absent —
+the third from the baseline's own `docs/research/step6_optimization.md`). No GPU test was changed; the
+GPU-side machinery was exercised end to end by jobs 6344899 and 6346226 + `certify.py`.
+`examples/results/step4/` is untouched. The 3 × 4.6 MB `localize*/frames/*.npz` stacks are untracked on
+purpose (regeneration: `arms_rerun.sbatch`, or `localize.py --configs <ids> --out <dir>`).
+
+## Not done — proposals for Sami (escalated by the coordinator)
+
+1. **Pin the `dmcontrol` extra** in `pyproject.toml` to the declared reference (`mujoco==3.11.0`,
+   `dm-control==1.0.44`) for certification interpreters. Until then a drifted interpreter BLOCKS rather
+   than FAILs, which is honest but means the visual-tier DMC cells cannot be certified on the current
+   `se-step5`/`se-step6` venvs; `se-vis311` is the interpreter that certifies them today.
+2. **Re-declare under 3.12** as the alternative: numbers from `certify312/` (mean 6.51 / 6.55 / 15.95 /
+   6.33, within-8 0.797 / 0.792 / 0.553 / 0.729, SSIM 0.584 / 0.546 / 0.533 / 0.865, single draw; a
+   3-draw spread per `scratch/dmcontrol/visual_calib.py` would set the ceilings), a new `_AT` naming
+   mujoco 3.12.0, `_AT_VERSIONS` bumped with it, `measured_with` bumped to mujoco_warp 3.12.0, and a third
+   `VISUAL_NOTE` mechanism ("MuJoCo ≥ 3.12 anchors finite-plane textures to the corner, `mujoco_warp` does
+   not; the floor checker is phase-shifted"). Not recommended while `mujoco_warp` upstream still implements
+   the centred mapping: it would declare a 2.5–4× floor error as the contract.
+3. **Widen the downsample margin** for the visual-tier DMC cells (≥ 0.01, from the measured state-set
+   spread) if item 4 is not merged; moot if it is.
+4. **Item 4 itself** (the last commit): the table above is the evidence; the coordinator holds the commit.
+
+SLURM (TEXTURE-2): 6344899 (first record, superseded), 6346226 (`se6-texture-fidelity-certify`, gpu2105,
+3 min 02 s, COMPLETED). One GPU job at a time throughout.
