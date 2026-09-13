@@ -126,17 +126,37 @@ _StyleCanvas = G.StyleCanvas
 _u8 = G.to_u8
 
 
-def _poly(cv, verts, color, bidx, kmax) -> None:
-    G.polygon(cv.use(color), verts, None, None, bidx, kmax, True)
+def _poly(cv, verts, color, bidx, kmax, win=None) -> None:
+    G.polygon(cv.use(color), verts, None, None, bidx, kmax, True, window=win)
 
 
 def _circ(cv, cx, cy, r, color, bidx, gfx) -> None:
-    G.circle(cv.use(color), cx, cy, r, None, None, bidx, gfx.hw(r), gfx.stencil(r), True)
+    """``aacircle`` + ``filled_circle``. The fill is the disc's own offset stencil, so it costs its
+    own pixels and needs no window: every disc in this family is under 45 px across."""
+    G.circle(cv.use(color), cx, cy, r, None, None, bidx, gfx.hw(r), gfx.stencil(r), True,
+             disc=gfx.disc(r))
 
 
 def _row(cv, y: int, color) -> None:
     """A full-width solid row (``gfxdraw.hline`` across the surface), one colour per environment."""
-    cv.buf[:, y, :, :] = _u8(color).view(cv.B, 1, 3)
+    cv.buf[:, :, y, :] = _u8(color).t().unsqueeze(-1)
+
+
+def _box(H: int, W: int, y0, y1, x0, x1, m: int = 2):
+    """A drawing window, clamped to the surface and grown by ``m`` pixels.
+
+    Every window in this file is a bound on a primitive's footprint that holds for EVERY state, not
+    for the states a rollout happens to visit: the geometry moves under a sine, a cosine or a
+    rotation, so its extent along at least one axis is a constant of the environment even though its
+    position is not. That is what makes it safe to evaluate the span rule and write the colour over
+    the box alone -- a state-dependent box would need a host sync to slice with (``render/gfxdraw``
+    rule 6), and a box that were merely usually right would silently truncate a primitive.
+
+    The margin is slack for the truncation that turns a float coordinate into a Sint16 one, where a
+    vertex sitting on an integer can land either side of it. It costs rows, never pixels.
+    """
+    return (max(0, int(y0) - m), min(H, int(y1) + 1 + m),
+            max(0, int(x0) - m), min(W, int(x1) + 1 + m))
 
 
 class _Classic(StableEnv):
@@ -435,21 +455,37 @@ class CartPole(_Classic):
             "rendering": self._aa_space(),
         })
 
+    #: Row windows. ``x`` moves the cart along the track and ``theta`` only rotates the pole, so the
+    #: ROW extent of all three primitives is a constant of the environment for every state: the cart
+    #: is 30 px tall about ``CARTY`` and the pole reaches ``hypot(5, POLELEN-5)`` from the axle
+    #: whatever its angle. The column extent is not bounded -- the cart really does visit every
+    #: column -- so these windows are rows only.
+    WIN_CART = (85, 115)
+    WIN_POLE = (int(CARTY + AXLEOFF - math.hypot(5.0, POLELEN - 5.0)),
+                int(CARTY + AXLEOFF + math.hypot(5.0, POLELEN - 5.0)))
+    #: Per EDGE, because a 50x30 quad and a 10x125 one both have two long sides and two short ones,
+    #: and the Wu pass costs its bound in steps whether the edge is that long or not.
+    KMAX_CART = (32, 52, 32, 52)
+    KMAX_POLE = (132, 16, 132, 16)
+
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
+        H, W = self.native
         bi = g.batch_index(B)
         cartx = s[:, 0] * self.SCALE + 300.0
         carty = torch.full_like(cartx, self.CARTY)
 
         ctr = torch.stack([cartx, carty], -1).view(B, 1, 2)
         cart = g.verts([(-25.0, -15.0), (-25.0, 15.0), (25.0, 15.0), (25.0, -15.0)]).view(1, 4, 2) + ctr
-        _poly(cv, cart, sty["cart.color"], bi, 52)
+        _poly(cv, cart, sty["cart.color"], bi, self.KMAX_CART,
+              _box(H, W, *self.WIN_CART, 0, W - 1))
 
         ploc = g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0),
                         (5.0, self.POLELEN - 5.0), (5.0, -5.0)]).view(1, 4, 2).expand(B, 4, 2)
         pole = G.rotate(ploc, (-s[:, 1]).view(B, 1)) + torch.stack(
             [cartx, carty + self.AXLEOFF], -1).view(B, 1, 2)
-        _poly(cv, pole, sty["pole.color"], bi, 132)
+        _poly(cv, pole, sty["pole.color"], bi, self.KMAX_POLE,
+              _box(H, W, *self.WIN_POLE, 0, W - 1))
 
         cxi = torch.trunc(cartx).to(torch.int64)
         cyi = torch.full_like(cxi, int(self.CARTY + self.AXLEOFF))
@@ -570,8 +606,16 @@ class Pendulum(_Classic):
             "rendering": self._aa_space(),
         })
 
+    #: Windows, both axes: the rod pivots about the centre, so it reaches ``hypot(SCALE, 0.1*SCALE)``
+    #: from it at any angle and its far cap is ``SCALE`` from it at any angle. Bounds on a rotation,
+    #: so they hold for every state.
+    _REACH = math.hypot(SCALE, 0.1 * SCALE)
+    WIN_ROD = (int(OFF - _REACH), int(OFF + _REACH))
+    KMAX_ROD = (28, 120, 28, 120)       # the quad starts on its short side
+
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
+        H, W = self.native
         bi = g.batch_index(B)
         th, off = s[:, 0], self.OFF
         rl, rw = 1.0 * self.SCALE, 0.2 * self.SCALE
@@ -580,7 +624,8 @@ class Pendulum(_Classic):
 
         loc = g.verts([(0.0, -rw / 2), (0.0, rw / 2), (rl, rw / 2),
                        (rl, -rw / 2)]).view(1, 4, 2).expand(B, 4, 2)
-        _poly(cv, G.rotate(loc, ang) + off, rod, bi, 120)
+        _poly(cv, G.rotate(loc, ang) + off, rod, bi, self.KMAX_ROD,
+              _box(H, W, *self.WIN_ROD, *self.WIN_ROD))
 
         ctr = torch.full((B,), off, dtype=torch.int64, device=self.device)
         _circ(cv, ctr, ctr, self.ROD_R, rod, bi, g)
@@ -612,9 +657,10 @@ class Pendulum(_Classic):
                             ly.clamp(0, self.MAX_SPRITE - 1).view(B, w, 1),
                             lx.clamp(0, self.MAX_SPRITE - 1).view(B, 1, w)].to(torch.int32)
         y0 = 250 - w // 2
-        dst = cv.buf[:, y0:y0 + w, y0:y0 + w, :].to(torch.int32)
-        a = torch.where(valid.unsqueeze(-1), rgba[..., 3:4], torch.zeros_like(rgba[..., 3:4]))
-        cv.buf[:, y0:y0 + w, y0:y0 + w, :] = G.blit_over(dst, rgba[..., :3], a).to(torch.uint8)
+        dst = cv.buf[:, :, y0:y0 + w, y0:y0 + w].to(torch.int32)          # (3,B,w,w)
+        a = torch.where(valid, rgba[..., 3], torch.zeros_like(rgba[..., 3])).unsqueeze(0)
+        src = rgba[..., :3].permute(3, 0, 1, 2)
+        cv.buf[:, :, y0:y0 + w, y0:y0 + w] = G.blit_over(dst, src, a).to(torch.uint8)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """``theta`` over a full turn (the render is periodic in it), ``torque`` over the action space."""
@@ -765,8 +811,18 @@ class Acrobot(_Classic):
             "rendering": self._aa_space(),
         })
 
+    #: Windows, per LINK, both axes. The first joint is pinned at the centre and the second is one
+    #: link length from it in some direction, so ``|centre - OFF| <= i * SCALE`` for link ``i``
+    #: whatever the angles are; a link then reaches ``hypot(SCALE, 0.1*SCALE)`` further. Both bounds
+    #: hold for every state because they are bounds on a sine and a cosine.
+    _REACH = math.hypot(SCALE, 0.1 * SCALE)
+    WIN_LINK = ((int(OFF - _REACH), int(OFF + _REACH)),
+                (int(OFF - SCALE - _REACH), int(OFF + SCALE + _REACH)))
+    KMAX_LINK = (28, 120, 28, 120)      # the quad starts on its short side
+
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
+        H, W = self.native
         bi = g.batch_index(B)
         sc, off = self.SCALE, self.OFF
         t1, t2 = s[:, 0], s[:, 1]
@@ -780,7 +836,8 @@ class Acrobot(_Classic):
         lc, jc = sty["link.color"], sty["joint.color"]
         for i, th in enumerate([t1 - math.pi / 2, t1 + t2 - math.pi / 2]):
             ctr = torch.stack([jx[i] + off, jy[i] + off], -1).view(B, 1, 2)
-            _poly(cv, G.rotate(loc, th.view(B, 1)) + ctr, lc, bi, 120)
+            _poly(cv, G.rotate(loc, th.view(B, 1)) + ctr, lc, bi, self.KMAX_LINK,
+                  _box(H, W, *self.WIN_LINK[i], *self.WIN_LINK[i]))
             _circ(cv, torch.trunc(jx[i] + off).to(torch.int64),
                   torch.trunc(jy[i] + off).to(torch.int64), self.JOINT_R, jc, bi, g)
 
@@ -901,13 +958,31 @@ class MountainCar(_Classic):
         """
         key = torch.cat([bg, terrain], 1).to(torch.uint8).cpu().numpy()
         uniq, inv = np.unique(key, axis=0, return_inverse=True)
+        # PLANAR, to match the canvas: the layer is the starting surface, so handing it over as
+        # ``(3,H,W)`` makes the per-frame cost a broadcast copy when the batch shares one appearance
+        # (which is every default render) instead of a transpose of the whole batch.
         imgs = torch.stack([torch.as_tensor(_bake_terrain(tuple(int(c) for c in u[:3]),
                                                           tuple(int(c) for c in u[3:])),
-                                            dtype=torch.uint8, device=self.device) for u in uniq])
-        return imgs[torch.as_tensor(inv, device=self.device).reshape(-1)]
+                                            dtype=torch.uint8, device=self.device).permute(2, 0, 1)
+                            for u in uniq])                                       # (U,3,H,W)
+        if len(uniq) == 1:
+            return imgs[0].unsqueeze(1)                                           # (3,1,H,W)
+        return imgs.index_select(0, torch.as_tensor(
+            inv, device=self.device).reshape(-1)).transpose(0, 1)                 # (3,B,H,W)
+
+    #: The car's ROW window. ``position`` moves the car along the whole track, so
+    #: its columns are unbounded -- but its row is ``10 + (sin(3p)*0.45 + 0.55) * SCALE``, which is
+    #: bounded by the sine for every state, and the quad reaches ``hypot(20, 20)`` from that centre
+    #: at any rotation. The flag is at a constant position, so both of its axes are bounded. The
+    #: wheels need no window at all: a disc is drawn as its own offsets.
+    _CARY = (10.0 + 0.1 * SCALE, 10.0 + 1.0 * SCALE)
+    WIN_CAR = (int(_CARY[0] - math.hypot(20.0, 20.0)), int(_CARY[1] + math.hypot(20.0, 20.0)))
+    KMAX_CAR = (26, 46, 26, 46)
+    KMAX_FLAG = (14, 30, 30)
 
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
+        H, W = self.native
         bi = g.batch_index(B)
         cv.fill_from(self._terrain_base(sty["background.color"], sty["terrain.color"]))
 
@@ -917,7 +992,8 @@ class MountainCar(_Classic):
                            10.0 + (torch.sin(3 * pos) * 0.45 + 0.55) * self.SCALE], -1).view(B, 1, 2)
         loc = g.verts([(-20.0, 0.0), (-20.0, 20.0), (20.0, 20.0),
                        (20.0, 0.0)]).view(1, 4, 2).expand(B, 4, 2)
-        _poly(cv, G.rotate(loc, ang) + ctr, sty["car.color"], bi, 46)
+        _poly(cv, G.rotate(loc, ang) + ctr, sty["car.color"], bi, self.KMAX_CAR,
+              _box(H, W, *self.WIN_CAR, 0, W - 1))
 
         wl = g.verts([(10.0, 0.0), (-10.0, 0.0)]).view(1, 2, 2).expand(B, 2, 2)
         wr = G.rotate(wl, ang) + ctr
@@ -927,12 +1003,13 @@ class MountainCar(_Classic):
                   torch.trunc(wr[:, j, 1]).to(torch.int64), self.WHEEL_R, wc, bi, g)
 
         # gfxdraw.vline, the flag pole
-        cv.buf[:, self.flagy1:self.flagy2 + 1, self.flagx, :] = \
-            _u8(sty["flag.pole_color"]).view(B, 1, 3)
+        cv.buf[:, :, self.flagy1:self.flagy2 + 1, self.flagx] = \
+            _u8(sty["flag.pole_color"]).t().unsqueeze(-1)
         tri = g.verts([(float(self.flagx), float(self.flagy2)),
                        (float(self.flagx), float(self.flagy2 - 10)),
                        (float(self.flagx + 25), float(self.flagy2 - 5))]).view(1, 3, 2).expand(B, 3, 2)
-        _poly(cv, tri, sty["flag.color"], bi, 30)
+        _poly(cv, tri, sty["flag.color"], bi, self.KMAX_FLAG,
+              _box(H, W, self.flagy2 - 10, self.flagy2, self.flagx, self.flagx + 25))
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """The whole track. Near ``+0.6`` the car hangs off the right edge, which is the case that

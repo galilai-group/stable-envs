@@ -362,7 +362,10 @@ class LunarLander(StableEnv):
         b = torch.arange(B, device=x.device).view(-1, 1).expand_as(ys)
         flat = torch.where(ok, (b * H + ys.clamp(0, H - 1)) * W + xs.clamp(0, W - 1),
                            torch.full_like(ys, cv.trash))
-        cv.flat[flat.reshape(-1)] = G.to_u8(color).view(B, 1, 3).expand(B, ys.shape[1], 3).reshape(-1, 3)
+        n = ys.shape[1]
+        # ``Canvas`` is planar ``(3, B*H*W+1)``, so the channel axis is the one NOT being indexed and
+        # the scatter is still one operation. See ``render/gfxdraw.Canvas`` for why it is planar.
+        cv.flat[:, flat.reshape(-1)] = G.to_u8(color).t().reshape(3, B, 1).expand(3, B, n).reshape(3, -1)
 
     def _aa_poly(self, cv, vi, bidx, kmax) -> None:
         """``gfxdraw.aapolygon`` for ``(N, V, 2)`` integer polygons, as ONE Wu pass over N*V edges.
