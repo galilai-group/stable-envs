@@ -5,8 +5,14 @@
 - **affected configurations** (all replayed): `Acrobot`, `CartPole`, `MountainCar`,
   `MountainCarContinuous`, `Pendulum`. Other consumers of the same primitive layer, checked but not
   in the frozen corpus: `LunarLander`, `CarRacing`.
-- **pixels changed: NO.** All five replay bit-identical to the frozen Step 4 oracle on CUDA, and
-  the fused-path identity test is green.
+- **pixels changed: NO.** All five replay bit-identical to the frozen Step 4 oracle on CUDA *and*
+  on CPU; every conformance check keeps the status it had in Step 4; the fused-path identity test
+  is green; and 512 states per configuration, half of them outside the reachable set, are
+  byte-identical to 89fa5ca.
+- **tiers.** CPU `CPU_REGRESSION -> CPU_PARITY` on four of five (Acrobot 0.94, a hair under), from
+  `S_cpu` 0.17-0.28 to 0.94-1.92, a 5.5-7.1x renderer speedup. GPU `GPU_FASTER -> GPU_FASTER` with
+  `R` 37-71 -> 83-179, a 2.2-2.5x speedup at every batch size and ~1.4 GB less peak VRAM at 4096.
+  Neither device reaches its FAST tier; the measured reason for both is one ticket, GFXDRAW-2.
 - **semantic follow-up: none.** Section 15's first case — the frames are digest-identical, so there
   is nothing for a tripwire to see.
 - **hardware** RTX 3090 (`gpu2104`) for GPU; `node2338` (batch partition, 1 torch thread) for CPU
@@ -320,9 +326,9 @@ once — and it reached 1,865x for PushT and made CarRacing viable. Extending it
 `hline` and an alpha blit, and giving classic control a fused path, is a well-posed piece of work
 with a precedent in this repository.
 
-**CPU_FAST needs `S_cpu >= 5` AND `cores_cpu >= 1`, and `cores_cpu` is the binding one.** On
-node2338 a 500x500 JPEG-q90 frame decodes at ~850-1,180 frames/s on one core, and these renderers
-now run at 258-460. The interleave alone is the wall: producing the caller's `(B,H,W,3)` uint8 from
+**CPU_FAST needs `S_cpu >= 5` AND `cores_cpu >= 1`, and `cores_cpu` is the binding one.** A
+500x500 JPEG-q90 frame decodes at ~850-1,180 frames/s on one core of these nodes, and these
+renderers now run at 258-520 there. The interleave alone is the wall: producing the caller's `(B,H,W,3)` uint8 from
 three planes costs ~0.17 ms per 400x600 frame on one core in torch (10.7 ms at batch 64, and every
 layout measured lands within 10%), against a 0.18 ms total budget at `S_cpu = 5` on the laptop.
 A torch-op renderer cannot get under that; a fused kernel writing the frame once can.
@@ -392,7 +398,11 @@ seams, wrappers only), `replay_digests.py` (the seconds-long replay loop), `cons
 | `se6-gfxdraw-gpu` | 6346430 | gpu2104 (RTX 3090) | Step 4 replay on CUDA, path tests, GPU sweep both arms, GPU profile-after |
 | `se6-gfxdraw-gputests` | 6346933 | gpu2104 | conformance + reproducibility with their output kept |
 | `se6-gfxdraw-paired` | 6346967 | (batch) | paired `S_cpu`, both arms, and the same-node profile pair |
+| `se6-gfxdraw-gpuprof` | 6346999 | gpu2104 | GPU profile-BEFORE, the branch's harness against the baseline tree |
 | `se6-gfxdraw-paired` | 6346954 | — | cancelled by me before it ran, to add the measured-tree provenance |
+
+`se6-gfxdraw-paired` 6346967 landed on `node1829` (load average 30-41), the frozen sweep on
+`node2338` (load average 47). Every artifact records its own host.
 
 ## Commits on `step6/gfxdraw`
 
