@@ -53,14 +53,17 @@ def _checker(size: int = SIZE, cell: int = 2) -> np.ndarray:
 
 
 def _frame(draw_disc: bool, jitter: int = 0) -> np.ndarray:
-    """One frame: the checker floor, optionally with the disc on it."""
-    f = _checker().astype(np.int16) + int(jitter)
+    """One frame: the checker floor, optionally with the disc on it, the whole thing off by
+    ``jitter`` levels. The jitter is applied LAST, to the disc as well as to the floor, so a fixture
+    built with it is never bit-exact against one built without -- which is what a real pair of
+    rasterizers looks like and what keeps ``presence_margin``'s denominator away from zero."""
+    f = _checker().astype(np.int16)
     if draw_disc:
         y, x = np.mgrid[0:SIZE, 0:SIZE]
         (cy, cx), r = DISC
         m = (y - cy) ** 2 + (x - cx) ** 2 <= r * r
         f[m] = np.asarray(DISC_RGB, np.int16)
-    return np.clip(f, 0, 255).astype(np.uint8)
+    return np.clip(f + int(jitter), 0, 255).astype(np.uint8)
 
 
 class FakeEnv:
@@ -74,9 +77,15 @@ class FakeEnv:
     reference_id = "synthetic/disc"
     fidelity_tier = "parity"
 
-    def __init__(self, n: int = 8, declared: int = 1, official_draws: bool = True):
+    def __init__(self, n: int = 8, declared: int = 1, official_draws: bool = True,
+                 jitter: int = 1):
         self.B, self.size, self.n = n, SIZE, n
         self.official_draws = bool(official_draws)
+        # A one-level offset on OUR floor, so neither arm is ever bit-exact against the official
+        # frame. Without it the flipped arm's mean error is exactly zero and presence_margin's
+        # denominator vanishes -- a real case, tested separately, but not the ordinary one, and a
+        # fixture that only exercises the degenerate path proves nothing about the usual one.
+        self.jitter = int(jitter)
         self.variation_space = spaces.Dict({
             "visibility": spaces.Dict({"target": spaces.Discrete(2, init_value=int(declared))}),
         })
@@ -103,7 +112,7 @@ class FakeEnv:
             col = np.full(n, float(variation["visibility.target"]), np.float32)
         else:
             col = np.full(n, float(self.variation_space["visibility"]["target"].value), np.float32)
-        return torch.as_tensor(np.stack([_frame(c >= 0.5) for c in col]))
+        return torch.as_tensor(np.stack([_frame(c >= 0.5, self.jitter) for c in col]))
 
     # -- the official side ----------------------------------------------------------
 
@@ -112,7 +121,7 @@ class FakeEnv:
         return None
 
     def _official(self, n: int) -> np.ndarray:
-        return np.stack([_frame(self.official_draws)] * n)
+        return np.stack([_frame(self.official_draws, 0)] * n)
 
 
 @pytest.fixture(autouse=True)
@@ -126,8 +135,8 @@ def _reference(monkeypatch):
     return holder
 
 
-def _run(reference, *, declared=1, official_draws=True, n=8):
-    env = FakeEnv(n=n, declared=declared, official_draws=official_draws)
+def _run(reference, *, declared=1, official_draws=True, n=8, jitter=1):
+    env = FakeEnv(n=n, declared=declared, official_draws=official_draws, jitter=jitter)
     reference["env"] = env
     r = C.check_task_object_visibility(env, states=env.sample_states(n))
     return r["objects"]["visibility.target"]
@@ -139,9 +148,9 @@ def _run(reference, *, declared=1, official_draws=True, n=8):
 def test_the_interior_metric_does_not_move_when_the_object_appears():
     """The premise. If this ever fails, the guard below is no longer needed — and that is a fact
     worth finding out from a test rather than from a docstring."""
-    official = np.stack([_frame(False)] * 4)
-    with_disc = np.stack([_frame(True)] * 4)
-    without = np.stack([_frame(False)] * 4)
+    official = np.stack([_frame(False, 0)] * 4)
+    with_disc = np.stack([_frame(True, 0)] * 4)
+    without = np.stack([_frame(False, 0)] * 4)
     a = C.pixel_agreement(with_disc, official)
     b = C.pixel_agreement(without, official)
     assert a["mean_abs"] > b["mean_abs"], "the disc must change the frame at all"
@@ -173,12 +182,21 @@ def test_the_guard_FIRES_when_we_draw_an_object_the_reference_does_not(_referenc
     o = _run(_reference, declared=1, official_draws=False)
     assert o["presence_margin"] < 0, (
         f"we paint an object the reference does not paint and the guard did not notice: {o}")
+
+
+def test_a_flipped_arm_that_is_bit_exact_is_reported_rather_than_divided_by(_reference):
+    """The degenerate end of the same failure: our OTHER appearance matches the reference exactly,
+    so the denominator is zero. There is no ratio to report and the answer is not 'no data' -- it is
+    that the official renderer is drawing the configuration this env does NOT declare."""
+    o = _run(_reference, declared=1, official_draws=False, jitter=0)
+    assert o["presence_margin"] is None
+    assert "why_no_margin" in o, o
     # and the interior metric, on the same frames, does NOT notice — which is the whole argument for
     # this check existing rather than for tightening that one.
-    env = FakeEnv(n=8, declared=1, official_draws=False)
+    env = FakeEnv(n=8, declared=1, official_draws=False, jitter=0)
     ours = env.render(env.sample_states(8)).cpu().numpy()
     blind = C.pixel_agreement(ours, env._official(8))
-    same = C.pixel_agreement(np.stack([_frame(False)] * 8), env._official(8))
+    same = C.pixel_agreement(np.stack([_frame(False, 0)] * 8), env._official(8))
     assert blind["interior_exact_frac"] == same["interior_exact_frac"], (
         "the fixture is no longer demonstrating the blind spot; the guard's justification has "
         "changed and this file has to be re-argued")

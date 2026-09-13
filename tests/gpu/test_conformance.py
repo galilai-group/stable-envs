@@ -33,26 +33,33 @@ INTERIOR_EXACT_MIN = 1.0
 ALL_EXACT_MIN = 0.90
 MEAN_ABS_MAX = 4.0
 
-#: How much better the env's DECLARED visibility must agree with the official renderer, inside a task
-#: object's own footprint, than the flipped one. A NEW bound on a NEW quantity — it neither redefines
-#: nor relaxes anything above; see ``test_a_declared_task_object_is_drawn_iff_the_reference_draws_it``
-#: and ``conformance.check_task_object_visibility`` for what the quantity is and why the interior bar
-#: cannot answer it.
+#: How much CLOSER to the official frame the env's DECLARED visibility must be than the flipped one,
+#: inside a task object's own footprint: ``1 - mean|d|(declared) / mean|d|(flipped)``. A NEW bound on
+#: a NEW quantity -- it neither redefines nor relaxes anything above; see
+#: ``test_a_declared_task_object_is_drawn_iff_the_reference_draws_it`` and
+#: ``conformance.check_task_object_visibility`` for what the quantity is and why the interior bar
+#: cannot answer it. 0.50 reads as "at least twice as close", which is the sentence a reader can check.
 #:
 #: Set from the SPREAD over independent draws, clear of the worst, like every other floor here. Five
 #: draws (four of 16 sampled states plus the frozen 64-state Step-4 corpus) on each of the four cells
-#: that declare a ``visibility.*`` leaf, at 84 px:
+#: that declare a ``visibility.*`` leaf, at 84 px on CPU:
 #:
-#:     DMCReacherEasy     0.8568 - 0.8710      DMCFingerTurnEasy  0.6649 - 0.6928
-#:     DMCReacherHard     0.3966 - 0.4893      DMCFingerTurnHard  0.5534 - 0.6232
+#:     cell                margin           declared mean|d|   flipped mean|d|
+#:     DMCReacherEasy      0.9646 - 0.9676    5.2 -  5.6         157 - 161
+#:     DMCReacherHard      0.8730 - 0.8806   17.0 - 18.3         140 - 144
+#:     DMCFingerTurnEasy   0.8263 - 0.8506   14.7 - 16.9          97 -  98
+#:     DMCFingerTurnHard   0.8199 - 0.8713   13.8 - 18.4          99 - 108
 #:
-#: Reacher-HARD is the worst and that is a property of its scene rather than of the renderer: its
-#: target is the small one, so ~240 footprint pixels are almost all silhouette, where two rasterizers
-#: are entitled to disagree. The bound sits below that worst draw and enormously above the failure it
-#: exists to catch: a renderer drawing an object the reference does not draw scores the SAME number
-#: with the sign reversed (the flipped arm agrees on 0.4-2.1% of those pixels here), so the pass and
-#: fail populations are ~1.3 apart and any bound in between separates them.
-TASK_OBJECT_PRESENCE_MARGIN = 0.25
+#: The failure this exists to catch inverts the ratio: a renderer drawing an object the reference does
+#: not draw puts ~140/255 in the numerator and ~15 in the denominator, i.e. a margin around -8. So the
+#: pass and fail populations are not close and any bound between them separates them; 0.50 is chosen
+#: to leave room for the CPU/GPU difference in edge pixels rather than to sit just under the worst.
+#:
+#: WHY NOT THE WITHIN-8 FRACTION, which this bound used in its first draft: on ``DMCReacherHard``'s
+#: ~15 footprint pixels per frame that fraction is 0.60 on CPU and 0.26 on a 3090 for one unchanged
+#: renderer, because the footprint is nearly all silhouette. It would have put the floor within 0.008
+#: of the frozen corpus on the certification hardware. The mean error does not move that way.
+TASK_OBJECT_PRESENCE_MARGIN = 0.50
 
 #: The states the two reference-based tests draw. A CONSTANT, because both of them used to call
 #: ``sample_states(n)`` with no generator, which takes the env's own ``rng`` — and the ``env`` fixture
@@ -286,15 +293,17 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
             f"{path} does not survive a PER-ROW style: a batch with the knob alternating down the "
             f"rows differs from the two uniform renders by {o['per_row_max_abs_diff']}/255. "
             f"check_per_env_variation cannot ask this of a Discrete leaf, which is why it is here")
+        assert "why_no_margin" not in o, (
+            f"{path}: {o['why_no_margin']} — {o}")
         if o["presence_margin"] is None:
             continue                                   # no official renderer to agree with
         assert o["presence_margin"] >= TASK_OBJECT_PRESENCE_MARGIN, (
-            f"inside {path}'s own {o['footprint_px']} pixels the official frame agrees with our "
-            f"DECLARED appearance {100*o['presence_agree_declared']:.1f}% of the time and with the "
-            f"FLIPPED one {100*o['presence_agree_flipped']:.1f}% — margin "
-            f"{o['presence_margin']:.4f} against a floor of {TASK_OBJECT_PRESENCE_MARGIN}. A negative "
-            f"margin means we draw an object the reference does not draw (or the reverse), which is "
-            f"exactly what the interior-pixel metric is blind to on a textured surface: {o}")
+            f"inside {path}'s own {o['footprint_px']} pixels our DECLARED appearance sits "
+            f"{o['presence_mean_abs_declared']:.2f}/255 from the official frame and the FLIPPED one "
+            f"sits {o['presence_mean_abs_flipped']:.2f}/255 — margin {o['presence_margin']:.4f} "
+            f"against a floor of {TASK_OBJECT_PRESENCE_MARGIN}. A margin at or below zero means we "
+            f"draw an object the reference does not draw (or the reverse), which is exactly what the "
+            f"interior-pixel metric is blind to on a textured surface: {o}")
 
 
 def test_fidelity_tier_is_fully_declared(env):

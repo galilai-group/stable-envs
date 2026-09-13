@@ -521,8 +521,12 @@ def check_colors_apply_exactly(env) -> dict:
 #: ``pixel_agreement`` already reports as ``within8_frac``, and for the same reason: an object's
 #: footprint is mostly SILHOUETTE — a 19-pixel disc at 84 px has almost no interior — so bit-exactness
 #: there would be measuring two rasterizers' coverage rules rather than whether the object is present.
-#: What this check has to separate is "the same object in the same place" from "an object one side
-#: does not draw at all", and those differ by 200+/255, not by 8.
+#:
+#: It feeds the two REPORTED ``presence_agree_*`` numbers and NOT the bound, because a fraction over a
+#: silhouette-dominated set is not stable enough to carry one: on ``DMCReacherHard``'s ~15 footprint
+#: pixels per frame the declared arm agrees on 60% of them on CPU and 26% on the GPU, which is the
+#: rasterizers' edge rule moving and not the object appearing. ``presence_margin`` is built from the
+#: mean ERROR instead — see the check.
 PRESENCE_TOL = 8
 
 
@@ -551,12 +555,22 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
                    ``check_per_env_variation`` structurally cannot ask this of a ``Discrete`` leaf —
                    it skips anything without ``.low`` — and per-row visibility is the whole point of
                    putting visibility in the style rather than in a constructor argument.
-    ``presence``   inside that footprint, how much of the frame agrees with the OFFICIAL one under
-                   each value. The env's declared default must be the arm that agrees, by
-                   ``presence_margin``. That is the question no other check in the suite asks: if we
-                   paint an object the reference does not paint, the declared arm agrees with the
-                   reference on almost none of the object's own pixels and the margin goes NEGATIVE,
-                   while every existing number stays where it was.
+    ``presence``   inside that footprint, how far our frame sits from the OFFICIAL one under each
+                   value. The env's declared default must be the arm that is CLOSER, by
+                   ``presence_margin = 1 - mean|d|(declared) / mean|d|(flipped)``. That is the
+                   question no other check in the suite asks: if we paint an object the reference does
+                   not paint, the declared arm is the FAR one, the ratio inverts and the margin goes
+                   sharply negative, while every existing number stays exactly where it was.
+
+                   A RATIO OF MEAN ERRORS rather than a fraction of agreeing pixels, and the
+                   difference is not cosmetic. An object's footprint is mostly silhouette, so the
+                   fraction of it that lands within 8/255 is a statement about two rasterizers' edge
+                   rules: on ``DMCReacherHard``'s ~15 footprint pixels per frame it is 0.60 on CPU and
+                   0.26 on a 3090, for one unchanged renderer. The mean error is not: an object drawn
+                   in the same place is a few levels away and an object one side does not draw at all
+                   is ~100/255 away, and nothing about an edge rule moves that by a factor of ten.
+                   Both fractions are still REPORTED, as ``presence_agree_*``, because they are what a
+                   human reads when the margin is marginal.
 
     Applies to any env that declares a ``visibility.*`` leaf; ``{"skipped": ...}` otherwise, which is
     every env that has no task-relevant object it can be asked to hide.
@@ -604,7 +618,20 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
             db = np.abs(b.astype(np.int16) - official).max(-1)[M]
             row["presence_agree_declared"] = float((da <= PRESENCE_TOL).mean())
             row["presence_agree_flipped"] = float((db <= PRESENCE_TOL).mean())
-            row["presence_margin"] = row["presence_agree_declared"] - row["presence_agree_flipped"]
+            row["presence_mean_abs_declared"] = float(da.mean())
+            row["presence_mean_abs_flipped"] = float(db.mean())
+            # 1 - near/far. One when the declared arm is exact, 0 when the two are equally wrong,
+            # and sharply negative when they are the wrong way round. The denominator cannot be zero
+            # unless the flipped arm is bit-exact on the object's own pixels, which would mean the
+            # object is not there at all -- reported as a margin of -inf via the guard below rather
+            # than divided by.
+            far = float(db.mean())
+            row["presence_margin"] = (1.0 - float(da.mean()) / far) if far > 0 else None
+            if far <= 0:
+                row["why_no_margin"] = (
+                    "the FLIPPED appearance is bit-exact against the official frame on the object's "
+                    "own pixels, so the official renderer is drawing the flipped configuration and "
+                    "the declared default is the wrong one")
             row["reference_id"] = cls.reference_id
         else:
             row["presence_margin"] = None
