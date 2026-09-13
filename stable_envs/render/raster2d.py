@@ -667,8 +667,28 @@ def render_triton(scene: Scene2D, out_size, supersample: int = 1, out=None,
 
 @torch.no_grad()
 def render(scene: Scene2D, out_size, supersample: int = 1, backend: str = "auto", out=None):
-    """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction."""
-    if backend == "torch" or (backend == "auto" and not HAVE_TRITON):
+    """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction.
+
+    ``auto`` is a question about THIS SCENE, not about this host. It used to be answered by
+    ``HAVE_TRITON`` alone, which is a property of the interpreter: on a machine where ``import
+    triton`` succeeds, a ``device="cpu"`` scene was routed into ``render_triton``, whose first act is
+    ``with torch.cuda.device(scene.kind.device)`` — so every CPU render of a Scene2D env died with
+    ``ValueError: Expected a cuda device, but got: cpu``. The laptop that measured the Step 3 CPU rows
+    had no Triton and never saw it; the certification cluster has Triton in every venv and could not
+    render PushT or SimplePointMaze on CPU at all. Triton compiles for CUDA here, so the predicate is
+    "Triton is importable AND the scene lives on a CUDA device", and ``device="cpu"`` is honoured on
+    every host.
+
+    An explicit ``backend="triton"`` still raises on a CPU scene, and should: the caller named a
+    backend that cannot draw the scene it was handed, and silently drawing it somewhere else is how a
+    ``device="cpu"`` run ends up on a GPU.
+    """
+    if backend == "triton" and scene.kind.device.type != "cuda":
+        raise ValueError(
+            f"render(backend='triton') on a scene that lives on {scene.kind.device}. The fused "
+            f"kernel is CUDA-only; use backend='torch', or build the scene on a cuda device.")
+    if backend == "torch" or (backend == "auto"
+                              and not (HAVE_TRITON and scene.kind.device.type == "cuda")):
         H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
         if not isinstance(out_size, int):
             H, W = out_size
