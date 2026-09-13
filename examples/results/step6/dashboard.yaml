@@ -3,7 +3,7 @@
 baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
 baseline_branch: sami/pre-step6-baseline
 integration_branch: step6/integration
-integration_sha: d8d8873 (merge of step6/texture-fidelity through 48a556a)
+integration_sha: see git log (merges: texture-fidelity d8d8873, reacher-correctness)
 oscar_capacity_note: condo QOS cs-3090-gcondo saturated by simclr_cifar10 (cpu 240/240, gpu 30/32); Step-6 GPU jobs routed to gpu/norm-gpu; HOME quota 100% full, all caches on scratch
 incident_log:
   - "2026-09-13 ~19:00: API monthly spend limit terminated 5 agents mid-work (raster2d Commit B, gfxdraw primitives, raycast3d 2a, cpu-3d start, reacher reviewer start). Plan upgraded; all resumed with context and uncommitted work intact."
@@ -12,7 +12,7 @@ workstreams:
     brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
     branch: step6/texture-fidelity
     worktree: /Users/samib/stable-envs-step6-texture-fidelity
-    oscar_copy: /oscar/scratch/sboughan/se6/texture-fidelity
+    oscar_copy: $SCR/se6/texture-fidelity
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (merged through 48a556a; 5402387 held)
     agent_model: fable
@@ -27,18 +27,18 @@ workstreams:
     pixels_changed: no
     semantic_followup: none
     review: {reviewer: "opus (independent)", verdict: "APPROVED after changes (795036f, d5bea6d, 8de054d, 5fefffe, 48a556a; record re-run job 6346226 on gpu2105: 3.11 PASS x3 + Walker gate FAIL on corpus downsample only; 3.12 BLOCKED x4). Original: APPROVE-WITH-CHANGES 2026-09-13: diagnosis sound (3.12 arm reproduces frozen digest_official bit-exactly; 3.11 arm differs), causality closed. Required: drop mujoco_warp/warp from reference_versions (our renderer, would mask own regressions); align certify.py precedence with env.py; hoist protocol draw out of try; digest protocol states; fix findings overstatements (ours 3.11 vs 3.12 mean 0.00018 not 0; skybox moves 0.01-0.05). e5309bc (downsample protocol) classified a CONTRACT change: judged states change for 18 configs, Walker FAIL->PASS, 4/18 re-measured -> held for Sami."}
-    slurm_jobs: [6343431, 6343518, 6343699, 6344899, 6346226]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\", "TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup."]
+    slurm_jobs: [6343431, 6343518, 6343699, 6344899, 6346226, 6346489]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\", "TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup.", "Post-merge check on integration copy (job 6346489, gpu2101, git_commit d8d8873): identical to 6346226 to the last digit; texture agent released."]
   - workstream: reacher-correctness
     brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
     branch: step6/reacher-correctness
     worktree: /Users/samib/stable-envs-step6-reacher-correctness
-    oscar_copy: /oscar/scratch/sboughan/se6/reacher-correctness
+    oscar_copy: $SCR/se6/reacher-correctness
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: af81aa2cd01cbafbe175d4700ae4d540fb580d80
+    head_sha: 5a1897d6659fb3f5598bdd3807dfcb91c2b65754 (includes merge of integration 9da50ee)
     agent_model: opus
     wave: wave1
-    status: implementation (applying review changes)
+    status: merged
     authorization: correctness
     goal: "correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear"
     affected_configs: ["DMCReacherEasy","DMCReacherHard","DMCFingerTurnEasy","DMCFingerTurnHard"]  # style_dim 17->18; other 12 DMC cells unchanged incl. declaration
@@ -47,14 +47,14 @@ workstreams:
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
     pixels_changed: no (default appearance, all 16 DMC cells)
     semantic_followup: none (Step-5 DINO-WM arm frames byte-identical; offscreen mode preserved)
-    review: {reviewer: "fable (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: per-row batching, pristine reads, 16-cell default identity and frozen-digest replay verified. Required: (1) render-purity bug - _static_t reads live model alpha lazily per (scene, ss); hidden->other bake->hidden at new supersample promotes hidden target to static prim (18 px/max 215 ReacherHard, 88 px/max 140 FingerTurnHard) -> use bake-time static sets + regression test; (2) committed Oscar paths grow test_every_cited_scratch_path_resolves 2->18; (3) eval_reacher.py choices lack hidden; hidden==offscreen measured bit-identical; (4) presence_margin is pooled not per-row; bound re-derivation post-failure judged legitimate but must be recorded."}
-    slurm_jobs: [6344667, 6344904]
+    review: {reviewer: "fable (independent)", verdict: "APPROVED after changes (db0f831 static sets recorded at bake + regression test 4/4 GPU; 2f51a97 logs/eval_reacher/wording). Re-verified on merged code job 6346537 gpu2113: 0/16 cells moved; conformance 72/0, reproducibility 94/0, fast_paths 23/0; dmc replay identical; guard margins 0.96/0.86/0.94/0.91. Original: APPROVE-WITH-CHANGES 2026-09-13: per-row batching, pristine reads, 16-cell default identity and frozen-digest replay verified. Required: (1) render-purity bug - _static_t reads live model alpha lazily per (scene, ss); hidden->other bake->hidden at new supersample promotes hidden target to static prim (18 px/max 215 ReacherHard, 88 px/max 140 FingerTurnHard) -> use bake-time static sets + regression test; (2) committed Oscar paths grow test_every_cited_scratch_path_resolves 2->18; (3) eval_reacher.py choices lack hidden; hidden==offscreen measured bit-identical; (4) presence_margin is pooled not per-row; bound re-derivation post-failure judged legitimate but must be recorded."}
+    slurm_jobs: [6344667, 6344904, 6346473(cancelled pre-merge), 6346537]
     notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "PATCH 2026-09-13. Escalate to Sami: default stays target-VISIBLE (dm_control reference), SWM render_target=0 reproduced via knob; folding TASK_OBJECT_PRESENCE_MARGIN into frozen spec is a Step-8 call. NEW FINDING (not this branch): 4 trackcom cells (Cheetah/Hopper/Humanoid/Walker) do not reproduce frozen Step-4 digests at BASELINE (mean_pixel off 0.16-0.61/255, same mujoco/warp/driver/GPU, different venv+node) -> narrow ticket MJWARP-1 queued. MJWarp cannot carry per-row visibility (shader ignores alpha; hidden at context creation)."]
   - workstream: raycast3d
     brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
     branch: step6/raycast3d
     worktree: /Users/samib/stable-envs-step6-raycast3d
-    oscar_copy: /oscar/scratch/sboughan/se6/raycast3d
+    oscar_copy: $SCR/se6/raycast3d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     head_sha: e5f19a7 (ticket 1; trailers being stripped)
     agent_model: opus
@@ -75,7 +75,7 @@ workstreams:
     brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
     branch: step6/fetch-gpu
     worktree: /Users/samib/stable-envs-step6-fetch-gpu
-    oscar_copy: /oscar/scratch/sboughan/se6/fetch-gpu
+    oscar_copy: $SCR/se6/fetch-gpu
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     head_sha: d1518b683b986834eca650af9ec5cc59d49f5f0a
     agent_model: opus
@@ -96,7 +96,7 @@ workstreams:
     brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
     branch: step6/raster2d
     worktree: /Users/samib/stable-envs-step6-raster2d
-    oscar_copy: /oscar/scratch/sboughan/se6/raster2d
+    oscar_copy: $SCR/se6/raster2d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
@@ -117,7 +117,7 @@ workstreams:
     brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
     branch: step6/gfxdraw
     worktree: /Users/samib/stable-envs-step6-gfxdraw
-    oscar_copy: /oscar/scratch/sboughan/se6/gfxdraw
+    oscar_copy: $SCR/se6/gfxdraw
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
@@ -138,7 +138,7 @@ workstreams:
     brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
     branch: step6/cpu-3d
     worktree: /Users/samib/stable-envs-step6-cpu-3d
-    oscar_copy: /oscar/scratch/sboughan/se6/cpu-3d
+    oscar_copy: $SCR/se6/cpu-3d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     head_sha: 6505e71
     agent_model: fable

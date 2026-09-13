@@ -302,6 +302,14 @@ def family_specific(env, states, style) -> dict:
         na("check_variations_do_something", "the env declares an empty variation space")
         na("check_colors_apply_exactly", "the env declares an empty variation space")
 
+    # On the FROZEN CORPUS, like the parity measurement above and for the same reason: its subject is
+    # a task-relevant object appearing or disappearing, and a replay has to be able to compare that
+    # state for state. Applies only where the env has NAMED such an object with a ``visibility.*``
+    # leaf; the check answers the applicability question itself by returning ``skipped``, which
+    # ``run`` already turns into ``not_applicable`` with the reason attached.
+    reseed(env)
+    out["check_task_object_visibility"] = run(C.check_task_object_visibility, env, states)
+
     # No style, deliberately. The floor this is judged against -- DOWNSAMPLE_EXACT_FRAC in
     # tests/gpu/test_reproducibility.py -- was recorded at the DEFAULT appearance, because the number
     # is a property of the geometry; measuring under a sampled style would produce a different
