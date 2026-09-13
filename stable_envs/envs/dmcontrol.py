@@ -909,6 +909,7 @@ class _DMCModel(StableEnv):
         which the appearance space already carries. Order follows ``_slots()`` so the declared space is
         a function of the model and not of a set's iteration order.
         """
+        import mujoco
         m = cls._model()
         out: list[tuple[str, str, int]] = []
         seen: dict[str, tuple[str, int]] = {}
@@ -916,9 +917,8 @@ class _DMCModel(StableEnv):
             kind, eid = _slot_element(m, arr, k)
             if kind not in ("geom", "site"):
                 continue
-            obj = {"geom": "mjOBJ_GEOM", "site": "mjOBJ_SITE"}[kind]
-            import mujoco
-            name = mujoco.mj_id2name(m, getattr(mujoco.mjtObj, obj), eid) or f"{kind}{eid}"
+            obj = {"geom": mujoco.mjtObj.mjOBJ_GEOM, "site": mujoco.mjtObj.mjOBJ_SITE}[kind]
+            name = mujoco.mj_id2name(m, obj, eid) or f"{kind}{eid}"
             if name in seen and seen[name] != (kind, eid):
                 # Two different elements would claim one variation path, and the second would silently
                 # win. A domain that does this needs a naming rule chosen deliberately, not here.
