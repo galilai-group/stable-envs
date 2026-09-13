@@ -145,6 +145,111 @@ def replica(scene, out_size, ss, clk) -> torch.Tensor:
     return out
 
 
+def replica_v2(scene, out_size, ss, clk) -> torch.Tensor:
+    """The Step 6 ``render_torch`` with timers, for the AFTER side of the same attribution.
+
+    One script has to serve both trees, because the before and the after have to be cut the same
+    way to be comparable. Which replica runs is decided by whether the renderer has the pre-pass,
+    not by a flag the caller could get wrong, and both are digest-checked against the real function
+    on every run.
+    """
+    H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
+    if not isinstance(out_size, int):
+        H, W = out_size
+    Rh, Rw = H * ss, W * ss
+    dev, dt = scene.kind.device, scene.geom.dtype
+    with clk("grid"):
+        px, py = R2._pixel_grid(scene, Rh, Rw, dev, dt)
+    B, N, V = scene.batch, scene.n_prims, scene.vertices
+    flat_out = ss == 1
+    with clk("canvas alloc"):
+        if flat_out:
+            u8 = lambda c: c.round().clamp(0, 255).to(torch.uint8).view(B, 1, 1, 3)   # noqa: E731
+            canvas = u8(scene.background).expand(B, Rh, Rw, 3).clone()
+        else:
+            u8 = lambda c: c.view(B, 3, 1, 1)                                         # noqa: E731
+            canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
+    with clk("plan (pre-pass)"):
+        plan = R2._prim_plan(scene, Rh, Rw)
+    K = int(scene.static_prefix)
+    painted = 0
+    for i, (has_disc, has_ring, has_poly, has_outline, has_seg, edges,
+            r0, r1, c0, c1) in enumerate(plan):
+        if r1 <= r0 or c1 <= c0 or not (has_disc or has_poly or has_seg):
+            continue
+        painted += 1
+        tag = "static prefix" if i < K else "dynamic"
+        kind = scene.kind[:, i]
+        g = scene.geom[:, i]
+        fill, line = u8(scene.fill[:, i]), u8(scene.line[:, i])
+        lw = scene.line_w[:, i].view(B, 1, 1)
+        p = px[r0:r1, c0:c1].unsqueeze(0)
+        q = py[r0:r1, c0:c1].unsqueeze(0)
+        view = ((lambda: canvas[:, r0:r1, c0:c1, :]) if flat_out
+                else (lambda: canvas[:, :, r0:r1, c0:c1]))
+        mdim = -1 if flat_out else 1
+
+        def paint(hit, colour, _v=view, _m=mdim):
+            w = _v()
+            w.copy_(torch.where(hit.unsqueeze(_m), colour, w))
+
+        if has_disc:
+            with clk("prim/disc"), clk(f"{tag}/disc"):
+                d2 = (p - g[:, 0].view(B, 1, 1)) ** 2 + (q - g[:, 1].view(B, 1, 1)) ** 2
+                is_disc = (kind == KIND_DISC).view(B, 1, 1)
+                paint(is_disc & (d2 <= g[:, 2].view(B, 1, 1) ** 2), fill)
+                if has_ring:
+                    paint(is_disc & (d2 <= g[:, 3].view(B, 1, 1) ** 2)
+                          & (g[:, 3].view(B, 1, 1) > 0), line)
+        if has_poly:
+            with clk("prim/poly"), clk(f"{tag}/poly"):
+                h, w_ = r1 - r0, c1 - c0
+                sdf = torch.full((B, h, w_), -1e30, device=dev, dtype=dt)
+                edge_d2 = (torch.full((B, h, w_), 1e30, device=dev, dtype=dt)
+                           if has_outline else None)
+                for e, mixed in edges:
+                    ax, ay = g[:, 2 * e].view(B, 1, 1), g[:, 2 * e + 1].view(B, 1, 1)
+                    j = (e + 1) % V
+                    bx, by = g[:, 2 * j].view(B, 1, 1), g[:, 2 * j + 1].view(B, 1, 1)
+                    ex, ey = bx - ax, by - ay
+                    L2 = ex * ex + ey * ey
+                    degen = L2 < 1e-12
+                    inv = torch.rsqrt(L2.clamp_min(1e-20))
+                    d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
+                    sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d)
+                                        if mixed else d)
+                    if has_outline:
+                        t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
+                        qx, qy = p - ax - t * ex, q - ay - t * ey
+                        e2 = qx * qx + qy * qy
+                        edge_d2 = torch.minimum(
+                            edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2)
+                            if mixed else e2)
+                is_poly = (kind == KIND_POLY).view(B, 1, 1)
+                paint(is_poly & (sdf <= 0), fill)
+                if has_outline:
+                    paint(is_poly & (lw > 0) & (edge_d2 <= lw * lw), line)
+        if has_seg:
+            with clk("prim/segment"), clk(f"{tag}/segment"):
+                ax, ay = g[:, 0].view(B, 1, 1), g[:, 1].view(B, 1, 1)
+                ex, ey = g[:, 2].view(B, 1, 1) - ax, g[:, 3].view(B, 1, 1) - ay
+                t = (((p - ax) * ex + (q - ay) * ey)
+                     / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
+                dx, dy = p - ax - t * ex, q - ay - t * ey
+                paint((kind == KIND_SEGMENT).view(B, 1, 1)
+                      & (dx * dx + dy * dy <= g[:, 4].view(B, 1, 1) ** 2), fill)
+    clk.add("primitives evaluated", 0.0)
+    clk.t["primitives evaluated"] = painted
+    with clk("output conversion"):
+        if flat_out:
+            out = canvas
+        else:
+            if ss > 1:
+                canvas = torch.nn.functional.avg_pool2d(canvas, ss)
+            out = canvas.round_().clamp_(0, 255).to(torch.uint8).permute(0, 2, 3, 1).contiguous()
+    return out
+
+
 def coverage(scene, H: int, W: int) -> dict:
     """How much of the frame each primitive's world-space bounding box actually covers.
 
@@ -221,11 +326,13 @@ def do_scene_env(env, states, repeat, warmup) -> dict:
     row["static_prefix"] = int(sc.static_prefix)
     row["n_prims"] = int(sc.n_prims)
     row["vertices"] = int(sc.vertices)
+    rep = replica_v2 if hasattr(R2, "_prim_plan") else replica
+    row["replica"] = rep.__name__
     clk = Clock()
-    img = replica(sc, size, ss, clk)
+    img = rep(sc, size, ss, clk)
     clk2 = Clock()
     for _ in range(max(1, repeat // 4)):
-        replica(sc, size, ss, clk2)
+        rep(sc, size, ss, clk2)
     n = max(1, repeat // 4)
     row["replica_matches_render_torch"] = (
         C.frames_digest(img) == C.frames_digest(R2.render_torch(sc, size, ss)))
