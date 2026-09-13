@@ -1,0 +1,176 @@
+# Step 6 coordinator dashboard (machine-readable). Maintained by the coordinator; one entry per workstream.
+# generated_at: 2026-09-13T17:44:22
+baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+baseline_branch: sami/pre-step6-baseline
+integration_branch: step6/integration
+integration_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+oscar_capacity_note: condo QOS cs-3090-gcondo saturated by simclr_cifar10 (cpu 240/240, gpu 30/32); Step-6 GPU jobs routed to gpu/norm-gpu; HOME quota 100% full, all caches on scratch
+workstreams:
+  - workstream: texture-fidelity
+    brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
+    branch: step6/texture-fidelity
+    worktree: /Users/samib/stable-envs-step6-texture-fidelity
+    oscar_copy: /oscar/scratch/sboughan/se6/texture-fidelity
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    agent_model: fable
+    wave: wave1
+    status: queued
+    authorization: diagnosis
+    goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
+    affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: reacher-correctness
+    brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
+    branch: step6/reacher-correctness
+    worktree: /Users/samib/stable-envs-step6-reacher-correctness
+    oscar_copy: /oscar/scratch/sboughan/se6/reacher-correctness
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    agent_model: opus
+    wave: wave1
+    status: queued
+    authorization: correctness
+    goal: "correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear"
+    affected_configs: ["DMCReacherEasy", "DMCReacherHard"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: raycast3d
+    brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
+    branch: step6/raycast3d
+    worktree: /Users/samib/stable-envs-step6-raycast3d
+    oscar_copy: /oscar/scratch/sboughan/se6/raycast3d
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    agent_model: opus
+    wave: wave1
+    status: queued
+    authorization: PROFILE ONLY
+    goal: "PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate"
+    affected_configs: ["AntmazeGiantNavigate", "AntmazeLargeExplore", "AntmazeMediumExplore", "AntmazeTeleportExplore", "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup", "DMCCheetahRun", "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCHopperHop", "DMCHumanoidStand", "DMCPendulumSwingup", "DMCReacherEasy", "DMCReacherHard", "DMCWalkerWalk", "HumanoidmazeGiantNavigate", "HumanoidmazeLargeNavigate", "HumanoidmazeMediumNavigate", "PointmazeGiantNavigate", "PointmazeLargeNavigate", "PointmazeMediumNavigate", "PointmazeTeleportNavigate"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: fetch-gpu
+    brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
+    branch: step6/fetch-gpu
+    worktree: /Users/samib/stable-envs-step6-fetch-gpu
+    oscar_copy: /oscar/scratch/sboughan/se6/fetch-gpu
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    agent_model: opus
+    wave: wave1
+    status: queued
+    authorization: PROFILE ONLY
+    goal: "PROFILE ONLY: why fps(4096)/fps(1) is 7-12x vs required 20x on the public Fetch path"
+    affected_configs: ["FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: raster2d
+    brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
+    branch: step6/raster2d
+    worktree: null
+    oscar_copy: null
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: null
+    agent_model: opus
+    wave: wave2
+    status: queued
+    authorization: PROFILE FIRST
+    goal: "PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts"
+    affected_configs: ["Piecewise", "PiecewiseZones", "PushT", "SimplePointMaze", "TwoRoom", "TwoRoomTarget"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: gfxdraw
+    brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
+    branch: step6/gfxdraw
+    worktree: null
+    oscar_copy: null
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: null
+    agent_model: opus
+    wave: wave2
+    status: queued
+    authorization: PROFILE FIRST
+    goal: "PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU"
+    affected_configs: ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: cpu-3d
+    brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
+    branch: step6/cpu-3d
+    worktree: null
+    oscar_copy: null
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: null
+    agent_model: fable
+    wave: wave2
+    status: queued
+    authorization: DESIGN/CHARACTERIZATION ONLY
+    goal: "DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes"
+    affected_configs: ["AntmazeGiantNavigate", "AntmazeLargeExplore", "AntmazeMediumExplore", "AntmazeTeleportExplore", "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup", "DMCCheetahRun", "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCHopperHop", "DMCHumanoidStand", "DMCPendulumSwingup", "DMCReacherEasy", "DMCReacherHard", "DMCWalkerWalk", "FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict", "HumanoidmazeGiantNavigate", "HumanoidmazeLargeNavigate", "HumanoidmazeMediumNavigate", "PointmazeGiantNavigate", "PointmazeLargeNavigate", "PointmazeMediumNavigate", "PointmazeTeleportNavigate"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
+  - workstream: tilemap
+    brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
+    branch: step6/tilemap
+    worktree: null
+    oscar_copy: null
+    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: null
+    agent_model: opus
+    wave: wave3
+    status: queued
+    authorization: per brief
+    goal: "tile/atlas CPU optimisation (not full Craftax coverage)"
+    affected_configs: ["CraftaxClassic"]
+    bottleneck: {measured: null, hypothesis: null}
+    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: null
+    semantic_followup: null
+    review: {reviewer: null, verdict: null}
+    slurm_jobs: []
+    notes: []
