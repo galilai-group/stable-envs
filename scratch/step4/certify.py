@@ -32,8 +32,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(ROOT))
 import bounds as B  # noqa: E402
 import universe  # noqa: E402
+from stable_envs.testing.provenance import block_on_reference_mismatch  # noqa: E402
 
 SPEC = json.loads((ROOT / "scratch" / "certification.json").read_text())
 
@@ -270,8 +272,15 @@ def _step_judge(bnd: dict):
     return judge
 
 
-def verdict(row: dict, J: dict) -> dict:
-    """Gate A for one configuration, plus the physics axis kept beside it rather than inside it."""
+def verdict(row: dict, J: dict, provenance: dict | None = None) -> dict:
+    """Gate A for one configuration, plus the physics axis kept beside it rather than inside it.
+
+    ``provenance`` is the measuring shard's record (``reference_packages`` in particular). A check
+    whose bound is a claim against the official renderer is judged only when the reference the
+    declaration names is the reference this interpreter ran; otherwise it is ``blocked_environment``
+    with the mismatch recorded -- ``stable_envs.testing.provenance`` -- exactly as a missing reference
+    package already is. The measurement is kept in the record either way.
+    """
     out = {"config_id": row["config_id"], "swm_ids": row.get("swm_ids", []),
            "role": row.get("role"), "shard": row.get("shard"),
            "registered_default_coverage": row.get("registered_default_coverage"),
@@ -292,6 +301,9 @@ def verdict(row: dict, J: dict) -> dict:
            # would judge a measurement against a bar nobody wrote for it. Absent means no bound.
            "variation_fidelity": decl.get("variation_fidelity") or {}}
     out["tier"] = decl.get("tier") or out["tier"]
+    declared_versions = (decl.get("reference_versions")
+                         or (decl.get("visual_fidelity") or {}).get("reference_versions") or {})
+    recorded_packages = (provenance or {}).get("reference_packages") or {}
 
     for group in ("mandatory", "family_specific"):
         for name, res in sorted((row.get(group) or {}).items()):
@@ -301,6 +313,10 @@ def verdict(row: dict, J: dict) -> dict:
                               else (None, {"why": "no judge is defined for this check"}))
                 rec.update(detail)
                 rec["status"] = "pass" if ok else ("fail" if ok is False else "no_declared_bound")
+                blocked = block_on_reference_mismatch(name, declared_versions, recorded_packages)
+                if blocked is not None:
+                    rec["judged_against_wrong_reference"] = rec["status"]
+                    rec.update(blocked)
             elif res.get("status") == "not_applicable":
                 rec["status"], rec["why"] = "not_applicable", res.get("why")
             elif res.get("status") == "blocked_environment":
@@ -344,7 +360,7 @@ def certify(merged: dict) -> dict:
     claims = {c["config_id"]: c for c in universe.configurations()}
     out = {}
     for cid, row in merged["configs"].items():
-        v = verdict(row, J)
+        v = verdict(row, J, (merged.get("shards") or {}).get(row.get("shard"), {}).get("provenance"))
         u = claims.get(cid, {})
         v["claimed_by"] = u.get("claimed_by", [])
         v["declared_parity"] = {k: u.get(k) for k in

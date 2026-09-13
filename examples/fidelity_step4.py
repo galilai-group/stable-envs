@@ -240,7 +240,7 @@ def mandatory(env, states, style) -> dict:
 
 def _fidelity_declaration(env) -> dict:
     """``register``'s own enforcement, re-run on the live class. Raises if the tier is half-declared."""
-    from stable_envs.core.env import check_fidelity_declaration
+    from stable_envs.core.env import check_fidelity_declaration, reference_versions_of
     check_fidelity_declaration(type(env))
     d = env.describe()
     return {"tier": env.fidelity_tier, "describe_reports_tier": d.get("fidelity_tier"),
@@ -251,6 +251,9 @@ def _fidelity_declaration(env) -> dict:
             # Recorded separately and never defaulted from visual_fidelity: they are different
             # declarations with different numbers, and only a LEARNED decoder carries this one.
             "variation_fidelity": _jsonable(getattr(env, "variation_fidelity", None) or None),
+            # The reference versions the declaration names, for either tier. The certifier compares
+            # them with this run's ``reference_packages`` and blocks a mismatch rather than failing it.
+            "reference_versions": _jsonable(reference_versions_of(type(env)) or None),
             "render_decoder": getattr(env, "render_decoder", "renderer")}
 
 
@@ -473,8 +476,16 @@ def provenance(device: str) -> dict:
         p["gpu"] = torch.cuda.get_device_name(0)
         p["driver"] = _run(["bash", "-c",
                             "nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1"])
+    import importlib.metadata as md
     for m in ("mujoco", "mujoco_warp", "dm_control", "ogbench", "gym_pusht", "gymnasium",
               "gymnasium_robotics", "craftax", "stable_worldmodel", "warp"):
+        # The distribution's version first: ``dm_control`` has no ``__version__`` and was recorded as
+        # "present", which the certifier cannot compare with a declared reference version.
+        try:
+            p.setdefault("reference_packages", {})[m] = md.version(m)
+            continue
+        except BaseException:                                               # noqa: BLE001
+            pass
         try:
             p.setdefault("reference_packages", {})[m] = getattr(__import__(m), "__version__", "present")
         except BaseException:                                               # noqa: BLE001
