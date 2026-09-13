@@ -196,6 +196,63 @@ both are bounds and a corpus chosen for coverage of the reachable set cannot tes
 `scratch/step3/certify.py` reads every bound out of `scratch/certification.json`; `scratch/step6/gfxdraw/tiers.py`
 only points it at the two Step 6 shards. No threshold is retyped anywhere in this workstream.
 
+**CPU — and the certification node makes this two answers, so both are here.**
+
+The frozen sweep (`examples/bench_step3.py`, `node2338`, both arms in one job) returns:
+
+| config | best B | f/s before | f/s after | x | S_cpu before | S_cpu after | tier before -> after |
+|---|---|---|---|---|---|---|---|
+| Acrobot | 64 | 60 | 258 | 4.3x | 0.48 | 4.64 | CPU_REGRESSION -> CPU_FASTER |
+| CartPole | 64 | 78 | 396 | 5.1x | 0.36 | 1.82 | CPU_REGRESSION -> CPU_PARITY |
+| MountainCar | 64 | 62 | 337 | 5.4x | 0.28 | 2.94 | CPU_REGRESSION -> CPU_FASTER |
+| MountainCarContinuous | 16 | 61 | 390 | 6.4x | 0.44 | 2.77 | CPU_REGRESSION -> CPU_FASTER |
+| Pendulum | 16 | 64 | 460 | 7.2x | 1.38 | 14.60 | CPU_PARITY -> CPU_FASTER |
+
+**Do not read the right-hand columns of that table.** node2338 ran at a load average of 47 and the
+benchmark times the official renderer once, after the sweep: its Acrobot reference came out at 125
+frames/s in the before arm and 55 in the after, and its Pendulum reference at 47 and 32 where the
+same renderer does 243-261 on a quieter node and 794 on the laptop. The `S_cpu` after column is
+inflated by a collapsed denominator, and `Pendulum 14.60` is that artefact, not a result. The f/s
+and the speedup columns are sound — they are the numerator only.
+
+So the same measurement was taken again, paired: reference burst, renderer burst, round after
+round, in one process, median of the per-round ratio (`scratch/step6/gfxdraw/paired_cpu.py`). This
+is the number to use.
+
+**CPU, the paired measurement (`node1829`, 1 thread, reference and renderer alternating):**
+
+| config | best B | f/s before | f/s after | x | S_cpu before | S_cpu after | tier before -> after |
+|---|---|---|---|---|---|---|---|
+| Acrobot | 256 | 69 | 372 | 5.5x | 0.18 | **0.94** (0.94-0.96) | CPU_REGRESSION -> **CPU_REGRESSION** |
+| CartPole | 256 | 88 | 520 | 5.8x | 0.20 | **1.25** (1.22-1.31) | CPU_REGRESSION -> **CPU_PARITY** |
+| MountainCar | 256 | 70 | 466 | 6.6x | 0.17 | **1.12** (1.10-1.21) | CPU_REGRESSION -> **CPU_PARITY** |
+| MountainCarContinuous | 256 | 71 | 447 | 6.3x | 0.17 | **1.12** (1.07-1.17) | CPU_REGRESSION -> **CPU_PARITY** |
+| Pendulum | 64 | 71 | 504 | 7.1x | 0.28 | **1.92** (1.88-1.95) | CPU_REGRESSION -> **CPU_PARITY** |
+
+Every batch size, for completeness:
+
+| config | B | before f/s | after f/s | x | S_cpu before | S_cpu after |
+|---|---|---|---|---|---|---|
+| Acrobot | 16 | 63 | 300 | 4.7x | 0.16 | 0.76 |
+| Acrobot | 64 | 69 | 382 | 5.6x | 0.18 | 0.94 |
+| Acrobot | 256 | 68 | 372 | 5.5x | 0.17 | 0.94 |
+| CartPole | 16 | 80 | 373 | 4.7x | 0.17 | 0.82 |
+| CartPole | 64 | 88 | 547 | 6.2x | 0.20 | 1.18 |
+| CartPole | 256 | 90 | 520 | 5.8x | 0.20 | 1.25 |
+| MountainCar | 16 | 65 | 343 | 5.2x | 0.16 | 0.84 |
+| MountainCar | 64 | 70 | 462 | 6.6x | 0.17 | 1.09 |
+| MountainCar | 256 | 71 | 466 | 6.6x | 0.17 | 1.12 |
+| MountainCarContinuous | 16 | 66 | 346 | 5.2x | 0.16 | 0.84 |
+| MountainCarContinuous | 64 | 70 | 474 | 6.8x | 0.17 | 1.11 |
+| MountainCarContinuous | 256 | 71 | 447 | 6.3x | 0.17 | 1.12 |
+| Pendulum | 16 | 68 | 414 | 6.1x | 0.28 | 1.61 |
+| Pendulum | 64 | 71 | 504 | 7.1x | 0.27 | 1.92 |
+| Pendulum | 256 | 71 | 450 | 6.4x | 0.28 | 1.85 |
+
+Four of five move CPU_REGRESSION -> CPU_PARITY; Acrobot lands at 0.94, a hair under. `cores_cpu`
+is 0.22-0.50 throughout (the decode bar is ~850-1,180 frames/s for these frames on that node), so
+every row keeps `BELOW_G4` and none reaches CPU_FAST.
+
 **GPU, class R, RTX 3090 `gpu2104`, both arms on the same card in one job:**
 
 | config | R before | R after | cores before | cores after | tier before | tier after |
