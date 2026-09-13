@@ -8,6 +8,13 @@
 #SBATCH --output=/oscar/scratch/%u/logs/%x_%j.out
 # Step 6 raster2d PROFILE-BEFORE, on Oscar's batch partition at the certification thread budget.
 #
+# SYNCING CODE TO OSCAR DELETES RESULTS. `rsync --delete` from the Mac mirrors the worktree, and the
+# worktree does not contain the notes this job has just written into examples/results/step6/ on the
+# node -- so a push between a run and a pull destroys them. It cost PushT's first before-note, which
+# had to be remeasured. Push with
+#   --exclude examples/results/step6/raster2d
+# or pull before you push.
+#
 # "Before" here means: the baseline renderer, with the device-dispatch defect fixed and NOTHING
 # else. Without that fix PushT and SimplePointMaze raise on any Triton host and there is no CPU
 # number to be before anything. Every other line of the renderer is the frozen baseline.
