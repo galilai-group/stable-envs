@@ -1,0 +1,77 @@
+{
+ "arm": "after",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "cpu": "arm",
+ "threads": 1,
+ "batch": 256,
+ "rounds": 3,
+ "torch": "2.14.0",
+ "tree": "/Users/samib/stable-envs-step6-gfxdraw",
+ "envs": {
+  "Acrobot": {
+   "official_fps_median": 1094.6345840929555,
+   "official_fps_min": 994.0049090503896,
+   "official_fps_max": 1143.081676452493,
+   "se_fps_median": 1161.0271317270706,
+   "se_fps_min": 1152.1268779661395,
+   "se_fps_max": 1180.9797680434403,
+   "S_cpu_paired_median": 1.060652704198205,
+   "S_cpu_paired_min": 1.0331543164164458,
+   "S_cpu_paired_max": 1.1590756418565475,
+   "loadavg": 2.74609375,
+   "digest": "9b47ff8b9795e9e4a48bc6efa625bc99721f48529ff2c5fe46cf185d7c15b493"
+  },
+  "CartPole": {
+   "official_fps_median": 1211.5246264853065,
+   "official_fps_min": 1210.246738690124,
+   "official_fps_max": 1211.9936491895764,
+   "se_fps_median": 1657.1639534322742,
+   "se_fps_min": 1647.5582250140283,
+   "se_fps_max": 1660.3363637617128,
+   "S_cpu_paired_median": 1.3692777682886865,
+   "S_cpu_paired_min": 1.3593785958496571,
+   "S_cpu_paired_max": 1.3704520134918194,
+   "loadavg": 2.74609375,
+   "digest": "5aee7cf21b0677a01e992ed9f7a369db0c7ad0760d111a7ecacac98c3800459b"
+  },
+  "MountainCar": {
+   "official_fps_median": 1171.853540520163,
+   "official_fps_min": 1165.487019713479,
+   "official_fps_max": 1185.4315210769128,
+   "se_fps_median": 1501.1627065211799,
+   "se_fps_min": 1492.6598709875814,
+   "se_fps_max": 1502.7501484284076,
+   "S_cpu_paired_median": 1.280717713488164,
+   "S_cpu_paired_min": 1.266342829451202,
+   "S_cpu_paired_max": 1.2823702762047942,
+   "loadavg": 2.76611328125,
+   "digest": "756e80b1487a24df0066f3830b0ade8db6f298754a3fb1a7bd5996756d984c50"
+  },
+  "MountainCarContinuous": {
+   "official_fps_median": 1189.092573153629,
+   "official_fps_min": 1172.0442786873268,
+   "official_fps_max": 1192.470027787262,
+   "se_fps_median": 1502.6742539265356,
+   "se_fps_min": 1502.250441843543,
+   "se_fps_max": 1520.567948866763,
+   "S_cpu_paired_median": 1.2751414404002395,
+   "S_cpu_paired_min": 1.2633586953279663,
+   "S_cpu_paired_max": 1.2820968296603177,
+   "loadavg": 2.76611328125,
+   "digest": "42026fc745b27f29f50bd2a069a001c1904d33a08e40b7f9e8c2762eb56d7a6b"
+  },
+  "Pendulum": {
+   "official_fps_median": 850.6716784385075,
+   "official_fps_min": 820.9829541279928,
+   "official_fps_max": 853.8659054931485,
+   "se_fps_median": 1422.690690137969,
+   "se_fps_min": 1420.049905012533,
+   "se_fps_max": 1424.007342168966,
+   "S_cpu_paired_median": 1.6693278276516457,
+   "S_cpu_paired_min": 1.6661757788727927,
+   "S_cpu_paired_max": 1.734515113875264,
+   "loadavg": 2.76611328125,
+   "digest": "f631ba80497eebadca062179eb7f2c345b9b7159679c611ee03662355c38c861"
+  }
+ }
+}
