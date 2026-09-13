@@ -27,21 +27,33 @@ from __future__ import annotations
 
 import numpy as np
 
-#: Where a geom the reference does not draw is put instead. See ``parity_probe.py``: the reference
-#: hides its target with material alpha, ``stable_envs``' DM Control appearance space has colour,
-#: light and fovy but no alpha, and a geom outside the camera frustum is the one way this renderer
-#: can be told not to paint it. Chosen far outside a scene whose arm reaches 0.22 m.
+#: SUPERSEDED, and kept only so the Step-5 arm stays reproducible. Where a geom the reference does not
+#: draw USED to be put instead: Step 5 ran with ``stable_envs``' DM Control appearance space carrying
+#: colour, light and fovy but no visibility, so a geom outside the camera frustum was the one way this
+#: renderer could be told not to paint it. Chosen far outside a scene whose arm reaches 0.22 m.
+#: ``target_mode="hidden"`` says the same thing directly and is the default; see ``VISIBILITY``.
 OFFSCREEN = (10.0, 10.0, 0.01)
 
+#: The style leaf that replaced it. ``DMCReacher*`` declares ``visibility.target`` — a binary knob that
+#: zeroes the target geom's rgba alpha, which is exactly what ``stable_worldmodel``'s
+#: ``render_target = 0`` does to the material and exactly what MuJoCo's own renderer honours. The state
+#: then keeps the target position the episode actually drew instead of carrying 10 m as a lie, and the
+#: geom is not built, transformed or cast against at all.
+VISIBILITY = "visibility.target"
+
 MODES = ("stable_envs", "blank", "official_regen")
-TARGET_MODES = ("offscreen", "as_placed")
+#: ``hidden`` and ``offscreen`` differ in MECHANISM, not in intent: both say "the reference does not
+#: draw its target, so neither should we". ``offscreen`` is the Step-5 mechanism and is retained so
+#: ``examples/results/step5/reacher/`` can be reproduced exactly; ``hidden`` is the representation and
+#: is the default.
+TARGET_MODES = ("hidden", "offscreen", "as_placed")
 
 
 class Renderer:
     """stable-envs ``DMCReacherHard``, answering the two shapes the swm eval asks for."""
 
     def __init__(self, size: int = 224, mode: str = "stable_envs", device: str = "cuda",
-                 target_mode: str = "offscreen", dataset_target_mode: str | None = None,
+                 target_mode: str = "hidden", dataset_target_mode: str | None = None,
                  env_name: str = "DMCReacherHard"):
         if mode not in MODES:
             raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
@@ -76,6 +88,23 @@ class Renderer:
             self.env = se.make(env_name, batch=1, size=self.size, device=device)
             self.slots = slot_names(self.env)
             self.nq = self.env.nq
+            if VISIBILITY not in self.env.style_names:
+                raise RuntimeError(
+                    f"{env_name} declares no {VISIBILITY!r} leaf ({self.env.style_names}), so "
+                    f"'the reference does not draw its target' has no representation here. Either "
+                    f"this checkout predates that knob or the env is not a DM Control reacher; "
+                    f"target_mode='offscreen' is the Step-5 fallback and says so in the arm.")
+
+    # ---- the one place a hidden target is expressed -----------------------
+
+    def _variation(self, mode: str) -> dict | None:
+        """The style override a target mode asks for. ``None`` when the target is drawn.
+
+        The knob is a STYLE leaf, so it is per row and it is part of what a dataset would store
+        beside the state; ``render(..., variation={...})`` broadcasts one value over the batch, which
+        is what these two surfaces want (a whole surface is drawn one way or the other).
+        """
+        return {VISIBILITY: 0} if mode == "hidden" else None
 
     # ---- the two shapes ---------------------------------------------------
 
@@ -89,9 +118,13 @@ class Renderer:
         if self.mode == "blank":
             return self.blank(1)[0]
         from state_bridge import read_state
+        # Under "hidden" the state is read STRAIGHT off the official env -- the target keeps the
+        # position the episode drew, and only the appearance says it is not painted. Under the Step-5
+        # "offscreen" mechanism the position itself was overwritten, which is the thing this replaces.
         override = {"target": OFFSCREEN} if self.target_mode == "offscreen" else None
         st = read_state(self.env, swm_env, slots=self.slots, target_override=override)
-        return self.env.render(st.reshape(1, -1))[0].cpu().numpy()
+        return self.env.render(st.reshape(1, -1),
+                               variation=self._variation(self.target_mode))[0].cpu().numpy()
 
     def from_state(self, qpos, target_pos=None) -> np.ndarray:
         """``(N, nq)`` stored joint positions (and the episode's target) -> ``(N, size, size, 3)``.
@@ -100,7 +133,9 @@ class Renderer:
         which for this model is the same two numbers ``initialize_episode`` wrote into
         ``geom_pos`` -- so a corpus recorded through it carries the whole state our renderer needs,
         and a stored frame really is regenerable from the numbers stored beside it. Where the
-        reference draws no target the column is irrelevant and the geom goes off camera instead.
+        reference draws no target the column is still written with whatever the corpus recorded and
+        the APPEARANCE declines to paint it ("hidden"); the Step-5 mechanism overwrote the column
+        instead ("offscreen"), and both are kept so that arm stays reproducible.
         """
         q = np.asarray(qpos, np.float64).reshape(len(qpos), -1)
         self.n_dataset += 1
@@ -108,20 +143,24 @@ class Renderer:
             return self.blank(len(q))
         if self.mode == "official_regen":
             return self._official_frames(q, target_pos)
-        if self.dataset_target_mode == "as_placed":
+        t = None
+        if self.dataset_target_mode != "offscreen":
             if target_pos is None:
-                raise KeyError(
-                    "the corpus has no target_pos column, so a stored frame cannot be regenerated "
-                    "with the target where the episode put it; the arms would not be comparable")
-            t = np.asarray(target_pos, np.float64).reshape(len(q), -1)
+                if self.dataset_target_mode == "as_placed":
+                    raise KeyError(
+                        "the corpus has no target_pos column, so a stored frame cannot be "
+                        "regenerated with the target where the episode put it; the arms would not "
+                        "be comparable")
+            else:
+                t = np.asarray(target_pos, np.float64).reshape(len(q), -1)
         st = np.zeros((len(q), self.env.state_dim), np.float32)
         st[:, :self.nq] = q[:, :self.nq]
         for j, (_arr, name, comp) in enumerate(self.slots):
             if self.dataset_target_mode == "offscreen":
                 st[:, self.nq + j] = OFFSCREEN[comp] if name == "target" else 0.0
-            else:
-                st[:, self.nq + j] = t[:, comp] if comp < t.shape[1] else OFFSCREEN[comp]
-        return self.env.render(st).cpu().numpy()
+            elif t is not None:
+                st[:, self.nq + j] = t[:, comp] if comp < t.shape[1] else 0.0
+        return self.env.render(st, variation=self._variation(self.dataset_target_mode)).cpu().numpy()
 
 
     def _official_frames(self, q, target_pos) -> np.ndarray:

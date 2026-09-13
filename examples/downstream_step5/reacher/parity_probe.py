@@ -38,6 +38,12 @@ ROOT = Path(__file__).resolve().parents[3]
 #: reaches 0.22 m and whose camera sees roughly +/-0.3 m, and finite so MuJoCo still computes a pose.
 OFFSCREEN = (10.0, 10.0)
 
+#: Step 6's replacement for it: the style leaf ``DMCReacher*`` now declares. Zeroing it zeroes the
+#: target geom's rgba alpha, which is what ``stable_worldmodel``'s ``render_target = 0`` does to the
+#: material and what MuJoCo's own renderer honours -- so the two sides now express the same thing the
+#: same way instead of one of them faking it with a position.
+VISIBILITY = "visibility.target"
+
 #: Fixed so the probe is reproducible and so the states are the env's own, not a box someone chose.
 PROBE_SEED = 5150
 
@@ -111,7 +117,13 @@ def main() -> None:
           f"{'DRAWN' if target_drawn else 'NOT DRAWN'}")
 
     states = rollout(swm_env, args.n, PROBE_SEED)
-    modes = {"as_placed": None, "offscreen": {"target": (*OFFSCREEN, 0.01)}}
+    # ``(state override, style override)`` per mode. ``hidden`` is Step 6's representation -- the
+    # state keeps the target position the episode drew and the env's own ``visibility.target`` leaf
+    # says it is not painted; ``offscreen`` is Step 5's mechanism, kept so the recorded arm stays
+    # reproducible and so the two can be compared on the same states in one run.
+    modes = {"as_placed": (None, None),
+             "hidden": (None, {VISIBILITY: 0}),
+             "offscreen": ({"target": (*OFFSCREEN, 0.01)}, None)}
     res = {"task": args.task, "size": args.size, "n": args.n,
            "reference_target_drawn": bool(target_drawn),
            "reference_target_move_delta": moved_delta,
@@ -120,7 +132,9 @@ def main() -> None:
            "modes": {}}
     keep_frames = {}
 
-    for mode, override in modes.items():
+    for mode, (override, variation) in modes.items():
+        if variation and VISIBILITY not in ours.style_names:
+            raise SystemExit(f"DMCReacherHard declares no {VISIBILITY!r}: {ours.style_names}")
         off_all, our_all = [], []
         for s in states:
             with p.reset_context():
@@ -128,7 +142,7 @@ def main() -> None:
                 p.data.qvel[:] = s["qvel"]
             off_all.append(swm_env.render(args.size, args.size).copy())
             st = read_state(ours, swm_env, slots=slots, target_override=override)
-            our_all.append(ours.render(st.reshape(1, -1))[0].cpu().numpy())
+            our_all.append(ours.render(st.reshape(1, -1), variation=variation)[0].cpu().numpy())
         off_a, our_a = np.stack(off_all), np.stack(our_all)
         keep_frames[mode] = (off_a, our_a)
         agree = C.pixel_agreement(our_a, off_a)
