@@ -380,6 +380,9 @@ def main() -> None:
     pool = np.load(Path(a.states_dir) / f"{a.env}.npz")["states"]
     note = {"env": a.env, "device": a.device, "threads": a.threads,
             "host": socket.gethostname(), "cpu": platform.machine(),
+            # the tree the import actually resolved to, not the one the command line named
+            "stable_envs_file": se.__file__,
+            "has_prim_plan": hasattr(R2, "_prim_plan"),
             "torch": torch.__version__, "batches": {}}
     for B in a.batch:
         states = np.asarray(pool[np.arange(B) % len(pool)], np.float32)

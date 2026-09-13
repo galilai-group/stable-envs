@@ -39,6 +39,9 @@ def main() -> None:
     torch.set_num_threads(a.threads)
 
     out = {"host": socket.gethostname(), "cpu": platform.machine(), "device": a.device,
+           # the tree the import actually resolved to, so a before/after pair of these files is a
+           # statement about two checkouts rather than about one invoked twice
+           "stable_envs_file": se.__file__,
            "torch": torch.__version__, "configs": {}}
     for cfg in a.configs.split(","):
         states = np.load(Path(a.states_dir) / f"{cfg}.npz")["states"]

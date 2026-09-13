@@ -197,6 +197,12 @@ def main() -> None:
 
     note: dict = {
         "workstream": args.workstream, "env": args.env, "device": args.device,
+        # WHICH TREE WAS MEASURED. A before/after that switches PYTHONPATH between two checkouts is
+        # only a before/after if the import actually followed it, and a script that does
+        # sys.path.insert(0, its own root) silently overrides PYTHONPATH -- so both legs measure one
+        # tree and the note cannot tell. Recording the resolved package path makes the artifact
+        # prove which code produced it instead of the invocation being taken on trust.
+        "stable_envs_file": se.__file__,
         "baseline_commit": git_commit(), "host": socket.gethostname(),
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "cpu": platform.processor() or platform.machine(),
@@ -267,7 +273,8 @@ def render_note(n: dict) -> str:
          f"·  threads: {n['threads']}",
          f"- frame: {n['size']}px  ·  state_dim: {n['state_dim']}",
          f"- states: `{n['states_source']}`",
-         f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}", ""]
+         f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}",
+         f"- measured tree: `{n.get('stable_envs_file', 'not recorded')}`", ""]
     for B, rec in n["batches"].items():
         t, r = rec["trace"], rec["render_ms"]
         L += [f"## batch {B}", "",

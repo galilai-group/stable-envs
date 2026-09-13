@@ -267,7 +267,33 @@ support is the whole frame and cropping it would change pixels. Any patch there 
 static half, not the dynamic one. Recommend a separate ticket; owner unclear, since `swm_nav.py` is a
 per-env renderer rather than a shared one.
 
-### 7c. Two defects in shared tooling, found by using it
+### 7c. Which tree each leg measured, proved rather than assumed
+
+The `raycast3d` workstream reported that a script doing `sys.path.insert(0, <its own root>)`
+overrides `$PYTHONPATH`, so a before/after job that switches `PYTHONPATH` between two checkouts can
+silently measure one tree twice. Checked here:
+
+- `scratch/step6/profile_note.py` inserts nothing; `attribute.py`, `cpu_digest.py` and
+  `fuzz_render_torch.py` insert the root derived from their own `__file__`, and every leg runs the
+  copy of the script that lives **inside the tree it is measuring** (`cd $TREE`, `$TREE/examples/...`
+  for `bench_step3.py`), so the inserted root and the intended tree are the same path;
+- confirmed by import under each leg's exact invocation:
+  `…/se6/raster2d-preB/stable_envs/__init__.py`, `_prim_plan` absent, against
+  `…/se6/raster2d/stable_envs/__init__.py`, `_prim_plan` present;
+- the artifacts already carry the proof independently. Every before attribution records
+  `"replica": "replica"` and every after one `"replica": "replica_v2"`, and which replica runs is
+  decided by `hasattr(raster2d, "_prim_plan")` — a before note could not say `replica` if it had
+  imported the patched tree;
+- and the sweep's own control says the same thing: the four `swm_nav` rows, whose source is
+  byte-identical in both trees, moved by ≤5%, while the two Scene2D rows moved 5.1x and 41.2x. One
+  tree measured twice cannot produce that.
+
+The three scripts now also record `stable_envs.__file__` (and `attribute.py` records
+`has_prim_plan`) in every note they write, so a future artifact states which code produced it rather
+than leaving it to the invocation. The artifacts in this directory predate that field and are
+covered by the four points above.
+
+### 7d. Two defects in shared tooling, found by using it
 
 - `scratch/step6/profile_note.py` wrote `n["host"]` in `main()`, where `n` is `render_note`'s
   parameter and is unbound. Every run profiled, printed and then raised `NameError` **before writing
