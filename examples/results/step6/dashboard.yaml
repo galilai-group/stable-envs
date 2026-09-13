@@ -15,7 +15,7 @@ workstreams:
     head_sha: 60f81acf2d166c160f6e58fb57d58c00260d75d3
     agent_model: fable
     wave: wave1
-    status: finding
+    status: implementation (TEXTURE-2 provenance policy)
     authorization: diagnosis
     goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
     affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
@@ -93,13 +93,13 @@ workstreams:
   - workstream: raster2d
     brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
     branch: step6/raster2d
-    worktree: null
-    oscar_copy: null
+    worktree: /Users/samib/stable-envs-step6-raster2d
+    oscar_copy: /oscar/scratch/sboughan/se6/raster2d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: null
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
     wave: wave2
-    status: queued
+    status: profiling
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts"
     affected_configs: ["Piecewise", "PiecewiseZones", "PushT", "SimplePointMaze", "TwoRoom", "TwoRoomTarget"]
@@ -110,17 +110,17 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave2 spawned 2026-09-13T18:25"]
   - workstream: gfxdraw
     brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
     branch: step6/gfxdraw
-    worktree: null
-    oscar_copy: null
+    worktree: /Users/samib/stable-envs-step6-gfxdraw
+    oscar_copy: /oscar/scratch/sboughan/se6/gfxdraw
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: null
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
     wave: wave2
-    status: queued
+    status: profiling
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU"
     affected_configs: ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"]
@@ -131,17 +131,17 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave2 spawned 2026-09-13T18:25"]
   - workstream: cpu-3d
     brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
     branch: step6/cpu-3d
-    worktree: null
-    oscar_copy: null
+    worktree: /Users/samib/stable-envs-step6-cpu-3d
+    oscar_copy: /oscar/scratch/sboughan/se6/cpu-3d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: null
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: fable
     wave: wave2
-    status: queued
+    status: design
     authorization: DESIGN/CHARACTERIZATION ONLY
     goal: "DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes"
     affected_configs: ["AntmazeGiantNavigate", "AntmazeLargeExplore", "AntmazeMediumExplore", "AntmazeTeleportExplore", "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup", "DMCCheetahRun", "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCHopperHop", "DMCHumanoidStand", "DMCPendulumSwingup", "DMCReacherEasy", "DMCReacherHard", "DMCWalkerWalk", "FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict", "HumanoidmazeGiantNavigate", "HumanoidmazeLargeNavigate", "HumanoidmazeMediumNavigate", "PointmazeGiantNavigate", "PointmazeLargeNavigate", "PointmazeMediumNavigate", "PointmazeTeleportNavigate"]
@@ -152,7 +152,7 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave2 spawned 2026-09-13T18:25"]
   - workstream: tilemap
     brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
     branch: step6/tilemap
