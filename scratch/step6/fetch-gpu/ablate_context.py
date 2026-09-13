@@ -129,11 +129,17 @@ def main() -> None:
         ("skybox_off", {"render_skybox": False}, False, None),
         ("specular_off", {"enable_specular": False}, False, None),
         ("textures_off", {"use_textures": False}, False, None),
-        ("seg_off", {"render_seg": False}, False, None),
+        # ``render_seg`` is load-bearing: the composite decides mover pixels from the segmentation
+        # buffer, so a context without one raises in ``_context``. Kept out of the table rather than
+        # reported as a saving.
         ("lightspec", {}, True, None),
         ("chunk_512", {}, False, 512),
         ("chunk_1024", {}, False, 1024),
-        ("lightspec+skybox_off", {"render_skybox": False}, True, None),
+        # The two cells that came back pixel-identical to the control, together and with the chunk
+        # knob, because neither is a saving worth proposing on its own.
+        ("skybox+textures_off", {"render_skybox": False, "use_textures": False}, False, None),
+        ("skybox+textures_off+chunk512", {"render_skybox": False, "use_textures": False},
+         False, 512),
     ]
 
     note = {"workstream": "step6/fetch-gpu", "env": args.env,
