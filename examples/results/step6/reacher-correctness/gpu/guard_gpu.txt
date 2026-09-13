@@ -1,0 +1,460 @@
+{
+ "DMCReacherEasy": {
+  "device": "cuda",
+  "draws": [
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 2450,
+      "footprint_frac": 0.021701388888888888,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.8138775510204082,
+      "presence_agree_flipped": 0.0020408163265306124,
+      "presence_mean_abs_declared": 6.715102040816326,
+      "presence_mean_abs_flipped": 158.08612244897958,
+      "presence_margin": 0.9575225077521682,
+      "reference_id": "dm_control/reacher-easy"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 2457,
+      "footprint_frac": 0.021763392857142856,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.7956857956857957,
+      "presence_agree_flipped": 0.001628001628001628,
+      "presence_mean_abs_declared": 7.145299145299146,
+      "presence_mean_abs_flipped": 159.81562881562883,
+      "presence_margin": 0.9552903605344987,
+      "reference_id": "dm_control/reacher-easy"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 2451,
+      "footprint_frac": 0.021710246598639456,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.7923296613627091,
+      "presence_agree_flipped": 0.0028559771521827824,
+      "presence_mean_abs_declared": 7.022847817217462,
+      "presence_mean_abs_flipped": 155.48674010607914,
+      "presence_margin": 0.9548331400322226,
+      "reference_id": "dm_control/reacher-easy"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 2418,
+      "footprint_frac": 0.02141794217687075,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.8019023986765922,
+      "presence_agree_flipped": 0.0016542597187758478,
+      "presence_mean_abs_declared": 6.892059553349876,
+      "presence_mean_abs_flipped": 159.2196029776675,
+      "presence_margin": 0.9567134986869891,
+      "reference_id": "dm_control/reacher-easy"
+     }
+    }
+   }
+  ],
+  "frozen_corpus": {
+   "n_states": 64,
+   "tol": 8,
+   "objects": {
+    "visibility.target": {
+     "declared_value": 1,
+     "footprint_px": 9891,
+     "footprint_frac": 0.021902901785714284,
+     "rows_with_footprint": 64,
+     "per_row_max_abs_diff": 0,
+     "presence_agree_declared": 0.797391568092205,
+     "presence_agree_flipped": 0.002426448286320898,
+     "presence_mean_abs_declared": 7.045091497320796,
+     "presence_mean_abs_flipped": 157.25932666060055,
+     "presence_margin": 0.955200803367767,
+     "reference_id": "dm_control/reacher-easy"
+    }
+   }
+  }
+ },
+ "DMCReacherHard": {
+  "device": "cuda",
+  "draws": [
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 243,
+      "footprint_frac": 0.002152423469387755,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.24691358024691357,
+      "presence_agree_flipped": 0.01646090534979424,
+      "presence_mean_abs_declared": 19.695473251028808,
+      "presence_mean_abs_flipped": 135.2880658436214,
+      "presence_margin": 0.8544182509505703,
+      "reference_id": "dm_control/reacher-hard"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 240,
+      "footprint_frac": 0.0021258503401360546,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.23333333333333334,
+      "presence_agree_flipped": 0.0125,
+      "presence_mean_abs_declared": 19.104166666666668,
+      "presence_mean_abs_flipped": 136.72083333333333,
+      "presence_margin": 0.8602687959040625,
+      "reference_id": "dm_control/reacher-hard"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 237,
+      "footprint_frac": 0.002099277210884354,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.2320675105485232,
+      "presence_agree_flipped": 0.016877637130801686,
+      "presence_mean_abs_declared": 19.071729957805907,
+      "presence_mean_abs_flipped": 131.83966244725738,
+      "presence_margin": 0.8553414837099149,
+      "reference_id": "dm_control/reacher-hard"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 233,
+      "footprint_frac": 0.002063846371882086,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.2145922746781116,
+      "presence_agree_flipped": 0.0,
+      "presence_mean_abs_declared": 20.321888412017167,
+      "presence_mean_abs_flipped": 136.6952789699571,
+      "presence_margin": 0.8513343799058085,
+      "reference_id": "dm_control/reacher-hard"
+     }
+    }
+   }
+  ],
+  "frozen_corpus": {
+   "n_states": 64,
+   "tol": 8,
+   "objects": {
+    "visibility.target": {
+     "declared_value": 1,
+     "footprint_px": 966,
+     "footprint_frac": 0.002139136904761905,
+     "rows_with_footprint": 64,
+     "per_row_max_abs_diff": 0,
+     "presence_agree_declared": 0.2608695652173913,
+     "presence_agree_flipped": 0.018633540372670808,
+     "presence_mean_abs_declared": 18.716356107660456,
+     "presence_mean_abs_flipped": 134.0248447204969,
+     "presence_margin": 0.8603515926715481,
+     "reference_id": "dm_control/reacher-hard"
+    }
+   }
+  }
+ },
+ "DMCFingerTurnEasy": {
+  "device": "cuda",
+  "draws": [
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 2777,
+      "footprint_frac": 0.024597859977324263,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.8501980554555275,
+      "presence_agree_flipped": 0.015124234785740008,
+      "presence_mean_abs_declared": 5.666906733885488,
+      "presence_mean_abs_flipped": 102.14944184371625,
+      "presence_margin": 0.9445233705480683,
+      "reference_id": "dm_control/finger-turn_easy"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 3022,
+      "footprint_frac": 0.02676799886621315,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.8749172733289212,
+      "presence_agree_flipped": 0.022501654533421574,
+      "presence_mean_abs_declared": 5.504301786896096,
+      "presence_mean_abs_flipped": 101.22733289212442,
+      "presence_margin": 0.945624352340075,
+      "reference_id": "dm_control/finger-turn_easy"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 2901,
+      "footprint_frac": 0.025696215986394558,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.8728024819027922,
+      "presence_agree_flipped": 0.01275422268183385,
+      "presence_mean_abs_declared": 5.108583247156153,
+      "presence_mean_abs_flipped": 102.74698379869011,
+      "presence_margin": 0.9502799687320721,
+      "reference_id": "dm_control/finger-turn_easy"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 3079,
+      "footprint_frac": 0.027272888321995464,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.873985060084443,
+      "presence_agree_flipped": 0.017213380967846702,
+      "presence_mean_abs_declared": 5.372523546606041,
+      "presence_mean_abs_flipped": 103.55050341019812,
+      "presence_margin": 0.9481168765995885,
+      "reference_id": "dm_control/finger-turn_easy"
+     }
+    }
+   }
+  ],
+  "frozen_corpus": {
+   "n_states": 64,
+   "tol": 8,
+   "objects": {
+    "visibility.target": {
+     "declared_value": 1,
+     "footprint_px": 11774,
+     "footprint_frac": 0.026072668650793652,
+     "rows_with_footprint": 64,
+     "per_row_max_abs_diff": 0,
+     "presence_agree_declared": 0.8693731951758111,
+     "presence_agree_flipped": 0.02564973670800068,
+     "presence_mean_abs_declared": 5.645829794462375,
+     "presence_mean_abs_flipped": 101.69194836079497,
+     "presence_margin": 0.94448105395295,
+     "reference_id": "dm_control/finger-turn_easy"
+    }
+   }
+  }
+ },
+ "DMCFingerTurnHard": {
+  "device": "cuda",
+  "draws": [
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 422,
+      "footprint_frac": 0.003737953514739229,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.6966824644549763,
+      "presence_agree_flipped": 0.002369668246445498,
+      "presence_mean_abs_declared": 9.815165876777252,
+      "presence_mean_abs_flipped": 107.90758293838863,
+      "presence_margin": 0.9090409996266772,
+      "reference_id": "dm_control/finger-turn_hard"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 490,
+      "footprint_frac": 0.004340277777777778,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.7183673469387755,
+      "presence_agree_flipped": 0.0,
+      "presence_mean_abs_declared": 9.097959183673469,
+      "presence_mean_abs_flipped": 103.78775510204082,
+      "presence_margin": 0.9123407267579047,
+      "reference_id": "dm_control/finger-turn_hard"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 468,
+      "footprint_frac": 0.004145408163265306,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.7115384615384616,
+      "presence_agree_flipped": 0.004273504273504274,
+      "presence_mean_abs_declared": 8.98076923076923,
+      "presence_mean_abs_flipped": 101.1025641025641,
+      "presence_margin": 0.9111716966776566,
+      "reference_id": "dm_control/finger-turn_hard"
+     }
+    }
+   },
+   {
+    "n_states": 16,
+    "tol": 8,
+    "objects": {
+     "visibility.target": {
+      "declared_value": 1,
+      "footprint_px": 513,
+      "footprint_frac": 0.004544005102040816,
+      "rows_with_footprint": 16,
+      "per_row_max_abs_diff": 0,
+      "presence_agree_declared": 0.7290448343079922,
+      "presence_agree_flipped": 0.005847953216374269,
+      "presence_mean_abs_declared": 8.955165692007798,
+      "presence_mean_abs_flipped": 104.98830409356725,
+      "presence_margin": 0.91470320652073,
+      "reference_id": "dm_control/finger-turn_hard"
+     }
+    }
+   }
+  ],
+  "frozen_corpus": {
+   "n_states": 64,
+   "tol": 8,
+   "objects": {
+    "visibility.target": {
+     "declared_value": 1,
+     "footprint_px": 1827,
+     "footprint_frac": 0.004045758928571429,
+     "rows_with_footprint": 64,
+     "per_row_max_abs_diff": 0,
+     "presence_agree_declared": 0.7208538587848933,
+     "presence_agree_flipped": 0.0071154898741105635,
+     "presence_mean_abs_declared": 9.166392993979201,
+     "presence_mean_abs_flipped": 105.42419266557198,
+     "presence_margin": 0.91305228181299,
+     "reference_id": "dm_control/finger-turn_hard"
+    }
+   }
+  }
+ }
+}
+
+== summary ==
+DMCReacherEasy       margin 0.9548-0.9575  declared_mae 6.72-7.15  flipped_mae 155.5-159.8  footprint_px [2450, 2457, 2451, 2418, 9891]  per_row [0, 0, 0, 0, 0]
+DMCReacherHard       margin 0.8513-0.8604  declared_mae 18.72-20.32  flipped_mae 131.8-136.7  footprint_px [243, 240, 237, 233, 966]  per_row [0, 0, 0, 0, 0]
+DMCFingerTurnEasy    margin 0.9445-0.9503  declared_mae 5.11-5.67  flipped_mae 101.2-103.6  footprint_px [2777, 3022, 2901, 3079, 11774]  per_row [0, 0, 0, 0, 0]
+DMCFingerTurnHard    margin 0.9090-0.9147  declared_mae 8.96-9.82  flipped_mae 101.1-107.9  footprint_px [422, 490, 468, 513, 1827]  per_row [0, 0, 0, 0, 0]
+Exception ignored in: <function Renderer.__del__ at 0x7f1c65e40ae0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f1c65e404a0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f1c65e40ae0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f1c65e404a0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f1c65e40ae0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f1c65e404a0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f1c65e40ae0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f1c65e404a0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

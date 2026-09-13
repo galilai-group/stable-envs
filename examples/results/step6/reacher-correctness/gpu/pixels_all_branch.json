@@ -1,0 +1,343 @@
+{
+ "device": "cuda",
+ "envs": {
+  "DMCAcrobotSwingup": {
+   "digest_default": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+   "digest_ours": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+   "mean_pixel": 77.10355696097884,
+   "n": 64,
+   "state_names": [
+    "shoulder",
+    "elbow"
+   ],
+   "status": "measured",
+   "style_dim": 11,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCBallInCupCatch": {
+   "digest_default": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+   "digest_ours": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+   "mean_pixel": 58.84612829506803,
+   "n": 64,
+   "state_names": [
+    "cup_x",
+    "cup_z",
+    "ball_x",
+    "ball_z"
+   ],
+   "status": "measured",
+   "style_dim": 11,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCCartpoleBalance": {
+   "digest_default": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+   "digest_ours": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+   "mean_pixel": 77.88875233253023,
+   "n": 64,
+   "state_names": [
+    "slider",
+    "hinge_1"
+   ],
+   "status": "measured",
+   "style_dim": 11,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCCartpoleSwingup": {
+   "digest_default": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+   "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+   "mean_pixel": 78.14292579010771,
+   "n": 64,
+   "state_names": [
+    "slider",
+    "hinge_1"
+   ],
+   "status": "measured",
+   "style_dim": 11,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCCheetahRun": {
+   "digest_default": "d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7",
+   "digest_ours": "d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7",
+   "mean_pixel": 79.08044276738474,
+   "n": 64,
+   "state_names": [
+    "rootx",
+    "rootz",
+    "rooty",
+    "bthigh",
+    "bshin",
+    "bfoot",
+    "fthigh",
+    "fshin",
+    "ffoot"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCFingerSpin": {
+   "digest_default": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+   "digest_ours": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+   "mean_pixel": 63.60093507889267,
+   "n": 64,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge"
+   ],
+   "status": "measured",
+   "style_dim": 14,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCFingerTurnEasy": {
+   "digest_default": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+   "digest_ours": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+   "mean_pixel": 64.34121521872638,
+   "n": 64,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge",
+    "target_pos_x",
+    "target_pos_z"
+   ],
+   "status": "measured",
+   "style_dim": 18,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ]
+  },
+  "DMCFingerTurnHard": {
+   "digest_default": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+   "digest_ours": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+   "mean_pixel": 63.734306352749435,
+   "n": 64,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge",
+    "target_pos_x",
+    "target_pos_z"
+   ],
+   "status": "measured",
+   "style_dim": 18,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ]
+  },
+  "DMCHopperHop": {
+   "digest_default": "80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc",
+   "digest_ours": "80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc",
+   "mean_pixel": 78.14701362315759,
+   "n": 64,
+   "state_names": [
+    "rootx",
+    "rootz",
+    "rooty",
+    "waist",
+    "hip",
+    "knee",
+    "ankle"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCHumanoidStand": {
+   "digest_default": "c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84",
+   "digest_ours": "c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84",
+   "mean_pixel": 62.615247661564624,
+   "n": 64,
+   "state_names": [
+    "root_x",
+    "root_y",
+    "root_z",
+    "root_qw",
+    "root_qx",
+    "root_qy",
+    "root_qz",
+    "abdomen_z",
+    "abdomen_y",
+    "abdomen_x",
+    "right_hip_x",
+    "right_hip_z",
+    "right_hip_y",
+    "right_knee",
+    "right_ankle_y",
+    "right_ankle_x",
+    "left_hip_x",
+    "left_hip_z",
+    "left_hip_y",
+    "left_knee",
+    "left_ankle_y",
+    "left_ankle_x",
+    "right_shoulder1",
+    "right_shoulder2",
+    "right_elbow",
+    "left_shoulder1",
+    "left_shoulder2",
+    "left_elbow"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCPendulumSwingup": {
+   "digest_default": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+   "digest_ours": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+   "mean_pixel": 74.9983908493953,
+   "n": 64,
+   "state_names": [
+    "hinge"
+   ],
+   "status": "measured",
+   "style_dim": 14,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCPointMassEasy": {
+   "path": "/oscar/scratch/sboughan/se6/reacher-correctness/examples/results/step4/states/DMCPointMassEasy.npz",
+   "status": "no corpus"
+  },
+  "DMCReacherEasy": {
+   "digest_default": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+   "digest_ours": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+   "mean_pixel": 80.1058127243953,
+   "n": 64,
+   "state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+   ],
+   "status": "measured",
+   "style_dim": 18,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ]
+  },
+  "DMCReacherHard": {
+   "digest_default": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+   "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+   "mean_pixel": 79.02629780210695,
+   "n": 64,
+   "state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+   ],
+   "status": "measured",
+   "style_dim": 18,
+   "style_names": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ]
+  },
+  "DMCSwimmerSwimmer6": {
+   "path": "/oscar/scratch/sboughan/se6/reacher-correctness/examples/results/step4/states/DMCSwimmerSwimmer6.npz",
+   "status": "no corpus"
+  },
+  "DMCWalkerWalk": {
+   "digest_default": "1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4",
+   "digest_ours": "1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4",
+   "mean_pixel": 70.9528127657313,
+   "n": 64,
+   "state_names": [
+    "rootz",
+    "rootx",
+    "rooty",
+    "right_hip",
+    "right_knee",
+    "right_ankle",
+    "left_hip",
+    "left_knee",
+    "left_ankle"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  }
+ },
+ "tree": "/oscar/scratch/sboughan/se6/reacher-correctness/stable_envs/__init__.py"
+}
