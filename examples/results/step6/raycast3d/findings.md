@@ -313,6 +313,17 @@ Both are already array code; neither has a batch axis.
 
 ## 4. Gate-A `check_style_is_state` on `AntmazeTeleportExplore` and `HumanoidmazeMediumNavigate`
 
+> **SUPERSEDED IN PART — read `RAYCAST-2c and 2c'` below before using this section.** The root cause
+> named here (the bake inheriting `qpos` from the last rendered environment) was tested by fixing it
+> and it changed nothing; and the fallback reading further down — that the bake is nondeterministic,
+> "what a coin flip looks like from one sample" — is also wrong. The eight-bake digest sequences are
+> byte-identical across two processes on two different code trees and across two nodes: the bake is a
+> DETERMINISTIC function of the renderer's call history. What survives from this section is the
+> evidence, not the attribution: the cache-eviction trigger, the per-config measurements, and the
+> observation that configurations which PASS Gate A carry the same defect. Kept as written, dated to
+> before the correction, because a finding is worth more with its wrong turn visible than tidied away.
+
+
 ### What the check measures
 
 `stable_envs/testing/conformance.py:462`:
