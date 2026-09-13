@@ -8,10 +8,12 @@
 | branch | `step6/reacher-correctness` |
 | HEAD | `ec3ac960aba3f7301bbb9c7c9787eaf0937391a9` |
 | the two required commits | `262a7c8` Problem 1 (visibility), `a60ae8f` Problem 2 (guard) |
+| review round | `db0f831` the `_static_t` render-purity fix, `2f51a97` the other three required items |
+| merge | `9da50ee` — `git merge step6/integration` (`d8d8873`), no conflicts, both sides verified present |
 | follow-ups on the same branch | `11ff2da`, `a9674df`, `465354e`, `0aa0d59` verification harness; `1d620f7` re-derive the guard's bound after it failed on GPU; `93eeb85`, `ec426e4`, `ec3ac96` robustness + recorded numbers |
 | hardware | Oscar `--partition=gpu --qos=norm-gpu --constraint=geforce3090`, NVIDIA GeForce RTX 3090 (gpu2113 and gpu2101), driver 575.57.08; Apple M5 Mac for CPU/static work |
 | venvs | `$SCR/venvs/se-step5` (torch 2.14.0+cu126, mujoco 3.12.0, mujoco_warp 3.12.0, warp 1.17.0 — the only one with MJWarp, has no pytest) for pixels/replay; `$SCR/venvs/se-step6` (+ pytest 9.1.1, no mujoco_warp) for the suites; `/Users/samib/se6-venv` locally with `MUJOCO_GL=glfw` (macOS has no EGL) |
-| SLURM job IDs | **6344667** (baseline-vs-branch pixels on the four affected cells + first dmc replay), **6344904** (all-16-cell pixel diff, the three GPU suites, `tests/unit`, the guard's GPU spread, the re-replay) |
+| SLURM job IDs | **6344667** (baseline-vs-branch pixels on the four affected cells + first dmc replay), **6344904** (all-16-cell pixel diff, the three GPU suites, `tests/unit`, the guard's GPU spread, the re-replay), **6346537** (the same battery re-run on the MERGED code after review). 6346473 was submitted and then cancelled by me one minute later, before the merge instruction arrived, so that no result would be reported from pre-merge code. |
 
 ---
 
@@ -56,6 +58,25 @@ The other 7 parity DM Control cells (`DMCCartpoleSwingup`, `DMCCartpoleBalance`,
 and all 5 trackcom cells are untouched in pixels *and* declaration: their `initialize_episode` draws
 nothing per episode, and `DMControlTrackCom.VISIBILITY_KNOB = False`. `examples/results/step4/` was
 not modified.
+
+## After review, and after the merge
+
+An independent review returned APPROVE-WITH-CHANGES and found **a render-purity bug this branch
+introduced**, which is written up in full in the intervention section below and was disqualifying
+until fixed. The other three required items were a log-hygiene problem, a missing `eval_reacher.py`
+choice, and two wording errors in this report — all corrected, all recorded where they belong rather
+than only here.
+
+The branch was then merged with `step6/integration` (`d8d8873`) at `9da50ee`. The auto-merge was
+clean, and both sides were verified present rather than assumed: `dmcontrol.py` carries this branch's
+`VISIBILITY_KNOB`/`_hideable`/`sc.statics` *and* integration's `_AT_VERSIONS` and
+`reference_versions`/`measured_with`; `fidelity_step4.py` carries this branch's
+`check_task_object_visibility` *and* integration's provenance work; `core/env.py` and the new
+`provenance.py` came across untouched. `conformance.py` had nothing to reconcile — integration does
+not modify it. On the merged tree `DMCReacherHard`'s frozen-corpus digest is unchanged
+(`10c851871acff9…`, CPU) and `describe()` gains no key on the affected cells, because
+`reference_versions` is declared by the trackcom cells only — so the four signatures are exactly what
+this branch measured before the merge.
 
 ## Diagnosis, before any code changed
 
@@ -366,7 +387,19 @@ against the frozen corpus.
    tier uses MJWarp. No Reacher pixel goes through MJWarp — `DMCReacher*` is `DMControlSuite`, i.e.
    baked plates plus `raycast3d`. Worth correcting in Step 8 so a reader does not conclude Reacher has
    two backends to keep in agreement.
-5. **`$SCR/venvs/se-step5` has no `pytest`** (AGENT_COMMON's table does not claim it does, but the
+5. **The merge adds seven unresolved citations, and they are not this branch's.** After
+   `9da50ee`, `test_every_cited_scratch_path_resolves` reports **9** unresolved paths where the
+   baseline reports 3. Integration *resolves* one of the baseline three (`scratch/step6/report.py`
+   now exists) and *adds seven*, every one of them an `oscar_copy:` line in
+   `examples/results/step6/dashboard.yaml` naming a workstream's cluster copy — a coordinator-owned
+   file. This branch's own contribution is zero: exactly the two entries it inherits. It is the same
+   root cause this branch just fixed on its own artifacts (the scanner reads every `.md`, `.txt` and
+   `.yaml` reachable from `examples/`, and an absolute cluster path contains a `scratch/` substring),
+   and the same fix applies — but the file is not mine to edit, so it is reported. If the dashboard
+   is meant to carry those paths, the cheapest fix is to write them without the leading `/oscar/`
+   (or to add `examples/results/step6/dashboard.yaml` to the scanner's exclusions deliberately).
+
+6. **`$SCR/venvs/se-step5` has no `pytest`** (AGENT_COMMON's table does not claim it does, but the
    obvious reading is that a venv used for GPU work can run the suite). It is the only venv with
    `mujoco_warp`, and `se-step6` — which has pytest — no longer has `mujoco_warp` even though the
    frozen Step-4 dmc run recorded `mujoco_warp 3.12.0`. Any agent needing both in one interpreter will
