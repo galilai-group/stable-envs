@@ -42,13 +42,15 @@ MEAN_ABS_MAX = 4.0
 #:
 #: Set from the SPREAD over independent draws, clear of the worst, like every other floor here. Five
 #: draws (four of 16 sampled states plus the frozen 64-state Step-4 corpus) on each of the four cells
-#: that declare a ``visibility.*`` leaf, at 84 px on CPU:
+#: that declare a ``visibility.*`` leaf, at 84 px, on BOTH the machine this is authored on and the
+#: machine it is enforced on -- because the first draft of this bound was set from CPU numbers alone
+#: and the GPU then measured under it:
 #:
-#:     cell                margin           declared mean|d|   flipped mean|d|
-#:     DMCReacherEasy      0.9646 - 0.9676    5.2 -  5.6         157 - 161
-#:     DMCReacherHard      0.8730 - 0.8806   17.0 - 18.3         140 - 144
-#:     DMCFingerTurnEasy   0.8263 - 0.8506   14.7 - 16.9          97 -  98
-#:     DMCFingerTurnHard   0.8199 - 0.8713   13.8 - 18.4          99 - 108
+#:     cell                margin (CPU)      margin (RTX 3090)   declared mean|d|   flipped mean|d|
+#:     DMCReacherEasy      0.9646 - 0.9676   0.9548 - 0.9575      5.2 -  7.2        156 - 161
+#:     DMCReacherHard      0.8730 - 0.8806   0.8513 - 0.8604     17.0 - 20.3        132 - 144
+#:     DMCFingerTurnEasy   0.8263 - 0.8506   0.9445 - 0.9503      5.1 - 16.9         97 - 104
+#:     DMCFingerTurnHard   0.8199 - 0.8713   0.9090 - 0.9147      9.0 - 18.4         99 - 108
 #:
 #: The failure this exists to catch inverts the ratio: a renderer drawing an object the reference does
 #: not draw puts ~140/255 in the numerator and ~15 in the denominator, i.e. a margin around -8. So the
