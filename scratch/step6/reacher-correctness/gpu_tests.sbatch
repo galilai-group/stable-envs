@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=se6-reacher-correctness-tests
+#SBATCH --job-name=se6-reacher-correctness-tests2
 #SBATCH --partition=gpu
 #SBATCH --qos=norm-gpu
 #SBATCH --gres=gpu:1
