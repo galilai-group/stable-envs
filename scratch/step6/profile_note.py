@@ -248,7 +248,7 @@ def main() -> None:
     # env and the directory becomes a mix of two machines -- which is section 12's "different
     # machines for numerator and denominator", arrived at by filename collision rather than by
     # choice. Acrobot read 109 fps locally and 20 fps on Oscar; one file cannot hold both.
-    host = n["host"].split(".")[0]
+    host = note["host"].split(".")[0]
     tag = f"{args.env}_{args.device.replace(':', '')}_{host}"
     (args.out / f"{tag}.json").write_text(json.dumps(note, indent=2))
     (args.out / f"{tag}.md").write_text(render_note(note))
