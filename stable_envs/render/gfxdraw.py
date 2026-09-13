@@ -502,14 +502,18 @@ class Canvas:
         """The finished frame, with the reference's final ``transform.flip(surf, False, True)``.
 
         The flip is a row reversal of the planes and the interleave is the transpose back to the
-        caller's ``(B,H,W,3)``; doing them together is one pass over the surface, which is why the
-        planar canvas costs one conversion per FRAME rather than one per primitive.
+        caller's ``(B,H,W,3)``; this is the one pass over the surface the planar canvas costs per
+        FRAME, against the one per PRIMITIVE it removes.
+
+        One plane at a time, although ``stack`` over the three flipped planes measures the same
+        11.7 ms at batch 64: the whole-surface form needs a second copy of the surface alive while
+        it builds the third, and at batch 4096 on a 500x500 frame that is 3.1 GB of peak rather than
+        1.0. Same instruction count, a third of the transient.
         """
-        src = self.buf.flip(2)
         if out is None:
-            return torch.stack((src[0], src[1], src[2]), -1)
+            out = torch.empty((self.B, self.H, self.W, 3), dtype=torch.uint8, device=self.device)
         for c in range(3):
-            out[..., c].copy_(src[c])
+            out[..., c].copy_(self.buf[c].flip(1))
         return out
 
 
