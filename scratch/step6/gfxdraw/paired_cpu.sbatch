@@ -31,6 +31,13 @@ for E in Acrobot CartPole MountainCar MountainCarContinuous Pendulum; do
       --states-dir "$SCR/se6/baseline/examples/results/step4/states" \
       --out "$SCR/se6/gfxdraw/examples/results/step6/gfxdraw/profile_before_samenode" \
       || echo "PROFILE BEFORE $E rc=$?"
+  cd "$SCR/se6/gfxdraw"
+  PYTHONPATH=$SCR/se6/gfxdraw $PY scratch/step6/profile_note.py \
+      --env $E --device cpu --threads 1 --batch 1 16 64 256 --repeat 10 --warmup 3 \
+      --workstream step6/gfxdraw \
+      --states-dir "$SCR/se6/gfxdraw/examples/results/step4/states" \
+      --out "$SCR/se6/gfxdraw/examples/results/step6/gfxdraw/profile_after_samenode" \
+      || echo "PROFILE AFTER $E rc=$?"
 done
 
 for B in 16 64 256; do
