@@ -1,0 +1,701 @@
+{
+ "arms": {
+  "311": {
+   "configs": {
+    "DMCCheetahRun": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.53385 - 0.005",
+      "observed": {
+       "exact_frac": 0.5303974454365079,
+       "factor": 2,
+       "max_abs": 167,
+       "mean_abs": 3.1569342580782314,
+       "size": 84
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 6.5,
+       "ssim_min": 0.62,
+       "within8_min": 0.84
+      },
+      "declared": {
+       "mean_abs": 5.01,
+       "ssim": 0.661,
+       "within8_frac": 0.882
+      },
+      "observed": {
+       "exact_frac": 0.2900058460884354,
+       "interior_exact_frac": null,
+       "mean_abs": 4.992132139314059,
+       "ssim": 0.6613030930236491,
+       "within8_frac": 0.8820440936791383
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "gate_a_on_these_two_checks": "PASS",
+     "oracle": {
+      "digest_official": "f385de803520f52065c04d61221aa6d10d649d4ca4c33ba1e19295ed43220c17",
+      "digest_ours": "7430abd1f92889e4f946bdd9c9fddf7a57d64d136dddc0b34091e6b2340889b3",
+      "distinct_colors": 1791,
+      "mean_pixel": 79.0804228375378
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    },
+    "DMCHopperHop": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.55022 - 0.005",
+      "observed": {
+       "exact_frac": 0.5526192247732427,
+       "factor": 2,
+       "max_abs": 169,
+       "mean_abs": 3.079954117063492,
+       "size": 84
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 5.7,
+       "ssim_min": 0.64,
+       "within8_min": 0.86
+      },
+      "declared": {
+       "mean_abs": 4.35,
+       "ssim": 0.684,
+       "within8_frac": 0.905
+      },
+      "observed": {
+       "exact_frac": 0.30615566539115646,
+       "interior_exact_frac": null,
+       "mean_abs": 4.373042446145124,
+       "ssim": 0.6842567132942957,
+       "within8_frac": 0.9042193700396826
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "gate_a_on_these_two_checks": "PASS",
+     "oracle": {
+      "digest_official": "ba664acf2ff49c64b7597b8b4e07747e1a657f3c3de528bae0d18fe620b56a9a",
+      "digest_ours": "c5d8a121b8fdc1674ae2a1e9ae60e458b72dd7d0f493f95a6bbc41f98a17a0bb",
+      "distinct_colors": 1705,
+      "mean_pixel": 78.14701067058768
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    },
+    "DMCHumanoidStand": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.60365 - 0.005",
+      "observed": {
+       "exact_frac": 0.6095366532029478,
+       "factor": 2,
+       "max_abs": 149,
+       "mean_abs": 2.4018034297052155,
+       "size": 84
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 8.2,
+       "ssim_min": 0.82,
+       "within8_min": 0.69
+      },
+      "declared": {
+       "mean_abs": 6.26,
+       "ssim": 0.868,
+       "within8_frac": 0.735
+      },
+      "observed": {
+       "exact_frac": 0.0231828408446712,
+       "interior_exact_frac": 0.0003081189339084887,
+       "mean_abs": 6.270955126842404,
+       "ssim": 0.8671576597740404,
+       "within8_frac": 0.7317044005102041
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "gate_a_on_these_two_checks": "PASS",
+     "oracle": {
+      "digest_official": "04484454cccd9686944eee0a9b4721bb7eb7ff36617e88d70a046a9dd9f89634",
+      "digest_ours": "49eef9b0c901f8145a999e182f5bd4aca981b8bf65c21a59d0918ecf74d9cf2d",
+      "distinct_colors": 2711,
+      "mean_pixel": 62.61524101828231
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    },
+    "DMCWalkerWalk": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.62895 - 0.005",
+      "observed": {
+       "exact_frac": 0.6187730300453514,
+       "factor": 2,
+       "max_abs": 200,
+       "mean_abs": 2.7162661505574452,
+       "size": 84
+      },
+      "status": "fail",
+      "violations": [
+       "exact_frac 0.6188 < >= 0.62895 - 0.005"
+      ]
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 10.5,
+       "ssim_min": 0.77,
+       "within8_min": 0.65
+      },
+      "declared": {
+       "mean_abs": 8.07,
+       "ssim": 0.826,
+       "within8_frac": 0.7
+      },
+      "observed": {
+       "exact_frac": 0.20494083049886622,
+       "interior_exact_frac": 0.0,
+       "mean_abs": 7.862391050170068,
+       "ssim": 0.8244778992740531,
+       "within8_frac": 0.7136501736111112
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "gate_a_on_these_two_checks": "FAIL",
+     "oracle": {
+      "digest_official": "85a2d8f42f25e2b4d5933772447c7bebcfbcb7e99be6a34bbb27be2f3c5cd6fd",
+      "digest_ours": "0aa8fd87d845952313ab2c905089f2ef9a14b2506a5027573b5c9104c8421546",
+      "distinct_colors": 2527,
+      "mean_pixel": 70.95282236158353
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    }
+   },
+   "packages": {
+    "craftax": null,
+    "dm_control": "present",
+    "gym_pusht": null,
+    "gymnasium": "1.3.0",
+    "gymnasium_robotics": null,
+    "mujoco": "3.11.0",
+    "mujoco_warp": "3.11.0",
+    "ogbench": null,
+    "stable_worldmodel": null,
+    "warp": "1.17.0"
+   },
+   "provenance": {
+    "driver": "575.57.08",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "host": "gpu2113.oscar.ccv.brown.edu",
+    "mujoco_gl": "egl",
+    "slurm_job_id": "6343699",
+    "torch": "2.14.0+cu126"
+   }
+  },
+  "312": {
+   "configs": {
+    "DMCCheetahRun": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.53385 - 0.005",
+      "observed": {
+       "exact_frac": 0.5303952310090703,
+       "factor": 2,
+       "max_abs": 167,
+       "mean_abs": 3.1569704270597128,
+       "size": 84
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 6.5,
+       "ssim_min": 0.62,
+       "within8_min": 0.84
+      },
+      "declared": {
+       "mean_abs": 5.01,
+       "ssim": 0.661,
+       "within8_frac": 0.882
+      },
+      "observed": {
+       "exact_frac": 0.2886439732142857,
+       "interior_exact_frac": null,
+       "mean_abs": 6.508366106859411,
+       "ssim": 0.5835518242533279,
+       "within8_frac": 0.7969480761054422
+      },
+      "status": "fail",
+      "violations": [
+       "mean_abs 6.508 > 6.5",
+       "within8_frac 0.7969 < 0.84",
+       "ssim 0.5836 < 0.62"
+      ]
+     },
+     "gate_a_on_these_two_checks": "FAIL",
+     "oracle": {
+      "digest_official": "b122be595cd033fdb963a8ddab115938afea54c3e5aafdd72039c605af100c17",
+      "digest_ours": "d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7",
+      "distinct_colors": 1791,
+      "mean_pixel": 79.08044276738474
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    },
+    "DMCHopperHop": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.55022 - 0.005",
+      "observed": {
+       "exact_frac": 0.5526147959183674,
+       "factor": 2,
+       "max_abs": 169,
+       "mean_abs": 3.0799519026360542,
+       "size": 84
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 5.7,
+       "ssim_min": 0.64,
+       "within8_min": 0.86
+      },
+      "declared": {
+       "mean_abs": 4.35,
+       "ssim": 0.684,
+       "within8_frac": 0.905
+      },
+      "observed": {
+       "exact_frac": 0.2960246598639456,
+       "interior_exact_frac": null,
+       "mean_abs": 6.547855991354876,
+       "ssim": 0.545972561629211,
+       "within8_frac": 0.7915382298752834
+      },
+      "status": "fail",
+      "violations": [
+       "mean_abs 6.548 > 5.7",
+       "within8_frac 0.7915 < 0.86",
+       "ssim 0.5460 < 0.64"
+      ]
+     },
+     "gate_a_on_these_two_checks": "FAIL",
+     "oracle": {
+      "digest_official": "a5f16ae5cd7b891756afd48d58ca8d2e9515be5cbe34a764021c5d570aa17b70",
+      "digest_ours": "80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc",
+      "distinct_colors": 1705,
+      "mean_pixel": 78.14701362315759
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    },
+    "DMCHumanoidStand": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.60365 - 0.005",
+      "observed": {
+       "exact_frac": 0.6095432964852607,
+       "factor": 2,
+       "max_abs": 149,
+       "mean_abs": 2.401812287414966,
+       "size": 84
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 8.2,
+       "ssim_min": 0.82,
+       "within8_min": 0.69
+      },
+      "declared": {
+       "mean_abs": 6.26,
+       "ssim": 0.868,
+       "within8_frac": 0.735
+      },
+      "observed": {
+       "exact_frac": 0.022416648951247165,
+       "interior_exact_frac": 0.0003837298541826554,
+       "mean_abs": 6.33430325255102,
+       "ssim": 0.8650792043403925,
+       "within8_frac": 0.7289629393424036
+      },
+      "status": "pass",
+      "violations": []
+     },
+     "gate_a_on_these_two_checks": "PASS",
+     "oracle": {
+      "digest_official": "4f908dbd3b7076a4f5353013634ff0fbef2ae84737ea5760e1293790ee22211f",
+      "digest_ours": "c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84",
+      "distinct_colors": 2712,
+      "mean_pixel": 62.615247661564624
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    },
+    "DMCWalkerWalk": {
+     "check_resolution_consistency": {
+      "bound": ">= 0.62895 - 0.005",
+      "observed": {
+       "exact_frac": 0.6187708156179138,
+       "factor": 2,
+       "max_abs": 200,
+       "mean_abs": 2.7161886455971276,
+       "size": 84
+      },
+      "status": "fail",
+      "violations": [
+       "exact_frac 0.6188 < >= 0.62895 - 0.005"
+      ]
+     },
+     "check_visual_fidelity": {
+      "bound": {
+       "mean_abs_max": 10.5,
+       "ssim_min": 0.77,
+       "within8_min": 0.65
+      },
+      "declared": {
+       "mean_abs": 8.07,
+       "ssim": 0.826,
+       "within8_frac": 0.7
+      },
+      "observed": {
+       "exact_frac": 0.19731212797619047,
+       "interior_exact_frac": 0.0,
+       "mean_abs": 15.954404939058957,
+       "ssim": 0.5334038909369165,
+       "within8_frac": 0.5528473107993197
+      },
+      "status": "fail",
+      "violations": [
+       "mean_abs 15.954 > 10.5",
+       "within8_frac 0.5528 < 0.65",
+       "ssim 0.5334 < 0.77"
+      ]
+     },
+     "gate_a_on_these_two_checks": "FAIL",
+     "oracle": {
+      "digest_official": "67568604de87b644a5c1cdd9d20434ed7254d6ac69911626a6a495ea7b6432be",
+      "digest_ours": "1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4",
+      "distinct_colors": 2528,
+      "mean_pixel": 70.9528127657313
+     },
+     "reference_stable": {
+      "max_abs_diff": 0
+     }
+    }
+   },
+   "packages": {
+    "craftax": null,
+    "dm_control": "present",
+    "gym_pusht": null,
+    "gymnasium": "1.3.0",
+    "gymnasium_robotics": null,
+    "mujoco": "3.12.0",
+    "mujoco_warp": "3.12.0",
+    "ogbench": null,
+    "stable_worldmodel": "present",
+    "warp": "1.17.0"
+   },
+   "provenance": {
+    "driver": "575.57.08",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "host": "gpu2108.oscar.ccv.brown.edu",
+    "mujoco_gl": "egl",
+    "slurm_job_id": "6343431",
+    "torch": "2.14.0+cu126"
+   }
+  }
+ },
+ "frozen_step4": {
+  "DMCCheetahRun": {
+   "digest_official": null,
+   "digest_ours": null,
+   "failures": [
+    "check_resolution_consistency",
+    "check_visual_fidelity"
+   ],
+   "gate_a": "FAIL",
+   "resolution": {
+    "bound": ">= 0.53385 - 0.005",
+    "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+    "group": "family_specific",
+    "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+    "observed": {
+     "exact_frac": 0.5208421910430839,
+     "max_abs": 167,
+     "mean_abs": 3.1743883751417235
+    },
+    "raw_status": "measured",
+    "status": "fail",
+    "violations": [
+     "exact_frac 0.5208 < 0.53385 - 0.005"
+    ]
+   },
+   "visual": {
+    "bound": {
+     "all_exact_frac": 0.29,
+     "draw_spread": {
+      "mean_abs": [
+       4.986,
+       5.032
+      ],
+      "ssim": [
+       0.6597,
+       0.6615
+      ],
+      "within8_frac": [
+       0.8813,
+       0.8826
+      ]
+     },
+     "floor_share": 0.127,
+     "interior_exact_frac": null,
+     "interior_frac": 0.0,
+     "mean_abs": 5.01,
+     "mean_abs_max": 6.5,
+     "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+     "skybox_share": 0.831,
+     "ssim": 0.661,
+     "ssim_min": 0.62,
+     "within8_frac": 0.882,
+     "within8_min": 0.84
+    },
+    "bound_from": "the env's own visual_fidelity declaration",
+    "group": "family_specific",
+    "observed": {
+     "interior_exact_frac": null,
+     "mean_abs": 6.541626806972789,
+     "ssim": 0.5815950282456197,
+     "within8_frac": 0.7960955215419501
+    },
+    "raw_status": "measured",
+    "status": "fail",
+    "violations": [
+     "mean_abs 6.542 > 6.5",
+     "within8_frac 0.7961 < 0.84",
+     "ssim 0.5816 < 0.62"
+    ]
+   }
+  },
+  "DMCHopperHop": {
+   "digest_official": null,
+   "digest_ours": null,
+   "failures": [
+    "check_resolution_consistency",
+    "check_visual_fidelity"
+   ],
+   "gate_a": "FAIL",
+   "resolution": {
+    "bound": ">= 0.55022 - 0.005",
+    "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+    "group": "family_specific",
+    "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+    "observed": {
+     "exact_frac": 0.5349857390873016,
+     "max_abs": 168,
+     "mean_abs": 3.1014790898998488
+    },
+    "raw_status": "measured",
+    "status": "fail",
+    "violations": [
+     "exact_frac 0.5350 < 0.55022 - 0.005"
+    ]
+   },
+   "visual": {
+    "bound": {
+     "all_exact_frac": 0.307,
+     "draw_spread": {
+      "mean_abs": [
+       4.327,
+       4.364
+      ],
+      "ssim": [
+       0.6826,
+       0.6866
+      ],
+      "within8_frac": [
+       0.9044,
+       0.9051
+      ]
+     },
+     "floor_share": 0.082,
+     "interior_exact_frac": null,
+     "interior_frac": 0.0,
+     "mean_abs": 4.35,
+     "mean_abs_max": 5.7,
+     "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+     "skybox_share": 0.893,
+     "ssim": 0.684,
+     "ssim_min": 0.64,
+     "within8_frac": 0.905,
+     "within8_min": 0.86
+    },
+    "bound_from": "the env's own visual_fidelity declaration",
+    "group": "family_specific",
+    "observed": {
+     "interior_exact_frac": null,
+     "mean_abs": 6.578056352749433,
+     "ssim": 0.5440296884096997,
+     "within8_frac": 0.7911972080498866
+    },
+    "raw_status": "measured",
+    "status": "fail",
+    "violations": [
+     "mean_abs 6.578 > 5.7",
+     "within8_frac 0.7912 < 0.86",
+     "ssim 0.5440 < 0.64"
+    ]
+   }
+  },
+  "DMCHumanoidStand": {
+   "digest_official": null,
+   "digest_ours": null,
+   "failures": [],
+   "gate_a": "PASS",
+   "resolution": {
+    "bound": ">= 0.60365 - 0.005",
+    "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+    "group": "family_specific",
+    "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+    "observed": {
+     "exact_frac": 0.6088302508503401,
+     "max_abs": 149,
+     "mean_abs": 2.379196339994331
+    },
+    "raw_status": "measured",
+    "status": "pass",
+    "violations": []
+   },
+   "visual": {
+    "bound": {
+     "all_exact_frac": 0.023,
+     "draw_spread": {
+      "mean_abs": [
+       6.203,
+       6.3
+      ],
+      "ssim": [
+       0.866,
+       0.8707
+      ],
+      "within8_frac": [
+       0.7308,
+       0.7442
+      ]
+     },
+     "floor_share": 0.959,
+     "interior_exact_frac": 0.00018,
+     "interior_frac": 0.0297,
+     "mean_abs": 6.26,
+     "mean_abs_max": 8.2,
+     "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+     "skybox_share": 0.0,
+     "ssim": 0.868,
+     "ssim_min": 0.82,
+     "within8_frac": 0.735,
+     "within8_min": 0.69
+    },
+    "bound_from": "the env's own visual_fidelity declaration",
+    "group": "family_specific",
+    "observed": {
+     "interior_exact_frac": 0.0029163468917881813,
+     "mean_abs": 6.298870199121315,
+     "ssim": 0.8657859637966075,
+     "within8_frac": 0.730240663973923
+    },
+    "raw_status": "measured",
+    "status": "pass",
+    "violations": []
+   }
+  },
+  "DMCWalkerWalk": {
+   "digest_official": null,
+   "digest_ours": null,
+   "failures": [
+    "check_resolution_consistency",
+    "check_visual_fidelity"
+   ],
+   "gate_a": "FAIL",
+   "resolution": {
+    "bound": ">= 0.62895 - 0.005",
+    "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+    "group": "family_specific",
+    "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+    "observed": {
+     "exact_frac": 0.6030749539399093,
+     "max_abs": 200,
+     "mean_abs": 2.7297379889455784
+    },
+    "raw_status": "measured",
+    "status": "fail",
+    "violations": [
+     "exact_frac 0.6031 < 0.62895 - 0.005"
+    ]
+   },
+   "visual": {
+    "bound": {
+     "all_exact_frac": 0.205,
+     "draw_spread": {
+      "mean_abs": [
+       7.636,
+       8.302
+      ],
+      "ssim": [
+       0.817,
+       0.8306
+      ],
+      "within8_frac": [
+       0.6887,
+       0.7199
+      ]
+     },
+     "floor_share": 0.448,
+     "interior_exact_frac": 0.0046,
+     "interior_frac": 0.001,
+     "mean_abs": 8.07,
+     "mean_abs_max": 10.5,
+     "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+     "skybox_share": 0.478,
+     "ssim": 0.826,
+     "ssim_min": 0.77,
+     "within8_frac": 0.7,
+     "within8_min": 0.65
+    },
+    "bound_from": "the env's own visual_fidelity declaration",
+    "group": "family_specific",
+    "observed": {
+     "interior_exact_frac": 0.0,
+     "mean_abs": 16.008270886479593,
+     "ssim": 0.533388636478334,
+     "within8_frac": 0.5524243551587301
+    },
+    "raw_status": "measured",
+    "status": "fail",
+    "violations": [
+     "mean_abs 16.008 > 10.5",
+     "within8_frac 0.5524 < 0.65",
+     "ssim 0.5334 < 0.77"
+    ]
+   }
+  }
+ }
+}

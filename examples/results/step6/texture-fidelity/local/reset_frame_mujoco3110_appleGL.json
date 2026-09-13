@@ -1,0 +1,30 @@
+{
+ "mujoco": "3.11.0",
+ "dm_control": "1.0.44",
+ "gl": "glfw",
+ "reacher-hard": {
+  "quadrant_spread": 36.01,
+  "mean": 95.505,
+  "distinct": 503
+ },
+ "cheetah-run": {
+  "quadrant_spread": 30.57,
+  "mean": 78.741,
+  "distinct": 1481
+ },
+ "hopper-hop": {
+  "quadrant_spread": 31.05,
+  "mean": 78.928,
+  "distinct": 1311
+ },
+ "walker-walk": {
+  "quadrant_spread": 13.73,
+  "mean": 67.948,
+  "distinct": 1457
+ },
+ "humanoid-stand": {
+  "quadrant_spread": 18.98,
+  "mean": 61.265,
+  "distinct": 1050
+ }
+}
