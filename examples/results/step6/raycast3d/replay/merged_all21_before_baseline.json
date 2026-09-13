@@ -1,7 +1,7 @@
 {
-  "host": "gpu2113.oscar.ccv.brown.edu",
+  "host": "gpu2104.oscar.ccv.brown.edu",
   "device": "cuda",
-  "slurm_job": "6346705",
+  "slurm_job": "6346814",
   "code_root": "$SCR/se6/baseline",
   "configs": {
     "AntmazeGiantNavigate": {

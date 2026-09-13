@@ -597,7 +597,22 @@ number below cites a leg whose recorded path is `$SCR/se6/baseline` or `$SCR/se6
 | `fa8c3ac` | `d8bf23b` (texture-fidelity) | declaration fields on the trackcom visual entries, `core/env.py`, `testing/conformance.py`, new `testing/provenance.py` | none |
 | `f312c92` | `ca0c577` (reacher-correctness) | `VISIBILITY_KNOB` / `_hideable` / `visibility.*` style leaves, `_apply_variation` alpha zeroing, `sc.statics` recorded at bake and read by `_static_t`, `check_task_object_visibility`, `fidelity_step4.py`, two GPU test files | none |
 
-Both touch `stable_envs/envs/dmcontrol.py`; this workstream's edits are confined to the tendon FK
+**Final verification on the TWICE-merged tree** (job **6346814**, gpu2104, RTX 3090, COMPLETED
+00:02:46), which is the tree this report describes:
+
+| check | result |
+|---|---|
+| all 21 live raycast3d configs, cuda batch 64, baseline vs merged branch | **pixel-identical** (`replay/merged_all21_pixel_diff.json`) |
+| the same 21 against their frozen Step-4 digests | 20/21 on BOTH legs; `AntmazeTeleportExplore` fails on both (pre-existing, see 2c) |
+| `tests/unit/test_dmcontrol_tendon.py` | **3 passed** |
+| `tests/gpu/test_fast_paths.py` (composite compaction, mover window, fused cast, reachability) | **136 passed, 24 skipped** |
+| `DMCBallInCupCatch` sweep, same card | **3,194.2 -> 9,956.0 fps** at B=4096 (**3.12x**); 3,084.1 -> 8,121.8 at B=256; 155.2 -> 158.7 at B=1 |
+
+which puts the certified tier on the merged tree at `cores` **1.67**, `R` **38.0**, `BATCH_SCALES`
+**62.7x**, `NO_LARGE_BATCH_REGRESSION` pass (9,956.0 >= 0.9 x 8,121.8) -- i.e. **`GPU_FAST` +
+`BATCH_SCALES`**, unchanged from the pre-merge measurement.
+
+Both merges touch `stable_envs/envs/dmcontrol.py`; this workstream's edits are confined to the tendon FK
 (`_fk`, `_tendon_polyline`, `_chain_capsules`, `_chain_capsules_batch`, `catenary`) and git merged
 them without a conflict. The movers/statics classification is not touched here — `_fk` reads
 `sc.movers` and writes mover rows only, and `sc.statics` is recorded at bake, which 2a does not go
