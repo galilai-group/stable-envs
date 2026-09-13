@@ -17,7 +17,15 @@ stop condition.
 | CPU hardware | Oscar `batch`, `node2339`/`node2340`/`node2342`/`node2344`, Intel Xeon Platinum 8268 @ 2.90 GHz, 1 torch thread, `OMP_NUM_THREADS=1` |
 | GPU hardware | RTX 3090 on `gpu2105`, driver 575.57.08 — before and after in the same job on the same card |
 | venvs | `se-step6` (profile, pytest, fuzz) · `se-step5` (stable_worldmodel + matplotlib references) · `se-step3` (gym_pusht reference) — all three carry torch 2.14.0+cu126 and triton 3.8.0 |
-| SLURM jobs | `6344858` (before, cancelled — see "a cell that could not be afforded"), `6346289` before, `6346290` after, `6346291` CPU sweep, `6346300` GPU, `6346490` before/PushT remeasure |
+| SLURM jobs | `6344858` profile-before (wrote PushT, then cancelled: see below) · `6346289` profile-before, the rest · `6346290` profile-after · `6346291` CPU certification sweep, before+after · `6346300` GPU: fuzz, replay, tests, sweep before+after · `6346490` PushT profile-before, remeasured |
+
+`6344858` was cancelled at `SimplePointMaze`, batch 256. One call at the baseline is 72 s at batch
+64 and the cell projected past four hours for the ten repetitions and three warm-ups, which would
+have bought a number the batch-64 cell already gives and cost the other five envs their notes to the
+wall clock. `SimplePointMaze` is therefore profiled to batch 64 on BOTH sides; the certification
+sweep, which does have to reach the frozen batches, caps each cell by projection instead and records
+the projection in place of the missing cell. `6346490` was cancelled once its two artifacts were
+written, to drop a duplicate digest run that `6346289` also performs.
 
 ---
 
