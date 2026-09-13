@@ -244,7 +244,12 @@ def main() -> None:
               f"ops {rec['trace']['op_count']}")
 
     args.out.mkdir(parents=True, exist_ok=True)
-    tag = f"{args.env}_{args.device.replace(':', '')}"
+    # HOST IN THE FILENAME. Without it an Oscar run silently overwrites a laptop run of the same
+    # env and the directory becomes a mix of two machines -- which is section 12's "different
+    # machines for numerator and denominator", arrived at by filename collision rather than by
+    # choice. Acrobot read 109 fps locally and 20 fps on Oscar; one file cannot hold both.
+    host = n["host"].split(".")[0]
+    tag = f"{args.env}_{args.device.replace(':', '')}_{host}"
     (args.out / f"{tag}.json").write_text(json.dumps(note, indent=2))
     (args.out / f"{tag}.md").write_text(render_note(note))
     print(f"\nwrote {args.out / (tag + '.json')} and {tag}.md")

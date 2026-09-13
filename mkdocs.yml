@@ -152,6 +152,9 @@ nav:
       # experiment: same checkpoint, same episodes, same planner, only render() differs -- judged by
       # the equivalence rule Step 2 froze before any of these numbers existed.
       - 'Step 5: downstream semantics': research/step5_downstream_semantics.md
+      # GENERATED (scratch/step6/report.py) from examples/results/step6/. IN PROGRESS: profile-before
+      # only, no renderer modified. States what it has not done as plainly as what it has.
+      - 'Step 6: optimisation (in progress)': research/step6_optimization.md
       - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
       # readers ask far more often than "why is this one here" -- and until now all three of them were
