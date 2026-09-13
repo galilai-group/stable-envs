@@ -1,0 +1,26 @@
+{
+ "DMCCheetahRun": {
+  "floor_px_in_dilated_body_bbox_share_median": 0.11947278911564625,
+  "max": 0.13718820861678005,
+  "body_share": 0.04195011337868481,
+  "floor_share": 0.13247590702947845
+ },
+ "DMCHopperHop": {
+  "floor_px_in_dilated_body_bbox_share_median": 0.06526360544217687,
+  "max": 0.17772108843537415,
+  "body_share": 0.025217899659863947,
+  "floor_share": 0.12121997236394558
+ },
+ "DMCWalkerWalk": {
+  "floor_px_in_dilated_body_bbox_share_median": 0.39654195011337867,
+  "max": 0.46343537414965985,
+  "body_share": 0.07238077522675737,
+  "floor_share": 0.37951521754535145
+ },
+ "DMCHumanoidStand": {
+  "floor_px_in_dilated_body_bbox_share_median": 0.5304705215419501,
+  "max": 0.7525510204081632,
+  "body_share": 0.038340596655328796,
+  "floor_share": 0.9616594033446711
+ }
+}

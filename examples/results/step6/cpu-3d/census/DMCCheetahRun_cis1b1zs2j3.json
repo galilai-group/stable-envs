@@ -1,0 +1,830 @@
+{
+ "config": "DMCCheetahRun",
+ "domain": "cheetah",
+ "task": "run",
+ "mujoco": "3.12.0",
+ "nq": 9,
+ "nbody": 8,
+ "geoms": [
+  {
+   "id": 0,
+   "name": "ground",
+   "type": "plane",
+   "body": 0,
+   "static": true,
+   "group": 0,
+   "size": [
+    100.0,
+    0.8,
+    0.5
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 0,
+   "material": "grid"
+  },
+  {
+   "id": 1,
+   "name": "torso",
+   "type": "capsule",
+   "body": 1,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.5,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 2,
+   "name": "head",
+   "type": "capsule",
+   "body": 1,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.15,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 3,
+   "name": "bthigh",
+   "type": "capsule",
+   "body": 2,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.145,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 4,
+   "name": "bshin",
+   "type": "capsule",
+   "body": 3,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.15,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 5,
+   "name": "bfoot",
+   "type": "capsule",
+   "body": 4,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.094,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 6,
+   "name": "fthigh",
+   "type": "capsule",
+   "body": 5,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.133,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 7,
+   "name": "fshin",
+   "type": "capsule",
+   "body": 6,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.106,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 8,
+   "name": "ffoot",
+   "type": "capsule",
+   "body": 7,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.046,
+    0.07,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  }
+ ],
+ "visible_geoms_by_type": {
+  "static:plane": 1,
+  "mover:capsule": 8
+ },
+ "n_movers": 8,
+ "n_static": 1,
+ "nmesh": 0,
+ "nsite": 0,
+ "sites": [],
+ "cameras": [
+  {
+   "id": 0,
+   "name": "side",
+   "mode": "trackcom",
+   "body": 1,
+   "targetbody": -1,
+   "fovy": 45.0,
+   "pos": [
+    0.0,
+    -3.0,
+    0.0
+   ],
+   "quat": [
+    0.7071067811865476,
+    0.7071067811865476,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "id": 1,
+   "name": "back",
+   "mode": "trackcom",
+   "body": 1,
+   "targetbody": -1,
+   "fovy": 45.0,
+   "pos": [
+    -1.8,
+    -1.3,
+    0.8
+   ],
+   "quat": [
+    0.6952648991024407,
+    0.4901158208281507,
+    -0.3029082356958508,
+    -0.42969733883007466
+   ]
+  }
+ ],
+ "lights": [
+  {
+   "id": 0,
+   "name": "light",
+   "mode": "trackcom",
+   "body": 1,
+   "type": 0,
+   "directional": null,
+   "castshadow": true,
+   "pos": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "attenuation": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "cutoff": 45.0,
+   "exponent": 10.0,
+   "ambient": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "diffuse": [
+    0.699999988079071,
+    0.699999988079071,
+    0.699999988079071
+   ],
+   "specular": [
+    0.30000001192092896,
+    0.30000001192092896,
+    0.30000001192092896
+   ]
+  }
+ ],
+ "headlight": {
+  "active": 1,
+  "ambient": [
+   0.4000000059604645,
+   0.4000000059604645,
+   0.4000000059604645
+  ],
+  "diffuse": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929
+  ],
+  "specular": [
+   0.10000000149011612,
+   0.10000000149011612,
+   0.10000000149011612
+  ]
+ },
+ "vis": {
+  "znear": 0.009999999776482582,
+  "zfar": 50.0,
+  "extent": 2.0,
+  "shadowsize": 2048,
+  "offsamples": 4,
+  "numslices": 28,
+  "numstacks": 16,
+  "offwidth": 640,
+  "offheight": 480
+ },
+ "materials": [
+  {
+   "id": 0,
+   "name": "grid",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "texid": [
+    -1,
+    1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 1,
+   "reflectance": 0.20000000298023224,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 1,
+   "name": "self",
+   "rgba": [
+    0.7,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 2,
+   "name": "self_default",
+   "rgba": [
+    0.7,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 3,
+   "name": "self_highlight",
+   "rgba": [
+    0.0,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 4,
+   "name": "effector",
+   "rgba": [
+    0.7,
+    0.4,
+    0.2,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 5,
+   "name": "effector_default",
+   "rgba": [
+    0.7,
+    0.4,
+    0.2,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 6,
+   "name": "effector_highlight",
+   "rgba": [
+    0.0,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 7,
+   "name": "decoration",
+   "rgba": [
+    0.3,
+    0.5,
+    0.7,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 8,
+   "name": "eye",
+   "rgba": [
+    0.0,
+    0.2,
+    1.0,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 9,
+   "name": "target",
+   "rgba": [
+    0.6,
+    0.3,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 10,
+   "name": "target_default",
+   "rgba": [
+    0.6,
+    0.3,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 11,
+   "name": "target_highlight",
+   "rgba": [
+    0.6,
+    0.3,
+    0.3,
+    0.4
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 12,
+   "name": "site",
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    0.3
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  }
+ ],
+ "textures": [
+  {
+   "id": 0,
+   "name": "skybox",
+   "type": 2,
+   "w": 800,
+   "h": 4800,
+   "nchannel": 3,
+   "distinct_colours": 307,
+   "bytes": 11520000,
+   "sha256": "f6a21dd7d85c1e5d",
+   "mean_rgb": [
+    52.54,
+    77.79,
+    103.03
+   ]
+  },
+  {
+   "id": 1,
+   "name": "grid",
+   "type": 0,
+   "w": 300,
+   "h": 300,
+   "nchannel": 3,
+   "distinct_colours": 2,
+   "bytes": 270000,
+   "sha256": "d6efb0698f2ef40f",
+   "mean_rgb": [
+    38.17,
+    63.67,
+    89.17
+   ]
+  }
+ ],
+ "corpus": {
+  "path": "examples/results/step4/states/DMCCheetahRun.npz",
+  "n": 64,
+  "state_dim": 9,
+  "sha256": "ec35fd6d5b6f4a96521dda5e663b5dc6be64aea0dc8824f58b2cd5f894fe0975"
+ },
+ "frozen_corpus_motion": {
+  "cam_xpos_min": [
+   -0.3502,
+   -3.0,
+   0.5494
+  ],
+  "cam_xpos_max": [
+   0.2683,
+   -3.0,
+   0.64
+  ],
+  "cam_xpos_spread": [
+   0.6186,
+   0.0,
+   0.0906
+  ],
+  "cam_xmat_constant": true,
+  "cam_xmat": [
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   -1.0,
+   0.0,
+   1.0,
+   0.0
+  ],
+  "light_xpos_spread": [
+   [
+    0.6186,
+    0.0,
+    0.0906
+   ]
+  ],
+  "light_xdir_constant": true,
+  "light_rel_cam_spread": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ]
+  ],
+  "mover_world_aabb_min": [
+   -1.546,
+   -0.546,
+   -0.473
+  ],
+  "mover_world_aabb_max": [
+   1.416,
+   0.546,
+   1.276
+  ],
+  "mover_aabb_extent_median": [
+   2.312,
+   1.092,
+   1.661
+  ]
+ },
+ "mj_kinematics_us": 0.41,
+ "mj_forward_us": 2.93,
+ "mj_comPos_us": 0.32,
+ "mj_camlight_us": 0.28,
+ "host": "cis1b1zs2j3",
+ "cpu": "arm"
+}
