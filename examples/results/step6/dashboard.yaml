@@ -54,21 +54,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-raycast3d
     oscar_copy: /oscar/scratch/sboughan/se6/raycast3d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: e5f19a7 (ticket 1; trailers being stripped)
     agent_model: opus
     wave: wave1
-    status: profiling
+    status: implementation (RAYCAST-2a/2b/2c authorized)
     authorization: PROFILE ONLY
     goal: "PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate"
-    affected_configs: ["AntmazeGiantNavigate", "AntmazeLargeExplore", "AntmazeMediumExplore", "AntmazeTeleportExplore", "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup", "DMCCheetahRun", "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCHopperHop", "DMCHumanoidStand", "DMCPendulumSwingup", "DMCReacherEasy", "DMCReacherHard", "DMCWalkerWalk", "HumanoidmazeGiantNavigate", "HumanoidmazeLargeNavigate", "HumanoidmazeMediumNavigate", "PointmazeGiantNavigate", "PointmazeLargeNavigate", "PointmazeMediumNavigate", "PointmazeTeleportNavigate"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
+    affected_configs: ["AntmazeGiantNavigate","AntmazeLargeExplore","AntmazeMediumExplore","AntmazeTeleportExplore","DMCAcrobotSwingup","DMCBallInCupCatch","DMCCartpoleBalance","DMCCartpoleSwingup","DMCFingerSpin","DMCFingerTurnEasy","DMCFingerTurnHard","DMCPendulumSwingup","DMCReacherEasy","DMCReacherHard","HumanoidmazeGiantNavigate","HumanoidmazeLargeNavigate","HumanoidmazeMediumNavigate","PointmazeGiantNavigate","PointmazeLargeNavigate","PointmazeMediumNavigate","PointmazeTeleportNavigate"]  # 21 live (Cheetah/Hopper/Humanoid/Walker are MJWarp-only, moved to cpu-3d); all frozen digests are cuda-only
+    bottleneck: {measured: "CPU: raycast3d.intersect 76-95% of render, Python loop over K primitives with 150-250 full-size aten temporaries each (145-240 ns/ray-primitive, ~10 GB/s on dead intermediates); Pointmaze (K=1): R3.composite 91%. GPU BallInCup: _fk 97.1% of wall (host tendon FK: _tendon_frame 78%, numpy cross/norm on (28,3) + catenary Python loop), device utilisation 5.1%; with _fk excluded 3,117 -> 73,187 fps", hypothesis: "2a batch tendon FK over batch axis (dmcontrol.py) -> ~9.5k fps vs cores bar 5,966; 2b cover-compaction/scatter composite in R3.composite -> ~2.8x Pointmaze CPU -> CPU_FAST; fused CPU cast for DMC CPU rows deferred to cpu-3d design"}
+    correctness: {targeted_tests: "n/a (ticket 1 no code change)", step4_replay: "n/a", gate_a: "AntmazeTeleportExplore/HumanoidmazeMediumNavigate FAIL check_style_is_state root-caused: OGBenchMaze._bake renders shared MjData without resetting qpos; plate depends on last pose; surfaces only when _SCENE_CACHE clears at 256 entries; latent in ALL OGB configs. Fix authorized as RAYCAST-2c", fidelity: "unchanged"}
+    performance: {cpu_before: "BELOW_G4 all raycast3d CPU rows except 2 at tier; Pointmaze Large/Medium 256-266 fps B=1", cpu_after: null, gpu_before: "BallInCup 2,458.7 fps sweep (R 9.38 pass, cores 0.41 fail, BATCH_SCALES fail)", gpu_after: null, batch_scales: "BallInCup FAIL", no_large_batch_regression: null}
+    pixels_changed: no (ticket 1)
+    semantic_followup: none yet
     review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
+    slurm_jobs: [6343543, 6343544, 6343664, 6344633]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus raycast3d callers maze2d/mujoco_locomotion have no oracle: self-consistency check required for composite changes."]
   - workstream: fetch-gpu
     brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
     branch: step6/fetch-gpu
