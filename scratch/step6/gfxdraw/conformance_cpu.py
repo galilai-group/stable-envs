@@ -37,6 +37,7 @@ def main() -> None:
     import stable_envs as se
     from stable_envs.testing import conformance as C
 
+    print(f"stable_envs from {se.__file__}", flush=True)
     bad = 0
     for name in a.configs.split(","):
         states = np.load(ROOT / f"examples/results/step4/states/{name}.npz")["states"][:a.batch]

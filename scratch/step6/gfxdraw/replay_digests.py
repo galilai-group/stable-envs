@@ -39,6 +39,7 @@ def main() -> None:
     import stable_envs as se
     from stable_envs.testing import conformance as C
 
+    print(f"stable_envs from {se.__file__}", flush=True)
     frozen = json.loads((ROOT / "examples/results/step4/conformance/raster.json").read_text())
     snap = json.loads(Path(a.snapshot_in).read_text()) if a.snapshot_in else None
     rows, bad, snapshot = {}, 0, {}
@@ -82,7 +83,8 @@ def main() -> None:
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(json.dumps(
-            {"device": a.device, "torch": torch.__version__, "configs": rows}, indent=1))
+            {"device": a.device, "torch": torch.__version__,
+             "stable_envs_file": se.__file__, "configs": rows}, indent=1))
         print(f"wrote {a.out}")
     what = "the host baseline" if snap is not None else "the Step 4 oracle"
     print(f"\n{len(rows) - bad}/{len(rows)} configurations bit-identical to {what}")

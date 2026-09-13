@@ -202,7 +202,15 @@ def main() -> None:
         "cpu": platform.processor() or platform.machine(),
         "threads": torch.get_num_threads(), "versions": versions(),
         "slurm_job": os.environ.get("SLURM_JOB_ID"), "batches": {},
+        # WHICH TREE WAS MEASURED. A before/after job switches PYTHONPATH between the baseline
+        # checkout and a workstream branch, and any script that does ``sys.path.insert(0, ROOT)``
+        # silently wins that argument -- both legs then measure the same tree and the "after" is
+        # the "before" with a different filename. Recording the imported module's own path makes
+        # the artifact prove which one it was instead of the job script asserting it.
+        "stable_envs_file": se.__file__,
+        "pythonpath": os.environ.get("PYTHONPATH"),
     }
+    print(f"measuring stable_envs from {se.__file__}", flush=True)
 
     env = se.make(args.env, batch=max(args.batch), size=args.size, device=args.device)
     note["size"] = int(getattr(env, "size", args.size) or 0)
@@ -264,7 +272,8 @@ def render_note(n: dict) -> str:
          f"·  threads: {n['threads']}",
          f"- frame: {n['size']}px  ·  state_dim: {n['state_dim']}",
          f"- states: `{n['states_source']}`",
-         f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}", ""]
+         f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}",
+         f"- measured tree: `{n.get('stable_envs_file', 'unrecorded')}`", ""]
     for B, rec in n["batches"].items():
         t, r = rec["trace"], rec["render_ms"]
         L += [f"## batch {B}", "",

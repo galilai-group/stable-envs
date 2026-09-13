@@ -51,7 +51,11 @@ def main() -> None:
 
     doc = {"arm": a.arm, "host": socket.gethostname(), "cpu": platform.processor() or platform.machine(),
            "threads": torch.get_num_threads(), "batch": a.batch, "rounds": a.rounds,
-           "torch": torch.__version__, "tree": str(ROOT), "envs": {}}
+           "torch": torch.__version__, "tree": str(ROOT),
+           # the tree actually imported, not the one the job script meant to import
+           "stable_envs_file": se.__file__, "pythonpath": __import__("os").environ.get("PYTHONPATH"),
+           "envs": {}}
+    print(f"arm {a.arm}: stable_envs from {se.__file__}", flush=True)
     for name in a.envs.split(","):
         pool = np.load(ROOT / f"examples/results/step4/states/{name}.npz")["states"]
         env = se.make(name, batch=a.batch, device="cpu")
