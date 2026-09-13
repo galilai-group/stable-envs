@@ -1,0 +1,704 @@
+{
+  "tool": "profile_phases",
+  "workstream": "step6/raycast3d",
+  "env": "HumanoidmazeMediumNavigate",
+  "device": "cpu",
+  "baseline_commit": "",
+  "host": "node2342.oscar.ccv.brown.edu",
+  "gpu": null,
+  "cpu": "x86_64",
+  "threads": 1,
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "triton": "3.8.0",
+    "numpy": "2.5.3",
+    "mujoco": "3.12.0",
+    "dm-control": "1.0.45",
+    "mujoco-warp": "absent",
+    "warp-lang": "absent"
+  },
+  "slurm_job": "6343544",
+  "batches": {
+    "1": {
+      "batch": 1,
+      "set_state_ms": {
+        "ms_median": 0.05013681948184967,
+        "ms_min": 0.048174988478422165,
+        "ms_max": 0.05498714745044708,
+        "ms_stdev": 0.0025600099555668984,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 34.02386186644435,
+        "ms_min": 33.687952905893326,
+        "ms_max": 36.7213049903512,
+        "ms_stdev": 1.1275065016877175,
+        "samples": 5
+      },
+      "fps": 29.391137429529678,
+      "kernels": {
+        "op_calls": 12241,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 32233.999999999833,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 33.32486655563116,
+          "self_ms": 1.780591905117035,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 30.286676560839016,
+          "self_ms": 30.286676560839016,
+          "calls": 1.0
+        },
+        "isect:capsule": {
+          "incl_ms": 27.447745359192293,
+          "self_ms": 27.447745359192293,
+          "calls": 16.0
+        },
+        "isect:sphere": {
+          "incl_ms": 0.8330245812733968,
+          "self_ms": 0.8330245812733968,
+          "calls": 3.0
+        },
+        "shade": {
+          "incl_ms": 0.7171781423191229,
+          "self_ms": 0.7171781423191229,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 0.5248379893600941,
+          "self_ms": 0.5248379893600941,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.19966857507824898,
+          "self_ms": 0.19966857507824898,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.123995045820872,
+          "self_ms": 0.123995045820872,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.08626297737161319,
+          "self_ms": 0.08626297737161319,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.015581957995891571,
+          "self_ms": 0.015581957995891571,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 19,
+          "max": 19,
+          "sum_per_render": 19.0
+        },
+        "cast_kinds": [
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 62.015563094367586
+    },
+    "16": {
+      "batch": 16,
+      "set_state_ms": {
+        "ms_median": 0.048688147217035294,
+        "ms_min": 0.04249997437000275,
+        "ms_max": 0.06458023563027382,
+        "ms_stdev": 0.007478573157556179,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 260.8111300505698,
+        "ms_min": 258.1541887484491,
+        "ms_max": 263.2143748924136,
+        "ms_stdev": 1.6195410543794415,
+        "samples": 5
+      },
+      "fps": 61.34707516852403,
+      "kernels": {
+        "op_calls": 12388,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 267763.62799999997,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 263.3386350547274,
+          "self_ms": 9.274185635149479,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 246.93344300612807,
+          "self_ms": 246.93344300612807,
+          "calls": 1.0
+        },
+        "isect:capsule": {
+          "incl_ms": 221.91968824093541,
+          "self_ms": 221.91968824093541,
+          "calls": 16.0
+        },
+        "isect:sphere": {
+          "incl_ms": 7.605914957821369,
+          "self_ms": 7.605914957821369,
+          "calls": 3.0
+        },
+        "shade": {
+          "incl_ms": 6.318743961552779,
+          "self_ms": 6.318743961552779,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 0.7976574512819449,
+          "self_ms": 0.7976574512819449,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.25385261202851933,
+          "self_ms": 0.25385261202851933,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.2220161259174347,
+          "self_ms": 0.2220161259174347,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.08457231645782788,
+          "self_ms": 0.08457231645782788,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.014605000615119934,
+          "self_ms": 0.014605000615119934,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 19,
+          "max": 19,
+          "sum_per_render": 19.0
+        },
+        "cast_kinds": [
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 65536,
+          "max": 65536,
+          "sum_per_render": 65536.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 493.42467930788797,
+      "cprofile": [
+        {
+          "func": "raycast3d.py:302(_capsule)",
+          "ncalls": 16,
+          "tottime_ms": 77.004167,
+          "cumtime_ms": 222.75217300000003
+        },
+        {
+          "func": "~:0(<built-in method torch.stack>)",
+          "ncalls": 99,
+          "tottime_ms": 48.154809,
+          "cumtime_ms": 48.154809
+        },
+        {
+          "func": "raycast3d.py:279(_dot)",
+          "ncalls": 92,
+          "tottime_ms": 27.491216,
+          "cumtime_ms": 27.491216
+        },
+        {
+          "func": "raycast3d.py:271(_mtv)",
+          "ncalls": 32,
+          "tottime_ms": 26.796128000000003,
+          "cumtime_ms": 42.60039700000001
+        },
+        {
+          "func": "~:0(<built-in method torch.where>)",
+          "ncalls": 168,
+          "tottime_ms": 20.047064,
+          "cumtime_ms": 20.047064
+        },
+        {
+          "func": "~:0(<built-in method torch.sqrt>)",
+          "ncalls": 69,
+          "tottime_ms": 16.48667,
+          "cumtime_ms": 16.48667
+        },
+        {
+          "func": "raycast3d.py:263(_mv)",
+          "ncalls": 17,
+          "tottime_ms": 12.517448,
+          "cumtime_ms": 20.550979
+        },
+        {
+          "func": "~:0(<method 'pow' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 66,
+          "tottime_ms": 4.171867,
+          "cumtime_ms": 4.171867
+        },
+        {
+          "func": "raycast3d.py:288(_sphere)",
+          "ncalls": 3,
+          "tottime_ms": 3.9672630000000004,
+          "cumtime_ms": 7.802385
+        },
+        {
+          "func": "raycast3d.py:957(composite)",
+          "ncalls": 1,
+          "tottime_ms": 3.8296780000000004,
+          "cumtime_ms": 265.19289100000003
+        },
+        {
+          "func": "~:0(<method 'sum' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 4,
+          "tottime_ms": 3.098815,
+          "cumtime_ms": 3.098815
+        },
+        {
+          "func": "~:0(<built-in method torch.zeros_like>)",
+          "ncalls": 130,
+          "tottime_ms": 3.0799010000000004,
+          "cumtime_ms": 3.0799010000000004
+        },
+        {
+          "func": "raycast3d.py:919(shade)",
+          "ncalls": 1,
+          "tottime_ms": 3.014469,
+          "cumtime_ms": 6.016053
+        },
+        {
+          "func": "~:0(<built-in method torch.clamp>)",
+          "ncalls": 107,
+          "tottime_ms": 2.8644710000000004,
+          "cumtime_ms": 2.8644710000000004
+        },
+        {
+          "func": "raycast3d.py:444(cast_nearest_torch)",
+          "ncalls": 1,
+          "tottime_ms": 2.46871,
+          "cumtime_ms": 248.753475
+        },
+        {
+          "func": "~:0(<built-in method torch.full_like>)",
+          "ncalls": 38,
+          "tottime_ms": 1.954295,
+          "cumtime_ms": 1.954295
+        },
+        {
+          "func": "~:0(<built-in method torch.minimum>)",
+          "ncalls": 16,
+          "tottime_ms": 1.4813250000000002,
+          "cumtime_ms": 1.4813250000000002
+        },
+        {
+          "func": "~:0(<method 'abs' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 32,
+          "tottime_ms": 1.3000350000000003,
+          "cumtime_ms": 1.3000350000000003
+        },
+        {
+          "func": "raycast3d.py:405(intersect)",
+          "ncalls": 19,
+          "tottime_ms": 0.5412760000000001,
+          "cumtime_ms": 231.278383
+        },
+        {
+          "func": "~:0(<method 'unsqueeze' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 67,
+          "tottime_ms": 0.5340680000000001,
+          "cumtime_ms": 0.5340680000000001
+        },
+        {
+          "func": "~:0(<method 'clamp' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 21,
+          "tottime_ms": 0.5279680000000001,
+          "cumtime_ms": 0.5279680000000001
+        },
+        {
+          "func": "~:0(<built-in method torch.maximum>)",
+          "ncalls": 16,
+          "tottime_ms": 0.48179600000000006,
+          "cumtime_ms": 0.48179600000000006
+        },
+        {
+          "func": "~:0(<method 'repeat_interleave' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 2,
+          "tottime_ms": 0.381383,
+          "cumtime_ms": 0.381383
+        },
+        {
+          "func": "~:0(<method 'copy_' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 1,
+          "tottime_ms": 0.258994,
+          "cumtime_ms": 0.258994
+        },
+        {
+          "func": "raycast3d.py:1119(_expand_tile)",
+          "ncalls": 2,
+          "tottime_ms": 0.254798,
+          "cumtime_ms": 0.343654
+        },
+        {
+          "func": "~:0(<method 'expand' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 30,
+          "tottime_ms": 0.25273900000000005,
+          "cumtime_ms": 0.25273900000000005
+        },
+        {
+          "func": "_tensor.py:32(wrapped)",
+          "ncalls": 68,
+          "tottime_ms": 0.250478,
+          "cumtime_ms": 4.5134680000000005
+        },
+        {
+          "func": "~:0(<method 'to' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 6,
+          "tottime_ms": 0.22781300000000002,
+          "cumtime_ms": 0.22781300000000002
+        },
+        {
+          "func": "~:0(<method 'squeeze' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 35,
+          "tottime_ms": 0.18254900000000002,
+          "cumtime_ms": 0.18254900000000002
+        },
+        {
+          "func": "~:0(<method 'scatter_' of 'torch._C.TensorBase' objects>)",
+          "ncalls": 1,
+          "tottime_ms": 0.181045,
+          "cumtime_ms": 0.181045
+        }
+      ]
+    },
+    "64": {
+      "batch": 64,
+      "set_state_ms": {
+        "ms_median": 0.0476357527077198,
+        "ms_min": 0.04352489486336708,
+        "ms_max": 0.055240001529455185,
+        "ms_stdev": 0.004081763180753921,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 1062.925353180617,
+        "ms_min": 1032.43439598009,
+        "ms_max": 1118.9592368900776,
+        "ms_stdev": 29.958998538818587,
+        "samples": 5
+      },
+      "fps": 60.2111896272784,
+      "kernels": {
+        "op_calls": 12388,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 1100127.198000003,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 1083.904237486422,
+          "self_ms": 33.24146413554748,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 1024.0775696001947,
+          "self_ms": 1024.0775696001947,
+          "calls": 1.0
+        },
+        "isect:capsule": {
+          "incl_ms": 927.8044031622509,
+          "self_ms": 927.8044031622509,
+          "calls": 16.0
+        },
+        "isect:sphere": {
+          "incl_ms": 31.68611057723562,
+          "self_ms": 31.68611057723562,
+          "calls": 3.0
+        },
+        "shade": {
+          "incl_ms": 25.016719941049814,
+          "self_ms": 25.016719941049814,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 1.5528895892202854,
+          "self_ms": 1.5528895892202854,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.6604650989174843,
+          "self_ms": 0.6604650989174843,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.23271003738045692,
+          "self_ms": 0.23271003738045692,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.07970491424202919,
+          "self_ms": 0.07970491424202919,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.015594220409790674,
+          "self_ms": 0.015594220409790674,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 19,
+          "max": 19,
+          "sum_per_render": 19.0
+        },
+        "cast_kinds": [
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 262144,
+          "max": 262144,
+          "sum_per_render": 262144.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 2044.3676312764485
+    },
+    "256": {
+      "batch": 256,
+      "set_state_ms": {
+        "ms_median": 0.06013503298163414,
+        "ms_min": 0.05878601223230362,
+        "ms_max": 0.06264820694923401,
+        "ms_stdev": 0.001400698458071239,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 5787.477363832295,
+        "ms_min": 5637.621397152543,
+        "ms_max": 6706.703444942832,
+        "ms_stdev": 393.1720511842326,
+        "samples": 5
+      },
+      "fps": 44.233434345648035,
+      "kernels": {
+        "op_calls": 12388,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 5303619.216000026,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 5118.895949640621,
+          "self_ms": 127.10838206112385,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 4862.706342246383,
+          "self_ms": 4862.706342246383,
+          "calls": 1.0
+        },
+        "isect:capsule": {
+          "incl_ms": 4462.693324312568,
+          "self_ms": 4462.693324312568,
+          "calls": 16.0
+        },
+        "isect:sphere": {
+          "incl_ms": 140.7570818749567,
+          "self_ms": 140.7570818749567,
+          "calls": 3.0
+        },
+        "shade": {
+          "incl_ms": 124.3964849660794,
+          "self_ms": 124.3964849660794,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 4.656138674666484,
+          "self_ms": 4.656138674666484,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 2.3174084102114043,
+          "self_ms": 2.3174084102114043,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.30844596525033313,
+          "self_ms": 0.30844596525033313,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.08676201105117798,
+          "self_ms": 0.08676201105117798,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.028601692368586857,
+          "self_ms": 0.028601692368586857,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 19,
+          "max": 19,
+          "sum_per_render": 19.0
+        },
+        "cast_kinds": [
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "capsule",
+          "sphere",
+          "capsule",
+          "capsule",
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 1048576,
+          "max": 1048576,
+          "sum_per_render": 1048576.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 9725.05897221466
+    }
+  },
+  "size": 224,
+  "state_dim": 28,
+  "scene": {
+    "class": "HumanoidmazeMediumNavigate",
+    "mover_primitives": 19,
+    "mover_kind_histogram": {
+      "capsule": 16,
+      "sphere": 3
+    },
+    "tendon_segments": 0,
+    "movers": null,
+    "shadow_light": null,
+    "reflectance": null,
+    "size": 224,
+    "supersample": 2,
+    "fk_kernel": "mj_kinematics",
+    "agent_geoms": 19
+  },
+  "states_source": "examples/results/step4/states/HumanoidmazeMediumNavigate.npz"
+}
