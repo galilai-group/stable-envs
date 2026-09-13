@@ -387,6 +387,47 @@ RENDER_DECODERS = ("renderer", "learned")
 REQUIRED_VISUAL_FIDELITY = ("mean_abs", "within8_frac", "ssim",
                             "mean_abs_max", "within8_min", "ssim_min", "measured_at")
 
+#: The reference package versions a declaration's numbers were measured AGAINST, as a field rather
+#: than as prose inside ``measured_at``. Optional, because most declarations predate it; validated
+#: whenever present; and read by the certifier, which compares it with the versions the measuring
+#: interpreter recorded and marks a mismatch ``blocked_environment`` rather than ``fail`` -- the
+#: same rule that already applies to a missing reference package. It exists because of a measured
+#: case: DM Control's trackcom cells were declared under mujoco 3.11.0 and judged under 3.12.0, and
+#: 3.12.0 re-anchors finite-plane textures (changelog 3.12.0, commit cc7fb98c), so the floor checker
+#: the reference drew had moved while ours had not. Judged as a FAIL, that read as a renderer defect;
+#: it was a version drift, and a field the certifier can compare is what tells the two apart.
+#:
+#: Keys follow ``examples/fidelity_step4.py``'s ``reference_packages`` record -- ``"mujoco"``,
+#: ``"mujoco_warp"``, ``"dm_control"``, ``"warp"``, ``"gymnasium"`` ... -- so the comparison is a
+#: dictionary lookup and not a parse. Values are the exact version strings. A visual env carries it
+#: inside ``visual_fidelity`` (next to ``measured_at``, whose text it must agree with); a parity env
+#: carries it as the class attribute ``reference_versions``. ``check_fidelity_declaration`` validates
+#: the shape; ``reference_versions_of`` reads it for either tier.
+REFERENCE_VERSIONS_KEY = "reference_versions"
+
+
+def reference_versions_of(cls) -> dict[str, str]:
+    """The declared reference versions for ``cls``, whichever tier carries them. ``{}`` if none."""
+    out = dict(getattr(cls, REFERENCE_VERSIONS_KEY, {}) or {})
+    out.update((getattr(cls, "visual_fidelity", {}) or {}).get(REFERENCE_VERSIONS_KEY) or {})
+    return out
+
+
+def _check_reference_versions_shape(cls, where: str, rv) -> None:
+    if rv is None:
+        return
+    if not isinstance(rv, dict) or not rv:
+        raise ValueError(
+            f"{cls.__name__}: {where} must be a non-empty dict of package -> exact version string, "
+            f"got {rv!r}. An empty or non-dict value declares nothing; leave the field out instead.")
+    for k, v in rv.items():
+        if not (isinstance(k, str) and k and isinstance(v, str) and v.strip()):
+            raise ValueError(
+                f"{cls.__name__}: {where}[{k!r}] = {v!r}; every entry is a package name mapped to the "
+                f"exact version string the declaration was measured against (e.g. 'mujoco': "
+                f"'3.11.0'), so the certifier can compare it with what the measuring interpreter "
+                f"recorded.")
+
 
 class StableEnv:
     """Base class: a batched, GPU-renderable environment defined by ``scene()``."""
@@ -449,6 +490,9 @@ class StableEnv:
     #: default-appearance declaration would have said 3.25, and every consumer using the variation
     #: knobs — which is what this family exists for — would have got the worst of the three.
     variation_fidelity: dict[str, Any] = {}
+    #: For a PARITY env: the reference package versions its parity numbers were measured against
+    #: (a visual env puts the same dict inside ``visual_fidelity``). See ``REFERENCE_VERSIONS_KEY``.
+    reference_versions: dict[str, str] = {}
 
     def __init__(self, batch: int = 1, size: int | None = None, supersample: int = 1,
                  device: str = "cuda", backend: str = "auto", seed: int = 0):
@@ -701,6 +745,9 @@ class StableEnv:
                             "frames are a different render of the same scene, not the same frame")
         if self.variation_fidelity:
             d["variation_fidelity"] = dict(self.variation_fidelity)
+        rv = reference_versions_of(type(self))
+        if rv:
+            d[REFERENCE_VERSIONS_KEY] = rv
         if self.render_decoder == "learned" and "not_for" in d:
             # Said separately from ``visual_note`` and in the caller's own words, because this is the
             # one thing about these frames that no amount of looking at them can reveal.
@@ -732,6 +779,14 @@ def check_fidelity_declaration(cls: type[StableEnv]) -> None:
     if tier not in FIDELITY_TIERS:
         raise ValueError(f"{cls.__name__}: fidelity_tier must be one of {FIDELITY_TIERS}, got {tier!r}")
     vf = dict(getattr(cls, "visual_fidelity", {}) or {})
+    # The reference-version field is optional on both tiers and malformed on neither: a version the
+    # certifier cannot compare is worse than none, because it looks like provenance.
+    if REFERENCE_VERSIONS_KEY in cls.__dict__ or getattr(cls, REFERENCE_VERSIONS_KEY, None):
+        _check_reference_versions_shape(cls, REFERENCE_VERSIONS_KEY,
+                                        getattr(cls, REFERENCE_VERSIONS_KEY))
+    if REFERENCE_VERSIONS_KEY in vf:
+        _check_reference_versions_shape(cls, f"visual_fidelity[{REFERENCE_VERSIONS_KEY!r}]",
+                                        vf[REFERENCE_VERSIONS_KEY])
     if tier == "parity":
         if vf:
             raise ValueError(
