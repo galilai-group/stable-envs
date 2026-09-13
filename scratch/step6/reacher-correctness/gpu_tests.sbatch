@@ -79,5 +79,22 @@ $PY -m pytest tests/gpu/test_fast_paths.py -v -p no:randomly \
     -k "Reacher or FingerTurn or unknown_geom or flat_polygon or declared_fast_path" \
     2>&1 | tee "$OUT/test_fast_paths.txt" | tail -40
 $PY -m pytest tests/unit -q -p no:randomly 2>&1 | tee "$OUT/test_unit.txt" | tail -20
+
+# ---- 2. the guard's own numbers ON THE CERTIFICATION HARDWARE ----------------------------------
+# The floor was first set from CPU draws and the frozen corpus then measured 0.008 under it on a
+# 3090, on a quantity (a within-8 fraction over silhouette pixels) that had no business carrying a
+# floor. The metric is now a ratio of mean errors; this is the same spread, measured where the bound
+# is enforced, so the floor is not a CPU number applied to a GPU test.
+PYTHONPATH=$SRC $PY5 scratch/step6/$WS/probe_guard.py --device cuda \
+    --states "$STATES" DMCReacherEasy DMCReacherHard DMCFingerTurnEasy DMCFingerTurnHard \
+    2>&1 | tee "$OUT/guard_gpu.txt" | tail -8
+
+# ---- 3. the Step-4 replay again, under the corrected metric ------------------------------------
+REPLAY=$SRC/examples/results/step6/$WS/replay
+PYTHONPATH=$SRC $PY5 examples/fidelity_step4.py --shard dmc --device cuda --states-dir "$STATES" \
+    --out "$REPLAY/dmc.json" 2>&1 | tail -30
+PYTHONPATH=$SRC $PY5 scratch/step6/$WS/compare_replay.py \
+    "$SRC/examples/results/step4/conformance/dmc.json" "$REPLAY/dmc.json" \
+    2>&1 | tee "$REPLAY/compare.txt"
 set +x
 echo "DONE $(date -u +%FT%TZ)"
