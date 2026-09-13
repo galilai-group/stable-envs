@@ -96,4 +96,4 @@ tests/gpu/test_conformance.py::test_a_learned_decoder_beats_the_render_it_replac
 tests/gpu/test_conformance.py::test_a_learned_decoder_holds_up_under_its_declared_variation[MujocoReacher] SKIPPED [ 97%]
 tests/gpu/test_conformance.py::test_gpu_step_tracks_the_reference_simulator[MujocoReacher] SKIPPED [ 98%]
 tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoReacher] PASSED [100%]
-== 72 passed, 26 skipped, 1350 deselected, 13260 warnings in 62.08s (0:01:02) ==
+======= 72 passed, 26 skipped, 1350 deselected, 13260 warnings in 59.04s =======

@@ -31,4 +31,4 @@ tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it
 tests/gpu/test_fast_paths.py::test_an_unknown_geom_code_is_refused_by_both_cast_backends PASSED [ 93%]
 tests/gpu/test_fast_paths.py::test_a_flat_polygon_is_not_culled PASSED   [ 96%]
 tests/gpu/test_fast_paths.py::test_every_declared_fast_path_is_actually_reachable PASSED [100%]
-======== 23 passed, 10 skipped, 252 deselected, 2490 warnings in 11.44s ========
+======== 23 passed, 10 skipped, 252 deselected, 2490 warnings in 8.74s =========

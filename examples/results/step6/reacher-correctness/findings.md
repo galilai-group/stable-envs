@@ -264,10 +264,16 @@ the per-row quantity — is 0 everywhere.
 | suite | selection | result |
 |---|---|---|
 | `tests/gpu/test_conformance.py` | `-k "Reacher or FingerTurn or required_envs or registry_is_not_empty or relaxed_parity"`, `SE_REQUIRE_ENVS` = the four cells | **72 passed, 26 skipped, 0 failed** — includes `test_render_parity_with_official_renderer`, `test_style_is_state`, `test_default_style_is_the_official_appearance`, `test_per_env_variation_is_per_env`, `test_variations_all_do_something`, `test_state_is_sufficient` and the new `test_a_declared_task_object_is_drawn_iff_the_reference_draws_it` on all four cells |
-| `tests/gpu/test_reproducibility.py` | `-k "Reacher or FingerTurn"` | **90 passed, 25 skipped, 0 failed** — includes the fresh-process bit-identity, batch-size independence, sub-batch style refusal, dataset round-trip and HuggingFace round-trip cases |
+| `tests/gpu/test_reproducibility.py` | `-k "Reacher or FingerTurn"` | **94 passed, 25 skipped, 0 failed** — includes the fresh-process bit-identity, batch-size independence, sub-batch style refusal, dataset round-trip and HuggingFace round-trip cases, and the four new `test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility` cases |
 | `tests/gpu/test_fast_paths.py` | `-k "Reacher or FingerTurn or unknown_geom or flat_polygon or declared_fast_path"` | **23 passed, 10 skipped, 0 failed** |
-| `tests/unit` (on Oscar) | full | **507 passed, 8 skipped, 2 failed** |
-| `tests/unit` (locally, `MUJOCO_GL=glfw`) | full | **509 passed, 6 skipped, 2 failed** |
+| `tests/unit` (on Oscar) | full | **538 passed, 8 skipped, 2 failed** |
+| `tests/unit` (locally, `MUJOCO_GL=glfw`) | full | **540 passed, 6 skipped, 2 failed** |
+
+Every number in this table is from job **6346537**, on the MERGED code
+(`9da50ee`), on one RTX 3090. The counts that moved against the pre-merge run
+(6344904) moved for two reasons and no others: `test_reproducibility` 90 → 94 is
+the four new regression cases, and `tests/unit` 507 → 538 is what
+`step6/integration` brought with it.
 
 Both `tests/unit` failures are **present at the baseline commit, unchanged by this patch**, verified
 by `git stash`: `test_examples.py::test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`
