@@ -1691,18 +1691,30 @@ class DMControlSuite(_DMCModel):
         because the tendon's capsules change LENGTH and COLOUR with the state and there is no useful
         way to say that only sometimes.
 
-        A pure function of the state, a couple of microseconds a call, and a Python loop over the batch
-        — which reads like the bottleneck and measurably is not: 17 ms of cartpole's 232 ms at
-        B=1024. What costs the rest is that three of the ray passes are FULL-FRAME. The movers can be
-        tiled (they are 0.2-3.0% of the frame), but the shadow test starts from every STATIC pixel and
-        the reflection test from every floor pixel, so those two scale with the image rather than with
-        the movers. Bounding them to the movers' light-space and screen-space footprints is the next
-        thing worth doing here; a batched GPU forward kinematics is not.
+        A pure function of the state, and a Python loop over the batch. On the domains without a
+        tendon that loop is cheap -- 17 ms of cartpole's 232 ms at B=1024 -- and what costs the rest
+        is that three of the ray passes are FULL-FRAME: the movers can be tiled (they are 0.2-3.0% of
+        the frame), but the shadow test starts from every STATIC pixel and the reflection test from
+        every floor pixel. Bounding those two to the movers' light-space and screen-space footprints
+        is still the next thing worth doing here.
+
+        ON ``ball_in_cup`` THE LOOP WAS THE BOTTLENECK, and this docstring used to say it was not.
+        Measured on a 3090 at batch 4096: the render was 1,314 ms of which the card did 66.7 ms
+        (5.1% utilised) and this function was 97%. Inside it, ``mj_forward`` -- which the paragraph
+        below blames, correctly, for being necessary -- was 3%, and the tendon's pure-Python/numpy
+        geometry was 78%: ``_chain_capsules`` once per environment (512 ``numpy.cross`` and 768
+        ``numpy.linalg.norm`` dispatches on ``(28,3)`` arrays at batch 256) and ``catenary``'s
+        29-point interior loop once per environment. Both are array code with no batch axis, so the
+        loop now collects POLYLINES and ``_chain_capsules_batch`` builds every chain at once, grouped
+        by point count. 3,272 -> 9,816 fps at batch 4096, bit-identical, and the row goes
+        GPU_PARITY/BELOW_G4 -> GPU_FAST. A batched GPU forward kinematics is still not the answer;
+        giving the numpy a batch axis was.
 
         A scene with a tendon runs ``mj_forward`` rather than ``mj_kinematics``, and pays for it: the
         colour of a taut tendon is its limit constraint's impedance, which only exists once the
-        constraint set has been built. ``ball_in_cup`` is 4 dof and 6 geoms, so the extra work is
-        microseconds; a domain where it were not could not use this path.
+        constraint set has been built. ``ball_in_cup`` is 4 dof and 6 geoms, so the extra work really
+        is microseconds (3.50 ms over 256 environments); a domain where it were not could not use
+        this path.
         """
         import mujoco
         gmov, smov = sc.movers
