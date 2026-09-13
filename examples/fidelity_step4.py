@@ -240,7 +240,7 @@ def mandatory(env, states, style) -> dict:
 
 def _fidelity_declaration(env) -> dict:
     """``register``'s own enforcement, re-run on the live class. Raises if the tier is half-declared."""
-    from stable_envs.core.env import check_fidelity_declaration
+    from stable_envs.core.env import check_fidelity_declaration, reference_versions_of
     check_fidelity_declaration(type(env))
     d = env.describe()
     return {"tier": env.fidelity_tier, "describe_reports_tier": d.get("fidelity_tier"),
@@ -251,6 +251,9 @@ def _fidelity_declaration(env) -> dict:
             # Recorded separately and never defaulted from visual_fidelity: they are different
             # declarations with different numbers, and only a LEARNED decoder carries this one.
             "variation_fidelity": _jsonable(getattr(env, "variation_fidelity", None) or None),
+            # The reference versions the declaration names, for either tier. The certifier compares
+            # them with this run's ``reference_packages`` and blocks a mismatch rather than failing it.
+            "reference_versions": _jsonable(reference_versions_of(type(env)) or None),
             "render_decoder": getattr(env, "render_decoder", "renderer")}
 
 
@@ -458,9 +461,18 @@ def provenance(device: str) -> dict:
         cpu = _run(["bash", "-c", "lscpu | grep 'Model name' | head -1"]).split(":", 1)[-1].strip() or cpu
     elif platform.system() == "Darwin":
         cpu = _run(["sysctl", "-n", "machdep.cpu.brand_string"]) or cpu
+    # The measured copy on the cluster is an rsync without .git, which is how Step 4's shards came to
+    # record git_commit: null. The launcher stamps the SHA into STABLE_ENVS_GIT_COMMIT or a GIT_COMMIT
+    # file at the root; a real checkout still wins, and the source is recorded beside the value.
+    commit, source = _run(["git", "-C", str(ROOT), "rev-parse", "HEAD"]) or None, "git"
+    dirty = bool(_run(["git", "-C", str(ROOT), "status", "--porcelain"])) if commit else None
+    if not commit and os.environ.get("STABLE_ENVS_GIT_COMMIT", "").strip():
+        commit, source = os.environ["STABLE_ENVS_GIT_COMMIT"].strip(), "env:STABLE_ENVS_GIT_COMMIT"
+    elif not commit and (ROOT / "GIT_COMMIT").is_file():
+        commit, source = (ROOT / "GIT_COMMIT").read_text().strip() or None, "file:GIT_COMMIT"
     p = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-         "git_commit": _run(["git", "-C", str(ROOT), "rev-parse", "HEAD"]) or None,
-         "git_dirty": bool(_run(["git", "-C", str(ROOT), "status", "--porcelain"])),
+         "git_commit": commit, "git_commit_source": source if commit else None,
+         "git_dirty": dirty,
          "host": platform.node(), "os": f"{platform.system()} {platform.release()}",
          "cpu": cpu, "python": platform.python_version(), "torch": torch.__version__,
          "device": device, "state_seed": STATE_SEED, "check_seed": CHECK_SEED,
@@ -473,8 +485,16 @@ def provenance(device: str) -> dict:
         p["gpu"] = torch.cuda.get_device_name(0)
         p["driver"] = _run(["bash", "-c",
                             "nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1"])
+    import importlib.metadata as md
     for m in ("mujoco", "mujoco_warp", "dm_control", "ogbench", "gym_pusht", "gymnasium",
               "gymnasium_robotics", "craftax", "stable_worldmodel", "warp"):
+        # The distribution's version first: ``dm_control`` has no ``__version__`` and was recorded as
+        # "present", which the certifier cannot compare with a declared reference version.
+        try:
+            p.setdefault("reference_packages", {})[m] = md.version(m)
+            continue
+        except BaseException:                                               # noqa: BLE001
+            pass
         try:
             p.setdefault("reference_packages", {})[m] = getattr(__import__(m), "__version__", "present")
         except BaseException:                                               # noqa: BLE001
