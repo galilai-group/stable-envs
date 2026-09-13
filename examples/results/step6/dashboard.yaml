@@ -15,7 +15,7 @@ workstreams:
     head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: fable
     wave: wave1
-    status: queued
+    status: diagnosing
     authorization: diagnosis
     goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
     affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
@@ -26,7 +26,7 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
   - workstream: reacher-correctness
     brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
     branch: step6/reacher-correctness
@@ -36,7 +36,7 @@ workstreams:
     head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
     wave: wave1
-    status: queued
+    status: implementation
     authorization: correctness
     goal: "correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear"
     affected_configs: ["DMCReacherEasy", "DMCReacherHard"]
@@ -47,7 +47,7 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
   - workstream: raycast3d
     brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
     branch: step6/raycast3d
@@ -57,7 +57,7 @@ workstreams:
     head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
     wave: wave1
-    status: queued
+    status: profiling
     authorization: PROFILE ONLY
     goal: "PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate"
     affected_configs: ["AntmazeGiantNavigate", "AntmazeLargeExplore", "AntmazeMediumExplore", "AntmazeTeleportExplore", "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup", "DMCCheetahRun", "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCHopperHop", "DMCHumanoidStand", "DMCPendulumSwingup", "DMCReacherEasy", "DMCReacherHard", "DMCWalkerWalk", "HumanoidmazeGiantNavigate", "HumanoidmazeLargeNavigate", "HumanoidmazeMediumNavigate", "PointmazeGiantNavigate", "PointmazeLargeNavigate", "PointmazeMediumNavigate", "PointmazeTeleportNavigate"]
@@ -68,7 +68,7 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
   - workstream: fetch-gpu
     brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
     branch: step6/fetch-gpu
@@ -78,7 +78,7 @@ workstreams:
     head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
     agent_model: opus
     wave: wave1
-    status: queued
+    status: profiling
     authorization: PROFILE ONLY
     goal: "PROFILE ONLY: why fps(4096)/fps(1) is 7-12x vs required 20x on the public Fetch path"
     affected_configs: ["FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict"]
@@ -89,7 +89,7 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
   - workstream: raster2d
     brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
     branch: step6/raster2d
