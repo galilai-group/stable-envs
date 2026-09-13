@@ -2271,6 +2271,25 @@ _AT = ("84 px, 64 states per domain from sample_states (the domain's own initial
        "0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, "
        "mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0")
 
+#: The versions ``_AT`` / ``_SWIMMER_AT`` name, as fields (``stable_envs.core.env.REFERENCE_VERSIONS_KEY``
+#: / ``MEASURED_WITH_KEY``). Exactly what the text says and nothing more.
+#:
+#: ``reference_versions`` holds the REFERENCE side only -- mujoco, which is what dm_control's
+#: ``physics.render`` draws with -- because the certifier blocks a measurement whose reference is not
+#: this version: Step 4 judged these numbers under mujoco 3.12.0, whose finite-plane texture
+#: re-anchoring (changelog item 15, commit cc7fb98c) had phase-shifted the reference's floor checker
+#: while ours had not (examples/results/step6/texture-fidelity/findings.md), and recorded three
+#: renderer FAILs for a version drift. dm_control is deliberately absent: neither string names a
+#: dm_control version, and a version nobody measured under is not provenance.
+#:
+#: ``measured_with`` holds OUR side -- mujoco_warp (warp for swimmer) -- and is recorded, never
+#: compared: a bump of our own renderer that moves these numbers is a regression to be seen, not a
+#: reason to block the check.
+_AT_VERSIONS = {"mujoco": "3.11.0"}
+_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
+_SWIMMER_AT_VERSIONS = {"mujoco": "3.11.0"}
+_SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
+
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
 #: measurements: ``scratch/dmcontrol/visual_calib.py`` re-draws three times and the ceiling sits clear
@@ -2286,28 +2305,32 @@ VISUAL_FIDELITY: dict[str, dict] = {
         "skybox_share": 0.831, "floor_share": 0.127,
         "draw_spread": {"mean_abs": [4.986, 5.032], "within8_frac": [0.8813, 0.8826],
                         "ssim": [0.6597, 0.6615]},
-        "mean_abs_max": 6.5, "within8_min": 0.84, "ssim_min": 0.62, "measured_at": _AT},
+        "mean_abs_max": 6.5, "within8_min": 0.84, "ssim_min": 0.62, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     "DMCWalkerWalk": {
         "mean_abs": 8.07, "within8_frac": 0.700, "ssim": 0.826,
         "interior_exact_frac": 0.0046, "interior_frac": 0.0010, "all_exact_frac": 0.205,
         "skybox_share": 0.478, "floor_share": 0.448,
         "draw_spread": {"mean_abs": [7.636, 8.302], "within8_frac": [0.6887, 0.7199],
                         "ssim": [0.8170, 0.8306]},
-        "mean_abs_max": 10.5, "within8_min": 0.65, "ssim_min": 0.77, "measured_at": _AT},
+        "mean_abs_max": 10.5, "within8_min": 0.65, "ssim_min": 0.77, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     "DMCHopperHop": {
         "mean_abs": 4.35, "within8_frac": 0.905, "ssim": 0.684,
         "interior_exact_frac": None, "interior_frac": 0.0000, "all_exact_frac": 0.307,
         "skybox_share": 0.893, "floor_share": 0.082,
         "draw_spread": {"mean_abs": [4.327, 4.364], "within8_frac": [0.9044, 0.9051],
                         "ssim": [0.6826, 0.6866]},
-        "mean_abs_max": 5.7, "within8_min": 0.86, "ssim_min": 0.64, "measured_at": _AT},
+        "mean_abs_max": 5.7, "within8_min": 0.86, "ssim_min": 0.64, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     "DMCHumanoidStand": {
         "mean_abs": 6.26, "within8_frac": 0.735, "ssim": 0.868,
         "interior_exact_frac": 0.00018, "interior_frac": 0.0297, "all_exact_frac": 0.023,
         "skybox_share": 0.000, "floor_share": 0.959,
         "draw_spread": {"mean_abs": [6.203, 6.300], "within8_frac": [0.7308, 0.7442],
                         "ssim": [0.8660, 0.8707]},
-        "mean_abs_max": 8.2, "within8_min": 0.69, "ssim_min": 0.82, "measured_at": _AT},
+        "mean_abs_max": 8.2, "within8_min": 0.69, "ssim_min": 0.82, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     # swimmer is the one domain that renders with ``enable_specular=False`` (see SPECULAR_NOTE), so
     # its entry is the only one measured under a non-default render context. Everything here is the
     # WORST of 4 independent 64-state draws, natively at 84 px with no resampling
@@ -2327,7 +2350,9 @@ VISUAL_FIDELITY: dict[str, dict] = {
         # in the pose. The ceiling is set from the worst of the four rather than from the mean.
         "draw_spread": {"mean_abs": [3.223, 3.452], "within8_frac": [0.917, 0.921],
                         "ssim": [0.986, 0.986], "interior_exact_frac": [0.515, 0.657]},
-        "mean_abs_max": 4.8, "within8_min": 0.85, "ssim_min": 0.94, "measured_at": _SWIMMER_AT},
+        "mean_abs_max": 4.8, "within8_min": 0.85, "ssim_min": 0.94, "measured_at": _SWIMMER_AT,
+        "reference_versions": _SWIMMER_AT_VERSIONS,
+        "measured_with": _SWIMMER_AT_MEASURED_WITH},
 }
 
 VISUAL_NOTE = (

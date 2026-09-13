@@ -257,6 +257,99 @@ def test_a_visual_env_that_misses_its_own_declaration_fails(C, tmp_path):
     assert len(v["Vis"]["checks"]["check_visual_fidelity"]["violations"]) == 3
 
 
+def _visual_row(reference_versions=None, observed=None):
+    """A visual env whose measurement MISSES its declaration -- what Step 4 recorded for the DM Control
+    trackcom cells -- with the declared reference versions in the declaration evidence."""
+    vf = {"mean_abs_max": 6.5, "within8_min": 0.84, "ssim_min": 0.62}
+    if reference_versions:
+        vf["reference_versions"] = dict(reference_versions)
+    decl = dict(CLEAN["check_fidelity_declaration"], tier="visual", describe_reports_tier="visual",
+                parity_interior_min=None, visual_fidelity=vf,
+                reference_versions=dict(reference_versions or {}) or None)
+    fam = {"render_parity_with_official_renderer": {"status": "not_applicable", "why": "visual"},
+           "check_visual_fidelity": {"status": "measured",
+                                     "evidence": observed or {"mean_abs": 6.54, "within8_frac": 0.796,
+                                                              "ssim": 0.58}}}
+    return config("Vis", tier="visual", mandatory=dict(CLEAN, check_fidelity_declaration=decl),
+                  family=fam)
+
+
+def test_a_visual_bound_judged_under_the_wrong_reference_version_is_blocked_not_failed(C, tmp_path):
+    """The measured case (examples/results/step6/texture-fidelity/findings.md): declared under mujoco
+    3.11.0, judged under 3.12.0, whose finite-plane texture re-anchoring had moved the reference's
+    floor. A dependency at the wrong version is a comparison that could not be made -- the same rule
+    as a missing dependency -- so the check is blocked, the mismatch is written down, and the
+    measurement is kept beside it."""
+    shard(tmp_path, "dmc", [_visual_row({"mujoco": "3.11.0", "mujoco_warp": "3.11.0"})],
+          reference_packages={"mujoco": "3.12.0", "mujoco_warp": "3.12.0", "dm_control": "1.0.45"})
+    _, v = verdicts(C, tmp_path)
+    c = v["Vis"]["checks"]["check_visual_fidelity"]
+    assert c["status"] == "blocked_environment"
+    assert c["reference_version_mismatch"] == ["mujoco: declared 3.11.0, interpreter had 3.12.0",
+                                               "mujoco_warp: declared 3.11.0, interpreter had 3.12.0"]
+    assert c["judged_against_wrong_reference"] == "fail"          # what it WOULD have been
+    assert c["observed"]["mean_abs"] == 6.54                       # the measurement is not discarded
+    assert v["Vis"]["gate_a"] == "BLOCKED"
+    assert v["Vis"]["failures"] == [] and v["Vis"]["blocked"] == ["check_visual_fidelity"]
+
+
+def test_a_visual_bound_judged_under_its_declared_reference_is_judged(C, tmp_path):
+    shard(tmp_path, "dmc", [_visual_row({"mujoco": "3.11.0", "mujoco_warp": "3.11.0"})],
+          reference_packages={"mujoco": "3.11.0", "mujoco_warp": "3.11.0"})
+    _, v = verdicts(C, tmp_path)
+    assert v["Vis"]["checks"]["check_visual_fidelity"]["status"] == "fail"
+    assert v["Vis"]["gate_a"] == "FAIL"
+    shard(tmp_path, "dmc", [_visual_row({"mujoco": "3.11.0"},
+                                        observed={"mean_abs": 4.99, "within8_frac": 0.882, "ssim": 0.661})],
+          reference_packages={"mujoco": "3.11.0"})
+    _, v = verdicts(C, tmp_path)
+    assert v["Vis"]["checks"]["check_visual_fidelity"]["status"] == "pass"
+    assert v["Vis"]["gate_a"] == "PASS"
+
+
+def test_the_certifier_reads_reference_versions_with_the_same_precedence_as_describe(C, tmp_path):
+    """visual_fidelity's entry overrides the class attribute (stable_envs.core.env.reference_versions_of),
+    so a class-level 3.10.0 under a visual_fidelity 3.11.0 is judged against 3.11.0."""
+    row = _visual_row({"mujoco": "3.11.0"}, observed={"mean_abs": 4.99, "within8_frac": 0.882, "ssim": 0.661})
+    row["mandatory"]["check_fidelity_declaration"]["evidence"]["reference_versions"] = {"mujoco": "3.10.0",
+                                                                                        "gymnasium": "1.3.0"}
+    shard(tmp_path, "dmc", [row], reference_packages={"mujoco": "3.11.0", "gymnasium": "1.3.0"})
+    _, v = verdicts(C, tmp_path)
+    assert v["Vis"]["checks"]["check_visual_fidelity"]["status"] == "pass"
+    shard(tmp_path, "dmc", [row], reference_packages={"mujoco": "3.10.0", "gymnasium": "1.3.0"})
+    _, v = verdicts(C, tmp_path)
+    c = v["Vis"]["checks"]["check_visual_fidelity"]
+    assert c["status"] == "blocked_environment"
+    assert c["reference_version_mismatch"] == ["mujoco: declared 3.11.0, interpreter had 3.10.0"]
+
+
+def test_a_declaration_without_reference_versions_is_judged_as_before(C, tmp_path):
+    """The pre-field state of the world: every existing declaration keeps its verdict."""
+    shard(tmp_path, "dmc", [_visual_row(None)], reference_packages={"mujoco": "3.12.0"})
+    _, v = verdicts(C, tmp_path)
+    assert v["Vis"]["checks"]["check_visual_fidelity"]["status"] == "fail"
+    assert v["Vis"]["gate_a"] == "FAIL"
+
+
+def test_a_reference_version_the_interpreter_did_not_record_cannot_confirm_a_match(C, tmp_path):
+    shard(tmp_path, "dmc", [_visual_row({"mujoco": "3.11.0"})])            # no reference_packages
+    _, v = verdicts(C, tmp_path)
+    c = v["Vis"]["checks"]["check_visual_fidelity"]
+    assert c["status"] == "blocked_environment" and "not recorded" in c["reference_version_mismatch"][0]
+
+
+def test_a_wrong_reference_version_blocks_only_the_checks_that_read_the_reference(C, tmp_path):
+    """A real self-consistency failure under the wrong reference is still a failure: the wrong version
+    says nothing about determinism, and hiding it would be the other misreading."""
+    row = _visual_row({"mujoco": "3.11.0"})
+    row["mandatory"]["check_determinism"] = {"status": "measured", "evidence": {"identical": False}}
+    shard(tmp_path, "dmc", [row], reference_packages={"mujoco": "3.12.0"})
+    _, v = verdicts(C, tmp_path)
+    assert v["Vis"]["checks"]["check_visual_fidelity"]["status"] == "blocked_environment"
+    assert v["Vis"]["checks"]["check_determinism"]["status"] == "fail"
+    assert v["Vis"]["gate_a"] == "FAIL"
+
+
 def test_a_parity_env_uses_its_own_declared_interior_floor(C, tmp_path):
     """A relaxed floor is the env's to declare; the certifier reads it rather than assuming 1.0."""
     decl = dict(CLEAN["check_fidelity_declaration"], parity_interior_min=0.99)

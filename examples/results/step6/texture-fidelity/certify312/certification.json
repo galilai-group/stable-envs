@@ -1,0 +1,1772 @@
+{
+ "bounds": {
+  "backend_agreement_exact_frac_min": {
+   "from": "tests/gpu/test_conformance.py:test_backend_agreement",
+   "value": 0.99
+  },
+  "downsample_exact_frac": {
+   "from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+   "value": {
+    "AntmazeGiantNavigate": 0.708287,
+    "AntmazeGiantStitch": 0.708287,
+    "AntmazeLargeExplore": 0.722699,
+    "AntmazeLargeNavigate": 0.722699,
+    "AntmazeLargeStitch": 0.722699,
+    "AntmazeMediumExplore": 0.722771,
+    "AntmazeMediumNavigate": 0.722771,
+    "AntmazeMediumStitch": 0.722771,
+    "AntmazeTeleportExplore": 0.717594,
+    "AntmazeTeleportNavigate": 0.717594,
+    "AntmazeTeleportStitch": 0.717594,
+    "BabyAIGoToLocal": 0.987213,
+    "CraftaxClassic": 1.0,
+    "Crafter": 0.382263,
+    "DMCCartpoleSwingup": 0.282065,
+    "DMCCheetahRun": 0.53385,
+    "DMCHopperHop": 0.55022,
+    "DMCHumanoidStand": 0.60365,
+    "DMCPointMassEasy": 0.730424,
+    "DMCSwimmerSwimmer6": 0.6098,
+    "DMCWalkerWalk": 0.62895,
+    "GriddlyBait": 0.43218,
+    "GriddlyButterflies": 0.704126,
+    "GriddlyClusters": 0.392938,
+    "GriddlyCookMePasta": 0.298415,
+    "GriddlyLabyrinth": 0.354689,
+    "GriddlySokoban": 0.222717,
+    "GriddlySokoban2": 0.248369,
+    "Highway": 0.92209,
+    "HumanoidBenchH1BalanceSimple": 0.967609,
+    "HumanoidBenchH1HandBalanceSimple": 0.963911,
+    "HumanoidBenchH1HandRun": 0.970247,
+    "HumanoidBenchH1HandSitHard": 0.963375,
+    "HumanoidBenchH1HandSitSimple": 0.964001,
+    "HumanoidBenchH1HandSlide": 0.967253,
+    "HumanoidBenchH1HandSpoon": 0.959507,
+    "HumanoidBenchH1HandStair": 0.967337,
+    "HumanoidBenchH1HandStand": 0.970247,
+    "HumanoidBenchH1HandWalk": 0.970247,
+    "HumanoidBenchH1Run": 0.972082,
+    "HumanoidBenchH1SitHard": 0.966482,
+    "HumanoidBenchH1SitSimple": 0.967659,
+    "HumanoidBenchH1Slide": 0.969963,
+    "HumanoidBenchH1Stair": 0.971107,
+    "HumanoidBenchH1Stand": 0.972082,
+    "HumanoidBenchH1Walk": 0.972082,
+    "HumanoidmazeGiantNavigate": 0.712624,
+    "HumanoidmazeGiantStitch": 0.712624,
+    "HumanoidmazeLargeNavigate": 0.725895,
+    "HumanoidmazeLargeStitch": 0.725895,
+    "HumanoidmazeMediumNavigate": 0.723503,
+    "HumanoidmazeMediumStitch": 0.723503,
+    "Intersection": 0.958981,
+    "JumanjiMaze": 1.0,
+    "JumanjiMinesweeper": 0.832503,
+    "JumanjiRubiksCube": 0.85515,
+    "JumanjiRubiksCubePartlyScrambled": 0.85515,
+    "JumanjiSokoban": 0.711994,
+    "JumanjiSudoku": 0.83145,
+    "JumanjiSudokuVeryEasy": 0.82284,
+    "Merge": 0.945075,
+    "MiniGridDoorKey": 0.9977,
+    "MiniGridEmpty": 0.998932,
+    "MiniGridFourRooms": 0.999811,
+    "MiniGridKeyCorridor": 0.982485,
+    "MiniGridLavaCrossing": 0.974085,
+    "MiniGridPOVFetch": 0.997429,
+    "MiniHack": 1.0,
+    "MujocoAnt": 0.771469,
+    "MujocoHalfCheetah": 0.758811,
+    "MujocoHopper": 0.694054,
+    "MujocoHumanoid": 0.681649,
+    "MujocoSwimmer": 0.909481,
+    "MujocoWalker2d": 0.755514,
+    "OvercookedAsymmAdvantages": 0.98552,
+    "OvercookedCoordRing": 0.98163,
+    "OvercookedCounterCircuit": 0.98714,
+    "OvercookedCrampedRoom": 0.98099,
+    "OvercookedForcedCoord": 0.98163,
+    "Parking": 0.931908,
+    "PointMazeLarge": 0.913387,
+    "PointMazeMedium": 0.913387,
+    "PointMazeOpen": 0.913387,
+    "PointMazeUMaze": 0.913387,
+    "PointmazeGiantNavigate": 0.708274,
+    "PointmazeGiantStitch": 0.708274,
+    "PointmazeLargeNavigate": 0.722781,
+    "PointmazeLargeStitch": 0.722781,
+    "PointmazeMediumNavigate": 0.723306,
+    "PointmazeMediumStitch": 0.723306,
+    "PointmazeTeleportNavigate": 0.717602,
+    "PointmazeTeleportStitch": 0.717602,
+    "ProcgenChaser": 0.09238,
+    "ProcgenHeist": 0.061981,
+    "ProcgenMaze": 0.007202,
+    "ProcgenMiner": 0.092468,
+    "PushT": 0.897163,
+    "Racetrack": 0.983442,
+    "RoboCasaCounterToSink": 0.756603,
+    "RoboCasaCounterToSinkL45S33": 0.787102,
+    "RoboCasaCounterToSinkRight": 0.740753,
+    "RoboCasaCounterToSinkWrist": 0.871983,
+    "Roundabout": 0.974241,
+    "Sokoban": 1.0
+   }
+  },
+  "downsample_margin": {
+   "from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_MARGIN",
+   "value": 0.005
+  },
+  "downsample_measured_on": {
+   "from": "tests/gpu/test_reproducibility.py:MEASURED_ON",
+   "value": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance"
+  },
+  "parity_all_exact_min_default": {
+   "from": "tests/gpu/test_conformance.py:ALL_EXACT_MIN",
+   "value": 0.9
+  },
+  "parity_interior_min_default": {
+   "from": "tests/gpu/test_conformance.py:INTERIOR_EXACT_MIN",
+   "value": 1.0
+  },
+  "parity_mean_abs_max": {
+   "from": "tests/gpu/test_conformance.py:MEAN_ABS_MAX",
+   "value": 4.0
+  },
+  "step_agent_max_err": {
+   "from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+   "value": 0.001
+  },
+  "step_block_median_err": {
+   "from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+   "value": 2.0
+  }
+ },
+ "configs": {
+  "DMCCheetahRun": {
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "blocked": [
+    "check_visual_fidelity"
+   ],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "visual",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "bound": ">= 0.53385 - 0.005",
+     "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+     "group": "family_specific",
+     "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+     "observed": {
+      "exact_frac": 0.5303952310090703,
+      "max_abs": 167,
+      "mean_abs": 3.1569704270597128
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "bound": {
+      "all_exact_frac": 0.29,
+      "draw_spread": {
+       "mean_abs": [
+        4.986,
+        5.032
+       ],
+       "ssim": [
+        0.6597,
+        0.6615
+       ],
+       "within8_frac": [
+        0.8813,
+        0.8826
+       ]
+      },
+      "floor_share": 0.127,
+      "interior_exact_frac": null,
+      "interior_frac": 0.0,
+      "mean_abs": 5.01,
+      "mean_abs_max": 6.5,
+      "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+      "measured_with": {
+       "mujoco_warp": "3.11.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "skybox_share": 0.831,
+      "ssim": 0.661,
+      "ssim_min": 0.62,
+      "within8_frac": 0.882,
+      "within8_min": 0.84
+     },
+     "bound_from": "the env's own visual_fidelity declaration",
+     "declared_reference_versions": {
+      "mujoco": "3.11.0"
+     },
+     "group": "family_specific",
+     "judged_against_wrong_reference": "fail",
+     "observed": {
+      "interior_exact_frac": null,
+      "mean_abs": 6.508366106859411,
+      "ssim": 0.5835518242533279,
+      "within8_frac": 0.7969480761054422
+     },
+     "raw_status": "measured",
+     "recorded_reference_packages": {
+      "mujoco": "3.12.0"
+     },
+     "reference_version_mismatch": [
+      "mujoco: declared 3.11.0, interpreter had 3.12.0"
+     ],
+     "status": "blocked_environment",
+     "violations": [
+      "mean_abs 6.508 > 6.5",
+      "within8_frac 0.7969 < 0.84",
+      "ssim 0.5836 < 0.62"
+     ],
+     "why": "reference version mismatch: the bound was measured against mujoco 3.11.0; this interpreter's reference is not that version, so the measurement is a different comparison and cannot pass or fail the declaration (mujoco: declared 3.11.0, interpreter had 3.12.0)"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "DMCCheetahRun.reference_render does not take a style, so the official renderer cannot be driven at this env's declared appearance and the two sides would be pictures of different scenes"
+    },
+    "render_parity_with_official_renderer": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the VISUAL tier; asserted against its own numbers instead"
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/CheetahDMControl-v0"
+    },
+    {
+     "axis": "render_parameter_space",
+     "detail": "not_parameterized coverage of 1 configurations",
+     "swm_id": "swm/CheetahDMControl-v0"
+    }
+   ],
+   "config_id": "DMCCheetahRun",
+   "corpus": {
+    "env": "DMCCheetahRun",
+    "indices": [
+     123,
+     66,
+     39,
+     52,
+     75,
+     108,
+     149,
+     57,
+     27,
+     248,
+     12,
+     191,
+     76,
+     175,
+     111,
+     29,
+     126,
+     44,
+     177,
+     56,
+     226,
+     73,
+     67,
+     165,
+     134,
+     103,
+     49,
+     179,
+     13,
+     153,
+     151,
+     237,
+     234,
+     155,
+     14,
+     117,
+     202,
+     150,
+     36,
+     208,
+     176,
+     154,
+     0,
+     97,
+     218,
+     109,
+     232,
+     6,
+     172,
+     127,
+     3,
+     74,
+     94,
+     45,
+     107,
+     249,
+     250,
+     9,
+     166,
+     242,
+     205,
+     70,
+     101,
+     236
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/DMCCheetahRun.npz",
+    "n_extreme": 17,
+    "n_spread": 46,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "8631719d70da7eac4a02a0a706319a826d05359c56612f0986590bed48d136cd",
+    "state_dim": 9,
+    "state_names": [
+     "rootx",
+     "rootz",
+     "rooty",
+     "bthigh",
+     "bshin",
+     "bfoot",
+     "fthigh",
+     "fshin",
+     "ffoot"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "parity_note": ""
+   },
+   "failures": [],
+   "gate_a": "BLOCKED",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_visual_fidelity_under_variation",
+    "render_parity_with_official_renderer"
+   ],
+   "physics": {
+    "status": "not_applicable",
+    "why": "no batched simulator declared checkable against a reference (step_reference_checkable is unset), so this env's physics is reference_only"
+   },
+   "reference_id": "dm_control/cheetah-run",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "dmc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "visual",
+     "name": "dmc-cheetah-run",
+     "parity_interior_min": null,
+     "reference_id": "dm_control/cheetah-run",
+     "size": 84,
+     "state_dim": 9,
+     "state_names": [
+      "rootx",
+      "rootz",
+      "rooty",
+      "bthigh",
+      "bshin",
+      "bfoot",
+      "fthigh",
+      "fshin",
+      "ffoot"
+     ],
+     "style_dim": 7,
+     "style_names": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ],
+     "variations": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ]
+    },
+    "describe_digest": "f2667df1b5d596b9",
+    "dm_control": {
+     "domain": "cheetah",
+     "model_digest": "5f5abcb79292",
+     "task": "run"
+    }
+   },
+   "swm_ids": [
+    "swm/CheetahDMControl-v0"
+   ],
+   "tier": "visual"
+  },
+  "DMCHopperHop": {
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "blocked": [
+    "check_visual_fidelity"
+   ],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "visual",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "bound": ">= 0.55022 - 0.005",
+     "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+     "group": "family_specific",
+     "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+     "observed": {
+      "exact_frac": 0.5526147959183674,
+      "max_abs": 169,
+      "mean_abs": 3.0799519026360542
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "bound": {
+      "all_exact_frac": 0.307,
+      "draw_spread": {
+       "mean_abs": [
+        4.327,
+        4.364
+       ],
+       "ssim": [
+        0.6826,
+        0.6866
+       ],
+       "within8_frac": [
+        0.9044,
+        0.9051
+       ]
+      },
+      "floor_share": 0.082,
+      "interior_exact_frac": null,
+      "interior_frac": 0.0,
+      "mean_abs": 4.35,
+      "mean_abs_max": 5.7,
+      "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+      "measured_with": {
+       "mujoco_warp": "3.11.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "skybox_share": 0.893,
+      "ssim": 0.684,
+      "ssim_min": 0.64,
+      "within8_frac": 0.905,
+      "within8_min": 0.86
+     },
+     "bound_from": "the env's own visual_fidelity declaration",
+     "declared_reference_versions": {
+      "mujoco": "3.11.0"
+     },
+     "group": "family_specific",
+     "judged_against_wrong_reference": "fail",
+     "observed": {
+      "interior_exact_frac": null,
+      "mean_abs": 6.547855991354876,
+      "ssim": 0.545972561629211,
+      "within8_frac": 0.7915382298752834
+     },
+     "raw_status": "measured",
+     "recorded_reference_packages": {
+      "mujoco": "3.12.0"
+     },
+     "reference_version_mismatch": [
+      "mujoco: declared 3.11.0, interpreter had 3.12.0"
+     ],
+     "status": "blocked_environment",
+     "violations": [
+      "mean_abs 6.548 > 5.7",
+      "within8_frac 0.7915 < 0.86",
+      "ssim 0.5460 < 0.64"
+     ],
+     "why": "reference version mismatch: the bound was measured against mujoco 3.11.0; this interpreter's reference is not that version, so the measurement is a different comparison and cannot pass or fail the declaration (mujoco: declared 3.11.0, interpreter had 3.12.0)"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "DMCHopperHop.reference_render does not take a style, so the official renderer cannot be driven at this env's declared appearance and the two sides would be pictures of different scenes"
+    },
+    "render_parity_with_official_renderer": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the VISUAL tier; asserted against its own numbers instead"
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/HopperDMControl-v0"
+    },
+    {
+     "axis": "render_parameter_space",
+     "detail": "not_parameterized coverage of 1 configurations",
+     "swm_id": "swm/HopperDMControl-v0"
+    }
+   ],
+   "config_id": "DMCHopperHop",
+   "corpus": {
+    "env": "DMCHopperHop",
+    "indices": [
+     236,
+     61,
+     176,
+     135,
+     219,
+     11,
+     170,
+     42,
+     173,
+     222,
+     80,
+     35,
+     57,
+     214,
+     95,
+     110,
+     237,
+     216,
+     144,
+     64,
+     15,
+     16,
+     180,
+     126,
+     105,
+     251,
+     53,
+     157,
+     3,
+     102,
+     182,
+     198,
+     161,
+     165,
+     71,
+     250,
+     22,
+     243,
+     197,
+     88,
+     14,
+     235,
+     253,
+     43,
+     221,
+     6,
+     10,
+     49,
+     115,
+     156,
+     172,
+     153,
+     54,
+     211,
+     68,
+     5,
+     158,
+     244,
+     169,
+     75,
+     124,
+     149,
+     188,
+     106
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/DMCHopperHop.npz",
+    "n_extreme": 13,
+    "n_spread": 50,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "f0006a2767a47bf675ce0e8ebd775f18314815dd48f66f050747b63fe63d8453",
+    "state_dim": 7,
+    "state_names": [
+     "rootx",
+     "rootz",
+     "rooty",
+     "waist",
+     "hip",
+     "knee",
+     "ankle"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "parity_note": ""
+   },
+   "failures": [],
+   "gate_a": "BLOCKED",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_visual_fidelity_under_variation",
+    "render_parity_with_official_renderer"
+   ],
+   "physics": {
+    "status": "not_applicable",
+    "why": "no batched simulator declared checkable against a reference (step_reference_checkable is unset), so this env's physics is reference_only"
+   },
+   "reference_id": "dm_control/hopper-hop",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "dmc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "visual",
+     "name": "dmc-hopper-hop",
+     "parity_interior_min": null,
+     "reference_id": "dm_control/hopper-hop",
+     "size": 84,
+     "state_dim": 7,
+     "state_names": [
+      "rootx",
+      "rootz",
+      "rooty",
+      "waist",
+      "hip",
+      "knee",
+      "ankle"
+     ],
+     "style_dim": 7,
+     "style_names": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ],
+     "variations": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ]
+    },
+    "describe_digest": "f76170656eb22efe",
+    "dm_control": {
+     "domain": "hopper",
+     "model_digest": "2922451baff6",
+     "task": "hop"
+    }
+   },
+   "swm_ids": [
+    "swm/HopperDMControl-v0"
+   ],
+   "tier": "visual"
+  },
+  "DMCHumanoidStand": {
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "blocked": [
+    "check_visual_fidelity"
+   ],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "visual",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "bound": ">= 0.60365 - 0.005",
+     "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+     "group": "family_specific",
+     "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+     "observed": {
+      "exact_frac": 0.6095432964852607,
+      "max_abs": 149,
+      "mean_abs": 2.401812287414966
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "bound": {
+      "all_exact_frac": 0.023,
+      "draw_spread": {
+       "mean_abs": [
+        6.203,
+        6.3
+       ],
+       "ssim": [
+        0.866,
+        0.8707
+       ],
+       "within8_frac": [
+        0.7308,
+        0.7442
+       ]
+      },
+      "floor_share": 0.959,
+      "interior_exact_frac": 0.00018,
+      "interior_frac": 0.0297,
+      "mean_abs": 6.26,
+      "mean_abs_max": 8.2,
+      "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+      "measured_with": {
+       "mujoco_warp": "3.11.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "skybox_share": 0.0,
+      "ssim": 0.868,
+      "ssim_min": 0.82,
+      "within8_frac": 0.735,
+      "within8_min": 0.69
+     },
+     "bound_from": "the env's own visual_fidelity declaration",
+     "declared_reference_versions": {
+      "mujoco": "3.11.0"
+     },
+     "group": "family_specific",
+     "judged_against_wrong_reference": "pass",
+     "observed": {
+      "interior_exact_frac": 0.0003837298541826554,
+      "mean_abs": 6.33430325255102,
+      "ssim": 0.8650792043403925,
+      "within8_frac": 0.7289629393424036
+     },
+     "raw_status": "measured",
+     "recorded_reference_packages": {
+      "mujoco": "3.12.0"
+     },
+     "reference_version_mismatch": [
+      "mujoco: declared 3.11.0, interpreter had 3.12.0"
+     ],
+     "status": "blocked_environment",
+     "violations": [],
+     "why": "reference version mismatch: the bound was measured against mujoco 3.11.0; this interpreter's reference is not that version, so the measurement is a different comparison and cannot pass or fail the declaration (mujoco: declared 3.11.0, interpreter had 3.12.0)"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "DMCHumanoidStand.reference_render does not take a style, so the official renderer cannot be driven at this env's declared appearance and the two sides would be pictures of different scenes"
+    },
+    "render_parity_with_official_renderer": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the VISUAL tier; asserted against its own numbers instead"
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "same_scene_reward_differs",
+     "swm_id": "swm/HumanoidDMControl-v0"
+    },
+    {
+     "axis": "render_parameter_space",
+     "detail": "not_parameterized coverage of 1 configurations",
+     "swm_id": "swm/HumanoidDMControl-v0"
+    }
+   ],
+   "config_id": "DMCHumanoidStand",
+   "corpus": {
+    "env": "DMCHumanoidStand",
+    "indices": [
+     64,
+     233,
+     71,
+     192,
+     14,
+     26,
+     61,
+     200,
+     119,
+     253,
+     108,
+     196,
+     191,
+     103,
+     92,
+     144,
+     45,
+     126,
+     7,
+     182,
+     105,
+     73,
+     151,
+     95,
+     44,
+     136,
+     30,
+     46,
+     133,
+     193,
+     247,
+     160,
+     50,
+     221,
+     157,
+     222,
+     128,
+     131,
+     85,
+     251,
+     226,
+     237,
+     238,
+     83,
+     217,
+     176,
+     254,
+     216,
+     99,
+     52,
+     240,
+     118,
+     23,
+     230,
+     246,
+     204,
+     51,
+     34,
+     179,
+     79,
+     81,
+     55,
+     164,
+     93
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/DMCHumanoidStand.npz",
+    "n_extreme": 32,
+    "n_spread": 31,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "ee36f379266a561c89fe94e9f05f08ebb97eefd021735298efa83e4bc60ac83d",
+    "state_dim": 28,
+    "state_names": [
+     "root_x",
+     "root_y",
+     "root_z",
+     "root_qw",
+     "root_qx",
+     "root_qy",
+     "root_qz",
+     "abdomen_z",
+     "abdomen_y",
+     "abdomen_x",
+     "right_hip_x",
+     "right_hip_z",
+     "right_hip_y",
+     "right_knee",
+     "right_ankle_y",
+     "right_ankle_x",
+     "left_hip_x",
+     "left_hip_z",
+     "left_hip_y",
+     "left_knee",
+     "left_ankle_y",
+     "left_ankle_x",
+     "right_shoulder1",
+     "right_shoulder2",
+     "right_elbow",
+     "left_shoulder1",
+     "left_shoulder2",
+     "left_elbow"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "parity_note": ""
+   },
+   "failures": [],
+   "gate_a": "BLOCKED",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_visual_fidelity_under_variation",
+    "render_parity_with_official_renderer"
+   ],
+   "physics": {
+    "status": "not_applicable",
+    "why": "no batched simulator declared checkable against a reference (step_reference_checkable is unset), so this env's physics is reference_only"
+   },
+   "reference_id": "dm_control/humanoid-stand",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "dmc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "visual",
+     "name": "dmc-humanoid-stand",
+     "parity_interior_min": null,
+     "reference_id": "dm_control/humanoid-stand",
+     "size": 84,
+     "state_dim": 28,
+     "state_names": [
+      "root_x",
+      "root_y",
+      "root_z",
+      "root_qw",
+      "root_qx",
+      "root_qy",
+      "root_qz",
+      "abdomen_z",
+      "abdomen_y",
+      "abdomen_x",
+      "right_hip_x",
+      "right_hip_z",
+      "right_hip_y",
+      "right_knee",
+      "right_ankle_y",
+      "right_ankle_x",
+      "left_hip_x",
+      "left_hip_z",
+      "left_hip_y",
+      "left_knee",
+      "left_ankle_y",
+      "left_ankle_x",
+      "right_shoulder1",
+      "right_shoulder2",
+      "right_elbow",
+      "left_shoulder1",
+      "left_shoulder2",
+      "left_elbow"
+     ],
+     "style_dim": 7,
+     "style_names": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ],
+     "variations": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ]
+    },
+    "describe_digest": "2c166c4bf111b179",
+    "dm_control": {
+     "domain": "humanoid",
+     "model_digest": "d172adb79bfe",
+     "task": "stand"
+    }
+   },
+   "swm_ids": [
+    "swm/HumanoidDMControl-v0"
+   ],
+   "tier": "visual"
+  },
+  "DMCWalkerWalk": {
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "blocked": [
+    "check_visual_fidelity"
+   ],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "visual",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "bound": ">= 0.62895 - 0.005",
+     "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+     "group": "family_specific",
+     "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
+     "observed": {
+      "exact_frac": 0.6187708156179138,
+      "max_abs": 200,
+      "mean_abs": 2.7161886455971276
+     },
+     "raw_status": "measured",
+     "status": "fail",
+     "violations": [
+      "exact_frac 0.6188 < 0.62895 - 0.005"
+     ]
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "bound": {
+      "all_exact_frac": 0.205,
+      "draw_spread": {
+       "mean_abs": [
+        7.636,
+        8.302
+       ],
+       "ssim": [
+        0.817,
+        0.8306
+       ],
+       "within8_frac": [
+        0.6887,
+        0.7199
+       ]
+      },
+      "floor_share": 0.448,
+      "interior_exact_frac": 0.0046,
+      "interior_frac": 0.001,
+      "mean_abs": 8.07,
+      "mean_abs_max": 10.5,
+      "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+      "measured_with": {
+       "mujoco_warp": "3.11.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "skybox_share": 0.478,
+      "ssim": 0.826,
+      "ssim_min": 0.77,
+      "within8_frac": 0.7,
+      "within8_min": 0.65
+     },
+     "bound_from": "the env's own visual_fidelity declaration",
+     "declared_reference_versions": {
+      "mujoco": "3.11.0"
+     },
+     "group": "family_specific",
+     "judged_against_wrong_reference": "fail",
+     "observed": {
+      "interior_exact_frac": 0.0,
+      "mean_abs": 15.954404939058957,
+      "ssim": 0.5334038909369165,
+      "within8_frac": 0.5528473107993197
+     },
+     "raw_status": "measured",
+     "recorded_reference_packages": {
+      "mujoco": "3.12.0"
+     },
+     "reference_version_mismatch": [
+      "mujoco: declared 3.11.0, interpreter had 3.12.0"
+     ],
+     "status": "blocked_environment",
+     "violations": [
+      "mean_abs 15.954 > 10.5",
+      "within8_frac 0.5528 < 0.65",
+      "ssim 0.5334 < 0.77"
+     ],
+     "why": "reference version mismatch: the bound was measured against mujoco 3.11.0; this interpreter's reference is not that version, so the measurement is a different comparison and cannot pass or fail the declaration (mujoco: declared 3.11.0, interpreter had 3.12.0)"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "DMCWalkerWalk.reference_render does not take a style, so the official renderer cannot be driven at this env's declared appearance and the two sides would be pictures of different scenes"
+    },
+    "render_parity_with_official_renderer": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the VISUAL tier; asserted against its own numbers instead"
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/WalkerDMControl-v0"
+    },
+    {
+     "axis": "render_parameter_space",
+     "detail": "not_parameterized coverage of 1 configurations",
+     "swm_id": "swm/WalkerDMControl-v0"
+    }
+   ],
+   "config_id": "DMCWalkerWalk",
+   "corpus": {
+    "env": "DMCWalkerWalk",
+    "indices": [
+     48,
+     201,
+     124,
+     249,
+     75,
+     186,
+     13,
+     252,
+     168,
+     140,
+     39,
+     215,
+     94,
+     40,
+     219,
+     26,
+     25,
+     151,
+     194,
+     148,
+     67,
+     152,
+     30,
+     5,
+     32,
+     0,
+     234,
+     238,
+     115,
+     195,
+     42,
+     175,
+     76,
+     143,
+     189,
+     100,
+     183,
+     82,
+     11,
+     181,
+     106,
+     208,
+     216,
+     141,
+     199,
+     89,
+     60,
+     176,
+     79,
+     113,
+     56,
+     8,
+     98,
+     131,
+     207,
+     10,
+     242,
+     108,
+     202,
+     223,
+     210,
+     99,
+     193,
+     64
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/DMCWalkerWalk.npz",
+    "n_extreme": 17,
+    "n_spread": 46,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "294dd61bb72bfae50427197c2b330337711c123fbdd08b55f7106dd28908a30f",
+    "state_dim": 9,
+    "state_names": [
+     "rootz",
+     "rootx",
+     "rooty",
+     "right_hip",
+     "right_knee",
+     "right_ankle",
+     "left_hip",
+     "left_knee",
+     "left_ankle"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "parity_note": ""
+   },
+   "failures": [
+    "check_resolution_consistency"
+   ],
+   "gate_a": "FAIL",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_visual_fidelity_under_variation",
+    "render_parity_with_official_renderer"
+   ],
+   "physics": {
+    "status": "not_applicable",
+    "why": "no batched simulator declared checkable against a reference (step_reference_checkable is unset), so this env's physics is reference_only"
+   },
+   "reference_id": "dm_control/walker-walk",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "dmc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "visual",
+     "name": "dmc-walker-walk",
+     "parity_interior_min": null,
+     "reference_id": "dm_control/walker-walk",
+     "size": 84,
+     "state_dim": 9,
+     "state_names": [
+      "rootz",
+      "rootx",
+      "rooty",
+      "right_hip",
+      "right_knee",
+      "right_ankle",
+      "left_hip",
+      "left_knee",
+      "left_ankle"
+     ],
+     "style_dim": 7,
+     "style_names": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ],
+     "variations": [
+      "light.diffuse_scale",
+      "material.grid",
+      "material.self"
+     ]
+    },
+    "describe_digest": "0858611d7c88b6dd",
+    "dm_control": {
+     "domain": "walker",
+     "model_digest": "e5f14cbd98c2",
+     "task": "walk"
+    }
+   },
+   "swm_ids": [
+    "swm/WalkerDMControl-v0"
+   ],
+   "tier": "visual"
+  }
+ },
+ "schema_version": 1,
+ "step": 4,
+ "tripwire": {
+  "bounds": {
+   "parity": 0.1,
+   "visual": 0.25
+  },
+  "envs": {},
+  "metric": "A = dino_cos(ours, official) / dino_cos(blank, official)"
+ },
+ "what_this_is": "Gate A per render-distinct configuration. Every bound is cited to the file that declares it; none is defined in scratch/step4/certify.py."
+}
