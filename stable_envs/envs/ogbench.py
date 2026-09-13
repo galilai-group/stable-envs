@@ -425,6 +425,28 @@ class OGBenchMaze(StableEnv):
         agent = pr["agent"]
         static = [g for g in range(m.ngeom) if g not in agent]
 
+        # BAKE FROM A STATED POSE, NOT AN INHERITED ONE.
+        #
+        # ``d`` is the single ``MjData`` in ``_ENV_CACHE``, shared by every scene of this
+        # (loco, maze, size), and ``_fk`` writes ``qpos`` into it once per environment per render.
+        # Without this reset the plate is a function of whichever environment happened to be
+        # rendered last: hiding the agent sets its alpha to 0, which removes its colour but not its
+        # presence from MuJoCo's rasterizer, and a pose change was measured to move 2-10 pixels by
+        # 1/255 on the ant and humanoid mazes (examples/results/step6/raycast3d/
+        # style_is_state_bisect.json). The plate is then MEMOISED, so the impurity stays invisible
+        # until ``_SCENE_CACHE`` clears itself wholesale at ``_SCENE_CACHE_MAX`` and the same key is
+        # baked a second time from a different leftover pose -- which is how it reached Step 4 as
+        # ``check_style_is_state`` observing 1 on AntmazeTeleportExplore and
+        # HumanoidmazeMediumNavigate, and 0 on nine configurations that carry the identical defect.
+        #
+        # ``DMControlSuite._bake`` has always done this; this family simply never did. ``qpos0`` is
+        # the model's own reference pose, so the bake now depends on (scene, style) and nothing else.
+        # Static geoms carry no joint, so ``sc.plate_t`` below -- cast from ``d.geom_xpos`` for the
+        # STATIC set -- cannot move either way; it is the rasterized RGB plate this protects.
+        d.qpos[:] = m.qpos0
+        d.qvel[:] = 0
+        mujoco.mj_forward(m, d)
+
         keep = m.geom_rgba[agent].copy()
         m.geom_rgba[agent, 3] = 0.0                       # hide the agent, bake what is left
         rkey = int(self._var(variation, "rendering.decolor_floor")[0])

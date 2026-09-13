@@ -1,0 +1,95 @@
+{
+  "before_dir": "/oscar/scratch/sboughan/se6/_dumps/2c/before",
+  "after_dir": "/oscar/scratch/sboughan/se6/_dumps/2c/after",
+  "configs": {
+    "AntmazeGiantNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "AntmazeLargeExplore": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "AntmazeMediumExplore": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "AntmazeTeleportExplore": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "HumanoidmazeGiantNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "HumanoidmazeLargeNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "HumanoidmazeMediumNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "PointmazeGiantNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "PointmazeLargeNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "PointmazeMediumNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "PointmazeTeleportNavigate": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3211264,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    }
+  },
+  "all_identical": true
+}
