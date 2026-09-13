@@ -25,6 +25,17 @@
 # and only that venv has it. It has NO PYTEST, which is why the targeted test suites are a SEPARATE
 # job (gpu_tests.sbatch, on se-step6) rather than a stanza here. Nothing installs anything.
 set -uo pipefail
+# Raw pytest output NEVER lands in the repository. It carries absolute
+# /oscar/.../se6/... interpreter paths, and tests/unit/test_repo_contracts.py's citation scanner
+# reads every .txt under examples/ -- so committing a raw log grew its unresolved-citation set from
+# 2 to 18 and failed the suite on a file that is not documentation. ``keep`` tees the full log to
+# $SCR/logs (outside the tree) and writes only the OUTCOME lines into the results directory.
+keep () {  # keep <results-file> ; reads stdin
+  local dest="$1" full="$SCR/logs/${SLURM_JOB_ID:-adhoc}_$(basename "$1")"
+  tee "$full" | grep -E "^(tests/\S+ (PASSED|FAILED|SKIPPED|XFAIL|XPASS)|=+ .*(passed|failed|error).*|[0-9]+ (passed|failed).*|== summary ==|DMC\S+ +margin |FAILED |ERROR )" \
+    > "$dest" || true
+  tail -3 "$dest"
+}
 export SCR=/oscar/scratch/$USER
 export XDG_CACHE_HOME=$SCR/.cache TORCH_HOME=$SCR/.torch HF_HOME=$SCR/.cache/huggingface
 export UV_CACHE_DIR=$SCR/.cache/uv PIP_CACHE_DIR=$SCR/.cache/pip WARP_CACHE_PATH=$SCR/.cache/warp

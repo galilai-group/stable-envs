@@ -39,6 +39,18 @@ MEAN_ABS_MAX = 4.0
 #: ``test_a_declared_task_object_is_drawn_iff_the_reference_draws_it`` and
 #: ``conformance.check_task_object_visibility`` for what the quantity is and why the interior bar
 #: cannot answer it. 0.50 reads as "at least twice as close", which is the sentence a reader can check.
+#: The ratio is POOLED over the whole state stack -- one number per object, not one per frame; the
+#: only per-row quantity in that check is ``per_row_max_abs_diff``.
+#:
+#: RE-DERIVED AFTER A FAILURE, and recorded as such rather than presented as a first measurement. The
+#: first version of this bound compared two WITHIN-8 AGREEMENT FRACTIONS and was floored at 0.25 from
+#: CPU draws (worst 0.3966 on DMCReacherHard); the frozen 64-state corpus then measured 0.2422 on the
+#: 3090 and the branch failed its own new bound on the certification card by 0.008. The renderer had
+#: not changed -- the statistic was machine-dependent, because a task object's footprint is nearly all
+#: silhouette (DMCReacherHard's target is ~15 px a frame) and the fraction of it landing within 8/255
+#: is a statement about two rasterizers' edge rules: 0.60 on CPU, 0.26 on the GPU, identical code. The
+#: quantity was replaced with the error ratio, which does not move that way, and the floor re-measured
+#: on BOTH machines before being set.
 #:
 #: Set from the SPREAD over independent draws, clear of the worst, like every other floor here. Five
 #: draws (four of 16 sampled states plus the frozen 64-state Step-4 corpus) on each of the four cells

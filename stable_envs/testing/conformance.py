@@ -556,7 +556,13 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
                    it skips anything without ``.low`` — and per-row visibility is the whole point of
                    putting visibility in the style rather than in a constructor argument.
     ``presence``   inside that footprint, how far our frame sits from the OFFICIAL one under each
-                   value. The env's declared default must be the arm that is CLOSER, by
+                   value, POOLED OVER THE WHOLE STATE STACK -- one number per object, not one per
+                   row. (``per_row_max_abs_diff`` is the only per-row quantity here, and
+                   ``rows_with_footprint`` says how many frames contributed pixels to the pool at
+                   all.) Pooling is deliberate: a small object contributes a couple of hundred pixels
+                   per frame and a per-frame ratio would be noisy enough to need its own floor, while
+                   the failure this catches is a property of the configuration and applies to every
+                   frame at once. The env's declared default must be the arm that is CLOSER, by
                    ``presence_margin = 1 - mean|d|(declared) / mean|d|(flipped)``. That is the
                    question no other check in the suite asks: if we paint an object the reference does
                    not paint, the declared arm is the FAR one, the ratio inverts and the margin goes

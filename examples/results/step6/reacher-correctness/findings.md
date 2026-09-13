@@ -101,6 +101,25 @@ Binary rather than a continuous alpha: MuJoCo **blends** `0 < alpha < 1` and the
 is opaque-only, so a continuous knob would advertise a range two thirds of which this renderer cannot
 honour, and no check in the suite could catch it.
 
+**A second, worse instance of the same class, found in review and fixed here.**
+`DMControlSuite._static_t` casts the static depth lazily, per (scene, supersample), because the
+supersample is a render-time argument — and it derived the STATIC primitive set at that moment from
+the **live** shared `MjModel`, which carries whatever the last bake applied. So a scene baked with an
+element hidden, whose static depth was first cast after some *other* appearance had been baked, saw
+the element visible again, failed to find it in `sc.movers`, and promoted it to a **static** primitive
+at whatever `geom_pos` the last `_fk` had written. Reproduced on CPU over the 64 frozen states
+(`scratch/step6/reacher-correctness/probe_static_leak.py`): `render(hidden, ss=2)` alone against
+`render(hidden) → render(other appearance) → render(hidden, ss=2)` differed by **18 px / max 215 / 3
+rows on `DMCReacherHard`** and **88 px / max 140 / 28 rows on `DMCFingerTurnHard`**; after the fix,
+**0/255** on both. The supersample change is the trigger and is why nothing caught it: `static_t` is
+cached per (scene, ss), and at an env's default supersample it is always cast during that scene's own
+first render, while that scene's appearance is still on the model — and every check in this repository
+renders at the default. Fixed by recording `gstat`/`sstat` on the `_Scene` at bake time (`sc.statics`,
+already computed there) and having `_static_t` read them. Regression test:
+`tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility`,
+parameterised over every env declaring a `visibility.*` leaf, which renders hidden → other bake →
+hidden at a fresh supersample and asserts 0/255.
+
 **One latent bug fixed in passing.** `_used_materials` read `_effective_alpha` off the *live* shared
 `MjModel`, which every bake mutates. Harmless until a bake could legitimately leave an element at
 alpha 0 — after which the *declared* variation space of the next env built from the class would
@@ -132,9 +151,11 @@ For each declared object it measures:
   leaf (it skips anything without `.low`), and per-row visibility is the reason visibility is style
   rather than a constructor argument.
 * **`presence_margin = 1 − mean|d|(declared) / mean|d|(flipped)`** over that footprint, against the
-  **official** frame. One when the declared arm is exact, zero when the two are equally wrong,
-  sharply negative when they are the wrong way round. `presence_agree_{declared,flipped}` (the
-  within-8 fractions) are still reported as diagnostics.
+  **official** frame, **pooled over the whole state stack** — one number per object, not one per
+  frame. One when the declared arm is exact, zero when the two are equally wrong, sharply negative
+  when they are the wrong way round. `per_row_max_abs_diff` is the only per-row quantity here, and
+  `rows_with_footprint` says how many frames contributed pixels to the pool.
+  `presence_agree_{declared,flipped}` (the within-8 fractions) are reported as diagnostics.
 
 **Bound `TASK_OBJECT_PRESENCE_MARGIN = 0.50`** — "the declared appearance must be at least twice as
 close to the official frame as the flipped one" — set from the spread over five draws (four of 16
@@ -213,7 +234,9 @@ On the frozen Step-4 corpora (GPU, 64 states, in the replay):
 | `DMCFingerTurnEasy` | 11 774 | 5.65 | 101.69 | **0.9445** | 0 |
 | `DMCFingerTurnHard` | 1 827 | 9.17 | 105.42 | **0.9131** | 0 |
 
-All ≥ 0.50, on 64/64 rows each.
+All ≥ 0.50. The margin is one pooled number per object over the 64-state stack; `rows_with_footprint`
+is 64/64 on every cell, so every frame contributed pixels to that pool, and `per_row_max_abs_diff` —
+the per-row quantity — is 0 everywhere.
 
 ### Targeted tests (job 6344904, RTX 3090, `se-step6`)
 
@@ -227,9 +250,18 @@ All ≥ 0.50, on 64/64 rows each.
 
 Both `tests/unit` failures are **present at the baseline commit, unchanged by this patch**, verified
 by `git stash`: `test_examples.py::test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`
-and `test_repo_contracts.py::test_every_cited_scratch_path_resolves`, whose three unresolved
-citations (`scratch/carracing/logs/`, `scratch/robocasa/out/corpus`, `scratch/step6/report.py`) are
-all pre-existing. The one citation this patch adds resolves.
+and `test_repo_contracts.py::test_every_cited_scratch_path_resolves`. The latter's unresolved set is
+back to **exactly the three entries it has at the baseline** — the test names them itself, and this
+page deliberately does not repeat them, because that scanner reads every `.md` and `.txt` under
+`examples/` and a report quoting an unresolved path becomes one more citer of it. The one citation
+this patch adds resolves.
+
+That same scanner is why **no raw pytest log is committed**. The first version of this directory
+carried the full `tee`d output of each suite, and those logs contain absolute interpreter paths from
+the cluster whose `.../scratch/...` substrings the scanner matches: the unresolved set went from 3 to
+18 entries, on files that are evidence rather than documentation. The logs are now filtered to their
+OUTCOME lines (`gpu/*.results.txt`), and both sbatch scripts gained a `keep` helper that tees the
+full log to the cluster's own log directory, outside the tree, and writes only those lines here.
 
 `tests/unit/test_declarations.py`, `test_repo_contracts.py` (bar the pre-existing case),
 `test_style.py`, `test_step4.py`, `test_step5.py` and the new `test_task_object_visibility.py` run
@@ -270,11 +302,15 @@ output under `examples/results/step6/reacher-correctness/replay/`, comparator
   Step-4 digests (11/11 parity cells identical).
 * **Target-visible configuration:** this *is* the default. `visibility.target = 1` is the compiled
   model's own alpha, and the digests above are taken at it.
-* **Target-hidden configuration (`visibility.target = 0`):** new — it did not exist before, so there
-  is nothing to compare it against. It changes ~15 px/frame on reacher-hard (max 219/255), 966 px
-  over the 64-state corpus, and its frames are *not* the same as the Step-5 `offscreen` frames: the
-  geometry is not drawn at all rather than drawn 10 m away where it can still return a reflection or
-  block a shadow ray.
+* **Target-hidden configuration (`visibility.target = 0`):** new as a *representation*, but **not a
+  new picture**. Against the default it changes ~15 px/frame on reacher-hard (max 219/255), 966 px
+  over the 64-state corpus. Against the Step-5 `offscreen` workaround it changes **nothing**:
+  measured on 16 frozen states at 84 px *and* 224 px, on both reacher cells, `max |d| = 0`, 0 of
+  112 896 and 0 of 802 816 pixels (`scratch/step6/reacher-correctness/probe_mode_equivalence.py`).
+  That was worth measuring rather than assuming — `offscreen` still builds, transforms and casts
+  against the geom, so it could in principle have leaked a floor reflection or a shadow ray, and on
+  this scene it does not. **An earlier draft of this report claimed the two differ; that claim was
+  wrong and the measurement above replaces it.**
 
 ## Semantic follow-up
 
@@ -284,13 +320,18 @@ The Step-5 Reacher + DINO-WM result is a **live-surface** comparison: only `DMCo
 is swapped, and it renders the state the official env is in at that instant, at the env's default
 appearance. Those frames are byte-identical here — same sha256, same card, same job, on the frozen
 corpora of both reacher cells. The Step-5 harness additionally ran `target_mode="offscreen"`, and
-that mode is unchanged and still selectable, so the exact configuration those 600 paired episodes ran
-under reproduces bit for bit. **The Step-5 semantic result does not need rerunning.**
+that mode is unchanged, still the default in `eval_reacher.py`, and still selectable, so the exact
+configuration those 600 paired episodes ran under reproduces bit for bit. **The Step-5 semantic
+result does not need rerunning** — and the conclusion is stronger than "the default did not move":
+`hidden` and `offscreen` are **bit-identical on this scene** (max |d| 0 at 84 and 224 px), so even
+the arm re-run under the new representation would see the same pixels the recorded one saw.
+`eval_reacher.py` now accepts `hidden` on both `--target-mode` and `--dataset-target-mode`, with
+`offscreen` kept as the default for Step-5 reproducibility.
 
 Recommendation: **no rerun, no tripwire** (a tripwire on a byte-identical default measures nothing).
-If Step 8 wants the live-swap arm restated under the representation rather than the workaround, the
-cheapest honest form is `parity_probe.py`, which now measures `as_placed`, `hidden` and `offscreen`
-on the same states in one run and will say in pixels how far `hidden` sits from `offscreen`.
+`parity_probe.py` now measures `as_placed`, `hidden` and `offscreen` on the same states in one run,
+so a Step-8 reader can re-confirm the equivalence against `stable_worldmodel`'s own env rather than
+against the frozen corpus.
 
 ---
 

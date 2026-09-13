@@ -1,14 +1,3 @@
-============================= test session starts ==============================
-platform linux -- Python 3.12.9, pytest-9.1.1, pluggy-1.6.0 -- /oscar/scratch/sboughan/venvs/se-step6/bin/python
-cachedir: .pytest_cache
-rootdir: /oscar/scratch/sboughan/se6/reacher-correctness
-configfile: pyproject.toml
-plugins: timeout-2.4.0
-timeout: 900s
-timeout method: signal
-timeout func_only: False
-collecting ... collected 285 items / 252 deselected / 33 selected
-
 tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-DMCFingerTurnEasy-84px] PASSED [  3%]
 tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-DMCFingerTurnEasy-256px] PASSED [  6%]
 tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-DMCFingerTurnHard-84px] PASSED [  9%]
@@ -42,15 +31,4 @@ tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it
 tests/gpu/test_fast_paths.py::test_an_unknown_geom_code_is_refused_by_both_cast_backends PASSED [ 93%]
 tests/gpu/test_fast_paths.py::test_a_flat_polygon_is_not_culled PASSED   [ 96%]
 tests/gpu/test_fast_paths.py::test_every_declared_fast_path_is_actually_reachable PASSED [100%]
-
-=============================== warnings summary ===============================
-tests/gpu/test_fast_paths.py: 2490 warnings
-  /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
-  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
-    key_item.shape = original_shape
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
------------------------------- stable-envs safety ------------------------------
-resources: 11 EGL contexts created, 0 released, 11 live (peak 11); renderers 8 created / 0 closed
-node: gpu2101 slurm=mix reason=none reference-renderer={}
 ======== 23 passed, 10 skipped, 252 deselected, 2490 warnings in 11.44s ========

@@ -20,6 +20,17 @@
 # One GPU job per agent at a time (AGENT_COMMON), so this is submitted only after gpu_verify has
 # finished, not alongside it.
 set -uo pipefail
+# Raw pytest output NEVER lands in the repository. It carries absolute
+# /oscar/.../se6/... interpreter paths, and tests/unit/test_repo_contracts.py's citation scanner
+# reads every .txt under examples/ -- so committing a raw log grew its unresolved-citation set from
+# 2 to 18 and failed the suite on a file that is not documentation. ``keep`` tees the full log to
+# $SCR/logs (outside the tree) and writes only the OUTCOME lines into the results directory.
+keep () {  # keep <results-file> ; reads stdin
+  local dest="$1" full="$SCR/logs/${SLURM_JOB_ID:-adhoc}_$(basename "$1")"
+  tee "$full" | grep -E "^(tests/\S+ (PASSED|FAILED|SKIPPED|XFAIL|XPASS)|=+ .*(passed|failed|error).*|[0-9]+ (passed|failed).*|== summary ==|DMC\S+ +margin |FAILED |ERROR )" \
+    > "$dest" || true
+  tail -3 "$dest"
+}
 export SCR=/oscar/scratch/$USER
 export XDG_CACHE_HOME=$SCR/.cache TORCH_HOME=$SCR/.torch HF_HOME=$SCR/.cache/huggingface
 export UV_CACHE_DIR=$SCR/.cache/uv PIP_CACHE_DIR=$SCR/.cache/pip WARP_CACHE_PATH=$SCR/.cache/warp
@@ -72,13 +83,13 @@ PYEOF
 
 $PY -m pytest tests/gpu/test_conformance.py -v -p no:randomly \
     -k "Reacher or FingerTurn or required_envs or registry_is_not_empty or relaxed_parity" \
-    2>&1 | tee "$OUT/test_conformance.txt" | tail -70
+    2>&1 | keep "$OUT/test_conformance.results.txt"
 $PY -m pytest tests/gpu/test_reproducibility.py -v -p no:randomly \
-    -k "Reacher or FingerTurn" 2>&1 | tee "$OUT/test_reproducibility.txt" | tail -70
+    -k "Reacher or FingerTurn" 2>&1 | keep "$OUT/test_reproducibility.results.txt"
 $PY -m pytest tests/gpu/test_fast_paths.py -v -p no:randomly \
     -k "Reacher or FingerTurn or unknown_geom or flat_polygon or declared_fast_path" \
-    2>&1 | tee "$OUT/test_fast_paths.txt" | tail -40
-$PY -m pytest tests/unit -q -p no:randomly 2>&1 | tee "$OUT/test_unit.txt" | tail -20
+    2>&1 | keep "$OUT/test_fast_paths.results.txt"
+$PY -m pytest tests/unit -q -p no:randomly 2>&1 | keep "$OUT/test_unit.results.txt"
 
 # ---- 2. the guard's own numbers ON THE CERTIFICATION HARDWARE ----------------------------------
 # The floor was first set from CPU draws and the frozen corpus then measured 0.008 under it on a
@@ -87,7 +98,7 @@ $PY -m pytest tests/unit -q -p no:randomly 2>&1 | tee "$OUT/test_unit.txt" | tai
 # is enforced, so the floor is not a CPU number applied to a GPU test.
 PYTHONPATH=$SRC $PY5 scratch/step6/$WS/probe_guard.py --device cuda \
     --states "$STATES" DMCReacherEasy DMCReacherHard DMCFingerTurnEasy DMCFingerTurnHard \
-    2>&1 | tee "$OUT/guard_gpu.txt" | tail -8
+    2>&1 | keep "$OUT/guard_gpu.results.txt"
 
 # ---- 3. the Step-4 replay again, under the corrected metric ------------------------------------
 REPLAY=$SRC/examples/results/step6/$WS/replay
