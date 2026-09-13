@@ -106,9 +106,175 @@ def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype):
     return cx.view(1, W).expand(H, W), cy.view(H, 1).expand(H, W)
 
 
+def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
+    """Per primitive: what it actually is, and where on the frame it can possibly paint.
+
+    ``render_torch`` used to evaluate all three primitive families over the whole frame for every
+    slot — a disc paid for four polygon edges and a capsule, and a wall covering 2% of the picture
+    paid for the other 98%. Neither is arithmetic that reaches a pixel; both are B x Rh x Rw
+    temporaries. This is the pre-pass that lets the loop skip them, and it is the CPU counterpart of
+    what ``_bbox_kernel`` does per tile on the GPU.
+
+    Returned per primitive, all of it decided on the HOST from one transfer:
+
+      ``(disc, ring, poly, outline, seg, edges, r0, r1, c0, c1)``
+
+      * ``disc``/``poly``/``seg`` — this family appears in this slot for at least one environment.
+        ``kind`` is per environment, so a slot that is a polygon in every row costs nothing for the
+        two families it is not; a slot that is disabled (``kind == 0``) in every row costs nothing
+        at all. Skipping a family no row has changes no pixel, because the family's paint is masked
+        by ``kind ==`` that family and the mask is empty.
+      * ``ring`` / ``outline`` — the inner disc and the polygon outline exist only where
+        ``inner_r > 0`` and ``line_w > 0``. Where no row has one, its ``where`` is a no-op over the
+        whole frame, and the outline is the expensive half of a polygon: the inside test is one dot
+        product per edge and the outline is a projection, a clamp, a rejection vector and a squared
+        length.
+      * ``edges`` — ``(e, mixed)`` for each edge some environment actually has. Polygons are padded
+        to ``V`` by repeating the last vertex, so a triangle in a ``V=8`` builder carries five
+        zero-length edges whose contribution the loop computes and then throws away with
+        ``torch.where(degen, ...)``; an edge degenerate in EVERY row is dropped outright. ``mixed``
+        says some rows are degenerate there and some are not, which is the only case that needs the
+        ``where`` at all — and it is rare, because degeneracy comes from padding, which is a
+        property of the vertex count rather than of the environment. Where no row is degenerate,
+        ``torch.where(False, ..., d)`` is ``d``, and dropping it drops a full window-sized select
+        and the ``full_like`` sentinel feeding it, per edge, per polygon.
+      * ``r0:r1, c0:c1`` — the pixel window of the primitive's world-space bound, unioned over the
+        batch. The BOUND is the encoding ``_bbox_kernel`` uses, deliberately including its two
+        special cases: an empty box for ``kind == 0`` and an INFINITE one for a polygon whose twice
+        signed area is exactly zero, which has no interior and whose halfplane intersection is
+        unbounded. Using the same encoding on both devices means there is one culling rule in the
+        repo rather than a second one that nothing tests; ``tests/gpu/test_fast_paths.py`` already
+        holds it against every registered env.
+
+    The window is a union over the batch because one torch op covers the whole batch: a primitive
+    that is static across environments (a wall, a goal marker, PushT's four table edges) keeps a
+    tight window at any batch size, and one that moves per environment widens to what the batch
+    spans. That is a throughput property only — a window that is too large evaluates pixels whose
+    mask then rejects them, and every pixel inside it is computed from exactly the values it was
+    computed from before, so the picture is bit-identical either way. It is also why the plan is
+    NOT cached: it is a pure function of the scene handed in, recomputed per call, with no state
+    that depends on what was rendered before.
+    """
+    B, N, V = scene.batch, scene.n_prims, scene.vertices
+    k, dt = scene.kind, scene.geom.dtype
+    g = scene.geom
+    G = int(g.shape[2])
+    is_disc, is_poly, is_seg = k == KIND_DISC, k == KIND_POLY, k == KIND_SEGMENT
+
+    # --- what each slot is, and which of its optional parts exist (all (N,) bool) -----------
+    rows = [is_disc.any(0), is_poly.any(0), is_seg.any(0),
+            (is_disc & (g[:, :, 3] > 0)).any(0) if G > 3 else is_disc.new_zeros(N),
+            (is_poly & (scene.line_w > 0)).any(0)]
+    # An edge is skippable only if it is degenerate for every environment, and "degenerate" has to
+    # be decided by the expression the loop uses, in the loop's dtype, or the plan and the loop
+    # could disagree about one edge of one polygon.
+    for e in range(V):
+        j = (e + 1) % V
+        ex = g[:, :, 2 * j] - g[:, :, 2 * e]
+        ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
+        degen = (ex * ex + ey * ey) < 1e-12
+        rows.append(~degen.all(0))                       # some row has this edge
+    for e in range(V):
+        j = (e + 1) % V
+        ex = g[:, :, 2 * j] - g[:, :, 2 * e]
+        ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
+        rows.append(((ex * ex + ey * ey) < 1e-12).any(0))   # ... and some row does not
+
+    # --- the world-space bound, exactly as _bbox_kernel encodes it ---------------------------
+    f64 = torch.float64
+    gg = g.to(f64)
+    lw = scene.line_w.abs().to(f64)
+    vx, vy = gg[:, :, 0:2 * V:2], gg[:, :, 1:2 * V:2]
+    # float64, and then the geom dtype as well: the kernel's ``flat`` is a float32 shoelace
+    # tested against exactly zero, and a polygon it calls unbounded must be unbounded here too
+    # or the two backends would cull by different rules.
+    area2 = (vx * torch.roll(vy, -1, -1) - torch.roll(vx, -1, -1) * vy).sum(-1)
+    v32x, v32y = g[:, :, 0:2 * V:2], g[:, :, 1:2 * V:2]
+    a32 = (v32x * torch.roll(v32y, -1, -1) - torch.roll(v32x, -1, -1) * v32y).sum(-1)
+    flat = (area2 == 0) | (a32 == 0)
+    r = torch.maximum(gg[:, :, 2].abs(), gg[:, :, 3].clamp_min(0)) if G > 3 else gg[:, :, 0] * 0
+    hw = gg[:, :, 4].abs() if G > 4 else gg[:, :, 0] * 0
+    sx1 = gg[:, :, 2] if G > 2 else gg[:, :, 0]
+    sy1 = gg[:, :, 3] if G > 3 else gg[:, :, 1]
+    inf = torch.full_like(area2, float("inf"))
+    poly0x = torch.where(flat, -inf, vx.min(-1).values - lw)
+    poly0y = torch.where(flat, -inf, vy.min(-1).values - lw)
+    poly1x = torch.where(flat, inf, vx.max(-1).values + lw)
+    poly1y = torch.where(flat, inf, vy.max(-1).values + lw)
+    bx0 = torch.where(is_disc, gg[:, :, 0] - r,
+                      torch.where(is_poly, poly0x, torch.minimum(gg[:, :, 0], sx1) - hw))
+    by0 = torch.where(is_disc, gg[:, :, 1] - r,
+                      torch.where(is_poly, poly0y, torch.minimum(gg[:, :, 1], sy1) - hw))
+    bx1 = torch.where(is_disc, gg[:, :, 0] + r,
+                      torch.where(is_poly, poly1x, torch.maximum(gg[:, :, 0], sx1) + hw))
+    by1 = torch.where(is_disc, gg[:, :, 1] + r,
+                      torch.where(is_poly, poly1y, torch.maximum(gg[:, :, 1], sy1) + hw))
+    off = k == 0
+    # NaN geometry is not a bound, so it draws over the whole frame, which is what the unbounded
+    # loop did with it. Silently shrinking a window around a NaN is how a bound stops being one.
+    bx0 = torch.where(off, inf, bx0).nan_to_num(nan=float("-inf"))
+    by0 = torch.where(off, inf, by0).nan_to_num(nan=float("-inf"))
+    bx1 = torch.where(off, -inf, bx1).nan_to_num(nan=float("inf"))
+    by1 = torch.where(off, -inf, by1).nan_to_num(nan=float("inf"))
+
+    x0, y0, x1, y1 = scene.world
+    sx, sy = (x1 - x0) / Rw, (y1 - y0) / Rh
+    # Pixel r samples at its CENTRE, y0 + (r+0.5)*sy, or y1 - (r+0.5)*sy under flip_y. One pixel of
+    # slack on every side so that no rounding of this conversion can cost a pixel the loop would
+    # have painted; one pixel too many costs throughput and nothing else.
+    ux0, uy0 = bx0.min(0).values, by0.min(0).values
+    ux1, uy1 = bx1.max(0).values, by1.max(0).values
+    c0 = torch.floor((ux0 - x0) / sx - 0.5) - 1
+    c1 = torch.ceil((ux1 - x0) / sx - 0.5) + 2
+    if scene.flip_y:
+        r0 = torch.floor((y1 - uy1) / sy - 0.5) - 1
+        r1 = torch.ceil((y1 - uy0) / sy - 0.5) + 2
+    else:
+        r0 = torch.floor((uy0 - y0) / sy - 0.5) - 1
+        r1 = torch.ceil((uy1 - y0) / sy - 0.5) + 2
+    win = torch.stack([r0.clamp(0, Rh), r1.clamp(0, Rh), c0.clamp(0, Rw), c1.clamp(0, Rw)], dim=1)
+
+    # ONE host transfer for the whole plan. Eleven small ``.cpu()`` calls is how a decision that
+    # costs nothing on paper becomes a dozen synchronisations per frame.
+    flags = torch.stack(rows, dim=1).to(f64)
+    plan = torch.cat([flags, win], dim=1).cpu().tolist()
+    out = []
+    for row in plan:
+        disc, poly, seg, ring, outline = (bool(v) for v in row[:5])
+        edges = [(e, bool(row[5 + V + e])) for e in range(V) if row[5 + e]]
+        rr0, rr1, cc0, cc1 = (int(v) for v in row[5 + 2 * V:])
+        out.append((disc, ring, poly, outline, seg, edges, rr0, rr1, cc0, cc1))
+    return out
+
+
 @torch.no_grad()
 def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor:
-    """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast."""
+    """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast.
+
+    Still the executable specification — every per-pixel expression below is the one it always was,
+    character for character, and it is still what ``tests/gpu`` diffs the fused kernel against. What
+    changed in Step 6 is not the arithmetic but WHERE it is evaluated, and that is decided entirely
+    by ``_prim_plan``:
+
+      * a slot is evaluated only for the primitive families some environment actually has there;
+      * a polygon's outline and a disc's inner ring are evaluated only where they exist;
+      * padded, zero-length polygon edges are skipped;
+      * every family is evaluated only inside the pixel window of its own world-space bound.
+
+    All four are bounds and masks that were already being computed and thrown away, so the picture
+    is bit-identical; ``scratch/step6/raster2d/cpu_digest.py`` and the frozen Step 4 replay hold
+    that rather than leaving it as an argument. Measured on Oscar's batch partition at one thread,
+    the whole-frame version cost 324 ms for one 500 px SimplePointMaze frame, of which 13 of the 13
+    primitives paid for a capsule test the scene contains none of.
+
+    The uint8 canvas is the second half. With ``supersample == 1`` nothing between a primitive's
+    colour and the output is an average, so ``round -> clamp -> uint8`` can be applied to the
+    (B,3) colours once instead of to a B x 3 x Rh x Rw float canvas at the end, and the canvas can
+    be the output's own (B,Rh,Rw,3) layout. That removes the float canvas (four bytes a channel
+    instead of one), the round, the clamp, the cast and the final permute+copy: five passes over
+    the frame stack. Supersampling genuinely averages, so ``ss > 1`` keeps the float canvas and the
+    conversion it always had.
+    """
     H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
     if not isinstance(out_size, int):
         H, W = out_size
@@ -118,53 +284,92 @@ def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor
     px, py = _pixel_grid(scene, Rh, Rw, dev, dt)
     B, N, V = scene.batch, scene.n_prims, scene.vertices
 
-    canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
-    for i in range(N):
+    flat_out = ss == 1
+    if flat_out:
+        u8 = lambda c: c.round().clamp(0, 255).to(torch.uint8).view(B, 1, 1, 3)   # noqa: E731
+        canvas = u8(scene.background).expand(B, Rh, Rw, 3).clone()
+    else:
+        u8 = lambda c: c.view(B, 3, 1, 1)                                         # noqa: E731
+        canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
+
+    for i, (has_disc, has_ring, has_poly, has_outline, has_seg, edges,
+            r0, r1, c0, c1) in enumerate(_prim_plan(scene, Rh, Rw)):
+        if r1 <= r0 or c1 <= c0 or not (has_disc or has_poly or has_seg):
+            continue                       # disabled everywhere, or its bound misses the frame
         kind = scene.kind[:, i]                                   # (B,)
         g = scene.geom[:, i]                                      # (B,2V)
-        fill = scene.fill[:, i].view(B, 3, 1, 1)
-        line = scene.line[:, i].view(B, 3, 1, 1)
+        fill = u8(scene.fill[:, i])
+        line = u8(scene.line[:, i])
         lw = scene.line_w[:, i].view(B, 1, 1)
-        p = px.unsqueeze(0)
-        q = py.unsqueeze(0)
+        p = px[r0:r1, c0:c1].unsqueeze(0)
+        q = py[r0:r1, c0:c1].unsqueeze(0)
+        view = ((lambda: canvas[:, r0:r1, c0:c1, :]) if flat_out
+                else (lambda: canvas[:, :, r0:r1, c0:c1]))
+        mdim = -1 if flat_out else 1
+
+        def paint(hit, colour, _v=view, _m=mdim):
+            """``canvas = torch.where(hit, colour, canvas)``, restricted to this primitive's window.
+
+            In place through the window rather than by rebinding a whole new canvas: the old loop
+            allocated and wrote a full B x 3 x Rh x Rw tensor for EVERY ``where``, which at batch 64
+            and 500 px is 192 MB per primitive per paint, and then threw the old one away.
+
+            Through a temporary and a ``copy_`` rather than ``out=`` the view it also reads. An
+            aliased ``out=`` measured the same to within the noise of the machine it was tried on
+            (46 ms against 58 on an isolated paint, indistinguishable in the renderer), and this is
+            the file the fused kernel is checked against -- a destination that is also an input is a
+            subtle thing to put in an executable specification for no measured gain.
+            """
+            w = _v()
+            w.copy_(torch.where(hit.unsqueeze(_m), colour, w))
 
         # disc (with optional inner disc)
-        d2 = (p - g[:, 0].view(B, 1, 1)) ** 2 + (q - g[:, 1].view(B, 1, 1)) ** 2
-        is_disc = (kind == KIND_DISC).view(B, 1, 1)
-        hit = is_disc & (d2 <= g[:, 2].view(B, 1, 1) ** 2)
-        canvas = torch.where(hit.unsqueeze(1), fill, canvas)
-        hit = is_disc & (d2 <= g[:, 3].view(B, 1, 1) ** 2) & (g[:, 3].view(B, 1, 1) > 0)
-        canvas = torch.where(hit.unsqueeze(1), line, canvas)
+        if has_disc:
+            d2 = (p - g[:, 0].view(B, 1, 1)) ** 2 + (q - g[:, 1].view(B, 1, 1)) ** 2
+            is_disc = (kind == KIND_DISC).view(B, 1, 1)
+            paint(is_disc & (d2 <= g[:, 2].view(B, 1, 1) ** 2), fill)
+            if has_ring:
+                paint(is_disc & (d2 <= g[:, 3].view(B, 1, 1) ** 2) & (g[:, 3].view(B, 1, 1) > 0),
+                      line)
 
         # convex polygon: inside = max over outward edge planes <= 0; outline = union of edge capsules
-        sdf = torch.full((B, Rh, Rw), -1e30, device=dev, dtype=dt)
-        edge_d2 = torch.full((B, Rh, Rw), 1e30, device=dev, dtype=dt)
-        for e in range(V):
-            ax, ay = g[:, 2 * e].view(B, 1, 1), g[:, 2 * e + 1].view(B, 1, 1)
-            j = (e + 1) % V
-            bx, by = g[:, 2 * j].view(B, 1, 1), g[:, 2 * j + 1].view(B, 1, 1)
-            ex, ey = bx - ax, by - ay
-            L2 = ex * ex + ey * ey
-            degen = L2 < 1e-12
-            inv = torch.rsqrt(L2.clamp_min(1e-20))
-            d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
-            sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d))
-            t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
-            qx, qy = p - ax - t * ex, q - ay - t * ey
-            edge_d2 = torch.minimum(edge_d2, torch.where(degen, torch.full_like(qx, 1e30),
-                                                         qx * qx + qy * qy))
-        is_poly = (kind == KIND_POLY).view(B, 1, 1)
-        canvas = torch.where((is_poly & (sdf <= 0)).unsqueeze(1), fill, canvas)
-        canvas = torch.where((is_poly & (lw > 0) & (edge_d2 <= lw * lw)).unsqueeze(1), line, canvas)
+        if has_poly:
+            h, w = r1 - r0, c1 - c0
+            sdf = torch.full((B, h, w), -1e30, device=dev, dtype=dt)
+            edge_d2 = (torch.full((B, h, w), 1e30, device=dev, dtype=dt) if has_outline else None)
+            for e, mixed in edges:
+                ax, ay = g[:, 2 * e].view(B, 1, 1), g[:, 2 * e + 1].view(B, 1, 1)
+                j = (e + 1) % V
+                bx, by = g[:, 2 * j].view(B, 1, 1), g[:, 2 * j + 1].view(B, 1, 1)
+                ex, ey = bx - ax, by - ay
+                L2 = ex * ex + ey * ey
+                degen = L2 < 1e-12
+                inv = torch.rsqrt(L2.clamp_min(1e-20))
+                d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
+                sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d)
+                                    if mixed else d)
+                if has_outline:
+                    t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
+                    qx, qy = p - ax - t * ex, q - ay - t * ey
+                    e2 = qx * qx + qy * qy
+                    edge_d2 = torch.minimum(
+                        edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2) if mixed else e2)
+            is_poly = (kind == KIND_POLY).view(B, 1, 1)
+            paint(is_poly & (sdf <= 0), fill)
+            if has_outline:
+                paint(is_poly & (lw > 0) & (edge_d2 <= lw * lw), line)
 
         # segment: capsule, distance to segment <= half width
-        ax, ay = g[:, 0].view(B, 1, 1), g[:, 1].view(B, 1, 1)
-        ex, ey = g[:, 2].view(B, 1, 1) - ax, g[:, 3].view(B, 1, 1) - ay
-        t = (((p - ax) * ex + (q - ay) * ey) / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
-        dx, dy = p - ax - t * ex, q - ay - t * ey
-        hit = (kind == KIND_SEGMENT).view(B, 1, 1) & (dx * dx + dy * dy <= g[:, 4].view(B, 1, 1) ** 2)
-        canvas = torch.where(hit.unsqueeze(1), fill, canvas)
+        if has_seg:
+            ax, ay = g[:, 0].view(B, 1, 1), g[:, 1].view(B, 1, 1)
+            ex, ey = g[:, 2].view(B, 1, 1) - ax, g[:, 3].view(B, 1, 1) - ay
+            t = (((p - ax) * ex + (q - ay) * ey) / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
+            dx, dy = p - ax - t * ex, q - ay - t * ey
+            paint((kind == KIND_SEGMENT).view(B, 1, 1)
+                  & (dx * dx + dy * dy <= g[:, 4].view(B, 1, 1) ** 2), fill)
 
+    if flat_out:
+        return canvas
     if ss > 1:
         canvas = torch.nn.functional.avg_pool2d(canvas, ss)
     return canvas.round_().clamp_(0, 255).to(torch.uint8).permute(0, 2, 3, 1).contiguous()
