@@ -272,7 +272,7 @@ context manager this repo already ships) from the OUTSIDE, clears `_CTX_CACHE` s
 fresh context, then times the **ordinary public `env.render(states)`** and takes a sha256 of the
 frames over the frozen Step 4 corpus. A cell only counts if its digest matches the control, because
 Fetch declares the parity tier. FetchReach, RTX 3090 `gpu2101`, jobs 6344491 and 6344691 (two
-independent runs; the second column pair is the rerun):
+independent runs; the second column pair is the rerun). **These are `gpu2101` numbers and must not be compared with the `gpu2116` numbers in §2–§5** — the control here is 8.5–8.7x where `gpu2116` reads 9.5x, for the reason in §9.3:
 
 | cell | µs/frame @4096 | vs control | `BATCH_SCALES` | pixels identical to control |
 |---|---:|---:|---:|:--|
@@ -396,7 +396,7 @@ coordinator should decide that trade; a workstream should not make it silently.
 |---|---|
 | contracts preserved | **yes** — nothing was changed; no replay was needed |
 | `NO_LARGE_BATCH_REGRESSION` | **PASS** on all 12 (1.005–1.021 against a 0.90 bar) |
-| `R ≥ 4` (class S) | **PASS** on all 12 (5.34–6.09) |
+| `R ≥ 4` (class S) | **PASS** on all 12 (5.34–6.70) |
 | `cores ≥ 1` | **PASS** on all 12 (4.10–5.40) |
 | `BATCH_SCALES ≥ 20` | **FAIL** on all 12 (7.6–11.7x), and **measured unreachable** — it needs the per-frame device cost to fall from 192 µs to 91 µs at 480 px, while every flag-level saving available totals 3.7 % |
 | `GPU_FAST` | blocked by that one qualifier alone |
