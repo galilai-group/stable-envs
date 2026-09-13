@@ -12,21 +12,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-texture-fidelity
     oscar_copy: /oscar/scratch/sboughan/se6/texture-fidelity
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 60f81acf2d166c160f6e58fb57d58c00260d75d3
+    head_sha: f484ab9d7492f7b37dd9f41fed53987bdd19c315
     agent_model: fable
     wave: wave1
-    status: implementation (TEXTURE-2 provenance policy)
+    status: review (TEXTURE-2 PATCH: provenance fields, certifier blocked-on-mismatch, certify311/312 record, downsample protocol; merge held for Sami policy sign-off)
     authorization: diagnosis
     goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
     affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
     bottleneck: {measured: "n/a (correctness diagnosis)", hypothesis: null}
-    correctness: {targeted_tests: "n/a (no code change)", step4_replay: "replayed Cheetah/Hopper/Walker/Humanoid under mujoco 3.11 pair -> all PASS declared visual bounds; under 3.12 -> Step-4 FAILs reproduced to 0.03/255", gate_a: "FAIL under 3.12 reference; PASS under declared 3.11 reference", fidelity: "verdict B: reference drift (MuJoCo 3.12 finite-plane texture re-anchored to corner; floor carries the residual, skybox unchanged; stable-envs frames identical across versions)"}
+    correctness: {targeted_tests: "tests/unit/test_declarations.py 54 pass (+7), test_step4.py 42 pass (+6), test_provenance.py 12 pass (new); test_repo_contracts.py::test_every_cited_scratch_path_resolves fails pre-existing at baseline", step4_replay: "certify311: PASS x4 (Cheetah/Hopper/Walker/Humanoid) under declared 3.11 pair; certify312: BLOCKED x4 (would-be FAIL x3) - job 6344899 gpu2113", gate_a: "PASS under declared reference; BLOCKED (not FAIL) under drifted 3.12 reference", fidelity: "verdict B (reference drift); no bound value or margin changed; downsample check now judged on its own 8-state protocol (reproduces recorded floors to 6 decimals)"}
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
     pixels_changed: no
     semantic_followup: none
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: [6343431, 6343518, 6343699]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\"]
+    review: {reviewer: "opus (independent, spawned 2026-09-13)", verdict: null}
+    slurm_jobs: [6343431, 6343518, 6343699, 6344899]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\", "TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup."]
   - workstream: reacher-correctness
     brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
     branch: step6/reacher-correctness
