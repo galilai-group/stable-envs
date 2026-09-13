@@ -15,3 +15,5 @@ no EGL, so they set `MUJOCO_GL=glfw` and `device="cpu"`; on Oscar drop both.
 | `probe_guard.py` | `check_task_object_visibility` over independent draws and over the frozen Step-4 corpus — the numbers `TASK_OBJECT_PRESENCE_MARGIN` is set from |
 | `probe_checks.py` | the mandatory conformance battery on the affected cells, on CPU |
 | `local_digests.py` | default-style frame digests on the frozen corpora, for the before/after pixel-identity argument |
+| `probe_static_leak.py` | the review-found render-purity bug: does a cached scene's STATIC primitive set come from its own bake or from the last one? (before the fix: 18 px / max 215 on DMCReacherHard, 88 px / max 140 on DMCFingerTurnHard; after: 0) |
+| `probe_mode_equivalence.py` | are the Step-5 `offscreen` workaround and the Step-6 `hidden` representation the same picture? (max \|d\| 0 at 84 and 224 px on both reacher cells) |

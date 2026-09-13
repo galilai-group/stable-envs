@@ -716,8 +716,8 @@ class _Scene:
     """Everything a render needs that does not depend on the state."""
 
     __slots__ = ("plate", "plate_shadow", "plate_norefl", "reflectance", "static_t", "cam", "model",
-                 "data", "movers", "size", "lights", "prims", "shadow_light", "floor", "eps",
-                 "tendon", "shadow_candidates", "rays", "const")
+                 "data", "movers", "statics", "size", "lights", "prims", "shadow_light", "floor",
+                 "eps", "tendon", "shadow_candidates", "rays", "const")
 
 
 # --------------------------------------------------------------------------- shading
@@ -1387,6 +1387,21 @@ class DMControlSuite(_DMCModel):
         sc.model, sc.data = m, d
         sc.cam, sc.lights, sc.shadow_light = cam, lights, sl
         sc.movers = (gmov, smov)
+        # The STATIC set, recorded here rather than re-derived later. ``_static_t`` used to recompute
+        # it from the LIVE shared model at render time, and the live model carries whatever the LAST
+        # bake applied -- so a scene baked with an element hidden, whose static depth was first cast
+        # after some other appearance had been baked, saw that element visible again, did not find it
+        # in ``sc.movers``, and promoted it to a STATIC primitive at whatever ``geom_pos`` ``_fk`` had
+        # last written. Measured on CPU over the 64 frozen states: ``render(hidden, ss=2)`` alone
+        # against ``render(hidden) -> render(other appearance) -> render(hidden, ss=2)`` differed by
+        # 18 px / max 215 on DMCReacherHard and 88 px / max 140 on DMCFingerTurnHard. It needed a
+        # SUPERSAMPLE change between the calls to show, because ``static_t`` is cached per (scene, ss)
+        # and the default-ss path had always cached it during the bake's own render.
+        #
+        # This is the same live-read class as the ``_used_materials`` fix in this patch's first
+        # commit, one call site further on: anything a scene is a function of must be read while that
+        # scene's appearance is ON the model, which is here and nowhere else.
+        sc.statics = (gstat, sstat)
         sc.tendon = tendon
         sc.plate = torch.tensor(plate, device=self.device, dtype=torch.uint8)
         sc.plate_shadow = torch.tensor(plate_shadow, device=self.device, dtype=torch.uint8)
@@ -1586,9 +1601,10 @@ class DMControlSuite(_DMCModel):
         if hit is not None:
             return hit
         m, d = sc.model, sc.data
-        gmov, smov = sc.movers
-        gstat = [i for i in self._visible(m, "geom") if i not in gmov]
-        sstat = [i for i in self._visible(m, "site") if i not in smov]
+        # From the BAKE, never from the live model -- see ``_bake``. The shared ``MjModel`` carries
+        # the last-baked appearance, so re-deriving the static set here silently used a different
+        # scene's visibility.
+        gstat, sstat = sc.statics
         import mujoco
         d.qpos[:] = m.qpos0
         d.qvel[:] = 0
