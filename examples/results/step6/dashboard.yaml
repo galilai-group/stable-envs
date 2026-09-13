@@ -38,7 +38,7 @@ workstreams:
     head_sha: af81aa2cd01cbafbe175d4700ae4d540fb580d80
     agent_model: opus
     wave: wave1
-    status: review (PATCH delivered: visibility as per-row Discrete style leaf in dmcontrol.py; task-object presence guard in conformance.py)
+    status: implementation (applying review changes)
     authorization: correctness
     goal: "correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear"
     affected_configs: ["DMCReacherEasy","DMCReacherHard","DMCFingerTurnEasy","DMCFingerTurnHard"]  # style_dim 17->18; other 12 DMC cells unchanged incl. declaration
@@ -47,7 +47,7 @@ workstreams:
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
     pixels_changed: no (default appearance, all 16 DMC cells)
     semantic_followup: none (Step-5 DINO-WM arm frames byte-identical; offscreen mode preserved)
-    review: {reviewer: "fable (independent, spawned 2026-09-13)", verdict: null}
+    review: {reviewer: "fable (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: per-row batching, pristine reads, 16-cell default identity and frozen-digest replay verified. Required: (1) render-purity bug - _static_t reads live model alpha lazily per (scene, ss); hidden->other bake->hidden at new supersample promotes hidden target to static prim (18 px/max 215 ReacherHard, 88 px/max 140 FingerTurnHard) -> use bake-time static sets + regression test; (2) committed Oscar paths grow test_every_cited_scratch_path_resolves 2->18; (3) eval_reacher.py choices lack hidden; hidden==offscreen measured bit-identical; (4) presence_margin is pooled not per-row; bound re-derivation post-failure judged legitimate but must be recorded."}
     slurm_jobs: [6344667, 6344904]
     notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "PATCH 2026-09-13. Escalate to Sami: default stays target-VISIBLE (dm_control reference), SWM render_target=0 reproduced via knob; folding TASK_OBJECT_PRESENCE_MARGIN into frozen spec is a Step-8 call. NEW FINDING (not this branch): 4 trackcom cells (Cheetah/Hopper/Humanoid/Walker) do not reproduce frozen Step-4 digests at BASELINE (mean_pixel off 0.16-0.61/255, same mujoco/warp/driver/GPU, different venv+node) -> narrow ticket MJWARP-1 queued. MJWarp cannot carry per-row visibility (shader ignores alpha; hidden at context creation)."]
   - workstream: raycast3d
