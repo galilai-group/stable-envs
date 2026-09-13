@@ -12,21 +12,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-texture-fidelity
     oscar_copy: /oscar/scratch/sboughan/se6/texture-fidelity
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 60f81acf2d166c160f6e58fb57d58c00260d75d3
     agent_model: fable
     wave: wave1
-    status: diagnosing
+    status: finding
     authorization: diagnosis
     goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
     affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    bottleneck: {measured: "n/a (correctness diagnosis)", hypothesis: null}
+    correctness: {targeted_tests: "n/a (no code change)", step4_replay: "replayed Cheetah/Hopper/Walker/Humanoid under mujoco 3.11 pair -> all PASS declared visual bounds; under 3.12 -> Step-4 FAILs reproduced to 0.03/255", gate_a: "FAIL under 3.12 reference; PASS under declared 3.11 reference", fidelity: "verdict B: reference drift (MuJoCo 3.12 finite-plane texture re-anchored to corner; floor carries the residual, skybox unchanged; stable-envs frames identical across versions)"}
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
+    pixels_changed: no
+    semantic_followup: none
     review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
+    slurm_jobs: [6343431, 6343518, 6343699]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\"]
   - workstream: reacher-correctness
     brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
     branch: step6/reacher-correctness
