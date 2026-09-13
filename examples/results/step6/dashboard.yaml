@@ -3,7 +3,7 @@
 baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
 baseline_branch: sami/pre-step6-baseline
 integration_branch: step6/integration
-integration_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+integration_sha: d8d8873 (merge of step6/texture-fidelity through 48a556a)
 oscar_capacity_note: condo QOS cs-3090-gcondo saturated by simclr_cifar10 (cpu 240/240, gpu 30/32); Step-6 GPU jobs routed to gpu/norm-gpu; HOME quota 100% full, all caches on scratch
 incident_log:
   - "2026-09-13 ~19:00: API monthly spend limit terminated 5 agents mid-work (raster2d Commit B, gfxdraw primitives, raycast3d 2a, cpu-3d start, reacher reviewer start). Plan upgraded; all resumed with context and uncommitted work intact."
@@ -14,20 +14,20 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-texture-fidelity
     oscar_copy: /oscar/scratch/sboughan/se6/texture-fidelity
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: f484ab9d7492f7b37dd9f41fed53987bdd19c315
+    head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (merged through 48a556a; 5402387 held)
     agent_model: fable
     wave: wave1
-    status: implementation (applying review changes; e5309bc to be reordered last and held)
+    status: merged (through 48a556a); 5402387 downsample-protocol commit held for Sami
     authorization: diagnosis
     goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
     affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
     bottleneck: {measured: "n/a (correctness diagnosis)", hypothesis: null}
-    correctness: {targeted_tests: "tests/unit/test_declarations.py 54 pass (+7), test_step4.py 42 pass (+6), test_provenance.py 12 pass (new); test_repo_contracts.py::test_every_cited_scratch_path_resolves fails pre-existing at baseline", step4_replay: "certify311: PASS x4 (Cheetah/Hopper/Walker/Humanoid) under declared 3.11 pair; certify312: BLOCKED x4 (would-be FAIL x3) - job 6344899 gpu2113", gate_a: "PASS under declared reference; BLOCKED (not FAIL) under drifted 3.12 reference", fidelity: "verdict B (reference drift); no bound value or margin changed; downsample check now judged on its own 8-state protocol (reproduces recorded floors to 6 decimals)"}
+    correctness: {targeted_tests: "integration after merge: tests/unit 531 pass, 2 pre-existing failures (render_mjwarp.py --help hardcoded path; cited scratch paths carracing/robocasa)", step4_replay: "certify311: PASS x4 (Cheetah/Hopper/Walker/Humanoid) under declared 3.11 pair; certify312: BLOCKED x4 (would-be FAIL x3) - job 6344899 gpu2113", gate_a: "PASS under declared reference; BLOCKED (not FAIL) under drifted 3.12 reference", fidelity: "verdict B (reference drift); no bound value or margin changed; downsample check now judged on its own 8-state protocol (reproduces recorded floors to 6 decimals)"}
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
     pixels_changed: no
     semantic_followup: none
-    review: {reviewer: "opus (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: diagnosis sound (3.12 arm reproduces frozen digest_official bit-exactly; 3.11 arm differs), causality closed. Required: drop mujoco_warp/warp from reference_versions (our renderer, would mask own regressions); align certify.py precedence with env.py; hoist protocol draw out of try; digest protocol states; fix findings overstatements (ours 3.11 vs 3.12 mean 0.00018 not 0; skybox moves 0.01-0.05). e5309bc (downsample protocol) classified a CONTRACT change: judged states change for 18 configs, Walker FAIL->PASS, 4/18 re-measured -> held for Sami."}
-    slurm_jobs: [6343431, 6343518, 6343699, 6344899]
+    review: {reviewer: "opus (independent)", verdict: "APPROVED after changes (795036f, d5bea6d, 8de054d, 5fefffe, 48a556a; record re-run job 6346226 on gpu2105: 3.11 PASS x3 + Walker gate FAIL on corpus downsample only; 3.12 BLOCKED x4). Original: APPROVE-WITH-CHANGES 2026-09-13: diagnosis sound (3.12 arm reproduces frozen digest_official bit-exactly; 3.11 arm differs), causality closed. Required: drop mujoco_warp/warp from reference_versions (our renderer, would mask own regressions); align certify.py precedence with env.py; hoist protocol draw out of try; digest protocol states; fix findings overstatements (ours 3.11 vs 3.12 mean 0.00018 not 0; skybox moves 0.01-0.05). e5309bc (downsample protocol) classified a CONTRACT change: judged states change for 18 configs, Walker FAIL->PASS, 4/18 re-measured -> held for Sami."}
+    slurm_jobs: [6343431, 6343518, 6343699, 6344899, 6346226]
     notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\", "TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup."]
   - workstream: reacher-correctness
     brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
