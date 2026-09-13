@@ -89,7 +89,10 @@ def _reference(verts, colours, nvs, n_gfx):
             G.polygon(cv, v, None, None, bi, 512, True)
         else:
             cv.paint(_draw_poly_mask(v, cv.ys, cv.xs))
-    return torch.flip(cv.buf, dims=(1,))
+    # ``rgb()`` and not ``flip(cv.buf)``: the canvas is planar ``(3,B,H,W)`` and the flip that turns
+    # the pre-flip surface into the caller's frame is its job, not this test's. Reaching past it
+    # coupled the test to a storage layout it does not test.
+    return cv.rgb()
 
 
 def _random_polys(rng, B, P, dev, radius=40.0):
