@@ -5,6 +5,8 @@ baseline_branch: sami/pre-step6-baseline
 integration_branch: step6/integration
 integration_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
 oscar_capacity_note: condo QOS cs-3090-gcondo saturated by simclr_cifar10 (cpu 240/240, gpu 30/32); Step-6 GPU jobs routed to gpu/norm-gpu; HOME quota 100% full, all caches on scratch
+incident_log:
+  - "2026-09-13 ~19:00: API monthly spend limit terminated 5 agents mid-work (raster2d Commit B, gfxdraw primitives, raycast3d 2a, cpu-3d start, reacher reviewer start). Plan upgraded; all resumed with context and uncommitted work intact."
 workstreams:
   - workstream: texture-fidelity
     brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
@@ -15,7 +17,7 @@ workstreams:
     head_sha: f484ab9d7492f7b37dd9f41fed53987bdd19c315
     agent_model: fable
     wave: wave1
-    status: review (TEXTURE-2 PATCH: provenance fields, certifier blocked-on-mismatch, certify311/312 record, downsample protocol; merge held for Sami policy sign-off)
+    status: implementation (applying review changes; e5309bc to be reordered last and held)
     authorization: diagnosis
     goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
     affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
@@ -24,7 +26,7 @@ workstreams:
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
     pixels_changed: no
     semantic_followup: none
-    review: {reviewer: "opus (independent, spawned 2026-09-13)", verdict: null}
+    review: {reviewer: "opus (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: diagnosis sound (3.12 arm reproduces frozen digest_official bit-exactly; 3.11 arm differs), causality closed. Required: drop mujoco_warp/warp from reference_versions (our renderer, would mask own regressions); align certify.py precedence with env.py; hoist protocol draw out of try; digest protocol states; fix findings overstatements (ours 3.11 vs 3.12 mean 0.00018 not 0; skybox moves 0.01-0.05). e5309bc (downsample protocol) classified a CONTRACT change: judged states change for 18 configs, Walker FAIL->PASS, 4/18 re-measured -> held for Sami."}
     slurm_jobs: [6343431, 6343518, 6343699, 6344899]
     notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\", "TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup."]
   - workstream: reacher-correctness
