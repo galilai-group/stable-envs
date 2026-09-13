@@ -33,21 +33,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-reacher-correctness
     oscar_copy: /oscar/scratch/sboughan/se6/reacher-correctness
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: af81aa2cd01cbafbe175d4700ae4d540fb580d80
     agent_model: opus
     wave: wave1
-    status: implementation
+    status: review (PATCH delivered: visibility as per-row Discrete style leaf in dmcontrol.py; task-object presence guard in conformance.py)
     authorization: correctness
     goal: "correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear"
-    affected_configs: ["DMCReacherEasy", "DMCReacherHard"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
+    affected_configs: ["DMCReacherEasy","DMCReacherHard","DMCFingerTurnEasy","DMCFingerTurnHard"]  # style_dim 17->18; other 12 DMC cells unchanged incl. declaration
+    bottleneck: {measured: "n/a (correctness)", hypothesis: null}
+    correctness: {targeted_tests: "GPU: test_conformance 72 pass/26 skip, test_reproducibility 90/25, test_fast_paths 23/10 (jobs 6344667, 6344904); unit 507 pass, 2 pre-existing failures; 7 new synthetic guard tests", step4_replay: "dmc shard: 16/16 cells pixel-identical baseline vs branch; 11 parity cells reproduce frozen digest_ours exactly; 4 affected cells declaration_changed=True", gate_a: "PASS (unchanged)", fidelity: "new guard check_task_object_visibility, bound TASK_OBJECT_PRESENCE_MARGIN=0.50 (re-derived after first fraction-based bound failed on GPU at 0.2422); interior metric untouched"}
     performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
+    pixels_changed: no (default appearance, all 16 DMC cells)
+    semantic_followup: none (Step-5 DINO-WM arm frames byte-identical; offscreen mode preserved)
+    review: {reviewer: "fable (independent, spawned 2026-09-13)", verdict: null}
+    slurm_jobs: [6344667, 6344904]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "PATCH 2026-09-13. Escalate to Sami: default stays target-VISIBLE (dm_control reference), SWM render_target=0 reproduced via knob; folding TASK_OBJECT_PRESENCE_MARGIN into frozen spec is a Step-8 call. NEW FINDING (not this branch): 4 trackcom cells (Cheetah/Hopper/Humanoid/Walker) do not reproduce frozen Step-4 digests at BASELINE (mean_pixel off 0.16-0.61/255, same mujoco/warp/driver/GPU, different venv+node) -> narrow ticket MJWARP-1 queued. MJWarp cannot carry per-row visibility (shader ignores alpha; hidden at context creation)."]
   - workstream: raycast3d
     brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
     branch: step6/raycast3d
