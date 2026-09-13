@@ -20,14 +20,22 @@ import numpy as np
 import pytest
 
 try:
-    # NOT ``importorskip``: this module needs dm_control AND a usable offscreen GL context, and an
-    # unusable one surfaces as RuntimeError from mujoco's gl_context rather than as ImportError --
-    # which importorskip does not catch, so the whole file errored at collection on a laptop.
     import stable_envs.envs.dmcontrol as D
-except Exception as exc:                                                # noqa: BLE001
-    pytest.skip(f"stable_envs.envs.dmcontrol is not importable here "
-                f"({type(exc).__name__}: {str(exc)[:120]}); this file is about its tendon "
+except ImportError as exc:                       # dm_control / mujoco absent: legitimately skippable
+    pytest.skip(f"stable_envs.envs.dmcontrol needs dm_control ({exc}); this file is about its tendon "
                 f"arithmetic and has nothing to assert without it", allow_module_level=True)
+except RuntimeError as exc:
+    # A machine with no usable offscreen GL raises RuntimeError out of mujoco's gl_context at import
+    # (``invalid value for environment variable MUJOCO_GL: egl`` on a laptop), which importorskip does
+    # not catch -- so the whole file used to ERROR at collection there.
+    #
+    # NARROW ON PURPOSE. Catching every exception would mean that a dmcontrol.py broken by an edit --
+    # a SyntaxError, a NameError, a bad module-level constant -- SKIPS the bit-identity tests instead
+    # of failing them, and these are the tests standing between a one-ulp change in a capsule pose and
+    # a silently different picture. Anything that is not a missing GL context must reach the runner.
+    if "MUJOCO_GL" not in str(exc) and "GL" not in str(exc):
+        raise
+    pytest.skip(f"no usable offscreen GL context here ({exc})", allow_module_level=True)
 
 
 def _catenary_reference(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:

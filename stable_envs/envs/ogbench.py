@@ -58,6 +58,7 @@ observations, not a limitation introduced here.
 from __future__ import annotations
 
 import os
+from collections import OrderedDict
 
 import numpy as np
 import torch
@@ -112,7 +113,23 @@ CELLS = (
     + [("humanoid", m, d) for m in ("medium", "large", "giant") for d in ("navigate", "stitch")]
 )
 
-_SCENE_CACHE: dict = {}
+#: Baked scenes, LRU. ``OrderedDict`` and not ``dict``, and evicting ONE entry and not all of them,
+#: for a reason that is a correctness reason and not a tidiness one.
+#:
+#: The wholesale ``clear()`` this replaces meant that crossing the cap threw away the key the caller
+#: was actively rendering, so the very next ``render`` of the SAME appearance re-baked it. That is
+#: free when a bake is a pure function of (scene, style) and it is not free here: measured on a 3090,
+#: ``mujoco.Renderer.render()`` returns two different plates for the same scene -- three bakes of one
+#: key with nothing in between give two distinct images, 1/255 apart on four pixels
+#: (``scratch/step6/raycast3d/bake_probe.py``). So a cache clear could change the frame a config was
+#: already producing, which is how ``check_style_is_state`` came to observe 1 on
+#: ``AntmazeTeleportExplore`` and ``HumanoidmazeMediumNavigate`` in Step 4 and 0 on nine cells that
+#: carry the identical defect: the difference between them was where the 256th insert landed.
+#:
+#: LRU does NOT make the bake deterministic -- a genuinely cold key still lands on either image, and
+#: the fix for that is above this module (see the findings note). What it removes is cache pressure
+#: as the trigger: a key that is being used is never the one evicted.
+_SCENE_CACHE: "OrderedDict" = OrderedDict()
 _SCENE_CACHE_MAX = 256      # a plate is 150 kB and a depth buffer 200 kB; re-baking costs far more
 
 
@@ -378,11 +395,12 @@ class OGBenchMaze(StableEnv):
         key = self._plate_key(size, variation)
         hit = _SCENE_CACHE.get(key)
         if hit is not None:
+            _SCENE_CACHE.move_to_end(key)          # a key in use is never the one evicted
             return hit
-        if len(_SCENE_CACHE) >= _SCENE_CACHE_MAX:
-            _SCENE_CACHE.clear()
         sc = self._bake(size, variation)
         _SCENE_CACHE[key] = sc
+        while len(_SCENE_CACHE) > _SCENE_CACHE_MAX:
+            _SCENE_CACHE.popitem(last=False)       # one entry, the least recently used, not all of them
         return sc
 
     def _bake(self, size: int, variation) -> _Scene:
