@@ -1,0 +1,1311 @@
+{
+ "workstream": "step6/fetch-gpu",
+ "env": "FetchReach",
+ "device": "cuda",
+ "what": "stage-resolved wall partition + device kernel partition of the public render path",
+ "baseline_commit": "",
+ "host": "gpu2116.oscar.ccv.brown.edu",
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "cpu": "x86_64",
+ "gpu_total_gb": 25.3,
+ "sm_count": 82,
+ "max_threads_per_sm": 1536,
+ "versions": {
+  "torch": "2.14.0+cu126",
+  "triton": "3.8.0",
+  "numpy": "2.5.3",
+  "mujoco": "3.11.0",
+  "mujoco-warp": "3.11.0",
+  "warp-lang": "1.17.0",
+  "gymnasium": "1.3.0",
+  "gymnasium-robotics": "1.4.2"
+ },
+ "slurm_job": "6343470",
+ "mjw_chunk": 256,
+ "batches": {
+  "1": {
+   "batch": 1,
+   "set_state_ms": {
+    "ms_median": 0.14284799993038177,
+    "ms_min": 0.13923199474811554,
+    "ms_max": 0.159743994474411,
+    "ms_stdev": 0.006662157405167999,
+    "samples": 10
+   },
+   "render_ms": {
+    "ms_median": 1.823743999004364,
+    "ms_min": 1.789952039718628,
+    "ms_max": 1.8585599660873413,
+    "ms_stdev": 0.018986796532813554,
+    "samples": 10
+   },
+   "fps": 548.3225718883405,
+   "stage_ms": {
+    "camera_batch": 0.3528,
+    "upload": 0.3485,
+    "warp_sync": 0.3474,
+    "gap:enter->plate": 0.3176,
+    "gap:warp_sync->return": 0.2174,
+    "gap:plate->camera_batch": 0.0802,
+    "plate": 0.0568,
+    "torch_sync": 0.0229,
+    "tail_drain(after return)": 0.0228,
+    "graph_launch": 0.015,
+    "gap:context->upload": 0.0094,
+    "gap:camera_batch->context": 0.005,
+    "context": 0.0036,
+    "gap:upload->torch_sync": 0.0019,
+    "gap:torch_sync->graph_launch": 0.0009,
+    "gap:graph_launch->warp_sync": 0.0007
+   },
+   "stage_calls": {
+    "plate": 1,
+    "camera_batch": 1,
+    "context": 1,
+    "upload": 1,
+    "torch_sync": 1,
+    "graph_launch": 1,
+    "warp_sync": 1
+   },
+   "stage_total_ms": 1.8233,
+   "stage_ms_per_frame": {
+    "camera_batch": 0.3528,
+    "upload": 0.3485,
+    "warp_sync": 0.3474,
+    "gap:enter->plate": 0.3176,
+    "gap:warp_sync->return": 0.2174,
+    "gap:plate->camera_batch": 0.0802,
+    "plate": 0.0568,
+    "torch_sync": 0.0229,
+    "tail_drain(after return)": 0.0228,
+    "graph_launch": 0.015,
+    "gap:context->upload": 0.0094,
+    "gap:camera_batch->context": 0.005,
+    "context": 0.0036,
+    "gap:upload->torch_sync": 0.0019,
+    "gap:torch_sync->graph_launch": 0.0009,
+    "gap:graph_launch->warp_sync": 0.0007
+   },
+   "device": {
+    "kernel_buckets": {
+     "mjwarp_raytrace_megakernel": {
+      "calls": 1,
+      "device_us": 286.722,
+      "device_pct": 71.43957005000635
+     },
+     "mjwarp_scene_update": {
+      "calls": 7,
+      "device_us": 53.153000000000006,
+      "device_pct": 13.24358600619411
+     },
+     "torch_composite_output": {
+      "calls": 8,
+      "device_us": 34.626,
+      "device_pct": 8.627404079741073
+     },
+     "kernel_other": {
+      "calls": 3,
+      "device_us": 5.728,
+      "device_pct": 1.4271868124749283
+     }
+    },
+    "memcpy": {
+     "Memcpy DtoD (Device -> Device)": {
+      "calls": 10,
+      "bytes": 1382548,
+      "device_us": 15.743999999999996
+     },
+     "Memset (Unknown)": {
+      "calls": 1,
+      "bytes": 156,
+      "device_us": 0.48
+     },
+     "Memcpy HtoD (Pageable -> Device)": {
+      "calls": 4,
+      "bytes": 60,
+      "device_us": 1.952
+     },
+     "Memcpy DtoH (Device -> Pageable)": {
+      "calls": 2,
+      "bytes": 52,
+      "device_us": 2.944
+     }
+    },
+    "total_device_us": 401.349,
+    "kernel_launches": 19,
+    "top_kernels": [
+     {
+      "kernel": "render__locals___render_megakernel_cbc9e69b_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 286.722
+     },
+     {
+      "kernel": "_kinematics_branch_95f8028e_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 26.176
+     },
+     {
+      "kernel": "wp::bvh_refit_kernel(int, int const*, int*, int const*, wp::BVHPackedNodeHalf*, wp::BVHPackedNodeHalf*, wp::ve",
+      "calls": 1,
+      "device_us": 9.697
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<a",
+      "calls": 1,
+      "device_us": 8.577
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+      "calls": 1,
+      "device_us": 6.432
+     },
+     {
+      "kernel": "void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueTy",
+      "calls": 2,
+      "device_us": 5.312
+     },
+     {
+      "kernel": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+      "calls": 1,
+      "device_us": 4.704
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSelf_a",
+      "calls": 1,
+      "device_us": 4.544
+     },
+     {
+      "kernel": "_compute_bvh_bounds_a4bfd372_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 4.352
+     },
+     {
+      "kernel": "_geom_local_to_global_e28b714c_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 3.712
+     },
+     {
+      "kernel": "_light_local_to_global_1966b84b_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 3.584
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel_im",
+      "calls": 1,
+      "device_us": 3.264
+     }
+    ]
+   },
+   "syncs_per_render": {
+    "Tensor.cpu": 2,
+    "Tensor.numpy": 2,
+    "_context": 1,
+    "_upload": 1,
+    "torch.cuda.synchronize": 1,
+    "warp.capture_launch": 1,
+    "warp.synchronize": 1
+   },
+   "upload_bytes": {
+    "dynamic_state_bytes_per_chunk": 72,
+    "static_appearance_bytes_per_chunk": 600,
+    "nq": 15,
+    "nmat": 35,
+    "nlight": 1,
+    "ngeom": 24,
+    "nbody": 33
+   },
+   "chunks": 1,
+   "peak_vram_mib": 3.74072265625,
+   "peak_vram_reserved_mib": 4.0
+  },
+  "16": {
+   "batch": 16,
+   "set_state_ms": {
+    "ms_median": 0.16657599806785583,
+    "ms_min": 0.16278399527072906,
+    "ms_max": 0.17801600694656372,
+    "ms_stdev": 0.004679759755429185,
+    "samples": 10
+   },
+   "render_ms": {
+    "ms_median": 5.0467681884765625,
+    "ms_min": 5.028768062591553,
+    "ms_max": 5.065120220184326,
+    "ms_stdev": 0.010217441308477467,
+    "samples": 10
+   },
+   "fps": 3170.345734629397,
+   "stage_ms": {
+    "warp_sync": 3.3192,
+    "upload": 0.4161,
+    "camera_batch": 0.3913,
+    "gap:enter->plate": 0.3675,
+    "gap:warp_sync->return": 0.2595,
+    "gap:plate->camera_batch": 0.0947,
+    "tail_drain(after return)": 0.0678,
+    "plate": 0.0553,
+    "torch_sync": 0.0254,
+    "graph_launch": 0.0207,
+    "gap:context->upload": 0.0106,
+    "gap:camera_batch->context": 0.0056,
+    "context": 0.0036,
+    "gap:upload->torch_sync": 0.0019,
+    "gap:torch_sync->graph_launch": 0.0009,
+    "gap:graph_launch->warp_sync": 0.0007
+   },
+   "stage_calls": {
+    "plate": 1,
+    "camera_batch": 1,
+    "context": 1,
+    "upload": 1,
+    "torch_sync": 1,
+    "graph_launch": 1,
+    "warp_sync": 1
+   },
+   "stage_total_ms": 5.0495,
+   "stage_ms_per_frame": {
+    "warp_sync": 0.20745,
+    "upload": 0.02601,
+    "camera_batch": 0.02446,
+    "gap:enter->plate": 0.02297,
+    "gap:warp_sync->return": 0.01622,
+    "gap:plate->camera_batch": 0.00592,
+    "tail_drain(after return)": 0.00424,
+    "plate": 0.00346,
+    "torch_sync": 0.00159,
+    "graph_launch": 0.00129,
+    "gap:context->upload": 0.00066,
+    "gap:camera_batch->context": 0.00035,
+    "context": 0.00022,
+    "gap:upload->torch_sync": 0.00012,
+    "gap:torch_sync->graph_launch": 6e-05,
+    "gap:graph_launch->warp_sync": 4e-05
+   },
+   "device": {
+    "kernel_buckets": {
+     "mjwarp_raytrace_megakernel": {
+      "calls": 1,
+      "device_us": 3251.343,
+      "device_pct": 89.54497170308356
+     },
+     "torch_composite_output": {
+      "calls": 15,
+      "device_us": 240.86599999999999,
+      "device_pct": 6.633670810565027
+     },
+     "mjwarp_scene_update": {
+      "calls": 7,
+      "device_us": 60.864000000000004,
+      "device_pct": 1.67625044719566
+     },
+     "kernel_other": {
+      "calls": 3,
+      "device_us": 40.192,
+      "device_pct": 1.1069245855298364
+     }
+    },
+    "memcpy": {
+     "Memcpy DtoD (Device -> Device)": {
+      "calls": 3,
+      "bytes": 11750592,
+      "device_us": 32.672
+     },
+     "Memset (Unknown)": {
+      "calls": 1,
+      "bytes": 2556,
+      "device_us": 0.608
+     },
+     "Memcpy DtoH (Device -> Pageable)": {
+      "calls": 2,
+      "bytes": 832,
+      "device_us": 2.432
+     },
+     "Memcpy HtoD (Pageable -> Device)": {
+      "calls": 4,
+      "bytes": 600,
+      "device_us": 1.984
+     }
+    },
+    "total_device_us": 3630.961,
+    "kernel_launches": 26,
+    "top_kernels": [
+     {
+      "kernel": "render__locals___render_megakernel_cbc9e69b_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 3251.343
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<a",
+      "calls": 1,
+      "device_us": 80.256
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+      "calls": 1,
+      "device_us": 55.009
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSelf_a",
+      "calls": 1,
+      "device_us": 54.752
+     },
+     {
+      "kernel": "void memtile_value_kernel<long>(long*, long, unsigned long)",
+      "calls": 1,
+      "device_us": 33.728
+     },
+     {
+      "kernel": "_kinematics_branch_95f8028e_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 27.328
+     },
+     {
+      "kernel": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+      "calls": 1,
+      "device_us": 26.879
+     },
+     {
+      "kernel": "wp::bvh_refit_kernel(int, int const*, int*, int const*, wp::BVHPackedNodeHalf*, wp::BVHPackedNodeHalf*, wp::ve",
+      "calls": 1,
+      "device_us": 15.008
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+      "calls": 7,
+      "device_us": 12.384999999999998
+     },
+     {
+      "kernel": "void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native::(anonymous namespace)::OpaqueType<4u>,",
+      "calls": 2,
+      "device_us": 5.984
+     },
+     {
+      "kernel": "_geom_local_to_global_e28b714c_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 4.64
+     },
+     {
+      "kernel": "_compute_bvh_bounds_a4bfd372_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 4.448
+     }
+    ]
+   },
+   "syncs_per_render": {
+    "Tensor.cpu": 2,
+    "Tensor.numpy": 2,
+    "_context": 1,
+    "_upload": 1,
+    "torch.cuda.synchronize": 1,
+    "warp.capture_launch": 1,
+    "warp.synchronize": 1
+   },
+   "upload_bytes": {
+    "dynamic_state_bytes_per_chunk": 1152,
+    "static_appearance_bytes_per_chunk": 9600,
+    "nq": 15,
+    "nmat": 35,
+    "nlight": 1,
+    "ngeom": 24,
+    "nbody": 33
+   },
+   "chunks": 1,
+   "peak_vram_mib": 39.998046875,
+   "peak_vram_reserved_mib": 62.0
+  },
+  "64": {
+   "batch": 64,
+   "set_state_ms": {
+    "ms_median": 0.16657599806785583,
+    "ms_min": 0.16476799547672272,
+    "ms_max": 0.18396799266338348,
+    "ms_stdev": 0.005903236250278148,
+    "samples": 10
+   },
+   "render_ms": {
+    "ms_median": 13.543424129486084,
+    "ms_min": 13.512191772460938,
+    "ms_max": 13.57420825958252,
+    "ms_stdev": 0.019628123192260302,
+    "samples": 10
+   },
+   "fps": 4725.540556664862,
+   "stage_ms": {
+    "warp_sync": 11.1489,
+    "tail_drain(after return)": 0.6787,
+    "camera_batch": 0.4151,
+    "upload": 0.4077,
+    "gap:enter->plate": 0.4073,
+    "gap:warp_sync->return": 0.2623,
+    "gap:plate->camera_batch": 0.0948,
+    "plate": 0.0557,
+    "torch_sync": 0.0247,
+    "graph_launch": 0.0169,
+    "gap:context->upload": 0.0105,
+    "gap:camera_batch->context": 0.0057,
+    "context": 0.0036,
+    "gap:upload->torch_sync": 0.0019,
+    "gap:torch_sync->graph_launch": 0.001,
+    "gap:graph_launch->warp_sync": 0.0007
+   },
+   "stage_calls": {
+    "plate": 1,
+    "camera_batch": 1,
+    "context": 1,
+    "upload": 1,
+    "torch_sync": 1,
+    "graph_launch": 1,
+    "warp_sync": 1
+   },
+   "stage_total_ms": 13.5434,
+   "stage_ms_per_frame": {
+    "warp_sync": 0.1742,
+    "tail_drain(after return)": 0.0106,
+    "camera_batch": 0.00649,
+    "upload": 0.00637,
+    "gap:enter->plate": 0.00636,
+    "gap:warp_sync->return": 0.0041,
+    "gap:plate->camera_batch": 0.00148,
+    "plate": 0.00087,
+    "torch_sync": 0.00039,
+    "graph_launch": 0.00026,
+    "gap:context->upload": 0.00016,
+    "gap:camera_batch->context": 9e-05,
+    "context": 6e-05,
+    "gap:upload->torch_sync": 3e-05,
+    "gap:torch_sync->graph_launch": 2e-05,
+    "gap:graph_launch->warp_sync": 1e-05
+   },
+   "device": {
+    "kernel_buckets": {
+     "mjwarp_raytrace_megakernel": {
+      "calls": 1,
+      "device_us": 11040.491,
+      "device_pct": 90.9496816902708
+     },
+     "torch_composite_output": {
+      "calls": 15,
+      "device_us": 785.858,
+      "device_pct": 6.47376416082879
+     },
+     "kernel_other": {
+      "calls": 3,
+      "device_us": 138.306,
+      "device_pct": 1.1393412372560778
+     },
+     "mjwarp_scene_update": {
+      "calls": 7,
+      "device_us": 58.367000000000004,
+      "device_pct": 0.48081739038744165
+     }
+    },
+    "memcpy": {
+     "Memcpy DtoD (Device -> Device)": {
+      "calls": 3,
+      "bytes": 44928768,
+      "device_us": 110.593
+     },
+     "Memset (Device)": {
+      "calls": 1,
+      "bytes": 10236,
+      "device_us": 1.12
+     },
+     "Memcpy DtoH (Device -> Pageable)": {
+      "calls": 2,
+      "bytes": 3328,
+      "device_us": 2.6239999999999997
+     },
+     "Memcpy HtoD (Pageable -> Device)": {
+      "calls": 4,
+      "bytes": 2328,
+      "device_us": 1.761
+     }
+    },
+    "total_device_us": 12139.12,
+    "kernel_launches": 26,
+    "top_kernels": [
+     {
+      "kernel": "render__locals___render_megakernel_cbc9e69b_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 11040.491
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<a",
+      "calls": 1,
+      "device_us": 275.137
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSelf_a",
+      "calls": 1,
+      "device_us": 208.897
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+      "calls": 1,
+      "device_us": 188.352
+     },
+     {
+      "kernel": "void memtile_value_kernel<long>(long*, long, unsigned long)",
+      "calls": 1,
+      "device_us": 132.8
+     },
+     {
+      "kernel": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+      "calls": 1,
+      "device_us": 90.369
+     },
+     {
+      "kernel": "_kinematics_branch_95f8028e_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 24.768
+     },
+     {
+      "kernel": "wp::bvh_refit_kernel(int, int const*, int*, int const*, wp::BVHPackedNodeHalf*, wp::BVHPackedNodeHalf*, wp::ve",
+      "calls": 1,
+      "device_us": 15.297
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+      "calls": 7,
+      "device_us": 12.030999999999999
+     },
+     {
+      "kernel": "void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native::(anonymous namespace)::OpaqueType<4u>,",
+      "calls": 2,
+      "device_us": 5.056
+     },
+     {
+      "kernel": "_geom_local_to_global_e28b714c_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 4.32
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel_im",
+      "calls": 1,
+      "device_us": 4.128
+     }
+    ]
+   },
+   "syncs_per_render": {
+    "Tensor.cpu": 2,
+    "Tensor.numpy": 2,
+    "_context": 1,
+    "_upload": 1,
+    "torch.cuda.synchronize": 1,
+    "warp.capture_launch": 1,
+    "warp.synchronize": 1
+   },
+   "upload_bytes": {
+    "dynamic_state_bytes_per_chunk": 4608,
+    "static_appearance_bytes_per_chunk": 38400,
+    "nq": 15,
+    "nmat": 35,
+    "nlight": 1,
+    "ngeom": 24,
+    "nbody": 33
+   },
+   "chunks": 1,
+   "peak_vram_mib": 156.0234375,
+   "peak_vram_reserved_mib": 164.0
+  },
+  "256": {
+   "batch": 256,
+   "set_state_ms": {
+    "ms_median": 0.17820800095796585,
+    "ms_min": 0.17472000420093536,
+    "ms_max": 0.19568000733852386,
+    "ms_stdev": 0.00603658334914844,
+    "samples": 10
+   },
+   "render_ms": {
+    "ms_median": 49.74929618835449,
+    "ms_min": 49.400638580322266,
+    "ms_max": 49.81977462768555,
+    "ms_stdev": 0.14491549759646807,
+    "samples": 10
+   },
+   "fps": 5145.801440703104,
+   "stage_ms": {
+    "warp_sync": 44.4877,
+    "tail_drain(after return)": 3.2245,
+    "gap:enter->plate": 0.67,
+    "camera_batch": 0.5141,
+    "upload": 0.4191,
+    "gap:warp_sync->return": 0.2698,
+    "gap:plate->camera_batch": 0.0967,
+    "plate": 0.0562,
+    "torch_sync": 0.0249,
+    "graph_launch": 0.017,
+    "gap:context->upload": 0.0108,
+    "gap:camera_batch->context": 0.0058,
+    "context": 0.0037,
+    "gap:upload->torch_sync": 0.0018,
+    "gap:torch_sync->graph_launch": 0.001,
+    "gap:graph_launch->warp_sync": 0.0007
+   },
+   "stage_calls": {
+    "plate": 1,
+    "camera_batch": 1,
+    "context": 1,
+    "upload": 1,
+    "torch_sync": 1,
+    "graph_launch": 1,
+    "warp_sync": 1
+   },
+   "stage_total_ms": 49.8104,
+   "stage_ms_per_frame": {
+    "warp_sync": 0.17378,
+    "tail_drain(after return)": 0.0126,
+    "gap:enter->plate": 0.00262,
+    "camera_batch": 0.00201,
+    "upload": 0.00164,
+    "gap:warp_sync->return": 0.00105,
+    "gap:plate->camera_batch": 0.00038,
+    "plate": 0.00022,
+    "torch_sync": 0.0001,
+    "graph_launch": 7e-05,
+    "gap:context->upload": 4e-05,
+    "gap:camera_batch->context": 2e-05,
+    "context": 1e-05,
+    "gap:upload->torch_sync": 1e-05,
+    "gap:torch_sync->graph_launch": 0.0,
+    "gap:graph_launch->warp_sync": 0.0
+   },
+   "device": {
+    "kernel_buckets": {
+     "mjwarp_raytrace_megakernel": {
+      "calls": 1,
+      "device_us": 44194.322,
+      "device_pct": 91.52200035640182
+     },
+     "torch_composite_output": {
+      "calls": 15,
+      "device_us": 3065.357,
+      "device_pct": 6.348046349630588
+     },
+     "kernel_other": {
+      "calls": 3,
+      "device_us": 535.49,
+      "device_pct": 1.108945985659642
+     },
+     "mjwarp_scene_update": {
+      "calls": 7,
+      "device_us": 62.62400000000001,
+      "device_pct": 0.12968801173868688
+     }
+    },
+    "memcpy": {
+     "Memcpy DtoD (Device -> Device)": {
+      "calls": 3,
+      "bytes": 177641472,
+      "device_us": 424.418
+     },
+     "Memset (Device)": {
+      "calls": 1,
+      "bytes": 40956,
+      "device_us": 1.12
+     },
+     "Memcpy DtoH (Device -> Pageable)": {
+      "calls": 2,
+      "bytes": 13312,
+      "device_us": 2.752
+     },
+     "Memcpy HtoD (Pageable -> Device)": {
+      "calls": 4,
+      "bytes": 9240,
+      "device_us": 2.112
+     }
+    },
+    "total_device_us": 48288.195,
+    "kernel_launches": 26,
+    "top_kernels": [
+     {
+      "kernel": "render__locals___render_megakernel_cbc9e69b_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 44194.322
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<a",
+      "calls": 1,
+      "device_us": 1107.364
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSelf_a",
+      "calls": 1,
+      "device_us": 828.804
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+      "calls": 1,
+      "device_us": 759.971
+     },
+     {
+      "kernel": "void memtile_value_kernel<long>(long*, long, unsigned long)",
+      "calls": 1,
+      "device_us": 529.922
+     },
+     {
+      "kernel": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+      "calls": 1,
+      "device_us": 345.697
+     },
+     {
+      "kernel": "_kinematics_branch_95f8028e_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 25.984
+     },
+     {
+      "kernel": "wp::bvh_refit_kernel(int, int const*, int*, int const*, wp::BVHPackedNodeHalf*, wp::BVHPackedNodeHalf*, wp::ve",
+      "calls": 1,
+      "device_us": 17.824
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+      "calls": 7,
+      "device_us": 12.225
+     },
+     {
+      "kernel": "void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native::(anonymous namespace)::OpaqueType<4u>,",
+      "calls": 2,
+      "device_us": 5.216
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel_im",
+      "calls": 1,
+      "device_us": 4.256
+     },
+     {
+      "kernel": "_geom_local_to_global_e28b714c_cuda_kernel_forward",
+      "calls": 1,
+      "device_us": 4.096
+     }
+    ]
+   },
+   "syncs_per_render": {
+    "Tensor.cpu": 2,
+    "Tensor.numpy": 2,
+    "_context": 1,
+    "_upload": 1,
+    "torch.cuda.synchronize": 1,
+    "warp.capture_launch": 1,
+    "warp.synchronize": 1
+   },
+   "upload_bytes": {
+    "dynamic_state_bytes_per_chunk": 18432,
+    "static_appearance_bytes_per_chunk": 153600,
+    "nq": 15,
+    "nmat": 35,
+    "nlight": 1,
+    "ngeom": 24,
+    "nbody": 33
+   },
+   "chunks": 1,
+   "peak_vram_mib": 621.13037109375,
+   "peak_vram_reserved_mib": 626.0
+  },
+  "1024": {
+   "batch": 1024,
+   "set_state_ms": {
+    "ms_median": 0.23080000281333923,
+    "ms_min": 0.21916800737380981,
+    "ms_max": 1.0202879905700684,
+    "ms_stdev": 0.3520741490973427,
+    "samples": 10
+   },
+   "render_ms": {
+    "ms_median": 195.74724578857422,
+    "ms_min": 195.679931640625,
+    "ms_max": 195.8506622314453,
+    "ms_stdev": 0.054258898985244296,
+    "samples": 10
+   },
+   "fps": 5231.235800405683,
+   "stage_ms": {
+    "warp_sync": 177.9607,
+    "torch_sync": 8.6062,
+    "tail_drain(after return)": 3.2201,
+    "gap:enter->plate": 2.0053,
+    "upload": 1.6155,
+    "camera_batch": 0.9946,
+    "gap:warp_sync->context": 0.7612,
+    "gap:warp_sync->return": 0.2746,
+    "gap:plate->camera_batch": 0.0997,
+    "graph_launch": 0.0661,
+    "plate": 0.057,
+    "gap:context->upload": 0.0284,
+    "context": 0.0164,
+    "gap:upload->torch_sync": 0.007,
+    "gap:camera_batch->context": 0.0064,
+    "gap:torch_sync->graph_launch": 0.0039,
+    "gap:graph_launch->warp_sync": 0.0028
+   },
+   "stage_calls": {
+    "plate": 1,
+    "camera_batch": 1,
+    "context": 4,
+    "upload": 4,
+    "torch_sync": 4,
+    "graph_launch": 4,
+    "warp_sync": 4
+   },
+   "stage_total_ms": 195.7397,
+   "stage_ms_per_frame": {
+    "warp_sync": 0.17379,
+    "torch_sync": 0.0084,
+    "tail_drain(after return)": 0.00314,
+    "gap:enter->plate": 0.00196,
+    "upload": 0.00158,
+    "camera_batch": 0.00097,
+    "gap:warp_sync->context": 0.00074,
+    "gap:warp_sync->return": 0.00027,
+    "gap:plate->camera_batch": 0.0001,
+    "graph_launch": 6e-05,
+    "plate": 6e-05,
+    "gap:context->upload": 3e-05,
+    "context": 2e-05,
+    "gap:upload->torch_sync": 1e-05,
+    "gap:camera_batch->context": 1e-05,
+    "gap:torch_sync->graph_launch": 0.0,
+    "gap:graph_launch->warp_sync": 0.0
+   },
+   "device": {
+    "kernel_buckets": {
+     "mjwarp_raytrace_megakernel": {
+      "calls": 4,
+      "device_us": 176686.585,
+      "device_pct": 91.52463670274447
+     },
+     "torch_composite_output": {
+      "calls": 54,
+      "device_us": 12265.548999999994,
+      "device_pct": 6.353622807213747
+     },
+     "kernel_other": {
+      "calls": 12,
+      "device_us": 2140.2960000000003,
+      "device_pct": 1.1086852679638197
+     },
+     "mjwarp_scene_update": {
+      "calls": 28,
+      "device_us": 250.78299999999996,
+      "device_pct": 0.12990699303076328
+     }
+    },
+    "memcpy": {
+     "Memcpy DtoD (Device -> Device)": {
+      "calls": 9,
+      "bytes": 708492288,
+      "device_us": 1690.15
+     },
+     "Memset (Device)": {
+      "calls": 4,
+      "bytes": 163824,
+      "device_us": 4.48
+     },
+     "Memcpy DtoH (Device -> Pageable)": {
+      "calls": 2,
+      "bytes": 53248,
+      "device_us": 4.256
+     },
+     "Memcpy HtoD (Pageable -> Device)": {
+      "calls": 7,
+      "bytes": 36960,
+      "device_us": 6.0150000000000015
+     }
+    },
+    "total_device_us": 193048.114,
+    "kernel_launches": 98,
+    "top_kernels": [
+     {
+      "kernel": "render__locals___render_megakernel_cbc9e69b_cuda_kernel_forward",
+      "calls": 4,
+      "device_us": 176686.585
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<a",
+      "calls": 4,
+      "device_us": 4433.424
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSelf_a",
+      "calls": 4,
+      "device_us": 3322.252
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+      "calls": 4,
+      "device_us": 3042.604
+     },
+     {
+      "kernel": "void memtile_value_kernel<long>(long*, long, unsigned long)",
+      "calls": 4,
+      "device_us": 2117.704
+     },
+     {
+      "kernel": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+      "calls": 4,
+      "device_us": 1382.277
+     },
+     {
+      "kernel": "_kinematics_branch_95f8028e_cuda_kernel_forward",
+      "calls": 4,
+      "device_us": 104.288
+     },
+     {
+      "kernel": "wp::bvh_refit_kernel(int, int const*, int*, int const*, wp::BVHPackedNodeHalf*, wp::BVHPackedNodeHalf*, wp::ve",
+      "calls": 4,
+      "device_us": 71.679
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+      "calls": 28,
+      "device_us": 54.462999999999994
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel_im",
+      "calls": 4,
+      "device_us": 16.865000000000002
+     },
+     {
+      "kernel": "_geom_local_to_global_e28b714c_cuda_kernel_forward",
+      "calls": 4,
+      "device_us": 16.512
+     },
+     {
+      "kernel": "_compute_bvh_bounds_a4bfd372_cuda_kernel_forward",
+      "calls": 4,
+      "device_us": 15.04
+     }
+    ]
+   },
+   "syncs_per_render": {
+    "Tensor.cpu": 2,
+    "Tensor.numpy": 2,
+    "_context": 4,
+    "_upload": 4,
+    "torch.cuda.synchronize": 4,
+    "warp.capture_launch": 4,
+    "warp.synchronize": 4
+   },
+   "upload_bytes": {
+    "dynamic_state_bytes_per_chunk": 18432,
+    "static_appearance_bytes_per_chunk": 153600,
+    "nq": 15,
+    "nmat": 35,
+    "nlight": 1,
+    "ngeom": 24,
+    "nbody": 33
+   },
+   "chunks": 4,
+   "peak_vram_mib": 1354.55908203125,
+   "peak_vram_reserved_mib": 1528.0
+  },
+  "4096": {
+   "batch": 4096,
+   "set_state_ms": {
+    "ms_median": 0.29201599955558777,
+    "ms_min": 0.28915199637413025,
+    "ms_max": 0.3032959997653961,
+    "ms_stdev": 0.004219730998214592,
+    "samples": 10
+   },
+   "render_ms": {
+    "ms_median": 786.310791015625,
+    "ms_min": 786.05224609375,
+    "ms_max": 786.5338745117188,
+    "ms_stdev": 0.1471373210350509,
+    "samples": 10
+   },
+   "fps": 5209.136192458292,
+   "stage_ms": {
+    "warp_sync": 716.8052,
+    "torch_sync": 43.1619,
+    "gap:enter->plate": 8.6867,
+    "upload": 6.3989,
+    "gap:warp_sync->context": 3.7443,
+    "camera_batch": 3.3778,
+    "tail_drain(after return)": 3.2337,
+    "gap:warp_sync->return": 0.2743,
+    "graph_launch": 0.2606,
+    "gap:plate->camera_batch": 0.1051,
+    "gap:context->upload": 0.0976,
+    "context": 0.0656,
+    "plate": 0.0582,
+    "gap:upload->torch_sync": 0.0278,
+    "gap:torch_sync->graph_launch": 0.015,
+    "gap:graph_launch->warp_sync": 0.0112,
+    "gap:camera_batch->context": 0.0061
+   },
+   "stage_calls": {
+    "plate": 1,
+    "camera_batch": 1,
+    "context": 16,
+    "upload": 16,
+    "torch_sync": 16,
+    "graph_launch": 16,
+    "warp_sync": 16
+   },
+   "stage_total_ms": 786.3842,
+   "stage_ms_per_frame": {
+    "warp_sync": 0.175,
+    "torch_sync": 0.01054,
+    "gap:enter->plate": 0.00212,
+    "upload": 0.00156,
+    "gap:warp_sync->context": 0.00091,
+    "camera_batch": 0.00082,
+    "tail_drain(after return)": 0.00079,
+    "gap:warp_sync->return": 7e-05,
+    "graph_launch": 6e-05,
+    "gap:plate->camera_batch": 3e-05,
+    "gap:context->upload": 2e-05,
+    "context": 2e-05,
+    "plate": 1e-05,
+    "gap:upload->torch_sync": 1e-05,
+    "gap:torch_sync->graph_launch": 0.0,
+    "gap:graph_launch->warp_sync": 0.0,
+    "gap:camera_batch->context": 0.0
+   },
+   "device": {
+    "kernel_buckets": {
+     "mjwarp_raytrace_megakernel": {
+      "calls": 16,
+      "device_us": 711855.872,
+      "device_pct": 91.55742477528597
+     },
+     "torch_composite_output": {
+      "calls": 209,
+      "device_us": 49284.73300000002,
+      "device_pct": 6.338900066301
+     },
+     "kernel_other": {
+      "calls": 48,
+      "device_us": 8560.61,
+      "device_pct": 1.1010478903594136
+     },
+     "mjwarp_scene_update": {
+      "calls": 112,
+      "device_us": 1006.467,
+      "device_pct": 0.1294496965831136
+     }
+    },
+    "memcpy": {
+     "Memcpy DtoD (Device -> Device)": {
+      "calls": 33,
+      "bytes": 2831895552,
+      "device_us": 6749.914999999999
+     },
+     "Memset (Device)": {
+      "calls": 16,
+      "bytes": 655296,
+      "device_us": 18.047000000000004
+     },
+     "Memcpy HtoD (Pageable -> Device)": {
+      "calls": 19,
+      "bytes": 147840,
+      "device_us": 18.021000000000004
+     },
+     "Memcpy DtoH (Device -> Pageable)": {
+      "calls": 1,
+      "bytes": 49152,
+      "device_us": 2.943
+     }
+    },
+    "total_device_us": 777496.608,
+    "kernel_launches": 385,
+    "top_kernels": [
+     {
+      "kernel": "render__locals___render_megakernel_cbc9e69b_cuda_kernel_forward",
+      "calls": 16,
+      "device_us": 711855.872
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<a",
+      "calls": 16,
+      "device_us": 17888.836
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSelf_a",
+      "calls": 16,
+      "device_us": 13290.068000000001
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+      "calls": 16,
+      "device_us": 12249.806999999997
+     },
+     {
+      "kernel": "void memtile_value_kernel<long>(long*, long, unsigned long)",
+      "calls": 16,
+      "device_us": 8469.505
+     },
+     {
+      "kernel": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+      "calls": 16,
+      "device_us": 5530.996
+     },
+     {
+      "kernel": "_kinematics_branch_95f8028e_cuda_kernel_forward",
+      "calls": 16,
+      "device_us": 418.6889999999999
+     },
+     {
+      "kernel": "wp::bvh_refit_kernel(int, int const*, int*, int const*, wp::BVHPackedNodeHalf*, wp::BVHPackedNodeHalf*, wp::ve",
+      "calls": 16,
+      "device_us": 288.57499999999993
+     },
+     {
+      "kernel": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+      "calls": 112,
+      "device_us": 223.94100000000014
+     },
+     {
+      "kernel": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel_im",
+      "calls": 16,
+      "device_us": 68.09300000000002
+     },
+     {
+      "kernel": "_geom_local_to_global_e28b714c_cuda_kernel_forward",
+      "calls": 16,
+      "device_us": 66.273
+     },
+     {
+      "kernel": "_compute_bvh_bounds_a4bfd372_cuda_kernel_forward",
+      "calls": 16,
+      "device_us": 60.576
+     }
+    ]
+   },
+   "syncs_per_render": {
+    "Tensor.cpu": 2,
+    "Tensor.numpy": 2,
+    "_context": 16,
+    "_upload": 16,
+    "torch.cuda.synchronize": 16,
+    "warp.capture_launch": 16,
+    "warp.synchronize": 16
+   },
+   "upload_bytes": {
+    "dynamic_state_bytes_per_chunk": 18432,
+    "static_appearance_bytes_per_chunk": 153600,
+    "nq": 15,
+    "nmat": 35,
+    "nlight": 1,
+    "ngeom": 24,
+    "nbody": 33
+   },
+   "chunks": 16,
+   "peak_vram_mib": 3379.27392578125,
+   "peak_vram_reserved_mib": 3554.0
+  }
+ },
+ "resolution_sweep": {
+  "84": {
+   "1": {
+    "ms_median": 1.8816959857940674,
+    "fps": 531.4354749914634,
+    "us_per_frame": 1881.6959857940674,
+    "peak_vram_mib": 0.78076171875,
+    "rays_per_frame": 7056
+   },
+   "256": {
+    "ms_median": 5.541152000427246,
+    "fps": 46199.77939249118,
+    "us_per_frame": 21.64512500166893,
+    "peak_vram_mib": 19.71142578125,
+    "rays_per_frame": 7056
+   },
+   "4096": {
+    "ms_median": 78.13033676147461,
+    "fps": 52425.21880463341,
+    "us_per_frame": 19.074789248406887,
+    "peak_vram_mib": 105.01513671875,
+    "rays_per_frame": 7056
+   },
+   "batch_scales": 98.64832377905434
+  },
+  "120": {
+   "1": {
+    "ms_median": 1.8535680174827576,
+    "fps": 539.5000294394658,
+    "us_per_frame": 1853.5680174827576,
+    "peak_vram_mib": 0.92041015625,
+    "rays_per_frame": 14400
+   },
+   "256": {
+    "ms_median": 8.13324785232544,
+    "fps": 31475.740644840313,
+    "us_per_frame": 31.770499423146248,
+    "peak_vram_mib": 39.49658203125,
+    "rays_per_frame": 14400
+   },
+   "4096": {
+    "ms_median": 119.70059204101562,
+    "fps": 34218.71128754733,
+    "us_per_frame": 29.22377735376358,
+    "peak_vram_mib": 212.65576171875,
+    "rays_per_frame": 14400
+   },
+   "batch_scales": 63.426708842073964
+  },
+  "240": {
+   "1": {
+    "ms_median": 1.8530400395393372,
+    "fps": 539.653746633882,
+    "us_per_frame": 1853.0400395393372,
+    "peak_vram_mib": 1.66162109375,
+    "rays_per_frame": 57600
+   },
+   "256": {
+    "ms_median": 19.168992042541504,
+    "fps": 13354.901469616263,
+    "us_per_frame": 74.87887516617775,
+    "peak_vram_mib": 155.80078125,
+    "rays_per_frame": 57600
+   },
+   "4096": {
+    "ms_median": 291.18798828125,
+    "fps": 14066.514296062904,
+    "us_per_frame": 71.09081745147705,
+    "peak_vram_mib": 846.7568359375,
+    "rays_per_frame": 57600
+   },
+   "batch_scales": 26.065814207357054
+  },
+  "480": {
+   "1": {
+    "ms_median": 1.949343979358673,
+    "fps": 512.9930943891167,
+    "us_per_frame": 1949.343979358673,
+    "peak_vram_mib": 3.9677734375,
+    "rays_per_frame": 230400
+   },
+   "256": {
+    "ms_median": 50.1322078704834,
+    "fps": 5106.497616489906,
+    "us_per_frame": 195.82893699407578,
+    "peak_vram_mib": 621.357421875,
+    "rays_per_frame": 230400
+   },
+   "4096": {
+    "ms_median": 786.305908203125,
+    "fps": 5209.16854021894,
+    "us_per_frame": 191.96921586990356,
+    "peak_vram_mib": 3379.5009765625,
+    "rays_per_frame": 230400
+   },
+   "batch_scales": 10.154461331340396
+  }
+ },
+ "states_source": "/oscar/scratch/sboughan/se6/fetch-gpu/examples/results/step4/states/FetchReach.npz",
+ "size": 480,
+ "state_dim": 18,
+ "model_dims": {
+  "dynamic_state_bytes_per_chunk": 72,
+  "static_appearance_bytes_per_chunk": 600,
+  "nq": 15,
+  "nmat": 35,
+  "nlight": 1,
+  "ngeom": 24,
+  "nbody": 33
+ }
+}
