@@ -33,6 +33,27 @@ INTERIOR_EXACT_MIN = 1.0
 ALL_EXACT_MIN = 0.90
 MEAN_ABS_MAX = 4.0
 
+#: How much better the env's DECLARED visibility must agree with the official renderer, inside a task
+#: object's own footprint, than the flipped one. A NEW bound on a NEW quantity — it neither redefines
+#: nor relaxes anything above; see ``test_a_declared_task_object_is_drawn_iff_the_reference_draws_it``
+#: and ``conformance.check_task_object_visibility`` for what the quantity is and why the interior bar
+#: cannot answer it.
+#:
+#: Set from the SPREAD over independent draws, clear of the worst, like every other floor here. Five
+#: draws (four of 16 sampled states plus the frozen 64-state Step-4 corpus) on each of the four cells
+#: that declare a ``visibility.*`` leaf, at 84 px:
+#:
+#:     DMCReacherEasy     0.8568 - 0.8710      DMCFingerTurnEasy  0.6649 - 0.6928
+#:     DMCReacherHard     0.3966 - 0.4893      DMCFingerTurnHard  0.5534 - 0.6232
+#:
+#: Reacher-HARD is the worst and that is a property of its scene rather than of the renderer: its
+#: target is the small one, so ~240 footprint pixels are almost all silhouette, where two rasterizers
+#: are entitled to disagree. The bound sits below that worst draw and enormously above the failure it
+#: exists to catch: a renderer drawing an object the reference does not draw scores the SAME number
+#: with the sign reversed (the flipped arm agrees on 0.4-2.1% of those pixels here), so the pass and
+#: fail populations are ~1.3 apart and any bound in between separates them.
+TASK_OBJECT_PRESENCE_MARGIN = 0.25
+
 #: The states the two reference-based tests draw. A CONSTANT, because both of them used to call
 #: ``sample_states(n)`` with no generator, which takes the env's own ``rng`` — and the ``env`` fixture
 #: is module-scoped, so the draw depended on how many tests had already consumed from that generator,
@@ -234,6 +255,46 @@ def test_variations_all_do_something(env):
     assert not r["inert_variations"], (
         f"declared variations that change nothing: {r['inert_variations']} — a knob in the space but "
         f"not in scene() advertises support that does not exist")
+
+
+@pytest.mark.reference
+def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
+    """The complement to the interior bar, for the one thing the interior bar cannot see.
+
+    ``test_render_parity_with_official_renderer`` above is the strong claim, and on a scene whose
+    floor is textured it is silent about whole OBJECTS: ``interior_mask`` keeps only pixels with a
+    flat 3x3 neighbourhood in the reference, so an object that lands on a checker floor contributes
+    no interior pixels and can appear or disappear without moving ``interior_exact_frac``. Measured,
+    not supposed — two DM Control reacher renders that differ by an entire red disc report interior
+    exactness identical to sixteen digits and the same ``interior_px``
+    (``examples/results/step5/reacher/parity_probe.json``), and the frame's ``interior_frac`` at 84 px
+    is 0.000000, so the assertion there does not even apply.
+
+    Nothing about the interior metric is changed to fix that. This asserts a SEPARATE bound on the
+    population the interior mask throws away — the object's own pixels — and only for envs that
+    declare a ``visibility.*`` leaf, i.e. that have named a task-relevant object at all.
+    """
+    r = C.check_task_object_visibility(env, n=16, seed=PARITY_STATE_SEED % 1000)
+    if "skipped" in r:
+        pytest.skip(r["skipped"])
+    print(f"\n{type(env).__name__} task objects: {r['objects']}")
+    for path, o in r["objects"].items():
+        assert o["footprint_px"] > 0, (
+            f"{path} changes no pixel on any of {r['n_states']} states, so the env declares a "
+            f"task-relevant object it cannot actually draw or hide")
+        assert o["per_row_max_abs_diff"] == 0, (
+            f"{path} does not survive a PER-ROW style: a batch with the knob alternating down the "
+            f"rows differs from the two uniform renders by {o['per_row_max_abs_diff']}/255. "
+            f"check_per_env_variation cannot ask this of a Discrete leaf, which is why it is here")
+        if o["presence_margin"] is None:
+            continue                                   # no official renderer to agree with
+        assert o["presence_margin"] >= TASK_OBJECT_PRESENCE_MARGIN, (
+            f"inside {path}'s own {o['footprint_px']} pixels the official frame agrees with our "
+            f"DECLARED appearance {100*o['presence_agree_declared']:.1f}% of the time and with the "
+            f"FLIPPED one {100*o['presence_agree_flipped']:.1f}% — margin "
+            f"{o['presence_margin']:.4f} against a floor of {TASK_OBJECT_PRESENCE_MARGIN}. A negative "
+            f"margin means we draw an object the reference does not draw (or the reverse), which is "
+            f"exactly what the interior-pixel metric is blind to on a textured surface: {o}")
 
 
 def test_fidelity_tier_is_fully_declared(env):

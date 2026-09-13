@@ -517,6 +517,103 @@ def check_colors_apply_exactly(env) -> dict:
     return {"colors_not_applied": wrong}
 
 
+#: How close a pixel has to be to count as agreeing inside a task object's footprint. The same 8/255
+#: ``pixel_agreement`` already reports as ``within8_frac``, and for the same reason: an object's
+#: footprint is mostly SILHOUETTE — a 19-pixel disc at 84 px has almost no interior — so bit-exactness
+#: there would be measuring two rasterizers' coverage rules rather than whether the object is present.
+#: What this check has to separate is "the same object in the same place" from "an object one side
+#: does not draw at all", and those differ by 200+/255, not by 8.
+PRESENCE_TOL = 8
+
+
+def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -> dict:
+    """Is a DECLARED task-relevant object drawn when, and only when, the env says it is — and does
+    the official renderer agree? The complement to interior-pixel exactness, which cannot see this.
+
+    WHY THIS EXISTS, measured rather than argued. ``interior_mask`` keeps only pixels whose 3x3
+    neighbourhood in the reference is one flat colour, so an object that lands on a TEXTURED surface
+    contributes no interior pixels at all and can appear or disappear without moving
+    ``interior_exact_frac`` by anything. Step 5 hit exactly that on DM Control reacher: two renders
+    that differ by a whole red disc — mean |d| 0.459 against 0.171 — report interior exactness equal
+    to SIXTEEN digits and an identical ``interior_px``
+    (``examples/results/step5/reacher/parity_probe.json``). The frame's ``interior_frac`` is 0.000000
+    at 84 px, so the strong assertion is not merely blunted there, it is undefined.
+
+    Nothing here redefines or relaxes that metric. This measures a population the interior mask
+    excludes BY CONSTRUCTION and asserts a separate bound on it:
+
+    ``footprint``  the pixels our renderer attributes to the object, as the exact set where the frame
+                   with the knob at its declared value differs from the frame with it flipped. A
+                   footprint of zero means the declaration is inert and nothing else below has a
+                   subject.
+    ``per_row``    a style whose rows alternate between the two values must reproduce the all-declared
+                   render on one set of rows and the all-flipped render on the other, bit for bit.
+                   ``check_per_env_variation`` structurally cannot ask this of a ``Discrete`` leaf —
+                   it skips anything without ``.low`` — and per-row visibility is the whole point of
+                   putting visibility in the style rather than in a constructor argument.
+    ``presence``   inside that footprint, how much of the frame agrees with the OFFICIAL one under
+                   each value. The env's declared default must be the arm that agrees, by
+                   ``presence_margin``. That is the question no other check in the suite asks: if we
+                   paint an object the reference does not paint, the declared arm agrees with the
+                   reference on almost none of the object's own pixels and the margin goes NEGATIVE,
+                   while every existing number stays where it was.
+
+    Applies to any env that declares a ``visibility.*`` leaf; ``{"skipped": ...}` otherwise, which is
+    every env that has no task-relevant object it can be asked to hide.
+    """
+    paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
+    if not paths:
+        return {"skipped": "the env declares no visibility.* leaf"}
+    if states is None:
+        states = env.sample_states(int(n), rng=np.random.default_rng(int(seed)))
+    states = np.asarray(states)
+    layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+    cls = type(env)
+    official = None
+    if getattr(cls, "reference_id", None) and hasattr(cls, "reference_env"):
+        official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
+
+    out: dict = {"n_states": int(len(states)), "tol": int(PRESENCE_TOL), "objects": {}}
+    for path in paths:
+        node = env.variation_space
+        for part in path.split("."):
+            node = node[part]
+        declared = int(np.asarray(node.value).reshape(-1)[0])
+        other = 1 - declared
+        a = env.render(states, variation={path: declared}).cpu().numpy()
+        b = env.render(states, variation={path: other}).cpu().numpy()
+        M = (a != b).any(-1)                                  # the object's own pixels, exactly
+
+        # per-row, through the STYLE vector rather than the variation dict: that is the form a dataset
+        # stores and the form a per-environment appearance arrives in.
+        off, w = layout[path]
+        sty = np.tile(np.asarray(env.default_style(), np.float32), (len(states), 1))
+        odd = np.arange(len(states)) % 2 == 1
+        sty[:, off:off + w] = float(declared)
+        sty[odd, off:off + w] = float(other)
+        mix = env.render(states, style=sty).cpu().numpy()
+        per_row = int(max(np.abs(mix[~odd].astype(np.int16) - a[~odd].astype(np.int16)).max(initial=0),
+                          np.abs(mix[odd].astype(np.int16) - b[odd].astype(np.int16)).max(initial=0)))
+
+        row = {"declared_value": declared, "footprint_px": int(M.sum()),
+               "footprint_frac": float(M.mean()),
+               "rows_with_footprint": int((M.reshape(len(states), -1).any(1)).sum()),
+               "per_row_max_abs_diff": per_row}
+        if official is not None and M.any():
+            da = np.abs(a.astype(np.int16) - official).max(-1)[M]
+            db = np.abs(b.astype(np.int16) - official).max(-1)[M]
+            row["presence_agree_declared"] = float((da <= PRESENCE_TOL).mean())
+            row["presence_agree_flipped"] = float((db <= PRESENCE_TOL).mean())
+            row["presence_margin"] = row["presence_agree_declared"] - row["presence_agree_flipped"]
+            row["reference_id"] = cls.reference_id
+        else:
+            row["presence_margin"] = None
+            row["why_no_reference"] = ("no official renderer is declared" if official is None
+                                       else "the object has an empty footprint on these states")
+        out["objects"][path] = row
+    return out
+
+
 def check_determinism(env) -> dict:
     st = env.sample_states(env.B)
     return {"identical": bool(np.array_equal(env.render(st).cpu().numpy(),
