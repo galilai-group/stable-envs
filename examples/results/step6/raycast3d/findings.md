@@ -586,6 +586,338 @@ itself. They append now, and every note records the `stable_envs.__file__` it ac
 number below cites a leg whose recorded path is `$SCR/se6/baseline` or `$SCR/se6/raycast3d`.
 
 
+> **Process note, recorded because it cost real work.** The 2a/2b/2c sections below were written
+> once, then silently destroyed: I was pulling artifacts back with
+> `rsync -az oscar:.../raycast3d/ examples/results/step6/raycast3d/`, and that directory also holds
+> this file, which only ever changes locally. The pull overwrote it with the cluster's older copy and
+> the next commit recorded the overwritten version. Pulls now exclude `findings.md`. Anything a
+> report says that is not also in a committed artifact or a commit message is one careless `rsync`
+> from being gone.
+
+## RAYCAST-2a — `DMCBallInCupCatch` GPU: the tendon is built for the batch, not per environment
+
+`stable_envs/envs/dmcontrol.py`, tendon FK only. Commit `af41d0f` (docstring corrected in `08fb05b`).
+
+**What changed.** `_chain_capsules_batch` takes `(M, K+1, 3)` polylines — every line the
+single-polyline version with one more leading axis. `_tendon_polyline` splits the part that must run
+per environment (it reads `MjData`, which holds one state at a time) from the part that must not.
+`_fk` collects polylines in the loop and builds the chain once per point count afterwards;
+`ball_in_cup`'s tendon has exactly three possible counts, so at most three calls replace B.
+`catenary`'s 29-point interior loop becomes one numpy expression, with `_cosh_sinh` still scalar and
+still `math.exp` (the 0-ULP validation against libmujoco's `mjv_catenary` depends on the same libm).
+The per-row pose gathers use `np.take(..., out=)`. The taut branch copies its two wrap points, which
+the old code did not need to and the new one does — `np.asarray(d.wrap_xpos, np.float64)` hands back
+the MjData buffer itself, and the caller now keeps polylines past the next `mj_forward`.
+
+**Bit-identity** (`tests/unit/test_dmcontrol_tendon.py`, **3 passed**): the pre-change expressions are
+written out in the test and the new ones held to them with `==` — all three branches of
+`mjv_catenary`, float64 and after the float32 cast the renderer applies, plus `_fk` end to end on the
+64 frozen `DMCBallInCupCatch` states.
+
+**Replay** (job 6346224): all **10** `DMControlSuite` configs reproduce their frozen Step-4 digests
+exactly at batch 64 on cuda, frames pixel-identical to the baseline's. Nine have no tendon and are
+the control.
+
+**The mandatory GPU sweep**, before (`$SCR/se6/baseline`) and after, one job, one RTX 3090
+(job 6346414, gpu2104). `fk` and `device util` come from the phase pass, timed separately and with
+synchronisation, so they describe the split rather than the wall clock exactly.
+
+| B | before fps | after fps | x | before `_fk` | after `_fk` | before util | after util |
+|---|---|---|---|---|---|---|---|
+| 1 | 158.7 | 159.3 | 1.00 | 0.61 ms (9.7 %) | 0.57 ms (9.0 %) | 23.6 % | 23.6 % |
+| 16 | 1,314.9 | 1,727.1 | 1.31 | 4.77 ms (39.2 %) | 1.99 ms (21.5 %) | 14.1 % | 18.4 % |
+| 64 | 2,432.1 | 4,676.0 | 1.92 | 18.90 ms (71.8 %) | 6.23 ms (45.5 %) | 8.7 % | 16.6 % |
+| 256 | 3,078.5 | 8,109.4 | 2.63 | 86.67 ms | 22.86 ms (72.4 %) | 6.2 % | 16.1 % |
+| 1024 | 2,838.7 | 9,627.2 | 3.39 | 344.37 ms (95.5 %) | 89.84 ms (84.5 %) | 4.7 % | 16.0 % |
+| **4096** | **3,271.8** | **9,816.3** | **3.00** | **1,217.24 ms (97.2 %)** | **385.96 ms (92.5 %)** | **5.3 %** | **15.9 %** |
+
+The mechanism moved, not just the number: `_fk` per environment goes **297 µs → 94 µs** and device
+utilisation at B=4096 **5.3 % → 15.9 %** on unchanged device time (66.83 → 66.16 ms), which is what a
+host-bound render being unblocked looks like.
+
+**Tier, `DMCBallInCupCatch` GPU (class S: `GPU_FAST := R >= 4 AND cores >= 1`)**, against Step 3's
+frozen denominators (official CPU renderer 262.2 fps; one-core JPEG-q90 decode 5,965.9 fps):
+
+| | before | after | after, merged tree (job 6346814) |
+|---|---|---|---|
+| best fps (B=4096) | 3,271.8 | **9,816.3** | **9,956.0** |
+| `R` | 12.5 | 37.4 | **38.0** |
+| `cores` | 0.55 | 1.65 | **1.67** |
+| `BATCH_SCALES` (>= 20x) | 20.6x | 61.6x | **62.7x** |
+| `NO_LARGE_BATCH_REGRESSION` | pass | pass | **pass** (9,956.0 >= 7,309.6) |
+| **tier** | `GPU_PARITY` + `BELOW_G4` | **`GPU_FAST` + `BATCH_SCALES`** | same |
+
+The whole family gains, because `np.take` costs nothing and every cell paid for the fancy-index
+allocations: `DMCFingerSpin` goes 39,152 → **43,759** fps at B=4096 (`_fk` 46.2 → 37.3 ms) with no
+tendon at all.
+
+**Pixels changed: no.** Semantic follow-up: **none** — digests identical.
+
+**Headroom left, measured.** `_fk` is still 92.5 % of the render at B=4096; ticket 1's counterfactual
+put the renderer's ceiling with `_fk` removed at ~73,000 fps. What remains per environment is
+`mj_forward`, the scalar Newton solve, the polyline assembly and four pageable host-to-device
+uploads. Not pursued: the row is at tier.
+
+
+## RAYCAST-2b — `R3.composite` shades the covered rays, not the window
+
+`stable_envs/render/raycast3d.py`, `composite`/`shade` only. Commit `53101dd`.
+
+Cover-compaction under the same `COVER_COMPACTION` name and the same argument
+`DMControlSuite._render_group` already uses — restricting the SET cannot change a VALUE, because
+every ray's colour is a function of that ray alone and outside the union `cov` is False for every
+row — with the expression it replaces kept verbatim behind the switch. Plus a memoised
+`_expand_tile` grid: `(y0*ss + a)*W + (x0*ss + b)` is a per-environment scalar plus a grid that
+depends only on `(tile, ss, width)`, and it was being rebuilt per call as two `(B,T,T)` int64 expands.
+
+**Identity, asserted on the envs.** A `composite-cover-compaction` case in
+`tests/gpu/test_fast_paths.py`, the file that exists for exactly this claim — **136 passed, 24
+skipped** on the merged tree — and `test_every_declared_fast_path_is_actually_reachable` now also
+asserts the switch still exists, so a rename cannot leave the case comparing the fast path with
+itself.
+
+**Replay.** The frozen oracle is CUDA-only, so both devices are covered:
+
+| check | result |
+|---|---|
+| cuda, 11 OGBench + 10 DMControlSuite, baseline vs branch, one job one card | **pixel-identical**, all digests unchanged |
+| cpu, 11 OGBench, baseline vs branch | **pixel-identical** |
+| cpu, `COVER_COMPACTION` on vs off, 11 OGBench | **pixel-identical** |
+| cpu, out-of-corpus `mujoco_locomotion` (4 envs), seeded draw | **pixel-identical** |
+| cpu, out-of-corpus `maze2d` `PointMaze*` (4 envs) | **pixel-identical** — see below |
+| `conformance.check_backend_agreement` on these configs | `skipped: env renders without a Scene2D` — the suite has no applicable backend-agreement check for the composite path, which is why the on/off diff stands in for it |
+
+**The 1-thread CPU certification sweep**, before (`$SCR/se6/baseline`) and after, ONE job, ONE batch
+node (job **6346706**, `node2339`, `--partition=batch --qos=normal`, `OMP_NUM_THREADS=1`,
+`torch.set_num_threads(1)`), merged tree. fps:
+
+| config | B=1 | B=16 | B=64 | B=256 | best x |
+|---|---|---|---|---|---|
+| PointmazeLargeNavigate **before** | 304.5 | 825.4 | 856.8 | 761.3 | |
+| PointmazeLargeNavigate **after** | 300.3 | 1,418.4 | **1,501.1** | 1,256.5 | **1.75x** |
+| PointmazeMediumNavigate before | 270.5 | 928.2 | 954.1 | 785.2 | |
+| PointmazeMediumNavigate after | 290.7 | 1,053.1 | 1,078.6 | 1,005.5 | 1.28x |
+| AntmazeMediumExplore before | 36.3 | 93.4 | 90.0 | 81.2 | |
+| AntmazeMediumExplore after | 37.8 | 98.9 | 92.5 | 81.0 | 1.03x |
+| HumanoidmazeMediumNavigate before | 28.0 | 71.3 | 69.7 | 58.2 | |
+| HumanoidmazeMediumNavigate after | 28.4 | 72.9 | 69.6 | 62.1 | 1.07x |
+
+**Tier, `PointmazeLargeNavigate` CPU (`CPU_FAST := S_cpu >= 5 AND cores_cpu >= 1`).** Two readings,
+because they differ and both are honest:
+
+| | before | after |
+|---|---|---|
+| measured fps @B=64, `node2339` | 856.8 | **1,501.1** |
+| `cores_cpu` = fps / 2,390.5 (Step 3's frozen one-core JPEG-q90 decode rate) | 0.358 | **0.628** |
+| Step 3's own certified row (`node2349`, best_batch 64) scaled by the measured 1.75x | 994.3 | ~1,740 → `cores` ~0.73 |
+| `S_cpu` (bar 5) | 48.0 ✓ | ~84 ✓ |
+| tier | `CPU_FASTER` + `BELOW_G4` | **`CPU_FASTER` + `BELOW_G4`** |
+
+Quote the direct number, **`cores` 0.63**: it divides a measurement by a constant. The scaled one is
+offered only because the decode rate was frozen on `node2349` while the sweep ran on `node2339` — the
+ratio transfers between hosts, the absolute fps does not. Either way **`CPU_FAST` is NOT reached**:
+the bar needed 2.40x and the measurement bought 1.75x. That is the stop condition's second branch,
+and the residual is measured, not guessed:
+
+| `PointmazeLargeNavigate` @B=64, node2339 | before | after |
+|---|---|---|
+| render | 74.70 ms | **42.64 ms** |
+| `composite` SELF (plate write, index grid, gather/scatter, box average, round/clamp/cast) | 30.95 | **25.31 ms — 59 %** |
+| `cast_nearest` (of which `intersect` 9.79) | 12.50 | **13.44 ms — 32 %** |
+| `shade` | 21.20 | **4.14 ms — 10 %** |
+
+So 2b did what it claimed and nothing more: **`shade` fell 5.1x and is now the smallest term.** What
+is left is `composite`'s own machinery at `ss=2` (59 %) and the cast that decides coverage and so
+cannot be compacted (32 %). Both are RAYCAST-3 scope.
+
+**The split across cells is the mechanism, not noise.** Ticket 1 measured `intersect` at 87 % of an
+`AntmazeMediumExplore` CPU render (K=13 capsules) and 90 % of `HumanoidmazeMediumNavigate` (K=19)
+against 14 % for `PointmazeLargeNavigate` (K=1, one sphere). The row this workstream owns gains
+1.75x; the cast-bound rows gain nothing and need the fused CPU cast instead.
+
+**`maze2d`'s `PointMaze*` are now verified** (job **6347137**, `node1829`); they were UNVERIFIED when
+2b was committed. `$SCR/venvs/se6-raycast3d-maze2d` is a fresh venv — `python -m venv` from
+`se-step6`'s interpreter, `gymnasium-robotics` + `pettingzoo` installed `--no-deps`, and a
+`se-step6-inherit.pth` pointing at `se-step6`'s site-packages so every other pin is inherited
+read-only. The same job checked that `se-step6` does **not** see `gymnasium_robotics`.
+
+| check, CPU, 64 seeded states | `PointMazeLarge` | `Medium` | `Open` | `UMaze` |
+|---|---|---|---|---|
+| `COVER_COMPACTION` on vs off | 0 | 0 | 0 | 0 |
+| branch vs pristine baseline | 0 | 0 | 0 | 0 |
+
+Two attempts failed first, both worth recording: `python -m venv --system-site-packages` run from a
+venv's interpreter inherits the BASE interpreter's site-packages, not the parent venv's (job 6347001
+produced a tree with `gymnasium_robotics` and no `numpy`); and `gymnasium_robotics` imports
+`pettingzoo` at module scope, which `--no-deps` had skipped (job 6347125). The second exposed a
+defect in my own comparator: it printed `ALL_IDENTICAL=True` over two EMPTY dump directories, because
+`all([])` is `True`. `compare_dumps` now returns `all_identical: null` with an explicit error and
+prints how many configurations it compared. **A verification that goes green having verified nothing
+is worse than one that fails**, and this one had already printed a green line.
+
+**The `_expand_tile` memo serves the DM Control path too** — `dmcontrol.py:1898` (`_mover_idx`) and
+`raycast3d.composite` both call it — which is why the **21**-config cuda replay, not just the 11
+OGBench ones, is the evidence that it moved no pixels. It is integer arithmetic, so the memoised form
+is the expression it replaces, and `tests/gpu/test_fast_paths.py` covers the DMC window path in its
+own `mover-window-vs-full-frame` case.
+
+**Pixels changed: no**, on either device. Semantic follow-up: **none**.
+
+
+## RAYCAST-2c and 2c' — the bake is history-dependent and reproducible, not random
+
+`stable_envs/envs/ogbench.py`. Commits `bb4ec44` (bake pose) and `17f28c0` (LRU eviction).
+
+### What changed
+
+**`bb4ec44`**: `_bake` rendered the shared `MjData` without ever setting `qpos`, so the plate was a
+function of whichever environment `_fk` had rendered last. It now resets to `qpos0`, exactly as
+`DMControlSuite._bake` always has. Real impurity, removed; **pixel-identical on all 21 live configs**.
+It does **not** fix `check_style_is_state`, and the measurement said so immediately: with the reset in
+place the two failing cells failed identically, byte for byte.
+
+**`17f28c0`**: `_scene` did not evict, it did `_SCENE_CACHE.clear()` on the whole dict at 256 entries,
+so crossing the cap threw away the key the caller was actively rendering. Now an `OrderedDict` with
+`move_to_end` on a hit and `popitem(last=False)` on overflow.
+
+### The correction: it is not a coin flip
+
+Ticket 1 called the bake "nondeterministic". That was wrong, and the digest sequences say so.
+`bake_probe.py` records the plate digest of eight consecutive bakes of one key. The sequences are
+**byte-identical between two processes running two different code trees** (`$SCR/se6/baseline` and
+this branch), and the teleport key's first bake is the same digest on **two different nodes**
+(`5681d6a91dc0` on gpu2107 in ticket 1 and on gpu2104 here):
+
+| config | sequence over 8 bakes | digests |
+|---|---|---|
+| `AntmazeGiantNavigate` | **A B A B A B A B** (strict alternation) | A `27359fa34b1e`, B `46ea1cfe42eb` |
+| `AntmazeTeleportExplore` | **A A A B A A A A** | A `5681d6a91dc0`, B `fb5c8bde6a2b` |
+| `HumanoidmazeMediumNavigate` | **A A A A A A A A** | A `f064174642ac` |
+
+So the bake output is a **deterministic function of the call history** — of how many
+`update_scene`/`render` cycles that renderer has seen — not of chance. The suspected source is the
+renderer's lifetime: `_bake` (`ogbench.py:471-479`) keeps one `mujoco.Renderer` per texture state
+forever and drives it `update_scene -> render -> update_scene`, two scene updates and one render per
+bake, so successive bakes do not start from the same renderer state. `AntmazeGiantNavigate`'s strict
+alternation is what a two-state resource looks like. **Probed separately; see the lifetime probe
+below.**
+
+### The host-determinism probe already owns this question — and is not wired to answer it
+
+`conformance.check_reference_renderer_is_stable` (`conformance.py:121`) is, verbatim, *"Is THIS
+MACHINE's offscreen rasterizer deterministic at all? Ask before blaming the code."* It renders the
+same states twice through one reference env and diffs. `scratch/step4/certify.py:125` states the
+routing: it *"is a property of the node, which Step 2 section 4.1 lists as diagnostic-only"*, and
+`judges()` declares no bound for it. `check_style_is_state`, by contrast, is a hard `max_abs_diff == 0`
+judge.
+
+Run 12 times per config on `gpu2106` (job 6347000):
+
+| config | probe fires | Step 4's recorded `reference_stable` |
+|---|---|---|
+| `PointmazeTeleportNavigate` | **12/12, max 1** | **1** |
+| `AntmazeTeleportExplore` | 0/12 | 0 |
+| `HumanoidmazeMediumNavigate` | 0/12 | 0 |
+| `AntmazeGiantNavigate` | 0/12 | 0 |
+| `PointmazeLargeNavigate` | 0/12 | 0 |
+
+Two things follow. First, the probe is **not** under-powered by sampling — it is deterministic and
+**scene-specific**, and it reproduces Step 4's own record exactly, including which single config it
+fires on. Second, and this is the routing problem: the same host property reaches the certifier
+through two call sites and is judged two different ways. Through `check_reference_renderer_is_stable`
+(the OFFICIAL renderer, two renders) it is diagnostic-only. Through `check_style_is_state` (OUR plate
+bake, two renders separated by a cache eviction) it is a fidelity FAIL. `AntmazeTeleportExplore` and
+`HumanoidmazeMediumNavigate` fail Gate A on a property of `mujoco.Renderer` on this host that the
+suite elsewhere declines to blame the code for.
+
+### Proposal (routing only — a contract decision for Sami, not implemented here)
+
+When the host probe demonstrates that the reference rasterizer is not bit-reproducible **for that
+configuration's scene at the plate-bake call site**, `check_style_is_state`'s `1/255`-on-N-px outcome
+should be reported as an environment property — `blocked_environment` / host-nondeterministic, the
+status `scratch/step4/certify.py` already has for a bound judged under the wrong conditions — with
+the measured plate spread recorded beside it, rather than as a fidelity FAIL. Concretely:
+
+1. the probe needs a **bake-path arm**. As written it exercises `cls.reference_render`, and that arm
+   fires on `PointmazeTeleportNavigate` and not on the two cells that actually fail. A second arm
+   that bakes the same key twice and diffs the plates fires on exactly the right ones
+   (`bake_probe.py` is that arm, measured: 2 distinct plates on the ant mazes, 1 on humanoid-medium);
+2. the routing should be **per configuration**, keyed on that arm's result for that scene, not
+   global — nine OGBench cells carry the defect and would still be judged normally on everything else;
+3. the record should carry the measured spread (**1/255 over 4-11 pixels**), so "blocked" never means
+   "unmeasured";
+4. **the bar itself must not move.** This is a proposal to attribute an outcome to the host, not to
+   relax `== 0`. A configuration whose bake IS reproducible and still differs is still a FAIL.
+
+I have not implemented any of it: it changes what the certifier concludes, which is above this
+workstream.
+
+### The cache-pressure scenario, before and after (2c' item b)
+
+`check_style_is_state` returns 0 in isolation — the second render finds the 64 plates the first one
+baked still cached. It disagreed in Step 4 only where the 64 inserts crossed the cap in a long
+session. `cache_pressure_probe.py` reproduces that instead of waiting for it: fill the cache to 8
+below the cap with keys nobody asks for, then run the frozen check verbatim (job 6347000, gpu2106):
+
+| config | baseline (`dict`, wholesale `clear()`) | branch (`OrderedDict`, LRU) |
+|---|---|---|
+| `AntmazeTeleportExplore` | 0 | 0 |
+| `HumanoidmazeMediumNavigate` | **1** (7 px) | **0** |
+| `AntmazeTeleportNavigate` | 0 | 0 |
+| `HumanoidmazeLargeNavigate` | **1** (11 px) | **0** |
+| `PointmazeLargeNavigate` | 0 | 0 |
+| synthetic filler surviving the first render | **0** | **192** |
+
+The filler count is the policy itself: the wholesale clear takes everything; LRU takes exactly the 64
+oldest synthetic entries and keeps the 64 the check had just inserted. **Both configurations that
+reproduced `observed = 1` now return 0**, and a passing sibling (`HumanoidmazeLargeNavigate`)
+reproduced it too — more evidence that the Step-4 fail/pass split was about session order.
+
+**Stated honestly: the nondeterminism still exists in a fresh bake.** A genuinely cold key still
+lands on whichever plate its position in the renderer's history selects. What LRU removes is cache
+pressure as the trigger — a key in use is never the one dropped — and it is a structural improvement
+in its own right, since one appearance rendered a thousand times could previously be re-baked because
+an unrelated configuration filled the cache.
+
+Verified: 11 OGBench configs replayed on cuda, baseline vs branch, **pixel-identical, all digests
+unchanged**; `tests/unit/test_ogbench_scene_cache.py` 3 policy tests (a hot key survives 300 distinct
+inserts past a cap of 256; an overflow costs one entry, not the cache; the common case never evicts),
+driven with a stub because proving a one-line eviction rule should not cost 300 MuJoCo bakes.
+
+### The oracle hole (2c' item c)
+
+**`AntmazeTeleportExplore` does not reproduce its frozen Step-4 digest at the BASELINE.** Measured on
+three separate jobs, on two nodes, on both legs of every before/after: `483968227d628c59` against a
+frozen `06a2e039e1fdf3ad`. The other 20 live configs reproduce exactly, on both legs.
+
+Root cause: the bake's history dependence above, with `vis.quality.offsamples = 4` on EGL/3090.
+Step 4 ran the full check suite before taking the oracle, so its plate was a NON-FIRST bake; a replay
+that renders immediately after construction takes the first one.
+
+**Recommended for the Step-8 re-freeze list**, and only after the bake is made deterministic —
+re-freezing a digest that is still a function of call history just moves the problem. Nothing under
+`examples/results/step4/` has been touched.
+
+
+## What is still open after RAYCAST-2 / 2c'
+
+1. **`PointmazeLargeNavigate` does not reach `CPU_FAST`** — 1.75x bought against 2.40x needed,
+   `cores` 0.63. The residual is measured (`composite` self 59 %, cast 32 %, `shade` 10 %) and is
+   RAYCAST-3's scope.
+2. **The bake is still history-dependent.** LRU removes cache pressure as the trigger; it does not
+   make a cold bake reproducible. The remedies and their costs are in the 2c section; all of them are
+   above this workstream.
+3. **`AntmazeTeleportExplore`'s frozen digest is unreproducible at the baseline** — recommended for
+   the Step-8 re-freeze list, after the bake is fixed.
+4. **The routing proposal is a proposal.** Nothing in the certifier or the gate has been changed.
+5. **Two pre-existing `tests/unit` failures** on the merged tree, neither mine and neither in my
+   authorised files: `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`
+   and `test_every_cited_scratch_path_resolves`. Verified pre-existing by stashing my working tree.
+6. **`gymnasium_robotics` is not in `se-step6`**, so the `maze2d` envs are only reachable through
+   `$SCR/venvs/se6-raycast3d-maze2d`. Any future CPU verification of `composite` has to use it or
+   repeat the 2b gap.
+
+
 ---
 
 ## Merge record
