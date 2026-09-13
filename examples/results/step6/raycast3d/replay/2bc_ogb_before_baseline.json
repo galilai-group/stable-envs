@@ -2,12 +2,12 @@
   "host": "gpu2104.oscar.ccv.brown.edu",
   "device": "cuda",
   "slurm_job": "6346414",
-  "code_root": "/oscar/scratch/sboughan/se6/baseline",
+  "code_root": "$SCR/se6/baseline",
   "configs": {
     "AntmazeGiantNavigate": {
       "config": "AntmazeGiantNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/AntmazeGiantNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -40,7 +40,7 @@
     "AntmazeLargeExplore": {
       "config": "AntmazeLargeExplore",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/AntmazeLargeExplore.npz",
       "size": 224,
       "supersample": 2,
@@ -73,7 +73,7 @@
     "AntmazeMediumExplore": {
       "config": "AntmazeMediumExplore",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/AntmazeMediumExplore.npz",
       "size": 224,
       "supersample": 2,
@@ -106,7 +106,7 @@
     "AntmazeTeleportExplore": {
       "config": "AntmazeTeleportExplore",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/AntmazeTeleportExplore.npz",
       "size": 224,
       "supersample": 2,
@@ -139,7 +139,7 @@
     "HumanoidmazeGiantNavigate": {
       "config": "HumanoidmazeGiantNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/HumanoidmazeGiantNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -172,7 +172,7 @@
     "HumanoidmazeLargeNavigate": {
       "config": "HumanoidmazeLargeNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/HumanoidmazeLargeNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -205,7 +205,7 @@
     "HumanoidmazeMediumNavigate": {
       "config": "HumanoidmazeMediumNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/HumanoidmazeMediumNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -238,7 +238,7 @@
     "PointmazeGiantNavigate": {
       "config": "PointmazeGiantNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/PointmazeGiantNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -271,7 +271,7 @@
     "PointmazeLargeNavigate": {
       "config": "PointmazeLargeNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/PointmazeLargeNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -304,7 +304,7 @@
     "PointmazeMediumNavigate": {
       "config": "PointmazeMediumNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/PointmazeMediumNavigate.npz",
       "size": 224,
       "supersample": 2,
@@ -337,7 +337,7 @@
     "PointmazeTeleportNavigate": {
       "config": "PointmazeTeleportNavigate",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/PointmazeTeleportNavigate.npz",
       "size": 224,
       "supersample": 2,

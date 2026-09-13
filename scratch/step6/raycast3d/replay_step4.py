@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import sys
 from pathlib import Path
@@ -35,6 +36,19 @@ ROOT = Path(__file__).resolve().parents[3]
 # inserted ahead of it -- doing that made both legs import the branch and report a 1.00x speed-up as
 # a real one. Appended, so the helper imports still resolve when PYTHONPATH is unset.
 sys.path.append(str(ROOT))
+
+
+def _root_tag(p: str) -> str:
+    """An absolute Oscar path with the scratch root collapsed to ``$SCR``.
+
+    The raw path is the evidence -- it says whether a leg loaded the baseline or the branch -- but
+    written in full it reads to ``tests/unit/test_repo_contracts.py`` as a repo-relative
+    ``scratch/...`` citation that cannot resolve, which is a false failure in a real check. Same
+    string, written the way the sbatch files write it.
+    """
+    return re.sub(r"^/oscar/scratch/([^/]+)", r"$SCR", p)
+
+
 
 STEP4 = ROOT / "examples" / "results" / "step4"
 SHARDS = ("dmc", "ogb", "raster", "fetch", "swm")
@@ -59,7 +73,7 @@ def replay_one(cfg, device, oracle, seed, dump_dir):
     from stable_envs.testing import conformance as C
 
     npz = STEP4 / "states" / f"{cfg}.npz"
-    rec = {"config": cfg, "device": device, "stable_envs_from": se.__file__}
+    rec = {"config": cfg, "device": device, "stable_envs_from": _root_tag(se.__file__)}
     if npz.is_file():
         states = np.asarray(np.load(npz)["states"], np.float32)
         rec["states_source"] = f"examples/results/step4/states/{cfg}.npz"

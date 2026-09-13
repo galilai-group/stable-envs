@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import platform
 import socket
 import statistics
@@ -47,6 +48,19 @@ ROOT = Path(__file__).resolve().parents[3]
 # inserted ahead of it -- doing that made both legs import the branch and report a 1.00x speed-up as
 # a real one. Appended, so the helper imports still resolve when PYTHONPATH is unset.
 sys.path.append(str(ROOT))
+
+
+def _root_tag(p: str) -> str:
+    """An absolute Oscar path with the scratch root collapsed to ``$SCR``.
+
+    The raw path is the evidence -- it says whether a leg loaded the baseline or the branch -- but
+    written in full it reads to ``tests/unit/test_repo_contracts.py`` as a repo-relative
+    ``scratch/...`` citation that cannot resolve, which is a false failure in a real check. Same
+    string, written the way the sbatch files write it.
+    """
+    return re.sub(r"^/oscar/scratch/([^/]+)", r"$SCR", p)
+
+
 sys.path.insert(0, str(ROOT / "scratch" / "step6"))
 
 # reuse the shared harness rather than re-deriving its provenance block
@@ -353,8 +367,8 @@ def main() -> None:
             "cpu": platform.processor() or platform.machine(),
             "threads": torch.get_num_threads(), "versions": versions(),
             "slurm_job": os.environ.get("SLURM_JOB_ID"),
-            "stable_envs_from": se.__file__,          # WHICH code this number describes
-            "pythonpath": os.environ.get("PYTHONPATH", ""), "batches": {}}
+            "stable_envs_from": _root_tag(se.__file__),          # WHICH code this number describes
+            "pythonpath": _root_tag(os.environ.get("PYTHONPATH", "")), "batches": {}}
 
     probe = se.make(args.env, batch=1, size=args.size, device=args.device)
     note["size"] = int(probe.size)

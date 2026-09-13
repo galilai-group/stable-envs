@@ -1,6 +1,6 @@
 {
-  "before_dir": "/oscar/scratch/sboughan/se6/_dumps/2bc/before",
-  "after_dir": "/oscar/scratch/sboughan/se6/_dumps/2bc/after",
+  "before_dir": "$SCR/se6/_dumps/2bc/before",
+  "after_dir": "$SCR/se6/_dumps/2bc/after",
   "configs": {
     "AntmazeGiantNavigate": {
       "identical": true,

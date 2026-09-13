@@ -22,6 +22,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import socket
 import sys
 from pathlib import Path
@@ -32,6 +33,19 @@ ROOT = Path(__file__).resolve().parents[3]
 # inserted ahead of it -- doing that made both legs import the branch and report a 1.00x speed-up as
 # a real one. Appended, so the helper imports still resolve when PYTHONPATH is unset.
 sys.path.append(str(ROOT))
+
+
+def _root_tag(p: str) -> str:
+    """An absolute Oscar path with the scratch root collapsed to ``$SCR``.
+
+    The raw path is the evidence -- it says whether a leg loaded the baseline or the branch -- but
+    written in full it reads to ``tests/unit/test_repo_contracts.py`` as a repo-relative
+    ``scratch/...`` citation that cannot resolve, which is a false failure in a real check. Same
+    string, written the way the sbatch files write it.
+    """
+    return re.sub(r"^/oscar/scratch/([^/]+)", r"$SCR", p)
+
+
 
 
 def dig(x) -> str:
@@ -71,7 +85,7 @@ def probe(cfg, device, size):
     import stable_envs as se
     import stable_envs.envs.ogbench as OGB
 
-    rep = {"config": cfg, "stable_envs_from": se.__file__}
+    rep = {"config": cfg, "stable_envs_from": _root_tag(se.__file__)}
     env = se.make(cfg, batch=4, size=size, device=device)
     npz = ROOT / "examples/results/step4/states" / f"{cfg}.npz"
     pool = np.load(npz)["states"] if npz.is_file() else env.sample_states(8)

@@ -2,11 +2,11 @@
   "host": "gpu2104.oscar.ccv.brown.edu",
   "device": "cuda",
   "slurm_job": "6346414",
-  "code_root": "/oscar/scratch/sboughan/se6/baseline",
+  "code_root": "$SCR/se6/baseline",
   "configs": {
     "AntmazeGiantNavigate": {
       "config": "AntmazeGiantNavigate",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "bake_at_construction": {
         "plate": "27359fa34b1e",
         "plate_t": "a64977871fac",
@@ -162,7 +162,7 @@
     },
     "AntmazeTeleportExplore": {
       "config": "AntmazeTeleportExplore",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "bake_at_construction": {
         "plate": "5681d6a91dc0",
         "plate_t": "a91726831da4",
@@ -298,7 +298,7 @@
     },
     "HumanoidmazeMediumNavigate": {
       "config": "HumanoidmazeMediumNavigate",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "bake_at_construction": {
         "plate": "f064174642ac",
         "plate_t": "5f9b8924e47f",

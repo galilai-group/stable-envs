@@ -553,3 +553,35 @@ exonerates on both devices.
 6. **`--fk-counterfactual` is a diagnostic, not a proposal.** It memoises `_fk` per `(scene, batch)`,
    which is not a legal renderer behaviour (it would break state-dependence). It exists only to put a
    number on the bound.
+
+---
+---
+
+# RAYCAST-2 — the three authorised changes
+
+**Classification: `PATCH`** (2a, 2b) + **`FINDING`** (2c: the authorised change is committed and is
+correct hygiene, but the measurement shows it does not fix the symptom it was aimed at, and the real
+cause is outside the three authorised files).
+
+- baseline SHA: `89fa5ca81341dc4df7186ec325cb691431a2ef17`
+- merge of `step6/integration` (`d8bf23b`) into `step6/raycast3d`: **`fa8c3ac`**, no conflicts
+- hardware: NVIDIA GeForce RTX 3090 (`gpu2104`, `gpu2110`), driver 575.57.08; CPU `node2337`
+  (`--partition=batch --qos=normal`, 1 torch thread, `OMP_NUM_THREADS=MKL_NUM_THREADS=1`)
+- venv `$SCR/venvs/se-step6`
+- SLURM: **6345115** (2c first pass, gpu2110) · **6346224** (2a, gpu2104) · **6346414**
+  (2b + 2c + 2a re-sweep, gpu2104) · **6346429** (2b CPU identity, node2337) · **6346705**
+  (final verification on the merged tree, gpu) · **6346706** (CPU certification sweep, node2339)
+
+**Final verification on the merged tree (job 6346705).** All **21** live raycast3d configs replayed
+on cuda at batch 64, baseline against merged branch, in one job on one card:
+**every frame pixel-identical**, 20 of 21 matching their frozen Step-4 digest on BOTH legs and
+`AntmazeTeleportExplore` failing on both (pre-existing — see 2c). `tests/unit/test_dmcontrol_tendon.py`
+3 passed; `tests/gpu/test_fast_paths.py` 136 passed, 24 skipped. The BallInCup sweep on the merged
+tree, same card: **3,242.9 → 9,906.7 fps** at B=4096 and 3,052.3 → 8,220.9 at B=256.
+
+**A harness defect found and fixed before any of these numbers were trusted.** The Step 6C scripts
+did `sys.path.insert(0, ROOT)`, which put this branch ahead of `$PYTHONPATH` — so a before/after job
+imported the BRANCH for both legs and the first 2a sweep reported a speed-up of the branch against
+itself. They append now, and every note records the `stable_envs.__file__` it actually loaded; every
+number below cites a leg whose recorded path is `$SCR/se6/baseline` or `$SCR/se6/raycast3d`.
+

@@ -2,12 +2,12 @@
   "host": "gpu2104.oscar.ccv.brown.edu",
   "device": "cuda",
   "slurm_job": "6346414",
-  "code_root": "/oscar/scratch/sboughan/se6/baseline",
+  "code_root": "$SCR/se6/baseline",
   "configs": {
     "DMCAcrobotSwingup": {
       "config": "DMCAcrobotSwingup",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCAcrobotSwingup.npz",
       "size": 84,
       "supersample": 1,
@@ -40,7 +40,7 @@
     "DMCBallInCupCatch": {
       "config": "DMCBallInCupCatch",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCBallInCupCatch.npz",
       "size": 84,
       "supersample": 1,
@@ -73,7 +73,7 @@
     "DMCCartpoleBalance": {
       "config": "DMCCartpoleBalance",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCCartpoleBalance.npz",
       "size": 84,
       "supersample": 1,
@@ -106,7 +106,7 @@
     "DMCCartpoleSwingup": {
       "config": "DMCCartpoleSwingup",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCCartpoleSwingup.npz",
       "size": 84,
       "supersample": 1,
@@ -139,7 +139,7 @@
     "DMCFingerSpin": {
       "config": "DMCFingerSpin",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCFingerSpin.npz",
       "size": 84,
       "supersample": 1,
@@ -172,7 +172,7 @@
     "DMCFingerTurnEasy": {
       "config": "DMCFingerTurnEasy",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCFingerTurnEasy.npz",
       "size": 84,
       "supersample": 1,
@@ -205,7 +205,7 @@
     "DMCFingerTurnHard": {
       "config": "DMCFingerTurnHard",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCFingerTurnHard.npz",
       "size": 84,
       "supersample": 1,
@@ -238,7 +238,7 @@
     "DMCPendulumSwingup": {
       "config": "DMCPendulumSwingup",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCPendulumSwingup.npz",
       "size": 84,
       "supersample": 1,
@@ -271,7 +271,7 @@
     "DMCReacherEasy": {
       "config": "DMCReacherEasy",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCReacherEasy.npz",
       "size": 84,
       "supersample": 1,
@@ -304,7 +304,7 @@
     "DMCReacherHard": {
       "config": "DMCReacherHard",
       "device": "cuda",
-      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
       "states_source": "examples/results/step4/states/DMCReacherHard.npz",
       "size": 84,
       "supersample": 1,

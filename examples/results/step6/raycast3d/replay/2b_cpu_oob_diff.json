@@ -1,6 +1,6 @@
 {
-  "before_dir": "/oscar/scratch/sboughan/se6/_dumps/2bcpu/oob_base",
-  "after_dir": "/oscar/scratch/sboughan/se6/_dumps/2bcpu/oob_branch",
+  "before_dir": "$SCR/se6/_dumps/2bcpu/oob_base",
+  "after_dir": "$SCR/se6/_dumps/2bcpu/oob_branch",
   "configs": {
     "MujocoInvertedDoublePendulum": {
       "identical": true,
