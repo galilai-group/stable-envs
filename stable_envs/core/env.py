@@ -398,12 +398,23 @@ REQUIRED_VISUAL_FIDELITY = ("mean_abs", "within8_frac", "ssim",
 #: it was a version drift, and a field the certifier can compare is what tells the two apart.
 #:
 #: Keys follow ``examples/fidelity_step4.py``'s ``reference_packages`` record -- ``"mujoco"``,
-#: ``"mujoco_warp"``, ``"dm_control"``, ``"warp"``, ``"gymnasium"`` ... -- so the comparison is a
-#: dictionary lookup and not a parse. Values are the exact version strings. A visual env carries it
-#: inside ``visual_fidelity`` (next to ``measured_at``, whose text it must agree with); a parity env
-#: carries it as the class attribute ``reference_versions``. ``check_fidelity_declaration`` validates
-#: the shape; ``reference_versions_of`` reads it for either tier.
+#: ``"dm_control"``, ``"gymnasium"`` ... -- so the comparison is a dictionary lookup and not a parse.
+#: Values are the exact version strings. A visual env carries it inside ``visual_fidelity`` (next to
+#: ``measured_at``, whose text it must agree with); a parity env carries it as the class attribute
+#: ``reference_versions``. ``check_fidelity_declaration`` validates the shape; ``reference_versions_of``
+#: reads it for either tier, ``visual_fidelity`` taking precedence over the class attribute.
+#:
+#: REFERENCE-SIDE PACKAGES ONLY. The field gates on a mismatch, so it must name what the OFFICIAL frame
+#: depends on and nothing that OUR frame depends on: with ``mujoco_warp`` in it, bumping our own
+#: renderer would turn a real regression of ours into ``blocked_environment``. The packages our side
+#: was drawn with go in ``MEASURED_WITH_KEY``, which is recorded and never compared.
 REFERENCE_VERSIONS_KEY = "reference_versions"
+
+#: The versions OUR renderer's dependencies had when the declaration was measured (``mujoco_warp``,
+#: ``warp``, ``nvdiffrast`` ...). Provenance, not a gate: the certifier records it and never blocks on
+#: it, because a change on our side is exactly what a fidelity check exists to catch. Same shape as
+#: ``REFERENCE_VERSIONS_KEY``; lives in ``visual_fidelity`` beside it.
+MEASURED_WITH_KEY = "measured_with"
 
 
 def reference_versions_of(cls) -> dict[str, str]:
@@ -787,6 +798,9 @@ def check_fidelity_declaration(cls: type[StableEnv]) -> None:
     if REFERENCE_VERSIONS_KEY in vf:
         _check_reference_versions_shape(cls, f"visual_fidelity[{REFERENCE_VERSIONS_KEY!r}]",
                                         vf[REFERENCE_VERSIONS_KEY])
+    if MEASURED_WITH_KEY in vf:
+        _check_reference_versions_shape(cls, f"visual_fidelity[{MEASURED_WITH_KEY!r}]",
+                                        vf[MEASURED_WITH_KEY])
     if tier == "parity":
         if vf:
             raise ValueError(

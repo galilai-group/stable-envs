@@ -601,7 +601,7 @@ def test_a_test_that_creates_no_context_is_never_a_runaway():
 
 # ------------------------------------------------------------------ reference versions
 
-from stable_envs.core.env import REFERENCE_VERSIONS_KEY, reference_versions_of  # noqa: E402
+from stable_envs.core.env import MEASURED_WITH_KEY, REFERENCE_VERSIONS_KEY, reference_versions_of  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -656,7 +656,8 @@ def _dmc_declaration_table() -> dict:
     """
     import ast
     src = (ROOT / "stable_envs" / "envs" / "dmcontrol.py").read_text()
-    want = {"_AT", "_SWIMMER_AT", "_AT_VERSIONS", "_SWIMMER_AT_VERSIONS", "VISUAL_FIDELITY"}
+    want = {"_AT", "_SWIMMER_AT", "_AT_VERSIONS", "_SWIMMER_AT_VERSIONS", "_AT_MEASURED_WITH",
+            "_SWIMMER_AT_MEASURED_WITH", "VISUAL_FIDELITY"}
     keep = [n for n in ast.parse(src).body
             if isinstance(n, (ast.Assign, ast.AnnAssign))
             and any(isinstance(t, ast.Name) and t.id in want
@@ -676,9 +677,10 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
         if rv:
             rows.append((name, rv, str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))))
     for name, vf in sorted(_dmc_declaration_table().items()):
-        if REFERENCE_VERSIONS_KEY in vf:
-            rows.append((f"dmcontrol.VISUAL_FIDELITY[{name}]", vf[REFERENCE_VERSIONS_KEY],
-                         str(vf.get("measured_at", ""))))
+        for key in (REFERENCE_VERSIONS_KEY, MEASURED_WITH_KEY):
+            if key in vf:
+                rows.append((f"dmcontrol.VISUAL_FIDELITY[{name}].{key}", vf[key],
+                             str(vf.get("measured_at", ""))))
     return rows
 
 
@@ -706,7 +708,39 @@ def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measu
     Step 4, and 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
     table = _dmc_declaration_table()
     for name in ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidStand"):
-        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0", "mujoco_warp": "3.11.0"}
+        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
+        assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.11.0"}
         assert table[name]["measured_at"].startswith("84 px")          # the text is kept as it was
-    assert table["DMCSwimmerSwimmer6"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0",
-                                                                    "warp": "1.16.0"}
+    assert table["DMCSwimmerSwimmer6"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
+    assert table["DMCSwimmerSwimmer6"][MEASURED_WITH_KEY] == {"warp": "1.16.0"}
+
+
+OUR_RENDERER_PACKAGES = ("mujoco_warp", "mujoco-warp", "warp", "warp-lang", "nvdiffrast", "torch", "triton")
+
+
+def test_reference_versions_never_name_our_own_renderer():
+    """The field gates: with mujoco_warp in it, bumping OUR renderer would turn a real regression of
+    ours into blocked_environment. Our side goes in measured_with, which is recorded and never compared."""
+    bad = []
+    for name, rv, _ in _declared_reference_versions():
+        if name.endswith(f".{MEASURED_WITH_KEY}"):
+            continue
+        bad += [f"{name}: {pkg}" for pkg in rv if pkg in OUR_RENDERER_PACKAGES]
+    assert not bad, "\n  ".join(bad)
+
+
+def test_measured_with_is_validated_like_reference_versions_but_is_not_a_reference_version():
+    cls = _visual("Measured", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"},
+                                                          MEASURED_WITH_KEY: {"mujoco_warp": "3.11.0"}}))
+    register(cls)
+    assert reference_versions_of(cls) == {"mujoco": "3.11.0"}
+    with pytest.raises(ValueError, match="measured_with"):
+        register(_visual("Bad", visual_fidelity=dict(VF, **{MEASURED_WITH_KEY: {"mujoco_warp": 3}})))
+
+
+def test_visual_fidelity_reference_versions_take_precedence_over_the_class_attribute():
+    """``reference_versions_of`` is the one reading; ``describe()`` and the certifier both use it."""
+    cls = _visual("Both", reference_versions={"mujoco": "3.10.0", "gymnasium": "1.3.0"},
+                  visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"}}))
+    register(cls)
+    assert reference_versions_of(cls) == {"mujoco": "3.11.0", "gymnasium": "1.3.0"}
