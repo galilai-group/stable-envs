@@ -597,3 +597,150 @@ def test_a_test_that_creates_no_context_is_never_a_runaway():
         f"a test that created and released nothing was reported as {names}. Holding many live "
         f"contexts is the DESIGN — they are cached for the life of the process — so it cannot by "
         f"itself be a violation, or the guard fails every test that runs after the registry is warm.")
+
+
+# ------------------------------------------------------------------ reference versions
+
+from stable_envs.core.env import MEASURED_WITH_KEY, REFERENCE_VERSIONS_KEY, reference_versions_of  # noqa: E402
+
+ROOT = Path(__file__).resolve().parents[2]
+
+RV = {"mujoco": "3.11.0", "mujoco_warp": "3.11.0"}
+
+
+def test_a_visual_env_may_declare_the_reference_versions_it_was_measured_against():
+    """The field the certifier compares with the measuring interpreter's ``reference_packages``.
+
+    It lives next to ``measured_at`` because that is where the same fact was already written as prose;
+    ``describe()`` publishes it so a consumer can see which reference the numbers describe.
+    """
+    cls = _visual("Versioned", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: dict(RV)}))
+    register(cls)
+    assert reference_versions_of(cls) == RV
+    assert cls(batch=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
+
+
+def test_a_parity_env_carries_reference_versions_as_a_class_attribute():
+    cls = _cls("VersionedParity", "An ordinary parity env.", reference_versions=dict(RV))
+    register(cls)
+    assert reference_versions_of(cls) == RV
+    assert cls(batch=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
+
+
+def test_an_undeclared_reference_version_is_absent_not_empty():
+    """Absent means "no claim about the reference version", which the certifier must not confuse with
+    "measured against nothing"; ``describe()`` leaves the key out rather than publishing ``{}``."""
+    cls = _cls("Plain", "An ordinary parity env.")
+    register(cls)
+    assert reference_versions_of(cls) == {}
+    assert REFERENCE_VERSIONS_KEY not in cls(batch=1, device="cpu").describe()
+
+
+@pytest.mark.parametrize("bad", [[], "3.11.0", {}, {"mujoco": 3.11}, {"mujoco": ""}, {"": "3.11.0"},
+                                 {"mujoco": None}])
+def test_a_malformed_reference_version_field_is_refused(bad):
+    """A version the certifier cannot compare is worse than none, because it looks like provenance."""
+    with pytest.raises(ValueError, match="reference_versions"):
+        register(_visual("Bad", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: bad})))
+    with pytest.raises(ValueError, match="reference_versions"):
+        register(_cls("BadParity", "doc", reference_versions=bad))
+
+
+def _dmc_declaration_table() -> dict:
+    """``stable_envs.envs.dmcontrol.VISUAL_FIDELITY``, read off the SOURCE rather than the module.
+
+    The module imports mujoco with ``MUJOCO_GL=egl`` at import time, so on a host without EGL (this
+    laptop) the family does not register and the module cannot be imported -- but the declaration is
+    a table of literals and names, and the claim under test is about the table. Only the module-level
+    assignments the table is built from are executed, in an empty namespace.
+    """
+    import ast
+    src = (ROOT / "stable_envs" / "envs" / "dmcontrol.py").read_text()
+    want = {"_AT", "_SWIMMER_AT", "_AT_VERSIONS", "_SWIMMER_AT_VERSIONS", "_AT_MEASURED_WITH",
+            "_SWIMMER_AT_MEASURED_WITH", "VISUAL_FIDELITY"}
+    keep = [n for n in ast.parse(src).body
+            if isinstance(n, (ast.Assign, ast.AnnAssign))
+            and any(isinstance(t, ast.Name) and t.id in want
+                    for t in (n.targets if isinstance(n, ast.Assign) else [n.target]))]
+    ns: dict = {}
+    exec(compile(ast.Module(body=keep, type_ignores=[]), "dmcontrol.py<declarations>", "exec"), ns)
+    return ns["VISUAL_FIDELITY"]
+
+
+def _declared_reference_versions() -> list[tuple[str, dict, str]]:
+    """``(name, versions, measured_at)`` for every declaration in the tree that names its reference
+    versions: the registered classes, plus the DM Control table read off the source so the check runs
+    where that family cannot register."""
+    rows = []
+    for name, cls in sorted(se.REGISTRY.items()):
+        rv = reference_versions_of(cls)
+        if rv:
+            rows.append((name, rv, str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))))
+    for name, vf in sorted(_dmc_declaration_table().items()):
+        for key in (REFERENCE_VERSIONS_KEY, MEASURED_WITH_KEY):
+            if key in vf:
+                rows.append((f"dmcontrol.VISUAL_FIDELITY[{name}].{key}", vf[key],
+                             str(vf.get("measured_at", ""))))
+    return rows
+
+
+def test_every_declared_reference_version_is_the_one_measured_at_names():
+    """Nothing invented: a declared version must appear, package and version, in ``measured_at``.
+
+    The field was populated FROM that text (the DM Control ``_AT`` string names mujoco 3.11.0 and
+    mujoco-warp 3.11.0 and no dm_control version, so no dm_control version is declared), and this
+    keeps the two from drifting apart: a bump to one without the other is a declaration that
+    disagrees with itself.
+    """
+    rows = _declared_reference_versions()
+    assert rows, "no declaration in the tree names its reference versions; the DM Control table should"
+    bad = []
+    for name, rv, at in rows:
+        text = at.lower().replace("-", "_")
+        for pkg, ver in rv.items():
+            if ver not in at or pkg.lower().replace("-", "_") not in text:
+                bad.append(f"{name}: declares {pkg}={ver}, measured_at says {at!r}")
+    assert not bad, "\n  ".join(bad)
+
+
+def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measured_against():
+    """The measured case this field exists for: declared under mujoco 3.11.0, judged under 3.12.0 in
+    Step 4, and 3.12.0 re-anchors finite-plane textures (changelog item 15, commit cc7fb98c)."""
+    table = _dmc_declaration_table()
+    for name in ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidStand"):
+        assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
+        assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.11.0"}
+        assert table[name]["measured_at"].startswith("84 px")          # the text is kept as it was
+    assert table["DMCSwimmerSwimmer6"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
+    assert table["DMCSwimmerSwimmer6"][MEASURED_WITH_KEY] == {"warp": "1.16.0"}
+
+
+OUR_RENDERER_PACKAGES = ("mujoco_warp", "mujoco-warp", "warp", "warp-lang", "nvdiffrast", "torch", "triton")
+
+
+def test_reference_versions_never_name_our_own_renderer():
+    """The field gates: with mujoco_warp in it, bumping OUR renderer would turn a real regression of
+    ours into blocked_environment. Our side goes in measured_with, which is recorded and never compared."""
+    bad = []
+    for name, rv, _ in _declared_reference_versions():
+        if name.endswith(f".{MEASURED_WITH_KEY}"):
+            continue
+        bad += [f"{name}: {pkg}" for pkg in rv if pkg in OUR_RENDERER_PACKAGES]
+    assert not bad, "\n  ".join(bad)
+
+
+def test_measured_with_is_validated_like_reference_versions_but_is_not_a_reference_version():
+    cls = _visual("Measured", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"},
+                                                          MEASURED_WITH_KEY: {"mujoco_warp": "3.11.0"}}))
+    register(cls)
+    assert reference_versions_of(cls) == {"mujoco": "3.11.0"}
+    with pytest.raises(ValueError, match="measured_with"):
+        register(_visual("Bad", visual_fidelity=dict(VF, **{MEASURED_WITH_KEY: {"mujoco_warp": 3}})))
+
+
+def test_visual_fidelity_reference_versions_take_precedence_over_the_class_attribute():
+    """``reference_versions_of`` is the one reading; ``describe()`` and the certifier both use it."""
+    cls = _visual("Both", reference_versions={"mujoco": "3.10.0", "gymnasium": "1.3.0"},
+                  visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"}}))
+    register(cls)
+    assert reference_versions_of(cls) == {"mujoco": "3.11.0", "gymnasium": "1.3.0"}
