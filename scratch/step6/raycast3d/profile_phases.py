@@ -42,7 +42,11 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT))
+# $PYTHONPATH DECIDES WHICH stable_envs IS MEASURED. A before/after run puts the baseline copy on
+# PYTHONPATH for one leg and this branch for the other, so this file's own repo root must NOT be
+# inserted ahead of it -- doing that made both legs import the branch and report a 1.00x speed-up as
+# a real one. Appended, so the helper imports still resolve when PYTHONPATH is unset.
+sys.path.append(str(ROOT))
 sys.path.insert(0, str(ROOT / "scratch" / "step6"))
 
 # reuse the shared harness rather than re-deriving its provenance block
@@ -348,7 +352,9 @@ def main() -> None:
             "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
             "cpu": platform.processor() or platform.machine(),
             "threads": torch.get_num_threads(), "versions": versions(),
-            "slurm_job": os.environ.get("SLURM_JOB_ID"), "batches": {}}
+            "slurm_job": os.environ.get("SLURM_JOB_ID"),
+            "stable_envs_from": se.__file__,          # WHICH code this number describes
+            "pythonpath": os.environ.get("PYTHONPATH", ""), "batches": {}}
 
     probe = se.make(args.env, batch=1, size=args.size, device=args.device)
     note["size"] = int(probe.size)

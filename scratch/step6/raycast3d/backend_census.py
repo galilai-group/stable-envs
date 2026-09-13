@@ -22,7 +22,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT))
+# $PYTHONPATH DECIDES WHICH stable_envs IS MEASURED. A before/after run puts the baseline copy on
+# PYTHONPATH for one leg and this branch for the other, so this file's own repo root must NOT be
+# inserted ahead of it -- doing that made both legs import the branch and report a 1.00x speed-up as
+# a real one. Appended, so the helper imports still resolve when PYTHONPATH is unset.
+sys.path.append(str(ROOT))
 
 ENTRY = ("cast_nearest", "cast_nearest_torch", "any_blocking", "any_blocking_torch",
          "composite", "static_depth", "screen_span", "intersect", "shade", "cached_rays")
