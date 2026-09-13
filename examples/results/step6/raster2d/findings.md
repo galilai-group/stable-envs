@@ -9,7 +9,8 @@ stop condition.
 | | |
 |---|---|
 | baseline | `89fa5ca81341dc4df7186ec325cb691431a2ef17` on `sami/pre-step6-baseline` |
-| branch | `step6/raster2d` |
+| branch | `step6/raster2d` (HEAD when this was written: `d1f481b65e07`; this file and the
+  artifact directory are committed after it, so the tip is one or two commits later) |
 | commits | `80b962c` shared harness · `e6c2af3` correctness · `dd67eb2` performance · `54dd65f`, `89408cf`, `755f2d4`, `def0893` measurement scripts |
 | configs patched | `PushT`, `SimplePointMaze` |
 | configs profiled, diagnosed, NOT patched | `TwoRoom`, `TwoRoomTarget`, `Piecewise`, `PiecewiseZones` — these are `swm_nav` torch arithmetic, not Scene2D, and need their own fix (below) |
