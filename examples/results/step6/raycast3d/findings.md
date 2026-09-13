@@ -585,3 +585,25 @@ imported the BRANCH for both legs and the first 2a sweep reported a speed-up of 
 itself. They append now, and every note records the `stable_envs.__file__` it actually loaded; every
 number below cites a leg whose recorded path is `$SCR/se6/baseline` or `$SCR/se6/raycast3d`.
 
+
+---
+
+## Merge record
+
+`step6/integration` was merged into `step6/raycast3d` twice, as the coordinator released it:
+
+| merge commit | integration at | what it brought | conflicts |
+|---|---|---|---|
+| `fa8c3ac` | `d8bf23b` (texture-fidelity) | declaration fields on the trackcom visual entries, `core/env.py`, `testing/conformance.py`, new `testing/provenance.py` | none |
+| `f312c92` | `ca0c577` (reacher-correctness) | `VISIBILITY_KNOB` / `_hideable` / `visibility.*` style leaves, `_apply_variation` alpha zeroing, `sc.statics` recorded at bake and read by `_static_t`, `check_task_object_visibility`, `fidelity_step4.py`, two GPU test files | none |
+
+Both touch `stable_envs/envs/dmcontrol.py`; this workstream's edits are confined to the tendon FK
+(`_fk`, `_tendon_polyline`, `_chain_capsules`, `_chain_capsules_batch`, `catenary`) and git merged
+them without a conflict. The movers/statics classification is not touched here — `_fk` reads
+`sc.movers` and writes mover rows only, and `sc.statics` is recorded at bake, which 2a does not go
+near. `tests/unit` on the merged tree: **527 passed, 7 skipped, 2 failed**, both failures
+pre-existing and outside the authorised files (verified by stashing the working tree and re-running):
+`test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]` and
+`test_every_cited_scratch_path_resolves` (9 unresolvable citations, all from
+`examples/results/step6/dashboard.yaml` and two pre-existing research docs; none from this
+workstream's files after the `$SCR` collapse).
