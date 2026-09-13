@@ -1,0 +1,118 @@
+{
+  "host": "node2337.oscar.ccv.brown.edu",
+  "device": "cpu",
+  "slurm_job": "6346429",
+  "code_root": "/oscar/scratch/sboughan/se6/baseline",
+  "configs": {
+    "PointMazeLarge": {
+      "config": "PointMazeLarge",
+      "error": "ModuleNotFoundError(\"No module named 'gymnasium_robotics'\")",
+      "tb": "r/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 183, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 67, in replay_one\n    probe = se.make(cfg, batch=1, device=device)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 291, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 354, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 366, in _bake\n    env, u, pr = _scene_env(self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 200, in _scene_env\n    env = _build_reference(maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 175, in _build_reference\n    import gymnasium_robotics  # noqa: F401\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+    },
+    "PointMazeMedium": {
+      "config": "PointMazeMedium",
+      "error": "ModuleNotFoundError(\"No module named 'gymnasium_robotics'\")",
+      "tb": "r/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 183, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 67, in replay_one\n    probe = se.make(cfg, batch=1, device=device)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 291, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 354, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 366, in _bake\n    env, u, pr = _scene_env(self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 200, in _scene_env\n    env = _build_reference(maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 175, in _build_reference\n    import gymnasium_robotics  # noqa: F401\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+    },
+    "PointMazeOpen": {
+      "config": "PointMazeOpen",
+      "error": "ModuleNotFoundError(\"No module named 'gymnasium_robotics'\")",
+      "tb": "r/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 183, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 67, in replay_one\n    probe = se.make(cfg, batch=1, device=device)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 291, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 354, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 366, in _bake\n    env, u, pr = _scene_env(self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 200, in _scene_env\n    env = _build_reference(maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 175, in _build_reference\n    import gymnasium_robotics  # noqa: F401\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+    },
+    "PointMazeUMaze": {
+      "config": "PointMazeUMaze",
+      "error": "ModuleNotFoundError(\"No module named 'gymnasium_robotics'\")",
+      "tb": "r/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 183, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/raycast3d/scratch/step6/raycast3d/replay_step4.py\", line 67, in replay_one\n    probe = se.make(cfg, batch=1, device=device)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/core/env.py\", line 868, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 291, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 354, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 366, in _bake\n    env, u, pr = _scene_env(self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 200, in _scene_env\n    env = _build_reference(maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/baseline/stable_envs/envs/maze2d.py\", line 175, in _build_reference\n    import gymnasium_robotics  # noqa: F401\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'gymnasium_robotics'\n"
+    },
+    "MujocoReacher": {
+      "config": "MujocoReacher",
+      "device": "cpu",
+      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 240,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "55c73a41e7f2bd9a0f25d1da56940f8effdd37a4184f8a29ac6d5f8fec995642",
+      "frames_shape": [
+        64,
+        240,
+        240,
+        3
+      ],
+      "mean_pixel": 80.07670826099537,
+      "digest_ours_default_style": "55c73a41e7f2bd9a0f25d1da56940f8effdd37a4184f8a29ac6d5f8fec995642",
+      "frozen": null,
+      "PASS": null,
+      "dump": "MujocoReacher.npy"
+    },
+    "MujocoPusher": {
+      "config": "MujocoPusher",
+      "device": "cpu",
+      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 240,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "fc3505c6e5727459210c33f2eb822546e3413f571b06c3d6acd1370a2d533302",
+      "frames_shape": [
+        64,
+        240,
+        240,
+        3
+      ],
+      "mean_pixel": 13.986153880931713,
+      "digest_ours_default_style": "fc3505c6e5727459210c33f2eb822546e3413f571b06c3d6acd1370a2d533302",
+      "frozen": null,
+      "PASS": null,
+      "dump": "MujocoPusher.npy"
+    },
+    "MujocoInvertedPendulum": {
+      "config": "MujocoInvertedPendulum",
+      "device": "cpu",
+      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 240,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "d94951a8ff0043ae66fd91330319b39ef03c0fb0ead5084dc376225c41f0deca",
+      "frames_shape": [
+        64,
+        240,
+        240,
+        3
+      ],
+      "mean_pixel": 3.0929438838252317,
+      "digest_ours_default_style": "d94951a8ff0043ae66fd91330319b39ef03c0fb0ead5084dc376225c41f0deca",
+      "frozen": null,
+      "PASS": null,
+      "dump": "MujocoInvertedPendulum.npy"
+    },
+    "MujocoInvertedDoublePendulum": {
+      "config": "MujocoInvertedDoublePendulum",
+      "device": "cpu",
+      "stable_envs_from": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 240,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "b496f0394424c9aaee2e3da7999a0455f8c10854a980db66e25af645961c14b6",
+      "frames_shape": [
+        64,
+        240,
+        240,
+        3
+      ],
+      "mean_pixel": 81.13419035734954,
+      "digest_ours_default_style": "b496f0394424c9aaee2e3da7999a0455f8c10854a980db66e25af645961c14b6",
+      "frozen": null,
+      "PASS": null,
+      "dump": "MujocoInvertedDoublePendulum.npy"
+    }
+  },
+  "summary": {
+    "pass": 0,
+    "fail": 0,
+    "error": 4,
+    "total": 8
+  }
+}

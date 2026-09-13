@@ -144,6 +144,9 @@ def main() -> None:
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sample-states", type=int, default=None,
                     help="seed for configs with no frozen corpus (self-consistency only)")
+    ap.add_argument("--cover-compaction", choices=("on", "off"), default=None,
+                    help="pin raycast3d.COVER_COMPACTION, to diff the compacted composite against "
+                         "the expression it replaced on the device the change targets")
     ap.add_argument("--dump-dir", type=Path, default=None)
     ap.add_argument("--compare-dumps", nargs=2, type=Path, default=None,
                     metavar=("BEFORE", "AFTER"))
@@ -159,6 +162,11 @@ def main() -> None:
             print(f"{cfg:30s} {v}", flush=True)
         print(f"ALL_IDENTICAL={rep['all_identical']}  wrote {args.out}", flush=True)
         return
+
+    if args.cover_compaction is not None:
+        import stable_envs.render.raycast3d as R3
+        R3.COVER_COMPACTION = args.cover_compaction == "on"
+        print(f"COVER_COMPACTION={R3.COVER_COMPACTION} in {R3.__file__}", flush=True)
 
     frozen = frozen_oracles()
     cfgs = list(args.configs)

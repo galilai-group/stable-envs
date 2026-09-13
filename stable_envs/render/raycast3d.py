@@ -823,6 +823,15 @@ def _packed(*ts) -> bool:
 #: call site would be testing the plumbing it just wrote.
 FORCE_BACKEND: str | None = None
 
+#: Shade only the rays that actually landed on a mover -- as the union over the batch -- rather than
+#: every ray of the screen window. ``False`` restores the expression this replaced, verbatim, so
+#: ``tests/gpu/test_fast_paths.py`` can diff the two on the envs themselves. Same reason
+#: ``FORCE_BACKEND`` is a module-level switch: the property under test is a property of the whole
+#: composite, not of a helper, and threading a ``compact=`` argument down five call sites would be
+#: testing the plumbing rather than the claim. ``DMControlSuite`` carries the identical switch under
+#: the identical name for its own path.
+COVER_COMPACTION: bool = True
+
 
 def _use_triton(o) -> bool:
     return HAVE_TRITON and o.is_cuda and o.dtype == torch.float32
@@ -1021,11 +1030,42 @@ def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Pr
         sz = sz * size_scale.view(B, 1, 1)
     t, n, i_hit = cast_nearest(P["kind"], sz.expand(B, nprim, 3), xpos, xmat, oo, dd)
     cov = t < bt
-    mat = (P["mat"][i_hit] if mat_rgb is None
-           else mat_rgb[torch.arange(B, device=device).unsqueeze(1), i_hit])
-    c = shade(n, -dd, ldir, lamb, ldif, lspec, lights.exponent,
-              mat, P["tex"][i_hit], P["spec"][i_hit]) * 255.0
-    col = torch.where(cov.unsqueeze(-1), c, torch.zeros_like(c))
+
+    # A WINDOW IS NOT A COVERAGE MASK, and on this path the difference is most of the cost.
+    #
+    # ``tile`` is a rectangle around the movers' projected bound. The agent inside it is a sphere or
+    # a small articulated body: measured on the CPU certification node at 224 px, ss=2, batch 256,
+    # ``shade`` and the four material gathers below are 47% of a PointmazeLargeNavigate render
+    # (115.5 ms + 44.3 ms of 337.0 ms) while the cast that decides coverage is 19%. Every one of
+    # ``shade``'s ~45 elementwise passes was running over the whole window and the result was then
+    # thrown away by the ``where``.
+    #
+    # RESTRICTING THE SET CANNOT CHANGE A VALUE. ``col`` is ``where(cov, c, 0)`` and every ray's
+    # colour is a function of that ray alone, so at a ray position where NO row of the batch is
+    # covered the value is ``+0.0`` for every row whatever the shader would have said -- which is
+    # exactly what ``torch.zeros`` holds there. The union is over ray POSITIONS rather than pixels
+    # (position j is a different pixel in each row once the window moves per environment), which is
+    # as sound for the same reason. ``DMControlSuite._render_group`` makes this argument already and
+    # calls it ``COVER_COMPACTION``; ``composite`` never had it.
+    #
+    # Everything downstream sees the identical ``(B, N, 3)`` tensor it saw before, so the box average
+    # and the composite are untouched and stay bit-for-bit what they were.
+    if COVER_COMPACTION:
+        col = torch.zeros((B, N, 3), device=device, dtype=n.dtype)
+        js = torch.nonzero(cov.any(0), as_tuple=False).reshape(-1)
+        if js.numel():
+            ih = i_hit[:, js]
+            mat = (P["mat"][ih] if mat_rgb is None
+                   else mat_rgb[torch.arange(B, device=device).unsqueeze(1), ih])
+            c = shade(n[:, js], -dd[:, js], ldir, lamb, ldif, lspec, lights.exponent,
+                      mat, P["tex"][ih], P["spec"][ih]) * 255.0
+            col.index_copy_(1, js, torch.where(cov[:, js].unsqueeze(-1), c, torch.zeros_like(c)))
+    else:                                          # the expression above is the identity of this one
+        mat = (P["mat"][i_hit] if mat_rgb is None
+               else mat_rgb[torch.arange(B, device=device).unsqueeze(1), i_hit])
+        c = shade(n, -dd, ldir, lamb, ldif, lspec, lights.exponent,
+                  mat, P["tex"][i_hit], P["spec"][i_hit]) * 255.0
+        col = torch.where(cov.unsqueeze(-1), c, torch.zeros_like(c))
 
     covf = cov.to(col.dtype)
     if org is None:
@@ -1116,12 +1156,28 @@ def _tile_origin(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: 
     return x0.clamp(0, W - tile), y0.clamp(0, H - tile)
 
 
+#: ``(tile, ss, width, device)`` -> the ``(tile*ss)^2`` flat offsets of a window at the origin.
+_TILE_CACHE: dict = {}
+_TILE_CACHE_MAX = 16
+
+
 def _expand_tile(org, tile: int, ss: int, Wpix: int, device) -> torch.Tensor:
-    """``(B, (tile*ss)^2)`` flat indices into a ``ss``-times supersampled frame of width ``Wpix``."""
+    """``(B, (tile*ss)^2)`` flat indices into a ``ss``-times supersampled frame of width ``Wpix``.
+
+    ``(y0*ss + a)*Wpix + (x0*ss + b)`` is ``(y0*ss*Wpix + x0*ss) + (a*Wpix + b)``: a per-environment
+    SCALAR plus a grid that depends only on (tile, ss, width). The grid was being rebuilt per call as
+    two ``(B, T, T)`` int64 expands and a multiply-add -- 8 MB of index traffic per call at 224 px,
+    batch 256, twice per composite -- to produce the same 4,096 numbers every time. Integer
+    arithmetic, so the memoised form is exactly the expression it replaces.
+    """
     x0, y0 = org
     B = x0.shape[0]
-    T = tile * ss
-    ar = torch.arange(T, device=device)
-    yy = (y0.view(B, 1, 1) * ss + ar.view(1, T, 1)).expand(B, T, T)
-    xx = (x0.view(B, 1, 1) * ss + ar.view(1, 1, T)).expand(B, T, T)
-    return (yy * Wpix + xx).reshape(B, -1)
+    key = (int(tile), int(ss), int(Wpix), str(device))
+    base = _TILE_CACHE.get(key)
+    if base is None:
+        if len(_TILE_CACHE) >= _TILE_CACHE_MAX:
+            _TILE_CACHE.clear()
+        T = tile * ss
+        ar = torch.arange(T, device=device)
+        base = _TILE_CACHE[key] = (ar.view(T, 1) * Wpix + ar.view(1, T)).reshape(1, -1)
+    return (y0.view(B, 1) * ss * Wpix + x0.view(B, 1) * ss) + base

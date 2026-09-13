@@ -156,6 +156,24 @@ def _mover_frames(env, states, fast: bool):
         return env.render(states).clone()
 
 
+@contextlib.contextmanager
+def _composite_compaction(on: bool):
+    """Pin ``raycast3d.COVER_COMPACTION`` for the duration, and put it back whatever happens."""
+    assert R3.COVER_COMPACTION is True, (
+        "raycast3d.COVER_COMPACTION was already off when this test started, so an earlier test leaked "
+        "it and every comparison after that point has been the slow path against itself")
+    try:
+        R3.COVER_COMPACTION = on
+        yield
+    finally:
+        R3.COVER_COMPACTION = True
+
+
+def _composite_frames(env, states, fast: bool):
+    with _composite_compaction(fast):
+        return env.render(states).clone()
+
+
 def _scene_prepare(seed: int):
     return lambda env: _scene(env, env.B, seed)
 
@@ -221,6 +239,32 @@ CASES: tuple[FastPath, ...] = (
         frames=_mover_frames,
         inapplicable=lambda env: (None if hasattr(env, "_mover_idx")
                                   else "does not use the windowed mover path"),
+    ),
+    FastPath(
+        id="composite-cover-compaction",
+        why=("``raycast3d.composite`` shades only the rays that landed on a mover, as the UNION over "
+             "the batch, instead of every ray of the screen window. The window is a rectangle around "
+             "the movers' projected bound and the mover inside it is a sphere or a small articulated "
+             "body, so at 224 px / ss=2 that was ~45 elementwise passes and four material gathers "
+             "running over eight times more samples than can be visible, with the result thrown away "
+             "by a ``where``. The claim is that restricting the SET cannot change a VALUE: every "
+             "ray's colour is a function of that ray alone, and at a position no row covers the "
+             "composite takes the plate whatever the shader would have said. A difference means that "
+             "argument is wrong somewhere -- a covered ray outside the union, or a shaded value that "
+             "is not +0.0 where it is dropped -- and it would show up as a handful of pixels on the "
+             "agent's silhouette, which is exactly what no mean-absolute-difference catches. The "
+             "union is over ray POSITIONS, not pixels, because the window moves per environment."),
+        names=tuple(n for n in sorted(se.REGISTRY)
+                    if n.startswith(("Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))),
+        modules=("ogbench", "maze2d"),
+        batch=8,
+        seed=0,
+        sizes=(None,),
+        prepare=_states_prepare(0),
+        frames=_composite_frames,
+        inapplicable=lambda env: (
+            None if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench", "maze2d")
+            else "does not render through raycast3d.composite"),
     ),
     FastPath(
         id="raster2d-tile-culling",
@@ -383,6 +427,9 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert hasattr(R3, "FORCE_BACKEND"), (
         "raycast3d.FORCE_BACKEND is gone, so the fused-vs-torch case cannot pin either backend and has "
         "been comparing the default against itself")
+    assert getattr(R3, "COVER_COMPACTION", None) is True, (
+        "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
+        "compaction off and has been comparing the compacted path against itself")
     assert "cull" in inspect.signature(R2.render_triton).parameters, (
         "raster2d.render_triton no longer takes cull=, so both culling cases are drawing the same "
         "picture twice")

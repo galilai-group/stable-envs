@@ -19,8 +19,15 @@ import math
 import numpy as np
 import pytest
 
-D = pytest.importorskip("stable_envs.envs.dmcontrol",
-                        reason="needs dm_control and an offscreen GL context")
+try:
+    # NOT ``importorskip``: this module needs dm_control AND a usable offscreen GL context, and an
+    # unusable one surfaces as RuntimeError from mujoco's gl_context rather than as ImportError --
+    # which importorskip does not catch, so the whole file errored at collection on a laptop.
+    import stable_envs.envs.dmcontrol as D
+except Exception as exc:                                                # noqa: BLE001
+    pytest.skip(f"stable_envs.envs.dmcontrol is not importable here "
+                f"({type(exc).__name__}: {str(exc)[:120]}); this file is about its tendon "
+                f"arithmetic and has nothing to assert without it", allow_module_level=True)
 
 
 def _catenary_reference(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:

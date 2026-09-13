@@ -1,0 +1,39 @@
+{
+  "before_dir": "/oscar/scratch/sboughan/se6/_dumps/2bcpu/oob_base",
+  "after_dir": "/oscar/scratch/sboughan/se6/_dumps/2bcpu/oob_branch",
+  "configs": {
+    "MujocoInvertedDoublePendulum": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3686400,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "MujocoInvertedPendulum": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3686400,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "MujocoPusher": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3686400,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "MujocoReacher": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 3686400,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    }
+  },
+  "all_identical": true
+}
