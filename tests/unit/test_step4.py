@@ -307,6 +307,22 @@ def test_a_visual_bound_judged_under_its_declared_reference_is_judged(C, tmp_pat
     assert v["Vis"]["gate_a"] == "PASS"
 
 
+def test_the_certifier_reads_reference_versions_with_the_same_precedence_as_describe(C, tmp_path):
+    """visual_fidelity's entry overrides the class attribute (stable_envs.core.env.reference_versions_of),
+    so a class-level 3.10.0 under a visual_fidelity 3.11.0 is judged against 3.11.0."""
+    row = _visual_row({"mujoco": "3.11.0"}, observed={"mean_abs": 4.99, "within8_frac": 0.882, "ssim": 0.661})
+    row["mandatory"]["check_fidelity_declaration"]["evidence"]["reference_versions"] = {"mujoco": "3.10.0",
+                                                                                        "gymnasium": "1.3.0"}
+    shard(tmp_path, "dmc", [row], reference_packages={"mujoco": "3.11.0", "gymnasium": "1.3.0"})
+    _, v = verdicts(C, tmp_path)
+    assert v["Vis"]["checks"]["check_visual_fidelity"]["status"] == "pass"
+    shard(tmp_path, "dmc", [row], reference_packages={"mujoco": "3.10.0", "gymnasium": "1.3.0"})
+    _, v = verdicts(C, tmp_path)
+    c = v["Vis"]["checks"]["check_visual_fidelity"]
+    assert c["status"] == "blocked_environment"
+    assert c["reference_version_mismatch"] == ["mujoco: declared 3.11.0, interpreter had 3.10.0"]
+
+
 def test_a_declaration_without_reference_versions_is_judged_as_before(C, tmp_path):
     """The pre-field state of the world: every existing declaration keeps its verdict."""
     shard(tmp_path, "dmc", [_visual_row(None)], reference_packages={"mujoco": "3.12.0"})

@@ -301,8 +301,10 @@ def verdict(row: dict, J: dict, provenance: dict | None = None) -> dict:
            # would judge a measurement against a bar nobody wrote for it. Absent means no bound.
            "variation_fidelity": decl.get("variation_fidelity") or {}}
     out["tier"] = decl.get("tier") or out["tier"]
-    declared_versions = (decl.get("reference_versions")
-                         or (decl.get("visual_fidelity") or {}).get("reference_versions") or {})
+    # Same precedence as ``stable_envs.core.env.reference_versions_of``: the class attribute first,
+    # then ``visual_fidelity``'s entry on top of it, so this and ``describe()`` cannot disagree.
+    declared_versions = {**(decl.get("reference_versions") or {}),
+                         **((decl.get("visual_fidelity") or {}).get("reference_versions") or {})}
     recorded_packages = (provenance or {}).get("reference_packages") or {}
 
     for group in ("mandatory", "family_specific"):
