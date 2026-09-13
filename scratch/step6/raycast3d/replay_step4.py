@@ -147,7 +147,17 @@ def compare_dumps(a_dir: Path, b_dir: Path) -> dict:
             "frames_differing": int((pm.reshape(len(A), -1).max(1) > 0).sum()),
             "mean_abs_diff": float(d.mean()),
         }
-    out["all_identical"] = all(v.get("identical") for v in out["configs"].values())
+    # A COMPARISON OF NOTHING IS NOT A PASS. ``all([])`` is True, and the first maze2d run (job
+    # 6347125) reported ALL_IDENTICAL=True over two empty dump directories because every config had
+    # failed to construct. A verification that goes green when it verified nothing is worse than one
+    # that fails.
+    if not out["configs"]:
+        out["all_identical"] = None
+        out["error"] = ("nothing to compare: no .npy dumps in the BEFORE directory, so every "
+                        "configuration failed before it rendered. This is NOT a pass.")
+    else:
+        out["all_identical"] = all(v.get("identical") for v in out["configs"].values())
+    out["n_compared"] = len(out["configs"])
     return out
 
 
@@ -174,7 +184,9 @@ def main() -> None:
         args.out.write_text(json.dumps(rep, indent=2))
         for cfg, v in rep["configs"].items():
             print(f"{cfg:30s} {v}", flush=True)
-        print(f"ALL_IDENTICAL={rep['all_identical']}  wrote {args.out}", flush=True)
+        print(f"ALL_IDENTICAL={rep['all_identical']} over {rep['n_compared']} config(s)"
+              + (f"  -- {rep['error']}" if rep.get("error") else "")
+              + f"  wrote {args.out}", flush=True)
         return
 
     if args.cover_compaction is not None:

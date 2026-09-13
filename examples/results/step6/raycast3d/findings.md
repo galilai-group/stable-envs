@@ -918,6 +918,118 @@ re-freezing a digest that is still a function of call history just moves the pro
    repeat the 2b gap.
 
 
+# RAYCAST-3 — a fused CPU cast: design-first, measured, **not implemented**
+
+No renderer edits. The kernel is `scratch/step6/raycast3d/cast_kernel.cpp`, built into a scratch
+extension by `cast_microbench.py`; nothing imports it from `stable_envs`. SLURM **6347071**,
+**6347142**, **6347404** (`node1828`/`node1829`, Intel Xeon Platinum 8268 @ 2.9 GHz, `batch`
+partition, **1 torch thread**, gcc 11.5.0).
+
+## The question, and the bar
+
+Ticket 1 measured the CPU blocker: `raycast3d.intersect` is 76–95 % of every multi-mover CPU render
+at **145–240 ns per ray-primitive test**, because `cast_nearest_torch` pays 60–100 flops as ~200
+elementwise kernels over materialised `(B,N)` temporaries. `step6/cpu-3d`'s design reproduced the
+same constant (220 ns/test) on a different scene shape and computed the bar: `cores_cpu >= 1` at
+84 px on this host is one-core JPEG-q90 decode at 6,629 fps — **151 µs per frame, 21.4 ns per pixel**.
+
+## What a compiled kernel costs (measured)
+
+`cast_kernel.cpp` is a scalar C++ transcription of `_sphere` and `_capsule` plus the nearest-hit
+reduction — same expressions, same association order, `-O3 -ffp-contract=off -fno-fast-math`. Over
+7,056 rays, one thread, median of 9:
+
+| cell | K | torch loop | torch, chunked 4096 | **scalar C++** | speed-up |
+|---|---|---|---|---|---|
+| DMCReacherHard | 4 | 215.9 ns | 316.7 | **18.0 ns** | **12.0x** |
+| DMCFingerSpin | 7 | 228.6 | 337.8 | **18.4** | **12.4x** |
+| DMCBallInCupCatch | 36 | 276.3 | 406.4 | **21.6** | **12.8x** |
+| AntmazeMediumExplore | 13 | 276.6 | 410.4 | **21.9** | **12.6x** |
+| PointmazeLargeNavigate | 1 | 64.6 | 100.5 | **8.5** | 7.6x |
+
+**Chunking the rays in pure torch makes it WORSE, not better** (1.5–4x slower at 1024, 1.5x at 4096):
+the shipped call is already one dispatch per op over the whole bundle, and cutting it up multiplies
+the 2 µs dispatch floor by the chunk count. So there is no compiler-free win here — the fused CPU
+cast has to be compiled or it does not happen.
+
+## The gate is bit-exactness, and it is NOT yet passed
+
+The frozen Step-4 digests were produced by `cast_nearest_torch`, so a CPU kernel is admissible only
+if it agrees to the last bit — the same standard the Triton kernel had to meet. Measured on the same
+inputs, uint32 bit patterns:
+
+| cell | `t` exact | winner index exact | normal: components differing | rays | max ulp | max abs |
+|---|---|---|---|---|---|---|
+| DMCReacherHard | yes | yes | 13 / 21,168 | 5 / 7,056 | 3 | 1.19e-07 |
+| DMCFingerSpin | **no** (1 ray) | yes | 18 / 21,168 | 6 | **17** | 3.58e-07 |
+| DMCBallInCupCatch | yes | yes | 74 / 21,168 | 31 | 16 | 1.79e-07 |
+| AntmazeMediumExplore | yes | yes | 25 / 21,168 | 10 | 8 | 1.19e-07 |
+| **PointmazeLargeNavigate** (sphere only) | **yes** | **yes** | **0** | **0** | **0** | **0** |
+
+Three facts narrow it a long way:
+
+* **the sphere transcription is exact**, on both toolchains, every ray;
+* the capsule NORMAL is exact on Apple clang/arm64 and not on gcc 11.5/x86-64;
+* and it is **identical with and without `-march=native`**, so it is not FMA or AVX codegen.
+
+A 3–17 ulp difference on 0.06–0.35 % of components is not a uniform rounding wobble; it is a handful
+of rays where the capsule normal is near-degenerate (`nl` almost zero before normalisation — a ray
+close to the capsule's own axis), which is exactly where a one-ulp difference upstream is amplified
+by the division. **That is the go/no-go item**, and it is a transcription question, not a packaging
+one: 17 ulp will not be fixed by pinning a compiler.
+
+## Does the speed reach `CPU_FAST`? Not by itself — the TEST COUNT is the other half
+
+At the measured C++ cost, against each cell's own decode budget and its MEASURED ray-primitive test
+count per frame (ticket 1's phase notes):
+
+| cell | tests/frame | budget | cast alone @C++ | cast-only fps ceiling | test-count reduction still needed |
+|---|---|---|---|---|---|
+| DMCReacherHard | 80,884 | 142.6 µs | 1,453.6 µs | 688 | **10.2x** |
+| DMCFingerSpin | 93,401 | 140.3 | 1,716.0 | 583 | **12.2x** |
+| DMCBallInCupCatch | 279,972 | 139.1 | 6,033.6 | 166 | **43.4x** |
+| AntmazeMediumExplore | 53,248 | 418.3 | 1,166.9 | 857 | **2.8x** |
+| PointmazeLargeNavigate | 4,096 | 418.3 | 34.8 | 28,705 | **0.1x** (already fits) |
+
+**So a 12x kernel is necessary and not sufficient for the DM Control parity cells.** `DMCReacherHard`
+issues 80,884 ray-primitive tests for a 7,056-pixel frame — **11.5 tests per pixel for a
+four-primitive scene** — because four passes each run over a window that is 64–95 % of the frame
+(measured: mover 4,489 rays/env, reflect 6,720, the two shadow passes 1,956 and 7,056). The cost is
+not the primitives, it is that nothing bounds the rays per primitive.
+
+**Verdict per cell, with a fused kernel and nothing else changed:**
+
+| cell | `CPU_FAST` reachable with the compiled cast alone? |
+|---|---|
+| PointmazeLargeNavigate / MediumNavigate | the cast already fits the budget; **the blocker is `composite`, not the cast** |
+| AntmazeMediumExplore | no — 2.8x of test-count reduction short, plausible with a per-primitive bound |
+| DMCReacherHard, DMCFingerSpin | no — 10–12x short; needs both the kernel and a per-primitive screen bound |
+| DMCCartpole*, DMCPendulum, DMCAcrobot | not measured here (K=2–3, fewer tests); the arithmetic says they are the closest of the DMC cells and should be measured before any implementation is scoped |
+| DMCBallInCupCatch | no — 43x short at K=36; out of reach on one core |
+
+## What it would need, and what to build first
+
+1. **A per-primitive screen bound before the cast.** `screen_span` already projects each primitive's
+   bounding sphere; the cast uses only the union. Casting each primitive against the rays inside its
+   OWN projected box is the same argument `raster2d`'s tile culling makes and would take Reacher's
+   11.5 tests/pixel towards 1–2. This is the larger lever and it needs no compiler.
+2. **Then** the compiled kernel, for the residual.
+3. **Packaging**, if it goes ahead: a `torch.utils.cpp_extension` build with `-ffp-contract=off
+   -fno-fast-math` — note `se-step6` has **no ninja**, so the build path needs the plain-`g++`
+   fallback this benchmark already carries, and **no numba** (`ModuleNotFoundError`), so numba was
+   not measurable here and would need its own venv to evaluate.
+
+## Scoping note for Pointmaze (review item 6)
+
+For the row this workstream owns the cast is **not** the next target. After RAYCAST-2b,
+`PointmazeLargeNavigate` at B=64 is 42.64 ms of which `composite` SELF is **25.31 ms (59 %)** and the
+cast 13.44 ms (32 %). That 25 ms is `composite`'s own machinery at `ss=2`: the full-frame stride-0
+plate write, the float promotion of the plate, and the `gather`/`scatter_` through `(B, tile*tile, 3)`
+int64 indices — 6.3 MB of index traffic for 2.4 MB of pixels at B=256. A micro-benchmark of THAT —
+scatter/gather versus a contiguous tile blit, and the box average at `ss=2` — belongs beside the cast
+benchmark in any RAYCAST-3 implementation ticket, and for Pointmaze it is the larger half.
+
+
 ---
 
 ## Merge record
