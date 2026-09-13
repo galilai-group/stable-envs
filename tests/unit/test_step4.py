@@ -228,6 +228,27 @@ def test_a_recorded_downsample_floor_is_applied_when_there_is_one(C, BOUNDS, tmp
 
 # ------------------------------------------------------------------ the two tiers stay apart
 
+def test_the_downsample_verdict_records_which_states_it_was_measured_on(C, BOUNDS, tmp_path):
+    """A shard measured on the bound's own protocol says so and carries the corpus number beside it;
+    an older shard measured on the corpus is marked as such rather than read as the protocol."""
+    name, floor = next(iter(BOUNDS.load()["downsample_exact_frac"]["value"].items()))
+    proto = {"n": 8, "state_seed": 20260809, "draw": "render_worker.sample_inputs(env, n)",
+             "style": "default appearance", "states_sha256": "ab" * 32}
+    fam = {"check_resolution_consistency": {"status": "measured", "evidence": {
+        "exact_frac": floor, "mean_abs": 1.0, "max_abs": 9, "protocol": proto,
+        "frozen_corpus": {"exact_frac": floor - 0.02, "mean_abs": 1.1, "max_abs": 9, "n_states": 64}}}}
+    shard(tmp_path, "s", [config(cid=name, family=fam)])
+    _, v = verdicts(C, tmp_path)
+    c = v[name]["checks"]["check_resolution_consistency"]
+    assert c["status"] == "pass" and c["protocol"] == proto
+    assert c["frozen_corpus"]["exact_frac"] == floor - 0.02 and c["frozen_corpus"]["n_states"] == 64
+    fam = {"check_resolution_consistency": {"status": "measured",
+                                            "evidence": {"exact_frac": floor, "mean_abs": 1.0, "max_abs": 9}}}
+    shard(tmp_path, "s", [config(cid=name, family=fam)])
+    _, v = verdicts(C, tmp_path)
+    assert v[name]["checks"]["check_resolution_consistency"]["protocol"].startswith("not recorded")
+
+
 def test_a_visual_env_is_never_held_to_a_parity_threshold(C, tmp_path):
     decl = dict(CLEAN["check_fidelity_declaration"], tier="visual", describe_reports_tier="visual",
                 visual_fidelity={"mean_abs_max": 30.0, "within8_min": 0.2, "ssim_min": 0.5})

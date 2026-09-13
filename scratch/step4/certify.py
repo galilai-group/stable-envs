@@ -247,11 +247,23 @@ def _downsample_judge(bnd: dict):
                                  + bnd["downsample_exact_frac"]["from"] + "; a guessed bound is worse "
                                  "than no test, so this is reported and does not gate"}
         ok = ev.get("exact_frac") is not None and ev["exact_frac"] >= f - margin
-        return ok, {"observed": got, "bound": f">= {f} - {margin}",
-                    "violations": ([] if ok else
-                                   [f"exact_frac {ev.get('exact_frac'):.4f} < {f} - {margin}"]),
-                    "bound_from": bnd["downsample_exact_frac"]["from"],
-                    "measured_on": bnd["downsample_measured_on"]["value"]}
+        out = {"observed": got, "bound": f">= {f} - {margin}",
+               "violations": ([] if ok else
+                              [f"exact_frac {ev.get('exact_frac'):.4f} < {f} - {margin}"]),
+               "bound_from": bnd["downsample_exact_frac"]["from"],
+               "measured_on": bnd["downsample_measured_on"]["value"]}
+        # Which states the judged number was measured on. A shard that measured on the bound's own
+        # protocol says so (``protocol``) and carries the frozen-corpus number beside it; an older
+        # shard measured on the corpus and carries neither, which the record must show rather than
+        # imply -- the floor is a property of the draw as much as of the renderer.
+        if ev.get("protocol") is not None:
+            out["protocol"] = ev["protocol"]
+        if ev.get("frozen_corpus") is not None:
+            out["frozen_corpus"] = {k: ev["frozen_corpus"].get(k)
+                                    for k in ("exact_frac", "mean_abs", "max_abs", "n_states")}
+        if "protocol" not in out:
+            out["protocol"] = "not recorded: measured on the caller's states (Step 4: the frozen corpus)"
+        return ok, out
     return judge
 
 

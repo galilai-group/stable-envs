@@ -71,3 +71,79 @@ def test_the_blocked_record_carries_the_mismatch_for_the_report(check):
     rec = block_on_reference_mismatch(check, {"mujoco": "3.11.0"}, {"mujoco": "3.12.0"})
     assert rec["reference_version_mismatch"] == ["mujoco: declared 3.11.0, interpreter had 3.12.0"]
     assert rec["why"].startswith("reference version mismatch")
+
+
+# ------------------------------------------------------------------ the downsample bound's protocol
+
+import ast  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import numpy as np  # noqa: E402
+
+from stable_envs.testing import conformance as C  # noqa: E402
+from stable_envs.testing import render_worker as W  # noqa: E402
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _repro_constants() -> dict:
+    """``N`` and ``MEASURED_ON`` out of tests/gpu/test_reproducibility.py, read as text: importing the
+    module parameterises fixtures over the registry and needs a GPU-capable interpreter."""
+    src = (ROOT / "tests" / "gpu" / "test_reproducibility.py").read_text()
+    out = {}
+    for n in ast.parse(src).body:
+        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name) \
+                and n.targets[0].id in ("N", "MEASURED_ON", "DOWNSAMPLE_MARGIN"):
+            try:
+                out[n.targets[0].id] = ast.literal_eval(n.value)
+            except ValueError:
+                pass
+    return out
+
+
+def test_the_downsample_protocol_is_the_one_the_bound_was_measured_under():
+    """``DOWNSAMPLE_EXACT_FRAC`` was measured by the GPU test module's ``inputs`` fixture:
+    ``render_worker.sample_inputs(env, N)`` at the default appearance. The library's copy of that
+    protocol must be the same N and the same seed, or the floor is applied to a different draw."""
+    k = _repro_constants()
+    assert k["N"] == C.DOWNSAMPLE_PROTOCOL_N
+    assert f"{C.DOWNSAMPLE_PROTOCOL_N} states per env" in k["MEASURED_ON"]
+    assert "render_worker.STATE_SEED" in k["MEASURED_ON"] and "default appearance" in k["MEASURED_ON"]
+    proto = C.downsample_protocol()
+    assert proto["n"] == k["N"] and proto["state_seed"] == W.STATE_SEED
+    assert proto["style"] == "default appearance"
+
+
+def test_the_protocol_states_are_the_fixture_draw():
+    """Bit-for-bit what ``render_worker.sample_inputs`` gives, and nothing the caller passed."""
+    class Env:
+        style_dim = 0
+        def sample_states(self, n, rng=None):
+            return rng.standard_normal((n, 3)).astype(np.float32)
+    env = Env()
+    got = C.downsample_protocol_states(env)
+    want, _ = W.sample_inputs(env, C.DOWNSAMPLE_PROTOCOL_N)
+    assert got.shape == (C.DOWNSAMPLE_PROTOCOL_N, 3) and got.dtype == np.float32
+    assert np.array_equal(got, want)
+    assert np.array_equal(got, C.downsample_protocol_states(env))       # deterministic
+    rec = C.downsample_protocol(got)
+    assert rec["states_sha256"] == C.frames_digest(got) and rec["n_states"] == C.DOWNSAMPLE_PROTOCOL_N
+    assert "states_sha256" not in C.downsample_protocol()                # nothing pinned without a draw
+
+
+def test_a_failing_protocol_draw_is_an_error_not_a_skip():
+    """fidelity_step4._resolution maps ValueError to not_applicable because that is how an env says it
+    renders at one size only; a ValueError from sample_states must not be reclassified as that skip."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("fidelity_step4", ROOT / "examples" / "fidelity_step4.py")
+    F = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(F)
+
+    class Env:
+        style_dim, size = 0, 8
+        def sample_states(self, n, rng=None):
+            raise ValueError("a broken state sampler")
+        def render(self, *a, **k):
+            raise AssertionError("must not render when the draw failed")
+    r = F._resolution(Env(), np.zeros((2, 3), np.float32))
+    assert r["status"] == "error" and "protocol draw" in r["why"] and "broken state sampler" in r["why"]

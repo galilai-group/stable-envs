@@ -799,6 +799,43 @@ def _box_downsample(frames: np.ndarray, f: int) -> np.ndarray:
     return np.clip(np.rint(x.mean(axis=(2, 4))), 0, 255).astype(np.uint8)
 
 
+#: The protocol ``tests/gpu/test_reproducibility.py::DOWNSAMPLE_EXACT_FRAC`` was measured under, as
+#: the test module's ``MEASURED_ON`` states it: "8 states per env from
+#: sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance" -- i.e. that module's
+#: ``inputs`` fixture, ``render_worker.sample_inputs(env, N)`` with ``N = 8``. The floor is a property
+#: of a STATE SET as much as of a renderer: how much speckled sky and far floor is in view decides how
+#: many pixels survive a 2x box filter, and the same renderer measures 0.6188 on one 64-state corpus,
+#: 0.6241 on the first 8 of it and 0.6290 on these 8 (walker, both mujoco 3.11 and 3.12; see
+#: ``examples/results/step6/texture-fidelity/findings.md`` section 6). A bound applied on a different
+#: draw with a 0.005 margin fails for the draw and not for the renderer, which is why the check
+#: carries its own protocol here rather than borrowing whatever states the caller has.
+DOWNSAMPLE_PROTOCOL_N = 8
+
+
+def downsample_protocol(states=None) -> dict:
+    """The recorded protocol of the downsample bound, as a record a shard can carry beside the number.
+
+    Pass the drawn states to pin them: now that the judged number is no longer measured on the frozen
+    corpus (whose sha256 the shard already records), the draw itself has to be identifiable, so a
+    later run can show it measured the same eight states and not a re-seeded ``sample_states``.
+    """
+    from . import render_worker as W
+    out = {"n": DOWNSAMPLE_PROTOCOL_N, "state_seed": W.STATE_SEED,
+           "draw": "render_worker.sample_inputs(env, n)", "style": "default appearance",
+           "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)"}
+    if states is not None:
+        out["states_sha256"] = frames_digest(np.ascontiguousarray(states, np.float32))
+        out["n_states"] = int(len(states))
+    return out
+
+
+def downsample_protocol_states(env) -> np.ndarray:
+    """The states ``DOWNSAMPLE_EXACT_FRAC`` was measured on for ``env``: the test fixture's own draw."""
+    from . import render_worker as W
+    states, _ = W.sample_inputs(env, DOWNSAMPLE_PROTOCOL_N)
+    return np.ascontiguousarray(states, np.float32)
+
+
 def check_resolution_consistency(env, states, style=None, factor: int = 2) -> dict:
     """Render at ``factor x S`` and box-downsample to ``S``; how far is that from rendering at ``S``?
 
