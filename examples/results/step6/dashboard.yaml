@@ -140,21 +140,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-cpu-3d
     oscar_copy: /oscar/scratch/sboughan/se6/cpu-3d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 6505e71
     agent_model: fable
     wave: wave2
-    status: design
+    status: finding (Phase-1 design delivered; Phase-2 approval pending Sami on CPU-backend contract + compiled-kernel packaging; Fetch CPU_FAST = demonstrated blocker)
     authorization: DESIGN/CHARACTERIZATION ONLY
     goal: "DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes"
-    affected_configs: ["AntmazeGiantNavigate", "AntmazeLargeExplore", "AntmazeMediumExplore", "AntmazeTeleportExplore", "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup", "DMCCheetahRun", "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCHopperHop", "DMCHumanoidStand", "DMCPendulumSwingup", "DMCReacherEasy", "DMCReacherHard", "DMCWalkerWalk", "FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict", "HumanoidmazeGiantNavigate", "HumanoidmazeLargeNavigate", "HumanoidmazeMediumNavigate", "PointmazeGiantNavigate", "PointmazeLargeNavigate", "PointmazeMediumNavigate", "PointmazeTeleportNavigate"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
+    affected_configs: ["DMCCheetahRun","DMCHopperHop","DMCWalkerWalk","DMCHumanoidStand","FetchPickAndPlace","FetchPickAndPlaceDense","FetchPickAndPlaceDict","FetchPush","FetchPushDense","FetchPushDict","FetchReach","FetchReachDense","FetchReachDict","FetchSlide","FetchSlideDense","FetchSlideDict"]  # 10 DMControlSuite parity cells already have a CPU path (raycast3d)
+    bottleneck: {measured: "No CPU path: Step-3 cpu rows for trackcom four are MJWarp on GPU behind device=cpu (DEVICE_NOT_HONOURED). Binding bar is cores_cpu>=1: 6,629 fps at 84px (21.4 ns/px) / 776-881 fps at 480px; official llvmpipe 11-27 fps DMC, 40-53 Fetch. Torch 1-thread: 2.0 us dispatch floor, 6.3 us per 84px full-frame op; compiled scalar C whole-frame 95-150 ns/px (K=8/19) = 4.5-7x short of bar. Fetch robot 15 meshes/31,720 tris at 480px: needs 36-41 ns/tri vs 540-1,640 measured -> fill-bound blocker", hypothesis: "DMC four: arch (d) baked skybox plate (99.4-99.7% constant) + analytic floor (MJWarp PLANE UV law) + compacted capsule cast on mover window + MJWarp-law shader -> 260-800 fps = CPU_FASTER (S_cpu 24-30, cores 0.04-0.12); CPU_FAST only via fused SIMD whole-frame kernel (M2), unproven; shared fused CPU cast to be owned by raycast3d"}
+    correctness: {targeted_tests: "n/a", step4_replay: "n/a (Phase 2 obligation: trackcom four byte-identical on cuda; new CPU shard)", gate_a: "unchanged", fidelity: "OPEN: frozen MJWarp digests are a soft oracle (0.02% run-to-run noise; baseline misses trackcom digests by 0.16-0.61/255); proposed new cross-backend within-1/mean bound + per-device visual declaration under 3.11 reference -> needs Sami"}
+    performance: {cpu_before: "CPU_UNMEASURED / DEVICE_NOT_HONOURED (trackcom four); Fetch no CPU route", cpu_after: null, gpu_before: "unchanged", gpu_after: null, batch_scales: null, no_large_batch_regression: null}
+    pixels_changed: no
+    semantic_followup: none now; DINO tripwire on CPU frames in Phase 2
     review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave2 spawned 2026-09-13T18:25"]
+    slurm_jobs: [6345025]
+    notes: ["wave2 spawned 2026-09-13T18:25", "Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER, pure torch, ~3-5 days) and gate M2 (compiled SIMD kernel, packaging decision) on a <=21 ns/px micro-benchmark; (3) Fetch: record blocker vs fund CPU_PARITY llvmpipe device-honouring path. RAYCAST-3 (fused CPU cast, raycast3d-owned) queued after RAYCAST-2."]
   - workstream: tilemap
     brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
     branch: step6/tilemap
