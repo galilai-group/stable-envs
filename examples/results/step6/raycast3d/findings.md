@@ -543,10 +543,13 @@ exonerates on both devices.
 4. **`maze2d` and `mujoco_locomotion` also call `raycast3d`** (`R3.composite`, `R3.cast_nearest`,
    `R3.any_blocking`, `R3.screen_span`) and are NOT among the frozen 49 — a change in
    `raycast3d.py` can move their pixels with no oracle to catch it.
-5. **Bug in the shared harness** (not mine to fix): `scratch/step6/profile_note.py:~247` reads
-   `host = n["host"].split(".")[0]` where the variable is `note`; the script raises `NameError`
-   before writing its outputs. My `profile_phases.py` imports only `git_commit`/`versions` from it
-   and is unaffected.
+5. **Bug in the shared harness — FIXED on this branch at the coordinator's instruction**
+   (commit `6ab122d`): `scratch/step6/profile_note.py:251` read `host = n["host"].split(".")[0]`
+   where the dict in scope is `note` (`n` is `render_note`'s parameter). A run measured every batch,
+   printed every line, then raised `NameError` before writing either output file, while SLURM
+   reported COMPLETED. One-line change, no other edit to the harness. My `profile_phases.py` imports
+   only `git_commit`/`versions` from it and never hit this, so none of the Step 6C measurements
+   needed re-running.
 6. **`--fk-counterfactual` is a diagnostic, not a proposal.** It memoises `_fk` per `(scene, batch)`,
    which is not a legal renderer behaviour (it would break state-dependence). It exists only to put a
    number on the bound.
