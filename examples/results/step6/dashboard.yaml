@@ -56,21 +56,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-raycast3d
     oscar_copy: $SCR/se6/raycast3d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: e5f19a7 (ticket 1; trailers being stripped)
+    head_sha: 0a77486 (RAYCAST-2; merges integration d8bf23b and ca0c577)
     agent_model: opus
     wave: wave1
-    status: implementation (RAYCAST-2a/2b/2c authorized)
+    status: review (2a/2b PATCH, 2c FINDING) + RAYCAST-2c' follow-up and RAYCAST-3 micro-benchmark authorized
     authorization: PROFILE ONLY
     goal: "PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate"
     affected_configs: ["AntmazeGiantNavigate","AntmazeLargeExplore","AntmazeMediumExplore","AntmazeTeleportExplore","DMCAcrobotSwingup","DMCBallInCupCatch","DMCCartpoleBalance","DMCCartpoleSwingup","DMCFingerSpin","DMCFingerTurnEasy","DMCFingerTurnHard","DMCPendulumSwingup","DMCReacherEasy","DMCReacherHard","HumanoidmazeGiantNavigate","HumanoidmazeLargeNavigate","HumanoidmazeMediumNavigate","PointmazeGiantNavigate","PointmazeLargeNavigate","PointmazeMediumNavigate","PointmazeTeleportNavigate"]  # 21 live (Cheetah/Hopper/Humanoid/Walker are MJWarp-only, moved to cpu-3d); all frozen digests are cuda-only
     bottleneck: {measured: "CPU: raycast3d.intersect 76-95% of render, Python loop over K primitives with 150-250 full-size aten temporaries each (145-240 ns/ray-primitive, ~10 GB/s on dead intermediates); Pointmaze (K=1): R3.composite 91%. GPU BallInCup: _fk 97.1% of wall (host tendon FK: _tendon_frame 78%, numpy cross/norm on (28,3) + catenary Python loop), device utilisation 5.1%; with _fk excluded 3,117 -> 73,187 fps", hypothesis: "2a batch tendon FK over batch axis (dmcontrol.py) -> ~9.5k fps vs cores bar 5,966; 2b cover-compaction/scatter composite in R3.composite -> ~2.8x Pointmaze CPU -> CPU_FAST; fused CPU cast for DMC CPU rows deferred to cpu-3d design"}
-    correctness: {targeted_tests: "n/a (ticket 1 no code change)", step4_replay: "n/a", gate_a: "AntmazeTeleportExplore/HumanoidmazeMediumNavigate FAIL check_style_is_state root-caused: OGBenchMaze._bake renders shared MjData without resetting qpos; plate depends on last pose; surfaces only when _SCENE_CACHE clears at 256 entries; latent in ALL OGB configs. Fix authorized as RAYCAST-2c", fidelity: "unchanged"}
-    performance: {cpu_before: "BELOW_G4 all raycast3d CPU rows except 2 at tier; Pointmaze Large/Medium 256-266 fps B=1", cpu_after: null, gpu_before: "BallInCup 2,458.7 fps sweep (R 9.38 pass, cores 0.41 fail, BATCH_SCALES fail)", gpu_after: null, batch_scales: "BallInCup FAIL", no_large_batch_regression: null}
-    pixels_changed: no (ticket 1)
-    semantic_followup: none yet
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: [6343543, 6343544, 6343664, 6344633]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus raycast3d callers maze2d/mujoco_locomotion have no oracle: self-consistency check required for composite changes."]
+    correctness: {targeted_tests: "tests/unit/test_dmcontrol_tendon.py 3 pass (bit-identity float64 + float32, all catenary branches, _fk on frozen states); test_fast_paths composite-cover-compaction 136 pass/24 skip; tests/unit 527 pass 2 pre-existing failures on merged tree", step4_replay: "2a: 10/10 DMControlSuite cuda digests exact (9 tendon-free controls byte-identical); 2b: cuda 21/21 identical, cpu 11/11 identical, 4 mujoco_locomotion identical, maze2d UNVERIFIED (gymnasium_robotics absent); 2c: pixel-free", gate_a: "OGB check_style_is_state FAIL root cause REVISED: mujoco.Renderer at offsamples=4 on EGL/3090 is not bit-reproducible across bakes (3 bakes -> 2 plates, 1/255 on 4 px); qpos0 reset committed but does not fix it. AntmazeTeleportExplore frozen digest does not reproduce at BASELINE (oracle hole -> Step-8 re-freeze list)", fidelity: "unchanged; pixels identical everywhere"}
+    performance: {cpu_before: "PointmazeLarge 856.8 fps B=64 (node2339, 1 thread)", cpu_after: "PointmazeLarge 1,501.1 fps (1.75x); Medium 1.28x; Antmaze 1.03x; Humanoidmaze 1.07x -> CPU_FAST NOT reached (needed 2.40x; cores ~0.73); legged rows need fused CPU cast (RAYCAST-3)", gpu_before: "DMCBallInCupCatch 3,194.2 fps B=4096; _fk 297 us/env; device util 5.3%", gpu_after: "DMCBallInCupCatch 9,956.0 fps B=4096 (3.12x); _fk 94 us/env; util 15.9%; R 38.0, cores 1.67 -> GPU_FAST; DMCFingerSpin 39,152 -> 43,759", batch_scales: "BallInCup 62.7x PASS", no_large_batch_regression: "PASS"}
+    pixels_changed: no
+    semantic_followup: none
+    review: {reviewer: "fable (independent, spawned)", verdict: null}
+    slurm_jobs: [6343543, 6343544, 6343664, 6344633, 6345115, 6346224, 6346414, 6346429, 6346705, 6346706, 6346814]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus raycast3d callers maze2d/mujoco_locomotion have no oracle: self-consistency check required for composite changes.", "RAYCAST-2 delivered 2026-09-13 late. Harness defect: 6C scripts sys.path.insert(0, ROOT) overrode PYTHONPATH (both legs = branch in job 6346224); fixed, notes record stable_envs_from; other workstreams warned. Trailers stripped via filter-branch above 89fa5ca only."]
   - workstream: fetch-gpu
     brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
     branch: step6/fetch-gpu
