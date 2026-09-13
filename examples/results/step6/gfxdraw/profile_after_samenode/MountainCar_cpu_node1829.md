@@ -6,7 +6,7 @@
 - frame: 600px  ·  state_dim: 1
 - states: `examples/results/step4/states/MountainCar.npz`
 - torch 2.14.0+cu126  ·  triton 3.8.0
-- measured tree: `/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/__init__.py`
+- measured tree: `$SCR/se6/gfxdraw/stable_envs/__init__.py`
 
 ## batch 1
 

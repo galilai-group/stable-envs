@@ -1,7 +1,7 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.12.9, pytest-9.1.1, pluggy-1.6.0 -- /oscar/scratch/sboughan/venvs/se-step6/bin/python
+platform linux -- Python 3.12.9, pytest-9.1.1, pluggy-1.6.0 -- $SCR/venvs/se-step6/bin/python
 cachedir: .pytest_cache
-rootdir: /oscar/scratch/sboughan/se6/gfxdraw
+rootdir: $SCR/se6/gfxdraw
 configfile: pyproject.toml
 plugins: timeout-2.4.0
 timeout: 900s
@@ -465,7 +465,7 @@ tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_i
 ../../venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: 122 warnings
 tests/gpu/test_conformance.py: 31482 warnings
 tests/gpu/test_reproducibility.py: 106586 warnings
-  /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  $SCR/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
   As an alternative, you can create a new view using np.reshape (with copy=False if needed).
     key_item.shape = original_shape
 
@@ -476,141 +476,141 @@ node: gpu2104 slurm=mix reason=none reference-renderer={'env': 'DMCAcrobotSwingu
 = 358 passed, 93 skipped, 2673 deselected, 138190 warnings in 285.48s (0:04:45) =
 Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function OffScreenViewer.__del__ at 0x7f8dc36a1c60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function Renderer.__del__ at 0x7f8f0959ab60>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
 Exception ignored in: <function GLContext.__del__ at 0x7f8f0959a520>
 Traceback (most recent call last):
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
-  File "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
-  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se6/gfxdraw/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
 OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

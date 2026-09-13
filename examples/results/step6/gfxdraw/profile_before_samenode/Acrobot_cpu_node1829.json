@@ -631,5 +631,6 @@
   "pythonpath": "/oscar/scratch/sboughan/se6/baseline",
   "size": 500,
   "state_dim": 2,
-  "states_source": "/oscar/scratch/sboughan/se6/baseline/examples/results/step4/states/Acrobot.npz"
+  "states_source": "examples/results/step4/states/Acrobot.npz",
+  "states_source_note": "read from the baseline tree's copy of the frozen corpus; recorded by its repo-relative name because the two copies are the same file. The tree MEASURED is stable_envs_file."
 }

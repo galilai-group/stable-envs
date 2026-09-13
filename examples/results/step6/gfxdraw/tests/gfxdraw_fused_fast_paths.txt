@@ -5,11 +5,11 @@ ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss.ss.ss.. [ 99%]
 .                                                                        [100%]
 =============================== warnings summary ===============================
 tests/gpu/test_fast_paths.py: 33 warnings
-  /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py:157: UserWarning: [33mWARN: The obs returned by the `reset()` method is not within the observation space.[0m
+  $SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py:157: UserWarning: [33mWARN: The obs returned by the `reset()` method is not within the observation space.[0m
     logger.warn(f"{pre} is not within the observation space.")
 
 tests/gpu/test_fast_paths.py: 10414 warnings
-  /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  $SCR/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
   As an alternative, you can create a new view using np.reshape (with copy=False if needed).
     key_item.shape = original_shape
 

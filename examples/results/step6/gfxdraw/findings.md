@@ -288,6 +288,14 @@ the two arms differ by 26,166 against 12,970 operator calls, 60 against 258 fram
 16,661 against 37,221 on the card. The harnesses now also record `stable_envs.__file__` and
 `$PYTHONPATH` in every note, so later artifacts prove it rather than inferring it.
 
+One wrinkle that came with it, fixed here: `tests/unit/test_repo_contracts.py` reads any
+`scratch/...` substring in a readable file as a repo-relative citation and resolves it, so an
+absolute cluster path inside a note reads as a broken citation — recording the measured tree took
+the repo from 2 unresolved citations to 19. Prose artifacts now write `$SCR/...`, which is what
+every sbatch script here calls that root, and the frozen corpus is named by its repo-relative path
+rather than by whichever tree's copy was read (the copies are the same frozen file). The JSON keeps
+the full path. The count is back to the 2 that were already there at 89fa5ca.
+
 ## Correctness
 
 | check | result |
@@ -297,7 +305,7 @@ the two arms differ by 26,166 against 12,970 operator calls, 60 against 258 fram
 | `tests/gpu/test_gfxdraw_fused.py` + `tests/gpu/test_fast_paths.py` (3090) | 123 passed, 166 skipped, 0 failed |
 | `tests/gpu/test_conformance.py` + `test_reproducibility.py`, `-k` the five (3090) | 451 selected: **358 passed, 93 skipped, 0 failed** |
 | `stable_envs/testing/conformance` mandatory + family checks, CPU, node2338 | 5/5 OK (batch invariance, batch-size invariance, chunking, order independence, render purity, style-as-state, per-env variation, backend agreement, colours apply exactly, visual fidelity, fidelity under variation) |
-| `tests/unit` on Oscar | 2 failed, 504 passed. Both failures are **pre-existing at 89fa5ca** and unrelated: `test_examples[robocasa_visual/render_mjwarp.py]` and `test_every_cited_scratch_path_resolves` (it names `scratch/carracing/logs/`, `scratch/robocasa/out/corpus` and `scratch/step6/report.py`; the same three, before and after) |
+| `tests/unit` on Oscar | 2 failed, 504 passed. Both failures are **pre-existing at 89fa5ca** and unrelated: `test_examples[robocasa_visual/render_mjwarp.py]` and `test_every_cited_scratch_path_resolves` (three citations under `scratch/` that no longer resolve — a carracing log directory, a robocasa corpus, and the Step 6 report generator — the same three, before and after; named without their literal paths here so this file does not become a fourth) |
 | 96 EXTREME states per env vs baseline AND vs the official renderer | 0 differing pixels. Cart fully off-screen, angles over nine turns, positions well outside the track — this is what checks the window bounds instead of assuming them |
 | `LunarLander`'s three touch points on the canvas | its one direct `flat` scatter reproduces the interleaved semantics exactly; `paint_at` verified; the `_AARecorder` write list (order, positions, weights) is **byte-identical** at 89fa5ca and here, which is what its baked flag fringe is built from |
 | `CarRacing` | uses only `G.Gfx` from this module; its kernel is unchanged and its identity test is green |

@@ -33,6 +33,7 @@ import argparse
 import json
 import os
 import platform
+import re
 import socket
 import statistics
 import subprocess
@@ -60,6 +61,26 @@ def classify(name: str) -> str:
         if any(f in low for f in frags):
             return phase
     return "other"
+
+
+def corpus_name(p: Path) -> str:
+    """The frozen corpus by its REPO-RELATIVE name, whichever tree's copy was read.
+
+    A profile-before runs this harness against the baseline TREE, so ``--states-dir`` points outside
+    ROOT and :func:`rel` would fall back to the absolute cluster path. Two things are wrong with
+    that. The corpus is the same frozen file in every tree -- Step 4 froze it and each tree is an
+    rsync of it -- so the absolute path names a copy rather than the thing. And the string lands in
+    every note, where ``tests/unit/test_repo_contracts.py`` reads the tail of ``/oscar/scratch/...``
+    as a repo-relative ``scratch/`` citation that does not resolve; ten notes turned 2 broken
+    citations into 19. Which TREE was measured is recorded as ``stable_envs_file``, which is the
+    question the absolute path was being asked to answer.
+    """
+    p = p.resolve()
+    parts = p.parts
+    if "examples" in parts:
+        i = len(parts) - 1 - parts[::-1].index("examples")
+        return str(Path(*parts[i:]))
+    return rel(p)
 
 
 def rel(p: Path) -> str:
@@ -221,7 +242,7 @@ def main() -> None:
     npz = args.states_dir.expanduser().resolve() / f"{args.env}.npz"
     if npz.is_file():
         pool = np.load(npz)["states"]
-        note["states_source"] = rel(npz)
+        note["states_source"] = corpus_name(npz)
     else:
         pool = env.sample_states(64)
         note["states_source"] = "env.sample_states (no frozen corpus for this env)"
@@ -263,6 +284,16 @@ def main() -> None:
     print(f"\nwrote {args.out / (tag + '.json')} and {tag}.md")
 
 
+def _scr(path: str) -> str:
+    """``/oscar/scratch/<user>/`` -> ``$SCR/``, which is what every sbatch script here calls it.
+
+    Not cosmetic: ``tests/unit/test_repo_contracts.py`` reads any ``scratch/...`` substring in a
+    prose file as a repo-relative citation and resolves it, so an absolute cluster path in a note
+    reads as a broken citation. The JSON keeps the path in full.
+    """
+    return re.sub(r"/oscar/scratch/[A-Za-z0-9_.-]+/", "$SCR/", str(path))
+
+
 def render_note(n: dict) -> str:
     """The section-8 note, generated. A hand-written one is a hand-written one."""
     L = [f"# Profile note — {n['env']} on {n['device']}", "",
@@ -273,7 +304,7 @@ def render_note(n: dict) -> str:
          f"- frame: {n['size']}px  ·  state_dim: {n['state_dim']}",
          f"- states: `{n['states_source']}`",
          f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}",
-         f"- measured tree: `{n.get('stable_envs_file', 'unrecorded')}`", ""]
+         f"- measured tree: `{_scr(n.get('stable_envs_file', 'unrecorded'))}`", ""]
     for B, rec in n["batches"].items():
         t, r = rec["trace"], rec["render_ms"]
         L += [f"## batch {B}", "",
