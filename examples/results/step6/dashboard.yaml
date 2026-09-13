@@ -75,21 +75,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-fetch-gpu
     oscar_copy: /oscar/scratch/sboughan/se6/fetch-gpu
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: d1518b683b986834eca650af9ec5cc59d49f5f0a
     agent_model: opus
     wave: wave1
-    status: profiling
+    status: blocked (demonstrated: compute-bound at 480px; BATCH_SCALES unreachable without ~2x megakernel speedup; escalated to Sami)
     authorization: PROFILE ONLY
     goal: "PROFILE ONLY: why fps(4096)/fps(1) is 7-12x vs required 20x on the public Fetch path"
     affected_configs: ["FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
+    bottleneck: {measured: "B=4096: device 98.9% of wall, megakernel 90.5% of device, host 3.4%; H2D 36 B/frame, static geometry not re-uploaded; 2 D2H syncs/render; fps(1) 81% fixed host cost (1.48 ms) independent of frame size", hypothesis: "BATCH_SCALES = fps(4096)/fps(1) ~ per-frame device cost with batching divided out; passes at <=240px (26-99x), fails at frozen 480px (9.5x)"}
+    correctness: {targeted_tests: "n/a (no code change)", step4_replay: "n/a", gate_a: "PASS (unchanged)", fidelity: "unchanged"}
+    performance: {cpu_before: "n/a (out of scope)", cpu_after: null, gpu_before: "R 5.34-6.70, cores 4.10-5.40 (pass); fps(1) 538-548, fps(256) ~5.1k, fps(4096) ~5.2k on 3090", gpu_after: null, batch_scales: "9.5x FAIL (node-dependent 7.6-11.7x; fps(1) swings +/-21% across 3090 nodes)", no_large_batch_regression: "PASS all 12 (1.005-1.021)"}
+    pixels_changed: no
+    semantic_followup: none
     review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)"]
+    slurm_jobs: [6343470, 6344491, 6344691]
+    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "FINDING 2026-09-13: PC-1 (skybox/textures off, +3.7%, pixel-identical) and PC-2 (event deps instead of chunk syncs, +5%) do not reach the bar and are NOT authorized. Fixed-host-cost fix (~3.3x at B=1) would drop BATCH_SCALES to ~2.9x: qualifier conflicts with frozen 480px frame. Decision escalated to Sami. Harness NameError in profile_note.py fixed on integration."]
   - workstream: raster2d
     brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
     branch: step6/raster2d
