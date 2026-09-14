@@ -1187,6 +1187,82 @@ lie along one thin chain that most rays miss entirely. It does **not** help `Poi
 Measured numbers below, not promised ones.
 
 
+# Ticket text: OGBENCH-BAKE-1 — make the plate bake a pure function of (scene, style)
+
+Written here at the coordinator's request. **Not authorised and not started**; this is the ticket, not
+the work.
+
+## The defect
+
+`OGBenchMaze._bake` keeps one `mujoco.Renderer` per texture state forever and drives it
+`update_scene → render → update_scene` (`ogbench.py:471-479`). The plate it produces is a
+deterministic function of **how many such cycles that renderer has already seen**, not of the scene
+and the style alone. Measured (job 6347171, gpu2105), eight consecutive bakes of one key:
+
+| scene | as shipped | with a discarded warm-up render | without the trailing `update_scene` | with a fresh `Renderer` each bake |
+|---|---|---|---|---|
+| ant/teleport | `ABCAAADA` (**4 distinct**) | `AAAAAAAB` (2) | `AAAAAAAA` (1) | **`AAAAAA` (1)** |
+| ant/giant | `AABABABA` (2) | `AAAAAAAA` (1) | `ABABABAB` (2) | **`AAAAAA` (1)** |
+| humanoid/medium | `AAAAAAAA` (1) | `AAAAAAAA` (1) | `AAAAAAAA` (1) | **`AAAAAA` (1)** |
+
+The sequences are byte-identical across two processes on two different code trees, and the teleport
+key's first bake is the same digest on two nodes. Consequences already recorded above: two OGBench
+cells fail Gate A on `check_style_is_state`, and `AntmazeTeleportExplore`'s frozen Step-4 digest is
+not reproducible at the baseline.
+
+## Why it is not a one-line fix
+
+Only `fresh_renderer_per_bake` is constant on every probed scene, **and its plate equals the one the
+cache already holds** (`digests[0]` matches the current first bake on all three), so in the common
+case it would change nothing. Its cost is the problem:
+
+* a `mujoco.Renderer` owns an EGL context, and the note above `OGBenchMaze` records that RELEASING
+  one corrupts rendering in every other live renderer in the process — two fresh reference envs came
+  back 44/255 apart, and a pool that evicted was how 25 cells once failed at 69-90/255. So they are
+  never closed;
+* the measured budget is ~96 live contexts (`stable_envs/testing/resource_guard.py` counts them, and
+  the suites print the count);
+* `check_style_is_state` alone bakes 64 appearances, and a certification session bakes hundreds.
+  "A fresh Renderer per bake" therefore exhausts the budget in one config.
+
+The two cheap variants are not fixes: `warmup_render` leaves ant/teleport flipping at the eighth
+bake, and `no_trailing_update` produces the OTHER plate on ant/giant (`46ea1cfe42eb` where the first
+bake is `27359fa34b1e`), i.e. it would move pixels on a configuration that is currently correct.
+
+## What the ticket has to do, in order
+
+1. **The EGL context budget is the first constraint, not an afterthought.** Establish what the
+   process can hold on the certification hardware and what happens at the limit — `resource_guard`
+   already counts, so this is a measurement, not a design.
+2. **Find a reset that costs no context.** The candidates are: a `mjvScene` rebuilt per bake rather
+   than reused; an explicit `mjr_setBuffer`/clear between bakes; or a renderer pool of fixed size
+   whose members are cycled deterministically so that a given key always meets the same renderer
+   state. The property to demonstrate is the one the probe measures: **N consecutive bakes of one key
+   give one digest**, on ant/teleport and ant/giant, which are the two scenes that flip.
+3. **Then check the plate it settles on.** The acceptance bar is the first-bake plate, because that is
+   what the cache holds today and what 20 of the 21 live configs' frozen digests were taken from.
+   Anything else moves pixels and needs its own authorisation.
+4. **Replay all 11 OGBench configs** on cuda against the frozen digests, and re-run the
+   `cache_pressure_probe.py` scenario and `check_style_is_state`. Expect `AntmazeTeleportExplore` to
+   still fail against its frozen digest — its Step-4 plate is a third image that this session does not
+   reach (job 6347171 probe (i)) — and to recommend it for the Step-8 re-freeze once the bake is
+   deterministic.
+5. **Only then** revisit the `check_style_is_state` routing proposal above. If the bake becomes pure,
+   the proposal is moot for these configs and the probe's bake-path arm becomes a regression test
+   rather than a router.
+
+## What it must not do
+
+Re-freeze any Step-4 digest as part of the fix; relax `check_style_is_state`'s `== 0`; or release an
+EGL context to stay inside the budget.
+
+## Containment already in place
+
+`17f28c0` made `_SCENE_CACHE` evict the least recently used entry instead of clearing wholesale, so a
+key in use is never dropped and cache pressure can no longer trigger the flip. The nondeterminism
+itself is untouched and a cold bake still lands where its history puts it.
+
+
 ---
 
 ## Merge record
