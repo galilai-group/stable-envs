@@ -36,7 +36,12 @@ cd "$TREE" || exit 1
 banner
 echo "configs: $CFG"
 
-for ARM in se-step6 se-tex311; do
+# se-tex311 itself cannot be used directly: it has mujoco 3.11 and dm_control 1.0.44 but no
+# gymnasium, so `import stable_envs` dies before any renderer runs. se6-verify-tex311 is the
+# same --without-pip trick as se6-verify: se-tex311's site-packages FIRST (so 3.11 and 1.0.44
+# win) and se-step6's second for gymnasium and torch. mujoco_warp is absent from both, so this
+# arm is still a CPU-only proof as well as the declared-reference arm.
+for ARM in ${ARMS:-se-step6 se6-verify-tex311}; do
   PY=$SCR/venvs/$ARM/bin/python
   echo "######################## CPU arm $ARM"
   $PY -c "import mujoco,sys;print(' mujoco',mujoco.__version__);
