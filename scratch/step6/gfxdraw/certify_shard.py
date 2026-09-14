@@ -69,6 +69,13 @@ def main() -> int:
     #: perturbed reference after the fact and costs a whole job to find out; this costs a second.
     #: 4 on a 48-core node is generous -- an exclusive allocation settles near 0 -- and it is a
     #: pre-condition on the measurement, not a threshold on the result.
+    #: A cheap pre-flight that measures the thing the load average is only a proxy for. Time the
+    #: official renderer N times before committing to the sweep and look at the spread: if the
+    #: denominator is already unstable, the whole job is wasted, and this costs seconds to find out.
+    #: Strictly better than the load average on a SHARED node, where total load says nothing about
+    #: whether our own cores are contended -- a 192-core node with 64 CPUs busy reads a load of 64
+    #: and may still be a perfectly quiet place to run one thread.
+    ap.add_argument("--preflight-bursts", type=int, default=0)
     ap.add_argument("--max-load", type=float, default=0.0,
                     help="abort and write a rejected shard if the 1-minute load average exceeds "
                          "this at start; 0 disables the check")
@@ -114,6 +121,44 @@ def main() -> int:
 
     batches = B3.batches_for(a.device, optional=False)
     universe = B3.matched_universe()
+    preflight = None
+    if a.preflight_bursts:
+        name0 = a.envs.split(",")[0]
+        cls0 = se.REGISTRY[name0]
+        pool0 = np.asarray(np.load(ROOT / f"examples/results/step4/states/{name0}.npz")["states"],
+                           np.float32)
+        e0 = make_env(name0, 1, None, None)
+        ref0 = C.reference_env(cls0, int(e0.size))
+        st0 = pool0[np.arange(a.ref_frames) % len(pool0)]
+        cls0.reference_render(ref0, st0[:4])
+        reads = []
+        for _ in range(a.preflight_bursts):
+            t0 = time.perf_counter()
+            cls0.reference_render(ref0, st0)
+            reads.append(a.ref_frames / (time.perf_counter() - t0))
+        preflight = {"env": name0, "bursts": len(reads), "fps_min": min(reads),
+                     "fps_max": max(reads), "fps_median": statistics.median(reads),
+                     "spread": max(reads) / min(reads)}
+        del e0, ref0
+        print(f"pre-flight on {name0}: {min(reads):.0f}-{max(reads):.0f} f/s over "
+              f"{len(reads)} bursts, spread {preflight['spread']:.2f}x")
+        if preflight["spread"] > a.max_reference_spread:
+            doc = {"schema_version": 1, "step": 6, "shard": f"gfxdraw-paired-{a.arm}",
+                   "arm": a.arm, "envs": [], "certifiable": False,
+                   "not_certifiable_because":
+                       f"a pre-flight of {len(reads)} reference bursts on {name0} varied "
+                       f"{preflight['spread']:.2f}x, over the {a.max_reference_spread}x bound, "
+                       f"before any renderer measurement was taken. The denominator is already "
+                       f"unstable on this node; the sweep would have produced an unusable ratio.",
+                   "preflight": preflight, "load_average_at_start": load0,
+                   "provenance": {**B3.provenance(a.device, torch.get_num_threads()),
+                                  "load_average": load0, "stable_envs_file": se.__file__,
+                                  "tree_commit": git_commit(
+                                      Path(se.__file__).resolve().parents[1])}}
+            Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(a.out).write_text(json.dumps(doc, indent=1))
+            print(f"ABORTED on pre-flight spread; wrote {a.out}")
+            return 4
     scratch = Path(os.environ.get("SCR", "/tmp")) / ".cache"
     scratch.mkdir(parents=True, exist_ok=True)
     doc = {"schema_version": 1, "step": 6, "shard": f"gfxdraw-paired-{a.arm}",
@@ -199,6 +244,7 @@ def main() -> int:
 
     worst = max(((e["official_cpu"].get("paired") or {}).get("spread") or 1.0)
                 for e in doc["envs"]) if doc["envs"] else 1.0
+    doc["preflight"] = preflight
     doc["reference_spread_worst"] = worst
     doc["certifiable"] = worst <= a.max_reference_spread
     if not doc["certifiable"]:
