@@ -1,0 +1,115 @@
+{
+  "env": "PushT",
+  "device": "cpu",
+  "threads": 1,
+  "host": "node2339.oscar.ccv.brown.edu",
+  "cpu": "x86_64",
+  "torch": "2.14.0+cu126",
+  "batches": {
+    "1": {
+      "family": "scene2d",
+      "ms_render_total": 15.43063297867775,
+      "ms_scene": 1.1653266847133636,
+      "ms_raster": 14.9659663438797,
+      "static_prefix": 6,
+      "n_prims": 9,
+      "vertices": 4,
+      "replica": "replica",
+      "replica_matches_render_torch": true,
+      "phases_ms": {
+        "grid": 0.0839,
+        "canvas alloc": 0.0191,
+        "static prefix/disc": 1.389,
+        "prim/disc": 2.0847,
+        "static prefix/poly": 6.3892,
+        "prim/poly": 9.5818,
+        "static prefix/segment": 1.2843,
+        "prim/segment": 1.9539,
+        "dynamic/disc": 0.6724,
+        "dynamic/poly": 3.1618,
+        "dynamic/segment": 0.6437,
+        "output conversion": 0.1068
+      },
+      "coverage": {
+        "per_primitive_frac": [
+          0.042915,
+          0.027466,
+          0.009651,
+          0.009651,
+          0.009651,
+          0.009651,
+          0.003433,
+          0.025121,
+          0.017722
+        ],
+        "kinds": [
+          2,
+          2,
+          3,
+          3,
+          3,
+          3,
+          1,
+          2,
+          2
+        ],
+        "n_prims": 9,
+        "mean_frac": 0.0172513743770091,
+        "sum_frac": 0.1552623693930819
+      }
+    },
+    "64": {
+      "family": "scene2d",
+      "ms_render_total": 562.1233507990837,
+      "ms_scene": 1.5715640038251877,
+      "ms_raster": 557.2381131350994,
+      "static_prefix": 6,
+      "n_prims": 9,
+      "vertices": 4,
+      "replica": "replica",
+      "replica_matches_render_torch": true,
+      "phases_ms": {
+        "grid": 0.1281,
+        "canvas alloc": 0.7658,
+        "static prefix/disc": 46.1591,
+        "prim/disc": 68.8171,
+        "static prefix/poly": 262.9398,
+        "prim/poly": 398.9214,
+        "static prefix/segment": 49.338,
+        "prim/segment": 75.2448,
+        "dynamic/disc": 22.5906,
+        "dynamic/poly": 135.9026,
+        "dynamic/segment": 25.8335,
+        "output conversion": 3.4703
+      },
+      "coverage": {
+        "per_primitive_frac": [
+          0.042915,
+          0.027466,
+          0.009651,
+          0.009651,
+          0.009651,
+          0.009651,
+          0.692649,
+          0.689639,
+          1.0
+        ],
+        "kinds": [
+          2,
+          2,
+          3,
+          3,
+          3,
+          3,
+          1,
+          2,
+          2
+        ],
+        "n_prims": 9,
+        "mean_frac": 0.2768081519540031,
+        "sum_frac": 2.491273367586028
+      }
+    }
+  },
+  "size": 96
+}

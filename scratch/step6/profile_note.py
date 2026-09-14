@@ -264,6 +264,9 @@ def main() -> None:
     # env and the directory becomes a mix of two machines -- which is section 12's "different
     # machines for numerator and denominator", arrived at by filename collision rather than by
     # choice. Acrobot read 109 fps locally and 20 fps on Oscar; one file cannot hold both.
+    # ``note``, not ``n``: the scaffolding commit wrote ``n["host"]`` here, which is the parameter
+    # name of ``render_note`` and is not bound in this function. Every run therefore printed its
+    # timings, raised ``NameError`` and wrote NO file -- the profile existed only in the SLURM log.
     host = note["host"].split(".")[0]
     tag = f"{args.env}_{args.device.replace(':', '')}_{host}"
     (args.out / f"{tag}.json").write_text(json.dumps(note, indent=2))

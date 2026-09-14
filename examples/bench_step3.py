@@ -93,10 +93,30 @@ def provenance(device: str, threads: int) -> dict:
         cpu_name = _run(["bash", "-c", "lscpu | grep 'Model name' | head -1"]).split(":", 1)[-1].strip() or cpu_name
     elif platform.system() == "Darwin":
         cpu_name = _run(["sysctl", "-n", "machdep.cpu.brand_string"]) or cpu_name
+    # WHICH TREE PRODUCED THIS SHARD. Two failures, both of which have already happened in Step 6.
+    #
+    # The measured copy on the cluster is an rsync without .git, so ``git rev-parse`` there returns
+    # nothing and the shard recorded ``git_commit: null`` -- the same hole ``fidelity_step4`` grew
+    # the STABLE_ENVS_GIT_COMMIT / GIT_COMMIT fallback for, reused verbatim here.
+    #
+    # And a before/after sweep that switches PYTHONPATH between two checkouts is only a before/after
+    # if the import followed it: a script that inserts its own root ahead of PYTHONPATH makes both
+    # legs measure one tree, and the shard cannot tell. ``stable_envs.__file__`` is where the import
+    # actually resolved, so the artifact states which code it timed instead of the invocation being
+    # taken on trust.
+    commit, source = _run(["git", "-C", str(ROOT), "rev-parse", "HEAD"]) or None, "git"
+    dirty = bool(_run(["git", "-C", str(ROOT), "status", "--porcelain"])) if commit else None
+    if not commit and os.environ.get("STABLE_ENVS_GIT_COMMIT", "").strip():
+        commit, source = os.environ["STABLE_ENVS_GIT_COMMIT"].strip(), "env:STABLE_ENVS_GIT_COMMIT"
+    elif not commit and (ROOT / "GIT_COMMIT").is_file():
+        commit, source = (ROOT / "GIT_COMMIT").read_text().strip() or None, "file:GIT_COMMIT"
     p = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-        "git_commit": _run(["git", "-C", str(ROOT), "rev-parse", "HEAD"]) or None,
-        "git_dirty": bool(_run(["git", "-C", str(ROOT), "status", "--porcelain"])),
+        "git_commit": commit,
+        "git_commit_source": source if commit else None,
+        "git_dirty": dirty,
+        "stable_envs_file": se.__file__,
+        "tree_root": str(Path(se.__file__).resolve().parents[1]),
         "host": platform.node(),
         "arch": platform.machine(),
         "os": f"{platform.system()} {platform.release()}",

@@ -106,9 +106,288 @@ def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype):
     return cx.view(1, W).expand(H, W), cy.view(H, 1).expand(H, W)
 
 
+def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
+    """Per primitive: what it actually is, and where on the frame it can possibly paint.
+
+    ``render_torch`` used to evaluate all three primitive families over the whole frame for every
+    slot — a disc paid for four polygon edges and a capsule, and a wall covering 2% of the picture
+    paid for the other 98%. Neither is arithmetic that reaches a pixel; both are B x Rh x Rw
+    temporaries. This is the pre-pass that lets the loop skip them, and it is the CPU counterpart of
+    what ``_bbox_kernel`` does per tile on the GPU.
+
+    Returned per primitive, all of it decided on the HOST from one transfer:
+
+      ``(disc, ring, poly, outline, seg, edges, r0, r1, c0, c1)``
+
+      * ``disc``/``poly``/``seg`` — this family appears in this slot for at least one environment.
+        ``kind`` is per environment, so a slot that is a polygon in every row costs nothing for the
+        two families it is not; a slot that is disabled (``kind == 0``) in every row costs nothing
+        at all. Skipping a family no row has changes no pixel, because the family's paint is masked
+        by ``kind ==`` that family and the mask is empty.
+      * ``ring`` / ``outline`` — the inner disc and the polygon outline exist only where
+        ``inner_r > 0`` and ``line_w > 0``. Where no row has one, its ``where`` is a no-op over the
+        whole frame, and the outline is the expensive half of a polygon: the inside test is one dot
+        product per edge and the outline is a projection, a clamp, a rejection vector and a squared
+        length.
+      * ``edges`` — ``(e, mixed)`` for each edge some environment actually has. Polygons are padded
+        to ``V`` by repeating the last vertex, so a triangle in a ``V=8`` builder carries five
+        zero-length edges whose contribution the loop computes and then throws away with
+        ``torch.where(degen, ...)``; an edge degenerate in EVERY row is dropped outright. ``mixed``
+        says some rows are degenerate there and some are not, which is the only case that needs the
+        ``where`` at all — and it is rare, because degeneracy comes from padding, which is a
+        property of the vertex count rather than of the environment. Where no row is degenerate,
+        ``torch.where(False, ..., d)`` is ``d``, and dropping it drops a full window-sized select
+        and the ``full_like`` sentinel feeding it, per edge, per polygon.
+      * ``r0:r1, c0:c1`` — the pixel window of the primitive's world-space bound, unioned over the
+        batch. The BOUND is the encoding ``_bbox_kernel`` uses, deliberately including its two
+        special cases: an empty box for ``kind == 0`` and an INFINITE one for a polygon whose twice
+        signed area is exactly zero, which has no interior and whose halfplane intersection is
+        unbounded. Using the same encoding on both devices means there is one culling rule in the
+        repo rather than a second one that nothing tests; ``tests/gpu/test_fast_paths.py`` already
+        holds it against every registered env.
+
+    The window is a union over the batch because one torch op covers the whole batch: a primitive
+    that is static across environments (a wall, a goal marker, PushT's four table edges) keeps a
+    tight window at any batch size, and one that moves per environment widens to what the batch
+    spans. That is a throughput property only — a window that is too large evaluates pixels whose
+    mask then rejects them, and every pixel inside it is computed from exactly the values it was
+    computed from before, so the picture is bit-identical either way. It is also why the plan is
+    NOT cached: it is a pure function of the scene handed in, recomputed per call, with no state
+    that depends on what was rendered before.
+    """
+    B, N, V = scene.batch, scene.n_prims, scene.vertices
+    k, dt = scene.kind, scene.geom.dtype
+    g = scene.geom
+    G = int(g.shape[2])
+    is_disc, is_poly, is_seg = k == KIND_DISC, k == KIND_POLY, k == KIND_SEGMENT
+
+    # --- what each slot is, and which of its optional parts exist (all (N,) bool) -----------
+    rows = [is_disc.any(0), is_poly.any(0), is_seg.any(0),
+            (is_disc & (g[:, :, 3] > 0)).any(0) if G > 3 else is_disc.new_zeros(N),
+            (is_poly & (scene.line_w > 0)).any(0)]
+    # An edge is skippable only if it is degenerate for every environment, and "degenerate" has to
+    # be decided by the expression the loop uses, in the loop's dtype, or the plan and the loop
+    # could disagree about one edge of one polygon.
+    for e in range(V):
+        j = (e + 1) % V
+        ex = g[:, :, 2 * j] - g[:, :, 2 * e]
+        ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
+        degen = (ex * ex + ey * ey) < 1e-12
+        rows.append(~degen.all(0))                       # some row has this edge
+    for e in range(V):
+        j = (e + 1) % V
+        ex = g[:, :, 2 * j] - g[:, :, 2 * e]
+        ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
+        rows.append(((ex * ex + ey * ey) < 1e-12).any(0))   # ... and some row does not
+
+    # --- the world-space bound, exactly as _bbox_kernel encodes it ---------------------------
+    f64 = torch.float64
+    gg = g.to(f64)
+    lw = scene.line_w.abs().to(f64)
+    vx, vy = gg[:, :, 0:2 * V:2], gg[:, :, 1:2 * V:2]
+    # float64, and then the geom dtype as well: the kernel's ``flat`` is a float32 shoelace
+    # tested against exactly zero, and a polygon it calls unbounded must be unbounded here too
+    # or the two backends would cull by different rules.
+    area2 = (vx * torch.roll(vy, -1, -1) - torch.roll(vx, -1, -1) * vy).sum(-1)
+    v32x, v32y = g[:, :, 0:2 * V:2], g[:, :, 1:2 * V:2]
+    a32 = (v32x * torch.roll(v32y, -1, -1) - torch.roll(v32x, -1, -1) * v32y).sum(-1)
+    flat = (area2 == 0) | (a32 == 0)
+    r = torch.maximum(gg[:, :, 2].abs(), gg[:, :, 3].clamp_min(0)) if G > 3 else gg[:, :, 0] * 0
+    hw = gg[:, :, 4].abs() if G > 4 else gg[:, :, 0] * 0
+    sx1 = gg[:, :, 2] if G > 2 else gg[:, :, 0]
+    sy1 = gg[:, :, 3] if G > 3 else gg[:, :, 1]
+    inf = torch.full_like(area2, float("inf"))
+    poly0x = torch.where(flat, -inf, vx.min(-1).values - lw)
+    poly0y = torch.where(flat, -inf, vy.min(-1).values - lw)
+    poly1x = torch.where(flat, inf, vx.max(-1).values + lw)
+    poly1y = torch.where(flat, inf, vy.max(-1).values + lw)
+    bx0 = torch.where(is_disc, gg[:, :, 0] - r,
+                      torch.where(is_poly, poly0x, torch.minimum(gg[:, :, 0], sx1) - hw))
+    by0 = torch.where(is_disc, gg[:, :, 1] - r,
+                      torch.where(is_poly, poly0y, torch.minimum(gg[:, :, 1], sy1) - hw))
+    bx1 = torch.where(is_disc, gg[:, :, 0] + r,
+                      torch.where(is_poly, poly1x, torch.maximum(gg[:, :, 0], sx1) + hw))
+    by1 = torch.where(is_disc, gg[:, :, 1] + r,
+                      torch.where(is_poly, poly1y, torch.maximum(gg[:, :, 1], sy1) + hw))
+    off = k == 0
+    # NaN geometry is not a bound, so it draws over the whole frame, which is what the unbounded
+    # loop did with it. Silently shrinking a window around a NaN is how a bound stops being one.
+    bx0 = torch.where(off, inf, bx0).nan_to_num(nan=float("-inf"))
+    by0 = torch.where(off, inf, by0).nan_to_num(nan=float("-inf"))
+    bx1 = torch.where(off, -inf, bx1).nan_to_num(nan=float("inf"))
+    by1 = torch.where(off, -inf, by1).nan_to_num(nan=float("inf"))
+
+    x0, y0, x1, y1 = scene.world
+    sx, sy = (x1 - x0) / Rw, (y1 - y0) / Rh
+    # Pixel r samples at its CENTRE, y0 + (r+0.5)*sy, or y1 - (r+0.5)*sy under flip_y. One pixel of
+    # slack on every side so that no rounding of this conversion can cost a pixel the loop would
+    # have painted; one pixel too many costs throughput and nothing else.
+    def _window(lx0, ly0, lx1, ly1):
+        cc0 = torch.floor((lx0 - x0) / sx - 0.5) - 1
+        cc1 = torch.ceil((lx1 - x0) / sx - 0.5) + 2
+        if scene.flip_y:
+            rr0 = torch.floor((y1 - ly1) / sy - 0.5) - 1
+            rr1 = torch.ceil((y1 - ly0) / sy - 0.5) + 2
+        else:
+            rr0 = torch.floor((ly0 - y0) / sy - 0.5) - 1
+            rr1 = torch.ceil((ly1 - y0) / sy - 0.5) + 2
+        return (rr0.clamp(0, Rh), rr1.clamp(0, Rh), cc0.clamp(0, Rw), cc1.clamp(0, Rw))
+
+    # The batch UNION window, which is what one torch op over the whole batch can cover.
+    ux0, uy0 = bx0.min(0).values, by0.min(0).values
+    ux1, uy1 = bx1.max(0).values, by1.max(0).values
+    uwin = torch.stack(_window(ux0, uy0, ux1, uy1), dim=1)                            # (N,4)
+
+    # Whether the union is worth replacing, decided in WORLD units before any pixel window is built.
+    # This test is three ``(B,N)`` reductions; building the per-row pixel windows for every primitive
+    # and deciding afterwards was measured at 0.57 ms per PushT render at batch 1, against 0.88 ms
+    # for the whole raster -- the scan for an optimisation costing more than the optimisation saves,
+    # on the scenes that do not want it. So the per-row boxes are built only for the primitives whose
+    # union is at least ``_GROUP_MIN_SPREAD`` times the largest single row's box, which is the
+    # necessary condition for grouping to buy anything at all.
+    area = (bx1 - bx0).clamp_min(0) * (by1 - by0).clamp_min(0)                        # (B,N)
+    spread = ((ux1 - ux0).clamp_min(0) * (uy1 - uy0).clamp_min(0)
+              > _GROUP_MIN_SPREAD * area.nan_to_num(0.0).amax(0))                     # (N,)
+
+    # ONE host transfer for the whole plan. Eleven small ``.cpu()`` calls is how a decision that
+    # costs nothing on paper becomes a dozen synchronisations per frame.
+    flags = torch.stack(rows + [spread], dim=1).to(f64)
+    plan = torch.cat([flags, uwin], dim=1).cpu().tolist()
+    wide = [i for i, row in enumerate(plan) if row[5 + 2 * V] and B > 1]
+    per_row = (torch.stack(_window(bx0[:, wide], by0[:, wide], bx1[:, wide], by1[:, wide]), dim=2)
+               .to(torch.int64).cpu().numpy() if wide else None)                      # (B,|wide|,4)
+    out = []
+    for i, row in enumerate(plan):
+        disc, poly, seg, ring, outline = (bool(v) for v in row[:5])
+        edges = [(e, bool(row[5 + V + e])) for e in range(V) if row[5 + e]]
+        rr0, rr1, cc0, cc1 = (int(v) for v in row[6 + 2 * V:])
+        win = [(None, rr0, rr1, cc0, cc1)]
+        if i in wide:
+            win = _row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
+        out.append((disc, ring, poly, outline, seg, edges, win))
+    return out
+
+
+#: How much bigger the batch-union window must be than the largest single row's box before the rows
+#: are grouped instead. A primitive that is the same in every environment has a ratio of exactly 1
+#: and must not pay for a grouping that would buy it nothing; a primitive whose position is part of
+#: the state has a ratio of hundreds. 4 is where the two populations separate with room to spare --
+#: measured over the frozen corpora, every static primitive is 1.0 and the smallest moving one is 12.
+_GROUP_MIN_SPREAD = 4.0
+
+#: Pixels one group costs in dispatch, and the margin the model must clear before grouping is
+#: accepted. Both are MEASURED, because the first guess at the first was wrong by 5x and silently
+#: refused the grouping on every scene that wanted it.
+#:
+#: One group is ~20 torch ops on small tensors. Timed directly on a scene built so the grouped pixel
+#: work is fixed and only the group count varies (B discs in B distinct cells at 64 px, one group
+#: per row): 68.2 / 56.3 / 59.0 / 61.7 us per group at B = 8 / 32 / 128 / 512 -- flat, as dispatch
+#: should be. A window pixel costs 6-20 ns on one core over the same scenes, so one group buys
+#: itself at 60 us / 6 ns = 10,000 window pixels, taking the cheapest per-pixel figure because that
+#: is the one that makes a group hardest to justify.
+#:
+#: The margin is 1.25 rather than 2: with the constant measured rather than assumed, a larger margin
+#: only refuses grouping that wins. Scanned against wall time over the frozen corpora at B = 1, 16,
+#: 64, 256 and a synthetic worst case (many groups, almost no pixel work), 10,000 x 1.25 is never
+#: slower than not grouping and captures 2.1x / 3.0x on PushT and 2.5x on SimplePointMaze, while
+#: correctly refusing to group the synthetic case at B = 32 and 128 and accepting it at 512.
+_GROUP_DISPATCH_PIXELS = 10_000
+_ACCEPT_MARGIN = 1.25
+
+
+def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
+    """Windows for one primitive: either ``[(None, r0, r1, c0, c1)]`` or one window per row group.
+
+    The batch-union window is what one torch op over the whole batch can cover, and for a primitive
+    that is the same in every environment it is already tight. For one whose position is part of the
+    state it is the whole frame: PushT's block quads and SimplePointMaze's agent disc reach every
+    corner across a corpus of reachable states, and the measured consequence was 104 ms of PushT's
+    143 ms and 301 ms of SimplePointMaze's 518 ms at batch 64.
+
+    The fix is the one the fused kernel already uses, in the shape torch ops allow. The per-row boxes
+    of such a primitive are all the same SIZE and differ only in ORIGIN, so quantising the origin
+    onto a grid of that size puts every row into a cell, and the rows of one cell share a window at
+    most two cells across. Each cell is then one torch op over the rows that landed in it. The number
+    of cells is bounded by the FRAME -- ``ceil(Rh/th) * ceil(Rw/tw)`` -- so the loop stops growing
+    with the batch: measured on the frozen corpora, SimplePointMaze's disc has 64 groups at batch 64
+    and the same 64 at batch 1024, while the union window it replaces costs 64 and 1024 frames.
+
+    It is a regrouping of the same evaluations, not a different evaluation. Every row is covered by a
+    window containing its own bound, every pixel in that window is computed from exactly the values
+    it was computed from before, and rows outside cannot paint. A row's cell is a function of its own
+    geometry, and a group's window is the union of its members' boxes, so a permutation of the batch
+    produces the same partition and the same windows -- order invariance, and batch-size invariance,
+    hold by construction rather than by test.
+
+    ``box`` is ``(B,4)`` int64 pixel boxes, ``r0..c1`` the union window already computed from them.
+    """
+    import numpy as np
+
+    B = box.shape[0]
+    if B <= 1 or r1 <= r0 or c1 <= c0:
+        return [(None, r0, r1, c0, c1)]
+    br0, br1, bc0, bc1 = box[:, 0], box[:, 1], box[:, 2], box[:, 3]
+    h, w = np.maximum(br1 - br0, 0), np.maximum(bc1 - bc0, 0)
+    live = (h > 0) & (w > 0)
+    if not live.any():
+        return [(None, r0, r1, c0, c1)]
+    th, tw = max(int(h[live].max()), 1), max(int(w[live].max()), 1)
+    union = (r1 - r0) * (c1 - c0)
+
+    # cell index from the box origin; dead rows go to their own cell and are dropped below
+    cell = (br0 // th) * (int(c1) // tw + 2) + (bc0 // tw)
+    cell = np.where(live, cell, -1)
+    keys, inv = np.unique(cell, return_inverse=True)
+    order = np.argsort(inv, kind="stable")
+    starts = np.searchsorted(inv[order], np.arange(len(keys)))
+    ends = np.append(starts[1:], len(order))
+
+    groups, work = [], 0
+    for gi, key in enumerate(keys):
+        if key < 0:
+            continue
+        idx = order[starts[gi]:ends[gi]]
+        g0, g1 = int(br0[idx].min()), int(br1[idx].max())
+        f0, f1 = int(bc0[idx].min()), int(bc1[idx].max())
+        work += len(idx) * (g1 - g0) * (f1 - f0)
+        groups.append((idx, g0, g1, f0, f1))
+    if not groups:
+        return [(None, r0, r1, c0, c1)]
+    # The cost model, applied rather than assumed: grouping has to win once its own dispatch is
+    # charged for, or the single window stays. Both constants are measured; see their definitions.
+    if B * union < _ACCEPT_MARGIN * (work + len(groups) * _GROUP_DISPATCH_PIXELS):
+        return [(None, r0, r1, c0, c1)]
+    return groups
+
+
 @torch.no_grad()
 def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor:
-    """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast."""
+    """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast.
+
+    Still the executable specification — every per-pixel expression below is the one it always was,
+    character for character, and it is still what ``tests/gpu`` diffs the fused kernel against. What
+    changed in Step 6 is not the arithmetic but WHERE it is evaluated, and that is decided entirely
+    by ``_prim_plan``:
+
+      * a slot is evaluated only for the primitive families some environment actually has there;
+      * a polygon's outline and a disc's inner ring are evaluated only where they exist;
+      * padded, zero-length polygon edges are skipped;
+      * every family is evaluated only inside the pixel window of its own world-space bound.
+
+    All four are bounds and masks that were already being computed and thrown away, so the picture
+    is bit-identical; ``scratch/step6/raster2d/cpu_digest.py`` and the frozen Step 4 replay hold
+    that rather than leaving it as an argument. Measured on Oscar's batch partition at one thread,
+    the whole-frame version cost 324 ms for one 500 px SimplePointMaze frame, of which 13 of the 13
+    primitives paid for a capsule test the scene contains none of.
+
+    The uint8 canvas is the second half. With ``supersample == 1`` nothing between a primitive's
+    colour and the output is an average, so ``round -> clamp -> uint8`` can be applied to the
+    (B,3) colours once instead of to a B x 3 x Rh x Rw float canvas at the end, and the canvas can
+    be the output's own (B,Rh,Rw,3) layout. That removes the float canvas (four bytes a channel
+    instead of one), the round, the clamp, the cast and the final permute+copy: five passes over
+    the frame stack. Supersampling genuinely averages, so ``ss > 1`` keeps the float canvas and the
+    conversion it always had.
+    """
     H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
     if not isinstance(out_size, int):
         H, W = out_size
@@ -118,53 +397,115 @@ def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor
     px, py = _pixel_grid(scene, Rh, Rw, dev, dt)
     B, N, V = scene.batch, scene.n_prims, scene.vertices
 
-    canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
-    for i in range(N):
-        kind = scene.kind[:, i]                                   # (B,)
-        g = scene.geom[:, i]                                      # (B,2V)
-        fill = scene.fill[:, i].view(B, 3, 1, 1)
-        line = scene.line[:, i].view(B, 3, 1, 1)
-        lw = scene.line_w[:, i].view(B, 1, 1)
-        p = px.unsqueeze(0)
-        q = py.unsqueeze(0)
+    flat_out = ss == 1
+    if flat_out:
+        u8 = lambda c, m: c.round().clamp(0, 255).to(torch.uint8).view(m, 1, 1, 3)  # noqa: E731
+        canvas = u8(scene.background, B).expand(B, Rh, Rw, 3).clone()
+    else:
+        u8 = lambda c, m: c.view(m, 3, 1, 1)                                        # noqa: E731
+        canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
 
-        # disc (with optional inner disc)
-        d2 = (p - g[:, 0].view(B, 1, 1)) ** 2 + (q - g[:, 1].view(B, 1, 1)) ** 2
-        is_disc = (kind == KIND_DISC).view(B, 1, 1)
-        hit = is_disc & (d2 <= g[:, 2].view(B, 1, 1) ** 2)
-        canvas = torch.where(hit.unsqueeze(1), fill, canvas)
-        hit = is_disc & (d2 <= g[:, 3].view(B, 1, 1) ** 2) & (g[:, 3].view(B, 1, 1) > 0)
-        canvas = torch.where(hit.unsqueeze(1), line, canvas)
+    for i, (has_disc, has_ring, has_poly, has_outline, has_seg, edges,
+            windows) in enumerate(_prim_plan(scene, Rh, Rw)):
+        if not (has_disc or has_poly or has_seg):
+            continue                       # disabled in every environment
+        for rows, r0, r1, c0, c1 in windows:
+            if r1 <= r0 or c1 <= c0:
+                continue                   # this window's bound misses the frame
+            # ``rows is None`` is the whole batch through a view; otherwise this window belongs to a
+            # group of rows and every per-environment quantity is gathered for them. The gather is
+            # what buys the tight window -- see ``_row_groups``.
+            sel = (lambda t: t) if rows is None else (lambda t, _r=rows: t[_r])
+            n = B if rows is None else len(rows)
+            kind = sel(scene.kind[:, i])                           # (n,)
+            g = sel(scene.geom[:, i])                              # (n,2V)
+            fill = u8(sel(scene.fill[:, i]), n)
+            line = u8(sel(scene.line[:, i]), n)
+            lw = sel(scene.line_w[:, i]).view(n, 1, 1)
+            p = px[r0:r1, c0:c1].unsqueeze(0)
+            q = py[r0:r1, c0:c1].unsqueeze(0)
+            mdim = -1 if flat_out else 1
 
-        # convex polygon: inside = max over outward edge planes <= 0; outline = union of edge capsules
-        sdf = torch.full((B, Rh, Rw), -1e30, device=dev, dtype=dt)
-        edge_d2 = torch.full((B, Rh, Rw), 1e30, device=dev, dtype=dt)
-        for e in range(V):
-            ax, ay = g[:, 2 * e].view(B, 1, 1), g[:, 2 * e + 1].view(B, 1, 1)
-            j = (e + 1) % V
-            bx, by = g[:, 2 * j].view(B, 1, 1), g[:, 2 * j + 1].view(B, 1, 1)
-            ex, ey = bx - ax, by - ay
-            L2 = ex * ex + ey * ey
-            degen = L2 < 1e-12
-            inv = torch.rsqrt(L2.clamp_min(1e-20))
-            d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
-            sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d))
-            t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
-            qx, qy = p - ax - t * ex, q - ay - t * ey
-            edge_d2 = torch.minimum(edge_d2, torch.where(degen, torch.full_like(qx, 1e30),
-                                                         qx * qx + qy * qy))
-        is_poly = (kind == KIND_POLY).view(B, 1, 1)
-        canvas = torch.where((is_poly & (sdf <= 0)).unsqueeze(1), fill, canvas)
-        canvas = torch.where((is_poly & (lw > 0) & (edge_d2 <= lw * lw)).unsqueeze(1), line, canvas)
+            def paint(hit, colour, _r=rows, _m=mdim, _w=(r0, r1, c0, c1)):
+                """``canvas = torch.where(hit, colour, canvas)``, restricted to this window.
 
-        # segment: capsule, distance to segment <= half width
-        ax, ay = g[:, 0].view(B, 1, 1), g[:, 1].view(B, 1, 1)
-        ex, ey = g[:, 2].view(B, 1, 1) - ax, g[:, 3].view(B, 1, 1) - ay
-        t = (((p - ax) * ex + (q - ay) * ey) / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
-        dx, dy = p - ax - t * ex, q - ay - t * ey
-        hit = (kind == KIND_SEGMENT).view(B, 1, 1) & (dx * dx + dy * dy <= g[:, 4].view(B, 1, 1) ** 2)
-        canvas = torch.where(hit.unsqueeze(1), fill, canvas)
+                In place through the window rather than by rebinding a whole new canvas: the old
+                loop allocated and wrote a full B x 3 x Rh x Rw tensor for EVERY ``where``, which at
+                batch 64 and 500 px is 192 MB per primitive per paint, and then threw the old one
+                away.
 
+                Through a temporary and a ``copy_`` rather than ``out=`` the view it also reads. An
+                aliased ``out=`` measured the same to within the noise of the machine it was tried
+                on (46 ms against 58 on an isolated paint, indistinguishable in the renderer), and
+                this is the file the fused kernel is checked against -- a destination that is also
+                an input is a subtle thing to put in an executable specification for no measured
+                gain.
+
+                A grouped window cannot be a view: a row index is advanced indexing, so reading it
+                copies and the result has to be assigned back. Assignment, not ``copy_``, is
+                therefore the write for that case, and it is the same ``where`` either way.
+                """
+                a, b, cc, d = _w
+                if _r is None:
+                    w_ = canvas[:, a:b, cc:d, :] if flat_out else canvas[:, :, a:b, cc:d]
+                    w_.copy_(torch.where(hit.unsqueeze(_m), colour, w_))
+                elif flat_out:
+                    w_ = canvas[_r, a:b, cc:d, :]
+                    canvas[_r, a:b, cc:d, :] = torch.where(hit.unsqueeze(_m), colour, w_)
+                else:
+                    w_ = canvas[_r, :, a:b, cc:d]
+                    canvas[_r, :, a:b, cc:d] = torch.where(hit.unsqueeze(_m), colour, w_)
+
+            # disc (with optional inner disc)
+            if has_disc:
+                d2 = (p - g[:, 0].view(n, 1, 1)) ** 2 + (q - g[:, 1].view(n, 1, 1)) ** 2
+                is_disc = (kind == KIND_DISC).view(n, 1, 1)
+                paint(is_disc & (d2 <= g[:, 2].view(n, 1, 1) ** 2), fill)
+                if has_ring:
+                    paint(is_disc & (d2 <= g[:, 3].view(n, 1, 1) ** 2)
+                          & (g[:, 3].view(n, 1, 1) > 0), line)
+
+            # convex polygon: inside = max over outward edge planes <= 0; outline = edge capsules
+            if has_poly:
+                h, w = r1 - r0, c1 - c0
+                sdf = torch.full((n, h, w), -1e30, device=dev, dtype=dt)
+                edge_d2 = (torch.full((n, h, w), 1e30, device=dev, dtype=dt)
+                           if has_outline else None)
+                for e, mixed in edges:
+                    ax, ay = g[:, 2 * e].view(n, 1, 1), g[:, 2 * e + 1].view(n, 1, 1)
+                    j = (e + 1) % V
+                    bx, by = g[:, 2 * j].view(n, 1, 1), g[:, 2 * j + 1].view(n, 1, 1)
+                    ex, ey = bx - ax, by - ay
+                    L2 = ex * ex + ey * ey
+                    degen = L2 < 1e-12
+                    inv = torch.rsqrt(L2.clamp_min(1e-20))
+                    d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
+                    sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d)
+                                        if mixed else d)
+                    if has_outline:
+                        t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
+                        qx, qy = p - ax - t * ex, q - ay - t * ey
+                        e2 = qx * qx + qy * qy
+                        edge_d2 = torch.minimum(
+                            edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2)
+                            if mixed else e2)
+                is_poly = (kind == KIND_POLY).view(n, 1, 1)
+                paint(is_poly & (sdf <= 0), fill)
+                if has_outline:
+                    paint(is_poly & (lw > 0) & (edge_d2 <= lw * lw), line)
+
+            # segment: capsule, distance to segment <= half width
+            if has_seg:
+                ax, ay = g[:, 0].view(n, 1, 1), g[:, 1].view(n, 1, 1)
+                ex, ey = g[:, 2].view(n, 1, 1) - ax, g[:, 3].view(n, 1, 1) - ay
+                t = (((p - ax) * ex + (q - ay) * ey)
+                     / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
+                dx, dy = p - ax - t * ex, q - ay - t * ey
+                paint((kind == KIND_SEGMENT).view(n, 1, 1)
+                      & (dx * dx + dy * dy <= g[:, 4].view(n, 1, 1) ** 2), fill)
+
+    if flat_out:
+        return canvas
     if ss > 1:
         canvas = torch.nn.functional.avg_pool2d(canvas, ss)
     return canvas.round_().clamp_(0, 255).to(torch.uint8).permute(0, 2, 3, 1).contiguous()
@@ -667,8 +1008,28 @@ def render_triton(scene: Scene2D, out_size, supersample: int = 1, out=None,
 
 @torch.no_grad()
 def render(scene: Scene2D, out_size, supersample: int = 1, backend: str = "auto", out=None):
-    """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction."""
-    if backend == "torch" or (backend == "auto" and not HAVE_TRITON):
+    """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction.
+
+    ``auto`` is a question about THIS SCENE, not about this host. It used to be answered by
+    ``HAVE_TRITON`` alone, which is a property of the interpreter: on a machine where ``import
+    triton`` succeeds, a ``device="cpu"`` scene was routed into ``render_triton``, whose first act is
+    ``with torch.cuda.device(scene.kind.device)`` — so every CPU render of a Scene2D env died with
+    ``ValueError: Expected a cuda device, but got: cpu``. The laptop that measured the Step 3 CPU rows
+    had no Triton and never saw it; the certification cluster has Triton in every venv and could not
+    render PushT or SimplePointMaze on CPU at all. Triton compiles for CUDA here, so the predicate is
+    "Triton is importable AND the scene lives on a CUDA device", and ``device="cpu"`` is honoured on
+    every host.
+
+    An explicit ``backend="triton"`` still raises on a CPU scene, and should: the caller named a
+    backend that cannot draw the scene it was handed, and silently drawing it somewhere else is how a
+    ``device="cpu"`` run ends up on a GPU.
+    """
+    if backend == "triton" and scene.kind.device.type != "cuda":
+        raise ValueError(
+            f"render(backend='triton') on a scene that lives on {scene.kind.device}. The fused "
+            f"kernel is CUDA-only; use backend='torch', or build the scene on a cuda device.")
+    if backend == "torch" or (backend == "auto"
+                              and not (HAVE_TRITON and scene.kind.device.type == "cuda")):
         H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
         if not isinstance(out_size, int):
             H, W = out_size

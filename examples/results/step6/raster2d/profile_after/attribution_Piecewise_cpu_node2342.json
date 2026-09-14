@@ -1,0 +1,31 @@
+{
+  "env": "Piecewise",
+  "device": "cpu",
+  "threads": 1,
+  "host": "node2342.oscar.ccv.brown.edu",
+  "cpu": "x86_64",
+  "torch": "2.14.0+cu126",
+  "batches": {
+    "1": {
+      "family": "swm_nav",
+      "ms_render_total": 2.9804229270666838,
+      "ms_resolve_style": 0.0007606577128171921,
+      "ms_base_image": 0.7754731923341751,
+      "ms_blend_dots": 1.714490819722414,
+      "ms_one_gaussian_dot": 0.49173692241311073,
+      "ms_one_alpha_blend": 1.2060150038450956,
+      "base_image_is_state_independent": true
+    },
+    "64": {
+      "family": "swm_nav",
+      "ms_render_total": 183.76117758452892,
+      "ms_resolve_style": 0.0007129274308681488,
+      "ms_base_image": 42.41542750969529,
+      "ms_blend_dots": 125.14058756642044,
+      "ms_one_gaussian_dot": 36.137632094323635,
+      "ms_one_alpha_blend": 102.7737152762711,
+      "base_image_is_state_independent": true
+    }
+  },
+  "size": 224
+}
