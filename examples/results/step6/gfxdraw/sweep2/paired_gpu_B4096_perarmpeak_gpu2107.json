@@ -1,0 +1,172 @@
+{
+ "host": "gpu2107.oscar.ccv.brown.edu",
+ "cpu": "x86_64",
+ "device_name": "NVIDIA GeForce RTX 3090",
+ "torch": "2.14.0+cu126",
+ "batch": 4096,
+ "rounds": 5,
+ "inner": 3,
+ "stable_envs_file": "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/__init__.py",
+ "envs": {
+  "Acrobot": {
+   "before": {
+    "official_fps_median": 327.137283692312,
+    "official_fps_min": 325.6538562032035,
+    "official_fps_max": 353.2054574921328,
+    "se_fps_median": 33248.130754398306,
+    "se_fps_min": 32893.73550371653,
+    "se_fps_max": 33333.06436081304,
+    "R_paired_median": 101.40000610015491,
+    "R_paired_min": 94.13255103833968,
+    "R_paired_max": 102.1449217381155,
+    "digest": "9d0b92b300657194461f8d830f4eb9c4e77573a1b4ba61be12c08716b042ca01",
+    "peak_gb": 8.84509184,
+    "peak_gb_is_per_arm": true
+   },
+   "after": {
+    "official_fps_median": 324.59873240017816,
+    "official_fps_min": 318.5709273592428,
+    "official_fps_max": 325.2448325434506,
+    "se_fps_median": 142635.6146499951,
+    "se_fps_min": 142261.14390154468,
+    "se_fps_max": 142852.5657291549,
+    "R_paired_median": 440.08972146274624,
+    "R_paired_min": 437.39709187397926,
+    "R_paired_max": 447.7358176791483,
+    "digest": "9d0b92b300657194461f8d830f4eb9c4e77573a1b4ba61be12c08716b042ca01",
+    "peak_gb": 3.121054208,
+    "peak_gb_is_per_arm": true
+   },
+   "speedup": 4.290034098567368,
+   "frames_identical": true
+  },
+  "CartPole": {
+   "before": {
+    "official_fps_median": 409.3934895867423,
+    "official_fps_min": 368.64016171882093,
+    "official_fps_max": 410.6832740576492,
+    "se_fps_median": 37807.84970605095,
+    "se_fps_min": 37685.79604553191,
+    "se_fps_max": 37943.02814587168,
+    "R_paired_median": 92.35088165230879,
+    "R_paired_min": 92.05896264371422,
+    "R_paired_max": 102.92700602386508,
+    "digest": "88761ad2c36b1d7ce8c8b2f3d8b62fa447fe1842534745bf9e672865759fab4a",
+    "peak_gb": 7.64841728,
+    "peak_gb_is_per_arm": true
+   },
+   "after": {
+    "official_fps_median": 412.0657178987808,
+    "official_fps_min": 405.4949177268622,
+    "official_fps_max": 416.67368041981626,
+    "se_fps_median": 163309.91881169265,
+    "se_fps_min": 161012.9382706793,
+    "se_fps_max": 163481.27542534418,
+    "R_paired_median": 394.86025566779927,
+    "R_paired_min": 390.74577494998084,
+    "R_paired_max": 403.1647951145561,
+    "digest": "88761ad2c36b1d7ce8c8b2f3d8b62fa447fe1842534745bf9e672865759fab4a",
+    "peak_gb": 2.995789824,
+    "peak_gb_is_per_arm": true
+   },
+   "speedup": 4.319471223076613,
+   "frames_identical": true
+  },
+  "MountainCar": {
+   "before": {
+    "official_fps_median": 379.4817440942943,
+    "official_fps_min": 375.23702981947076,
+    "official_fps_max": 383.3185484988971,
+    "se_fps_median": 34176.25672571984,
+    "se_fps_min": 34103.54401943996,
+    "se_fps_max": 34412.75228829863,
+    "R_paired_median": 90.03211842629618,
+    "R_paired_min": 89.32583807278371,
+    "R_paired_max": 91.70937181987304,
+    "digest": "174ed92e5d896d8527126343b89c2df7c42d414980852df6b634a4035ecad487",
+    "peak_gb": 8.639749632,
+    "peak_gb_is_per_arm": true
+   },
+   "after": {
+    "official_fps_median": 380.4411287008036,
+    "official_fps_min": 368.73398958276334,
+    "official_fps_max": 384.17588466227596,
+    "se_fps_median": 122443.4700542298,
+    "se_fps_min": 120024.2849052746,
+    "se_fps_max": 123328.89463662387,
+    "R_paired_median": 321.87197274678067,
+    "R_paired_min": 320.6855632814888,
+    "R_paired_max": 325.50371893051323,
+    "digest": "174ed92e5d896d8527126343b89c2df7c42d414980852df6b634a4035ecad487",
+    "peak_gb": 2.996486144,
+    "peak_gb_is_per_arm": true
+   },
+   "speedup": 3.582705708143958,
+   "frames_identical": true
+  },
+  "MountainCarContinuous": {
+   "before": {
+    "official_fps_median": 377.7346655414769,
+    "official_fps_min": 374.17133233944617,
+    "official_fps_max": 380.2146725206893,
+    "se_fps_median": 34163.72187848955,
+    "se_fps_min": 34097.033511183894,
+    "se_fps_max": 34188.26817733993,
+    "R_paired_median": 90.41528907898257,
+    "R_paired_min": 89.8537703766036,
+    "R_paired_max": 91.37062415654154,
+    "digest": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+    "peak_gb": 8.639749632,
+    "peak_gb_is_per_arm": true
+   },
+   "after": {
+    "official_fps_median": 377.23947976918214,
+    "official_fps_min": 363.89555539074775,
+    "official_fps_max": 383.1518332995824,
+    "se_fps_median": 122343.30378350038,
+    "se_fps_min": 119931.71194092724,
+    "se_fps_max": 123622.6260828952,
+    "R_paired_median": 322.9493007811974,
+    "R_paired_min": 313.01354063247794,
+    "R_paired_max": 339.1508786297279,
+    "digest": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+    "peak_gb": 2.996486144,
+    "peak_gb_is_per_arm": true
+   },
+   "speedup": 3.5810882730704816,
+   "frames_identical": true
+  },
+  "Pendulum": {
+   "before": {
+    "official_fps_median": 197.06583768178945,
+    "official_fps_min": 193.69627237141333,
+    "official_fps_max": 200.67976974589496,
+    "se_fps_median": 43446.265471458515,
+    "se_fps_min": 43367.90387707327,
+    "se_fps_max": 43498.007827184934,
+    "R_paired_median": 220.7283024743386,
+    "R_paired_min": 216.4954919296106,
+    "R_paired_max": 224.15522443508584,
+    "digest": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+    "peak_gb": 9.142845952,
+    "peak_gb_is_per_arm": true
+   },
+   "after": {
+    "official_fps_median": 194.87391475501235,
+    "official_fps_min": 192.62288481344828,
+    "official_fps_max": 198.49186760995363,
+    "se_fps_median": 153028.92860228656,
+    "se_fps_min": 151860.4577748141,
+    "se_fps_max": 153207.46827663557,
+    "R_paired_median": 785.2714858972704,
+    "R_paired_min": 767.4482067358996,
+    "R_paired_max": 788.3822211565783,
+    "digest": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+    "peak_gb": 3.133532672,
+    "peak_gb_is_per_arm": true
+   },
+   "speedup": 3.5222573664661008,
+   "frames_identical": true
+  }
+ }
+}

@@ -1,0 +1,71 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.9, pytest-9.1.1, pluggy-1.6.0 -- /oscar/scratch/sboughan/venvs/se-step6/bin/python
+cachedir: .pytest_cache
+rootdir: /oscar/scratch/sboughan/se6/gfxdraw
+configfile: pyproject.toml
+plugins: timeout-2.4.0
+timeout: 900s
+timeout method: signal
+timeout func_only: False
+collecting ... collected 55 items
+
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[corpus-Acrobot] PASSED [  1%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[corpus-CartPole] PASSED [  3%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[corpus-MountainCar] PASSED [  5%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[corpus-MountainCarContinuous] PASSED [  7%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[corpus-Pendulum] PASSED [  9%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[far-angles-Acrobot] PASSED [ 10%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[far-angles-CartPole] PASSED [ 12%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[far-angles-MountainCar] PASSED [ 14%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[far-angles-MountainCarContinuous] PASSED [ 16%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[far-angles-Pendulum] PASSED [ 18%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[off-surface-Acrobot] PASSED [ 20%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[off-surface-CartPole] PASSED [ 21%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[off-surface-MountainCar] PASSED [ 23%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[off-surface-MountainCarContinuous] PASSED [ 25%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[off-surface-Pendulum] PASSED [ 27%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[reachable-Acrobot] PASSED [ 29%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[reachable-CartPole] PASSED [ 30%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[reachable-MountainCar] PASSED [ 32%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[reachable-MountainCarContinuous] PASSED [ 34%]
+tests/gpu/test_gfxdraw_classic.py::test_the_described_frame_is_the_drawn_frame[reachable-Pendulum] PASSED [ 36%]
+tests/gpu/test_gfxdraw_classic.py::test_the_description_carries_per_row_appearance[Acrobot] PASSED [ 38%]
+tests/gpu/test_gfxdraw_classic.py::test_the_description_carries_per_row_appearance[CartPole] PASSED [ 40%]
+tests/gpu/test_gfxdraw_classic.py::test_the_description_carries_per_row_appearance[MountainCar] PASSED [ 41%]
+tests/gpu/test_gfxdraw_classic.py::test_the_description_carries_per_row_appearance[MountainCarContinuous] PASSED [ 43%]
+tests/gpu/test_gfxdraw_classic.py::test_the_description_carries_per_row_appearance[Pendulum] PASSED [ 45%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[corpus-Acrobot] PASSED [ 47%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[corpus-CartPole] PASSED [ 49%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[corpus-MountainCar] PASSED [ 50%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[corpus-MountainCarContinuous] PASSED [ 52%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[corpus-Pendulum] PASSED [ 54%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[far-angles-Acrobot] PASSED [ 56%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[far-angles-CartPole] PASSED [ 58%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[far-angles-MountainCar] PASSED [ 60%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[far-angles-MountainCarContinuous] PASSED [ 61%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[far-angles-Pendulum] PASSED [ 63%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[off-surface-Acrobot] PASSED [ 65%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[off-surface-CartPole] PASSED [ 67%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[off-surface-MountainCar] PASSED [ 69%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[off-surface-MountainCarContinuous] PASSED [ 70%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[off-surface-Pendulum] PASSED [ 72%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[reachable-Acrobot] PASSED [ 74%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[reachable-CartPole] PASSED [ 76%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[reachable-MountainCar] PASSED [ 78%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[reachable-MountainCarContinuous] PASSED [ 80%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_the_description[reachable-Pendulum] PASSED [ 81%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_batch_and_chunk_invariant[Acrobot] PASSED [ 83%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_batch_and_chunk_invariant[CartPole] PASSED [ 85%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_batch_and_chunk_invariant[MountainCar] PASSED [ 87%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_batch_and_chunk_invariant[MountainCarContinuous] PASSED [ 89%]
+tests/gpu/test_gfxdraw_classic.py::test_the_kernel_is_batch_and_chunk_invariant[Pendulum] PASSED [ 90%]
+tests/gpu/test_gfxdraw_classic.py::test_the_cpu_path_is_untouched_by_the_kernel[Acrobot] PASSED [ 92%]
+tests/gpu/test_gfxdraw_classic.py::test_the_cpu_path_is_untouched_by_the_kernel[CartPole] PASSED [ 94%]
+tests/gpu/test_gfxdraw_classic.py::test_the_cpu_path_is_untouched_by_the_kernel[MountainCar] PASSED [ 96%]
+tests/gpu/test_gfxdraw_classic.py::test_the_cpu_path_is_untouched_by_the_kernel[MountainCarContinuous] PASSED [ 98%]
+tests/gpu/test_gfxdraw_classic.py::test_the_cpu_path_is_untouched_by_the_kernel[Pendulum] PASSED [100%]
+
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: gpu2110 slurm=alloc reason=none reference-renderer={}
+============================= 55 passed in 43.98s ==============================

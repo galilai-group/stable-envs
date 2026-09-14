@@ -1,0 +1,61 @@
+{
+ "host": "node2334.oscar.ccv.brown.edu",
+ "cpu": "x86_64",
+ "threads": 1,
+ "torch": "2.14.0+cu126",
+ "shape": [
+  64,
+  400,
+  600
+ ],
+ "cases": {
+  "torch: 3x out[...,c].copy_(plane.flip(1))  [shipped]": {
+   "ms_per_batch": 33.76837633550167,
+   "ms_per_frame": 0.5276308802422136,
+   "ms_min": 32.13178180158138,
+   "ms_max": 42.26034693419933
+  },
+  "torch: stack of flipped planes": {
+   "ms_per_batch": 43.887415900826454,
+   "ms_per_frame": 0.6857408734504133,
+   "ms_min": 43.48680004477501,
+   "ms_max": 44.11346651613712
+  },
+  "torch: flip + permute + contiguous": {
+   "ms_per_batch": 65.52653759717941,
+   "ms_per_frame": 1.0238521499559283,
+   "ms_min": 65.31329639256,
+   "ms_max": 77.55011133849621
+  },
+  "torch: out.permute(3,...).copy_(flipped)": {
+   "ms_per_batch": 68.29174421727657,
+   "ms_per_frame": 1.0670585033949465,
+   "ms_min": 65.64642861485481,
+   "ms_max": 68.81054863333702
+  },
+  "numpy: stack of reversed views": {
+   "ms_per_batch": 253.054304048419,
+   "ms_per_frame": 3.953973500756547,
+   "ms_min": 104.30172272026539,
+   "ms_max": 320.45505568385124
+  },
+  "numpy: 3x strided assign into the output": {
+   "ms_per_batch": 24.48198013007641,
+   "ms_per_frame": 0.3825309395324439,
+   "ms_min": 24.34265986084938,
+   "ms_max": 24.689124897122383
+  },
+  "torch: int32-packed surface, drop the 4th byte": {
+   "ms_per_batch": 111.09326034784317,
+   "ms_per_frame": 1.7358321929350495,
+   "ms_min": 109.04871486127377,
+   "ms_max": 112.45709098875523
+  },
+  "[reference] contiguous copy of the same bytes": {
+   "ms_per_batch": 0.0005923211574554443,
+   "ms_per_frame": 9.255018085241318e-06,
+   "ms_min": 0.0005830079317092896,
+   "ms_max": 0.001987442374229431
+  }
+ }
+}
