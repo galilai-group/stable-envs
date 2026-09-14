@@ -6,7 +6,8 @@ declaration and no frozen artifact was changed. Everything new lives under
 
 - Baseline SHA: `89fa5ca81341dc4df7186ec325cb691431a2ef17` (verified ancestor of this branch)
 - Branch parent: `step6/integration` @ `c975c8c`
-- Branch HEAD: `5417e9b` (this commit amends it to record its own SHA)
+- Branch HEAD: the tip of `step6/lance-baseline`; all artifacts and tables landed in `60d6430`,
+  and this line was committed on top of it.
 - Affected configs: the **36 `role == registered_default`** rows of
   `examples/results/step4/certification.json` — enumerated in §4.
 
@@ -427,7 +428,7 @@ mujoco_warp versions, GPU name, SLURM job id, seed, size policy, render chunk.
 
 - Classification: **FINDING**
 - Baseline SHA: `89fa5ca81341dc4df7186ec325cb691431a2ef17` (verified ancestor)
-- Branch: `step6/lance-baseline` @ `5417e9b`, forked from `step6/integration` @ `c975c8c`
+- Branch: `step6/lance-baseline` (artifact commit `60d6430`), forked from `step6/integration` @ `c975c8c`
 - Renderer code changed: **none**. Thresholds changed: **none**. Frozen artifacts touched: **none**.
 - Step-4 replay: **not run** — no renderer change was made, so there is nothing to replay. Frame
   provenance is instead checked by byte-identity against the committed Randall dump on the eleven
