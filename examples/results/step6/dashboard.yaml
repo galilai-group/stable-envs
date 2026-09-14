@@ -20,10 +20,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-texture-fidelity
   oscar_copy: $SCR/se6/texture-fidelity
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (merged through 48a556a; 5402387 held)
+  head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (fully merged)
   agent_model: fable
   wave: wave1
-  status: merged (through 48a556a); 5402387 downsample-protocol commit held for Sami
+  status: merged (5402387 merged 2026-09-15 by Sami decision; certification re-run under the protocol pending)
   authorization: diagnosis
   goal: 'diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift'
   affected_configs:
@@ -133,7 +133,7 @@ workstreams:
   head_sha: 6802559 (merged)
   agent_model: opus
   wave: wave1
-  status: merged (closed)
+  status: reopened for RAYCAST-6 (Pointmaze composite rewrite, Sami 2026-09-15)
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
   affected_configs:
@@ -250,7 +250,7 @@ workstreams:
   head_sha: d1518b683b986834eca650af9ec5cc59d49f5f0a
   agent_model: opus
   wave: wave1
-  status: 'blocked (demonstrated: compute-bound at 480px; BATCH_SCALES unreachable without ~2x megakernel speedup; escalated to Sami)'
+  status: closed (demonstrated blocker, Sami 2026-09-15)
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: why fps(4096)/fps(1) is 7-12x vs required 20x on the public Fetch path'
   affected_configs:
@@ -304,7 +304,7 @@ workstreams:
   head_sha: 15cfaba0c917abea69718e93f6f9fd23cc2959c8 (merged)
   agent_model: opus
   wave: wave2
-  status: merged
+  status: reopened for SWMNAV-2 (shared swm_nav GPU kernel, Sami 2026-09-15)
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts'
   affected_configs:
@@ -465,7 +465,7 @@ workstreams:
   head_sha: ff5232c5bcf3b06e16525eda855a26b9835b65d5 (merged; tip amended to strip an AI trailer, content identical)
   agent_model: fable
   wave: wave2
-  status: merged (M1 complete; M2 fused SIMD kernel unauthorized; Fetch = measured blocker)
+  status: merged (closed; Fetch CPU = demonstrated blocker, M2 deferred)
   authorization: Phase 2 implement (DMC four) + Fetch feasibility only
   goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
   affected_configs:
@@ -618,6 +618,39 @@ decisions:
   by: coordinator
   decision: Certification partition cannot provide a sole-tenant CPU node under the normal QOS (cpu=64 cap vs whole-node exclusive charge); 1-thread cores_cpu shards with a same-node decode bar are not
     obtainable there for gfxdraw. S_cpu rows stand; cores_cpu left unasserted rather than borrowed. Needs a QOS with a node-sized CPU cap or free 48-core nodes (escalate to Sami / Step 8).
+- date: '2026-09-15'
+  by: Sami
+  decision: 'MERGE 5402387 (Walker downsample protocol): the frozen DOWNSAMPLE_EXACT_FRAC bounds were measured on the 8-state STATE_SEED protocol; the certifier judges on that protocol, no threshold/margin
+    change, the 64-state corpus number stays reported diagnostically.'
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Report scope: correctness/fidelity accounting over all 49 render-distinct cells; CPU/GPU performance completion over registered/default configurations only (Step 2 §4.2, §12.2); parameter-space
+    cells are not performance blockers.'
+- date: '2026-09-15'
+  by: Sami
+  decision: Authorize RAYCAST-6 (Pointmaze composite rewrite) and SWMNAV-2 (shared swm_nav GPU kernel for the four registered/default GPU_FASTER rows).
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Fetch GPU CLOSED as a demonstrated blocker. Do not fund the ~2x MJWarp megakernel effort in Step 6. Recorded explicitly: at B>=64 the per-frame cost is flat (212 us at B=64, 192 us at B=4096);
+    the BATCH_SCALES failure (9.5x vs 20x) is compute-bound per-frame arithmetic (device 98.9% of wall, megakernel 90.5% of device) against a fixed ~1.48 ms B=1 host cost, not a failure to batch. R 5.3-6.7
+    and cores 4.1-5.4 pass.'
+- date: '2026-09-15'
+  by: Sami
+  decision: Fetch CPU CLOSED as a demonstrated blocker under the current parity contract (31,720 sub-pixel triangles at 480 px; culled span rasteriser 135 ns/tri vs 36-41 required; triangle setup alone
+    60-68% of the budget; mesh decimation inadmissible). No further CPU optimisation.
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Do NOT change the frozen CPU_FAST / cores_cpu>=1 criterion in Step 6. Recorded: the decode conjunct still enforces the intended regeneration-vs-storage economic claim (one-core JPEG-q90 decode
+    is stable at 6.4-7.6k fps for 84 px across nodes); but S_cpu>=5 no longer approximates that break-even on the llvmpipe certification host (decode/official = 200-700 for the DMC cells vs the Step-2 anchor
+    median of 5.04). Any policy change is an explicit later decision.'
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Deferred, not exhausted: gfxdraw per-environment GPU specialisation (R 303-398 vs 500); SIMD CPU-3D whole-frame kernel (M2); direct-write span/scanline CPU rasterisers for Scene2D/swm_nav/gfxdraw
+    (named, not costed on hardware); fused compiled raycast cast (12x measured, not bit-exact on gcc/x86).'
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Close-out rule: after Walker + Pointmaze composite + swm_nav kernel land through the normal gates, close Step 6 as ENGINEERING COMPLETE WITH DOCUMENTED CERTIFICATION BLOCKERS; never claim the
+    frozen Step-2 performance contract is fully satisfied where it is not; then prepare the Step-7 launch state and report the remaining registered/default certification blockers separately.'
 integration_verification:
   branch: step6/integration-verify (merged)
   head: 596b88e (merged)
@@ -662,3 +695,22 @@ integration_verification:
     with CPUVENV=se-step6 (no mujoco_warp importable) + tests/unit; waiting for RAYCAST-5, cpu-3d, VISIBILITY-1 merges'
 step6_status: CODE COMPLETE 2026-09-15 at integration 83bd778 (+ verification/docs merges). All eight workstreams merged and closed. Remaining items are Sami decisions (see decisions/notes) and Step-8 carry-overs;
   no further Step-6 implementation is authorized. Not pushed.
+deferred_work:
+- item: gfxdraw per-environment GPU specialisation
+  reason: four registered rows at R 303-398 vs 500; per-pixel walk cost, not bandwidth; general kernel exhausted
+  status: deferred
+- item: CPU-3D M2 fused SIMD whole-frame kernel
+  reason: compiled scalar C measured 95-150 ns/px vs 21 ns/px bar; SIMD plausible but unproven; packaging decision
+  status: deferred
+- item: direct-write span/scanline CPU rasteriser (Scene2D, swm_nav, gfxdraw)
+  reason: the obvious remaining algorithm; named in three findings, costed only by arithmetic
+  status: deferred
+- item: fused compiled raycast3d CPU cast
+  reason: 12x measured but not bit-exact on gcc/x86 (capsule normal 3-17 ulp) and insufficient alone
+  status: deferred
+- item: Fetch fixed B=1 host cost (~1.48 ms)
+  reason: largest user-facing win at small batch (3.3x at B=1) but lowers BATCH_SCALES to ~2.9x under the frozen qualifier
+  status: deferred
+- item: MJWarp trackcom gl_rounding capture scope
+  reason: GPU frames of Cheetah/Hopper/Walker/Humanoid are truncated, not rounded; one-line fix moves four frozen cuda digests
+  status: deferred (Step 8 re-freeze)
