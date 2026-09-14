@@ -1,0 +1,9 @@
+{
+ "host": "node2407.oscar.ccv.brown.edu",
+ "job": "6356047",
+ "mujoco_gl": "egl",
+ "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+ "gl_vendor": "Mesa",
+ "gl_version": "4.5 (Compatibility Profile) Mesa 24.2.8",
+ "commit": "5f020fed2b2341068dabe6a2d5c8e41ffec4d45c"
+}

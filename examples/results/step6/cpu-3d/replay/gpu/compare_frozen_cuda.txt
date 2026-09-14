@@ -1,0 +1,22 @@
+DMCCheetahRun            PIXELS MOVED     declaration_changed=False style_keys_changed=['digest_ours_corpus_style'] checks=-
+    digest_ours: frozen='1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38' replay='d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7'
+    digest_ours_default_style: frozen='1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38' replay='d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7'
+    mean_pixel: frozen=79.24217199900794 replay=79.08044276738474
+    distinct_colors: frozen=1804 replay=1791
+DMCHopperHop             PIXELS MOVED     declaration_changed=False style_keys_changed=['digest_ours_corpus_style'] checks=-
+    digest_ours: frozen='d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491' replay='80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc'
+    digest_ours_default_style: frozen='d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491' replay='80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc'
+    mean_pixel: frozen=78.301793243339 replay=78.14701362315759
+    distinct_colors: frozen=1729 replay=1705
+DMCHumanoidStand         PIXELS MOVED     declaration_changed=False style_keys_changed=['digest_ours_corpus_style'] checks=-
+    digest_ours: frozen='539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8' replay='c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84'
+    digest_ours_default_style: frozen='539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8' replay='c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84'
+    mean_pixel: frozen=63.22497549366969 replay=62.615247661564624
+    distinct_colors: frozen=2671 replay=2712
+DMCWalkerWalk            PIXELS MOVED     declaration_changed=False style_keys_changed=['digest_ours_corpus_style'] checks=-
+    digest_ours: frozen='13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d' replay='1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4'
+    digest_ours_default_style: frozen='13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d' replay='1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4'
+    mean_pixel: frozen=71.22600298800076 replay=70.9528127657313
+    distinct_colors: frozen=2590 replay=2528
+
+4 config(s); 4 with something to look at

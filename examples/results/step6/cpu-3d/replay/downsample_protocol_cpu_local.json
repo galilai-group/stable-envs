@@ -1,0 +1,35 @@
+{
+ "state_seed": 20260809,
+ "DMCCheetahRun": {
+  "protocol_exact_frac": 0.534562783446712,
+  "corpus_exact_frac": 0.5310949900793651,
+  "bound": 0.53385,
+  "floor": 0.52885,
+  "protocol_pass": true,
+  "corpus_pass": true
+ },
+ "DMCHopperHop": {
+  "protocol_exact_frac": 0.550984977324263,
+  "corpus_exact_frac": 0.5535204967403629,
+  "bound": 0.55022,
+  "floor": 0.54522,
+  "protocol_pass": true,
+  "corpus_pass": true
+ },
+ "DMCWalkerWalk": {
+  "protocol_exact_frac": 0.6287910997732427,
+  "corpus_exact_frac": 0.6185383007369615,
+  "bound": 0.62895,
+  "floor": 0.62395,
+  "protocol_pass": true,
+  "corpus_pass": false
+ },
+ "DMCHumanoidStand": {
+  "protocol_exact_frac": 0.6036706349206349,
+  "corpus_exact_frac": 0.6095122945011338,
+  "bound": 0.60365,
+  "floor": 0.59865,
+  "protocol_pass": true,
+  "corpus_pass": true
+ }
+}

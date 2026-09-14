@@ -1,0 +1,119 @@
+{
+ "device": "cuda",
+ "envs": {
+  "DMCCheetahRun": {
+   "digest_default": "d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7",
+   "digest_ours": "d314a7eab0123acb01128957f3bd64ee89e7e8435c7ffdf0edf301080a6f82a7",
+   "mean_pixel": 79.08044276738474,
+   "n": 64,
+   "state_names": [
+    "rootx",
+    "rootz",
+    "rooty",
+    "bthigh",
+    "bshin",
+    "bfoot",
+    "fthigh",
+    "fshin",
+    "ffoot"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCHopperHop": {
+   "digest_default": "80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc",
+   "digest_ours": "80eb493872a6532a7338a8ba2f77c9e1cd03933d6167e945e65c1ed192731afc",
+   "mean_pixel": 78.14701362315759,
+   "n": 64,
+   "state_names": [
+    "rootx",
+    "rootz",
+    "rooty",
+    "waist",
+    "hip",
+    "knee",
+    "ankle"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCHumanoidStand": {
+   "digest_default": "c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84",
+   "digest_ours": "c32a0829379444aa8547a8445e6bb6bc78b7bc2068f0821fa7ea6b708d7e3b84",
+   "mean_pixel": 62.615247661564624,
+   "n": 64,
+   "state_names": [
+    "root_x",
+    "root_y",
+    "root_z",
+    "root_qw",
+    "root_qx",
+    "root_qy",
+    "root_qz",
+    "abdomen_z",
+    "abdomen_y",
+    "abdomen_x",
+    "right_hip_x",
+    "right_hip_z",
+    "right_hip_y",
+    "right_knee",
+    "right_ankle_y",
+    "right_ankle_x",
+    "left_hip_x",
+    "left_hip_z",
+    "left_hip_y",
+    "left_knee",
+    "left_ankle_y",
+    "left_ankle_x",
+    "right_shoulder1",
+    "right_shoulder2",
+    "right_elbow",
+    "left_shoulder1",
+    "left_shoulder2",
+    "left_elbow"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  },
+  "DMCWalkerWalk": {
+   "digest_default": "1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4",
+   "digest_ours": "1801687041bc5b972833e716963bd04096da49518a25cacce9446abc37237ea4",
+   "mean_pixel": 70.9528127657313,
+   "n": 64,
+   "state_names": [
+    "rootz",
+    "rootx",
+    "rooty",
+    "right_hip",
+    "right_knee",
+    "right_ankle",
+    "left_hip",
+    "left_knee",
+    "left_ankle"
+   ],
+   "status": "measured",
+   "style_dim": 7,
+   "style_names": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ]
+  }
+ },
+ "tree": "/oscar/scratch/sboughan/se6/cpu-3d/stable_envs/__init__.py"
+}
