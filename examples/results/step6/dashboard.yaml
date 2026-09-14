@@ -717,3 +717,8 @@ deferred_work:
 - item: MJWarp trackcom gl_rounding capture scope
   reason: GPU frames of Cheetah/Hopper/Walker/Humanoid are truncated, not rounded; one-line fix moves four frozen cuda digests
   status: deferred (Step 8 re-freeze)
+report_generator:
+  branch: step6/report (merged through 4633035)
+  scope: correctness over all 49; performance completion over the 36 registered/default rows per Step 2 §4.2/§12.2 (bar read live from scratch/certification.json ladder.environment_done_min_tiers); parameter-space
+    table separate; deferred_work and demonstrated-blocker sections from the dashboard
+  pending: newest-stamped-commit precedence among certification records per arm (Walker PASS record vs pre-protocol record)
