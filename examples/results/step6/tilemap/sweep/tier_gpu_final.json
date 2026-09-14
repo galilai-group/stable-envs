@@ -1,0 +1,102 @@
+{
+  "env": "CraftaxClassic",
+  "device": "cuda",
+  "evaluator": "scratch/step3/certify.py:classify",
+  "spec": "scratch/certification.json (frozen in Step 2, not read by this file)",
+  "before": {
+    "env": "CraftaxClassic",
+    "device": "gpu",
+    "backend_class": "R",
+    "backends": [],
+    "projected_to": [
+      "swm/CraftaxClassicPixels-v1"
+    ],
+    "host": "gpu2104.oscar.ccv.brown.edu",
+    "device_name": "NVIDIA GeForce RTX 3090",
+    "threads": 1,
+    "qualifiers": [
+      "NO_REFERENCE",
+      "BATCH_SCALES"
+    ],
+    "evidence": {
+      "best_batch": 4096,
+      "se_fps": 145113.40275069806,
+      "official_cpu_fps": null,
+      "decode_fps_per_core": 4674.51717599631,
+      "shape": "112x144",
+      "supersample": 1,
+      "size": 16,
+      "max_cpu_frac": 0.9952656581712361,
+      "cores": 31.043506160562803,
+      "batch_scales": 96.4695569290554,
+      "large_batch_ratio": 1.1404729076340192
+    },
+    "why": "no official renderer measured here",
+    "tier": "GPU_FAST",
+    "shard": "/oscar/scratch/sboughan/se6/tilemap/examples/results/step6/tilemap/sweep/gpu_before_final.json",
+    "per_batch_fps": {
+      "1": 1504.2403776915426,
+      "16": 23823.143269980115,
+      "64": 74963.48527881349,
+      "256": 127239.67555857569,
+      "1024": 141333.94019638718,
+      "4096": 145113.40275069806
+    }
+  },
+  "after": {
+    "env": "CraftaxClassic",
+    "device": "gpu",
+    "backend_class": "R",
+    "backends": [],
+    "projected_to": [
+      "swm/CraftaxClassicPixels-v1"
+    ],
+    "host": "gpu2104.oscar.ccv.brown.edu",
+    "device_name": "NVIDIA GeForce RTX 3090",
+    "threads": 1,
+    "qualifiers": [
+      "NO_REFERENCE",
+      "BATCH_SCALES"
+    ],
+    "evidence": {
+      "best_batch": 4096,
+      "se_fps": 1229786.6130569633,
+      "official_cpu_fps": null,
+      "decode_fps_per_core": 4581.933116764038,
+      "shape": "112x144",
+      "supersample": 1,
+      "size": 16,
+      "max_cpu_frac": 0.994356063665584,
+      "cores": 268.3990756123242,
+      "batch_scales": 641.333304998395,
+      "large_batch_ratio": 3.2229799332712203
+    },
+    "why": "no official renderer measured here",
+    "tier": "GPU_EXCEPTIONAL",
+    "shard": "/oscar/scratch/sboughan/se6/tilemap/examples/results/step6/tilemap/sweep/gpu_after_final.json",
+    "per_batch_fps": {
+      "1": 1917.5467786754673,
+      "16": 30638.507768472413,
+      "64": 120648.53776791482,
+      "256": 381568.18798706256,
+      "1024": 849747.1480453317,
+      "4096": 1229786.6130569633
+    }
+  },
+  "delta": {
+    "tier": [
+      "GPU_FAST",
+      "GPU_EXCEPTIONAL"
+    ],
+    "qualifiers": [
+      [
+        "NO_REFERENCE",
+        "BATCH_SCALES"
+      ],
+      [
+        "NO_REFERENCE",
+        "BATCH_SCALES"
+      ]
+    ]
+  }
+}

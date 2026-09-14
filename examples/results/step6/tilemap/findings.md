@@ -11,7 +11,8 @@
 | pixels changed | **no**, on both devices, at every tile size, at the default appearance and under every variation |
 | semantic follow-up | **none**. Every frozen digest is byte-identical, so there is nothing for a tripwire to see |
 | CPU tier | `CPU_REGRESSION` (`NO_REFERENCE` `BELOW_G4`) → **`CPU_EXCEPTIONAL`** (`NO_REFERENCE`) |
-| SLURM jobs | `6349384` (CPU sweep), `6350070` (CPU confirmation on the final commit), `6349394` (GPU) |
+| GPU tier | `GPU_FAST` (`NO_REFERENCE`) → **`GPU_EXCEPTIONAL`** (`NO_REFERENCE`); both frozen qualifiers still pass, by a wider margin |
+| SLURM jobs | `6349384` CPU sweep · `6350070` CPU confirm · `6349394` GPU sweep · `6351158` GPU confirm |
 
 ---
 
@@ -362,12 +363,25 @@ difference would have indicted the patch rather than the node. `digest_official`
 `tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py tests/gpu/test_fast_paths.py -k
 CraftaxClassic` → **30 passed, 14 skipped, 3481 deselected**. No failures.
 
-### Re-measured on the final commit
+### Re-measured on the final commit, on a second 3090
 
 The first GPU job finished in 58 seconds and three docstring-only commits landed in the same minute,
-so the artifact does not pin which text the after leg imported. Job `6351158` re-takes the sweep,
-the CUDA replay and the GPU tests on the offered commit, with the file's md5 printed into the log:
-see `sweep/tier_gpu_final.json`, `replay/cuda_final_vs_frozen.json`.
+so its artifact does not pin which text the after leg imported. Job `6351158` re-took the sweep, the
+CUDA replay and the GPU tests on the offered commit, on `gpu2104` (a different RTX 3090, driver
+575.57.08), with `md5sum stable_envs/envs/craftax.py` printed into the log and matching the offered
+tree byte for byte (`ec41decf3fb8ad2b5fb7e0054884ef26`):
+
+| | before | after |
+|---|---|---|
+| fps at B=1 / 16 / 64 / 256 / 1024 / 4096 | 1,504 / 23,823 / 74,963 / 127,240 / 141,334 / **145,113** | 1,918 / 30,639 / 120,649 / 381,568 / 849,747 / **1,229,787** |
+| `cores` | 31.0 | **268.4** |
+| `BATCH_SCALES` | pass, 96.5x | pass, **641.3x** |
+| `NO_LARGE_BATCH_REGRESSION` | pass, 1.140 | pass, **3.223** |
+| **tier** | **`GPU_FAST`** | **`GPU_EXCEPTIONAL`** |
+
+8.5x, the same verdict on a second card. `PIXELS UNCHANGED` against the frozen oracle; the targeted
+GPU tests again 30 passed, 14 skipped. Files: `sweep/gpu_before_final.json`,
+`sweep/gpu_after_final.json`, `sweep/tier_gpu_final.json`, `replay/cuda_final_vs_frozen.json`.
 
 ---
 
