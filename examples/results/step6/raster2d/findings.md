@@ -94,7 +94,17 @@ the loop actually evaluated.
 `SimplePointMaze` is the same disease at 27x the pixel count: 12 polygons, 1 disc, 1 disabled slot,
 **zero** capsules, and the capsule block ran 13 times per frame anyway. 324.75 ms for one frame at
 B=1 (`6344858`, `node2351`); 72.4 s for a batch of 64 (`node2340`). Its 13 primitives cover 1.7% of
-the frame each.
+the frame each. Its before-attribution at B=64 (raster 74,779 ms) splits as
+
+| block | ms | slots that are this kind | ms that cannot reach a pixel |
+|---|---|---|---|
+| polygon | 55,463 | 12 of 13 | 4,266 |
+| capsule | 9,508 | **0** of 13 | 9,508 |
+| disc | 6,428 | 1 of 13 | 5,933 |
+| canvas + output conversion | 214 | — | — |
+
+— 26% of it evaluating primitive families the scene does not contain at all, and the other 74%
+mostly evaluating polygons over the 98% of the frame they cannot cover.
 
 This is finding #2 of the pre-implementation notes — "each primitive is evaluated over the whole
 frame" — confirmed, and with a second cause beside it that the note did not have: the primitive is
@@ -146,7 +156,7 @@ than necessary evaluates pixels whose mask then rejects them.
 | evidence | result |
 |---|---|
 | frozen Step 4 replay, all six configs, on cuda where the frozen digests were taken (`replay/raster2d_swm.json`, `replay/raster2d_pusht.json`, job `6346300`) | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` and `digest_official` **all identical**; all 17 conformance checks per config identical in status |
-| CPU digests of the six configs, before and after, on Oscar and on the laptop (`cpu_digest_before.json`, `cpu_digest_after.json`) | identical across the patch AND across arm/x86; five of the six also equal the frozen cuda digest |
+| CPU digests of the six configs, before and after, on Oscar and on the laptop (`cpu_digest_before.json` `node2340`, `cpu_digest_after.json` `node2342`) | all six identical across the patch, and identical to the laptop's arm run of both trees; five of the six also equal the frozen cuda digest |
 | every registered Scene2D consumer on CPU — PushT, SimplePointMaze and the six highway-env envs (130 to 604 primitives, outlines, padded vertices) | 8 of 8 digests identical |
 | differential fuzz against a verbatim copy of the 89fa5ca8 implementation (`scratch/step6/raster2d/fuzz_render_torch.py`) | **1,650 scenes on CPU + 650 on the 3090, byte-identical in every case** — collinear polygons, all-degenerate edges, padded triangles, negative radii, rings larger than their disc, primitives off the frame and larger than the world, `flip_y`, non-square worlds and outputs, supersample 2 |
 
