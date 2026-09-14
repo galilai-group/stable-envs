@@ -1175,6 +1175,1208 @@
    "swm_ids": [
     "swm/MountainCarControl-v0"
    ]
+  },
+  "MountainCarContinuous": {
+   "backends": [
+    "gfxdraw"
+   ],
+   "config_id": "MountainCarContinuous",
+   "corpus": {
+    "env": "MountainCarContinuous",
+    "indices": [
+     85,
+     57,
+     0,
+     234,
+     153,
+     146,
+     209,
+     114,
+     183,
+     243,
+     173,
+     255,
+     254,
+     18,
+     54,
+     84,
+     47,
+     1,
+     241,
+     90,
+     66,
+     121,
+     43,
+     197,
+     13,
+     100,
+     159,
+     120,
+     74,
+     127,
+     11,
+     14,
+     130,
+     244,
+     22,
+     237,
+     10,
+     134,
+     94,
+     37,
+     201,
+     230,
+     93,
+     168,
+     21,
+     206,
+     188,
+     157,
+     162,
+     202,
+     52,
+     80,
+     150,
+     126,
+     165,
+     216,
+     144,
+     235,
+     136,
+     71,
+     62,
+     2,
+     95,
+     172
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/MountainCarContinuous.npz",
+    "n_extreme": 2,
+    "n_spread": 61,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "b37c4341bf36c8e615dd248792528edec2756ae3f14952b40c2f006b19b69937",
+    "state_dim": 1,
+    "state_names": [
+     "position"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "MountainCarContinuous",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 4.96,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: MountainCarContinuous renders at its reference's native 400x600 and nothing else (got size=1200). The official renderer hardcodes every primitive in pixels, so a resized frame has no reference to be exact against; resample the output if you want one."
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.23,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+      "digest_ours": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+      "exact_frac": 1.0,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.977313902452291,
+      "interior_mean_abs": 0.0,
+      "interior_px": 14949056,
+      "max_abs": 0,
+      "mean_abs": 0.0,
+      "n_states": 64,
+      "reference_id": "MountainCarContinuous-v0",
+      "ssim": 1.0,
+      "within8_frac": 1.0
+     },
+     "seconds": 2.82,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.2,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 1.12,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.08,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 1.0,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.71,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 72.06,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.1,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.04,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+    "digest_ours": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+    "digest_ours_corpus_style": "611eddf517dd2014cea3085ee8667d4893c7f376cba61356c4e0981dae97d5c7",
+    "digest_ours_default_style": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+    "distinct_colors": 261,
+    "frames_shape": [
+     64,
+     400,
+     600,
+     3
+    ],
+    "mean_pixel": 253.26359131944446,
+    "n_states": 64,
+    "reference_id": "MountainCarContinuous-v0",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "size": 600,
+    "state_dim": 1,
+    "style_digest": "ab2a963bcb89bbb3c935839007271cc5dc23e18e2994db2407caeb6381458773",
+    "style_dim": 19,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 5.960464477539063e-08,
+     "block_median_err": 0.0,
+     "control_max_err": 5.960464477539063e-08,
+     "env": "MountainCarContinuous",
+     "episodes": 16,
+     "exact_claim": false,
+     "exact_frac": 0.7465625,
+     "first_step_max_err": 5.960464477539063e-08,
+     "max_err": 1.1920928955078125e-07,
+     "median_err": 0.0,
+     "position_max_err": 1.1920928955078125e-07,
+     "position_mean_err": 9.313225746154785e-09,
+     "position_median_err": 0.0,
+     "position_median_err_at_25": 0.0,
+     "position_p90_err": 2.9802322387695312e-08,
+     "steps": 100,
+     "velocity_max_err": 9.313225746154785e-09,
+     "velocity_mean_err": 7.566995918750763e-10,
+     "velocity_median_err": 0.0,
+     "velocity_median_err_at_25": 0.0,
+     "velocity_p90_err": 2.7939677238464355e-09
+    },
+    "seconds": 0.2,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 108.0,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "mountain-car-continuous",
+     "parity_interior_min": 1.0,
+     "reference_id": "MountainCarContinuous-v0",
+     "size": 600,
+     "state_dim": 1,
+     "state_names": [
+      "position"
+     ],
+     "style_dim": 19,
+     "style_names": [
+      "background.color",
+      "car.color",
+      "flag.color",
+      "flag.pole_color",
+      "rendering.antialias",
+      "terrain.color",
+      "wheel.color"
+     ],
+     "variations": [
+      "background.color",
+      "car.color",
+      "flag.color",
+      "flag.pole_color",
+      "rendering.antialias",
+      "terrain.color",
+      "wheel.color"
+     ]
+    },
+    "describe_digest": "47220dc9f52d6eed"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/MountainCarContinuousControl-v0"
+   ]
+  },
+  "Pendulum": {
+   "backends": [
+    "gfxdraw"
+   ],
+   "config_id": "Pendulum",
+   "corpus": {
+    "env": "Pendulum",
+    "indices": [
+     30,
+     57,
+     0,
+     31,
+     26,
+     40,
+     92,
+     13,
+     117,
+     71,
+     171,
+     33,
+     200,
+     253,
+     187,
+     230,
+     36,
+     45,
+     251,
+     204,
+     248,
+     255,
+     175,
+     132,
+     77,
+     14,
+     78,
+     164,
+     238,
+     165,
+     125,
+     48,
+     18,
+     203,
+     235,
+     24,
+     192,
+     225,
+     21,
+     159,
+     138,
+     66,
+     16,
+     254,
+     64,
+     23,
+     250,
+     134,
+     62,
+     67,
+     154,
+     209,
+     216,
+     51,
+     146,
+     201,
+     108,
+     104,
+     113,
+     121,
+     118,
+     79,
+     49,
+     85
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/Pendulum.npz",
+    "n_extreme": 3,
+    "n_spread": 60,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "218fc6db3afb31e70cb213937757f6f45cabb58966d38914c38fcbae05150296",
+    "state_dim": 2,
+    "state_names": [
+     "theta",
+     "torque"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "Pendulum",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 2.55,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: Pendulum renders at its reference's native 500x500 and nothing else (got size=1000). The official renderer hardcodes every primitive in pixels, so a resized frame has no reference to be exact against; resample the output if you want one."
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.14,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+      "digest_ours": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+      "exact_frac": 1.0,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.9904430604696367,
+      "interior_mean_abs": 0.0,
+      "interior_px": 15783764,
+      "max_abs": 0,
+      "mean_abs": 0.0,
+      "n_states": 64,
+      "reference_id": "Pendulum-v1",
+      "ssim": 1.0,
+      "within8_frac": 1.0
+     },
+     "seconds": 2.89,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.19,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 1.08,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.09,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 1.0,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.73,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 32.16,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.1,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.09,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+    "digest_ours": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+    "digest_ours_corpus_style": "325d1a994607d988e38cc90089e35303522e317842a726ae8396c9c7250d2732",
+    "digest_ours_default_style": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+    "distinct_colors": 851,
+    "frames_shape": [
+     64,
+     500,
+     500,
+     3
+    ],
+    "mean_pixel": 252.92123904166667,
+    "n_states": 64,
+    "reference_id": "Pendulum-v1",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "size": 500,
+    "state_dim": 2,
+    "style_digest": "4ed1e53551e280b5bea5291902dab8ad85bb58728de3961742bba7777dc884a3",
+    "style_dim": 10,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 2.220446049250313e-16,
+     "block_median_err": 1.2212453270876722e-15,
+     "control_max_err": 2.220446049250313e-16,
+     "env": "Pendulum",
+     "episodes": 16,
+     "exact_claim": false,
+     "exact_frac": 0.71875,
+     "first_step_max_err": 2.220446049250313e-16,
+     "max_err": 2.8421709430404007e-13,
+     "median_err": 1.2212453270876722e-15,
+     "steps": 100,
+     "theta_dot_max_err": 2.8421709430404007e-13,
+     "theta_dot_mean_err": 2.6759844340418226e-14,
+     "theta_dot_median_err": 1.1102230246251565e-15,
+     "theta_dot_median_err_at_25": 0.0,
+     "theta_dot_p90_err": 6.347700143294333e-14,
+     "theta_max_err": 1.3233858453531866e-13,
+     "theta_mean_err": 3.9968028886505635e-15,
+     "theta_median_err": 2.220446049250313e-16,
+     "theta_median_err_at_25": 0.0,
+     "theta_p90_err": 1.7541523789077473e-14,
+     "torque_max_err": 0.0,
+     "torque_mean_err": 0.0,
+     "torque_median_err": 0.0,
+     "torque_median_err_at_25": 0.0,
+     "torque_p90_err": 0.0
+    },
+    "seconds": 0.2,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 67.0,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pendulum",
+     "parity_interior_min": 1.0,
+     "reference_id": "Pendulum-v1",
+     "size": 500,
+     "state_dim": 2,
+     "state_names": [
+      "theta",
+      "torque"
+     ],
+     "style_dim": 10,
+     "style_names": [
+      "axle.color",
+      "background.color",
+      "rendering.antialias",
+      "rod.color"
+     ],
+     "variations": [
+      "axle.color",
+      "background.color",
+      "rendering.antialias",
+      "rod.color"
+     ]
+    },
+    "describe_digest": "429a82f72467f457"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/PendulumControl-v1"
+   ]
+  },
+  "PushT": {
+   "backends": [
+    "scene"
+   ],
+   "config_id": "PushT",
+   "corpus": {
+    "env": "PushT",
+    "indices": [
+     226,
+     57,
+     0,
+     31,
+     113,
+     23,
+     141,
+     97,
+     207,
+     115,
+     208,
+     150,
+     70,
+     175,
+     191,
+     88,
+     200,
+     237,
+     223,
+     67,
+     111,
+     185,
+     107,
+     148,
+     246,
+     114,
+     210,
+     108,
+     27,
+     7,
+     170,
+     98,
+     28,
+     62,
+     109,
+     85,
+     233,
+     127,
+     89,
+     80,
+     86,
+     22,
+     184,
+     194,
+     47,
+     181,
+     209,
+     211,
+     161,
+     59,
+     94,
+     74,
+     162,
+     230,
+     204,
+     132,
+     182,
+     25,
+     156,
+     45,
+     171,
+     234,
+     54,
+     69
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/PushT.npz",
+    "n_extreme": 8,
+    "n_spread": 55,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "0aa3bacd24cf91cefb24cfc4ebef770bc43768f2a976cea5abeb2589dd78f9f9",
+    "state_dim": 5,
+    "state_names": [
+     "agent_x",
+     "agent_y",
+     "block_x",
+     "block_y",
+     "block_angle"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "PushT",
+   "family_specific": {
+    "check_backend_agreement": {
+     "evidence": {
+      "exact_frac": 1.0,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.817617728531856,
+      "interior_mean_abs": 0.0,
+      "interior_px": 29516,
+      "max_abs": 0,
+      "mean_abs": 0.0,
+      "within8_frac": 1.0
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 0.25,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "evidence": {
+      "exact_frac": 0.8975457085503472,
+      "factor": 2,
+      "max_abs": 143,
+      "mean_abs": 2.288381505895544,
+      "size": 96
+     },
+     "status": "measured"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.06,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "f9185ed11d1cb9ea17da991c91a2cbbd0aee543ad25fb1d80fad3d23673af6a2",
+      "digest_ours": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+      "exact_frac": 0.9067671034071181,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.7870065789473685,
+      "interior_mean_abs": 0.0,
+      "interior_px": 454575,
+      "max_abs": 190,
+      "mean_abs": 2.46988762749566,
+      "n_states": 64,
+      "reference_id": "gym_pusht/PushT-v0",
+      "ssim": 0.8844303589322896,
+      "within8_frac": 0.9288787841796875
+     },
+     "seconds": 0.99,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.23,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 1.0,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 1.82,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "f9185ed11d1cb9ea17da991c91a2cbbd0aee543ad25fb1d80fad3d23673af6a2",
+    "digest_ours": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+    "digest_ours_corpus_style": "e43c89e51a5e4c330acbd3c2ab17ec40cedd99a769f58871dc75989b3b8f7d48",
+    "digest_ours_default_style": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+    "distinct_colors": 7,
+    "frames_shape": [
+     64,
+     96,
+     96,
+     3
+    ],
+    "mean_pixel": 248.48880004882812,
+    "n_states": 64,
+    "reference_id": "gym_pusht/PushT-v0",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "size": 96,
+    "state_dim": 5,
+    "style_digest": "cae594732107e8d04be872a1e9d0c1cd32adef27ce423bf9d3bfdd8a9d0955f8",
+    "style_dim": 29,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 9.476891976335551e-05,
+     "agent_mean_err": 4.013688943892002e-05,
+     "agent_median_err": 2.3769564678020918e-05,
+     "agent_median_err_at_25": 2.7140755637282337e-05,
+     "agent_p90_err": 8.401325839869e-05,
+     "angle_max_err": 0.5881927989920572,
+     "angle_mean_err": 0.05640674385151213,
+     "angle_median_err": 0.016918332328264455,
+     "angle_median_err_at_25": 0.0010568135643086451,
+     "angle_p90_err": 0.1393684574939422,
+     "block_max_err": 216.8300359673836,
+     "block_mean_err": 20.67290030975399,
+     "block_median_err": 0.6832067635108644,
+     "block_median_err_at_25": 0.0549885520736807,
+     "block_p90_err": 33.60830735928883,
+     "block_touched": 13,
+     "control_max_err": 9.476891976335551e-05,
+     "env": "PushT",
+     "episodes": 16,
+     "exact_claim": false,
+     "exact_frac": 0.0,
+     "first_step_max_err": 6.75766830782205,
+     "max_err": 216.8300359673836,
+     "median_err": 0.6832067635108644,
+     "steps": 100
+    },
+    "seconds": 10.61,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 15.4,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "push-t",
+     "parity_interior_min": 1.0,
+     "reference_id": "gym_pusht/PushT-v0",
+     "size": 96,
+     "state_dim": 5,
+     "state_names": [
+      "agent_x",
+      "agent_y",
+      "block_x",
+      "block_y",
+      "block_angle"
+     ],
+     "style_dim": 29,
+     "style_names": [
+      "agent.color",
+      "agent.inner_color",
+      "agent.scale",
+      "background.color",
+      "block.color",
+      "block.outline_color",
+      "block.scale",
+      "goal.angle",
+      "goal.color",
+      "goal.position",
+      "goal.scale",
+      "rendering.render_goal",
+      "walls.color",
+      "walls.visible"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.inner_color",
+      "agent.scale",
+      "background.color",
+      "block.color",
+      "block.outline_color",
+      "block.scale",
+      "goal.angle",
+      "goal.color",
+      "goal.position",
+      "goal.scale",
+      "rendering.render_goal",
+      "walls.color",
+      "walls.visible"
+     ]
+    },
+    "describe_digest": "05b02a2b687a0511"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/PushT-Discrete-v1",
+    "swm/PushT-v1"
+   ]
   }
  },
  "provenance": {

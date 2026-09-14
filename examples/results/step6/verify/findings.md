@@ -390,3 +390,24 @@ Integration moved again while section 5 was being written. This worktree is at `
 **Still owed** once RAYCAST-5 and cpu-3d merge: the 21 raycast3d configs on CPU and cuda, the four
 swm_nav configs on both, and the four DM Control trackcom cells on CPU under the new backend. The
 scripts already take that subset without modification — see the invocations at the end of section 5.
+
+### 6a. Job 6355272 finished — the `e0182f6` pass is complete and adds nothing new
+
+| what | result | vs the `f7b07d7` pass |
+|---|---|---|
+| `raster` shard on cuda | all 6 configs measured, **nothing moved** (every digest and every check status identical to the frozen oracle) | same |
+| `tests/gpu/test_conformance.py` | 845 passed, 387 skipped, **7 failed**, 437 errors | **identical, test for test** |
+| `tests/gpu/test_reproducibility.py` | 1275 passed, 218 skipped, **17 failed**, 529 errors | **identical, test for test** |
+| `tests/gpu/test_fast_paths.py` | **168 passed**, 180 skipped, 0 failed | same |
+| `tests/gpu/test_gfxdraw_classic.py` | **80 passed**, 0 failed | same |
+
+The 24 failures are the same 24 names as on `f7b07d7`: 7 VISIBILITY-1, 3 `visual_tier` + 3
+`resolution_downsample` (texture drift / held commit), 4 `state_is_sufficient` + 2
+`reference_renderer_is_deterministic` (NODE-1), 5 `fresh_process`. **SWMNAV-1 and the gfxdraw shard
+rename introduced no new failure and moved no pixel.**
+
+One refinement on NODE-1 worth recording: the five `fresh_process` failures reproduce on `gpu2113`
+inside the FULL suite run but pass on `gpu2113` when those five tests are the only ones selected
+(job 6354905). So they are sensitive to what the process has already accumulated, which is the same
+EGL-context pressure the `test_state_is_sufficient` docstring already documents — not to the tree.
+Every GPU sbatch in `scratch/step6/verify/` now carries `--exclude=gpu2108,gpu2113`.

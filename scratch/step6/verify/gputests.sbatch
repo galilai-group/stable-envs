@@ -4,6 +4,9 @@
 #SBATCH --qos=norm-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=geforce3090
+# NODE-1: the OFFICIAL OGBench renderer is nondeterministic at 1/255 on these two, on the
+# baseline tree as much as on any branch, and the suite aborts its own session over it.
+#SBATCH --exclude=gpu2108,gpu2113
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=03:00:00
