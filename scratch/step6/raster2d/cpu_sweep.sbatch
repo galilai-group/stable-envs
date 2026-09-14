@@ -19,6 +19,10 @@
 #
 # --states-out on the before run and --states-in on the after run: the two halves of a before/after
 # have to render the same states or the ratio is between two different workloads.
+#
+# GIT_COMMIT is written into each tree by the sync from the Mac, not committed:
+#   git rev-parse HEAD > /tmp/GIT_COMMIT && scp /tmp/GIT_COMMIT <tree>/GIT_COMMIT
+# A committed one would be a SHA that is always one commit stale.
 set -uo pipefail
 export SCR=/oscar/scratch/$USER
 export XDG_CACHE_HOME=$SCR/.cache TORCH_HOME=$SCR/.torch HF_HOME=$SCR/.cache/huggingface
@@ -32,6 +36,10 @@ AFT=$SCR/se6/$WS               # + the bounded/dispatched primitive loop
 OUT=$SCR/se6/$WS/examples/results/step6/$WS/sweep
 ST=$SCR/se6/$WS/examples/results/step6/$WS/sweep/states
 mkdir -p "$OUT" "$ST"
+# rsync drops .git, so the SHA reaches the shard through the environment or a
+# GIT_COMMIT file at the tree root -- otherwise every artifact records git_commit: null.
+export STABLE_ENVS_GIT_COMMIT=${STABLE_ENVS_GIT_COMMIT:-$(cat "$AFT/GIT_COMMIT" 2>/dev/null || true)}
+echo "measuring tree $AFT at ${STABLE_ENVS_GIT_COMMIT:-unknown}"
 echo "node=$(hostname) job=$SLURM_JOB_ID cpus=$SLURM_CPUS_PER_TASK load=$(cat /proc/loadavg)"
 lscpu | grep "Model name"
 set -x

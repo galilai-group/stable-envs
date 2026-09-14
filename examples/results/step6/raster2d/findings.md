@@ -158,7 +158,7 @@ than necessary evaluates pixels whose mask then rejects them.
 | frozen Step 4 replay, all six configs, on cuda where the frozen digests were taken (`replay/raster2d_swm.json`, `replay/raster2d_pusht.json`, job `6346300`) | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` and `digest_official` **all identical**; all 17 conformance checks per config identical in status |
 | CPU digests of the six configs, before and after, on Oscar and on the laptop (`cpu_digest_before.json` `node2340`, `cpu_digest_after.json` `node2342`) | all six identical across the patch, and identical to the laptop's arm run of both trees; five of the six also equal the frozen cuda digest |
 | every registered Scene2D consumer on CPU — PushT, SimplePointMaze and the six highway-env envs (130 to 604 primitives, outlines, padded vertices) | 8 of 8 digests identical |
-| differential fuzz against a verbatim copy of the 89fa5ca8 implementation (`scratch/step6/raster2d/fuzz_render_torch.py`) | **1,650 scenes on CPU + 650 on the 3090, byte-identical in every case** — collinear polygons, all-degenerate edges, padded triangles, negative radii, rings larger than their disc, primitives off the frame and larger than the world, `flip_y`, non-square worlds and outputs, supersample 2 |
+| differential fuzz against a verbatim copy of the 89fa5ca8 implementation (`scratch/step6/raster2d/fuzz_render_torch.py`) | byte-identical in every case. The counts are what the runs printed: **400 + 5x250 = 1,650 on CPU** at the time of this commit and **400 + 250 = 650 on the 3090** in job `6346300`, whose log carries both `400/400 identical` and `250/250 identical`. RASTER2D-2 re-ran it at 8x300 = 2,400 on CPU. Cases: collinear polygons, all-degenerate edges, padded triangles, negative radii, rings larger than their disc, primitives off the frame and larger than the world, `flip_y`, non-square worlds and outputs, supersample 2 |
 
 Batch invariance, batch-size invariance, order invariance and render purity are re-checked in
 `cpu_digest_*.json` for all six configs: `b1_matches`, `order_invariant`, `pure` all true.
@@ -242,13 +242,16 @@ and the bounding-box coverage confirms the cause rather than inferring it: summe
 primitives, 0.218 frames at B=1 against 1.216 at B=64 for `SimplePointMaze`, 0.155 against 2.491 for
 `PushT`.
 
-Measured on the real agent positions of the frozen corpus, splitting the batch into chunks and
-taking a window per chunk collapses that cost — 59.5 ms at one chunk of 64, 35.3 at chunks of 4,
-15.1 at 2, **1.5 ms at 1** — but chunk-of-1 is a Python loop over the batch, which is the first
-structural problem on section 7's own list and would be `O(B)` dispatch at B=4096. The shape that
-keeps it batched is the one the GPU already uses: bin primitives against **screen tiles** and, per
-tile, select the rows whose box reaches it, which is flat in the batch. That is a larger change than
-this ticket authorises and it is the next thing worth doing on this path.
+Measured on the real agent positions of the frozen corpus
+(`scratch/step6/raster2d/window_experiment.py --mode chunk`, output in
+`experiments/window_chunk.txt`), splitting the batch into chunks and taking a window per chunk
+collapses that cost — 93.7 ms at one chunk of 64, 82.1 at chunks of 8, 58.8 at 4, 25.5 at 2 and
+**2.5 ms at 1** — but chunk-of-1 is a Python loop over the batch, which is the first structural
+problem on section 7's own list and would be `O(B)` dispatch at B=4096. The shape that keeps it
+batched is the one the GPU already uses: bin primitives against **screen tiles** and, per tile,
+select the rows whose box reaches it, which is flat in the batch.
+
+**This was done: see §9 (RASTER2D-2).**
 
 Beside it, at B=64 and 500 px, the uint8 canvas fill is 69.9 ms (13%) and is irreducible — it is the
 output — and the `_prim_plan` pre-pass is 1.6 ms, flat in the batch (24% of the raster at B=1, 1% at
@@ -272,11 +275,24 @@ when the style is batch-uniform. That is section 7's "repeated construction of s
 and the fix is the pre-bake that `SimplePointMaze` did *not* need: build it for the distinct style
 rows only and expand.
 
-**Bounding is not available to them.** `_gaussian_dot` normalises by the frame's own maximum and
-`_alpha_blend` truncates to uint8, so an alpha of 2e-9 still moves a pixel by one count — the dot's
-support is the whole frame and cropping it would change pixels. Any patch there has to come from the
-static half, not the dynamic one. Recommend a separate ticket; owner unclear, since `swm_nav.py` is a
-per-env renderer rather than a shared one.
+**The dot's support was claimed unbounded here, and that was wrong.** The first version of this
+section said "an alpha of 2e-9 still moves a pixel", concluded the Gaussian had unbounded support and
+ruled bounding out. Measured instead against `swm_nav._alpha_blend` itself
+(`scratch/step6/raster2d/alpha_bound.py`, output in `experiments/alpha_bound.txt`), the smallest
+alpha that changes any pixel over every uint8 contrast is **2.98e-8 = 2^-25**, and it is reached at
+`img=1, colour=0` — not because 1/255 has been crossed but because `img * (1 - a)` goes through
+`1 - a`, which rounds to exactly 1.0 in float32 for every `a` below the spacing at 1.0. The two
+directions are not symmetric: painting a bright colour onto a dark pixel needs `a >= 1/255`, and
+darkening a bright one is four orders of magnitude more sensitive. A bound has to hold for the
+easiest pixel to move, so 2^-25 is the number, and the corresponding radius of a normalised Gaussian
+is **5.89 sigma** — 41 px at the smallest declared `agent.radius` and 82 px at the largest, against a
+224 px frame. The dot IS boundable.
+
+Two things the bound has to carry, and both are in the implementation rather than in this paragraph:
+the normalisation divides by the frame's own maximum, so the threshold radius is measured from the
+peak and the peak is the sample nearest the centre (half a pixel, which the formula charges for);
+and if a caller passes a state whose agent is outside the frame, the in-frame maximum is no longer
+next to the centre, so the margin has to grow by that distance. See §10.
 
 ### 7c. Which tree each leg measured, proved rather than assumed
 

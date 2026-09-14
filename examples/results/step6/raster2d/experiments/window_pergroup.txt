@@ -1,0 +1,6 @@
+host torch 2.14.0, 1 thread(s), tree /Users/samib/stable-envs-step6-raster2d/stable_envs/__init__.py
+one group's dispatch cost, from a scene whose grouped pixel work does not change with B:
+   B=8    groups 7    ungrouped    0.517 ms  grouped    0.782 ms  canvas only   0.276 ms  ->    72.0 us per group
+   B=32   groups 28   ungrouped    1.319 ms  grouped    1.956 ms  canvas only   0.348 ms  ->    57.1 us per group
+   B=128  groups 66   ungrouped    3.982 ms  grouped    4.406 ms  canvas only   0.628 ms  ->    56.3 us per group
+   B=512  groups 80   ungrouped   15.494 ms  grouped    7.003 ms  canvas only   1.778 ms  ->    60.1 us per group
