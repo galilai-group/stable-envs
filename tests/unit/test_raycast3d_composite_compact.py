@@ -63,36 +63,80 @@ def _prims(kinds, g):
                          spec=torch.rand(K, generator=g).numpy())
 
 
+#: ``t`` of a mover at this scene's default placement, from the camera in ``_camera()``. The
+#: occlusion band below is built around it: ``plate_t`` has to CUT THROUGH the movers to be a real
+#: threshold, and a band chosen without reference to where they are would sit entirely in front of
+#: them or entirely behind, which is the same as not varying at all.
+_MOVER_T = 2.72
+
+
 def _scene(seed, *, B=5, K=2, H=41, W=37, ss=2, spread=0.25, depth=0.0,
-           kinds=(R3.SPHERE, R3.CAPSULE), plate_t_inf=False):
+           kinds=(R3.SPHERE, R3.CAPSULE), plate_t="floor", offset=(0.0, 0.0),
+           scales=None):
     """A plate, its ray parameter, and a batch of mover poses in front of the camera.
 
-    ``plate_t`` is the analytic depth of a ground plane through the origin, so the composite's
-    ``t < plate_t`` test is a real occlusion decision rather than a constant; ``plate_t_inf`` takes
-    the other branch, where nothing static is in the way and ``INF < INF`` has to stay False.
+    ``plate_t`` selects the occlusion threshold, and the choice is load-bearing rather than
+    decorative:
+
+    * ``"floor"`` -- the analytic depth of a ground plane through the origin. Smooth, and far enough
+      behind the movers that every sample of the window is covered or not covered for reasons that
+      have nothing to do with which pixel's threshold it read.
+    * ``"inf"`` -- nothing static in the way, so ``INF < INF`` has to stay False.
+    * ``"band"`` -- **a FINITE per-pixel field that cuts through the movers**, so a sample's coverage
+      depends on WHICH pixel's ``plate_t`` it was handed. This is the only mode that exercises the
+      ``bt`` gather: the compact path reads ``plate_t`` at the window's output pixels and blows the
+      value up over the ``ss x ss`` subgrid, where the path it replaces blew the whole frame up first
+      and read the window out of that. Those are the same numbers only if the blow-up maps
+      ``(ty, a, tx, b) -> (y0+ty, x0+tx)``; transposing it is a real defect that the ``"floor"`` and
+      ``"inf"`` scenes cannot see, because under them every sample of a window shares an answer.
+      The field depends on ``y`` and ``x`` with different periods so a transposition cannot alias
+      back onto itself, and ``R3.INF`` never appears in it -- the sentinel would collapse the
+      comparison to ``t < INF`` and hide exactly what this mode is for.
+
+    ``offset`` shifts every mover in world x and z, which is how a window gets pushed against a frame
+    edge and the origin clamp in ``_fit_tile`` is made to engage. ``scales`` is a per-row
+    ``size_scale``.
     """
     g = torch.Generator().manual_seed(seed)
     cam = _camera()
     prims = _prims(kinds[:K], g)
     plate = (torch.rand(H, W, 3, generator=g) * 255).to(torch.uint8)
-    if plate_t_inf:
-        plate_t = torch.full((H * W,), R3.INF)
+    if plate_t == "inf":
+        plate_t_v = torch.full((H * W,), R3.INF)
+    elif plate_t == "band":
+        y = torch.arange(H).view(H, 1).to(torch.float32)
+        x = torch.arange(W).view(1, W).to(torch.float32)
+        phase = (3.0 * y + 7.0 * x) % 11.0 / 11.0 + 0.017 * ((y * 5 + x * 2) % 3)
+        plate_t_v = (_MOVER_T - 0.22 + 0.44 * phase).reshape(-1).contiguous()
+        assert torch.isfinite(plate_t_v).all() and float(plate_t_v.max()) < R3.INF
     else:
         floor = R3.Primitives(kind=np.array([R3.PLANE]), size=np.zeros((1, 3)),
                               mat_rgb=np.zeros((1, 3)), tex_rgb=np.ones((1, 3)), spec=np.zeros(1))
-        plate_t = R3.static_depth(cam, floor, np.zeros((1, 3)), np.eye(3).reshape(1, 3, 3),
-                                  H, W, "cpu")
+        plate_t_v = R3.static_depth(cam, floor, np.zeros((1, 3)), np.eye(3).reshape(1, 3, 3),
+                                    H, W, "cpu")
     xpos = torch.zeros(B, K, 3)
-    xpos[..., 0] = (torch.rand(B, K, generator=g) - 0.5) * spread
+    xpos[..., 0] = (torch.rand(B, K, generator=g) - 0.5) * spread + offset[0]
     xpos[..., 1] = (torch.rand(B, K, generator=g) - 0.5) * spread + depth
-    xpos[..., 2] = torch.rand(B, K, generator=g) * spread + 0.12
+    xpos[..., 2] = torch.rand(B, K, generator=g) * spread + 0.12 + offset[1]
     xmat = torch.eye(3).view(1, 1, 3, 3).expand(B, K, 3, 3).contiguous()
-    return dict(plate=plate, plate_t=plate_t, cam=cam, prims=prims, xpos=xpos, xmat=xmat,
-                lights=_lights(), H=H, W=W, supersample=ss)
+    sc = dict(plate=plate, plate_t=plate_t_v, cam=cam, prims=prims, xpos=xpos, xmat=xmat,
+              lights=_lights(), H=H, W=W, supersample=ss)
+    if scales is not None:
+        sc["_scales"] = torch.as_tensor(scales, dtype=torch.float32)
+    return sc
+
+
+def _split(sc):
+    """The composite kwargs, and the per-row ``size_scale`` the scene carried beside them."""
+    sc = dict(sc)
+    return sc, sc.pop("_scales", None)
 
 
 def _both(sc, **kw):
     """``composite`` with the compact tail, then with the window it replaces. Same inputs."""
+    sc, scales = _split(sc)
+    if scales is not None:
+        kw.setdefault("size_scale", scales)
     R3.COMPOSITE_COMPACT_MERGE = True
     a = R3.composite(**sc, **kw).clone()
     R3.COMPOSITE_COMPACT_MERGE = False
@@ -127,10 +171,34 @@ CASES = [
     ("tile-too-small-falls-back", dict(seed=7, spread=1.4), dict(tile=4)),
     ("batch-of-one", dict(seed=8, B=1), dict(tile=16)),
     ("large-batch", dict(seed=9, B=32), dict(tile=16)),
-    ("plate-t-infinite", dict(seed=10, plate_t_inf=True), dict(tile=16)),
+    ("plate-t-infinite", dict(seed=10, plate_t="inf"), dict(tile=16)),
+    # the three cases below are the only ones in this file whose coverage depends on WHICH
+    # pixel's occlusion threshold a sample was handed -- see ``_scene``'s "band" mode
+    ("plate-t-band-ss2", dict(seed=14, K=1, kinds=(R3.SPHERE,), plate_t="band"), dict(tile=16)),
+    ("plate-t-band-ss1", dict(seed=15, K=1, kinds=(R3.SPHERE,), ss=1, plate_t="band"),
+     dict(tile=16)),
+    ("plate-t-band-two-movers", dict(seed=16, K=2, plate_t="band"), dict(tile=16)),
     ("box-and-cylinder", dict(seed=11, K=2, kinds=(R3.BOX, R3.CYLINDER)), dict(tile=16)),
     ("far-behind-camera", dict(seed=12, depth=-4.0), dict(tile=16)),
-    ("mover-at-frame-edge", dict(seed=13, spread=0.05), dict(tile=16)),
+    # ``mover-at-frame-edge`` used to be ``spread=0.05``, which lands the sphere dead CENTRE and
+    # clamps nothing -- a case named for a boundary it never reached. ``offset`` moves the movers
+    # until ``_fit_tile``'s ``x0.clamp(0, W - t)`` actually engages, and
+    # ``test_the_edge_cases_actually_clamp`` asserts that it still does, so this cannot silently go
+    # back to being a centred sphere.
+    ("mover-clamped-left", dict(seed=13, B=6, K=1, kinds=(R3.SPHERE,), spread=0.35,
+                                offset=(-1.4, 0.0)), dict(tile=16)),
+    ("mover-clamped-right", dict(seed=17, B=6, K=1, kinds=(R3.SPHERE,), spread=0.35,
+                                 offset=(1.4, 0.0)), dict(tile=16)),
+    ("mover-clamped-corner", dict(seed=18, B=6, K=1, kinds=(R3.SPHERE,), spread=0.35,
+                                  offset=(-1.15, 0.95)), dict(tile=16)),
+    ("mover-clamped-band", dict(seed=19, B=6, K=1, kinds=(R3.SPHERE,), spread=0.35,
+                                offset=(-1.15, 0.95), plate_t="band"), dict(tile=16)),
+    # the clamp and a per-row size_scale together: the scale feeds ``bound_scale``, so it moves the
+    # span the tile is fitted to AND the primitive the cast tests, on a window already pinned
+    # against two frame edges
+    ("clamped-ss2-per-row-scale",
+     dict(seed=20, B=6, K=1, kinds=(R3.SPHERE,), ss=2, spread=0.35, offset=(-1.15, 0.95),
+          plate_t="band", scales=(0.5, 0.8, 1.0, 1.4, 1.9, 2.4)), dict(tile=16)),
 ]
 
 
@@ -152,7 +220,7 @@ def test_random_scenes_agree_on_every_byte(seed):
     sc = _scene(seed=2000 + seed, B=ri(1, 9), K=K, H=H, W=W, ss=ss, kinds=kinds,
                 spread=float(torch.rand(1, generator=g)) * 1.2 + 0.05,
                 depth=float(torch.rand(1, generator=g)) - 0.5,
-                plate_t_inf=bool(ri(0, 1)))
+                plate_t=("band", "floor", "inf")[ri(0, 2)])
     tile = ri(3, min(H, W) - 1)
     a, b = _both(sc, tile=tile)
     _assert_identical(a, b, f"random seed {seed} H={H} W={W} ss={ss} K={K} tile={tile}")
@@ -160,6 +228,7 @@ def test_random_scenes_agree_on_every_byte(seed):
 
 def _cover_fraction(sc, tile):
     """What fraction of the window each row covers -- the quantity the fuzz has to span."""
+    sc, _ = _split(sc)
     seen = {}
     orig = R3.shade
 
@@ -173,6 +242,40 @@ def _cover_fraction(sc, tile):
     finally:
         R3.shade = orig
     return seen.get("shaded", 0)
+
+
+def _clamp_counts(sc, tile):
+    """(rows clamped in x, rows clamped in y, the fitted tile) for this scene."""
+    sc, _ = _split(sc)
+    span = R3.screen_span(sc["cam"], sc["prims"], sc["xpos"], sc["H"], sc["W"], "cpu")
+    fit = R3._fit_tile(sc["cam"], sc["prims"], sc["xpos"], sc["H"], sc["W"], tile, "cpu")
+    if span is None or fit is None:
+        return 0, 0, None
+    x0, y0, _, _ = span
+    t = fit[1]
+    return (int((x0 < 0).sum() + (x0 > sc["W"] - t).sum()),
+            int((y0 < 0).sum() + (y0 > sc["H"] - t).sum()), t)
+
+
+CLAMPED_IDS = ("mover-clamped-left", "mover-clamped-right", "mover-clamped-corner",
+               "mover-clamped-band", "clamped-ss2-per-row-scale")
+
+
+@pytest.mark.parametrize("cid", CLAMPED_IDS)
+def test_the_edge_cases_actually_clamp(cid):
+    """A case named for the origin clamp has to reach it, or it is testing the centred sphere again.
+
+    This is the check that the previous ``mover-at-frame-edge`` lacked and needed: it was
+    ``spread=0.05``, which puts the movers in the middle of the frame, so ``x0.clamp(0, W - t)`` was
+    the identity on every row and the case had been passing for years of the wrong reason.
+    """
+    skw = dict(next(c[1] for c in CASES if c[0] == cid))
+    ckw = next(c[2] for c in CASES if c[0] == cid)
+    cx, cy, t = _clamp_counts(_scene(**skw), ckw["tile"])
+    assert t is not None, f"{cid}: no window was fitted, so no clamp can be exercised"
+    assert cx + cy > 0, (
+        f"{cid}: the fitted window ({t} px) clamped no row in either axis, so this case is not "
+        "exercising the origin clamp it is named for")
 
 
 def test_the_fuzz_actually_reaches_empty_and_full_cover_rows():
@@ -191,7 +294,7 @@ def test_the_fuzz_actually_reaches_empty_and_full_cover_rows():
                        .expand(a.shape[0], *empty["plate"].shape)), (
         "with nothing covered the composite must be the plate on every row")
 
-    full = _scene(seed=42, K=1, kinds=(R3.BOX,), spread=0.02, plate_t_inf=True)
+    full = _scene(seed=42, K=1, kinds=(R3.BOX,), spread=0.02, plate_t="inf")
     full["xpos"][..., 2] = 0.35
     full["prims"] = R3.Primitives(kind=np.array([R3.BOX]), size=np.full((1, 3), 0.9),
                                   mat_rgb=np.array([[0.8, 0.2, 0.2]]), tex_rgb=np.ones((1, 3)),
@@ -205,7 +308,7 @@ def test_the_fuzz_actually_reaches_empty_and_full_cover_rows():
 
 def test_a_caller_supplied_buffer_and_a_fresh_one_agree():
     """``maze2d`` reads ``with_t != plate`` to find the target, so every pixel of ``out`` is load-bearing."""
-    sc = _scene(seed=51, B=6, K=1, kinds=(R3.SPHERE,))
+    sc, _ = _split(_scene(seed=51, B=6, K=1, kinds=(R3.SPHERE,)))
     buf = torch.full((6, sc["H"], sc["W"], 3), 7, dtype=torch.uint8)
     R3.COMPOSITE_COMPACT_MERGE = True
     given = R3.composite(**sc, tile=16, out=buf).clone()
@@ -232,8 +335,8 @@ def test_per_environment_colour_and_scale_are_still_per_environment():
 @pytest.mark.parametrize("seed", range(12))
 def test_the_chosen_window_always_contains_the_span_it_was_derived_from(seed):
     """The whole identity rests on ``_fit_tile`` never returning a window smaller than the bound."""
-    sc = _scene(seed=3000 + seed, B=7, K=2,
-                spread=0.1 + 0.15 * seed, depth=0.2 * (seed % 3))
+    sc, _ = _split(_scene(seed=3000 + seed, B=7, K=2,
+                          spread=0.1 + 0.15 * seed, depth=0.2 * (seed % 3)))
     span = R3.screen_span(sc["cam"], sc["prims"], sc["xpos"], sc["H"], sc["W"], "cpu")
     if span is None:
         pytest.skip("no finite bound for this scene")
@@ -281,7 +384,7 @@ def test_a_row_renders_the_same_alone_as_it_does_in_a_batch(seed):
     the same distinction for its per-primitive bound -- batch invariance is a claim there, not an
     identity -- and it earned its own test for the same reason.
     """
-    sc = _scene(seed=4000 + seed, B=8, K=2, spread=0.2 + 0.1 * seed)
+    sc, _ = _split(_scene(seed=4000 + seed, B=8, K=2, spread=0.2 + 0.1 * seed))
     R3.COMPOSITE_COMPACT_MERGE = True
     together = R3.composite(**sc, tile=16).clone()
     for i in range(sc["xpos"].shape[0]):
