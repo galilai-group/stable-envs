@@ -671,6 +671,14 @@ decisions:
   by: Sami
   decision: 'Close-out rule: after Walker + Pointmaze composite + swm_nav kernel land through the normal gates, close Step 6 as ENGINEERING COMPLETE WITH DOCUMENTED CERTIFICATION BLOCKERS; never claim the
     frozen Step-2 performance contract is fully satisfied where it is not; then prepare the Step-7 launch state and report the remaining registered/default certification blockers separately.'
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Remaining Step-6 execution set: (1) finish + independently review the PointMaze CPU composite rewrite (RAYCAST-6); (2) finish + independently review the shared swm_nav GPU kernel (SWMNAV-2/2b);
+    (3) finish the Oscar Lance/JPEG-vs-regeneration rerun at each env''s certified/native resolution with the matched production-style comparison (1/8 workers; NFS, jobtmp, /tmp; CPU util; read throughput;
+    host output; stable-envs CPU 1-thread + 8-way + scaling efficiency; GPU renderer-only + end-to-end loader+transfer+render on device; cpu_pipeline_ratio and gpu_pipeline_ratio per row; frozen one-core
+    cores_cpu kept separate). Then: merge only through the normal gates; regenerate the report with performance scope = registered/default; keep the 49-cell corpus for correctness; retain Fetch CPU/GPU
+    as documented blockers unless the Lance experiment reveals a factual measurement error; no SIMD CPU-3D, no gfxdraw specialisation, no Fetch megakernel, no new campaigns; no threshold changes. Then produce
+    the Step 6 closure packet and recommend FULLY CERTIFIED / ENGINEERING COMPLETE WITH DOCUMENTED CERTIFICATION BLOCKERS / CONTINUE FOR <finite tickets>. Step 7 does not start before the packet.'
 integration_verification:
   branch: step6/integration-verify (merged)
   head: 50e1716 (merged)
