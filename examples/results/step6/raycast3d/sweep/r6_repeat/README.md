@@ -5,6 +5,20 @@ only — `PointmazeLargeNavigate` and `PointmazeMediumNavigate` — because thos
 tier was in question. Commit under measurement: **`7fa1856`** on `step6/raycast3d`, carried in the
 shard itself this time (`provenance.tree_commit`), not recovered afterwards from a job log.
 
+**One provenance defect in these two files, uncorrected in place on purpose.** Both legs record
+`tree_commit: 7fa1856`, but the BEFORE leg measured `$SCR/se6/integration`, which is at `5b327af`.
+The cause: the inner producer takes the commit from `git rev-parse` in the tree it imported and falls
+back to `$STABLE_ENVS_GIT_COMMIT` when that tree has no `.git` — and `rsync` drops `.git` from both
+trees, so one job-level variable got stamped on both legs. `provenance.stable_envs_file` records
+which tree each leg actually imported and is correct in both
+(`.../se6/integration/...` and `.../se6/raycast3d/...`), so nothing here is ambiguous, only
+mislabelled. The JSONs are left exactly as the job wrote them — a measurement artifact edited after
+the fact is worth less than one with its defect written down beside it — and the fix is in the
+tooling: `r6_certify_shard.py` now takes `$SE6_TREE_COMMIT` **per leg** and writes `null` with a
+reason rather than the other leg's answer when it is absent.
+
+**Read `tree_commit` on the before leg as `5b327af`.**
+
 ## Why it exists
 
 `sweep/r6/` put `PointmazeMediumNavigate` at `cores_cpu` **1.207** and therefore over the `CPU_FAST`

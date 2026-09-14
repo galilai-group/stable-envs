@@ -67,7 +67,23 @@ def main() -> int:
         d = json.loads(out.read_text())
         d["arm"] = leg
         d["shard"] = f"raycast3d-paired-{leg}"
-        d.setdefault("provenance", {})["se6_switches"] = switches
+        pv = d.setdefault("provenance", {})
+        pv["se6_switches"] = switches
+        # A SINGLE $STABLE_ENVS_GIT_COMMIT IS WRONG FOR A PAIR. The inner script reads the commit
+        # from `git rev-parse` in the tree it imported and falls back to that environment variable
+        # when the tree has no .git -- which is both trees here, because rsync drops it. So a job
+        # that exports one SHA stamps it on BOTH legs, and the before leg comes out claiming the
+        # branch's commit while having measured $SCR/se6/integration. Observed in job 6368126, where
+        # both legs record 7fa1856; `provenance.stable_envs_file` shows the truth and
+        # `tree_commit` did not. $SE6_TREE_COMMIT is per leg, and if it is absent the field is set
+        # to null with a reason rather than left holding the other leg's answer.
+        want = os.environ.get("SE6_TREE_COMMIT")
+        pv["tree_commit"] = want
+        pv["git_commit_source"] = ("env:SE6_TREE_COMMIT (per leg)" if want else
+                                   "unavailable: no .git in the measured tree and SE6_TREE_COMMIT "
+                                   "was not set for this leg; see provenance.stable_envs_file for "
+                                   "which tree was actually imported")
+        pv["measured_tree"] = switches["module"]
         d["produced_by"] = ("scratch/step6/raycast3d/r6_certify_shard.py wrapping "
                             "scratch/step6/cpu-3d/certify_shard_cpu3d.py")
         out.write_text(json.dumps(d, indent=1))

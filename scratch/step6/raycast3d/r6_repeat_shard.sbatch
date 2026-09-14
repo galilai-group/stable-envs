@@ -48,11 +48,11 @@ hostname; lscpu | grep -E "^Model name" | head -1; cat /proc/loadavg
 echo "STABLE_ENVS_GIT_COMMIT=$STABLE_ENVS_GIT_COMMIT"
 
 ENVS="PointmazeLargeNavigate,PointmazeMediumNavigate"
-SE6_LEG=before PYTHONPATH=$INT $PY scratch/step6/raycast3d/r6_certify_shard.py \
+SE6_LEG=before SE6_TREE_COMMIT=${INT_COMMIT:-5b327af} PYTHONPATH=$INT $PY scratch/step6/raycast3d/r6_certify_shard.py \
     --device cpu --threads 1 --envs "$ENVS" --reps 25 --max-cell-s 20 \
     --max-reference-spread 1.25 --max-load 12 \
     --out "$SW/cpu_1thread_before_integration.json" || echo "RPT_BEFORE rc=$?"
-SE6_LEG=after PYTHONPATH=$WS $PY scratch/step6/raycast3d/r6_certify_shard.py \
+SE6_LEG=after SE6_TREE_COMMIT=$STABLE_ENVS_GIT_COMMIT PYTHONPATH=$WS $PY scratch/step6/raycast3d/r6_certify_shard.py \
     --device cpu --threads 1 --envs "$ENVS" --reps 25 --max-cell-s 20 \
     --max-reference-spread 1.25 --max-load 12 \
     --out "$SW/cpu_1thread_after_branch.json" || echo "RPT_AFTER rc=$?"
