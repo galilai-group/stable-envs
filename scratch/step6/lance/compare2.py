@@ -245,8 +245,22 @@ def main() -> None:
                                      .get("q90", {}).get("rel_to_q95")),
         }
 
-        ln = row["lance_cpu_node"]["local_n8"]
-        l1 = row["lance_cpu_node"]["local_1proc"]
+        # The CPU pipeline ratio must divide two numbers from the SAME job on the SAME node under
+        # the same load, so it uses the instrumented run (which shares its job with the 8-way
+        # renderer measurement) whenever that run is present, and says so.
+        I8 = (row["lance_instrumented"] or {}).get("local_n8") or {}
+        I1 = (row["lance_instrumented"] or {}).get("local_n1") or {}
+        ln = I8.get("fps") or row["lance_cpu_node"]["local_n8"]
+        l1 = I1.get("fps") or row["lance_cpu_node"]["local_n1"]
+        row["lance_for_cpu_ratio"] = {
+            "local_n8": ln, "local_n1": l1,
+            "from": ("lance_arms2 (same job as the 8-way renderer)" if I8.get("fps")
+                     else "run_lance_oscar (different job)"),
+            "node": (a2c or {}).get("node") if I8.get("fps") else lcpu["node"],
+            "job": ((a2c or {}).get("slurm", {}) or {}).get("SLURM_JOB_ID") if I8.get("fps")
+                   else lcpu.get("slurm", {}).get("SLURM_JOB_ID"),
+            "cores_used_total": I8.get("cores_used_total"),
+        }
         percore = ln / 8 if ln else None
         b8 = row["ours_cpu"]["best_8way"]
         t1 = (row["ours_cpu"]["threads1"] or {}).get("fps")
@@ -259,7 +273,7 @@ def main() -> None:
         row["ratios"] = {
             # (2) realistic stored-dataset training-pipeline break-even
             "cpu_pipeline_ratio": (b8 / ln) if b8 and ln else None,
-            "cpu1_vs_lance_1proc": (t1 / l1) if t1 and l1 else None,
+            "cpu1_vs_lance_1worker": (t1 / l1) if t1 and l1 else None,
             "cpu1_vs_lance_percore": (t1 / percore) if t1 and percore else None,
             "gpu_renderer_only_vs_lance_n8_host": (grf / ln) if grf and ln else None,
             "gpu_pipeline_ratio": (e2ef / jl8) if e2ef and jl8 else None,
@@ -271,7 +285,7 @@ def main() -> None:
         }
         row["verdict"] = {
             "cpu_8way_beats_lance_8worker": bool(b8 and ln and b8 > ln),
-            "cpu1_beats_lance_1proc": bool(t1 and l1 and t1 > l1),
+            "cpu1_beats_lance_1worker": bool(t1 and l1 and t1 > l1),
             "cpu1_beats_lance_percore": bool(t1 and percore and t1 > percore),
             "gpu_e2e_beats_jpeg_loader8": bool(e2ef and jl8 and e2ef > jl8),
             "gpu_e2e_beats_nvjpeg": bool(e2ef and jnv and e2ef > jnv),
@@ -313,32 +327,36 @@ def main() -> None:
               "`sum(worker CPU seconds) / slowest-worker elapsed`, i.e. how many cores the 8 workers "
               "actually burned.\n")
     md.append("| config | frame | kB/f | tmpfs 1w | tmpfs 8w | NFS 1w | NFS 8w | GPFS 1w | GPFS 8w | "
-              "cores used (8w) | read MB/s | read frac | 1-proc best-of-8 |")
-    md.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+              "cores used (8w) | JPEG read MB/s | host-out MB/s (8w) | read frac | 1-proc best-of-8 |")
+    md.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for r in rows:
         Lc = r["lance_cpu_node"]
         I = r["lance_instrumented"] or {}
+        g = lambda k: (I.get(k) or {}).get("fps")
         loc8 = I.get("local_n8") or {}
         md.append(f"| {r['env']} | {r['frame']} | {r['jpeg_bytes_per_frame']/1000:.1f} | "
-                  f"{fmt(Lc['local_n1'])} | {fmt(Lc['local_n8'])} | {fmt(I.get('shared_n1',{}).get('fps'))} | "
-                  f"{fmt(Lc['shared_n8'])} | {fmt(I.get('jobtmp_n1',{}).get('fps'))} | "
-                  f"{fmt(Lc['jobtmp_n8'])} | {fmtr(loc8.get('cores_used_total'))} | "
+                  f"{fmt(g('local_n1') or Lc['local_n1'])} | {fmt(g('local_n8') or Lc['local_n8'])} | "
+                  f"{fmt(g('shared_n1'))} | {fmt(g('shared_n8') or Lc['shared_n8'])} | "
+                  f"{fmt(g('jobtmp_n1'))} | {fmt(g('jobtmp_n8') or Lc['jobtmp_n8'])} | "
+                  f"{fmtr(loc8.get('cores_used_total'))} | "
                   f"{fmtr((I.get('local_1proc') or {}).get('read_MBps'))} | "
-                  f"{pct(Lc['local_read_frac'])} | {fmt(Lc['local_1proc'])} |")
+                  f"{fmtr(loc8.get('raw_out_MBps_host'))} | "
+                  f"{pct((I.get('local_1proc') or {}).get('read_frac') or Lc['local_read_frac'])} | "
+                  f"{fmt(Lc['local_1proc'])} |")
 
     md.append("\n## T2 — CPU: our renderer vs the stored pipeline, same node, same job\n")
-    md.append("| config | lance 1 proc | lance 8w | lance 8w / 8 | ours 1 thread | ours 8 threads | "
+    md.append("| config | lance 1 worker | lance 8w | lance 8w / 8 | ours 1 thread | ours 8 threads | "
               "ours 8 procs | best 8-way | scaling eff. | **cpu_pipeline_ratio** (8-way / lance 8w) | "
-              "1thr / lance 1proc | 1thr / per-core |")
+              "1thr / lance 1w | 1thr / per-core |")
     md.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
     for r in rows:
-        Lc, O, Ra = r["lance_cpu_node"], r["ours_cpu"], r["ratios"]
-        md.append(f"| {r['env']} | {fmt(Lc['local_1proc'])} | {fmt(Lc['local_n8'])} | "
+        Lc, O, Ra = r["lance_for_cpu_ratio"], r["ours_cpu"], r["ratios"]
+        md.append(f"| {r['env']} | {fmt(Lc['local_n1'])} | {fmt(Lc['local_n8'])} | "
                   f"{fmt(Lc['local_n8']/8 if Lc['local_n8'] else None)} | "
                   f"{fmt((O['threads1'] or {}).get('fps'))} | {fmt(O['threads8'])} | "
                   f"{fmt(O['procs8'])} | {fmt(O['best_8way'])} | "
                   f"{fmtr(O['scaling_efficiency_best'])} | **{fmtr(Ra['cpu_pipeline_ratio'])}** | "
-                  f"{fmtr(Ra['cpu1_vs_lance_1proc'])} | {fmtr(Ra['cpu1_vs_lance_percore'])} |")
+                  f"{fmtr(Ra['cpu1_vs_lance_1worker'])} | {fmtr(Ra['cpu1_vs_lance_percore'])} |")
 
     md.append("\n## T3 — GPU: both sides end with frames ON THE DEVICE\n")
     md.append("| config | JPEG→device, 8-worker loader + H2D | JPEG→device, nvJPEG | H2D alone (pinned) | "
@@ -401,8 +419,10 @@ def main() -> None:
     md.append("| quantity | median | min | max | n |")
     md.append("|---|---|---|---|---|")
     for label, path in [
-            ("lance 1 proc (tmpfs)", ("lance_cpu_node", "local_1proc")),
-            ("lance 8 workers (tmpfs)", ("lance_cpu_node", "local_n8")),
+            ("lance 1 worker (tmpfs, same job as 8-way renderer)", ("lance_for_cpu_ratio", "local_n1")),
+            ("lance 8 workers (tmpfs, same job as 8-way renderer)", ("lance_for_cpu_ratio", "local_n8")),
+            ("lance 8 workers: cores actually used", ("lance_for_cpu_ratio", "cores_used_total")),
+            ("lance 1 proc best-of-8 (tmpfs)", ("lance_cpu_node", "local_1proc")),
             ("lance 8 workers (NFS)", ("lance_cpu_node", "shared_n8")),
             ("lance 8 workers (GPFS)", ("lance_cpu_node", "jobtmp_n8")),
             ("JPEG→device, 8w loader + H2D", ("jpeg_to_device", "loader8_h2d")),
@@ -425,7 +445,7 @@ def main() -> None:
     for key, title in [
             ("cpu_8way_beats_lance_8worker", "CPU: our 8-way renderer beats the 8-worker Lance pipeline"),
             ("cpu1_beats_lance_percore", "CPU: our 1 thread beats ONE CORE's share of the 8-worker pipeline"),
-            ("cpu1_beats_lance_1proc", "CPU: our 1 thread beats 1-process Lance"),
+            ("cpu1_beats_lance_1worker", "CPU: our 1 thread beats ONE Lance worker"),
             ("gpu_e2e_beats_jpeg_loader8", "GPU: our end-to-end state→device beats 8-worker JPEG→device"),
             ("gpu_e2e_beats_nvjpeg", "GPU: our end-to-end beats nvJPEG→device"),
             ("gpu_rendereronly_beats_lance_8worker_host",

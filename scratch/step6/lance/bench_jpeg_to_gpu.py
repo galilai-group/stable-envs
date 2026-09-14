@@ -65,7 +65,12 @@ class LanceJPEG(torch.utils.data.Dataset):
         return self.n
 
     def __getitem__(self, i):
-        return self.__getitems__([i])
+        # With ``batch_size=None`` torch's fetcher disables auto-collation and hands the WHOLE index
+        # list to ``__getitem__``; with a batch_size it hands one index. Serve both, so the loader
+        # arm measures the batched Lance take either way.
+        if isinstance(i, (list, tuple, range)):
+            return self.__getitems__(list(i))
+        return self.__getitems__([i])[0]
 
     def __getitems__(self, idx):
         batch = self._lazy().take(list(idx), columns=["pixels"])
@@ -80,10 +85,34 @@ def _worker_init(_):
     torch.set_num_threads(1)
 
 
-def loader_h2d(root, name, n, chunk, reps, workers, pin=True):
-    from torch.utils.data import BatchSampler, DataLoader, SequentialSampler
+class Chunks(torch.utils.data.Sampler):
+    """The exact batch schedule ``bench_lance.time_parallel`` gives its 8 workers.
+
+    A 512-row table holds only two 256-row batches, so a plain sequential epoch would leave six of
+    eight workers idle and the "8 worker" number would be a 2-worker number. ``bench_lance`` avoids
+    this by giving each of its 8 workers ``reps`` chunks at wrapped offsets, i.e.
+    ``workers * reps`` batches over the same table. The same schedule is used here, so the two
+    numbers cover the same frames: 8 x 8 x 256 = 16,384.
+    """
+
+    def __init__(self, n: int, chunk: int, workers: int, reps: int):
+        self.batches = []
+        for w in range(workers):
+            for i in range(reps):
+                s0 = ((i + w) * chunk) % max(n - chunk, 1)
+                self.batches.append(list(range(s0, min(s0 + chunk, n))))
+
+    def __iter__(self):
+        return iter(self.batches)
+
+    def __len__(self):
+        return len(self.batches)
+
+
+def loader_h2d(root, name, n, chunk, reps, workers, pin=True, inner=8):
+    from torch.utils.data import DataLoader
     ds = LanceJPEG(root, name, n)
-    sampler = BatchSampler(SequentialSampler(range(n)), batch_size=chunk, drop_last=True)
+    sampler = Chunks(n, chunk, workers, inner)
     dl = DataLoader(ds, sampler=sampler, batch_size=None, num_workers=workers,
                     collate_fn=_identity, pin_memory=pin, persistent_workers=True,
                     prefetch_factor=2, worker_init_fn=_worker_init,
@@ -104,7 +133,8 @@ def loader_h2d(root, name, n, chunk, reps, workers, pin=True):
             best, tot_best = dt / frames, frames
     del dl
     return {"fps": 1 / best, "workers": workers, "pin_memory": pin, "frames_per_epoch": tot_best,
-            "epoch_s": best * tot_best, "output_location": "DEVICE memory, uint8 CHW"}
+            "batches_per_epoch": len(sampler), "epoch_s": best * tot_best,
+            "output_location": "DEVICE memory, uint8 CHW"}
 
 
 def nvjpeg_h2d(tbl, n, chunk, reps):

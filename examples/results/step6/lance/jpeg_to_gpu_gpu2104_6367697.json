@@ -1,0 +1,1988 @@
+{
+  "what": "end-to-end stored-JPEG -> frames ON THE DEVICE, the denominator the GPU comparison actually needs",
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "node": "gpu2104.oscar.ccv.brown.edu",
+  "hostname": "gpu2104.oscar.ccv.brown.edu",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "chunk": 256,
+  "reps": 5,
+  "workers": 8,
+  "cpu_count_affinity": 8,
+  "loadavg_start": [
+    55.32,
+    54.95,
+    55.39
+  ],
+  "slurm": {
+    "SLURM_CPUS_PER_TASK": "8",
+    "SLURM_JOB_ID": "6367697",
+    "SLURM_JOB_NODELIST": "gpu2104"
+  },
+  "python": "3.12.9",
+  "executable": "/oscar/scratch/sboughan/venvs/se6-verify/bin/python",
+  "torch": "2.14.0+cu126",
+  "local_arm": {
+    "path": "/tmp/se_lance_6367697",
+    "fstype": "tmpfs"
+  },
+  "envs": {
+    "Acrobot": {
+      "meta": {
+        "env": "Acrobot",
+        "size": 500,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 500,
+        "w": 500,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 5443034,
+        "raw_bytes_per_frame": 750000
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 10630.92578125,
+      "nvjpeg_h2d": {
+        "fps": 5027.125192647276,
+        "read_fps": 72843.82103943158,
+        "decode_fps": 5438.759492456671,
+        "read_frac": 0.06901237635414552,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "error": "TypeError: Caught TypeError in DataLoader worker process 0.\nOriginal Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/worker.py\", line 375, in _worker_loop\n    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/fetch.py\", line 56, in fetch\n    data = self.dataset[possibly_batched_index]\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 68, in __getitem__\n    return self.__getitems__([i])\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 71, in __getitems__\n    batch = self._lazy().take(list(idx), columns=[\"pixels\"])\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/lance/dataset.py\", line 2253, in take\n    [self._ds.take(indices, columns, columns_with_transform)]\n     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: argument 'row_indices': 'list' object cannot be interpreted as an integer\n",
+      "loadavg": [
+        60.15,
+        55.96,
+        55.72
+      ]
+    },
+    "CartPole": {
+      "meta": {
+        "env": "CartPole",
+        "size": 600,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 400,
+        "w": 600,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 4145024,
+        "raw_bytes_per_frame": 720000
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 8095.75,
+      "nvjpeg_h2d": {
+        "fps": 5894.390935332112,
+        "read_fps": 88607.40988459803,
+        "decode_fps": 6321.860176995954,
+        "read_frac": 0.06652255091316793,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "error": "TypeError: Caught TypeError in DataLoader worker process 0.\nOriginal Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/worker.py\", line 375, in _worker_loop\n    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/fetch.py\", line 56, in fetch\n    data = self.dataset[possibly_batched_index]\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 68, in __getitem__\n    return self.__getitems__([i])\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 71, in __getitems__\n    batch = self._lazy().take(list(idx), columns=[\"pixels\"])\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/lance/dataset.py\", line 2253, in take\n    [self._ds.take(indices, columns, columns_with_transform)]\n     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: argument 'row_indices': 'list' object cannot be interpreted as an integer\n",
+      "loadavg": [
+        59.81,
+        55.96,
+        55.72
+      ]
+    },
+    "CraftaxClassic": {
+      "meta": {
+        "env": "CraftaxClassic",
+        "size": 16,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 112,
+        "w": 144,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 508,
+        "state_dim": 127,
+        "jpeg_bytes_total": 5525459,
+        "raw_bytes_per_frame": 48384
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 10791.912109375,
+      "nvjpeg_h2d": {
+        "fps": 6491.779644535515,
+        "read_fps": 73757.7981712821,
+        "decode_fps": 7139.835738474719,
+        "read_frac": 0.0880148242692949,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "error": "TypeError: Caught TypeError in DataLoader worker process 0.\nOriginal Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/worker.py\", line 375, in _worker_loop\n    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/fetch.py\", line 56, in fetch\n    data = self.dataset[possibly_batched_index]\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 68, in __getitem__\n    return self.__getitems__([i])\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 71, in __getitems__\n    batch = self._lazy().take(list(idx), columns=[\"pixels\"])\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/lance/dataset.py\", line 2253, in take\n    [self._ds.take(indices, columns, columns_with_transform)]\n     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: argument 'row_indices': 'list' object cannot be interpreted as an integer\n",
+      "loadavg": [
+        59.55,
+        56.08,
+        55.76
+      ]
+    },
+    "DMCAcrobotSwingup": {
+      "meta": {
+        "env": "DMCAcrobotSwingup",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 1562239,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 3051.248046875,
+      "nvjpeg_h2d": {
+        "fps": 13150.05843343378,
+        "read_fps": 121465.40275225871,
+        "decode_fps": 14746.54541217359,
+        "read_frac": 0.10826176125439348,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "error": "TypeError: Caught TypeError in DataLoader worker process 0.\nOriginal Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/worker.py\", line 375, in _worker_loop\n    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/fetch.py\", line 56, in fetch\n    data = self.dataset[possibly_batched_index]\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 68, in __getitem__\n    return self.__getitems__([i])\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 71, in __getitems__\n    batch = self._lazy().take(list(idx), columns=[\"pixels\"])\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/lance/dataset.py\", line 2253, in take\n    [self._ds.take(indices, columns, columns_with_transform)]\n     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: argument 'row_indices': 'list' object cannot be interpreted as an integer\n",
+      "loadavg": [
+        59.25,
+        56.18,
+        55.8
+      ]
+    },
+    "DMCBallInCupCatch": {
+      "meta": {
+        "env": "DMCBallInCupCatch",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 16,
+        "state_dim": 4,
+        "jpeg_bytes_total": 1553024,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 3033.25,
+      "nvjpeg_h2d": {
+        "fps": 12973.097464062954,
+        "read_fps": 117296.65464048182,
+        "decode_fps": 14640.41741187534,
+        "read_frac": 0.11060074563785244,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "error": "TypeError: Caught TypeError in DataLoader worker process 0.\nOriginal Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/worker.py\", line 375, in _worker_loop\n    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/data/_utils/fetch.py\", line 56, in fetch\n    data = self.dataset[possibly_batched_index]\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 68, in __getitem__\n    return self.__getitems__([i])\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/lance/scratch/step6/lance/bench_jpeg_to_gpu.py\", line 71, in __getitems__\n    batch = self._lazy().take(list(idx), columns=[\"pixels\"])\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step5/lib/python3.12/site-packages/lance/dataset.py\", line 2253, in take\n    [self._ds.take(indices, columns, columns_with_transform)]\n     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: argument 'row_indices': 'list' object cannot be interpreted as an integer\n",
+      "loadavg": [
+        59.17,
+        56.3,
+        55.85
+      ]
+    },
+    "DMCCartpoleBalance": {
+      "meta": {
+        "env": "DMCCartpoleBalance",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 1508786,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 2946.84765625,
+      "nvjpeg_h2d": {
+        "fps": 13386.666789261832,
+        "read_fps": 128870.96721660408,
+        "decode_fps": 14938.417521297244,
+        "read_frac": 0.1038765136817958,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 10015.07508153615,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.05112293176352978,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 12792.738006239764,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.0400227066129446,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 743882.3195189409,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 15.74650093957694
+      },
+      "h2d_only_unpinned": {
+        "fps": 581237.9882854956,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 12.30364573602737
+      },
+      "loadavg": [
+        59.45,
+        56.59,
+        55.95
+      ]
+    },
+    "DMCCartpoleSwingup": {
+      "meta": {
+        "env": "DMCCartpoleSwingup",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 1526377,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 2981.205078125,
+      "nvjpeg_h2d": {
+        "fps": 13440.050744009872,
+        "read_fps": 121035.39015100477,
+        "decode_fps": 15127.525379522827,
+        "read_frac": 0.1110423218138261,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 11611.145117524455,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.044095564633607864,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 14465.884762520443,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.035393618047237396,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 1025074.7963632838,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 21.698783289417992
+      },
+      "h2d_only_unpinned": {
+        "fps": 731470.688111382,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 15.483771525941732
+      },
+      "loadavg": [
+        60.04,
+        56.87,
+        56.06
+      ]
+    },
+    "DMCCheetahRun": {
+      "meta": {
+        "env": "DMCCheetahRun",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 36,
+        "state_dim": 9,
+        "jpeg_bytes_total": 2366112,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 4621.3125,
+      "nvjpeg_h2d": {
+        "fps": 11051.86983976114,
+        "read_fps": 114501.54580929816,
+        "decode_fps": 12232.577520189157,
+        "read_frac": 0.09652157760531883,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 12644.995888964977,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.040490325540304184,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 13465.770627505379,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03802233189344406,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 810457.2034296093,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 17.15575808219797
+      },
+      "h2d_only_unpinned": {
+        "fps": 624651.5326531077,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 13.222623643200981
+      },
+      "loadavg": [
+        60.47,
+        57.18,
+        56.18
+      ]
+    },
+    "DMCFingerTurnHard": {
+      "meta": {
+        "env": "DMCFingerTurnHard",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 20,
+        "state_dim": 5,
+        "jpeg_bytes_total": 1913148,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 3736.6171875,
+      "nvjpeg_h2d": {
+        "fps": 11791.305808008728,
+        "read_fps": 124192.68579752209,
+        "decode_fps": 13028.255858541488,
+        "read_frac": 0.09494364126429086,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 12745.614821972016,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.04017067886888981,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 10753.574645782268,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.04761207476258278,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 872888.7571021194,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 18.477309210337662
+      },
+      "h2d_only_unpinned": {
+        "fps": 861691.6311199443,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 18.24028844754698
+      },
+      "loadavg": [
+        59.61,
+        57.15,
+        56.18
+      ]
+    },
+    "DMCHopperHop": {
+      "meta": {
+        "env": "DMCHopperHop",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 28,
+        "state_dim": 7,
+        "jpeg_bytes_total": 2266539,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 4426.833984375,
+      "nvjpeg_h2d": {
+        "fps": 11109.887638603856,
+        "read_fps": 105689.34560540755,
+        "decode_fps": 12444.531904205349,
+        "read_frac": 0.10511833122784917,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 13306.366063396255,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.038477823138237,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 12863.35496447482,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03980299085378647,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 902434.3948837148,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 19.102731270898477
+      },
+      "h2d_only_unpinned": {
+        "fps": 738371.2808346496,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 15.629843272707863
+      },
+      "loadavg": [
+        59.9,
+        57.33,
+        56.26
+      ]
+    },
+    "DMCHumanoidStand": {
+      "meta": {
+        "env": "DMCHumanoidStand",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 112,
+        "state_dim": 28,
+        "jpeg_bytes_total": 1921832,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 3753.578125,
+      "nvjpeg_h2d": {
+        "fps": 11611.87399804158,
+        "read_fps": 113897.57714871023,
+        "decode_fps": 12956.629790520321,
+        "read_frac": 0.10195014054496129,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 12593.594533473362,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.0406555887311697,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 13859.885261986248,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03694114275276661,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 791959.0733823894,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 16.76418966535842
+      },
+      "h2d_only_unpinned": {
+        "fps": 638944.8472220285,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 13.525184525995899
+      },
+      "loadavg": [
+        60.34,
+        57.54,
+        56.35
+      ]
+    },
+    "DMCPendulumSwingup": {
+      "meta": {
+        "env": "DMCPendulumSwingup",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 4,
+        "state_dim": 1,
+        "jpeg_bytes_total": 1257319,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 2455.701171875,
+      "nvjpeg_h2d": {
+        "fps": 14536.579381867023,
+        "read_fps": 143222.86567960517,
+        "decode_fps": 16322.417887245008,
+        "read_frac": 0.10149621928656201,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 14500.573709903074,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.035308947786688805,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 13945.982394280805,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03671308234333992,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 1006768.1461524374,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 21.311268117754796
+      },
+      "h2d_only_unpinned": {
+        "fps": 724705.5253522315,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 15.340566560656036
+      },
+      "loadavg": [
+        60.42,
+        57.7,
+        56.42
+      ]
+    },
+    "DMCReacherHard": {
+      "meta": {
+        "env": "DMCReacherHard",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 16,
+        "state_dim": 4,
+        "jpeg_bytes_total": 1230399,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 2403.123046875,
+      "nvjpeg_h2d": {
+        "fps": 14776.143428592377,
+        "read_fps": 156901.48428747072,
+        "decode_fps": 16312.353743395606,
+        "read_frac": 0.09417465676436763,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 14559.692383053338,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03516557812690735,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 15755.671677686301,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03249623440206051,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 1059553.7372373068,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 22.428633509839308
+      },
+      "h2d_only_unpinned": {
+        "fps": 860828.0990861774,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 18.222009201456203
+      },
+      "loadavg": [
+        59.65,
+        57.66,
+        56.43
+      ]
+    },
+    "DMCWalkerWalk": {
+      "meta": {
+        "env": "DMCWalkerWalk",
+        "size": 84,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 84,
+        "w": 84,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 36,
+        "state_dim": 9,
+        "jpeg_bytes_total": 2211212,
+        "raw_bytes_per_frame": 21168
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 4318.7734375,
+      "nvjpeg_h2d": {
+        "fps": 11154.672716293868,
+        "read_fps": 111569.9988326624,
+        "decode_fps": 12492.445845916542,
+        "read_frac": 0.09997914164204785,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 11707.414082395473,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.04373297095298767,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 12801.030337294444,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.03999678045511246,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 789806.4170650975,
+        "pinned": true,
+        "bytes_per_frame": 21168,
+        "GBps": 16.718622236433983
+      },
+      "h2d_only_unpinned": {
+        "fps": 583414.1426030555,
+        "pinned": false,
+        "bytes_per_frame": 21168,
+        "GBps": 12.349710570621479
+      },
+      "loadavg": [
+        57.16,
+        57.22,
+        56.3
+      ]
+    },
+    "FetchPickAndPlace": {
+      "meta": {
+        "env": "FetchPickAndPlace",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13257717,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25893.978515625,
+      "nvjpeg_h2d": {
+        "fps": 2830.9734390298554,
+        "read_fps": 43194.64056530599,
+        "decode_fps": 3035.6683693470877,
+        "read_frac": 0.06553992351781943,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1000.3346020407892,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5118287410587072,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1099.9928702567659,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.46545756235718727,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37775.783590167004,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.110621617523435
+      },
+      "h2d_only_unpinned": {
+        "fps": 31307.086145939422,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.63945794407333
+      },
+      "loadavg": [
+        53.64,
+        56.44,
+        56.06
+      ]
+    },
+    "FetchPickAndPlaceDense": {
+      "meta": {
+        "env": "FetchPickAndPlaceDense",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13257717,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25893.978515625,
+      "nvjpeg_h2d": {
+        "fps": 2727.758255108984,
+        "read_fps": 41570.90881461817,
+        "decode_fps": 2927.209027680205,
+        "read_frac": 0.06561699835029307,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 946.1478214193658,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5411416571587324,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1047.9644169146663,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.4885662067681551,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37784.75651464858,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.1168237029251
+      },
+      "h2d_only_unpinned": {
+        "fps": 31475.871781565314,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.756122575417947
+      },
+      "loadavg": [
+        55.68,
+        56.66,
+        56.15
+      ]
+    },
+    "FetchPickAndPlaceDict": {
+      "meta": {
+        "env": "FetchPickAndPlaceDict",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13257717,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25893.978515625,
+      "nvjpeg_h2d": {
+        "fps": 2717.6856474712904,
+        "read_fps": 40018.45844253519,
+        "decode_fps": 2915.69267856017,
+        "read_frac": 0.06791080299541702,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 953.8333606285544,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5367813929915428,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1072.006216622618,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.4776091706007719,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37783.364601248315,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.115861612382833
+      },
+      "h2d_only_unpinned": {
+        "fps": 31428.76986254382,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.723565728990287
+      },
+      "loadavg": [
+        56.74,
+        56.85,
+        56.22
+      ]
+    },
+    "FetchPush": {
+      "meta": {
+        "env": "FetchPush",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13255725,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25890.087890625,
+      "nvjpeg_h2d": {
+        "fps": 2708.607014569102,
+        "read_fps": 39141.27575557705,
+        "decode_fps": 2909.9799090865727,
+        "read_frac": 0.06920078516304277,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 966.4048765003881,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5297986511141062,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1031.1172997025983,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.4965487439185381,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37856.66237764457,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.166525035427924
+      },
+      "h2d_only_unpinned": {
+        "fps": 31592.474541705647,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.836718403226943
+      },
+      "loadavg": [
+        57.33,
+        56.97,
+        56.27
+      ]
+    },
+    "FetchPushDense": {
+      "meta": {
+        "env": "FetchPushDense",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13255725,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25890.087890625,
+      "nvjpeg_h2d": {
+        "fps": 2716.9510206741897,
+        "read_fps": 40965.64286712801,
+        "decode_fps": 2912.883466988454,
+        "read_frac": 0.06632267506423896,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 990.8243014241683,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5167414639145136,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1011.4020924872074,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5062279421836138,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37839.975516160026,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.15499107676981
+      },
+      "h2d_only_unpinned": {
+        "fps": 31378.949932339765,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.689130193233247
+      },
+      "loadavg": [
+        58.37,
+        57.26,
+        56.39
+      ]
+    },
+    "FetchPushDict": {
+      "meta": {
+        "env": "FetchPushDict",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13255725,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25890.087890625,
+      "nvjpeg_h2d": {
+        "fps": 2726.930953181727,
+        "read_fps": 41365.96409765741,
+        "decode_fps": 2928.398418968155,
+        "read_frac": 0.06592209350527758,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 981.2514082312563,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5217826906591654,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1037.3661778062715,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.49355763755738735,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37848.13470998343,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.160630711540545
+      },
+      "h2d_only_unpinned": {
+        "fps": 31746.002666924753,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.942837043378386
+      },
+      "loadavg": [
+        58.3,
+        57.32,
+        56.43
+      ]
+    },
+    "FetchReach": {
+      "meta": {
+        "env": "FetchReach",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 72,
+        "state_dim": 18,
+        "jpeg_bytes_total": 13071203,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25529.693359375,
+      "nvjpeg_h2d": {
+        "fps": 2761.96946224021,
+        "read_fps": 42407.53241513415,
+        "decode_fps": 2957.485127614174,
+        "read_frac": 0.06512921891334886,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1052.549875264921,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.48643775656819344,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 977.9514316120077,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.523543382063508,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37836.78782165919,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.152787742330833
+      },
+      "h2d_only_unpinned": {
+        "fps": 31739.50715911004,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.93834734837686
+      },
+      "loadavg": [
+        58.68,
+        57.48,
+        56.5
+      ]
+    },
+    "FetchReachDense": {
+      "meta": {
+        "env": "FetchReachDense",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 72,
+        "state_dim": 18,
+        "jpeg_bytes_total": 13071203,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25529.693359375,
+      "nvjpeg_h2d": {
+        "fps": 2733.068951813941,
+        "read_fps": 41581.247111693876,
+        "decode_fps": 2933.609492706668,
+        "read_frac": 0.06572840262516612,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 960.0515215180922,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5333047118037939,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1100.9265121071237,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.46506283059716225,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37841.24657680587,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.15586963388822
+      },
+      "h2d_only_unpinned": {
+        "fps": 31565.780144412707,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.818267235818062
+      },
+      "loadavg": [
+        58.18,
+        57.47,
+        56.52
+      ]
+    },
+    "FetchReachDict": {
+      "meta": {
+        "env": "FetchReachDict",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 72,
+        "state_dim": 18,
+        "jpeg_bytes_total": 13071203,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 25529.693359375,
+      "nvjpeg_h2d": {
+        "fps": 2732.9147181344074,
+        "read_fps": 40517.01850725606,
+        "decode_fps": 2942.6087678290764,
+        "read_frac": 0.06745103215442613,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1008.2401516629507,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5078155230730772,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1036.71530992457,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.49386750161647797,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37843.736852959824,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.15759091276583
+      },
+      "h2d_only_unpinned": {
+        "fps": 31777.92496523685,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.96490173597171
+      },
+      "loadavg": [
+        58.13,
+        57.5,
+        56.55
+      ]
+    },
+    "FetchSlide": {
+      "meta": {
+        "env": "FetchSlide",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13668731,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 26696.740234375,
+      "nvjpeg_h2d": {
+        "fps": 2777.4288591565487,
+        "read_fps": 40771.07079221784,
+        "decode_fps": 2980.4657536260675,
+        "read_frac": 0.06812253897650118,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1000.8489546856287,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5115657038986683,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1054.908035746012,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.48535036481916904,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37943.31359183793,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.226418354678376
+      },
+      "h2d_only_unpinned": {
+        "fps": 31591.937161356404,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.836346965929547
+      },
+      "loadavg": [
+        59.47,
+        57.89,
+        56.71
+      ]
+    },
+    "FetchSlideDense": {
+      "meta": {
+        "env": "FetchSlideDense",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13668731,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 26696.740234375,
+      "nvjpeg_h2d": {
+        "fps": 2661.2185908755755,
+        "read_fps": 39922.42995134562,
+        "decode_fps": 2866.6235558575154,
+        "read_frac": 0.06665973474357306,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 978.4472149568329,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5232781004160643,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1015.9114233804289,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5039809457957745,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37883.30218778839,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.184938472199335
+      },
+      "h2d_only_unpinned": {
+        "fps": 31704.421714464723,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.914096289038017
+      },
+      "loadavg": [
+        59.63,
+        58.03,
+        56.78
+      ]
+    },
+    "FetchSlideDict": {
+      "meta": {
+        "env": "FetchSlideDict",
+        "size": 480,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 480,
+        "w": 480,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 100,
+        "state_dim": 25,
+        "jpeg_bytes_total": 13668731,
+        "raw_bytes_per_frame": 691200
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 26696.740234375,
+      "nvjpeg_h2d": {
+        "fps": 2665.364462896657,
+        "read_fps": 42020.82880234223,
+        "decode_fps": 2847.101852840628,
+        "read_frac": 0.06342960238680706,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 955.9700782286691,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5355816166847944,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 982.3701489404281,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5211884751915932,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 37847.50935992225,
+        "pinned": true,
+        "bytes_per_frame": 691200,
+        "GBps": 26.160198469578262
+      },
+      "h2d_only_unpinned": {
+        "fps": 31167.345125189637,
+        "pinned": false,
+        "bytes_per_frame": 691200,
+        "GBps": 21.54286895053108
+      },
+      "loadavg": [
+        60.41,
+        58.35,
+        56.92
+      ]
+    },
+    "MountainCar": {
+      "meta": {
+        "env": "MountainCar",
+        "size": 600,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 400,
+        "w": 600,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 4,
+        "state_dim": 1,
+        "jpeg_bytes_total": 6691029,
+        "raw_bytes_per_frame": 720000
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 13068.416015625,
+      "nvjpeg_h2d": {
+        "fps": 4734.091733163698,
+        "read_fps": 64973.1262749844,
+        "decode_fps": 5106.136615829434,
+        "read_frac": 0.07286230484166178,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1017.0029474995869,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.5034400355070829,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1043.599387968035,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.49060971662402153,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 36346.84779720928,
+        "pinned": true,
+        "bytes_per_frame": 720000,
+        "GBps": 26.16973041399068
+      },
+      "h2d_only_unpinned": {
+        "fps": 30294.503761052485,
+        "pinned": false,
+        "bytes_per_frame": 720000,
+        "GBps": 21.81204270795779
+      },
+      "loadavg": [
+        59.39,
+        58.26,
+        56.92
+      ]
+    },
+    "MountainCarContinuous": {
+      "meta": {
+        "env": "MountainCarContinuous",
+        "size": 600,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 400,
+        "w": 600,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 4,
+        "state_dim": 1,
+        "jpeg_bytes_total": 6685371,
+        "raw_bytes_per_frame": 720000
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 13057.365234375,
+      "nvjpeg_h2d": {
+        "fps": 4778.623586407258,
+        "read_fps": 67450.06648475687,
+        "decode_fps": 5172.959483495032,
+        "read_frac": 0.07084683285652779,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1041.8003000519896,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.4914569519460201,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1093.4562986070496,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.4682400207966566,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 36339.41907040816,
+        "pinned": true,
+        "bytes_per_frame": 720000,
+        "GBps": 26.164381730693876
+      },
+      "h2d_only_unpinned": {
+        "fps": 30435.65424798072,
+        "pinned": false,
+        "bytes_per_frame": 720000,
+        "GBps": 21.913671058546118
+      },
+      "loadavg": [
+        59.5,
+        58.35,
+        56.98
+      ]
+    },
+    "Pendulum": {
+      "meta": {
+        "env": "Pendulum",
+        "size": 500,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 500,
+        "w": 500,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 4397348,
+        "raw_bytes_per_frame": 750000
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 8588.5703125,
+      "nvjpeg_h2d": {
+        "fps": 5573.44007968977,
+        "read_fps": 78538.65416499757,
+        "decode_fps": 6077.891240119482,
+        "read_frac": 0.07096429317442636,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1089.646456916689,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.4698771759867668,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1135.2397946934916,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.45100603625178337,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 34942.216379492034,
+        "pinned": true,
+        "bytes_per_frame": 750000,
+        "GBps": 26.206662284619025
+      },
+      "h2d_only_unpinned": {
+        "fps": 29264.945479570597,
+        "pinned": false,
+        "bytes_per_frame": 750000,
+        "GBps": 21.94870910967795
+      },
+      "loadavg": [
+        58.25,
+        58.18,
+        56.95
+      ]
+    },
+    "Piecewise": {
+      "meta": {
+        "env": "Piecewise",
+        "size": 224,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 224,
+        "w": 224,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 1641925,
+        "raw_bytes_per_frame": 150528
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 3206.884765625,
+      "nvjpeg_h2d": {
+        "fps": 12303.246677498333,
+        "read_fps": 127264.65348452608,
+        "decode_fps": 13623.150638461191,
+        "read_frac": 0.09667449948303412,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 3552.282767996821,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.14413267001509666,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 3922.0298151872057,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.13054464757442474,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 167468.58230868116,
+        "pinned": true,
+        "bytes_per_frame": 150528,
+        "GBps": 25.208710757761157
+      },
+      "h2d_only_unpinned": {
+        "fps": 142537.8162343346,
+        "pinned": false,
+        "bytes_per_frame": 150528,
+        "GBps": 21.45593240212192
+      },
+      "loadavg": [
+        55.71,
+        57.6,
+        56.79
+      ]
+    },
+    "PiecewiseZones": {
+      "meta": {
+        "env": "PiecewiseZones",
+        "size": 224,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 224,
+        "w": 224,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 2510318,
+        "raw_bytes_per_frame": 150528
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 4902.96484375,
+      "nvjpeg_h2d": {
+        "fps": 9163.127137757037,
+        "read_fps": 106170.96674098073,
+        "decode_fps": 10028.654081621782,
+        "read_frac": 0.08630539420547802,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 3545.918405587733,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.14439136534929276,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 3915.718572223093,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.13075505569577217,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 169229.7837230836,
+        "pinned": true,
+        "bytes_per_frame": 150528,
+        "GBps": 25.473820884268324
+      },
+      "h2d_only_unpinned": {
+        "fps": 141368.86659445937,
+        "pinned": false,
+        "bytes_per_frame": 150528,
+        "GBps": 21.27997275073078
+      },
+      "loadavg": [
+        56.65,
+        57.72,
+        56.84
+      ]
+    },
+    "PointmazeLargeNavigate": {
+      "meta": {
+        "env": "PointmazeLargeNavigate",
+        "size": 224,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 224,
+        "w": 224,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 6295415,
+        "raw_bytes_per_frame": 150528
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 12295.732421875,
+      "nvjpeg_h2d": {
+        "fps": 4974.2454336140745,
+        "read_fps": 65883.26793467996,
+        "decode_fps": 5380.476179369311,
+        "read_frac": 0.07550089103876564,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 3106.9718144036347,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.1647906806319952,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 3325.352051936762,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.15396866016089916,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 165541.83139513174,
+        "pinned": true,
+        "bytes_per_frame": 150528,
+        "GBps": 24.91868079624639
+      },
+      "h2d_only_unpinned": {
+        "fps": 142275.46565135207,
+        "pinned": false,
+        "bytes_per_frame": 150528,
+        "GBps": 21.416441293566724
+      },
+      "loadavg": [
+        57.73,
+        57.91,
+        56.92
+      ]
+    },
+    "PushT": {
+      "meta": {
+        "env": "PushT",
+        "size": 96,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 96,
+        "w": 96,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 20,
+        "state_dim": 5,
+        "jpeg_bytes_total": 1367422,
+        "raw_bytes_per_frame": 27648
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 2670.74609375,
+      "nvjpeg_h2d": {
+        "fps": 13817.71788678192,
+        "read_fps": 135618.81337765846,
+        "decode_fps": 15385.268053955866,
+        "read_frac": 0.10188643848625667,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 12156.834036280961,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.042116228491067886,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 12237.70765902552,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.0418379008769989,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 715663.8763616671,
+        "pinned": true,
+        "bytes_per_frame": 27648,
+        "GBps": 19.786674853647373
+      },
+      "h2d_only_unpinned": {
+        "fps": 570537.0556012188,
+        "pinned": false,
+        "bytes_per_frame": 27648,
+        "GBps": 15.774208513262497
+      },
+      "loadavg": [
+        58.34,
+        58.04,
+        56.99
+      ]
+    },
+    "SimplePointMaze": {
+      "meta": {
+        "env": "SimplePointMaze",
+        "size": 500,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 500,
+        "w": 500,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 6219968,
+        "raw_bytes_per_frame": 750000
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 12148.375,
+      "nvjpeg_h2d": {
+        "fps": 4518.839055639616,
+        "read_fps": 62440.860854497696,
+        "decode_fps": 4880.792326245098,
+        "read_frac": 0.07236990319799728,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 1048.2435134595598,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.48843612521886826,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 1043.7609050748767,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.490533797070384,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 34864.37403385959,
+        "pinned": true,
+        "bytes_per_frame": 750000,
+        "GBps": 26.148280525394696
+      },
+      "h2d_only_unpinned": {
+        "fps": 29146.67980482773,
+        "pinned": false,
+        "bytes_per_frame": 750000,
+        "GBps": 21.8600098536208
+      },
+      "loadavg": [
+        59.13,
+        58.24,
+        57.07
+      ]
+    },
+    "TwoRoom": {
+      "meta": {
+        "env": "TwoRoom",
+        "size": 224,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 224,
+        "w": 224,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 8,
+        "state_dim": 2,
+        "jpeg_bytes_total": 2247734,
+        "raw_bytes_per_frame": 150528
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 4390.10546875,
+      "nvjpeg_h2d": {
+        "fps": 10012.092948537931,
+        "read_fps": 109147.92139447379,
+        "decode_fps": 11091.418181606892,
+        "read_frac": 0.09172957964405952,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 3664.103875363214,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.13973402976989746,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 4078.8155637201075,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.12552663683891296,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 151710.51315500442,
+        "pinned": true,
+        "bytes_per_frame": 150528,
+        "GBps": 22.836680124196505
+      },
+      "h2d_only_unpinned": {
+        "fps": 117279.83919296111,
+        "pinned": false,
+        "bytes_per_frame": 150528,
+        "GBps": 17.653899634038048
+      },
+      "loadavg": [
+        61.46,
+        58.8,
+        57.27
+      ]
+    },
+    "TwoRoomTarget": {
+      "meta": {
+        "env": "TwoRoomTarget",
+        "size": 224,
+        "requested_size": null,
+        "size_note": "native/certified size (env.size); Step-6 re-dump",
+        "h": 224,
+        "w": 224,
+        "n": 512,
+        "jpeg_quality": 95,
+        "state_bytes": 16,
+        "state_dim": 4,
+        "jpeg_bytes_total": 2473292,
+        "raw_bytes_per_frame": 150528
+      },
+      "n": 512,
+      "jpeg_bytes_per_frame": 4830.6484375,
+      "nvjpeg_h2d": {
+        "fps": 9162.020912418639,
+        "read_fps": 104444.91064435797,
+        "decode_fps": 10047.091969897092,
+        "read_frac": 0.08772108526777284,
+        "output_location": "DEVICE memory, uint8 CHW (nvJPEG, bytes moved H2D then decoded)"
+      },
+      "loader8_h2d": {
+        "fps": 3579.185085226348,
+        "workers": 8,
+        "pin_memory": true,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.14304932206869125,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "loader8_h2d_unpinned": {
+        "fps": 3693.681386943847,
+        "workers": 8,
+        "pin_memory": false,
+        "frames_per_epoch": 512,
+        "epoch_s": 0.138615095987916,
+        "output_location": "DEVICE memory, uint8 CHW"
+      },
+      "h2d_only_pinned": {
+        "fps": 167621.15363844583,
+        "pinned": true,
+        "bytes_per_frame": 150528,
+        "GBps": 25.231677014887975
+      },
+      "h2d_only_unpinned": {
+        "fps": 142398.11005269515,
+        "pinned": false,
+        "bytes_per_frame": 150528,
+        "GBps": 21.434902710012096
+      },
+      "loadavg": [
+        61.17,
+        58.87,
+        57.32
+      ]
+    }
+  },
+  "loadavg_end": [
+    61.17,
+    58.87,
+    57.32
+  ]
+}

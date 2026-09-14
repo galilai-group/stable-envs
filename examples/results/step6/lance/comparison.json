@@ -1,0 +1,2587 @@
+{
+  "what": "Step 6: our renderer vs the JPEG-in-Lance 8-worker baseline, on Oscar",
+  "lance_cpu_run": {
+    "what": "Step 6 re-run of examples/bench_lance.py on Oscar",
+    "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+    "lscpu": "CPU(s):                                  48\nModel name:                              Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz\nThread(s) per core:                      1\nCore(s) per socket:                      24\nSocket(s):                               2\nCPU(s) scaling MHz:                      65%\nCPU max MHz:                             3900.0000\nCPU min MHz:                             1200.0000\nL3 cache:                                71.5 MiB (2 instances)\nNUMA node(s):                            2\nNUMA node0 CPU(s):                       0-23\nNUMA node1 CPU(s):                       24-47",
+    "node": "node2317.oscar.ccv.brown.edu",
+    "hostname": "node2317.oscar.ccv.brown.edu",
+    "chunk": 256,
+    "reps": 8,
+    "workers": 8,
+    "loadavg": [
+      34.72,
+      38.71,
+      38.23
+    ],
+    "cpu_count": 8,
+    "cpu_count_total": 48,
+    "gpu": null,
+    "slurm": {
+      "SLURM_JOB_PARTITION": "batch",
+      "SLURM_JOB_QOS": "normal",
+      "SLURM_CPUS_PER_TASK": "8",
+      "SLURM_MEM_PER_NODE": "65536",
+      "SLURM_JOB_ID": "6366909",
+      "SLURM_JOB_NODELIST": "node2317"
+    },
+    "python": "3.12.9",
+    "executable": "/oscar/scratch/sboughan/venvs/se6-verify/bin/python",
+    "torch": "2.14.0+cu126",
+    "git_commit": "",
+    "frames_dir": "/oscar/scratch/sboughan/se6/lance_frames",
+    "arms": {
+      "local": {
+        "path": "/tmp/se_lance_6366909",
+        "stat_f_type": "tmpfs",
+        "df_T": "rootfs         tmpfs 197422184 13157716 184264468   7% /tmp",
+        "mount_line": "rootfs[/slurm_tmpfs/6366909/.6366909/_tmp] /tmp   tmpfs  rw,relatime,mode=755,inode64",
+        "writable": true,
+        "avail_gb": 188.686815232,
+        "size_gb": 202.160316416,
+        "write_64MB_MBps": 2540.422553859808
+      },
+      "shared": {
+        "path": "/oscar/scratch/sboughan/se6/lance_tmp_shared_6366909",
+        "stat_f_type": "nfs",
+        "df_T": "hpcnfs.ccv.brown.edu:/oscar nfs  536870912000 84153354240 452717557760  16% /oscar",
+        "mount_line": "hpcnfs.ccv.brown.edu:/oscar /oscar nfs    rw,relatime,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=30,acregmax=30,acdirmax=30,hard,rdirplus=force,forcerdirplus,proto=rdma,nconnect=8,port=20049,timeo=600,retrans=2,sec=sys,mountaddr=172.25.91.185,mountvers=3,mountproto=tcp,local_lock=none,remoteports=172.25.91.101-172.25.91.250,spread_reads,spread_writes,addr=172.25.91.157",
+        "writable": true,
+        "avail_gb": 463582.77914624,
+        "size_gb": 549755.813888,
+        "write_64MB_MBps": 620.4551157437495
+      },
+      "jobtmp": {
+        "path": "/sss/jobtmp/sboughan/6366909/se_lance",
+        "stat_f_type": "gpfs",
+        "df_T": "jobtmp         gpfs 540406562816 48811884544 491594678272  10% /sss/jobtmp",
+        "mount_line": "jobtmp /sss/jobtmp gpfs   rw,relatime",
+        "writable": true,
+        "avail_gb": 503392.950550528,
+        "size_gb": 553376.320323584,
+        "write_64MB_MBps": 1138.0261471116007
+      }
+    },
+    "lancedb": "0.38.0",
+    "pylance": "11.0.0",
+    "pyarrow": "25.0.1",
+    "torchvision": "0.29.0+cu126",
+    "pillow": "12.3.0",
+    "frames_provenance": [
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-step5/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2104.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366739",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.12.0",
+        "mujoco_warp": "3.12.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      },
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-step5/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2105.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366652",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.12.0",
+        "mujoco_warp": "3.12.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      },
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-step5/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2109.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366696",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.12.0",
+        "mujoco_warp": "3.12.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      },
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2116.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366839",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.11.0",
+        "mujoco_warp": "3.11.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      }
+    ],
+    "loadavg_end": [
+      40.54,
+      40.74,
+      39.89
+    ]
+  },
+  "lance_gpu_run": {
+    "what": "Step 6 re-run of examples/bench_lance.py on Oscar",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "lscpu": "CPU(s):                                  64\nModel name:                              AMD EPYC 7532 32-Core Processor\nThread(s) per core:                      1\nCore(s) per socket:                      32\nSocket(s):                               2\nCPU(s) scaling MHz:                      76%\nCPU max MHz:                             2400.0000\nCPU min MHz:                             1500.0000\nL3 cache:                                512 MiB (32 instances)\nNUMA node(s):                            2\nNUMA node0 CPU(s):                       0-31\nNUMA node1 CPU(s):                       32-63",
+    "node": "gpu2109.oscar.ccv.brown.edu",
+    "hostname": "gpu2109.oscar.ccv.brown.edu",
+    "chunk": 256,
+    "reps": 8,
+    "workers": 8,
+    "loadavg": [
+      23.43,
+      23.91,
+      24.12
+    ],
+    "cpu_count": 8,
+    "cpu_count_total": 64,
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "slurm": {
+      "SLURM_JOB_PARTITION": "gpu",
+      "SLURM_JOB_QOS": "norm-gpu",
+      "SLURM_CPUS_PER_TASK": "8",
+      "SLURM_MEM_PER_NODE": "49152",
+      "SLURM_JOB_ID": "6366910",
+      "SLURM_JOB_NODELIST": "gpu2109"
+    },
+    "python": "3.12.9",
+    "executable": "/oscar/scratch/sboughan/venvs/se6-verify/bin/python",
+    "torch": "2.14.0+cu126",
+    "git_commit": "",
+    "frames_dir": "/oscar/scratch/sboughan/se6/lance_frames",
+    "arms": {
+      "local": {
+        "path": "/tmp/se_lance_6366910",
+        "stat_f_type": "tmpfs",
+        "df_T": "rootfs         tmpfs 527818096 43935428 483882668   9% /tmp",
+        "mount_line": "rootfs[/slurm_tmpfs/6366910/.6366910/_tmp] /tmp   tmpfs  rw,relatime,mode=755,inode64",
+        "writable": true,
+        "avail_gb": 495.495852032,
+        "size_gb": 540.485730304,
+        "write_64MB_MBps": 2368.4155164381077
+      },
+      "shared": {
+        "path": "/oscar/scratch/sboughan/se6/lance_tmp_shared_6366910",
+        "stat_f_type": "nfs",
+        "df_T": "hpcnfs.ccv.brown.edu:/oscar nfs  536870912000 84153354240 452717557760  16% /oscar",
+        "mount_line": "hpcnfs.ccv.brown.edu:/oscar /oscar nfs    rw,relatime,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=30,acregmax=30,acdirmax=30,hard,rdirplus=force,forcerdirplus,proto=rdma,nconnect=8,port=20049,timeo=600,retrans=2,sec=sys,mountaddr=172.25.91.151,mountvers=3,mountproto=tcp,local_lock=none,remoteports=172.25.91.101-172.25.91.250,spread_reads,spread_writes,addr=172.25.91.160",
+        "writable": true,
+        "avail_gb": 463582.77914624,
+        "size_gb": 549755.813888,
+        "write_64MB_MBps": 735.4120904894227
+      },
+      "jobtmp": {
+        "path": "/sss/jobtmp/sboughan/6366910/se_lance",
+        "stat_f_type": "gpfs",
+        "df_T": "jobtmp         gpfs 540406562816 48811884544 491594678272  10% /sss/jobtmp",
+        "mount_line": "jobtmp /sss/jobtmp gpfs   rw,relatime",
+        "writable": true,
+        "avail_gb": 503392.950550528,
+        "size_gb": 553376.320323584,
+        "write_64MB_MBps": 2095.093861834337
+      }
+    },
+    "lancedb": "0.38.0",
+    "pylance": "11.0.0",
+    "pyarrow": "25.0.1",
+    "torchvision": "0.29.0+cu126",
+    "pillow": "12.3.0",
+    "frames_provenance": [
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-step5/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2104.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366739",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.12.0",
+        "mujoco_warp": "3.12.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      },
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-step5/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2105.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366652",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.12.0",
+        "mujoco_warp": "3.12.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      },
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-step5/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2109.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366696",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.12.0",
+        "mujoco_warp": "3.12.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      },
+      {
+        "renderer": "stable_envs GPU renderer (env.render on device=cuda)",
+        "git_commit": "unknown",
+        "repo_root": "/oscar/scratch/sboughan/se6/lance",
+        "python": "3.12.9",
+        "executable": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/bin/python",
+        "torch": "2.14.0+cu126",
+        "node": "gpu2116.oscar.ccv.brown.edu",
+        "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+        "slurm_job_id": "6366839",
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "jpeg_quality": 95,
+        "frames": 512,
+        "seed": 0,
+        "size_policy": "env.size (each env's own certified size); no size= argument",
+        "state_source": "env.sample_states(frames, rng=np.random.default_rng(seed))",
+        "render_chunk": 64,
+        "mujoco": "3.11.0",
+        "mujoco_warp": "3.11.0",
+        "torchvision": "0.29.0+cu126",
+        "numpy": "2.5.3"
+      }
+    ],
+    "loadavg_end": [
+      30.64,
+      29.81,
+      28.77
+    ]
+  },
+  "rows": [
+    {
+      "env": "Acrobot",
+      "frame": "500x500",
+      "jpeg_bytes_per_frame": 10630.92578125,
+      "randall_frame": "500x500",
+      "randall_jpeg_bytes_per_frame": 10630.92578125,
+      "lance": {
+        "local_1": 1439.330967732706,
+        "local_n8": 7639.394952186118,
+        "local_n1": 988.5396904126386,
+        "local_n4": 3908.5186449431094,
+        "shared_1": 1418.0413863234728,
+        "shared_n8": 7594.350551407132,
+        "jobtmp_1": 1420.0175089161432,
+        "jobtmp_n8": 7677.801032438593,
+        "local_read_frac": 0.021390376235643733,
+        "shared_read_frac": 0.025316977584375344,
+        "jobtmp_read_frac": 0.022060900410781212,
+        "gpu_nvjpeg": 5295.379082792827,
+        "gpu_node_local_1": 1553.977474549609,
+        "gpu_node_local_n8": 7348.293067472919
+      },
+      "randall_lance": {
+        "local_1": 1132.6609531134295,
+        "local_n8": 7003.755366155409,
+        "shared_1": 1123.896725108951,
+        "local_gpu": 26467.24164709187
+      },
+      "ours": {
+        "gpu": {
+          "fps": 158648.40030514423,
+          "batch": 4096,
+          "host": "gpu2264.oscar.ccv.brown.edu",
+          "shape": "500x500",
+          "size": 500,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 382.1632760317625,
+          "batch": 64,
+          "host": "node1829.oscar.ccv.brown.edu",
+          "shape": null,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep/cpu_1thread_paired_after_node1829.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 2463.746356385112
+      },
+      "ratios": {
+        "gpu_vs_local_n": 20.767142070556886,
+        "gpu_cores_of_8": 166.1371365644551,
+        "cpu1_vs_local_1": 0.26551452348292204,
+        "cpu1_vs_percore": 0.4002026636126739,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 22.651904872604298,
+        "nvjpeg_vs_our_gpu": 0.03337808053915261
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "CartPole",
+      "frame": "400x600",
+      "jpeg_bytes_per_frame": 8095.75,
+      "randall_frame": "400x600",
+      "randall_jpeg_bytes_per_frame": 8095.75,
+      "lance": {
+        "local_1": 1522.311340249166,
+        "local_n8": 7623.929201135408,
+        "local_n1": 1015.4398417335115,
+        "local_n4": 4160.308061655083,
+        "shared_1": 1514.2879674515514,
+        "shared_n8": 7687.8789921765,
+        "jobtmp_1": 1522.7216582547399,
+        "jobtmp_n8": 8190.868793311193,
+        "local_read_frac": 0.018798273581235234,
+        "shared_read_frac": 0.023846911724778975,
+        "jobtmp_read_frac": 0.02008620770839392,
+        "gpu_nvjpeg": 6164.35742081214,
+        "gpu_node_local_1": 1555.5598328846993,
+        "gpu_node_local_n8": 6102.461669268055
+      },
+      "randall_lance": {
+        "local_1": 1239.3343364302057,
+        "local_n8": 7286.619168453336,
+        "shared_1": 1234.8538136732018,
+        "local_gpu": 28404.91143176187
+      },
+      "ours": {
+        "gpu": {
+          "fps": 176593.27513997318,
+          "batch": 4096,
+          "host": "gpu2264.oscar.ccv.brown.edu",
+          "shape": "400x600",
+          "size": 600,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 546.7088175797945,
+          "batch": 64,
+          "host": "node1829.oscar.ccv.brown.edu",
+          "shape": null,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep/cpu_1thread_paired_after_node1829.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 2761.7434892932515
+      },
+      "ratios": {
+        "gpu_vs_local_n": 23.163026633782707,
+        "gpu_cores_of_8": 185.30421307026165,
+        "cpu1_vs_local_1": 0.35913075277381257,
+        "cpu1_vs_percore": 0.5736766994094068,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 24.23528265406205,
+        "nvjpeg_vs_our_gpu": 0.034907090408318686
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "CraftaxClassic",
+      "frame": "112x144",
+      "jpeg_bytes_per_frame": 10791.912109375,
+      "randall_frame": "112x144",
+      "randall_jpeg_bytes_per_frame": 10791.912109375,
+      "lance": {
+        "local_1": 5088.852073452718,
+        "local_n8": 38476.28077946557,
+        "local_n1": 4891.042548995629,
+        "local_n4": 19215.05617816592,
+        "shared_1": 4785.272608095793,
+        "shared_n8": 38206.799517873165,
+        "jobtmp_1": 4675.184888642398,
+        "jobtmp_n8": 38148.0167391866,
+        "local_read_frac": 0.07179645917760948,
+        "shared_read_frac": 0.0903730542534413,
+        "jobtmp_read_frac": 0.0763393703909415,
+        "gpu_nvjpeg": 6807.193226949657,
+        "gpu_node_local_1": 5146.383734427802,
+        "gpu_node_local_n8": 35607.15146532647
+      },
+      "randall_lance": {
+        "local_1": 5507.610891891398,
+        "local_n8": 40562.03612569036,
+        "shared_1": 5416.556461932292,
+        "local_gpu": 26490.30488647597
+      },
+      "ours": {
+        "gpu": {
+          "fps": 1229786.6130569633,
+          "batch": 4096,
+          "host": "gpu2104.oscar.ccv.brown.edu",
+          "shape": "112x144",
+          "size": 16,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/tilemap/sweep/gpu_after_final.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 154085.7629590432,
+          "batch": 256,
+          "host": "node2333.oscar.ccv.brown.edu",
+          "shape": "112x144",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/tilemap/sweep/cpu_after_final.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 10614.649178179485
+      },
+      "ratios": {
+        "gpu_vs_local_n": 31.962200819401676,
+        "gpu_cores_of_8": 255.6976065552134,
+        "cpu1_vs_local_1": 30.279080770075925,
+        "cpu1_vs_percore": 32.03755869070949,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 30.318660760672856,
+        "nvjpeg_vs_our_gpu": 0.0055352637235402645
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": true,
+        "cpu1_beats_percore_lance": true,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCAcrobotSwingup",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 3051.248046875,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 23262.685546875,
+      "lance": {
+        "local_1": 11532.152957251164,
+        "local_n8": 89049.89647206588,
+        "local_n1": 11937.521786436291,
+        "local_n4": 46323.32274695452,
+        "shared_1": 9443.943301826714,
+        "shared_n8": 92140.08956567259,
+        "jobtmp_1": 11183.976965258775,
+        "jobtmp_n8": 93271.29008362346,
+        "local_read_frac": 0.11463705158596839,
+        "shared_read_frac": 0.1253690270932745,
+        "jobtmp_read_frac": 0.1354965726838722,
+        "gpu_nvjpeg": 13912.788248868312,
+        "gpu_node_local_1": 12272.019953970646,
+        "gpu_node_local_n8": 85031.1570469904
+      },
+      "randall_lance": {
+        "local_1": 2387.7345719210057,
+        "local_n8": 14473.642594671435,
+        "shared_1": 2365.5905414901044,
+        "local_gpu": 29135.40050658758
+      },
+      "ours": {
+        "gpu": {
+          "fps": 27807.717089124522,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 322.2929676639765,
+          "batch": 64,
+          "host": "node2335.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/cpu_1thread_after_branch_bounds_on.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 21092.544616946438
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.31227118942072596,
+        "gpu_cores_of_8": 2.4981695153658077,
+        "cpu1_vs_local_1": 0.027947337228242865,
+        "cpu1_vs_percore": 0.028953921828765005,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.921265977602771,
+        "nvjpeg_vs_our_gpu": 0.5003211232435022
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCBallInCupCatch",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 3033.25,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 21748.361328125,
+      "lance": {
+        "local_1": 11332.214296574486,
+        "local_n8": 92184.03770207621,
+        "local_n1": 11617.169957325128,
+        "local_n4": 43808.94258666698,
+        "shared_1": 9275.25663866837,
+        "shared_n8": 92101.75320689447,
+        "jobtmp_1": 11365.62285327931,
+        "jobtmp_n8": 93707.38372292685,
+        "local_read_frac": 0.12414525397248916,
+        "shared_read_frac": 0.13837014737539416,
+        "jobtmp_read_frac": 0.11736848102884148,
+        "gpu_nvjpeg": 13726.635475752788,
+        "gpu_node_local_1": 12268.755406519433,
+        "gpu_node_local_n8": 95337.44478263927
+      },
+      "randall_lance": {
+        "local_1": 2487.189205867728,
+        "local_n8": 15024.411206871637,
+        "shared_1": 2466.83960471143,
+        "local_gpu": 28705.5145014444
+      },
+      "ours": {
+        "gpu": {
+          "fps": 10112.437739448462,
+          "batch": 4096,
+          "host": "gpu2105.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/gpu_3090_after_branch.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 66.16063453784487,
+          "batch": 64,
+          "host": "node2335.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/cpu_1thread_after_branch_bounds_on.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 21850.550405638085
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.10969835984110625,
+        "gpu_cores_of_8": 0.87758687872885,
+        "cpu1_vs_local_1": 0.005838279510637562,
+        "cpu1_vs_percore": 0.005741613076369274,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.6730671571890544,
+        "nvjpeg_vs_our_gpu": 1.35740123493719
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCCartpoleBalance",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 2946.84765625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 22211.96875,
+      "lance": {
+        "local_1": 11662.080949916988,
+        "local_n8": 92828.68253333676,
+        "local_n1": 11899.485248279187,
+        "local_n4": 47348.49520369553,
+        "shared_1": 11090.88652655224,
+        "shared_n8": 92180.96947372916,
+        "jobtmp_1": 11691.600840399757,
+        "jobtmp_n8": 94379.40960711284,
+        "local_read_frac": 0.09553272034534413,
+        "shared_read_frac": 0.1570482781638762,
+        "jobtmp_read_frac": 0.1072457342430575,
+        "gpu_nvjpeg": 13805.119672435283,
+        "gpu_node_local_1": 12406.285610864827,
+        "gpu_node_local_n8": 78472.58618016557
+      },
+      "randall_lance": {
+        "local_1": 2401.618677312596,
+        "local_n8": 13488.77256511831,
+        "shared_1": 2325.9427699996045,
+        "local_gpu": 29690.14637198079
+      },
+      "ours": {
+        "gpu": {
+          "fps": 43642.173674644466,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 369.5648028104004,
+          "batch": 64,
+          "host": "node2349.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/cpu/oscar_x86_1thread.json",
+          "post_step6": false
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 21832.451251493934
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.4701367345052175,
+        "gpu_cores_of_8": 3.76109387604174,
+        "cpu1_vs_local_1": 0.03168943899442157,
+        "cpu1_vs_percore": 0.03184919080825535,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 3.2354444011831167,
+        "nvjpeg_vs_our_gpu": 0.31632520816569404
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCCartpoleSwingup",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 2981.205078125,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 22396.951171875,
+      "lance": {
+        "local_1": 11987.549170520522,
+        "local_n8": 95566.51485348253,
+        "local_n1": 12158.758327953641,
+        "local_n4": 47444.20522415802,
+        "shared_1": 9487.550565011961,
+        "shared_n8": 93251.44264910341,
+        "jobtmp_1": 11806.23889157952,
+        "jobtmp_n8": 95365.76734975632,
+        "local_read_frac": 0.0994843325970145,
+        "shared_read_frac": 0.13735253076677859,
+        "jobtmp_read_frac": 0.10513920627178575,
+        "gpu_nvjpeg": 14429.08346192295,
+        "gpu_node_local_1": 12626.102688367977,
+        "gpu_node_local_n8": 68981.37097792121
+      },
+      "randall_lance": {
+        "local_1": 2451.6981500981387,
+        "local_n8": 14541.640527357977,
+        "shared_1": 2347.424613305969,
+        "local_gpu": 29733.597565434993
+      },
+      "ours": {
+        "gpu": {
+          "fps": 42389.13134026462,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 646.6653769897769,
+          "batch": 64,
+          "host": "node2335.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/cpu_1thread_after_branch_bounds_on.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 21443.353079831308
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.4435563168255468,
+        "gpu_cores_of_8": 3.5484505346043744,
+        "cpu1_vs_local_1": 0.05394475282571019,
+        "cpu1_vs_percore": 0.054133218354249675,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 2.9150171372009677,
+        "nvjpeg_vs_our_gpu": 0.34039582802719626
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCCheetahRun",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 4621.3125,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 27231.095703125,
+      "lance": {
+        "local_1": 9601.601313383871,
+        "local_n8": 77236.32781047915,
+        "local_n1": 9973.988510159319,
+        "local_n4": 37702.04400956432,
+        "shared_1": 9316.18349930284,
+        "shared_n8": 72108.7750697122,
+        "jobtmp_1": 9578.580605233747,
+        "jobtmp_n8": 78140.29817979803,
+        "local_read_frac": 0.09689908670918397,
+        "shared_read_frac": 0.14201905954905913,
+        "jobtmp_read_frac": 0.12215431612288666,
+        "gpu_nvjpeg": 11834.630910837812,
+        "gpu_node_local_1": 10422.979741468092,
+        "gpu_node_local_n8": 62753.86220901504
+      },
+      "randall_lance": {
+        "local_1": 2192.8365793965095,
+        "local_n8": 13288.830426722863,
+        "shared_1": 2134.672859118556,
+        "local_gpu": 28342.330377805585
+      },
+      "ours": {
+        "gpu": {
+          "fps": 76589.25216356255,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 115.56453495989345,
+          "batch": 64,
+          "host": "node2333.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/cpu-3d/sweep/after/cpu_1thread_paired_after_node2333.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 8054.383331309889
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.9916221334537759,
+        "gpu_cores_of_8": 7.932977067630207,
+        "cpu1_vs_local_1": 0.012035964750880215,
+        "cpu1_vs_percore": 0.011969966800437559,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 5.763430618359549,
+        "nvjpeg_vs_our_gpu": 0.15452077904565512
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCFingerTurnHard",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 3736.6171875,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 23298.130859375,
+      "lance": {
+        "local_1": 10438.985584155467,
+        "local_n8": 84288.72017851387,
+        "local_n1": 10532.649342393162,
+        "local_n4": 41279.16249636089,
+        "shared_1": 8435.19204827343,
+        "shared_n8": 78923.79005445863,
+        "jobtmp_1": 10357.320751725354,
+        "jobtmp_n8": 84427.56567924829,
+        "local_read_frac": 0.09735689009435718,
+        "shared_read_frac": 0.13015531697942703,
+        "jobtmp_read_frac": 0.11123624125265454,
+        "gpu_nvjpeg": 12399.74444928124,
+        "gpu_node_local_1": 11106.151134340684,
+        "gpu_node_local_n8": 84688.1450021323
+      },
+      "randall_lance": {
+        "local_1": 2303.3584655386358,
+        "local_n8": 14470.975075416472,
+        "shared_1": 1925.1653570439573,
+        "local_gpu": 28517.500606291993
+      },
+      "ours": {
+        "gpu": {
+          "fps": 22042.026026596253,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 57.388217686965575,
+          "batch": 16,
+          "host": "node2349.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/cpu/oscar_x86_1thread.json",
+          "post_step6": false
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 20223.256832542185
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.26150623689520686,
+        "gpu_cores_of_8": 2.092049895161655,
+        "cpu1_vs_local_1": 0.005497489887721536,
+        "cpu1_vs_percore": 0.005446823021198935,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.523188721680656,
+        "nvjpeg_vs_our_gpu": 0.5625501228571055
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCHopperHop",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 4426.833984375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 26388.306640625,
+      "lance": {
+        "local_1": 9840.488467695974,
+        "local_n8": 77942.13031885614,
+        "local_n1": 10136.158539016202,
+        "local_n4": 37785.87648211127,
+        "shared_1": 7940.074252276058,
+        "shared_n8": 78318.73066133236,
+        "jobtmp_1": 8145.393625825362,
+        "jobtmp_n8": 77890.54155303986,
+        "local_read_frac": 0.09869933298393033,
+        "shared_read_frac": 0.12561103623264178,
+        "jobtmp_read_frac": 0.10342547702239502,
+        "gpu_nvjpeg": 11742.790054163861,
+        "gpu_node_local_1": 10455.92910789568,
+        "gpu_node_local_n8": 83401.74861359334
+      },
+      "randall_lance": {
+        "local_1": 1868.9335564448681,
+        "local_n8": 13688.638255393598,
+        "shared_1": 1938.531174887119,
+        "local_gpu": 27682.909529784254
+      },
+      "ours": {
+        "gpu": {
+          "fps": 76734.79004662244,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 187.7715583118522,
+          "batch": 256,
+          "host": "node2333.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/cpu-3d/sweep/after/cpu_1thread_paired_after_node2333.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 7360.46514222739
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.984509786077253,
+        "gpu_cores_of_8": 7.876078288618024,
+        "cpu1_vs_local_1": 0.019081528211558032,
+        "cpu1_vs_percore": 0.01927292031087075,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 5.60572853303267,
+        "nvjpeg_vs_our_gpu": 0.15303084881093948
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCHumanoidStand",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 3753.578125,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 16584.19140625,
+      "lance": {
+        "local_1": 10564.82693522522,
+        "local_n8": 85513.7158058902,
+        "local_n1": 10903.768863727239,
+        "local_n4": 41942.01282515588,
+        "shared_1": 8542.027697412525,
+        "shared_n8": 86016.51149672447,
+        "jobtmp_1": 10806.27447013942,
+        "jobtmp_n8": 84878.82394750985,
+        "local_read_frac": 0.104790905693289,
+        "shared_read_frac": 0.13592890970105534,
+        "jobtmp_read_frac": 0.10922172845097354,
+        "gpu_nvjpeg": 12124.573662550714,
+        "gpu_node_local_1": 11127.452849002619,
+        "gpu_node_local_n8": 85493.55211074311
+      },
+      "randall_lance": {
+        "local_1": 2482.12157185952,
+        "local_n8": 16436.66344772736,
+        "shared_1": 2398.4194440702704,
+        "local_gpu": 30380.552468054615
+      },
+      "ours": {
+        "gpu": {
+          "fps": 64493.40149301672,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 45.817770187307914,
+          "batch": 64,
+          "host": "node2333.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/cpu-3d/sweep/after/cpu_1thread_paired_after_node2333.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 6884.706393998219
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.7541878035029136,
+        "gpu_cores_of_8": 6.033502428023309,
+        "cpu1_vs_local_1": 0.004336821650579284,
+        "cpu1_vs_percore": 0.004286355212659533,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 3.923752633745993,
+        "nvjpeg_vs_our_gpu": 0.18799711880390665
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCPendulumSwingup",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 2455.701171875,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11465.046875,
+      "lance": {
+        "local_1": 12860.499893233831,
+        "local_n8": 100506.26492947302,
+        "local_n1": 13068.091414391583,
+        "local_n4": 49878.37325984951,
+        "shared_1": 10248.06359574362,
+        "shared_n8": 101458.98486869897,
+        "jobtmp_1": 12340.144659488786,
+        "jobtmp_n8": 102982.074848257,
+        "local_read_frac": 0.11399931841825875,
+        "shared_read_frac": 0.15246914298275205,
+        "jobtmp_read_frac": 0.1508906628281198,
+        "gpu_nvjpeg": 15508.25738306545,
+        "gpu_node_local_1": 13595.538116168744,
+        "gpu_node_local_n8": 101488.83354505077
+      },
+      "randall_lance": {
+        "local_1": 2817.5408438035324,
+        "local_n8": 18940.707715834134,
+        "shared_1": 2771.676303131616,
+        "local_gpu": 31920.760816131628
+      },
+      "ours": {
+        "gpu": {
+          "fps": 36126.64041883985,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 239.0281246139068,
+          "batch": 16,
+          "host": "node2335.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/cpu_1thread_after_branch_bounds_on.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 22020.715322327113
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.3594466518499174,
+        "gpu_cores_of_8": 2.8755732147993394,
+        "cpu1_vs_local_1": 0.01858622344374532,
+        "cpu1_vs_percore": 0.019025928366287373,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.907354305913213,
+        "nvjpeg_vs_our_gpu": 0.42927482885948
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCReacherHard",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 2403.123046875,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 10260.61328125,
+      "lance": {
+        "local_1": 13042.000940579872,
+        "local_n8": 103579.28374773676,
+        "local_n1": 13362.583016687824,
+        "local_n4": 51533.67554281681,
+        "shared_1": 10223.979570928803,
+        "shared_n8": 100425.55761635084,
+        "jobtmp_1": 12720.8019527098,
+        "jobtmp_n8": 104287.328400881,
+        "local_read_frac": 0.09887836419571501,
+        "shared_read_frac": 0.15178648740247944,
+        "jobtmp_read_frac": 0.10832496935470316,
+        "gpu_nvjpeg": 15357.694132833445,
+        "gpu_node_local_1": 13633.314172614506,
+        "gpu_node_local_n8": 73034.43624606602
+      },
+      "randall_lance": {
+        "local_1": 2873.075348030398,
+        "local_n8": 19070.004464933296,
+        "shared_1": 2854.095907687153,
+        "local_gpu": 32482.28464697551
+      },
+      "ours": {
+        "gpu": {
+          "fps": 25206.64306145484,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 139.01361518453234,
+          "batch": 16,
+          "host": "node2335.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/cpu_1thread_after_branch_bounds_on.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 22995.69895558727
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.24335602786021018,
+        "gpu_cores_of_8": 1.9468482228816815,
+        "cpu1_vs_local_1": 0.010658917739531426,
+        "cpu1_vs_percore": 0.010736789068601362,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.32179534135956,
+        "nvjpeg_vs_our_gpu": 0.6092716945842709
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "DMCWalkerWalk",
+      "frame": "84x84",
+      "jpeg_bytes_per_frame": 4318.7734375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 23976.5390625,
+      "lance": {
+        "local_1": 9970.59822535929,
+        "local_n8": 79561.11440287871,
+        "local_n1": 10254.851181401391,
+        "local_n4": 39779.91457832163,
+        "shared_1": 9609.154822253753,
+        "shared_n8": 78153.99082530185,
+        "jobtmp_1": 9890.963493402063,
+        "jobtmp_n8": 79427.47287595837,
+        "local_read_frac": 0.09747538235910329,
+        "shared_read_frac": 0.14642214966204797,
+        "jobtmp_read_frac": 0.10026839086241884,
+        "gpu_nvjpeg": 11608.484450475467,
+        "gpu_node_local_1": 10622.450955382506,
+        "gpu_node_local_n8": 66495.00730819725
+      },
+      "randall_lance": {
+        "local_1": 2041.7573073080582,
+        "local_n8": 14383.979713753377,
+        "shared_1": 2051.098269849096,
+        "local_gpu": 28635.276375180605
+      },
+      "ours": {
+        "gpu": {
+          "fps": 73503.10227449084,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "size": 84,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 63.08453122761685,
+          "batch": 16,
+          "host": "node2333.oscar.ccv.brown.edu",
+          "shape": "84x84",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/cpu-3d/sweep/after/cpu_1thread_paired_after_node2333.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 7353.375645166282
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.9238571232460179,
+        "gpu_cores_of_8": 7.390856985968143,
+        "cpu1_vs_local_1": 0.006327055789608211,
+        "cpu1_vs_percore": 0.00634325265060232,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 5.110067153682799,
+        "nvjpeg_vs_our_gpu": 0.15793189799152432
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25893.978515625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11796.0859375,
+      "lance": {
+        "local_1": 1100.7515671773438,
+        "local_n8": 5806.551137453381,
+        "local_n1": 848.0068219410509,
+        "local_n4": 3215.0404421888575,
+        "shared_1": 1097.31965714312,
+        "shared_n8": 6149.765026932456,
+        "jobtmp_1": 1108.8799423068222,
+        "jobtmp_n8": 5232.303796728037,
+        "local_read_frac": 0.030109100335855125,
+        "shared_read_frac": 0.035415638853127436,
+        "jobtmp_read_frac": 0.029973340206117693,
+        "gpu_nvjpeg": 2821.1522317159042,
+        "gpu_node_local_1": 1179.362781352653,
+        "gpu_node_local_n8": 4756.301447814962
+      },
+      "randall_lance": {
+        "local_1": 2912.655062806934,
+        "local_n8": 19423.715909138624,
+        "shared_1": 2896.7129239104183,
+        "local_gpu": 31738.08158231614
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5171.308896674654,
+          "batch": 1024,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1185.8340713962532
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.8905990448131437,
+        "gpu_cores_of_8": 7.124792358505149,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2662368478238304,
+        "nvjpeg_vs_our_gpu": 0.5455392992536205
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25893.978515625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11796.0859375,
+      "lance": {
+        "local_1": 1106.4312131774127,
+        "local_n8": 5551.963662961367,
+        "local_n1": 835.8649074264508,
+        "local_n4": 3036.4068239670323,
+        "shared_1": 1098.5717425245396,
+        "shared_n8": 5700.650984520529,
+        "jobtmp_1": 1106.0194283963733,
+        "jobtmp_n8": 5754.97190305874,
+        "local_read_frac": 0.03028031612809499,
+        "shared_read_frac": 0.03391790946472164,
+        "jobtmp_read_frac": 0.030180348688799315,
+        "gpu_nvjpeg": 2833.138604528439,
+        "gpu_node_local_1": 1113.6270195197194,
+        "gpu_node_local_n8": 5366.391719200947
+      },
+      "randall_lance": {
+        "local_1": 2904.715573380537,
+        "local_n8": 19359.793034221606,
+        "shared_1": 2928.358907803937,
+        "local_gpu": 31754.881471530196
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5161.877163260805,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1042.5167480338266
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.9297390034623365,
+        "gpu_cores_of_8": 7.437912027698692,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2666287368948801,
+        "nvjpeg_vs_our_gpu": 0.5488581992405878
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25893.978515625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11796.0859375,
+      "lance": {
+        "local_1": 1104.3798046351392,
+        "local_n8": 6482.315576879689,
+        "local_n1": 771.8537190270733,
+        "local_n4": 3324.0009839241175,
+        "shared_1": 1103.254909903026,
+        "shared_n8": 6037.853330951532,
+        "jobtmp_1": 1104.253876969755,
+        "jobtmp_n8": 6133.118650843743,
+        "local_read_frac": 0.03103512481643885,
+        "shared_read_frac": 0.034282157440394444,
+        "jobtmp_read_frac": 0.02988086822525768,
+        "gpu_nvjpeg": 2830.733270169988,
+        "gpu_node_local_1": 1155.886010168258,
+        "gpu_node_local_n8": 4373.57920234803
+      },
+      "randall_lance": {
+        "local_1": 2906.5058252237213,
+        "local_n8": 19076.017757843256,
+        "shared_1": 2882.075614190686,
+        "local_gpu": 31697.283442557837
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5163.156922567964,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1041.2925129602024
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.7964988531232984,
+        "gpu_cores_of_8": 6.371990824986387,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2706621994228901,
+        "nvjpeg_vs_our_gpu": 0.5482562921527641
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchPush",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25890.087890625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11796.740234375,
+      "lance": {
+        "local_1": 1108.8510633546364,
+        "local_n8": 6420.911282275592,
+        "local_n1": 827.8411287834663,
+        "local_n4": 3212.5437435132667,
+        "shared_1": 1105.9626637551773,
+        "shared_n8": 6409.910161838362,
+        "jobtmp_1": 1111.590364314546,
+        "jobtmp_n8": 6486.244511892513,
+        "local_read_frac": 0.028890179115986608,
+        "shared_read_frac": 0.033624675386542686,
+        "jobtmp_read_frac": 0.030249674284720446,
+        "gpu_nvjpeg": 2829.5903009042263,
+        "gpu_node_local_1": 1111.5053574577985,
+        "gpu_node_local_n8": 5292.061904460794
+      },
+      "randall_lance": {
+        "local_1": 2929.760575772256,
+        "local_n8": 19623.077500126208,
+        "shared_1": 2896.8764613684807,
+        "local_gpu": 31589.413896758786
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5223.983019512306,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 991.4443019299913
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.8135890358635992,
+        "gpu_cores_of_8": 6.508712286908794,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2662162965762484,
+        "nvjpeg_vs_our_gpu": 0.5416538090448058
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchPushDense",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25890.087890625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11796.740234375,
+      "lance": {
+        "local_1": 1105.243775674657,
+        "local_n8": 6389.996644072601,
+        "local_n1": 854.3925831743627,
+        "local_n4": 3257.725666643619,
+        "shared_1": 1099.247966555734,
+        "shared_n8": 6525.865787279297,
+        "jobtmp_1": 1101.5405950534905,
+        "jobtmp_n8": 6503.600950316587,
+        "local_read_frac": 0.03060149313588048,
+        "shared_read_frac": 0.03386838846381662,
+        "jobtmp_read_frac": 0.030664401865714928,
+        "gpu_nvjpeg": 2838.643482252271,
+        "gpu_node_local_1": 1148.850539884873,
+        "gpu_node_local_n8": 5541.20940035268
+      },
+      "randall_lance": {
+        "local_1": 2900.1824412440988,
+        "local_n8": 18659.953606943378,
+        "shared_1": 2903.6290859399414,
+        "local_gpu": 31494.338204998105
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5220.823061178591,
+          "batch": 1024,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 985.8519593191822
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.8170306421086242,
+        "gpu_cores_of_8": 6.5362451368689936,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2797875692057412,
+        "nvjpeg_vs_our_gpu": 0.5437157032499493
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchPushDict",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25890.087890625,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11796.740234375,
+      "lance": {
+        "local_1": 1109.190119055163,
+        "local_n8": 6450.306611164071,
+        "local_n1": 824.4441444354298,
+        "local_n4": 3278.611371843025,
+        "shared_1": 1099.9604116239425,
+        "shared_n8": 6452.624988120796,
+        "jobtmp_1": 1105.2847155330614,
+        "jobtmp_n8": 6501.042843314276,
+        "local_read_frac": 0.030297358509472138,
+        "shared_read_frac": 0.03392829074262299,
+        "jobtmp_read_frac": 0.031808830867504564,
+        "gpu_nvjpeg": 2826.0838809632232,
+        "gpu_node_local_1": 1111.8942784359965,
+        "gpu_node_local_n8": 5186.546520219938
+      },
+      "randall_lance": {
+        "local_1": 2930.8769140463046,
+        "local_n8": 19031.437589064262,
+        "shared_1": 2890.084597009788,
+        "local_gpu": 31569.262222400874
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5192.436707143341,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1261.5026197064042
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.8049906803122145,
+        "gpu_cores_of_8": 6.439925442497716,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.27283470745935606,
+        "nvjpeg_vs_our_gpu": 0.5442692978954028
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchReach",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25529.693359375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11652.240234375,
+      "lance": {
+        "local_1": 1109.212659718679,
+        "local_n8": 6079.662449740071,
+        "local_n1": 855.4390258403542,
+        "local_n4": 3041.90595233682,
+        "shared_1": 1108.0205876694429,
+        "shared_n8": 5328.223977287148,
+        "jobtmp_1": 1110.1054977537235,
+        "jobtmp_n8": 6311.330326085596,
+        "local_read_frac": 0.02960095012083521,
+        "shared_read_frac": 0.03487703554380394,
+        "jobtmp_read_frac": 0.031355226690938834,
+        "gpu_nvjpeg": 2872.005570195243,
+        "gpu_node_local_1": 1136.227191481194,
+        "gpu_node_local_n8": 5443.251408132619
+      },
+      "randall_lance": {
+        "local_1": 2936.4087151411245,
+        "local_n8": 19378.17017669596,
+        "shared_1": 2891.5070830918094,
+        "local_gpu": 31772.10128012329
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5212.486373017016,
+          "batch": 1024,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1252.759303665172
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.857364436941704,
+        "gpu_cores_of_8": 6.858915495533632,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.26898754245049994,
+        "nvjpeg_vs_our_gpu": 0.5509857224879247
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchReachDense",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25529.693359375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11652.240234375,
+      "lance": {
+        "local_1": 1111.0836259610676,
+        "local_n8": 5721.315550359635,
+        "local_n1": 855.0244690142292,
+        "local_n4": 3157.1467104832454,
+        "shared_1": 1109.6022440616814,
+        "shared_n8": 6123.28583412908,
+        "jobtmp_1": 1108.8533177911963,
+        "jobtmp_n8": 6715.50793312443,
+        "local_read_frac": 0.030697960982720852,
+        "shared_read_frac": 0.03252226636821497,
+        "jobtmp_read_frac": 0.03131285553525654,
+        "gpu_nvjpeg": 2850.848452728802,
+        "gpu_node_local_1": 1085.4103498913717,
+        "gpu_node_local_n8": 5142.731331144164
+      },
+      "randall_lance": {
+        "local_1": 2931.117718019615,
+        "local_n8": 19556.304551794525,
+        "shared_1": 2903.5112948088454,
+        "local_gpu": 31593.576591703186
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5185.349087041701,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1264.1116279930702
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.9063211146806535,
+        "gpu_cores_of_8": 7.250568917445228,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2651497410110584,
+        "nvjpeg_vs_our_gpu": 0.5497891086741168
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchReachDict",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 25529.693359375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 11652.240234375,
+      "lance": {
+        "local_1": 1110.6660379093958,
+        "local_n8": 5746.464488337593,
+        "local_n1": 779.9632314224881,
+        "local_n4": 3381.5571117442905,
+        "shared_1": 1104.9816937935414,
+        "shared_n8": 6671.329091302808,
+        "jobtmp_1": 1111.534141107131,
+        "jobtmp_n8": 6196.896359838981,
+        "local_read_frac": 0.030458146925911755,
+        "shared_read_frac": 0.03460463367117752,
+        "jobtmp_read_frac": 0.030259774073789575,
+        "gpu_nvjpeg": 2863.1835225033483,
+        "gpu_node_local_1": 1160.3747305405136,
+        "gpu_node_local_n8": 5309.1380345447005
+      },
+      "randall_lance": {
+        "local_1": 2931.431791475883,
+        "local_n8": 19113.48613846099,
+        "shared_1": 2899.841636235443,
+        "local_gpu": 31989.19506249159
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5184.418166946524,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1257.6323798728215
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.9021926747251745,
+        "gpu_cores_of_8": 7.217541397801396,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.27124398602064603,
+        "nvjpeg_vs_our_gpu": 0.5522670877047872
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchSlide",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 26696.740234375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 12721.525390625,
+      "lance": {
+        "local_1": 1092.9038610860268,
+        "local_n8": 6346.286580679693,
+        "local_n1": 844.033897357057,
+        "local_n4": 3301.559022250288,
+        "shared_1": 1092.1812913959648,
+        "shared_n8": 6391.002905639179,
+        "jobtmp_1": 1099.7727050179897,
+        "jobtmp_n8": 6410.437014960936,
+        "local_read_frac": 0.03211064100937629,
+        "shared_read_frac": 0.03523412892904165,
+        "jobtmp_read_frac": 0.031678544232972554,
+        "gpu_nvjpeg": 2762.460097825278,
+        "gpu_node_local_1": 1115.5070167500205,
+        "gpu_node_local_n8": 5339.4994054491435
+      },
+      "randall_lance": {
+        "local_1": 2851.292397630337,
+        "local_n8": 19042.5041597327,
+        "shared_1": 2836.8731143727005,
+        "local_gpu": 31352.818843132856
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5295.346591944714,
+          "batch": 1024,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1237.5638278035813
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.8344007987388395,
+        "gpu_cores_of_8": 6.675206389910716,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2780803694475362,
+        "nvjpeg_vs_our_gpu": 0.5216769195103366
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchSlideDense",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 26696.740234375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 12721.525390625,
+      "lance": {
+        "local_1": 1098.1035427803354,
+        "local_n8": 6311.240491470186,
+        "local_n1": 849.2120411831555,
+        "local_n4": 3202.826788162871,
+        "shared_1": 1094.8610085671296,
+        "shared_n8": 6330.112168061704,
+        "jobtmp_1": 1094.8653171732828,
+        "jobtmp_n8": 6205.649702449157,
+        "local_read_frac": 0.03121101848552823,
+        "shared_read_frac": 0.03494884449222726,
+        "jobtmp_read_frac": 0.03220086827368266,
+        "gpu_nvjpeg": 2778.346510843043,
+        "gpu_node_local_1": 1143.3263636146592,
+        "gpu_node_local_n8": 5659.567310340822
+      },
+      "randall_lance": {
+        "local_1": 2842.0755716006206,
+        "local_n8": 19102.523098043013,
+        "shared_1": 2825.5368548721913,
+        "local_gpu": 31469.003567536947
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5266.934471010444,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 975.5694062255751
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.834532367785517,
+        "gpu_cores_of_8": 6.676258942284136,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2757193091183867,
+        "nvjpeg_vs_our_gpu": 0.5275073244475028
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "FetchSlideDict",
+      "frame": "480x480",
+      "jpeg_bytes_per_frame": 26696.740234375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 12721.525390625,
+      "lance": {
+        "local_1": 1097.099500929277,
+        "local_n8": 6224.007646612089,
+        "local_n1": 851.4527673254247,
+        "local_n4": 3276.6520135195883,
+        "shared_1": 1092.884307391383,
+        "shared_n8": 6436.626711405462,
+        "jobtmp_1": 1103.5096697938955,
+        "jobtmp_n8": 6398.934095954832,
+        "local_read_frac": 0.032218666750535606,
+        "shared_read_frac": 0.03360485799043509,
+        "jobtmp_read_frac": 0.031506404459510515,
+        "gpu_nvjpeg": 2789.0406562997064,
+        "gpu_node_local_1": 1141.155154658837,
+        "gpu_node_local_n8": 5972.54135916402
+      },
+      "randall_lance": {
+        "local_1": 2845.245687630024,
+        "local_n8": 19035.671688533654,
+        "shared_1": 2809.7632671989604,
+        "local_gpu": 26716.81423513182
+      },
+      "ours": {
+        "gpu": {
+          "fps": 5263.770168693481,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "480x480",
+          "size": 480,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_fetch311.json",
+          "post_step6": false
+        },
+        "cpu1": null,
+        "cpu8": null,
+        "decode_q90_fps_per_core": 1244.070092300127
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.845720389106319,
+        "gpu_cores_of_8": 6.765763112850552,
+        "cpu1_vs_local_1": null,
+        "cpu1_vs_percore": null,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.2765213781168631,
+        "nvjpeg_vs_our_gpu": 0.5298560854513854
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "MountainCar",
+      "frame": "400x600",
+      "jpeg_bytes_per_frame": 13068.416015625,
+      "randall_frame": "400x600",
+      "randall_jpeg_bytes_per_frame": 12882.294921875,
+      "lance": {
+        "local_1": 1416.1095961773651,
+        "local_n8": 7598.968526961974,
+        "local_n1": 1004.5706171130174,
+        "local_n4": 3831.356708791021,
+        "shared_1": 1398.4346963569583,
+        "shared_n8": 7550.977748056748,
+        "jobtmp_1": 1407.9422631098616,
+        "jobtmp_n8": 7557.048248280479,
+        "local_read_frac": 0.02311041691721474,
+        "shared_read_frac": 0.027647419124550016,
+        "jobtmp_read_frac": 0.0239466126847549,
+        "gpu_nvjpeg": 4947.912366563032,
+        "gpu_node_local_1": 1426.6556641723323,
+        "gpu_node_local_n8": 6581.283385342493
+      },
+      "randall_lance": {
+        "local_1": 1386.1441549764536,
+        "local_n8": 5960.895079364612,
+        "shared_1": 1380.733979742236,
+        "local_gpu": 25721.89754563056
+      },
+      "ours": {
+        "gpu": {
+          "fps": 148169.60460068833,
+          "batch": 4096,
+          "host": "gpu2264.oscar.ccv.brown.edu",
+          "shape": "400x600",
+          "size": 600,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 465.7144991832348,
+          "batch": 256,
+          "host": "node1829.oscar.ccv.brown.edu",
+          "shape": null,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep/cpu_1thread_paired_after_node1829.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 2641.0043748883413
+      },
+      "ratios": {
+        "gpu_vs_local_n": 19.498646964382903,
+        "gpu_cores_of_8": 155.98917571506323,
+        "cpu1_vs_local_1": 0.3288689663853566,
+        "cpu1_vs_percore": 0.4902923311560812,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 24.85693887040906,
+        "nvjpeg_vs_our_gpu": 0.033393572048042344
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "MountainCarContinuous",
+      "frame": "400x600",
+      "jpeg_bytes_per_frame": 13057.365234375,
+      "randall_frame": "400x600",
+      "randall_jpeg_bytes_per_frame": 12876.462890625,
+      "lance": {
+        "local_1": 1410.4633188897944,
+        "local_n8": 7483.935545918064,
+        "local_n1": 1007.5521108513989,
+        "local_n4": 3842.935990557585,
+        "shared_1": 1400.8973422479628,
+        "shared_n8": 7450.929344782012,
+        "jobtmp_1": 1409.8071613661316,
+        "jobtmp_n8": 7047.739223830239,
+        "local_read_frac": 0.02341795384055338,
+        "shared_read_frac": 0.02868856561228701,
+        "jobtmp_read_frac": 0.024092355873815884,
+        "gpu_nvjpeg": 4941.544807270196,
+        "gpu_node_local_1": 1399.9634082796508,
+        "gpu_node_local_n8": 5921.271532389708
+      },
+      "randall_lance": {
+        "local_1": 1387.7119825972484,
+        "local_n8": 5998.094002844296,
+        "shared_1": 1376.9502456494588,
+        "local_gpu": 25692.697181619205
+      },
+      "ours": {
+        "gpu": {
+          "fps": 147355.48982195772,
+          "batch": 4096,
+          "host": "gpu2264.oscar.ccv.brown.edu",
+          "shape": "400x600",
+          "size": 600,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 473.598310867612,
+          "batch": 64,
+          "host": "node1829.oscar.ccv.brown.edu",
+          "shape": null,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep/cpu_1thread_paired_after_node1829.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 2641.172459289263
+      },
+      "ratios": {
+        "gpu_vs_local_n": 19.689572273551885,
+        "gpu_cores_of_8": 157.51657818841508,
+        "cpu1_vs_local_1": 0.33577499288701196,
+        "cpu1_vs_percore": 0.5062558948690304,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 24.567052425667512,
+        "nvjpeg_vs_our_gpu": 0.03353485379635884
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "Pendulum",
+      "frame": "500x500",
+      "jpeg_bytes_per_frame": 8588.5703125,
+      "randall_frame": "500x500",
+      "randall_jpeg_bytes_per_frame": 8588.5703125,
+      "lance": {
+        "local_1": 1455.1439717533906,
+        "local_n8": 7742.252253349622,
+        "local_n1": 1008.1688724181093,
+        "local_n4": 4002.726659057137,
+        "shared_1": 1466.401319754166,
+        "shared_n8": 7802.150302578399,
+        "jobtmp_1": 1455.0505531436277,
+        "jobtmp_n8": 7764.757371516186,
+        "local_read_frac": 0.019499988226626762,
+        "shared_read_frac": 0.021473575116840875,
+        "jobtmp_read_frac": 0.019486180302293713,
+        "gpu_nvjpeg": 5918.129286445753,
+        "gpu_node_local_1": 1589.2828957583909,
+        "gpu_node_local_n8": 6700.1088104201135
+      },
+      "randall_lance": {
+        "local_1": 1552.277212437666,
+        "local_n8": 5862.995324887905,
+        "shared_1": 1552.0274451222379,
+        "local_gpu": 26454.28016766567
+      },
+      "ours": {
+        "gpu": {
+          "fps": 176382.21803322673,
+          "batch": 4096,
+          "host": "gpu2264.oscar.ccv.brown.edu",
+          "shape": "500x500",
+          "size": 500,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 503.56611896936874,
+          "batch": 64,
+          "host": "node1829.oscar.ccv.brown.edu",
+          "shape": null,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/gfxdraw/sweep/cpu_1thread_paired_after_node1829.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 2473.1400370795504
+      },
+      "ratios": {
+        "gpu_vs_local_n": 22.781771022368382,
+        "gpu_cores_of_8": 182.25416817894705,
+        "cpu1_vs_local_1": 0.3460593101056465,
+        "cpu1_vs_percore": 0.520330366401074,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 30.083977260650297,
+        "nvjpeg_vs_our_gpu": 0.03355286804098869
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "Piecewise",
+      "frame": "224x224",
+      "jpeg_bytes_per_frame": 3206.884765625,
+      "randall_frame": "224x224",
+      "randall_jpeg_bytes_per_frame": 3206.884765625,
+      "lance": {
+        "local_1": 4871.711914028092,
+        "local_n8": 28868.48726285335,
+        "local_n1": 3686.1693564723755,
+        "local_n4": 14521.242987239952,
+        "shared_1": 4517.74076372358,
+        "shared_n8": 28871.047700755214,
+        "jobtmp_1": 4573.8540442242875,
+        "jobtmp_n8": 27986.841201809704,
+        "local_read_frac": 0.04377151638930237,
+        "shared_read_frac": 0.05611166162547736,
+        "jobtmp_read_frac": 0.040896436959205196,
+        "gpu_nvjpeg": 12306.459084204078,
+        "gpu_node_local_1": 4998.749338308067,
+        "gpu_node_local_n8": 27874.15081457193
+      },
+      "randall_lance": {
+        "local_1": 6367.085469426899,
+        "local_n8": 30639.83691575167,
+        "shared_1": 5719.022658939061,
+        "local_gpu": 34330.37088135918
+      },
+      "ours": {
+        "gpu": {
+          "fps": 54670.64765092979,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "size": 224,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/gpu_after.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 1243.1644742278754,
+          "batch": 16,
+          "host": "node2334.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 9955.852481733584
+      },
+      "ratios": {
+        "gpu_vs_local_n": 1.893782904283921,
+        "gpu_cores_of_8": 15.150263234271367,
+        "cpu1_vs_local_1": 0.25518021101538946,
+        "cpu1_vs_percore": 0.34450422369793454,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.784299564036651,
+        "nvjpeg_vs_our_gpu": 0.22510176142013893
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "PiecewiseZones",
+      "frame": "224x224",
+      "jpeg_bytes_per_frame": 4902.96484375,
+      "randall_frame": "224x224",
+      "randall_jpeg_bytes_per_frame": 4902.96484375,
+      "lance": {
+        "local_1": 4048.9791590291097,
+        "local_n8": 26464.909216928165,
+        "local_n1": 3425.7417670574946,
+        "local_n4": 13331.159240989413,
+        "shared_1": 3593.408426450051,
+        "shared_n8": 24183.249550389042,
+        "jobtmp_1": 4131.323506255468,
+        "jobtmp_n8": 26036.36520168492,
+        "local_read_frac": 0.04602272559885223,
+        "shared_read_frac": 0.05268556249846069,
+        "jobtmp_read_frac": 0.04253588242904434,
+        "gpu_nvjpeg": 9761.97985823429,
+        "gpu_node_local_1": 4604.475074353425,
+        "gpu_node_local_n8": 24662.44897885896
+      },
+      "randall_lance": {
+        "local_1": 5697.254722129613,
+        "local_n8": 28653.87052138241,
+        "shared_1": 5217.660943852402,
+        "local_gpu": 33310.46698557125
+      },
+      "ours": {
+        "gpu": {
+          "fps": 46921.758348415955,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "size": 224,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/gpu_after.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 1204.971336052652,
+          "batch": 16,
+          "host": "node2334.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 9386.731499971225
+      },
+      "ratios": {
+        "gpu_vs_local_n": 1.772980136217609,
+        "gpu_cores_of_8": 14.183841089740872,
+        "cpu1_vs_local_1": 0.2975987992839133,
+        "cpu1_vs_percore": 0.36424726075595903,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.6375364826682481,
+        "nvjpeg_vs_our_gpu": 0.20804804001050076
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "PointmazeLargeNavigate",
+      "frame": "224x224",
+      "jpeg_bytes_per_frame": 12295.732421875,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 14936.66796875,
+      "lance": {
+        "local_1": 3048.32247771241,
+        "local_n8": 20163.09178984502,
+        "local_n1": 2637.642364493774,
+        "local_n4": 10327.461341581464,
+        "shared_1": 3038.432069391384,
+        "shared_n8": 20500.892721482534,
+        "jobtmp_1": 3040.287421546759,
+        "jobtmp_n8": 20429.979210017107,
+        "local_read_frac": 0.05396161843557143,
+        "shared_read_frac": 0.059300767979280494,
+        "jobtmp_read_frac": 0.05602334101993925,
+        "gpu_nvjpeg": 5224.699860565901,
+        "gpu_node_local_1": 3551.1338218436026,
+        "gpu_node_local_n8": 21092.089566702252
+      },
+      "randall_lance": {
+        "local_1": 3316.014884397434,
+        "local_n8": 18152.52728761234,
+        "shared_1": 3109.461648622355,
+        "local_gpu": 29915.41788080169
+      },
+      "ours": {
+        "gpu": {
+          "fps": 95961.76125943789,
+          "batch": 4096,
+          "host": "gpu2107.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "size": 224,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step3/gpu/3090_full.json",
+          "post_step6": false
+        },
+        "cpu1": {
+          "fps": 1460.2579596777039,
+          "batch": 64,
+          "host": "node2335.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raycast3d/sweep/cpu_1thread_after_branch_bounds_on.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 7458.941314739535
+      },
+      "ratios": {
+        "gpu_vs_local_n": 4.759278103756303,
+        "gpu_cores_of_8": 38.074224830050426,
+        "cpu1_vs_local_1": 0.47903657515052117,
+        "cpu1_vs_percore": 0.5793785893146213,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 5.286413276730022,
+        "nvjpeg_vs_our_gpu": 0.0544456436813476
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "PushT",
+      "frame": "96x96",
+      "jpeg_bytes_per_frame": 2670.74609375,
+      "randall_frame": "256x256",
+      "randall_jpeg_bytes_per_frame": 7488.919921875,
+      "lance": {
+        "local_1": 9957.537666498774,
+        "local_n8": 79219.94275048912,
+        "local_n1": 10256.011477507456,
+        "local_n4": 39278.45325537503,
+        "shared_1": 8302.661467395434,
+        "shared_n8": 78241.4390904221,
+        "jobtmp_1": 9903.80706222339,
+        "jobtmp_n8": 78035.63964424074,
+        "local_read_frac": 0.10893371231770699,
+        "shared_read_frac": 0.12481984283541431,
+        "jobtmp_read_frac": 0.09429830661192244,
+        "gpu_nvjpeg": 14531.464388389753,
+        "gpu_node_local_1": 11205.804222901645,
+        "gpu_node_local_n8": 71122.32906546733
+      },
+      "randall_lance": {
+        "local_1": 4584.314201961809,
+        "local_n8": 22537.819965603616,
+        "shared_1": 4113.555328196887,
+        "local_gpu": 32875.928537846055
+      },
+      "ours": {
+        "gpu": {
+          "fps": 816785.4337950221,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "96x96",
+          "size": 96,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/gpu_after.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 1981.11688148149,
+          "batch": 1024,
+          "host": "node2334.oscar.ccv.brown.edu",
+          "shape": "96x96",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/cpu_1thread_after_pusht.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 20697.264910686685
+      },
+      "ratios": {
+        "gpu_vs_local_n": 10.310351225165194,
+        "gpu_cores_of_8": 82.48280980132155,
+        "cpu1_vs_local_1": 0.19895650389019132,
+        "cpu1_vs_percore": 0.2000624401076592,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 36.24065837075501,
+        "nvjpeg_vs_our_gpu": 0.017791042527377544
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "SimplePointMaze",
+      "frame": "500x500",
+      "jpeg_bytes_per_frame": 12148.375,
+      "randall_frame": "500x500",
+      "randall_jpeg_bytes_per_frame": 12148.375,
+      "lance": {
+        "local_1": 1406.5393964512323,
+        "local_n8": 7639.737814447406,
+        "local_n1": 985.2753758793425,
+        "local_n4": 3881.60864318029,
+        "shared_1": 1430.5914648914318,
+        "shared_n8": 7686.023612993895,
+        "jobtmp_1": 1408.6393323097116,
+        "jobtmp_n8": 7402.8772031744975,
+        "local_read_frac": 0.022929448023849292,
+        "shared_read_frac": 0.025426854313176595,
+        "jobtmp_read_frac": 0.02304575683629332,
+        "gpu_nvjpeg": 4759.091113049913,
+        "gpu_node_local_1": 1551.9353107244538,
+        "gpu_node_local_n8": 6253.24820832684
+      },
+      "randall_lance": {
+        "local_1": 1562.9236866478923,
+        "local_n8": 5893.749091249793,
+        "shared_1": 1517.2838283331962,
+        "local_gpu": 25888.503779351944
+      },
+      "ours": {
+        "gpu": {
+          "fps": 42304.82839296141,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "500x500",
+          "size": 500,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/gpu_after.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 241.53464781857264,
+          "batch": 16,
+          "host": "node2334.oscar.ccv.brown.edu",
+          "shape": "500x500",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 2464.404108345343
+      },
+      "ratios": {
+        "gpu_vs_local_n": 5.5374712353294795,
+        "gpu_cores_of_8": 44.299769882635836,
+        "cpu1_vs_local_1": 0.1717226324609011,
+        "cpu1_vs_percore": 0.25292454132319536,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 7.177914725920322,
+        "nvjpeg_vs_our_gpu": 0.11249522321290684
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "TwoRoom",
+      "frame": "224x224",
+      "jpeg_bytes_per_frame": 4390.10546875,
+      "randall_frame": "224x224",
+      "randall_jpeg_bytes_per_frame": 4390.10546875,
+      "lance": {
+        "local_1": 4618.790402440719,
+        "local_n8": 27277.84996141664,
+        "local_n1": 3518.038662948014,
+        "local_n4": 13812.027489048322,
+        "shared_1": 4260.4309116455415,
+        "shared_n8": 27483.17867347886,
+        "jobtmp_1": 4337.409389048008,
+        "jobtmp_n8": 27331.70496451182,
+        "local_read_frac": 0.04535495829110444,
+        "shared_read_frac": 0.05584108471694547,
+        "jobtmp_read_frac": 0.04857948129692558,
+        "gpu_nvjpeg": 10356.303051365063,
+        "gpu_node_local_1": 5048.4865746665055,
+        "gpu_node_local_n8": 24865.303753760945
+      },
+      "randall_lance": {
+        "local_1": 5904.169621589527,
+        "local_n8": 29354.9865325178,
+        "shared_1": 5817.533167345003,
+        "local_gpu": 33865.34455262828
+      },
+      "ours": {
+        "gpu": {
+          "fps": 39517.56438865712,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "size": 224,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/gpu_after.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 1359.2180515658658,
+          "batch": 16,
+          "host": "node2334.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 8567.600872116309
+      },
+      "ratios": {
+        "gpu_vs_local_n": 1.448705247831227,
+        "gpu_cores_of_8": 11.589641982649816,
+        "cpu1_vs_local_1": 0.2942800891869029,
+        "cpu1_vs_percore": 0.3986290865265179,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 1.3461959638401397,
+        "nvjpeg_vs_our_gpu": 0.26206835394788836
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": true,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    },
+    {
+      "env": "TwoRoomTarget",
+      "frame": "224x224",
+      "jpeg_bytes_per_frame": 4830.6484375,
+      "randall_frame": "224x224",
+      "randall_jpeg_bytes_per_frame": 4830.6484375,
+      "lance": {
+        "local_1": 4185.092148306618,
+        "local_n8": 26940.84985245814,
+        "local_n1": 3462.624205334574,
+        "local_n4": 13299.271524847441,
+        "shared_1": 3639.116989287718,
+        "shared_n8": 26888.291366709695,
+        "jobtmp_1": 4178.8262234774475,
+        "jobtmp_n8": 26632.443175057473,
+        "local_read_frac": 0.04613490216206844,
+        "shared_read_frac": 0.05011624398325781,
+        "jobtmp_read_frac": 0.04847037498561845,
+        "gpu_nvjpeg": 9537.106348288838,
+        "gpu_node_local_1": 4779.572647588338,
+        "gpu_node_local_n8": 25689.401193511232
+      },
+      "randall_lance": {
+        "local_1": 5502.404822119467,
+        "local_n8": 28285.852237486135,
+        "shared_1": 5064.059737052665,
+        "local_gpu": 33435.87382800063
+      },
+      "ours": {
+        "gpu": {
+          "fps": 23731.21423441668,
+          "batch": 4096,
+          "host": "gpu2101.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "size": 224,
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/gpu_after.json",
+          "post_step6": true
+        },
+        "cpu1": {
+          "fps": 638.0397747665306,
+          "batch": 1,
+          "host": "node2334.oscar.ccv.brown.edu",
+          "shape": "224x224",
+          "source": "/Users/samib/stable-envs-step6-lance/examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json",
+          "post_step6": true
+        },
+        "cpu8": null,
+        "decode_q90_fps_per_core": 9475.433125070313
+      },
+      "ratios": {
+        "gpu_vs_local_n": 0.8808636091430275,
+        "gpu_cores_of_8": 7.04690887314422,
+        "cpu1_vs_local_1": 0.15245537067199247,
+        "cpu1_vs_percore": 0.18946388944989112,
+        "cpu8_vs_local_n": null,
+        "gpu_vs_randall_local_n": 0.8389782296524418,
+        "nvjpeg_vs_our_gpu": 0.4018802516416313
+      },
+      "verdict": {
+        "gpu_beats_8worker_lance": false,
+        "cpu1_beats_1proc_lance": false,
+        "cpu1_beats_percore_lance": false,
+        "cpu8_beats_8worker_lance": false
+      }
+    }
+  ]
+}
