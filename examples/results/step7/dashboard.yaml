@@ -53,3 +53,4 @@ workstreams:
 decisions: []
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
+- '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
