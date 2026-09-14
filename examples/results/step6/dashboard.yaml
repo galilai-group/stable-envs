@@ -575,3 +575,29 @@ decisions:
   decision: 'CPU 3-D backend work APPROVED. Policy: backend implementation may differ by device, renderer semantics may not; CPU backend certified against the same frozen contract; no MJWarp-on-CPU for
     symmetry; one shared CPU-native backend for the MJWarp-only scenes (Fetch if feasible), no bespoke per-env approximations; device="cpu" must be a genuine CPU backend, never silent CUDA fallback; minimize
     coupling toward a later Scene3D extraction without blocking Step 6; Fetch CPU feasibility to be quantified before a large implementation.'
+integration_verification:
+  branch: step6/integration-verify (merged)
+  head: bcd2e44
+  verdict: PASS-WITH-KNOWN-DELTAS (first pass on e4d015d/f7b07d7/e0182f6; final incremental pass pending RAYCAST-5 + cpu-3d merges)
+  jobs:
+  - 6352885
+  - 6352886
+  - 6353226
+  - 6354203
+  - 6354905
+  - 6355272
+  - 6355274
+  cuda_replay: 48/49 frozen configs bit-identical; AntmazeTeleportExplore mean 187.26056 -> 187.26032 (bake nondeterminism); 49/49 digest_official identical; no config lost a check
+  gate_a: 43 PASS/5 FAIL/1 PARTIAL -> 44 PASS/3 FAIL/1 PARTIAL/1 BLOCKED; FAIL->PASS = check_style_is_state 1->0 x2; Cheetah/Hopper/Walker FAIL on check_resolution_consistency only (held 5402387)
+  cpu_replay: 31/31 comparable configs byte-identical; PushT+SimplePointMaze render on CPU where baseline raised
+  gpu_suite: all 9 files on f7b07d7; test_fast_paths 348 collected/168 pass/0 fail after hand-merge; test_gfxdraw_classic 80/0; test_gfxdraw_fused needs Box2D (4/4 in se6-gfxdraw-box2d)
+  unit: 584/611/662 pass, always the 2 pre-existing failures
+  findings:
+  - 'VISIBILITY-1: tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility 7 failed/4 passed - selector uses class flag VISIBILITY_KNOB but the asserted leaf comes
+    from per-cell _hideable() (empty for 7 cells); no pixel effect; owner reacher-correctness'
+  - 'MJWARP-1 CLOSED: all four trackcom cells reproduce frozen digest_ours AND digest_official byte for byte in se-step3 (matches the frozen shard package set); earlier non-reproduction was se-step5 ->
+    venv, not MJWarp'
+  - 'NODE-1: gpu2108/gpu2113 nondeterministic official OGBench renderer at 1/255 (Pointmaze Teleport/maze2d), identical on baseline; repo guard aborts (NODE FAULT); explains 4 test_state_is_sufficient +
+    5 fresh-process failures on gpu2108'
+  - 'minigrid absent from every Oscar venv: 7 registered envs outside the 49 never had GPU conformance run here'
+  - test_rendernet.py::test_no_checkpoint_means_no_class fails on both trees (pytest 9 importorskip semantics)
