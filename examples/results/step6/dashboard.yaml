@@ -803,3 +803,30 @@ report_generator:
   scope: correctness over all 49; performance completion over the 36 registered/default rows per Step 2 §4.2/§12.2 (bar read live from scratch/certification.json ladder.environment_done_min_tiers); parameter-space
     table separate; deferred_work and demonstrated-blocker sections from the dashboard
   pending: none; newest-stamped-commit-by-ancestry precedence among certification records per (config, declared reference) implemented (116 superseded records listed); page Gate-A 48/49
+lance_baseline:
+  branch: step6/lance-baseline (merged eaaae6b)
+  report: examples/results/step6/lance/findings.md; comparison2.md/json
+  storage: /tmp inside an Oscar job is a per-job tmpfs (RAM); /oscar scratch is NFS v3 over RDMA (nconnect=8); /sss/jobtmp is job-local GPFS. All three arms agree within ~2% (8-worker median tmpfs 13,177
+    / NFS 14,152 / GPFS 14,310 fps) because bench_lance writes the table in-process moments before reading it (page-cache warm); read term is 5-8% of a chunk (NFS 339 MB/s vs tmpfs 535). 8 workers use 7.41-7.94
+    cores; 1->8 scaling 7.72x.
+  equivalence: 'NOT equivalent (11 asymmetries): committed Randall-cluster run at 256 px does not match 25/36 certified sizes; Lance output lands in host memory vs ours on device; 8 cores vs 1 thread; min-vs-median;
+    warm cache; hardware (1.05x on 11 like-for-like configs, 8 reproduce jpeg_bytes_total byte-identically); q90 decodes only 1.04x faster than q95. Step 2 §6.1 forbids merging the tables; both are reported.'
+  results: '36 registered/default configs at certified size, same node class per column: CPU 8-way ours vs 8-worker Lance: 1/24 win (CraftaxClassic 6.96x), cpu_pipeline_ratio median 0.11; frozen one-core
+    cores_cpu median 0.20 (agrees in direction); ours scales by processes not threads (8 procs > 8 threads on 24/24, median 1.53x). GPU end-to-end (state->device vs 8-worker JPEG->device incl. H2D): 30/36
+    win, gpu_pipeline_ratio median 1.44; vs nvJPEG 35/36 win, median 3.42; losers = six raycast3d DMC rows (BallInCup 0.18, ReacherHard 0.47, FingerTurnHard 0.56, AcrobotSwingup 0.68, PendulumSwingup 0.84,
+    CartpoleSwingup 0.97). Renderer-only GPU column re-measured post-Step-6 for all 36.'
+  caveats: CPU column for the raycast3d rows predates RAYCAST-6 (PointmazeLarge 1-thread now 5,535-6,154 fps); GPU-side Lance denominator measured on 8 EPYC 7532 cores at load 54 vs Xeon 8268 CPU arms ->
+    gpu_pipeline_ratio flattering by roughly that CPU ratio; examples/results/storage/lance.json must not be quoted for configs whose size_note is null (25/36 describe a frame the config does not render).
+  jobs:
+  - 6366652
+  - 6366696
+  - 6366739
+  - 6366839
+  - 6366909
+  - 6366910
+  - 6366960
+  - 6366975
+  - 6367697
+  - 6367705
+  - 6367822
+  - 6368790
