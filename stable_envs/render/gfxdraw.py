@@ -428,18 +428,19 @@ class Canvas:
         return torch.arange(kmax + 1, device=self.device).view(1, -1)
 
     def solid(self) -> torch.Tensor:
-        """The ``pixelColor`` weight, as ONE element rather than one per write.
+        """The ``pixelColor`` weight, cached as ONE element. Callers ``expand`` it to their write count.
 
-        ``blend`` broadcasts it, so an edge no longer allocates and fills a ``B*(kmax+1)`` vector of a
-        constant before every scatter -- three allocations per edge that the profile counted and the
-        picture never used.
+        An edge used to allocate and fill a ``B*(kmax+1)`` vector of a constant before every scatter
+        -- three allocations per edge that the profile counted and the picture never used. A
+        stride-0 ``expand`` of this removes the allocation while keeping ``len(w) == len(valid)``,
+        which ``blend_at`` overrides are entitled to rely on.
         """
         if self.gfx is not None:
             return self.gfx.solid
         return torch.tensor([SOLID], dtype=torch.int64, device=self.device)
 
     def always(self) -> torch.Tensor:
-        """An all-true ``valid`` for a scatter that cannot be out of range by construction."""
+        """An all-true ``valid``, cached as one element; callers ``expand`` it to their write count."""
         if self.gfx is not None:
             return self.gfx.always
         return torch.ones(1, dtype=torch.bool, device=self.device)
@@ -651,18 +652,26 @@ def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
     """
     draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = p
     B = xx0.shape[0]
+    # ONE weight per write, as a stride-0 view of a cached scalar. ``blend`` would broadcast a
+    # 1-element weight, but ``blend_at`` is an overridable seam and a subclass is entitled to index
+    # the weight by its own mask -- LunarLander's _AARecorder does exactly that to bake the flag
+    # fringe, and a (1,) weight against a (B*(kmax+1),) mask is an IndexError inside its __init__.
+    # ``expand`` keeps what the cache was for (no allocation, no host copy, rule 6) and keeps the
+    # contract the baseline had: len(w) == len(valid).
     solid = cv.solid()
-    cv.blend_at(bidx, sy, sx, color_t, solid, draw)
+    cv.blend_at(bidx, sy, sx, color_t, solid.expand(B), draw)
 
     k = cv.steps(kmax)
+    n = B * (kmax + 1)
+    run = solid.expand(n)
     bb = bidx.view(-1, 1).expand(B, kmax + 1).reshape(-1)
     dw = draw.view(-1, 1)
     # axis-aligned edges: SDL_gfx short-circuits to a solid vline/hline, with no AA whatsoever
     cv.blend_at(bb, (yy0.view(-1, 1) + k).reshape(-1),
-                xx0.view(-1, 1).expand(B, kmax + 1).reshape(-1), color_t, solid,
+                xx0.view(-1, 1).expand(B, kmax + 1).reshape(-1), color_t, run,
                 (dw & vert.view(-1, 1) & (dy > 0).view(-1, 1) & (k <= dy.view(-1, 1))).reshape(-1))
     cv.blend_at(bb, yy0.view(-1, 1).expand(B, kmax + 1).reshape(-1),
-                (lo.view(-1, 1) + k).reshape(-1), color_t, solid,
+                (lo.view(-1, 1) + k).reshape(-1), color_t, run,
                 (dw & horiz.view(-1, 1) & (k <= dx.view(-1, 1))).reshape(-1))
 
     gen = ~vert & ~horiz
@@ -750,7 +759,7 @@ def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool 
             cv.blend_at(bb, (cy.view(-1, 1) + st[:, 0].view(1, -1)).reshape(-1),
                         (cx.view(-1, 1) + st[:, 1].view(1, -1)).reshape(-1), color_t,
                         st[:, 2].view(1, -1).expand(B, S).reshape(-1),
-                        cv.always())
+                        cv.always().expand(B * S))
     if disc is not None:
         cv.paint_disc(cy, cx, disc, color)
     else:

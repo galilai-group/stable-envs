@@ -169,7 +169,12 @@ class _AARecorder(G.Canvas):
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
         ok = valid & (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
         if bool(ok.any()):
-            self.writes.append((y[ok].clone(), x[ok].clone(), w[ok].clone()))
+            # ``expand`` before indexing: the weight a primitive hands over may be one element that
+            # every write shares (``Canvas.solid``), and a boolean index wants it at full length.
+            # Belt and braces -- ``aaline_emit`` expands it too -- because this override is what a
+            # weight-shape change breaks first, and it breaks inside ``LunarLander.__init__``.
+            self.writes.append((y[ok].clone(), x[ok].clone(),
+                                w.expand(ok.shape)[ok].clone()))
 
 
 def _record_aa(gfx: G.Gfx, vi: torch.Tensor) -> list[tuple]:
