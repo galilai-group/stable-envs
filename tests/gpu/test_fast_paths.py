@@ -266,11 +266,13 @@ CASES: tuple[FastPath, ...] = (
     FastPath(
         id="raycast3d-primitive-bounds",
         why=("``raycast3d``'s torch cast tests a primitive only against the rays whose line passes "
-             "within that primitive's own bounding sphere. The claim is that a ray outside the bound "
-             "provably misses -- ``intersect`` would return INF and lose the ``t < best`` test -- so "
-             "skipping it cannot change t, the normal or the winning index. A difference means a "
-             "bound is too SMALL somewhere, and the pixels it drops are on a silhouette where "
-             "nothing else looks. Both legs are forced through the torch backend because the bound "
+             "within that primitive's own bounding sphere. The claim is that a ray outside the "
+             "INFLATED bound misses within the intersector's own rounding budget (k = 16 ulp) -- not "
+             "in exact arithmetic, because _capsule in float32 at 100 m reports hits outside the "
+             "primitive's true bound -- so intersect returns INF there and loses the ``t < best`` "
+             "test, and skipping it cannot change t, the normal or the winning index. A difference "
+             "means a bound is too SMALL somewhere, and the pixels it drops are on a silhouette "
+             "where nothing else looks. Both legs are forced through the torch backend because the bound "
              "is the CPU path: the fused Triton kernel keeps every primitive in registers and has no "
              "bound to switch off, which is also why the GPU digests cannot move. The unit-ray "
              "invariant the bound rests on is checked at runtime, so a bundle that violated it would "

@@ -468,9 +468,17 @@ def _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d):
 #: WHY THIS AND NOT A SCREEN BOX. The cast is handed ``o``/``d`` and nothing else -- no camera, no
 #: pixel indices, and for the reflection pass the origins are per-ray floor points rather than one
 #: pinhole -- so a screen-space box is not computable here without threading a camera through five
-#: call sites. The ray/sphere distance test needs none of that, is exact in the sense that matters (a
-#: ray outside the bound provably misses the primitive, so skipping it is the identity), and costs
-#: ~8 elementwise ops against the ~200 an intersector costs.
+#: call sites. The ray/sphere distance test needs none of that and costs ~8 elementwise ops against
+#: the ~200 an intersector costs.
+#:
+#: WHAT THE SKIP CLAIMS, STATED HONESTLY. A ray outside the inflated bound misses the primitive
+#: **within the intersector's own rounding budget** -- ``k = 16`` ulp, the ``_BOUND_SLACK_NOISE``
+#: term below -- not in exact arithmetic. The distinction is not pedantry: ``_capsule`` in float32 at
+#: 100 m reports hits OUTSIDE the primitive's true bound (measured, below), so "provably misses" is
+#: a claim about geometry that this intersector does not honour. What is actually established is
+#: that over the 21 live configs the two paths produce bit-identical frames on both devices, and
+#: that the differential fuzz finds no disagreement on adversarial scenes. Baseline for every such
+#: replay in this workstream: ``89fa5ca``.
 #:
 #: THIS IS THE CPU PATH ONLY. ``_launch``'s fused Triton kernel keeps every primitive in registers and
 #: has nothing to gain from skipping one; it is untouched, which is also why the GPU digests cannot
@@ -501,7 +509,21 @@ PRIMITIVE_BOUNDS: bool = True
 #: violates it takes the unbounded path, the way ``_packed`` routes an exotic layout to the torch loop.
 #: The differential fuzz in tests/unit/test_raycast3d_primitive_bounds.py found this by feeding it
 #: ``d`` scaled by 0-3x; without the check, 23 of 400 shadow-ray answers moved.
-_UNIT_D_TOL = 1e-4
+#:
+#: THE TOLERANCE IS NOT A COMFORT MARGIN, AND 1e-4 WAS WRONG. Independent review of 3b9e81c found
+#: that inside a 1e-4 window the identity this module claims is FALSE, not merely strained: the
+#: cap-sphere test drops the leading ``|d|^2``, so at ``|d|^2 = 1 + 9e-5`` and 100 m the reviewer's
+#: probe lost 113,008 of 126,184 unbounded hits. They are garbage hits either way -- an intersector
+#: handed a non-unit ray is not computing a ray parameter -- but the check is what decides whether a
+#: bundle is allowed through, and a bundle it admits must get the SAME garbage from both paths.
+#:
+#: So the window is sized to the real call sites rather than to a round number: the worst measured
+#: ``||d|^2 - 1||`` across DM Control and the Mujoco* families -- camera, reflection and shadow
+#: passes -- is **2.4e-7**. 1e-6 leaves ~4x headroom over that and sits at or below
+#: ``_BOUND_SLACK_NOISE`` (1.9e-6), which is the term the bound already carries for the
+#: intersector's own resolution, so nothing can slip between the two. 1e-4 was ~400x looser than
+#: anything that has ever been passed to this function.
+_UNIT_D_TOL = 1e-6
 
 
 def _unit_rays(dd) -> bool:
@@ -522,9 +544,11 @@ def _unit_rays(dd) -> bool:
 #:
 #: ``|oc x d|`` is the same geometry without the cancellation: its components are differences of
 #: products of order ``|oc||d|`` but the RESULT is of order ``r|d|``, so the absolute error is
-#: ~``eps*|oc||d|`` rather than ~``eps*|oc|^2|d|^2``. Inflating the radius by ``8*eps*|oc|`` covers
-#: that with margin -- 9.5e-5 m against a 5 cm capsule at 100 m -- and costs six multiplies.
-#: AND THE LARGER TERM: the bound has to absorb the INTERSECTOR's own resolution, not only its own.
+#: ~``eps*|oc||d|`` rather than ~``eps*|oc|^2|d|^2``. An earlier draft of this comment described a
+#: separate ``8*eps*|oc|`` inflation covering that; **no such term exists in the code and none is
+#: needed** -- the quadrature term below is larger and subsumes it. The comment is corrected rather
+#: than the code, because the code was right and the description was not.
+#: AND THE TERM THAT DOES EXIST: the bound has to absorb the INTERSECTOR's own resolution, not its own.
 #: ``_capsule`` forms ``c = olx^2 + oly^2 - r^2`` in float32. At ``|ol| = 100`` m the first two terms
 #: are ~1e4, where float32's resolution is 1.2e-3 -- and a 2 cm capsule's ``r^2`` is 4e-4, so **the
 #: radius is entirely lost** and ``disc > 0`` decides hit-or-miss on rounding noise. Measured: at
@@ -566,23 +590,36 @@ _BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7         # (|oc| * sqrt(this))^2, added 
 #: 2/2, finger_spin 7/7, reacher 2/4, acrobot 3/4. The maze families keep 12/13 (antmaze) and 16/19
 #: (humanoidmaze).
 #:
-#: MEASURED by ``scratch/step6/raycast3d/r5_kind_cost.py`` (job 6352389, node2339, Xeon 8268,
-#: 1 thread) over B in {1,16,64} x N in {7056, 50176, 200704}, timing the bound at its WORST case --
-#: a radius so large that nothing is pruned, so the gather and scatter run at full width -- against
-#: each intersector at full width. ``ns_intersect / ns_bound``, worst case over every width:
+#: MEASURED by ``scratch/step6/raycast3d/r5_kind_cost.py``, THREE independent runs in one job (6356311,
+#: node1843, Xeon 8268, 1 thread) over B in {1,16,64} x N in {7056, 50176, 200704}. The bound is timed
+#: at its worst case -- N-1 rays kept, so the gather and the scatter run at essentially full width --
+#: in the ``cast_nearest`` shape, which is the branch that decides this table: it gathers ``best`` and
+#: scatters ``best``/``nrm``/``idx``, and pricing the cheaper ``any_blocking`` shape instead (as the
+#: first version did) understates the bound by about 2x. ``ns_intersect / ns_bound``:
 #:
-#:     SPHERE     0.45 - 0.83     cheaper than the bound at every width: can NEVER pay
-#:     BOX        1.84 - 2.93
-#:     CYLINDER   1.95 - 3.11
-#:     CAPSULE    2.38 - 3.74
+#:     kind       worst over widths, per run   best     verdict
+#:     SPHERE     0.27  0.28  0.28             0.46     never reaches 1: can NEVER pay
+#:     BOX        1.13  1.11  1.13                      above 1 in every run
+#:     CYLINDER   1.24  1.23  1.24                      above 1 in every run
+#:     CAPSULE    1.48  1.48  1.47                      above 1 in every run
 #:
-#: The margin is measured too, not chosen: ``1 + 3*worst_rsd`` = **1.227** from the benchmark's own
-#: worst relative standard deviation (7.6 %). It lands in a gap of more than a factor of two between
-#: 0.83 and 1.84, so the table does not depend on where in that gap the line is drawn -- which is the
-#: difference between a derived constant and a fitted one. Numbers and the exact rule in
-#: ``examples/results/step6/raycast3d/experiments/r5_kind_cost.json``;
-#: ``test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose`` keeps this set and that
-#: file from drifting apart.
+#: THE RULE IS THE NECESSARY CONDITION, NOT A MARGIN, and that is a correction. The first version used
+#: ``1 + 3*worst_rsd`` -- three times the spread of an INDIVIDUAL timing -- which is not the statistic
+#: the decision consumes. Run on a busier node it moved from 1.23 to 1.75 and would have un-bounded
+#: every kind: the three runs above, whose ratios agree to within 1-3 %, carry three DIFFERENT
+#: predicates in their own ``predicate`` fields for exactly that reason. A threshold that a node's
+#: load average can flip is not a derived constant. What stands instead is ``ratio > 1``, which is the
+#: condition derived above and needs no constant at all; the spread of the ratio across runs is 1-3 %,
+#: which is the error bar that matters and is nowhere near the decision boundary.
+#:
+#: The separation survives the re-pricing: the dearest unbounded kind reaches 0.46 at its best, the
+#: cheapest bounded kind never falls below 1.11, and the line at 1.0 sits inside that 2.4x gap. (The
+#: earlier note claimed a ">2x gap between 0.83 and 1.84" about where a THRESHOLD sat; that framing
+#: is retired along with the threshold.) Numbers in
+#: ``examples/results/step6/raycast3d/experiments/r6_kind_cost.json``, which supersedes the
+#: ``r5_kind_cost.json`` of the first attempt;
+#: ``test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose`` keeps this set, that file
+#: and the rule behind it from drifting apart.
 _BOUNDED_KINDS = frozenset({CAPSULE, CYLINDER, BOX})
 
 

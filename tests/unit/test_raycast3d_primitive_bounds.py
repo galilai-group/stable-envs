@@ -24,7 +24,7 @@ KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
 
 
 def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0,
-                kinds=None):
+                kinds=None, dd_at_tol=0):
     g = torch.Generator().manual_seed(rng)
     r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)          # noqa: E731
     # ``kinds`` PINNED rather than sampled is what makes the per-kind dispatch testable. RAYCAST-5
@@ -70,6 +70,23 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
         d = torch.nn.functional.normalize((r(B, N, 3) - 0.5) + torch.tensor([0.0, 1.0, 0.0]), dim=-1)
     if nonunit_d:
         d = d * (r(B, N, 1) * 3.0)                            # includes exact zeros
+    if dd_at_tol:
+        # Put |d|^2 just INSIDE the admission window: the worst bundle ``_unit_rays`` still lets
+        # through. ``d`` is unit to ~1e-7, so scaling by sqrt(1 +/- f*TOL) moves |d|^2 to 1 +/- f*TOL
+        # up to that spread; f starts at 0.9 and backs off until the float32 quantity the CAST
+        # computes -- not the real number aimed at -- is inside. Checked, not assumed, below.
+        for f in (0.9, 0.7, 0.5, 0.3):
+            m = torch.tensor((1.0 + dd_at_tol * f * R3._UNIT_D_TOL) ** 0.5, dtype=torch.float32)
+            cand = (d * m).contiguous()
+            dd = R3._dot(cand, cand)
+            if bool(torch.all((dd - 1.0).abs() <= R3._UNIT_D_TOL)):
+                break
+        else:
+            raise AssertionError("could not place |d|^2 inside the admission window")
+        d = cand
+        assert float((dd - 1.0).abs().max()) > R3._UNIT_D_TOL / 4, (
+            "this case is meant to sit at the EDGE of the window; it landed near |d| = 1 and would "
+            f"test nothing new (max |dd-1| = {float((dd - 1.0).abs().max()):.3e})")
     return kinds, sizes.contiguous(), pos.contiguous(), R.contiguous(), o, d.contiguous()
 
 
@@ -134,12 +151,24 @@ CASES = [
     dict(rng=18, B=2, K=5, N=512, far=100.0, tangent=True,
          kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
     dict(rng=19, B=3, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3, degenerate=True),
+    # AT THE EDGE OF THE ADMISSION WINDOW, at the lever arm that broke the first bound. Review of
+    # 3b9e81c showed the old 1e-4 tolerance admitted bundles on which the identity is FALSE: the
+    # cap-sphere test drops the leading |d|^2, so at |d|^2 = 1 + 9e-5 and 100 m a probe lost 113,008
+    # of 126,184 unbounded hits. These feed |d|^2 = 1 +/- (_UNIT_D_TOL - 1 ulp) -- the worst bundle
+    # the check still lets through -- at far=100. They are the cases that say the window is sized
+    # correctly, and they FAIL against the old tolerance.
+    dict(rng=20, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=+1),
+    dict(rng=21, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=-1),
+    dict(rng=22, B=2, K=5, N=512, far=100.0, dd_at_tol=+1,
+         kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
 ]
 
 
 def _case_id(c):
     tag = [f"B{c['B']}K{c['K']}N{c['N']}"]
     tag += [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]
+    if c.get("dd_at_tol"):
+        tag.append("ddtol" + ("hi" if c["dd_at_tol"] > 0 else "lo"))
     if c.get("far"):
         tag.append(f"far{int(c['far'])}")
     if c.get("kinds"):
@@ -199,8 +228,12 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     """
     import json
     from pathlib import Path
-    f = (Path(R3.__file__).resolve().parents[2]
-         / "examples/results/step6/raycast3d/experiments/r5_kind_cost.json")
+    # r6_kind_cost.json is the AUTHORITATIVE table and supersedes r5_kind_cost.json, which priced the
+    # any_blocking-shaped bound (cheaper than the cast_nearest branch that actually decides this) and
+    # applied a margin scaled by a single run's timing spread. Three runs whose ratios agree to 1-3 %
+    # produced three DIFFERENT predicates under that margin, which is what retired it.
+    root = Path(R3.__file__).resolve().parents[2] / "examples/results/step6/raycast3d/experiments"
+    f = root / "r6_kind_cost.json"
     if not f.is_file():
         pytest.skip(f"no committed measurement at {f}")
     m = json.loads(f.read_text())
@@ -209,7 +242,18 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     measured = {names[n] for n, on in m["predicate"].items() if on}
     assert set(R3._BOUNDED_KINDS) == measured, (
         f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
-        f"({f.name}, margin {m['margin']['value']:.3f}) chose {sorted(measured)}")
+        f"({f.name}) chose {sorted(measured)}")
+    # And the rule behind it must still hold in the numbers, not merely in the summary field: every
+    # bounded kind above 1.0 in every run, every unbounded one below it.
+    for kind, on in m["predicate"].items():
+        if kind not in m["ratio_worst_per_run"]:
+            continue
+        worst = m["ratio_worst_per_run"][kind]
+        best = m["ratio_best_per_run"][kind]
+        if on:
+            assert min(worst) > 1.0, f"{kind} is bounded but its worst ratio is {min(worst):.2f}"
+        else:
+            assert max(best) < 1.0, f"{kind} is unbounded but its best ratio is {max(best):.2f}"
 
 
 def test_an_unbounded_kind_never_reaches_the_gather():

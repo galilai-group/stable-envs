@@ -25,10 +25,14 @@ sweep.
 
 What this script measures, per kind and per bundle width:
 
-  * ``ns_bound``      -- ``_rays_near`` + ``.any(0)`` + ``nonzero`` + the gather of ``o``/``d`` + the
-                         scatter back, i.e. everything the bounded path does that the unbounded one
-                         does not, at the WORST case for the bound (nothing pruned, so the gather is
-                         full width). Reported per ray.
+  * ``ns_bound``      -- ``_rays_near`` + ``.any(0)`` + ``nonzero`` + the gather of ``o``/``d`` +
+                         the scatter back, i.e. everything the bounded path does that the unbounded
+                         one does not, at the WORST case for the bound (N-1 rays kept, so the gather
+                         and scatter run at essentially full width). In the ``cast_nearest`` shape,
+                         which is the one that ships and the one the table is built from: that
+                         branch also gathers ``best`` and scatters ``best``/``nrm``/``idx``, which
+                         the first version of this benchmark left out and thereby understated.
+                         Reported per ray.
   * ``ns_intersect``  -- ``intersect(kind, ...)`` at full width. Reported per ray.
 
 and the margin, which is also measured rather than chosen: the decision has to survive this
@@ -71,6 +75,12 @@ def main() -> int:
     ap.add_argument("--repeat", type=int, default=20)
     ap.add_argument("--warmup", type=int, default=5)
     ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--shape", choices=("nearest", "blocking"), default="nearest",
+                    help="which of the two bounded branches to price; 'nearest' is the one that "
+                         "decides the table and the one that ships")
+    ap.add_argument("--keep", type=int, default=10 ** 9,
+                    help="rays surviving the bound; the default keeps N-1, the worst case that "
+                         "still takes the narrow branch")
     ap.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
 
@@ -81,7 +91,7 @@ def main() -> int:
     torch.set_num_threads(a.threads)
     g = torch.Generator().manual_seed(0)
 
-    note = {"tool": "r5_kind_cost", "workstream": "step6/raycast3d",
+    note = {"tool": "r5_kind_cost", "shape": a.shape, "keep_request": a.keep, "workstream": "step6/raycast3d",
             "host": socket.gethostname(), "cpu": platform.processor() or platform.machine(),
             "threads": torch.get_num_threads(), "slurm_job": os.environ.get("SLURM_JOB_ID"),
             "torch": torch.__version__, "numpy": __import__("numpy").__version__,
@@ -100,19 +110,47 @@ def main() -> int:
             pos = torch.rand(B, 1, 3, generator=g)
             Rm = torch.eye(3).view(1, 1, 3, 3).expand(B, 1, 3, 3).contiguous()
             size = torch.rand(B, 1, 3, generator=g) * 0.3 + 0.05
-            # THE BOUND'S COST AT ITS WORST: a radius large enough that nothing is pruned, so the
-            # nonzero returns every index and the gather and scatter run at full width. Timing it with
-            # a selective radius would measure the bound at its best and hide the cost this table is
-            # about.
+            # THE BOUND'S COST AT ITS WORST, in the SHAPE THAT SHIPS. Two things matter here and the
+            # first version of this benchmark got the second one wrong.
+            #
+            # (a) The radius is large enough that nothing useful is pruned, so ``nonzero`` returns
+            #     essentially every index and the gather and the scatter run at full width. A
+            #     selective radius would measure the bound at its best and hide the cost this table
+            #     exists to price. ``--keep`` controls how many rays survive; the default keeps
+            #     N - 1, which is the worst case that still exercises the narrow branch.
+            #
+            # (b) ``--shape``. Independent review pointed out that the original timed the
+            #     ``any_blocking`` shape -- one bool scatter -- while the branch that actually decides
+            #     the table is ``cast_nearest``, which additionally gathers ``best`` and scatters
+            #     ``best``/``nrm``/``idx``. That is more work per ray, so pricing the cheap shape
+            #     understated the bound and flattered the ratios. ``nearest`` is now the default and
+            #     is what the committed table is built from.
             big = torch.full((B, 1), 1e3)
             blocked = torch.zeros((B, N), dtype=torch.bool)
+            best = torch.full((B, N), float("inf"))
+            nrm = torch.zeros((B, N, 3))
+            idx = torch.zeros((B, N), dtype=torch.long)
+            keep = (N - 1) if a.keep >= N else a.keep
 
-            def bound_path():
+            def bound_path_blocking():
                 js = torch.nonzero(R3._rays_near(pos, big, o, d, dd).any(0),
-                                   as_tuple=False).reshape(-1)
+                                   as_tuple=False).reshape(-1)[:keep]
                 oo, ddd = o[:, js], d[:, js]
                 blocked[:, js] |= (oo[..., 0] > ddd[..., 0])
                 return js
+
+            def bound_path_nearest():
+                js = torch.nonzero(R3._rays_near(pos, big, o, d, dd).any(0),
+                                   as_tuple=False).reshape(-1)[:keep]
+                oo, ddd = o[:, js], d[:, js]
+                t = oo[..., 0] * ddd[..., 0]
+                upd = t < best[:, js]
+                best[:, js] = torch.where(upd, t, best[:, js])
+                nrm[:, js] = torch.where(upd.unsqueeze(-1), ddd, nrm[:, js])
+                idx[:, js] = torch.where(upd, torch.zeros_like(idx[:, js]), idx[:, js])
+                return js
+
+            bound_path = bound_path_nearest if a.shape == "nearest" else bound_path_blocking
 
             row = {"batch": B, "rays": N,
                    "bound": _stats(bound_path, a.repeat, a.warmup), "kinds": {}}

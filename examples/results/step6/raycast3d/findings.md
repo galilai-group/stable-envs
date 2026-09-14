@@ -1516,25 +1516,50 @@ batch and resolution is just `cost_bound < cost_intersect(kind)`. A kind whose i
 cheaper than the bound's own mask + `nonzero` + gather + scatter can never pay: there is nothing
 left to save even under perfect pruning. That ratio is a property of the intersector's arithmetic.
 
-`scratch/step6/raycast3d/r5_kind_cost.py`, job `6352389`, `node2339` (x86_64), 1 thread, B in {1,16,64} x N in {7056, 50176, 200704}, timing the
-bound at its **worst** case — a radius so large that nothing is pruned, so the gather and the
-scatter run at full width:
+`scratch/step6/raycast3d/r5_kind_cost.py`, **three independent runs in one job** (`6356311`,
+`node1843`, Xeon 8268, 1 thread), B in {1,16,64} x N in {7056, 50176, 200704}. The bound is timed at
+its worst case — N−1 rays kept, so the gather and scatter run at essentially full width — in the
+**`cast_nearest` shape**, which is the branch that decides the table: it gathers `best` and scatters
+`best`/`nrm`/`idx`.
 
-| kind | `ns_intersect / ns_bound`, worst .. best over every width | bounded? |
-|---|---:|---|
-| `PLANE` | no finite bounding sphere | no |
-| `SPHERE` | 0.45 .. 0.83 | no |
-| `BOX` | 1.84 .. 2.93 | **yes** |
-| `CYLINDER` | 1.95 .. 3.11 | **yes** |
-| `CAPSULE` | 2.38 .. 3.74 | **yes** |
+| kind | `ns_intersect / ns_bound`, worst over widths, per run | best | bounded? |
+|---|---|---:|---|
+| `PLANE` | no finite bounding sphere | — | no |
+| `SPHERE` | 0.27 · 0.28 · 0.28 | 0.46 | no — never reaches 1, so it can never pay |
+| `BOX` | 1.13 · 1.11 · 1.13 | 2.93 | **yes** |
+| `CYLINDER` | 1.24 · 1.23 · 1.24 | 3.11 | **yes** |
+| `CAPSULE` | 1.48 · 1.48 · 1.47 | 3.74 | **yes** |
 
-The margin is measured too: `1 + 3*worst_rsd` = **1.227**, from this
-benchmark's own worst relative standard deviation (7.6 %). It lands
-in a gap of more than a factor of two between 0.83 and 1.84, so the table does not depend on where
-in that gap the line is drawn — which is the difference between a derived constant and a fitted
-one. `_BOUNDED_KINDS = {CAPSULE, CYLINDER, BOX}`, and
-`test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose` fails if the module constant
-and that JSON ever disagree.
+The dearest unbounded kind reaches **0.46** at its best; the cheapest bounded kind never falls below
+**1.11**; the line at 1.0 sits inside that **2.4x** gap. `_BOUNDED_KINDS = {CAPSULE, CYLINDER, BOX}`,
+and `test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose` fails if the module
+constant, `experiments/r6_kind_cost.json`, or the rule behind them ever disagree.
+
+### Two corrections this table carries, both found in review
+
+**1. The first version priced the wrong branch.** It timed the `any_blocking`-shaped bound — one bool
+scatter — while the branch that decides the table is `cast_nearest`, which additionally gathers
+`best` and scatters `best`/`nrm`/`idx`. That understates the bound by about **2x**, so the original
+ratios (SPHERE 0.45–0.83, CAPSULE 2.38–3.74) were flattering. Re-priced, capsule's worst case is
+1.47, not 2.38.
+
+**2. The margin rule was scaled by the wrong noise, and it was not stable.** `1 + 3*worst_rsd` used
+three times the spread of an *individual timing*, which is not the statistic the decision consumes.
+Run on a busier node it moved from 1.23 to **1.75** — and the three runs above, whose ratios agree to
+within **1–3 %**, carry three *different* predicates in their own `predicate` fields for exactly that
+reason: all-False, capsule-only, all-False. **A threshold a node's load average can flip is not a
+derived constant.**
+
+What stands instead is the necessary condition itself — `ratio > 1`, at every width, in every run —
+which was derived above and needs no constant at all. The error bar that matters is the spread of the
+ratio across runs, and it is 1–3 %, nowhere near the boundary. The earlier claim of *"a >2x gap so
+line placement doesn't matter"* was about where a **threshold** sat between 0.83 and 1.84; that
+framing is retired with the threshold. The separation claim survives in a better form, because 1.0 is
+not a tuned number.
+
+**The shipped predicate did not change.** Both corrections make the bound look worse and neither moves
+a kind across the line, which is the outcome worth stating plainly: the table was right for
+partly-wrong reasons, and it is now right for the right ones.
 
 ## What each config actually casts — counted, not assumed
 
@@ -1616,6 +1641,37 @@ the default on my own judgment: whether 0.969-inside-5.8 %-noise at an uncertifi
 0.97 bar is a release decision. The coordinator took it — acceptance holds — and the default is now
 `True`, verified as below.
 
+## The admission window was 400x too loose, and inside it the identity was false
+
+Independent review of `3b9e81c` found the substantive defect of this ticket. `_UNIT_D_TOL` was
+`1e-4` on `|d|^2`, and **inside that window the identity this module claims does not hold**: the
+cap-sphere test drops the leading `|d|^2`, so at `|d|^2 = 1 + 9e-5` and 100 m the reviewer's probe
+lost **113,008 of 126,184** unbounded hits. They are garbage hits either way — an intersector handed
+a non-unit ray is not computing a ray parameter — but `_unit_rays` is what decides whether a bundle
+is *admitted*, and a bundle it admits must get the same garbage out of both paths.
+
+The window is now sized to the call sites instead of to a round number. `_UNIT_D_TOL = 1e-6`, which
+is at or below `_BOUND_SLACK_NOISE` (1.9e-6), the term the bound already carries for the
+intersector's own resolution — so nothing can slip between the two.
+
+**Tightening an admission check has its own failure mode**, and it is silent: a real bundle that now
+falls *outside* the window takes the unbounded path, the pixels stay identical because that path is
+the definition, and the bound quietly stops applying where it was measured to pay. So `_unit_rays`
+itself is instrumented across every live config (`scratch/step6/raycast3d/r6_unit_ray_probe.py`,
+`experiments/r6_unit_ray_probe_cpu.json`):
+
+| | |
+|---|---|
+| configs measured | 21 of 21 |
+| `_unit_rays` calls | 94 |
+| **bundles rejected** | **0** |
+| worst `abs(dd - 1)` actually seen | **2.384e-07** |
+| headroom to the new tolerance | **4.19x** |
+
+Nothing routes to the unbounded path, and the worst real bundle reproduces the reviewer's measured
+2.4e-7 exactly. Three fuzz cases now sit one ulp *inside* the window at `far=100` — the worst bundle
+the check still admits — and they fail against the old tolerance.
+
 ## The default is on, and the identity is re-taken without pinning anything
 
 `PRIMITIVE_BOUNDS = True` (jobs `6355332` CPU, `6355333` GPU). This is the run that matters now:
@@ -1632,6 +1688,17 @@ off a replay taking the default would have compared the unbounded path against i
 | `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
 | `tests/unit` | **623 passed**, 9 skipped, 2 failed — the same two pre-existing failures, neither in the authorised files |
 
+Re-run after the review changes (jobs `6356117` CPU, `6356123` GPU), on the tightened tolerance:
+
+| check | result |
+|---|---|
+| cpu, `PRIMITIVE_BOUNDS` on vs off, all 21, nothing excluded | **identical** (`replay/r6_cpu_bounds_identity.json`) |
+| cpu, pristine baseline vs branch, all 21, defaults both legs | **identical** (`replay/r6_cpu_branch_vs_baseline.json`) |
+| cuda, pristine baseline vs branch, all 21 | **identical** (`replay/r6_cuda_identity.json`) |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
+| `tests/unit/test_raycast3d_primitive_bounds.py` | **51 passed** (was 45; the three edge-of-window cases x two cast functions) |
+| `tests/unit` | **629 passed**, 9 skipped, 2 failed — the same two pre-existing |
+
 ## Step-3-shaped shards, so the dashboard can label these rows
 
 `examples/results/step6/raycast3d/sweep/`, produced by `examples/bench_step3.py` itself rather than
@@ -1640,6 +1707,12 @@ back-converted from the profile notes: a shard needs `decode` and `official_cpu`
 measurement taken elsewhere would bury a cross-host ratio in a file whose whole purpose is to be
 classified as if it were Step 3. Three CPU legs because the release decision was open when they were taken; the
 `bound on` leg is the shipped build.
+
+The bound-off leg is named `cpu_1thread_branch_bounds_off_control.json`, with **no `before`/`after`
+token**, and that is load-bearing rather than tidy: `report.py`'s `leg_of` reads the leg out of the
+filename, and under its old name this control was taken for a second *after* leg — which would have
+made the page report "CPU after-legs disagree" on `DMCFingerSpin` and `DMCBallInCupCatch`, the two
+rows whose tier change is the whole point of the shard. It is a control, not an after.
 
 CPU: `node2335`, job `6354672`, 1 thread, Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz. Classified here with `scratch/step3/certify.py:classify`.
 
@@ -1670,6 +1743,21 @@ GPU: `gpu2105`, NVIDIA GeForce RTX 3090, job `6354674`.
 | `DMCBallInCupCatch` | GPU_PARITY · R 9.4 · cores 0.44 · BELOW_G4,BATCH_SCALES_FAIL | GPU_FAST · R 28.6 · cores 1.39 · BATCH_SCALES |
 | `DMCFingerSpin` | GPU_FAST · R 108.1 · cores 5.94 · BATCH_SCALES | GPU_FAST · R 127.9 · cores 5.82 · BATCH_SCALES |
 
+### Two things these shards do not carry
+
+* **No per-cell spread.** A Step-3 shard records one `fps` per cell and no dispersion, so a tier read
+  off one carries no error bar — and this workstream has just measured an **11.7 % off-vs-off spread
+  on identical code** at one thread on a shared node. The tier *changes* below are far larger than
+  that (S_cpu 1.95 -> 4.01, 1.45 -> 4.74) so they survive it comfortably, but a future row that moved
+  a tier by a few per cent on this evidence would not be safe to believe, and the shard format gives
+  no way to tell the two situations apart.
+* **`Mujoco*` CPU identity is inferred, not replayed.** The 21-config CPU replay covers the DM Control
+  and OGBench maze families. The `Mujoco*` family's agreement between the bounded and unbounded paths
+  comes from `tests/gpu/test_fast_paths.py`, which builds those envs **on cuda**; no CPU replay of
+  them exists. The cast code is shared and the fuzz is device-independent, so the inference is a
+  reasonable one — but it is an inference, and it is the obvious gap to close if `Mujoco*` CPU ever
+  becomes a certified path.
+
 `DMCBallInCupCatch` goes **`GPU_PARITY` + `BELOW_G4` + `BATCH_SCALES_FAIL` -> `GPU_FAST` +
 `BATCH_SCALES`** (R 9.4 -> 28.6, `cores` 0.44 -> 1.39, batch scaling 19.0x -> 55.9x). That is the
 dashboard's claim, now carried by a shard the report generator can classify instead of by prose.
@@ -1691,13 +1779,19 @@ The identity legs **force** the bound on. With the default at `False` a replay t
 would compare the unbounded path against itself and report `ALL_IDENTICAL` for the wrong reason — the
 same shape of false green as the empty-directory `compare_dumps` bug this workstream fixed earlier.
 
-## Public API: nothing moved
+## Public API: signatures, defaults and return shapes — not bodies
 
 The CPU-3-D workstream builds on `raycast3d`'s public functions, so this is checked rather than
-asserted. Every public entry point is **byte-identical to the pre-Step-6 baseline** (`3bc8fbc`):
-`cast_nearest`, `any_blocking`, `shade`, `composite`, `_render_group`, `cast_nearest_torch`,
-`any_blocking_torch`, `intersect`, `static_depth` — same signatures, same defaults, same return
-shapes (the last guaranteed independently by the 21-config bit-identical replays on both devices).
+asserted. For `cast_nearest`, `any_blocking`, `shade`, `composite`, `_render_group`,
+`cast_nearest_torch`, `any_blocking_torch`, `intersect` and `static_depth`, the **signatures,
+defaults and return shapes are identical** to the pre-Step-6 baseline — the last guaranteed
+independently by the 21-config bit-identical replays on both devices.
+
+**Their bodies are not, and an earlier draft of this section said "byte-identical", which was wrong.**
+`cast_nearest_torch` and `any_blocking_torch` changed in this ticket (the bound, its per-kind table
+and the call-level short circuit) and `composite` changed in RAYCAST-2b (cover compaction). What a
+caller can rely on is the interface and the pixels, which is the useful claim; "byte-identical" was a
+stronger one that happens to be false and that nobody needs.
 The only additions at module scope are switches and derived constants: `COVER_COMPACTION`,
 `PRIMITIVE_BOUNDS`, `_BOUNDED_KINDS`, `_BOUND_SLACK_NOISE`, `_TILE_CACHE`, `_TILE_CACHE_MAX`,
 `_UNIT_D_TOL`. Nothing was removed.
@@ -1927,3 +2021,6 @@ number that survived was arrived at.
 | `6354674` | `se6-raycast3d-r5shardgpu` | COMPLETED | 00:01:05 | `gpu2105` | RAYCAST-5 Step-3-shaped GPU shards, two legs |
 | `6355332` | `se6-raycast3d-r5finalcpu` | COMPLETED | 00:04:28 | `node2333` | **final identity with the default ON, neither leg pinning the switch**, plus `tests/unit` |
 | `6355333` | `se6-raycast3d-r5finalgpu` | COMPLETED | 00:02:09 | `gpu2116` | final cuda identity with the default ON, plus the fast-path suite |
+| `6356117` | `se6-raycast3d-r6cpu` | COMPLETED | 00:09:45 | `node2411` | review changes: the `_unit_rays` routing probe, the re-priced cost table, CPU identity on 21 (on-vs-off and vs baseline), `tests/unit` |
+| `6356123` | `se6-raycast3d-r6gpu` | COMPLETED | 00:02:04 | `gpu2108` | review changes: cuda identity on 21, fast-path suite, fuzz |
+| `6356311` | `se6-raycast3d-r6cost` | COMPLETED | 01:13:49 | `node1843` | **three independent runs of the per-kind cost table in the shape that ships** — the runs that retired the margin rule |

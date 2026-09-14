@@ -46,7 +46,7 @@ PYTHONPATH=$BASE $PY examples/bench_step3.py --device cpu --threads 1 --envs "$E
     --reps 25 --max-cell-s 12 --out "$OUT/cpu_1thread_before_baseline.json" || echo "BEFORE rc=$?"
 SE6_PRIMITIVE_BOUNDS=off PYTHONPATH=$WS $PY scratch/step6/raycast3d/r5_bench_step3_bounds.py \
     --device cpu --threads 1 --envs "$ENVS" \
-    --reps 25 --max-cell-s 12 --out "$OUT/cpu_1thread_after_branch_bounds_off.json" || echo "OFF rc=$?"
+    --reps 25 --max-cell-s 12 --out "$OUT/cpu_1thread_branch_bounds_off_control.json" || echo "OFF rc=$?"
 SE6_PRIMITIVE_BOUNDS=on  PYTHONPATH=$WS $PY scratch/step6/raycast3d/r5_bench_step3_bounds.py \
     --device cpu --threads 1 --envs "$ENVS" \
     --reps 25 --max-cell-s 12 --out "$OUT/cpu_1thread_after_branch_bounds_on.json" || echo "ON rc=$?"
