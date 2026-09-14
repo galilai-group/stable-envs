@@ -31,12 +31,19 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: phase 0 (diagnosis, local; cluster items pending Oscar access)
+  status: 'phase 1 (implementation authorized: shared ellipsoid intersector in raycast3d + cpu3d admission + DMControlTrackCom registration; cluster items pending Oscar)'
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
   worktree: /Users/samib/stable-envs-step7-dmc-quadruped
   agent_model: fable
+  head_sha: 494b747 (phase 0)
+  phase0: "FINDING: SWM default = walk model + Move(0.5), camera 2 (y, trackcom, fovy 45), 224 px, SWM appearance (self recoloured, foot density); state = qpos (0 px under re-render/qvel x100/history);\
+    \ primitives: 1 textured plane, 12 capsules, 4 spheres, 2 cylinders, 1 ELLIPSOID (torso, visible in every state); HFIELD declared but deleted from the walk model (no capability needed); MJWarp supports\
+    \ ellipsoid (ray_ellipsoid) \u2014 no GPU gap; cpu3d refuses kind 4; raycast3d lacks _ellipsoid. Prototype (cpu3d + patched ellipsoid) vs official 3.11 at 224 px: mean 3.55/255, within-8 0.901, SSIM\
+    \ 0.952 (84 px: 5.27/0.826/0.881) inside the family band; residual: floor near body 46% (reflection + shadow), far floor 30%, sky 10%, body 11%, ellipsoid 1.7%. Tier: visual under the 3.11 pair."
+  decisions: certify at the registered SWM default (camera 2, 224 px, SWM appearance); Swimmer6 allow-listed not certified; reflection named as a residual; W4 owns the raycast3d ellipsoid; W3 must not edit
+    raycast3d.py
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -47,9 +54,12 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: queued (feasibility gate)
+  status: phase 0 (feasibility gate, local; started 2026-09-15 as the fourth active workstream)
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
-  wave: 2
+  wave: 1
+  agent_model: fable
+  branch: step7/rocket-landing
+  worktree: /Users/samib/stable-envs-step7-rocket-landing
 decisions: []
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
