@@ -122,7 +122,7 @@ workstreams:
     head_sha: 62136732a5e34dc67e2869d04113a7196d2fcbd3
     agent_model: opus
     wave: wave2
-    status: review (PATCH) + GFXDRAW-2 authorized (GPU fused path implement; CPU mechanism design-first)
+    status: implementation (fixing review blocker: LunarLander regression) then GFXDRAW-2
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU"
     affected_configs: ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"]
@@ -131,9 +131,9 @@ workstreams:
     performance: {cpu_before: "S_cpu 0.17-0.28 (CPU_REGRESSION), 20-30 fps B=1", cpu_after: "S_cpu 0.94-1.92 paired on node1829 (CPU_PARITY on 4/5; Acrobot 0.94); 5.5-7.1x; cores_cpu 0.22-0.50 still BELOW_G4", gpu_before: "R 37-71 (GPU_FASTER) on 3090", gpu_after: "R 83-179 (GPU_FASTER), 2.2-2.5x at every batch, VRAM 9.8-10.3 -> 7.6-9.1 GB at B=4096; bar R>=500", batch_scales: "PASS 1,179-1,890x (was never the blocker; plan.json miscounted a satisfied qualifier string)", no_large_batch_regression: "PASS"}
     pixels_changed: no
     semantic_followup: none
-    review: {reviewer: "fable (independent, spawned)", verdict: null}
+    review: {reviewer: "fable (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: classic-control patch bit-exact (reviewer fuzz 170-175 states/env incl. off-screen cart, 24-turn angles; bounds derivations checked; select_ identity exact; layout/strides identical; measurements paired and honest). BLOCKING: aaline_emit passes (1,)-shaped weight; lunarlander _AARecorder.blend_at indexes w[ok] -> IndexError in LunarLander.__init__ on Box2D hosts (Box2D absent on Oscar, consumer_digests swallowed the error). Required: fix + recorder test + Box2D-host verification; commit bound fuzz test; correct interleave figure (0.287 ms/frame measured, not 0.17); hoist paint_disc colour tensor."}
     slurm_jobs: [6346430, 6346431, 6346933, 6346967, 6346999, 6346954(cancelled)]
-    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the baseline tree."]
+    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the baseline tree.", "Review escalations: no Step-6 gate covers LunarLander/CarRacing consumers on Oscar (no Box2D) -> fresh venv verification ordered; plan.json BATCH_SCALES miscount confirmed at scratch/step3/certify.py:266 (satisfied qualifier counted as blocker) -> recheck other rows; adopt paired S_cpu measurement for all CPU rows (shared-node swings 2.3x)."]
   - workstream: cpu-3d
     brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
     branch: step6/cpu-3d
