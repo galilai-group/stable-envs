@@ -549,3 +549,71 @@ the same question `cpu-3d` §4.3 and `raycast3d`'s RAYCAST-3 both end on.
 certification host), `interleave_laptop.json`. Tools: `scratch/step6/gfxdraw/cost_floor.py`,
 `cost_floor.cpp`, `numba_floor.py`, `interleave_bench.py`, `cpu_floor.sbatch`, `cpu_floor2.sbatch`.
 SLURM 6348987 (`node2334`), 6349091 (`node1831`).
+
+---
+
+## GFXDRAW-2-GPU — the fused per-pixel path for classic control
+
+`stable_envs/render/gfxdraw_classic.py`, reached from `_Classic.render` when the device is CUDA and
+Triton is present. One kernel, one pass, one store per pixel, already flipped.
+
+### What it had to cover, and what `gfxdraw_fused` did not
+
+`gfxdraw_fused` is CarRacing's, and it draws what CarRacing draws: 4-vertex gfxdraw quads plus
+`pygame.draw` polygons, over a flat background. Classic control draws a different alphabet, and the
+missing four are not decorations:
+
+| primitive | where | what the kernel has to do |
+|---|---|---|
+| polygon, 3 or 4 vertices, + `aapolygon` | all five | the Wu inversion `gfxdraw_fused` already has, plus a variable vertex count |
+| `filled_circle` + `aacircle` | CartPole axle, Acrobot joints, Pendulum hub/end/axle, MountainCar wheels | **new**: the disc as a table |
+| `hline` | CartPole's track, Acrobot's ground | **new** |
+| `vline` | MountainCar's flagpole | **new** |
+| alpha blit of a pre-scaled sprite | Pendulum's torque arrow | **new**, and a different blend rule from SDL_gfx's |
+| a pre-baked per-environment plate as the background | MountainCar's terrain | **new** |
+
+**A disc is a table, and that is the one idea in this module that is not in `gfxdraw_fused`.**
+`filled_circle`'s half-width per row and `aacircle`'s fringe weights are constants of the RADIUS,
+which is a constant of the environment and never of the state or the style — so both become a dense
+`(2r+1)^2` lookup at `(dy, dx)` rather than a midpoint walk. `disc_table` builds them from
+`gfxdraw.circle_hw` and `gfxdraw.AACIRCLE_FRINGE`, the same two objects the per-primitive path
+reads, so there is one definition of a disc in the repository rather than two that agree.
+
+### Three implementations, two joints
+
+    gfxdraw.py            per primitive, batched torch      the executable specification
+    gfxdraw_classic.py    render_classic_torch              the same rules, per pixel, in torch
+    gfxdraw_classic.py    render_classic (Triton)           the same again, in one kernel
+
+The middle one is not a convenience. Triton does not exist on the laptop, so without it every
+mistake — a window that clips a primitive, an order that swaps two, a colour from the wrong style
+path — would have cost a GPU job to find. With it, the description is checked in seconds on a CPU
+and the kernel only has to match a form that is already known to draw the right picture. It is the
+same split `raycast3d` keeps between `cast_nearest_torch` and its Triton kernel, and
+`tests/gpu/test_gfxdraw_classic.py` asserts both joints separately so a failure says which file to
+open.
+
+### Status
+
+Implemented and verified as far as a laptop can verify it. **Not yet measured on a device**: the
+`gpu` QOS is estimating 45+ minutes per submission tonight, and the identity tests, the frozen
+replay and the mandatory sweep are one job (6349362) so the wait is paid once. What is established:
+
+| check | where | result |
+|---|---|---|
+| the op list describes what the per-primitive path draws | CPU, all five, 4 state classes | **0 differing pixels** |
+| the same, under per-row colours AND mixed antialias in one batch | CPU, all five | **0 differing pixels** |
+| the per-pixel closed form vs the Triton kernel | CUDA | queued (6349362) |
+| `env.render` with the kernel on vs off | CUDA, `test_fast_paths.py`, 2 new cases | queued |
+| frozen Step 4 replay under the kernel | CUDA | queued |
+| CarRacing's own fused identity test | CUDA | queued |
+| mandatory sweep, kernel on and off, one card one process | CUDA | queued |
+
+The two new `test_fast_paths.py` cases (`gfxdraw-classic-fused-vs-per-primitive` and its `-extreme`
+twin) and `tests/gpu/test_gfxdraw_classic.py` (55 cases) are in the tree and green on the CPU half.
+
+### The one thing that is decided already
+
+`_use_fused` is CUDA-and-Triton only, and `tests/gpu/test_gfxdraw_classic.py` asserts it: a
+`device="cpu"` render takes the per-primitive path by construction, so **the CPU path's pixels and
+the CPU tiers in this document are untouched by GFXDRAW-2** whatever the kernel measures.
