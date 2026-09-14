@@ -14,7 +14,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scratch" / "step3"))
-SW = ROOT / "examples/results/step6/raycast3d/sweep/r6"
+import argparse
+
+_AP = argparse.ArgumentParser(description=__doc__)
+_AP.add_argument("--sweep", default="sweep/r6",
+                 help="directory under examples/results/step6/raycast3d/ holding the pair")
+SW = ROOT / "examples/results/step6/raycast3d" / _AP.parse_args().sweep
 
 
 def rows(path: Path) -> dict:

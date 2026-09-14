@@ -35,6 +35,11 @@ INT=$SCR/se6/integration
 PY=$SCR/venvs/se-step6/bin/python
 OUT=$WS/examples/results/step6/raycast3d
 SW=$OUT/sweep/r6
+# rsync drops .git, so the SHA under measurement can only reach the shard through the environment.
+# Without this the shard records tree_commit "unknown" and git_commit null -- which is what the first
+# pair did, and why sweep/r6/README.md has to carry the commits in prose. The sync writes
+# $WS/GIT_COMMIT from `git rev-parse HEAD`.
+export STABLE_ENVS_GIT_COMMIT=$(cat "$WS/GIT_COMMIT" 2>/dev/null || echo unknown)
 mkdir -p "$SW" "$OUT/profile_after_r6"
 set -x
 cd "$WS"

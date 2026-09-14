@@ -10,7 +10,7 @@
 # raycast3d.composite, and on the two Pointmaze rows that is a tier difference. Its files now live
 # under examples/results/step6/raycast3d/sweep/superseded_r5_node2335/ with their before/after
 # tokens removed; re-running this script would re-create them under the ORIGINAL names and give
-# the report two after-legs again. See that directory's PROVENANCE_NOTE.md.
+# the report two after-legs again. See that directory's README.md.
 #
 # Step-3-SHAPED shards for the Step-6 report generator, which labels tiers only from these and finds
 # none under this workstream's directory.

@@ -2174,7 +2174,7 @@ verified byte-identical to this branch's merge commit before the change was appl
 | `maze2d`, branch vs integration, defaults | cpu | 4 | **identical** | `replay/r6cm_maze2d_branch_vs_integration.json` |
 | the four DMControl trackcom cells (`cpu3d.py`'s path) | cpu | 4 | **identical** | `replay/r6cm_trackcom_identity.json` |
 | `tests/gpu/test_fast_paths.py` at the envs' own sizes | cuda | — | **223 passed**, 179 skipped | job 6366547 |
-| `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **63 passed** | jobs 6366546 / 6366548 / 6366959 |
+| `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **55 passed** (jobs 6366546, 6366548) -> **63 passed** (job 6366959, after the batch-invariance cases) -> **75 passed** (after the review's `bt`-gather and clamp cases, local) | jobs 6366546 / 6366548 / 6366959 |
 | `tests/unit` | cpu | — | **794 passed**, 19 skipped, **2 failed** — the same two pre-existing failures, neither in the authorised file | job 6366959 |
 | branch vs integration, defaults, **re-taken on the HEAD that ships** | cpu | 21 live | **identical** | `replay/r6fin_cpu_branch_vs_integration.json` |
 
@@ -2184,10 +2184,19 @@ change. On CPU it is 0 of 21 on both legs, because **every Step-4 digest was tak
 CPU path has never been frozen — so the CPU evidence here is entirely the dump diff, which is the
 point of dumping rather than hashing.
 
-**Neither leg of the default comparison pins the switch.** With the default off, a replay taking the
-default would have compared the window path against itself and reported `ALL_IDENTICAL` for the wrong
-reason; the job log prints `COMPOSITE_COMPACT_MERGE=True in .../raycast3d.py` before each leg starts,
-so a vacuous run is visible in the log rather than inferred.
+**Neither leg of the default comparison pins the switch**, and the two kinds of leg are evidenced
+differently — which an earlier draft of this section got wrong by claiming one mechanism for both.
+
+* The **pinned** legs (`--compact-merge on|off`) print
+  `COMPOSITE_COMPACT_MERGE=True/False in .../raycast3d.py` before they start, because
+  `replay_step4.py` only reaches that print when a switch is pinned. A vacuous pinned run is
+  therefore visible in the job log.
+* The **default** legs print nothing, by construction: pinning is what triggers the print, so a leg
+  that takes the default cannot announce itself that way. What identifies them is
+  `stable_envs_from` in each per-config record of the replay JSON —
+  `$SCR/se6/integration/stable_envs/__init__.py` on the before leg and
+  `$SCR/se6/raycast3d/stable_envs/__init__.py` on the after leg. That is the field to check, and it
+  is the field that proves the two legs imported different trees rather than the same one twice.
 
 ### The fuzz, and whether it has teeth
 
@@ -2415,7 +2424,7 @@ the same host.
 | env | fps before | fps after | x | S_cpu before -> after | **cores_cpu before -> after** | tier before -> after |
 |---|---:|---:|---:|---|---|---|
 | `PointmazeLargeNavigate` | 1,361 | **6,154** | **4.52** | 70.79 -> **314.45** | **0.663 -> 2.703** | `CPU_FASTER`+`BELOW_G4` -> **`CPU_FAST`** |
-| `PointmazeMediumNavigate` | 969 | **2,732** | **2.82** | 37.23 -> **103.11** | **0.362 -> 1.207** | `CPU_FASTER`+`BELOW_G4` -> **`CPU_FAST`** |
+| `PointmazeMediumNavigate` | 969 | **2,732** | **2.82** | 37.23 -> **103.11** | **0.362 -> 1.207** | `CPU_FASTER`+`BELOW_G4` -> **`CPU_FAST` (marginal, see below)** |
 | `AntmazeGiantNavigate` | 250 | 804 | 3.21 | 21.18 -> 68.35 | 0.102 -> 0.314 | `CPU_FASTER`+`BELOW_G4`, unchanged |
 | `HumanoidmazeMediumNavigate` | 137 | 274 | 2.00 | 8.26 -> 16.65 | 0.057 -> 0.102 | `CPU_FASTER`+`BELOW_G4`, unchanged |
 | `DMCReacherHard` | 132 | 121 | 0.92 | 3.62 -> 3.40 | 0.018 -> 0.018 | control |
@@ -2425,14 +2434,21 @@ the same host.
 | `DMCAcrobotSwingup` | 309 | 311 | 1.01 | 8.29 -> 8.28 | 0.042 -> 0.047 | control |
 | `DMCBallInCupCatch` | 58 | 55 | 0.95 | 3.68 -> 3.61 | 0.009 -> 0.007 | control |
 
-Labels are `scratch/step3/certify.py`'s own, not computed here: **`{'CPU_FASTER': 8, 'CPU_FAST': 2}`**.
+Labels are **`{'CPU_FASTER': 8, 'CPU_FAST': 2}`**, from `scratch/step3/certify.py`'s `classify`
+— the same function `report.py` labels the dashboard with — run over this pair out of tree. Not from
+the sweep job: its `certify.py` step was invoked with a `--doc` flag copied from another workstream's
+script, `certify.py` accepts no such flag, and the step **exited 2 without producing anything**. The
+flag is gone from `r6_sweep.sbatch`, and so is the call: `certify.py` rewrites
+`docs/research/step3_benchmarks.md` as a side effect, which is a Step-3 document this workstream must
+not touch, so the job now reads the tier with `scratch/step6/raycast3d/r6_tiers.py` and the
+certifier's label is taken separately and quoted above.
 
 **The six DM Control rows are a same-code control and they behave like one.** They do not enter
 `composite` at all, both legs run the identical build for them, and their before/after ratios are
 0.92-1.13x — inside each shard's own reference spread. A shard pair that moved them would have been
 measuring the node rather than the change, and this is the row-set that says it did not.
 
-## `PointmazeLargeNavigate` and `PointmazeMediumNavigate` are the first `CPU_FAST` rows on this path
+## `PointmazeLargeNavigate` and `PointmazeMediumNavigate` (marginal) are the first `CPU_FAST` rows on this path
 
 Plainly: **both cross, and no raycast3d configuration had ever crossed before.**
 `CPU_FAST := S_cpu >= 5 AND cores_cpu >= 1`; `S_cpu` was never the problem on these rows (48 and 37
@@ -2440,9 +2456,17 @@ at the Step-3 freeze) and `cores_cpu` always was — Step 3 recorded 0.4159 and 
 ticket 1 put the shortfall at **2.40x**. RAYCAST-2b bought 1.75x of it and stopped at `cores` 0.63;
 RAYCAST-6 buys 4.52x from the integration tree and lands at **2.703**.
 
-`PointmazeMediumNavigate` is the one to read carefully, because it is the narrower crossing and the
-denominator is host-specific. Its after-fps of 2,732 against the three one-core decode rates this
-workstream has actually measured for that configuration:
+**`PointmazeMediumNavigate` is `CPU_FAST` (marginal)** and should be cited that way everywhere,
+because its crossing is narrow and the denominator is host-specific rather than a property of the
+renderer. The decisive number is not its `cores_cpu` but how far the decode bar moved **inside one
+job on one node**: between the before and after legs of job 6366607 on `node2317`, the one-core
+JPEG-q90 rate measured for `PointmazeMediumNavigate` fell 2,678 -> 2,264 f/s (**-15 %**) while the
+rate for `PointmazeLargeNavigate` in the same two legs rose 2,054 -> 2,277 (**+11 %**). Same node,
+same job, same image content, a 26-point swing between two rows in opposite directions: the bar is
+noisy at the scale this crossing is being judged at.
+
+Its after-fps of 2,732 against the three one-core decode rates this workstream has actually measured
+for that configuration:
 
 | decode rate | where it came from | `cores_cpu` |
 |---|---|---:|
@@ -2452,9 +2476,15 @@ workstream has actually measured for that configuration:
 
 **It crosses on all three, and the tightest is 1.02.** The honest statement is that
 `PointmazeMediumNavigate` clears `cores_cpu >= 1` by 2 % in the most conservative reading available
-and by 21 % in its own leg's — a real crossing, but not one with room in it, and a future node whose
-decode is 10 % faster would put it back under. `PointmazeLargeNavigate` has no such ambiguity: 2.70,
-3.00 and 2.61 on the same three denominators.
+and by 21 % in its own leg's — a real crossing, **but not one with room in it**, and a node whose
+decode ran 10 % faster would put it back under. Given that the bar moved -15 % between two legs of
+one job, that is not a hypothetical. `PointmazeLargeNavigate` has no such ambiguity: 2.70, 3.00 and
+2.61 on the same three denominators, and it would still clear the bar if the decode rate were twice
+what was measured.
+
+**Cite it as `CPU_FAST` (marginal), with the range**, not as `CPU_FAST` unqualified: the tier is
+right and the margin is 2-21 % depending on which of three same-workstream decode measurements is
+used as the denominator.
 
 **The two that do not cross, and by how much.** `AntmazeGiantNavigate` gains 3.21x and reaches
 `cores` 0.314 — still **3.2x short**. `HumanoidmazeMediumNavigate` gains 2.00x and reaches 0.102 —
@@ -2470,7 +2500,9 @@ a build that no longer exists, and leaving them in place would have given `repor
 per row and made it print *CPU after-legs disagree* on exactly the two rows whose tier change is the
 result. They are now `sweep/superseded_r5_node2335/`, with the `before`/`after` tokens removed from
 their names — `leg_of` reads the leg out of the filename, so a move alone would not have been enough
-— and a `PROVENANCE_NOTE.md` giving the full comparison and the exact steps to reverse it.
+— and a `README.md` giving the full comparison and the exact steps to reverse it (a
+`README.md` rather than a `PROVENANCE_NOTE.md` so the report generator renders the
+withdrawal reason rather than listing four unexplained files).
 `r5_shards.sbatch`'s header now says it is superseded, because this workstream has already been
 bitten once by a re-run re-creating a name it had deliberately changed. **No DM Control row changes
 tier between the two shards**, which is what makes the replacement safe; the new pair also covers two
@@ -2512,12 +2544,12 @@ All mine, all named `se6-raycast3d-*`. No job I did not submit was touched; one 
 | `6366546` | `se6-raycast3d-r6vcpu` | COMPLETED | 00:06:24 | `node2326` | CPU identity: switch on/off, branch vs integration, trackcom, tests |
 | `6366547` | `se6-raycast3d-r6vgpu` | COMPLETED | 00:02:59 | `gpu2109` | cuda identity on 21 (both comparisons), fast-path suite, first GPU sweep |
 | `6366548` | `se6-raycast3d-r6m2d` | COMPLETED | 00:00:52 | `node2326` | maze2d `PointMaze*` identity in the fresh venv |
-| `6366607` | `se6-raycast3d-r6sweep` | COMPLETED | ~00:45 | `node2317` | **the interleaved sweep and the Step-3-shaped pair** |
+| `6366607` | `se6-raycast3d-r6sweep` | COMPLETED | 00:43:43 | `node2317` | **the interleaved sweep and the Step-3-shaped pair** |
 | `6366608` | `se6-raycast3d-r6gnr` | COMPLETED | 00:02:37 | `gpu2104` | **the interleaved GPU no-regression check** that retired the 0.53x reading |
 | `6366640` | `se6-raycast3d-r6design` | COMPLETED | 00:02:30 | `node2345` | before/after attribution — **discarded**: the profiler's nested timers mis-attributed a block |
 | `6366736` | `se6-raycast3d-r6design` | COMPLETED | 00:02:30 | `node2345` | the same, with the recorder fixed; this is the one quoted |
-| `6366853` | `se6-raycast3d-r6gt` | COMPLETED | 00:03:00 | `gpu2116` | the fast-path suite after the cover-compaction case was re-pointed |
-| `6366959` | `se6-raycast3d-r6fin` | COMPLETED | 00:05:00 | `node2338` | identity re-taken on the HEAD that ships, plus `tests/unit` |
+| `6366853` | `se6-raycast3d-r6gt` | COMPLETED | 00:02:41 | `gpu2116` | the fast-path suite after the cover-compaction case was re-pointed |
+| `6366959` | `se6-raycast3d-r6fin` | COMPLETED | 00:04:28 | `node2349` | identity re-taken on the HEAD that ships, plus `tests/unit` |
 
 ## Report
 

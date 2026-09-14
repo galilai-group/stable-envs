@@ -1,5 +1,9 @@
 # Superseded: the RAYCAST-5 CPU shard pair
 
+*(This file was `PROVENANCE_NOTE.md`. It is a `README.md` so the Step-6 report generator
+renders the withdrawal reason beside the withdrawn files instead of listing them as
+unexplained artifacts.)*
+
 These three shards were taken on `node2335` in job **6354672** and were correct when they were
 written. They describe a build of this branch that no longer exists: RAYCAST-6 changed
 `raycast3d.composite` under them, and on the two Pointmaze rows that changes the TIER, not just the
