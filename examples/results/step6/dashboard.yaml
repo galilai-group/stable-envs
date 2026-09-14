@@ -452,10 +452,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-cpu-3d
   oscar_copy: $SCR/se6/cpu-3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: ccba12d (M1 PATCH, in review)
+  head_sha: 8b06a52 (review round 1 applied; awaiting RAYCAST-5 merge for the post-merge re-run)
   agent_model: fable
   wave: wave2
-  status: implementation (applying review changes; post-RAYCAST-5 re-run pending)
+  status: implementation (review changes applied; post-RAYCAST-5 re-run then merge)
   authorization: Phase 2 implement (DMC four) + Fetch feasibility only
   goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
   affected_configs:
@@ -492,7 +492,9 @@ workstreams:
     cpu_before: CPU_UNMEASURED / DEVICE_NOT_HONOURED (trackcom four); Fetch no CPU route
     cpu_after: 'CPU_FASTER + BELOW_G4 on all four (node2333, paired llvmpipe spread 1.08-1.13): Cheetah 115.6 fps S_cpu 4.93 cores 0.017; Hopper 187.8 / 6.86 / 0.028; Walker 63.1 / 2.52 / 0.008; Humanoid
       45.8 / 4.22 / 0.006; 60-75% of time in raycast3d unfused cast (RAYCAST-5 should lift). Fetch: span rasteriser on real 15 meshes/31,720 tris at 480px = 277-327 ns/tri, 97-114 fps, cores 0.11-0.15;
-      CPU_FAST needs <=36-41 ns/tri -> 7-9x short, setup-bound -> BLOCKER'
+      CPU_FAST needs <=36-41 ns/tri -> 7-9x short, setup-bound -> BLOCKER | Fetch re-measured with backface culling + phases (job 6356048, node2407 EPYC 9684X, load ~135): culled 135 ns/tri, 4.28 ms, 234
+      fps; un-culled 214 ns (2x overdraw confirmed); setup 24 + bbox 77 + shade 34 ns/tri; 3.3-3.8x short of the 36-41 ns budget culled; setup alone is 60-68% of the budget; S_cpu>=5 arm also fails -> BLOCKER
+      stands'
     gpu_before: unchanged
     gpu_after: unchanged (cuda IDENTICAL)
     batch_scales: null
@@ -510,6 +512,11 @@ workstreams:
   - 6354766
   - 6354767
   - 6354890
+  - 6356047
+  - 6356048
+  - 6356330
+  - 6356449
+  - 6356450
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER,
@@ -524,6 +531,10 @@ workstreams:
     within1_min/mean_abs_max (e.g. 0.9990/0.03) plus per-device visual-tier statement, noting CPU frames'' distance to the official reference equals MJWarp''s to 3 decimals (6.513 vs 6.512, 6.205, 15.562,
     6.291) - Sami decision. E2 gl_rounding: every shipped GPU frame of these four cells is truncated; fix is one line, moves four cuda digests (re-freeze). E3 cpu3d is a new consumer of the CPU cast ->
     re-run after RAYCAST-5 merges. E4 CPU reference arm is llvmpipe vs declared hardware EGL (margins safe; record GL string). E5 cuda replay is integration-vs-branch identical, not frozen-oracle pass.'
+  - 'Review round 1 applied (8b06a52): provenance stamped (round-2 certification job 6356047 on node2407 reproduces round 1 to every digit; GL string llvmpipe recorded); --frac-bits knob fixed and ablations
+    relabelled/regenerated with signed diffs; Scene.__init__ now rejects cam_projection!=0, sensorsize, POINT/IMAGE lights, shadow-casting directional light, non-default attenuation, reads light_active,
+    implements nlight==0 fallback, texel-(0,0) textured non-plane, plane as shadow occluder, primary backface cull; two shadow preconditions checked per chunk; Swimmer6 raises naming env+geom (test); numbers/§2.3/§4.4
+    corrected; test_cpu3d 30 pass; unit 689 pass. Coordinator: node2333 shard is the certification row; batch=1024 cells reported not certified (partition finding).'
 - workstream: tilemap
   brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
   branch: step6/tilemap
