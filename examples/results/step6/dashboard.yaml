@@ -771,8 +771,9 @@ integration_verification:
     (21 raycast3d rows included by a ${RAY:-} default bug, now ${RAY-}); unit 732 pass + 2 pre-existing.'
   final_pass: 'ready: scratch/step6/verify/final.sbatch (dmc+ogb+swm shards, trackcom cells under se-step5 paired with se-step3, Gate A, full test_reproducibility, VISIBILITY-1 line) + cpu_verify.sbatch
     with CPUVENV=se-step6 (no mujoco_warp importable) + tests/unit; waiting for RAYCAST-5, cpu-3d, VISIBILITY-1 merges'
-step6_status: CODE COMPLETE 2026-09-15 at integration 83bd778 (+ verification/docs merges). All eight workstreams merged and closed. Remaining items are Sami decisions (see decisions/notes) and Step-8 carry-overs;
-  no further Step-6 implementation is authorized. Not pushed.
+step6_status: 'CLOSED 2026-09-15: ENGINEERING COMPLETE WITH DOCUMENTED CERTIFICATION BLOCKERS (coordinator recommendation to Sami). Final code state 547c887; integration HEAD after artifacts/docs = see
+  git log. Gate A 48/49 PASS + CraftaxClassic PARTIAL, 0 FAIL. Registered/default: CPU_FAST+ 2/36, GPU_FAST+ 16/36. The frozen Step-2 performance contract is NOT fully satisfied; nothing pushed; Step 7
+  not started.'
 deferred_work:
 - item: gfxdraw per-environment GPU specialisation
   reason: four registered rows at R 303-398 vs 500; per-pixel walk cost, not bandwidth; general kernel exhausted
@@ -815,8 +816,10 @@ lance_baseline:
     cores_cpu median 0.20 (agrees in direction); ours scales by processes not threads (8 procs > 8 threads on 24/24, median 1.53x). GPU end-to-end (state->device vs 8-worker JPEG->device incl. H2D): 30/36
     win, gpu_pipeline_ratio median 1.44; vs nvJPEG 35/36 win, median 3.42; losers = six raycast3d DMC rows (BallInCup 0.18, ReacherHard 0.47, FingerTurnHard 0.56, AcrobotSwingup 0.68, PendulumSwingup 0.84,
     CartpoleSwingup 0.97). Renderer-only GPU column re-measured post-Step-6 for all 36.'
-  caveats: CPU column for the raycast3d rows predates RAYCAST-6 (PointmazeLarge 1-thread now 5,535-6,154 fps); GPU-side Lance denominator measured on 8 EPYC 7532 cores at load 54 vs Xeon 8268 CPU arms ->
-    gpu_pipeline_ratio flattering by roughly that CPU ratio; examples/results/storage/lance.json must not be quoted for configs whose size_note is null (25/36 describe a frame the config does not render).
+  caveats: 'CPU column for the raycast3d rows predates RAYCAST-6 (PointmazeLarge 1-thread now 5,535-6,154 fps); GPU-side Lance denominator measured on 8 EPYC 7532 cores at load 54 vs Xeon 8268 CPU arms
+    -> gpu_pipeline_ratio flattering by roughly that CPU ratio; examples/results/storage/lance.json must not be quoted for configs whose size_note is null (25/36 describe a frame the config does not render).
+    PointmazeLargeNavigate: the Lance CPU row used the pre-RAYCAST-6 renderer (1,189 fps 1-thread; cpu_pipeline_ratio 0.47); post-RAYCAST-6 the same row is 5,535-6,154 fps 1-thread, which would exceed one
+    Lance worker (2,464) and, scaled, the 8-worker arm (19,184) - a projection, not a measurement.'
   jobs:
   - 6366652
   - 6366696
