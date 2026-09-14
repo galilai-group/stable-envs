@@ -342,3 +342,126 @@ Saying this explicitly for `PushT`, because it is the representative path of the
 `digest_ours` on cuda is `cecda14a…`, unchanged, and its GPU renderer was not modified at all — the
 patch is in `render_torch`, which the default cuda path does not call. There is nothing for a
 downstream rerun to detect.
+
+
+---
+
+# Round 2 — the three authorized follow-ups
+
+`1103326` went to independent review as `APPROVE-WITH-CHANGES`. What follows is on top of it, on
+`step6/raster2d` after `git merge step6/integration` (a merge, not a rebase; the one conflict was
+`profile_note.py`, where both branches had made the same one-line fix and only this branch carried
+the comment explaining it).
+
+## 8. RASTER2D-1c — the second instance of the device-dispatch defect (`48c221a`)
+
+`check_backend_agreement` guarded on `HAVE_TRITON` and then called `render_triton` unconditionally,
+so on a Triton host a `device="cpu"` env died with the same `ValueError: Expected a cuda device` and
+took its conformance row with it. Reproduced on a host without Triton by forcing
+`raster2d.HAVE_TRITON = True`, which is what makes the old predicate fire: PushT and SimplePointMaze
+both raise before the commit and both return a skip naming the device after it.
+
+It is a defect rather than a slow path. A CPU env has ONE backend, so the question the check asks
+does not arise, and "not applicable" is the same answer, in the same shape, that the tilemap branch
+beside it already returns for the other reason a Scene2D comparison cannot be made. On cuda nothing
+changes.
+
+## 9. RASTER2D-2 — row grouping (`c376f34`)
+
+The plan from §7a, implemented. Per-row boxes of a moving primitive are all the same SIZE and differ
+only in ORIGIN; quantise the origin onto a grid of that size and each cell's rows share a window at
+most two cells across. The cell count is bounded by the FRAME, so the loop is flat in the batch:
+SimplePointMaze's disc has **64 groups at batch 64 and the same 64 at batch 1024**, against a union
+window costing 64 and 1024 frames.
+
+**Both constants of the cost model are measured, and the first guess at one of them was wrong by 5x
+and silently refused the grouping on every scene that wanted it.** One group is 56-68 us of
+dispatch, flat in the batch, timed on a scene built so the grouped pixel work is fixed and only the
+group count varies; a window pixel is 6-20 ns; so a group buys itself at 10,000 window pixels. The
+accept margin is 1.25. Scanned against wall time over the frozen corpora and a synthetic worst case
+of many groups and almost no pixel work, that pair is never slower than not grouping. Experiments and
+their output: `scratch/step6/raster2d/window_experiment.py`, `experiments/window_*.txt`.
+
+Interleaved in one process against the `render_torch` at `1103326`, one thread, frozen states:
+
+| config | B=1 | B=16 | B=64 | B=256 |
+|---|---|---|---|---|
+| PushT | 1.01x | 0.97x | **2.08x** | **3.10x** |
+| SimplePointMaze | 0.99x | **2.46x** | **2.44x** | **2.43x** |
+
+Pixels identical: 2,400 random scenes against the verbatim 89fa5ca8 implementation, the six frozen
+CPU digests, and all eight registered Scene2D consumers.
+
+**The interface, for gfxdraw.** `raster2d._row_groups(box, r0, r1, c0, c1)` takes a `(B,4)` int64
+array of per-row pixel boxes and the union window already computed from them, and returns a list of
+`(rows, r0, r1, c0, c1)` — `rows is None` meaning the whole batch through a view, otherwise an index
+array. It has no Scene2D in it and nothing 2-D-primitive-specific; `swm_nav` already uses it for its
+Gaussian dots (§10). If `gfxdraw` wants the same partition it can call it as-is. **`gfxdraw.py` was
+not touched** — that workstream is mid-GFXDRAW-2.
+
+## 10. SWMNAV-1 — bake the base image, bound the dot (`d862e2a`)
+
+Two changes on the `swm_nav` path, which is not Scene2D and needed its own fix.
+
+**The bake.** The base image is a pure function of the style; rows are grouped by the bytes of their
+style row and each distinct row is built once. The key is the WHOLE row rather than the leaves an env
+happens to read — a key listing the relevant leaves would go stale the day somebody adds a leaf that
+feeds the base image and forgets to declare it, and a wrong key is a stale picture. Keying on
+everything can only cost a miss.
+
+**The dot window, and the claim this findings document got wrong the first time.** §7b said "an alpha
+of 2e-9 still moves a pixel" and concluded the Gaussian could not be cropped. Measured against
+`_alpha_blend` itself, the smallest alpha that changes any pixel over every uint8 contrast is
+**2.98e-8 = 2^-25**, at `img=1, colour=0` — `img * (1 - a)` goes through `1 - a`, which rounds to
+exactly 1.0 in float32 below the spacing at 1.0, and that is four orders of magnitude more sensitive
+than the 1/255 the other direction needs. Below that alpha the blend is the identity, so the dot is
+boundable at **5.89 sigma**.
+
+The subtlety is the normalisation. `_gaussian_dot` divides by the frame's own maximum, so for a
+centre outside the frame — which `render(states)` permits, since only `step` clamps — the whole dot
+is rescaled until its largest in-frame sample is 1.0, and a window derived from the un-normalised
+tail alone would crop a dot painting at full strength. The window therefore grows by the distance
+from the centre to the nearest in-frame sample, and it always contains that sample, which is what
+lets the maximum be taken over the window and still be the frame's.
+
+Against the full-frame composition it replaces, one thread, frozen states, pixels identical:
+
+| config | B=1 | B=16 | B=64 | B=256 |
+|---|---|---|---|---|
+| TwoRoom | 8.81x | 7.55x | **6.88x** | 7.08x |
+| TwoRoomTarget | 6.31x | 5.39x | **4.10x** | 4.28x |
+| Piecewise | 4.36x | 3.78x | **3.08x** | 3.24x |
+| PiecewiseZones | 11.99x | 9.86x | **8.43x** | 8.95x |
+
+## 11. The regression tests the review asked for
+
+`tests/unit/test_raster2d_torch_backend.py` and `tests/unit/test_swm_nav_render.py`, both CPU-only,
+both differential against the arithmetic they replaced, and both mutation-checked rather than
+assumed green:
+
+| mutation | caught by |
+|---|---|
+| delete the exactly-zero shoelace collinear cull | 7 raster2d cases |
+| shrink a window by one pixel | 2 raster2d cases |
+| widen `_ALPHA_FLOOR` to 1e-3 | 33 swm_nav cases |
+| drop the out-of-frame margin from the dot window | 1 swm_nav case |
+| restore the `contiguous()` that aliased the cached plate | 20 swm_nav cases |
+| key every style row on row 0 | 4 swm_nav cases |
+
+The raster2d oracle is 89fa5ca8's `render_torch`, loaded from `fuzz_render_torch.py` so there is one
+copy rather than two that can drift, and it **stays** 89fa5ca8's under RASTER2D-2 — comparing the
+current renderer against itself would pass no matter what it drew.
+
+Two of those mutations are bugs this work actually had, not hypotheticals. The `contiguous()` one
+shipped for about twenty minutes: `expand` to a tensor's own shape returns it, `contiguous()` on
+something already contiguous returns it again, so at batch 1 the agent was painted into the cached
+plate and every later render of that style came back with a stale dot. The order-invariance and
+purity columns of `cpu_digest.py` went False and that is how it was found.
+
+## 12. Provenance of a sweep
+
+`examples/bench_step3.py` now records `stable_envs.__file__` and the tree root in every shard and
+resolves the SHA through `STABLE_ENVS_GIT_COMMIT` or a `GIT_COMMIT` file, the way `fidelity_step4`
+already does — the measured copy on the cluster is an rsync without `.git`, so every sweep artifact
+before this recorded `git_commit: null`, and a before/after that switches `PYTHONPATH` between two
+checkouts could not otherwise prove which tree each leg timed.
