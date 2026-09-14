@@ -45,7 +45,7 @@
   "official_renderer_timing": "paired: one reference burst between every batch cell, median of the readings",
   "fused_classic_kernel": false
  },
- "envs": [
+ "envs_not_for_certification": [
   {
    "env": "Acrobot",
    "projected_to": [
@@ -631,5 +631,8 @@
     "load_decode_fps_per_core": 877.8417531031853
    }
   }
- ]
+ ],
+ "envs": [],
+ "excluded_from_certification": "the kernel-off comparison arm. certify.merge keys on (env, device, host, threads) with no slot for an arm, so a before/after pair from one host collides and one silently supersedes the other -- on a tie, by path order. Only the arm reflecting the current tree is a certification row.",
+ "how_this_exclusion_works": "certify.merge reads d.get('envs', []), so an empty list contributes no runs and no tier. The rows are kept under 'envs_not_for_certification'. Structural, so it holds wherever the file sits and survives a pull that recreates it."
 }

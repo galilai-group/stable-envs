@@ -40,7 +40,7 @@
   "official_renderer_timing": "paired: one reference burst between every batch cell, median of the readings",
   "fused_classic_kernel": true
  },
- "envs": [
+ "envs_not_for_certification": [
   {
    "env": "Acrobot",
    "projected_to": [
@@ -566,5 +566,8 @@
     "load_decode_fps_per_core": 886.6251131178145
    }
   }
- ]
+ ],
+ "envs": [],
+ "excluded_from_certification": "the reference varied 4.52x-10.37x across the interleaved readings; certifiable=false",
+ "how_this_exclusion_works": "certify.merge reads d.get('envs', []), so an empty list contributes no runs and no tier. The rows are kept under 'envs_not_for_certification'. Structural, so it does not depend on the report generator's directory traversal."
 }

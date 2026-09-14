@@ -7,7 +7,38 @@
   1024,
   4096
  ],
- "envs": [
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "cuda": "12.6",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "device_total_gb": 25.3,
+  "driver": "575.57.08",
+  "git_commit": null,
+  "git_dirty": false,
+  "host": "gpu2104.oscar.ccv.brown.edu",
+  "loadavg_end": 22.56,
+  "loadavg_start": 22.91,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6346430",
+  "slurm_nodelist": "gpu2104",
+  "timestamp": "2026-09-13T19:19:33-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "states_in": null,
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard",
+ "envs_not_for_certification": [
   {
    "backend": "auto",
    "cells": [
@@ -569,35 +600,7 @@
    "supersample": 1
   }
  ],
- "provenance": {
-  "arch": "x86_64",
-  "certification_spec_version": 1,
-  "cpu": "AMD EPYC 7532 32-Core Processor",
-  "cpu_count_logical": 64,
-  "cpu_count_physical": 64,
-  "cuda": "12.6",
-  "device": "cuda",
-  "device_name": "NVIDIA GeForce RTX 3090",
-  "device_total_gb": 25.3,
-  "driver": "575.57.08",
-  "git_commit": null,
-  "git_dirty": false,
-  "host": "gpu2104.oscar.ccv.brown.edu",
-  "loadavg_end": 22.56,
-  "loadavg_start": 22.91,
-  "mujoco_gl": "egl",
-  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
-  "python": "3.12.9",
-  "slurm_job_id": "6346430",
-  "slurm_nodelist": "gpu2104",
-  "timestamp": "2026-09-13T19:19:33-0400",
-  "torch": "2.14.0+cu126",
-  "torch_threads": 1
- },
- "reps": 25,
- "ss_request": "native",
- "states_in": null,
- "states_out": null,
- "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
- "what": "Step 3 raw renderer benchmark shard"
+ "envs": [],
+ "excluded_from_certification": "the pre-Step-6 baseline, and one arm of a pair that collides in merge's key",
+ "how_this_exclusion_works": "certify.merge reads d.get('envs', []), so an empty list contributes no runs and no tier. The rows are kept under 'envs_not_for_certification'. Structural, so it does not depend on the report generator's directory traversal."
 }
