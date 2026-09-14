@@ -1,0 +1,582 @@
+[
+ {
+  "id": 0,
+  "name": "floor",
+  "type": "PLANE",
+  "group": 0,
+  "body": 0,
+  "bodyname": "world",
+  "size": [
+   10.0,
+   10.0,
+   0.5
+  ],
+  "matid": 0,
+  "matname": "grid",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.0,
+   0.0,
+   0.0
+  ]
+ },
+ {
+  "id": 1,
+  "name": "eye_r",
+  "type": "CYLINDER",
+  "group": 0,
+  "body": 1,
+  "bodyname": "torso",
+  "size": [
+   0.05,
+   0.1069,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.205,
+   -0.07,
+   0.67
+  ]
+ },
+ {
+  "id": 2,
+  "name": "eye_l",
+  "type": "CYLINDER",
+  "group": 0,
+  "body": 1,
+  "bodyname": "torso",
+  "size": [
+   0.05,
+   0.1069,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.205,
+   0.07,
+   0.67
+  ]
+ },
+ {
+  "id": 3,
+  "name": "torso",
+  "type": "ELLIPSOID",
+  "group": 0,
+  "body": 1,
+  "bodyname": "torso",
+  "size": [
+   0.3,
+   0.27,
+   0.2
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.0,
+   0.0,
+   0.57
+  ]
+ },
+ {
+  "id": 4,
+  "name": "thigh_front_left",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 2,
+  "bodyname": "hip_front_left",
+  "size": [
+   0.08,
+   0.1598,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.306,
+   0.306,
+   0.625
+  ]
+ },
+ {
+  "id": 5,
+  "name": "shin_front_left",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 3,
+  "bodyname": "knee_front_left",
+  "size": [
+   0.065,
+   0.1768,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.501,
+   0.501,
+   0.555
+  ]
+ },
+ {
+  "id": 6,
+  "name": "foot_front_left",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 4,
+  "bodyname": "ankle_front_left",
+  "size": [
+   0.055,
+   0.125,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.589,
+   0.589,
+   0.305
+  ]
+ },
+ {
+  "id": 7,
+  "name": "toe_front_left",
+  "type": "SPHERE",
+  "group": 0,
+  "body": 5,
+  "bodyname": "toe_front_left",
+  "size": [
+   0.08,
+   0.0,
+   0.0
+  ],
+  "matid": 4,
+  "matname": "effector",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.589,
+   0.589,
+   0.13
+  ]
+ },
+ {
+  "id": 8,
+  "name": "thigh_front_right",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 6,
+  "bodyname": "hip_front_right",
+  "size": [
+   0.08,
+   0.1598,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.306,
+   -0.306,
+   0.625
+  ]
+ },
+ {
+  "id": 9,
+  "name": "shin_front_right",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 7,
+  "bodyname": "knee_front_right",
+  "size": [
+   0.065,
+   0.1768,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.501,
+   -0.501,
+   0.555
+  ]
+ },
+ {
+  "id": 10,
+  "name": "foot_front_right",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 8,
+  "bodyname": "ankle_front_right",
+  "size": [
+   0.055,
+   0.125,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.589,
+   -0.589,
+   0.305
+  ]
+ },
+ {
+  "id": 11,
+  "name": "toe_front_right",
+  "type": "SPHERE",
+  "group": 0,
+  "body": 9,
+  "bodyname": "toe_front_right",
+  "size": [
+   0.08,
+   0.0,
+   0.0
+  ],
+  "matid": 4,
+  "matname": "effector",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   0.589,
+   -0.589,
+   0.13
+  ]
+ },
+ {
+  "id": 12,
+  "name": "thigh_back_right",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 10,
+  "bodyname": "hip_back_right",
+  "size": [
+   0.08,
+   0.1598,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.306,
+   -0.306,
+   0.625
+  ]
+ },
+ {
+  "id": 13,
+  "name": "shin_back_right",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 11,
+  "bodyname": "knee_back_right",
+  "size": [
+   0.065,
+   0.1768,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.501,
+   -0.501,
+   0.555
+  ]
+ },
+ {
+  "id": 14,
+  "name": "foot_back_right",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 12,
+  "bodyname": "ankle_back_right",
+  "size": [
+   0.055,
+   0.125,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.589,
+   -0.589,
+   0.305
+  ]
+ },
+ {
+  "id": 15,
+  "name": "toe_back_right",
+  "type": "SPHERE",
+  "group": 0,
+  "body": 13,
+  "bodyname": "toe_back_right",
+  "size": [
+   0.08,
+   0.0,
+   0.0
+  ],
+  "matid": 4,
+  "matname": "effector",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.589,
+   -0.589,
+   0.13
+  ]
+ },
+ {
+  "id": 16,
+  "name": "thigh_back_left",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 14,
+  "bodyname": "hip_back_left",
+  "size": [
+   0.08,
+   0.1598,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.306,
+   0.306,
+   0.625
+  ]
+ },
+ {
+  "id": 17,
+  "name": "shin_back_left",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 15,
+  "bodyname": "knee_back_left",
+  "size": [
+   0.065,
+   0.1768,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.501,
+   0.501,
+   0.555
+  ]
+ },
+ {
+  "id": 18,
+  "name": "foot_back_left",
+  "type": "CAPSULE",
+  "group": 0,
+  "body": 16,
+  "bodyname": "ankle_back_left",
+  "size": [
+   0.055,
+   0.125,
+   0.0
+  ],
+  "matid": 1,
+  "matname": "self",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.589,
+   0.589,
+   0.305
+  ]
+ },
+ {
+  "id": 19,
+  "name": "toe_back_left",
+  "type": "SPHERE",
+  "group": 0,
+  "body": 17,
+  "bodyname": "toe_back_left",
+  "size": [
+   0.08,
+   0.0,
+   0.0
+  ],
+  "matid": 4,
+  "matname": "effector",
+  "rgba": [
+   0.5,
+   0.5,
+   0.5,
+   1.0
+  ],
+  "contype": 1,
+  "conaff": 1,
+  "dataid": -1,
+  "xpos": [
+   -0.589,
+   0.589,
+   0.13
+  ]
+ }
+]
