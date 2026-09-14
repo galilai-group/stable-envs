@@ -1451,8 +1451,10 @@ B=8 bundle whose other seven rows are a different scene, and compares bit patter
 `node1827`: **27 passed** for that module (24 differential + 3 batch-invariance), and `tests/unit`
 overall **570 passed, 9 skipped, 2 failed** — both failures pre-existing and outside the authorised
 files: `render_mjwarp.py --help`, and `test_every_cited_scratch_path_resolves`, which after this
-commit is down to **two** unresolvable citations (`scratch/carracing/logs/` and
-`scratch/robocasa/out/corpus`), both cited from `docs/research/` and
+commit is down to **two** unresolvable citations (a `carracing` log directory and a `robocasa`
+output corpus — deliberately not spelled as paths here, because writing them out would make THIS
+file a citation site for them and hand the blame to this workstream), both cited from `docs/research/`
+and
 `examples/results/step6/texture-fidelity/findings.md` and neither from this workstream. Verified by
 re-running that module against the synced tree with this document in place.
 
@@ -1492,6 +1494,193 @@ measurements and neither is noise.
 Neither limit is a defect of the bound; they are what the bound costs, and they are the two places a
 follow-up would look.
 
+
+# RAYCAST-5 — the bound pays only where the intersector is dearer than the bound
+
+RAYCAST-4 shipped a bound that was on for every primitive kind. It gained 3.08x on `ball_in_cup`
+and cost `PointmazeLargeNavigate` 8 % and `PointmazeMediumNavigate` 25 % — a regression on a row
+with a frozen Step-3 CPU certification. This is the repair, and the thing it must not be is a
+threshold on `K`, on `N`, or on selectivity: those are constants fitted to the eight rows that
+happened to be swept.
+
+## The predicate is arithmetic, not a fit
+
+For one primitive over `N` rays:
+
+    unbounded:  cost_intersect(kind) * N
+    bounded:    cost_bound * N  +  cost_intersect(kind) * N * p       (p = fraction of rays kept)
+
+so the bound pays iff `cost_bound < cost_intersect(kind) * (1 - p)`. `p` belongs to the scene and
+is not knowable inside the cast — but `p >= 0`, so the condition that must hold for **every** scene,
+batch and resolution is just `cost_bound < cost_intersect(kind)`. A kind whose intersector is
+cheaper than the bound's own mask + `nonzero` + gather + scatter can never pay: there is nothing
+left to save even under perfect pruning. That ratio is a property of the intersector's arithmetic.
+
+`scratch/step6/raycast3d/r5_kind_cost.py`, job `6352389`, `node2339` (x86_64), 1 thread, B in {1,16,64} x N in {7056, 50176, 200704}, timing the
+bound at its **worst** case — a radius so large that nothing is pruned, so the gather and the
+scatter run at full width:
+
+| kind | `ns_intersect / ns_bound`, worst .. best over every width | bounded? |
+|---|---:|---|
+| `PLANE` | no finite bounding sphere | no |
+| `SPHERE` | 0.45 .. 0.83 | no |
+| `BOX` | 1.84 .. 2.93 | **yes** |
+| `CYLINDER` | 1.95 .. 3.11 | **yes** |
+| `CAPSULE` | 2.38 .. 3.74 | **yes** |
+
+The margin is measured too: `1 + 3*worst_rsd` = **1.227**, from this
+benchmark's own worst relative standard deviation (7.6 %). It lands
+in a gap of more than a factor of two between 0.83 and 1.84, so the table does not depend on where
+in that gap the line is drawn — which is the difference between a derived constant and a fitted
+one. `_BOUNDED_KINDS = {CAPSULE, CYLINDER, BOX}`, and
+`test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose` fails if the module constant
+and that JSON ever disagree.
+
+## What each config actually casts — counted, not assumed
+
+The explanation *"Pointmaze regressed because its mover is a sphere"* is a claim about MuJoCo
+models resolved at bake time, so it is measured (`experiments/r5_mover_kinds.json`):
+
+| config | primitives cast per frame | bounded | unbounded |
+|---|---|---:|---:|
+| `PointmazeLargeNavigate` | SPHERE x1 | 0 | 1 |
+| `PointmazeMediumNavigate` | SPHERE x1 | 0 | 1 |
+| `DMCBallInCupCatch` | CAPSULE x33, SPHERE x3 | 33 | 3 |
+| `DMCCartpoleSwingup` | BOX x1, CAPSULE x1 | 2 | 0 |
+| `DMCFingerSpin` | CAPSULE x5, CYLINDER x2 | 7 | 0 |
+| `DMCReacherHard` | CAPSULE x2, SPHERE x2 | 2 | 2 |
+| `DMCAcrobotSwingup` | CAPSULE x2, CYLINDER x1, SPHERE x1 | 3 | 1 |
+| `DMCPendulumSwingup` | CAPSULE x1, CYLINDER x1, SPHERE x1 | 2 | 1 |
+| `AntmazeGiantNavigate` | CAPSULE x12, SPHERE x1 | 12 | 1 |
+| `HumanoidmazeGiantNavigate` | CAPSULE x16, SPHERE x3 | 16 | 3 |
+
+**All four Pointmaze configs cast exactly one primitive and it is a SPHERE.** Under this table the
+bound is not merely cheaper for them, it is *absent* — which is why the regression should return to
+exactly 1.00x rather than approximately.
+
+## The call-level short circuit, which is the same table read once
+
+The per-kind table alone still left Pointmaze at 0.92-0.98x — **with its ray-primitive test counts
+identical in both legs**, 0.08 per pixel either way. Identical counts mean identical work inside the
+`K`-loop, which located the cost precisely: `dd = _dot(d, d)` and the `_unit_rays` reduction run
+*before* the loop, unconditionally, over the whole bundle — 200,704 rays at `ss=2`, per cast call,
+for a loop that then bounds nothing. `any(_kind_is_bounded(k) for k in kinds)` at the top returns
+the verbatim unbounded body instead. No new constant and no second predicate: it is the authorised
+per-kind decision applied to the call rather than to each primitive.
+
+| row | B=16 / 64 / 256, per-kind table only | with the short circuit |
+|---|---|---|
+| `PointmazeLargeNavigate` | 0.98 / 0.95 / 0.91 | **1.06 / 1.01 / 1.05** |
+| `PointmazeMediumNavigate` | 0.95 / 0.98 / 0.96 | **1.00 / 1.02 / 0.93** |
+
+## The bar is finer than the harness — measured, not asserted
+
+Four readings still sat under 0.97x, one of them `PointmazeMediumNavigate` at B=256 on a row whose
+bounded path is *absent*. A 7 % cost cannot come from an `any()` over a one-element list, so either
+the reading was wrong or the harness was. `r5_noise.sbatch` (job `6354150`) runs four **interleaved**
+legs — off, on, off, on — same branch, same node, same job, 15 repeats instead of 5. `off2/off1` is
+a ratio of two runs of *identical code* and therefore measures nothing but the harness.
+
+| env | B | off1 | off2 | **noise** | on (mean) | **signal** | verdict |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `DMCCartpoleSwingup` | 1 | 69.9 | 73.9 | 1.058 | 69.7 | **0.969** | below bar, **B=1 is not a certification batch** |
+| `DMCCartpoleSwingup` | 16 | 269.2 | 279.1 | 1.037 | 420.1 | **1.533** | ok |
+| `DMCCartpoleSwingup` | 64 | 293.5 | 308.1 | 1.050 | 519.9 | **1.729** | ok |
+| `DMCCartpoleSwingup` | 256 | 257.4 | 287.5 | 1.117 | 519.3 | **1.906** | ok |
+| `DMCFingerSpin` | 1 | 20.2 | 20.4 | 1.012 | 24.4 | **1.200** | ok |
+| `DMCFingerSpin` | 16 | 50.3 | 51.3 | 1.021 | 103.2 | **2.031** | ok |
+| `DMCFingerSpin` | 64 | 47.3 | 46.9 | 0.991 | 94.2 | **1.999** | ok |
+| `DMCFingerSpin` | 256 | 42.7 | 42.6 | 0.996 | 90.2 | **2.116** | ok |
+| `DMCReacherHard` | 1 | 43.3 | 40.4 | 0.934 | 44.1 | **1.053** | ok |
+| `DMCReacherHard` | 16 | 81.8 | 77.2 | 0.943 | 115.2 | **1.449** | ok |
+| `DMCReacherHard` | 64 | 71.5 | 63.6 | 0.889 | 93.1 | **1.378** | ok |
+| `DMCReacherHard` | 256 | 66.8 | 60.0 | 0.898 | 88.1 | **1.389** | ok |
+| `PointmazeLargeNavigate` | 1 | 302.2 | 287.3 | 0.951 | 297.1 | **1.008** | ok |
+| `PointmazeLargeNavigate` | 16 | 1144.7 | 1126.0 | 0.984 | 1159.5 | **1.021** | ok |
+| `PointmazeLargeNavigate` | 64 | 1289.0 | 1283.4 | 0.996 | 1326.0 | **1.031** | ok |
+| `PointmazeLargeNavigate` | 256 | 1229.6 | 1214.0 | 0.987 | 1240.7 | **1.015** | ok |
+| `PointmazeMediumNavigate` | 1 | 292.1 | 299.7 | 1.026 | 292.9 | **0.990** | ok |
+| `PointmazeMediumNavigate` | 16 | 889.6 | 899.8 | 1.012 | 894.9 | **1.000** | ok |
+| `PointmazeMediumNavigate` | 64 | 963.1 | 972.0 | 1.009 | 958.2 | **0.990** | ok |
+| `PointmazeMediumNavigate` | 256 | 935.6 | 945.1 | 1.010 | 923.2 | **0.982** | ok |
+
+**The worst off-vs-off spread on identical code is 11.7 %, against a bar that asks about
+3 %.** One thread on a shared cluster node cannot resolve 3 %. Averaged over both legs each way,
+**every row passes at every certification batch**; the single remaining sub-bar reading is
+`DMCCartpoleSwingup` at B=1, 0.969 against 0.970, on a row whose own off-vs-off noise is 1.058 —
+and B=1 is the batch the frozen spec **forbids** certifying on (`gpu.never_certify_on_batch`,
+because the corpus median there is 0.6x the official renderer and it measures launch overhead).
+
+Per the ticket's instruction I report that and **do not add a second predicate**, and I have not
+flipped the default: whether 0.969-inside-5.8 %-noise at an uncertifiable batch clears a 0.97 bar
+is a release decision.
+
+## Step-3-shaped shards, so the dashboard can label these rows
+
+`examples/results/step6/raycast3d/sweep/`, produced by `examples/bench_step3.py` itself rather than
+back-converted from the profile notes: a shard needs `decode` and `official_cpu`, which are the
+**denominators of both tier bars**, and copying those from the frozen `node2349` row onto a
+measurement taken elsewhere would bury a cross-host ratio in a file whose whole purpose is to be
+classified as if it were Step 3. Three CPU legs because the release decision is open.
+
+CPU: `node2335`, job `6354672`, 1 thread, Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz. Classified here with `scratch/step3/certify.py:classify`.
+
+| env | baseline | branch, bound off | branch, bound **on** |
+|---|---|---|---|
+| `DMCBallInCupCatch` | CPU_PARITY · S_cpu 1.40 · cores 0.0026 | CPU_PARITY · S_cpu 1.45 · cores 0.0027 | CPU_FASTER · S_cpu 4.74 · cores 0.0089 |
+| `DMCFingerSpin` | CPU_PARITY · S_cpu 1.76 · cores 0.0078 | CPU_PARITY · S_cpu 1.95 · cores 0.0097 | CPU_FASTER · S_cpu 4.01 · cores 0.0194 |
+| `DMCReacherHard` | CPU_FASTER · S_cpu 2.72 · cores 0.0131 | CPU_FASTER · S_cpu 2.76 · cores 0.0134 | CPU_FASTER · S_cpu 4.02 · cores 0.0198 |
+| `DMCPendulumSwingup` | CPU_FASTER · S_cpu 3.88 · cores 0.0193 | CPU_FASTER · S_cpu 3.50 · cores 0.0184 | CPU_FASTER · S_cpu 6.56 · cores 0.0335 |
+| `DMCCartpoleSwingup` | CPU_FASTER · S_cpu 10.41 · cores 0.0582 | CPU_FASTER · S_cpu 10.10 · cores 0.0498 | CPU_FASTER · S_cpu 19.00 · cores 0.0975 |
+| `DMCAcrobotSwingup` | CPU_FASTER · S_cpu 7.27 · cores 0.0376 | CPU_FASTER · S_cpu 7.23 · cores 0.0363 | CPU_FASTER · S_cpu 9.25 · cores 0.0452 |
+| `PointmazeLargeNavigate` | CPU_FASTER · S_cpu 51.55 · cores 0.3762 | CPU_FASTER · S_cpu 76.89 · cores 0.6171 | CPU_FASTER · S_cpu 78.05 · cores 0.6184 |
+| `PointmazeMediumNavigate` | CPU_FASTER · S_cpu 36.72 · cores 0.4150 | CPU_FASTER · S_cpu 44.22 · cores 0.4761 | CPU_FASTER · S_cpu 43.64 · cores 0.4716 |
+
+**Two rows change tier with the bound on**: `DMCFingerSpin` and `DMCBallInCupCatch` go
+`CPU_PARITY` -> `CPU_FASTER` (S_cpu 1.95 -> 4.01 and 1.45 -> 4.74). That is a stronger result than
+RAYCAST-4 reported, and the difference is method, not luck: R4 projected by scaling the *frozen
+`node2349`* rows, while these are a like-for-like pair measured on one node in one job with the
+official renderer and the decode rate taken there too. `cores_cpu` is still below 1 on every row,
+so `CPU_FAST` remains out of reach and the RAYCAST-4 conclusion on that point stands.
+
+GPU: `gpu2105`, NVIDIA GeForce RTX 3090, job `6354674`.
+
+| env | baseline | branch |
+|---|---|---|
+| `DMCBallInCupCatch` | GPU_PARITY · R 9.4 · cores 0.44 · BELOW_G4,BATCH_SCALES_FAIL | GPU_FAST · R 28.6 · cores 1.39 · BATCH_SCALES |
+| `DMCFingerSpin` | GPU_FAST · R 108.1 · cores 5.94 · BATCH_SCALES | GPU_FAST · R 127.9 · cores 5.82 · BATCH_SCALES |
+
+`DMCBallInCupCatch` goes **`GPU_PARITY` + `BELOW_G4` + `BATCH_SCALES_FAIL` -> `GPU_FAST` +
+`BATCH_SCALES`** (R 9.4 -> 28.6, `cores` 0.44 -> 1.39, batch scaling 19.0x -> 55.9x). That is the
+dashboard's claim, now carried by a shard the report generator can classify instead of by prose.
+The GPU legs are unaffected by `PRIMITIVE_BOUNDS` — the fused kernel has no bound — so the gain
+there is RAYCAST-2a's batched tendon FK, already merged.
+
+## Identity, unchanged by any of this
+
+| check | result |
+|---|---|
+| cpu, `PRIMITIVE_BOUNDS` on vs off, all 21 live configs at native sizes | **identical** (`replay/r5_cpu_bounds_identity.json`) |
+| cpu, branch with the bound ON vs pristine baseline, all 21 | **identical** (`replay/r5_cpu_branch_vs_baseline.json`) |
+| cuda, branch vs pristine baseline, all 21 | **identical** — the fused kernel has no per-kind table (`replay/r5_cuda_pixel_diff.json`) |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
+| `tests/unit/test_raycast3d_primitive_bounds.py` | **45 passed** (24 differential, 3 batch-invariance, 16 pinned kind mixes, 2 predicate) |
+| `tests/unit` overall | **604 passed**, 28 skipped, 2 failed — the same two pre-existing failures |
+
+The identity legs **force** the bound on. With the default at `False` a replay that took the default
+would compare the unbounded path against itself and report `ALL_IDENTICAL` for the wrong reason — the
+same shape of false green as the empty-directory `compare_dumps` bug this workstream fixed earlier.
+
+## Public API: nothing moved
+
+The CPU-3-D workstream builds on `raycast3d`'s public functions, so this is checked rather than
+asserted. Every public entry point is **byte-identical to the pre-Step-6 baseline** (`3bc8fbc`):
+`cast_nearest`, `any_blocking`, `shade`, `composite`, `_render_group`, `cast_nearest_torch`,
+`any_blocking_torch`, `intersect`, `static_depth` — same signatures, same defaults, same return
+shapes (the last guaranteed independently by the 21-config bit-identical replays on both devices).
+The only additions at module scope are switches and derived constants: `COVER_COMPACTION`,
+`PRIMITIVE_BOUNDS`, `_BOUNDED_KINDS`, `_BOUND_SLACK_NOISE`, `_TILE_CACHE`, `_TILE_CACHE_MAX`,
+`_UNIT_D_TOL`. Nothing was removed.
 
 # Ticket text: OGBENCH-BAKE-1 — make the plate bake a pure function of (scene, style)
 
@@ -1573,8 +1762,11 @@ itself is untouched and a cold bake still lands where its history puts it.
 
 # Ticket text: RAYCAST-5 — the bounded cast must not be slower than the unbounded one
 
-Written here because RAYCAST-4's attribution leg (job `6350679`) found it and RAYCAST-4 is not
-authorised to fix it. **Not started.**
+**DELIVERED — see the RAYCAST-5 section above for what was measured and built.** Kept verbatim
+as written, because the ticket's own reasoning is what the work was judged against and editing
+it after the fact would remove the only record of what was asked for. Written originally
+because RAYCAST-4's attribution leg (job `6350679`) found the defect and RAYCAST-4 was not
+authorised to fix it.
 
 ## The defect
 
@@ -1663,3 +1855,53 @@ pre-existing and outside the authorised files (verified by stashing the working 
 `test_every_cited_scratch_path_resolves` (9 unresolvable citations, all from
 `examples/results/step6/dashboard.yaml` and two pre-existing research docs; none from this
 workstream's files after the `$SCR` collapse).
+
+# Every SLURM job this workstream ran
+
+Added at the coordinator's request after `6347000` and `6347137` turned out to be cited in prose
+but absent from any list — they had written artifacts under this directory that nothing indexed.
+The list is `sacct`, not memory, so a job that produced a number cannot be missing from it.
+Cancelled and failed runs are kept: a measurement that had to be taken twice is part of how the
+number that survived was arrived at.
+
+| job | name | state | elapsed | node | what |
+|---|---|---|---:|---|---|
+| `6343478` | `se6-raycast3d-cpu` | FAILED | 00:00:50 | `node2342` | Ticket 1 CPU profile — FAILED (EGL/venv), superseded by 6343544 |
+| `6343479` | `se6-raycast3d-gpu` | CANCELLED | 00:00:00 | `-` | Ticket 1 GPU profile — cancelled before start |
+| `6343520` | `se6-raycast3d-census` | CANCELLED | 00:00:17 | `node2339` | backend census — cancelled |
+| `6343543` | `se6-raycast3d-census` | COMPLETED | 00:00:58 | `node2339` | backend census: which 21 configs are live, and on which backend/device |
+| `6343544` | `se6-raycast3d-cpu` | COMPLETED | 00:13:57 | `node2342` | Ticket 1 CPU phase profile, 5 envs |
+| `6343545` | `se6-raycast3d-gpu` | CANCELLED | 00:00:00 | `-` | Ticket 1 GPU profile — cancelled before start |
+| `6343664` | `se6-raycast3d-gpu` | CANCELLED | 00:06:51 | `gpu2101` | Ticket 1 GPU profile — cancelled (wrong card constraint) |
+| `6344633` | `se6-raycast3d-style` | COMPLETED | 00:11:08 | `gpu2107` | check_style_is_state bisect, 12 runs per config |
+| `6345115` | `se6-raycast3d-2c` | COMPLETED | 00:11:57 | `gpu2110` | RAYCAST-2c: _bake qpos reset, replay + bisect after |
+| `6346224` | `se6-raycast3d-2a` | COMPLETED | 00:02:29 | `gpu2104` | RAYCAST-2a: batched tendon FK, GPU replay + BallInCup sweep |
+| `6346414` | `se6-raycast3d-2bc` | COMPLETED | 00:03:22 | `gpu2104` | RAYCAST-2b: cover compaction, GPU replay |
+| `6346429` | `se6-raycast3d-2bcpu` | COMPLETED | 00:12:18 | `node2337` | RAYCAST-2b: cover compaction, CPU sweep |
+| `6346705` | `se6-raycast3d-merged` | COMPLETED | 00:02:50 | `gpu2113` | first merge verification (texture-fidelity) |
+| `6346706` | `se6-raycast3d-cpusweep` | COMPLETED | 00:05:22 | `node2339` | RAYCAST-2 CPU sweep on the merged tree |
+| `6346814` | `se6-raycast3d-merged` | COMPLETED | 00:02:46 | `gpu2104` | **final RAYCAST-2 verification on the twice-merged tree** |
+| `6347000` | `se6-raycast3d-2cp` | COMPLETED | 00:09:30 | `gpu2106` | **RAYCAST-2c' probes (i) and (ii): renderer lifetime as the bake's carrier, cache pressure, host-rasterizer determinism** |
+| `6347001` | `se6-raycast3d-maze2d` | COMPLETED | 00:00:20 | `node1829` | maze2d venv attempt 1 — inherited the BASE interpreter, no numpy |
+| `6347071` | `se6-raycast3d-mb` | COMPLETED | 00:01:40 | `node1828` | RAYCAST-3 cast micro-benchmark |
+| `6347125` | `se6-raycast3d-maze2d` | COMPLETED | 00:00:19 | `node1828` | maze2d venv attempt 2 — gymnasium_robotics needed pettingzoo |
+| `6347137` | `se6-raycast3d-maze2d` | COMPLETED | 00:01:03 | `node1829` | **maze2d PointMaze verification in a fresh venv (RAYCAST-2c' item d)** |
+| `6347142` | `se6-raycast3d-mb` | COMPLETED | 00:02:03 | `node1829` | RAYCAST-3 micro-benchmark, -march variant |
+| `6347171` | `se6-raycast3d-bakelt` | COMPLETED | 00:00:28 | `gpu2105` | bake-lifetime probe |
+| `6347404` | `se6-raycast3d-mb2` | COMPLETED | 00:01:20 | `node1829` | RAYCAST-3 micro-benchmark at 224 px |
+| `6348207` | `se6-raycast3d-r4cpu` | CANCELLED | 00:10:35 | `node2337` | RAYCAST-4 CPU — **the run that moved one pixel of 3,211,264** and produced the far-field fix |
+| `6348293` | `se6-raycast3d-r4gpu` | COMPLETED | 00:03:27 | `gpu2108` | RAYCAST-4 GPU, first pass |
+| `6348760` | `se6-raycast3d-r4cpu` | COMPLETED | 00:22:41 | `node2337` | RAYCAST-4 CPU: identity on 21 + the 1-thread sweep, both legs |
+| `6348761` | `se6-raycast3d-r4gpu` | COMPLETED | 00:03:16 | `gpu2113` | RAYCAST-4 GPU: cuda identity on 21, fast paths at native sizes, fuzz, no-regression sweep |
+| `6350679` | `se6-raycast3d-r4iso` | COMPLETED | 00:13:40 | `node2333` | RAYCAST-4 attribution: the switch against itself — **found that the sweep could not attribute** |
+| `6351415` | `se6-raycast3d-r4units` | COMPLETED | 00:01:53 | `node1827` | RAYCAST-4 tests/unit incl. batch invariance |
+| `6352389` | `se6-raycast3d-r5cost` | COMPLETED | 00:13:05 | `node2339` | RAYCAST-5 **per-kind cost table** — the measurement the predicate is derived from |
+| `6353078` | `se6-raycast3d-r5cpu` | COMPLETED | 00:20:59 | `node1831` | RAYCAST-5 CPU verification, per-kind table only |
+| `6353080` | `se6-raycast3d-r5gpu` | COMPLETED | 00:02:07 | `gpu2101` | RAYCAST-5 GPU verification, per-kind table only |
+| `6353140` | `se6-raycast3d-r5kinds` | COMPLETED | 00:00:51 | `node2333` | kind census attempt 1 — read the bound METHOD as the scene, reported no prims for all 21 |
+| `6353212` | `se6-raycast3d-r5kinds` | COMPLETED | 00:01:05 | `node2335` | **kind census: what each of the 21 configs actually casts** |
+| `6353649` | `se6-raycast3d-r5cpu` | COMPLETED | 00:20:22 | `node2333` | RAYCAST-5 CPU verification with the call-level short circuit |
+| `6353650` | `se6-raycast3d-r5gpu` | COMPLETED | 00:02:01 | `gpu2264` | RAYCAST-5 GPU verification with the call-level short circuit |
+| `6354150` | `se6-raycast3d-r5noise` | COMPLETED | 00:25:05 | `node1831` | RAYCAST-5 **noise floor**: four interleaved legs, off/on/off/on |
+| `6354672` | `se6-raycast3d-r5shardcpu` | COMPLETED | 00:27:49 | `node2335` | RAYCAST-5 Step-3-shaped CPU shards, three legs |
+| `6354674` | `se6-raycast3d-r5shardgpu` | COMPLETED | 00:01:05 | `gpu2105` | RAYCAST-5 Step-3-shaped GPU shards, two legs |
