@@ -50,7 +50,15 @@
   "mkl_num_threads": "1",
   "max_load_policy": "disabled: batch nodes are shared and the reference is PAIRED (interleaved bursts, median, spread recorded) so load enters the ratio symmetrically; the spread bound rejects a node whose load moved the reference"
  },
- "envs": [
+ "reference_spread_worst": 1.6746684430990508,
+ "certifiable": false,
+ "not_certifiable_because": "the official renderer's throughput varied 1.67x across the interleaved readings on this host, over the 1.25x bound. S_cpu/R is a ratio to that number, so a tier computed from this shard would describe the node's load rather than the renderer. The numerator (our frames/s) is unaffected.",
+ "load_average_at_start": [
+  124.36,
+  129.73,
+  136.43
+ ],
+ "envs_measured_not_certified": [
   {
    "env": "DMCCheetahRun",
    "projected_to": [
@@ -472,12 +480,6 @@
    }
   }
  ],
- "reference_spread_worst": 1.6746684430990508,
- "certifiable": false,
- "not_certifiable_because": "the official renderer's throughput varied 1.67x across the interleaved readings on this host, over the 1.25x bound. S_cpu/R is a ratio to that number, so a tier computed from this shard would describe the node's load rather than the renderer. The numerator (our frames/s) is unaffected.",
- "load_average_at_start": [
-  124.36,
-  129.73,
-  136.43
- ]
+ "envs": [],
+ "why_envs_empty": "this shard is not certifiable (reference spread 1.67x > 1.25x); its cells are kept under envs_measured_not_certified so no evaluator labels a tier from them"
 }
