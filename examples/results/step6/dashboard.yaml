@@ -1,178 +1,517 @@
 # Step 6 coordinator dashboard (machine-readable). Maintained by the coordinator; one entry per workstream.
-# generated_at: 2026-09-13T17:44:22
 baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
 baseline_branch: sami/pre-step6-baseline
 integration_branch: step6/integration
-integration_sha: see git log (merges: texture-fidelity, reacher-correctness, raycast3d, tilemap, raster2d through b0c94ad, gfxdraw)
+integration_sha: 'see git log (merges: texture-fidelity, reacher-correctness, raycast3d, tilemap, raster2d through b0c94ad, gfxdraw)'
 oscar_capacity_note: condo QOS cs-3090-gcondo saturated by simclr_cifar10 (cpu 240/240, gpu 30/32); Step-6 GPU jobs routed to gpu/norm-gpu; HOME quota 100% full, all caches on scratch
 incident_log:
-  - "2026-09-13 ~19:00: API monthly spend limit terminated 5 agents mid-work (raster2d Commit B, gfxdraw primitives, raycast3d 2a, cpu-3d start, reacher reviewer start). Plan upgraded; all resumed with context and uncommitted work intact."
+- '2026-09-13 ~19:00: API monthly spend limit terminated 5 agents mid-work (raster2d Commit B, gfxdraw primitives, raycast3d 2a, cpu-3d start, reacher reviewer start). Plan upgraded; all resumed with context
+  and uncommitted work intact.'
 workstreams:
-  - workstream: texture-fidelity
-    brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
-    branch: step6/texture-fidelity
-    worktree: /Users/samib/stable-envs-step6-texture-fidelity
-    oscar_copy: $SCR/se6/texture-fidelity
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (merged through 48a556a; 5402387 held)
-    agent_model: fable
-    wave: wave1
-    status: merged (through 48a556a); 5402387 downsample-protocol commit held for Sami
-    authorization: diagnosis
-    goal: "diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift"
-    affected_configs: ["DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"]
-    bottleneck: {measured: "n/a (correctness diagnosis)", hypothesis: null}
-    correctness: {targeted_tests: "integration after merge: tests/unit 531 pass, 2 pre-existing failures (render_mjwarp.py --help hardcoded path; cited scratch paths carracing/robocasa)", step4_replay: "certify311: PASS x4 (Cheetah/Hopper/Walker/Humanoid) under declared 3.11 pair; certify312: BLOCKED x4 (would-be FAIL x3) - job 6344899 gpu2113", gate_a: "PASS under declared reference; BLOCKED (not FAIL) under drifted 3.12 reference", fidelity: "verdict B (reference drift); no bound value or margin changed; downsample check now judged on its own 8-state protocol (reproduces recorded floors to 6 decimals)"}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: no
-    semantic_followup: none
-    review: {reviewer: "opus (independent)", verdict: "APPROVED after changes (795036f, d5bea6d, 8de054d, 5fefffe, 48a556a; record re-run job 6346226 on gpu2105: 3.11 PASS x3 + Walker gate FAIL on corpus downsample only; 3.12 BLOCKED x4). Original: APPROVE-WITH-CHANGES 2026-09-13: diagnosis sound (3.12 arm reproduces frozen digest_official bit-exactly; 3.11 arm differs), causality closed. Required: drop mujoco_warp/warp from reference_versions (our renderer, would mask own regressions); align certify.py precedence with env.py; hoist protocol draw out of try; digest protocol states; fix findings overstatements (ours 3.11 vs 3.12 mean 0.00018 not 0; skybox moves 0.01-0.05). e5309bc (downsample protocol) classified a CONTRACT change: judged states change for 18 configs, Walker FAIL->PASS, 4/18 re-measured -> held for Sami."}
-    slurm_jobs: [6343431, 6343518, 6343699, 6344899, 6346226, 6346489]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", \"FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.\", "TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup.", "Post-merge check on integration copy (job 6346489, gpu2101, git_commit d8d8873): identical to 6346226 to the last digit; texture agent released."]
-  - workstream: reacher-correctness
-    brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
-    branch: step6/reacher-correctness
-    worktree: /Users/samib/stable-envs-step6-reacher-correctness
-    oscar_copy: $SCR/se6/reacher-correctness
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 5a1897d6659fb3f5598bdd3807dfcb91c2b65754 (includes merge of integration 9da50ee)
-    agent_model: opus
-    wave: wave1
-    status: merged
-    authorization: correctness
-    goal: "correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear"
-    affected_configs: ["DMCReacherEasy","DMCReacherHard","DMCFingerTurnEasy","DMCFingerTurnHard"]  # style_dim 17->18; other 12 DMC cells unchanged incl. declaration
-    bottleneck: {measured: "n/a (correctness)", hypothesis: null}
-    correctness: {targeted_tests: "GPU: test_conformance 72 pass/26 skip, test_reproducibility 90/25, test_fast_paths 23/10 (jobs 6344667, 6344904); unit 507 pass, 2 pre-existing failures; 7 new synthetic guard tests", step4_replay: "dmc shard: 16/16 cells pixel-identical baseline vs branch; 11 parity cells reproduce frozen digest_ours exactly; 4 affected cells declaration_changed=True", gate_a: "PASS (unchanged)", fidelity: "new guard check_task_object_visibility, bound TASK_OBJECT_PRESENCE_MARGIN=0.50 (re-derived after first fraction-based bound failed on GPU at 0.2422); interior metric untouched"}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: no (default appearance, all 16 DMC cells)
-    semantic_followup: none (Step-5 DINO-WM arm frames byte-identical; offscreen mode preserved)
-    review: {reviewer: "fable (independent)", verdict: "APPROVED after changes (db0f831 static sets recorded at bake + regression test 4/4 GPU; 2f51a97 logs/eval_reacher/wording). Re-verified on merged code job 6346537 gpu2113: 0/16 cells moved; conformance 72/0, reproducibility 94/0, fast_paths 23/0; dmc replay identical; guard margins 0.96/0.86/0.94/0.91. Original: APPROVE-WITH-CHANGES 2026-09-13: per-row batching, pristine reads, 16-cell default identity and frozen-digest replay verified. Required: (1) render-purity bug - _static_t reads live model alpha lazily per (scene, ss); hidden->other bake->hidden at new supersample promotes hidden target to static prim (18 px/max 215 ReacherHard, 88 px/max 140 FingerTurnHard) -> use bake-time static sets + regression test; (2) committed Oscar paths grow test_every_cited_scratch_path_resolves 2->18; (3) eval_reacher.py choices lack hidden; hidden==offscreen measured bit-identical; (4) presence_margin is pooled not per-row; bound re-derivation post-failure judged legitimate but must be recorded."}
-    slurm_jobs: [6344667, 6344904, 6346473(cancelled pre-merge), 6346537]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "PATCH 2026-09-13. Escalate to Sami: default stays target-VISIBLE (dm_control reference), SWM render_target=0 reproduced via knob; folding TASK_OBJECT_PRESENCE_MARGIN into frozen spec is a Step-8 call. NEW FINDING (not this branch): 4 trackcom cells (Cheetah/Hopper/Humanoid/Walker) do not reproduce frozen Step-4 digests at BASELINE (mean_pixel off 0.16-0.61/255, same mujoco/warp/driver/GPU, different venv+node) -> narrow ticket MJWARP-1 queued. MJWarp cannot carry per-row visibility (shader ignores alpha; hidden at context creation)."]
-  - workstream: raycast3d
-    brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
-    branch: step6/raycast3d
-    worktree: /Users/samib/stable-envs-step6-raycast3d
-    oscar_copy: $SCR/se6/raycast3d
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: afc7027 (RAYCAST-4 on branch, NOT merged; 082430e merged)
-    agent_model: opus
-    wave: wave1
-    status: implementation (RAYCAST-5 per-kind bounding authorized; RAYCAST-4 held: Pointmaze 0.92x/0.75x with bounds on)
-    authorization: PROFILE ONLY
-    goal: "PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate"
-    affected_configs: ["AntmazeGiantNavigate","AntmazeLargeExplore","AntmazeMediumExplore","AntmazeTeleportExplore","DMCAcrobotSwingup","DMCBallInCupCatch","DMCCartpoleBalance","DMCCartpoleSwingup","DMCFingerSpin","DMCFingerTurnEasy","DMCFingerTurnHard","DMCPendulumSwingup","DMCReacherEasy","DMCReacherHard","HumanoidmazeGiantNavigate","HumanoidmazeLargeNavigate","HumanoidmazeMediumNavigate","PointmazeGiantNavigate","PointmazeLargeNavigate","PointmazeMediumNavigate","PointmazeTeleportNavigate"]  # 21 live (Cheetah/Hopper/Humanoid/Walker are MJWarp-only, moved to cpu-3d); all frozen digests are cuda-only
-    bottleneck: {measured: "CPU: raycast3d.intersect 76-95% of render, Python loop over K primitives with 150-250 full-size aten temporaries each (145-240 ns/ray-primitive, ~10 GB/s on dead intermediates); Pointmaze (K=1): R3.composite 91%. GPU BallInCup: _fk 97.1% of wall (host tendon FK: _tendon_frame 78%, numpy cross/norm on (28,3) + catenary Python loop), device utilisation 5.1%; with _fk excluded 3,117 -> 73,187 fps", hypothesis: "2a batch tendon FK over batch axis (dmcontrol.py) -> ~9.5k fps vs cores bar 5,966; 2b cover-compaction/scatter composite in R3.composite -> ~2.8x Pointmaze CPU -> CPU_FAST; fused CPU cast for DMC CPU rows deferred to cpu-3d design"}
-    correctness: {targeted_tests: "tests/unit/test_dmcontrol_tendon.py 3 pass (bit-identity float64 + float32, all catenary branches, _fk on frozen states); test_fast_paths composite-cover-compaction 136 pass/24 skip; tests/unit 527 pass 2 pre-existing failures on merged tree", step4_replay: "2a: 10/10 DMControlSuite cuda digests exact (9 tendon-free controls byte-identical); 2b: cuda 21/21 identical, cpu 11/11 identical, 4 mujoco_locomotion identical, maze2d UNVERIFIED (gymnasium_robotics absent); 2c: pixel-free", gate_a: "OGB check_style_is_state FAIL root cause REVISED: mujoco.Renderer at offsamples=4 on EGL/3090 is not bit-reproducible across bakes (3 bakes -> 2 plates, 1/255 on 4 px); qpos0 reset committed but does not fix it. AntmazeTeleportExplore frozen digest does not reproduce at BASELINE (oracle hole -> Step-8 re-freeze list)", fidelity: "unchanged; pixels identical everywhere"}
-    performance: {cpu_before: "PointmazeLarge 856.8 fps B=64 (node2339, 1 thread)", cpu_after: "PointmazeLarge 1,501.1 fps (1.75x); Medium 1.28x; Antmaze 1.03x; Humanoidmaze 1.07x -> CPU_FAST NOT reached (needed 2.40x; cores ~0.73); legged rows need fused CPU cast (RAYCAST-3)", gpu_before: "DMCBallInCupCatch 3,194.2 fps B=4096; _fk 297 us/env; device util 5.3%", gpu_after: "DMCBallInCupCatch 9,956.0 fps B=4096 (3.12x); _fk 94 us/env; util 15.9%; R 38.0, cores 1.67 -> GPU_FAST; DMCFingerSpin 39,152 -> 43,759", batch_scales: "BallInCup 62.7x PASS", no_large_batch_regression: "PASS"}
-    pixels_changed: no
-    semantic_followup: none
-    review: {reviewer: "fable (independent)", verdict: "APPROVED after doc changes (4cca48e, 6e111ac) + LRU 17f28c0 authorized. Original: 2a APPROVE (bit-identity reproduced on arm64 vs pristine baseline module; all catenary branches reached; sweep legs verified same job/card with stable_envs_from). 2b APPROVE-WITH-CHANGES (docs: CPU numbers/residual/maze2d status/_expand_tile DMC reach missing from findings.md; _TILE_CACHE immutable, batch/chunk-safe; off-path verbatim). 2c APPROVE-WITH-CHANGES (reset correct+pixel-free; bake output is history-dependent and cross-process reproducible, not random - suspect persistent mujoco.Renderer per rkey; whether the other plate is the frozen 06a2e039 untested). Required changes sent 2026-09-13."}
-    slurm_jobs: [6343543, 6343544, 6343664, 6344633, 6345115, 6346224, 6346414, 6346429, 6346705, 6346706, 6346814, 6347171]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus raycast3d callers maze2d/mujoco_locomotion have no oracle: self-consistency check required for composite changes.", "RAYCAST-2 delivered 2026-09-13 late. Harness defect: 6C scripts sys.path.insert(0, ROOT) overrode PYTHONPATH (both legs = branch in job 6346224); fixed, notes record stable_envs_from; other workstreams warned. Trailers stripped via filter-branch above 89fa5ca only.", "Review escalations: Step-8 re-freeze of AntmazeTeleportExplore with documented bake protocol; decide whether a _bake-level reproducibility precondition belongs in Gate A; raycast3d.py composite/_expand_tile edits reach DMC path -> flag to cpu-3d before merge; Pointmaze next target = composite gathers/patch merge at ss=2 (25 of 43 ms).", "2c\' (job 6347171): retained mujoco.Renderer per rkey is the bake-history carrier; fresh Renderer per bake is constant and equals the cached plate but leaks an EGL context per bake (budget ~96, check_style_is_state bakes 64) -> separate ticket with context budget as first constraint; AntmazeTeleportExplore yields 4 distinct plates in 8 bakes, Step-4 frozen plate is none of them -> Step-8 re-freeze. check_reference_renderer_is_stable fires 12/12 on PointmazeTeleportNavigate only (needs a bake-path arm) - contract-routing proposal for Sami. maze2d PointMaze* identity verified (max_abs_diff 0) in fresh venv. RAYCAST-3: scalar C++ cast 18-22 ns/test vs torch 216-277 (12x) but NOT bit-exact on gcc/x86 (capsule normal 3-17 ulp) and insufficient alone: Reacher issues 11.5 tests/pixel for 4 primitives -> per-primitive screen bounds are the bigger lever (no compiler). Pointmaze blocker is composite gathers/patch merge at ss=2. LRU: cache-pressure observed 1 -> 0 on both cells.", "RAYCAST-4 delivered 2026-09-14 (afc7027): bit-identical, batch-invariance CPU test added, far-field conservativeness fix (capsule intersector float32 cancellation at ~100 m recorded as shipped property). Held for RAYCAST-5: per-primitive-kind bounding from a committed op-cost measurement (spheres unbounded by mechanism), acceptance >=0.97x every row; then default True."]
-  - workstream: fetch-gpu
-    brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
-    branch: step6/fetch-gpu
-    worktree: /Users/samib/stable-envs-step6-fetch-gpu
-    oscar_copy: $SCR/se6/fetch-gpu
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: d1518b683b986834eca650af9ec5cc59d49f5f0a
-    agent_model: opus
-    wave: wave1
-    status: blocked (demonstrated: compute-bound at 480px; BATCH_SCALES unreachable without ~2x megakernel speedup; escalated to Sami)
-    authorization: PROFILE ONLY
-    goal: "PROFILE ONLY: why fps(4096)/fps(1) is 7-12x vs required 20x on the public Fetch path"
-    affected_configs: ["FetchPickAndPlace", "FetchPickAndPlaceDense", "FetchPickAndPlaceDict", "FetchPush", "FetchPushDense", "FetchPushDict", "FetchReach", "FetchReachDense", "FetchReachDict", "FetchSlide", "FetchSlideDense", "FetchSlideDict"]
-    bottleneck: {measured: "B=4096: device 98.9% of wall, megakernel 90.5% of device, host 3.4%; H2D 36 B/frame, static geometry not re-uploaded; 2 D2H syncs/render; fps(1) 81% fixed host cost (1.48 ms) independent of frame size", hypothesis: "BATCH_SCALES = fps(4096)/fps(1) ~ per-frame device cost with batching divided out; passes at <=240px (26-99x), fails at frozen 480px (9.5x)"}
-    correctness: {targeted_tests: "n/a (no code change)", step4_replay: "n/a", gate_a: "PASS (unchanged)", fidelity: "unchanged"}
-    performance: {cpu_before: "n/a (out of scope)", cpu_after: null, gpu_before: "R 5.34-6.70, cores 4.10-5.40 (pass); fps(1) 538-548, fps(256) ~5.1k, fps(4096) ~5.2k on 3090", gpu_after: null, batch_scales: "9.5x FAIL (node-dependent 7.6-11.7x; fps(1) swings +/-21% across 3090 nodes)", no_large_batch_regression: "PASS all 12 (1.005-1.021)"}
-    pixels_changed: no
-    semantic_followup: none
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: [6343470, 6344491, 6344691]
-    notes: ["wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)", "FINDING 2026-09-13: PC-1 (skybox/textures off, +3.7%, pixel-identical) and PC-2 (event deps instead of chunk syncs, +5%) do not reach the bar and are NOT authorized. Fixed-host-cost fix (~3.3x at B=1) would drop BATCH_SCALES to ~2.9x: qualifier conflicts with frozen 480px frame. Decision escalated to Sami. Harness NameError in profile_note.py fixed on integration."]
-  - workstream: raster2d
-    brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
-    branch: step6/raster2d
-    worktree: /Users/samib/stable-envs-step6-raster2d
-    oscar_copy: $SCR/se6/raster2d
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 15efce1f732322f877cd2efd376aafa2211ce172 (round 2: RASTER2D-1c, RASTER2D-2, SWMNAV-1)
-    agent_model: opus
-    wave: wave2
-    status: partially merged (through b0c94ad: RASTER2D-1c + RASTER2D-2); SWMNAV-1 (d862e2a) held for GPU small-batch regression fix
-    authorization: PROFILE FIRST
-    goal: "PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts"
-    affected_configs: ["Piecewise", "PiecewiseZones", "PushT", "SimplePointMaze", "TwoRoom", "TwoRoomTarget"]
-    bottleneck: {measured: "render_torch evaluated all three primitive families over the whole frame for every slot: PushT B=64 raster 557 ms, 324.6 ms (58%) in families the slot lacks; SimplePointMaze B=64 74,779 ms with 9,508 ms in a capsule block for a scene with zero capsules; bbox covers 1.7% of frame per primitive. Pre-bake hypothesis killed (static walls cover 0.216 frames). Remaining: batch-union window degenerates to whole frame (301/518 ms SPM, 104/143 ms PushT); swm_nav base_image 23-49% of render, state-independent, rebuilt per call per row", hypothesis: "_prim_plan pre-pass + world-space bounding (same encoding as GPU _bbox_kernel) + uint8 NHWC canvas at ss==1; next: tile-binning (flat in B) and swm_nav base_image pre-bake"}
-    correctness: {targeted_tests: "tests/unit 2 pre-existing failures; GPU suite for the six envs 183 pass/75 skip/0 fail incl. test_backend_agreement; differential fuzz vs verbatim baseline function 1,650 CPU + 650 GPU scenes byte-identical", step4_replay: "all six configs on cuda: every digest and all 17 checks unchanged; CPU digests before/after identical on Oscar and laptop; 8 Scene2D consumers incl. highway-env identical", gate_a: "PASS (unchanged); Commit A e6c2af3 makes device=cpu honoured on Triton hosts (Step-3 CPU_UNMEASURED cause); second HAVE_TRITON instance at conformance.py:381 -> RASTER2D-1c", fidelity: "unchanged"}
-    performance: {cpu_before: "Step-5 baseline: PushT 115 fps, SimplePointMaze 3, TwoRoom 261, TwoRoomTarget 189, Piecewise 425, PiecewiseZones 215 (1 thread)", cpu_after: "round 2 (node1828, job 6349273): PushT 2,046 (17.8x vs baseline, S_cpu 5.49), SPM 243 (81x, S_cpu 4.69), TwoRoom 1,623 (6.2x, S_cpu 5.08), TwoRoomTarget 731 (3.9x, 3.66), Piecewise 1,435 (3.4x, 3.79), PiecewiseZones 1,401 (6.5x, 5.28); cores_cpu 0.22-0.55 -> all CPU_FASTER, none CPU_FAST (residual = uint8 write bandwidth)", gpu_before: "PushT 1.93M fps, SPM 43.7k (3090)", gpu_after: "PushT/SPM/Piecewise flat (0.98-0.99); TwoRoom 1.41x, PiecewiseZones 1.14x, TwoRoomTarget 1.13x (swm_nav has no kernel); no regression", batch_scales: "n/a", no_large_batch_regression: "unchanged"}
-    pixels_changed: no
-    semantic_followup: none (PushT cuda digest_ours unchanged cecda14a; GPU path not modified)
-    review: {reviewer: "fable (independent)", verdict: "Round 1 APPROVE-WITH-CHANGES (applied). Round 2 (2026-09-14): RASTER2D-1c and RASTER2D-2 APPROVE (grouping exact, deterministic, order-independent; alpha floor verified over all 65,536 pairs; 108k-state boundary scan 0 diffs; mutation counts reproduced; merge-tree clean). SWMNAV-1 BLOCKED: committed gpu_before/after (job 6349274) shows TwoRoom 0.48x/0.55x, TwoRoomTarget 0.32x/0.40x, Piecewise 0.19x/0.35x, PiecewiseZones 0.27x/0.43x at B=16/64 (4-6 host syncs per render, CPU-calibrated grouping on cuda) while findings said no regression; plus per-leg SHA stamping on GPU launcher, multi-plate gather branch untested, citation mismatch."}
-    slurm_jobs: [6344858(cancelled), 6346289, 6346290, 6346291, 6346300, 6346490, 6349273, 6349274]
-    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d).", "Round 2 2026-09-14: RASTER2D-2 row grouping by quantised box origin (group count bounded by frame; measured cost constants) 2.1-3.1x; SWMNAV-1 base_image per distinct whole style row + 5.89-sigma dot window (alpha floor 2^-25 measured) 3.1-12x; RASTER2D-1c conformance backend-agreement reads scene device. Mutation-checked tests; an aliasing bug (cached plate painted in place at k=1) was caught by purity/order columns and fixed. Per-leg SHA stamping fixed. All six configs digest-identical on cuda; 650/650 fuzz; GPU suite 183/0."]
-  - workstream: gfxdraw
-    brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
-    branch: step6/gfxdraw
-    worktree: /Users/samib/stable-envs-step6-gfxdraw
-    oscar_copy: $SCR/se6/gfxdraw
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: b0d461e10bce0f13ae0d424cb9fada0ed0c7aa51 (merged into integration)
-    agent_model: opus
-    wave: wave2
-    status: merged
-    authorization: PROFILE FIRST
-    goal: "PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU"
-    affected_configs: ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"]
-    bottleneck: {measured: "B>=16: 68-74% StyleCanvas.paint + 11-14% scanline mask = (B,H,W,3) temporaries per primitive; torch.where on interleaved surface 340 Mpx/s vs 4.8 Gpx/s planar; B=1: dispatch, clip_line 33-38% over 8 calls; 26,477 ops/render Acrobot", hypothesis: "planar (3,B,H,W) canvas + bounded primitives (per-env static windows, disc stencils, per-edge kmax) + one clip_line per polygon -> ops halved (12,970 CPU / 20,859 CUDA); remaining: three-plane interleave ~0.17 ms/frame floor for torch ops on one core -> fused per-pixel path (GFXDRAW-2)"}
-    correctness: {targeted_tests: "test_gfxdraw_fused + test_fast_paths 123/0; conformance+reproducibility -k five 358 pass/93 skip/0 fail; CPU conformance 5/5; tests/unit 2 pre-existing failures; new tests/unit/test_gfxdraw_select.py (select_ branches bit-equal)", step4_replay: "fidelity_step4 cuda + cpu on all 5: every check status and every digest unchanged; 512 states/env (half unreachable) byte-identical; LunarLander _AARecorder write list identical", gate_a: "PASS (unchanged)", fidelity: "unchanged"}
-    performance: {cpu_before: "S_cpu 0.17-0.28 (CPU_REGRESSION), 20-30 fps B=1", cpu_after: "S_cpu 0.94-1.92 paired on node1829 (CPU_PARITY on 4/5; Acrobot 0.94); 5.5-7.1x; cores_cpu 0.22-0.50 still BELOW_G4", gpu_before: "R 37-71 (GPU_FASTER) on 3090", gpu_after: "round 1: R 83-179 (2.2-2.5x). Round 2 fused kernel (job 6351758, paired): Acrobot 160,066 f/s R 389.8; CartPole 185,436 R 347.0; MountainCar 144,691 R 295.0; MountainCarContinuous 145,176 R 296.8; Pendulum 175,462 R 691.4 -> GPU_FAST; others GPU_FASTER (gap 1.28-1.69x, per-pixel walk not the store); cores 105-163; VRAM 7.7-9.1 -> 3.0 GB", batch_scales: "PASS 1,179-1,890x (was never the blocker; plan.json miscounted a satisfied qualifier string)", no_large_batch_regression: "PASS"}
-    pixels_changed: no
-    semantic_followup: none
-    review: {reviewer: "fable (independent)", verdict: "APPROVED after round-2 changes (mixed-row CUDA guard 80/80 on gpu2107; paired peak_gb per arm reproduces sweep VRAM to 0.02 GB; R holds on second card: Pendulum 785, others 322-440). Round 1 APPROVE-WITH-CHANGES (applied, LunarLander fix verified on Box2D host, pinned digests reproduced against pristine 89fa5ca). Round 2 (2026-09-14) APPROVE-WITH-CHANGES: fused kernel bit-identical to per-primitive path (semantics traced per case; joint tests 50 CPU / 55 CUDA / 10 fast-path; corpus-style replay under kernel matches oracle incl. mixed AA rows); paired R reproduces; before leg reproduces round-1 after. Required: per-row-style CUDA guard test; paired_gpu peak_gb reset; scope CPU negative to the per-pixel-walk design (span rasterizer unmeasured); disc_table duplicate assert. Merge conflict in tests/gpu/test_fast_paths.py (additive both sides) to resolve at merge."}
-    slurm_jobs: [6346430, 6346431, 6346933, 6346967, 6346999, 6346954(cancelled), 6348411, 6348468, 6348987, 6349091, 6349362, 6351758, 6352593]
-    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the baseline tree.", "Review escalations: no Step-6 gate covers LunarLander/CarRacing consumers on Oscar (no Box2D) -> fresh venv verification ordered; plan.json BATCH_SCALES miscount confirmed at scratch/step3/certify.py:266 (satisfied qualifier counted as blocker) -> recheck other rows; adopt paired S_cpu measurement for all CPU rows (shared-node swings 2.3x).", "Review fixes 2026-09-14: aaline_emit weight expanded (stride-0 view), recorder contract test over 4 quad classes pinned to 89fa5ca, bounds fuzz test committed, interleave figure corrected (0.289 ms/frame laptop), paint_disc colour hoisted. Box2D venv se6-gfxdraw-box2d: LunarLander byte-identical baseline vs branch; CarRacing cannot render on CPU on EITHER tree (Triton-only, device=cpu not honoured - not in frozen 49; record for Step 7/8). GFXDRAW-2-CPU verdict: do NOT build a fused CPU kernel - C++ -O3 / numba gain 1.03-1.51x, still 1.6-2.4x short of cores_cpu=1 (budget 3.6-4.0 ns/px; interleave 44-61% of budget); numba installs cleanly beside certified pins (third answer to packaging); numpy strided interleave 1.38x cheaper (proposed). GFXDRAW-2-GPU: stable_envs/render/gfxdraw_classic.py one-pass per-pixel kernel + baked plate, 0 differing pixels on CPU form for all five; _use_fused CUDA+Triton only.", "GFXDRAW-2-GPU delivered 2026-09-14: 3.76-4.33x every batch, BATCH_SCALES 1,687-1,990x, NLBR 7.2-8.2; frozen replay under kernel identical; CarRacing byte-identical on CUDA in Box2D venv; its fused identity test now executes (4 pass; first job collected-and-skipped, caught by coverage guard). Remaining GPU gap needs per-env specialisation (not general).", "Round-2 changes 2026-09-14: test_gfxdraw_classic 55->80 cases (20 per-row style, asserts mixed AA/colours/PLATE_B=B before comparing) + env.render per-row guard; paired peak_gb reset per arm; CPU negative scoped to per-pixel walk, span/scanline rasterizer named as unmeasured alternative (cores_cpu>=1 NOT shown unreachable); disc_table within-pass duplicate assert (fires on injection). Step-8 record: PLATE_B constexpr recompile per batch size with >1 terrain pair; plate.contiguous() 2.9 GB transient at B=4096 (off certification path)."]
-  - workstream: cpu-3d
-    brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
-    branch: step6/cpu-3d
-    worktree: /Users/samib/stable-envs-step6-cpu-3d
-    oscar_copy: $SCR/se6/cpu-3d
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 6505e71
-    agent_model: fable
-    wave: wave2
-    status: finding (Phase-1 design delivered; Phase-2 approval pending Sami on CPU-backend contract + compiled-kernel packaging; Fetch CPU_FAST = demonstrated blocker)
-    authorization: DESIGN/CHARACTERIZATION ONLY
-    goal: "DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes"
-    affected_configs: ["DMCCheetahRun","DMCHopperHop","DMCWalkerWalk","DMCHumanoidStand","FetchPickAndPlace","FetchPickAndPlaceDense","FetchPickAndPlaceDict","FetchPush","FetchPushDense","FetchPushDict","FetchReach","FetchReachDense","FetchReachDict","FetchSlide","FetchSlideDense","FetchSlideDict"]  # 10 DMControlSuite parity cells already have a CPU path (raycast3d)
-    bottleneck: {measured: "No CPU path: Step-3 cpu rows for trackcom four are MJWarp on GPU behind device=cpu (DEVICE_NOT_HONOURED). Binding bar is cores_cpu>=1: 6,629 fps at 84px (21.4 ns/px) / 776-881 fps at 480px; official llvmpipe 11-27 fps DMC, 40-53 Fetch. Torch 1-thread: 2.0 us dispatch floor, 6.3 us per 84px full-frame op; compiled scalar C whole-frame 95-150 ns/px (K=8/19) = 4.5-7x short of bar. Fetch robot 15 meshes/31,720 tris at 480px: needs 36-41 ns/tri vs 540-1,640 measured -> fill-bound blocker", hypothesis: "DMC four: arch (d) baked skybox plate (99.4-99.7% constant) + analytic floor (MJWarp PLANE UV law) + compacted capsule cast on mover window + MJWarp-law shader -> 260-800 fps = CPU_FASTER (S_cpu 24-30, cores 0.04-0.12); CPU_FAST only via fused SIMD whole-frame kernel (M2), unproven; shared fused CPU cast to be owned by raycast3d"}
-    correctness: {targeted_tests: "n/a", step4_replay: "n/a (Phase 2 obligation: trackcom four byte-identical on cuda; new CPU shard)", gate_a: "unchanged", fidelity: "OPEN: frozen MJWarp digests are a soft oracle (0.02% run-to-run noise; baseline misses trackcom digests by 0.16-0.61/255); proposed new cross-backend within-1/mean bound + per-device visual declaration under 3.11 reference -> needs Sami"}
-    performance: {cpu_before: "CPU_UNMEASURED / DEVICE_NOT_HONOURED (trackcom four); Fetch no CPU route", cpu_after: null, gpu_before: "unchanged", gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: no
-    semantic_followup: none now; DINO tripwire on CPU frames in Phase 2
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: [6345025]
-    notes: ["wave2 spawned 2026-09-13T18:25", "Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER, pure torch, ~3-5 days) and gate M2 (compiled SIMD kernel, packaging decision) on a <=21 ns/px micro-benchmark; (3) Fetch: record blocker vs fund CPU_PARITY llvmpipe device-honouring path. RAYCAST-3 (fused CPU cast, raycast3d-owned) queued after RAYCAST-2."]
-  - workstream: tilemap
-    brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
-    branch: step6/tilemap
-    worktree: /Users/samib/stable-envs-step6-tilemap
-    oscar_copy: $SCR/se6/tilemap
-    baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 55bf7643c6ccf0c74f844677bb3520a4bf10086c
-    agent_model: opus
-    wave: wave3
-    status: merged
-    authorization: per brief
-    goal: "tile/atlas CPU optimisation (not full Craftax coverage)"
-    affected_configs: ["CraftaxClassic"]
-    bottleneck: {measured: "render composited every frame from scratch: ~12 image-sized float32 temporaries (1.94 MB per 48.4 KB frame); working set 31 MB at B=16 fits L3, 496 MB at B=256 does not -> fps falls with batch; ops constant 216/batch; allocation <0.5%; at B=256 compositing 66%, gather+untile 15%, recolour 10%, output conversion 11%", hypothesis: "bake composite into 680-entry tile table (5 player x 17 block x 8 mob, 522 KiB) once per (device, tile size); visibility/style folded into the gather index; one index_select into uint8 output at default gain"}
-    correctness: {targeted_tests: "tests/unit/test_craftax_atlas.py 16 tests (84 differential cells max|diff|=0 incl. per-env style mixtures, out-of-range states); tests/unit 558/559 on Oscar; GPU suites -k CraftaxClassic 30 pass/14 skip x2", step4_replay: "frozen CraftaxClassic replay on cuda AND cpu: digest_ours/default_style/corpus_style/style_digest identical; mean_pixel 93.84458414713542, distinct_colors 277 identical; cross-tree diff 90 blocks identical", gate_a: "PARTIAL (unchanged; no coverage added)", fidelity: "unchanged"}
-    performance: {cpu_before: "CPU_REGRESSION BELOW_G4: 1,867 f/s @B=16 (cores 0.43), node1831 1 thread, NO_REFERENCE ladder (no jax)", cpu_after: "CPU_EXCEPTIONAL: 116,448 f/s @B=1024 (cores 23.4) = 62.4x; confirmed quiet node2333 154,086 f/s (cores 27.85, 61x)", gpu_before: "GPU_FAST: 145,110 f/s @4096, cores 25.7 (matches Step-3 frozen 144,738 to 0.3%)", gpu_after: "GPU_EXCEPTIONAL: 1,206,822 f/s @4096 (8.3x), cores 262.4; VRAM 3,790 -> 221 MiB; confirmed gpu2104 1,229,787", batch_scales: "637.9x PASS (was 97.6x)", no_large_batch_regression: "3.167 PASS"}
-    pixels_changed: no
-    semantic_followup: none
-    review: {reviewer: "fable (independent)", verdict: "APPROVE 2026-09-14: cache keyed (device, tile size), bounded 8, never mutated; all 3 style leaves folded/applied; folds exact (mob-0 alpha exactly 0; slot 4 == block bit-for-bit); coverage unchanged; gain detection global per call, mixed batches correct; reviewer cross-tree diff 102 blocks incl. sizes 65/96 identical; tier.py reproduces frozen Step-3 labels; before leg matches Step 3 to 0.26%; merge-tree clean."}
-    slurm_jobs: [6349384, 6350070, 6349394, 6351158]
-    notes: ["wave3 spawned 2026-09-13 late (CPU-only; no file overlap with other workstreams)", "PATCH 2026-09-14. Residual tickets: TILEMAP-2 channel_gain path (float table gather, 21x slower on CPU, off certification path); TILEMAP-3 GPU gather at 153 GB/s vs 1.1 TB/s possible via _blit_kernel (out of scope, CPU was the failing bar). Hazard: rsync pull of examples/results/step6/<ws>/ overwrote findings.md (recovered from git) - same incident as raycast3d. Docs table in pixel_native.md describes replaced pipeline (H200 number left as floor)."]
+- workstream: texture-fidelity
+  brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
+  branch: step6/texture-fidelity
+  worktree: /Users/samib/stable-envs-step6-texture-fidelity
+  oscar_copy: $SCR/se6/texture-fidelity
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (merged through 48a556a; 5402387 held)
+  agent_model: fable
+  wave: wave1
+  status: merged (through 48a556a); 5402387 downsample-protocol commit held for Sami
+  authorization: diagnosis
+  goal: 'diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift'
+  affected_configs:
+  - DMCCheetahRun
+  - DMCHopperHop
+  - DMCWalkerWalk
+  bottleneck:
+    measured: n/a (correctness diagnosis)
+    hypothesis: null
+  correctness:
+    targeted_tests: 'integration after merge: tests/unit 531 pass, 2 pre-existing failures (render_mjwarp.py --help hardcoded path; cited scratch paths carracing/robocasa)'
+    step4_replay: 'certify311 (declared 3.11 pair): Cheetah/Hopper/Humanoid PASS, Walker gate FAIL on corpus-based check_resolution_consistency only (visual PASS); certify312 (3.12): visual BLOCKED x4 (would-be
+      FAIL x3), Walker gate FAIL same downsample check - jobs 6344899/6346226/6346489'
+    gate_a: PASS under declared reference; BLOCKED (not FAIL) under drifted 3.12 reference
+    fidelity: verdict B (reference drift); no bound value or margin changed; downsample check now judged on its own 8-state protocol (reproduces recorded floors to 6 decimals)
+  performance:
+    cpu_before: null
+    cpu_after: null
+    gpu_before: null
+    gpu_after: null
+    batch_scales: null
+    no_large_batch_regression: null
+  pixels_changed: 'no'
+  semantic_followup: none
+  review:
+    reviewer: opus (independent)
+    verdict: 'APPROVED after changes (795036f, d5bea6d, 8de054d, 5fefffe, 48a556a; record re-run job 6346226 on gpu2105: 3.11 PASS x3 + Walker gate FAIL on corpus downsample only; 3.12 BLOCKED x4). Original:
+      APPROVE-WITH-CHANGES 2026-09-13: diagnosis sound (3.12 arm reproduces frozen digest_official bit-exactly; 3.11 arm differs), causality closed. Required: drop mujoco_warp/warp from reference_versions
+      (our renderer, would mask own regressions); align certify.py precedence with env.py; hoist protocol draw out of try; digest protocol states; fix findings overstatements (ours 3.11 vs 3.12 mean 0.00018
+      not 0; skybox moves 0.01-0.05). e5309bc (downsample protocol) classified a CONTRACT change: judged states change for 18 configs, Walker FAIL->PASS, 4/18 re-measured -> held for Sami.'
+  slurm_jobs:
+  - 6343431
+  - 6343518
+  - 6343699
+  - 6344899
+  - 6346226
+  - 6346489
+  notes:
+  - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
+  - 'FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol
+    provenance. Policy sign-off (pin vs re-declare; bound protocol) escalated to Sami before merge.'
+  - 'TEXTURE-2 PATCH delivered; independent review spawned. Escalated to Sami: pin dmcontrol extra to declared pair vs re-declare under 3.12; downsample-protocol change is a check-application change (values
+    untouched) - needs sign-off. Pre-existing baseline failure test_every_cited_scratch_path_resolves (carracing/robocasa paths) -> Step 8 cleanup.'
+  - 'Post-merge check on integration copy (job 6346489, gpu2101, git_commit d8d8873): identical to 6346226 to the last digit; texture agent released.'
+- workstream: reacher-correctness
+  brief: STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md
+  branch: step6/reacher-correctness
+  worktree: /Users/samib/stable-envs-step6-reacher-correctness
+  oscar_copy: $SCR/se6/reacher-correctness
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: 5a1897d6659fb3f5598bdd3807dfcb91c2b65754 (includes merge of integration 9da50ee)
+  agent_model: opus
+  wave: wave1
+  status: merged
+  authorization: correctness
+  goal: 'correctness: target visibility/alpha semantics instead of offscreen hack; fidelity guard for object appear/disappear'
+  affected_configs:
+  - DMCReacherEasy
+  - DMCReacherHard
+  - DMCFingerTurnEasy
+  - DMCFingerTurnHard
+  bottleneck:
+    measured: n/a (correctness)
+    hypothesis: null
+  correctness:
+    targeted_tests: 'GPU: test_conformance 72 pass/26 skip, test_reproducibility 90/25, test_fast_paths 23/10 (jobs 6344667, 6344904); unit 507 pass, 2 pre-existing failures; 7 new synthetic guard tests'
+    step4_replay: 'dmc shard: 16/16 cells pixel-identical baseline vs branch; 11 parity cells reproduce frozen digest_ours exactly; 4 affected cells declaration_changed=True'
+    gate_a: PASS (unchanged)
+    fidelity: new guard check_task_object_visibility, bound TASK_OBJECT_PRESENCE_MARGIN=0.50 (re-derived after first fraction-based bound failed on GPU at 0.2422); interior metric untouched
+  performance:
+    cpu_before: null
+    cpu_after: null
+    gpu_before: null
+    gpu_after: null
+    batch_scales: null
+    no_large_batch_regression: null
+  pixels_changed: no (default appearance, all 16 DMC cells)
+  semantic_followup: none (Step-5 DINO-WM arm frames byte-identical; offscreen mode preserved)
+  review:
+    reviewer: fable (independent)
+    verdict: 'APPROVED after changes (db0f831 static sets recorded at bake + regression test 4/4 GPU; 2f51a97 logs/eval_reacher/wording). Re-verified on merged code job 6346537 gpu2113: 0/16 cells moved;
+      conformance 72/0, reproducibility 94/0, fast_paths 23/0; dmc replay identical; guard margins 0.96/0.86/0.94/0.91. Original: APPROVE-WITH-CHANGES 2026-09-13: per-row batching, pristine reads, 16-cell
+      default identity and frozen-digest replay verified. Required: (1) render-purity bug - _static_t reads live model alpha lazily per (scene, ss); hidden->other bake->hidden at new supersample promotes
+      hidden target to static prim (18 px/max 215 ReacherHard, 88 px/max 140 FingerTurnHard) -> use bake-time static sets + regression test; (2) committed Oscar paths grow test_every_cited_scratch_path_resolves
+      2->18; (3) eval_reacher.py choices lack hidden; hidden==offscreen measured bit-identical; (4) presence_margin is pooled not per-row; bound re-derivation post-failure judged legitimate but must be
+      recorded.'
+  slurm_jobs:
+  - 6344667
+  - 6344904
+  - 6346473(cancelled pre-merge)
+  - 6346537
+  notes:
+  - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
+  - 'PATCH 2026-09-13. Escalate to Sami: default stays target-VISIBLE (dm_control reference), SWM render_target=0 reproduced via knob; folding TASK_OBJECT_PRESENCE_MARGIN into frozen spec is a Step-8 call.
+    NEW FINDING (not this branch): 4 trackcom cells (Cheetah/Hopper/Humanoid/Walker) do not reproduce frozen Step-4 digests at BASELINE (mean_pixel off 0.16-0.61/255, same mujoco/warp/driver/GPU, different
+    venv+node) -> narrow ticket MJWARP-1 queued. MJWarp cannot carry per-row visibility (shader ignores alpha; hidden at context creation).'
+- workstream: raycast3d
+  brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
+  branch: step6/raycast3d
+  worktree: /Users/samib/stable-envs-step6-raycast3d
+  oscar_copy: $SCR/se6/raycast3d
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: afc7027 (RAYCAST-4 on branch, NOT merged; 082430e merged)
+  agent_model: opus
+  wave: wave1
+  status: 'implementation (RAYCAST-5 per-kind bounding authorized; RAYCAST-4 held: Pointmaze 0.92x/0.75x with bounds on)'
+  authorization: PROFILE ONLY
+  goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
+  affected_configs:
+  - AntmazeGiantNavigate
+  - AntmazeLargeExplore
+  - AntmazeMediumExplore
+  - AntmazeTeleportExplore
+  - DMCAcrobotSwingup
+  - DMCBallInCupCatch
+  - DMCCartpoleBalance
+  - DMCCartpoleSwingup
+  - DMCFingerSpin
+  - DMCFingerTurnEasy
+  - DMCFingerTurnHard
+  - DMCPendulumSwingup
+  - DMCReacherEasy
+  - DMCReacherHard
+  - HumanoidmazeGiantNavigate
+  - HumanoidmazeLargeNavigate
+  - HumanoidmazeMediumNavigate
+  - PointmazeGiantNavigate
+  - PointmazeLargeNavigate
+  - PointmazeMediumNavigate
+  - PointmazeTeleportNavigate
+  bottleneck:
+    measured: 'CPU: raycast3d.intersect 76-95% of render, Python loop over K primitives with 150-250 full-size aten temporaries each (145-240 ns/ray-primitive, ~10 GB/s on dead intermediates); Pointmaze
+      (K=1): R3.composite 91%. GPU BallInCup: _fk 97.1% of wall (host tendon FK: _tendon_frame 78%, numpy cross/norm on (28,3) + catenary Python loop), device utilisation 5.1%; with _fk excluded 3,117 ->
+      73,187 fps'
+    hypothesis: 2a batch tendon FK over batch axis (dmcontrol.py) -> ~9.5k fps vs cores bar 5,966; 2b cover-compaction/scatter composite in R3.composite -> ~2.8x Pointmaze CPU -> CPU_FAST; fused CPU cast
+      for DMC CPU rows deferred to cpu-3d design
+  correctness:
+    targeted_tests: tests/unit/test_dmcontrol_tendon.py 3 pass (bit-identity float64 + float32, all catenary branches, _fk on frozen states); test_fast_paths composite-cover-compaction 136 pass/24 skip;
+      tests/unit 527 pass 2 pre-existing failures on merged tree
+    step4_replay: '2a: 10/10 DMControlSuite cuda digests exact (9 tendon-free controls byte-identical); 2b: cuda 21/21 identical, cpu 11/11 identical, 4 mujoco_locomotion identical, maze2d UNVERIFIED (gymnasium_robotics
+      absent); 2c: pixel-free'
+    gate_a: 'OGB check_style_is_state FAIL root cause REVISED: mujoco.Renderer at offsamples=4 on EGL/3090 is not bit-reproducible across bakes (3 bakes -> 2 plates, 1/255 on 4 px); qpos0 reset committed
+      but does not fix it. AntmazeTeleportExplore frozen digest does not reproduce at BASELINE (oracle hole -> Step-8 re-freeze list)'
+    fidelity: unchanged; pixels identical everywhere
+  performance:
+    cpu_before: PointmazeLarge 856.8 fps B=64 (node2339, 1 thread)
+    cpu_after: PointmazeLarge 1,501.1 fps (1.75x); Medium 1.28x; Antmaze 1.03x; Humanoidmaze 1.07x -> CPU_FAST NOT reached (needed 2.40x; cores ~0.73); legged rows need fused CPU cast (RAYCAST-3)
+    gpu_before: DMCBallInCupCatch 3,194.2 fps B=4096; _fk 297 us/env; device util 5.3%
+    gpu_after: DMCBallInCupCatch 9,956.0 fps B=4096 (3.12x); _fk 94 us/env; util 15.9%; R 38.0, cores 1.67 -> GPU_FAST; DMCFingerSpin 39,152 -> 43,759
+    batch_scales: BallInCup 62.7x PASS
+    no_large_batch_regression: PASS
+  pixels_changed: 'no'
+  semantic_followup: none
+  review:
+    reviewer: fable (independent)
+    verdict: 'APPROVED after doc changes (4cca48e, 6e111ac) + LRU 17f28c0 authorized. Original: 2a APPROVE (bit-identity reproduced on arm64 vs pristine baseline module; all catenary branches reached; sweep
+      legs verified same job/card with stable_envs_from). 2b APPROVE-WITH-CHANGES (docs: CPU numbers/residual/maze2d status/_expand_tile DMC reach missing from findings.md; _TILE_CACHE immutable, batch/chunk-safe;
+      off-path verbatim). 2c APPROVE-WITH-CHANGES (reset correct+pixel-free; bake output is history-dependent and cross-process reproducible, not random - suspect persistent mujoco.Renderer per rkey; whether
+      the other plate is the frozen 06a2e039 untested). Required changes sent 2026-09-13.'
+  slurm_jobs:
+  - 6343543
+  - 6343544
+  - 6343664
+  - 6344633
+  - 6345115
+  - 6346224
+  - 6346414
+  - 6346429
+  - 6346705
+  - 6346706
+  - 6346814
+  - 6347171
+  notes:
+  - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
+  - 'FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus
+    raycast3d callers maze2d/mujoco_locomotion have no oracle: self-consistency check required for composite changes.'
+  - 'RAYCAST-2 delivered 2026-09-13 late. Harness defect: 6C scripts sys.path.insert(0, ROOT) overrode PYTHONPATH (both legs = branch in job 6346224); fixed, notes record stable_envs_from; other workstreams
+    warned. Trailers stripped via filter-branch above 89fa5ca only.'
+  - 'Review escalations: Step-8 re-freeze of AntmazeTeleportExplore with documented bake protocol; decide whether a _bake-level reproducibility precondition belongs in Gate A; raycast3d.py composite/_expand_tile
+    edits reach DMC path -> flag to cpu-3d before merge; Pointmaze next target = composite gathers/patch merge at ss=2 (25 of 43 ms).'
+  - '2c'' (job 6347171): retained mujoco.Renderer per rkey is the bake-history carrier; fresh Renderer per bake is constant and equals the cached plate but leaks an EGL context per bake (budget ~96, check_style_is_state
+    bakes 64) -> separate ticket with context budget as first constraint; AntmazeTeleportExplore yields 4 distinct plates in 8 bakes, Step-4 frozen plate is none of them -> Step-8 re-freeze. check_reference_renderer_is_stable
+    fires 12/12 on PointmazeTeleportNavigate only (needs a bake-path arm) - contract-routing proposal for Sami. maze2d PointMaze* identity verified (max_abs_diff 0) in fresh venv. RAYCAST-3: scalar C++
+    cast 18-22 ns/test vs torch 216-277 (12x) but NOT bit-exact on gcc/x86 (capsule normal 3-17 ulp) and insufficient alone: Reacher issues 11.5 tests/pixel for 4 primitives -> per-primitive screen bounds
+    are the bigger lever (no compiler). Pointmaze blocker is composite gathers/patch merge at ss=2. LRU: cache-pressure observed 1 -> 0 on both cells.'
+  - 'RAYCAST-4 delivered 2026-09-14 (afc7027): bit-identical, batch-invariance CPU test added, far-field conservativeness fix (capsule intersector float32 cancellation at ~100 m recorded as shipped property).
+    Held for RAYCAST-5: per-primitive-kind bounding from a committed op-cost measurement (spheres unbounded by mechanism), acceptance >=0.97x every row; then default True.'
+- workstream: fetch-gpu
+  brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
+  branch: step6/fetch-gpu
+  worktree: /Users/samib/stable-envs-step6-fetch-gpu
+  oscar_copy: $SCR/se6/fetch-gpu
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: d1518b683b986834eca650af9ec5cc59d49f5f0a
+  agent_model: opus
+  wave: wave1
+  status: 'blocked (demonstrated: compute-bound at 480px; BATCH_SCALES unreachable without ~2x megakernel speedup; escalated to Sami)'
+  authorization: PROFILE ONLY
+  goal: 'PROFILE ONLY: why fps(4096)/fps(1) is 7-12x vs required 20x on the public Fetch path'
+  affected_configs:
+  - FetchPickAndPlace
+  - FetchPickAndPlaceDense
+  - FetchPickAndPlaceDict
+  - FetchPush
+  - FetchPushDense
+  - FetchPushDict
+  - FetchReach
+  - FetchReachDense
+  - FetchReachDict
+  - FetchSlide
+  - FetchSlideDense
+  - FetchSlideDict
+  bottleneck:
+    measured: 'B=4096: device 98.9% of wall, megakernel 90.5% of device, host 3.4%; H2D 36 B/frame, static geometry not re-uploaded; 2 D2H syncs/render; fps(1) 81% fixed host cost (1.48 ms) independent
+      of frame size'
+    hypothesis: BATCH_SCALES = fps(4096)/fps(1) ~ per-frame device cost with batching divided out; passes at <=240px (26-99x), fails at frozen 480px (9.5x)
+  correctness:
+    targeted_tests: n/a (no code change)
+    step4_replay: n/a
+    gate_a: PASS (unchanged)
+    fidelity: unchanged
+  performance:
+    cpu_before: n/a (out of scope)
+    cpu_after: null
+    gpu_before: R 5.34-6.70, cores 4.10-5.40 (pass); fps(1) 538-548, fps(256) ~5.1k, fps(4096) ~5.2k on 3090
+    gpu_after: null
+    batch_scales: 9.5x FAIL (node-dependent 7.6-11.7x; fps(1) swings +/-21% across 3090 nodes)
+    no_large_batch_regression: PASS all 12 (1.005-1.021)
+  pixels_changed: 'no'
+  semantic_followup: none
+  review:
+    reviewer: null
+    verdict: null
+  slurm_jobs:
+  - 6343470
+  - 6344491
+  - 6344691
+  notes:
+  - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
+  - 'FINDING 2026-09-13: PC-1 (skybox/textures off, +3.7%, pixel-identical) and PC-2 (event deps instead of chunk syncs, +5%) do not reach the bar and are NOT authorized. Fixed-host-cost fix (~3.3x at B=1)
+    would drop BATCH_SCALES to ~2.9x: qualifier conflicts with frozen 480px frame. Decision escalated to Sami. Harness NameError in profile_note.py fixed on integration.'
+- workstream: raster2d
+  brief: STEP_06_AGENT_BRIEFS/05_RASTER2D_CPU.md
+  branch: step6/raster2d
+  worktree: /Users/samib/stable-envs-step6-raster2d
+  oscar_copy: $SCR/se6/raster2d
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: '15efce1f732322f877cd2efd376aafa2211ce172 (round 2: RASTER2D-1c, RASTER2D-2, SWMNAV-1)'
+  agent_model: opus
+  wave: wave2
+  status: 'partially merged (through b0c94ad: RASTER2D-1c + RASTER2D-2); SWMNAV-1 (d862e2a) held for GPU small-batch regression fix'
+  authorization: PROFILE FIRST
+  goal: 'PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts'
+  affected_configs:
+  - Piecewise
+  - PiecewiseZones
+  - PushT
+  - SimplePointMaze
+  - TwoRoom
+  - TwoRoomTarget
+  bottleneck:
+    measured: 'render_torch evaluated all three primitive families over the whole frame for every slot: PushT B=64 raster 557 ms, 324.6 ms (58%) in families the slot lacks; SimplePointMaze B=64 74,779 ms
+      with 9,508 ms in a capsule block for a scene with zero capsules; bbox covers 1.7% of frame per primitive. Pre-bake hypothesis killed (static walls cover 0.216 frames). Remaining: batch-union window
+      degenerates to whole frame (301/518 ms SPM, 104/143 ms PushT); swm_nav base_image 23-49% of render, state-independent, rebuilt per call per row'
+    hypothesis: '_prim_plan pre-pass + world-space bounding (same encoding as GPU _bbox_kernel) + uint8 NHWC canvas at ss==1; next: tile-binning (flat in B) and swm_nav base_image pre-bake'
+  correctness:
+    targeted_tests: tests/unit 2 pre-existing failures; GPU suite for the six envs 183 pass/75 skip/0 fail incl. test_backend_agreement; differential fuzz vs verbatim baseline function 1,650 CPU + 650 GPU
+      scenes byte-identical
+    step4_replay: 'all six configs on cuda: every digest and all 17 checks unchanged; CPU digests before/after identical on Oscar and laptop; 8 Scene2D consumers incl. highway-env identical'
+    gate_a: PASS (unchanged); Commit A e6c2af3 makes device=cpu honoured on Triton hosts (Step-3 CPU_UNMEASURED cause); second HAVE_TRITON instance at conformance.py:381 -> RASTER2D-1c
+    fidelity: unchanged
+  performance:
+    cpu_before: 'Step-5 baseline: PushT 115 fps, SimplePointMaze 3, TwoRoom 261, TwoRoomTarget 189, Piecewise 425, PiecewiseZones 215 (1 thread)'
+    cpu_after: 'round 2 (node1828, job 6349273): PushT 2,046 (17.8x vs baseline, S_cpu 5.49), SPM 243 (81x, S_cpu 4.69), TwoRoom 1,623 (6.2x, S_cpu 5.08), TwoRoomTarget 731 (3.9x, 3.66), Piecewise 1,435
+      (3.4x, 3.79), PiecewiseZones 1,401 (6.5x, 5.28); cores_cpu 0.22-0.55 -> all CPU_FASTER, none CPU_FAST (residual = uint8 write bandwidth)'
+    gpu_before: PushT 1.93M fps, SPM 43.7k (3090)
+    gpu_after: PushT/SPM/Piecewise flat (0.98-0.99); TwoRoom 1.41x, PiecewiseZones 1.14x, TwoRoomTarget 1.13x (swm_nav has no kernel); no regression
+    batch_scales: n/a
+    no_large_batch_regression: unchanged
+  pixels_changed: 'no'
+  semantic_followup: none (PushT cuda digest_ours unchanged cecda14a; GPU path not modified)
+  review:
+    reviewer: fable (independent)
+    verdict: 'Round 1 APPROVE-WITH-CHANGES (applied). Round 2 (2026-09-14): RASTER2D-1c and RASTER2D-2 APPROVE (grouping exact, deterministic, order-independent; alpha floor verified over all 65,536 pairs;
+      108k-state boundary scan 0 diffs; mutation counts reproduced; merge-tree clean). SWMNAV-1 BLOCKED: committed gpu_before/after (job 6349274) shows TwoRoom 0.48x/0.55x, TwoRoomTarget 0.32x/0.40x, Piecewise
+      0.19x/0.35x, PiecewiseZones 0.27x/0.43x at B=16/64 (4-6 host syncs per render, CPU-calibrated grouping on cuda) while findings said no regression; plus per-leg SHA stamping on GPU launcher, multi-plate
+      gather branch untested, citation mismatch.'
+  slurm_jobs:
+  - 6344858(cancelled)
+  - 6346289
+  - 6346290
+  - 6346291
+  - 6346300
+  - 6346490
+  - 6349273
+  - 6349274
+  notes:
+  - wave2 spawned 2026-09-13T18:25
+  - 'PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d).'
+  - 'Round 2 2026-09-14: RASTER2D-2 row grouping by quantised box origin (group count bounded by frame; measured cost constants) 2.1-3.1x; SWMNAV-1 base_image per distinct whole style row + 5.89-sigma dot
+    window (alpha floor 2^-25 measured) 3.1-12x; RASTER2D-1c conformance backend-agreement reads scene device. Mutation-checked tests; an aliasing bug (cached plate painted in place at k=1) was caught by
+    purity/order columns and fixed. Per-leg SHA stamping fixed. All six configs digest-identical on cuda; 650/650 fuzz; GPU suite 183/0.'
+- workstream: gfxdraw
+  brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
+  branch: step6/gfxdraw
+  worktree: /Users/samib/stable-envs-step6-gfxdraw
+  oscar_copy: $SCR/se6/gfxdraw
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: b0d461e10bce0f13ae0d424cb9fada0ed0c7aa51 (merged into integration)
+  agent_model: opus
+  wave: wave2
+  status: merged
+  authorization: PROFILE FIRST
+  goal: 'PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU'
+  affected_configs:
+  - Acrobot
+  - CartPole
+  - MountainCar
+  - MountainCarContinuous
+  - Pendulum
+  bottleneck:
+    measured: 'B>=16: 68-74% StyleCanvas.paint + 11-14% scanline mask = (B,H,W,3) temporaries per primitive; torch.where on interleaved surface 340 Mpx/s vs 4.8 Gpx/s planar; B=1: dispatch, clip_line 33-38%
+      over 8 calls; 26,477 ops/render Acrobot'
+    hypothesis: 'planar (3,B,H,W) canvas + bounded primitives (per-env static windows, disc stencils, per-edge kmax) + one clip_line per polygon -> ops halved (12,970 CPU / 20,859 CUDA); remaining: three-plane
+      interleave ~0.17 ms/frame floor for torch ops on one core -> fused per-pixel path (GFXDRAW-2)'
+  correctness:
+    targeted_tests: test_gfxdraw_fused + test_fast_paths 123/0; conformance+reproducibility -k five 358 pass/93 skip/0 fail; CPU conformance 5/5; tests/unit 2 pre-existing failures; new tests/unit/test_gfxdraw_select.py
+      (select_ branches bit-equal)
+    step4_replay: 'fidelity_step4 cuda + cpu on all 5: every check status and every digest unchanged; 512 states/env (half unreachable) byte-identical; LunarLander _AARecorder write list identical'
+    gate_a: PASS (unchanged)
+    fidelity: unchanged
+  performance:
+    cpu_before: S_cpu 0.17-0.28 (CPU_REGRESSION), 20-30 fps B=1
+    cpu_after: S_cpu 0.94-1.92 paired on node1829 (CPU_PARITY on 4/5; Acrobot 0.94); 5.5-7.1x; cores_cpu 0.22-0.50 still BELOW_G4
+    gpu_before: R 37-71 (GPU_FASTER) on 3090
+    gpu_after: 'round 1: R 83-179 (2.2-2.5x). Round 2 fused kernel (job 6351758, paired): Acrobot 160,066 f/s R 389.8; CartPole 185,436 R 347.0; MountainCar 144,691 R 295.0; MountainCarContinuous 145,176
+      R 296.8; Pendulum 175,462 R 691.4 -> GPU_FAST; others GPU_FASTER (gap 1.28-1.69x, per-pixel walk not the store); cores 105-163; VRAM 7.7-9.1 -> 3.0 GB'
+    batch_scales: PASS 1,179-1,890x (was never the blocker; plan.json miscounted a satisfied qualifier string)
+    no_large_batch_regression: PASS
+  pixels_changed: 'no'
+  semantic_followup: none
+  review:
+    reviewer: fable (independent)
+    verdict: 'APPROVED after round-2 changes (mixed-row CUDA guard 80/80 on gpu2107; paired peak_gb per arm reproduces sweep VRAM to 0.02 GB; R holds on second card: Pendulum 785, others 322-440). Round
+      1 APPROVE-WITH-CHANGES (applied, LunarLander fix verified on Box2D host, pinned digests reproduced against pristine 89fa5ca). Round 2 (2026-09-14) APPROVE-WITH-CHANGES: fused kernel bit-identical
+      to per-primitive path (semantics traced per case; joint tests 50 CPU / 55 CUDA / 10 fast-path; corpus-style replay under kernel matches oracle incl. mixed AA rows); paired R reproduces; before leg
+      reproduces round-1 after. Required: per-row-style CUDA guard test; paired_gpu peak_gb reset; scope CPU negative to the per-pixel-walk design (span rasterizer unmeasured); disc_table duplicate assert.
+      Merge conflict in tests/gpu/test_fast_paths.py (additive both sides) to resolve at merge.'
+  slurm_jobs:
+  - 6346430
+  - 6346431
+  - 6346933
+  - 6346967
+  - 6346999
+  - 6346954(cancelled)
+  - 6348411
+  - 6348468
+  - 6348987
+  - 6349091
+  - 6349362
+  - 6351758
+  - 6352593
+  notes:
+  - wave2 spawned 2026-09-13T18:25
+  - 'PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the
+    baseline tree.'
+  - 'Review escalations: no Step-6 gate covers LunarLander/CarRacing consumers on Oscar (no Box2D) -> fresh venv verification ordered; plan.json BATCH_SCALES miscount confirmed at scratch/step3/certify.py:266
+    (satisfied qualifier counted as blocker) -> recheck other rows; adopt paired S_cpu measurement for all CPU rows (shared-node swings 2.3x).'
+  - 'Review fixes 2026-09-14: aaline_emit weight expanded (stride-0 view), recorder contract test over 4 quad classes pinned to 89fa5ca, bounds fuzz test committed, interleave figure corrected (0.289 ms/frame
+    laptop), paint_disc colour hoisted. Box2D venv se6-gfxdraw-box2d: LunarLander byte-identical baseline vs branch; CarRacing cannot render on CPU on EITHER tree (Triton-only, device=cpu not honoured -
+    not in frozen 49; record for Step 7/8). GFXDRAW-2-CPU verdict: do NOT build a fused CPU kernel - C++ -O3 / numba gain 1.03-1.51x, still 1.6-2.4x short of cores_cpu=1 (budget 3.6-4.0 ns/px; interleave
+    44-61% of budget); numba installs cleanly beside certified pins (third answer to packaging); numpy strided interleave 1.38x cheaper (proposed). GFXDRAW-2-GPU: stable_envs/render/gfxdraw_classic.py one-pass
+    per-pixel kernel + baked plate, 0 differing pixels on CPU form for all five; _use_fused CUDA+Triton only.'
+  - 'GFXDRAW-2-GPU delivered 2026-09-14: 3.76-4.33x every batch, BATCH_SCALES 1,687-1,990x, NLBR 7.2-8.2; frozen replay under kernel identical; CarRacing byte-identical on CUDA in Box2D venv; its fused
+    identity test now executes (4 pass; first job collected-and-skipped, caught by coverage guard). Remaining GPU gap needs per-env specialisation (not general).'
+  - 'Round-2 changes 2026-09-14: test_gfxdraw_classic 55->80 cases (20 per-row style, asserts mixed AA/colours/PLATE_B=B before comparing) + env.render per-row guard; paired peak_gb reset per arm; CPU negative
+    scoped to per-pixel walk, span/scanline rasterizer named as unmeasured alternative (cores_cpu>=1 NOT shown unreachable); disc_table within-pass duplicate assert (fires on injection). Step-8 record:
+    PLATE_B constexpr recompile per batch size with >1 terrain pair; plate.contiguous() 2.9 GB transient at B=4096 (off certification path).'
+- workstream: cpu-3d
+  brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
+  branch: step6/cpu-3d
+  worktree: /Users/samib/stable-envs-step6-cpu-3d
+  oscar_copy: $SCR/se6/cpu-3d
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: 6505e71
+  agent_model: fable
+  wave: wave2
+  status: finding (Phase-1 design delivered; Phase-2 approval pending Sami on CPU-backend contract + compiled-kernel packaging; Fetch CPU_FAST = demonstrated blocker)
+  authorization: DESIGN/CHARACTERIZATION ONLY
+  goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
+  affected_configs:
+  - DMCCheetahRun
+  - DMCHopperHop
+  - DMCWalkerWalk
+  - DMCHumanoidStand
+  - FetchPickAndPlace
+  - FetchPickAndPlaceDense
+  - FetchPickAndPlaceDict
+  - FetchPush
+  - FetchPushDense
+  - FetchPushDict
+  - FetchReach
+  - FetchReachDense
+  - FetchReachDict
+  - FetchSlide
+  - FetchSlideDense
+  - FetchSlideDict
+  bottleneck:
+    measured: 'No CPU path: Step-3 cpu rows for trackcom four are MJWarp on GPU behind device=cpu (DEVICE_NOT_HONOURED). Binding bar is cores_cpu>=1: 6,629 fps at 84px (21.4 ns/px) / 776-881 fps at 480px;
+      official llvmpipe 11-27 fps DMC, 40-53 Fetch. Torch 1-thread: 2.0 us dispatch floor, 6.3 us per 84px full-frame op; compiled scalar C whole-frame 95-150 ns/px (K=8/19) = 4.5-7x short of bar. Fetch
+      robot 15 meshes/31,720 tris at 480px: needs 36-41 ns/tri vs 540-1,640 measured -> fill-bound blocker'
+    hypothesis: 'DMC four: arch (d) baked skybox plate (99.4-99.7% constant) + analytic floor (MJWarp PLANE UV law) + compacted capsule cast on mover window + MJWarp-law shader -> 260-800 fps = CPU_FASTER
+      (S_cpu 24-30, cores 0.04-0.12); CPU_FAST only via fused SIMD whole-frame kernel (M2), unproven; shared fused CPU cast to be owned by raycast3d'
+  correctness:
+    targeted_tests: n/a
+    step4_replay: 'n/a (Phase 2 obligation: trackcom four byte-identical on cuda; new CPU shard)'
+    gate_a: unchanged
+    fidelity: 'OPEN: frozen MJWarp digests are a soft oracle (0.02% run-to-run noise; baseline misses trackcom digests by 0.16-0.61/255); proposed new cross-backend within-1/mean bound + per-device visual
+      declaration under 3.11 reference -> needs Sami'
+  performance:
+    cpu_before: CPU_UNMEASURED / DEVICE_NOT_HONOURED (trackcom four); Fetch no CPU route
+    cpu_after: null
+    gpu_before: unchanged
+    gpu_after: null
+    batch_scales: null
+    no_large_batch_regression: null
+  pixels_changed: 'no'
+  semantic_followup: none now; DINO tripwire on CPU frames in Phase 2
+  review:
+    reviewer: null
+    verdict: null
+  slurm_jobs:
+  - 6345025
+  notes:
+  - wave2 spawned 2026-09-13T18:25
+  - 'Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER,
+    pure torch, ~3-5 days) and gate M2 (compiled SIMD kernel, packaging decision) on a <=21 ns/px micro-benchmark; (3) Fetch: record blocker vs fund CPU_PARITY llvmpipe device-honouring path. RAYCAST-3
+    (fused CPU cast, raycast3d-owned) queued after RAYCAST-2.'
+- workstream: tilemap
+  brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
+  branch: step6/tilemap
+  worktree: /Users/samib/stable-envs-step6-tilemap
+  oscar_copy: $SCR/se6/tilemap
+  baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+  head_sha: 55bf7643c6ccf0c74f844677bb3520a4bf10086c
+  agent_model: opus
+  wave: wave3
+  status: merged
+  authorization: per brief
+  goal: tile/atlas CPU optimisation (not full Craftax coverage)
+  affected_configs:
+  - CraftaxClassic
+  bottleneck:
+    measured: 'render composited every frame from scratch: ~12 image-sized float32 temporaries (1.94 MB per 48.4 KB frame); working set 31 MB at B=16 fits L3, 496 MB at B=256 does not -> fps falls with
+      batch; ops constant 216/batch; allocation <0.5%; at B=256 compositing 66%, gather+untile 15%, recolour 10%, output conversion 11%'
+    hypothesis: bake composite into 680-entry tile table (5 player x 17 block x 8 mob, 522 KiB) once per (device, tile size); visibility/style folded into the gather index; one index_select into uint8 output
+      at default gain
+  correctness:
+    targeted_tests: tests/unit/test_craftax_atlas.py 16 tests (84 differential cells max|diff|=0 incl. per-env style mixtures, out-of-range states); tests/unit 558/559 on Oscar; GPU suites -k CraftaxClassic
+      30 pass/14 skip x2
+    step4_replay: 'frozen CraftaxClassic replay on cuda AND cpu: digest_ours/default_style/corpus_style/style_digest identical; mean_pixel 93.84458414713542, distinct_colors 277 identical; cross-tree diff
+      90 blocks identical'
+    gate_a: PARTIAL (unchanged; no coverage added)
+    fidelity: unchanged
+  performance:
+    cpu_before: 'CPU_REGRESSION BELOW_G4: 1,867 f/s @B=16 (cores 0.43), node1831 1 thread, NO_REFERENCE ladder (no jax)'
+    cpu_after: 'CPU_EXCEPTIONAL: 116,448 f/s @B=1024 (cores 23.4) = 62.4x; confirmed quiet node2333 154,086 f/s (cores 27.85, 61x)'
+    gpu_before: 'GPU_FAST: 145,110 f/s @4096, cores 25.7 (matches Step-3 frozen 144,738 to 0.3%)'
+    gpu_after: 'GPU_EXCEPTIONAL: 1,206,822 f/s @4096 (8.3x), cores 262.4; VRAM 3,790 -> 221 MiB; confirmed gpu2104 1,229,787'
+    batch_scales: 637.9x PASS (was 97.6x)
+    no_large_batch_regression: 3.167 PASS
+  pixels_changed: 'no'
+  semantic_followup: none
+  review:
+    reviewer: fable (independent)
+    verdict: 'APPROVE 2026-09-14: cache keyed (device, tile size), bounded 8, never mutated; all 3 style leaves folded/applied; folds exact (mob-0 alpha exactly 0; slot 4 == block bit-for-bit); coverage
+      unchanged; gain detection global per call, mixed batches correct; reviewer cross-tree diff 102 blocks incl. sizes 65/96 identical; tier.py reproduces frozen Step-3 labels; before leg matches Step
+      3 to 0.26%; merge-tree clean.'
+  slurm_jobs:
+  - 6349384
+  - 6350070
+  - 6349394
+  - 6351158
+  notes:
+  - wave3 spawned 2026-09-13 late (CPU-only; no file overlap with other workstreams)
+  - 'PATCH 2026-09-14. Residual tickets: TILEMAP-2 channel_gain path (float table gather, 21x slower on CPU, off certification path); TILEMAP-3 GPU gather at 153 GB/s vs 1.1 TB/s possible via _blit_kernel
+    (out of scope, CPU was the failing bar). Hazard: rsync pull of examples/results/step6/<ws>/ overwrote findings.md (recovered from git) - same incident as raycast3d. Docs table in pixel_native.md describes
+    replaced pipeline (H200 number left as floor).'
+wave0_profile_jobs:
+- 6318695
+- 6318867
+- 6322166
+- 6322168
+- 6322230
+- 6322231
+- 6322235
+dashboard_note: Fields are strings; pixels_changed is the literal string 'no'/'yes'. Rewritten as valid YAML 2026-09-14 after the report generator flagged syntax errors.
