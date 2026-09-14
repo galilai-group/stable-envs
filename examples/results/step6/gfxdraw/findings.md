@@ -418,6 +418,9 @@ seams, wrappers only), `replay_digests.py` (the seconds-long replay loop), `cons
 | 6351758 | `se6-gfxdraw-gpupaired` | `gpu2264` (3090) | `tests/fused_box2d_gpu2264.txt`, `sweep2/paired_gpu_B{1024,4096}_gpu2264.json` |
 | 6352593 | `se6-gfxdraw-mixedrow` | `gpu2107` (3090) | `tests/classic_kernel_mixedrow_gpu2107.txt`, `sweep2/paired_gpu_B4096_perarmpeak_gpu2107.json`, `characterize/venv_box2d_manifest.json` |
 | 6353689 | `se6-gfxdraw-shardcpu` | `node2339` | `sweep/rejected_high_spread_node2339/` — **rejected itself**: reference spread 4.52x-10.37x |
+| 6353993 | `se6-gfxdraw-cpuexcl` | — | `--exclusive` attempt; **never ran** (`QOSMaxCpuPerUserLimit`), cancelled |
+| 6356085 | `se6-gfxdraw-cpuatt` | `node2407` | `sweep/rejected_no_quiet_node/..._node2407.json` — pre-flight spread 1.62x |
+| 6356102 | `se6-gfxdraw-cpuatt` | `node2422` | `sweep/rejected_no_quiet_node/..._node2422.json` — pre-flight spread 1.65x on the partition's quietest node |
 | 6353690 | `se6-gfxdraw-shardgpu` | `gpu2264` (3090) | `sweep2/gpu_paired_{before,after}_gpu2264.json` — self-contained, spread 1.10-1.11x, decode on the same card. **The GPU certification rows.** |
 
 Jobs whose artifacts carry their own `slurm_job` field: 6322230, 6346430, 6346431, 6346967,
@@ -468,12 +471,52 @@ a single block-timed reading has no spread — its denominator had collapsed 2.3
 file said so, and the wrong tier it published looked exactly like a right one. A rejected shard is
 written and marked, never dropped: a missing file would look like a job that never ran.
 
-**`cores_cpu` is absent from the CPU row and the reason is recorded in the shard.** Decode was not
-measured on `node1829`, and borrowing another host's would be the cross-host ratio this exercise
-exists to avoid, so `classify` computes no `cores` and the row cannot be inflated (it caps at
-`CPU_FASTER`; the paired `S_cpu` tops out at 1.96, so the labels are unchanged either way). The
-magnitude is **0.22-0.50**, measured on `node2334`, `node2338` and `node2339`, and `BELOW_G4` is
-true of all five CPU rows even though this shard does not assert it.
+**`cores_cpu` is not measured, after three attempts, and that is a finding about the partition.**
+A self-contained CPU shard needs the renderer, the official reference and the decode bar timed on
+one host in one process. Four tries:
+
+| # | job | node | load at start | reference spread | verdict |
+|---|---|---|---|---|---|
+| 0 | 6346431 | `node2338` (48 cores) | 47 | 2.3x, *after the fact* | a block-timed reading cannot record its own instability |
+| 1 | 6353689 | `node2339` (48) | — | 4.52x / 10.37x | rejected by its own run-spread check |
+| 2 | 6356085 | `node2407` (192) | 133 | **1.62x** in pre-flight | rejected in 13 s |
+| 3 | 6356102 | `node2422` (192) | 57 | **1.65x** in pre-flight | rejected |
+| — | 6353993 | — | — | — | `--exclusive`: never ran, `QOSMaxCpuPerUserLimit` |
+
+**Attempt 3 is what makes this structural rather than unlucky.** `node2422` was chosen by querying
+every node in the partition for `CPULoad` and idle CPUs and taking the best (load/core 0.29, 103
+CPUs idle) — and its reference still varied **1.65x**, indistinguishable from the busiest node
+tried at 1.62x. What the measurement needs is sole tenancy, not a quieter co-tenant.
+
+And sole tenancy is unavailable. Job 6353993 pended two hours, its estimate slipping 02:03 to
+05:34, and finally reported the reason outright: the `normal` QOS caps a user at `cpu=64` while an
+exclusive allocation charges the **whole node**, and this partition's nodes are 48 or 192 cores. On
+a 192-core node the request is 192 against a cap of 64 and can never be satisfied; on a 48-core one
+it fits but queues behind a partition with 632 of 12,928 CPUs idle. Cancelled so three attempts
+stayed three.
+
+So: **no `cores_cpu` is published for these five rows, and none is guessed.** Three things follow
+and are worth separating.
+
+* **`S_cpu` is unaffected and is measured.** It is a ratio of two throughputs timed against each
+  other, and pairing them round by round is exactly what makes it survive a noisy node —
+  `sweep/cpu_1thread_paired_after_node1829.json` has a worst spread of 1.11x. `cores_cpu` is a
+  ratio to a decode bar that must be measured beside it, and no node held both still.
+* **`BELOW_G4` is not in doubt**, only unasserted. It measured **0.22-0.50** on `node2334`,
+  `node2338` and `node2339` against a bar of 1 — every CPU row is below G4 by two to five times.
+  What is missing is a shard entitled to say so.
+* **A borrowed decode bar would be worse than a missing one**: it is the cross-host ratio this
+  whole provenance pass exists to remove, and on the page it would be indistinguishable from a
+  measured one.
+
+Fixing it needs either a QOS whose `cpu` cap is at least one node's core count, or free 48-core
+nodes. Neither is in this workstream's gift. Evidence:
+`characterize/cpu_shard_attempts.json` and `sweep/rejected_no_quiet_node/README.md`.
+
+One thing that did work: the pre-flight. Timing the reference twelve times *before* committing to
+the sweep turned two doomed 30-minute jobs into two 13-second ones, and it is the right instrument
+on a shared node where the load average is only a proxy — a 192-core box with 64 CPUs busy reads a
+load of 64 and may still be a fine place to run one thread.
 
 
 ## Commits on `step6/gfxdraw`

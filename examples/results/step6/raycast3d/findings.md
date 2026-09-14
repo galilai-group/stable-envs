@@ -1106,7 +1106,842 @@ scatter/gather versus a contiguous tile blit, and the box average at `ss=2` — 
 benchmark in any RAYCAST-3 implementation ticket, and for Pointmaze it is the larger half.
 
 
+# RAYCAST-4 — per-primitive bounds in the CPU cast
+
+`stable_envs/render/raycast3d.py`, the torch cast only. Design first, then the implementation and its
+evidence.
+
+## Design
+
+**The lever, restated from RAYCAST-3.** `DMCReacherHard` issues **80,884 ray-primitive tests for a
+7,056-pixel frame — 11.5 tests per pixel for a FOUR-primitive scene.** The four ray passes each run
+over a window that is 64–95 % of the frame, because the window is a rectangle around *all* the movers
+and a reacher arm is long, thin and diagonal. A single capsule covers a small part of it. Nothing
+between the window and the intersector bounds a primitive to the rays it can reach.
+
+**The bound: ray/bounding-sphere distance, not a screen box.** A screen-space box is the obvious
+answer and is the wrong one here. The cast is handed `o`, `d` and the primitive arrays — no camera,
+no pixel indices — and for the reflection pass the origins are per-ray floor points rather than one
+pinhole, so "which pixel is this ray" is not a question it can answer without threading a camera
+through five call sites. The distance from a primitive's origin to a ray's line needs none of that:
+
+    perpendicular distance^2 <= radius^2   <=>   |oc|^2 |d|^2 - (oc.d)^2 <= r^2 |d|^2 ,   oc = pos - o
+
+multiplied through by `|d|^2` so that a degenerate `d = 0` reads `0 <= 0` and includes the ray
+instead of producing a NaN that would silently drop it. A second term, `oc.d + r|d| >= 0`, drops rays
+whose whole bound lies behind the origin — where `intersect`'s own `t > 0` would reject them anyway.
+About **8 elementwise ops per primitive per ray, against the ~200 an intersector costs**.
+
+**Per primitive, per row.** The radius comes from the `sizes` tensor the caller actually passed, not
+from `Primitives.bound_radius`, so a per-environment `size_scale` (which `composite` applies before
+calling) is already in it and cannot drift out of sync:
+
+| kind | radius about the primitive's own origin |
+|---|---|
+| `SPHERE` | `size[0]` |
+| `CAPSULE`, `CYLINDER` | `size[0] + size[1]` (conservative; the tight bound is `sqrt(r^2+hh^2)`) |
+| `BOX` | `sqrt(sx^2+sy^2+sz^2)` |
+| `PLANE`, anything unknown | **unbounded — always tested** |
+
+`pos` is `(B,K,3)`, so the bound is per row for free: the mask is `(B,N)` and costs four broadcasts.
+
+**Grouping without a Python loop over primitives or rows.** There is none. The mask is one vectorised
+expression over the whole `(B,N)` bundle; the ray set for primitive `k` is
+`nonzero(mask.any(0))` — **the union over the batch of the rays near that primitive in ANY row** —
+and the intersector then runs once on `o[:, js]`, `d[:, js]`. The existing Python loop over `K` is
+untouched (K is 1–36 and it is the shipped structure); what disappears is the *width* of each
+iteration. Restricting the set row-wise instead would need a ragged gather per row, which is the
+Python loop over rows the brief rules out, and is unnecessary: the union is already small because
+the rows of a chunk hold the same scene at nearby states.
+
+This is the same shape as `raster2d`'s tile binning — a conservative per-primitive bound, evaluated
+once, used to skip work that provably cannot contribute — but keyed on ray geometry rather than on a
+pixel tile, because that is the information this function has.
+
+**Why it is the identity, not an approximation.** A ray whose line passes further from the primitive's
+origin than the primitive's bounding radius cannot intersect it, so `intersect` returns `INF` there,
+so `t < best` is False and `best`/`nrm`/`idx` are unchanged; in `any_blocking`, `hit` is False and
+`blocked |= hit` is a no-op. The bound is inflated by `1.001x + 1e-6` before it is used to EXCLUDE
+anything: the test is a handful of float32 operations on values of order 1–1700, relative error
+~1e-6, so three orders of margin, and being over-inclusive costs only speed.
+
+**The invariant it rests on, and why it is checked.** The intersectors assume unit rays — `_sphere`
+solves `t^2 - 2bt + c = 0` with the leading `|d|^2` dropped — so with a non-unit `d` the `t` they
+return is not the geometric ray parameter and a geometrically exact bound disagrees with them. Every
+call site normalises, but the cast now *checks* (`|d|^2` within 1e-4 of 1) and routes a violating
+bundle to the unbounded path, the way `_packed` routes an exotic layout to the torch loop. **The
+differential fuzz found this rather than my reading it off the source**: feeding `d` scaled by 0–3x
+moved 23 of 400 shadow-ray answers before the check existed.
+
+**Scope: the CPU path only.** `_launch`'s fused Triton kernel keeps the whole primitive loop in
+registers and has nothing to gain from skipping one; it is untouched, which is why the cuda digests
+cannot move and the cuda replay is a control rather than a risk. `nonzero` synchronises on CUDA, so
+the torch fallback on a CUDA device pays K syncs per call — that path exists for the tests that diff
+the two backends, not for throughput, and the switch makes that explicit.
+
+**Expected effect.** Per-primitive rather than per-window, so tests/pixel should fall from 11.5
+towards the number of primitives whose bound actually covers a given pixel — 1–2 for the DM Control
+cells, where the movers are small and disjoint, and less for `ball_in_cup`, whose 28 tendon capsules
+lie along one thin chain that most rays miss entirely. It does **not** help `PointmazeLargeNavigate`
+(K=1: there is nothing to prune against) and it cannot help the passes whose cost is not the cast.
+Measured numbers below, not promised ones.
+
+
+## Implementation and evidence
+
+`PRIMITIVE_BOUNDS` (default on) in `cast_nearest_torch` / `any_blocking_torch`; off restores
+`_cast_nearest_torch_unbounded` / `_any_blocking_torch_unbounded`, the current expressions kept
+verbatim. Commits `96ef58a` (implementation), `fcbd2b5` (the conservativeness fix below), `f7077a9`.
+
+### Two defects, both found by measurement
+
+**1. The intersectors assume unit rays, and the bound did not.** `_sphere` solves `t^2 - 2bt + c = 0`
+with the leading `|d|^2` dropped, so with a non-unit `d` the `t` it returns is not the geometric ray
+parameter and a geometrically exact bound disagrees with it. The differential fuzz found this by
+feeding `d` scaled by 0-3x: **23 of 400 shadow-ray answers moved.** The cast now CHECKS `|d|^2` within
+1e-4 of 1 and routes a violating bundle to the unbounded path, the way `_packed` routes an exotic
+layout to the torch loop. Every call site in the repo normalises; the point is that it is checked.
+
+**2. Far-field cancellation — and the larger half of it is in the SHIPPED intersector.** The first
+version moved **one pixel of 3,211,264, in one frame of 64, on exactly one of the twenty-one live
+configs**: `HumanoidmazeGiantNavigate`, by 22/255. The cuda replay was identical and 176 fast-path
+cases passed, so only the CPU `PRIMITIVE_BOUNDS` on-vs-off replay pinned it to this change. The giant
+maze puts the camera ~100 m from a ~2 cm capsule, the longest lever arm in the corpus, which is why
+that configuration and no other.
+
+* *My test cancelled.* `|oc|^2|d|^2 - (oc.d)^2` is two terms of ~1e4 differing by ~`r^2` ~ 2.5e-3,
+  and float32's resolution at 1e4 is 1.2e-3. `|oc x d|^2` is the same geometry with the result of
+  order `r|d|` instead, so its absolute error is ~`eps|oc||d|`.
+* *The intersector cancels too.* `_capsule` forms `c = olx^2 + oly^2 - r^2` in float32; at
+  `|ol| = 100` m a 2 cm capsule's `r^2 = 4e-4` is **below** the 1.2e-3 resolution of the first two
+  terms, so the radius is entirely lost and `disc > 0` decides hit-or-miss on rounding noise.
+  Measured directly: the shipped cast reports a hit for a ray whose float64 perpendicular distance is
+  **0.0277 m from a capsule whose own bounding radius is 0.0221 m — a hit outside the primitive's own
+  bound.** A geometrically exact bound is therefore not conservative against this intersector,
+  however carefully it is computed.
+
+  So the intersector's own resolution, `|ol| sqrt(eps)` (0.0345 m at 100 m), is added to the radius in
+  **quadrature**: invisible wherever `r >> |ol| sqrt(eps)` — every DM Control cell — and dominant only
+  where the intersector has already stopped being able to tell. At 100 m the effective radius becomes
+  0.14 m, well under a pixel on a giant maze, so the pruning survives.
+
+| `|ol|` | float32 resolution at `|ol|^2` | `r^2` for r = 2 cm | verdict |
+|---|---|---|---|
+| 2 m | 4.8e-7 | 4.0e-4 | radius survives |
+| 30 m | 1.1e-4 | 4.0e-4 | survives, 4x margin |
+| **100 m** | **1.2e-3** | **4.0e-4** | **radius is LOST** |
+| 300 m | 1.1e-2 | 4.0e-4 | lost by 27x |
+
+**FOR THE RECORD, NOT FIXED HERE.** That second item is a property of the CPU cast *as shipped*, and
+the same expressions are in the Triton kernel. It does not make any current frame wrong — the frozen
+digests ARE what that arithmetic produces — but far-field hit/miss in these scenes is decided at the
+edge of float32, so anything that perturbs it (a different kernel, a different association order, the
+compiled cast RAYCAST-3 priced) can move those pixels. Worth a line in whatever ticket next touches
+the intersectors.
+
+### The test gap was the actual lesson
+
+Both suites passed while a real configuration moved a pixel:
+
+* the differential fuzz had **no far-field case** — it sampled primitives and rays within a couple of
+  metres, which is the regime where everything cancels harmlessly. It now sweeps lever arms of 30,
+  100 and 300 m with the rays aimed exactly at the bound, and **those cases fail against the first
+  version**;
+* the GPU fast-path case built every env at **84 px**, shortening the very lever arm under test. It
+  now uses each env's own size, so a giant maze is tested at its certified 224 px.
+
+### Identity, on the device the change targets
+
+| check | result |
+|---|---|
+| cpu, `PRIMITIVE_BOUNDS` on vs off, all 21 live configs at their native sizes | **identical** (`replay/r4_cpu_bounds_identity.json`) |
+| cpu, branch vs pristine baseline, all 21 | **identical** (`replay/r4_cpu_branch_vs_baseline.json`) |
+| cuda, branch vs pristine baseline, all 21 | **identical** — the fused kernel is untouched (`replay/r4_cuda_pixel_diff.json`) |
+| `tests/unit/test_raycast3d_primitive_bounds.py` | **24 passed** — random scenes, rays aimed at the bound radius, primitives behind the origin, zero radii and half-lengths, non-unit and zero directions, far field at 30/100/300 m, finite and infinite shadow limits, with and without `skip`, all diffed on bit patterns |
+| `tests/gpu/test_fast_paths.py` | the `raycast3d-primitive-bounds` case over the whole raycast3d family |
+| `tests/unit` overall | 554 passed, 7 skipped, 2 failed (both pre-existing, neither in the authorised files) |
+
+### What it buys, on one thread of the node it was measured on
+
+One job (`6348760`), one node (`node2337`), `OMP_NUM_THREADS=1`, eight rows, both legs, every row
+carrying its own `stable_envs.__file__` (`profile_after_r4/`). **The `before` leg here is the
+PRISTINE pre-Step-6 baseline**, so these ratios carry RAYCAST-2a and 2b as well as the bound — the
+attribution to the bound alone is the table after this one.
+
+| env | px | B | fps before | fps after | fps x | tests/px before | after | tests x |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| DMCAcrobotSwingup | 84 | 1 | 42.8 | 49.3 | 1.15x | 2.80 | 0.22 | 12.8x |
+| DMCAcrobotSwingup | 84 | 16 | 213.7 | 272.8 | 1.28x | 3.02 | 0.79 | 3.8x |
+| DMCAcrobotSwingup | 84 | 64 | 215.7 | 264.2 | 1.22x | 3.23 | 1.12 | 2.9x |
+| DMCAcrobotSwingup | 84 | 256 | 204.0 | 252.6 | 1.24x | 3.23 | 1.12 | 2.9x |
+| DMCBallInCupCatch | 84 | 1 | 5.5 | 9.5 | 1.72x | 27.39 | 0.13 | 213.3x |
+| DMCBallInCupCatch | 84 | 16 | 21.3 | 48.6 | 2.28x | 30.23 | 0.81 | 37.4x |
+| DMCBallInCupCatch | 84 | 64 | 16.6 | 51.8 | 3.11x | 39.68 | 1.70 | 23.3x |
+| DMCBallInCupCatch | 84 | 256 | 14.5 | 47.1 | 3.23x | 39.68 | 1.70 | 23.3x |
+| DMCCartpoleSwingup | 84 | 1 | 64.3 | 62.0 | 0.96x | 1.93 | 0.23 | 8.4x |
+| DMCCartpoleSwingup | 84 | 16 | 258.7 | 411.9 | 1.59x | 1.96 | 0.29 | 6.8x |
+| DMCCartpoleSwingup | 84 | 64 | 282.2 | 428.9 | 1.52x | 1.96 | 0.29 | 6.7x |
+| DMCCartpoleSwingup | 84 | 256 | 224.4 | 404.9 | 1.80x | 1.96 | 0.29 | 6.7x |
+| DMCFingerSpin | 84 | 1 | 21.1 | 23.4 | 1.11x | 10.98 | 0.59 | 18.7x |
+| DMCFingerSpin | 84 | 16 | 49.1 | 93.0 | 1.90x | 12.39 | 1.81 | 6.9x |
+| DMCFingerSpin | 84 | 64 | 45.2 | 81.9 | 1.81x | 13.24 | 2.40 | 5.5x |
+| DMCFingerSpin | 84 | 256 | 37.4 | 68.1 | 1.82x | 13.24 | 2.40 | 5.5x |
+| DMCPendulumSwingup | 84 | 1 | 47.0 | 44.0 | 0.94x | 6.25 | 0.31 | 20.0x |
+| DMCPendulumSwingup | 84 | 16 | 107.3 | 169.2 | 1.58x | 6.43 | 0.84 | 7.7x |
+| DMCPendulumSwingup | 84 | 64 | 90.7 | 161.8 | 1.78x | 6.51 | 1.01 | 6.4x |
+| DMCPendulumSwingup | 84 | 256 | 80.9 | 142.9 | 1.77x | 6.51 | 1.01 | 6.4x |
+| DMCReacherHard | 84 | 1 | 35.9 | 38.5 | 1.07x | 8.87 | 0.24 | 36.8x |
+| DMCReacherHard | 84 | 16 | 70.0 | 109.1 | 1.56x | 10.94 | 1.87 | 5.8x |
+| DMCReacherHard | 84 | 64 | 53.1 | 81.7 | 1.54x | 11.46 | 3.10 | 3.7x |
+| DMCReacherHard | 84 | 256 | 55.2 | 75.2 | 1.36x | 11.46 | 3.10 | 3.7x |
+| PointmazeLargeNavigate | 224 | 1 | 214.9 | 235.4 | 1.10x | 0.08 | 0.00 | 21.3x |
+| PointmazeLargeNavigate | 224 | 16 | 742.2 | 1019.1 | 1.37x | 0.08 | 0.01 | 6.4x |
+| PointmazeLargeNavigate | 224 | 64 | 809.6 | 1110.5 | 1.37x | 0.08 | 0.02 | 5.1x |
+| PointmazeLargeNavigate | 224 | 256 | 628.7 | 986.3 | 1.57x | 0.08 | 0.02 | 5.1x |
+| PointmazeMediumNavigate | 224 | 1 | 238.8 | 234.2 | 0.98x | 0.08 | 0.01 | 7.6x |
+| PointmazeMediumNavigate | 224 | 16 | 751.8 | 698.9 | 0.93x | 0.08 | 0.04 | 1.9x |
+| PointmazeMediumNavigate | 224 | 64 | 770.0 | 731.5 | 0.95x | 0.08 | 0.05 | 1.7x |
+| PointmazeMediumNavigate | 224 | 256 | 609.2 | 655.8 | 1.08x | 0.08 | 0.05 | 1.7x |
+
+### What the BOUND alone buys — the same branch, switch off and on
+
+Job `6350679`, one node, one thread, both legs on `$SCR/se6/raycast3d` with
+`--primitive-bounds off|on`. Added because the sweep above cannot attribute: its `before` leg is
+the pre-Step-6 baseline, so every ratio in it also contains 2a's batched tendon FK and 2b's
+cover compaction. This is the only leg where the single independent variable is the bound.
+
+| env | B | fps off | fps on | fps x | tests/px off | on | tests x |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| DMCAcrobotSwingup | 1 | 45.8 | 57.2 | 1.25x | 2.80 | 0.22 | 12.8x |
+| DMCAcrobotSwingup | 16 | 233.6 | 309.8 | 1.33x | 3.02 | 0.79 | 3.8x |
+| DMCAcrobotSwingup | 64 | 237.6 | 314.6 | 1.32x | 3.23 | 1.12 | 2.9x |
+| DMCAcrobotSwingup | 256 | 242.5 | 298.6 | 1.23x | 3.23 | 1.12 | 2.9x |
+| DMCBallInCupCatch | 1 | 6.2 | 9.6 | 1.54x | 27.39 | 0.13 | 213.3x |
+| DMCBallInCupCatch | 16 | 23.4 | 50.9 | 2.17x | 30.23 | 0.81 | 37.4x |
+| DMCBallInCupCatch | 64 | 20.0 | 61.6 | 3.08x | 39.68 | 1.70 | 23.3x |
+| DMCBallInCupCatch | 256 | 18.3 | 55.6 | 3.03x | 39.68 | 1.70 | 23.3x |
+| DMCCartpoleSwingup | 1 | 73.5 | 69.0 | 0.94x | 1.93 | 0.23 | 8.4x |
+| DMCCartpoleSwingup | 16 | 342.2 | 514.6 | 1.50x | 1.96 | 0.29 | 6.8x |
+| DMCCartpoleSwingup | 64 | 341.8 | 638.9 | 1.87x | 1.96 | 0.29 | 6.7x |
+| DMCCartpoleSwingup | 256 | 324.0 | 610.7 | 1.88x | 1.96 | 0.29 | 6.7x |
+| DMCFingerSpin | 1 | 20.0 | 23.8 | 1.19x | 10.98 | 0.59 | 18.7x |
+| DMCFingerSpin | 16 | 57.5 | 114.2 | 1.99x | 12.39 | 1.81 | 6.9x |
+| DMCFingerSpin | 64 | 51.5 | 107.8 | 2.09x | 13.24 | 2.40 | 5.5x |
+| DMCFingerSpin | 256 | 47.3 | 97.9 | 2.07x | 13.24 | 2.40 | 5.5x |
+| DMCPendulumSwingup | 1 | 51.6 | 46.9 | 0.91x | 6.25 | 0.31 | 20.0x |
+| DMCPendulumSwingup | 16 | 146.0 | 223.3 | 1.53x | 6.43 | 0.84 | 7.7x |
+| DMCPendulumSwingup | 64 | 132.2 | 216.4 | 1.64x | 6.51 | 1.01 | 6.4x |
+| DMCPendulumSwingup | 256 | 119.7 | 192.0 | 1.60x | 6.51 | 1.01 | 6.4x |
+| DMCReacherHard | 1 | 44.0 | 41.2 | 0.94x | 8.87 | 0.24 | 36.8x |
+| DMCReacherHard | 16 | 96.4 | 136.9 | 1.42x | 10.94 | 1.87 | 5.8x |
+| DMCReacherHard | 64 | 82.1 | 99.9 | 1.22x | 11.46 | 3.10 | 3.7x |
+| DMCReacherHard | 256 | 73.8 | 96.0 | 1.30x | 11.46 | 3.10 | 3.7x |
+| PointmazeLargeNavigate | 1 | 285.2 | 279.9 | 0.98x | 0.08 | 0.00 | 21.3x |
+| PointmazeLargeNavigate | 16 | 1092.5 | 1004.1 | 0.92x | 0.08 | 0.01 | 6.4x |
+| PointmazeLargeNavigate | 64 | 1239.7 | 1144.3 | 0.92x | 0.08 | 0.02 | 5.1x |
+| PointmazeLargeNavigate | 256 | 1066.2 | 935.3 | 0.88x | 0.08 | 0.02 | 5.1x |
+| PointmazeMediumNavigate | 1 | 248.7 | 221.8 | 0.89x | 0.08 | 0.01 | 7.6x |
+| PointmazeMediumNavigate | 16 | 894.6 | 747.0 | 0.84x | 0.08 | 0.04 | 1.9x |
+| PointmazeMediumNavigate | 64 | 954.9 | 715.9 | 0.75x | 0.08 | 0.05 | 1.7x |
+| PointmazeMediumNavigate | 256 | 891.6 | 654.1 | 0.73x | 0.08 | 0.05 | 1.7x |
+
+### Tiers, against `cores_cpu` — and the answer is no
+
+Each frozen Step-3 CPU row on `node2349` scaled by the speed-up measured **at that row's own
+certified `best_batch`**, not by the best ratio across batches: `se_fps` in the certification is
+that row's number at its own operating point, and scaling it by a ratio measured at a different
+batch compares two different things. `S_cpu = se_fps / official_cpu_fps` (bar 5);
+`cores_cpu = se_fps / decode_fps_per_core` (bar 1); `CPU_FAST` needs **both**.
+
+| env | Step-3 fps | x at best_batch | projected fps | S_cpu | cores_cpu | short of the cores bar by | tier |
+|---|---:|---:|---:|---:|---:|---:|---|
+| DMCAcrobotSwingup | 267.0 | 1.22x @B=64 | 327.1 | 7.05 -> 8.64 | 0.0396 -> 0.0485 | **20.6x** | CPU_FASTER+BELOW_G4 |
+| DMCBallInCupCatch | 20.9 | 2.28x @B=16 | 47.6 | 1.61 -> 3.68 | 0.0029 -> 0.0066 | **150.8x** | CPU_FASTER+BELOW_G4 |
+| DMCCartpoleSwingup | 372.2 | 1.52x @B=64 | 565.7 | 10.06 -> 15.29 | 0.0575 -> 0.0873 | **11.5x** | CPU_FASTER+BELOW_G4 |
+| DMCFingerSpin | — | — | — | — | — | — | no frozen Step-3 `node2349` row |
+| DMCPendulumSwingup | 145.2 | 1.58x @B=16 | 229.0 | 3.79 -> 5.98 | 0.0187 -> 0.0295 | **33.9x** | CPU_FASTER+BELOW_G4 |
+| DMCReacherHard | 98.6 | 1.56x @B=16 | 153.8 | 2.87 -> 4.48 | 0.0141 -> 0.0219 | **45.6x** | CPU_FASTER+BELOW_G4 |
+| PointmazeLargeNavigate | 994.3 | 1.37x @B=64 | 1363.8 | 48.01 -> 65.85 | 0.4159 -> 0.5705 | **1.8x** | CPU_FASTER+BELOW_G4 |
+| PointmazeMediumNavigate | — | — | — | — | — | — | no frozen Step-3 `node2349` row |
+
+### The cuda path is untouched, and the device agrees
+
+| env | B | device us before | after | x | fps before | after | x |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| DMCBallInCupCatch | 1 | 1482 | 1475 | 0.995x | 159.0 | 152.1 | 0.96x |
+| DMCBallInCupCatch | 64 | 2291 | 2281 | 0.996x | 2409.7 | 4579.4 | 1.90x |
+| DMCBallInCupCatch | 256 | 5106 | 5055 | 0.990x | 2662.6 | 8201.8 | 3.08x |
+| DMCBallInCupCatch | 4096 | 66635 | 66171 | 0.993x | 3240.4 | 9674.6 | 2.99x |
+| DMCFingerSpin | 1 | 1002 | 1001 | 0.999x | 182.6 | 186.8 | 1.02x |
+| DMCFingerSpin | 64 | 2150 | 2148 | 0.999x | 7421.5 | 7776.7 | 1.05x |
+| DMCFingerSpin | 256 | 5626 | 5631 | 1.001x | 22325.0 | 23606.0 | 1.06x |
+| DMCFingerSpin | 4096 | 73803 | 72509 | 0.982x | 21202.8 | 43257.7 | 2.04x |
+
+### The finding the attribution leg produced, which is not the one I expected
+
+**The bound makes both Pointmaze rows SLOWER, and the cumulative table hides it.** Against the
+pristine baseline `PointmazeLargeNavigate` reads 1.37x at B=64 and looks like a win; with the switch
+as the only variable it reads **0.92x**, and `PointmazeMediumNavigate` reads **0.75x**. The 1.37x is
+2b's cover compaction, which is already merged. The bound's own contribution to that row is negative.
+
+| row | K | N (rays/frame) | R4 alone @B=64 | tests/px |
+|---|---:|---:|---:|---|
+| `DMCBallInCupCatch` | 36 | 7,056 | **3.08x** | 39.68 -> 1.70 |
+| `DMCFingerSpin` | 7 | 7,056 | **2.09x** | 13.24 -> 2.40 |
+| `DMCCartpoleSwingup` | 2 | 7,056 | **1.87x** | 1.96 -> 0.29 |
+| `DMCPendulumSwingup` | 3 | 7,056 | 1.64x | 6.51 -> 1.01 |
+| `DMCAcrobotSwingup` | 4 | 7,056 | 1.32x | 3.23 -> 1.12 |
+| `DMCReacherHard` | 4 | 7,056 | 1.22x | 11.46 -> 3.10 |
+| `PointmazeLargeNavigate` | **1** | **200,704** | **0.92x** | 0.08 -> 0.02 |
+| `PointmazeMediumNavigate` | **1** | **200,704** | **0.75x** | 0.08 -> 0.05 |
+
+Two things are worth separating here.
+
+* **Every ray-primitive test the bound removes, it removes.** `tests/px` is bit-for-bit the same in
+  the isolation leg as in the cumulative sweep, on all eight rows — 2a and 2b contribute none of that
+  reduction. The pruning claim is entirely confirmed.
+* **Fewer tests is not less time.** On the two maze rows the bound prunes 1.7x–5.1x of the tests and
+  still loses 8–25 % of the frame rate, because what it substitutes is not free: `torch.nonzero`
+  plus the advanced-indexing gather of `o[:, js]` / `d[:, js]` and the scatter back into
+  `blocked[:, js]`. Those are O(N) on a bundle of **200,704 rays** (224 px at `supersample=2`, 28x
+  the DM Control bundles) and they buy the narrowing of **one** intersector call, because these
+  scenes have **K = 1** — one mover primitive, the agent sphere. There is no second primitive to
+  prune between; there is only the gather.
+
+So the design's own prediction — *"it does not help `PointmazeLargeNavigate` (K=1: there is nothing
+to prune against)"* — was directionally right and quantitatively wrong in sign. It does not merely
+fail to help. It costs.
+
+**This is a live regression on a certified CPU row and I am not fixing it in this ticket.**
+`PointmazeLargeNavigate` has a frozen Step-3 CPU row, so `PRIMITIVE_BOUNDS = True` as it stands ships
+a ~8 % CPU slowdown there. The obvious guard is a dispatch predicate — take the bounded path only
+when it can pay — but every candidate I can write down is a tuned threshold (`K >= 2`? `|js| < N/2`?
+a ray-count ceiling?), the DM Control rows themselves lose 6–9 % at B=1, and picking a constant from
+eight rows to make a table look good is the same move that put a far-field bug past two test suites
+earlier in this ticket. **It needs its own measurement and the coordinator's call, so it is written
+up as RAYCAST-5 below rather than guessed at here.** Until then the switch is the containment: it
+exists, its off-path is the verbatim definition, and flipping it restores the baseline exactly.
+
+### The verdict on the tier question, which is "no" either way
+
+* **It prunes.** 3.7x–23x fewer ray-primitive tests per pixel at B=64, 8x–213x at B=1, with no pixel
+  moving anywhere in the 21-config corpus.
+* **It does not change a tier.** `cores_cpu` binds on all eight rows and is short by **1.8x on
+  `PointmazeLargeNavigate`, 11.5x on `DMCCartpoleSwingup`, 151x on `DMCBallInCupCatch`.**
+* **One half-threshold moves and does not matter.** `DMCPendulumSwingup` crosses `S_cpu >= 5`
+  (3.79 -> 5.98). `CPU_FAST` needs both halves and its `cores_cpu` is 0.0295. Recorded so that nobody
+  later reads the 5.98 as a tier.
+
+RAYCAST-4 is a **PATCH, not a tier change**, and on two rows it is currently a negative one. The
+honest reading of the tier table is that no cast-level optimisation reaches `CPU_FAST` here:
+`cores_cpu` measures a whole analytic render against one core of JPEG decode, and closing 11x — let
+alone 151x — is a question about what the renderer does per frame, not about how many primitives it
+tests.
+
+### Batch invariance is a claim here, not an identity
+
+The ray set for a primitive is the union over the batch, so **batching changes which rays reach the
+intersector.** That row 0's pixels come out the same alone and in company is therefore a consequence
+of the bound being conservative, not something readable off the code — and a too-tight bound would
+break it asymmetrically, the row alone losing a hit the row in company keeps.
+`tests/gpu/test_reproducibility.py` owns this property for the repo but is cuda-only and skips its
+whole module without a device, so it has nothing to say about a CPU-only switch.
+`test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH` puts row 0 of a B=1 bundle into row 0 of a
+B=8 bundle whose other seven rows are a different scene, and compares bit patterns. Job `6351415`,
+`node1827`: **27 passed** for that module (24 differential + 3 batch-invariance), and `tests/unit`
+overall **570 passed, 9 skipped, 2 failed** — both failures pre-existing and outside the authorised
+files: `render_mjwarp.py --help`, and `test_every_cited_scratch_path_resolves`, which after this
+commit is down to **two** unresolvable citations (a `carracing` log directory and a `robocasa`
+output corpus — deliberately not spelled as paths here, because writing them out would make THIS
+file a citation site for them and hand the blame to this workstream), both cited from `docs/research/`
+and
+`examples/results/step6/texture-fidelity/findings.md` and neither from this workstream. Verified by
+re-running that module against the synced tree with this document in place.
+
+### The five jobs this section is made of
+
+| job | node | what |
+|---|---|---|
+| `6348760` | `node2337` | CPU pixels baseline-vs-branch and `PRIMITIVE_BOUNDS` on-vs-off over all 21, then the 1-thread sweep, both legs |
+| `6348761` | `gpu2113` | cuda pixels over all 21, `tests/gpu/test_fast_paths.py` at native sizes, the fuzz, and the cuda no-regression sweep |
+| `6350679` | `node2333` | the same branch with the switch off and on, one thread — the only leg that attributes anything to the bound alone |
+| `6351415` | `node1827` | `tests/unit`, including the batch-invariance case |
+| `6348207` | — | the run that moved one pixel of 3,211,264 and produced the far-field fix |
+
+The sweep and the isolation ran on different nodes (`node2337`, `node2333`), so the two tables are
+**not** comparable to each other row by row; each is internally comparable because both of its legs
+ran in one job on one node, which is the only comparison either is asked to support.
+
+### The two limits of this design, both measured rather than argued
+
+**1. The union is over the BATCH, and it costs.** The ray set for primitive `k` is the rays near it in
+ANY row of the chunk, because a per-row set would need a ragged gather — a Python loop over rows, the
+thing this design exists to avoid. So the set grows with `B` while the per-row set does not. Measured
+on `DMCReacherHard`: **0.24 ray-primitive tests per pixel at B=1 against 3.10 at B=64 — the union
+costs 12.9x.** At B=1 the bound is nearly perfect; at B=64 it still prunes 3.7x but has given most of
+it back. That is the honest ceiling of a batch-union bound, and the next lever if this row needs more:
+a ragged per-row gather, or binning rows by pose so that the union within a bin is tight.
+
+**2. The mask is evaluated over the FULL bundle, for every primitive.** `_rays_near` is ~14
+elementwise ops on `(B,N)` whether it ends up keeping one ray or all of them, so the saving is on the
+intersector (~200 ops) and the cost is paid regardless. That is why the fps gain is smaller than the
+test-count reduction — on `DMCReacherHard` at B=64, **3.7x fewer tests buys 1.22x of frame rate**
+(the bound alone; 1.54x including 2a and 2b) — and the gap is the mask, the `nonzero`/gather/scatter,
+and the part of the render that was never the cast. On the two maze rows that gap is larger than the
+saving and the net is **negative**; see the attribution table above. Both terms are visible in the
+measurements and neither is noise.
+
+Neither limit is a defect of the bound; they are what the bound costs, and they are the two places a
+follow-up would look.
+
+
+# RAYCAST-5 — the bound pays only where the intersector is dearer than the bound
+
+RAYCAST-4 shipped a bound that was on for every primitive kind. It gained 3.08x on `ball_in_cup`
+and cost `PointmazeLargeNavigate` 8 % and `PointmazeMediumNavigate` 25 % — a regression on a row
+with a frozen Step-3 CPU certification. This is the repair, and the thing it must not be is a
+threshold on `K`, on `N`, or on selectivity: those are constants fitted to the eight rows that
+happened to be swept.
+
+## The predicate is arithmetic, not a fit
+
+For one primitive over `N` rays:
+
+    unbounded:  cost_intersect(kind) * N
+    bounded:    cost_bound * N  +  cost_intersect(kind) * N * p       (p = fraction of rays kept)
+
+so the bound pays iff `cost_bound < cost_intersect(kind) * (1 - p)`. `p` belongs to the scene and
+is not knowable inside the cast — but `p >= 0`, so the condition that must hold for **every** scene,
+batch and resolution is just `cost_bound < cost_intersect(kind)`. A kind whose intersector is
+cheaper than the bound's own mask + `nonzero` + gather + scatter can never pay: there is nothing
+left to save even under perfect pruning. That ratio is a property of the intersector's arithmetic.
+
+`scratch/step6/raycast3d/r5_kind_cost.py`, **three independent runs in one job** (`6356311`,
+`node1843`, Xeon 8268, 1 thread), B in {1,16,64} x N in {7056, 50176, 200704}. The bound is timed at
+its worst case — N−1 rays kept, so the gather and scatter run at essentially full width — in the
+**`cast_nearest` shape**, which is the branch that decides the table: it gathers `best` and scatters
+`best`/`nrm`/`idx`.
+
+| kind | `ns_intersect / ns_bound`, worst over widths, per run | best | bounded? |
+|---|---|---:|---|
+| `PLANE` | no finite bounding sphere | — | no |
+| `SPHERE` | 0.27 · 0.28 · 0.28 | 0.46 | no — never reaches 1, so it can never pay |
+| `BOX` | 1.13 · 1.11 · 1.13 | 2.93 | **yes** |
+| `CYLINDER` | 1.24 · 1.23 · 1.24 | 3.11 | **yes** |
+| `CAPSULE` | 1.48 · 1.48 · 1.47 | 3.74 | **yes** |
+
+The dearest unbounded kind reaches **0.46** at its best; the cheapest bounded kind never falls below
+**1.11**; the line at 1.0 sits inside that **2.4x** gap. `_BOUNDED_KINDS = {CAPSULE, CYLINDER, BOX}`,
+and `test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose` fails if the module
+constant, `experiments/r6_kind_cost.json`, or the rule behind them ever disagree.
+
+### Two corrections this table carries, both found in review
+
+**1. The first version priced the wrong branch.** It timed the `any_blocking`-shaped bound — one bool
+scatter — while the branch that decides the table is `cast_nearest`, which additionally gathers
+`best` and scatters `best`/`nrm`/`idx`. That understates the bound by about **2x**, so the original
+ratios (SPHERE 0.45–0.83, CAPSULE 2.38–3.74) were flattering. Re-priced, capsule's worst case is
+1.47, not 2.38.
+
+**2. The margin rule was scaled by the wrong noise, and it was not stable.** `1 + 3*worst_rsd` used
+three times the spread of an *individual timing*, which is not the statistic the decision consumes.
+Run on a busier node it moved from 1.23 to **1.75** — and the three runs above, whose ratios agree to
+within **1–3 %**, carry three *different* predicates in their own `predicate` fields for exactly that
+reason: all-False, capsule-only, all-False. **A threshold a node's load average can flip is not a
+derived constant.**
+
+What stands instead is the necessary condition itself — `ratio > 1`, at every width, in every run —
+which was derived above and needs no constant at all. The error bar that matters is the spread of the
+ratio across runs, and it is 1–3 %, nowhere near the boundary. The earlier claim of *"a >2x gap so
+line placement doesn't matter"* was about where a **threshold** sat between 0.83 and 1.84; that
+framing is retired with the threshold. The separation claim survives in a better form, because 1.0 is
+not a tuned number.
+
+**The shipped predicate did not change.** Both corrections make the bound look worse and neither moves
+a kind across the line, which is the outcome worth stating plainly: the table was right for
+partly-wrong reasons, and it is now right for the right ones.
+
+## What each config actually casts — counted, not assumed
+
+The explanation *"Pointmaze regressed because its mover is a sphere"* is a claim about MuJoCo
+models resolved at bake time, so it is measured (`experiments/r5_mover_kinds.json`):
+
+| config | primitives cast per frame | bounded | unbounded |
+|---|---|---:|---:|
+| `PointmazeLargeNavigate` | SPHERE x1 | 0 | 1 |
+| `PointmazeMediumNavigate` | SPHERE x1 | 0 | 1 |
+| `DMCBallInCupCatch` | CAPSULE x33, SPHERE x3 | 33 | 3 |
+| `DMCCartpoleSwingup` | BOX x1, CAPSULE x1 | 2 | 0 |
+| `DMCFingerSpin` | CAPSULE x5, CYLINDER x2 | 7 | 0 |
+| `DMCReacherHard` | CAPSULE x2, SPHERE x2 | 2 | 2 |
+| `DMCAcrobotSwingup` | CAPSULE x2, CYLINDER x1, SPHERE x1 | 3 | 1 |
+| `DMCPendulumSwingup` | CAPSULE x1, CYLINDER x1, SPHERE x1 | 2 | 1 |
+| `AntmazeGiantNavigate` | CAPSULE x12, SPHERE x1 | 12 | 1 |
+| `HumanoidmazeGiantNavigate` | CAPSULE x16, SPHERE x3 | 16 | 3 |
+
+**All four Pointmaze configs cast exactly one primitive and it is a SPHERE.** Under this table the
+bound is not merely cheaper for them, it is *absent* — which is why the regression should return to
+exactly 1.00x rather than approximately.
+
+## The call-level short circuit, which is the same table read once
+
+The per-kind table alone still left Pointmaze at 0.92-0.98x — **with its ray-primitive test counts
+identical in both legs**, 0.08 per pixel either way. Identical counts mean identical work inside the
+`K`-loop, which located the cost precisely: `dd = _dot(d, d)` and the `_unit_rays` reduction run
+*before* the loop, unconditionally, over the whole bundle — 200,704 rays at `ss=2`, per cast call,
+for a loop that then bounds nothing. `any(_kind_is_bounded(k) for k in kinds)` at the top returns
+the verbatim unbounded body instead. No new constant and no second predicate: it is the authorised
+per-kind decision applied to the call rather than to each primitive.
+
+| row | B=16 / 64 / 256, per-kind table only | with the short circuit |
+|---|---|---|
+| `PointmazeLargeNavigate` | 0.98 / 0.95 / 0.91 | **1.06 / 1.01 / 1.05** |
+| `PointmazeMediumNavigate` | 0.95 / 0.98 / 0.96 | **1.00 / 1.02 / 0.93** |
+
+## The bar is finer than the harness — measured, not asserted
+
+Four readings still sat under 0.97x, one of them `PointmazeMediumNavigate` at B=256 on a row whose
+bounded path is *absent*. A 7 % cost cannot come from an `any()` over a one-element list, so either
+the reading was wrong or the harness was. `r5_noise.sbatch` (job `6354150`) runs four **interleaved**
+legs — off, on, off, on — same branch, same node, same job, 15 repeats instead of 5. `off2/off1` is
+a ratio of two runs of *identical code* and therefore measures nothing but the harness.
+
+| env | B | off1 | off2 | **noise** | on (mean) | **signal** | verdict |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `DMCCartpoleSwingup` | 1 | 69.9 | 73.9 | 1.058 | 69.7 | **0.969** | below bar, **B=1 is not a certification batch** |
+| `DMCCartpoleSwingup` | 16 | 269.2 | 279.1 | 1.037 | 420.1 | **1.533** | ok |
+| `DMCCartpoleSwingup` | 64 | 293.5 | 308.1 | 1.050 | 519.9 | **1.729** | ok |
+| `DMCCartpoleSwingup` | 256 | 257.4 | 287.5 | 1.117 | 519.3 | **1.906** | ok |
+| `DMCFingerSpin` | 1 | 20.2 | 20.4 | 1.012 | 24.4 | **1.200** | ok |
+| `DMCFingerSpin` | 16 | 50.3 | 51.3 | 1.021 | 103.2 | **2.031** | ok |
+| `DMCFingerSpin` | 64 | 47.3 | 46.9 | 0.991 | 94.2 | **1.999** | ok |
+| `DMCFingerSpin` | 256 | 42.7 | 42.6 | 0.996 | 90.2 | **2.116** | ok |
+| `DMCReacherHard` | 1 | 43.3 | 40.4 | 0.934 | 44.1 | **1.053** | ok |
+| `DMCReacherHard` | 16 | 81.8 | 77.2 | 0.943 | 115.2 | **1.449** | ok |
+| `DMCReacherHard` | 64 | 71.5 | 63.6 | 0.889 | 93.1 | **1.378** | ok |
+| `DMCReacherHard` | 256 | 66.8 | 60.0 | 0.898 | 88.1 | **1.389** | ok |
+| `PointmazeLargeNavigate` | 1 | 302.2 | 287.3 | 0.951 | 297.1 | **1.008** | ok |
+| `PointmazeLargeNavigate` | 16 | 1144.7 | 1126.0 | 0.984 | 1159.5 | **1.021** | ok |
+| `PointmazeLargeNavigate` | 64 | 1289.0 | 1283.4 | 0.996 | 1326.0 | **1.031** | ok |
+| `PointmazeLargeNavigate` | 256 | 1229.6 | 1214.0 | 0.987 | 1240.7 | **1.015** | ok |
+| `PointmazeMediumNavigate` | 1 | 292.1 | 299.7 | 1.026 | 292.9 | **0.990** | ok |
+| `PointmazeMediumNavigate` | 16 | 889.6 | 899.8 | 1.012 | 894.9 | **1.000** | ok |
+| `PointmazeMediumNavigate` | 64 | 963.1 | 972.0 | 1.009 | 958.2 | **0.990** | ok |
+| `PointmazeMediumNavigate` | 256 | 935.6 | 945.1 | 1.010 | 923.2 | **0.982** | ok |
+
+**The worst off-vs-off spread on identical code is 11.7 %, against a bar that asks about
+3 %.** One thread on a shared cluster node cannot resolve 3 %. Averaged over both legs each way,
+**every row passes at every certification batch**; the single remaining sub-bar reading is
+`DMCCartpoleSwingup` at B=1, 0.969 against 0.970, on a row whose own off-vs-off noise is 1.058 —
+and B=1 is the batch the frozen spec **forbids** certifying on (`gpu.never_certify_on_batch`,
+because the corpus median there is 0.6x the official renderer and it measures launch overhead).
+
+Per the ticket's instruction I reported that and added **no second predicate**, and I did not flip
+the default on my own judgment: whether 0.969-inside-5.8 %-noise at an uncertifiable batch clears a
+0.97 bar is a release decision. The coordinator took it — acceptance holds — and the default is now
+`True`, verified as below.
+
+## The admission window was 400x too loose, and inside it the identity was false
+
+Independent review of `3b9e81c` found the substantive defect of this ticket. `_UNIT_D_TOL` was
+`1e-4` on `|d|^2`, and **inside that window the identity this module claims does not hold**: the
+cap-sphere test drops the leading `|d|^2`, so at `|d|^2 = 1 + 9e-5` and 100 m the reviewer's probe
+lost **113,008 of 126,184** unbounded hits. They are garbage hits either way — an intersector handed
+a non-unit ray is not computing a ray parameter — but `_unit_rays` is what decides whether a bundle
+is *admitted*, and a bundle it admits must get the same garbage out of both paths.
+
+The window is now sized to the call sites instead of to a round number. `_UNIT_D_TOL = 1e-6`, which
+is at or below `_BOUND_SLACK_NOISE` (1.9e-6), the term the bound already carries for the
+intersector's own resolution — so nothing can slip between the two.
+
+**Tightening an admission check has its own failure mode**, and it is silent: a real bundle that now
+falls *outside* the window takes the unbounded path, the pixels stay identical because that path is
+the definition, and the bound quietly stops applying where it was measured to pay. So `_unit_rays`
+itself is instrumented across every live config (`scratch/step6/raycast3d/r6_unit_ray_probe.py`,
+`experiments/r6_unit_ray_probe_cpu.json`):
+
+| | |
+|---|---|
+| configs measured | 21 of 21 |
+| `_unit_rays` calls | 94 |
+| **bundles rejected** | **0** |
+| worst `abs(dd - 1)` actually seen | **2.384e-07** |
+| headroom to the new tolerance | **4.19x** |
+
+Nothing routes to the unbounded path, and the worst real bundle reproduces the reviewer's measured
+2.4e-7 exactly. Three fuzz cases now sit one ulp *inside* the window at `far=100` — the worst bundle
+the check still admits — and they fail against the old tolerance.
+
+## The default is on, and the identity is re-taken without pinning anything
+
+`PRIMITIVE_BOUNDS = True` (jobs `6355332` CPU, `6355333` GPU). This is the run that matters now:
+**neither leg pins the switch**, so it is the pristine pre-Step-6 baseline against the branch exactly
+as a caller gets it. Every earlier identity run had to force the bound on, because with the default
+off a replay taking the default would have compared the unbounded path against itself and reported
+`ALL_IDENTICAL` for the wrong reason — the job log prints the branch's own
+`PRIMITIVE_BOUNDS = True kinds [3, 5, 6]` before it starts, so the leg cannot be silently vacuous.
+
+| check | result |
+|---|---|
+| cpu, pristine baseline vs branch, all 21 live configs, **defaults on both legs** | **identical** (`replay/r5final_cpu_identity.json`) |
+| cuda, pristine baseline vs branch, all 21 | **identical** (`replay/r5final_cuda_identity.json`) |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
+| `tests/unit` | **623 passed**, 9 skipped, 2 failed — the same two pre-existing failures, neither in the authorised files |
+
+Re-run after the review changes (jobs `6356117` CPU, `6356123` GPU), on the tightened tolerance:
+
+| check | result |
+|---|---|
+| cpu, `PRIMITIVE_BOUNDS` on vs off, all 21, nothing excluded | **identical** (`replay/r6_cpu_bounds_identity.json`) |
+| cpu, pristine baseline vs branch, all 21, defaults both legs | **identical** (`replay/r6_cpu_branch_vs_baseline.json`) |
+| cuda, pristine baseline vs branch, all 21 | **identical** (`replay/r6_cuda_identity.json`) |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
+| `tests/unit/test_raycast3d_primitive_bounds.py` | **51 passed** (was 45; the three edge-of-window cases x two cast functions) |
+| `tests/unit` | **629 passed**, 9 skipped, 2 failed — the same two pre-existing |
+
+## Step-3-shaped shards, so the dashboard can label these rows
+
+`examples/results/step6/raycast3d/sweep/`, produced by `examples/bench_step3.py` itself rather than
+back-converted from the profile notes: a shard needs `decode` and `official_cpu`, which are the
+**denominators of both tier bars**, and copying those from the frozen `node2349` row onto a
+measurement taken elsewhere would bury a cross-host ratio in a file whose whole purpose is to be
+classified as if it were Step 3. Three CPU legs because the release decision was open when they were taken; the
+`bound on` leg is the shipped build.
+
+The bound-off leg is named `cpu_1thread_branch_bounds_off_control.json`, with **no `before`/`after`
+token**, and that is load-bearing rather than tidy: `report.py`'s `leg_of` reads the leg out of the
+filename, and under its old name this control was taken for a second *after* leg — which would have
+made the page report "CPU after-legs disagree" on `DMCFingerSpin` and `DMCBallInCupCatch`, the two
+rows whose tier change is the whole point of the shard. It is a control, not an after.
+
+That rename regressed once before it stuck, and the mechanism is worth recording because it is not
+specific to this file: the shard job on the cluster had written the OLD name, so the next
+`rsync` pull of the results directory re-created it alongside the new one and it was committed back.
+A rename is not complete until the producer is renamed too — the `.sbatch` now writes the control
+name — and until the stale copy is removed at the source. This workstream has now been bitten twice
+by a pull re-materialising something it had deliberately changed; the first time it was
+`findings.md`, which is why the pulls carry `--exclude findings.md`.
+
+CPU: `node2335`, job `6354672`, 1 thread, Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz. Classified here with `scratch/step3/certify.py:classify`.
+
+The **bound on** column is what the branch now ships.
+
+| env | baseline | branch, bound off | branch, bound **on** (shipped) |
+|---|---|---|---|
+| `DMCBallInCupCatch` | CPU_PARITY · S_cpu 1.40 · cores 0.0026 | CPU_PARITY · S_cpu 1.45 · cores 0.0027 | CPU_FASTER · S_cpu 4.74 · cores 0.0089 |
+| `DMCFingerSpin` | CPU_PARITY · S_cpu 1.76 · cores 0.0078 | CPU_PARITY · S_cpu 1.95 · cores 0.0097 | CPU_FASTER · S_cpu 4.01 · cores 0.0194 |
+| `DMCReacherHard` | CPU_FASTER · S_cpu 2.72 · cores 0.0131 | CPU_FASTER · S_cpu 2.76 · cores 0.0134 | CPU_FASTER · S_cpu 4.02 · cores 0.0198 |
+| `DMCPendulumSwingup` | CPU_FASTER · S_cpu 3.88 · cores 0.0193 | CPU_FASTER · S_cpu 3.50 · cores 0.0184 | CPU_FASTER · S_cpu 6.56 · cores 0.0335 |
+| `DMCCartpoleSwingup` | CPU_FASTER · S_cpu 10.41 · cores 0.0582 | CPU_FASTER · S_cpu 10.10 · cores 0.0498 | CPU_FASTER · S_cpu 19.00 · cores 0.0975 |
+| `DMCAcrobotSwingup` | CPU_FASTER · S_cpu 7.27 · cores 0.0376 | CPU_FASTER · S_cpu 7.23 · cores 0.0363 | CPU_FASTER · S_cpu 9.25 · cores 0.0452 |
+| `PointmazeLargeNavigate` | CPU_FASTER · S_cpu 51.55 · cores 0.3762 | CPU_FASTER · S_cpu 76.89 · cores 0.6171 | CPU_FASTER · S_cpu 78.05 · cores 0.6184 |
+| `PointmazeMediumNavigate` | CPU_FASTER · S_cpu 36.72 · cores 0.4150 | CPU_FASTER · S_cpu 44.22 · cores 0.4761 | CPU_FASTER · S_cpu 43.64 · cores 0.4716 |
+
+**Two rows change tier with the bound on**: `DMCFingerSpin` and `DMCBallInCupCatch` go
+`CPU_PARITY` -> `CPU_FASTER` (S_cpu 1.95 -> 4.01 and 1.45 -> 4.74). That is a stronger result than
+RAYCAST-4 reported, and the difference is method, not luck: R4 projected by scaling the *frozen
+`node2349`* rows, while these are a like-for-like pair measured on one node in one job with the
+official renderer and the decode rate taken there too. `cores_cpu` is still below 1 on every row,
+so `CPU_FAST` remains out of reach and the RAYCAST-4 conclusion on that point stands.
+
+GPU: `gpu2105`, NVIDIA GeForce RTX 3090, job `6354674`.
+
+| env | baseline | branch |
+|---|---|---|
+| `DMCBallInCupCatch` | GPU_PARITY · R 9.4 · cores 0.44 · BELOW_G4,BATCH_SCALES_FAIL | GPU_FAST · R 28.6 · cores 1.39 · BATCH_SCALES |
+| `DMCFingerSpin` | GPU_FAST · R 108.1 · cores 5.94 · BATCH_SCALES | GPU_FAST · R 127.9 · cores 5.82 · BATCH_SCALES |
+
+### Two things these shards do not carry
+
+* **No per-cell spread.** A Step-3 shard records one `fps` per cell and no dispersion, so a tier read
+  off one carries no error bar — and this workstream has just measured an **11.7 % off-vs-off spread
+  on identical code** at one thread on a shared node. The tier *changes* below are far larger than
+  that (S_cpu 1.95 -> 4.01, 1.45 -> 4.74) so they survive it comfortably, but a future row that moved
+  a tier by a few per cent on this evidence would not be safe to believe, and the shard format gives
+  no way to tell the two situations apart.
+* **`Mujoco*` CPU identity is inferred, not replayed.** The 21-config CPU replay covers the DM Control
+  and OGBench maze families. The `Mujoco*` family's agreement between the bounded and unbounded paths
+  comes from `tests/gpu/test_fast_paths.py`, which builds those envs **on cuda**; no CPU replay of
+  them exists. The cast code is shared and the fuzz is device-independent, so the inference is a
+  reasonable one — but it is an inference, and it is the obvious gap to close if `Mujoco*` CPU ever
+  becomes a certified path.
+
+`DMCBallInCupCatch` goes **`GPU_PARITY` + `BELOW_G4` + `BATCH_SCALES_FAIL` -> `GPU_FAST` +
+`BATCH_SCALES`** (R 9.4 -> 28.6, `cores` 0.44 -> 1.39, batch scaling 19.0x -> 55.9x). That is the
+dashboard's claim, now carried by a shard the report generator can classify instead of by prose.
+The GPU legs are unaffected by `PRIMITIVE_BOUNDS` — the fused kernel has no bound — so the gain
+there is RAYCAST-2a's batched tendon FK, already merged.
+
+## Identity, unchanged by any of this
+
+| check | result |
+|---|---|
+| cpu, `PRIMITIVE_BOUNDS` on vs off, all 21 live configs at native sizes | **identical** (`replay/r5_cpu_bounds_identity.json`) |
+| cpu, branch with the bound ON vs pristine baseline, all 21 | **identical** (`replay/r5_cpu_branch_vs_baseline.json`) |
+| cuda, branch vs pristine baseline, all 21 | **identical** — the fused kernel has no per-kind table (`replay/r5_cuda_pixel_diff.json`) |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
+| `tests/unit/test_raycast3d_primitive_bounds.py` | **45 passed** (24 differential, 3 batch-invariance, 16 pinned kind mixes, 2 predicate) |
+| `tests/unit` overall | **604 passed**, 28 skipped, 2 failed — the same two pre-existing failures |
+
+The identity legs **force** the bound on. With the default at `False` a replay that took the default
+would compare the unbounded path against itself and report `ALL_IDENTICAL` for the wrong reason — the
+same shape of false green as the empty-directory `compare_dumps` bug this workstream fixed earlier.
+
+## Public API: signatures, defaults and return shapes — not bodies
+
+The CPU-3-D workstream builds on `raycast3d`'s public functions, so this is checked rather than
+asserted. For `cast_nearest`, `any_blocking`, `shade`, `composite`, `_render_group`,
+`cast_nearest_torch`, `any_blocking_torch`, `intersect` and `static_depth`, the **signatures,
+defaults and return shapes are identical** to the pre-Step-6 baseline — the last guaranteed
+independently by the 21-config bit-identical replays on both devices.
+
+**Their bodies are not, and an earlier draft of this section said "byte-identical", which was wrong.**
+`cast_nearest_torch` and `any_blocking_torch` changed in this ticket (the bound, its per-kind table
+and the call-level short circuit) and `composite` changed in RAYCAST-2b (cover compaction). What a
+caller can rely on is the interface and the pixels, which is the useful claim; "byte-identical" was a
+stronger one that happens to be false and that nobody needs.
+The only additions at module scope are switches and derived constants: `COVER_COMPACTION`,
+`PRIMITIVE_BOUNDS`, `_BOUNDED_KINDS`, `_BOUND_SLACK_NOISE`, `_TILE_CACHE`, `_TILE_CACHE_MAX`,
+`_UNIT_D_TOL`. Nothing was removed.
+
+# Ticket text: OGBENCH-BAKE-1 — make the plate bake a pure function of (scene, style)
+
+Written here at the coordinator's request. **Not authorised and not started**; this is the ticket, not
+the work.
+
+## The defect
+
+`OGBenchMaze._bake` keeps one `mujoco.Renderer` per texture state forever and drives it
+`update_scene → render → update_scene` (`ogbench.py:471-479`). The plate it produces is a
+deterministic function of **how many such cycles that renderer has already seen**, not of the scene
+and the style alone. Measured (job 6347171, gpu2105), eight consecutive bakes of one key:
+
+| scene | as shipped | with a discarded warm-up render | without the trailing `update_scene` | with a fresh `Renderer` each bake |
+|---|---|---|---|---|
+| ant/teleport | `ABCAAADA` (**4 distinct**) | `AAAAAAAB` (2) | `AAAAAAAA` (1) | **`AAAAAA` (1)** |
+| ant/giant | `AABABABA` (2) | `AAAAAAAA` (1) | `ABABABAB` (2) | **`AAAAAA` (1)** |
+| humanoid/medium | `AAAAAAAA` (1) | `AAAAAAAA` (1) | `AAAAAAAA` (1) | **`AAAAAA` (1)** |
+
+The sequences are byte-identical across two processes on two different code trees, and the teleport
+key's first bake is the same digest on two nodes. Consequences already recorded above: two OGBench
+cells fail Gate A on `check_style_is_state`, and `AntmazeTeleportExplore`'s frozen Step-4 digest is
+not reproducible at the baseline.
+
+## Why it is not a one-line fix
+
+Only `fresh_renderer_per_bake` is constant on every probed scene, **and its plate equals the one the
+cache already holds** (`digests[0]` matches the current first bake on all three), so in the common
+case it would change nothing. Its cost is the problem:
+
+* a `mujoco.Renderer` owns an EGL context, and the note above `OGBenchMaze` records that RELEASING
+  one corrupts rendering in every other live renderer in the process — two fresh reference envs came
+  back 44/255 apart, and a pool that evicted was how 25 cells once failed at 69-90/255. So they are
+  never closed;
+* the measured budget is ~96 live contexts (`stable_envs/testing/resource_guard.py` counts them, and
+  the suites print the count);
+* `check_style_is_state` alone bakes 64 appearances, and a certification session bakes hundreds.
+  "A fresh Renderer per bake" therefore exhausts the budget in one config.
+
+The two cheap variants are not fixes: `warmup_render` leaves ant/teleport flipping at the eighth
+bake, and `no_trailing_update` produces the OTHER plate on ant/giant (`46ea1cfe42eb` where the first
+bake is `27359fa34b1e`), i.e. it would move pixels on a configuration that is currently correct.
+
+## What the ticket has to do, in order
+
+1. **The EGL context budget is the first constraint, not an afterthought.** Establish what the
+   process can hold on the certification hardware and what happens at the limit — `resource_guard`
+   already counts, so this is a measurement, not a design.
+2. **Find a reset that costs no context.** The candidates are: a `mjvScene` rebuilt per bake rather
+   than reused; an explicit `mjr_setBuffer`/clear between bakes; or a renderer pool of fixed size
+   whose members are cycled deterministically so that a given key always meets the same renderer
+   state. The property to demonstrate is the one the probe measures: **N consecutive bakes of one key
+   give one digest**, on ant/teleport and ant/giant, which are the two scenes that flip.
+3. **Then check the plate it settles on.** The acceptance bar is the first-bake plate, because that is
+   what the cache holds today and what 20 of the 21 live configs' frozen digests were taken from.
+   Anything else moves pixels and needs its own authorisation.
+4. **Replay all 11 OGBench configs** on cuda against the frozen digests, and re-run the
+   `cache_pressure_probe.py` scenario and `check_style_is_state`. Expect `AntmazeTeleportExplore` to
+   still fail against its frozen digest — its Step-4 plate is a third image that this session does not
+   reach (job 6347171 probe (i)) — and to recommend it for the Step-8 re-freeze once the bake is
+   deterministic.
+5. **Only then** revisit the `check_style_is_state` routing proposal above. If the bake becomes pure,
+   the proposal is moot for these configs and the probe's bake-path arm becomes a regression test
+   rather than a router.
+
+## What it must not do
+
+Re-freeze any Step-4 digest as part of the fix; relax `check_style_is_state`'s `== 0`; or release an
+EGL context to stay inside the budget.
+
+## Containment already in place
+
+`17f28c0` made `_SCENE_CACHE` evict the least recently used entry instead of clearing wholesale, so a
+key in use is never dropped and cache pressure can no longer trigger the flip. The nondeterminism
+itself is untouched and a cold bake still lands where its history puts it.
+
+
 ---
+
+# Ticket text: RAYCAST-5 — the bounded cast must not be slower than the unbounded one
+
+**DELIVERED — see the RAYCAST-5 section above for what was measured and built.** Kept verbatim
+as written, because the ticket's own reasoning is what the work was judged against and editing
+it after the fact would remove the only record of what was asked for. Written originally
+because RAYCAST-4's attribution leg (job `6350679`) found the defect and RAYCAST-4 was not
+authorised to fix it.
+
+## The defect
+
+`PRIMITIVE_BOUNDS = True` ships a CPU slowdown on the OGBench maze family: **0.92x on
+`PointmazeLargeNavigate` and 0.75x on `PointmazeMediumNavigate`** at B=64, same branch, same node,
+same job, switch as the only variable. `PointmazeLargeNavigate` carries a frozen Step-3 CPU row
+(994.3 fps, `node2349`), so this is a regression on a certified path, not on a curiosity.
+
+It is invisible in the baseline-vs-branch sweep, where 2b's cover compaction more than covers it and
+the row reads 1.37x. **Any future "is this faster" question about a switch has to be asked with the
+switch as the independent variable; the cumulative leg cannot answer it.**
+
+## Why it happens
+
+These scenes have **K = 1** — one mover primitive — and **N = 200,704 rays** (224 px at
+`supersample=2`). The bounded path replaces one full-width intersector call with: a `(B,N)` mask, a
+`torch.nonzero`, an advanced-indexing gather of `o[:, js]` and `d[:, js]`, a narrow intersector call,
+and a scatter back into `blocked[:, js]`. The gather and scatter are O(N) and the saving they buy is
+the narrowing of a single primitive's test. With K = 1 there is nothing to prune *between*; there is
+only the gather. The DM Control rows (K = 2–36, N = 7,056) are the opposite regime and gain 1.2x–3.1x.
+
+The same shape shows up weakly at B=1 on DM Control too (0.91x–0.94x on Cartpole, Pendulum and
+Reacher), which says the predicate is not simply "K = 1".
+
+## What the ticket has to do, in order
+
+1. **Measure the predicate before choosing it.** Sweep the bounded path's cost against `K`, `N`, `B`
+   and the selectivity `|js|/N` — a synthetic bundle is enough and is cheaper and cleaner than eight
+   envs. The output is a surface, not a constant.
+2. **Then choose a dispatch rule** that the surface supports, in the shape the code already uses:
+   `_unit_rays` and the existing `if js.numel() == N: js = None` are both "take the unbounded path
+   when the bound cannot pay", and this is a third one. Bit-identity is free for any such rule, since
+   both paths are already proven identical — which means the ONLY question is performance, and the
+   only risk is picking a constant that fits eight rows and nothing else.
+3. **Re-run the isolation leg** (`scratch/step6/raycast3d/r4_isolate_cpu.sbatch`) and require no row
+   below 1.00x, rather than requiring any particular row to improve.
+
+## What it must not do
+
+* Do not tune the constant against the eight rows in the table above. That is the move that put a
+  far-field precision bug past two test suites earlier in this ticket: a threshold chosen to make
+  the measured cases pass is not evidence about the unmeasured ones.
+* Do not reach for the gather-free alternative (mask-and-`torch.where` instead of gather-and-scatter)
+  without measuring it: it makes the intersector run at full width, which is the entire cost the
+  bound exists to avoid, and it would help exactly the rows that are already fast.
+* Do not touch the Triton path. It has no bound to switch off.
+
+## Containment already in place
+
+`PRIMITIVE_BOUNDS = False` restores `_cast_nearest_torch_unbounded` / `_any_blocking_torch_unbounded`,
+which are the pre-RAYCAST-4 bodies line for line, so the regression is one assignment away from gone
+on any deployment that cares more about the mazes than about `ball_in_cup`.
+
 
 ## Merge record
 
@@ -1142,3 +1977,58 @@ pre-existing and outside the authorised files (verified by stashing the working 
 `test_every_cited_scratch_path_resolves` (9 unresolvable citations, all from
 `examples/results/step6/dashboard.yaml` and two pre-existing research docs; none from this
 workstream's files after the `$SCR` collapse).
+
+# Every SLURM job this workstream ran
+
+Added at the coordinator's request after `6347000` and `6347137` turned out to be cited in prose
+but absent from any list — they had written artifacts under this directory that nothing indexed.
+The list is `sacct`, not memory, so a job that produced a number cannot be missing from it.
+Cancelled and failed runs are kept: a measurement that had to be taken twice is part of how the
+number that survived was arrived at.
+
+| job | name | state | elapsed | node | what |
+|---|---|---|---:|---|---|
+| `6343478` | `se6-raycast3d-cpu` | FAILED | 00:00:50 | `node2342` | Ticket 1 CPU profile — FAILED (EGL/venv), superseded by 6343544 |
+| `6343479` | `se6-raycast3d-gpu` | CANCELLED | 00:00:00 | `-` | Ticket 1 GPU profile — cancelled before start |
+| `6343520` | `se6-raycast3d-census` | CANCELLED | 00:00:17 | `node2339` | backend census — cancelled |
+| `6343543` | `se6-raycast3d-census` | COMPLETED | 00:00:58 | `node2339` | backend census: which 21 configs are live, and on which backend/device |
+| `6343544` | `se6-raycast3d-cpu` | COMPLETED | 00:13:57 | `node2342` | Ticket 1 CPU phase profile, 5 envs |
+| `6343545` | `se6-raycast3d-gpu` | CANCELLED | 00:00:00 | `-` | Ticket 1 GPU profile — cancelled before start |
+| `6343664` | `se6-raycast3d-gpu` | CANCELLED | 00:06:51 | `gpu2101` | Ticket 1 GPU profile — cancelled (wrong card constraint) |
+| `6344633` | `se6-raycast3d-style` | COMPLETED | 00:11:08 | `gpu2107` | check_style_is_state bisect, 12 runs per config |
+| `6345115` | `se6-raycast3d-2c` | COMPLETED | 00:11:57 | `gpu2110` | RAYCAST-2c: _bake qpos reset, replay + bisect after |
+| `6346224` | `se6-raycast3d-2a` | COMPLETED | 00:02:29 | `gpu2104` | RAYCAST-2a: batched tendon FK, GPU replay + BallInCup sweep |
+| `6346414` | `se6-raycast3d-2bc` | COMPLETED | 00:03:22 | `gpu2104` | RAYCAST-2b: cover compaction, GPU replay |
+| `6346429` | `se6-raycast3d-2bcpu` | COMPLETED | 00:12:18 | `node2337` | RAYCAST-2b: cover compaction, CPU sweep |
+| `6346705` | `se6-raycast3d-merged` | COMPLETED | 00:02:50 | `gpu2113` | first merge verification (texture-fidelity) |
+| `6346706` | `se6-raycast3d-cpusweep` | COMPLETED | 00:05:22 | `node2339` | RAYCAST-2 CPU sweep on the merged tree |
+| `6346814` | `se6-raycast3d-merged` | COMPLETED | 00:02:46 | `gpu2104` | **final RAYCAST-2 verification on the twice-merged tree** |
+| `6347000` | `se6-raycast3d-2cp` | COMPLETED | 00:09:30 | `gpu2106` | **RAYCAST-2c' probes (i) and (ii): renderer lifetime as the bake's carrier, cache pressure, host-rasterizer determinism** |
+| `6347001` | `se6-raycast3d-maze2d` | COMPLETED | 00:00:20 | `node1829` | maze2d venv attempt 1 — inherited the BASE interpreter, no numpy |
+| `6347071` | `se6-raycast3d-mb` | COMPLETED | 00:01:40 | `node1828` | RAYCAST-3 cast micro-benchmark |
+| `6347125` | `se6-raycast3d-maze2d` | COMPLETED | 00:00:19 | `node1828` | maze2d venv attempt 2 — gymnasium_robotics needed pettingzoo |
+| `6347137` | `se6-raycast3d-maze2d` | COMPLETED | 00:01:03 | `node1829` | **maze2d PointMaze verification in a fresh venv (RAYCAST-2c' item d)** |
+| `6347142` | `se6-raycast3d-mb` | COMPLETED | 00:02:03 | `node1829` | RAYCAST-3 micro-benchmark, -march variant |
+| `6347171` | `se6-raycast3d-bakelt` | COMPLETED | 00:00:28 | `gpu2105` | bake-lifetime probe |
+| `6347404` | `se6-raycast3d-mb2` | COMPLETED | 00:01:20 | `node1829` | RAYCAST-3 micro-benchmark at 224 px |
+| `6348207` | `se6-raycast3d-r4cpu` | CANCELLED | 00:10:35 | `node2337` | RAYCAST-4 CPU — **the run that moved one pixel of 3,211,264** and produced the far-field fix |
+| `6348293` | `se6-raycast3d-r4gpu` | COMPLETED | 00:03:27 | `gpu2108` | RAYCAST-4 GPU, first pass |
+| `6348760` | `se6-raycast3d-r4cpu` | COMPLETED | 00:22:41 | `node2337` | RAYCAST-4 CPU: identity on 21 + the 1-thread sweep, both legs |
+| `6348761` | `se6-raycast3d-r4gpu` | COMPLETED | 00:03:16 | `gpu2113` | RAYCAST-4 GPU: cuda identity on 21, fast paths at native sizes, fuzz, no-regression sweep |
+| `6350679` | `se6-raycast3d-r4iso` | COMPLETED | 00:13:40 | `node2333` | RAYCAST-4 attribution: the switch against itself — **found that the sweep could not attribute** |
+| `6351415` | `se6-raycast3d-r4units` | COMPLETED | 00:01:53 | `node1827` | RAYCAST-4 tests/unit incl. batch invariance |
+| `6352389` | `se6-raycast3d-r5cost` | COMPLETED | 00:13:05 | `node2339` | RAYCAST-5 **per-kind cost table** — the measurement the predicate is derived from |
+| `6353078` | `se6-raycast3d-r5cpu` | COMPLETED | 00:20:59 | `node1831` | RAYCAST-5 CPU verification, per-kind table only |
+| `6353080` | `se6-raycast3d-r5gpu` | COMPLETED | 00:02:07 | `gpu2101` | RAYCAST-5 GPU verification, per-kind table only |
+| `6353140` | `se6-raycast3d-r5kinds` | COMPLETED | 00:00:51 | `node2333` | kind census attempt 1 — read the bound METHOD as the scene, reported no prims for all 21 |
+| `6353212` | `se6-raycast3d-r5kinds` | COMPLETED | 00:01:05 | `node2335` | **kind census: what each of the 21 configs actually casts** |
+| `6353649` | `se6-raycast3d-r5cpu` | COMPLETED | 00:20:22 | `node2333` | RAYCAST-5 CPU verification with the call-level short circuit |
+| `6353650` | `se6-raycast3d-r5gpu` | COMPLETED | 00:02:01 | `gpu2264` | RAYCAST-5 GPU verification with the call-level short circuit |
+| `6354150` | `se6-raycast3d-r5noise` | COMPLETED | 00:25:05 | `node1831` | RAYCAST-5 **noise floor**: four interleaved legs, off/on/off/on |
+| `6354672` | `se6-raycast3d-r5shardcpu` | COMPLETED | 00:27:49 | `node2335` | RAYCAST-5 Step-3-shaped CPU shards, three legs |
+| `6354674` | `se6-raycast3d-r5shardgpu` | COMPLETED | 00:01:05 | `gpu2105` | RAYCAST-5 Step-3-shaped GPU shards, two legs |
+| `6355332` | `se6-raycast3d-r5finalcpu` | COMPLETED | 00:04:28 | `node2333` | **final identity with the default ON, neither leg pinning the switch**, plus `tests/unit` |
+| `6355333` | `se6-raycast3d-r5finalgpu` | COMPLETED | 00:02:09 | `gpu2116` | final cuda identity with the default ON, plus the fast-path suite |
+| `6356117` | `se6-raycast3d-r6cpu` | COMPLETED | 00:09:45 | `node2411` | review changes: the `_unit_rays` routing probe, the re-priced cost table, CPU identity on 21 (on-vs-off and vs baseline), `tests/unit` |
+| `6356123` | `se6-raycast3d-r6gpu` | COMPLETED | 00:02:04 | `gpu2108` | review changes: cuda identity on 21, fast-path suite, fuzz |
+| `6356311` | `se6-raycast3d-r6cost` | COMPLETED | 01:13:49 | `node1843` | **three independent runs of the per-kind cost table in the shape that ships** — the runs that retired the margin rule |

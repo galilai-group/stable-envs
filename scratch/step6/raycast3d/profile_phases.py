@@ -153,6 +153,9 @@ def install(env, device: str):
     def intersect(kind, size, pos, R, o, d):
         if not REC.on:
             return raw_isect(kind, size, pos, R, o, d)
+        # The ray-primitive TEST COUNT, which is the quantity RAYCAST-4 exists to reduce: one
+        # intersect call tests d.shape[0] x d.shape[1] (row, ray) pairs against one primitive.
+        REC.note("ray_primitive_tests", int(d.shape[0]) * int(d.shape[1]))
         if REC.sync is not None:
             REC.sync()
         t0 = time.perf_counter()
@@ -350,6 +353,11 @@ def main() -> None:
     ap.add_argument("--states-dir", type=Path,
                     default=ROOT / "examples" / "results" / "step4" / "states")
     ap.add_argument("--out", type=Path, required=True)
+    # PIN THE SWITCH so R4's own contribution can be isolated. The sweep's "before" leg is the
+    # PRISTINE pre-Step-6 baseline, which makes its ratios cumulative over 2a + 2b + R4; running the
+    # same branch with the bound off is the only leg that attributes anything to the bound alone.
+    ap.add_argument("--primitive-bounds", choices=("on", "off"), default=None,
+                    help="pin raycast3d.PRIMITIVE_BOUNDS on this interpreter's stable_envs")
     args = ap.parse_args()
 
     os.environ.setdefault("MUJOCO_GL", "egl")
@@ -360,6 +368,16 @@ def main() -> None:
     if args.threads:
         torch.set_num_threads(args.threads)
 
+    switch = None
+    if args.primitive_bounds is not None:
+        from stable_envs.render import raycast3d as R3
+        if not hasattr(R3, "PRIMITIVE_BOUNDS"):
+            raise SystemExit("this stable_envs has no PRIMITIVE_BOUNDS; pinning it would compare "
+                             "two runs of the same code and report the difference as a result")
+        R3.PRIMITIVE_BOUNDS = args.primitive_bounds == "on"
+        switch = {"PRIMITIVE_BOUNDS": R3.PRIMITIVE_BOUNDS, "module": R3.__file__}
+        print(f"[profile_phases] PRIMITIVE_BOUNDS={R3.PRIMITIVE_BOUNDS} in {R3.__file__}", flush=True)
+
     note = {"tool": "profile_phases", "workstream": "step6/raycast3d", "env": args.env,
             "device": args.device, "baseline_commit": git_commit(),
             "host": socket.gethostname(),
@@ -368,7 +386,8 @@ def main() -> None:
             "threads": torch.get_num_threads(), "versions": versions(),
             "slurm_job": os.environ.get("SLURM_JOB_ID"),
             "stable_envs_from": _root_tag(se.__file__),          # WHICH code this number describes
-            "pythonpath": _root_tag(os.environ.get("PYTHONPATH", "")), "batches": {}}
+            "pythonpath": _root_tag(os.environ.get("PYTHONPATH", "")),
+            "switches": switch, "batches": {}}
 
     probe = se.make(args.env, batch=1, size=args.size, device=args.device)
     note["size"] = int(probe.size)
