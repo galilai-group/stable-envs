@@ -222,29 +222,142 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     # Pixel r samples at its CENTRE, y0 + (r+0.5)*sy, or y1 - (r+0.5)*sy under flip_y. One pixel of
     # slack on every side so that no rounding of this conversion can cost a pixel the loop would
     # have painted; one pixel too many costs throughput and nothing else.
+    def _window(lx0, ly0, lx1, ly1):
+        cc0 = torch.floor((lx0 - x0) / sx - 0.5) - 1
+        cc1 = torch.ceil((lx1 - x0) / sx - 0.5) + 2
+        if scene.flip_y:
+            rr0 = torch.floor((y1 - ly1) / sy - 0.5) - 1
+            rr1 = torch.ceil((y1 - ly0) / sy - 0.5) + 2
+        else:
+            rr0 = torch.floor((ly0 - y0) / sy - 0.5) - 1
+            rr1 = torch.ceil((ly1 - y0) / sy - 0.5) + 2
+        return (rr0.clamp(0, Rh), rr1.clamp(0, Rh), cc0.clamp(0, Rw), cc1.clamp(0, Rw))
+
+    # The batch UNION window, which is what one torch op over the whole batch can cover.
     ux0, uy0 = bx0.min(0).values, by0.min(0).values
     ux1, uy1 = bx1.max(0).values, by1.max(0).values
-    c0 = torch.floor((ux0 - x0) / sx - 0.5) - 1
-    c1 = torch.ceil((ux1 - x0) / sx - 0.5) + 2
-    if scene.flip_y:
-        r0 = torch.floor((y1 - uy1) / sy - 0.5) - 1
-        r1 = torch.ceil((y1 - uy0) / sy - 0.5) + 2
-    else:
-        r0 = torch.floor((uy0 - y0) / sy - 0.5) - 1
-        r1 = torch.ceil((uy1 - y0) / sy - 0.5) + 2
-    win = torch.stack([r0.clamp(0, Rh), r1.clamp(0, Rh), c0.clamp(0, Rw), c1.clamp(0, Rw)], dim=1)
+    uwin = torch.stack(_window(ux0, uy0, ux1, uy1), dim=1)                            # (N,4)
+
+    # Whether the union is worth replacing, decided in WORLD units before any pixel window is built.
+    # This test is three ``(B,N)`` reductions; building the per-row pixel windows for every primitive
+    # and deciding afterwards was measured at 0.57 ms per PushT render at batch 1, against 0.88 ms
+    # for the whole raster -- the scan for an optimisation costing more than the optimisation saves,
+    # on the scenes that do not want it. So the per-row boxes are built only for the primitives whose
+    # union is at least ``_GROUP_MIN_SPREAD`` times the largest single row's box, which is the
+    # necessary condition for grouping to buy anything at all.
+    area = (bx1 - bx0).clamp_min(0) * (by1 - by0).clamp_min(0)                        # (B,N)
+    spread = ((ux1 - ux0).clamp_min(0) * (uy1 - uy0).clamp_min(0)
+              > _GROUP_MIN_SPREAD * area.nan_to_num(0.0).amax(0))                     # (N,)
 
     # ONE host transfer for the whole plan. Eleven small ``.cpu()`` calls is how a decision that
     # costs nothing on paper becomes a dozen synchronisations per frame.
-    flags = torch.stack(rows, dim=1).to(f64)
-    plan = torch.cat([flags, win], dim=1).cpu().tolist()
+    flags = torch.stack(rows + [spread], dim=1).to(f64)
+    plan = torch.cat([flags, uwin], dim=1).cpu().tolist()
+    wide = [i for i, row in enumerate(plan) if row[5 + 2 * V] and B > 1]
+    per_row = (torch.stack(_window(bx0[:, wide], by0[:, wide], bx1[:, wide], by1[:, wide]), dim=2)
+               .to(torch.int64).cpu().numpy() if wide else None)                      # (B,|wide|,4)
     out = []
-    for row in plan:
+    for i, row in enumerate(plan):
         disc, poly, seg, ring, outline = (bool(v) for v in row[:5])
         edges = [(e, bool(row[5 + V + e])) for e in range(V) if row[5 + e]]
-        rr0, rr1, cc0, cc1 = (int(v) for v in row[5 + 2 * V:])
-        out.append((disc, ring, poly, outline, seg, edges, rr0, rr1, cc0, cc1))
+        rr0, rr1, cc0, cc1 = (int(v) for v in row[6 + 2 * V:])
+        win = [(None, rr0, rr1, cc0, cc1)]
+        if i in wide:
+            win = _row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
+        out.append((disc, ring, poly, outline, seg, edges, win))
     return out
+
+
+#: How much bigger the batch-union window must be than the largest single row's box before the rows
+#: are grouped instead. A primitive that is the same in every environment has a ratio of exactly 1
+#: and must not pay for a grouping that would buy it nothing; a primitive whose position is part of
+#: the state has a ratio of hundreds. 4 is where the two populations separate with room to spare --
+#: measured over the frozen corpora, every static primitive is 1.0 and the smallest moving one is 12.
+_GROUP_MIN_SPREAD = 4.0
+
+#: Pixels one group costs in dispatch, and the margin the model must clear before grouping is
+#: accepted. Both are MEASURED, because the first guess at the first was wrong by 5x and silently
+#: refused the grouping on every scene that wanted it.
+#:
+#: One group is ~20 torch ops on small tensors. Timed directly on a scene built so the grouped pixel
+#: work is fixed and only the group count varies (B discs in B distinct cells at 64 px, one group
+#: per row): 68.2 / 56.3 / 59.0 / 61.7 us per group at B = 8 / 32 / 128 / 512 -- flat, as dispatch
+#: should be. A window pixel costs 6-20 ns on one core over the same scenes, so one group buys
+#: itself at 60 us / 6 ns = 10,000 window pixels, taking the cheapest per-pixel figure because that
+#: is the one that makes a group hardest to justify.
+#:
+#: The margin is 1.25 rather than 2: with the constant measured rather than assumed, a larger margin
+#: only refuses grouping that wins. Scanned against wall time over the frozen corpora at B = 1, 16,
+#: 64, 256 and a synthetic worst case (many groups, almost no pixel work), 10,000 x 1.25 is never
+#: slower than not grouping and captures 2.1x / 3.0x on PushT and 2.5x on SimplePointMaze, while
+#: correctly refusing to group the synthetic case at B = 32 and 128 and accepting it at 512.
+_GROUP_DISPATCH_PIXELS = 10_000
+_ACCEPT_MARGIN = 1.25
+
+
+def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
+    """Windows for one primitive: either ``[(None, r0, r1, c0, c1)]`` or one window per row group.
+
+    The batch-union window is what one torch op over the whole batch can cover, and for a primitive
+    that is the same in every environment it is already tight. For one whose position is part of the
+    state it is the whole frame: PushT's block quads and SimplePointMaze's agent disc reach every
+    corner across a corpus of reachable states, and the measured consequence was 104 ms of PushT's
+    143 ms and 301 ms of SimplePointMaze's 518 ms at batch 64.
+
+    The fix is the one the fused kernel already uses, in the shape torch ops allow. The per-row boxes
+    of such a primitive are all the same SIZE and differ only in ORIGIN, so quantising the origin
+    onto a grid of that size puts every row into a cell, and the rows of one cell share a window at
+    most two cells across. Each cell is then one torch op over the rows that landed in it. The number
+    of cells is bounded by the FRAME -- ``ceil(Rh/th) * ceil(Rw/tw)`` -- so the loop stops growing
+    with the batch: measured on the frozen corpora, SimplePointMaze's disc has 64 groups at batch 64
+    and the same 64 at batch 1024, while the union window it replaces costs 64 and 1024 frames.
+
+    It is a regrouping of the same evaluations, not a different evaluation. Every row is covered by a
+    window containing its own bound, every pixel in that window is computed from exactly the values
+    it was computed from before, and rows outside cannot paint. A row's cell is a function of its own
+    geometry, and a group's window is the union of its members' boxes, so a permutation of the batch
+    produces the same partition and the same windows -- order invariance, and batch-size invariance,
+    hold by construction rather than by test.
+
+    ``box`` is ``(B,4)`` int64 pixel boxes, ``r0..c1`` the union window already computed from them.
+    """
+    import numpy as np
+
+    B = box.shape[0]
+    if B <= 1 or r1 <= r0 or c1 <= c0:
+        return [(None, r0, r1, c0, c1)]
+    br0, br1, bc0, bc1 = box[:, 0], box[:, 1], box[:, 2], box[:, 3]
+    h, w = np.maximum(br1 - br0, 0), np.maximum(bc1 - bc0, 0)
+    live = (h > 0) & (w > 0)
+    if not live.any():
+        return [(None, r0, r1, c0, c1)]
+    th, tw = max(int(h[live].max()), 1), max(int(w[live].max()), 1)
+    union = (r1 - r0) * (c1 - c0)
+
+    # cell index from the box origin; dead rows go to their own cell and are dropped below
+    cell = (br0 // th) * (int(c1) // tw + 2) + (bc0 // tw)
+    cell = np.where(live, cell, -1)
+    keys, inv = np.unique(cell, return_inverse=True)
+    order = np.argsort(inv, kind="stable")
+    starts = np.searchsorted(inv[order], np.arange(len(keys)))
+    ends = np.append(starts[1:], len(order))
+
+    groups, work = [], 0
+    for gi, key in enumerate(keys):
+        if key < 0:
+            continue
+        idx = order[starts[gi]:ends[gi]]
+        g0, g1 = int(br0[idx].min()), int(br1[idx].max())
+        f0, f1 = int(bc0[idx].min()), int(bc1[idx].max())
+        work += len(idx) * (g1 - g0) * (f1 - f0)
+        groups.append((idx, g0, g1, f0, f1))
+    if not groups:
+        return [(None, r0, r1, c0, c1)]
+    # The cost model, applied rather than assumed: grouping has to win once its own dispatch is
+    # charged for, or the single window stays. Both constants are measured; see their definitions.
+    if B * union < _ACCEPT_MARGIN * (work + len(groups) * _GROUP_DISPATCH_PIXELS):
+        return [(None, r0, r1, c0, c1)]
+    return groups
 
 
 @torch.no_grad()
@@ -286,87 +399,110 @@ def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor
 
     flat_out = ss == 1
     if flat_out:
-        u8 = lambda c: c.round().clamp(0, 255).to(torch.uint8).view(B, 1, 1, 3)   # noqa: E731
-        canvas = u8(scene.background).expand(B, Rh, Rw, 3).clone()
+        u8 = lambda c, m: c.round().clamp(0, 255).to(torch.uint8).view(m, 1, 1, 3)  # noqa: E731
+        canvas = u8(scene.background, B).expand(B, Rh, Rw, 3).clone()
     else:
-        u8 = lambda c: c.view(B, 3, 1, 1)                                         # noqa: E731
+        u8 = lambda c, m: c.view(m, 3, 1, 1)                                        # noqa: E731
         canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
 
     for i, (has_disc, has_ring, has_poly, has_outline, has_seg, edges,
-            r0, r1, c0, c1) in enumerate(_prim_plan(scene, Rh, Rw)):
-        if r1 <= r0 or c1 <= c0 or not (has_disc or has_poly or has_seg):
-            continue                       # disabled everywhere, or its bound misses the frame
-        kind = scene.kind[:, i]                                   # (B,)
-        g = scene.geom[:, i]                                      # (B,2V)
-        fill = u8(scene.fill[:, i])
-        line = u8(scene.line[:, i])
-        lw = scene.line_w[:, i].view(B, 1, 1)
-        p = px[r0:r1, c0:c1].unsqueeze(0)
-        q = py[r0:r1, c0:c1].unsqueeze(0)
-        view = ((lambda: canvas[:, r0:r1, c0:c1, :]) if flat_out
-                else (lambda: canvas[:, :, r0:r1, c0:c1]))
-        mdim = -1 if flat_out else 1
+            windows) in enumerate(_prim_plan(scene, Rh, Rw)):
+        if not (has_disc or has_poly or has_seg):
+            continue                       # disabled in every environment
+        for rows, r0, r1, c0, c1 in windows:
+            if r1 <= r0 or c1 <= c0:
+                continue                   # this window's bound misses the frame
+            # ``rows is None`` is the whole batch through a view; otherwise this window belongs to a
+            # group of rows and every per-environment quantity is gathered for them. The gather is
+            # what buys the tight window -- see ``_row_groups``.
+            sel = (lambda t: t) if rows is None else (lambda t, _r=rows: t[_r])
+            n = B if rows is None else len(rows)
+            kind = sel(scene.kind[:, i])                           # (n,)
+            g = sel(scene.geom[:, i])                              # (n,2V)
+            fill = u8(sel(scene.fill[:, i]), n)
+            line = u8(sel(scene.line[:, i]), n)
+            lw = sel(scene.line_w[:, i]).view(n, 1, 1)
+            p = px[r0:r1, c0:c1].unsqueeze(0)
+            q = py[r0:r1, c0:c1].unsqueeze(0)
+            mdim = -1 if flat_out else 1
 
-        def paint(hit, colour, _v=view, _m=mdim):
-            """``canvas = torch.where(hit, colour, canvas)``, restricted to this primitive's window.
+            def paint(hit, colour, _r=rows, _m=mdim, _w=(r0, r1, c0, c1)):
+                """``canvas = torch.where(hit, colour, canvas)``, restricted to this window.
 
-            In place through the window rather than by rebinding a whole new canvas: the old loop
-            allocated and wrote a full B x 3 x Rh x Rw tensor for EVERY ``where``, which at batch 64
-            and 500 px is 192 MB per primitive per paint, and then threw the old one away.
+                In place through the window rather than by rebinding a whole new canvas: the old
+                loop allocated and wrote a full B x 3 x Rh x Rw tensor for EVERY ``where``, which at
+                batch 64 and 500 px is 192 MB per primitive per paint, and then threw the old one
+                away.
 
-            Through a temporary and a ``copy_`` rather than ``out=`` the view it also reads. An
-            aliased ``out=`` measured the same to within the noise of the machine it was tried on
-            (46 ms against 58 on an isolated paint, indistinguishable in the renderer), and this is
-            the file the fused kernel is checked against -- a destination that is also an input is a
-            subtle thing to put in an executable specification for no measured gain.
-            """
-            w = _v()
-            w.copy_(torch.where(hit.unsqueeze(_m), colour, w))
+                Through a temporary and a ``copy_`` rather than ``out=`` the view it also reads. An
+                aliased ``out=`` measured the same to within the noise of the machine it was tried
+                on (46 ms against 58 on an isolated paint, indistinguishable in the renderer), and
+                this is the file the fused kernel is checked against -- a destination that is also
+                an input is a subtle thing to put in an executable specification for no measured
+                gain.
 
-        # disc (with optional inner disc)
-        if has_disc:
-            d2 = (p - g[:, 0].view(B, 1, 1)) ** 2 + (q - g[:, 1].view(B, 1, 1)) ** 2
-            is_disc = (kind == KIND_DISC).view(B, 1, 1)
-            paint(is_disc & (d2 <= g[:, 2].view(B, 1, 1) ** 2), fill)
-            if has_ring:
-                paint(is_disc & (d2 <= g[:, 3].view(B, 1, 1) ** 2) & (g[:, 3].view(B, 1, 1) > 0),
-                      line)
+                A grouped window cannot be a view: a row index is advanced indexing, so reading it
+                copies and the result has to be assigned back. Assignment, not ``copy_``, is
+                therefore the write for that case, and it is the same ``where`` either way.
+                """
+                a, b, cc, d = _w
+                if _r is None:
+                    w_ = canvas[:, a:b, cc:d, :] if flat_out else canvas[:, :, a:b, cc:d]
+                    w_.copy_(torch.where(hit.unsqueeze(_m), colour, w_))
+                elif flat_out:
+                    w_ = canvas[_r, a:b, cc:d, :]
+                    canvas[_r, a:b, cc:d, :] = torch.where(hit.unsqueeze(_m), colour, w_)
+                else:
+                    w_ = canvas[_r, :, a:b, cc:d]
+                    canvas[_r, :, a:b, cc:d] = torch.where(hit.unsqueeze(_m), colour, w_)
 
-        # convex polygon: inside = max over outward edge planes <= 0; outline = union of edge capsules
-        if has_poly:
-            h, w = r1 - r0, c1 - c0
-            sdf = torch.full((B, h, w), -1e30, device=dev, dtype=dt)
-            edge_d2 = (torch.full((B, h, w), 1e30, device=dev, dtype=dt) if has_outline else None)
-            for e, mixed in edges:
-                ax, ay = g[:, 2 * e].view(B, 1, 1), g[:, 2 * e + 1].view(B, 1, 1)
-                j = (e + 1) % V
-                bx, by = g[:, 2 * j].view(B, 1, 1), g[:, 2 * j + 1].view(B, 1, 1)
-                ex, ey = bx - ax, by - ay
-                L2 = ex * ex + ey * ey
-                degen = L2 < 1e-12
-                inv = torch.rsqrt(L2.clamp_min(1e-20))
-                d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
-                sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d)
-                                    if mixed else d)
+            # disc (with optional inner disc)
+            if has_disc:
+                d2 = (p - g[:, 0].view(n, 1, 1)) ** 2 + (q - g[:, 1].view(n, 1, 1)) ** 2
+                is_disc = (kind == KIND_DISC).view(n, 1, 1)
+                paint(is_disc & (d2 <= g[:, 2].view(n, 1, 1) ** 2), fill)
+                if has_ring:
+                    paint(is_disc & (d2 <= g[:, 3].view(n, 1, 1) ** 2)
+                          & (g[:, 3].view(n, 1, 1) > 0), line)
+
+            # convex polygon: inside = max over outward edge planes <= 0; outline = edge capsules
+            if has_poly:
+                h, w = r1 - r0, c1 - c0
+                sdf = torch.full((n, h, w), -1e30, device=dev, dtype=dt)
+                edge_d2 = (torch.full((n, h, w), 1e30, device=dev, dtype=dt)
+                           if has_outline else None)
+                for e, mixed in edges:
+                    ax, ay = g[:, 2 * e].view(n, 1, 1), g[:, 2 * e + 1].view(n, 1, 1)
+                    j = (e + 1) % V
+                    bx, by = g[:, 2 * j].view(n, 1, 1), g[:, 2 * j + 1].view(n, 1, 1)
+                    ex, ey = bx - ax, by - ay
+                    L2 = ex * ex + ey * ey
+                    degen = L2 < 1e-12
+                    inv = torch.rsqrt(L2.clamp_min(1e-20))
+                    d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
+                    sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d)
+                                        if mixed else d)
+                    if has_outline:
+                        t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
+                        qx, qy = p - ax - t * ex, q - ay - t * ey
+                        e2 = qx * qx + qy * qy
+                        edge_d2 = torch.minimum(
+                            edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2)
+                            if mixed else e2)
+                is_poly = (kind == KIND_POLY).view(n, 1, 1)
+                paint(is_poly & (sdf <= 0), fill)
                 if has_outline:
-                    t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
-                    qx, qy = p - ax - t * ex, q - ay - t * ey
-                    e2 = qx * qx + qy * qy
-                    edge_d2 = torch.minimum(
-                        edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2) if mixed else e2)
-            is_poly = (kind == KIND_POLY).view(B, 1, 1)
-            paint(is_poly & (sdf <= 0), fill)
-            if has_outline:
-                paint(is_poly & (lw > 0) & (edge_d2 <= lw * lw), line)
+                    paint(is_poly & (lw > 0) & (edge_d2 <= lw * lw), line)
 
-        # segment: capsule, distance to segment <= half width
-        if has_seg:
-            ax, ay = g[:, 0].view(B, 1, 1), g[:, 1].view(B, 1, 1)
-            ex, ey = g[:, 2].view(B, 1, 1) - ax, g[:, 3].view(B, 1, 1) - ay
-            t = (((p - ax) * ex + (q - ay) * ey) / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
-            dx, dy = p - ax - t * ex, q - ay - t * ey
-            paint((kind == KIND_SEGMENT).view(B, 1, 1)
-                  & (dx * dx + dy * dy <= g[:, 4].view(B, 1, 1) ** 2), fill)
+            # segment: capsule, distance to segment <= half width
+            if has_seg:
+                ax, ay = g[:, 0].view(n, 1, 1), g[:, 1].view(n, 1, 1)
+                ex, ey = g[:, 2].view(n, 1, 1) - ax, g[:, 3].view(n, 1, 1) - ay
+                t = (((p - ax) * ex + (q - ay) * ey)
+                     / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
+                dx, dy = p - ax - t * ex, q - ay - t * ey
+                paint((kind == KIND_SEGMENT).view(n, 1, 1)
+                      & (dx * dx + dy * dy <= g[:, 4].view(n, 1, 1) ** 2), fill)
 
     if flat_out:
         return canvas
