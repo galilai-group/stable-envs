@@ -98,21 +98,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-raster2d
     oscar_copy: $SCR/se6/raster2d
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 11033262c018b95f006011e4bb6ce4865c474ac8
     agent_model: opus
     wave: wave2
-    status: profiling
+    status: review (PATCH) + RASTER2D-1c/RASTER2D-2/SWMNAV-1 authorized
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts"
     affected_configs: ["Piecewise", "PiecewiseZones", "PushT", "SimplePointMaze", "TwoRoom", "TwoRoomTarget"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave2 spawned 2026-09-13T18:25"]
+    bottleneck: {measured: "render_torch evaluated all three primitive families over the whole frame for every slot: PushT B=64 raster 557 ms, 324.6 ms (58%) in families the slot lacks; SimplePointMaze B=64 74,779 ms with 9,508 ms in a capsule block for a scene with zero capsules; bbox covers 1.7% of frame per primitive. Pre-bake hypothesis killed (static walls cover 0.216 frames). Remaining: batch-union window degenerates to whole frame (301/518 ms SPM, 104/143 ms PushT); swm_nav base_image 23-49% of render, state-independent, rebuilt per call per row", hypothesis: "_prim_plan pre-pass + world-space bounding (same encoding as GPU _bbox_kernel) + uint8 NHWC canvas at ss==1; next: tile-binning (flat in B) and swm_nav base_image pre-bake"}
+    correctness: {targeted_tests: "tests/unit 2 pre-existing failures; GPU suite for the six envs 183 pass/75 skip/0 fail incl. test_backend_agreement; differential fuzz vs verbatim baseline function 1,650 CPU + 650 GPU scenes byte-identical", step4_replay: "all six configs on cuda: every digest and all 17 checks unchanged; CPU digests before/after identical on Oscar and laptop; 8 Scene2D consumers incl. highway-env identical", gate_a: "PASS (unchanged); Commit A e6c2af3 makes device=cpu honoured on Triton hosts (Step-3 CPU_UNMEASURED cause); second HAVE_TRITON instance at conformance.py:381 -> RASTER2D-1c", fidelity: "unchanged"}
+    performance: {cpu_before: "PushT 115 fps (S_cpu 0.34 CPU_REGRESSION); SimplePointMaze 3 fps (S_cpu 0.06)", cpu_after: "PushT 590 fps (5.1x, S_cpu 1.50 CPU_PARITY); SimplePointMaze 112 fps (41.2x, S_cpu 2.21 CPU_FASTER); cores_cpu 0.08/0.13 -> CPU_FAST not reached; swm_nav four rows unchanged (not patched)", gpu_before: "PushT 1,933,431 fps; SPM 43,682 (3090)", gpu_after: "within 1%: PushT 1,926,247; SPM 43,317; render_triton untouched", batch_scales: "n/a (GPU unchanged)", no_large_batch_regression: "unchanged"}
+    pixels_changed: no
+    semantic_followup: none (PushT cuda digest_ours unchanged cecda14a; GPU path not modified)
+    review: {reviewer: "fable (independent, spawned)", verdict: null}
+    slurm_jobs: [6344858(cancelled), 6346289, 6346290, 6346291, 6346300, 6346490]
+    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d)."]
   - workstream: gfxdraw
     brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
     branch: step6/gfxdraw
