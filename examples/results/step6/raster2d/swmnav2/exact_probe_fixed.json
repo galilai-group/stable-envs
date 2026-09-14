@@ -1,0 +1,34 @@
+{
+  "n": 4194304,
+  "enable_fp_fusion": false,
+  "triton": "3.8.0",
+  "torch": "2.14.0+cu126",
+  "card": "NVIDIA GeForce RTX 3090",
+  "rows": [
+    {
+      "expr": "dist2",
+      "differing": 0,
+      "n": 4194304,
+      "max_abs_diff": 0.0
+    },
+    {
+      "expr": "dot (float64 exp)",
+      "differing": 0,
+      "n": 4194304,
+      "max_abs_diff": 0.0
+    },
+    {
+      "expr": "alpha = dot/max",
+      "differing": 0,
+      "n": 4194304,
+      "max_abs_diff": 0.0
+    },
+    {
+      "expr": "blend -> uint8",
+      "differing": 0,
+      "n": 4194304,
+      "max_abs_diff": 0.0
+    }
+  ],
+  "bit_identical": true
+}
