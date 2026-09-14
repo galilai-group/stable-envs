@@ -1,0 +1,2470 @@
+{
+ "configs": {
+  "Piecewise": {
+   "backends": [],
+   "config_id": "Piecewise",
+   "corpus": {
+    "env": "Piecewise",
+    "indices": [
+     173,
+     28,
+     56,
+     230,
+     0,
+     183,
+     79,
+     18,
+     60,
+     80,
+     179,
+     243,
+     111,
+     116,
+     148,
+     76,
+     252,
+     174,
+     15,
+     210,
+     125,
+     215,
+     29,
+     149,
+     141,
+     38,
+     226,
+     82,
+     222,
+     204,
+     73,
+     176,
+     153,
+     217,
+     50,
+     93,
+     163,
+     225,
+     255,
+     143,
+     150,
+     241,
+     105,
+     24,
+     242,
+     245,
+     121,
+     63,
+     62,
+     78,
+     180,
+     54,
+     20,
+     81,
+     51,
+     202,
+     104,
+     133,
+     43,
+     187,
+     103,
+     88,
+     25,
+     128
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/Piecewise.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "485bfd613f54358077446969d3e9fb486534ef3c53d04b38fdf6989a09b11cee",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "Piecewise",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 0.66,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: Piecewise renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re-sam"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "30d2f0bad5423f4534e0c6da7e5ecd3c895e6bb1964f197aed4fc0b7ce9ee716",
+      "digest_ours": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+      "exact_frac": 0.9999610745176977,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.8098974567153975,
+      "interior_mean_abs": 0.0,
+      "interior_px": 2577625,
+      "max_abs": 1,
+      "mean_abs": 3.892548230229592e-05,
+      "n_states": 64,
+      "reference_id": "swm/Piecewise-v0",
+      "ssim": 0.999999982936628,
+      "within8_frac": 1.0
+     },
+     "seconds": 8.62,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.13,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 0.999995,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.14,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 5.0,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.04,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.09,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "30d2f0bad5423f4534e0c6da7e5ecd3c895e6bb1964f197aed4fc0b7ce9ee716",
+    "digest_ours": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+    "digest_ours_corpus_style": "c3187d3ae2e8c6cf3720904f94893d7284513ca59909db1145959910399c425c",
+    "digest_ours_default_style": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+    "distinct_colors": 633,
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "mean_pixel": 236.113103126993,
+    "n_states": 64,
+    "reference_id": "swm/Piecewise-v0",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "size": 224,
+    "state_dim": 2,
+    "style_digest": "7d59bdcc7de6731490749dbef95a9712a72f730cbdcfca2d57a01221d5361d74",
+    "style_dim": 10,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 0.0,
+     "agent_mean_err": 0.0,
+     "agent_median_err": 0.0,
+     "agent_median_err_at_25": 0.0,
+     "agent_p90_err": 0.0,
+     "agent_touched": 16,
+     "block_median_err": 0.0,
+     "control_max_err": 0.0,
+     "env": "Piecewise",
+     "episodes": 16,
+     "exact_claim": true,
+     "exact_frac": 1.0,
+     "first_step_max_err": 0.0,
+     "max_err": 0.0,
+     "median_err": 0.0,
+     "steps": 100
+    },
+    "seconds": 1.21,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 22.8,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-piecewise",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/Piecewise-v0",
+     "size": 224,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 10,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color"
+     ]
+    },
+    "describe_digest": "586139bf93671248"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/Piecewise-v0"
+   ]
+  },
+  "PiecewiseZones": {
+   "backends": [],
+   "config_id": "PiecewiseZones",
+   "corpus": {
+    "env": "PiecewiseZones",
+    "indices": [
+     173,
+     28,
+     56,
+     230,
+     0,
+     183,
+     79,
+     18,
+     60,
+     80,
+     179,
+     243,
+     111,
+     116,
+     148,
+     76,
+     252,
+     174,
+     15,
+     210,
+     125,
+     215,
+     29,
+     149,
+     141,
+     38,
+     226,
+     82,
+     222,
+     204,
+     73,
+     176,
+     153,
+     217,
+     50,
+     93,
+     163,
+     225,
+     255,
+     143,
+     150,
+     241,
+     105,
+     24,
+     242,
+     245,
+     121,
+     63,
+     62,
+     78,
+     180,
+     54,
+     20,
+     81,
+     51,
+     202,
+     104,
+     133,
+     43,
+     187,
+     103,
+     88,
+     25,
+     128
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/PiecewiseZones.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "485bfd613f54358077446969d3e9fb486534ef3c53d04b38fdf6989a09b11cee",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "PiecewiseZones",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 1.5,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: PiecewiseZones renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to r"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "7502cecbc68c180dbc7897822bfa8095110623239168658c636dd2a99ce7da20",
+      "digest_ours": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+      "exact_frac": 0.9999735306720344,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.8127120870116029,
+      "interior_mean_abs": 0.0,
+      "interior_px": 2586583,
+      "max_abs": 1,
+      "mean_abs": 2.6469327965561223e-05,
+      "n_states": 64,
+      "reference_id": "swm/Piecewise-v0",
+      "ssim": 0.9999999864492101,
+      "within8_frac": 1.0
+     },
+     "seconds": 1.06,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.15,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 0.999995,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.12,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 10.12,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "7502cecbc68c180dbc7897822bfa8095110623239168658c636dd2a99ce7da20",
+    "digest_ours": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+    "digest_ours_corpus_style": "b329815f91b71cb250de93e9290c29eb8cd161b910eea0b32cd8135533fc922f",
+    "digest_ours_default_style": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+    "distinct_colors": 1911,
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "mean_pixel": 211.78783847523385,
+    "n_states": 64,
+    "reference_id": "swm/Piecewise-v0",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "size": 224,
+    "state_dim": 2,
+    "style_digest": "e4f8b8336dfca7e5603efa6a2b99fb0aca1fa9d05e9ed55290e6bd86749c7f5f",
+    "style_dim": 22,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 0.0,
+     "agent_mean_err": 0.0,
+     "agent_median_err": 0.0,
+     "agent_median_err_at_25": 0.0,
+     "agent_p90_err": 0.0,
+     "agent_touched": 16,
+     "block_median_err": 0.0,
+     "control_max_err": 0.0,
+     "env": "PiecewiseZones",
+     "episodes": 16,
+     "exact_claim": true,
+     "exact_frac": 1.0,
+     "first_step_max_err": 0.0,
+     "max_err": 0.0,
+     "median_err": 0.0,
+     "steps": 100
+    },
+    "seconds": 1.22,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 21.0,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-piecewise-zones",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/Piecewise-v0",
+     "size": 224,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 22,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color",
+      "zones.color_0",
+      "zones.color_1",
+      "zones.color_2",
+      "zones.color_3"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color",
+      "zones.color_0",
+      "zones.color_1",
+      "zones.color_2",
+      "zones.color_3"
+     ]
+    },
+    "describe_digest": "28a8235c6ffe0f8d"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/Piecewise-v0"
+   ]
+  },
+  "PushT": {
+   "backends": [
+    "scene"
+   ],
+   "config_id": "PushT",
+   "corpus": {
+    "env": "PushT",
+    "indices": [
+     226,
+     57,
+     0,
+     31,
+     113,
+     23,
+     141,
+     97,
+     207,
+     115,
+     208,
+     150,
+     70,
+     175,
+     191,
+     88,
+     200,
+     237,
+     223,
+     67,
+     111,
+     185,
+     107,
+     148,
+     246,
+     114,
+     210,
+     108,
+     27,
+     7,
+     170,
+     98,
+     28,
+     62,
+     109,
+     85,
+     233,
+     127,
+     89,
+     80,
+     86,
+     22,
+     184,
+     194,
+     47,
+     181,
+     209,
+     211,
+     161,
+     59,
+     94,
+     74,
+     162,
+     230,
+     204,
+     132,
+     182,
+     25,
+     156,
+     45,
+     171,
+     234,
+     54,
+     69
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/PushT.npz",
+    "n_extreme": 8,
+    "n_spread": 55,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "0aa3bacd24cf91cefb24cfc4ebef770bc43768f2a976cea5abeb2589dd78f9f9",
+    "state_dim": 5,
+    "state_names": [
+     "agent_x",
+     "agent_y",
+     "block_x",
+     "block_y",
+     "block_angle"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "PushT",
+   "family_specific": {
+    "check_backend_agreement": {
+     "evidence": {
+      "exact_frac": 1.0,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.817617728531856,
+      "interior_mean_abs": 0.0,
+      "interior_px": 29516,
+      "max_abs": 0,
+      "mean_abs": 0.0,
+      "within8_frac": 1.0
+     },
+     "seconds": 0.07,
+     "status": "measured"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 0.34,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "evidence": {
+      "exact_frac": 0.8975457085503472,
+      "factor": 2,
+      "max_abs": 143,
+      "mean_abs": 2.288381505895544,
+      "size": 96
+     },
+     "status": "measured"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.08,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "seconds": 0.0,
+     "status": "blocked_environment",
+     "why": "ModuleNotFoundError: No module named 'pymunk'"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.57,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.06,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.31,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 1.0,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.07,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 2.48,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 1.57,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_ours": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+    "digest_ours_corpus_style": "e43c89e51a5e4c330acbd3c2ab17ec40cedd99a769f58871dc75989b3b8f7d48",
+    "digest_ours_default_style": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+    "distinct_colors": 7,
+    "frames_shape": [
+     64,
+     96,
+     96,
+     3
+    ],
+    "mean_pixel": 248.48880004882812,
+    "n_states": 64,
+    "reference": {
+     "status": "blocked_environment",
+     "why": "ModuleNotFoundError: No module named 'pymunk'"
+    },
+    "reference_stable": {
+     "seconds": 0.0,
+     "status": "blocked_environment",
+     "why": "ModuleNotFoundError: No module named 'pymunk'"
+    },
+    "size": 96,
+    "state_dim": 5,
+    "style_digest": "cae594732107e8d04be872a1e9d0c1cd32adef27ce423bf9d3bfdd8a9d0955f8",
+    "style_dim": 29,
+    "supersample": 1
+   },
+   "physics": {
+    "seconds": 0.0,
+    "status": "blocked_environment",
+    "why": "ModuleNotFoundError: No module named 'pymunk'"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 7.4,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "push-t",
+     "parity_interior_min": 1.0,
+     "reference_id": "gym_pusht/PushT-v0",
+     "size": 96,
+     "state_dim": 5,
+     "state_names": [
+      "agent_x",
+      "agent_y",
+      "block_x",
+      "block_y",
+      "block_angle"
+     ],
+     "style_dim": 29,
+     "style_names": [
+      "agent.color",
+      "agent.inner_color",
+      "agent.scale",
+      "background.color",
+      "block.color",
+      "block.outline_color",
+      "block.scale",
+      "goal.angle",
+      "goal.color",
+      "goal.position",
+      "goal.scale",
+      "rendering.render_goal",
+      "walls.color",
+      "walls.visible"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.inner_color",
+      "agent.scale",
+      "background.color",
+      "block.color",
+      "block.outline_color",
+      "block.scale",
+      "goal.angle",
+      "goal.color",
+      "goal.position",
+      "goal.scale",
+      "rendering.render_goal",
+      "walls.color",
+      "walls.visible"
+     ]
+    },
+    "describe_digest": "05b02a2b687a0511"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/PushT-Discrete-v1",
+    "swm/PushT-v1"
+   ]
+  },
+  "SimplePointMaze": {
+   "backends": [
+    "scene"
+   ],
+   "config_id": "SimplePointMaze",
+   "corpus": {
+    "env": "SimplePointMaze",
+    "indices": [
+     238,
+     195,
+     0,
+     21,
+     46,
+     253,
+     61,
+     13,
+     111,
+     227,
+     103,
+     152,
+     65,
+     97,
+     163,
+     251,
+     147,
+     191,
+     22,
+     133,
+     215,
+     7,
+     148,
+     36,
+     174,
+     219,
+     23,
+     223,
+     154,
+     254,
+     20,
+     120,
+     241,
+     209,
+     40,
+     248,
+     29,
+     84,
+     150,
+     180,
+     51,
+     116,
+     63,
+     198,
+     50,
+     104,
+     156,
+     66,
+     54,
+     204,
+     18,
+     224,
+     75,
+     139,
+     165,
+     69,
+     212,
+     146,
+     77,
+     72,
+     177,
+     92,
+     41,
+     128
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/SimplePointMaze.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "555d913d0f2ca51057db19e3dfd19e2e8998c544c1b3a535b0f78f6aae78dc0c",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "SimplePointMaze",
+   "family_specific": {
+    "check_backend_agreement": {
+     "evidence": {
+      "exact_frac": 1.0,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.9287534626038781,
+      "interior_mean_abs": 0.0,
+      "interior_px": 33528,
+      "max_abs": 0,
+      "mean_abs": 0.0,
+      "within8_frac": 1.0
+     },
+     "seconds": 0.66,
+     "status": "measured"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 3.33,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: SimplePointMaze renders at 500px only: the reference is a 5x5 inch matplotlib figure at 100 dpi and its axes spine is a 0.8 pt line, i.e. a constant in OUTPUT PIXELS with no world-unit description. Asked for 1000."
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.23,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "8d9c7f4b841c1bb5bb1da721d829195295debb5aed0ce8d15ce09bf11440cda1",
+      "digest_ours": "23cda999c9447184553ab6cebcfc7339da028f63faacf007dfc3fc124e5ffe66",
+      "exact_frac": 0.999696,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.9661142801635335,
+      "interior_mean_abs": 0.0,
+      "interior_px": 15396059,
+      "max_abs": 241,
+      "mean_abs": 0.0179025,
+      "n_states": 64,
+      "reference_id": "swm/SimplePointMaze-v0",
+      "ssim": 0.9995054257215078,
+      "within8_frac": 0.9997404375
+     },
+     "seconds": 5.19,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.08,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.17,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.75,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.1,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.06,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 1.0,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.78,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 95.75,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.11,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.61,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.1,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "8d9c7f4b841c1bb5bb1da721d829195295debb5aed0ce8d15ce09bf11440cda1",
+    "digest_ours": "23cda999c9447184553ab6cebcfc7339da028f63faacf007dfc3fc124e5ffe66",
+    "digest_ours_corpus_style": "d2c75ee657f48c900e7aaed6ee912a309b05c62f3cefffa653e2cd5b1cd0340c",
+    "digest_ours_default_style": "23cda999c9447184553ab6cebcfc7339da028f63faacf007dfc3fc124e5ffe66",
+    "distinct_colors": 4,
+    "frames_shape": [
+     64,
+     500,
+     500,
+     3
+    ],
+    "mean_pixel": 215.365318,
+    "n_states": 64,
+    "reference_id": "swm/SimplePointMaze-v0",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.25,
+     "status": "measured"
+    },
+    "size": 500,
+    "state_dim": 2,
+    "style_digest": "4c0f1a0ce23a47335e873c435e06c048cc83ed39855beaff25fad290a898e357",
+    "style_dim": 35,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 0.0,
+     "agent_mean_err": 0.0,
+     "agent_median_err": 0.0,
+     "agent_median_err_at_25": 0.0,
+     "agent_p90_err": 0.0,
+     "agent_touched": 16,
+     "block_median_err": 0.0,
+     "control_max_err": 0.0,
+     "env": "SimplePointMaze",
+     "episodes": 16,
+     "exact_claim": true,
+     "exact_frac": 1.0,
+     "first_step_max_err": 0.0,
+     "max_err": 0.0,
+     "median_err": 0.0,
+     "steps": 100
+    },
+    "seconds": 1.63,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 148.8,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-simple-point-maze",
+     "parity_interior_min": 1.0,
+     "reference_id": "swm/SimplePointMaze-v0",
+     "size": 500,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 35,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "walls.color",
+      "walls.number",
+      "walls.positions",
+      "walls.shape"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "walls.color",
+      "walls.number",
+      "walls.positions",
+      "walls.shape"
+     ]
+    },
+    "describe_digest": "8add05867975e297"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/SimplePointMaze-v0"
+   ]
+  },
+  "TwoRoom": {
+   "backends": [],
+   "config_id": "TwoRoom",
+   "corpus": {
+    "env": "TwoRoom",
+    "indices": [
+     49,
+     51,
+     0,
+     141,
+     97,
+     208,
+     170,
+     124,
+     7,
+     245,
+     205,
+     8,
+     155,
+     45,
+     63,
+     122,
+     37,
+     197,
+     181,
+     99,
+     101,
+     218,
+     232,
+     243,
+     55,
+     114,
+     156,
+     144,
+     117,
+     11,
+     9,
+     78,
+     150,
+     42,
+     195,
+     27,
+     244,
+     61,
+     35,
+     119,
+     56,
+     118,
+     95,
+     126,
+     209,
+     48,
+     111,
+     248,
+     177,
+     235,
+     252,
+     24,
+     38,
+     16,
+     85,
+     68,
+     212,
+     146,
+     228,
+     112,
+     215,
+     3,
+     116,
+     15
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/TwoRoom.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "cc690c68808441c7c74ff992fbfba1fbe3c97cddfe4019d7191d2051c2b7cb21",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "TwoRoom",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 0.86,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: TwoRoom renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re-sampl"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.06,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "84d2563b5ea8b0a42114d2d3d08624f0ae5f8bc4567f9cf82ab9499b1a44c5b9",
+      "digest_ours": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+      "exact_frac": 0.9999831841916454,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.7921839495063243,
+      "interior_mean_abs": 0.0,
+      "interior_px": 2521249,
+      "max_abs": 1,
+      "mean_abs": 1.6815808354591835e-05,
+      "n_states": 64,
+      "reference_id": "swm/TwoRoom-v1",
+      "ssim": 0.9999999942600183,
+      "within8_frac": 1.0
+     },
+     "seconds": 1.03,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.04,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.19,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 0.999995,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.12,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 9.53,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "84d2563b5ea8b0a42114d2d3d08624f0ae5f8bc4567f9cf82ab9499b1a44c5b9",
+    "digest_ours": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+    "digest_ours_corpus_style": "33d56c339b7484659a5618cc5e1ac857cb90f90612b60d848976531f629b10c3",
+    "digest_ours_default_style": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+    "distinct_colors": 632,
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "mean_pixel": 225.65891769305378,
+    "n_states": 64,
+    "reference_id": "swm/TwoRoom-v1",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "size": 224,
+    "state_dim": 2,
+    "style_digest": "89d1be2c0622a96bafbcb88033fb8f000ccea94b4119886051545a67072217ae",
+    "style_dim": 22,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 0.0,
+     "agent_mean_err": 0.0,
+     "agent_median_err": 0.0,
+     "agent_median_err_at_25": 0.0,
+     "agent_p90_err": 0.0,
+     "agent_touched": 16,
+     "block_median_err": 0.0,
+     "control_max_err": 0.0,
+     "env": "TwoRoom",
+     "episodes": 16,
+     "exact_claim": true,
+     "exact_frac": 1.0,
+     "first_step_max_err": 0.0,
+     "max_err": 0.0,
+     "median_err": 0.0,
+     "steps": 100
+    },
+    "seconds": 2.61,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 21.3,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-two-room",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/TwoRoom-v1",
+     "size": 224,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 22,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ]
+    },
+    "describe_digest": "9bf8113a770e9c19"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/TwoRoom-v1"
+   ]
+  },
+  "TwoRoomTarget": {
+   "backends": [],
+   "config_id": "TwoRoomTarget",
+   "corpus": {
+    "env": "TwoRoomTarget",
+    "indices": [
+     228,
+     51,
+     0,
+     56,
+     143,
+     141,
+     97,
+     112,
+     219,
+     207,
+     227,
+     125,
+     22,
+     127,
+     212,
+     153,
+     3,
+     128,
+     150,
+     175,
+     245,
+     223,
+     154,
+     61,
+     169,
+     49,
+     114,
+     177,
+     36,
+     37,
+     145,
+     170,
+     239,
+     136,
+     168,
+     64,
+     191,
+     192,
+     135,
+     19,
+     163,
+     186,
+     229,
+     124,
+     214,
+     182,
+     144,
+     252,
+     81,
+     188,
+     117,
+     213,
+     230,
+     236,
+     248,
+     199,
+     101,
+     27,
+     226,
+     85,
+     221,
+     162,
+     46,
+     172
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/TwoRoomTarget.npz",
+    "n_extreme": 8,
+    "n_spread": 55,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "eda3ee1a080a281e9ced1a049df339914ff0a24eb1f1ab98ce934e7bb4a6503e",
+    "state_dim": 4,
+    "state_names": [
+     "agent_x",
+     "agent_y",
+     "target_x",
+     "target_y"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "TwoRoomTarget",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 1.09,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "status": "not_applicable",
+     "why": "ValueError: TwoRoomTarget renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.09,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "61ae5c707170dabb46c5a9a324739e606c23271cd01a7b882242902f8f0eaa67",
+      "digest_ours": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+      "exact_frac": 0.9999673025948661,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.7210553072653784,
+      "interior_mean_abs": 0.0,
+      "interior_px": 2294871,
+      "max_abs": 1,
+      "mean_abs": 3.269740513392857e-05,
+      "n_states": 64,
+      "reference_id": "swm/TwoRoom-v1",
+      "ssim": 0.9999999656151597,
+      "within8_frac": 1.0
+     },
+     "seconds": 1.07,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.24,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 0.999995,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.14,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 9.28,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "61ae5c707170dabb46c5a9a324739e606c23271cd01a7b882242902f8f0eaa67",
+    "digest_ours": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+    "digest_ours_corpus_style": "bd17aeb2e255a4f42d80ee0fbc97e497624f201eb503eb7e14223375f1a4b252",
+    "digest_ours_default_style": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+    "distinct_colors": 5924,
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "mean_pixel": 224.7399692665152,
+    "n_states": 64,
+    "reference_id": "swm/TwoRoom-v1",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.03,
+     "status": "measured"
+    },
+    "size": 224,
+    "state_dim": 4,
+    "style_digest": "efc39bcba31874aaab9c47717a18a3297c299ff94d7b08f8540e476045fe6779",
+    "style_dim": 26,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 0.0,
+     "agent_mean_err": 0.0,
+     "agent_median_err": 0.0,
+     "agent_median_err_at_25": 0.0,
+     "agent_p90_err": 0.0,
+     "agent_touched": 16,
+     "block_median_err": 0.0,
+     "control_max_err": 0.0,
+     "env": "TwoRoomTarget",
+     "episodes": 16,
+     "exact_claim": true,
+     "exact_frac": 1.0,
+     "first_step_max_err": 0.0,
+     "max_err": 0.0,
+     "median_err": 0.0,
+     "steps": 100,
+     "target_max_err": 0.0,
+     "target_mean_err": 0.0,
+     "target_median_err": 0.0,
+     "target_median_err_at_25": 0.0,
+     "target_p90_err": 0.0
+    },
+    "seconds": 2.64,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 21.5,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-two-room-target",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/TwoRoom-v1",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "agent_x",
+      "agent_y",
+      "target_x",
+      "target_y"
+     ],
+     "style_dim": 26,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "target.color",
+      "target.radius",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "target.color",
+      "target.radius",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ]
+    },
+    "describe_digest": "143275c72035e0f1"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/TwoRoom-v1"
+   ]
+  }
+ },
+ "provenance": {
+  "check_seed": 4041,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "device": "cuda",
+  "driver": "575.57.08",
+  "git_commit": "c96f8866b6f80a1a3f7e0fa24fb4a3d6d81c3f8c",
+  "git_commit_source": "file:GIT_COMMIT",
+  "git_dirty": null,
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "import_errors": {
+   "carracing": "ImportError: CarRacing-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+   "griddly": "ImportError: griddly is not importable (ModuleNotFoundError: No module named 'griddly'). The atlas is composed of tiles griddly's own Vulkan renderer draws, so there is no degraded mode. `pip install griddly==1.6.7` \u2014 the only release, from 2023-03-15; upstream's last commit is 2024-04-07 and there is no successor.",
+   "humanoidbench": "ImportError: the HumanoidBench family is measured and complete on fidelity (17 cells, VISUAL tier, mean 2.6-8.4/255, SSIM 0.845-0.931, 437x the official renderer at batch 64) but is NOT registered by default: mujoco_warp's batched render is not bit-reproducible inside a long conformance session, so 2-3 of ~660 tests fail every run on test_determinism and test_frame_i_is_independent_of_batch_size, by 1-2/255, on a different cell each time. Set STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway. See docs/research/humanoidbench.md",
+   "jumanji": "ImportError: the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so it cannot render without the reference package: missing jumanji, jax. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-jumanji, built with a CLEAN `python -m venv` \u2014 a --system-site-packages venv breaks jax's CUDA plugin discovery. See docs/research/jumanji.md",
+   "lunarlander": "ImportError: LunarLander-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+   "metaworld": "ImportError: the Meta-World family ray-casts the Sawyer's meshes with mujoco_warp's batch raytracer, which this interpreter cannot run: missing metaworld; mujoco is 3.12.0 and mujoco_warp requires >= 3.11 (metaworld itself pins mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-fetch; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml",
+   "overcooked": "ImportError: jaxmarl is not importable (ModuleNotFoundError: No module named 'jaxmarl'). The atlas IS jaxmarl's own `_render_tile` output \u2014 nothing here re-derives it \u2014 so there is no degraded mode. `pip install jaxmarl` (measured against jaxmarl 0.1.0 / jax 0.4.38) INTO A CLEAN VENV: a `python -m venv --system-site-packages` venv breaks jax's CUDA plugin discovery.",
+   "pgx": "ImportError: the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter cannot provide them: ModuleNotFoundError: No module named 'pgx'. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-pgx, built with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin discovery. See docs/research/pgx.md",
+   "procgen": "ImportError: procgen is not installed; `pip install procgen` provides both the assets this renderer packs and the reference env parity is measured against",
+   "robocasa": "ImportError: no compiled RoboCasa kitchen is cached under /users/sboughan/.cache/stable-envs/robocasa. robocasa pins mujoco == 3.3.1 and mujoco_warp needs >= 3.11, so the kitchen has to be built by a different interpreter and cached:\n\n    conda run -n robocasa python examples/robocasa_visual/dump_trajectory.py --kitchen L52S03 --steps 200 --res 256 --out /users/sboughan/.cache/stable-envs/robocasa\n\nIt needs robocasa's 24 GB asset library. Set STABLE_ENVS_ROBOCASA_CACHE to point somewhere else. See docs/research/robocasa.md",
+   "sokoban": "ImportError: gym-sokoban is not installed. The seven 16x16 tile images ARE this env -- the frame is a gather from them and nothing here re-derives them -- so there is no degraded mode to fall back to. `pip install gym-sokoban`."
+  },
+  "mujoco_gl": "egl",
+  "n_states": 64,
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "pool": 256,
+  "python": "3.12.9",
+  "reference_packages": {
+   "craftax": null,
+   "dm_control": "1.0.45",
+   "gym_pusht": null,
+   "gymnasium": "1.3.0",
+   "gymnasium_robotics": null,
+   "mujoco": "3.12.0",
+   "mujoco_warp": "3.12.0",
+   "ogbench": null,
+   "stable_worldmodel": "0.0.6",
+   "warp": "1.17.0"
+  },
+  "registry_here": [
+   "Acrobot",
+   "AntmazeGiantNavigate",
+   "AntmazeGiantStitch",
+   "AntmazeLargeExplore",
+   "AntmazeLargeNavigate",
+   "AntmazeLargeStitch",
+   "AntmazeMediumExplore",
+   "AntmazeMediumNavigate",
+   "AntmazeMediumStitch",
+   "AntmazeTeleportExplore",
+   "AntmazeTeleportNavigate",
+   "AntmazeTeleportStitch",
+   "BabyAIGoToLocal",
+   "CartPole",
+   "CraftaxClassic",
+   "Crafter",
+   "DMCAcrobotSwingup",
+   "DMCBallInCupCatch",
+   "DMCCartpoleBalance",
+   "DMCCartpoleSwingup",
+   "DMCCheetahRun",
+   "DMCFingerSpin",
+   "DMCFingerTurnEasy",
+   "DMCFingerTurnHard",
+   "DMCHopperHop",
+   "DMCHumanoidStand",
+   "DMCPendulumSwingup",
+   "DMCPointMassEasy",
+   "DMCReacherEasy",
+   "DMCReacherHard",
+   "DMCSwimmerSwimmer6",
+   "DMCWalkerWalk",
+   "FetchPickAndPlace",
+   "FetchPickAndPlaceDense",
+   "FetchPickAndPlaceDict",
+   "FetchPush",
+   "FetchPushDense",
+   "FetchPushDict",
+   "FetchReach",
+   "FetchReachDense",
+   "FetchReachDict",
+   "FetchSlide",
+   "FetchSlideDense",
+   "FetchSlideDict",
+   "Highway",
+   "HumanoidmazeGiantNavigate",
+   "HumanoidmazeGiantStitch",
+   "HumanoidmazeLargeNavigate",
+   "HumanoidmazeLargeStitch",
+   "HumanoidmazeMediumNavigate",
+   "HumanoidmazeMediumStitch",
+   "Intersection",
+   "Merge",
+   "MiniGridDoorKey",
+   "MiniGridEmpty",
+   "MiniGridFourRooms",
+   "MiniGridKeyCorridor",
+   "MiniGridLavaCrossing",
+   "MiniGridPOVFetch",
+   "MiniHack",
+   "MountainCar",
+   "MountainCarContinuous",
+   "MujocoInvertedDoublePendulum",
+   "MujocoInvertedPendulum",
+   "MujocoPusher",
+   "MujocoReacher",
+   "Parking",
+   "Pendulum",
+   "Piecewise",
+   "PiecewiseZones",
+   "PointMazeLarge",
+   "PointMazeMedium",
+   "PointMazeOpen",
+   "PointMazeUMaze",
+   "PointmazeGiantNavigate",
+   "PointmazeGiantStitch",
+   "PointmazeLargeNavigate",
+   "PointmazeLargeStitch",
+   "PointmazeMediumNavigate",
+   "PointmazeMediumStitch",
+   "PointmazeTeleportNavigate",
+   "PointmazeTeleportStitch",
+   "PushT",
+   "Racetrack",
+   "Roundabout",
+   "SimplePointMaze",
+   "TwoRoom",
+   "TwoRoomTarget"
+  ],
+  "slurm_job_id": "6352385",
+  "slurm_nodelist": "gpu2107",
+  "state_seed": 20260909,
+  "timestamp": "2026-09-13T21:27:35-0400",
+  "torch": "2.14.0+cu126"
+ },
+ "schema_version": 1,
+ "shard": "adhoc",
+ "step": 4,
+ "what_this_is": "raw Step 4 conformance/fidelity measurements for one interpreter. No threshold is applied here; scratch/step4/certify.py does that from the frozen Step 2 spec."
+}

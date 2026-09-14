@@ -398,19 +398,83 @@ Tools added under `scratch/step6/gfxdraw/`: `phase_profile.py` (phase timers at 
 seams, wrappers only), `replay_digests.py` (the seconds-long replay loop), `consumer_digests.py`,
 `conformance_cpu.py`, `paired_cpu.py`, `tiers.py`, and the four sbatch scripts.
 
-## SLURM jobs
+## SLURM jobs — every job that wrote an artifact under this directory
 
-| job | id | node | what |
+| job | name | node / card | what it wrote |
 |---|---|---|---|
-| `se6-gfxdraw-cpu` | 6346431 | node2338 | CPU sweep both arms, profile notes, `tests/unit`, CPU conformance, CPU replay |
-| `se6-gfxdraw-gpu` | 6346430 | gpu2104 (RTX 3090) | Step 4 replay on CUDA, path tests, GPU sweep both arms, GPU profile-after |
-| `se6-gfxdraw-gputests` | 6346933 | gpu2104 | conformance + reproducibility with their output kept |
-| `se6-gfxdraw-paired` | 6346967 | (batch) | paired `S_cpu`, both arms, and the same-node profile pair |
-| `se6-gfxdraw-gpuprof` | 6346999 | gpu2104 | GPU profile-BEFORE, the branch's harness against the baseline tree |
-| `se6-gfxdraw-paired` | 6346954 | — | cancelled by me before it ran, to add the measured-tree provenance |
+| **6322230** | wave-0 profile | `node2314` | `profile_before/*_cpu_node2314.{json,md}` — the pre-implementation profile, run before this workstream had a branch. It is the only job here that predates the worktree, which is why it appears in no earlier list in this file: it was inherited with the scaffolding commit rather than launched by it. |
+| 6346430 | `se6-gfxdraw-gpu` | `gpu2104` (3090) | Step 4 replay on cuda, path tests, GPU sweep both arms, `profile_after_gpu/` |
+| 6346431 | `se6-gfxdraw-cpu` | `node2338` | CPU sweep both arms (**superseded**, see `sweep/superseded_node2338/`), `profile_after/`, `tests/unit`, CPU conformance, CPU replay |
+| 6346933 | `se6-gfxdraw-gputests` | `gpu2104` | `tests/conformance_reproducibility.txt`, `tests/gfxdraw_fused_fast_paths.txt` |
+| 6346954 | `se6-gfxdraw-paired` | — | cancelled by me before it ran, to add the measured-tree provenance. **Wrote nothing.** |
+| 6346967 | `se6-gfxdraw-paired` | `node1829` | `sweep/paired_{before,after}_B*_node1829.json`, `profile_{before,after}_samenode/` |
+| 6346999 | `se6-gfxdraw-gpuprof` | `gpu2104` | `profile_before_gpu/` |
+| 6348411 | `se6-gfxdraw-box2d` | `node1831` | first attempt at the Box2D venv; **wrote nothing** (se-step6 has no pip) |
+| 6348468 | `se6-gfxdraw-box2d` | `node1831` | `consumers/consumers_{baseline,gfxdraw}_node1831.json` |
+| 6348986 | `se6-gfxdraw-gpuclassic` | — | cancelled by me while pending, to merge two GPU jobs into one. **Wrote nothing.** |
+| 6348987 | `se6-gfxdraw-cpufloor` | `node2334` | `characterize/{interleave,interleave_500,cost_floor,cost_floor_numba,decode}_node2334.json` |
+| 6349091 | `se6-gfxdraw-cpufloor2` | `node1831` | `characterize/cost_floor_batched_node1831.json` |
+| 6349362 | `se6-gfxdraw-gpuclassic` | `gpu2110` (3090) | `consumers/consumers_cuda_*`, `tests/classic_kernel_gpu2110.txt`, `replay/step4_replay_fused_cuda.json`, `sweep2/gpu_{before,after}_gpu2110.json` (**superseded**, see `sweep2/superseded_gpu2110/`) |
+| 6351758 | `se6-gfxdraw-gpupaired` | `gpu2264` (3090) | `tests/fused_box2d_gpu2264.txt`, `sweep2/paired_gpu_B{1024,4096}_gpu2264.json` |
+| 6352593 | `se6-gfxdraw-mixedrow` | `gpu2107` (3090) | `tests/classic_kernel_mixedrow_gpu2107.txt`, `sweep2/paired_gpu_B4096_perarmpeak_gpu2107.json`, `characterize/venv_box2d_manifest.json` |
+| 6353689 | `se6-gfxdraw-shardcpu` | `node2339` | `sweep/rejected_high_spread_node2339/` — **rejected itself**: reference spread 4.52x-10.37x |
+| 6353690 | `se6-gfxdraw-shardgpu` | `gpu2264` (3090) | `sweep2/gpu_paired_{before,after}_gpu2264.json` — self-contained, spread 1.10-1.11x, decode on the same card. **The GPU certification rows.** |
 
-`se6-gfxdraw-paired` 6346967 landed on `node1829` (load average 30-41), the frozen sweep on
-`node2338` (load average 47). Every artifact records its own host.
+Jobs whose artifacts carry their own `slurm_job` field: 6322230, 6346430, 6346431, 6346967,
+6346999, 6349362. The rest are recorded here because their outputs are test logs, sweeps or
+characterisation files whose schemas have no such field — which is the gap this table closes.
+
+**Which shards the report generator labels from, and how the rest are kept out.**
+`scratch/step6/report.py` runs `certify.classify` over every Step-3-shaped shard it finds. Three
+ways of keeping one out of that set were tried and only the third works:
+
+* **Prose beside the shard** does not stop a generator reading it. That is how `CPU_FASTER` reached
+  the page for four configurations whose own findings file says `CPU_PARITY`.
+* **A directory name** (`superseded_*/`) works only if the generator does not recurse, which nobody
+  has promised — and it does not survive `rsync`: the file still exists at its original path on the
+  cluster, so the next pull recreates the top-level copy beside the quarantined one. That happened.
+* **The shape of the file.** `certify.merge` reads `d.get("envs", [])`, so moving the rows to
+  `envs_not_for_certification` and leaving `envs: []` contributes no runs from anywhere in the tree
+  and keeps the file readable. `scratch/step6/gfxdraw/quarantine.py` applies that list idempotently
+  and `pull_artifacts.sh` runs it, because a pull undoes it for any shard it recreates.
+
+After this pass the generator sees **two** shards, and publishes:
+
+| device | host | rows |
+|---|---|---|
+| cpu | `node1829` | Acrobot `CPU_REGRESSION` (0.96); CartPole 1.20, MountainCar 1.12, MCC 1.15, Pendulum 1.96 — all `CPU_PARITY` |
+| gpu | `gpu2264` | Acrobot 397.7, CartPole 340.9, MountainCar 302.8, MCC 302.8 — `GPU_FASTER`; **Pendulum 690.8 `GPU_FAST`** — all with `BATCH_SCALES` and `cores` 105.9-151.3 |
+
+which is what the rest of this document says. Eight shards are excluded, each with the reason in
+its own JSON and a README beside it: `sweep/superseded_node2338/` (collapsed denominator),
+`sweep2/superseded_gpu2110/` (the same, and it would publish `GPU_FAST` for two more rows),
+`sweep/wave1_pre_gfxdraw2/` (superseded code plus a colliding arm pair),
+`sweep/rejected_high_spread_node2339/` (see below), and `sweep2/gpu_paired_before_gpu2264.json`
+(the kernel-off arm).
+
+**`certify.merge` has no slot for an ARM.** It keys runs on `(env, device, host, threads)`, so a
+before/after pair from one host collides and one silently supersedes the other — on a tie in
+measured cells, by path order. Only the arm reflecting the current tree is a certification row; the
+other is excluded structurally rather than left to that tie-break.
+
+**The denominator now carries its own spread, and one shard rejected itself on it.**
+`scratch/step6/gfxdraw/certify_shard.py` emits the Step-3 schema with the reference measured
+**between every batch cell** instead of once after the sweep, and records the spread of those
+readings. Its first CPU run (6353689, `node2339`) came back at **4.52x on Acrobot and 10.37x on
+CartPole**, against 1.02-1.11x on `node1829` and `gpu2264`, and is filed under
+`sweep/rejected_high_spread_node2339/` with `certifiable: false` in the JSON. That is the mechanism
+working: the shard this whole pass started from had the same disease and no way to show it, because
+a single block-timed reading has no spread — its denominator had collapsed 2.3x, nothing in the
+file said so, and the wrong tier it published looked exactly like a right one. A rejected shard is
+written and marked, never dropped: a missing file would look like a job that never ran.
+
+**`cores_cpu` is absent from the CPU row and the reason is recorded in the shard.** Decode was not
+measured on `node1829`, and borrowing another host's would be the cross-host ratio this exercise
+exists to avoid, so `classify` computes no `cores` and the row cannot be inflated (it caps at
+`CPU_FASTER`; the paired `S_cpu` tops out at 1.96, so the labels are unchanged either way). The
+magnitude is **0.22-0.50**, measured on `node2334`, `node2338` and `node2339`, and `BELOW_G4` is
+true of all five CPU rows even though this shard does not assert it.
+
 
 ## Commits on `step6/gfxdraw`
 

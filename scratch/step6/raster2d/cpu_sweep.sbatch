@@ -33,18 +33,23 @@ export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 WS=raster2d
 BEF=$SCR/se6/$WS-preB          # baseline + the device-dispatch fix only
 AFT=$SCR/se6/$WS               # + the bounded/dispatched primitive loop
-OUT=$SCR/se6/$WS/examples/results/step6/$WS/sweep
-ST=$SCR/se6/$WS/examples/results/step6/$WS/sweep/states
+TAG=${TAG:-}
+OUT=$SCR/se6/$WS/examples/results/step6/$WS/sweep$TAG
+ST=$OUT/states
 mkdir -p "$OUT" "$ST"
 # rsync drops .git, so the SHA reaches the shard through the environment or a
 # GIT_COMMIT file at the tree root -- otherwise every artifact records git_commit: null.
-export STABLE_ENVS_GIT_COMMIT=${STABLE_ENVS_GIT_COMMIT:-$(cat "$AFT/GIT_COMMIT" 2>/dev/null || true)}
-echo "measuring tree $AFT at ${STABLE_ENVS_GIT_COMMIT:-unknown}"
+echo "before tree $BEF at $(cat "$BEF/GIT_COMMIT" 2>/dev/null || echo unknown)"
+echo "after  tree $AFT at $(cat "$AFT/GIT_COMMIT" 2>/dev/null || echo unknown)"
 echo "node=$(hostname) job=$SLURM_JOB_ID cpus=$SLURM_CPUS_PER_TASK load=$(cat /proc/loadavg)"
 lscpu | grep "Model name"
 set -x
 
 run () {   # tree, tag, venv, envs, states-flag
+  # PER LEG, not once for the job: exporting one SHA globally stamped the before shard with the
+  # after tree's commit. stable_envs_file still discriminated them correctly, but a provenance field
+  # that is right only because another one is checked is not provenance.
+  export STABLE_ENVS_GIT_COMMIT=$(cat "$1/GIT_COMMIT" 2>/dev/null || true)
   PYTHONPATH=$1 "$SCR/venvs/$3/bin/python" $1/examples/bench_step3.py \
       --device cpu --threads 1 --envs "$4" --reps 15 --max-cell-s 12 \
       $5 "$ST" --out "$OUT/cpu_1thread_$2.json" || echo "SWEEP $2 rc=$?"

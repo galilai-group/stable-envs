@@ -152,8 +152,12 @@ nav:
       # experiment: same checkpoint, same episodes, same planner, only render() differs -- judged by
       # the equivalence rule Step 2 froze before any of these numbers existed.
       - 'Step 5: downstream semantics': research/step5_downstream_semantics.md
-      # GENERATED (scratch/step6/report.py) from examples/results/step6/. IN PROGRESS: profile-before
-      # only, no renderer modified. States what it has not done as plainly as what it has.
+      # GENERATED (scratch/step6/report.py) from examples/results/step6/, the coordinator dashboard,
+      # and the frozen Step 3 labels + Step 4 certification. Per-workstream evidence, the 49 frozen
+      # configurations carried forward with a source cited per cell, and the section-25 counts summed
+      # over that table. IN PROGRESS: workstreams are still merging, so the page prints what has NOT
+      # been done -- and where the dashboard and a committed artifact disagree -- as plainly as what
+      # has. Re-run it after every merge; it needs no edit to pick one up.
       - 'Step 6: optimisation (in progress)': research/step6_optimization.md
       - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
