@@ -20,10 +20,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-texture-fidelity
   oscar_copy: $SCR/se6/texture-fidelity
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 54023878b626a0518be76dbb11beafd5a449c49e (fully merged)
+  head_sha: 5a360450577b81b381944ad5c04e653717b7a882 (fully merged incl. protocol certification record)
   agent_model: fable
   wave: wave1
-  status: merged (5402387 merged 2026-09-15 by Sami decision; certification re-run under the protocol pending)
+  status: merged (closed)
   authorization: diagnosis
   goal: 'diagnosis: are DMCCheetahRun/DMCHopperHop/DMCWalkerWalk Step-4 visual failures stable-envs defects or MuJoCo 3.11->3.12 reference drift'
   affected_configs:
@@ -36,7 +36,9 @@ workstreams:
   correctness:
     targeted_tests: 'integration after merge: tests/unit 531 pass, 2 pre-existing failures (render_mjwarp.py --help hardcoded path; cited scratch paths carracing/robocasa)'
     step4_replay: 'certify311 (declared 3.11 pair): Cheetah/Hopper/Humanoid PASS, Walker gate FAIL on corpus-based check_resolution_consistency only (visual PASS); certify312 (3.12): visual BLOCKED x4 (would-be
-      FAIL x3), Walker gate FAIL same downsample check - jobs 6344899/6346226/6346489'
+      FAIL x3), Walker gate FAIL same downsample check - jobs 6344899/6346226/6346489 | protocol re-run (job 6365695, gpu2109, git_commit 5b327af): 3.11 PASS x4 (Walker downsample 0.628951 on the pinned
+      8-state draw, corpus 0.618773 diagnostic); 3.12 BLOCKED x4 (visual), downsample passing; test_reproducibility -k downsample 11 pass / 26 skip / 49 fixture errors (optional families absent in the 3.11
+      venv) / 2 pygame-absent'
     gate_a: PASS under declared reference; BLOCKED (not FAIL) under drifted 3.12 reference
     fidelity: verdict B (reference drift); no bound value or margin changed; downsample check now judged on its own 8-state protocol (reproduces recorded floors to 6 decimals)
   performance:
@@ -61,6 +63,7 @@ workstreams:
   - 6344899
   - 6346226
   - 6346489
+  - 6365695
   notes:
   - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
   - 'FINDING 2026-09-13: drift, not defect. Follow-up TEXTURE-2 authorized: reference-version provenance on declarations + certifier marks mismatch blocked_environment + check_resolution_consistency protocol
