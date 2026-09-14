@@ -895,15 +895,80 @@ unchanged**; `tests/unit/test_ogbench_scene_cache.py` 3 policy tests (a hot key 
 inserts past a cap of 256; an overflow costs one entry, not the cache; the common case never evicts),
 driven with a stub because proving a one-line eviction rule should not cost 300 MuJoCo bakes.
 
+### The two decisive probes (2c' item 3) — the renderer's lifetime IS the mechanism
+
+Job **6347171**, gpu2105, `bake_lifetime_probe.py`. Report only; nothing here is committed into the
+renderer.
+
+**(i) Which plate did Step 4 freeze?** Bake the key repeatedly, render the frozen states against each
+bake's plate, digest the frames:
+
+| config | plate sequence | frozen `digest_ours` reproduced? |
+|---|---|---|
+| `AntmazeGiantNavigate` | A B A B A B A B | **yes, by every ODD bake** (plate `27359fa34b1e` → `9da286404b65dc66`, the frozen value) |
+| `HumanoidmazeMediumNavigate` | A A A A A A A A | yes, by all of them |
+| `AntmazeTeleportExplore` | A A B A A A A A | **NO — by neither plate.** A → `483968227d628c59`, B → `bf67da3c6fe37298`, frozen is `06a2e039e1fdf3ad` |
+
+So the hypothesis that Step 4 simply froze "the other plate" is **true for Giant and false for
+Teleport**. And the reason is visible in probe (ii): driven as shipped, `ant/teleport` produces
+**four distinct plates in eight bakes**, not two. Its Step-4 plate is a third image this probe did not
+reach. That closes the door on reconciling that digest by re-deriving it and leaves re-freezing as the
+only route.
+
+**(ii) Is the renderer's lifetime the mechanism?** Same shot sequence, four ways. `as_shipped` is
+`update_scene → render → update_scene` on the Renderer kept forever per texture state
+(`ogbench.py:471-479`); `warmup_render` adds a discarded render; `no_trailing_update` drops the
+second `update_scene`; `fresh_renderer_per_bake` builds a new `mujoco.Renderer` each time.
+
+| scene | as_shipped | warmup_render | no_trailing_update | **fresh_renderer_per_bake** |
+|---|---|---|---|---|
+| ant/teleport | `ABCAAADA` (4) | `AAAAAAAB` (2) | `AAAAAAAA` (1) | **`AAAAAA` (1)** |
+| ant/giant | `AABABABA` (2) | `AAAAAAAA` (1) | `ABABABAB` (2) | **`AAAAAA` (1)** |
+| humanoid/medium | `AAAAAAAA` (1) | `AAAAAAAA` (1) | `AAAAAAAA` (1) | **`AAAAAA` (1)** |
+
+**Confirmed: the retained renderer is the carrier.** And only one variant is constant on every probed
+scene. The two cheap ones each fix one scene and break or miss the other — and `no_trailing_update`
+does worse than miss: on `ant/giant` its plate is `46ea1cfe42eb`, **the other image**, so it would
+move pixels on a configuration that is currently correct.
+
+**The plate a fresh Renderer produces is the one the cache already holds** — `digests[0]` equals the
+current first bake on all three scenes. That is the property that makes it a candidate rather than a
+rewrite: in the common case (a cold cache, first bake) it changes nothing.
+
+### Proposal for the bake (NOT implemented — needs authorisation, and it has a real cost)
+
+A fresh `mujoco.Renderer` per bake makes the plate a pure function of (scene, style) and preserves
+the plate every config currently gets. Its cost is the reason I have not written it:
+
+* **one EGL context per bake, never released.** The module's own note above `OGBenchMaze` records
+  that releasing a context corrupts rendering in every other live renderer in the process — that is
+  how a batch of maze cells once came back 69–90/255 apart — so they are kept. The measured budget is
+  ~96 live contexts, and `check_style_is_state` alone bakes 64 appearances. A certification session
+  would exhaust it.
+* So the shape of a usable fix is **not** "always build a fresh one": it is a renderer whose state is
+  reset between bakes without a new context, or a small pool sized against the context budget with
+  the reset property demonstrated. Neither is measured, and the difference between them is exactly
+  the kind of thing this probe exists to settle before somebody writes it.
+* `warmup_render` is the cheap partial: no extra context, constant on `ant/giant`, plate-preserving
+  everywhere, and still flips on `ant/teleport` at the eighth bake. It is not a fix; it is evidence
+  that the state being carried is small.
+
+My recommendation: treat this as a separate ticket with the EGL-context budget as its first
+constraint, and keep the LRU change (which is committed and needs none of this) as the containment.
+
 ### The oracle hole (2c' item c)
 
 **`AntmazeTeleportExplore` does not reproduce its frozen Step-4 digest at the BASELINE.** Measured on
 three separate jobs, on two nodes, on both legs of every before/after: `483968227d628c59` against a
 frozen `06a2e039e1fdf3ad`. The other 20 live configs reproduce exactly, on both legs.
 
-Root cause: the bake's history dependence above, with `vis.quality.offsamples = 4` on EGL/3090.
-Step 4 ran the full check suite before taking the oracle, so its plate was a NON-FIRST bake; a replay
-that renders immediately after construction takes the first one.
+Root cause: the bake's history dependence above. Step 4 ran the full check suite before taking the
+oracle, so its plate was a NON-FIRST bake; a replay that renders immediately after construction takes
+the first one. Probe (i) above tested the obvious repair and **refuted it**: neither of the two plates
+this config produces in a short session reproduces the frozen digest, and probe (ii) shows the scene
+yields **four** distinct plates in eight bakes as shipped. Step 4's plate is a third image. For
+contrast, `AntmazeGiantNavigate` alternates between exactly two and its frozen digest IS one of them,
+which is why that config replays green.
 
 **Recommended for the Step-8 re-freeze list**, and only after the bake is made deterministic —
 re-freezing a digest that is still a function of call history just moves the problem. Nothing under

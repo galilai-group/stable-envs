@@ -1,0 +1,364 @@
+{
+  "host": "gpu2105.oscar.ccv.brown.edu",
+  "device": "cuda",
+  "slurm_job": "6347171",
+  "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+  "which_plate_step4_froze": {
+    "AntmazeTeleportExplore": {
+      "config": "AntmazeTeleportExplore",
+      "frozen_digest_ours": "06a2e039e1fdf3ad0c926f84550bb1dd7ebff910c50c096d59aa8e502c29a805",
+      "plate_sequence": "AABAAAAA",
+      "bakes": [
+        {
+          "bake": 0,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        },
+        {
+          "bake": 1,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        },
+        {
+          "bake": 2,
+          "plate": "fb5c8bde6a2b",
+          "frames_digest": "bf67da3c6fe372988d97f7e46c08dc55701dfc22fc936c24eb7949e32446c1c3",
+          "matches_frozen": false
+        },
+        {
+          "bake": 3,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        },
+        {
+          "bake": 4,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        },
+        {
+          "bake": 5,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        },
+        {
+          "bake": 6,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        },
+        {
+          "bake": 7,
+          "plate": "5681d6a91dc0",
+          "frames_digest": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+          "matches_frozen": false
+        }
+      ],
+      "any_bake_reproduces_frozen": false,
+      "distinct_plates": 2,
+      "distinct_frame_digests": 2
+    },
+    "AntmazeGiantNavigate": {
+      "config": "AntmazeGiantNavigate",
+      "frozen_digest_ours": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+      "plate_sequence": "ABABABAB",
+      "bakes": [
+        {
+          "bake": 0,
+          "plate": "46ea1cfe42eb",
+          "frames_digest": "a93aa8dfdb9518dcdf01c3fd02b132a37fe5c34d6a0c7363fbc3c36278907891",
+          "matches_frozen": false
+        },
+        {
+          "bake": 1,
+          "plate": "27359fa34b1e",
+          "frames_digest": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+          "matches_frozen": true
+        },
+        {
+          "bake": 2,
+          "plate": "46ea1cfe42eb",
+          "frames_digest": "a93aa8dfdb9518dcdf01c3fd02b132a37fe5c34d6a0c7363fbc3c36278907891",
+          "matches_frozen": false
+        },
+        {
+          "bake": 3,
+          "plate": "27359fa34b1e",
+          "frames_digest": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+          "matches_frozen": true
+        },
+        {
+          "bake": 4,
+          "plate": "46ea1cfe42eb",
+          "frames_digest": "a93aa8dfdb9518dcdf01c3fd02b132a37fe5c34d6a0c7363fbc3c36278907891",
+          "matches_frozen": false
+        },
+        {
+          "bake": 5,
+          "plate": "27359fa34b1e",
+          "frames_digest": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+          "matches_frozen": true
+        },
+        {
+          "bake": 6,
+          "plate": "46ea1cfe42eb",
+          "frames_digest": "a93aa8dfdb9518dcdf01c3fd02b132a37fe5c34d6a0c7363fbc3c36278907891",
+          "matches_frozen": false
+        },
+        {
+          "bake": 7,
+          "plate": "27359fa34b1e",
+          "frames_digest": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+          "matches_frozen": true
+        }
+      ],
+      "any_bake_reproduces_frozen": true,
+      "distinct_plates": 2,
+      "distinct_frame_digests": 2
+    },
+    "HumanoidmazeMediumNavigate": {
+      "config": "HumanoidmazeMediumNavigate",
+      "frozen_digest_ours": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+      "plate_sequence": "AAAAAAAA",
+      "bakes": [
+        {
+          "bake": 0,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 1,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 2,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 3,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 4,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 5,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 6,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        },
+        {
+          "bake": 7,
+          "plate": "f064174642ac",
+          "frames_digest": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+          "matches_frozen": true
+        }
+      ],
+      "any_bake_reproduces_frozen": true,
+      "distinct_plates": 1,
+      "distinct_frame_digests": 1
+    }
+  },
+  "renderer_lifetime": {
+    "ant/teleport": {
+      "as_shipped": {
+        "sequence": "ABCAAADA",
+        "digests": [
+          "5681d6a91dc0",
+          "a69afcf31c35",
+          "a89e313bc1a4",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "55f08b5b9786",
+          "5681d6a91dc0"
+        ],
+        "distinct": 4,
+        "renderer": "kept (as _bake does)"
+      },
+      "warmup_render": {
+        "sequence": "AAAAAAAB",
+        "digests": [
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "55f08b5b9786"
+        ],
+        "distinct": 2,
+        "renderer": "kept (as _bake does)"
+      },
+      "no_trailing_update": {
+        "sequence": "AAAAAAAA",
+        "digests": [
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0"
+        ],
+        "distinct": 1,
+        "renderer": "kept (as _bake does)"
+      },
+      "fresh_renderer_per_bake": {
+        "sequence": "AAAAAA",
+        "digests": [
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0",
+          "5681d6a91dc0"
+        ],
+        "distinct": 1,
+        "renderer": "a new mujoco.Renderer per bake (6 EGL contexts leaked)"
+      }
+    },
+    "ant/giant": {
+      "as_shipped": {
+        "sequence": "AABABABA",
+        "digests": [
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "46ea1cfe42eb",
+          "27359fa34b1e",
+          "46ea1cfe42eb",
+          "27359fa34b1e",
+          "46ea1cfe42eb",
+          "27359fa34b1e"
+        ],
+        "distinct": 2,
+        "renderer": "kept (as _bake does)"
+      },
+      "warmup_render": {
+        "sequence": "AAAAAAAA",
+        "digests": [
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e"
+        ],
+        "distinct": 1,
+        "renderer": "kept (as _bake does)"
+      },
+      "no_trailing_update": {
+        "sequence": "ABABABAB",
+        "digests": [
+          "46ea1cfe42eb",
+          "27359fa34b1e",
+          "46ea1cfe42eb",
+          "27359fa34b1e",
+          "46ea1cfe42eb",
+          "27359fa34b1e",
+          "46ea1cfe42eb",
+          "27359fa34b1e"
+        ],
+        "distinct": 2,
+        "renderer": "kept (as _bake does)"
+      },
+      "fresh_renderer_per_bake": {
+        "sequence": "AAAAAA",
+        "digests": [
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e",
+          "27359fa34b1e"
+        ],
+        "distinct": 1,
+        "renderer": "a new mujoco.Renderer per bake (6 EGL contexts leaked)"
+      }
+    },
+    "humanoid/medium": {
+      "as_shipped": {
+        "sequence": "AAAAAAAA",
+        "digests": [
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac"
+        ],
+        "distinct": 1,
+        "renderer": "kept (as _bake does)"
+      },
+      "warmup_render": {
+        "sequence": "AAAAAAAA",
+        "digests": [
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac"
+        ],
+        "distinct": 1,
+        "renderer": "kept (as _bake does)"
+      },
+      "no_trailing_update": {
+        "sequence": "AAAAAAAA",
+        "digests": [
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac"
+        ],
+        "distinct": 1,
+        "renderer": "kept (as _bake does)"
+      },
+      "fresh_renderer_per_bake": {
+        "sequence": "AAAAAA",
+        "digests": [
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac",
+          "f064174642ac"
+        ],
+        "distinct": 1,
+        "renderer": "a new mujoco.Renderer per bake (6 EGL contexts leaked)"
+      }
+    }
+  }
+}
