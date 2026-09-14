@@ -331,7 +331,12 @@ class _Composite:
 
     @classmethod
     def get(cls, device: torch.device, t: int, want_float: bool):
-        """``(f32_or_None, u8)``. ``f32`` is materialised only once a gain path has asked for it."""
+        """``(f32_or_None, u8)``. ``f32`` is materialised only once a gain path has asked for it.
+
+        ``device`` is always a tensor's own ``.device`` here, which carries an explicit index, so the
+        string key cannot conflate ``"cuda"`` on one GPU with ``"cuda"`` on another — the failure
+        ``render/tilemap.py:MiniGridAtlas.get`` documents and resolves the long way round.
+        """
         key = (str(device), int(t))
         have = cls._cache.get(key)
         if have is not None and (have[0] is not None or not want_float):
