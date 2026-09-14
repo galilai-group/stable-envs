@@ -1,0 +1,573 @@
+{
+ "configs": {
+  "PushT": {
+   "backends": [
+    "scene"
+   ],
+   "config_id": "PushT",
+   "corpus": {
+    "env": "PushT",
+    "indices": [
+     226,
+     57,
+     0,
+     31,
+     113,
+     23,
+     141,
+     97,
+     207,
+     115,
+     208,
+     150,
+     70,
+     175,
+     191,
+     88,
+     200,
+     237,
+     223,
+     67,
+     111,
+     185,
+     107,
+     148,
+     246,
+     114,
+     210,
+     108,
+     27,
+     7,
+     170,
+     98,
+     28,
+     62,
+     109,
+     85,
+     233,
+     127,
+     89,
+     80,
+     86,
+     22,
+     184,
+     194,
+     47,
+     181,
+     209,
+     211,
+     161,
+     59,
+     94,
+     74,
+     162,
+     230,
+     204,
+     132,
+     182,
+     25,
+     156,
+     45,
+     171,
+     234,
+     54,
+     69
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/PushT.npz",
+    "n_extreme": 8,
+    "n_spread": 55,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "0aa3bacd24cf91cefb24cfc4ebef770bc43768f2a976cea5abeb2589dd78f9f9",
+    "state_dim": 5,
+    "state_names": [
+     "agent_x",
+     "agent_y",
+     "block_x",
+     "block_y",
+     "block_angle"
+    ]
+   },
+   "declared_tier": "parity",
+   "env": "PushT",
+   "family_specific": {
+    "check_backend_agreement": {
+     "evidence": {
+      "exact_frac": 1.0,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.817617728531856,
+      "interior_mean_abs": 0.0,
+      "interior_px": 29516,
+      "max_abs": 0,
+      "mean_abs": 0.0,
+      "within8_frac": 1.0
+     },
+     "seconds": 0.09,
+     "status": "measured"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 0.25,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "evidence": {
+      "exact_frac": 0.8975457085503472,
+      "factor": 2,
+      "max_abs": 143,
+      "mean_abs": 2.288381505895544,
+      "size": 96
+     },
+     "status": "measured"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 0.06,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "evidence": {
+      "digest_official": "f9185ed11d1cb9ea17da991c91a2cbbd0aee543ad25fb1d80fad3d23673af6a2",
+      "digest_ours": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+      "exact_frac": 0.9067671034071181,
+      "interior_bad_px": 0,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.7870065789473685,
+      "interior_mean_abs": 0.0,
+      "interior_px": 454575,
+      "max_abs": 190,
+      "mean_abs": 2.46988762749566,
+      "n_states": 64,
+      "reference_id": "gym_pusht/PushT-v0",
+      "ssim": 0.8844303589322896,
+      "within8_frac": 0.9288787841796875
+     },
+     "seconds": 2.42,
+     "status": "measured"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.46,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 0.23,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "parity",
+      "parity_all_exact_min": null,
+      "parity_interior_min": 1.0,
+      "reference_versions": null,
+      "render_decoder": "renderer",
+      "tier": "parity",
+      "variation_fidelity": null,
+      "visual_fidelity": null
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 1.89,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 0.05,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 2.62,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.01,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cuda",
+    "digest_official": "f9185ed11d1cb9ea17da991c91a2cbbd0aee543ad25fb1d80fad3d23673af6a2",
+    "digest_ours": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+    "digest_ours_corpus_style": "e43c89e51a5e4c330acbd3c2ab17ec40cedd99a769f58871dc75989b3b8f7d48",
+    "digest_ours_default_style": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+    "distinct_colors": 7,
+    "frames_shape": [
+     64,
+     96,
+     96,
+     3
+    ],
+    "mean_pixel": 248.48880004882812,
+    "n_states": 64,
+    "reference_id": "gym_pusht/PushT-v0",
+    "reference_stable": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 0.02,
+     "status": "measured"
+    },
+    "size": 96,
+    "state_dim": 5,
+    "style_digest": "cae594732107e8d04be872a1e9d0c1cd32adef27ce423bf9d3bfdd8a9d0955f8",
+    "style_dim": 29,
+    "supersample": 1
+   },
+   "physics": {
+    "evidence": {
+     "agent_max_err": 9.476891976335551e-05,
+     "agent_mean_err": 4.013688943892002e-05,
+     "agent_median_err": 2.3769564678020918e-05,
+     "agent_median_err_at_25": 2.7140755637282337e-05,
+     "agent_p90_err": 8.401325839869e-05,
+     "angle_max_err": 0.5881927989920572,
+     "angle_mean_err": 0.05640674385151213,
+     "angle_median_err": 0.016918332328264455,
+     "angle_median_err_at_25": 0.0010568135643086451,
+     "angle_p90_err": 0.1393684574939422,
+     "block_max_err": 216.8300359673836,
+     "block_mean_err": 20.67290030975399,
+     "block_median_err": 0.6832067635108644,
+     "block_median_err_at_25": 0.0549885520736807,
+     "block_p90_err": 33.60830735928883,
+     "block_touched": 13,
+     "control_max_err": 9.476891976335551e-05,
+     "env": "PushT",
+     "episodes": 16,
+     "exact_claim": false,
+     "exact_frac": 0.0,
+     "first_step_max_err": 6.75766830782205,
+     "max_err": 216.8300359673836,
+     "median_err": 0.6832067635108644,
+     "steps": 100
+    },
+    "seconds": 10.45,
+    "status": "measured"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 20.3,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "push-t",
+     "parity_interior_min": 1.0,
+     "reference_id": "gym_pusht/PushT-v0",
+     "size": 96,
+     "state_dim": 5,
+     "state_names": [
+      "agent_x",
+      "agent_y",
+      "block_x",
+      "block_y",
+      "block_angle"
+     ],
+     "style_dim": 29,
+     "style_names": [
+      "agent.color",
+      "agent.inner_color",
+      "agent.scale",
+      "background.color",
+      "block.color",
+      "block.outline_color",
+      "block.scale",
+      "goal.angle",
+      "goal.color",
+      "goal.position",
+      "goal.scale",
+      "rendering.render_goal",
+      "walls.color",
+      "walls.visible"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.inner_color",
+      "agent.scale",
+      "background.color",
+      "block.color",
+      "block.outline_color",
+      "block.scale",
+      "goal.angle",
+      "goal.color",
+      "goal.position",
+      "goal.scale",
+      "rendering.render_goal",
+      "walls.color",
+      "walls.visible"
+     ]
+    },
+    "describe_digest": "05b02a2b687a0511"
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/PushT-Discrete-v1",
+    "swm/PushT-v1"
+   ]
+  }
+ },
+ "provenance": {
+  "check_seed": 4041,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "device": "cuda",
+  "driver": "575.57.08",
+  "git_commit": "d862e2ac14277821e3710573ebf79f6e41748e70",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "host": "gpu2113.oscar.ccv.brown.edu",
+  "import_errors": {
+   "carracing": "ImportError: CarRacing-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+   "griddly": "ImportError: griddly is not importable (ModuleNotFoundError: No module named 'griddly'). The atlas is composed of tiles griddly's own Vulkan renderer draws, so there is no degraded mode. `pip install griddly==1.6.7` \u2014 the only release, from 2023-03-15; upstream's last commit is 2024-04-07 and there is no successor.",
+   "humanoidbench": "ImportError: the HumanoidBench family is measured and complete on fidelity (17 cells, VISUAL tier, mean 2.6-8.4/255, SSIM 0.845-0.931, 437x the official renderer at batch 64) but is NOT registered by default: mujoco_warp's batched render is not bit-reproducible inside a long conformance session, so 2-3 of ~660 tests fail every run on test_determinism and test_frame_i_is_independent_of_batch_size, by 1-2/255, on a different cell each time. Set STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway. See docs/research/humanoidbench.md",
+   "jumanji": "ImportError: the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so it cannot render without the reference package: missing jumanji, jax, matplotlib. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-jumanji, built with a CLEAN `python -m venv` \u2014 a --system-site-packages venv breaks jax's CUDA plugin discovery. See docs/research/jumanji.md",
+   "lunarlander": "ImportError: LunarLander-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+   "metaworld": "ImportError: the Meta-World family ray-casts the Sawyer's meshes with mujoco_warp's batch raytracer, which this interpreter cannot run: missing metaworld; mujoco is 3.12.0 and mujoco_warp requires >= 3.11 (metaworld itself pins mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-fetch; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml",
+   "overcooked": "ImportError: jaxmarl is not importable (ModuleNotFoundError: No module named 'jaxmarl'). The atlas IS jaxmarl's own `_render_tile` output \u2014 nothing here re-derives it \u2014 so there is no degraded mode. `pip install jaxmarl` (measured against jaxmarl 0.1.0 / jax 0.4.38) INTO A CLEAN VENV: a `python -m venv --system-site-packages` venv breaks jax's CUDA plugin discovery.",
+   "pgx": "ImportError: the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter cannot provide them: ModuleNotFoundError: No module named 'pgx'. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-pgx, built with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin discovery. See docs/research/pgx.md",
+   "procgen": "ImportError: procgen is not installed; `pip install procgen` provides both the assets this renderer packs and the reference env parity is measured against",
+   "robocasa": "ImportError: no compiled RoboCasa kitchen is cached under /users/sboughan/.cache/stable-envs/robocasa. robocasa pins mujoco == 3.3.1 and mujoco_warp needs >= 3.11, so the kitchen has to be built by a different interpreter and cached:\n\n    conda run -n robocasa python examples/robocasa_visual/dump_trajectory.py --kitchen L52S03 --steps 200 --res 256 --out /users/sboughan/.cache/stable-envs/robocasa\n\nIt needs robocasa's 24 GB asset library. Set STABLE_ENVS_ROBOCASA_CACHE to point somewhere else. See docs/research/robocasa.md",
+   "sokoban": "ImportError: gym-sokoban is not installed. The seven 16x16 tile images ARE this env -- the frame is a gather from them and nothing here re-derives them -- so there is no degraded mode to fall back to. `pip install gym-sokoban`."
+  },
+  "mujoco_gl": "egl",
+  "n_states": 64,
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "pool": 256,
+  "python": "3.12.9",
+  "reference_packages": {
+   "craftax": null,
+   "dm_control": "1.0.45",
+   "gym_pusht": "0.1.6",
+   "gymnasium": "1.3.0",
+   "gymnasium_robotics": null,
+   "mujoco": "3.12.0",
+   "mujoco_warp": "3.12.0",
+   "ogbench": "1.2.1",
+   "stable_worldmodel": null,
+   "warp": "1.17.0"
+  },
+  "registry_here": [
+   "Acrobot",
+   "AntmazeGiantNavigate",
+   "AntmazeGiantStitch",
+   "AntmazeLargeExplore",
+   "AntmazeLargeNavigate",
+   "AntmazeLargeStitch",
+   "AntmazeMediumExplore",
+   "AntmazeMediumNavigate",
+   "AntmazeMediumStitch",
+   "AntmazeTeleportExplore",
+   "AntmazeTeleportNavigate",
+   "AntmazeTeleportStitch",
+   "BabyAIGoToLocal",
+   "CartPole",
+   "CraftaxClassic",
+   "Crafter",
+   "DMCAcrobotSwingup",
+   "DMCBallInCupCatch",
+   "DMCCartpoleBalance",
+   "DMCCartpoleSwingup",
+   "DMCCheetahRun",
+   "DMCFingerSpin",
+   "DMCFingerTurnEasy",
+   "DMCFingerTurnHard",
+   "DMCHopperHop",
+   "DMCHumanoidStand",
+   "DMCPendulumSwingup",
+   "DMCPointMassEasy",
+   "DMCReacherEasy",
+   "DMCReacherHard",
+   "DMCSwimmerSwimmer6",
+   "DMCWalkerWalk",
+   "FetchPickAndPlace",
+   "FetchPickAndPlaceDense",
+   "FetchPickAndPlaceDict",
+   "FetchPush",
+   "FetchPushDense",
+   "FetchPushDict",
+   "FetchReach",
+   "FetchReachDense",
+   "FetchReachDict",
+   "FetchSlide",
+   "FetchSlideDense",
+   "FetchSlideDict",
+   "Highway",
+   "HumanoidmazeGiantNavigate",
+   "HumanoidmazeGiantStitch",
+   "HumanoidmazeLargeNavigate",
+   "HumanoidmazeLargeStitch",
+   "HumanoidmazeMediumNavigate",
+   "HumanoidmazeMediumStitch",
+   "Intersection",
+   "Merge",
+   "MiniGridDoorKey",
+   "MiniGridEmpty",
+   "MiniGridFourRooms",
+   "MiniGridKeyCorridor",
+   "MiniGridLavaCrossing",
+   "MiniGridPOVFetch",
+   "MiniHack",
+   "MountainCar",
+   "MountainCarContinuous",
+   "MujocoInvertedDoublePendulum",
+   "MujocoInvertedPendulum",
+   "MujocoPusher",
+   "MujocoReacher",
+   "Parking",
+   "Pendulum",
+   "Piecewise",
+   "PiecewiseZones",
+   "PointMazeLarge",
+   "PointMazeMedium",
+   "PointMazeOpen",
+   "PointMazeUMaze",
+   "PointmazeGiantNavigate",
+   "PointmazeGiantStitch",
+   "PointmazeLargeNavigate",
+   "PointmazeLargeStitch",
+   "PointmazeMediumNavigate",
+   "PointmazeMediumStitch",
+   "PointmazeTeleportNavigate",
+   "PointmazeTeleportStitch",
+   "PushT",
+   "Racetrack",
+   "Roundabout",
+   "SimplePointMaze",
+   "TwoRoom",
+   "TwoRoomTarget"
+  ],
+  "slurm_job_id": "6349274",
+  "slurm_nodelist": "gpu2113",
+  "state_seed": 20260909,
+  "timestamp": "2026-09-13T20:44:30-0400",
+  "torch": "2.14.0+cu126"
+ },
+ "schema_version": 1,
+ "shard": "adhoc",
+ "step": 4,
+ "what_this_is": "raw Step 4 conformance/fidelity measurements for one interpreter. No threshold is applied here; scratch/step4/certify.py does that from the frozen Step 2 spec."
+}

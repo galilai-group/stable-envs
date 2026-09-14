@@ -27,11 +27,12 @@ export MUJOCO_GL=egl MPLBACKEND=Agg PYTHONUNBUFFERED=1
 WS=raster2d
 BEF=$SCR/se6/$WS-preB
 AFT=$SCR/se6/$WS
+TAG=${TAG:-}
 RES=$AFT/examples/results/step6/$WS
 CFG=PushT,SimplePointMaze,TwoRoom,TwoRoomTarget,Piecewise,PiecewiseZones
 P6=$SCR/venvs/se-step6/bin/python        # the only interpreter here with pytest
 P5=$SCR/venvs/se-step5/bin/python        # the only one with stable_worldmodel + matplotlib
-mkdir -p "$RES/replay" "$RES/sweep"
+mkdir -p "$RES/replay$TAG" "$RES/sweep$TAG"
 # rsync drops .git, so the SHA reaches the shard through the environment or a
 # GIT_COMMIT file at the tree root -- otherwise every artifact records git_commit: null.
 export STABLE_ENVS_GIT_COMMIT=${STABLE_ENVS_GIT_COMMIT:-$(cat "$AFT/GIT_COMMIT" 2>/dev/null || true)}
@@ -48,10 +49,14 @@ PYTHONPATH=$AFT $P6 scratch/step6/raster2d/fuzz_render_torch.py --cases 250 --de
 # 2. frozen Step 4 replay, on cuda, into the Step 6 directory (never over examples/results/step4)
 PYTHONPATH=$AFT $P5 examples/fidelity_step4.py --configs "$CFG" --device cuda \
     --states-dir "$AFT/examples/results/step4/states" \
-    --out "$RES/replay/raster2d_swm.json"
+    --out "$RES/replay$TAG/raster2d_swm.json"
 PYTHONPATH=$AFT $SCR/venvs/se-step3/bin/python examples/fidelity_step4.py --configs PushT \
     --device cuda --states-dir "$AFT/examples/results/step4/states" \
-    --out "$RES/replay/raster2d_pusht.json" || echo "PUSHT_REPLAY_STEP3VENV rc=$?"
+    --out "$RES/replay$TAG/raster2d_pusht.json" || echo "PUSHT_REPLAY_STEP3VENV rc=$?"
+
+# 3a. the two CPU regression tests, here because this is the only venv with pytest
+PYTHONPATH=$AFT $P6 -m pytest tests/unit/test_raster2d_torch_backend.py \
+    tests/unit/test_swm_nav_render.py -q -p no:randomly 2>&1 | tail -5
 
 # 3. the targeted GPU suite
 PYTHONPATH=$AFT $P6 -m pytest tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py \
@@ -60,12 +65,12 @@ PYTHONPATH=$AFT $P6 -m pytest tests/gpu/test_conformance.py tests/gpu/test_repro
     -q -p no:randomly 2>&1 | tail -40
 
 # 4. the GPU sweep, before and after, same card
-ST=$RES/sweep/states_gpu; mkdir -p "$ST"
+ST=$RES/sweep$TAG/states_gpu; mkdir -p "$ST"
 PYTHONPATH=$BEF $P5 $BEF/examples/bench_step3.py --device cuda --threads 0 --envs "$CFG" \
     --reps 15 --max-cell-s 12 --optional-batches --states-out "$ST" \
-    --out "$RES/sweep/gpu_before.json" || echo "GPU_SWEEP_BEFORE rc=$?"
+    --out "$RES/sweep$TAG/gpu_before.json" || echo "GPU_SWEEP_BEFORE rc=$?"
 PYTHONPATH=$AFT $P5 $AFT/examples/bench_step3.py --device cuda --threads 0 --envs "$CFG" \
     --reps 15 --max-cell-s 12 --optional-batches --states-in "$ST" \
-    --out "$RES/sweep/gpu_after.json" || echo "GPU_SWEEP_AFTER rc=$?"
+    --out "$RES/sweep$TAG/gpu_after.json" || echo "GPU_SWEEP_AFTER rc=$?"
 
 echo "GPU_CHECK_DONE"
