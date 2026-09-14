@@ -304,10 +304,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raster2d
   oscar_copy: $SCR/se6/raster2d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 15cfaba0c917abea69718e93f6f9fd23cc2959c8 (merged)
+  head_sha: cc01fa70b7de1a4687a90261b5eb8794add36da4 (SWMNAV-2, in review)
   agent_model: opus
   wave: wave2
-  status: reopened for SWMNAV-2 (shared swm_nav GPU kernel, Sami 2026-09-15)
+  status: 'review (SWMNAV-2 fused swm_nav GPU kernel: bit-identical, ~2x, R 124-211 vs 500 -> stays GPU_FASTER)'
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts'
   affected_configs:
@@ -334,7 +334,9 @@ workstreams:
       (3.4x, 3.79), PiecewiseZones 1,401 (6.5x, 5.28); cores_cpu 0.22-0.55 -> all CPU_FASTER, none CPU_FAST (residual = uint8 write bandwidth); SWMNAV-1 re-confirmed on shipping code (job 6352386, node2334):
       PushT 3.2x, SPM 2.3x, TwoRoom 4.7x, TwoRoomTarget 3.2x, Piecewise 2.9x, PiecewiseZones 5.2x vs round-1; S_cpu>=5 rows straddle by node (TwoRoom 4.32 node2334 vs 5.08 node1828); all CPU_FASTER (BELOW_G4)'
     gpu_before: PushT 1.93M fps, SPM 43.7k (3090)
-    gpu_after: 'cuda paths run the replaced arithmetic; same-process interleaved A/B (job 6353691, 3090): worst 0.979 (Piecewise B=1), 0.99-1.00 elsewhere, frames identical; PushT/SPM unchanged'
+    gpu_after: 'cuda paths run the replaced arithmetic; same-process interleaved A/B (job 6353691, 3090): worst 0.979 (Piecewise B=1), 0.99-1.00 elsewhere, frames identical; PushT/SPM unchanged | SWMNAV-2
+      (job 6366231, 3090, paired): TwoRoom 39,631 -> 66,821 (R 129.8, cores 19.7), TwoRoomTarget 23,781 -> 47,351 (R 123.7), Piecewise 54,697 -> 125,431 (R 199.2), PiecewiseZones 46,868 -> 91,365 (R 210.7);
+      BATCH_SCALES 57-77x, NLBR 1.03-1.14; class-R bar 500 not reached (2.4-4.0x short); residual = env-specific base_image torch ops (18-58% of render)'
     batch_scales: n/a
     no_large_batch_regression: unchanged
   pixels_changed: 'no'
@@ -359,6 +361,9 @@ workstreams:
   - 6352386
   - 6353295
   - 6353691
+  - 6365727
+  - 6366231
+  - 6366562
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d).'
@@ -367,6 +372,9 @@ workstreams:
     purity/order columns and fixed. Per-leg SHA stamping fixed. All six configs digest-identical on cuda; 650/650 fuzz; GPU suite 183/0.'
   - 'Shard layout: sweep/ top level holds only current-tree shards (certify.py:merge keys on env/device/host/threads, so a before/after pair collides); before legs in before_legs/, superseded rounds under
     superseded_*/ with READMEs.'
+  - 'SWMNAV-2 delivered 2026-09-15: mechanism was ~1.76 GB of float temporaries per 256-frame chunk, not launches; four bit-exactness knobs (fp fusion off, div_rn, quantise-between-blends, widen AFTER the
+    float32 division) verified over 4.19M arguments; fuzz 1,200 cases byte-identical; frozen replay identical. First fuzz run raised a generator-device error yet the job reported success (caught by log
+    reading; re-run 6366562). Next lever would be a per-family base-image kernel — NOT authorized (no broad campaign).'
 - workstream: gfxdraw
   brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
   branch: step6/gfxdraw
