@@ -24,7 +24,7 @@ set -uo pipefail
 export SCR=/oscar/scratch/$USER
 TREE=${TREE:-$SCR/se6/verify}
 source "$TREE/scratch/step6/verify/_env.sh" || exit 1
-FILES=${FILES:-"tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py tests/gpu/test_fast_paths.py tests/gpu/test_gfxdraw_fused.py tests/gpu/test_rendernet.py tests/gpu/test_crash_isolation.py tests/gpu/test_rollout_on_device.py tests/gpu/test_distributed.py"}
+FILES=${FILES:-"tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py tests/gpu/test_fast_paths.py tests/gpu/test_gfxdraw_fused.py tests/gpu/test_gfxdraw_classic.py tests/gpu/test_rendernet.py tests/gpu/test_crash_isolation.py tests/gpu/test_rollout_on_device.py tests/gpu/test_distributed.py"}
 KFILTER=${KFILTER:-}
 TAG=${TAG:-}
 PY=$(venv_for verify)/bin/python
