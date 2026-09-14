@@ -722,9 +722,10 @@ decisions:
     between legs/nodes on shared batch nodes. For the closure packet PointmazeMediumNavigate is reported as CPU_FASTER at the bar; PointmazeLargeNavigate as CPU_FAST.'
 integration_verification:
   branch: step6/integration-verify (merged)
-  head: 237a7cd (merged)
-  verdict: 'FINAL: PASS-WITH-KNOWN-DELTAS on 83bd778 (raster/fetch/trackcom re-measured there; dmc/ogb/swm + 25-config CPU at 43e6bcc with library files byte-identical between the two except the new cpu3d.py
-    and added trackcom methods)'
+  head: 11dde0b (merged)
+  verdict: 'CLOSING: PASS-WITH-KNOWN-DELTAS at 547c887. Gate A over all 49: 48 PASS / 1 PARTIAL / 0 BLOCKED / 0 FAIL (frozen Step 4: 43/1/0/5). RAYCAST-6 subsets: dmc cuda 14/14 identical, ogb 11 (AntmazeTeleportExplore
+    bake nondeterminism only), 21 raycast3d CPU 21/21 byte-identical, trackcom CPU byte-identical to the 83bd778 run, trackcom cuda identical x4, test_fast_paths 238/188/0 (426 collected), unit 807 + 2
+    pre-existing; 3.12 CPU arm BLOCKED x4 no FAIL. No regression at any SHA survives comparison with the Step-5 baseline tree on the same card.'
   jobs:
   - 6352885
   - 6352886
@@ -736,7 +737,7 @@ integration_verification:
   cuda_replay: 48/49 digest_ours bit-identical; 49/49 digest_official identical; no config lost a check, all gained one; AntmazeTeleportExplore 0.00024/255 (bake nondeterminism)
   gate_a: 'FINAL at 7e0862c, declared arm: 48 PASS / 1 PARTIAL (CraftaxClassic) / 0 BLOCKED / 0 FAIL — all four visual cells PASS under the declared 3.11 pair on BOTH devices in two independently built
     interpreters (cuda se6-verify-vis311 job 6365966 gpu2109; CPU via cpu3d in se6-verify-tex311 job 6365967 node2320); Walker protocol exact_frac 0.62879 vs floor 0.62395, corpus 0.61854 carried as frozen_corpus;
-    dmc digests 14/14 identical'
+    dmc digests 14/14 identical | CLOSING (replay/final_547c887/certification.json): 48 PASS / 1 PARTIAL / 0 FAIL, assembled from the newest measurement per shard'
   cpu_replay: 33/33 comparable configs byte-identical at 1 thread; six not comparable because the baseline cannot render them (PushT/SimplePointMaze raised; four trackcom cells had no CPU path); trackcom
     four rendered in se-step6 (mujoco_warp not importable) -> Cheetah/Hopper/Humanoid Gate A PASS with visual fidelity MEASURED under 3.11, Walker corpus-downsample FAIL
   gpu_suite: 'all 9 files on f7b07d7; test_fast_paths 348 collected/168 pass/0 fail after hand-merge; test_gfxdraw_classic 80/0; test_gfxdraw_fused needs Box2D (4/4 in se6-gfxdraw-box2d) | job 6355272 on
