@@ -56,7 +56,7 @@ for E in PointmazeLargeNavigate PointmazeMediumNavigate AntmazeMediumExplore; do
     [ "$LEG" = int ] && T=$INT || T=$WS
     PYTHONPATH=$T $PY scratch/step6/raycast3d/profile_phases.py --env "$E" --device cuda \
         --batch 64 256 1024 --repeat 5 \
-        --out "$OUT/experiments/r6cm_gpu_${LEG}_${E}.json" 2>&1 | tail -8
+        --out "$OUT/experiments/r6cm_gpu_oneshot/${LEG}_${E}" 2>&1 | tail -8
     echo "GPU $LEG $E rc=$?"
   done
 done

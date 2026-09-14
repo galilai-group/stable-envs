@@ -165,24 +165,6 @@ def _mover_frames(env, states, fast: bool):
 
 
 @contextlib.contextmanager
-def _composite_compaction(on: bool):
-    """Pin ``raycast3d.COVER_COMPACTION`` for the duration, and put it back whatever happens."""
-    assert R3.COVER_COMPACTION is True, (
-        "raycast3d.COVER_COMPACTION was already off when this test started, so an earlier test leaked "
-        "it and every comparison after that point has been the slow path against itself")
-    try:
-        R3.COVER_COMPACTION = on
-        yield
-    finally:
-        R3.COVER_COMPACTION = True
-
-
-def _composite_frames(env, states, fast: bool):
-    with _composite_compaction(fast):
-        return env.render(states).clone()
-
-
-@contextlib.contextmanager
 def _composite_compact_merge(on: bool):
     """Pin ``raycast3d.COMPOSITE_COMPACT_MERGE`` for the duration, and put it back whatever happens."""
     assert R3.COMPOSITE_COMPACT_MERGE is True, (
@@ -199,6 +181,35 @@ def _composite_compact_merge(on: bool):
 def _compact_merge_frames(env, states, fast: bool):
     with _composite_compact_merge(fast):
         return env.render(states).clone()
+
+
+@contextlib.contextmanager
+def _composite_compaction(on: bool):
+    """Pin ``raycast3d.COVER_COMPACTION`` for the duration, and put it back whatever happens."""
+    assert R3.COVER_COMPACTION is True, (
+        "raycast3d.COVER_COMPACTION was already off when this test started, so an earlier test leaked "
+        "it and every comparison after that point has been the slow path against itself")
+    try:
+        R3.COVER_COMPACTION = on
+        yield
+    finally:
+        R3.COVER_COMPACTION = True
+
+
+def _composite_frames(env, states, fast: bool):
+    """RAYCAST-2b's claim, exercised on the path where the switch is still live.
+
+    ``COMPOSITE_COMPACT_MERGE`` is pinned OFF here on purpose. RAYCAST-6's composite compacts per
+    ROW rather than over the union, so it never reads ``COVER_COMPACTION`` at all -- and with the
+    default left on, this case would flip a flag the running code ignores and compare the compact
+    path with itself. A green light for that reason is worse than no case: the union compaction is
+    still what ``_composite_window`` does, ``_composite_window`` is still what
+    ``COMPOSITE_COMPACT_MERGE=False`` selects, and that is where the claim has to keep holding.
+    """
+    with _composite_compact_merge(False), _composite_compaction(fast):
+        return env.render(states).clone()
+
+
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 
 
@@ -636,6 +647,15 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert getattr(R3, "COVER_COMPACTION", None) is True, (
         "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
         "compaction off and has been comparing the compacted path against itself")
+    # COVER_COMPACTION now governs ONLY ``_composite_window``: RAYCAST-6's composite compacts per
+    # row and never reads it. So the cover-compaction case must run with COMPOSITE_COMPACT_MERGE
+    # pinned off, and a future edit that drops that pin would make it green for the wrong reason.
+    assert "_composite_compact_merge(False)" in inspect.getsource(_composite_frames), (
+        "the composite-cover-compaction case no longer pins COMPOSITE_COMPACT_MERGE off, so it "
+        "flips a switch the running composite ignores and compares the compact path with itself")
+    assert "COVER_COMPACTION" in inspect.getsource(R3._composite_window), (
+        "raycast3d._composite_window no longer branches on COVER_COMPACTION, so pinning that switch "
+        "changes nothing on either path and the case is vacuous")
     assert getattr(R3, "COMPOSITE_COMPACT_MERGE", None) is True, (
         "raycast3d.COMPOSITE_COMPACT_MERGE is gone or already off, so the compact-merge case cannot "
         "switch the compaction off and has been comparing the compacted path against itself")
