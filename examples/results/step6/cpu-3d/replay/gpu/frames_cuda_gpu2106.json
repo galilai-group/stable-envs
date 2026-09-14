@@ -1,0 +1,28 @@
+{
+ "host": "gpu2106.oscar.ccv.brown.edu",
+ "job": "6354766",
+ "device": "cuda",
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "cells": {
+  "DMCCheetahRun": {
+   "sha256": "d85349b01b2785907e7a8eebb41334fdc65e83073a31b7fe4416c39168a88608",
+   "mean_pixel": 79.08044276738474,
+   "n": 64
+  },
+  "DMCHopperHop": {
+   "sha256": "d8e5ef5df6cdbedc43c3daedf3a8d73e225a96757237d10ffda9872229d1cba6",
+   "mean_pixel": 78.14701362315759,
+   "n": 64
+  },
+  "DMCWalkerWalk": {
+   "sha256": "6d488766fdbb415c146c39c0a02f743959a657fb79946c0e6eb65a7b7e0288f7",
+   "mean_pixel": 70.9528127657313,
+   "n": 64
+  },
+  "DMCHumanoidStand": {
+   "sha256": "c2672c3d7009777df67dde22059f7e8fc450db7be3a8e6fdb0d305b45c944b7d",
+   "mean_pixel": 62.615247661564624,
+   "n": 64
+  }
+ }
+}
