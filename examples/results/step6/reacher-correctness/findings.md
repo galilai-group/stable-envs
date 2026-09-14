@@ -13,7 +13,7 @@
 | follow-ups on the same branch | `11ff2da`, `a9674df`, `465354e`, `0aa0d59` verification harness; `1d620f7` re-derive the guard's bound after it failed on GPU; `93eeb85`, `ec426e4`, `ec3ac96` robustness + recorded numbers |
 | hardware | Oscar `--partition=gpu --qos=norm-gpu --constraint=geforce3090`, NVIDIA GeForce RTX 3090 (gpu2113 and gpu2101), driver 575.57.08; Apple M5 Mac for CPU/static work |
 | venvs | `$SCR/venvs/se-step5` (torch 2.14.0+cu126, mujoco 3.12.0, mujoco_warp 3.12.0, warp 1.17.0 — the only one with MJWarp, has no pytest) for pixels/replay; `$SCR/venvs/se-step6` (+ pytest 9.1.1, no mujoco_warp) for the suites; `/Users/samib/se6-venv` locally with `MUJOCO_GL=glfw` (macOS has no EGL) |
-| SLURM job IDs | **6344667** (baseline-vs-branch pixels on the four affected cells + first dmc replay), **6344904** (all-16-cell pixel diff, the three GPU suites, `tests/unit`, the guard's GPU spread, the re-replay), **6346537** (the same battery re-run on the MERGED code after review). 6346473 was submitted and then cancelled by me one minute later, before the merge instruction arrived, so that no result would be reported from pre-merge code. |
+| SLURM job IDs | **6356087** (VISIBILITY-1: `tests/gpu/test_reproducibility.py` unfiltered on gpu2110), **6344667** (baseline-vs-branch pixels on the four affected cells + first dmc replay), **6344904** (all-16-cell pixel diff, the three GPU suites, `tests/unit`, the guard's GPU spread, the re-replay), **6346537** (the same battery re-run on the MERGED code after review). 6346473 was submitted and then cancelled by me one minute later, before the merge instruction arrived, so that no result would be reported from pre-merge code. |
 
 ---
 
@@ -349,9 +349,32 @@ Fixed by separating them, and by paying attention to where the cost lands:
   body**, and fails if the capable envs ever declare no leaf at all — the state in which all eleven
   would skip and the file would be green having asserted nothing.
 
-Result over the full family: **4 run at full assertion strength (all 0/255), 7 skip with a stated
-domain reason, and the census guard passes** — verified on CPU across all eleven cells before the
-GPU run, since the test itself is CUDA-gated.
+Result over the full family, on GPU, **with no `-k` at all** (job **6356087**, RTX 3090, gpu2110,
+`gpu/test_reproducibility_full.results.txt`): `test_some_env_actually_declares_a_hideable_task_object`
+**PASSED**, and the sweep is **4 PASSED / 7 SKIPPED / 0 failed** — `DMCReacherEasy`,
+`DMCReacherHard`, `DMCFingerTurnEasy`, `DMCFingerTurnHard` at full assertion strength, the other
+seven skipping with the domain reason. Verified on CPU across all eleven cells first, since the test
+itself is CUDA-gated.
+
+**What else that unfiltered run says, and why none of it is this branch's.** Running the file with no
+selection sweeps the entire 196-env registry for the first time on this branch, and it reports **9
+failed, 1106 passed, 281 skipped, 368 errors**. Every one of those is environmental:
+
+* **368 errors** are 16 envs × 23 tests, all fixture-setup `ModuleNotFoundError`s: the 5 DM Control
+  **trackcom** cells need `mujoco_warp` (`dmcontrol.py:2001`), MiniGrid/BabyAI need `minigrid`, and
+  the four `PointMaze*` need `gymnasium_robotics` — none of which is installed in `se-step6`. They
+  surface as ERRORS rather than skips because this file's `env` fixture calls `se.make` directly
+  instead of `_shared.make_or_skip`, which is the very asymmetry `_shared.py`'s docstring was written
+  about. Pre-existing, and a note for whoever owns that fixture.
+* **9 failures** are all `stable_envs.envs.ogbench` maze cells, and two of them are the file's own
+  node-fault diagnostic firing: `test_the_reference_renderer_on_this_machine_is_deterministic
+  [PointmazeTeleportNavigate]` fails with *"the OFFICIAL renderer gave two different frames for the
+  same states on this machine (max 1/255), before any of our code was involved"*. The other seven are
+  `test_frames_are_bit_identical_in_a_fresh_process` on the same family on the same node, which a
+  nondeterministic reference breaks by construction. **This is the nondeterministic official OGBench
+  renderer the coordinator excluded `gpu2108` and `gpu2113` for — observed here on `gpu2110`, which
+  was not on the exclusion list.** No DM Control cell fails, and no failure is on any path this branch
+  touches.
 
 ## Pixels changed?
 
