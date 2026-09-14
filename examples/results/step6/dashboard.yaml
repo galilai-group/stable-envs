@@ -158,13 +158,13 @@ workstreams:
   - workstream: tilemap
     brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
     branch: step6/tilemap
-    worktree: null
-    oscar_copy: null
+    worktree: /Users/samib/stable-envs-step6-tilemap
+    oscar_copy: $SCR/se6/tilemap
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: null
+    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17 (to merge integration first)
     agent_model: opus
     wave: wave3
-    status: queued
+    status: profiling
     authorization: per brief
     goal: "tile/atlas CPU optimisation (not full Craftax coverage)"
     affected_configs: ["CraftaxClassic"]
@@ -175,4 +175,4 @@ workstreams:
     semantic_followup: null
     review: {reviewer: null, verdict: null}
     slurm_jobs: []
-    notes: []
+    notes: ["wave3 spawned 2026-09-13 late (CPU-only; no file overlap with other workstreams)"]
