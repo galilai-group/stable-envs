@@ -2347,7 +2347,7 @@ and `_fit_tile`, both private. Return shapes are guaranteed by the 21-config bit
 both devices. `shade` was not touched at all, and `cpu3d.py` reaches this module only through
 `cast_nearest`, `any_blocking`, `Primitives.radii` and `INF` — it never enters `composite`.
 
-The diff against `step6/integration` is **+183/-2 lines in one file**, and the two deleted lines are a
-blank line and a wrapped signature: the off-path body is preserved literally, which is visible in the
-diff rather than needing to be taken on trust. Verified by extracting both bodies and comparing
-them character for character.
+The diff against `step6/integration` is **+182/-0 lines in one file**: a pure insertion, with not one
+line of the old `composite` deleted or edited. That the off-path is verbatim is therefore visible in
+`git diff --stat` rather than something to be taken on trust, and it was also checked directly by
+extracting both bodies and comparing them character for character.
