@@ -29,16 +29,20 @@ mkdir -p "$OUT"
 echo "NODE $(hostname -s) JOB $SLURM_JOB_ID"
 set -x
 
-if [ ! -x "$V/bin/python" ]; then
-  "$BASE/bin/python" -m venv --without-pip "$V"
-  # inherit the certified pins rather than resolving a second set; se-step6 is read-only here
+if [ ! -x "$V/bin/pip" ]; then
+  rm -rf "$V"
+  # WITH pip: se-step6 was built by uv and has no pip of its own, so the first attempt could not
+  # install anything. The new venv gets its own pip; se-step6 is still never written to.
+  "$BASE/bin/python" -m venv "$V"
+  # inherit the certified pins rather than resolving a second set (the se6-raycast3d-maze2d pattern)
   echo "$BASE/lib/python3.12/site-packages" > "$V/lib/python3.12/site-packages/_inherit_se_step6.pth"
-  "$BASE/bin/python" -m pip install --upgrade --target "$V/lib/python3.12/site-packages" \
-      --no-deps swig || echo "swig rc=$?"
-  PATH="$V/lib/python3.12/site-packages/bin:$PATH" \
-    "$BASE/bin/python" -m pip install --target "$V/lib/python3.12/site-packages" \
-      --no-deps "box2d-py==2.3.5" || echo "box2d-py rc=$?"
+  "$V/bin/pip" install --quiet --upgrade pip wheel setuptools || echo "pip bootstrap rc=$?"
+  "$V/bin/pip" install --quiet swig || echo "swig rc=$?"
+  PATH="$V/bin:$PATH" "$V/bin/pip" install --quiet --no-build-isolation box2d-py \
+    || PATH="$V/bin:$PATH" "$V/bin/pip" install --quiet box2d-py \
+    || echo "box2d-py rc=$?"
 fi
+"$V/bin/python" -c "import sys; print('site-packages order:', [p for p in sys.path if 'site-packages' in p])"
 "$V/bin/python" -c "import Box2D, torch, pygame, gymnasium; print('Box2D', Box2D.__version__, 'torch', torch.__version__, 'pygame', pygame.version.ver)" \
   || { echo "BOX2D VENV UNUSABLE"; echo "BOX2D JOB DONE"; exit 0; }
 

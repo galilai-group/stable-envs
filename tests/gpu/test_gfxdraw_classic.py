@@ -33,6 +33,11 @@ from tests.gpu._shared import assert_frames_identical, make_or_skip
 
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 
+#: A fixed seed per state family. NOT ``hash(kind)``: string hashing is salted per interpreter, so
+#: that would draw different states every run -- a failure nobody could reproduce and a pass that is
+#: not evidence. ``tests/gpu/test_conformance.py`` documents the same trap for its parity draw.
+SEEDS = {"corpus": 0, "reachable": 101, "off-surface": 202, "far-angles": 303}
+
 #: State families, each chosen for a rule it stresses. See the module docstring.
 STATE_CLASSES = {
     "corpus": None,
@@ -101,7 +106,7 @@ def test_the_described_frame_is_the_drawn_frame(name, kind):
     env = make_or_skip(name, batch=8, device="cpu")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
-    states = _states(env, kind, env.B, seed=hash(kind) % 1000)
+    states = _states(env, kind, env.B, seed=SEEDS[kind])
     assert_frames_identical(
         _described(env, states), _per_primitive(env, states),
         what=f"{name} [{kind}] described vs drawn",
@@ -124,9 +129,12 @@ def test_the_description_carries_per_row_appearance(name):
     style = C.uniform_style(env, env.B, groups=4, seed=3)
     if style is None:
         pytest.skip(f"{name} declares no variation")
-    # both settings of the one non-appearance knob, in one batch
-    o, _w = style.layout["rendering.antialias"]
-    style.values[:, o] = (torch.arange(env.B) % 2).to(style.values.dtype)
+    # ``uniform_style`` returns a raw ``(n, style_dim)`` array; the offset of one leaf comes from the
+    # env's own resolved style. Both settings of the one non-appearance knob, in one batch, because
+    # a batch is allowed to hold both and the fused path routes it per environment.
+    style = np.asarray(style, np.float32).copy()
+    o, _w = env.resolve_style(None, None, batch=1).layout["rendering.antialias"]
+    style[:, o] = (np.arange(env.B) % 2).astype(np.float32)
     assert_frames_identical(
         _described(env, states, style), _per_primitive(env, states, style),
         what=f"{name} per-row style, mixed antialias",
@@ -147,7 +155,7 @@ def test_the_kernel_is_the_description(name, kind):
     env = make_or_skip(name, batch=8, device="cuda")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
-    states = _states(env, kind, env.B, seed=hash(kind) % 1000)
+    states = _states(env, kind, env.B, seed=SEEDS[kind])
     s = torch.as_tensor(states, device=env.device).reshape(-1, env.state_dim).to(torch.float64)
     sty = env.resolve_style(None, None, batch=s.shape[0])
     ops = env._ops(s, sty).finish()
