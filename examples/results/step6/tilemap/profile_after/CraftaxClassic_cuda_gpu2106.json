@@ -1,0 +1,991 @@
+{
+  "workstream": "step6/tilemap",
+  "env": "CraftaxClassic",
+  "device": "cuda",
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/tilemap/stable_envs/__init__.py",
+  "load_average": [
+    28.79,
+    30.07,
+    30.95
+  ],
+  "baseline_commit": "",
+  "host": "gpu2106.oscar.ccv.brown.edu",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "cpu": "x86_64",
+  "threads": 4,
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "triton": "3.8.0",
+    "numpy": "2.5.3",
+    "mujoco": "3.12.0",
+    "dm-control": "1.0.45",
+    "mujoco-warp": "absent",
+    "warp-lang": "absent"
+  },
+  "slurm_job": "6349394",
+  "batches": {
+    "1": {
+      "batch": 1,
+      "set_state_ms": {
+        "ms_median": 0.1157120019197464,
+        "ms_min": 0.11267200112342834,
+        "ms_max": 0.12902399897575378,
+        "ms_stdev": 0.004463893302361536,
+        "samples": 20
+      },
+      "render_ms": {
+        "ms_median": 0.5980640053749084,
+        "ms_min": 0.5867519974708557,
+        "ms_max": 0.6163840293884277,
+        "ms_stdev": 0.008542643039321418,
+        "samples": 20
+      },
+      "peak_vram_mib": 2.736328125,
+      "trace": {
+        "phases": {
+          "host->device": {
+            "cpu_us": 117.06999999999891,
+            "device_us": 56.06199999999808,
+            "calls": 51,
+            "cpu_pct": 5.422176688762286,
+            "device_pct": 59.43052198617624
+          },
+          "other": {
+            "cpu_us": 1665.3080000000007,
+            "device_us": 19.006999999999152,
+            "calls": 142,
+            "cpu_pct": 77.12987287272087,
+            "device_pct": 20.149048043081592
+          },
+          "kernel/raster": {
+            "cpu_us": 189.9589999999988,
+            "device_us": 15.03899999999976,
+            "calls": 11,
+            "cpu_pct": 8.798080307684275,
+            "device_pct": 15.942628164355908
+          },
+          "output conversion": {
+            "cpu_us": 44.358999999999696,
+            "device_us": 4.22400000000016,
+            "calls": 3,
+            "cpu_pct": 2.0545172609277085,
+            "device_pct": 4.477801806386261
+          },
+          "allocation": {
+            "cpu_us": 116.60000000000065,
+            "device_us": 0.0,
+            "calls": 19,
+            "cpu_pct": 5.400408319037259,
+            "device_pct": 0.0
+          },
+          "synchronization": {
+            "cpu_us": 25.800000000000182,
+            "device_us": 0.0,
+            "calls": 6,
+            "cpu_pct": 1.1949445508675942,
+            "device_pct": 0.0
+          }
+        },
+        "total_cpu_us": 2159.095999999999,
+        "total_device_us": 94.33199999999715,
+        "op_count": 232,
+        "top_ops": [
+          {
+            "op": "Unrecognized",
+            "calls": 1,
+            "cpu_us": 871.2240000000002,
+            "device_us": 0
+          },
+          {
+            "op": "cudaLaunchKernel",
+            "calls": 27,
+            "cpu_us": 241.01800000000094,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 8,
+            "cpu_us": 68.34999999999991,
+            "device_us": 0
+          },
+          {
+            "op": "cudaMemcpyAsync",
+            "calls": 3,
+            "cpu_us": 54.80899999999974,
+            "device_us": 0
+          },
+          {
+            "op": "aten::index_select",
+            "calls": 1,
+            "cpu_us": 53.5,
+            "device_us": 0
+          },
+          {
+            "op": "aten::abs",
+            "calls": 2,
+            "cpu_us": 53.17900000000003,
+            "device_us": 0
+          },
+          {
+            "op": "aten::view",
+            "calls": 13,
+            "cpu_us": 46.28999999999991,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty",
+            "calls": 6,
+            "cpu_us": 32.13000000000085,
+            "device_us": 0
+          },
+          {
+            "op": "aten::to",
+            "calls": 8,
+            "cpu_us": 30.77999999999963,
+            "device_us": 0
+          },
+          {
+            "op": "aten::slice",
+            "calls": 5,
+            "cpu_us": 28.42999999999961,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_to_copy",
+            "calls": 6,
+            "cpu_us": 28.420000000000073,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ne",
+            "calls": 1,
+            "cpu_us": 25.049999999999955,
+            "device_us": 0
+          },
+          {
+            "op": "aten::any",
+            "calls": 1,
+            "cpu_us": 22.67999999999995,
+            "device_us": 0
+          },
+          {
+            "op": "aten::as_strided",
+            "calls": 14,
+            "cpu_us": 15.250000000000227,
+            "device_us": 0
+          },
+          {
+            "op": "aten::select",
+            "calls": 3,
+            "cpu_us": 15.1400000000001,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 1672.0618378849433
+    },
+    "16": {
+      "batch": 16,
+      "set_state_ms": {
+        "ms_median": 0.13993600010871887,
+        "ms_min": 0.1387840062379837,
+        "ms_max": 0.15702399611473083,
+        "ms_stdev": 0.004728980856252945,
+        "samples": 20
+      },
+      "render_ms": {
+        "ms_median": 0.7598240077495575,
+        "ms_min": 0.741536021232605,
+        "ms_max": 0.9095360040664673,
+        "ms_stdev": 0.03505659702345877,
+        "samples": 20
+      },
+      "peak_vram_mib": 3.533203125,
+      "trace": {
+        "phases": {
+          "host->device": {
+            "cpu_us": 82.8790000000001,
+            "device_us": 77.3420000000001,
+            "calls": 51,
+            "cpu_pct": 4.381935085458816,
+            "device_pct": 59.06674812891406
+          },
+          "kernel/raster": {
+            "cpu_us": 292.42900000000094,
+            "device_us": 27.2000000000005,
+            "calls": 11,
+            "cpu_pct": 15.461152947135446,
+            "device_pct": 20.772873071636237
+          },
+          "other": {
+            "cpu_us": 1392.7830000000001,
+            "device_us": 20.86199999999917,
+            "calls": 142,
+            "cpu_pct": 73.63849339555955,
+            "device_pct": 15.932488162516544
+          },
+          "output conversion": {
+            "cpu_us": 32.6400000000001,
+            "device_us": 5.536000000000286,
+            "calls": 3,
+            "cpu_pct": 1.725724986901097,
+            "device_pct": 4.227890636933163
+          },
+          "allocation": {
+            "cpu_us": 73.97899999999942,
+            "device_us": 0.0,
+            "calls": 19,
+            "cpu_pct": 3.911378946260872,
+            "device_pct": 0.0
+          },
+          "synchronization": {
+            "cpu_us": 16.66899999999913,
+            "device_us": 0.0,
+            "calls": 6,
+            "cpu_pct": 0.8813146386842157,
+            "device_pct": 0.0
+          }
+        },
+        "total_cpu_us": 1891.379,
+        "total_device_us": 130.94000000000005,
+        "op_count": 232,
+        "top_ops": [
+          {
+            "op": "Unrecognized",
+            "calls": 1,
+            "cpu_us": 869.345,
+            "device_us": 0
+          },
+          {
+            "op": "cudaLaunchKernel",
+            "calls": 28,
+            "cpu_us": 201.6989999999987,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 8,
+            "cpu_us": 41.18899999999948,
+            "device_us": 0
+          },
+          {
+            "op": "cudaMemcpyAsync",
+            "calls": 2,
+            "cpu_us": 27.70900000000006,
+            "device_us": 0
+          },
+          {
+            "op": "aten::view",
+            "calls": 11,
+            "cpu_us": 25.05000000000021,
+            "device_us": 0
+          },
+          {
+            "op": "aten::to",
+            "calls": 8,
+            "cpu_us": 24.409999999999314,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty",
+            "calls": 6,
+            "cpu_us": 22.920000000000044,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_to_copy",
+            "calls": 6,
+            "cpu_us": 19.950000000000983,
+            "device_us": 0
+          },
+          {
+            "op": "aten::abs",
+            "calls": 2,
+            "cpu_us": 19.099999999999994,
+            "device_us": 0
+          },
+          {
+            "op": "aten::slice",
+            "calls": 5,
+            "cpu_us": 17.84999999999991,
+            "device_us": 0
+          },
+          {
+            "op": "aten::gather",
+            "calls": 1,
+            "cpu_us": 12.709999999999582,
+            "device_us": 12.800000000000182
+          },
+          {
+            "op": "void at::native::vectorized_gather_kernel<16, int>(char*, char*, int*, int, long, long, long, long, bool)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 12.800000000000182
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 7,
+            "cpu_us": 38.51899999999981,
+            "device_us": 11.872000000000071
+          },
+          {
+            "op": "aten::as_strided",
+            "calls": 14,
+            "cpu_us": 11.640000000000043,
+            "device_us": 0
+          },
+          {
+            "op": "aten::resize_",
+            "calls": 3,
+            "cpu_us": 11.2800000000002,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 21057.50783972819
+    },
+    "64": {
+      "batch": 64,
+      "set_state_ms": {
+        "ms_median": 0.15910400450229645,
+        "ms_min": 0.15647999942302704,
+        "ms_max": 0.18928000330924988,
+        "ms_stdev": 0.00839744255024423,
+        "samples": 20
+      },
+      "render_ms": {
+        "ms_median": 0.7783359885215759,
+        "ms_min": 0.7625280022621155,
+        "ms_max": 0.7904959917068481,
+        "ms_stdev": 0.006944027423235307,
+        "samples": 20
+      },
+      "peak_vram_mib": 6.083984375,
+      "trace": {
+        "phases": {
+          "host->device": {
+            "cpu_us": 96.07999999999993,
+            "device_us": 114.59200000000078,
+            "calls": 51,
+            "cpu_pct": 5.521845427408533,
+            "device_pct": 56.91354100445021
+          },
+          "kernel/raster": {
+            "cpu_us": 106.27000000000044,
+            "device_us": 60.80000000000064,
+            "calls": 11,
+            "cpu_pct": 6.107478284457824,
+            "device_pct": 30.19707565162128
+          },
+          "other": {
+            "cpu_us": 1410.4400000000003,
+            "device_us": 20.64099999999962,
+            "calls": 142,
+            "cpu_pct": 81.0598632871992,
+            "device_pct": 10.251609186268041
+          },
+          "output conversion": {
+            "cpu_us": 33.14899999999966,
+            "device_us": 5.310999999999922,
+            "calls": 3,
+            "cpu_pct": 1.9051171323185236,
+            "device_pct": 2.63777415766047
+          },
+          "allocation": {
+            "cpu_us": 75.73999999999972,
+            "device_us": 0.0,
+            "calls": 19,
+            "cpu_pct": 4.352878566527073,
+            "device_pct": 0.0
+          },
+          "synchronization": {
+            "cpu_us": 18.31899999999979,
+            "device_us": 0.0,
+            "calls": 6,
+            "cpu_pct": 1.052817302088841,
+            "device_pct": 0.0
+          }
+        },
+        "total_cpu_us": 1739.9979999999998,
+        "total_device_us": 201.34400000000096,
+        "op_count": 232,
+        "top_ops": [
+          {
+            "op": "Unrecognized",
+            "calls": 1,
+            "cpu_us": 853.364,
+            "device_us": 0
+          },
+          {
+            "op": "cudaLaunchKernel",
+            "calls": 28,
+            "cpu_us": 201.3680000000013,
+            "device_us": 0
+          },
+          {
+            "op": "aten::gather",
+            "calls": 1,
+            "cpu_us": 12.239999999999782,
+            "device_us": 46.78500000000031
+          },
+          {
+            "op": "void at::native::vectorized_gather_kernel<16, int>(char*, char*, int*, int, long, long, long, long, bool)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 46.78500000000031
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 8,
+            "cpu_us": 42.31999999999968,
+            "device_us": 0
+          },
+          {
+            "op": "aten::abs",
+            "calls": 2,
+            "cpu_us": 42.129999999999995,
+            "device_us": 0
+          },
+          {
+            "op": "aten::to",
+            "calls": 8,
+            "cpu_us": 36.16000000000011,
+            "device_us": 0
+          },
+          {
+            "op": "aten::view",
+            "calls": 11,
+            "cpu_us": 32.25999999999985,
+            "device_us": 0
+          },
+          {
+            "op": "cudaMemcpyAsync",
+            "calls": 2,
+            "cpu_us": 24.810000000000173,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty",
+            "calls": 6,
+            "cpu_us": 23.20999999999978,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_to_copy",
+            "calls": 6,
+            "cpu_us": 20.430000000000234,
+            "device_us": 0
+          },
+          {
+            "op": "aten::slice",
+            "calls": 5,
+            "cpu_us": 18.83999999999969,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ne",
+            "calls": 1,
+            "cpu_us": 14.70999999999998,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 7,
+            "cpu_us": 39.48999999999958,
+            "device_us": 13.9200000000003
+          },
+          {
+            "op": "aten::any",
+            "calls": 1,
+            "cpu_us": 12.209999999999923,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 82226.70022179744
+    },
+    "256": {
+      "batch": 256,
+      "set_state_ms": {
+        "ms_median": 0.2340800017118454,
+        "ms_min": 0.2295999974012375,
+        "ms_max": 4.9022722244262695,
+        "ms_stdev": 1.0165436609004697,
+        "samples": 20
+      },
+      "render_ms": {
+        "ms_median": 0.9719040095806122,
+        "ms_min": 0.9666879773139954,
+        "ms_max": 0.9857280254364014,
+        "ms_stdev": 0.005959712638747845,
+        "samples": 20
+      },
+      "peak_vram_mib": 16.287109375,
+      "trace": {
+        "phases": {
+          "host->device": {
+            "cpu_us": 91.39000000000075,
+            "device_us": 267.42799999999966,
+            "calls": 51,
+            "cpu_pct": 3.9311162107464064,
+            "device_pct": 54.11857080412502
+          },
+          "kernel/raster": {
+            "cpu_us": 123.7389999999981,
+            "device_us": 197.72899999999981,
+            "calls": 11,
+            "cpu_pct": 5.322599724275502,
+            "device_pct": 40.01380142142498
+          },
+          "other": {
+            "cpu_us": 1848.9690000000003,
+            "device_us": 22.564000000000078,
+            "calls": 142,
+            "cpu_pct": 79.53290304264705,
+            "device_pct": 4.566206349463343
+          },
+          "output conversion": {
+            "cpu_us": 37.848999999999705,
+            "device_us": 6.43100000000004,
+            "calls": 3,
+            "cpu_pct": 1.6280645306985266,
+            "device_pct": 1.301421424986653
+          },
+          "allocation": {
+            "cpu_us": 81.43899999999908,
+            "device_us": 0.0,
+            "calls": 19,
+            "cpu_pct": 3.5030766285914257,
+            "device_pct": 0.0
+          },
+          "synchronization": {
+            "cpu_us": 141.3989999999999,
+            "device_us": 0.0,
+            "calls": 6,
+            "cpu_pct": 6.0822398630411,
+            "device_pct": 0.0
+          }
+        },
+        "total_cpu_us": 2324.7849999999976,
+        "total_device_us": 494.1519999999996,
+        "op_count": 232,
+        "top_ops": [
+          {
+            "op": "Unrecognized",
+            "calls": 1,
+            "cpu_us": 885.2439999999999,
+            "device_us": 0
+          },
+          {
+            "op": "cudaMemcpyAsync",
+            "calls": 2,
+            "cpu_us": 340.85699999999997,
+            "device_us": 0
+          },
+          {
+            "op": "cudaLaunchKernel",
+            "calls": 28,
+            "cpu_us": 223.81999999999994,
+            "device_us": 0
+          },
+          {
+            "op": "aten::gather",
+            "calls": 1,
+            "cpu_us": 14.809999999999945,
+            "device_us": 182.75300000000016
+          },
+          {
+            "op": "void at::native::vectorized_gather_kernel<16, int>(char*, char*, int*, int, long, long, long, long, bool)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 182.75300000000016
+          },
+          {
+            "op": "cudaDeviceSynchronize",
+            "calls": 2,
+            "cpu_us": 123.30899999999974,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 8,
+            "cpu_us": 43.929999999999836,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ne",
+            "calls": 1,
+            "cpu_us": 35.25999999999999,
+            "device_us": 0
+          },
+          {
+            "op": "aten::any",
+            "calls": 1,
+            "cpu_us": 28.319999999999993,
+            "device_us": 0
+          },
+          {
+            "op": "aten::to",
+            "calls": 8,
+            "cpu_us": 25.900000000000603,
+            "device_us": 0
+          },
+          {
+            "op": "aten::view",
+            "calls": 11,
+            "cpu_us": 25.25000000000003,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty",
+            "calls": 6,
+            "cpu_us": 23.57900000000032,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_to_copy",
+            "calls": 6,
+            "cpu_us": 21.660000000000224,
+            "device_us": 0
+          },
+          {
+            "op": "aten::slice",
+            "calls": 5,
+            "cpu_us": 20.89900000000057,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 7,
+            "cpu_us": 43.82999999999993,
+            "device_us": 20.35199999999986
+          }
+        ]
+      },
+      "fps": 263400.4978644619
+    },
+    "1024": {
+      "batch": 1024,
+      "set_state_ms": {
+        "ms_median": 0.32763200998306274,
+        "ms_min": 0.3144319951534271,
+        "ms_max": 0.3728959858417511,
+        "ms_stdev": 0.013820813096187495,
+        "samples": 20
+      },
+      "render_ms": {
+        "ms_median": 1.6179519891738892,
+        "ms_min": 1.599552035331726,
+        "ms_max": 1.6401280164718628,
+        "ms_stdev": 0.01130140006688055,
+        "samples": 20
+      },
+      "peak_vram_mib": 57.8544921875,
+      "trace": {
+        "phases": {
+          "host->device": {
+            "cpu_us": 113.16999999999979,
+            "device_us": 862.7939999999996,
+            "calls": 52,
+            "cpu_pct": 4.8015708523392755,
+            "device_pct": 52.55958683052765
+          },
+          "kernel/raster": {
+            "cpu_us": 142.738,
+            "device_us": 746.2480000000003,
+            "calls": 11,
+            "cpu_pct": 6.056080412840901,
+            "device_pct": 45.45985084864711
+          },
+          "other": {
+            "cpu_us": 1277.245000000001,
+            "device_us": 24.736000000000104,
+            "calls": 146,
+            "cpu_pct": 54.19088418570376,
+            "device_pct": 1.5068648366121438
+          },
+          "output conversion": {
+            "cpu_us": 37.83900000000017,
+            "device_us": 7.7759999999996126,
+            "calls": 3,
+            "cpu_pct": 1.6054311167417779,
+            "device_pct": 0.47369748421310626
+          },
+          "allocation": {
+            "cpu_us": 82.27000000000012,
+            "device_us": 0.0,
+            "calls": 20,
+            "cpu_pct": 3.490547265370271,
+            "device_pct": 0.0
+          },
+          "synchronization": {
+            "cpu_us": 703.6749999999997,
+            "device_us": 0.0,
+            "calls": 6,
+            "cpu_pct": 29.855486167004017,
+            "device_pct": 0.0
+          }
+        },
+        "total_cpu_us": 2356.937000000001,
+        "total_device_us": 1641.5539999999996,
+        "op_count": 238,
+        "top_ops": [
+          {
+            "op": "aten::gather",
+            "calls": 1,
+            "cpu_us": 15.499000000000251,
+            "device_us": 726.152
+          },
+          {
+            "op": "void at::native::vectorized_gather_kernel<16, int>(char*, char*, int*, int, long, long, long, long, bool)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 726.152
+          },
+          {
+            "op": "cudaDeviceSynchronize",
+            "calls": 2,
+            "cpu_us": 665.866,
+            "device_us": 0
+          },
+          {
+            "op": "cudaMemcpyAsync",
+            "calls": 2,
+            "cpu_us": 355.87800000000016,
+            "device_us": 0
+          },
+          {
+            "op": "Unrecognized",
+            "calls": 1,
+            "cpu_us": 268.41799999999995,
+            "device_us": 0
+          },
+          {
+            "op": "cudaLaunchKernel",
+            "calls": 28,
+            "cpu_us": 217.89899999999966,
+            "device_us": 0
+          },
+          {
+            "op": "aten::to",
+            "calls": 8,
+            "cpu_us": 47.09999999999985,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 8,
+            "cpu_us": 44.12000000000023,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 8,
+            "cpu_us": 45.83999999999992,
+            "device_us": 42.016999999999825
+          },
+          {
+            "op": "aten::ne",
+            "calls": 1,
+            "cpu_us": 41.559999999999974,
+            "device_us": 0
+          },
+          {
+            "op": "aten::any",
+            "calls": 1,
+            "cpu_us": 36.889999999999986,
+            "device_us": 0
+          },
+          {
+            "op": "cudaStreamSynchronize",
+            "calls": 2,
+            "cpu_us": 33.628999999999905,
+            "device_us": 0
+          },
+          {
+            "op": "Memcpy HtoD (Pageable -> Device)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 28.961000000000013
+          },
+          {
+            "op": "aten::view",
+            "calls": 11,
+            "cpu_us": 25.940000000001106,
+            "device_us": 0
+          },
+          {
+            "op": "aten::abs",
+            "calls": 2,
+            "cpu_us": 24.939999999999998,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 632898.8788615691
+    },
+    "4096": {
+      "batch": 4096,
+      "set_state_ms": {
+        "ms_median": 0.7958559989929199,
+        "ms_min": 0.688319981098175,
+        "ms_max": 1.1318080425262451,
+        "ms_stdev": 0.12931359055667857,
+        "samples": 20
+      },
+      "render_ms": {
+        "ms_median": 4.297967910766602,
+        "ms_min": 4.234335899353027,
+        "ms_max": 4.6075520515441895,
+        "ms_stdev": 0.10829034915688382,
+        "samples": 20
+      },
+      "peak_vram_mib": 221.3759765625,
+      "trace": {
+        "phases": {
+          "host->device": {
+            "cpu_us": 135.5400000000007,
+            "device_us": 3299.774000000001,
+            "calls": 52,
+            "cpu_pct": 2.233986058107384,
+            "device_pct": 52.438443380559775
+          },
+          "kernel/raster": {
+            "cpu_us": 183.65899999999874,
+            "device_us": 2950.5829999999996,
+            "calls": 11,
+            "cpu_pct": 3.0270890176032097,
+            "device_pct": 46.88926562399187
+          },
+          "other": {
+            "cpu_us": 2704.9929999999995,
+            "device_us": 30.01600000000053,
+            "calls": 146,
+            "cpu_pct": 44.58400951215902,
+            "device_pct": 0.47700003591485646
+          },
+          "output conversion": {
+            "cpu_us": 47.63999999999987,
+            "device_us": 12.289000000000215,
+            "calls": 3,
+            "cpu_pct": 0.7852080257358339,
+            "device_pct": 0.19529095953350445
+          },
+          "allocation": {
+            "cpu_us": 103.60800000000026,
+            "device_us": 0.0,
+            "calls": 20,
+            "cpu_pct": 1.7076791169277645,
+            "device_pct": 0.0
+          },
+          "synchronization": {
+            "cpu_us": 2891.7419999999993,
+            "device_us": 0.0,
+            "calls": 6,
+            "cpu_pct": 47.66202826946678,
+            "device_pct": 0.0
+          }
+        },
+        "total_cpu_us": 6067.181999999999,
+        "total_device_us": 6292.662000000001,
+        "op_count": 238,
+        "top_ops": [
+          {
+            "op": "aten::gather",
+            "calls": 1,
+            "cpu_us": 18.699999999999818,
+            "device_us": 2899.8
+          },
+          {
+            "op": "void at::native::vectorized_gather_kernel<16, int>(char*, char*, int*, int, long, long, long, long, bool)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 2899.8
+          },
+          {
+            "op": "cudaDeviceSynchronize",
+            "calls": 2,
+            "cpu_us": 2827.6019999999994,
+            "device_us": 0
+          },
+          {
+            "op": "Unrecognized",
+            "calls": 1,
+            "cpu_us": 956.554,
+            "device_us": 0
+          },
+          {
+            "op": "cudaMemcpyAsync",
+            "calls": 2,
+            "cpu_us": 508.28599999999983,
+            "device_us": 0
+          },
+          {
+            "op": "cudaLaunchKernel",
+            "calls": 28,
+            "cpu_us": 239.54999999999973,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 8,
+            "cpu_us": 59.90999999999991,
+            "device_us": 153.4430000000002
+          },
+          {
+            "op": "Memcpy HtoD (Pageable -> Device)",
+            "calls": 1,
+            "cpu_us": 0,
+            "device_us": 138.27300000000014
+          },
+          {
+            "op": "aten::ne",
+            "calls": 1,
+            "cpu_us": 126.43900000000002,
+            "device_us": 0
+          },
+          {
+            "op": "aten::any",
+            "calls": 1,
+            "cpu_us": 99.47000000000014,
+            "device_us": 0
+          },
+          {
+            "op": "aten::abs",
+            "calls": 2,
+            "cpu_us": 91.83000000000004,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 8,
+            "cpu_us": 60.60000000000031,
+            "device_us": 0
+          },
+          {
+            "op": "cudaStreamSynchronize",
+            "calls": 2,
+            "cpu_us": 59.01000000000022,
+            "device_us": 0
+          },
+          {
+            "op": "aten::to",
+            "calls": 8,
+            "cpu_us": 52.37000000000057,
+            "device_us": 0
+          },
+          {
+            "op": "aten::bitwise_not",
+            "calls": 1,
+            "cpu_us": 36.789999999999964,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 953008.5112407045
+    }
+  },
+  "size": 16,
+  "state_dim": 127,
+  "states_source": "examples/results/step4/states/CraftaxClassic.npz"
+}
