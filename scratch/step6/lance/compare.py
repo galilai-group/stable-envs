@@ -111,8 +111,12 @@ def main() -> None:
         G = (lgpu or {}).get("envs", {}).get(env, {})
         R = randall.get(env, {})
         cands = by_env.get(env, [])
-        gpu = pick(cands, "cuda", ["/step6/", "3090_fetch311", "3090_full"],
-                   exclude_substrings=("before", "superseded", "rejected", "control"),
+        gpu = pick(cands, "cuda",
+                   ["sweep/gpu_after_final.json", "sweep/gpu_after.json",
+                    "sweep/gpu_3090_after_branch.json", "sweep2/gpu_paired_after",
+                    "/step6/", "3090_fetch311", "3090_full"],
+                   exclude_substrings=("before", "superseded", "rejected", "control",
+                                       "order_check", "perarmpeak"),
                    require_host=("gpu2", "oscar"))
         cpu1 = pick(cands, "cpu", ["#same_job_supplemental", "/step6/", "oscar_x86_1thread"],
                     exclude_substrings=("before", "superseded", "rejected", "control",
@@ -150,9 +154,11 @@ def main() -> None:
             } if R else None,
             "ours": {
                 "gpu": gpu and {"fps": gpu["fps"], "batch": gpu["batch"], "host": gpu["host"],
-                                "shape": gpu["shape"], "size": gpu["size"], "source": gpu["source"]},
+                                "shape": gpu["shape"], "size": gpu["size"], "source": gpu["source"],
+                                "post_step6": "results/step6/" in gpu["source"]},
                 "cpu1": cpu1 and {"fps": cpu1["fps"], "batch": cpu1["batch"], "host": cpu1["host"],
-                                  "shape": cpu1["shape"], "source": cpu1["source"]},
+                                  "shape": cpu1["shape"], "source": cpu1["source"],
+                                  "post_step6": ("results/step6/" in cpu1["source"])},
                 "cpu8": cpu8 and {"fps": cpu8["fps"], "batch": cpu8["batch"], "host": cpu8["host"],
                                   "shape": cpu8["shape"], "source": cpu8["source"]},
                 "decode_q90_fps_per_core": next((r["decode_q90_fps_per_core"] for r in cands
@@ -212,13 +218,69 @@ def main() -> None:
             c1r=fmtr(r["ratios"]["cpu1_vs_local_1"]), c1p=fmtr(r["ratios"]["cpu1_vs_percore"]),
             c8=fmt(r["ours"]["cpu8"]["fps"] if r["ours"]["cpu8"] else None),
             c8r=fmtr(r["ratios"]["cpu8_vs_local_n"])))
+    md += ["", "## Storage arms -- does the filesystem matter?", "",
+           "| config | local (tmpfs) 1-proc | shared (NFS) 1-proc | jobtmp (GPFS) 1-proc | local 8w | shared 8w | jobtmp 8w | read_frac local | read_frac NFS | read_frac GPFS |",
+           "|---|---|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        L = r["lance"]
+        def pc(x):
+            return f"{x*100:.2f}%" if isinstance(x, (int, float)) else "-"
+        md.append(f"| {r['env']} | {fmt(L['local_1'])} | {fmt(L['shared_1'])} | {fmt(L['jobtmp_1'])} | "
+                  f"{fmt(L['local_n8'])} | {fmt(L['shared_n8'])} | {fmt(L['jobtmp_n8'])} | "
+                  f"{pc(L['local_read_frac'])} | {pc(L['shared_read_frac'])} | {pc(L['jobtmp_read_frac'])} |")
+    md += ["", "## Worker scaling on the local arm", "",
+           "| config | 1 worker | 4 workers | 8 workers | 8w / 1w | 1-process best-of-8 |",
+           "|---|---|---|---|---|---|"]
+    for r in rows:
+        L = r["lance"]
+        sc = (L["local_n8"] / L["local_n1"]) if L["local_n8"] and L["local_n1"] else None
+        md.append(f"| {r['env']} | {fmt(L['local_n1'])} | {fmt(L['local_n4'])} | {fmt(L['local_n8'])} | "
+                  f"{fmtr(sc)} | {fmt(L['local_1'])} |")
+
+    md += ["", "## Oscar vs the committed Randall-cluster run -- how much is hardware, how much is size",
+           "",
+           "The committed `examples/results/storage/lance.json` asked for 256 px frames; the Step-6 rows",
+           "are certified at each env's own size. Where an env refused 256 and fell back to native, the",
+           "two runs describe the SAME picture and the ratio is pure hardware (Xeon 8558/H200 vs Xeon",
+           "8268/3090). Where 256 was accepted, the pictures differ and the ratio is size + hardware.", "",
+           "| config | Oscar frame | Randall frame | same picture? | Oscar kB/f | Randall kB/f | Oscar local_1 | Randall local_1 | Oscar local_n | Randall local_n | Oscar/Randall local_n |",
+           "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        R = r["randall_lance"]
+        same = (r["frame"] == r["randall_frame"])
+        rl1 = R["local_1"] if R else None
+        rln = R["local_n8"] if R else None
+        md.append("| {e} | {of} | {rf} | {s} | {okb} | {rkb} | {ol1} | {rl1} | {oln} | {rln} | {ratio} |".format(
+            e=r["env"], of=r["frame"], rf=r["randall_frame"] or "-",
+            s=("yes" if same else "NO"),
+            okb=f"{r['jpeg_bytes_per_frame']/1000:.1f}",
+            rkb=(f"{r['randall_jpeg_bytes_per_frame']/1000:.1f}" if r["randall_jpeg_bytes_per_frame"] else "-"),
+            ol1=fmt(r["lance"]["local_1"]), rl1=fmt(rl1),
+            oln=fmt(r["lance"]["local_n8"]), rln=fmt(rln),
+            ratio=fmtr(r["lance"]["local_n8"] / rln if rln and r["lance"]["local_n8"] else None)))
+    same_rows = [r for r in rows if r["frame"] == r["randall_frame"] and r["randall_lance"]
+                 and r["randall_lance"]["local_n8"] and r["lance"]["local_n8"]]
+    if same_rows:
+        v = [r["lance"]["local_n8"] / r["randall_lance"]["local_n8"] for r in same_rows]
+        md += ["", f"On the **{len(same_rows)}** configs whose frames are the same picture in both runs, "
+               f"Oscar/Randall `local_n` is median **{st.median(v):.2f}x** (range {min(v):.2f}-{max(v):.2f}). "
+               "That factor is the hardware term; anything beyond it on the other rows is frame size."]
+
+    stale = [r["env"] for r in rows if r["ours"]["gpu"] and not r["ours"]["gpu"]["post_step6"]]
+    md += ["", "### GPU cells that are NOT post-Step-6 measurements", "",
+           "These rows carry the Step-3 pre-Step-6 3090 number because no Step-6 shard re-measured "
+           "them on GPU. Where a Step-6 change touched their backend they are LOWER BOUNDS, not "
+           "current values.", "", f"**{len(stale)}/{len(rows)}**: " + (", ".join(stale) or "none")]
     md += ["", "## Per-cell provenance", "",
            "| config | GPU cell source | CPU 1-thread cell source | CPU 8-thread cell source |",
            "|---|---|---|---|"]
     for r in rows:
         def src(k):
             v = r["ours"][k]
-            return (v["source"].split("examples/results/")[-1] + f" (B={v['batch']}, {v['host']})") if v else "-"
+            if not v:
+                return "-"
+            tag = "" if v.get("post_step6", True) else " **[pre-Step-6]**"
+            return v["source"].split("examples/results/")[-1] + f" (B={v['batch']}, {v['host']}){tag}"
         md.append(f"| {r['env']} | {src('gpu')} | {src('cpu1')} | {src('cpu8')} |")
 
     def med(key, path):
