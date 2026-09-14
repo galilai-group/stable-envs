@@ -1199,16 +1199,67 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
 
 # ------------------------------------------------------------------ 9. what a SCENE is a function of
 
-def _visibility_envs():
-    """Registered envs that declare a ``visibility.*`` leaf, resolved without building anything."""
-    out = []
-    for name, cls in sorted(se.REGISTRY.items()):
-        if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable"):
-            out.append(name)
+def _visibility_capable_envs():
+    """Envs whose RENDERER can carry a visibility knob, resolved without building anything.
+
+    ``VISIBILITY_KNOB`` is a statement about the renderer, not about the scene: every fixed-camera DM
+    Control cell sets it, and only the ones whose ``initialize_episode`` actually DRAWS a task object
+    end up declaring a ``visibility.*`` leaf. The two are different questions and this is deliberately
+    the cheap one -- answering the other needs each domain's compiled model, and building those at
+    COLLECTION time would create an EGL context per domain for a run that may deselect every one of
+    them. The test body asks the precise question once it has the env.
+    """
+    return [name for name, cls in sorted(se.REGISTRY.items())
+            if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable")]
+
+
+def _declared_visibility_leaves(names) -> dict:
+    """``{env name: [visibility leaf, ...]}`` for ``names``, measured from each class's own census.
+
+    Pays for the compiled models, so it is called from a test body and never at collection.
+    """
+    out = {}
+    for name in names:
+        cls = se.REGISTRY[name]
+        try:
+            out[name] = [f"visibility.{el[1]}" for el in cls._hideable()]
+        except ImportError:                                # the family is not installed here
+            continue
     return out
 
 
-@pytest.mark.parametrize("name", family_params(_visibility_envs(), family="visibility"))
+def test_some_env_actually_declares_a_hideable_task_object():
+    """The zero-coverage rule for the check below, which SKIPS per cell rather than failing.
+
+    ``test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility`` is swept over every env whose
+    renderer can carry the knob -- 11 DM Control cells -- and seven of them draw no task object per
+    episode, so they declare no leaf and there is nothing for it to hide. A per-cell skip is the right
+    answer for those (it is what ``test_backend_agreement`` does for an env with no ``Scene2D``), and
+    it is also how a sweep goes quietly vacuous: if the census ever emptied, all eleven would skip and
+    the run would be green having asserted nothing. This is the line that fails instead.
+    """
+    names = _visibility_capable_envs()
+    if not names:
+        errs = se.envs.import_errors()
+        if "dmcontrol" in errs:
+            pytest.skip(f"no env can carry a visibility knob here: dmcontrol did not import "
+                        f"({errs['dmcontrol']})")
+        pytest.fail("no registered env sets VISIBILITY_KNOB, and every env module imported cleanly")
+    declared = _declared_visibility_leaves(names)
+    if not declared:
+        pytest.skip("the visibility-capable envs are registered but their models are not reachable "
+                    "in this interpreter")
+    with_leaf = {n: v for n, v in declared.items() if v}
+    assert with_leaf, (
+        f"{len(declared)} env(s) advertise VISIBILITY_KNOB and NOT ONE declares a visibility.* leaf, "
+        f"so the scene-cache check below skips on every one of them and asserts nothing. Either "
+        f"_episode_slots has stopped finding the per-episode draw or _hideable has stopped turning it "
+        f"into a leaf; both are silent, and both make this file green: {declared}")
+    print(f"\nvisibility leaves declared by {len(with_leaf)} of {len(declared)} capable env(s): "
+          f"{with_leaf}")
+
+
+@pytest.mark.parametrize("name", family_params(_visibility_capable_envs(), family="visibility"))
 def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
     """A cached scene must be a function of ITS OWN appearance, not of whichever was baked last.
 
@@ -1235,7 +1286,15 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
                    subject="the scene-cache visibility check")
     env = make_or_skip(name, batch=8, device="cuda")
     paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
-    assert paths, f"{name} advertises VISIBILITY_KNOB but declares no visibility.* leaf"
+    if not paths:
+        # A property of the DOMAIN, not a defect: this cell's initialize_episode draws no task object
+        # (measured by _episode_slots), so _hideable is empty and there is nothing to hide. Seven of
+        # the eleven fixed-camera DM Control cells are in this position. The sweep is kept over all of
+        # them so that a cell which STARTS drawing one is covered the day it does; that the family is
+        # not entirely leaf-less is asserted by
+        # test_some_env_actually_declares_a_hideable_task_object above.
+        pytest.skip(f"{name} draws no task object per episode, so it declares no visibility.* leaf "
+                    f"and has nothing for this check to hide")
     hidden = {p: 0 for p in paths}
     other = {p: [0.2, 0.9, 0.4] for p in env.variation_space.names()
              if p.split(".")[0] == "material"}

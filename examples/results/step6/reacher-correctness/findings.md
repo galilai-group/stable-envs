@@ -264,7 +264,7 @@ the per-row quantity — is 0 everywhere.
 | suite | selection | result |
 |---|---|---|
 | `tests/gpu/test_conformance.py` | `-k "Reacher or FingerTurn or required_envs or registry_is_not_empty or relaxed_parity"`, `SE_REQUIRE_ENVS` = the four cells | **72 passed, 26 skipped, 0 failed** — includes `test_render_parity_with_official_renderer`, `test_style_is_state`, `test_default_style_is_the_official_appearance`, `test_per_env_variation_is_per_env`, `test_variations_all_do_something`, `test_state_is_sufficient` and the new `test_a_declared_task_object_is_drawn_iff_the_reference_draws_it` on all four cells |
-| `tests/gpu/test_reproducibility.py` | `-k "Reacher or FingerTurn"` | **94 passed, 25 skipped, 0 failed** — includes the fresh-process bit-identity, batch-size independence, sub-batch style refusal, dataset round-trip and HuggingFace round-trip cases, and the four new `test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility` cases |
+| `tests/gpu/test_reproducibility.py` | `-k "Reacher or FingerTurn"`, then **in full** (VISIBILITY-1) | **94 passed, 25 skipped, 0 failed** under the -k selection — includes the fresh-process bit-identity, batch-size independence, sub-batch style refusal, dataset round-trip and HuggingFace round-trip cases, and the four new `test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility` cases |
 | `tests/gpu/test_fast_paths.py` | `-k "Reacher or FingerTurn or unknown_geom or flat_polygon or declared_fast_path"` | **23 passed, 10 skipped, 0 failed** |
 | `tests/unit` (on Oscar) | full | **538 passed, 8 skipped, 2 failed** |
 | `tests/unit` (locally, `MUJOCO_GL=glfw`) | full | **540 passed, 6 skipped, 2 failed** |
@@ -319,6 +319,39 @@ output under `examples/results/step6/reacher-correctness/replay/`, comparator
 * **4 trackcom cells differ from the frozen digest — and so does the baseline.** See below.
 * No check that was `measured` in the frozen run is anything other than `measured` here; no check
   errored.
+
+### VISIBILITY-1 — the regression test's own selector was wrong
+
+Found by the integration-wide verification, which ran the new test over the **full** DM Control
+family instead of the `-k "Reacher or FingerTurn"` selection this branch had used: 7 of 11 cells
+failed with *"advertises VISIBILITY_KNOB but declares no visibility.\* leaf"*. No pixel effect — those
+seven are digest-identical everywhere — but the 4/4 originally reported had only ever run on the four
+cells the test was written for, which is exactly the kind of selection-shaped blind spot
+`tests/gpu/_shared.py` exists to abolish.
+
+The cause is that the test conflated two different questions. `VISIBILITY_KNOB` is a statement about
+the **renderer** — every fixed-camera DM Control cell sets it — while a `visibility.*` leaf exists
+only where the **domain**'s `initialize_episode` actually draws a task object, which is 4 of the 11.
+The selector asked the first and the body asserted the second.
+
+Fixed by separating them, and by paying attention to where the cost lands:
+
+* `_visibility_capable_envs()` (renamed) still answers the cheap renderer question at collection
+  time. The precise question needs each domain's compiled model, and answering it during collection
+  would create an EGL context per domain even for a run that deselects every one of them — measured
+  at 0.61 s and 7 contexts for the 11 cells — which is not a cost to move into collection in a file
+  the whole registry sweeps.
+* The body asks the precise question once it has the env and **skips with the domain's own reason**
+  when the cell draws no task object. That is the pattern `test_backend_agreement` already uses for
+  an env with no `Scene2D`.
+* A per-cell skip is also how a sweep goes quietly vacuous, so
+  `test_some_env_actually_declares_a_hideable_task_object` pays the model cost **once, in a test
+  body**, and fails if the capable envs ever declare no leaf at all — the state in which all eleven
+  would skip and the file would be green having asserted nothing.
+
+Result over the full family: **4 run at full assertion strength (all 0/255), 7 skip with a stated
+domain reason, and the census guard passes** — verified on CPU across all eleven cells before the
+GPU run, since the test itself is CUDA-gated.
 
 ## Pixels changed?
 
