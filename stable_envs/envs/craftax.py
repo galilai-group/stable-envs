@@ -276,10 +276,11 @@ class _Composite:
     per frame: it gathered the block texture into a ``(B, 7t, 9t, 3)`` float32 buffer, blended the
     player into the centre tile, then blended a full-frame mob texture and a full-frame mob alpha
     over all of it, applied the channel gain and rounded. Every one of those steps is a
-    ``B x 7t x 9t x 3`` float32 temporary, and there are about a dozen of them: 2.4 MB of traffic per
-    16 px frame against a 48 KB frame, which is why throughput FELL from 2,006 f/s at B=16 to 774 f/s
-    at B=256 on one Oscar core — at B=16 the temporaries still fit in last-level cache and at B=256
-    they do not.
+    ``B x 7t x 9t x 3`` float32 temporary, and there are about a dozen of them: **1.94 MB per 16 px
+    frame against a 48.4 KB frame**. That is why throughput FELL with batch — 1,876 f/s at B=16 down
+    to 1,113 f/s at B=256 on one core of ``node1831`` — rather than rising: 16 frames of temporaries
+    are 31 MB and still fit that node's ~35.8 MiB of last-level cache, and 256 frames are 495 MB and
+    do not. Measured in ``examples/results/step6/tilemap/profile_before/``.
 
     None of that work depends on the state. A tile's pixels are a function of exactly three small
     integers, so the whole composite is a 680-entry table that is built once per (device, tile size)
@@ -299,6 +300,12 @@ class _Composite:
     """
 
     _cache: dict = {}
+    #: How many (device, tile size) tables to keep. Both forms of one table come to ~40 MiB at
+    #: :data:`ATLAS_MAX_TILE_PX`, and a caller sweeping sizes would otherwise retain one per size
+    #: for the life of the process. Dropping the whole dict rather than evicting one entry is the
+    #: rule ``render/tilemap.py``'s recoloured-atlas cache already uses, and it is safe because a
+    #: render holds its own reference to the table it is gathering from.
+    _MAX_ENTRIES = 8
 
     @staticmethod
     def _build(device: torch.device, t: int) -> torch.Tensor:
@@ -318,13 +325,6 @@ class _Composite:
         comp = (with_player.unsqueeze(2) * (1 - am)
                 + mtex.view(1, 1, N_MOB, t, t, 3) * am)
         return comp.reshape(N_COMPOSITE * t, t * 3).contiguous()
-
-    #: How many (device, tile size) tables to keep. A table is up to 51 MiB at
-    #: :data:`ATLAS_MAX_TILE_PX`, and a caller sweeping sizes would otherwise retain one per size
-    #: for the life of the process. Dropping the whole dict rather than evicting one entry is the
-    #: same rule ``render/tilemap.py``'s recoloured-atlas cache uses, and it is safe because a
-    #: render already holds its own reference to the table it is gathering from.
-    _MAX_ENTRIES = 8
 
     @classmethod
     def get(cls, device: torch.device, t: int, want_float: bool):
