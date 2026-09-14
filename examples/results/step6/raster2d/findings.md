@@ -765,3 +765,86 @@ headroom is real but it is not in the two stages this ticket touched.
 assigned to it under SWMNAV-1. Nothing in `gfxdraw`, `raster2d`'s kernel, or any other workstream's
 module was touched. `raster2d._row_groups` remains shared with `swm_nav`'s CPU path as described in
 §9.
+
+
+---
+
+# SWMNAV-2b — the dot evaluated only inside its own window
+
+## 23. What it does, and why it is exact
+
+SWMNAV-1 proved two things about `navdot.dot_window`, and SWMNAV-2b is what you get by using the
+second one as well as the first:
+
+* outside the window a normalised Gaussian is below the measured 2^-25 alpha floor, where the blend
+  is the identity — so the **blend pass** may skip it;
+* the window always contains the in-frame argmax, because that sample is within `m <= d` of the
+  centre — so a maximum taken over the window IS the maximum over the frame, and the
+  **normalisation pass** may skip it too.
+
+Both passes are now 32x32 tiled and skip a tile a dot's window misses. What the skip saves is the
+float64 `exp`, which a 3090 issues at 1/64 the float32 rate and which was being evaluated twice per
+pixel per dot; the tile is still written, because the output carries the base image whether a dot
+reaches it or not.
+
+The bound now has **one definition**, `navdot.dot_window`, used by the kernel and by `swm_nav`'s CPU
+path. Two copies of a bound is two bounds, and a fast path is only the slow path if the two agree
+about what "outside" means.
+
+## 24. Correctness, unchanged
+
+| evidence | result |
+|---|---|
+| 1,600 differential fuzz cases (8 seeds), kernel vs torch, job `6366951` | **byte-identical** |
+| `tests/gpu/test_navdot_fused.py` | 24 passed (up from 20: the per-row mixed-style case) |
+| targeted GPU suites for the four configs | 116 passed, 60 skipped, 0 failed |
+| frozen Step 4 replay on cuda (`swmnav2b/replay/`) | all four configs, every digest identical, every check unchanged |
+| CPU digests | unchanged |
+
+### One documented divergence, at a state no env can produce
+
+A **NaN coordinate** renders differently on the two paths, and the difference is in the clamp:
+
+* torch — `alpha.clamp(0.0, 1.0)` propagates NaN, the blend is then NaN, and `.to(uint8)` of NaN
+  gives **0**;
+* the kernel — `tl.minimum(tl.maximum(alpha, 0.0), 1.0)` lowers to PTX `max.f32`/`min.f32`, which
+  return the non-NaN operand, so `a` is 0 and the pixel keeps its **base colour**.
+
+Neither is more correct; IEEE `maxNum` and torch's NaN-propagating clamp are both defensible and they
+disagree. It is recorded rather than fixed because it is **unreachable from the envs**: positions
+reach `render` either from `step`, which clamps, or from the frozen corpora, and a NaN would have to
+be handed to `render(states)` directly. Matching torch would cost an explicit `alpha != alpha` test
+on the hot path, per pixel per dot, to change the colour of a frame that is already meaningless. If
+that trade ever wants making the test is three tokens.
+
+## 25. The sweep — and R still does not reach 500
+
+Job `6366951`, 3090 `gpu2105`, before and after in one job on one card. "pre-2" is the torch path
+before any of this, "pre-2b" is the unwindowed kernel.
+
+| config | pre-2 | pre-2b | **now** | 2b gain | total | official | **R** | **cores** | BATCH_SCALES | NLBR |
+|---|---|---|---|---|---|---|---|---|---|---|
+| TwoRoom | 39,631 | 67,412 | **96,142** | 1.43x | **2.43x** | 523 | **183.7** | 29.7 | 146x PASS | 1.10 PASS |
+| TwoRoomTarget | 23,781 | 47,239 | **84,746** | 1.79x | **3.56x** | 383 | **221.2** | 28.1 | 139x PASS | 1.12 PASS |
+| Piecewise | 54,697 | 126,187 | **295,526** | 2.34x | **5.40x** | 672 | **439.9** | 94.1 | 244x PASS | 1.40 PASS |
+| PiecewiseZones | 46,868 | 92,600 | **156,017** | 1.68x | **3.33x** | 433 | **360.6** | 36.7 | 180x PASS | 1.04 PASS |
+
+**No row reaches R >= 500, so this is where it stops.** Piecewise gets closest at 439.9, which is 88%
+of the bar; TwoRoom is at 37% of it. R has gone from the 71/57/83/99 the ticket opened with to
+184/221/440/361 — between 2.4x and 5.4x — every qualifier passes and `cores` is 28 to 94 against a
+bar of 1, but the class-R `GPU_FAST` bar is R >= 500 and these four rows remain **`GPU_FASTER`**.
+
+**Where the remaining time is** (`swmnav2b/gpu_profile_after.json`, per 256-frame chunk at B=4096):
+
+| config | render/chunk | `base_image` | share |
+|---|---|---|---|
+| TwoRoom | 2.64 ms | 2.22 | **84%** |
+| TwoRoomTarget | 3.00 | 2.24 | **75%** |
+| Piecewise | 1.03 | 0.37 | 36% |
+| PiecewiseZones | 1.62 | 1.13 | **70%** |
+
+The dots and the blend are now a minority of every row and the base image is 36-84% of it. Piecewise,
+whose base is only a fill and a border, is both the fastest row and the one with the smallest base
+share — the two facts are the same fact. **A base-image kernel is the remaining lever and it is not
+authorized**, so the honest close is: the four rows are 2.4-5.4x faster, bit-identical, and still
+`GPU_FASTER`.
