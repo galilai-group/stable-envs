@@ -337,10 +337,22 @@ the identical test against the baseline tree on the same card.
    `digest_ours` AND `digest_official` byte for byte in `$SCR/venvs/se-step3`, the interpreter the
    dmc shard was frozen in. The earlier non-reproduction was measured in `$SCR/venvs/se-step5`. That
    points at the venv, not at MJWarp nondeterminism.
-3. **NODE-1** (new): the official OGBench renderer is nondeterministic at 1/255 on `gpu2108` and
-   `gpu2113` for the Pointmaze Teleport and maze2d cells, on the baseline tree as much as on this
-   one. The repo already aborts the session over it. Any Pointmaze parity number taken on those two
-   nodes should be re-taken elsewhere.
+3. **NODE-1** (new, and the name turns out to be wrong): the OFFICIAL OGBench renderer is
+   nondeterministic at 1/255 for the Pointmaze Teleport and maze2d cells, on the baseline tree as
+   much as on this one, and the repo aborts its own session over it. First seen on `gpu2108` and
+   `gpu2113` (jobs 6354203, 6354905, 6355272); the coordinator then saw the same diagnostic fire on
+   **`gpu2110`** in the VISIBILITY-1 fix's own unfiltered run (job 6356087), with the same 1/255 on
+   `PointmazeTeleportNavigate` and the same dependent `fresh_process` ogbench failures. Three of the
+   eleven `gpu`-partition 3090 nodes, so **this is not a bad host — it is a property of the
+   reference stack on this cluster**, and the exclusion list must NOT be grown to chase it. The one
+   thing that IS node-specific so far is `test_state_is_sufficient`, which broke on `gpu2108` and
+   `gpu2113` only; those two stay excluded for that reason alone.
+
+   **Reporting rule for this class**, used from here on: the ogbench node-fault diagnostic and the
+   `fresh_process` failures that depend on it are recorded as the NODE-1 class, **naming the node
+   they occurred on**, and are never counted against a branch. Our own `PointmazeTeleportNavigate`
+   frames replayed bit-identical to the frozen oracle on `gpu2104` (section 1), which is what says
+   the renderer is not the variable.
 4. **`minigrid` is installed in no venv on Oscar**, so 7 registered envs have never had their GPU
    conformance run on this cluster. Outside the 49, but worth a ticket.
 5. Three Gate A FAILs remain (`DMCCheetahRun`, `DMCHopperHop`, `DMCWalkerWalk`) on
@@ -406,8 +418,13 @@ The 24 failures are the same 24 names as on `f7b07d7`: 7 VISIBILITY-1, 3 `visual
 `reference_renderer_is_deterministic` (NODE-1), 5 `fresh_process`. **SWMNAV-1 and the gfxdraw shard
 rename introduced no new failure and moved no pixel.**
 
-One refinement on NODE-1 worth recording: the five `fresh_process` failures reproduce on `gpu2113`
-inside the FULL suite run but pass on `gpu2113` when those five tests are the only ones selected
-(job 6354905). So they are sensitive to what the process has already accumulated, which is the same
-EGL-context pressure the `test_state_is_sufficient` docstring already documents — not to the tree.
-Every GPU sbatch in `scratch/step6/verify/` now carries `--exclude=gpu2108,gpu2113`.
+Two refinements on NODE-1 worth recording. First, the five `fresh_process` failures reproduce on
+`gpu2113` inside the FULL suite run but pass on `gpu2113` when those five tests are the only ones
+selected (job 6354905) — so they are sensitive to what the process has already accumulated, which is
+the same EGL-context pressure the `test_state_is_sufficient` docstring already documents, not to the
+tree. Second, the coordinator's VISIBILITY-1 run on **`gpu2110`** (job 6356087) fires the same
+ogbench node-fault diagnostic with the same seven dependent `fresh_process` failures, so the fault
+is not confined to the two nodes this workstream happened to land on. `--exclude=gpu2108,gpu2113`
+stays in every GPU sbatch here, but only because those two additionally broke
+`test_state_is_sufficient`; the exclusion list is deliberately NOT being grown to chase the ogbench
+diagnostic, because excluding every node that shows it would eventually exclude the partition.
