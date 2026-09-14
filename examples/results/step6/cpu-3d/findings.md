@@ -1,117 +1,232 @@
-# Step 6G — `cpu-3d` findings (Phase 1: design and characterisation, no implementation)
+# Step 6G — `cpu-3d` findings
 
-**Classification: `FINDING`** — design ready for coordinator approval for the four DM Control
-trackcom cells (reachable tier stated per architecture), carrying a **measured `BLOCKER` for
-`CPU_FAST` on the twelve Fetch cells**. The architecture note is
-`examples/results/step6/cpu-3d/design.md`; this file is the report in AGENT_COMMON's format.
+Two reports in one file: **Phase 1** (design and characterisation, §A, classified `FINDING` +
+Fetch `BLOCKER`) and **Phase 2 / M1** (the CPU backend for the four DM Control trackcom cells, §B,
+classified `PATCH`; certified `CPU_FASTER` + `BELOW_G4` on all four). The architecture note is `examples/results/step6/cpu-3d/design.md` (§11 there
+is "M1 as built"). The Fetch feasibility ticket (CPU3D-FETCH-1) is reported in §C.
 
-- Baseline SHA: `89fa5ca81341dc4df7186ec325cb691431a2ef17` (`sami/pre-step6-baseline`).
-- Branch: `step6/cpu-3d`, HEAD = the commit carrying this file. `stable_envs/` untouched;
-  `examples/results/step4/` and `step5/` untouched. Only `scratch/step6/cpu-3d/` and
-  `examples/results/step6/cpu-3d/` were added.
-- Hardware/venv: certification numbers from **SLURM job 6345025** (`se6-cpu-3d-char`, `node2339`,
-  Intel Xeon Platinum 8268 @ 2.9 GHz, `--partition=batch --qos=normal`, 4 CPUs, 1 torch thread,
-  `OMP/MKL_NUM_THREADS=1`), venvs `se-step6` (torch 2.14 cpu path, dm_control 1.0.45, mujoco 3.12),
-  `se-step5` (mujoco_warp 3.12.0 source dump only), `se-s3b-fetch311` (mujoco 3.11, gymnasium-robotics).
-  Model census on the Mac (mujoco 3.12; geometry/materials/textures byte-identical to 3.11 per
-  texture-fidelity §2). No GPU job: reference frames came from the texture-fidelity workstream's
-  frozen-state frame stacks.
+---
 
-## Affected configs (16)
+# B. Phase 2 / M1 — `PATCH`: a CPU-native backend for `DMCCheetahRun`, `DMCHopperHop`, `DMCWalkerWalk`, `DMCHumanoidStand`
 
-- `DMCCheetahRun`, `DMCHopperHop`, `DMCWalkerWalk`, `DMCHumanoidStand` — `DMControlTrackCom`, 84 px,
-  visual tier, MJWarp-only on the render path (the `raycast3d` entry in `backends` is a module-level
-  artefact; confirmed by the raycast3d workstream's census).
-- `Fetch{Reach,Push,Slide,PickAndPlace}` × `{'',Dense,Dict}` — `FetchBase`, 480 px, parity tier
-  (interior ≥ 0.99), baked MuJoCo plate + MJWarp mover pass.
-- NOT in scope (already a genuine CPU path, owned by `step6/raycast3d`): the 10 `DMControlSuite`
-  parity cells.
+- **Baseline SHA** `89fa5ca81341dc4df7186ec325cb691431a2ef17`; the M1 parent is the
+  `step6/integration` merge `5b3bcc6` (merged as `9e2e0a1`); **branch HEAD** = the commit carrying
+  this file (M1 code: `28419aa`, cuda replay: `749a19c`).
+- **Hardware/venvs**: cuda replay on `gpu2106` (RTX 3090, `se-step5`, one job); CPU certification
+  on `node2333` (Xeon Platinum 8268, `batch`/`normal`, 1 torch thread; `se-vis311` = mujoco 3.11.0 +
+  dm_control 1.0.44 for the declared reference, `se-step6` = 3.12 for the record); unit tests
+  locally in `/Users/samib/se6-venv`.
+- **Affected configs**: the four above (visual tier, 84 px). Nothing else renders through the
+  changed code: `DMControlSuite` (10 parity cells) and every other family are untouched by
+  construction; `raycast3d.py` and `mjwarp.py` are not edited.
 
-## Profile-before artifacts
+## What was built (`stable_envs/render/cpu3d.py`, dispatch in `stable_envs/envs/dmcontrol.py`)
 
-There is no CPU path to profile (`CPU_BACKEND_MISSING`; Step 3's "cpu" MJWarp shard ran on the
-GPU behind `device="cpu"`, labelled `DEVICE_NOT_HONOURED`). What was measured instead:
-`examples/results/step6/cpu-3d/census/` (DMC model census ×4, `frames_census.json`,
-`shadow_candidates.json`) and `examples/results/step6/cpu-3d/characterize/`
-(`cpu_micro_node2339.json`, `cost_floor_node2339.jsonl`, `census_fetch_node2339.json`,
-`mujoco_warp_sampling_source.txt`, official frames). Scripts: `scratch/step6/cpu-3d/`.
+Architecture (d) of the design note, MJWarp's semantics transcribed from `mujoco_warp/_src/render.py`:
+per-pixel rays as `compute_ray`; the skybox baked once per (orientation, resolution) through
+`sample_skybox`'s cube-map law (the trackcom camera never rotates: 99.4-99.7 % of MJWarp's own
+skybox pixels are constant across the corpus); the plane by `ray_plane` (front-face, bounded) with
+the PLANE texgen law and one bilinear tap; the 6-19 capsules/spheres cast through the shared
+`raycast3d.cast_nearest` inside their projected per-env window; shadow rays through
+`raycast3d.any_blocking` only on mover hits and on floor hits inside the movers' light-space
+footprint; the megakernel's shading order with its constants (headlight as a directional light
+toward the camera, spot cutoff and `pow(cos, exponent)`, shadow factor **0.3**, `128*shininess`).
+`DMControlTrackCom` dispatches on device: `cuda` -> the MJWarp path, unchanged byte for byte;
+`cpu` -> `cpu3d`; anything else raises `ValueError` -- `device="cpu"` can no longer reach the GPU.
+Per-env appearance (`material.*`, `light.diffuse_scale`) is applied as tables, as on the GPU path;
+`VISIBILITY_KNOB`/`CAMERA_KNOB` stay `False` on both devices (same variation space per device).
 
-## Bottleneck mechanism (measured)
+## Bottleneck / mechanism (measured, `design.md` §4, §11)
 
-1. **The binding bar is `cores_cpu ≥ 1`, not `S_cpu ≥ 5`.** On the certification host the official
-   renderer is Mesa llvmpipe: 24.4 / 27.1 / 25.5 / 10.7 fps at 84 px (DMC), 39.6–53.3 fps at 480 px
-   (Fetch); so `S_cpu ≥ 5` is 54–136 fps (DMC) / 198–267 fps (Fetch). One core of JPEG-q90 decode
-   is **6,629 fps at 84 px** and **776–881 fps at 480 px**, i.e. `cores ≥ 1` needs **21.4 ns/px**
-   (DMC) and **36–41 ns per triangle including fill** for Fetch's 31,720 mover triangles.
-2. **Torch on one core is dispatch/bandwidth-bound**: 2.0 µs dispatch floor, 6.3 µs per full-frame
-   op at 84 px (0.9 ns/elem in L2), 2.2 ns/elem out of L2 (batching *hurts*). `raycast3d`'s unfused
-   CPU cast: 210–225 ns per ray-primitive test (reproduces the raycast3d workstream's 145–240).
-   A full-frame 2-light `shade` alone is 0.99 ms/frame at 84 px.
-3. **Compiled scalar floor** (`cost_floor.c`, `-O3 -march=native`, no SIMD intrinsics): whole DMC
-   frame (plane + skybox + checker + headlight + spot + shadow + K capsules, tiled) **95 ns/px at
-   K=8 (1,484 fps), 150 ns/px at K=19 (943 fps)** — 4.5–7× short of the decode bar; triangle raster
-   540–1,640 ns/tri at 480 px — 14–40× short of Fetch's bar.
-4. **Scene structure (DMC)**: 6–19 capsules/spheres over one textured plane; camera and spotlight
-   are `trackcom` on the same body and never rotate; in our MJWarp frames **99.4–99.7 % of skybox
-   pixels are bit-identical across the 64 frozen states** (bakeable plate, 55–85 % of three
-   frames); floor 0 % constant (checker phase); movers cover 2.5–7.2 % of pixels, bbox 7–28 %;
-   FK 3–10 µs/state. **Fetch**: fixed camera, one directional light without shadow, flat
-   materials, plate exact (10.8–13.5 ms warm bake on the same llvmpipe), robot = 15 meshes /
-   31,720 triangles covering 8–10.5 % of pixels with an 50–89 % screen bbox.
+There was no CPU path (`CPU_BACKEND_MISSING`; Step 3's "cpu" MJWarp rows were the GPU behind
+`device="cpu"`, `DEVICE_NOT_HONOURED`). The binding bar on the certification host is the decode
+conjunct: `cores_cpu >= 1` = 6,629 fps at 84 px = 21 ns/px, while torch costs 2 us per operator and
+0.9-2.2 ns/element/op and `raycast3d`'s unfused CPU cast 210-225 ns per ray-primitive test. M1's
+cost is 60-75 % that cast on the compacted windows, which RAYCAST-5 and the shared fused cast
+address; `cpu3d.py`'s own passes (plane, sky, shade) are the remainder.
 
-## Proposed intervention (design; nothing implemented)
+## A finding on the GPU path, made while matching it
 
-- **DMC four — architecture (d)**: per-(camera orientation, res) baked skybox plate (exact vs
-  MJWarp by construction) + analytic floor with MJWarp's PLANE UV law and one bilinear tap +
-  compacted `raycast3d.cast_nearest_torch` on the per-env mover window + `any_blocking_torch`
-  shadow rays on the floor candidates + an MJWarp-law shader (headlight at the camera, spot
-  cutoff/exponent, shadow factor 0.3, `128·shininess`, round-to-nearest). New module
-  `stable_envs/render/cpu3d.py`; `DMControlTrackCom` dispatches on device and never builds an MJWarp
-  context on CPU. Estimated **260–800 fps at 84 px → `CPU_FASTER` (S_cpu 24–30 same-host, cores
-  0.04–0.12)**. `CPU_FAST` only via a fused SIMD whole-frame kernel (M2), gated on a stand-alone
-  micro-benchmark reaching ≤ 21 ns/px at K=19 on the certification host; plausible, unproven.
-- **Shared fused CPU cast**: one kernel behind `raycast3d.cast_nearest`/`any_blocking` (Triton
-  `_tri_cast`'s shape, SIMD across rays, `-ffp-contract=off`/IEEE div+sqrt discipline, asserted
-  bit-identical to `cast_nearest_torch`), **owned by `step6/raycast3d`**; this workstream consumes it
-  and layers the whole-frame kernel on it. Proposed split, coordinator's call.
-- **Fetch — `CPU_FAST` is a measured blocker** (39 ns/tri needed vs 540–1,640 measured; even a
-  SIMD binning rasteriser is fill-bound at 1–3 px triangles). A genuine `device="cpu"` path at
-  `CPU_PARITY` exists (option (g): llvmpipe mover pass over the plate) if wanted; decimating the
-  meshes is not admissible under the parity contract.
+**The four trackcom cells' certified frames are truncated, not rounded.** `_tc_context` wraps the
+context build and the warm-up in `MW.gl_rounding()` but captures the CUDA graph outside it (the
+defect `fetch.py` fixed for Fetch on 2026-08-11 and `mjwarp.gl_rounding`'s docstring warns about).
+Measured on the frozen states: a rounding CPU backend sits exactly one level above MJWarp on
+83-91 % of floor and body pixels; a truncating one does not. `cpu3d.QUANT = "trunc"` by default so
+the CPU draws the picture as certified. Moving the capture inside the block is a one-line GPU-path
+change that would move the four cuda digests (and the declared numbers slightly toward the
+official frames); **not applied -- the coordinator's call, since the cuda frames must stay
+byte-identical in this ticket.**
 
 ## Tests run
 
-None applicable (no code under `stable_envs/` changed). Characterisation scripts ran to completion
-in job 6345025 (all four steps; `COMPLETED`, output files verified).
+- `tests/unit/test_cpu3d.py` (new): honest device (CPU scene built, no MJWarp context; an unknown
+  device raises), no GPU runtime import in `cpu3d.py`, determinism, batch-size / chunk-boundary /
+  order invariance, within-a-level agreement against a committed slice of MJWarp frames
+  (`replay/mjwarp_frames_first4.npz`), render at another resolution. **15 passed** (`MUJOCO_GL=glfw`).
+- `tests/unit` whole suite locally: **674 passed, 6 skipped, 2 failed** -- both failures
+  (`test_every_cited_scratch_path_resolves`, `test_examples[...robocasa_visual/render_mjwarp.py]`)
+  reproduce identically on the integration commit `5b3bcc6` in a scratch worktree: pre-existing.
+- cuda side: `examples/fidelity_step4.py --shard dmc --device cuda` on the branch tree (job
+  6354766); the frozen-digest comparison shows the known baseline drift (`mean_pixel` 79.24->79.08
+  etc., reacher-correctness), identical on both trees.
 
-## Step-4 replay
+## Step-4 replay -- cuda (job **6354766**, `gpu2106`, RTX 3090, driver 575.57.08, one job, two trees)
 
-Not applicable in Phase 1 (no pixels produced by any changed path). Phase-2 obligation stated in
-`design.md` §6: the four trackcom configs on cuda must stay byte-identical (CUDA path untouched);
-a new CPU shard under `examples/results/step6/cpu-3d/replay/`.
+`verify_pixels.py` (reacher-correctness's method) on the four cells, `$SCR/se6/integration` vs this
+branch: **`cuda_pixels_identical=True` on all four; `CUDA PIXEL VERDICT: IDENTICAL`**
+(`replay/gpu/pixels_{before_integration,after_branch}.json`). The GPU path did not move by a bit.
+The same-tree cuda frame stack (`replay/gpu/frames_cuda_gpu2106.npz`) is bit-identical to the
+texture-fidelity stack from gpu2108/gpu2113, so MJWarp is stable across nodes in `se-step5`; the
+frozen Step-4 digests (a different venv, job 6176998) remain the soft oracle they were.
+
+## Cross-backend: CPU vs our MJWarp frames, 64 frozen states per cell (same tree, same states)
+
+| cell | mean abs /255 | exact | within 1 | max | sky exact | floor exact | body exact | > 2 levels |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| DMCCheetahRun | 0.018 | 0.982 | 0.99998 | 65 | 0.980 | 0.9985 | 0.969 | 1.7e-5 |
+| DMCHopperHop | 0.018 | 0.983 | 0.99999 | 66 | 0.981 | 0.998 | 0.974 | 1.2e-5 |
+| DMCWalkerWalk | 0.016 | 0.985 | 0.9997 | 65 | 0.977 | 0.998 | 0.982 | 1.5e-5 |
+| DMCHumanoidStand | 0.004 | 0.997 | 0.99996 | 115 | -- | 0.9986 | 0.945 | 1.6e-5 |
+
+(`replay/cross_backend_vs_fresh_cuda_local.json`, `m1_local/compare_frozen.json`.) The pixels beyond
+two levels are ~1 per frame: silhouette hit/miss flips between two analytic intersectors. **The
+declared bound `backend_agreement_exact_frac_min = 0.99`** (`tests/gpu/test_conformance.py::
+test_backend_agreement`) is declared for the Scene2D Triton-vs-torch check and is `not_applicable`
+on these configs; *applied as written* to CPU-vs-MJWarp it would read 0.982-0.997 exact -- **below
+0.99 on three of four cells for a renderer that is semantically equal and within one level on
+99.97 % of pixels**. Per the instruction: the numbers are reported and **this stops for a
+coordinator/Sami decision**; the bound is not touched and no cross-backend bound is declared here.
+The proposal stands as in `design.md` §8: a cross-backend `within1_min`/`mean_abs_max` bound set
+from this spread, alongside the visual-tier declaration.
+
+## Certification of the CPU frames (job **6354767**, `node2333`, 1 thread)
+
+Job 6354767 ran the existing machinery unchanged (`examples/fidelity_step4.py --device cpu`,
+`scratch/step4/certify.py`, `scratch/step6/gfxdraw/certify_shard.py`, the frozen Step-3 evaluator).
+Node load was 23-26 throughout (a shared node; the paired reference spread of 1.08-1.13 is inside
+the 1.25 bound, `certifiable: True`).
+
+**(i) Gate A under the declared reference (`se-vis311`: mujoco 3.11.0 + dm_control 1.0.44) --
+`replay/certify311_cpu/certification.json`: 3 PASS, 1 FAIL.** Every mandatory check passes on all
+four cells on CPU: determinism, batch invariance, batch-size invariance, chunked render, order
+independence, render purity, style-is-state, set_state round trip, state dims matter, variations
+do something, per-env variation.
+
+| cell | `check_visual_fidelity` (mean / within8 / ssim) vs declared ceilings | verdict | `check_resolution_consistency` (corpus) | bound - margin |
+|---|---|---|---:|---:|
+| DMCCheetahRun | 5.12 / 0.872 / 0.662 vs <= 6.5 / >= 0.84 / >= 0.62 | **PASS** | 0.5311 pass | 0.52885 |
+| DMCHopperHop | 4.52 / 0.898 / 0.687 vs 5.7 / 0.86 / 0.64 | **PASS** | 0.5535 pass | 0.54522 |
+| DMCWalkerWalk | 8.03 / 0.711 / 0.825 vs 10.5 / 0.65 / 0.77 | visual PASS; **gate FAIL** on the downsample | 0.6185 **fail** | 0.62395 |
+| DMCHumanoidStand | 5.95 / 0.742 / 0.881 vs 8.2 / 0.69 / 0.82 | **PASS** | 0.6095 pass | 0.59865 |
+
+The visual numbers are the GPU path's own (texture-fidelity's 3.11 arm: 4.99 / 4.37 / 7.86 / 6.27)
+to within 0.1-0.3/255 -- the reference here is llvmpipe rather than hardware EGL, which is where
+that spread comes from. Walker's FAIL is the known bound-provenance defect, not the backend: the
+merged `fidelity_step4._resolution` measures on the 64-state frozen corpus, where the GPU path
+scores 0.6188 (texture-fidelity, both arms) and the CPU path 0.6185; on the bound's OWN protocol
+(8 states from `render_worker.STATE_SEED`) the CPU path reproduces every recorded floor to
+<= 0.001: **0.53456 / 0.55098 / 0.62879 / 0.60367 vs recorded 0.53385 / 0.55022 / 0.62895 / 0.60365**
+(`replay/downsample_protocol_cpu_local.json`). Same finding, same fix owner as texture-fidelity §6.
+
+**(ii) The 3.12 arm (`se-step6`, `replay/certify312_cpu/`): 3 BLOCKED, 1 FAIL**, exactly as the
+provenance certifier is designed to answer a drifted reference (`reference version mismatch: the
+bound was measured against mujoco 3.11.0`); the blocked observations (6.80 / 6.83 / 16.17 / 5.99)
+are MJWarp's own 3.12 numbers (6.51 / 6.55 / 15.95 / 6.33) plus the llvmpipe-vs-EGL reference spread.
+Walker's FAIL is the same downsample check.
+
+**(iii) Cross-backend on the certification node** (`replay/cross_backend_node2333/`): identical to
+the local table above to every printed digit (mean 0.018 / 0.018 / 0.016 / 0.004, exact 0.982 /
+0.983 / 0.985 / 0.997, within-1 >= 0.999).
+
+**Performance -- the paired Step-3-shaped sweep** (`sweep/after/cpu_1thread_paired_after_node2333.json`,
+labels by the frozen evaluator in `sweep/tiers_after_node2333.json`; 1 torch thread; official =
+dm_control's own renderer on the same node = Mesa llvmpipe, interleaved between cells):
+
+| cell | ours fps B=1 / best (batch) | official llvmpipe fps, median [min-max] | decode fps/core | **S_cpu** | **cores_cpu** | **tier** |
+|---|---|---|---:|---:|---:|---|
+| DMCCheetahRun | 37.3 / **115.6** (64) | 23.4 [22.6-25.5] | 6,831 | **4.93** | 0.017 | `CPU_FASTER` + `BELOW_G4` |
+| DMCHopperHop | 52.7 / **187.8** (256) | 27.4 [25.1-28.2] | 6,758 | **6.86** | 0.028 | `CPU_FASTER` + `BELOW_G4` |
+| DMCWalkerWalk | 31.6 / **63.1** (16) | 25.0 [24.2-26.1] | 7,572 | **2.52** | 0.008 | `CPU_FASTER` + `BELOW_G4` |
+| DMCHumanoidStand | 19.8 / **45.8** (64) | 10.9 [10.6-11.4] | 7,551 | **4.22** | 0.006 | `CPU_FASTER` + `BELOW_G4` |
+
+Honestly: `S_cpu >= 2` on all four (`CPU_FASTER`), 2.5-6.9x the official renderer on the same
+core; `cores_cpu` 0.006-0.028, i.e. 35-160x short of the decode bar, so `BELOW_G4` caps every row
+and none is `CPU_FAST` -- the outcome the design predicted for M1 (§4.2: 260-800 fps estimated on
+an idle core; 46-188 fps measured on a node at load 24 with `raycast3d`'s unfused cast still on the
+path). Hopper clears `S_cpu >= 5`; the other three would need 1.02-2x, which RAYCAST-5's bounded
+CPU cast is expected to give without touching `cpu3d.py`. M2 (the fused SIMD kernel) remains
+unauthorized and is the only route to `cores_cpu >= 1`.
 
 ## Tiers before/after, pixels changed, semantic follow-up
 
-Before: all 16 `CPU_UNMEASURED`. After: unchanged (design only). Pixels changed: **no**. Semantic
-follow-up: none now; for a Phase-2 CPU path within a level of the MJWarp frames, the DINO tripwire on
-the CPU frames (visual-tier bound 0.25), no Gate-H rerun.
+- Tiers: `CPU_UNMEASURED` (no path; `DEVICE_NOT_HONOURED`) -> **`CPU_FASTER` + `BELOW_G4` on all four** (S_cpu 2.52-6.86, cores 0.006-0.028).
+- Pixels changed: **no** on cuda (byte-identical); the CPU frames are new pixels, within a level of
+  the cuda ones as tabulated.
+- Semantic follow-up: none required for the GPU frames; for the CPU frames the DINO tripwire on
+  the visual tier (bound 0.25) is the proportionate check if the coordinator wants one -- the CPU
+  frames are within 0.02/255 of frames that sit far inside it.
+
+## SLURM
+
+6345025 (Phase 1 characterisation), 6354766 (cuda replay), 6354767 (CPU certification), 6354890
+(CPU3D-FETCH-1 measurement).
 
 ## Open questions for the coordinator
 
-1. **Contract for a CPU backend** (`design.md` §8): the only cross-backend bound
-   (`backend_agreement_exact_frac_min` 0.99, Scene2D-only) is the wrong one; the frozen MJWarp
-   digests are a **soft oracle** (MJWarp 0.02 % run-to-run noise; reacher-correctness: the baseline
-   misses the four trackcom digests by 0.16–0.61/255 `mean_pixel` on the same card). Proposed: a
-   new cross-backend within-1/mean bound against our frozen frames (B) plus a per-device
-   visual-tier declaration under the 3.11 reference (A); Fetch stays on parity (C). Both A and B
-   change a schema/declaration → approval needed.
-2. **Is `CPU_FASTER` for the DMC four worth M1 (3–5 days + certification)** given `CPU_FAST` needs
-   the gated M2 kernel and a compiled-extension packaging decision?
-3. **Fetch**: accept the `CPU_FAST` blocker as the record, or fund option (g) for `device="cpu"`
-   honouring at `CPU_PARITY`?
-4. **Ownership of the fused CPU cast** (raycast3d, as proposed) and scheduling of M2 after it.
-5. Same-host `S_cpu` denominators are llvmpipe (11–53 fps), not the GPU-node hardware EGL numbers
-   Step 3 carries (355–970): the certification record should say which.
+1. The cross-backend bound (above): `backend_agreement_exact_frac_min` as declared would fail this
+   renderer on three cells at 0.982-0.985 exact; decide whether the CPU backend is certified under
+   the visual-tier declaration alone, under a new within-1 bound, or both.
+2. The GPU capture outside `gl_rounding()`: fix (moves the cuda digests) or leave (the CPU backend
+   then keeps `QUANT="trunc"`).
+3. `raycast3d` interface: none needed for M1. RAYCAST-5's per-primitive bounding will speed the
+   CPU path directly through the unchanged `cast_nearest`/`any_blocking` calls.
 
-SLURM: **6345025** only. Sibling findings read (not depended on): raycast3d `c7a9330`/`473a37b`,
-reacher-correctness `af81aa2`, texture-fidelity `f484ab9`, fetch-gpu `c568fde`.
+---
+
+# A. Phase 1 -- `FINDING` (design ready) + Fetch `BLOCKER` (measured), as reported at commit `6505e71`
+
+- Affected: the 4 DMC trackcom cells (visual, 84 px, MJWarp-only) and the 12 Fetch cells (parity,
+  480 px). Step 3's "cpu" rows: `CPU_BACKEND_MISSING` / `DEVICE_NOT_HONOURED`.
+- Measured (job 6345025, `node2339`): same-host official llvmpipe 24.4/27.1/25.5/10.7 fps (DMC) and
+  39.6-53.3 fps (Fetch); decode 6,629 fps at 84 px, 776-881 at 480 px; torch 2 us dispatch floor,
+  6.3 us/full-frame op at 84 px; `raycast3d` unfused cast 210-225 ns/ray-primitive; compiled scalar
+  floor 95-150 ns/px (DMC, tiled) and 540-1,640 ns/triangle (480 px).
+- DMC: 6-19 capsules/spheres + one textured plane, camera and spotlight `trackcom` (translate only),
+  skybox constant in camera space (99.4-99.7 %), movers 2.5-7.2 % of pixels. Fetch: 15 meshes /
+  31,720 triangles at 8-10.5 % of pixels, fixed camera, no shadow, exact plate.
+- Recommendation (approved): architecture (d) in torch -> `CPU_FASTER` (M1, done above); `CPU_FAST`
+  only by a fused SIMD kernel, gated on <= 21 ns/px; Fetch `CPU_FAST` a measured blocker (39 ns/tri
+  required incl. fill vs 540-1,640 scalar), `CPU_PARITY` reachable.
+- Full detail: `design.md` §0-§10.
+
+---
+
+# C. CPU3D-FETCH-1 -- feasibility of a shared CPU backend for Fetch at the frozen `CPU_FAST` bar (measurement only)
+
+**Classification: `BLOCKER` for `CPU_FAST` (measured on the real mesh set); a shared CPU backend at
+`CPU_PARITY`/`CPU_FASTER` is feasible.** No implementation, no decimation.
+
+Job **6354890** (`node2334`, Xeon 8268, one core): `scratch/step6/cpu-3d/fetch_mesh_dump.py`
+(`se-s3b-fetch311`) put the ACTUAL visible mover meshes of `FetchReach` and `FetchPickAndPlace` --
+15 meshes, **31,720 triangles**, all in view -- through MuJoCo FK at 16 frozen states and the
+`se:cam` frustum at 480 px; `span_raster.c` (scalar C, `-O3 -march=native`, bbox-bounded
+edge-function scan, z-test, Gouraud normals, Blinn-Phong) rasterised them
+(`fetch_feasibility/`):
+
+| scene | triangles / frame | median triangle edge | ms / frame | fps (1 core) | ns / triangle | pixel writes / frame | bbox pixel tests / frame |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| FetchReach | 31,720 | **0.50 px** | 8.79-10.24 | **97.7-113.7** | 277-323 | 49,151 | 942,741 |
+| FetchPickAndPlace | 31,720 | 0.50 px | 9.18-10.37 | 96.4-108.9 | 289-327 | 49,109 | 941,704 |
+
+Against the frozen bars on the same host (design.md §3.2): decode **776-881 fps** -> `cores_cpu`
+**0.11-0.15**; official llvmpipe 39.6-53.3 fps -> `S_cpu` **1.8-2.9**. `CPU_FAST` needs <= 1.13-1.29
+ms per frame = **<= 36-41 ns per triangle including fill**; the measured scalar floor on the real
+set is 277-327 ns, **7-9x short**. The shape of the cost rules out closing it by architecture: the
+robot's triangles are **half a pixel** across at 480 px (31,720 triangles for ~24 k robot pixels;
+49 k pixel writes, 942 k bbox tests), so the pass is per-triangle setup and bbox scanning, not
+fill -- a binning/SIMD rasteriser removes most of the 942 k wasted bbox tests (2-3x) but not the
+per-triangle setup, and a BVH ray cast over the ~200 k-pixel robot bbox is the same order (design.md
+§4.4). What IS feasible: a shared span-rasteriser backend (the plate is exact and free; movers ~10
+ms/frame) at ~100 fps = `CPU_PARITY`/`CPU_FASTER` (S_cpu 1.8-2.9, borderline at the 2.0 floor),
+or option (g) llvmpipe at ~46 fps = `CPU_PARITY`. Verdict: **do not fund a Fetch CPU backend for
+`CPU_FAST`; fund one only if `device="cpu"` honoured at `CPU_PARITY` is wanted for its own sake.**

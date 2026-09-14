@@ -646,3 +646,71 @@ Gate-H rerun.
   `step6/texture-fidelity` (reference-version drift and the new provenance certifier),
   `step6/reacher-correctness` (edits `DMControlSuite` target visibility; does not touch the trackcom
   cells).
+
+---
+
+## 11. Phase 2 / M1 as built (`stable_envs/render/cpu3d.py`, commit `28419aa` on top of the `step6/integration` merge)
+
+Architecture (d) exactly as §6 proposed, with two facts learned in the diff loop against the
+frozen MJWarp frames:
+
+| stage | implementation | reuse |
+|---|---|---|
+| rays | `compute_ray`'s formula per pixel centre, float32, `cam_xmat @ dir` in the kernel's op order; one grid per (orientation, res) | own (10 lines) |
+| skybox | `sample_skybox`'s cube-map law (S=x, T=z, R=−y; face select; `t` clamped half a texel) through a CUDA-style bilinear (8-bit fixed-point weights, switchable) over the 800×4800 strip, **baked once per (orientation, res)** | own |
+| floor | `ray_plane`: local frame, front-face only, bounded by `size>0`; `sample_texture`'s PLANE texgen `u = 0.5x·rep − 0.5, v = −0.5y·rep − 0.5`, wrap, one bilinear tap | own |
+| movers | per-env rectangular window from projected bounding spheres (batch-max size, one gather), then `raycast3d.cast_nearest` on the window rays, camera-relative (origin 0 for every env) | `raycast3d` (unchanged) |
+| shadows | candidates = mover hits ∪ floor hits inside the movers' light-space footprint AABB (8 bounding-box corners projected from the light onto the plane, conservative) ∩ spot cone ∩ `n·l > 0`; regrouped per env, `raycast3d.any_blocking` with `o = p + 1e-4 n`, `max_t = dist − 1e-3`, factor **0.3** on a hit | `raycast3d` (unchanged) |
+| shading | the megakernel's order: emission, headlight ambient, per-light ambient, per light (spot cutoff/`pow(cosθ, exponent)`, `ndotl`, shadow weight, diffuse, `mat_spec·pow(n·h, 128·shininess)`), headlight as a directional light toward the camera, clamp | own |
+| quantise | **truncate** by default (`QUANT`), see below | own |
+| FK | `mj_kinematics + mj_comPos + mj_camlight` per state in a Python loop (3–10 µs/state); `cam_xpos`, `geom_xpos/xmat`, `light_xpos/xdir` | MuJoCo |
+| dispatch | `DMControlTrackCom.__init__`: `cuda` → MJWarp context (byte-for-byte the old path), `cpu` → `cpu3d.Scene`, else `ValueError`; `render` branches the same way | `dmcontrol.py` |
+
+**The frozen trackcom frames are truncated, not rounded.** `_tc_context` wraps
+`create_render_context` and the warm-up frame in `MW.gl_rounding()` but captures the CUDA graph
+*outside* it — the defect `fetch.py` documents and fixed for Fetch (2026-08-11) — so every frame
+the four cells have ever shipped (the Step-4 digests, the declared visual-tier numbers measured
+through the env) came from the truncating `pack_rgba_to_uint32`. Measured (`m1_local`): with
+round-to-nearest the CPU frames sit exactly one level above MJWarp's on 83–91 % of floor and body
+pixels (floor exact 0.14, within-1 1.00); with truncation the offset vanishes (floor exact 0.998).
+The CPU backend therefore truncates by default, to draw the picture as certified; `QUANT="round"`
+is one constant away for the day the GPU capture is moved inside the block (which would change the
+four cuda digests and is not this workstream's edit). The 8-bit texture-weight emulation made no
+measurable difference on these textures (2-colour checker, gradient sky) and is kept switchable.
+
+**Cross-backend agreement on the 64 frozen states per cell, local (Apple M5, 1 thread), against
+`localize312/frames/frozen_ours` (MJWarp, `se-step5`, RTX 3090):**
+
+| cell | mean \|d\| /255 | exact | within 1 | max | sky exact / w1 | floor exact / w1 | body exact / w1 | pixels > 2 levels | CPU vs official (mean / w8 / ssim) | MJWarp vs official |
+|---|---:|---:|---:|---:|---|---|---|---:|---|---|
+| DMCCheetahRun | 0.018 | 0.982 | 0.99994 | 65 | .980 / .99999 | .9985 / 1.0 | .969 / .9997 | 1.7e-5 | 6.513 / 0.797 / 0.583 | 6.512 / 0.797 / 0.583 |
+| DMCHopperHop | 0.018 | 0.983 | 0.99995 | 66 | .981 / .99999 | .998 / .99998 | .974 / .9999 | 1.2e-5 | 6.205 / 0.809 / 0.551 | 6.205 / 0.809 / 0.551 |
+| DMCWalkerWalk | 0.016 | 0.985 | 0.9995 | 65 | .977 / .9995 | .998 / .99999 | .982 / .9999 | 1.5e-5 | 15.562 / 0.565 / 0.559 | 15.562 / 0.565 / 0.559 |
+| DMCHumanoidStand | 0.004 | 0.997 | 0.9998 | 115 | — | .9986 / .99998 | .945 / .9996 | 1.6e-5 | 6.291 / 0.739 / 0.869 | 6.291 / 0.739 / 0.869 |
+
+The pixels beyond two levels are ~1 per frame: silhouette rays that `raycast3d`'s intersector and
+MJWarp's resolve on opposite sides of a hit/miss decision (max 65–115 is a body-vs-sky or
+floor-edge flip), which is the residual the design predicted. The declared-metric distance of the
+CPU frames from the official reference is MJWarp's to three decimals on every cell, i.e. the CPU
+backend inherits the visual-tier declaration rather than needing a new one — subject to the
+certifier's reference-version rule (§8, and §12 below for the certified numbers).
+
+Cost, local 1 thread (not certification numbers; the certification sweep is §12): 258 / 459 / 156 /
+110 fps at 84 px (Cheetah / Hopper / Walker / Humanoid), of which 60–75 % is `raycast3d`'s unfused
+CPU cast and shadow cast on the compacted windows (`_capsule`'s ~200 elementwise kernels per
+primitive), 5–10 % FK, the rest the plane/sky/shade passes. That is the raycast3d workstream's
+RAYCAST-5 (per-primitive bounding in the CPU cast) and the shared fused cast of §6; nothing in
+`cpu3d.py` sits on the critical path once the cast is bounded.
+
+
+## 12. M1 certified (job 6354767, `node2333`, 1 thread) and CPU3D-FETCH-1 measured (job 6354890)
+
+See `findings.md` §B (certification block) and §C. In one line each: the CPU frames pass every
+mandatory Gate-A check and the declared visual-tier bounds under the 3.11 reference on all four
+cells (Walker's one FAIL is the corpus-vs-protocol downsample provenance defect, reproduced on the
+GPU path too; on the bound's own protocol the CPU path reproduces every recorded floor to
+<= 0.001); the frozen evaluator labels all four **`CPU_FASTER` + `BELOW_G4`** (S_cpu 4.93 / 6.86 /
+2.52 / 4.22, cores 0.017 / 0.028 / 0.008 / 0.006); the cuda frames are byte-identical before and
+after; and a span rasteriser over the real 31,720-triangle Fetch set measures 277-327 ns/triangle
+(97-114 fps at 480 px) against a `CPU_FAST` bar of 36-41 ns/triangle -- the Fetch blocker stands on
+the real meshes.
