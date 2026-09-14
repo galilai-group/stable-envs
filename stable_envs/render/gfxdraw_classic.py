@@ -364,8 +364,9 @@ if HAVE_TRITON:
     @triton.jit
     def _classic_kernel(meta_ptr, vert_ptr, edge_ptr, disc_ptr, bg_ptr, plate_ptr, sprite_ptr,
                         aa_ptr, out_ptr,
-                        P, PG, PLATE_B,
-                        H: tl.constexpr, W: tl.constexpr, HAS_PLATE: tl.constexpr,
+                        P, PG,
+                        H: tl.constexpr, W: tl.constexpr, PLATE_B: tl.constexpr,
+                        HAS_PLATE: tl.constexpr,
                         HAS_SPRITE: tl.constexpr, SPR_N: tl.constexpr, SPR_S: tl.constexpr,
                         NTX: tl.constexpr, BH: tl.constexpr, BW: tl.constexpr):
         b = tl.program_id(0)
@@ -395,9 +396,11 @@ if HAVE_TRITON:
         ty1 = ty0 + BH - 1
 
         if HAS_PLATE:
+            # the plate is (3, 1, H, W) when the batch shares one appearance and (3, B, H, W)
+            # when it does not; b % PLATE_B is that choice without a branch
             pb = b64 % PLATE_B
             po = ((pb * H + Y.to(tl.int64)) * W + X.to(tl.int64))
-            pl = (H * PLATE_B * W).to(tl.int64)
+            pl = H * PLATE_B * W
             cr = tl.load(plate_ptr + po, mask=m, other=0).to(tl.int32)
             cg = tl.load(plate_ptr + pl + po, mask=m, other=0).to(tl.int32)
             cb = tl.load(plate_ptr + 2 * pl + po, mask=m, other=0).to(tl.int32)
@@ -620,8 +623,9 @@ def render_classic(ops: Ops, out=None) -> torch.Tensor:
             plate.contiguous() if plate is not None else empty8,
             spr.contiguous() if spr is not None else empty8,
             ops.aa, out,
-            P, PG, int(plate.shape[1]) if plate is not None else 1,
-            H=H, W=W, HAS_PLATE=plate is not None, HAS_SPRITE=spr is not None,
+            P, PG,
+            H=H, W=W, PLATE_B=int(plate.shape[1]) if plate is not None else 1,
+            HAS_PLATE=plate is not None, HAS_SPRITE=spr is not None,
             SPR_N=int(spr.shape[1]) if spr is not None else 1,
             SPR_S=int(spr.shape[2]) if spr is not None else 1,
             NTX=ntx, BH=bh, BW=bw, num_warps=WARPS)
