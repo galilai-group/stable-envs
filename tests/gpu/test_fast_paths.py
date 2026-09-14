@@ -176,15 +176,19 @@ def _composite_frames(env, states, fast: bool):
 
 @contextlib.contextmanager
 def _primitive_bounds(on: bool):
-    """Pin ``raycast3d.PRIMITIVE_BOUNDS`` for the duration, and put it back whatever happens."""
-    assert R3.PRIMITIVE_BOUNDS is True, (
-        "raycast3d.PRIMITIVE_BOUNDS was already off when this test started, so an earlier test leaked "
-        "it and every comparison after that point has been the slow path against itself")
+    """Pin ``raycast3d.PRIMITIVE_BOUNDS`` for the duration, and put back whatever it was.
+
+    Both legs are pinned explicitly, so the comparison is real whatever the module default is -- and
+    the default MOVES: RAYCAST-4 shipped it on, RAYCAST-5 turned it off while the maze regression was
+    open. Restoring a hard ``True`` here (as this did) would have quietly turned the bound back on for
+    every later test in the process the moment the default changed.
+    """
+    was = R3.PRIMITIVE_BOUNDS
     try:
         R3.PRIMITIVE_BOUNDS = on
         yield
     finally:
-        R3.PRIMITIVE_BOUNDS = True
+        R3.PRIMITIVE_BOUNDS = was
 
 
 def _bounds_frames(env, states, fast: bool):
@@ -473,9 +477,17 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert hasattr(R3, "FORCE_BACKEND"), (
         "raycast3d.FORCE_BACKEND is gone, so the fused-vs-torch case cannot pin either backend and has "
         "been comparing the default against itself")
-    assert getattr(R3, "PRIMITIVE_BOUNDS", None) is True, (
-        "raycast3d.PRIMITIVE_BOUNDS is gone or already off, so the per-primitive-bound case cannot "
-        "switch the bound off and has been comparing the bounded path against itself")
+    # NOT "is True": the default is a release decision that moves, and pinning it here would make
+    # this assertion fail for a reason that has nothing to do with reachability. What the case needs
+    # is that the switch EXISTS and that turning it on actually reaches the bound -- i.e. that at
+    # least one kind is bounded. A `_BOUNDED_KINDS` emptied by a future measurement would make the
+    # case compare the unbounded path against itself, and that is the failure worth catching.
+    assert isinstance(getattr(R3, "PRIMITIVE_BOUNDS", None), bool), (
+        "raycast3d.PRIMITIVE_BOUNDS is gone, so the per-primitive-bound case cannot switch the bound "
+        "off and has been comparing the bounded path against itself")
+    assert getattr(R3, "_BOUNDED_KINDS", frozenset()), (
+        "raycast3d._BOUNDED_KINDS is empty, so PRIMITIVE_BOUNDS=True bounds NOTHING and the "
+        "per-primitive-bound case compares the unbounded path against itself")
     assert getattr(R3, "COVER_COMPACTION", None) is True, (
         "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
         "compaction off and has been comparing the compacted path against itself")
