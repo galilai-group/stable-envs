@@ -1,6 +1,8 @@
 # Step 6 — integration verification, FINAL (`step6/integration-verify`)
 
-**Classification: PASS-WITH-KNOWN-DELTAS.**
+**Classification: PASS-WITH-KNOWN-DELTAS**, and after `5402387` the correctness ledger is clean:
+**48 of 49 configurations PASS Gate A and the 49th is `PARTIAL`, which is a passing state — no FAIL,
+no BLOCKED — when each configuration is judged under the reference pair its own declaration names.**
 
 Certification of `step6/integration` as a whole. This workstream changed no renderer code; it ran the
 existing machinery — `examples/fidelity_step4.py`, `scratch/step4/certify.py`, `tests/gpu`,
@@ -9,7 +11,8 @@ existing machinery — `examples/fidelity_step4.py`, `scratch/step4/certify.py`,
 | | |
 |---|---|
 | baseline SHA | `89fa5ca81341dc4df7186ec325cb691431a2ef17` (`sami/pre-step6-baseline`) |
-| **final integration SHA** | **`83bd778b27e07dd4fd500297f8b58ca258243714`** (all eight workstreams' merged work) |
+| **integration SHA certified here** | **`7e0862c573cf0e9d4b269f1bc2f94bd549cb03c6`** (adds `5402387`, the downsample protocol) |
+| previous full pass | `83bd778` — superseded for Gate A only; every pixel result below still stands |
 | carried on this branch as | `5dd5596` (worktree `$SCR/se6/verify5`) |
 | earlier SHAs in this report | `e4d015d` (pre-gfxdraw), `f7b07d7` (+gfxdraw), `e0182f6` (+SWMNAV-1), `43e6bcc` (+RAYCAST-4/5, +VISIBILITY-1) |
 | my branch | `step6/integration-verify` — `step6/integration` itself was never committed to |
@@ -411,3 +414,84 @@ workstream did find, VISIBILITY-1, was a test selector, was fixed, and is confir
   `postmerge.sbatch`, `gaps.sbatch`, `final.sbatch`, `trackcom_cpu.sbatch`, `trackcom_gpu.sbatch`,
   `compare49.py`. All take `TREE=`, `SHARDS=`, `CONFIGS=`, `FILES=`, `ARMS=`, `CPUVENV=`, `TAG=`.
 
+
+
+---
+
+## 7. After `5402387` (the downsample protocol) — integration `7e0862c`
+
+`check_resolution_consistency` now measures the judged number on the bound's own 8-state protocol
+draw and carries the 64-state corpus number beside it as `frozen_corpus`. Two arms, because the four
+visual-tier cells declare their numbers against mujoco 3.11 / dm_control 1.0.44 and the other 45
+against 3.12.
+
+### Gate A over all 49, judged under each configuration's DECLARED reference
+
+| | frozen Step 4 | `83bd778` | **`7e0862c`, declared arm** |
+|---|---|---|---|
+| PASS | 43 | 44 | **48** |
+| PARTIAL | 1 | 1 | 1 (`CraftaxClassic`, a passing state) |
+| BLOCKED | 0 | 1 | **0** |
+| FAIL | 5 | 3 | **0** |
+
+`examples/results/step6/verify/replay/final_declared/certification.json`. The four visual cells are
+carried in a shard of their own (`dmcvis.json`) so they travel with the 3.11 provenance they were
+measured under: `certify.py` reads the reference version off the SHARD, so copying those rows into
+the 3.12 document instead makes the certifier block the very numbers it was handed. It did, the first
+time this was assembled, and the 48 became 44 — worth writing down, because that failure mode looks
+exactly like a real BLOCKED.
+
+The four cells PASS under the declared pair on BOTH devices, in two independently built
+interpreters: cuda in `se6-verify-vis311` (mujoco 3.11.0, mujoco_warp 3.11.0, dm_control 1.0.44, job
+6365966 on gpu2109) and CPU in `se6-verify-tex311` (same pair, no `mujoco_warp` at all, job 6365967
+on node2320) — the CPU arm running through `cpu3d.py`. Walker's protocol `exact_frac` is **0.62879**
+on CPU against a floor of 0.6290 − 0.005, with the corpus number 0.61854 recorded beside it as
+`frozen_corpus`, which is exactly what `5402387` was for.
+
+### A discrepancy the coordinator should see before this is handed to Sami
+
+The merged `examples/results/step6/texture-fidelity/certify312_protocol/` record reports the four
+cells as **BLOCKED with no `check_resolution_consistency` failure** under 3.12. My 3.12 arm reports
+**three FAILs** on that check. Same node (`gpu2109`), same GPU and driver, same python/torch, same
+mujoco 3.12.0 / mujoco_warp 3.12.0 / dm_control 1.0.45 / warp 1.17.0, and `git diff stable_envs/`
+between the two SHAs is **empty**. The difference is the interpreter, and the digests say which:
+
+| cell | frozen `digest_ours` | texture-fidelity's 3.12 arm | my 3.12 arm (`se-step3`) | protocol `exact_frac`: theirs / mine |
+|---|---|---|---|---|
+| `DMCCheetahRun` | `1fc511eaec27` | `d314a7eab012` | `1fc511eaec27` | 0.53385 / **0.52223** |
+| `DMCHopperHop` | `d65978480077` | `80eb493872a6` | `d65978480077` | — / 0.53655 |
+| `DMCHumanoidStand` | `539c71a22769` | `c32a08293794` | `539c71a22769` | — / 0.60390 |
+| `DMCWalkerWalk` | `13b88aad7d82` | `1801687041bc` | `13b88aad7d82` | 0.62895 / **0.61258** |
+
+`d314a7ea / 80eb4938 / c32a0829 / 1801687` are precisely the digests `se-step5` produced in job
+6359331, and `se-step5` is the venv MJWARP-1 identified as the one that does NOT reproduce the frozen
+corpus. So the merged 3.12 record was taken in the interpreter whose frames differ from the frozen
+Step-4 oracle, and my arm was taken in the one that reproduces it byte for byte.
+
+`exact_frac` is a knife-edge statistic — the two interpreters differ by ~0.012 on it, against a
+margin of 0.005 — so **the 3.12 downsample verdict flips with the venv**: PASS in `se-step5` (0.53385,
+the recorded floor to five decimals), FAIL in `se-step3` (0.52223). Neither is wrong; they are two
+different renders.
+
+**This does not change the verdict**, because the contract judges these cells under 3.11, where both
+of my arms and texture-fidelity's own `certify311_protocol` agree on PASS ×4. But "no FAIL under
+3.12" cannot be asserted, and the merged `certify312_protocol` record should say which interpreter it
+was taken in — otherwise the page claims a clean 3.12 arm that the frozen-corpus interpreter does not
+reproduce.
+
+### Everything else at `7e0862c`
+
+- `dmc` shard on cuda in `se-step3`: **14 of 14 `digest_ours` identical** to the frozen oracle,
+  trackcom cells included. No pixel moved.
+- `tests/unit` (job 6365967, `se-step6`): **732 passed, 21 skipped, 2 failed** — the same two
+  pre-existing failures.
+- Gate A under the 3.12 arm alone, for the record: 44 PASS / 1 PARTIAL / 3 FAIL / 1 BLOCKED
+  (`replay/final_step312/certification.json`), with the three FAILs subject to the venv dependence
+  above.
+
+### Jobs
+
+| job | partition / node | what |
+|---|---|---|
+| **6365966** | gpu / gpu2109 | `dmc` shard + Gate A under 3.12 (`se-step3`); the four visual cells + Gate A under the declared 3.11 pair (`se6-verify-vis311`) |
+| **6365967** | batch / node2320 | the four visual cells on CPU under the declared 3.11 pair (`se6-verify-tex311`) + `tests/unit` |

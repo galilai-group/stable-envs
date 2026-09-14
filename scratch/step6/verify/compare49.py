@@ -28,7 +28,12 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-SHARDS = ("dmc", "fetch", "ogb", "raster", "swm")
+#: The five frozen shard names, plus ``dmcvis`` -- the four visual-tier DM Control cells split
+#: into a shard of their own so that they can carry the provenance of the 3.11 reference pair
+#: their declaration names. certify.py reads the reference version off the SHARD, so copying
+#: those rows into the 3.12 document instead would have the certifier block the very numbers it
+#: was handed -- which it did, the first time this was assembled.
+SHARDS = ("dmc", "dmcvis", "fetch", "ogb", "raster", "swm")
 
 PIXEL_KEYS = ("digest_ours", "digest_ours_default_style")
 OFFICIAL_KEYS = ("digest_official",)
