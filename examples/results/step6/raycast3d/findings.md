@@ -2369,6 +2369,11 @@ extracting both bodies and comparing them character for character.
 Job **6366607**, `node2317`, `--partition=batch --qos=normal`, `OMP_NUM_THREADS=MKL_NUM_THREADS=1`,
 `torch.set_num_threads(1)`, Intel Xeon Platinum 8268. Both parts in ONE job on ONE node.
 
+**A second certification pair was taken afterwards on a quieter node** (job 6368126, `node1946`,
+`sweep/r6_repeat/`) and it disagrees with this one about `PointmazeMediumNavigate`'s tier. Read the
+two together in *The two readings, side by side* below; the numbers in this section are the first
+reading and are not the whole answer on their own.
+
 ### Part 1 — four interleaved legs, off/on/off/on, on this branch
 
 `off2/off1` is a ratio of two runs of IDENTICAL code, so it measures the harness and nothing else.
@@ -2424,7 +2429,7 @@ the same host.
 | env | fps before | fps after | x | S_cpu before -> after | **cores_cpu before -> after** | tier before -> after |
 |---|---:|---:|---:|---|---|---|
 | `PointmazeLargeNavigate` | 1,361 | **6,154** | **4.52** | 70.79 -> **314.45** | **0.663 -> 2.703** | `CPU_FASTER`+`BELOW_G4` -> **`CPU_FAST`** |
-| `PointmazeMediumNavigate` | 969 | **2,732** | **2.82** | 37.23 -> **103.11** | **0.362 -> 1.207** | `CPU_FASTER`+`BELOW_G4` -> **`CPU_FAST` (marginal, see below)** |
+| `PointmazeMediumNavigate` | 969 | **2,732** | **2.82** | 37.23 -> **103.11** | **0.362 -> 1.207** | `CPU_FAST` **on this reading only** — the repeat below puts it at 0.925 and back in `CPU_FASTER`+`BELOW_G4` |
 | `AntmazeGiantNavigate` | 250 | 804 | 3.21 | 21.18 -> 68.35 | 0.102 -> 0.314 | `CPU_FASTER`+`BELOW_G4`, unchanged |
 | `HumanoidmazeMediumNavigate` | 137 | 274 | 2.00 | 8.26 -> 16.65 | 0.057 -> 0.102 | `CPU_FASTER`+`BELOW_G4`, unchanged |
 | `DMCReacherHard` | 132 | 121 | 0.92 | 3.62 -> 3.40 | 0.018 -> 0.018 | control |
@@ -2434,7 +2439,8 @@ the same host.
 | `DMCAcrobotSwingup` | 309 | 311 | 1.01 | 8.29 -> 8.28 | 0.042 -> 0.047 | control |
 | `DMCBallInCupCatch` | 58 | 55 | 0.95 | 3.68 -> 3.61 | 0.009 -> 0.007 | control |
 
-Labels are **`{'CPU_FASTER': 8, 'CPU_FAST': 2}`**, from `scratch/step3/certify.py`'s `classify`
+Labels for THIS pair are **`{'CPU_FASTER': 8, 'CPU_FAST': 2}`**, from `scratch/step3/certify.py`'s
+`classify`
 — the same function `report.py` labels the dashboard with — run over this pair out of tree. Not from
 the sweep job: its `certify.py` step was invoked with a `--doc` flag copied from another workstream's
 script, `certify.py` accepts no such flag, and the step **exited 2 without producing anything**. The
@@ -2448,50 +2454,94 @@ certifier's label is taken separately and quoted above.
 0.92-1.13x — inside each shard's own reference spread. A shard pair that moved them would have been
 measuring the node rather than the change, and this is the row-set that says it did not.
 
-## `PointmazeLargeNavigate` and `PointmazeMediumNavigate` (marginal) are the first `CPU_FAST` rows on this path
+## `PointmazeLargeNavigate` is the first `CPU_FAST` row on this path. `PointmazeMediumNavigate` is not.
 
-Plainly: **both cross, and no raycast3d configuration had ever crossed before.**
-`CPU_FAST := S_cpu >= 5 AND cores_cpu >= 1`; `S_cpu` was never the problem on these rows (48 and 37
-at the Step-3 freeze) and `cores_cpu` always was — Step 3 recorded 0.4159 and this workstream's
-ticket 1 put the shortfall at **2.40x**. RAYCAST-2b bought 1.75x of it and stopped at `cores` 0.63;
-RAYCAST-6 buys 4.52x from the integration tree and lands at **2.703**.
+**This section retracts half of what an earlier draft of it claimed**, and the retraction is the
+result of the one repeat shard the coordinator authorized. The first pair (`node2317`, job 6366607)
+put both rows over `cores_cpu >= 1`. The second (`node1946`, job **6368126**) puts
+`PointmazeMediumNavigate` under it.
 
-**`PointmazeMediumNavigate` is `CPU_FAST` (marginal)** and should be cited that way everywhere,
-because its crossing is narrow and the denominator is host-specific rather than a property of the
-renderer. The decisive number is not its `cores_cpu` but how far the decode bar moved **inside one
-job on one node**: between the before and after legs of job 6366607 on `node2317`, the one-core
-JPEG-q90 rate measured for `PointmazeMediumNavigate` fell 2,678 -> 2,264 f/s (**-15 %**) while the
-rate for `PointmazeLargeNavigate` in the same two legs rose 2,054 -> 2,277 (**+11 %**). Same node,
-same job, same image content, a 26-point swing between two rows in opposite directions: the bar is
-noisy at the scale this crossing is being judged at.
+### The two readings, side by side
 
-Its after-fps of 2,732 against the three one-core decode rates this workstream has actually measured
-for that configuration:
+| | first: `node2317`, job 6366607 | second: `node1946`, job 6368126 |
+|---|---|---|
+| node load at start | not recorded (the 23xx block was at 31-48 that afternoon) | **4.2 -> 4.8** |
+| worst paired reference spread | 1.17x | **1.06x** |
+| pre-flight load guard | none | `--max-load 12`, passed |
+| `certifiable` | (no guard) | **true** |
+| `PointmazeLargeNavigate` | 1,361 -> 6,154 f/s (**4.52x**), cores **2.703** | 1,180 -> 5,535 (**4.69x**), cores **2.152** |
+| `PointmazeMediumNavigate` | 969 -> 2,732 f/s (**2.82x**), cores **1.207** | 908 -> 2,479 (**2.73x**), cores **0.925** |
+| `certify.classify` | `CPU_FAST`, `CPU_FAST` | **`CPU_FAST`, `CPU_FASTER`+`BELOW_G4`** |
 
-| decode rate | where it came from | `cores_cpu` |
-|---|---|---:|
-| 2,264 f/s | this shard's own after leg, `node2317` | **1.207** |
-| 2,678 f/s | this shard's own **before** leg, same node, same job | **1.020** |
-| 2,385 f/s | RAYCAST-5's shard, `node2335` | **1.145** |
+**The speed-up reproduces and the tier does not.** 4.52x against 4.69x and 2.82x against 2.73x is
+two independent measurements of the same thing on two nodes. What moved is the DENOMINATOR: the
+after-fps for `PointmazeMediumNavigate` differs by 10 % between nodes (2,732 vs 2,479) while the
+one-core decode rate measured for it differs by 18 % (2,264 vs 2,680), and the bar is the decode
+rate.
 
-**It crosses on all three, and the tightest is 1.02.** The honest statement is that
-`PointmazeMediumNavigate` clears `cores_cpu >= 1` by 2 % in the most conservative reading available
-and by 21 % in its own leg's — a real crossing, **but not one with room in it**, and a node whose
-decode ran 10 % faster would put it back under. Given that the bar moved -15 % between two legs of
-one job, that is not a hypothetical. `PointmazeLargeNavigate` has no such ambiguity: 2.70, 3.00 and
-2.61 on the same three denominators, and it would still clear the bar if the decode rate were twice
-what was measured.
+### `PointmazeMediumNavigate` straddles the bar
 
-**Cite it as `CPU_FAST` (marginal), with the range**, not as `CPU_FAST` unqualified: the tier is
-right and the margin is 2-21 % depending on which of three same-workstream decode measurements is
-used as the denominator.
+Its two certification-grade after-fps readings against the five one-core decode rates this workstream
+has actually measured for that configuration:
 
-**The two that do not cross, and by how much.** `AntmazeGiantNavigate` gains 3.21x and reaches
-`cores` 0.314 — still **3.2x short**. `HumanoidmazeMediumNavigate` gains 2.00x and reaches 0.102 —
-**9.8x short**. Both stay `CPU_FASTER` + `BELOW_G4`. They are cast-bound (`cast` is 90 % of an
-`AntmazeGiantNavigate` composite after the change, on 13 and 19 primitives against Pointmaze's one),
-and the remaining lever for them is RAYCAST-3's compiled CPU cast, which was measured at 12x and
-found necessary-but-not-sufficient there.
+| after fps | `n1946` after 2,680 | `n1946` before 2,430 | `n2317` after 2,264 | `n2317` before 2,678 | `n2335` (R5) 2,385 |
+|---|---:|---:|---:|---:|---:|
+| **2,732** (`node2317`) | 1.019 | 1.124 | **1.207** | 1.020 | 1.145 |
+| **2,479** (`node1946`) | **0.925** | 1.020 | 1.095 | 0.926 | 1.039 |
+
+**Ten combinations, range 0.925 to 1.207, and the bar runs through the middle of it.** Four are under
+1. The lowest is the one where fps and decode were measured in the same leg of the better-conditioned
+job — which is the combination with the strongest claim to being a single coherent measurement, and
+it is the one that says no.
+
+**So: `PointmazeMediumNavigate` is NOT established as `CPU_FAST`.** It is `CPU_FASTER` + `BELOW_G4`
+with `cores_cpu` somewhere around 0.93-1.21 depending on the host, i.e. **at the bar rather than over
+it**, having come from 0.36-0.37. Reporting it as `CPU_FAST` on the strength of the first reading
+alone would have been reporting the node, and the repeat exists because the first draft nearly did.
+
+### `PointmazeLargeNavigate` is not close to the bar and crosses on every combination
+
+| after fps | `n1946` after 2,573 | `n1946` before 2,276 | `n2317` after 2,277 | `n2317` before 2,054 | `n2335` (R5) 2,361 |
+|---|---:|---:|---:|---:|---:|
+| **6,154** (`node2317`) | 2.392 | 2.704 | **2.703** | 2.996 | 2.607 |
+| **5,535** (`node1946`) | **2.151** | 2.432 | 2.431 | 2.695 | 2.344 |
+
+Range **2.151 to 2.996**, every combination over the bar by at least 2.1x, from 0.52-0.66 before.
+`S_cpu` is 250-314 against a bar of 5. **`PointmazeLargeNavigate` is `CPU_FAST`, and it is the first
+`CPU_FAST` row this renderer path has ever had** — Step 3 recorded `cores` 0.4159 for it and ticket 1
+put the shortfall at 2.40x; RAYCAST-2b bought 1.75x and stopped at 0.63; RAYCAST-6 lands at 2.15-2.70
+depending on the host.
+
+### The two that never came close, and by how much
+
+`AntmazeGiantNavigate` gains 3.21x and reaches `cores` 0.314 — still **3.2x short**.
+`HumanoidmazeMediumNavigate` gains 2.00x and reaches 0.102 — **9.8x short**. Both stay `CPU_FASTER` +
+`BELOW_G4`. They are cast-bound (`cast` is 90 % of an `AntmazeGiantNavigate` composite after the
+change and 95 % of a `HumanoidmazeMediumNavigate` one, on 13 and 19 primitives against Pointmaze's
+one), and the remaining lever for them is RAYCAST-3's compiled CPU cast, which was measured at 12x
+and found necessary-but-not-sufficient there.
+
+### What this says about the methodology, which is bigger than this ticket
+
+Two certification shards, both taken by the producer with the interleaved denominator, both inside
+their own reference-spread bound, on two nodes of the same partition, disagree about a TIER. Not
+about the renderer — they agree on the speed-up to within 4 % — but about the bar, because
+`cores_cpu` divides by a one-core JPEG decode rate that is itself a measurement on a shared node and
+moved 18 % between them. That is a property of `cores_cpu` as a metric, not of this change, and it
+will hit any row that lands near 1. **Recommended to the coordinator for Sami's closure packet: a
+row within roughly 25 % of `cores_cpu = 1` should not be labelled from a single shard.** This ticket
+is the second workstream to arrive at that conclusion from its own evidence, after `gfxdraw`'s
+`cpu_shard_attempts.json`.
+
+### Both r6 pairs stay live, and the dashboard is meant to flag them
+
+`sweep/r6_repeat/` sorts after `sweep/r6/`, so `report.py` reads the tier from the repeat — the
+better-conditioned measurement — and will mark **CPU after-legs disagree** on
+`PointmazeMediumNavigate`. That flag is correct and wanted here. It would be trivial to suppress by
+withdrawing one shard, and doing so would publish a tier the evidence does not support; the
+withdrawal mechanism in this directory exists for shards describing a build that no longer exists,
+not for shards that disagree with the answer one would prefer. `PointmazeLargeNavigate` agrees across
+both and raises no flag.
 
 ### The RAYCAST-5 CPU shards are superseded, and moved rather than deleted
 
@@ -2550,6 +2600,7 @@ All mine, all named `se6-raycast3d-*`. No job I did not submit was touched; one 
 | `6366736` | `se6-raycast3d-r6design` | COMPLETED | 00:02:30 | `node2345` | the same, with the recorder fixed; this is the one quoted |
 | `6366853` | `se6-raycast3d-r6gt` | COMPLETED | 00:02:41 | `gpu2116` | the fast-path suite after the cover-compaction case was re-pointed |
 | `6366959` | `se6-raycast3d-r6fin` | COMPLETED | 00:04:28 | `node2349` | identity re-taken on the HEAD that ships, plus `tests/unit` |
+| `6368126` | `se6-raycast3d-r6rpt` | COMPLETED | 00:01:49 | `node1946` | **the authorized repeat shard**, load-guarded, which retracted `PointmazeMediumNavigate`'s tier |
 
 ## Report
 
@@ -2562,7 +2613,11 @@ All mine, all named `se6-raycast3d-*`. No job I did not submit was touched; one 
   unchanged.
 - pixels changed: **no**, on either device, on any of the 21 live configs, the 4 maze2d envs or the
   4 trackcom cells.
-- tiers: `PointmazeLargeNavigate` and `PointmazeMediumNavigate` **`CPU_FASTER` + `BELOW_G4` ->
-  `CPU_FAST`**; everything else unchanged; no GPU tier moves.
+- tiers: **`PointmazeLargeNavigate` `CPU_FASTER` + `BELOW_G4` -> `CPU_FAST`** — the first `CPU_FAST`
+  row on this renderer path, and it crosses on all ten (fps, decode) combinations measured, range
+  2.15-3.00. **`PointmazeMediumNavigate` is NOT claimed**: its two certification shards straddle the
+  bar (`cores_cpu` 1.207 on `node2317`, 0.925 on the quieter `node1946`), so it stays `CPU_FASTER` +
+  `BELOW_G4` at roughly 0.93-1.21, up from 0.36-0.37. `AntmazeGiantNavigate` 0.102 -> 0.314 and
+  `HumanoidmazeMediumNavigate` 0.057 -> 0.102, both still `BELOW_G4`. No GPU tier moves.
 - semantic follow-up recommendation: **none.** The frames are bit-identical, so no downstream metric
   can move.

@@ -1,0 +1,279 @@
+{
+ "schema_version": 1,
+ "step": 6,
+ "shard": "raycast3d-paired-after",
+ "what_this_is": "the frozen Step 3 sweep with the official renderer measured INTERLEAVED with ours instead of in a block after it; same schema, same cells, same decode bar, a denominator that is a median over the whole run",
+ "arm": "after",
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024
+ ],
+ "provenance": {
+  "timestamp": "2026-09-14T11:33:30-0400",
+  "git_commit": "7fa1856fb0adbdf5d4cb9df97797a189b4a9d737",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/raycast3d/stable_envs/__init__.py",
+  "tree_root": "/oscar/scratch/sboughan/se6/raycast3d",
+  "host": "node1946.oscar.ccv.brown.edu",
+  "arch": "x86_64",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "cpu_count_logical": 48,
+  "cpu_count_physical": 48,
+  "python": "3.12.9",
+  "torch": "2.14.0+cu126",
+  "device": "cpu",
+  "torch_threads": 1,
+  "loadavg_start": 4.81,
+  "slurm_job_id": "6368126",
+  "slurm_nodelist": "node1946",
+  "mujoco_gl": "egl",
+  "certification_spec_version": 1,
+  "load_average": [
+   4.81,
+   4.35,
+   4.17
+  ],
+  "load_average_at_end": [
+   5.42,
+   4.55,
+   4.25
+  ],
+  "tree_commit": "7fa1856fb0adbdf5d4cb9df97797a189b4a9d737",
+  "official_renderer_timing": "paired: one reference burst between every batch cell, median of the readings",
+  "reps": 25,
+  "omp_num_threads": "1",
+  "mkl_num_threads": "1",
+  "max_load_policy": "checked",
+  "se6_switches": {
+   "COMPOSITE_COMPACT_MERGE": true,
+   "COVER_COMPACTION": true,
+   "PRIMITIVE_BOUNDS": true,
+   "module": "/oscar/scratch/sboughan/se6/raycast3d/stable_envs/render/raycast3d.py"
+  }
+ },
+ "envs": [
+  {
+   "env": "PointmazeLargeNavigate",
+   "projected_to": [
+    "swm/OGBMaze-v0"
+   ],
+   "device": "cpu",
+   "size": 224,
+   "supersample": 2,
+   "shape": "224x224",
+   "backend": "auto",
+   "renderer_class": "PointmazeLargeNavigate",
+   "reference_id": "ogbench/pointmaze-large-v0",
+   "fidelity_tier": "parity",
+   "state_dim": 2,
+   "states_source": "/oscar/scratch/sboughan/se6/raycast3d/examples/results/step4/states/PointmazeLargeNavigate.npz",
+   "cells": [
+    {
+     "batch": 1,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.002460312098264694,
+     "fps": 406.4524987318964,
+     "cpu_frac": 0.9938131242970929,
+     "loadavg": 5.06,
+     "us_per_frame": 2460.312098264694,
+     "gb_per_s": 0.061182481729114904,
+     "peak_gb": 1.065222144
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.004868119955062866,
+     "fps": 3286.6897586120344,
+     "cpu_frac": 0.9940248832134053,
+     "loadavg": 5.06,
+     "us_per_frame": 304.25749719142914,
+     "gb_per_s": 0.49473883598435237,
+     "peak_gb": 1.065222144
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.012955304235219955,
+     "fps": 4940.061525225417,
+     "cpu_frac": 0.9949291845170423,
+     "loadavg": 5.06,
+     "us_per_frame": 202.4266286753118,
+     "gb_per_s": 0.7436175812691316,
+     "peak_gb": 1.072300032
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.04624855425208807,
+     "fps": 5535.308165626429,
+     "cpu_frac": 0.99597275872009,
+     "loadavg": 5.3,
+     "us_per_frame": 180.65841504721902,
+     "gb_per_s": 0.8332188675554152,
+     "peak_gb": 1.127743488
+    },
+    {
+     "batch": 1024,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.19038941990584135,
+     "fps": 5378.450128722634,
+     "cpu_frac": 0.9965020648150095,
+     "loadavg": 5.28,
+     "us_per_frame": 185.9271678767982,
+     "gb_per_s": 0.8096073409763607,
+     "peak_gb": 1.350422528
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "size": 224,
+    "set_state_render": {
+     "fps": 22.14437620457652,
+     "seconds_per_frame": 0.04515819234471516,
+     "us_per_frame": 45158.192344715164
+    },
+    "paired": {
+     "readings": 6,
+     "fps_median": 22.14437620457652,
+     "fps_min": 21.598989559892587,
+     "fps_max": 22.180431303621354,
+     "spread": 1.0269198585478485
+    }
+   },
+   "decode": {
+    "h": 224,
+    "w": 224,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 9528,
+    "raw_bytes": 150528,
+    "n": 797,
+    "decode_fps_per_core": 2572.5753693835163,
+    "decode_MBps_raw": 387.24462520256196,
+    "load_decode_fps_per_core": 1608.2451025816094
+   }
+  },
+  {
+   "env": "PointmazeMediumNavigate",
+   "projected_to": [
+    "PointmazeMediumNavigate"
+   ],
+   "device": "cpu",
+   "size": 224,
+   "supersample": 2,
+   "shape": "224x224",
+   "backend": "auto",
+   "renderer_class": "PointmazeMediumNavigate",
+   "reference_id": "ogbench/pointmaze-medium-v0",
+   "fidelity_tier": "parity",
+   "state_dim": 2,
+   "states_source": "/oscar/scratch/sboughan/se6/raycast3d/examples/results/step4/states/PointmazeMediumNavigate.npz",
+   "cells": [
+    {
+     "batch": 1,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.0026176534593105316,
+     "fps": 382.0215378178408,
+     "cpu_frac": 0.9937293389553928,
+     "loadavg": 5.49,
+     "us_per_frame": 2617.6534593105316,
+     "gb_per_s": 0.05750493804464394,
+     "peak_gb": 1.448128512
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.008087355643510818,
+     "fps": 1978.396982311292,
+     "cpu_frac": 0.9943973578013079,
+     "loadavg": 5.49,
+     "us_per_frame": 505.45972771942616,
+     "gb_per_s": 0.29780414095335417,
+     "peak_gb": 1.448128512
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.026657966896891594,
+     "fps": 2400.783234803349,
+     "cpu_frac": 0.995578932024122,
+     "loadavg": 5.49,
+     "us_per_frame": 416.53073276393116,
+     "gb_per_s": 0.3613850987684786,
+     "peak_gb": 1.46700288
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.10324905347079039,
+     "fps": 2479.4416161153817,
+     "cpu_frac": 0.9963091761160929,
+     "loadavg": 5.45,
+     "us_per_frame": 403.31661512027495,
+     "gb_per_s": 0.37322538759061624,
+     "peak_gb": 1.553616896
+    },
+    {
+     "batch": 1024,
+     "size": null,
+     "supersample": 2,
+     "seconds_per_batch": 0.5285283885896206,
+     "fps": 1937.4550584360222,
+     "cpu_frac": 0.9965288705689533,
+     "loadavg": 5.42,
+     "us_per_frame": 516.1410044820514,
+     "gb_per_s": 0.29164123503625755,
+     "peak_gb": 1.880776704
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "size": 224,
+    "set_state_render": {
+     "fps": 29.245351310923702,
+     "seconds_per_frame": 0.03419346854029689,
+     "us_per_frame": 34193.46854029689
+    },
+    "paired": {
+     "readings": 6,
+     "fps_median": 29.245351310923702,
+     "fps_min": 29.17968557370996,
+     "fps_max": 29.3626397482581,
+     "spread": 1.0062699159004296
+    }
+   },
+   "decode": {
+    "h": 224,
+    "w": 224,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 8012,
+    "raw_bytes": 150528,
+    "n": 797,
+    "decode_fps_per_core": 2679.594245693073,
+    "decode_MBps_raw": 403.3539626156869,
+    "load_decode_fps_per_core": 1659.2929990570924
+   }
+  }
+ ],
+ "reference_spread_worst": 1.0269198585478485,
+ "certifiable": true,
+ "load_average_at_start": [
+  4.81,
+  4.35,
+  4.17
+ ],
+ "produced_by": "scratch/step6/raycast3d/r6_certify_shard.py wrapping scratch/step6/cpu-3d/certify_shard_cpu3d.py"
+}
