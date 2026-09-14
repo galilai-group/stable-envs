@@ -656,7 +656,7 @@ decisions:
     frozen Step-2 performance contract is fully satisfied where it is not; then prepare the Step-7 launch state and report the remaining registered/default certification blockers separately.'
 integration_verification:
   branch: step6/integration-verify (merged)
-  head: 596b88e (merged)
+  head: 50e1716 (merged)
   verdict: 'FINAL: PASS-WITH-KNOWN-DELTAS on 83bd778 (raster/fetch/trackcom re-measured there; dmc/ogb/swm + 25-config CPU at 43e6bcc with library files byte-identical between the two except the new cpu3d.py
     and added trackcom methods)'
   jobs:
@@ -668,8 +668,9 @@ integration_verification:
   - 6355272
   - 6355274
   cuda_replay: 48/49 digest_ours bit-identical; 49/49 digest_official identical; no config lost a check, all gained one; AntmazeTeleportExplore 0.00024/255 (bake nondeterminism)
-  gate_a: 44 PASS / 3 FAIL / 1 PARTIAL / 1 BLOCKED (from 43/5/1); FAILs = check_resolution_consistency on Cheetah/Hopper/Walker only (held 5402387); DMCHumanoidStand BLOCKED under 3.12 by the provenance
-    gate, PASS under the declared 3.11 pair on CPU
+  gate_a: 'FINAL at 7e0862c, declared arm: 48 PASS / 1 PARTIAL (CraftaxClassic) / 0 BLOCKED / 0 FAIL — all four visual cells PASS under the declared 3.11 pair on BOTH devices in two independently built
+    interpreters (cuda se6-verify-vis311 job 6365966 gpu2109; CPU via cpu3d in se6-verify-tex311 job 6365967 node2320); Walker protocol exact_frac 0.62879 vs floor 0.62395, corpus 0.61854 carried as frozen_corpus;
+    dmc digests 14/14 identical'
   cpu_replay: 33/33 comparable configs byte-identical at 1 thread; six not comparable because the baseline cannot render them (PushT/SimplePointMaze raised; four trackcom cells had no CPU path); trackcom
     four rendered in se-step6 (mujoco_warp not importable) -> Cheetah/Hopper/Humanoid Gate A PASS with visual fidelity MEASURED under 3.11, Walker corpus-downsample FAIL
   gpu_suite: 'all 9 files on f7b07d7; test_fast_paths 348 collected/168 pass/0 fail after hand-merge; test_gfxdraw_classic 80/0; test_gfxdraw_fused needs Box2D (4/4 in se6-gfxdraw-box2d) | job 6355272 on
@@ -694,6 +695,11 @@ integration_verification:
   - tests/gpu/test_reproducibility.py's env fixture calls se.make directly instead of _shared.make_or_skip, turning missing optional packages into 368 errors instead of skips (Step 8).
   - NODE-1 now seen on gpu2108/gpu2110/gpu2113/gpu2116 (4 of 11 3090 nodes), identical on baseline; exclusion list not grown; classified per node.
   - No regression survives comparison with the baseline tree.
+  - 'Assembly rule: certify.py reads the reference version off the shard, so 3.11-certified cells must travel in their own shard (dmcvis.json); copied into the 3.12 document they are BLOCKED by construction
+    — indistinguishable from a real BLOCKED.'
+  - '3.12 arm is interpreter-dependent: texture-fidelity''s certify312_protocol (se-step5: digests d314a7ea/.../1801687, downsample 0.53385/0.62895, no FAIL) vs the verify 3.12 arm in se-step3 (reproduces
+    the frozen digests 1fc511ea/13b88aad; downsample 0.52223/0.61258 -> 3 FAIL). Same node/GPU/driver/versions, stable_envs identical: two different renders. The contract judges these cells under 3.11 where
+    all arms agree PASS x4; ''no FAIL under 3.12'' must not be asserted and certify312_protocol must name its interpreter (se-step5).'
   final_pass: 'ready: scratch/step6/verify/final.sbatch (dmc+ogb+swm shards, trackcom cells under se-step5 paired with se-step3, Gate A, full test_reproducibility, VISIBILITY-1 line) + cpu_verify.sbatch
     with CPUVENV=se-step6 (no mujoco_warp importable) + tests/unit; waiting for RAYCAST-5, cpu-3d, VISIBILITY-1 merges'
 step6_status: CODE COMPLETE 2026-09-15 at integration 83bd778 (+ verification/docs merges). All eight workstreams merged and closed. Remaining items are Sami decisions (see decisions/notes) and Step-8 carry-overs;
