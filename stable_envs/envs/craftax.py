@@ -253,6 +253,85 @@ class _Assets:
         return cls._cache[key]
 
 
+#: Player slot meaning "no player is drawn on this tile". ``player_visible = 0`` and every non-centre
+#: tile both resolve to it, and it is exactly the identity: the reference computes
+#: ``tile*(1 - 0) + player_tex*0``, which is ``tile + 0`` in float32, and so does slot 4.
+NO_PLAYER = N_PLAYER
+#: (player slot, block, mob) composites in the atlas: 5 * 17 * 8.
+N_COMPOSITE = (N_PLAYER + 1) * N_BLOCK * N_MOB
+
+#: Largest tile edge the baked atlas is used at. The atlas holds ``N_COMPOSITE`` tiles, so it costs
+#: ``680 * t*t*3`` bytes as uint8 and four times that as float32 — 522 KiB / 2.0 MiB at the default
+#: 16 px, but 134 MiB / 534 MiB at ``size=256``. Above this edge the atlas stops being a small table
+#: that stays resident and becomes the largest allocation in the process, so ``render`` falls back to
+#: :meth:`CraftaxClassic._render_blend`, which is the pre-bake implementation and is asserted
+#: pixel-identical to the atlas path by ``tests/unit/test_craftax_atlas.py``.
+ATLAS_MAX_TILE_PX = 64
+
+
+class _Composite:
+    """The **composited** tile atlas: every (player slot, block, mob) tile the renderer can draw.
+
+    The frame is a gather and nothing else. The reference — and this env before Step 6 — composited
+    per frame: it gathered the block texture into a ``(B, 7t, 9t, 3)`` float32 buffer, blended the
+    player into the centre tile, then blended a full-frame mob texture and a full-frame mob alpha
+    over all of it, applied the channel gain and rounded. Every one of those steps is a
+    ``B x 7t x 9t x 3`` float32 temporary, and there are about a dozen of them: 2.4 MB of traffic per
+    16 px frame against a 48 KB frame, which is why throughput FELL from 2,006 f/s at B=16 to 774 f/s
+    at B=256 on one Oscar core — at B=16 the temporaries still fit in last-level cache and at B=256
+    they do not.
+
+    None of that work depends on the state. A tile's pixels are a function of exactly three small
+    integers, so the whole composite is a 680-entry table that is built once per (device, tile size)
+    and gathered from thereafter. The arithmetic per tile is the reference's arithmetic in the
+    reference's order, elementwise in float32, so the result is bit-identical rather than close.
+
+    Two forms are kept:
+
+    * ``u8`` — ``round -> clamp -> uint8`` already applied. Usable only when ``channel_gain`` is
+      exactly 1 on every row of the batch, where ``px * 1.0`` is the identity in float32 and the
+      rounding therefore commutes with the gather. This is the default appearance and the certified
+      one, and it lets ``render`` gather straight into the uint8 output with **no float intermediate
+      at all**.
+    * ``f32`` — the pre-rounding composite, built lazily and only when a non-default gain is actually
+      rendered, because the gain multiplies before the rounding and cannot be folded into a uint8
+      table.
+    """
+
+    _cache: dict = {}
+
+    @staticmethod
+    def _build(device: torch.device, t: int) -> torch.Tensor:
+        """``(N_COMPOSITE * t, t * 3)`` float32, row ``slot * t + y``.
+
+        Laid out one *tile row* per row so the gather in :meth:`CraftaxClassic.render` can address a
+        whole output scanline of one tile with a single index and write it where it finally belongs.
+        """
+        block, ptex, palpha, mtex, malpha = _Assets.get(device, t)
+        # player over block -> (5, 17, t, t, 3); slot 4 is the block untouched
+        with_player = block.unsqueeze(0).repeat(N_PLAYER + 1, 1, 1, 1, 1)
+        ap = palpha.view(N_PLAYER, 1, t, t, 3)
+        with_player[:N_PLAYER] = (with_player[:N_PLAYER] * (1 - ap)
+                                  + ptex.view(N_PLAYER, 1, t, t, 3) * ap)
+        # mob over that -> (5, 17, 8, t, t, 3)
+        am = malpha.view(1, 1, N_MOB, t, t, 3)
+        comp = (with_player.unsqueeze(2) * (1 - am)
+                + mtex.view(1, 1, N_MOB, t, t, 3) * am)
+        return comp.reshape(N_COMPOSITE * t, t * 3).contiguous()
+
+    @classmethod
+    def get(cls, device: torch.device, t: int, want_float: bool):
+        """``(f32_or_None, u8)``. ``f32`` is materialised only once a gain path has asked for it."""
+        key = (str(device), int(t))
+        have = cls._cache.get(key)
+        if have is not None and (have[0] is not None or not want_float):
+            return have
+        f32 = cls._build(device, t)
+        u8 = have[1] if have is not None else f32.round().clamp_(0, 255).to(torch.uint8)
+        cls._cache[key] = (f32 if want_float else None, u8)
+        return cls._cache[key]
+
+
 @register
 class CraftaxClassic(StableEnv):
     """Craftax Classic's world layer: a 7x9 block window, the player, and one mob per tile."""
@@ -298,7 +377,21 @@ class CraftaxClassic(StableEnv):
         """``(...,127)`` -> ``(...,7*size,9*size,3)`` uint8, in the reference's compositing order.
 
         There is no ``scene()``: the frame is a gather from a texture atlas with two alpha blends over
-        it, not a rasterisation of vector primitives.
+        it, not a rasterisation of vector primitives — and since Step 6 the two blends are baked into
+        the atlas (:class:`_Composite`) instead of being redone per frame, so at the default
+        appearance the whole render is one ``index_select`` straight into the uint8 output.
+
+        Three things fold into the gather index rather than into a branch, so a batch may hold any
+        mixture of them:
+
+        * ``mobs_visible = 0`` becomes mob id 0, whose alpha table is exactly zero (asserted at build
+          time by ``tests/unit/test_craftax_atlas.py``), which is what scaling the alpha to zero did;
+        * ``player_visible = 0`` becomes player slot :data:`NO_PLAYER`;
+        * every non-centre tile is player slot :data:`NO_PLAYER` too.
+
+        ``channel_gain`` cannot fold in — it multiplies before the rounding — so a batch carrying any
+        gain other than exactly 1 gathers the pre-rounding float composite instead and then applies
+        the gain, which is still one gather and three elementwise passes rather than a dozen.
         """
         s = self._state if states is None else torch.as_tensor(states, device=self.device,
                                                                dtype=torch.float32)
@@ -310,14 +403,64 @@ class CraftaxClassic(StableEnv):
             raise ValueError(
                 f"CraftaxClassic.render: supersample={supersample} is meaningless here — the frame is a "
                 f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate.")
-        block, ptex, palpha, mtex, malpha = _Assets.get(self.device, t)
         sty = self.resolve_style(style, variation, batch=n)
 
-        nb, nm = OBS_H * OBS_W, OBS_H * OBS_W
+        nb = OBS_H * OBS_W
         blk = s[:, :nb].round().remainder(N_BLOCK).long().view(n, OBS_H, OBS_W)
-        mob = s[:, nb:nb + nm].round().remainder(N_MOB).long().view(n, OBS_H, OBS_W)
-        pid = s[:, nb + nm].round().remainder(N_PLAYER).long()
+        mob = s[:, nb:nb + nb].round().remainder(N_MOB).long().view(n, OBS_H, OBS_W)
+        pid = s[:, nb + nb].round().remainder(N_PLAYER).long()
 
+        if t > ATLAS_MAX_TILE_PX:
+            img = self._render_blend(blk, mob, pid, t, sty)
+        else:
+            img = self._render_atlas(blk, mob, pid, t, sty, out)
+        if out is not None and img.data_ptr() != out.data_ptr():
+            out.view(n, OBS_H * t, OBS_W * t, 3).copy_(img)
+            img = out.view(n, OBS_H * t, OBS_W * t, 3)
+        return img.view(*lead, *img.shape[1:]) if lead else img
+
+    def _render_atlas(self, blk, mob, pid, t, sty, out) -> torch.Tensor:
+        """The gather. One ``index_select`` per frame at the default gain, and no float buffer."""
+        n = blk.shape[0]
+        dev = blk.device
+        vis_m = (sty["mobs_visible"] > 0.5).view(n, 1, 1)
+        vis_p = (sty["player_visible"] > 0.5).view(n)
+        m = torch.where(vis_m, mob, torch.zeros_like(mob))
+        slot = torch.full((n, OBS_H, OBS_W), NO_PLAYER, dtype=torch.long, device=dev)
+        cr, cc = OBS_H // 2, OBS_W // 2
+        slot[:, cr, cc] = torch.where(vis_p, pid, torch.full_like(pid, NO_PLAYER))
+        tile = ((slot * N_BLOCK + blk) * N_MOB + m).to(torch.int32)      # (n, H, W)
+
+        # One index entry per (frame, tile row, output scanline within the tile, tile column), which
+        # IS the output's own row order — so the gather writes the final raster directly instead of
+        # building a tile-major buffer and transposing it.
+        rows = (tile.unsqueeze(2) * t
+                + torch.arange(t, dtype=torch.int32, device=dev).view(1, 1, t, 1))
+        rows = rows.reshape(-1)
+
+        gain = sty["channel_gain"]
+        if bool(torch.all(gain == 1.0)):
+            atlas = _Composite.get(dev, t, want_float=False)[1]
+            img = (out.view(n, OBS_H * t, OBS_W * t, 3) if out is not None
+                   else torch.empty(n, OBS_H * t, OBS_W * t, 3, dtype=torch.uint8, device=dev))
+            torch.index_select(atlas, 0, rows, out=img.view(-1, t * 3))
+            return img
+        f32 = _Composite.get(dev, t, want_float=True)[0]
+        px = torch.index_select(f32, 0, rows).view(n, OBS_H * t, OBS_W * t, 3)
+        px = px * gain.to(px.dtype).view(n, 1, 1, 3)
+        return px.round_().clamp_(0, 255).to(torch.uint8)
+
+    def _render_blend(self, blk, mob, pid, t, sty) -> torch.Tensor:
+        """Composite per frame, the way this renderer did before Step 6.
+
+        Kept because the baked atlas costs ``680 * t*t*3`` bytes and stops being a table worth keeping
+        somewhere above :data:`ATLAS_MAX_TILE_PX` (see there). It is the readable definition of what
+        the atlas bakes, and ``tests/unit/test_craftax_atlas.py`` asserts the two agree on every
+        pixel — including the two visibility flags mixed within one batch, out-of-range class ids and
+        a random gain.
+        """
+        n = blk.shape[0]
+        block, ptex, palpha, mtex, malpha = _Assets.get(blk.device, t)
         px = self._tiles_to_frame(block[blk])                              # (n,H*t,W*t,3) float32
 
         # The two visibility flags scale the sprite's own alpha instead of branching, so a batch can
@@ -336,11 +479,7 @@ class CraftaxClassic(StableEnv):
 
         # the reference frame is fractional float32; uint8 is a rounding of it, half-to-even to match
         # numpy, and reference_render rounds the official float the same way
-        img = px.round_().clamp_(0, 255).to(torch.uint8)
-        if out is not None:
-            out.view(n, OBS_H * t, OBS_W * t, 3).copy_(img)
-            img = out.view(n, OBS_H * t, OBS_W * t, 3)
-        return img.view(*lead, *img.shape[1:]) if lead else img
+        return px.round_().clamp_(0, 255).to(torch.uint8)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Random terrain windows with the reference's mob budget respected.
