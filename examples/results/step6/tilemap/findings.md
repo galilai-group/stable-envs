@@ -289,10 +289,25 @@ batch-shared. It is not in this patch because forming that cache key means readi
 host, which is a device→host sync, and that trade needs its own measurement rather than an
 assumption.
 
+On the GPU the same ticket is milder — 1,069,105 f/s at the default appearance against 384,162 f/s
+under a gain at B=4096, 2.8x rather than 21x — because the device has the bandwidth to absorb the
+float frame that the one CPU core does not.
+
+**`TILEMAP-3` — the gather is at about a sixth of the 3090's bandwidth, and there is a kernel in this
+repo that already fixes that shape.** At B=4096 the `index_select` moves ~198 MB out and ~198 MB in
+in 2.595 ms, which is ~153 GB/s on a card that does ~900. The reason is the granularity: one index
+per 48-byte tile row, so each lane copies 48 bytes. `render/tilemap.py:_blit_kernel` — this
+workstream's own module, written for MiniGrid — does exactly this gather in Triton at word
+granularity and measured 1.1 TB/s. Wiring Craftax's composited table into it is the obvious next
+step and is *not* in this patch, because the patch that clears the frozen bar should be the small
+one and a second renderer path needs its own differential test. It would not help the CPU, which is
+where the bar was failing.
+
 **Recorded, smaller:** `render` calls `torch.all(gain == 1.0)` to choose the table — free on the CPU,
 but on CUDA a 3-element reduction plus one synchronisation per render. It cannot be hoisted without
 either caching a boolean against a mutable style tensor's identity or reading the gain to the host,
-both worse than the thing they avoid. Its GPU cost is reported in section 8.
+both worse than the thing they avoid. Its cost is inside the B=1 GPU numbers in section 8, which
+*rose* from 1,487 to 1,892 f/s, so it is not measurable against what it replaced.
 
 **Not a ticket, but worth the coordinator's eye:** the same shape of fix applies to every other
 gather-style env in the repo — `crafter.py`, `griddly.py`, `minihack`, the Jumanji family are all
