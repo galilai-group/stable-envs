@@ -133,10 +133,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raycast3d
   oscar_copy: $SCR/se6/raycast3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: a80284951cff9d92c6753e1eeaf958d020c781d3 (RAYCAST-6, in review)
+  head_sha: 170f09f5ea9c14fe6ed7e25bb1497caa0f750fed (merged; workstream closed)
   agent_model: opus
   wave: wave1
-  status: 'review (RAYCAST-6 PATCH: compacted composite; first CPU_FAST rows)'
+  status: merged (closed)
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
   affected_configs:
@@ -183,7 +183,9 @@ workstreams:
       same-node denominators): DMCFingerSpin CPU_PARITY -> CPU_FASTER (S_cpu 1.95 -> 4.01); DMCBallInCupCatch CPU_PARITY -> CPU_FASTER (1.45 -> 4.74); cores_cpu < 1 everywhere | RAYCAST-6 (job 6366607,
       node2317, 1 thread, paired spread 1.17x): PointmazeLarge 1,361 -> 6,154 fps, S_cpu 314.5, cores 2.703 -> CPU_FAST; PointmazeMedium 969 -> 2,732, cores 1.207 (1.145 / 1.020 on other legs) -> CPU_FAST
       (marginal); AntmazeGiant 0.314; HumanoidmazeMedium 0.102; DMC control rows 0.92-1.13x. Premise corrected: patch merge was 4.7%; N-proportional terms (cast, box averages, ray gather) 72%, ~90% on bound-empty
-      samples (tile=32 vs 14x13 span)'
+      samples (tile=32 vs 14x13 span) | RAYCAST-6 repeat shard (job 6368126, node1946, load 4.2, spread 1.06x): PointmazeLarge 4.69x, cores 2.152 -> CPU_FAST (robust: 2.15-3.00 across all ten fps/decode
+      combinations); PointmazeMedium 2.73x, cores 0.925 -> RETRACTED to CPU_FASTER+BELOW_G4 (0.925-1.207 across ten combinations, four under the bar); one-core decode moved 18% between nodes vs renderer
+      10%'
     gpu_before: DMCBallInCupCatch 3,194.2 fps B=4096; _fk 297 us/env; device util 5.3%
     gpu_after: 'DMCBallInCupCatch 9,956.0 fps B=4096 (3.12x); _fk 94 us/env; util 15.9%; R 38.0, cores 1.67 -> GPU_FAST; DMCFingerSpin 39,152 -> 43,759 | shard: DMCBallInCupCatch GPU_PARITY+BELOW_G4+BATCH_SCALES_FAIL
       -> GPU_FAST+BATCH_SCALES (R 9.4 -> 28.6, cores 0.44 -> 1.39, scaling 19.0x -> 55.9x)'
@@ -206,7 +208,8 @@ workstreams:
       2026-09-15 (fable): window conservativeness holds (same screen_span/bound; per-row shaded set is a superset of every nonzero-contribution pair); off-path AST-identical to old composite; box averages
       untouched; identity logs verified per leg; tiers recomputed (Large cores 2.703, Medium 1.207 with 1.02-1.21 across denominators, decode moved -15%/+11% within one job -> MARGINAL). Required: fuzz
       case exercising the bt gather (a transposed index passed 63/63) + real clamped-window cases; provenance fixes (node2349, pinned-leg switch print, certify CLI --doc, STABLE_ENVS_GIT_COMMIT stamp);
-      label Medium marginal + one repeat shard on a quiet node; README for the superseded r5 shards.'
+      label Medium marginal + one repeat shard on a quiet node; README for the superseded r5 shards. -> APPROVED after changes (170f09f): bt-gather fuzz case (transposition now fails 5/75), real clamped-window
+      cases, provenance corrected, per-leg commit stamping, READMEs; renderer byte-identical across the review round (job 6368356 cuda 21/21, fast paths 223/0).'
   slurm_jobs:
   - 6343543
   - 6343544
@@ -238,6 +241,8 @@ workstreams:
   - 6366736
   - 6366853
   - 6366959
+  - 6368126
+  - 6368356
   notes:
   - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
   - 'FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus
@@ -264,6 +269,9 @@ workstreams:
   - 'RAYCAST-6 delivered 2026-09-15 (a802849): composite-only pure insertion behind COMPOSITE_COMPACT_MERGE (window from the bound, per-row shaded set, merge at covered pixels, uint8 plate gather; box averages
     untouched for association order); bit-identical on 21 CPU/21 cuda/4 maze2d/4 trackcom; fuzz 63 mutation-tested; fast-path case fixed (would have compared the new path with itself); RAYCAST-5 CPU shards
     superseded (build no longer exists). Gap noted: scratch/step6/cpu-3d/compare_frozen.py cannot run (texture frame stacks gone from cluster).'
+  - 'RAYCAST-6 merged 2026-09-15. Retraction recorded in place: PointmazeMedium is AT the bar, not over it. Both r6 and r6_repeat shards kept live so the page flags ''CPU after-legs disagree'' on that row
+    — the flag is correct. Provenance defect found: one STABLE_ENVS_GIT_COMMIT stamped both legs (before leg claimed the after commit); artifacts left as written with the defect documented; wrapper now
+    takes SE6_TREE_COMMIT per leg.'
 - workstream: fetch-gpu
   brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
   branch: step6/fetch-gpu
@@ -708,6 +716,10 @@ decisions:
   decision: 'Methodology escalation for Sami: on shared batch nodes the one-core decode denominator moved -15%/+11% within one job (RAYCAST-6, node2317, load ~40), which decides any cores_cpu ~ 1 call.
     A rule (median of per-leg decodes, or a load cap with pre-flight spread check as gfxdraw certify_shard.py does) is needed before further CPU_FAST labels are asserted; PointmazeMedium is stated as CPU_FAST
     (marginal) pending one repeat on a quiet node.'
+- date: '2026-09-15'
+  by: coordinator
+  decision: 'Methodology (second workstream to reach it from its own evidence): a row within ~25% of cores_cpu = 1 must not be labelled from a single shard; the one-core decode denominator moves 15-18%
+    between legs/nodes on shared batch nodes. For the closure packet PointmazeMediumNavigate is reported as CPU_FASTER at the bar; PointmazeLargeNavigate as CPU_FAST.'
 integration_verification:
   branch: step6/integration-verify (merged)
   head: 237a7cd (merged)
