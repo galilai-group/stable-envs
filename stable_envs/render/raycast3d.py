@@ -642,6 +642,16 @@ def cast_nearest_torch(kinds, sizes, pos, R, o, d):
     """
     if not PRIMITIVE_BOUNDS:
         return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
+    # NOTHING IN THIS CALL IS BOUNDED -> there is no bound to take, so take the definition. This is
+    # the SAME table as below, read once at the call instead of once per primitive; it adds no
+    # constant and no second predicate. Without it a scene of unbounded kinds still pays the
+    # preamble -- ``_dot(d, d)`` over the whole bundle plus a full reduction in ``_unit_rays`` -- for
+    # a loop that then bounds nothing. On the Pointmaze rows (one SPHERE, 200,704 rays, ss=2) that
+    # preamble alone measured 0.91-0.98x with the ray-primitive test COUNT identical in both legs,
+    # which is what identified it: identical counts mean identical work in the loop, so the whole
+    # difference was arithmetic done before it.
+    if not any(_kind_is_bounded(int(x)) for x in kinds):
+        return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
     B, N = o.shape[0], o.shape[1]
     best = torch.full((B, N), INF, device=o.device, dtype=o.dtype)
     # (B,N,3) explicitly rather than ``zeros_like(o)``: ``o`` arrives expanded from one origin, and
@@ -697,6 +707,16 @@ def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
     so ``hit`` is False and ``blocked |= hit`` leaves it alone.
     """
     if not PRIMITIVE_BOUNDS:
+        return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
+    # NOTHING IN THIS CALL IS BOUNDED -> there is no bound to take, so take the definition. This is
+    # the SAME table as below, read once at the call instead of once per primitive; it adds no
+    # constant and no second predicate. Without it a scene of unbounded kinds still pays the
+    # preamble -- ``_dot(d, d)`` over the whole bundle plus a full reduction in ``_unit_rays`` -- for
+    # a loop that then bounds nothing. On the Pointmaze rows (one SPHERE, 200,704 rays, ss=2) that
+    # preamble alone measured 0.91-0.98x with the ray-primitive test COUNT identical in both legs,
+    # which is what identified it: identical counts mean identical work in the loop, so the whole
+    # difference was arithmetic done before it.
+    if not any(_kind_is_bounded(int(x)) for x in kinds):
         return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
     B, N = o.shape[0], o.shape[1]
     blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)

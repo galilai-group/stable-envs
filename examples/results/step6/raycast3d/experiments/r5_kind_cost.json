@@ -7,8 +7,8 @@
  "slurm_job": "6352389",
  "torch": "2.14.0+cu126",
  "numpy": "2.5.3",
- "stable_envs_from": "/oscar/scratch/sboughan/se6/raycast3d/stable_envs/__init__.py",
- "pythonpath": "/oscar/scratch/sboughan/se6/raycast3d",
+ "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+ "pythonpath": "$SCR/se6/raycast3d",
  "rows": [
   {
    "batch": 1,

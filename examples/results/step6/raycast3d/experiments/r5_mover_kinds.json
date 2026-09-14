@@ -1,8 +1,8 @@
 {
  "tool": "r5_mover_kinds",
- "host": "node2333.oscar.ccv.brown.edu",
- "slurm_job": "6353140",
- "stable_envs_from": "/oscar/scratch/sboughan/se6/raycast3d/stable_envs/__init__.py",
+ "host": "node2335.oscar.ccv.brown.edu",
+ "slurm_job": "6353212",
+ "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
  "bounded_kinds": [
   "BOX",
   "CAPSULE",
@@ -10,67 +10,235 @@
  ],
  "configs": {
   "AntmazeGiantNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 12,
+     "SPHERE": 1
+    },
+    "total": 13,
+    "bounded": 12,
+    "unbounded": 1
+   }
   },
   "AntmazeLargeExplore": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 12,
+     "SPHERE": 1
+    },
+    "total": 13,
+    "bounded": 12,
+    "unbounded": 1
+   }
   },
   "AntmazeMediumExplore": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 12,
+     "SPHERE": 1
+    },
+    "total": 13,
+    "bounded": 12,
+    "unbounded": 1
+   }
   },
   "AntmazeTeleportExplore": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 12,
+     "SPHERE": 1
+    },
+    "total": 13,
+    "bounded": 12,
+    "unbounded": 1
+   }
   },
   "HumanoidmazeGiantNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 16,
+     "SPHERE": 3
+    },
+    "total": 19,
+    "bounded": 16,
+    "unbounded": 3
+   }
   },
   "HumanoidmazeLargeNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 16,
+     "SPHERE": 3
+    },
+    "total": 19,
+    "bounded": 16,
+    "unbounded": 3
+   }
   },
   "HumanoidmazeMediumNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "CAPSULE": 16,
+     "SPHERE": 3
+    },
+    "total": 19,
+    "bounded": 16,
+    "unbounded": 3
+   }
   },
   "PointmazeGiantNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "SPHERE": 1
+    },
+    "total": 1,
+    "bounded": 0,
+    "unbounded": 1
+   }
   },
   "PointmazeLargeNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "SPHERE": 1
+    },
+    "total": 1,
+    "bounded": 0,
+    "unbounded": 1
+   }
   },
   "PointmazeMediumNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "SPHERE": 1
+    },
+    "total": 1,
+    "bounded": 0,
+    "unbounded": 1
+   }
   },
   "PointmazeTeleportNavigate": {
-   "error": "no scene.prims after bake"
+   "prims_base": {
+    "kinds": {
+     "SPHERE": 1
+    },
+    "total": 1,
+    "bounded": 0,
+    "unbounded": 1
+   }
   },
   "DMCAcrobotSwingup": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 2,
+     "CYLINDER": 1,
+     "SPHERE": 1
+    },
+    "total": 4,
+    "bounded": 3,
+    "unbounded": 1
+   }
   },
   "DMCBallInCupCatch": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 33,
+     "SPHERE": 3
+    },
+    "total": 36,
+    "bounded": 33,
+    "unbounded": 3
+   }
   },
   "DMCCartpoleBalance": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "BOX": 1,
+     "CAPSULE": 1
+    },
+    "total": 2,
+    "bounded": 2,
+    "unbounded": 0
+   }
   },
   "DMCCartpoleSwingup": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "BOX": 1,
+     "CAPSULE": 1
+    },
+    "total": 2,
+    "bounded": 2,
+    "unbounded": 0
+   }
   },
   "DMCFingerSpin": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 5,
+     "CYLINDER": 2
+    },
+    "total": 7,
+    "bounded": 7,
+    "unbounded": 0
+   }
   },
   "DMCFingerTurnEasy": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 5,
+     "CYLINDER": 2,
+     "SPHERE": 2
+    },
+    "total": 9,
+    "bounded": 7,
+    "unbounded": 2
+   }
   },
   "DMCFingerTurnHard": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 5,
+     "CYLINDER": 2,
+     "SPHERE": 2
+    },
+    "total": 9,
+    "bounded": 7,
+    "unbounded": 2
+   }
   },
   "DMCPendulumSwingup": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 1,
+     "CYLINDER": 1,
+     "SPHERE": 1
+    },
+    "total": 3,
+    "bounded": 2,
+    "unbounded": 1
+   }
   },
   "DMCReacherEasy": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 2,
+     "SPHERE": 2
+    },
+    "total": 4,
+    "bounded": 2,
+    "unbounded": 2
+   }
   },
   "DMCReacherHard": {
-   "error": "no scene.prims after bake"
+   "prims": {
+    "kinds": {
+     "CAPSULE": 2,
+     "SPHERE": 2
+    },
+    "total": 4,
+    "bounded": 2,
+    "unbounded": 2
+   }
   }
  }
 }
