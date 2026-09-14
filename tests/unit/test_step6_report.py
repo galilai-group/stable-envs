@@ -70,15 +70,81 @@ def test_every_frozen_configuration_is_in_the_summary(report):
         f"counts below the table are sums over an incomplete corpus: {missing}")
 
 
-def test_the_section_25_counts_are_present_and_are_out_of_the_corpus(report):
-    """The four counts section 25 names, each denominated in the frozen corpus."""
-    n = len(json.loads(STEP4.read_text())["configs"])
-    for label in ("covered configs Gate-A pass", "covered configs CPU_FAST+",
-                  "covered configs GPU_FAST+", "remaining blockers"):
-        m = re.search(re.escape(label) + r"\s*\|\s*(\d+) / (\d+)", report)
-        assert m, f"the page does not report a count for {label!r}"
-        assert int(m.group(2)) == n, f"{label} is counted out of {m.group(2)}, not the corpus's {n}"
-        assert int(m.group(1)) <= n, f"{label} exceeds the size of the corpus"
+def _counts(report: str) -> dict[str, tuple[int, int]]:
+    out = {}
+    for label, a, b in re.findall(r"\| ([^|]+?)\s*\|\s*(\d+) / (\d+)\s*\|", report):
+        out[label.strip()] = (int(a), int(b))
+    return out
+
+
+def test_correctness_is_counted_over_all_49_and_performance_over_the_registered_defaults(report):
+    """The scope split Sami decided on 2026-09-15, asserted as arithmetic.
+
+    Step 2 §4.2 puts certification on the registered SWM default and §12.2 puts `ENVIRONMENT_DONE`
+    there too, so a render-parameter-space cell owes correctness and owes no tier. Counting the 13 of
+    them as performance blockers — which this page did until the decision — invents an obligation the
+    frozen contract never wrote down, and inflates the remaining work by a third.
+    """
+    configs = json.loads(STEP4.read_text())["configs"]
+    n = len(configs)
+    m = sum(1 for c in configs.values() if c.get("role") == "registered_default")
+    assert 0 < m < n, "the corpus no longer has both registered-default and other roles"
+    c = _counts(report)
+
+    assert c["Gate-A pass"][1] == n, "Gate A must be counted over every render-distinct cell"
+    for label in ("registered/default CPU_FAST+", "registered/default GPU_FAST+",
+                  "registered/default rows with CPU missing",
+                  "registered/default rows below the GPU target",
+                  "remaining registered/default blockers"):
+        assert label in c, f"the summary does not report {label!r}"
+        assert c[label][1] == m, (
+            f"{label} is counted out of {c[label][1]}, not the {m} registered/default rows; "
+            f"performance completion is owed only on the registered SWM default")
+        assert c[label][0] <= m
+
+
+def test_no_parameter_space_cell_is_counted_as_a_performance_blocker(report):
+    """The 13 must appear — with their Gate A and their replay identity — and never as a blocker."""
+    configs = json.loads(STEP4.read_text())["configs"]
+    others = [k for k, v in configs.items() if v.get("role") != "registered_default"]
+    assert others, "no non-registered-default cells in the corpus"
+    section = report.split("Each remaining blocker", 1)[-1].split("## ", 1)[0]
+    named = [c for c in others if f"`{c}`" in section]
+    assert not named, (
+        f"parameter-space cells are listed as remaining performance blockers: {named}; the frozen "
+        f"contract asks them for no tier")
+    assert "not required by the frozen contract" in report, (
+        "the parameter-space table must say that performance is not owed there")
+    for c in others:
+        assert f"`{c}`" in report
+
+
+def test_the_performance_bar_is_read_from_the_frozen_spec_not_restated():
+    """`CPU_FAST` / `GPU_FAST` must come out of `scratch/certification.json`, not out of this page."""
+    spec = importlib.util.spec_from_file_location("step6_report_bar", GEN)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    bar = mod.spec_bar()["min"]
+    frozen = json.loads((ROOT / "scratch" / "certification.json").read_text())
+    assert bar == frozen["ladder"]["environment_done_min_tiers"]
+    src = GEN.read_text()
+    assert 'CPU_OK = (' not in src and 'GPU_OK = (' not in src, (
+        "the generator carries its own copy of the tier bar; it must read the frozen one")
+
+
+def test_the_deferred_work_and_demonstrated_blocker_sections_exist(report):
+    """Remaining work must never read as exhausted.
+
+    A blocker table with no deferred-work section beside it turns "not funded" into "impossible".
+    The section is present whether or not the dashboard has populated the field — an empty field is
+    reported as an empty field, with the candidates the notes still name.
+    """
+    assert "## Deferred possible work" in report
+    assert "## Demonstrated blockers" in report
+    tail = report.split("## Deferred possible work", 1)[1]
+    assert ("dashboard records no `deferred_work` entries" in tail
+            or re.search(r"\|\s*deferred\s*\|", tail)), (
+        "the deferred-work section neither lists entries nor says the field is empty")
 
 
 def test_no_cluster_path_reaches_the_page(report):
