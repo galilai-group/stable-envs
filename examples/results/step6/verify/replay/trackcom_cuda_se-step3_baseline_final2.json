@@ -1,0 +1,146 @@
+{
+  "host": "gpu2106.oscar.ccv.brown.edu",
+  "device": "cuda",
+  "slurm_job": "6359331",
+  "code_root": "/oscar/scratch/sboughan/se6/baseline",
+  "configs": {
+    "DMCCheetahRun": {
+      "config": "DMCCheetahRun",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCheetahRun.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.24217199900794,
+      "digest_ours_default_style": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+      "frozen": {
+        "digest_ours": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+        "digest_ours_default_style": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCCheetahRun.npy"
+    },
+    "DMCHopperHop": {
+      "config": "DMCHopperHop",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCHopperHop.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.301793243339,
+      "digest_ours_default_style": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+      "frozen": {
+        "digest_ours": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+        "digest_ours_default_style": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCHopperHop.npy"
+    },
+    "DMCHumanoidStand": {
+      "config": "DMCHumanoidStand",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCHumanoidStand.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 63.22497549366969,
+      "digest_ours_default_style": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+      "frozen": {
+        "digest_ours": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+        "digest_ours_default_style": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCHumanoidStand.npy"
+    },
+    "DMCWalkerWalk": {
+      "config": "DMCWalkerWalk",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/baseline/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCWalkerWalk.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 71.22600298800076,
+      "digest_ours_default_style": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+      "frozen": {
+        "digest_ours": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+        "digest_ours_default_style": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCWalkerWalk.npy"
+    }
+  },
+  "summary": {
+    "pass": 4,
+    "fail": 0,
+    "error": 0,
+    "total": 4
+  }
+}

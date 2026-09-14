@@ -44,11 +44,18 @@ for S in ${SHARDS:-"dmc ogb swm"}; do
 done
 
 # ---- 2. the four trackcom cells again under se-step5, the venv the coordinator named ----------
+# TRACKCOM=0 skips this leg. The cells' CPU backend arrives with cpu-3d, so the paired se-step5 /
+# se-step3 arm is only worth taking once that is merged; run before it, the pair would describe a
+# tree that is about to change under exactly these four cells.
+if [ "${TRACKCOM:-1}" = 1 ]; then
 PYTHONPATH=$TREE $SCR/venvs/se-step5/bin/python examples/fidelity_step4.py \
     --configs DMCCheetahRun,DMCHopperHop,DMCHumanoidStand,DMCWalkerWalk --device cuda \
     --states-dir "$TREE/examples/results/step4/states" \
     --out "$OUT/trackcom_step5venv${TAG}.json" 2>&1 | tail -20
 echo "TRACKCOM_STEP5 rc=$?"
+else
+  echo "TRACKCOM leg skipped (TRACKCOM=0): the cpu-3d backend for these four cells is not merged yet"
+fi
 
 # ---- 3. Gate A over the three shards ----------------------------------------------------------
 CDIR=$OUT/certify${TAG}

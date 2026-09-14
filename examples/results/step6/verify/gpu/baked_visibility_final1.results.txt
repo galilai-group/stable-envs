@@ -1,0 +1,12 @@
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCAcrobotSwingup] SKIPPED [  9%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCBallInCupCatch] SKIPPED [ 18%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCCartpoleBalance] SKIPPED [ 27%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCCartpoleSwingup] SKIPPED [ 36%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCFingerSpin] SKIPPED [ 45%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCFingerTurnEasy] PASSED [ 54%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCFingerTurnHard] PASSED [ 63%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCPendulumSwingup] SKIPPED [ 72%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCPointMassEasy] SKIPPED [ 81%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCReacherEasy] PASSED [ 90%]
+tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[DMCReacherHard] PASSED [100%]
+========= 4 passed, 7 skipped, 2029 deselected, 392 warnings in 8.71s ==========
