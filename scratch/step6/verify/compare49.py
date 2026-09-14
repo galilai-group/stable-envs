@@ -113,13 +113,22 @@ def row(cid, frozen, replay):
     if d["pixel_changed"] and cid not in KNOWN_PIXEL_MOVERS:
         unexplained.append("default-appearance pixels moved")
     for k, v in moved.items():
-        # measured -> anything is a loss of a number; anything -> measured is a gain and is fine.
-        if not v.endswith("->measured") and not known:
+        # Only the LOSS of a number is a finding. A check that the frozen run measured and this one
+        # did not is a number that went missing; a check that did not exist in the frozen run at all
+        # (``None->...``, e.g. reacher-correctness's new check_task_object_visibility) is coverage
+        # this branch ADDED, and a check that went anything->measured is coverage it recovered.
+        if v.startswith("None->") or v.endswith("->measured"):
+            continue
+        if not known:
             unexplained.append(f"{k} {v}")
     if d["official_changed"] and not known:
         unexplained.append("digest_official moved")
     d["unexplained"] = unexplained
-    if not unexplained and not d["pixel_changed"] and not moved and not d["declaration_changed"]:
+    gained = {k for k, v in moved.items() if v.startswith("None->")}
+    d["checks_gained"] = sorted(gained)
+    d["checks_lost"] = {k: v for k, v in moved.items() if k not in gained}
+    if (not unexplained and not d["pixel_changed"] and not d["checks_lost"]
+            and not d["declaration_changed"]):
         d["verdict"] = "identical"
     elif not unexplained:
         d["verdict"] = "expected-known" if known else "declaration/style only"
@@ -180,8 +189,10 @@ def main() -> None:
             of="identical" if not d["official_changed"] else "CHANGED",
             sy="-" if not d["style_changed"] else ",".join(d["style_changed"]),
             dc="changed" if d["declaration_changed"] else "-",
-            ck=("%d/%d identical" % (d["checks_total_replay"], d["checks_total_frozen"]))
-               if d["checks_identical"] else "; ".join(f"{k} {v}" for k, v in d["checks_moved"].items()),
+            ck=("%d/%d identical" % (d["checks_total_frozen"], d["checks_total_frozen"])
+                + (f" +{len(d['checks_gained'])} new" if d["checks_gained"] else ""))
+               if not d["checks_lost"]
+               else "; ".join(f"{k} {v}" for k, v in d["checks_lost"].items()),
             ga=f"{d['gate_a_frozen']}->{d['gate_a_replay']}",
             v=d["verdict"]))
     if missing:
