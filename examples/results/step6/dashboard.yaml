@@ -304,10 +304,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raster2d
   oscar_copy: $SCR/se6/raster2d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: cc01fa70b7de1a4687a90261b5eb8794add36da4 (SWMNAV-2, in review)
+  head_sha: e86b40b618b67884591055fe58f109fdaaa86214 (merged; workstream closed)
   agent_model: opus
   wave: wave2
-  status: implementation (SWMNAV-2 review changes + one bounded exactness-preserving attempt SWMNAV-2b)
+  status: merged (closed)
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts'
   affected_configs:
@@ -336,7 +336,9 @@ workstreams:
     gpu_before: PushT 1.93M fps, SPM 43.7k (3090)
     gpu_after: 'cuda paths run the replaced arithmetic; same-process interleaved A/B (job 6353691, 3090): worst 0.979 (Piecewise B=1), 0.99-1.00 elsewhere, frames identical; PushT/SPM unchanged | SWMNAV-2
       (job 6366231, 3090, paired): TwoRoom 39,631 -> 66,821 (R 129.8, cores 19.7), TwoRoomTarget 23,781 -> 47,351 (R 123.7), Piecewise 54,697 -> 125,431 (R 199.2), PiecewiseZones 46,868 -> 91,365 (R 210.7);
-      BATCH_SCALES 57-77x, NLBR 1.03-1.14; class-R bar 500 not reached (2.4-4.0x short); residual = env-specific base_image torch ops (18-58% of render)'
+      BATCH_SCALES 57-77x, NLBR 1.03-1.14; class-R bar 500 not reached (2.4-4.0x short); residual = env-specific base_image torch ops (18-58% of render) | SWMNAV-2b (job 6366951, gpu2105, paired, window-restricted
+      both passes): TwoRoom 96,142 (R 183.7, cores 29.7), TwoRoomTarget 84,746 (R 221.2), Piecewise 295,526 (R 439.9, cores 94.1), PiecewiseZones 156,017 (R 360.6); totals 2.43x/3.56x/5.40x/3.33x vs Step-6
+      entry; BATCH_SCALES 139-244x, NLBR 1.04-1.40; none reaches 500 -> GPU_FASTER; base_image now 84/75/36/70% of render (deferred, not authorized)'
     batch_scales: n/a
     no_large_batch_regression: unchanged
   pixels_changed: 'no'
@@ -367,6 +369,7 @@ workstreams:
   - 6365727
   - 6366231
   - 6366562
+  - 6366951
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d).'
@@ -378,6 +381,9 @@ workstreams:
   - 'SWMNAV-2 delivered 2026-09-15: mechanism was ~1.76 GB of float temporaries per 256-frame chunk, not launches; four bit-exactness knobs (fp fusion off, div_rn, quantise-between-blends, widen AFTER the
     float32 division) verified over 4.19M arguments; fuzz 1,200 cases byte-identical; frozen replay identical. First fuzz run raised a generator-device error yet the job reported success (caught by log
     reading; re-run 6366562). Next lever would be a per-family base-image kernel — NOT authorized (no broad campaign).'
+  - 'SWMNAV-2b + review changes merged 2026-09-15: one window definition (navdot.dot_window) shared by kernel and CPU path; fuzz 1,600 cases identical; per-row-style pytest via env.blend_dots; provenance
+    note (artifacts stamped parent cc02ff7, md5-identical to 6a47b59; float_temp_mib is a formula/undercount); NaN-state divergence recorded (torch -> 0, kernel -> base pixel; unreachable from step). Stopped
+    per Sami: base-image kernel not authorized.'
 - workstream: gfxdraw
   brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
   branch: step6/gfxdraw
@@ -734,6 +740,9 @@ deferred_work:
 - item: MJWarp trackcom gl_rounding capture scope
   reason: GPU frames of Cheetah/Hopper/Walker/Humanoid are truncated, not rounded; one-line fix moves four frozen cuda digests
   status: deferred (Step 8 re-freeze)
+- item: swm_nav per-family base-image kernel (or a predicate IR the fused kernel interprets)
+  reason: after SWMNAV-2b the base image is 36-84% of the render and R is 184-440 vs 500; Piecewise (smallest base share) is at 88% of the bar
+  status: deferred
 report_generator:
   branch: step6/report (merged through b81f3e8)
   scope: correctness over all 49; performance completion over the 36 registered/default rows per Step 2 §4.2/§12.2 (bar read live from scratch/certification.json ladder.environment_done_min_tiers); parameter-space
