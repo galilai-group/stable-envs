@@ -133,10 +133,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raycast3d
   oscar_copy: $SCR/se6/raycast3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 6802559 (merged)
+  head_sha: a80284951cff9d92c6753e1eeaf958d020c781d3 (RAYCAST-6, in review)
   agent_model: opus
   wave: wave1
-  status: reopened for RAYCAST-6 (Pointmaze composite rewrite, Sami 2026-09-15)
+  status: 'review (RAYCAST-6 PATCH: compacted composite; first CPU_FAST rows)'
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
   affected_configs:
@@ -180,7 +180,10 @@ workstreams:
     cpu_after: 'PointmazeLarge 1,501.1 fps (1.75x); Medium 1.28x; Antmaze 1.03x; Humanoidmaze 1.07x -> CPU_FAST NOT reached (needed 2.40x; cores ~0.73); legged rows need fused CPU cast (RAYCAST-3) | RAYCAST-5
       (per-kind table from job 6352389: SPHERE 0.45-0.83x bound cost -> unbounded; BOX/CYLINDER/CAPSULE 1.8-3.7x -> bounded; margin 1.227 from 7.6% rsd; census 6353212: all Pointmaze cast one SPHERE; early
       return when no bounded kind): Pointmaze 1.01-1.06x; interleaved acceptance job 6354150: all rows pass at every certifiable batch; off-vs-off noise 11.7%. Step-3-shaped shards (bench_step3 itself,
-      same-node denominators): DMCFingerSpin CPU_PARITY -> CPU_FASTER (S_cpu 1.95 -> 4.01); DMCBallInCupCatch CPU_PARITY -> CPU_FASTER (1.45 -> 4.74); cores_cpu < 1 everywhere'
+      same-node denominators): DMCFingerSpin CPU_PARITY -> CPU_FASTER (S_cpu 1.95 -> 4.01); DMCBallInCupCatch CPU_PARITY -> CPU_FASTER (1.45 -> 4.74); cores_cpu < 1 everywhere | RAYCAST-6 (job 6366607,
+      node2317, 1 thread, paired spread 1.17x): PointmazeLarge 1,361 -> 6,154 fps, S_cpu 314.5, cores 2.703 -> CPU_FAST; PointmazeMedium 969 -> 2,732, cores 1.207 (1.145 / 1.020 on other legs) -> CPU_FAST
+      (marginal); AntmazeGiant 0.314; HumanoidmazeMedium 0.102; DMC control rows 0.92-1.13x. Premise corrected: patch merge was 4.7%; N-proportional terms (cast, box averages, ray gather) 72%, ~90% on bound-empty
+      samples (tile=32 vs 14x13 span)'
     gpu_before: DMCBallInCupCatch 3,194.2 fps B=4096; _fk 297 us/env; device util 5.3%
     gpu_after: 'DMCBallInCupCatch 9,956.0 fps B=4096 (3.12x); _fk 94 us/env; util 15.9%; R 38.0, cores 1.67 -> GPU_FAST; DMCFingerSpin 39,152 -> 43,759 | shard: DMCBallInCupCatch GPU_PARITY+BELOW_G4+BATCH_SCALES_FAIL
       -> GPU_FAST+BATCH_SCALES (R 9.4 -> 28.6, cores 0.44 -> 1.39, scaling 19.0x -> 55.9x)'
@@ -221,6 +224,16 @@ workstreams:
   - 6354150
   - 6355332
   - 6355333
+  - 6365780
+  - 6365965
+  - 6366546
+  - 6366547
+  - 6366548
+  - 6366607
+  - 6366608
+  - 6366736
+  - 6366853
+  - 6366959
   notes:
   - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
   - 'FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus
@@ -244,6 +257,9 @@ workstreams:
     change (compiled cast, cpu3d) must re-check. The 0.97 acceptance bar is a coordinator decision (recorded here).'
   - Merged 2026-09-15. The 1+3*rsd margin rule was shown load-dependent (1.23 -> 1.75 on a busy node) and replaced by the necessary condition itself. A results pull re-materialised the renamed control shard
     once; removed at both ends (second pull-overwrite incident after findings.md).
+  - 'RAYCAST-6 delivered 2026-09-15 (a802849): composite-only pure insertion behind COMPOSITE_COMPACT_MERGE (window from the bound, per-row shaded set, merge at covered pixels, uint8 plate gather; box averages
+    untouched for association order); bit-identical on 21 CPU/21 cuda/4 maze2d/4 trackcom; fuzz 63 mutation-tested; fast-path case fixed (would have compared the new path with itself); RAYCAST-5 CPU shards
+    superseded (build no longer exists). Gap noted: scratch/step6/cpu-3d/compare_frozen.py cannot run (texture frame stacks gone from cluster).'
 - workstream: fetch-gpu
   brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
   branch: step6/fetch-gpu
