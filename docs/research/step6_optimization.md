@@ -11,13 +11,13 @@ the disagreement is listed under *Where the dashboard and the artifacts disagree
 | —                                    | value                                      | read from                                                                                                                       |
 |--------------------------------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | baseline SHA                         | `89fa5ca81341dc4df7186ec325cb691431a2ef17` | `dashboard.yaml: baseline_sha`                                                                                                  |
-| integration SHA                      | `44487d94849baf784aa2e29a62b3f1d0bd3958c7` | `git rev-parse HEAD` in this tree (`step6/integration`) when the page was generated; the commit that adds the page is its child |
+| integration SHA                      | `d01dc2d061ae8b27e9cfa2cd029792b16b820b76` | `git rev-parse HEAD` in this tree (`step6/integration`) when the page was generated; the commit that adds the page is its child |
 | integration branch                   | `step6/integration`                        | `dashboard.yaml`                                                                                                                |
 | baseline ancestry                    | the baseline is an ancestor of this tree   | `git merge-base --is-ancestor`                                                                                                  |
 | workstreams                          | 8                                          | `dashboard.yaml: workstreams`                                                                                                   |
 | workstreams with code on this branch | 6 of 8                                     | `git log --merges`                                                                                                              |
 | workstreams whose status says merged | 4 of 8                                     | `dashboard.yaml: status`                                                                                                        |
-| merge commits on this branch         | 7                                          | `git log --merges`                                                                                                              |
+| merge commits on this branch         | 8                                          | `git log --merges`                                                                                                              |
 
 ## Workstreams
 
@@ -25,16 +25,16 @@ One row per workstream, in the fields section 19 defines. `merge commit` is read
 `git log --merges` on this branch rather than from the dashboard, so a workstream that reports
 itself merged and has no merge commit here becomes a flagged disagreement rather than a claim.
 
-| workstream            | status           | model | authorization                | configs | pixels | semantic | reviewer            | merge commit |
-|-----------------------|------------------|-------|------------------------------|---------|--------|----------|---------------------|--------------|
-| `texture-fidelity`    | merged           | fable | diagnosis                    | 3       | no     | none     | opus (independent)  | `d8d8873`    |
-| `reacher-correctness` | merged           | opus  | correctness                  | 4       | no     | none     | fable (independent) | `3067ee8`    |
-| `raycast3d`           | implementation   | opus  | PROFILE ONLY                 | 21      | no     | none     | fable (independent) | `43feb0d`    |
-| `fetch-gpu`           | blocked          | opus  | PROFILE ONLY                 | 12      | no     | none     | —                   | —            |
-| `raster2d`            | partially merged | opus  | PROFILE FIRST                | 6       | no     | none     | fable (independent) | `fffe031`    |
-| `gfxdraw`             | merged           | opus  | PROFILE FIRST                | 5       | no     | none     | fable (independent) | `62558d5`    |
-| `cpu-3d`              | finding          | fable | DESIGN/CHARACTERIZATION ONLY | 16      | no     | none     | —                   | —            |
-| `tilemap`             | merged           | opus  | per brief                    | 1       | no     | none     | fable (independent) | `0eb1ebb`    |
+| workstream            | status           | model | authorization                | configs | pixels | semantic | reviewer            | merge commit         |
+|-----------------------|------------------|-------|------------------------------|---------|--------|----------|---------------------|----------------------|
+| `texture-fidelity`    | merged           | fable | diagnosis                    | 3       | no     | none     | opus (independent)  | `d8d8873`            |
+| `reacher-correctness` | merged           | opus  | correctness                  | 4       | no     | none     | fable (independent) | `3067ee8`            |
+| `raycast3d`           | implementation   | opus  | PROFILE ONLY                 | 21      | no     | none     | fable (independent) | `43feb0d`            |
+| `fetch-gpu`           | blocked          | opus  | PROFILE ONLY                 | 12      | no     | none     | —                   | —                    |
+| `raster2d`            | partially merged | opus  | PROFILE FIRST                | 6       | no     | none     | fable (independent) | `fffe031`            |
+| `gfxdraw`             | merged           | opus  | PROFILE FIRST                | 5       | no     | none     | fable (independent) | `d01dc2d`, `62558d5` |
+| `cpu-3d`              | finding          | fable | DESIGN/CHARACTERIZATION ONLY | 16      | no     | none     | —                   | —                    |
+| `tilemap`             | merged           | opus  | per brief                    | 1       | no     | none     | fable (independent) | `0eb1ebb`            |
 
 ## The 49 frozen configurations after Step 6
 
@@ -56,72 +56,71 @@ content of the table:
 
 | config                       | role               | Gate A (Step 4) | Gate A (after Step 6) | src | CPU tier          | src | GPU tier          | src | detail                                                                                                                                              |
 |------------------------------|--------------------|-----------------|-----------------------|-----|-------------------|-----|-------------------|-----|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Acrobot`                    | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s2  | GPU_FAST          | s3  | **GPU after-legs disagree**                                                                                                                         |
+| `Acrobot`                    | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
 | `AntmazeGiantNavigate`       | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
 | `AntmazeLargeExplore`        | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
 | `AntmazeMediumExplore`       | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
 | `AntmazeTeleportExplore`     | parameter_space    | FAIL            | FAIL                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
-| `CartPole`                   | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s2  | GPU_FAST          | s3  | **GPU after-legs disagree**                                                                                                                         |
+| `CartPole`                   | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
 | `CraftaxClassic`             | registered_default | PARTIAL         | PARTIAL               | s1  | CPU_EXCEPTIONAL   | s4  | GPU_EXCEPTIONAL   | s5  | —                                                                                                                                                   |
-| `DMCAcrobotSwingup`          | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s6  | GPU_FAST          | s6  | —                                                                                                                                                   |
-| `DMCBallInCupCatch`          | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `DMCCartpoleBalance`         | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s6  | GPU_FAST          | s6  | —                                                                                                                                                   |
-| `DMCCartpoleSwingup`         | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s6  | GPU_FAST          | s6  | —                                                                                                                                                   |
-| `DMCCheetahRun`              | registered_default | FAIL            | PASS                  | s7  | CPU_UNMEASURED    | s6  | GPU_EXCEPTIONAL   | s6  | certify311: PASS [s7]; certify312: BLOCKED (blocked) [s8]; **arms disagree**; Step 4 said FAIL; replay pixels moved against the frozen digests [s9] |
+| `DMCAcrobotSwingup`          | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s2  | GPU_FAST          | s2  | —                                                                                                                                                   |
+| `DMCBallInCupCatch`          | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `DMCCartpoleBalance`         | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s2  | GPU_FAST          | s2  | —                                                                                                                                                   |
+| `DMCCartpoleSwingup`         | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s2  | GPU_FAST          | s2  | —                                                                                                                                                   |
+| `DMCCheetahRun`              | registered_default | FAIL            | PASS                  | s6  | CPU_UNMEASURED    | s2  | GPU_EXCEPTIONAL   | s2  | certify311: PASS [s6]; certify312: BLOCKED (blocked) [s7]; **arms disagree**; Step 4 said FAIL; replay pixels moved against the frozen digests [s8] |
 | `DMCFingerSpin`              | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
-| `DMCFingerTurnEasy`          | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | declaration changed [s9]                                                                                                                            |
-| `DMCFingerTurnHard`          | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s6  | GPU_FAST          | s6  | declaration changed [s9]                                                                                                                            |
-| `DMCHopperHop`               | registered_default | FAIL            | PASS                  | s7  | CPU_UNMEASURED    | s6  | GPU_EXCEPTIONAL   | s6  | certify311: PASS [s7]; certify312: BLOCKED (blocked) [s8]; **arms disagree**; Step 4 said FAIL; replay pixels moved against the frozen digests [s9] |
-| `DMCHumanoidStand`           | registered_default | PASS            | PASS                  | s7  | CPU_UNMEASURED    | s6  | GPU_EXCEPTIONAL   | s6  | certify311: PASS [s7]; certify312: BLOCKED (blocked) [s8]; **arms disagree**; replay pixels moved against the frozen digests [s9]                   |
-| `DMCPendulumSwingup`         | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s6  | GPU_FAST          | s6  | —                                                                                                                                                   |
-| `DMCReacherEasy`             | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | declaration changed [s9]                                                                                                                            |
-| `DMCReacherHard`             | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s6  | GPU_FAST          | s6  | declaration changed [s9]                                                                                                                            |
-| `DMCWalkerWalk`              | registered_default | FAIL            | FAIL                  | s7  | CPU_UNMEASURED    | s6  | GPU_EXCEPTIONAL   | s6  | certify311: FAIL [s7]; certify312: FAIL (blocked) [s8]; replay pixels moved against the frozen digests [s9]                                         |
-| `FetchPickAndPlace`          | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchPickAndPlaceDense`     | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchPickAndPlaceDict`      | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchPush`                  | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchPushDense`             | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchPushDict`              | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchReach`                 | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchReachDense`            | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchReachDict`             | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchSlide`                 | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchSlideDense`            | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
-| `FetchSlideDict`             | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s6  | GPU_PARITY        | s6  | —                                                                                                                                                   |
+| `DMCFingerTurnEasy`          | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | declaration changed [s8]                                                                                                                            |
+| `DMCFingerTurnHard`          | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FAST          | s2  | declaration changed [s8]                                                                                                                            |
+| `DMCHopperHop`               | registered_default | FAIL            | PASS                  | s6  | CPU_UNMEASURED    | s2  | GPU_EXCEPTIONAL   | s2  | certify311: PASS [s6]; certify312: BLOCKED (blocked) [s7]; **arms disagree**; Step 4 said FAIL; replay pixels moved against the frozen digests [s8] |
+| `DMCHumanoidStand`           | registered_default | PASS            | PASS                  | s6  | CPU_UNMEASURED    | s2  | GPU_EXCEPTIONAL   | s2  | certify311: PASS [s6]; certify312: BLOCKED (blocked) [s7]; **arms disagree**; replay pixels moved against the frozen digests [s8]                   |
+| `DMCPendulumSwingup`         | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FAST          | s2  | —                                                                                                                                                   |
+| `DMCReacherEasy`             | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | declaration changed [s8]                                                                                                                            |
+| `DMCReacherHard`             | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FAST          | s2  | declaration changed [s8]                                                                                                                            |
+| `DMCWalkerWalk`              | registered_default | FAIL            | FAIL                  | s6  | CPU_UNMEASURED    | s2  | GPU_EXCEPTIONAL   | s2  | certify311: FAIL [s6]; certify312: FAIL (blocked) [s7]; replay pixels moved against the frozen digests [s8]                                         |
+| `FetchPickAndPlace`          | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchPickAndPlaceDense`     | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchPickAndPlaceDict`      | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchPush`                  | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchPushDense`             | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchPushDict`              | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchReach`                 | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchReachDense`            | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchReachDict`             | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchSlide`                 | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchSlideDense`            | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
+| `FetchSlideDict`             | registered_default | PASS            | PASS                  | s1  | CPU_UNMEASURED    | s2  | GPU_PARITY        | s2  | —                                                                                                                                                   |
 | `HumanoidmazeGiantNavigate`  | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
 | `HumanoidmazeLargeNavigate`  | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
 | `HumanoidmazeMediumNavigate` | parameter_space    | FAIL            | FAIL                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
-| `MountainCar`                | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
-| `MountainCarContinuous`      | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
-| `Pendulum`                   | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s2  | GPU_FAST          | s3  | **GPU after-legs disagree**                                                                                                                         |
-| `Piecewise`                  | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s10 | GPU_FASTER        | s11 | —                                                                                                                                                   |
-| `PiecewiseZones`             | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s10 | GPU_FASTER        | s11 | —                                                                                                                                                   |
+| `MountainCar`                | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
+| `MountainCarContinuous`      | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
+| `Pendulum`                   | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s2  | GPU_FASTER        | s3  | —                                                                                                                                                   |
+| `Piecewise`                  | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s9  | GPU_FASTER        | s10 | —                                                                                                                                                   |
+| `PiecewiseZones`             | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s9  | GPU_FASTER        | s10 | —                                                                                                                                                   |
 | `PointmazeGiantNavigate`     | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
-| `PointmazeLargeNavigate`     | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s6  | GPU_EXCEPTIONAL   | s6  | —                                                                                                                                                   |
+| `PointmazeLargeNavigate`     | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s2  | GPU_EXCEPTIONAL   | s2  | —                                                                                                                                                   |
 | `PointmazeMediumNavigate`    | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
 | `PointmazeTeleportNavigate`  | parameter_space    | PASS            | PASS                  | s1  | never benchmarked | —   | never benchmarked | —   | —                                                                                                                                                   |
-| `PushT`                      | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s12 | GPU_EXCEPTIONAL   | s11 | —                                                                                                                                                   |
-| `SimplePointMaze`            | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s10 | GPU_FAST          | s11 | —                                                                                                                                                   |
-| `TwoRoom`                    | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s10 | GPU_FASTER        | s11 | —                                                                                                                                                   |
-| `TwoRoomTarget`              | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s10 | GPU_FASTER        | s11 | —                                                                                                                                                   |
+| `PushT`                      | registered_default | PASS            | PASS                  | s1  | CPU_PARITY        | s11 | GPU_EXCEPTIONAL   | s10 | —                                                                                                                                                   |
+| `SimplePointMaze`            | registered_default | PASS            | PASS                  | s1  | CPU_FASTER        | s9  | GPU_FAST          | s10 | —                                                                                                                                                   |
+| `TwoRoom`                    | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s9  | GPU_FASTER        | s10 | —                                                                                                                                                   |
+| `TwoRoomTarget`              | registered_default | PASS            | PASS                  | s1  | CPU_REGRESSION    | s9  | GPU_FASTER        | s10 | —                                                                                                                                                   |
 
 Every `src` key above:
 
 | key   | file                                                                    |
 |-------|-------------------------------------------------------------------------|
 | `s1`  | `examples/results/step4/certification.json`                             |
-| `s2`  | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json`  |
-| `s3`  | `examples/results/step6/gfxdraw/sweep2/gpu_after_gpu2110.json`          |
+| `s2`  | `examples/results/step3/certification.json`                             |
+| `s3`  | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json`   |
 | `s4`  | `examples/results/step6/tilemap/sweep/tier_cpu_final.json`              |
 | `s5`  | `examples/results/step6/tilemap/sweep/tier_gpu_final.json`              |
-| `s6`  | `examples/results/step3/certification.json`                             |
-| `s7`  | `examples/results/step6/texture-fidelity/certify311/certification.json` |
-| `s8`  | `examples/results/step6/texture-fidelity/certify312/certification.json` |
-| `s9`  | `examples/results/step6/reacher-correctness/replay/compare.txt`         |
-| `s10` | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`      |
-| `s11` | `examples/results/step6/raster2d/sweep/gpu_after.json`                  |
-| `s12` | `examples/results/step6/raster2d/sweep/cpu_1thread_after_pusht.json`    |
+| `s6`  | `examples/results/step6/texture-fidelity/certify311/certification.json` |
+| `s7`  | `examples/results/step6/texture-fidelity/certify312/certification.json` |
+| `s8`  | `examples/results/step6/reacher-correctness/replay/compare.txt`         |
+| `s9`  | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`      |
+| `s10` | `examples/results/step6/raster2d/sweep/gpu_after.json`                  |
+| `s11` | `examples/results/step6/raster2d/sweep/cpu_1thread_after_pusht.json`    |
 
 ### The section-25 counts
 
@@ -129,7 +128,7 @@ Every `src` key above:
 |-----------------------------|---------|
 | covered configs Gate-A pass | 45 / 49 |
 | covered configs CPU_FAST+   | 1 / 49  |
-| covered configs GPU_FAST+   | 17 / 49 |
+| covered configs GPU_FAST+   | 14 / 49 |
 | remaining blockers          | 49 / 49 |
 
 `CPU_FAST+` is `CPU_FAST` or `CPU_EXCEPTIONAL`; `GPU_FAST+` is `GPU_FAST` or `GPU_EXCEPTIONAL`. A configuration is a remaining blocker when it
@@ -138,12 +137,12 @@ with the reason it is one:
 
 | config                       | role               | why it is still a blocker                                 |
 |------------------------------|--------------------|-----------------------------------------------------------|
-| `Acrobot`                    | registered_default | CPU CPU_FASTER                                            |
+| `Acrobot`                    | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
 | `AntmazeGiantNavigate`       | parameter_space    | CPU never benchmarked; GPU never benchmarked              |
 | `AntmazeLargeExplore`        | parameter_space    | CPU never benchmarked; GPU never benchmarked              |
 | `AntmazeMediumExplore`       | parameter_space    | CPU never benchmarked; GPU never benchmarked              |
 | `AntmazeTeleportExplore`     | parameter_space    | Gate A FAIL; CPU never benchmarked; GPU never benchmarked |
-| `CartPole`                   | registered_default | CPU CPU_PARITY                                            |
+| `CartPole`                   | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
 | `CraftaxClassic`             | registered_default | Gate A PARTIAL                                            |
 | `DMCAcrobotSwingup`          | registered_default | CPU CPU_PARITY                                            |
 | `DMCBallInCupCatch`          | registered_default | CPU CPU_REGRESSION; GPU GPU_PARITY                        |
@@ -174,9 +173,9 @@ with the reason it is one:
 | `HumanoidmazeGiantNavigate`  | parameter_space    | CPU never benchmarked; GPU never benchmarked              |
 | `HumanoidmazeLargeNavigate`  | parameter_space    | CPU never benchmarked; GPU never benchmarked              |
 | `HumanoidmazeMediumNavigate` | parameter_space    | Gate A FAIL; CPU never benchmarked; GPU never benchmarked |
-| `MountainCar`                | registered_default | CPU CPU_FASTER; GPU GPU_FASTER                            |
-| `MountainCarContinuous`      | registered_default | CPU CPU_FASTER; GPU GPU_FASTER                            |
-| `Pendulum`                   | registered_default | CPU CPU_FASTER                                            |
+| `MountainCar`                | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
+| `MountainCarContinuous`      | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
+| `Pendulum`                   | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
 | `Piecewise`                  | registered_default | CPU CPU_PARITY; GPU GPU_FASTER                            |
 | `PiecewiseZones`             | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
 | `PointmazeGiantNavigate`     | parameter_space    | CPU never benchmarked; GPU never benchmarked              |
@@ -189,20 +188,20 @@ with the reason it is one:
 | `TwoRoomTarget`              | registered_default | CPU CPU_REGRESSION; GPU GPU_FASTER                        |
 
 The same table counted by tier, which is the shape of the remaining work rather than its
-length. 12 CPU cell(s) and 12 GPU cell(s) in the table above
+length. 7 CPU cell(s) and 12 GPU cell(s) in the table above
 were re-measured by a Step 6 artifact; the rest still carry their Step 3 label:
 
 | tier after Step 6 | CPU configs | GPU configs |
 |-------------------|-------------|-------------|
 | CPU_UNMEASURED    | 16          | 0           |
-| CPU_REGRESSION    | 7           | 0           |
-| CPU_FASTER        | 6           | 0           |
-| CPU_PARITY        | 6           | 0           |
+| CPU_REGRESSION    | 12          | 0           |
+| CPU_PARITY        | 5           | 0           |
+| CPU_FASTER        | 2           | 0           |
 | CPU_EXCEPTIONAL   | 1           | 0           |
 | GPU_PARITY        | 0           | 13          |
-| GPU_FAST          | 0           | 10          |
+| GPU_FASTER        | 0           | 9           |
 | GPU_EXCEPTIONAL   | 0           | 7           |
-| GPU_FASTER        | 0           | 6           |
+| GPU_FAST          | 0           | 7           |
 | never benchmarked | 13          | 13          |
 
 ## Per workstream
@@ -496,7 +495,7 @@ the renderer, and the number belongs beside the tier rather than in a footnote.
 | pixels changed               | no                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | semantic follow-up           | none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | review                       | fable (independent) — APPROVED after round-2 changes (mixed-row CUDA guard 80/80 on gpu2107; paired peak_gb per arm reproduces sweep VRAM to 0.02 GB; R holds on second card: Pendulum 785, others 322-440). Round 1 APPROVE-WITH-CHANGES (applied, LunarLander fix verified on Box2D host, pinned digests reproduced against pristine 89fa5ca). Round 2 (2026-09-14) APPROVE-WITH-CHANGES: fused kernel bit-identical to per-primitive path (semantics traced per case; joint tests 50 CPU / 55 CUDA / 10 fast-path; corpus-style replay under kernel matches oracle incl. mixed AA rows); paired R reproduces; before leg reproduces round-1 after. Required: per-row-style CUDA guard test; paired_gpu peak_gb reset; scope CPU negative to the per-pixel-walk design (span rasterizer unmeasured); disc_table duplicate assert. Merge conflict in tests/gpu/test_fast_paths.py (additive both sides) to resolve at merge. |
-| merge commit                 | `62558d5dce1a` Merge step6/gfxdraw: planar bounded gfxdraw primitives and a fused per-pixel classic-control kernel                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| merge commit                 | `d01dc2d061ae` Merge step6/gfxdraw provenance: quarantine block-timed shards, commit paired Step-3-shaped shards, SLURM ledger, `62558d5dce1a` Merge step6/gfxdraw: planar bounded gfxdraw primitives and a fused per-pixel classic-control kernel                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Render wall time from the committed profile notes, paired on the same host, at the
 largest batch both legs measured:
@@ -530,23 +529,23 @@ Tiers re-measured by this workstream's own committed artifacts:
 a re-measurement on a loaded shared node is evidence about that node as much as about
 the renderer, and the number belongs beside the tier rather than in a footnote.
 
-| config                  | device | tier after | qualifiers   | host     | load | labelled                                    | artifact                                                               |
-|-------------------------|--------|------------|--------------|----------|------|---------------------------------------------|------------------------------------------------------------------------|
-| `Acrobot`               | cpu    | CPU_FASTER | BELOW_G4     | node2338 | 44.4 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `Acrobot`               | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104  | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/gpu_after_gpu2104.json`          |
-| `Acrobot`               | gpu    | GPU_FAST   | BATCH_SCALES | gpu2110  | 30.6 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_after_gpu2110.json`         |
-| `CartPole`              | cpu    | CPU_PARITY | BELOW_G4     | node2338 | 44.4 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `CartPole`              | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104  | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/gpu_after_gpu2104.json`          |
-| `CartPole`              | gpu    | GPU_FAST   | BATCH_SCALES | gpu2110  | 30.6 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_after_gpu2110.json`         |
-| `MountainCar`           | cpu    | CPU_FASTER | BELOW_G4     | node2338 | 44.4 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `MountainCar`           | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104  | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/gpu_after_gpu2104.json`          |
-| `MountainCar`           | gpu    | GPU_FASTER | BATCH_SCALES | gpu2110  | 30.6 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_after_gpu2110.json`         |
-| `MountainCarContinuous` | cpu    | CPU_FASTER | BELOW_G4     | node2338 | 44.4 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `MountainCarContinuous` | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104  | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/gpu_after_gpu2104.json`          |
-| `MountainCarContinuous` | gpu    | GPU_FASTER | BATCH_SCALES | gpu2110  | 30.6 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_after_gpu2110.json`         |
-| `Pendulum`              | cpu    | CPU_FASTER | BELOW_G4     | node2338 | 44.4 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `Pendulum`              | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104  | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/gpu_after_gpu2104.json`          |
-| `Pendulum`              | gpu    | GPU_FAST   | BATCH_SCALES | gpu2110  | 30.6 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_after_gpu2110.json`         |
+| config                  | device | tier after | qualifiers   | host    | load | labelled                                    | artifact                                                                         |
+|-------------------------|--------|------------|--------------|---------|------|---------------------------------------------|----------------------------------------------------------------------------------|
+| `Acrobot`               | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104 | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/gpu_after_gpu2104.json` |
+| `Acrobot`               | gpu    | GPU_FASTER | —            | gpu2107 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2107.json`            |
+| `Acrobot`               | gpu    | GPU_FASTER | —            | gpu2264 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json`            |
+| `CartPole`              | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104 | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/gpu_after_gpu2104.json` |
+| `CartPole`              | gpu    | GPU_FASTER | —            | gpu2107 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2107.json`            |
+| `CartPole`              | gpu    | GPU_FASTER | —            | gpu2264 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json`            |
+| `MountainCar`           | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104 | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/gpu_after_gpu2104.json` |
+| `MountainCar`           | gpu    | GPU_FASTER | —            | gpu2107 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2107.json`            |
+| `MountainCar`           | gpu    | GPU_FASTER | —            | gpu2264 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json`            |
+| `MountainCarContinuous` | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104 | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/gpu_after_gpu2104.json` |
+| `MountainCarContinuous` | gpu    | GPU_FASTER | —            | gpu2107 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2107.json`            |
+| `MountainCarContinuous` | gpu    | GPU_FASTER | —            | gpu2264 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json`            |
+| `Pendulum`              | gpu    | GPU_FASTER | BATCH_SCALES | gpu2104 | 23.5 | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/gpu_after_gpu2104.json` |
+| `Pendulum`              | gpu    | GPU_FASTER | —            | gpu2107 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2107.json`            |
+| `Pendulum`              | gpu    | GPU_FASTER | —            | gpu2264 | —    | labelled here by `scratch/step3/certify.py` | `examples/results/step6/gfxdraw/sweep2/gpu_paired_after_gpu2264.json`            |
 
 
 ### `cpu-3d`
@@ -743,31 +742,29 @@ Each row is a place where a committed artifact says something the dashboard does
 page prints the artifact value everywhere above; the rows are listed here so the dashboard
 gets corrected, rather than the page acquiring a special case for each one.
 
-| where                                                    | the dashboard says                                                                                     | the artifact says                                                          | artifact                                                               |
-|----------------------------------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|------------------------------------------------------------------------|
-| `raycast3d`: `performance.cpu_after`                     | mentions `CPU_FAST` (a text match on the field, not a reading of the sentence around it)               | no committed Step-6 artifact re-measures a tier for this workstream on cpu | `examples/results/step6/raycast3d/`                                    |
-| `raycast3d`: `performance.gpu_after`                     | mentions `GPU_FAST` (a text match on the field, not a reading of the sentence around it)               | no committed Step-6 artifact re-measures a tier for this workstream on gpu | `examples/results/step6/raycast3d/`                                    |
-| `raycast3d`: `slurm_jobs`                                | 19 job(s) recorded for this workstream (its own plus the 7 wave-0 profile job(s)), not including these | artifacts under this workstream were written by job(s) 6347000, 6347137    | `examples/results/step6/raycast3d/`                                    |
-| `raster2d`: `Piecewise` cpu tier after Step 6            | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_PARITY` on node2344                                                   | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`     |
-| `raster2d`: `Piecewise` gpu tier after Step 6            | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`                 |
-| `raster2d`: `PiecewiseZones` cpu tier after Step 6       | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_REGRESSION` on node2344                                               | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`     |
-| `raster2d`: `PiecewiseZones` gpu tier after Step 6       | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`                 |
-| `raster2d`: `PushT` cpu tier after Step 6                | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_PARITY` on node2344                                                   | `examples/results/step6/raster2d/sweep/cpu_1thread_after_pusht.json`   |
-| `raster2d`: `PushT` gpu tier after Step 6                | `performance.gpu_after` mentions no tier name                                                          | `GPU_EXCEPTIONAL` on gpu2105                                               | `examples/results/step6/raster2d/sweep/gpu_after.json`                 |
-| `raster2d`: `SimplePointMaze` gpu tier after Step 6      | `performance.gpu_after` mentions no tier name                                                          | `GPU_FAST` on gpu2105                                                      | `examples/results/step6/raster2d/sweep/gpu_after.json`                 |
-| `raster2d`: `TwoRoom` cpu tier after Step 6              | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_REGRESSION` on node2344                                               | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`     |
-| `raster2d`: `TwoRoom` gpu tier after Step 6              | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`                 |
-| `raster2d`: `TwoRoomTarget` cpu tier after Step 6        | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_REGRESSION` on node2344                                               | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`     |
-| `raster2d`: `TwoRoomTarget` gpu tier after Step 6        | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`                 |
-| `raster2d`: `performance.cpu_after`                      | mentions `CPU_FAST` (a text match on the field, not a reading of the sentence around it)               | the committed artifacts label `CPU_FASTER`, `CPU_PARITY`, `CPU_REGRESSION` | `examples/results/step6/raster2d/`                                     |
-| `gfxdraw`: `Acrobot` cpu tier after Step 6               | `performance.cpu_after` mentions `CPU_PARITY`                                                          | `CPU_FASTER` on node2338                                                   | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `gfxdraw`: `MountainCar` cpu tier after Step 6           | `performance.cpu_after` mentions `CPU_PARITY`                                                          | `CPU_FASTER` on node2338                                                   | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `gfxdraw`: `MountainCarContinuous` cpu tier after Step 6 | `performance.cpu_after` mentions `CPU_PARITY`                                                          | `CPU_FASTER` on node2338                                                   | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
-| `gfxdraw`: `Pendulum` cpu tier after Step 6              | `performance.cpu_after` mentions `CPU_PARITY`                                                          | `CPU_FASTER` on node2338                                                   | `examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json` |
+| where                                               | the dashboard says                                                                                     | the artifact says                                                          | artifact                                                             |
+|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|----------------------------------------------------------------------|
+| `raycast3d`: `performance.cpu_after`                | mentions `CPU_FAST` (a text match on the field, not a reading of the sentence around it)               | no committed Step-6 artifact re-measures a tier for this workstream on cpu | `examples/results/step6/raycast3d/`                                  |
+| `raycast3d`: `performance.gpu_after`                | mentions `GPU_FAST` (a text match on the field, not a reading of the sentence around it)               | no committed Step-6 artifact re-measures a tier for this workstream on gpu | `examples/results/step6/raycast3d/`                                  |
+| `raycast3d`: `slurm_jobs`                           | 19 job(s) recorded for this workstream (its own plus the 7 wave-0 profile job(s)), not including these | artifacts under this workstream were written by job(s) 6347000, 6347137    | `examples/results/step6/raycast3d/`                                  |
+| `raster2d`: `Piecewise` cpu tier after Step 6       | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_PARITY` on node2344                                                   | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`   |
+| `raster2d`: `Piecewise` gpu tier after Step 6       | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`               |
+| `raster2d`: `PiecewiseZones` cpu tier after Step 6  | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_REGRESSION` on node2344                                               | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`   |
+| `raster2d`: `PiecewiseZones` gpu tier after Step 6  | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`               |
+| `raster2d`: `PushT` cpu tier after Step 6           | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_PARITY` on node2344                                                   | `examples/results/step6/raster2d/sweep/cpu_1thread_after_pusht.json` |
+| `raster2d`: `PushT` gpu tier after Step 6           | `performance.gpu_after` mentions no tier name                                                          | `GPU_EXCEPTIONAL` on gpu2105                                               | `examples/results/step6/raster2d/sweep/gpu_after.json`               |
+| `raster2d`: `SimplePointMaze` gpu tier after Step 6 | `performance.gpu_after` mentions no tier name                                                          | `GPU_FAST` on gpu2105                                                      | `examples/results/step6/raster2d/sweep/gpu_after.json`               |
+| `raster2d`: `TwoRoom` cpu tier after Step 6         | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_REGRESSION` on node2344                                               | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`   |
+| `raster2d`: `TwoRoom` gpu tier after Step 6         | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`               |
+| `raster2d`: `TwoRoomTarget` cpu tier after Step 6   | `performance.cpu_after` mentions `CPU_FAST`, `CPU_FASTER`                                              | `CPU_REGRESSION` on node2344                                               | `examples/results/step6/raster2d/sweep/cpu_1thread_after_swm.json`   |
+| `raster2d`: `TwoRoomTarget` gpu tier after Step 6   | `performance.gpu_after` mentions no tier name                                                          | `GPU_FASTER` on gpu2105                                                    | `examples/results/step6/raster2d/sweep/gpu_after.json`               |
+| `raster2d`: `performance.cpu_after`                 | mentions `CPU_FAST` (a text match on the field, not a reading of the sentence around it)               | the committed artifacts label `CPU_FASTER`, `CPU_PARITY`, `CPU_REGRESSION` | `examples/results/step6/raster2d/`                                   |
+| `gfxdraw`: `performance.cpu_after`                  | mentions `CPU_PARITY` (a text match on the field, not a reading of the sentence around it)             | no committed Step-6 artifact re-measures a tier for this workstream on cpu | `examples/results/step6/gfxdraw/`                                    |
+| `gfxdraw`: `performance.gpu_after`                  | mentions `GPU_FAST` (a text match on the field, not a reading of the sentence around it)               | the committed artifacts label `GPU_FASTER`                                 | `examples/results/step6/gfxdraw/`                                    |
 
 ## Appendix — artifacts not summarised
 
-69 JSON file(s) under `examples/results/step6/` are in a shape this generator
+68 JSON file(s) under `examples/results/step6/` are in a shape this generator
 does not recognise. They are named rather than dropped: an artifact nothing reads is an
 artifact nobody is checking, and this list is the to-do for the next run.
 
@@ -798,8 +795,7 @@ artifact nobody is checking, and this list is the to-do for the next run.
 | `examples/results/step6/gfxdraw/sweep/paired_before_B16_node1829.json`                    | unrecognised shape; top-level keys ['arm', 'batch', 'cpu', 'envs', 'host', 'pythonpath', 'rounds', 'stable_envs_file']                          |
 | `examples/results/step6/gfxdraw/sweep/paired_before_B256_node1829.json`                   | unrecognised shape; top-level keys ['arm', 'batch', 'cpu', 'envs', 'host', 'pythonpath', 'rounds', 'stable_envs_file']                          |
 | `examples/results/step6/gfxdraw/sweep/paired_before_B64_node1829.json`                    | unrecognised shape; top-level keys ['arm', 'batch', 'cpu', 'envs', 'host', 'pythonpath', 'rounds', 'stable_envs_file']                          |
-| `examples/results/step6/gfxdraw/sweep/tiers_cpu_node2338.json`                            | unrecognised shape; top-level keys ['after_shard', 'before_shard', 'rows']                                                                      |
-| `examples/results/step6/gfxdraw/sweep/tiers_gpu_gpu2104.json`                             | unrecognised shape; top-level keys ['after_shard', 'before_shard', 'rows']                                                                      |
+| `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/tiers_gpu_gpu2104.json`          | unrecognised shape; top-level keys ['after_shard', 'before_shard', 'rows']                                                                      |
 | `examples/results/step6/gfxdraw/sweep2/paired_gpu_B1024_gpu2264.json`                     | unrecognised shape; top-level keys ['batch', 'cpu', 'device_name', 'envs', 'host', 'inner', 'rounds', 'stable_envs_file']                       |
 | `examples/results/step6/gfxdraw/sweep2/paired_gpu_B4096_gpu2264.json`                     | unrecognised shape; top-level keys ['batch', 'cpu', 'device_name', 'envs', 'host', 'inner', 'rounds', 'stable_envs_file']                       |
 | `examples/results/step6/gfxdraw/sweep2/paired_gpu_B4096_perarmpeak_gpu2107.json`          | unrecognised shape; top-level keys ['batch', 'cpu', 'device_name', 'envs', 'host', 'inner', 'rounds', 'stable_envs_file']                       |
@@ -843,7 +839,22 @@ artifact nobody is checking, and this list is the to-do for the next run.
 | `examples/results/step6/tilemap/profile_before/attribution_before_cpu_node1831.json`      | unrecognised shape; top-level keys ['batches', 'caches', 'cpu', 'device', 'gpu', 'host', 'label', 'load_average']                               |
 | `examples/results/step6/tilemap/profile_before/attribution_gpu-before_cuda_gpu2106.json`  | unrecognised shape; top-level keys ['batches', 'caches', 'cpu', 'device', 'gpu', 'host', 'label', 'load_average']                               |
 
-A further 53 artifact(s) were recognised and read, but nothing on this page
+7 artifact(s) were **withdrawn by the workstream that took them** — moved into a
+`superseded_*` directory, or stamped `superseded` / `unusable` — and nothing on this page
+is computed from them. They are listed with the reason rather than deleted, because a
+measurement that was taken and then not stood behind is part of the record:
+
+| artifact                                                                                    | why it was withdrawn                                                                                                                            |
+|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `examples/results/step6/gfxdraw/sweep/superseded_node2338/README.md`                        | the note that records the withdrawal                                                                                                            |
+| `examples/results/step6/gfxdraw/sweep/superseded_node2338/cpu_1thread_after_node2338.json`  | superseded by the workstream; **These shards must not be used to label a tier.** They are kept because the renderer throughput in (`README.md`) |
+| `examples/results/step6/gfxdraw/sweep/superseded_node2338/cpu_1thread_before_node2338.json` | superseded by the workstream; **These shards must not be used to label a tier.** They are kept because the renderer throughput in (`README.md`) |
+| `examples/results/step6/gfxdraw/sweep/superseded_node2338/tiers_cpu_node2338.json`          | superseded by the workstream; **These shards must not be used to label a tier.** They are kept because the renderer throughput in (`README.md`) |
+| `examples/results/step6/gfxdraw/sweep2/superseded_gpu2110/README.md`                        | the note that records the withdrawal                                                                                                            |
+| `examples/results/step6/gfxdraw/sweep2/superseded_gpu2110/gpu_after_gpu2110.json`           | superseded by the workstream; **These shards must not be used to label a tier**, for the same reason as (`README.md`)                           |
+| `examples/results/step6/gfxdraw/sweep2/superseded_gpu2110/gpu_before_gpu2110.json`          | superseded by the workstream; **These shards must not be used to label a tier**, for the same reason as (`README.md`)                           |
+
+A further 52 artifact(s) were recognised and read, but nothing on this page
 rests on them. They are the inputs to numbers that appear here in reduced form, or
 measurements a workstream took that no section above needed:
 
@@ -851,9 +862,8 @@ measurements a workstream took that no section above needed:
 |-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 | `examples/results/step6/gfxdraw/replay/step4_replay_cuda.json`                                                        | a raw Step-4 conformance shard: per-config measurements with no verdict applied, which is what the certifications above are computed from |
 | `examples/results/step6/gfxdraw/replay/step4_replay_fused_cuda.json`                                                  | a raw Step-4 conformance shard: per-config measurements with no verdict applied, which is what the certifications above are computed from |
-| `examples/results/step6/gfxdraw/sweep/cpu_1thread_before_node2338.json`                                               | a Step-3 raw renderer benchmark shard                                                                                                     |
-| `examples/results/step6/gfxdraw/sweep/gpu_before_gpu2104.json`                                                        | a Step-3 raw renderer benchmark shard                                                                                                     |
-| `examples/results/step6/gfxdraw/sweep2/gpu_before_gpu2110.json`                                                       | a Step-3 raw renderer benchmark shard                                                                                                     |
+| `examples/results/step6/gfxdraw/sweep/cpu_1thread_paired_node1829.json`                                               | a Step-3 raw renderer benchmark shard                                                                                                     |
+| `examples/results/step6/gfxdraw/sweep/wave1_pre_gfxdraw2/gpu_before_gpu2104.json`                                     | a Step-3 raw renderer benchmark shard                                                                                                     |
 | `examples/results/step6/plan.json`                                                                                    | the pre-implementation workstream ranking, superseded by the measurements on this page                                                    |
 | `examples/results/step6/raster2d/profile_after/attribution_PiecewiseZones_cpu_node2342.json`                          | a phase/op attribution dump, not a timing of the public path — not a before/after quantity                                                |
 | `examples/results/step6/raster2d/profile_after/attribution_Piecewise_cpu_node2342.json`                               | a phase/op attribution dump, not a timing of the public path — not a before/after quantity                                                |
@@ -903,4 +913,4 @@ measurements a workstream took that no section above needed:
 | `examples/results/step6/tilemap/sweep/gpu_before.json`                                                                | a Step-3 raw renderer benchmark shard                                                                                                     |
 | `examples/results/step6/tilemap/sweep/gpu_before_final.json`                                                          | a Step-3 raw renderer benchmark shard                                                                                                     |
 
-Read and summarised: 90 profile note(s), 4 tier artifact(s), 20 Step-3 benchmark shard(s), 2 Gate-A certification(s), 16 conformance shard(s), 22 replay leg(s) and 16 pixel comparison(s). A further 153 non-JSON file(s) — findings, the Markdown twin of each profile note, state banks, test logs — are evidence behind the prose above and are not parsed here.
+Read and summarised: 90 profile note(s), 4 tier artifact(s), 19 Step-3 benchmark shard(s), 2 Gate-A certification(s), 16 conformance shard(s), 22 replay leg(s) and 16 pixel comparison(s). A further 154 non-JSON file(s) — findings, the Markdown twin of each profile note, state banks, test logs — are evidence behind the prose above and are not parsed here.
