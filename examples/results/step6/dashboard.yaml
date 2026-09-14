@@ -595,7 +595,7 @@ decisions:
     obtainable there for gfxdraw. S_cpu rows stand; cores_cpu left unasserted rather than borrowed. Needs a QOS with a node-sized CPU cap or free 48-core nodes (escalate to Sami / Step 8).
 integration_verification:
   branch: step6/integration-verify (merged)
-  head: bcd2e44
+  head: 811fb19 (merged)
   verdict: PASS-WITH-KNOWN-DELTAS (first pass on e4d015d/f7b07d7/e0182f6; final incremental pass pending RAYCAST-5 + cpu-3d merges)
   jobs:
   - 6352885
@@ -608,7 +608,10 @@ integration_verification:
   cuda_replay: 48/49 frozen configs bit-identical; AntmazeTeleportExplore mean 187.26056 -> 187.26032 (bake nondeterminism); 49/49 digest_official identical; no config lost a check
   gate_a: 43 PASS/5 FAIL/1 PARTIAL -> 44 PASS/3 FAIL/1 PARTIAL/1 BLOCKED; FAIL->PASS = check_style_is_state 1->0 x2; Cheetah/Hopper/Walker FAIL on check_resolution_consistency only (held 5402387)
   cpu_replay: 31/31 comparable configs byte-identical; PushT+SimplePointMaze render on CPU where baseline raised
-  gpu_suite: all 9 files on f7b07d7; test_fast_paths 348 collected/168 pass/0 fail after hand-merge; test_gfxdraw_classic 80/0; test_gfxdraw_fused needs Box2D (4/4 in se6-gfxdraw-box2d)
+  gpu_suite: 'all 9 files on f7b07d7; test_fast_paths 348 collected/168 pass/0 fail after hand-merge; test_gfxdraw_classic 80/0; test_gfxdraw_fused needs Box2D (4/4 in se6-gfxdraw-box2d) | job 6355272 on
+    e0182f6 (gpu2113): raster shard all digests+checks identical; test_conformance 845 pass/387 skip/7 fail/437 errors; test_reproducibility 1275/218/17/529; test_fast_paths 168/0; test_gfxdraw_classic
+    80/0; the 24 failures are the same 24 names as f7b07d7 (7 VISIBILITY-1, 6 texture held-commit cells, 6 NODE-1, 5 fresh_process = EGL-context pressure in the full-suite process); the 966 errors are gymnasium_robotics/minigrid
+    absent from the venv'
   unit: 584/611/662 pass, always the 2 pre-existing failures
   findings:
   - 'VISIBILITY-1: tests/gpu/test_reproducibility.py::test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility 7 failed/4 passed - selector uses class flag VISIBILITY_KNOB but the asserted leaf comes
@@ -619,3 +622,6 @@ integration_verification:
     5 fresh-process failures on gpu2108'
   - 'minigrid absent from every Oscar venv: 7 registered envs outside the 49 never had GPU conformance run here'
   - test_rendernet.py::test_no_checkpoint_means_no_class fails on both trees (pytest 9 importorskip semantics)
+  - 966 GPU-suite errors are missing packages (gymnasium_robotics, minigrid) in every Oscar venv - the GPU suite has never run fully there; Step 8 must build a complete certification venv
+  final_pass: 'ready: scratch/step6/verify/final.sbatch (dmc+ogb+swm shards, trackcom cells under se-step5 paired with se-step3, Gate A, full test_reproducibility, VISIBILITY-1 line) + cpu_verify.sbatch
+    with CPUVENV=se-step6 (no mujoco_warp importable) + tests/unit; waiting for RAYCAST-5, cpu-3d, VISIBILITY-1 merges'
