@@ -2032,3 +2032,617 @@ number that survived was arrived at.
 | `6356117` | `se6-raycast3d-r6cpu` | COMPLETED | 00:09:45 | `node2411` | review changes: the `_unit_rays` routing probe, the re-priced cost table, CPU identity on 21 (on-vs-off and vs baseline), `tests/unit` |
 | `6356123` | `se6-raycast3d-r6gpu` | COMPLETED | 00:02:04 | `gpu2108` | review changes: cuda identity on 21, fast-path suite, fuzz |
 | `6356311` | `se6-raycast3d-r6cost` | COMPLETED | 01:13:49 | `node1843` | **three independent runs of the per-kind cost table in the shape that ships** — the runs that retired the margin rule |
+
+
+---
+---
+
+# RAYCAST-6 — the window `composite` casts is the caller's ceiling, not the bound's answer
+
+`stable_envs/render/raycast3d.py`, `composite` only. Merged `step6/integration` at `5b327af` first,
+so everything below is measured on the tree this branch will merge back into; the **before** leg of
+every comparison is `$SCR/se6/integration`, NOT the pre-Step-6 baseline.
+
+Commits: `6c954c5` implementation + differential fuzz + fast-path case; `24b3932` design
+evidence and the profiler fix; `5f86a75` the re-pointed cover-compaction case; `39e994d` batch
+invariance; plus the findings and shard commits listed in `git log`.
+
+## The gap this ticket was given, and what re-measuring the residual changed
+
+RAYCAST-2b left `PointmazeLargeNavigate` at `cores_cpu` 0.618 and `PointmazeMediumNavigate` at
+0.472, needing **1.6x** and **2.1x** on the `cores_cpu >= 1` conjunct, and named the residual as
+"`composite`'s own gathers/patch merge at ss=2: 25.3 ms of 42.6". That phrase was the ticket's
+premise and it did not survive being opened. `composite`'s statements were timed one at a time
+through the public path (`env.render(states)`) on a batch node at one thread —
+`scratch/step6/raycast3d/r6_composite_profile.py`, job **6365780** (`node2348`, Intel Xeon Platinum
+8268), a statement-for-statement copy of the shipped body with each block timed, so the numbers carry
+~25 % instrumentation overhead and the PROPORTIONS are what they are for.
+
+`PointmazeLargeNavigate`, B=64, 224 px, ss=2, `tile=32` (composite 53.13 ms of a 56.60 ms render):
+
+| block | ms | share | sized by |
+|---|---:|---:|---|
+| `cast` | 16.19 | 30 % | **B x N** |
+| `box_avg_col` (`view(B,tile,ss,tile,ss,3).sum((2,4))`) | 11.66 | 22 % | **B x N** |
+| `shade` | 6.39 | 12 % | B x \|union\| |
+| `window_gather` (`d[idx]`, per environment) | 5.47 | 10 % | **B x N** |
+| `box_avg_cov` | 3.71 | 7 % | **B x N** |
+| `material_gather` | 2.14 | 4 % | B x \|union\| |
+| `col_scatter` (`where` + `index_copy_`) | 1.41 | 2.7 % | B x \|union\| |
+| `plate_broadcast_write` (`out.copy_(plate.expand)`) | 1.10 | 2.1 % | B x H x W |
+| `compact_nonzero` (zeros + `nonzero(cov.any(0))`) | 0.85 | 1.6 % | B x N |
+| the **patch merge** (`oidx`, plate promote, gather, blend, round, scatter) | **2.48** | **4.7 %** | B x tile^2 |
+| `tile_origin`, `upsample_t`, `cov`, `covf`, `setup`, `sizes` | 1.73 | 3.3 % | mixed |
+
+**The patch merge is 4.7 % of the composite, not the residual.** What the residual actually is:
+the terms proportional to `N = (tile*ss)^2` — cast, both box averages, the per-environment ray
+gather, the coverage tensors — which are **38.4 ms, 72 %**. That is also the answer to "why ss=2
+doubles them": it does not double them, it QUADRUPLES the sample count, because `N` is quadratic in
+`ss`; the box averages then fold `ss^2` samples back into one output pixel, so they read `N` and
+write `tile^2` and exist only at `ss > 1`.
+
+And the samples are nearly all empty. At the same cell, each row covers **193 of 4,096 samples
+(4.7 %)** and 56.5 of 1,024 output pixels.
+
+## Two numbers the design turns on, both measured
+
+**1. The caller's `tile` is a ceiling, and the bound asks for far less.**
+`scratch/step6/raycast3d/r6_span_probe.py` intercepts `screen_span` and records the `(w, h)` it
+returns, per config, over the frozen corpora (job **6365965**):
+
+| config | span w x h | `tile` asked | N at 32 | N at the span | saving |
+|---|---|---:|---:|---:|---:|
+| `PointmazeLargeNavigate` | 14 x 13 | 32 | 4,096 | 784 | **5.2x** |
+| `PointmazeMediumNavigate` | 21 x 21 | 32 | 4,096 | 1,764 | **2.3x** |
+| `PointmazeGiantNavigate` | 11 x 10 | 32 | 4,096 | 484 | 8.5x |
+| `PointmazeTeleportNavigate` | 14 x 13 | 32 | 4,096 | 784 | 5.2x |
+| `AntmazeGiantNavigate` | 14 x 14 | 32 | 4,096 | 784 | 5.2x |
+| `AntmazeLargeExplore` | 18 x 18 | 32 | 4,096 | 1,296 | 3.2x |
+| `AntmazeTeleportExplore` | 18 x 18 | 32 | 4,096 | 1,296 | 3.2x |
+| `AntmazeMediumExplore` | 28 x 28 | 32 | 4,096 | 3,136 | 1.3x |
+| `HumanoidmazeGiantNavigate` | 11 x 9 | 32 | 4,096 | 484 | 8.5x |
+| `HumanoidmazeLargeNavigate` | 12 x 12 | 32 | 4,096 | 576 | 7.1x |
+| `HumanoidmazeMediumNavigate` | 19 x 20 | 32 | 4,096 | 1,600 | 2.6x |
+| `maze2d` `PointMaze{Large,Medium,Open,UMaze}` | 18-30 | 48 | 9,216 | 1,296-3,600 | 2.6-7.1x |
+
+`w_max` is constant across B=16/64/256 on every row, so this is a property of the scene rather than
+of the batch. **A power-of-two ladder would have rounded `PointmazeMediumNavigate`'s 21 straight
+back to 32**, on the row with the worst gap; the rung is therefore the span itself.
+
+**2. `COVER_COMPACTION`'s union is four times the per-row cover.** The window origin tracks the
+movers' projected bound, but the agent still drifts several pixels inside that window across a
+batch, and the union is what gets shaded:
+
+| config, B=64 | covered samples per row | union over the batch | ratio |
+|---|---:|---:|---:|
+| `PointmazeLargeNavigate` | 193 | 785 | **4.06x** |
+| `PointmazeMediumNavigate` | 555 | 2,372 | **4.28x** |
+
+## The change
+
+`COMPOSITE_COMPACT_MERGE` (default on). Off restores `_composite_window`, the pre-RAYCAST-6 body
+kept verbatim. Three mechanisms, each an identity rather than an approximation:
+
+**(a) The window is sized to the bound.** `_fit_tile` returns `max(w, h)` capped by the caller's
+`tile`, or None when the span does not fit — which is exactly `_tile_origin`'s existing
+admissibility test, one rung finer. A ray outside the span cannot reach a mover, so `intersect`
+returns `INF`, `cov` is False, `col` is `+0.0` and the composite writes back the plate byte
+`out.copy_` already put there. **This is the argument the tiled path already makes against the full
+frame**, and the repo already asserts it (`tests/gpu/test_fast_paths.py`'s
+`mover-window-vs-full-frame`). The clamp is safe at any tile: with `t >= w` the window
+`[clamp(x0,0,W-t), +t)` contains `[x0, x0+w) & [0, W)` at both edges.
+
+**(b) The shaded set is per row, not the union.** `nonzero(cov.reshape(-1))` selects the covered
+`(row, sample)` pairs — 4.1x fewer than `nonzero(cov.any(0))` — and the `torch.where` that discarded
+the union's uncovered members disappears with them, because every selected element is covered by
+construction. `shade` is elementwise in every argument (its only reduction is `_dot`, unrolled over
+the three components for exactly this reason, and `lamb.sum()` over the lights, which does not
+depend on ray shape), so shading a gathered subset returns the values the superset held there.
+
+**(c) The patch merge runs at the covered output pixels.** At an output pixel with `covf == 0` the
+blend is `patch * 1.0 + 0.0` on a float that came out of a uint8 — `round` returns it, `clamp(0,255)`
+cannot move it — so the scatter would write back the byte the broadcast already wrote. Only
+`nonzero((covf > 0).any(0))` needs gathering, blending, rounding and scattering. And the gather takes
+the plate as the **uint8 it is** and promotes what it took, instead of promoting all 50,176 pixels of
+the frame to float to use 1,024 of them.
+
+Plus one term that does not shrink with the window and therefore had to go: `bt` is now read at the
+window's output pixels and blown up, rather than `_upsample_t` building a `(H*ss*W*ss,)` intermediate
+per call and being read at the window. Nearest-neighbour upsampling is pure data movement, so
+`base_t[(y*ss+a)*Rw + (x*ss+b)] == plate_t[y*W + x]` exactly.
+
+**What was deliberately NOT compacted: the two box averages.** A four-element float sum has an
+association order, a compacted reduction is not obliged to reproduce it, and this function's contract
+is bit-exactness rather than approximate agreement. They keep their spelling and shrink only because
+`N` shrank. That is the one place where a cheaper option was available and refused, and it is worth
+naming as such.
+
+## Identity — the acceptance test, not a tolerance
+
+Every leg below is `replay_step4.py` rendering the frozen corpora through the public path and
+diffing the raw uint8 dumps, not the digests: a digest says "it moved", a dump says by how much and
+where. **The before tree is `$SCR/se6/integration`**, whose `stable_envs/render/raycast3d.py` was
+verified byte-identical to this branch's merge commit before the change was applied.
+
+| check | device | configs | result | artifact |
+|---|---|---|---|---|
+| `COMPOSITE_COMPACT_MERGE` on vs off | cpu | 21 live | **identical** | `replay/r6cm_cpu_switch_identity.json` |
+| branch vs integration, **defaults on both legs** | cpu | 21 live | **identical** | `replay/r6cm_cpu_branch_vs_integration.json` |
+| branch vs integration, defaults | cuda | 21 live | **identical** | `replay/r6cm_cuda_identity.json` |
+| on vs off | cuda | 21 live | **identical** | `replay/r6cm_cuda_switch_identity.json` |
+| `maze2d` `PointMaze{Large,Medium,Open,UMaze}`, on vs off | cpu | 4 | **identical** | `replay/r6cm_maze2d_switch_identity.json` |
+| `maze2d`, branch vs integration, defaults | cpu | 4 | **identical** | `replay/r6cm_maze2d_branch_vs_integration.json` |
+| the four DMControl trackcom cells (`cpu3d.py`'s path) | cpu | 4 | **identical** | `replay/r6cm_trackcom_identity.json` |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | cuda | — | **223 passed**, 179 skipped | jobs 6366547 / 6366853 / 6368356 |
+| `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **55 passed** (jobs 6366546, 6366548) -> **63 passed** (job 6366959, after the batch-invariance cases) -> **75 passed** (after the review's `bt`-gather and clamp cases, local) | jobs 6366546 / 6366548 / 6366959 |
+| `tests/unit` | cpu | — | **794 passed**, 19 skipped, **2 failed** — the same two pre-existing failures, neither in the authorised file | job 6366959 |
+| branch vs integration, defaults, **re-taken on the HEAD that ships** | cpu | 21 live | **identical** | `replay/r6fin_cpu_branch_vs_integration.json` |
+| branch vs integration, defaults, **re-taken again after the review changes** | cuda | 21 live | **identical** | `replay/r6rev_cuda_identity.json` (job 6368356, gpu2107) |
+
+The frozen-digest comparison is 20 of 21 on BOTH legs on cuda: `AntmazeTeleportExplore` fails on the
+branch and on integration alike, which is RAYCAST-2c's unreproducible frozen digest and not this
+change. On CPU it is 0 of 21 on both legs, because **every Step-4 digest was taken on cuda** and the
+CPU path has never been frozen — so the CPU evidence here is entirely the dump diff, which is the
+point of dumping rather than hashing.
+
+**Neither leg of the default comparison pins the switch**, and the two kinds of leg are evidenced
+differently — which an earlier draft of this section got wrong by claiming one mechanism for both.
+
+* The **pinned** legs (`--compact-merge on|off`) print
+  `COMPOSITE_COMPACT_MERGE=True/False in .../raycast3d.py` before they start, because
+  `replay_step4.py` only reaches that print when a switch is pinned. A vacuous pinned run is
+  therefore visible in the job log.
+* The **default** legs print nothing, by construction: pinning is what triggers the print, so a leg
+  that takes the default cannot announce itself that way. What identifies them is
+  `stable_envs_from` in each per-config record of the replay JSON —
+  `$SCR/se6/integration/stable_envs/__init__.py` on the before leg and
+  `$SCR/se6/raycast3d/stable_envs/__init__.py` on the after leg. That is the field to check, and it
+  is the field that proves the two legs imported different trees rather than the same one twice.
+
+### The fuzz, and whether it has teeth
+
+`tests/unit/test_raycast3d_composite_compact.py` — 55 cases: 13 pinned scenes (odd frame sizes at
+ss=1 and ss=2, a window that does not fit and falls back to the full frame, `plate_t = INF`, a mover
+behind the camera, batch 1 and batch 32, box and cylinder), 24 random ones, an explicit empty-cover
+and full-cover pair, a caller-supplied buffer against a fresh one, per-environment colour and scale,
+12 cases on `_fit_tile`'s containment property, and the switch-still-exists guard.
+
+A differential test that passes on the first run is a claim about the test as much as about the code,
+so three defects were injected and the suite re-run:
+
+| injected defect | caught by |
+|---|---|
+| window one output pixel too small | `_fit_tile` containment property (11 failures); **NOT by any pixel comparison** |
+| window three too small | 20 pixel comparisons |
+| window five too small | 26 pixel comparisons |
+| the patch merge compacted to `all(0)` instead of `any(0)` — i.e. per-batch instead of per-union | 24 pixel comparisons |
+| the per-row material lookup replaced by row 0's | the per-environment-appearance case |
+
+The first row is the useful one: **`screen_span` pads a pixel each way, so a one-pixel error is
+invisible in the output and only a property test on the bound catches it.** That is why the
+containment test exists beside the pixel diff rather than instead of it.
+
+## The cost model, written down before the measurement and then checked against it
+
+The model is arithmetic on the table above: window-sized terms scale by `N_new/N_old`, union-sized
+terms by the per-row-to-union ratio, the patch merge by the covered-pixel fraction, and the rest is
+unchanged. `PointmazeLargeNavigate` at B=64 (`composite` 45.67 ms before, `r6_composite_profile.py`
+with both bodies instrumented identically, job **6366736**, `node2345`):
+
+| group | before ms | factor | predicted ms | measured ms |
+|---|---:|---|---:|---:|
+| window-sized (cast, both box averages, ray gather, `cov`/`covf`, the zeros+`nonzero`) | 32.41 | x 784/4096 | 6.20 | 6.45 |
+| union-sized (`shade`, material gather, `col` scatter) | 8.86 | / 4.06 | 2.18 | 2.51 |
+| patch merge (`oidx`, promote, gather, blend, round, scatter) | 2.32 | x covered pixels | ~0.6 | 0.57 |
+| unchanged (frame write, `tile_origin`, `bt`, setup) | 2.08 | x 1 | 2.08 | 1.88 |
+| **total** | **45.67** | | **11.06** | **11.41** |
+
+Within 3 %. `PointmazeMediumNavigate` the same way: 62.97 -> predicted 23.07, measured 24.18, within
+5 %. The model is not a fit; it is the claim that these terms are proportional to the sample count,
+and that claim is what the change acts on.
+
+### Per-op, before and after, at B=64 (instrumented copies of both bodies, one job, one node)
+
+| block | `PointmazeLarge` before -> after | `PointmazeMedium` before -> after |
+|---|---|---|
+| `cast` | 14.15 -> **2.85** | 14.21 -> **6.53** |
+| `box_avg_col` | 9.44 -> **1.86** | 9.44 -> **4.03** |
+| `shade` | 5.90 -> **1.57** | 17.64 -> **3.89** |
+| `window_gather` | 4.57 -> **0.86** | 4.63 -> **1.83** |
+| `box_avg_cov` | 2.98 -> 0.59 | 2.98 -> 1.30 |
+| `material_gather` | 1.76 -> 0.81 | 5.03 -> 2.14 |
+| `col_scatter` | 1.20 -> 0.13 | 3.41 -> 0.35 |
+| `plate_broadcast_write` | 1.03 -> 1.00 | 1.00 -> 1.05 |
+| patch merge (6 blocks) | 2.32 -> 0.57 | 2.28 -> 1.13 |
+| `plate_promote` | 0.11 -> **0.00** | 0.10 -> **0.00** |
+| **composite** | **45.67 -> 11.41** | **62.97 -> 24.18** |
+
+The instrumented render, both bodies, all four envs the ticket names:
+
+| config | B=16 | B=64 | B=256 | `tile` chosen | N |
+|---|---|---|---|---|---|
+| `PointmazeLargeNavigate` | 13.98 -> 5.35 (2.61x) | 47.22 -> 12.50 (**3.78x**) | 209.29 -> 46.56 (4.50x) | 14 | 784 |
+| `PointmazeMediumNavigate` | 19.98 -> 8.67 (2.31x) | 64.95 -> 25.05 (**2.59x**) | 272.79 -> 97.29 (2.80x) | 21 | 1,764 |
+| `AntmazeGiantNavigate` | 62.32 -> 30.16 (2.07x) | 280.98 -> 80.44 (**3.49x**) | 1279.16 -> 306.20 (4.18x) | 14 | 784 |
+| `HumanoidmazeMediumNavigate` | 99.97 -> 62.70 (1.59x) | 534.45 -> 244.80 (**2.18x**) | 2478.31 -> 1000.89 (2.48x) | 18-20 | 1,296-1,600 |
+
+**These are attribution, not the result.** Both columns carry the instrument's overhead and neither
+is the shipped function; the ratio that goes in a report is the interleaved sweep below, which times
+the real `composite`.
+
+**The legged mazes were not supposed to gain and they did.** RAYCAST-2b measured `AntmazeMedium` and
+`HumanoidmazeMedium` gaining 1.03x and 1.07x from cover compaction and concluded they were
+cast-bound and out of this lever's reach. They still are cast-bound — `cast` is 254.8 of 286.0 ms on
+`AntmazeGiantNavigate` — but the cast runs over the WINDOW, so narrowing the window narrows the cast
+too. That is the part of the design that was not in the ticket's premise: shrinking `N` is not a
+compositing optimisation, it is a ray-count optimisation that the compositing path happened to own.
+
+### One thing this change RETIRES, and it had to be said out loud
+
+`COVER_COMPACTION` no longer does anything on the shipped path. RAYCAST-6's composite compacts per
+row, which is a strictly tighter set than the union that switch selects, so `composite` never reads
+it; it now governs `_composite_window` alone. That is a live hazard rather than a tidy-up, because
+`tests/gpu/test_fast_paths.py`'s `composite-cover-compaction` case flips exactly that flag: left
+alone it would have flipped a switch the running code ignores, compared the compact path with itself
+and gone **green for the wrong reason** — the same shape of false pass as the empty-directory
+`compare_dumps` bug this workstream fixed in RAYCAST-2b. The case now pins
+`COMPOSITE_COMPACT_MERGE` off for its duration, so RAYCAST-2b's claim keeps being tested on the path
+where it still applies, and `test_every_declared_fast_path_is_actually_reachable` asserts both halves
+of that arrangement — the pin in the case, and the `COVER_COMPACTION` branch inside
+`_composite_window` — so a later edit cannot quietly remove either.
+
+### What the trackcom check could and could not be
+
+The brief asked for the four DMControl trackcom cells through `scratch/step6/cpu-3d`'s cross-backend
+comparison script. **That script cannot run: its inputs are gone.** `compare_frozen.py` reads
+`localize312/frames/<cfg>.npz` (`frozen_ours`, `frozen_official`, `frozen_seg`) from the
+texture-fidelity workstream, and no such directory exists anywhere under `$SCR/se6` any more.
+
+What it would have answered is a FIDELITY question — how the CPU backend compares with MJWarp and
+with the official renderer — and the question this ticket owes is narrower: did this change move a
+pixel on the path `cpu3d.py` uses. That is answered decisively by rendering the four cells on CPU
+under `$SCR/se6/integration` and under this branch and diffing the raw frames, which is what was run:
+**identical**, all four. `cpu3d.py` reaches `raycast3d` through `cast_nearest` and `any_blocking` and
+does not call `composite` or `shade` at all, so identity there is the expected result and the check
+is a control — but a control that had not been run would have been an assumption.
+
+## GPU: no regression, and one reading that had to be taken twice
+
+The fused Triton cast is untouched and `composite`'s arithmetic is unchanged, so the cuda digests
+cannot move and do not (21 configs, identical, twice over). Throughput is the separate question, and
+the first attempt at it got it wrong. Job **6366547** ran each leg ONCE per cell and returned
+`AntmazeMediumExplore` at **0.53x** at B=4096 and `PointmazeMediumNavigate` at **1.39x** at B=1024 —
+two numbers that cannot both describe a change that is bit-identical on both devices.
+
+Job **6366608** re-took it INTERLEAVED, int/br/int/br on one card (gpu2104, RTX 3090) in one job, and
+`int2/int1` is a ratio of two runs of identical code:
+
+| env | B | noise (int2/int1) | signal (br/int) | reading |
+|---|---:|---:|---:|---|
+| `PointmazeLargeNavigate` | 64 | 1.00 | 0.993 | unchanged |
+| `PointmazeLargeNavigate` | 256 | 1.02 | 0.975 | unchanged (inside noise) |
+| `PointmazeLargeNavigate` | 1024 | 1.01 | 1.048 | slight gain |
+| `PointmazeLargeNavigate` | 4096 | 1.01 | **1.387** | real gain |
+| `PointmazeMediumNavigate` | 64 | 0.99 | 0.986 | unchanged |
+| `PointmazeMediumNavigate` | 256 | 0.97 | 0.968 | unchanged (inside noise) |
+| `PointmazeMediumNavigate` | 1024 | 0.99 | **1.350** | real gain |
+| `PointmazeMediumNavigate` | 4096 | 1.00 | **1.688** | real gain |
+| `AntmazeMediumExplore` | 64 | 0.98 | 0.995 | unchanged |
+| `AntmazeMediumExplore` | 256 | 0.98 | 1.007 | unchanged |
+| `AntmazeMediumExplore` | 1024 | 1.00 | 1.269 | gain |
+| `AntmazeMediumExplore` | 4096 | **0.44** | 1.249 | **unreadable** |
+| `HumanoidmazeMediumNavigate` | 64 | 0.99 | 0.981 | unchanged |
+| `HumanoidmazeMediumNavigate` | 256 | **0.77** | 1.143 | unreadable |
+| `HumanoidmazeMediumNavigate` | 1024 | **1.99** | 1.029 | unreadable |
+| `HumanoidmazeMediumNavigate` | 4096 | 1.03 | 1.227 | gain |
+
+**The 0.53x was the harness.** The same cell's off-vs-off ratio on identical code is 0.44x, and a
+cell whose noise is 2.3x cannot answer a question about 2x. At the batches where the harness IS
+stable the answer is: **unchanged at B=64 and B=256 (0.968-1.007), a real gain at the large
+batches** where the frame write stops dominating — `PointmazeMediumNavigate` 1.69x at B=4096 against
+a 1.00 noise floor. No cell shows a regression outside its own noise, which is the check this ticket
+owed.
+
+The single-pair readings from 6366547 are not published: `profile_phases.py` writes a directory, and
+`--out` ending in `.json` produced six directories named `*.json` that the Step-6 report scanner
+classifies as unaccounted artifacts. They were deleted rather than renamed, because the interleaved
+run supersedes them and keeping a superseded reading that the page cannot classify is how a
+misleading number survives.
+
+## Public surface: checked, not asserted
+
+`cpu-3d` builds on `raycast3d`'s public functions, so this is compared rather than claimed. Parsing
+both trees and diffing the argument lists of `cast_nearest`, `any_blocking`, `shade`, `composite`,
+`cast_nearest_torch`, `any_blocking_torch`, `intersect`, `static_depth`, `screen_span`,
+`cached_rays`, `_expand_tile`, `_tile_origin` and `_upsample_t`: **every signature and default is
+identical**, **no module-level name was removed**, and exactly two were added — `_composite_window`
+and `_fit_tile`, both private. Return shapes are guaranteed by the 21-config bit-identical replays on
+both devices. `shade` was not touched at all, and `cpu3d.py` reaches this module only through
+`cast_nearest`, `any_blocking`, `Primitives.radii` and `INF` — it never enters `composite`.
+
+The diff against `step6/integration` is **+182/-0 lines in one file**: a pure insertion, with not one
+line of the old `composite` deleted or edited. That the off-path is verbatim is therefore visible in
+`git diff --stat` rather than something to be taken on trust, and it was also checked directly by
+extracting both bodies and comparing them character for character.
+
+## The CPU sweep: interleaved on the real function, then a Step-3-shaped pair
+
+Job **6366607**, `node2317`, `--partition=batch --qos=normal`, `OMP_NUM_THREADS=MKL_NUM_THREADS=1`,
+`torch.set_num_threads(1)`, Intel Xeon Platinum 8268. Both parts in ONE job on ONE node.
+
+**A second certification pair was taken afterwards on a quieter node** (job 6368126, `node1946`,
+`sweep/r6_repeat/`) and it disagrees with this one about `PointmazeMediumNavigate`'s tier. Read the
+two together in *The two readings, side by side* below; the numbers in this section are the first
+reading and are not the whole answer on their own.
+
+### Part 1 — four interleaved legs, off/on/off/on, on this branch
+
+`off2/off1` is a ratio of two runs of IDENTICAL code, so it measures the harness and nothing else.
+RAYCAST-5 put that at 11.7 % on a shared batch node, which is why a single before/after pair is not
+evidence at this resolution.
+
+| env | B | off1 | off2 | **noise** | on1 | on2 | **signal** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `PointmazeLargeNavigate` | 1 | 284.6 | 335.5 | 1.18 | 473.1 | 405.7 | 1.417 |
+| `PointmazeLargeNavigate` | 16 | 1,082.8 | 1,279.0 | 1.18 | 3,532.8 | 3,465.3 | **2.963** |
+| `PointmazeLargeNavigate` | 64 | 1,363.1 | 1,430.3 | 1.05 | 5,425.4 | 5,361.1 | **3.861** |
+| `PointmazeLargeNavigate` | 256 | 1,313.8 | 1,279.2 | 0.97 | 5,578.0 | 5,537.0 | **4.287** |
+| `PointmazeMediumNavigate` | 1 | 282.2 | 291.8 | 1.03 | 369.7 | 388.6 | 1.321 |
+| `PointmazeMediumNavigate` | 16 | 982.0 | 974.5 | 0.99 | 2,116.1 | 2,173.8 | **2.193** |
+| `PointmazeMediumNavigate` | 64 | 1,045.3 | 1,031.1 | 0.99 | 2,678.5 | 2,704.5 | **2.592** |
+| `PointmazeMediumNavigate` | 256 | 974.8 | 964.5 | 0.99 | 2,588.9 | 2,424.0 | **2.585** |
+| `AntmazeGiantNavigate` | 1 | 50.2 | 44.2 | 0.88 | 52.3 | 50.5 | 1.089 |
+| `AntmazeGiantNavigate` | 16 | 254.1 | 240.8 | 0.95 | 481.5 | 438.9 | **1.859** |
+| `AntmazeGiantNavigate` | 64 | 227.7 | 230.4 | 1.01 | 734.2 | 697.2 | **3.125** |
+| `AntmazeGiantNavigate` | 256 | 197.3 | 199.3 | 1.01 | 800.4 | 765.7 | **3.948** |
+| `HumanoidmazeMediumNavigate` | 1 | 33.8 | 33.6 | 0.99 | 38.9 | 40.3 | 1.175 |
+| `HumanoidmazeMediumNavigate` | 16 | 138.0 | 145.5 | 1.05 | 266.1 | 272.4 | **1.899** |
+| `HumanoidmazeMediumNavigate` | 64 | 111.0 | 120.7 | 1.09 | 218.9 | 225.9 | **1.919** |
+| `HumanoidmazeMediumNavigate` | 256 | 98.3 | 99.0 | 1.01 | 240.0 | 243.0 | **2.448** |
+
+**Worst off-vs-off spread on identical code, certification batches only: 1.181x.** Every signal at
+every certification batch clears it by a wide margin; the narrowest is `HumanoidmazeMediumNavigate`
+at B=64, 1.92x against 1.09x. B=1 is shown but does not gate — the frozen spec forbids certifying on
+it (`gpu.never_certify_on_batch`).
+
+### Part 2 — the Step-3-shaped pair, with a paired denominator
+
+`examples/results/step6/raycast3d/sweep/r6/{cpu_1thread_before_integration,cpu_1thread_after_branch}.json`.
+
+Produced by `scratch/step6/raycast3d/r6_certify_shard.py`, which runs
+`scratch/step6/cpu-3d/certify_shard_cpu3d.py` unmodified and relabels the leg afterwards. That
+producer rather than `examples/bench_step3.py` because `bench_step3.py` times the official renderer
+ONCE, in a block, after the whole batch sweep, and
+`examples/results/step6/gfxdraw/characterize/cpu_shard_attempts.json` is the record of what that does
+on a shared node: a single block-timed reading moved **2.3x between the two arms of one job** on
+`node2338` and took `S_cpu` far enough with it to relabel four configurations a tier up. The paired
+form measures a reference burst between every batch cell and reports the median with its spread.
+
+**The reference spread bound was 1.25x and the worst reading in either leg is 1.17x**
+(`DMCReacherHard`, before). Nothing was rejected; had anything exceeded the bound the shard would
+have been written and marked rather than published, which is the rule this workstream's own
+11.7 %-noise measurement made necessary.
+
+`node2317`, job **6366607**, 1 thread, Intel Xeon Platinum 8268. `S_cpu` = ours / the official
+renderer; `cores_cpu` = ours / the one-core JPEG-q90 decode rate, both measured in the same leg on
+the same host.
+
+| env | fps before | fps after | x | S_cpu before -> after | **cores_cpu before -> after** | tier before -> after |
+|---|---:|---:|---:|---|---|---|
+| `PointmazeLargeNavigate` | 1,361 | **6,154** | **4.52** | 70.79 -> **314.45** | **0.663 -> 2.703** | `CPU_FASTER`+`BELOW_G4` -> **`CPU_FAST`** |
+| `PointmazeMediumNavigate` | 969 | **2,732** | **2.82** | 37.23 -> **103.11** | **0.362 -> 1.207** | `CPU_FAST` **on this reading only** — the repeat below puts it at 0.925 and back in `CPU_FASTER`+`BELOW_G4` |
+| `AntmazeGiantNavigate` | 250 | 804 | 3.21 | 21.18 -> 68.35 | 0.102 -> 0.314 | `CPU_FASTER`+`BELOW_G4`, unchanged |
+| `HumanoidmazeMediumNavigate` | 137 | 274 | 2.00 | 8.26 -> 16.65 | 0.057 -> 0.102 | `CPU_FASTER`+`BELOW_G4`, unchanged |
+| `DMCReacherHard` | 132 | 121 | 0.92 | 3.62 -> 3.40 | 0.018 -> 0.018 | control |
+| `DMCFingerSpin` | 116 | 116 | 1.00 | 3.78 -> 3.70 | 0.017 -> 0.018 | control |
+| `DMCCartpoleSwingup` | 562 | 638 | 1.13 | 15.38 -> 17.30 | 0.086 -> 0.099 | control |
+| `DMCPendulumSwingup` | 214 | 210 | 0.98 | 5.64 -> 5.60 | 0.028 -> 0.033 | control |
+| `DMCAcrobotSwingup` | 309 | 311 | 1.01 | 8.29 -> 8.28 | 0.042 -> 0.047 | control |
+| `DMCBallInCupCatch` | 58 | 55 | 0.95 | 3.68 -> 3.61 | 0.009 -> 0.007 | control |
+
+Labels for THIS pair are **`{'CPU_FASTER': 8, 'CPU_FAST': 2}`**, from `scratch/step3/certify.py`'s
+`classify`
+— the same function `report.py` labels the dashboard with — run over this pair out of tree. Not from
+the sweep job: its `certify.py` step was invoked with a `--doc` flag copied from another workstream's
+script, `certify.py` accepts no such flag, and the step **exited 2 without producing anything**. The
+flag is gone from `r6_sweep.sbatch`, and so is the call: `certify.py` rewrites
+`docs/research/step3_benchmarks.md` as a side effect, which is a Step-3 document this workstream must
+not touch, so the job now reads the tier with `scratch/step6/raycast3d/r6_tiers.py` and the
+certifier's label is taken separately and quoted above.
+
+**The six DM Control rows are a same-code control and they behave like one.** They do not enter
+`composite` at all, both legs run the identical build for them, and their before/after ratios are
+0.92-1.13x — inside each shard's own reference spread. A shard pair that moved them would have been
+measuring the node rather than the change, and this is the row-set that says it did not.
+
+## `PointmazeLargeNavigate` is the first `CPU_FAST` row on this path. `PointmazeMediumNavigate` is not.
+
+**This section retracts half of what an earlier draft of it claimed**, and the retraction is the
+result of the one repeat shard the coordinator authorized. The first pair (`node2317`, job 6366607)
+put both rows over `cores_cpu >= 1`. The second (`node1946`, job **6368126**) puts
+`PointmazeMediumNavigate` under it.
+
+### The two readings, side by side
+
+| | first: `node2317`, job 6366607 | second: `node1946`, job 6368126 |
+|---|---|---|
+| node load at start | not recorded (the 23xx block was at 31-48 that afternoon) | **4.2 -> 4.8** |
+| worst paired reference spread | 1.17x | **1.06x** |
+| pre-flight load guard | none | `--max-load 12`, passed |
+| `certifiable` | (no guard) | **true** |
+| `PointmazeLargeNavigate` | 1,361 -> 6,154 f/s (**4.52x**), cores **2.703** | 1,180 -> 5,535 (**4.69x**), cores **2.152** |
+| `PointmazeMediumNavigate` | 969 -> 2,732 f/s (**2.82x**), cores **1.207** | 908 -> 2,479 (**2.73x**), cores **0.925** |
+| `certify.classify` | `CPU_FAST`, `CPU_FAST` | **`CPU_FAST`, `CPU_FASTER`+`BELOW_G4`** |
+
+**The speed-up reproduces and the tier does not.** 4.52x against 4.69x and 2.82x against 2.73x is
+two independent measurements of the same thing on two nodes. What moved is the DENOMINATOR: the
+after-fps for `PointmazeMediumNavigate` differs by 10 % between nodes (2,732 vs 2,479) while the
+one-core decode rate measured for it differs by 18 % (2,264 vs 2,680), and the bar is the decode
+rate.
+
+### `PointmazeMediumNavigate` straddles the bar
+
+Its two certification-grade after-fps readings against the five one-core decode rates this workstream
+has actually measured for that configuration:
+
+| after fps | `n1946` after 2,680 | `n1946` before 2,430 | `n2317` after 2,264 | `n2317` before 2,678 | `n2335` (R5) 2,385 |
+|---|---:|---:|---:|---:|---:|
+| **2,732** (`node2317`) | 1.019 | 1.124 | **1.207** | 1.020 | 1.145 |
+| **2,479** (`node1946`) | **0.925** | 1.020 | 1.095 | 0.926 | 1.039 |
+
+**Ten combinations, range 0.925 to 1.207, and the bar runs through the middle of it.** Four are under
+1. The lowest is the one where fps and decode were measured in the same leg of the better-conditioned
+job — which is the combination with the strongest claim to being a single coherent measurement, and
+it is the one that says no.
+
+**So: `PointmazeMediumNavigate` is NOT established as `CPU_FAST`.** It is `CPU_FASTER` + `BELOW_G4`
+with `cores_cpu` somewhere around 0.93-1.21 depending on the host, i.e. **at the bar rather than over
+it**, having come from 0.36-0.37. Reporting it as `CPU_FAST` on the strength of the first reading
+alone would have been reporting the node, and the repeat exists because the first draft nearly did.
+
+### `PointmazeLargeNavigate` is not close to the bar and crosses on every combination
+
+| after fps | `n1946` after 2,573 | `n1946` before 2,276 | `n2317` after 2,277 | `n2317` before 2,054 | `n2335` (R5) 2,361 |
+|---|---:|---:|---:|---:|---:|
+| **6,154** (`node2317`) | 2.392 | 2.704 | **2.703** | 2.996 | 2.607 |
+| **5,535** (`node1946`) | **2.151** | 2.432 | 2.431 | 2.695 | 2.344 |
+
+Range **2.151 to 2.996**, every combination over the bar by at least 2.1x, from 0.52-0.66 before.
+`S_cpu` is 250-314 against a bar of 5. **`PointmazeLargeNavigate` is `CPU_FAST`, and it is the first
+`CPU_FAST` row this renderer path has ever had** — Step 3 recorded `cores` 0.4159 for it and ticket 1
+put the shortfall at 2.40x; RAYCAST-2b bought 1.75x and stopped at 0.63; RAYCAST-6 lands at 2.15-2.70
+depending on the host.
+
+### The two that never came close, and by how much
+
+`AntmazeGiantNavigate` gains 3.21x and reaches `cores` 0.314 — still **3.2x short**.
+`HumanoidmazeMediumNavigate` gains 2.00x and reaches 0.102 — **9.8x short**. Both stay `CPU_FASTER` +
+`BELOW_G4`. They are cast-bound (`cast` is 90 % of an `AntmazeGiantNavigate` composite after the
+change and 95 % of a `HumanoidmazeMediumNavigate` one, on 13 and 19 primitives against Pointmaze's
+one), and the remaining lever for them is RAYCAST-3's compiled CPU cast, which was measured at 12x
+and found necessary-but-not-sufficient there.
+
+### What this says about the methodology, which is bigger than this ticket
+
+Two certification shards, both taken by the producer with the interleaved denominator, both inside
+their own reference-spread bound, on two nodes of the same partition, disagree about a TIER. Not
+about the renderer — they agree on the speed-up to within 4 % — but about the bar, because
+`cores_cpu` divides by a one-core JPEG decode rate that is itself a measurement on a shared node and
+moved 18 % between them. That is a property of `cores_cpu` as a metric, not of this change, and it
+will hit any row that lands near 1. **Recommended to the coordinator for Sami's closure packet: a
+row within roughly 25 % of `cores_cpu = 1` should not be labelled from a single shard.** This ticket
+is the second workstream to arrive at that conclusion from its own evidence, after `gfxdraw`'s
+`cpu_shard_attempts.json`.
+
+### Both r6 pairs stay live, and the dashboard is meant to flag them
+
+`sweep/r6_repeat/` sorts after `sweep/r6/`, so `report.py` reads the tier from the repeat — the
+better-conditioned measurement — and will mark **CPU after-legs disagree** on
+`PointmazeMediumNavigate`. That flag is correct and wanted here. It would be trivial to suppress by
+withdrawing one shard, and doing so would publish a tier the evidence does not support; the
+withdrawal mechanism in this directory exists for shards describing a build that no longer exists,
+not for shards that disagree with the answer one would prefer. `PointmazeLargeNavigate` agrees across
+both and raises no flag.
+
+### The RAYCAST-5 CPU shards are superseded, and moved rather than deleted
+
+`sweep/cpu_1thread_{before_baseline,after_branch_bounds_on,branch_bounds_off_control}.json` describe
+a build that no longer exists, and leaving them in place would have given `report.py` two after-legs
+per row and made it print *CPU after-legs disagree* on exactly the two rows whose tier change is the
+result. They are now `sweep/superseded_r5_node2335/`, with the `before`/`after` tokens removed from
+their names — `leg_of` reads the leg out of the filename, so a move alone would not have been enough
+— and a `README.md` giving the full comparison and the exact steps to reverse it (a
+`README.md` rather than a `PROVENANCE_NOTE.md` so the report generator renders the
+withdrawal reason rather than listing four unexplained files).
+`r5_shards.sbatch`'s header now says it is superseded, because this workstream has already been
+bitten once by a re-run re-creating a name it had deliberately changed. **No DM Control row changes
+tier between the two shards**, which is what makes the replacement safe; the new pair also covers two
+environments the old one did not.
+
+**This is a judgment call and it is reversible.** If the coordinator would rather keep both pairs
+live and accept the disagreement flag, the note says how.
+
+## The review round, and what it changed
+
+Independent review of `a802849` returned APPROVE-WITH-CHANGES and found **no defect in the shipped
+path** — the window-containment argument, the AST-identical off-path body, the untouched box averages
+and the per-leg identity logs all held up, and the numbers recompute from the shards. What it found
+was in the evidence around the path, and two of those were real holes:
+
+1. **The `bt` gather had no test.** Transposing the occlusion-threshold blow-up passed 63 of 63,
+   because every scene in the fuzz had `plate_t` either `INF` or a smooth floor far behind the
+   movers. Fixed with a `"band"` mode; the transposition now fails 5 cases (§ the fuzz).
+2. **`mover-at-frame-edge` never reached an edge** — `spread=0.05` centres the sphere, so the origin
+   clamp was the identity on every row. Replaced by four clamped cases plus one at ss=2 with a
+   per-row `size_scale`, and an assertion that the clamp still engages.
+3. Provenance corrections (node names, which legs print the switch, the per-job test counts, where
+   the tier label came from) and per-leg commit stamping — all recorded in place.
+4. **The one authorized repeat shard retracted `PointmazeMediumNavigate`'s tier.** That is the
+   substantive change and it is above.
+
+The renderer itself is byte-identical across the review round: `git diff a802849 HEAD --
+stable_envs/` is empty. The post-review job **6368356** (gpu2107) is the control that says so from
+the outside — cuda identity on all 21, `tests/gpu/test_fast_paths.py` 223 passed, `tests/unit` 807
+passed with the same two pre-existing failures.
+
+## What is still open after RAYCAST-6
+
+1. **`COVER_COMPACTION` is now dead code on the shipped path.** It governs `_composite_window` only.
+   Removing it would delete the off-path the fast-path suite diffs against, so it should stay until
+   someone decides `_composite_window` itself can go — which is a coordinator call, not mine.
+2. **`AntmazeGiantNavigate` and `HumanoidmazeMediumNavigate` remain `BELOW_G4`** by 3.2x and 9.8x.
+   They are cast-bound; the lever is RAYCAST-3's compiled CPU cast, still unimplemented and still
+   blocked on the capsule-normal bit-exactness question (3-17 ulp on 0.06-0.35 % of components under
+   gcc 11.5/x86-64, exact under Apple clang/arm64).
+3. **`PointmazeMediumNavigate`'s crossing is 1.02 on the most conservative denominator available.**
+   It is a real crossing on every rate measured, but it has no margin, and the decode rate is a
+   property of the certification host.
+4. **The RAYCAST-5 CPU shard move is a judgment call** (above), reversible, and flagged for the
+   coordinator.
+5. **`scratch/step6/cpu-3d/compare_frozen.py` cannot run any more** — the texture-fidelity frame
+   stacks it reads (`localize312/frames/<cfg>.npz`) are not on the cluster. That is a gap in a
+   different workstream's evidence chain, noticed here because this ticket was asked to use it.
+6. Unchanged from before: the bake is still history-dependent (OGBENCH-BAKE-1, unauthorised);
+   `AntmazeTeleportExplore`'s frozen digest is still unreproducible at the baseline and fails on both
+   legs of every cuda replay; the two pre-existing `tests/unit` failures are still there and still
+   not in any file this workstream owns.
+
+## Every SLURM job RAYCAST-6 ran
+
+All mine, all named `se6-raycast3d-*`. No job I did not submit was touched; one GPU job at a time.
+
+| job | name | state | elapsed | node | what |
+|---|---|---|---:|---|---|
+| `6365780` | `se6-raycast3d-r6prof` | COMPLETED | 00:00:30 | `node2348` | the per-op attribution that replaced the ticket's premise |
+| `6365965` | `se6-raycast3d-r6span` | COMPLETED | 00:01:21 | `node1828` | the window each caller actually needs, 11 OGBench + 4 maze2d |
+| `6366546` | `se6-raycast3d-r6vcpu` | COMPLETED | 00:06:24 | `node2326` | CPU identity: switch on/off, branch vs integration, trackcom, tests |
+| `6366547` | `se6-raycast3d-r6vgpu` | COMPLETED | 00:02:59 | `gpu2109` | cuda identity on 21 (both comparisons), fast-path suite, first GPU sweep |
+| `6366548` | `se6-raycast3d-r6m2d` | COMPLETED | 00:00:52 | `node2326` | maze2d `PointMaze*` identity in the fresh venv |
+| `6366607` | `se6-raycast3d-r6sweep` | COMPLETED | 00:43:43 | `node2317` | **the interleaved sweep and the Step-3-shaped pair** |
+| `6366608` | `se6-raycast3d-r6gnr` | COMPLETED | 00:02:37 | `gpu2104` | **the interleaved GPU no-regression check** that retired the 0.53x reading |
+| `6366640` | `se6-raycast3d-r6design` | COMPLETED | 00:02:30 | `node2345` | before/after attribution — **discarded**: the profiler's nested timers mis-attributed a block |
+| `6366736` | `se6-raycast3d-r6design` | COMPLETED | 00:02:30 | `node2345` | the same, with the recorder fixed; this is the one quoted |
+| `6366853` | `se6-raycast3d-r6gt` | COMPLETED | 00:02:41 | `gpu2116` | the fast-path suite after the cover-compaction case was re-pointed |
+| `6366959` | `se6-raycast3d-r6fin` | COMPLETED | 00:04:28 | `node2349` | identity re-taken on the HEAD that ships, plus `tests/unit` |
+| `6368126` | `se6-raycast3d-r6rpt` | COMPLETED | 00:01:49 | `node1946` | **the authorized repeat shard**, load-guarded, which retracted `PointmazeMediumNavigate`'s tier |
+| `6368356` | `se6-raycast3d-r6rev` | COMPLETED | 00:04:15 | `gpu2107` | post-review control: cuda identity on 21, fast paths, `tests/unit`, on the shipping HEAD |
+
+## Report
+
+**Classification: `PATCH`.**
+
+- baseline SHA `89fa5ca81341dc4df7186ec325cb691431a2ef17`; merged `step6/integration` at `5b327af`
+- affected configs: the **11** `OGBenchMaze` configurations (35 registered names with siblings) and
+  the **4** `maze2d` `PointMaze*`, which are the only callers of `R3.composite`. The 10
+  `DMControlSuite` configurations and the 4 trackcom cells were replayed as controls and are
+  unchanged.
+- pixels changed: **no**, on either device, on any of the 21 live configs, the 4 maze2d envs or the
+  4 trackcom cells.
+- tiers: **`PointmazeLargeNavigate` `CPU_FASTER` + `BELOW_G4` -> `CPU_FAST`** — the first `CPU_FAST`
+  row on this renderer path, and it crosses on all ten (fps, decode) combinations measured, range
+  2.15-3.00. **`PointmazeMediumNavigate` is NOT claimed**: its two certification shards straddle the
+  bar (`cores_cpu` 1.207 on `node2317`, 0.925 on the quieter `node1946`), so it stays `CPU_FASTER` +
+  `BELOW_G4` at roughly 0.93-1.21, up from 0.36-0.37. `AntmazeGiantNavigate` 0.102 -> 0.314 and
+  `HumanoidmazeMediumNavigate` 0.057 -> 0.102, both still `BELOW_G4`. No GPU tier moves.
+- semantic follow-up recommendation: **none.** The frames are bit-identical, so no downstream metric
+  can move.

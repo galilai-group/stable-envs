@@ -174,6 +174,9 @@ def main() -> None:
     ap.add_argument("--cover-compaction", choices=("on", "off"), default=None,
                     help="pin raycast3d.COVER_COMPACTION, to diff the compacted composite against "
                          "the expression it replaced on the device the change targets")
+    ap.add_argument("--compact-merge", choices=("on", "off"), default=None,
+                    help="pin raycast3d.COMPOSITE_COMPACT_MERGE, to diff the bound-sized window and "
+                         "the compact patch merge against the expression they replaced")
     ap.add_argument("--dump-dir", type=Path, default=None)
     ap.add_argument("--compare-dumps", nargs=2, type=Path, default=None,
                     metavar=("BEFORE", "AFTER"))
@@ -192,7 +195,8 @@ def main() -> None:
               + f"  wrote {args.out}", flush=True)
         return
 
-    if args.cover_compaction is not None or args.primitive_bounds is not None:
+    if (args.cover_compaction is not None or args.primitive_bounds is not None
+            or args.compact_merge is not None):
         import stable_envs.render.raycast3d as R3
         if args.cover_compaction is not None:
             R3.COVER_COMPACTION = args.cover_compaction == "on"
@@ -201,8 +205,15 @@ def main() -> None:
                 raise SystemExit("this stable_envs has no PRIMITIVE_BOUNDS; pinning it would compare "
                                  "the same path with itself and report a false identity")
             R3.PRIMITIVE_BOUNDS = args.primitive_bounds == "on"
+        if args.compact_merge is not None:
+            if not hasattr(R3, "COMPOSITE_COMPACT_MERGE"):
+                raise SystemExit("this stable_envs has no COMPOSITE_COMPACT_MERGE; pinning it would "
+                                 "compare the same path with itself and report a false identity")
+            R3.COMPOSITE_COMPACT_MERGE = args.compact_merge == "on"
         print(f"COVER_COMPACTION={getattr(R3, 'COVER_COMPACTION', None)} "
-              f"PRIMITIVE_BOUNDS={getattr(R3, 'PRIMITIVE_BOUNDS', None)} in {R3.__file__}",
+              f"PRIMITIVE_BOUNDS={getattr(R3, 'PRIMITIVE_BOUNDS', None)} "
+              f"COMPOSITE_COMPACT_MERGE={getattr(R3, 'COMPOSITE_COMPACT_MERGE', None)} "
+              f"in {R3.__file__}",
               flush=True)
 
     frozen = frozen_oracles()

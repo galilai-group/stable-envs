@@ -1,0 +1,98 @@
+{
+  "host": "node2326.oscar.ccv.brown.edu",
+  "device": "cpu",
+  "slurm_job": "6366548",
+  "code_root": "/oscar/scratch/sboughan/se6/integration",
+  "configs": {
+    "PointMazeLarge": {
+      "config": "PointMazeLarge",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/integration/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "745d17d9688f6f2cfc4ca269254380f78c0e7ccef053a2c9aff259fb3385fb02",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 87.50915651905294,
+      "digest_ours_default_style": "745d17d9688f6f2cfc4ca269254380f78c0e7ccef053a2c9aff259fb3385fb02",
+      "frozen": null,
+      "PASS": null,
+      "dump": "PointMazeLarge.npy"
+    },
+    "PointMazeMedium": {
+      "config": "PointMazeMedium",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/integration/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "1ad45b5804c14bdd62c8f633e04494ce5a12ef7185fd6493e3dfad27727dc605",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 87.59843247601775,
+      "digest_ours_default_style": "1ad45b5804c14bdd62c8f633e04494ce5a12ef7185fd6493e3dfad27727dc605",
+      "frozen": null,
+      "PASS": null,
+      "dump": "PointMazeMedium.npy"
+    },
+    "PointMazeOpen": {
+      "config": "PointMazeOpen",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/integration/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "14125057cf38a506cc7e0923d41b346694014e680a17e7daf4c78378b00bf16b",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 81.77814042487113,
+      "digest_ours_default_style": "14125057cf38a506cc7e0923d41b346694014e680a17e7daf4c78378b00bf16b",
+      "frozen": null,
+      "PASS": null,
+      "dump": "PointMazeOpen.npy"
+    },
+    "PointMazeUMaze": {
+      "config": "PointMazeUMaze",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/integration/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(20260913))  [no frozen corpus]",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "2e99d79ac456246dfa731e77dcc5cc7478245e0bc94c17861f4fc025e847846a",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 81.19521835223347,
+      "digest_ours_default_style": "2e99d79ac456246dfa731e77dcc5cc7478245e0bc94c17861f4fc025e847846a",
+      "frozen": null,
+      "PASS": null,
+      "dump": "PointMazeUMaze.npy"
+    }
+  },
+  "summary": {
+    "pass": 0,
+    "fail": 0,
+    "error": 0,
+    "total": 4
+  }
+}

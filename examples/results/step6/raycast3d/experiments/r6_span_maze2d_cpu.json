@@ -1,0 +1,88 @@
+{
+  "host": "node2345.oscar.ccv.brown.edu",
+  "slurm_job": "6366736",
+  "device": "cpu",
+  "stable_envs_from": "$SCR/se6/integration/stable_envs/__init__.py",
+  "configs": {
+    "PointMazeLarge": {
+      "16": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 19,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      },
+      "64": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 21,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      }
+    },
+    "PointMazeMedium": {
+      "16": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 28,
+        "h_max": 26,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      },
+      "64": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 27,
+        "h_max": 26,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      }
+    },
+    "PointMazeOpen": {
+      "16": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 21,
+        "h_max": 23,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      },
+      "64": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 21,
+        "h_max": 22,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      }
+    },
+    "PointMazeUMaze": {
+      "16": {
+        "calls": 2,
+        "none": 0,
+        "w_max": 19,
+        "h_max": 23,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      },
+      "64": {
+        "calls": 3,
+        "none": 0,
+        "w_max": 19,
+        "h_max": 30,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 48
+      }
+    }
+  }
+}
