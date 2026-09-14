@@ -23,10 +23,18 @@ R3 = pytest.importorskip("stable_envs.render.raycast3d")
 KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
 
 
-def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0):
+def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0,
+                kinds=None):
     g = torch.Generator().manual_seed(rng)
     r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)          # noqa: E731
-    kinds = [KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)]
+    # ``kinds`` PINNED rather than sampled is what makes the per-kind dispatch testable. RAYCAST-5
+    # applies the bound only to the kinds whose intersector costs more than the bound does, so a
+    # scene now mixes primitives that take the bounded path with primitives that take the verbatim
+    # unbounded body, and they write into the same ``best`` / ``blocked``. Sampling reaches those
+    # mixes eventually; pinning them means the boundary is covered on every run.
+    kinds = ([KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)]
+             if kinds is None else list(kinds))
+    K = len(kinds)
     sizes = (r(B, K, 3) * 0.4 + 0.02)
     if degenerate:
         sizes[:, ::2] = 0.0                                   # zero radius / half-length / extent
@@ -66,14 +74,22 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
 
 
 def _both(fn, *a, **kw):
-    assert R3.PRIMITIVE_BOUNDS is True, "a previous test leaked the switch"
+    """Run ``fn`` with the bound on and with it off, restoring whatever the default was.
+
+    The default is NOT assumed here. RAYCAST-4 shipped with ``PRIMITIVE_BOUNDS`` on; RAYCAST-5 turned
+    it off while the maze regression is open and will turn it back on when the sweep says it may.
+    A differential test that asserts the default is testing the release decision rather than the
+    identity, and would have to be edited every time that decision moves -- which is exactly when it
+    most needs to keep working.
+    """
+    was = R3.PRIMITIVE_BOUNDS
     try:
         R3.PRIMITIVE_BOUNDS = True
         fast = fn(*a, **kw)
         R3.PRIMITIVE_BOUNDS = False
         slow = fn(*a, **kw)
     finally:
-        R3.PRIMITIVE_BOUNDS = True
+        R3.PRIMITIVE_BOUNDS = was
     return fast, slow
 
 
@@ -106,12 +122,33 @@ CASES = [
     dict(rng=9, B=2, K=6, N=512, far=100.0, tangent=True),
     dict(rng=10, B=2, K=6, N=512, far=300.0, tangent=True),
     dict(rng=11, B=1, K=9, N=1024, far=100.0),
+    # PINNED KIND MIXES (RAYCAST-5). Under the per-kind predicate a scene can hold primitives on both
+    # paths at once, so these pin the combinations rather than hoping the sampler finds them: every
+    # kind alone, the two sides of the predicate adjacent, and a scene with one of each.
+    dict(rng=12, B=2, K=4, N=333, kinds=(R3.SPHERE,) * 4),
+    dict(rng=13, B=2, K=4, N=333, kinds=(R3.CAPSULE,) * 4),
+    dict(rng=14, B=2, K=4, N=333, kinds=(R3.PLANE,) * 4),
+    dict(rng=15, B=2, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3),
+    dict(rng=16, B=2, K=6, N=333, kinds=(R3.CAPSULE, R3.SPHERE) * 3),
+    dict(rng=17, B=2, K=5, N=333, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
+    dict(rng=18, B=2, K=5, N=512, far=100.0, tangent=True,
+         kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
+    dict(rng=19, B=3, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3, degenerate=True),
 ]
 
 
-@pytest.mark.parametrize("case", CASES, ids=lambda c: "-".join(
-    [f"B{c['B']}K{c['K']}N{c['N']}"] + [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]
-    + ([f"far{int(c['far'])}"] if c.get("far") else [])))
+def _case_id(c):
+    tag = [f"B{c['B']}K{c['K']}N{c['N']}"]
+    tag += [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]
+    if c.get("far"):
+        tag.append(f"far{int(c['far'])}")
+    if c.get("kinds"):
+        names = {R3.PLANE: "pl", R3.SPHERE: "sp", R3.CAPSULE: "ca", R3.CYLINDER: "cy", R3.BOX: "bx"}
+        tag.append("".join(names[k] for k in c["kinds"]))
+    return "-".join(tag)
+
+
+@pytest.mark.parametrize("case", CASES, ids=_case_id)
 def test_cast_nearest_is_unchanged_by_the_bound(case):
     kinds, sizes, pos, R, o, d = _rand_scene(**case)
     (bt, bn, bi), (st, sn, si) = _both(R3.cast_nearest_torch, kinds, sizes, pos, R, o, d)
@@ -120,9 +157,7 @@ def test_cast_nearest_is_unchanged_by_the_bound(case):
     _same(bi, si, "winning primitive index")
 
 
-@pytest.mark.parametrize("case", CASES, ids=lambda c: "-".join(
-    [f"B{c['B']}K{c['K']}N{c['N']}"] + [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]
-    + ([f"far{int(c['far'])}"] if c.get("far") else [])))
+@pytest.mark.parametrize("case", CASES, ids=_case_id)
 def test_any_blocking_is_unchanged_by_the_bound(case):
     kinds, sizes, pos, R, o, d = _rand_scene(**case)
     B, N = o.shape[0], o.shape[1]
@@ -147,10 +182,68 @@ def test_a_ray_aimed_straight_at_a_primitive_is_never_pruned():
     assert idx.tolist() == [[0, 1]], f"wrong primitive won: {idx.tolist()}"
 
 
-def test_the_switch_exists_and_defaults_on():
-    assert R3.PRIMITIVE_BOUNDS is True
+def test_the_switch_exists_and_both_paths_are_reachable():
+    assert isinstance(R3.PRIMITIVE_BOUNDS, bool)
     assert callable(R3._cast_nearest_torch_unbounded)
     assert callable(R3._any_blocking_torch_unbounded)
+
+
+def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
+    """``_BOUNDED_KINDS`` must equal the table in the experiment file, not a hand-edited guess.
+
+    The predicate is the deliverable of RAYCAST-5 and its whole claim is that it was derived from a
+    measurement of intersector cost rather than fitted to eight sweep rows. A constant in the module
+    that has drifted from the JSON it cites would leave that claim true of the document and false of
+    the code, which is the failure this check exists to make impossible. If the measurement is re-run
+    and the table moves, this test is what says the constant has to move with it.
+    """
+    import json
+    from pathlib import Path
+    f = (Path(R3.__file__).resolve().parents[2]
+         / "examples/results/step6/raycast3d/experiments/r5_kind_cost.json")
+    if not f.is_file():
+        pytest.skip(f"no committed measurement at {f}")
+    m = json.loads(f.read_text())
+    names = {"PLANE": R3.PLANE, "SPHERE": R3.SPHERE, "CAPSULE": R3.CAPSULE,
+             "CYLINDER": R3.CYLINDER, "BOX": R3.BOX}
+    measured = {names[n] for n, on in m["predicate"].items() if on}
+    assert set(R3._BOUNDED_KINDS) == measured, (
+        f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
+        f"({f.name}, margin {m['margin']['value']:.3f}) chose {sorted(measured)}")
+
+
+def test_an_unbounded_kind_never_reaches_the_gather():
+    """A kind outside the table must take the verbatim unbounded body, bound or no bound.
+
+    Pointmaze's regression was one SPHERE over a 200,704-ray bundle: the bound spent an O(N)
+    ``nonzero`` plus gather plus scatter to narrow the cheapest intersector in the file. The repair is
+    only real if the sphere genuinely stops going through that machinery, so this asserts on the call
+    rather than on the pixels -- pixels are identical either way, which is precisely why they cannot
+    detect the thing being fixed.
+    """
+    seen = []
+    real = torch.nonzero
+
+    def spy(*a, **kw):
+        seen.append(1)
+        return real(*a, **kw)
+
+    kinds, sizes, pos, R, o, d = _rand_scene(rng=31, B=2, K=3, N=257, kinds=(R3.SPHERE,) * 3)
+    was = R3.PRIMITIVE_BOUNDS
+    torch.nonzero = spy
+    try:
+        R3.PRIMITIVE_BOUNDS = True
+        R3.cast_nearest_torch(kinds, sizes, pos, R, o, d)
+        assert not seen or R3.SPHERE in R3._BOUNDED_KINDS, (
+            "an unbounded kind still went through the bound's nonzero/gather")
+        kinds2, s2, p2, R2, o2, d2 = _rand_scene(rng=31, B=2, K=3, N=257, kinds=(R3.CAPSULE,) * 3)
+        seen.clear()
+        R3.cast_nearest_torch(kinds2, s2, p2, R2, o2, d2)
+        assert seen or R3.CAPSULE not in R3._BOUNDED_KINDS, (
+            "a bounded kind did not go through the bound at all; the test would pass vacuously")
+    finally:
+        torch.nonzero = real
+        R3.PRIMITIVE_BOUNDS = was
 
 
 @pytest.mark.parametrize("rng", [21, 22, 23])

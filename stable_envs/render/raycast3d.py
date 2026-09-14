@@ -476,7 +476,11 @@ def _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d):
 #: has nothing to gain from skipping one; it is untouched, which is also why the GPU digests cannot
 #: move. ``nonzero`` synchronises on CUDA, so the torch fallback on a CUDA device pays K syncs per
 #: call -- that path exists for the tests that diff the two backends, not for throughput.
-PRIMITIVE_BOUNDS: bool = True
+#: DEFAULT OFF. RAYCAST-4 measured this bound at 3.08x on ``ball_in_cup`` and **0.92x on
+#: ``PointmazeLargeNavigate`` / 0.75x on ``PointmazeMediumNavigate``** -- a regression on a row with a
+#: frozen Step-3 CPU certification. RAYCAST-5's per-kind predicate below is the repair; the default
+#: goes back to ``True`` only in the commit that records the sweep showing no row below 0.97x.
+PRIMITIVE_BOUNDS: bool = False
 
 #: The bound is valid only for UNIT ray directions, and that is a fact about the INTERSECTORS rather
 #: than about the bound. ``_sphere`` solves ``t^2 - 2bt + c = 0`` with the leading coefficient dropped,
@@ -528,6 +532,50 @@ def _unit_rays(dd) -> bool:
 #: at 100 m the effective radius becomes 0.14 m, which is well under a pixel on a giant maze.
 _BOUND_SLACK_REL, _BOUND_SLACK_ABS = 1.01, 1e-6
 _BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7         # (|oc| * sqrt(this))^2, added to r^2
+
+
+#: WHICH KINDS THE BOUND IS APPLIED TO, and this table is a measurement rather than a preference.
+#:
+#: For one primitive over ``N`` rays the two paths cost
+#:
+#:     unbounded:  cost_intersect(kind) * N
+#:     bounded:    cost_bound * N  +  cost_intersect(kind) * N * p        (p = fraction kept)
+#:
+#: so the bound pays iff ``cost_bound < cost_intersect(kind) * (1 - p)``. ``p`` is a property of the
+#: scene and is not knowable here -- but ``p >= 0``, so the condition that must hold for EVERY scene,
+#: batch and resolution is simply ``cost_bound < cost_intersect(kind)``. A kind whose intersector is
+#: cheaper than the bound's own mask + ``nonzero`` + gather + scatter can never pay: there is nothing
+#: left to save even if the bound prunes perfectly. That ratio is a fact about the intersector's
+#: arithmetic, not about the eight rows anybody happened to sweep.
+#:
+#: THIS IS WHY POINTMAZE REGRESSED. Its one mover is a SPHERE -- ~15 elementwise ops per ray -- over a
+#: 200,704-ray bundle, so the bound spent an O(N) gather to narrow the cheapest intersector in the
+#: file. ``ball_in_cup``'s 28 tendon CAPSULES are the opposite: ~200 ops each, and the bound pays
+#: several times over.
+#:
+#: MEASURED by ``scratch/step6/raycast3d/r5_kind_cost.py`` (job 6352389, node2339, Xeon 8268,
+#: 1 thread) over B in {1,16,64} x N in {7056, 50176, 200704}, timing the bound at its WORST case --
+#: a radius so large that nothing is pruned, so the gather and scatter run at full width -- against
+#: each intersector at full width. ``ns_intersect / ns_bound``, worst case over every width:
+#:
+#:     SPHERE     0.45 - 0.83     cheaper than the bound at every width: can NEVER pay
+#:     BOX        1.84 - 2.93
+#:     CYLINDER   1.95 - 3.11
+#:     CAPSULE    2.38 - 3.74
+#:
+#: The margin is measured too, not chosen: ``1 + 3*worst_rsd`` = **1.227** from the benchmark's own
+#: worst relative standard deviation (7.6 %). It lands in a gap of more than a factor of two between
+#: 0.83 and 1.84, so the table does not depend on where in that gap the line is drawn -- which is the
+#: difference between a derived constant and a fitted one. Numbers and the exact rule in
+#: ``examples/results/step6/raycast3d/experiments/r5_kind_cost.json``;
+#: ``test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose`` keeps this set and that
+#: file from drifting apart.
+_BOUNDED_KINDS = frozenset({CAPSULE, CYLINDER, BOX})
+
+
+def _kind_is_bounded(kind: int) -> bool:
+    """Is the bound worth its own cost for this primitive kind? See ``_BOUNDED_KINDS``."""
+    return kind in _BOUNDED_KINDS
 
 
 def _bound_radius(kind: int, size):
@@ -601,7 +649,7 @@ def cast_nearest_torch(kinds, sizes, pos, R, o, d):
         return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
     for k, kind in enumerate(int(x) for x in kinds):
         js = None
-        rad = _bound_radius(kind, sizes[:, k:k + 1])
+        rad = _bound_radius(kind, sizes[:, k:k + 1]) if _kind_is_bounded(kind) else None
         if rad is not None:
             js = torch.nonzero(_rays_near(pos[:, k:k + 1], rad, o, d, dd).any(0),
                                as_tuple=False).reshape(-1)
@@ -653,7 +701,7 @@ def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
         return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
     for k, kind in enumerate(int(x) for x in kinds):
         js = None
-        rad = _bound_radius(kind, sizes[:, k:k + 1])
+        rad = _bound_radius(kind, sizes[:, k:k + 1]) if _kind_is_bounded(kind) else None
         if rad is not None:
             js = torch.nonzero(_rays_near(pos[:, k:k + 1], rad, o, d, dd).any(0),
                                as_tuple=False).reshape(-1)
