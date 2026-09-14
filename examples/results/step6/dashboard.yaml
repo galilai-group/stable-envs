@@ -423,8 +423,8 @@ workstreams:
   head_sha: 6505e71
   agent_model: fable
   wave: wave2
-  status: finding (Phase-1 design delivered; Phase-2 approval pending Sami on CPU-backend contract + compiled-kernel packaging; Fetch CPU_FAST = demonstrated blocker)
-  authorization: DESIGN/CHARACTERIZATION ONLY
+  status: implementation (Phase 2 approved by Sami 2026-09-14; M1 shared CPU-native backend for DMC trackcom four; Fetch = feasibility ticket CPU3D-FETCH-1)
+  authorization: Phase 2 implement (DMC four) + Fetch feasibility only
   goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
   affected_configs:
   - DMCCheetahRun
@@ -474,6 +474,8 @@ workstreams:
   - 'Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER,
     pure torch, ~3-5 days) and gate M2 (compiled SIMD kernel, packaging decision) on a <=21 ns/px micro-benchmark; (3) Fetch: record blocker vs fund CPU_PARITY llvmpipe device-honouring path. RAYCAST-3
     (fused CPU cast, raycast3d-owned) queued after RAYCAST-2.'
+  - '2026-09-14 Sami approved Phase 2 under the backend-may-differ/semantics-may-not policy (see decisions). Contract: same frozen visual-tier bounds vs the official reference under the declared 3.11 pair;
+    Gate-A mandatory checks on CPU; backend-agreement bound handled per its declared applicability (escalate if it would fail a semantically-equal renderer at exact-frac level, never weaken).'
 - workstream: tilemap
   brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
   branch: step6/tilemap
@@ -533,3 +535,9 @@ wave0_profile_jobs:
 - 6322231
 - 6322235
 dashboard_note: Fields are strings; pixels_changed is the literal string 'no'/'yes'. Rewritten as valid YAML 2026-09-14 after the report generator flagged syntax errors.
+decisions:
+- date: '2026-09-14'
+  by: Sami
+  decision: 'CPU 3-D backend work APPROVED. Policy: backend implementation may differ by device, renderer semantics may not; CPU backend certified against the same frozen contract; no MJWarp-on-CPU for
+    symmetry; one shared CPU-native backend for the MJWarp-only scenes (Fetch if feasible), no bespoke per-env approximations; device="cpu" must be a genuine CPU backend, never silent CUDA fallback; minimize
+    coupling toward a later Scene3D extraction without blocking Step 6; Fetch CPU feasibility to be quantified before a large implementation.'
