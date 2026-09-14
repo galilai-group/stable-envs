@@ -128,10 +128,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raycast3d
   oscar_copy: $SCR/se6/raycast3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 3b9e81c (RAYCAST-4+5, PRIMITIVE_BOUNDS default True; in independent review)
+  head_sha: 6802559 (merged)
   agent_model: opus
   wave: wave1
-  status: implementation (applying RAYCAST-4/5 review changes; then merge)
+  status: merged (closed)
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
   affected_configs:
@@ -192,7 +192,9 @@ workstreams:
       is a 16-ulp error-bound argument validated by fuzz/replay, not a proof; batch-invariance test genuinely prunes; acceptance and shard numbers reproduced; merge-tree clean; public signatures identical.
       Required: _UNIT_D_TOL 1e-4 -> <=1.9e-6 (bit-identity false inside the old window; unreachable today, worst real 2.4e-7) + fuzz case + CPU identity re-run; rename the bounds-off control shard (leg_of
       would read it as an after leg); doc corrections (bench measures any_blocking-shaped bound; API ''byte-identical'' -> signatures identical; comment at :525; ''provably'' -> within rounding budget;
-      no per-cell spread in shards; Mujoco* CPU identity inferred).'
+      no per-cell spread in shards; Mujoco* CPU identity inferred). -> APPROVED after changes (6802559): _UNIT_D_TOL 1e-6 (94 calls/0 rejected/worst 2.384e-7 = 4.19x headroom; 3 fuzz cases one ulp inside
+      the window); control shard renamed; per-kind table re-derived with the cast_nearest-shaped bound and a constant-free rule (ratio > 1 at every width in every run: SPHERE 0.27-0.46 unbounded; BOX 1.11-1.13,
+      CYLINDER 1.23-1.24, CAPSULE 1.47-1.48 bounded; membership unchanged); identity ALL_IDENTICAL cpu on/off, cpu vs baseline, cuda vs baseline on 21; fuzz 51; unit 629.'
   slurm_jobs:
   - 6343543
   - 6343544
@@ -235,6 +237,8 @@ workstreams:
     test_fast_paths.py, test_raycast3d_primitive_bounds.py.'
   - 'Review escalation: far-field hit/miss in _capsule/_sphere is decided at float32 rounding noise at ~100 m (HumanoidmazeGiant); the bound depends on a 16-ulp budget - any future intersector/association
     change (compiled cast, cpu3d) must re-check. The 0.97 acceptance bar is a coordinator decision (recorded here).'
+  - Merged 2026-09-15. The 1+3*rsd margin rule was shown load-dependent (1.23 -> 1.75 on a busy node) and replaced by the necessary condition itself. A results pull re-materialised the renamed control shard
+    once; removed at both ends (second pull-overwrite incident after findings.md).
 - workstream: fetch-gpu
   brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
   branch: step6/fetch-gpu
