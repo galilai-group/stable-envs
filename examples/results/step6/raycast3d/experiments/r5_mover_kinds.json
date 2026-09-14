@@ -1,0 +1,76 @@
+{
+ "tool": "r5_mover_kinds",
+ "host": "node2333.oscar.ccv.brown.edu",
+ "slurm_job": "6353140",
+ "stable_envs_from": "/oscar/scratch/sboughan/se6/raycast3d/stable_envs/__init__.py",
+ "bounded_kinds": [
+  "BOX",
+  "CAPSULE",
+  "CYLINDER"
+ ],
+ "configs": {
+  "AntmazeGiantNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "AntmazeLargeExplore": {
+   "error": "no scene.prims after bake"
+  },
+  "AntmazeMediumExplore": {
+   "error": "no scene.prims after bake"
+  },
+  "AntmazeTeleportExplore": {
+   "error": "no scene.prims after bake"
+  },
+  "HumanoidmazeGiantNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "HumanoidmazeLargeNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "HumanoidmazeMediumNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "PointmazeGiantNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "PointmazeLargeNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "PointmazeMediumNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "PointmazeTeleportNavigate": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCAcrobotSwingup": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCBallInCupCatch": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCCartpoleBalance": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCCartpoleSwingup": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCFingerSpin": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCFingerTurnEasy": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCFingerTurnHard": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCPendulumSwingup": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCReacherEasy": {
+   "error": "no scene.prims after bake"
+  },
+  "DMCReacherHard": {
+   "error": "no scene.prims after bake"
+  }
+ }
+}

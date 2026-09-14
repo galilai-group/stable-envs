@@ -548,10 +548,14 @@ _BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7         # (|oc| * sqrt(this))^2, added 
 #: left to save even if the bound prunes perfectly. That ratio is a fact about the intersector's
 #: arithmetic, not about the eight rows anybody happened to sweep.
 #:
-#: THIS IS WHY POINTMAZE REGRESSED. Its one mover is a SPHERE -- ~15 elementwise ops per ray -- over a
-#: 200,704-ray bundle, so the bound spent an O(N) gather to narrow the cheapest intersector in the
-#: file. ``ball_in_cup``'s 28 tendon CAPSULES are the opposite: ~200 ops each, and the bound pays
-#: several times over.
+#: THIS IS WHY POINTMAZE REGRESSED, and the census is measured rather than assumed
+#: (``experiments/r5_mover_kinds.json``): all four Pointmaze configs cast **exactly one primitive, a
+#: SPHERE**, over a 200,704-ray bundle, so the bound spent an O(N) ``nonzero`` + gather + scatter to
+#: narrow the cheapest intersector in the file. Under this table they take the unbounded body and the
+#: bound becomes a no-op for them. ``ball_in_cup`` is the opposite -- 33 CAPSULES and 3 spheres, so
+#: 33 of its 36 primitives stay bounded -- and DM Control generally keeps most of its own: cartpole
+#: 2/2, finger_spin 7/7, reacher 2/4, acrobot 3/4. The maze families keep 12/13 (antmaze) and 16/19
+#: (humanoidmaze).
 #:
 #: MEASURED by ``scratch/step6/raycast3d/r5_kind_cost.py`` (job 6352389, node2339, Xeon 8268,
 #: 1 thread) over B in {1,16,64} x N in {7056, 50176, 200704}, timing the bound at its WORST case --
