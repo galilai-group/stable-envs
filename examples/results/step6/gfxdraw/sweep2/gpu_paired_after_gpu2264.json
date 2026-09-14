@@ -1,256 +1,635 @@
 {
  "schema_version": 1,
  "step": 6,
- "shard": "gfxdraw-paired-gpu-after",
- "what_this_is": "the paired R measurement (scratch/step6/gfxdraw/paired_gpu.py) in the Step 3 shard schema. The reference is interleaved with our own render round by round; only B=1024 and B=4096 were timed, so BATCH_SCALES has no B=1 to compare against here (it is 1,687-1,990x in sweep2/superseded_gpu2110/, whose numerator is sound).",
+ "shard": "gfxdraw-paired-after",
+ "what_this_is": "the frozen Step 3 sweep with the official renderer measured INTERLEAVED with ours instead of in a block after it; same schema, same cells, same decode bar, a denominator that is a median over the whole run",
  "arm": "after",
  "batches": [
+  1,
+  16,
+  64,
+  256,
   1024,
   4096
  ],
  "provenance": {
-  "device": "cuda",
+  "timestamp": "2026-09-13T21:55:10-0400",
+  "git_commit": null,
+  "git_dirty": false,
   "host": "gpu2264.oscar.ccv.brown.edu",
-  "device_name": "NVIDIA GeForce RTX 3090",
-  "cpu_model": "x86_64",
-  "torch_threads": null,
+  "arch": "x86_64",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "python": "3.12.9",
   "torch": "2.14.0+cu126",
-  "load_average": null,
+  "device": "cuda",
+  "torch_threads": 1,
+  "loadavg_start": 37.97,
+  "slurm_job_id": "6353690",
+  "slurm_nodelist": "gpu2264",
+  "mujoco_gl": "egl",
+  "certification_spec_version": 1,
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "cuda": "12.6",
+  "driver": "575.57.08",
+  "device_total_gb": 25.3,
+  "load_average": [
+   37.97,
+   40.98,
+   41.16
+  ],
   "stable_envs_file": "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/__init__.py",
-  "tree_commit": "339f07b85d7082d8e1476c71a16faaea9d0b70d3",
-  "official_renderer_timing": "paired: reference burst and render burst alternating, median of the per-round readings",
-  "fused_classic_kernel": true,
-  "derived_from": [
-   "examples/results/step6/gfxdraw/sweep2/paired_gpu_B1024_gpu2264.json",
-   "examples/results/step6/gfxdraw/sweep2/paired_gpu_B4096_gpu2264.json"
-  ]
+  "tree_commit": "unknown",
+  "official_renderer_timing": "paired: one reference burst between every batch cell, median of the readings",
+  "fused_classic_kernel": true
  },
  "envs": [
   {
    "env": "Acrobot",
-   "device": "cuda",
    "projected_to": [
-    "Acrobot"
+    "swm/AcrobotControl-v1"
    ],
+   "device": "cuda",
+   "size": 500,
+   "supersample": 1,
+   "shape": "500x500",
+   "backend": "auto",
+   "renderer_class": "Acrobot",
+   "reference_id": "Acrobot-v1",
+   "fidelity_tier": "parity",
+   "state_dim": 2,
+   "states_source": "/oscar/scratch/sboughan/se6/gfxdraw/examples/results/step4/states/Acrobot.npz",
    "cells": [
     {
+     "batch": 1,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.01153143122792244,
+     "fps": 86.71950430390461,
+     "cpu_frac": 0.9762935294575203,
+     "loadavg": 37.57,
+     "us_per_frame": 11531.43122792244,
+     "gb_per_s": 0.06503962822792846,
+     "peak_gb": 0.001543168
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011733079329133034,
+     "fps": 1363.6658843916853,
+     "cpu_frac": 0.9722865363203603,
+     "loadavg": 37.57,
+     "us_per_frame": 733.3174580708146,
+     "gb_per_s": 1.022749413293764,
+     "peak_gb": 0.013417472
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.01187540777027607,
+     "fps": 5389.288623856002,
+     "cpu_frac": 0.9704282159886072,
+     "loadavg": 37.57,
+     "us_per_frame": 185.5532464105636,
+     "gb_per_s": 4.041966467892002,
+     "peak_gb": 0.049252352
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.012543363496661186,
+     "fps": 20409.198861863686,
+     "cpu_frac": 0.9717547277613167,
+     "loadavg": 37.57,
+     "us_per_frame": 48.99751365883276,
+     "gb_per_s": 15.306899146397766,
+     "peak_gb": 0.194707456
+    },
+    {
      "batch": 1024,
-     "fps": 69781.96826201135,
-     "seconds_per_batch": 0.014674277976155283,
-     "us_per_frame": 14.330349586089143,
-     "fps_min": 67974.07725322101,
-     "fps_max": 70300.07731174836,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.015393338166177273,
+     "fps": 66522.2831425847,
+     "cpu_frac": 0.9759074331417368,
+     "loadavg": 37.57,
+     "us_per_frame": 15.032556802907493,
+     "gb_per_s": 49.89171235693852,
+     "peak_gb": 0.772780032
     },
     {
      "batch": 4096,
-     "fps": 160066.3708334642,
-     "seconds_per_batch": 0.02558938506990671,
-     "us_per_frame": 6.247408464332693,
-     "fps_min": 156157.3051661389,
-     "fps_max": 161944.2990080225,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.025818098336458206,
+     "fps": 158648.40030514423,
+     "cpu_frac": 0.9746888902952842,
+     "loadavg": 37.57,
+     "us_per_frame": 6.303246664174367,
+     "gb_per_s": 118.98630022885818,
+     "peak_gb": 3.089149952
     }
    ],
    "official_cpu": {
     "frames": 24,
+    "size": 500,
     "set_state_render": {
-     "fps": 413.33972743910994
+     "fps": 398.9582879199387,
+     "seconds_per_frame": 0.0025065277004614472,
+     "us_per_frame": 2506.5277004614472
     },
     "paired": {
-     "readings": 2,
-     "fps_median": 413.33972743910994,
-     "fps_min": 410.5972070477755,
-     "fps_max": 413.33972743910994,
-     "spread": 1.006679344974247
+     "readings": 7,
+     "fps_median": 398.9582879199387,
+     "fps_min": 394.82360973075856,
+     "fps_max": 439.6900718641955,
+     "spread": 1.1136367254329917
     }
    },
    "decode": {
-    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
-    "kind": "not_measured_here"
-   },
-   "states_source": "examples/results/step4/states/Acrobot.npz"
+    "h": 500,
+    "w": 500,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 8598,
+    "raw_bytes": 750000,
+    "n": 160,
+    "decode_fps_per_core": 1333.714652139262,
+    "decode_MBps_raw": 1000.2859891044466,
+    "load_decode_fps_per_core": 1020.7618834580985
+   }
   },
   {
    "env": "CartPole",
-   "device": "cuda",
    "projected_to": [
-    "CartPole"
+    "swm/CartPoleControl-v1"
    ],
+   "device": "cuda",
+   "size": 600,
+   "supersample": 1,
+   "shape": "400x600",
+   "backend": "auto",
+   "renderer_class": "CartPole",
+   "reference_id": "CartPole-v1",
+   "fidelity_tier": "parity",
+   "state_dim": 2,
+   "states_source": "/oscar/scratch/sboughan/se6/gfxdraw/examples/results/step4/states/CartPole.npz",
    "cells": [
     {
+     "batch": 1,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.010829316452145576,
+     "fps": 92.34193168322025,
+     "cpu_frac": 0.9721809082096491,
+     "loadavg": 37.57,
+     "us_per_frame": 10829.316452145576,
+     "gb_per_s": 0.06648619081191859,
+     "peak_gb": 0.001480192
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.010811127722263336,
+     "fps": 1479.9566160939185,
+     "cpu_frac": 0.9808405697828013,
+     "loadavg": 37.57,
+     "us_per_frame": 675.6954826414585,
+     "gb_per_s": 1.0655687635876214,
+     "peak_gb": 0.012319744
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.01091699581593275,
+     "fps": 5862.4186616061115,
+     "cpu_frac": 0.9814144853795738,
+     "loadavg": 37.61,
+     "us_per_frame": 170.57805962394923,
+     "gb_per_s": 4.220941436356401,
+     "peak_gb": 0.0471168
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011562401428818703,
+     "fps": 22140.72929192139,
+     "cpu_frac": 0.9773447245062541,
+     "loadavg": 37.61,
+     "us_per_frame": 45.16563058132306,
+     "gb_per_s": 15.941325090183403,
+     "peak_gb": 0.186264576
+    },
+    {
      "batch": 1024,
-     "fps": 76053.61171469165,
-     "seconds_per_batch": 0.013464186340570448,
-     "us_per_frame": 13.148619473213328,
-     "fps_min": 73240.35677341904,
-     "fps_max": 76946.37652014724,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.014255787245929241,
+     "fps": 71830.47714831775,
+     "cpu_frac": 0.9819277486637938,
+     "loadavg": 37.61,
+     "us_per_frame": 13.921667232352775,
+     "gb_per_s": 51.71794354678878,
+     "peak_gb": 0.742858752
     },
     {
      "batch": 4096,
-     "fps": 185435.7608325615,
-     "seconds_per_batch": 0.02208851184695959,
-     "us_per_frame": 5.392703087636619,
-     "fps_min": 181621.71656987848,
-     "fps_max": 185862.54782081215,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.023194541223347187,
+     "fps": 176593.27513997318,
+     "cpu_frac": 0.981657346361753,
+     "loadavg": 37.61,
+     "us_per_frame": 5.662729790856247,
+     "gb_per_s": 127.1471581007807,
+     "peak_gb": 2.96556544
     }
    ],
    "official_cpu": {
     "frames": 24,
+    "size": 600,
     "set_state_render": {
-     "fps": 529.1282336741702
+     "fps": 518.0463384218053,
+     "seconds_per_frame": 0.0019303292501717806,
+     "us_per_frame": 1930.3292501717806
     },
     "paired": {
-     "readings": 2,
-     "fps_median": 529.1282336741702,
-     "fps_min": 527.7802166356649,
-     "fps_max": 529.1282336741702,
-     "spread": 1.0025541257440422
+     "readings": 7,
+     "fps_median": 518.0463384218053,
+     "fps_min": 474.44139303460605,
+     "fps_max": 522.9945907091709,
+     "spread": 1.1023376087908572
     }
    },
    "decode": {
-    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
-    "kind": "not_measured_here"
-   },
-   "states_source": "examples/results/step4/states/CartPole.npz"
+    "h": 400,
+    "w": 600,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 7323,
+    "raw_bytes": 720000,
+    "n": 166,
+    "decode_fps_per_core": 1167.527378200652,
+    "decode_MBps_raw": 840.6197123044694,
+    "load_decode_fps_per_core": 881.9295306109103
+   }
   },
   {
    "env": "MountainCar",
-   "device": "cuda",
    "projected_to": [
-    "MountainCar"
+    "swm/MountainCarControl-v0"
    ],
+   "device": "cuda",
+   "size": 600,
+   "supersample": 1,
+   "shape": "400x600",
+   "backend": "auto",
+   "renderer_class": "MountainCar",
+   "reference_id": "MountainCar-v0",
+   "fidelity_tier": "parity",
+   "state_dim": 1,
+   "states_source": "/oscar/scratch/sboughan/se6/gfxdraw/examples/results/step4/states/MountainCar.npz",
    "cells": [
     {
+     "batch": 1,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.01148323155939579,
+     "fps": 87.08350039164557,
+     "cpu_frac": 0.9914460471291444,
+     "loadavg": 37.61,
+     "us_per_frame": 11483.23155939579,
+     "gb_per_s": 0.06270012028198481,
+     "peak_gb": 0.00290048
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011575731448829174,
+     "fps": 1382.2020725626214,
+     "cpu_frac": 0.9912860646572593,
+     "loadavg": 37.61,
+     "us_per_frame": 723.4832155518234,
+     "gb_per_s": 0.9951854922450875,
+     "peak_gb": 0.01370112
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011933287605643272,
+     "fps": 5363.149042828255,
+     "cpu_frac": 0.9907792729286647,
+     "loadavg": 37.61,
+     "us_per_frame": 186.45761883817613,
+     "gb_per_s": 3.861467310836344,
+     "peak_gb": 0.048323072
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.012752319686114788,
+     "fps": 20074.779044219114,
+     "cpu_frac": 0.9904858924650091,
+     "loadavg": 37.61,
+     "us_per_frame": 49.81374877388589,
+     "gb_per_s": 14.453840911837762,
+     "peak_gb": 0.187006464
+    },
+    {
      "batch": 1024,
-     "fps": 65696.35625248525,
-     "seconds_per_batch": 0.015586861409246922,
-     "us_per_frame": 15.221544344967697,
-     "fps_min": 64460.249626843884,
-     "fps_max": 66226.14116469197,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.015712578780949116,
+     "fps": 65170.71540424413,
+     "cpu_frac": 0.991371858817829,
+     "loadavg": 38.84,
+     "us_per_frame": 15.34431521577062,
+     "gb_per_s": 46.92291509105578,
+     "peak_gb": 0.743659008
     },
     {
      "batch": 4096,
-     "fps": 144690.83554139148,
-     "seconds_per_batch": 0.028308634646236897,
-     "us_per_frame": 6.91128775542893,
-     "fps_min": 142085.36239037648,
-     "fps_max": 145456.57920977828,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.02764399629086256,
+     "fps": 148169.60460068833,
+     "cpu_frac": 0.9926650958048182,
+     "loadavg": 38.84,
+     "us_per_frame": 6.749022531948867,
+     "gb_per_s": 106.6821153124956,
+     "peak_gb": 2.966599168
     }
    ],
    "official_cpu": {
     "frames": 24,
+    "size": 600,
     "set_state_render": {
-     "fps": 492.5079411251104
+     "fps": 489.36488776586253,
+     "seconds_per_frame": 0.002043464958357314,
+     "us_per_frame": 2043.4649583573141
     },
     "paired": {
-     "readings": 2,
-     "fps_median": 492.5079411251104,
-     "fps_min": 480.1916953260557,
-     "fps_max": 492.5079411251104,
-     "spread": 1.0256486022539224
+     "readings": 7,
+     "fps_median": 489.36488776586253,
+     "fps_min": 483.66401149931676,
+     "fps_max": 494.32495051965225,
+     "spread": 1.0220420348979191
     }
    },
    "decode": {
-    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
-    "kind": "not_measured_here"
-   },
-   "states_source": "examples/results/step4/states/MountainCar.npz"
+    "h": 400,
+    "w": 600,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 11188,
+    "raw_bytes": 720000,
+    "n": 166,
+    "decode_fps_per_core": 1382.886243718669,
+    "decode_MBps_raw": 995.6780954774416,
+    "load_decode_fps_per_core": 985.9258100341681
+   }
   },
   {
    "env": "MountainCarContinuous",
-   "device": "cuda",
    "projected_to": [
-    "MountainCarContinuous"
+    "swm/MountainCarContinuousControl-v0"
    ],
+   "device": "cuda",
+   "size": 600,
+   "supersample": 1,
+   "shape": "400x600",
+   "backend": "auto",
+   "renderer_class": "MountainCarContinuous",
+   "reference_id": "MountainCarContinuous-v0",
+   "fidelity_tier": "parity",
+   "state_dim": 1,
+   "states_source": "/oscar/scratch/sboughan/se6/gfxdraw/examples/results/step4/states/MountainCarContinuous.npz",
    "cells": [
     {
+     "batch": 1,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011564729735255241,
+     "fps": 86.4698114778667,
+     "cpu_frac": 0.9910047789257431,
+     "loadavg": 38.84,
+     "us_per_frame": 11564.729735255241,
+     "gb_per_s": 0.06225826426406403,
+     "peak_gb": 0.00290048
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011580928228795528,
+     "fps": 1381.5818286669476,
+     "cpu_frac": 0.9915971468677569,
+     "loadavg": 38.84,
+     "us_per_frame": 723.8080142997205,
+     "gb_per_s": 0.9947389166402023,
+     "peak_gb": 0.01370112
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011815456673502922,
+     "fps": 5416.633632411768,
+     "cpu_frac": 0.9911829171406051,
+     "loadavg": 38.84,
+     "us_per_frame": 184.61651052348316,
+     "gb_per_s": 3.899976215336473,
+     "peak_gb": 0.048323072
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.012677420862019062,
+     "fps": 20193.381823187996,
+     "cpu_frac": 0.9909793689001307,
+     "loadavg": 38.84,
+     "us_per_frame": 49.52117524226196,
+     "gb_per_s": 14.539234912695356,
+     "peak_gb": 0.187006464
+    },
+    {
      "batch": 1024,
-     "fps": 65745.49960675697,
-     "seconds_per_batch": 0.015575210563838482,
-     "us_per_frame": 15.210166566248517,
-     "fps_min": 65120.22492424042,
-     "fps_max": 66340.0098477822,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.015707590617239475,
+     "fps": 65191.41127068427,
+     "cpu_frac": 0.9920302918796162,
+     "loadavg": 38.84,
+     "us_per_frame": 15.339443962147925,
+     "gb_per_s": 46.93781611489268,
+     "peak_gb": 0.743659008
     },
     {
      "batch": 4096,
-     "fps": 145176.3828549231,
-     "seconds_per_batch": 0.028213955461978916,
-     "us_per_frame": 6.888172720209696,
-     "fps_min": 142129.392193023,
-     "fps_max": 145522.05804210645,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.027796724811196327,
+     "fps": 147355.48982195772,
+     "cpu_frac": 0.9933938327419977,
+     "loadavg": 38.84,
+     "us_per_frame": 6.786309768358478,
+     "gb_per_s": 106.09595267180957,
+     "peak_gb": 2.966599168
     }
    ],
    "official_cpu": {
     "frames": 24,
+    "size": 600,
     "set_state_render": {
-     "fps": 488.2214915410862
+     "fps": 486.64549750816536,
+     "seconds_per_frame": 0.0020548839044446745,
+     "us_per_frame": 2054.8839044446745
     },
     "paired": {
-     "readings": 2,
-     "fps_median": 488.2214915410862,
-     "fps_min": 484.959347902549,
-     "fps_max": 488.2214915410862,
-     "spread": 1.0067266331758447
+     "readings": 7,
+     "fps_median": 486.64549750816536,
+     "fps_min": 481.29506854631535,
+     "fps_max": 489.6812389527537,
+     "spread": 1.017424176881279
     }
    },
    "decode": {
-    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
-    "kind": "not_measured_here"
-   },
-   "states_source": "examples/results/step4/states/MountainCarContinuous.npz"
+    "h": 400,
+    "w": 600,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 11184,
+    "raw_bytes": 720000,
+    "n": 166,
+    "decode_fps_per_core": 1391.8725595161875,
+    "decode_MBps_raw": 1002.148242851655,
+    "load_decode_fps_per_core": 1067.977697456405
+   }
   },
   {
    "env": "Pendulum",
-   "device": "cuda",
    "projected_to": [
-    "Pendulum"
+    "swm/PendulumControl-v1"
    ],
+   "device": "cuda",
+   "size": 500,
+   "supersample": 1,
+   "shape": "500x500",
+   "backend": "auto",
+   "renderer_class": "Pendulum",
+   "reference_id": "Pendulum-v1",
+   "fidelity_tier": "parity",
+   "state_dim": 2,
+   "states_source": "/oscar/scratch/sboughan/se6/gfxdraw/examples/results/step4/states/Pendulum.npz",
    "cells": [
     {
+     "batch": 1,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.01093654241412878,
+     "fps": 91.436576765625,
+     "cpu_frac": 0.9915463362821709,
+     "loadavg": 39.09,
+     "us_per_frame": 10936.54241412878,
+     "gb_per_s": 0.06857743257421875,
+     "peak_gb": 0.014126592
+    },
+    {
+     "batch": 16,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.010884803719818592,
+     "fps": 1469.9392301275836,
+     "cpu_frac": 0.9915985984985001,
+     "loadavg": 39.09,
+     "us_per_frame": 680.300232488662,
+     "gb_per_s": 1.1024544225956878,
+     "peak_gb": 0.025975296
+    },
+    {
+     "batch": 64,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011298120953142643,
+     "fps": 5664.658775156589,
+     "cpu_frac": 0.9914114776236219,
+     "loadavg": 39.09,
+     "us_per_frame": 176.5331398928538,
+     "gb_per_s": 4.248494081367442,
+     "peak_gb": 0.061730304
+    },
+    {
+     "batch": 256,
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.011880826205015182,
+     "fps": 21547.323021351516,
+     "cpu_frac": 0.991869423047997,
+     "loadavg": 39.09,
+     "us_per_frame": 46.40947736334056,
+     "gb_per_s": 16.160492266013637,
+     "peak_gb": 0.20686336
+    },
+    {
      "batch": 1024,
-     "fps": 71942.0394587608,
-     "seconds_per_batch": 0.014233680441975594,
-     "us_per_frame": 13.90007855661679,
-     "fps_min": 71001.15659150784,
-     "fps_max": 72351.32324044693,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.014426348730921745,
+     "fps": 70981.23157144652,
+     "cpu_frac": 0.9921611674086483,
+     "loadavg": 39.09,
+     "us_per_frame": 14.088231182540767,
+     "gb_per_s": 53.23592367858489,
+     "peak_gb": 0.78365184
     },
     {
      "batch": 4096,
-     "fps": 175462.47161946478,
-     "seconds_per_batch": 0.023344023153185844,
-     "us_per_frame": 5.699224402633263,
-     "fps_min": 173974.05389570585,
-     "fps_max": 176133.99622921846,
-     "peak_gb": null
+     "size": null,
+     "supersample": 1,
+     "seconds_per_batch": 0.023222295567393303,
+     "fps": 176382.21803322673,
+     "cpu_frac": 0.9928411894379117,
+     "loadavg": 39.09,
+     "us_per_frame": 5.669505753758131,
+     "gb_per_s": 132.28666352492004,
+     "peak_gb": 3.094885376
     }
    ],
    "official_cpu": {
     "frames": 24,
+    "size": 500,
     "set_state_render": {
-     "fps": 254.41545507171003
+     "fps": 255.31695186688938,
+     "seconds_per_frame": 0.00391670037060976,
+     "us_per_frame": 3916.7003706097603
     },
     "paired": {
-     "readings": 2,
-     "fps_median": 254.41545507171003,
-     "fps_min": 253.8439929528746,
-     "fps_max": 254.41545507171003,
-     "spread": 1.0022512335714067
+     "readings": 7,
+     "fps_median": 255.31695186688938,
+     "fps_min": 249.93016087332646,
+     "fps_max": 277.46042571840644,
+     "spread": 1.1101518310110372
     }
    },
    "decode": {
-    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
-    "kind": "not_measured_here"
-   },
-   "states_source": "examples/results/step4/states/Pendulum.npz"
+    "h": 500,
+    "w": 500,
+    "jpeg_quality": 90,
+    "jpeg_bytes": 6726,
+    "raw_bytes": 750000,
+    "n": 160,
+    "decode_fps_per_core": 1400.2309195608157,
+    "decode_MBps_raw": 1050.173189670612,
+    "load_decode_fps_per_core": 1083.6844664267958
+   }
   }
- ],
- "only_the_current_arm_is_a_certification_row": "Only the arm that reflects the CURRENT tree is a certification row. certify.merge keys runs on (env, device, host, threads) with no slot for an arm, so a before/after pair from one host collides and one silently supersedes the other. The before arm -- the per-primitive path on CPU, the kernel switched off on GPU -- is a Step 6 internal comparison and lives in the paired_*.json it came from, which is not Step-3-shaped and is not a shard."
+ ]
 }
