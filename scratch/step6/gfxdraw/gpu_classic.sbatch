@@ -6,7 +6,7 @@
 #SBATCH --constraint=geforce3090
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
-#SBATCH --time=02:30:00
+#SBATCH --time=03:00:00
 #SBATCH --output=/oscar/scratch/%u/logs/%x_%j.out
 # Two things that both need a CUDA device.
 #
@@ -60,4 +60,26 @@ PYTHONPATH=$SCR/se6/gfxdraw $PY -m pytest tests/gpu/test_gfxdraw_fused.py \
     -q --tb=short > "$OUT/tests/fused_${NODE}.txt" 2>&1
 echo "CARRACING FUSED rc=$?"
 grep -E "passed|failed" "$OUT/tests/fused_${NODE}.txt" | tail -3
+
+# ---- 3. the frozen Step 4 replay UNDER the kernel, then the mandatory sweep ---------------------
+# One job rather than two: the GPU queue estimated a two-hour wait per submission, and a throughput
+# number from a renderer whose pixels have not been replayed is not a result anyway, so the two
+# belong together. The replay runs first and the sweep is skipped if it does not come back clean.
+PYTHONPATH=$SCR/se6/gfxdraw $PY examples/fidelity_step4.py \
+    --configs Acrobot,CartPole,MountainCar,MountainCarContinuous,Pendulum --device cuda \
+    --out "$OUT/replay/step4_replay_fused_cuda.json"
+echo "REPLAY FUSED rc=$?"
+PYTHONPATH=$SCR/se6/gfxdraw $PY scratch/step6/gfxdraw/replay_digests.py --device cuda \
+    --out "$OUT/replay/digests_fused_cuda_${NODE}.json"
+REPLAY_RC=$?
+echo "DIGESTS FUSED rc=$REPLAY_RC"
+
+mkdir -p "$OUT/sweep2"
+if [ "$REPLAY_RC" -eq 0 ]; then
+  PYTHONPATH=$SCR/se6/gfxdraw $PY scratch/step6/gfxdraw/sweep_fused.py \
+      --device cuda --out "$OUT/sweep2"
+  echo "SWEEP rc=$?"
+else
+  echo "SWEEP SKIPPED: the frozen replay did not come back clean, so there is nothing to time"
+fi
 echo "GPU CLASSIC JOB DONE"
