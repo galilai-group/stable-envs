@@ -465,3 +465,73 @@ resolves the SHA through `STABLE_ENVS_GIT_COMMIT` or a `GIT_COMMIT` file, the wa
 already does — the measured copy on the cluster is an rsync without `.git`, so every sweep artifact
 before this recorded `git_commit: null`, and a before/after that switches `PYTHONPATH` between two
 checkouts could not otherwise prove which tree each leg timed.
+
+## 13. Round-2 verification on Oscar
+
+Jobs `6349273` (CPU sweep, `node1828`, Xeon Platinum 8268, 1 thread, before and after in one job on
+one node) and `6349274` (GPU, RTX 3090, before and after on one card).
+
+### CPU certification, 1 thread — before is `1103326`, the approved PATCH
+
+| config | best B | before f/s | after f/s | speed-up | official f/s | `S_cpu` before | `S_cpu` after | `cores_cpu` after | tier |
+|---|---|---|---|---|---|---|---|---|---|
+| PushT | 1024 | 621 | **2,046** | 3.3x | 365 / 373 | 1.70 | **5.49** | 0.29 | CPU_PARITY -> `S_cpu` bar cleared |
+| SimplePointMaze | 256 | 114 | **243** | 2.1x | 47 / 52 | 2.42 | **4.69** | 0.24 | CPU_FASTER |
+| TwoRoom | 16 | 261 | **1,623** | 6.2x | 290 / 320 | 0.90 | **5.08** | 0.55 | CPU_REGRESSION -> `S_cpu` bar cleared |
+| TwoRoomTarget | 16 | 189 | **731** | 3.9x | 200 / 200 | 0.95 | **3.66** | 0.22 | CPU_REGRESSION -> CPU_FASTER |
+| Piecewise | 16 | 425 | **1,435** | 3.4x | 376 / 378 | 1.13 | **3.79** | 0.41 | CPU_PARITY -> CPU_FASTER |
+| PiecewiseZones | 16 | 215 | **1,401** | 6.5x | 266 / 265 | 0.81 | **5.28** | 0.51 | CPU_REGRESSION -> `S_cpu` bar cleared |
+
+**Against the Step-5 baseline** — round 1 and round 2 composed, same partition, same CPU model:
+PushT **115 -> 2,046 f/s (17.8x)**, SimplePointMaze **3 -> 243 (81x)**, TwoRoom 235 -> 1,623 (6.9x),
+TwoRoomTarget 186 -> 731 (3.9x), Piecewise 415 -> 1,435 (3.5x), PiecewiseZones 223 -> 1,401 (6.3x).
+Every row that was `CPU_REGRESSION` has left it.
+
+**`CPU_FAST` is still not awarded, and the reason has changed.** Three rows now clear `S_cpu >= 5`
+(PushT 5.49, PiecewiseZones 5.28, TwoRoom 5.08) where before none reached 2. The tier is a
+conjunction, and `cores_cpu >= 1` is the half that does not fall: one-core JPEG-q90 decode of these
+frames is 7,015 f/s at 96 px, 2,773-3,536 f/s at 224 px and 992 f/s at 500 px, and `cores_cpu` has
+moved from 0.02-0.13 to 0.22-0.55. The frozen `BELOW_G4` qualifier caps every row in this workstream
+at `CPU_FASTER` regardless of `S_cpu`, as it does every measured CPU row in the project. Going
+further is a different argument from this one: at 224 px and one thread, 2,773 f/s is 417 MB/s of
+uint8 output, so the remaining factor of two is bandwidth on the write, not arithmetic.
+
+### GPU, before and after on the same card (`6349274`)
+
+| config | before best f/s | after best f/s | ratio |
+|---|---|---|---|
+| PushT | 1,937,192 | 1,917,702 | 0.99 |
+| SimplePointMaze | 43,201 | 42,724 | 0.99 |
+| TwoRoom | 39,629 | **55,845** | **1.41** |
+| TwoRoomTarget | 23,818 | **26,989** | **1.13** |
+| Piecewise | 54,831 | 53,823 | 0.98 |
+| PiecewiseZones | 46,993 | **53,730** | **1.14** |
+
+No healthy GPU row regressed. The three that improved are the `swm_nav` envs: that path has no fused
+kernel and runs the same torch arithmetic on both devices, so SWMNAV-1 helps it on the GPU too. The
+Scene2D rows are flat because `render_triton` was not touched.
+
+### Correctness, round 2
+
+| evidence | result |
+|---|---|
+| frozen Step 4 replay, all six configs on cuda (`replay_r2/`) | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style`, `digest_official` all identical; every check unchanged in status |
+| differential fuzz on the 3090 against the 89fa5ca8 function | 650/650 identical |
+| `tests/unit/test_raster2d_torch_backend.py` + `test_swm_nav_render.py` on Oscar | 56 passed |
+| targeted GPU suite for the six envs | 183 passed, 81 skipped, 0 failed |
+| CPU digests of the six configs | unchanged |
+
+Each sweep shard now names the tree it timed: the before legs resolve to
+`$SCR/se6/raster2d-preB/stable_envs/__init__.py` and the after legs to `$SCR/se6/raster2d/...`. The
+first run of this stamped both shards with the after tree's SHA because the environment variable was
+exported once for the job rather than per leg — fixed, and recorded here because `stable_envs_file`
+being right is what made it visible.
+
+## 14. Still open
+
+- **`cores_cpu`**, the G4 bar, is now the only thing between these rows and `CPU_FAST`, and it is a
+  memory-bandwidth argument rather than an arithmetic one.
+- **`raster2d._row_groups` is shared machinery now** — `swm_nav` calls it for its Gaussian dots. If
+  `gfxdraw` wants the same partition the interface is in §9. Not touched here.
+- **`stable_envs/testing/conformance.py`** was edited by this workstream (§8) after the coordinator
+  confirmed it; `swm_nav.py` likewise, under SWMNAV-1.
