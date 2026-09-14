@@ -76,6 +76,12 @@ def main() -> None:
             cls.reference_render(ref, ref_states[:4])
             env.render(st, out=out)
             _sync()
+            # PER ARM. Without this the "after" arm reports the "before" arm's high-water mark and
+            # the number says nothing about the kernel -- which is what the first committed run of
+            # this script did. The VRAM claim in findings.md rests on the sweep shards, which
+            # reset per cell (bench_gpu_vs_cpu.gpu_throughput); this is a cross-check, not the
+            # source.
+            torch.cuda.reset_peak_memory_stats()
             ours, theirs, ratios = [], [], []
             for _ in range(a.rounds):
                 t0 = time.perf_counter()
@@ -99,7 +105,8 @@ def main() -> None:
                         "R_paired_median": statistics.median(ratios),
                         "R_paired_min": min(ratios), "R_paired_max": max(ratios),
                         "digest": C.frames_digest(env.render(st[:64]).cpu().numpy()),
-                        "peak_gb": torch.cuda.max_memory_allocated() / 1e9}
+                        "peak_gb": torch.cuda.max_memory_allocated() / 1e9,
+                        "peak_gb_is_per_arm": True}
             print(f"[{name:22s} {arm:6s}] official {rec[arm]['official_fps_median']:7.1f} "
                   f"({rec[arm]['official_fps_min']:.0f}-{rec[arm]['official_fps_max']:.0f})  "
                   f"ours {rec[arm]['se_fps_median']:10,.0f}  "

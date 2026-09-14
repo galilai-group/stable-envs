@@ -84,6 +84,21 @@ def disc_table(r: int) -> np.ndarray:
     d = 2 * r + 1
     hw = np.asarray(G.circle_hw(r), np.int32)
     w = np.zeros((2, d, d), np.int32)
+    # A dense map holds ONE weight per (pass, dy, dx), so two entries of the same pass at the same
+    # offset would silently become one and the kernel would drop a write the per-primitive path
+    # makes. Two passes exist precisely because ``aaellipseColor`` writes a few pixels twice, so a
+    # duplicate ACROSS passes is the normal case and a duplicate WITHIN one is a table that this
+    # representation cannot hold. Checked rather than assumed, because the table is generated
+    # (``scratch/classic_control/gen_stencils.py``) and a regenerated one must fail loudly here
+    # instead of quietly losing pixels only on the radii that grew one.
+    seen: dict[tuple[int, int, int], int] = {}
+    for (dy, dx, wt, pas) in G.AACIRCLE_FRINGE[r]:
+        key = (pas, dy, dx)
+        assert key not in seen, (
+            f"aacircle fringe for r={r} has two pass-{pas} writes at (dy={dy}, dx={dx}) "
+            f"(weights {seen[key]} and {wt}); a dense per-pass map can only hold one, so the "
+            f"fused path would drop the second while the per-primitive path makes both")
+        seen[key] = wt
     for (dy, dx, wt, pas) in G.AACIRCLE_FRINGE[r]:
         # A fringe weight of SOLID would mean pixelColor -- write the colour outright rather than
         # blend -- and neither this table nor the kernel implements that case for a disc. No radius

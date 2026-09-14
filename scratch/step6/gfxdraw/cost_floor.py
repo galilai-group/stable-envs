@@ -187,6 +187,8 @@ def main() -> None:
                 NB = None
                 rec["numba"] = {"absent": str(e)[:200]}
         if NB is not None and NB.HAVE_NUMBA:
+            import numba
+            doc["numba"] = numba.__version__
             frames = NB.render_batch(ops)                                  # compile + warm
             ts = []
             for _ in range(a.reps):
