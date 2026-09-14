@@ -168,10 +168,18 @@ def main() -> None:
         d = row(cid, frozen[cid], replay[cid])
         d["gate_a_frozen"] = fgate.get(cid)
         d["gate_a_replay"] = gate.get(cid)
+        # A Gate A that MOVED is not automatically a finding: FAIL->PASS is a fixed failure and is
+        # the point of the step. Only a move INTO FAIL is a regression; a move into BLOCKED is a
+        # judgement this interpreter cannot make and is reported as coverage lost, not as a pass.
         if d["gate_a_replay"] and d["gate_a_frozen"] and d["gate_a_replay"] != d["gate_a_frozen"]:
-            if cid not in KNOWN:
-                d["unexplained"].append(f"gate_a {d['gate_a_frozen']}->{d['gate_a_replay']}")
+            if d["gate_a_replay"] == "FAIL":
+                d["unexplained"].append(f"gate_a {d['gate_a_frozen']}->FAIL")
                 d["verdict"] = "REGRESSION?"
+            elif d["gate_a_replay"] == "BLOCKED" and cid not in KNOWN:
+                d["unexplained"].append(f"gate_a {d['gate_a_frozen']}->BLOCKED (coverage lost)")
+                d["verdict"] = "REGRESSION?"
+            elif d["verdict"] == "identical":
+                d["verdict"] = "gate A improved"
         rows.append(d)
 
     a.out.mkdir(parents=True, exist_ok=True)
