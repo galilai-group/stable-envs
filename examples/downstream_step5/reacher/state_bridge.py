@@ -48,12 +48,14 @@ def slot_names(se_env) -> tuple[tuple[str, str, int], ...]:
 def read_state(se_env, swm_env, slots=None, target_override=None) -> np.ndarray:
     """``(state_dim,)`` for our renderer, read off a live ``stable_worldmodel`` env.
 
-    ``target_override`` moves the elements named in it before they are read, which is how the
-    harness reproduces an element the official env has made INVISIBLE: ``stable_envs``' DM Control
-    appearance space carries material colour, light and camera fovy but no alpha, so a geom the
-    reference declines to draw can only be matched by putting it where the camera cannot see it.
-    Used only when the probe has MEASURED that the reference draws no target, and recorded as part
-    of the arm's configuration rather than hidden in a default.
+    ``target_override`` moves the elements named in it before they are read. That was Step 5's way
+    of reproducing an element the official env has made INVISIBLE, at a time when ``stable_envs``'
+    DM Control appearance space carried material colour, light and camera fovy and no visibility, so
+    a geom the reference declines to draw could only be matched by putting it where the camera cannot
+    see it. Step 6 gave the env a ``visibility.target`` style leaf and
+    ``swap_renderer.Renderer._variation`` uses it, so the state read here keeps the position the
+    episode actually drew. The override is kept, unused by the default path, because
+    ``examples/results/step5/reacher/`` was measured under it and has to stay reproducible.
     """
     import mujoco
 

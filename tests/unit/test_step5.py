@@ -386,8 +386,28 @@ def test_as_placed_refuses_to_invent_a_target_position(SW):
 
 def test_the_offscreen_placement_is_outside_any_reacher_scene(SW):
     """The reacher arm reaches 0.22 m and the camera sees roughly +/-0.3 m. The constant has to be
-    far enough out that no state can bring the geom back into frame."""
+    far enough out that no state can bring the geom back into frame.
+
+    Retained although ``hidden`` has superseded it: ``offscreen`` is the mechanism Step 5 ran under
+    and ``examples/results/step5/reacher/`` is only reproducible while it still works.
+    """
     assert min(abs(v) for v in SW.OFFSCREEN[:2]) > 1.0
+
+
+def test_hiding_the_target_is_a_style_leaf_rather_than_a_placement(SW):
+    """Step 6's replacement, asserted where the placement is: the harness must express "the
+    reference does not draw its target" through the env's own appearance space, not by moving the
+    geometry. ``visibility.target`` is the leaf ``DMCReacher*`` declares."""
+    assert SW.VISIBILITY == "visibility.target"
+    r = SW.Renderer(size=84, mode="blank", target_mode="hidden")
+    assert r._variation("hidden") == {SW.VISIBILITY: 0}
+    assert r._variation("as_placed") is None
+    assert r._variation("offscreen") is None        # the placement does the work in that mode
+
+
+def test_the_default_target_mode_is_the_representation_not_the_workaround(SW):
+    r = SW.Renderer(size=84, mode="blank")
+    assert r.target_mode == "hidden" and r.dataset_target_mode == "hidden"
 
 
 def test_the_placements_and_modes_are_the_ones_the_arms_record(SW):
@@ -398,7 +418,7 @@ def test_the_placements_and_modes_are_the_ones_the_arms_record(SW):
     environment no longer draws, so a stored frame sits ~18/255 from ANY re-render of its own
     state -- and an arm that drops under this mode drops for reasons that are not ours.
     """
-    assert set(SW.TARGET_MODES) == {"offscreen", "as_placed"}
+    assert set(SW.TARGET_MODES) == {"hidden", "offscreen", "as_placed"}
     assert set(SW.MODES) == {"stable_envs", "blank", "official_regen"}
 
 

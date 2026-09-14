@@ -87,13 +87,21 @@ def main() -> None:
     ap.add_argument("--size", type=int, default=224)
     # Per surface. The live env hides its target and the stored corpus draws it, so one policy for
     # both would make our frames disagree with whichever surface it was not chosen for.
-    ap.add_argument("--target-mode", default="offscreen", choices=("offscreen", "as_placed"),
+    # ``hidden`` is Step 6's REPRESENTATION -- the env's own ``visibility.target`` style leaf, which
+    # is what stable_worldmodel's ``render_target = 0`` actually does -- and ``offscreen`` is the
+    # Step-5 mechanism, which moved the geometry out of the camera frustum instead. The DEFAULT stays
+    # ``offscreen`` so ``examples/results/step5/reacher/`` reproduces exactly; the two are measured
+    # BIT-IDENTICAL on this scene (probe_mode_equivalence.py: max |d| 0 over 16 frozen states at both
+    # 84 and 224 px), so the choice cannot move a downstream number either way.
+    ap.add_argument("--target-mode", default="offscreen",
+                    choices=("offscreen", "hidden", "as_placed"),
                     help="target placement for the LIVE observation")
     # MEASURED, not assumed. corpus_probe.py compared the stored frames against both placements:
     # drawing the target puts max |d| at 217 and omitting it at 115, so the corpus does NOT contain
     # one -- the ~285 "red" pixels per frame that first suggested otherwise were the tan arm. Both
     # surfaces therefore hide it, which is also what the live environment does.
-    ap.add_argument("--dataset-target-mode", default="offscreen", choices=("offscreen", "as_placed"),
+    ap.add_argument("--dataset-target-mode", default="offscreen",
+                    choices=("offscreen", "hidden", "as_placed"),
                     help="target placement when regenerating the stored start and goal frames")
     # Three surfaces feed the model an image. Swapping them separately is what turned the PushT
     # null result into a diagnosis, and it is the first thing to reach for if this arm moves.

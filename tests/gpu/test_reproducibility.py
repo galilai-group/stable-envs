@@ -67,6 +67,7 @@ if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
 import stable_envs as se
+from _shared import family_params, make_or_skip, resolve_family, sampled_states
 from stable_envs.testing import conformance as C
 from stable_envs.testing import render_worker as W
 
@@ -1194,3 +1195,68 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
         f"machine (max {r['max_abs_diff']}/255), before any of our code was involved. This is a node "
         f"fault, not a repo fault — rerun elsewhere and exclude this host; every parity number "
         f"measured here is meaningless")
+
+
+# ------------------------------------------------------------------ 9. what a SCENE is a function of
+
+def _visibility_envs():
+    """Registered envs that declare a ``visibility.*`` leaf, resolved without building anything."""
+    out = []
+    for name, cls in sorted(se.REGISTRY.items()):
+        if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable"):
+            out.append(name)
+    return out
+
+
+@pytest.mark.parametrize("name", family_params(_visibility_envs(), family="visibility"))
+def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
+    """A cached scene must be a function of ITS OWN appearance, not of whichever was baked last.
+
+    The eighth entry in the defect list above, found in review of the ``visibility.*`` knob and fixed
+    in the same branch. ``DMControlSuite`` caches three baked plates per appearance and casts the
+    STATIC depth lazily, per (scene, supersample), because the supersample is a render-time argument.
+    ``_static_t`` derived the static primitive set at that moment from the LIVE shared ``MjModel`` —
+    and the live model carries whatever the LAST bake applied. So a scene baked with an element
+    hidden, whose static depth was first cast after some other appearance had been baked, saw the
+    element visible again, failed to find it in ``sc.movers``, and promoted it to a STATIC primitive
+    at whatever ``geom_pos`` the last ``_fk`` had written.
+
+    Measured on CPU over the 64 frozen Step-4 states before the fix: 18 px / max 215 / 3 rows on
+    ``DMCReacherHard`` and 88 px / max 140 / 28 rows on ``DMCFingerTurnHard``.
+
+    THE SUPERSAMPLE CHANGE IS THE TRIGGER and is why nothing else caught it: ``static_t`` is cached
+    per (scene, ss), and at an env's default supersample it is always cast during that scene's own
+    first render, while that scene's appearance is still on the model. Every check in this repository
+    renders at the default. So the sequence below is the cheapest one that can fail — and the scene
+    cache is cleared between the two halves because it is process-global and a previous test may
+    already hold the entry this is about.
+    """
+    resolve_family(name, family="visibility", modules=("dm_control",),
+                   subject="the scene-cache visibility check")
+    env = make_or_skip(name, batch=8, device="cuda")
+    paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
+    assert paths, f"{name} advertises VISIBILITY_KNOB but declares no visibility.* leaf"
+    hidden = {p: 0 for p in paths}
+    other = {p: [0.2, 0.9, 0.4] for p in env.variation_space.names()
+             if p.split(".")[0] == "material"}
+    assert other, f"{name} has no second appearance to bake in between"
+
+    from stable_envs.envs import dmcontrol as D
+    st = sampled_states(env, 8, seed=0)
+    ss = env.ss + 1                        # a supersample nothing has cached for this scene
+
+    D._SCENE_CACHE.clear()
+    alone = env.render(st, variation=hidden, supersample=ss).cpu().numpy()
+
+    D._SCENE_CACHE.clear()
+    env.render(st, variation=hidden)                   # bake the hidden scene at the default ss
+    env.render(st, variation=other)                    # ... then bake a DIFFERENT appearance
+    after = env.render(st, variation=hidden, supersample=ss).cpu().numpy()
+
+    d = np.abs(alone.astype(np.int16) - after.astype(np.int16)).max(-1)
+    assert int(d.max()) == 0, (
+        f"{name}: the same hidden-target scene rendered at supersample {ss} differs by "
+        f"{int(d.max())}/255 over {int((d > 0).sum())} pixel(s) in "
+        f"{int((d.reshape(len(st), -1) > 0).any(1).sum())} of {len(st)} frames depending on whether "
+        f"another appearance was baked first. A cached scene is reading the LIVE model instead of "
+        f"what it was baked from; see _bake's `sc.statics`")
