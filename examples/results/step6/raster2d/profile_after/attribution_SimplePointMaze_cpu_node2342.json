@@ -1,0 +1,127 @@
+{
+  "env": "SimplePointMaze",
+  "device": "cpu",
+  "threads": 1,
+  "host": "node2342.oscar.ccv.brown.edu",
+  "cpu": "x86_64",
+  "torch": "2.14.0+cu126",
+  "batches": {
+    "1": {
+      "family": "scene2d",
+      "ms_render_total": 11.875032912939787,
+      "ms_scene": 1.9788129720836878,
+      "ms_raster": 8.597818203270435,
+      "static_prefix": 6,
+      "n_prims": 13,
+      "vertices": 4,
+      "replica": "replica_v2",
+      "replica_matches_render_torch": true,
+      "phases_ms": {
+        "grid": 0.0995,
+        "canvas alloc": 1.2395,
+        "plan (pre-pass)": 1.1018,
+        "static prefix/poly": 2.9108,
+        "prim/poly": 5.2431,
+        "dynamic/disc": 0.1201,
+        "prim/disc": 0.1229,
+        "dynamic/poly": 2.3005,
+        "primitives evaluated": 6.0,
+        "output conversion": 0.0005
+      },
+      "coverage": {
+        "per_primitive_frac": [
+          0.043359,
+          0.051907,
+          0.035997,
+          0.048926,
+          0.023769,
+          0.0,
+          0.0016,
+          0.002,
+          0.002,
+          0.002,
+          0.002,
+          0.002,
+          0.002
+        ],
+        "kinds": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          0,
+          1,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "n_prims": 13,
+        "mean_frac": 0.016735204959889862,
+        "sum_frac": 0.21755766447856822
+      }
+    },
+    "64": {
+      "family": "scene2d",
+      "ms_render_total": 528.201662003994,
+      "ms_scene": 2.547122072428465,
+      "ms_raster": 518.5115940403193,
+      "static_prefix": 6,
+      "n_prims": 13,
+      "vertices": 4,
+      "replica": "replica_v2",
+      "replica_matches_render_torch": true,
+      "phases_ms": {
+        "grid": 0.2101,
+        "canvas alloc": 69.8791,
+        "plan (pre-pass)": 1.5912,
+        "static prefix/poly": 111.3819,
+        "prim/poly": 146.9643,
+        "dynamic/disc": 300.9991,
+        "prim/disc": 301.0083,
+        "dynamic/poly": 35.4815,
+        "primitives evaluated": 6.0,
+        "output conversion": 0.0006
+      },
+      "coverage": {
+        "per_primitive_frac": [
+          0.043359,
+          0.051907,
+          0.035997,
+          0.048926,
+          0.023769,
+          0.0,
+          1.0,
+          0.002,
+          0.002,
+          0.002,
+          0.002,
+          0.002,
+          0.002
+        ],
+        "kinds": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          0,
+          1,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "n_prims": 13,
+        "mean_frac": 0.09353520495622189,
+        "sum_frac": 1.2159576644308845
+      }
+    }
+  },
+  "size": 500
+}

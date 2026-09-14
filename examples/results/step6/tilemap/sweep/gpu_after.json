@@ -1,0 +1,148 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024,
+  4096
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9910079244786613,
+     "fps": 1891.8027259785474,
+     "gb_per_s": 0.09153298309374604,
+     "loadavg": 30.38,
+     "peak_gb": 0.000756224,
+     "seconds_per_batch": 0.0005285963416099548,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 528.5963416099548
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9919597278894969,
+     "fps": 30107.795111213924,
+     "gb_per_s": 1.4567355586609747,
+     "loadavg": 30.38,
+     "peak_gb": 0.001595392,
+     "seconds_per_batch": 0.0005314238369464874,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 33.213989809155464
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9927181938886518,
+     "fps": 119150.33088395932,
+     "gb_per_s": 5.764969609489488,
+     "loadavg": 30.38,
+     "peak_gb": 0.004282368,
+     "seconds_per_batch": 0.0005371365696191788,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 8.392758900299668
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9922332892239552,
+     "fps": 381039.25330819667,
+     "gb_per_s": 18.43620323206379,
+     "loadavg": 30.38,
+     "peak_gb": 0.015225856,
+     "seconds_per_batch": 0.00067184679210186,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 2.624401531647891
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9917449485449804,
+     "fps": 836415.4691301675,
+     "gb_per_s": 40.46912605839403,
+     "loadavg": 30.38,
+     "peak_gb": 0.058809344,
+     "seconds_per_batch": 0.0012242719531059265,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1.1955780792050064
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9936097244237619,
+     "fps": 1206822.2634411906,
+     "gb_per_s": 58.390888394338575,
+     "loadavg": 30.38,
+     "peak_gb": 0.231343104,
+     "seconds_per_batch": 0.0033940374851226807,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 0.8286224328912795
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 222.52952300476807,
+    "decode_fps_per_core": 4599.237826652779,
+    "h": 112,
+    "jpeg_bytes": 7845,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4175.489830004258,
+    "n": 2480,
+    "raw_bytes": 48384,
+    "w": 144
+   },
+   "device": "cuda",
+   "env": "CraftaxClassic",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'jax'"
+   },
+   "projected_to": [
+    "swm/CraftaxClassicPixels-v1"
+   ],
+   "reference_id": "Craftax-Classic-Pixels-v1",
+   "renderer_class": "CraftaxClassic",
+   "seconds": 1.65,
+   "shape": "112x144",
+   "size": 16,
+   "state_dim": 127,
+   "states_source": "sample_states",
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "cuda": "12.6",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "device_total_gb": 25.3,
+  "driver": "575.57.08",
+  "git_commit": null,
+  "git_dirty": false,
+  "host": "gpu2106.oscar.ccv.brown.edu",
+  "loadavg_end": 30.35,
+  "loadavg_start": 30.38,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6349394",
+  "slurm_nodelist": "gpu2106",
+  "timestamp": "2026-09-13T20:52:08-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "states_in": null,
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

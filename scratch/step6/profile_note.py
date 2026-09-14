@@ -33,6 +33,7 @@ import argparse
 import json
 import os
 import platform
+import re
 import socket
 import statistics
 import subprocess
@@ -62,6 +63,26 @@ def classify(name: str) -> str:
     return "other"
 
 
+def corpus_name(p: Path) -> str:
+    """The frozen corpus by its REPO-RELATIVE name, whichever tree's copy was read.
+
+    A profile-before runs this harness against the baseline TREE, so ``--states-dir`` points outside
+    ROOT and :func:`rel` would fall back to the absolute cluster path. Two things are wrong with
+    that. The corpus is the same frozen file in every tree -- Step 4 froze it and each tree is an
+    rsync of it -- so the absolute path names a copy rather than the thing. And the string lands in
+    every note, where ``tests/unit/test_repo_contracts.py`` reads the tail of ``/oscar/scratch/...``
+    as a repo-relative ``scratch/`` citation that does not resolve; ten notes turned 2 broken
+    citations into 19. Which TREE was measured is recorded as ``stable_envs_file``, which is the
+    question the absolute path was being asked to answer.
+    """
+    p = p.resolve()
+    parts = p.parts
+    if "examples" in parts:
+        i = len(parts) - 1 - parts[::-1].index("examples")
+        return str(Path(*parts[i:]))
+    return rel(p)
+
+
 def rel(p: Path) -> str:
     """Repo-relative when it can be, absolute when it cannot.
 
@@ -82,6 +103,16 @@ def git_commit() -> str:
                               capture_output=True, text=True, timeout=30).stdout.strip()
     except Exception:
         return "unknown"
+
+
+def stable_envs_file() -> str:
+    """The ``stable_envs`` package actually imported, resolved.
+
+    A before/after pair taken by switching ``PYTHONPATH`` between two checkouts is only evidence if
+    each leg records which checkout it loaded; the git commit of the harness does not answer that.
+    """
+    import stable_envs
+    return str(Path(stable_envs.__file__).resolve())
 
 
 def versions() -> dict:
@@ -197,12 +228,26 @@ def main() -> None:
 
     note: dict = {
         "workstream": args.workstream, "env": args.env, "device": args.device,
+        # WHICH TREE WAS MEASURED. ``baseline_commit`` is the commit of the tree this SCRIPT lives
+        # in, which is not the tree that was imported when a before-leg runs the branch's harness
+        # against the baseline checkout through PYTHONPATH. Without this line a before and an after
+        # taken in the same job are indistinguishable in the artifact.
+        "stable_envs_file": stable_envs_file(),
+        "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
         "baseline_commit": git_commit(), "host": socket.gethostname(),
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "cpu": platform.processor() or platform.machine(),
         "threads": torch.get_num_threads(), "versions": versions(),
         "slurm_job": os.environ.get("SLURM_JOB_ID"), "batches": {},
+        # WHICH TREE WAS MEASURED. A before/after job switches PYTHONPATH between the baseline
+        # checkout and a workstream branch, and any script that does ``sys.path.insert(0, ROOT)``
+        # silently wins that argument -- both legs then measure the same tree and the "after" is
+        # the "before" with a different filename. Recording the imported module's own path makes
+        # the artifact prove which one it was instead of the job script asserting it.
+        "stable_envs_file": se.__file__,
+        "pythonpath": os.environ.get("PYTHONPATH"),
     }
+    print(f"measuring stable_envs from {se.__file__}", flush=True)
 
     env = se.make(args.env, batch=max(args.batch), size=args.size, device=args.device)
     note["size"] = int(getattr(env, "size", args.size) or 0)
@@ -213,7 +258,7 @@ def main() -> None:
     npz = args.states_dir.expanduser().resolve() / f"{args.env}.npz"
     if npz.is_file():
         pool = np.load(npz)["states"]
-        note["states_source"] = rel(npz)
+        note["states_source"] = corpus_name(npz)
     else:
         pool = env.sample_states(64)
         note["states_source"] = "env.sample_states (no frozen corpus for this env)"
@@ -248,11 +293,24 @@ def main() -> None:
     # env and the directory becomes a mix of two machines -- which is section 12's "different
     # machines for numerator and denominator", arrived at by filename collision rather than by
     # choice. Acrobot read 109 fps locally and 20 fps on Oscar; one file cannot hold both.
-    host = n["host"].split(".")[0]
+    # ``note``, not ``n``: the scaffolding commit wrote ``n["host"]`` here, which is the parameter
+    # name of ``render_note`` and is not bound in this function. Every run therefore printed its
+    # timings, raised ``NameError`` and wrote NO file -- the profile existed only in the SLURM log.
+    host = note["host"].split(".")[0]
     tag = f"{args.env}_{args.device.replace(':', '')}_{host}"
     (args.out / f"{tag}.json").write_text(json.dumps(note, indent=2))
     (args.out / f"{tag}.md").write_text(render_note(note))
     print(f"\nwrote {args.out / (tag + '.json')} and {tag}.md")
+
+
+def _scr(path: str) -> str:
+    """``/oscar/scratch/<user>/`` -> ``$SCR/``, which is what every sbatch script here calls it.
+
+    Not cosmetic: ``tests/unit/test_repo_contracts.py`` reads any ``scratch/...`` substring in a
+    prose file as a repo-relative citation and resolves it, so an absolute cluster path in a note
+    reads as a broken citation. The JSON keeps the path in full.
+    """
+    return re.sub(r"/oscar/scratch/[A-Za-z0-9_.-]+/", "$SCR/", str(path))
 
 
 def render_note(n: dict) -> str:
@@ -262,9 +320,12 @@ def render_note(n: dict) -> str:
          f"- baseline commit: `{n['baseline_commit'][:12]}`",
          f"- host: {n['host']}  ·  gpu: {n['gpu'] or 'none'}  ·  cpu: {n['cpu']}  "
          f"·  threads: {n['threads']}",
+         f"- tree measured: `{n.get('stable_envs_file', 'unrecorded')}`"
+         + (f"  ·  load average {n['load_average'][0]:.1f}" if n.get("load_average") else ""),
          f"- frame: {n['size']}px  ·  state_dim: {n['state_dim']}",
          f"- states: `{n['states_source']}`",
-         f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}", ""]
+         f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}",
+         f"- measured tree: `{_scr(n.get('stable_envs_file', 'unrecorded'))}`", ""]
     for B, rec in n["batches"].items():
         t, r = rec["trace"], rec["render_ms"]
         L += [f"## batch {B}", "",

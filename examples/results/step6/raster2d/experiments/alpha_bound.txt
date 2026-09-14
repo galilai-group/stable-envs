@@ -1,0 +1,8 @@
+tree /Users/samib/stable-envs-step6-raster2d/stable_envs/envs/swm_nav.py
+smallest alpha that changes any pixel, over every uint8 contrast: 2.980232e-08   (at img=1, colour=0)
+   = 2^-25.00   (float32 has 24 bits of significand; 2^-24 = 5.960464e-08)
+
+radius at which the normalised dot can no longer move a pixel:
+   sigma   7.0 px ->   41.22 px =  5.89 sigma   (frame is 224 px, so the bound is INSIDE)
+   sigma  10.0 px ->   58.87 px =  5.89 sigma   (frame is 224 px, so the bound is INSIDE)
+   sigma  14.0 px ->   82.42 px =  5.89 sigma   (frame is 224 px, so the bound is INSIDE)

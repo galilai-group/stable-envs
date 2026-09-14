@@ -189,7 +189,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 from ..core.env import StableEnv, register
 from ..render import mjwarp as MW
 from ..render import raycast3d as R3
-from ..spaces import Box, Dict
+from ..spaces import Box, Dict, Discrete
 
 #: ``mjvLight.type``: 1 is directional, 0 is a positional spot/point light. Every domain here has both
 #: — the headlight, which is directional, sits at the camera and never casts a shadow, and the model
@@ -361,7 +361,7 @@ def _tex_rgb(m, matid: int) -> np.ndarray:
     return u[0] if len(u) == 1 else reg.mean(0)
 
 
-def _effective_alpha(m, kind: str) -> np.ndarray:
+def _effective_alpha(m, kind: str, rgba=None, mat_rgba=None) -> np.ndarray:
     """The alpha MuJoCo actually draws a geom or site with, resolved through its material.
 
     ``mujoco.Renderer`` selects geometry by GROUP, which is what ``VISIBLE_GROUPS`` covers, and then
@@ -373,13 +373,22 @@ def _effective_alpha(m, kind: str) -> np.ndarray:
     Same resolution ``stable_envs.render.mjwarp.effective_alpha`` performs, and the same rule
     ``_mat_rgb`` uses for colour: the element's own rgba unless that is the compiler default and a
     material supplies one.
+
+    ``rgba``/``mat_rgba`` ask the question against a SNAPSHOT of those arrays instead of against the
+    live model, and that is a correctness argument rather than a convenience. The ``MjModel`` in
+    ``_bundle`` is shared by every instance of a class and is mutated by every bake; since
+    ``visibility.*`` exists a bake can legitimately leave an element at alpha 0, so a caller deciding
+    what this class DECLARES (rather than what this bake happens to draw) must ask the pristine
+    snapshot or the declaration depends on what the previous env most recently rendered. ``_pristine``
+    records what that mistake cost the last time it was made.
     """
-    rgba = np.asarray(getattr(m, f"{kind}_rgba"), np.float64)
+    rgba = np.asarray(getattr(m, f"{kind}_rgba") if rgba is None else rgba, np.float64)
+    mat = np.asarray(m.mat_rgba if mat_rgba is None else mat_rgba, np.float64)
     matid = np.asarray(getattr(m, f"{kind}_matid"), np.int64)
     a = rgba[:, 3].copy()
     default = np.all(np.isclose(rgba, [0.5, 0.5, 0.5, 1.0]), axis=1)
     for i in np.flatnonzero(default & (matid >= 0)):
-        a[i] = float(m.mat_rgba[matid[i], 3])
+        a[i] = float(mat[matid[i], 3])
     return a
 
 
@@ -532,9 +541,18 @@ def catenary(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
     v_off = -_cosh_sinh(h_off / bh)[0] * bh
     pts = np.empty((npoints, 3))
     pts[0], pts[npoints - 1] = x0, x1
-    for i in range(1, npoints - 1):
-        hor = i * h / npoints
-        pts[i] = x0 + ac * hor + up * (bh * _cosh_sinh((hor - h_off) / bh)[0] + v_off)
+    # The interior points, written as ONE numpy expression rather than as a Python loop of (3,)
+    # temporaries. ``_cosh_sinh`` stays SCALAR and stays ``math.exp``: the 0-ULP validation against
+    # libmujoco's ``mjv_catenary`` (scratch/dmcontrol/probe_catenary.py, 440 inputs) depends on
+    # calling the same libm that MuJoCo's ``mju_*`` macros expand to, and ``np.exp`` is a different
+    # implementation. What is vectorised is only the assembly, which is elementwise in the same
+    # association order -- ``(x0 + ac*hor) + up*w``, componentwise -- so it is bit-identical.
+    # Measured on DMCBallInCupCatch at batch 256: 24.5 ms -> ~8 ms of a 88 ms ``_fk``.
+    if npoints > 2:
+        hor = np.arange(1, npoints - 1, dtype=np.float64) * h / npoints
+        w = np.fromiter((bh * _cosh_sinh((hh - h_off) / bh)[0] + v_off for hh in hor),
+                        np.float64, npoints - 2)
+        pts[1:npoints - 1] = x0 + ac * hor[:, None] + up * w[:, None]
     return pts
 
 
@@ -574,6 +592,47 @@ def _chain_capsules(pts: np.ndarray, nseg: int):
     x /= np.maximum(np.linalg.norm(x, axis=1, keepdims=True), _MJMINVAL)
     y = np.cross(z, x)
     return 0.5 * (lo + hi), np.stack([x, y, z], axis=2), half
+
+
+def _chain_capsules_batch(pts: np.ndarray, nseg: int):
+    """``_chain_capsules`` with a BATCH axis. ``pts`` ``(M, K+1, 3)`` -> ``(M,nseg,3)``,
+    ``(M,nseg,3,3)``, ``(M,nseg)``.
+
+    THE WHOLE POINT IS THAT IT IS THE SAME ARITHMETIC. Every line below is the single-polyline
+    version with one more leading axis: the products and differences are elementwise, ``norm`` and
+    ``argmin`` reduce the SAME trailing axis of length 3, and ``cross`` is component arithmetic. A
+    leading axis cannot change a per-row result, and ``tests/unit/test_dmcontrol_tendon.py`` asserts
+    that against ``_chain_capsules`` on the frozen ball_in_cup states rather than leaving it as an
+    argument.
+
+    Why it exists: ``_fk`` called ``_chain_capsules`` ONCE PER ENVIRONMENT, and at batch 256 that was
+    512 ``numpy.cross`` dispatches and 768 ``numpy.linalg.norm`` dispatches on ``(28,3)`` arrays --
+    46% of ``_fk``, which was itself 90.7% of a DMCBallInCupCatch render on a 3090 (the card was 5.3%
+    utilised). The work is trivially batched because the polylines differ only in their VALUES; they
+    are grouped by segment count, of which ball_in_cup's tendon has exactly three possible values
+    (1 taut, 2 near-vertical, 28 catenary).
+    """
+    M, npts, _ = pts.shape
+    K = npts - 1
+    if nseg % K:
+        raise RuntimeError(f"a tendon drawn as {K} segments cannot be split into {nseg} pieces "
+                           f"without resampling it; {nseg} must be a multiple of every branch's "
+                           f"segment count")
+    per = nseg // K
+    p0 = np.asarray(pts[:, :-1], np.float64).reshape(M, K, 1, 3)
+    p1 = np.asarray(pts[:, 1:], np.float64).reshape(M, K, 1, 3)
+    t = (np.arange(per, dtype=np.float64) / per).reshape(1, 1, per, 1)
+    lo = (p0 + (p1 - p0) * t).reshape(M, nseg, 3)
+    hi = (p0 + (p1 - p0) * (t + 1.0 / per)).reshape(M, nseg, 3)
+    axis = hi - lo
+    half = np.linalg.norm(axis, axis=-1) * 0.5
+    z = axis / np.maximum(np.linalg.norm(axis, axis=-1, keepdims=True), _MJMINVAL)
+    ref = np.zeros_like(z)
+    np.put_along_axis(ref, np.argmin(np.abs(z), axis=-1)[..., None], 1.0, axis=-1)
+    x = np.cross(ref, z)
+    x /= np.maximum(np.linalg.norm(x, axis=-1, keepdims=True), _MJMINVAL)
+    y = np.cross(z, x)
+    return 0.5 * (lo + hi), np.stack([x, y, z], axis=-1), half
 
 
 class _Tendon:
@@ -640,25 +699,41 @@ def _tendon_frame(m, d, td: _Tendon):
     A random policy leaves ``ball_in_cup`` taut in 35-44% of the states it visits, so this is not a
     branch a renderer can decline: skipping it would paint a third of the dataset's strings grey.
     """
+    pts, rgb = _tendon_polyline(m, d, td)
+    pos, mat, half = _chain_capsules(pts, td.nseg)
+    return pos, mat, half, rgb
+
+
+def _tendon_polyline(m, d, td: "_Tendon"):
+    """``(pts, rgb)``: the chain's POLYLINE and its colour, for one state. ``mj_forward`` must have run.
+
+    Split out of ``_tendon_frame`` so that the part which must run per environment (it reads ``d``,
+    which holds one state at a time) is separated from the part which must NOT (``_chain_capsules``,
+    which is pure array arithmetic on the polyline and batches over the whole call). ``_tendon_frame``
+    is unchanged in behaviour and is what the single-polyline tests compare against.
+
+    The polyline has two, three or ``ncat`` points depending on the branch, which is why ``_fk``
+    groups the batch by point count before batching the chain.
+    """
     import mujoco
     adr, num = int(d.ten_wrapadr[td.id]), int(d.ten_wrapnum[td.id])
     w = np.asarray(d.wrap_xpos, np.float64).reshape(-1, 3)[adr:adr + num]
     if float(d.ten_length[td.id]) < td.upper:
-        pts = catenary(w[0], w[1], td.gravity, td.upper, td.ncat)
-        rgb = td.grey
-    else:
-        pts = w[:2]
-        imp = 0.0
-        if int(d.nefc):
-            et = np.asarray(d.efc_type, np.int64)
-            ei = np.asarray(d.efc_id, np.int64)
-            hit = np.flatnonzero((et == int(mujoco.mjtConstraint.mjCNSTR_LIMIT_TENDON))
-                                 & (ei == td.id))
-            if len(hit):
-                imp = float(np.asarray(d.efc_KBIP)[hit[0], 2])
-        rgb = (1.0 - imp) * td.grey + imp * td.constraint
-    pos, mat, half = _chain_capsules(pts, td.nseg)
-    return pos, mat, half, rgb
+        return catenary(w[0], w[1], td.gravity, td.upper, td.ncat), td.grey
+    # A COPY, not ``w[:2]``. ``np.asarray(d.wrap_xpos, np.float64)`` returns the MjData buffer itself
+    # when it is already float64, so the slice is a live view; the caller now keeps polylines until
+    # the whole batch has been walked, and the next environment's ``mj_forward`` would rewrite this
+    # one under it. The slack branch above already returns a fresh array.
+    pts = np.array(w[:2])
+    imp = 0.0
+    if int(d.nefc):
+        et = np.asarray(d.efc_type, np.int64)
+        ei = np.asarray(d.efc_id, np.int64)
+        hit = np.flatnonzero((et == int(mujoco.mjtConstraint.mjCNSTR_LIMIT_TENDON))
+                             & (ei == td.id))
+        if len(hit):
+            imp = float(np.asarray(d.efc_KBIP)[hit[0], 2])
+    return pts, (1.0 - imp) * td.grey + imp * td.constraint
 
 
 class _Lights:
@@ -707,8 +782,8 @@ class _Scene:
     """Everything a render needs that does not depend on the state."""
 
     __slots__ = ("plate", "plate_shadow", "plate_norefl", "reflectance", "static_t", "cam", "model",
-                 "data", "movers", "size", "lights", "prims", "shadow_light", "floor", "eps",
-                 "tendon", "shadow_candidates", "rays", "const")
+                 "data", "movers", "statics", "size", "lights", "prims", "shadow_light", "floor",
+                 "eps", "tendon", "shadow_candidates", "rays", "const")
 
 
 # --------------------------------------------------------------------------- shading
@@ -804,6 +879,14 @@ class _DMCModel(StableEnv):
     #: re-bakes per appearance and gets it for free, while MJWarp would need ``cam_fovy`` per world and
     #: ``put_model`` does not carry that array per world.
     CAMERA_KNOB = True
+    #: Whether the appearance space offers a per-element VISIBILITY knob. A class flag for exactly the
+    #: reason ``CAMERA_KNOB`` is one — whether it can be honoured is a property of the RENDERER, not of
+    #: the domain. The ray-caster re-bakes per appearance and gets it for free because MuJoCo's own
+    #: alpha filter is already what ``_visible`` reads; MJWarp's shader never reads alpha and hides
+    #: zero-alpha elements by moving them out of the enabled geom groups at CONTEXT-CREATION time
+    #: (``MW.prepare_model`` in ``_tc_context``), which is once per (domain, res, worlds) and not per
+    #: world. See ``DMControlTrackCom``.
+    VISIBILITY_KNOB = True
 
     def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
                  device: str = "cuda", backend: str = "auto", seed: int = 0):
@@ -875,6 +958,46 @@ class _DMCModel(StableEnv):
         return tuple(_slot_name(m, arr, i) for arr, i in cls._slots())
 
     @classmethod
+    def _hideable(cls) -> tuple[tuple[str, str, int], ...]:
+        """``((kind, element name, id), ...)`` the visibility knob covers: what the EPISODE DRAWS.
+
+        DERIVED, never a name list. ``_episode_slots`` already measured which model entries the task
+        writes per episode, by diffing real episodes rather than transcribing a task's source, and
+        those entries ARE the scene's task-relevant landmarks: they are the reason the state is widened
+        (``_DMCModel.__init__``) and the reason ``_movers`` has to treat a world-body geom as a mover
+        at all. Measured over all sixteen shipped cells (``scratch/step6/reacher-correctness``): the
+        two reachers draw a ``target`` GEOM, the two finger-turn cells a ``target`` SITE, swimmer a
+        ``target`` geom and a ``target_light``, and the other eleven draw nothing — so eleven cells
+        gain no leaf and their ``describe()`` does not move.
+
+        Lights are excluded because visibility is not what an rgba alpha means for one: MuJoCo draws no
+        geometry for a light, it only lights the scene, and "hide the light" is ``light_diffuse``,
+        which the appearance space already carries. Order follows ``_slots()`` so the declared space is
+        a function of the model and not of a set's iteration order.
+        """
+        import mujoco
+        m = cls._model()
+        out: list[tuple[str, str, int]] = []
+        seen: dict[str, tuple[str, int]] = {}
+        for arr, k in cls._slots():
+            kind, eid = _slot_element(m, arr, k)
+            if kind not in ("geom", "site"):
+                continue
+            obj = {"geom": mujoco.mjtObj.mjOBJ_GEOM, "site": mujoco.mjtObj.mjOBJ_SITE}[kind]
+            name = mujoco.mj_id2name(m, obj, eid) or f"{kind}{eid}"
+            if name in seen and seen[name] != (kind, eid):
+                # Two different elements would claim one variation path, and the second would silently
+                # win. A domain that does this needs a naming rule chosen deliberately, not here.
+                raise RuntimeError(
+                    f"{cls.__name__}: the episode draws two different elements both named {name!r} "
+                    f"({seen[name]} and {(kind, eid)}); visibility.{name} would be ambiguous")
+            if name in seen:
+                continue
+            seen[name] = (kind, eid)
+            out.append((kind, name, eid))
+        return tuple(out)
+
+    @classmethod
     def _model(cls):
         return cls._bundle(cls.default_size)[1]
 
@@ -924,13 +1047,19 @@ class _DMCModel(StableEnv):
         ``check_variations_do_something`` moves every declared leaf and fails if the frame does not
         change: cartpole has no ``effector`` and acrobot no ``target``, so a shared knob set would
         advertise support that does not exist in three of the five domains.
+
+        Every array is read from the PRISTINE snapshot, alpha included. The groups always were; alpha
+        was not, and it had to become so the moment a bake could legitimately leave an element hidden
+        (``visibility.*``) — otherwise this census, and therefore the DECLARED variation space of the
+        next env built from this class, would depend on what the previous env last drew. The same
+        failure ``_pristine`` documents, one array further along.
         """
         import mujoco
         m, pr = cls._model(), cls._pristine()
         used = []
         for kind, arr, grp, n in (("geom", m.geom_matid, pr["geom_group"], m.ngeom),
                                   ("site", m.site_matid, pr["site_group"], m.nsite)):
-            alpha = _effective_alpha(m, kind)
+            alpha = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
             for i in range(n):
                 # alpha as well as group: ``finger-spin`` hides its ``target`` and ``tip`` sites by
                 # setting their alpha to zero, and they are the ONLY wearers of the ``target``
@@ -951,6 +1080,15 @@ class _DMCModel(StableEnv):
         mazes are: MuJoCo's material colours are floats (0.7, 0.5, 0.3) that a uint8 channel cannot
         hold, and in a lit 3-D scene no material colour appears verbatim in any pixel anyway, because
         a pixel is the material colour times the lighting.
+
+        VISIBILITY is a ``Discrete(2)`` and deliberately not an alpha ``Box``. ``stable_worldmodel``'s
+        reacher hides its target with a material alpha of zero (``render_target = 0``) and MuJoCo then
+        declines to draw the geom; the thing that has to be representable is therefore exactly "drawn
+        or not". MuJoCo BLENDS an alpha strictly between 0 and 1 and the analytic ray-caster is
+        opaque-only, so a continuous knob would advertise a range two thirds of which this renderer
+        cannot honour, and no conformance check in the suite could catch it. A binary knob says what
+        is true. Its default is read off the pristine model's own resolved alpha, so the default
+        appearance is still the compiled model's by construction.
         """
         import mujoco
         m, pr = self._model(), self._pristine()
@@ -967,6 +1105,13 @@ class _DMCModel(StableEnv):
         if self.CAMERA_KNOB:
             space["camera"] = Dict({"fovy_scale": Box(low=0.55, high=1.8, shape=(1,),
                                                       init_value=[1.0])})
+        vis = {}
+        if self.VISIBILITY_KNOB:
+            for kind, name, eid in self._hideable():
+                a = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])[eid]
+                vis[name] = Discrete(2, init_value=int(float(a) > 0))
+        if vis:
+            space["visibility"] = Dict(vis)
         return Dict(space)
 
     def _var(self, variation, path):
@@ -1182,6 +1327,22 @@ class DMControlSuite(_DMCModel):
         m.light_diffuse[:] = np.clip(
             pr["light_diffuse"] * float(self._var(variation, "light.diffuse_scale")[0]), 0, 1)
         m.light_specular[:] = pr["light_specular"]
+        # VISIBILITY, last, and expressed the way MuJoCo expresses it: the element's own rgba alpha.
+        # Everything downstream already reads that — ``_effective_alpha`` resolves it, ``_visible``
+        # drops a zero-alpha element, ``_movers`` therefore never lists it, and the three plate shots
+        # are taken by MuJoCo itself, which skips it too. So the knob needs no code in the renderer;
+        # it needed a way IN. Zeroing the element's own alpha rather than its MATERIAL's is the finer
+        # of the two instruments and measurably matters: on finger-turn the ``target`` material is worn
+        # by both the ``target`` and ``tip`` sites, so a material-alpha knob hides 58 px where the
+        # element knob hides 43 (84 px, scratch/step6/reacher-correctness/probe_hide.py). On reacher
+        # the target geom is the material's only wearer and the two coincide exactly, which is what
+        # makes this a faithful reading of stable_worldmodel's ``render_target = 0``.
+        for kind, name, eid in self._hideable():
+            # ``>= 0.5`` rather than ``!= 0``: the value arrives as a float32 style column, and a
+            # Discrete leaf only ever holds 0 or 1, so the threshold is a guard on a caller who writes
+            # a style row by hand rather than a semantic.
+            if float(self._var(variation, f"visibility.{name}")[0]) < 0.5:
+                getattr(m, f"{kind}_rgba")[eid, 3] = 0.0
 
     @staticmethod
     def _visible(m, kind: str) -> list[int]:
@@ -1292,6 +1453,21 @@ class DMControlSuite(_DMCModel):
         sc.model, sc.data = m, d
         sc.cam, sc.lights, sc.shadow_light = cam, lights, sl
         sc.movers = (gmov, smov)
+        # The STATIC set, recorded here rather than re-derived later. ``_static_t`` used to recompute
+        # it from the LIVE shared model at render time, and the live model carries whatever the LAST
+        # bake applied -- so a scene baked with an element hidden, whose static depth was first cast
+        # after some other appearance had been baked, saw that element visible again, did not find it
+        # in ``sc.movers``, and promoted it to a STATIC primitive at whatever ``geom_pos`` ``_fk`` had
+        # last written. Measured on CPU over the 64 frozen states: ``render(hidden, ss=2)`` alone
+        # against ``render(hidden) -> render(other appearance) -> render(hidden, ss=2)`` differed by
+        # 18 px / max 215 on DMCReacherHard and 88 px / max 140 on DMCFingerTurnHard. It needed a
+        # SUPERSAMPLE change between the calls to show, because ``static_t`` is cached per (scene, ss)
+        # and the default-ss path had always cached it during the bake's own render.
+        #
+        # This is the same live-read class as the ``_used_materials`` fix in this patch's first
+        # commit, one call site further on: anything a scene is a function of must be read while that
+        # scene's appearance is ON the model, which is here and nowhere else.
+        sc.statics = (gstat, sstat)
         sc.tendon = tendon
         sc.plate = torch.tensor(plate, device=self.device, dtype=torch.uint8)
         sc.plate_shadow = torch.tensor(plate_shadow, device=self.device, dtype=torch.uint8)
@@ -1491,9 +1667,10 @@ class DMControlSuite(_DMCModel):
         if hit is not None:
             return hit
         m, d = sc.model, sc.data
-        gmov, smov = sc.movers
-        gstat = [i for i in self._visible(m, "geom") if i not in gmov]
-        sstat = [i for i in self._visible(m, "site") if i not in smov]
+        # From the BAKE, never from the live model -- see ``_bake``. The shared ``MjModel`` carries
+        # the last-baked appearance, so re-deriving the static set here silently used a different
+        # scene's visibility.
+        gstat, sstat = sc.statics
         import mujoco
         d.qpos[:] = m.qpos0
         d.qvel[:] = 0
@@ -1514,18 +1691,30 @@ class DMControlSuite(_DMCModel):
         because the tendon's capsules change LENGTH and COLOUR with the state and there is no useful
         way to say that only sometimes.
 
-        A pure function of the state, a couple of microseconds a call, and a Python loop over the batch
-        — which reads like the bottleneck and measurably is not: 17 ms of cartpole's 232 ms at
-        B=1024. What costs the rest is that three of the ray passes are FULL-FRAME. The movers can be
-        tiled (they are 0.2-3.0% of the frame), but the shadow test starts from every STATIC pixel and
-        the reflection test from every floor pixel, so those two scale with the image rather than with
-        the movers. Bounding them to the movers' light-space and screen-space footprints is the next
-        thing worth doing here; a batched GPU forward kinematics is not.
+        A pure function of the state, and a Python loop over the batch. On the domains without a
+        tendon that loop is cheap -- 17 ms of cartpole's 232 ms at B=1024 -- and what costs the rest
+        is that three of the ray passes are FULL-FRAME: the movers can be tiled (they are 0.2-3.0% of
+        the frame), but the shadow test starts from every STATIC pixel and the reflection test from
+        every floor pixel. Bounding those two to the movers' light-space and screen-space footprints
+        is still the next thing worth doing here.
+
+        ON ``ball_in_cup`` THE LOOP WAS THE BOTTLENECK, and this docstring used to say it was not.
+        Measured on a 3090 at batch 4096: the render was 1,314 ms of which the card did 66.7 ms
+        (5.1% utilised) and this function was 97%. Inside it, ``mj_forward`` -- which the paragraph
+        below blames, correctly, for being necessary -- was 3%, and the tendon's pure-Python/numpy
+        geometry was 78%: ``_chain_capsules`` once per environment (512 ``numpy.cross`` and 768
+        ``numpy.linalg.norm`` dispatches on ``(28,3)`` arrays at batch 256) and ``catenary``'s
+        29-point interior loop once per environment. Both are array code with no batch axis, so the
+        loop now collects POLYLINES and ``_chain_capsules_batch`` builds every chain at once, grouped
+        by point count. 3,272 -> 9,816 fps at batch 4096, bit-identical, and the row goes
+        GPU_PARITY/BELOW_G4 -> GPU_FAST. A batched GPU forward kinematics is still not the answer;
+        giving the numpy a batch axis was.
 
         A scene with a tendon runs ``mj_forward`` rather than ``mj_kinematics``, and pays for it: the
         colour of a taut tendon is its limit constraint's impedance, which only exists once the
-        constraint set has been built. ``ball_in_cup`` is 4 dof and 6 geoms, so the extra work is
-        microseconds; a domain where it were not could not use this path.
+        constraint set has been built. ``ball_in_cup`` is 4 dof and 6 geoms, so the extra work really
+        is microseconds (3.50 ms over 256 environments); a domain where it were not could not use
+        this path.
         """
         import mujoco
         gmov, smov = sc.movers
@@ -1542,6 +1731,9 @@ class DMControlSuite(_DMCModel):
         m, d = sc.model, sc.data
         slots = self._slots()
         pr = self._pristine()
+        gid = np.asarray(gmov, np.intp)
+        sid = np.asarray(smov, np.intp)
+        polys: list = []
         try:
             for i in range(B):
                 # The episode's draw goes into the MODEL and then through the same kinematics as the
@@ -1558,21 +1750,39 @@ class DMControlSuite(_DMCModel):
                 else:
                     d.qvel[:] = 0
                     mujoco.mj_forward(m, d)
+                # ``np.take(..., out=)`` rather than ``d.geom_xpos[ids]``: fancy indexing ALLOCATES a
+                # fresh array per call and the reshape allocates a second, where this writes the same
+                # bytes straight into the destination row. Identical values, no temporaries; the same
+                # change ``ogbench._fk`` already documents having made.
                 if gmov:
-                    xp[i, :len(gmov)] = d.geom_xpos[gmov]
-                    xm[i, :len(gmov)] = d.geom_xmat[gmov].reshape(-1, 3, 3)
+                    np.take(d.geom_xpos, gid, axis=0, out=xp[i, :len(gmov)])
+                    np.take(d.geom_xmat, gid, axis=0, out=xm[i, :len(gmov)].reshape(-1, 9))
                 if smov:
-                    xp[i, len(gmov):nmov] = d.site_xpos[smov]
-                    xm[i, len(gmov):nmov] = d.site_xmat[smov].reshape(-1, 3, 3)
+                    np.take(d.site_xpos, sid, axis=0, out=xp[i, len(gmov):nmov])
+                    np.take(d.site_xmat, sid, axis=0, out=xm[i, len(gmov):nmov].reshape(-1, 9))
                 if td is not None:
-                    tp, tm, half, trgb = _tendon_frame(m, d, td)
-                    xp[i, nmov:] = tp
-                    xm[i, nmov:] = tm
-                    size[i, nmov:, 1] = half
+                    # ONLY the polyline here. The chain of capsules it becomes is the same arithmetic
+                    # for every row and is built once for the whole batch below -- see
+                    # ``_chain_capsules_batch``.
+                    pts, trgb = _tendon_polyline(m, d, td)
+                    polys.append(pts)
                     rgb[i, nmov:] = trgb
         finally:
             for arr in {a for a, _ in slots}:                 # never leave a state row in the model
                 getattr(m, arr)[:] = pr[arr]
+        if td is not None:
+            # Grouped by point count, because the three branches of ``mjv_catenary`` produce polylines
+            # of different lengths and a batch holds states from all three at once. ball_in_cup has
+            # exactly three possible counts, so this is at most three batched calls in place of B.
+            by_len: dict = {}
+            for i, pts in enumerate(polys):
+                by_len.setdefault(len(pts), []).append(i)
+            for npts, rows in by_len.items():
+                idx = np.asarray(rows, np.intp)
+                tp, tm, half = _chain_capsules_batch(np.stack([polys[i] for i in rows]), td.nseg)
+                xp[idx, nmov:] = tp
+                xm[idx, nmov:] = tm
+                size[idx, nmov:, 1] = half
         t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)   # noqa: E731
         return t(xp), t(xm), t(size), t(rgb)
 
@@ -2000,6 +2210,17 @@ class DMControlTrackCom(_DMCModel):
     #: per world, so a per-environment field of view would need one render context per distinct value
     #: — and a variation that silently costs a context rebuild is worse than one that is not offered.
     CAMERA_KNOB = False
+    #: No visibility knob either, and for the same shape of reason — a fact about MJWarp, not about
+    #: these domains. ``mujoco_warp``'s shader never reads alpha: ``_tc_context`` hides zero-alpha
+    #: elements through ``MW.prepare_model``, which moves them out of the ENABLED GEOM GROUPS, and
+    #: ``create_render_context`` reads the geometry once per (domain, resolution, worlds) and then the
+    #: five kernels are CUDA-graph captured. So visibility is fixed for the life of a context and a
+    #: per-world value would need either one captured context per distinct combination — the same
+    #: trade ``CAMERA_KNOB`` refuses — or an alpha-aware shader upstream in ``mujoco_warp``. Only
+    #: ``DMCSwimmerSwimmer6`` draws a hideable element per episode in this tier, and it is a VISUAL
+    #: cell; the parity cells that need the knob are all in ``DMControlSuite``. Recorded here rather
+    #: than fixed because the fix is in a renderer this file does not own.
+    VISIBILITY_KNOB = False
 
     #: Per-domain overrides for ``create_render_context``, folded into the cache key so two domains
     #: that disagree cannot share a context. Empty for every domain but swimmer; see
@@ -2149,6 +2370,25 @@ _AT = ("84 px, 64 states per domain from sample_states (the domain's own initial
        "0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, "
        "mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0")
 
+#: The versions ``_AT`` / ``_SWIMMER_AT`` name, as fields (``stable_envs.core.env.REFERENCE_VERSIONS_KEY``
+#: / ``MEASURED_WITH_KEY``). Exactly what the text says and nothing more.
+#:
+#: ``reference_versions`` holds the REFERENCE side only -- mujoco, which is what dm_control's
+#: ``physics.render`` draws with -- because the certifier blocks a measurement whose reference is not
+#: this version: Step 4 judged these numbers under mujoco 3.12.0, whose finite-plane texture
+#: re-anchoring (changelog item 15, commit cc7fb98c) had phase-shifted the reference's floor checker
+#: while ours had not (examples/results/step6/texture-fidelity/findings.md), and recorded three
+#: renderer FAILs for a version drift. dm_control is deliberately absent: neither string names a
+#: dm_control version, and a version nobody measured under is not provenance.
+#:
+#: ``measured_with`` holds OUR side -- mujoco_warp (warp for swimmer) -- and is recorded, never
+#: compared: a bump of our own renderer that moves these numbers is a regression to be seen, not a
+#: reason to block the check.
+_AT_VERSIONS = {"mujoco": "3.11.0"}
+_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
+_SWIMMER_AT_VERSIONS = {"mujoco": "3.11.0"}
+_SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
+
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
 #: measurements: ``scratch/dmcontrol/visual_calib.py`` re-draws three times and the ceiling sits clear
@@ -2164,28 +2404,32 @@ VISUAL_FIDELITY: dict[str, dict] = {
         "skybox_share": 0.831, "floor_share": 0.127,
         "draw_spread": {"mean_abs": [4.986, 5.032], "within8_frac": [0.8813, 0.8826],
                         "ssim": [0.6597, 0.6615]},
-        "mean_abs_max": 6.5, "within8_min": 0.84, "ssim_min": 0.62, "measured_at": _AT},
+        "mean_abs_max": 6.5, "within8_min": 0.84, "ssim_min": 0.62, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     "DMCWalkerWalk": {
         "mean_abs": 8.07, "within8_frac": 0.700, "ssim": 0.826,
         "interior_exact_frac": 0.0046, "interior_frac": 0.0010, "all_exact_frac": 0.205,
         "skybox_share": 0.478, "floor_share": 0.448,
         "draw_spread": {"mean_abs": [7.636, 8.302], "within8_frac": [0.6887, 0.7199],
                         "ssim": [0.8170, 0.8306]},
-        "mean_abs_max": 10.5, "within8_min": 0.65, "ssim_min": 0.77, "measured_at": _AT},
+        "mean_abs_max": 10.5, "within8_min": 0.65, "ssim_min": 0.77, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     "DMCHopperHop": {
         "mean_abs": 4.35, "within8_frac": 0.905, "ssim": 0.684,
         "interior_exact_frac": None, "interior_frac": 0.0000, "all_exact_frac": 0.307,
         "skybox_share": 0.893, "floor_share": 0.082,
         "draw_spread": {"mean_abs": [4.327, 4.364], "within8_frac": [0.9044, 0.9051],
                         "ssim": [0.6826, 0.6866]},
-        "mean_abs_max": 5.7, "within8_min": 0.86, "ssim_min": 0.64, "measured_at": _AT},
+        "mean_abs_max": 5.7, "within8_min": 0.86, "ssim_min": 0.64, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     "DMCHumanoidStand": {
         "mean_abs": 6.26, "within8_frac": 0.735, "ssim": 0.868,
         "interior_exact_frac": 0.00018, "interior_frac": 0.0297, "all_exact_frac": 0.023,
         "skybox_share": 0.000, "floor_share": 0.959,
         "draw_spread": {"mean_abs": [6.203, 6.300], "within8_frac": [0.7308, 0.7442],
                         "ssim": [0.8660, 0.8707]},
-        "mean_abs_max": 8.2, "within8_min": 0.69, "ssim_min": 0.82, "measured_at": _AT},
+        "mean_abs_max": 8.2, "within8_min": 0.69, "ssim_min": 0.82, "measured_at": _AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _AT_MEASURED_WITH},
     # swimmer is the one domain that renders with ``enable_specular=False`` (see SPECULAR_NOTE), so
     # its entry is the only one measured under a non-default render context. Everything here is the
     # WORST of 4 independent 64-state draws, natively at 84 px with no resampling
@@ -2205,7 +2449,9 @@ VISUAL_FIDELITY: dict[str, dict] = {
         # in the pose. The ceiling is set from the worst of the four rather than from the mean.
         "draw_spread": {"mean_abs": [3.223, 3.452], "within8_frac": [0.917, 0.921],
                         "ssim": [0.986, 0.986], "interior_exact_frac": [0.515, 0.657]},
-        "mean_abs_max": 4.8, "within8_min": 0.85, "ssim_min": 0.94, "measured_at": _SWIMMER_AT},
+        "mean_abs_max": 4.8, "within8_min": 0.85, "ssim_min": 0.94, "measured_at": _SWIMMER_AT,
+        "reference_versions": _SWIMMER_AT_VERSIONS,
+        "measured_with": _SWIMMER_AT_MEASURED_WITH},
 }
 
 VISUAL_NOTE = (

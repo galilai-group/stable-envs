@@ -1,0 +1,8 @@
+host torch 2.14.0, 1 thread(s), tree /Users/samib/stable-envs-step6-raster2d/stable_envs/__init__.py
+union vs grouped window work, in frame-equivalents (1.0 = one full-frame pass per row):
+   PushT             B=64    union    176.94   grouped     39.89   shipped     39.89   groups 64
+   PushT             B=256   union    707.78   grouped    159.55   shipped    159.55   groups 64
+   PushT             B=1024  union   2831.11   grouped    638.22   shipped    638.22   groups 64
+   SimplePointMaze   B=64    union    144.69   grouped     80.83   shipped     80.83   groups 76
+   SimplePointMaze   B=256   union    578.75   grouped    323.31   shipped    323.31   groups 76
+   SimplePointMaze   B=1024  union   2315.01   grouped   1293.22   shipped   1293.22   groups 76

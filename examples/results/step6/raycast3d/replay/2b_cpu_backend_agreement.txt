@@ -1,0 +1,11 @@
+{
+  "PointmazeLargeNavigate": {
+    "skipped": "env renders without a Scene2D (tilemap path)"
+  },
+  "AntmazeMediumExplore": {
+    "skipped": "env renders without a Scene2D (tilemap path)"
+  },
+  "HumanoidmazeMediumNavigate": {
+    "skipped": "env renders without a Scene2D (tilemap path)"
+  }
+}

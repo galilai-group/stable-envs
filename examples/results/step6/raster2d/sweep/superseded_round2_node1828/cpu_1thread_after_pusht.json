@@ -1,0 +1,148 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9945249702701604,
+     "fps": 166.26743967097767,
+     "gb_per_s": 0.00459696217202319,
+     "loadavg": 32.77,
+     "peak_gb": 0.689414144,
+     "seconds_per_batch": 0.006014406681060791,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6014.406681060791
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9947622842750293,
+     "fps": 602.7623279517966,
+     "gb_per_s": 0.016665172843211274,
+     "loadavg": 32.77,
+     "peak_gb": 0.70268928,
+     "seconds_per_batch": 0.02654445916414261,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1659.028697758913
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9947432656389962,
+     "fps": 1046.8724042942326,
+     "gb_per_s": 0.028943928233926944,
+     "loadavg": 32.63,
+     "peak_gb": 0.705380352,
+     "seconds_per_batch": 0.06113447993993759,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 955.2262490615249
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.994985005579213,
+     "fps": 1873.827686107586,
+     "gb_per_s": 0.05180758786550254,
+     "loadavg": 32.63,
+     "peak_gb": 0.71876608,
+     "seconds_per_batch": 0.1366187520325184,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 533.667000127025
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9955595845685994,
+     "fps": 2045.8535550827823,
+     "gb_per_s": 0.05656375909092877,
+     "loadavg": 32.5,
+     "peak_gb": 0.821018624,
+     "seconds_per_batch": 0.5005245842039585,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 488.79353926167823
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 193.94223020466856,
+    "decode_fps_per_core": 7014.692932749875,
+    "h": 96,
+    "jpeg_bytes": 2388,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 5869.559941057623,
+    "n": 4340,
+    "raw_bytes": 27648,
+    "w": 96
+   },
+   "device": "cpu",
+   "env": "PushT",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "render_only": {
+     "fps": 384.0942858402016,
+     "gb_per_s": 0.010619438814909895,
+     "seconds_per_frame": 0.0026035274068514505,
+     "us_per_frame": 2603.5274068514505
+    },
+    "set_state_render": {
+     "fps": 372.769877117796,
+     "gb_per_s": 0.010306341562552824,
+     "seconds_per_frame": 0.002682620193809271,
+     "us_per_frame": 2682.620193809271
+    },
+    "size": 96
+   },
+   "projected_to": [
+    "swm/PushT-Discrete-v1",
+    "swm/PushT-v1"
+   ],
+   "reference_id": "gym_pusht/PushT-v0",
+   "renderer_class": "PushT",
+   "seconds": 11.17,
+   "shape": "96x96",
+   "size": 96,
+   "state_dim": 5,
+   "states_source": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states/PushT.npy",
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "cpu_count_logical": 48,
+  "cpu_count_physical": 48,
+  "device": "cpu",
+  "git_commit": "d862e2ac14277821e3710573ebf79f6e41748e70",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "host": "node1828.oscar.ccv.brown.edu",
+  "loadavg_end": 32.38,
+  "loadavg_start": 32.77,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6349273",
+  "slurm_nodelist": "node1828",
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/raster2d/stable_envs/__init__.py",
+  "timestamp": "2026-09-13T20:48:57-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1,
+  "tree_root": "/oscar/scratch/sboughan/se6/raster2d"
+ },
+ "reps": 15,
+ "ss_request": "native",
+ "states_in": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states",
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

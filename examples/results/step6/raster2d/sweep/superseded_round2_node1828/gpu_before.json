@@ -1,0 +1,857 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024,
+  4096,
+  8192,
+  16384
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9939056064462618,
+     "fps": 413.024487009103,
+     "gb_per_s": 0.011419301016827678,
+     "loadavg": 18.14,
+     "peak_gb": 0.008595456,
+     "seconds_per_batch": 0.0024211639538407326,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 2421.1639538407326
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9937418369745377,
+     "fps": 5171.385220562162,
+     "gb_per_s": 0.14297845857810265,
+     "loadavg": 18.14,
+     "peak_gb": 0.009032704,
+     "seconds_per_batch": 0.0030939485877752304,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 193.3717867359519
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9932960566897912,
+     "fps": 20501.587672700043,
+     "gb_per_s": 0.5668278959748108,
+     "loadavg": 18.14,
+     "peak_gb": 0.01042432,
+     "seconds_per_batch": 0.0031217094510793686,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 48.776710173115134
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9931946119737272,
+     "fps": 77834.0811397026,
+     "gb_per_s": 2.1519566753504975,
+     "loadavg": 18.14,
+     "peak_gb": 0.016001024,
+     "seconds_per_batch": 0.0032890476286411285,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 12.847842299379408
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9935612047012462,
+     "fps": 264202.6026326748,
+     "gb_per_s": 7.304673557588193,
+     "loadavg": 18.14,
+     "peak_gb": 0.039402496,
+     "seconds_per_batch": 0.0038758134469389915,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 3.784974069276359
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9937723612630418,
+     "fps": 862347.1812847151,
+     "gb_per_s": 23.842174868159802,
+     "loadavg": 18.14,
+     "peak_gb": 0.128148992,
+     "seconds_per_batch": 0.004749827086925507,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1.1596257536439225
+    },
+    {
+     "batch": 8192,
+     "cpu_frac": 0.9943737189787405,
+     "fps": 1331076.31154241,
+     "gb_per_s": 36.80159786152455,
+     "loadavg": 18.14,
+     "peak_gb": 0.247719424,
+     "seconds_per_batch": 0.006154417991638184,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 0.7512717274948955
+    },
+    {
+     "batch": 16384,
+     "cpu_frac": 0.9948930307792223,
+     "fps": 1937192.1256941615,
+     "gb_per_s": 53.55948789119218,
+     "loadavg": 17.73,
+     "peak_gb": 0.486860288,
+     "seconds_per_batch": 0.008457602001726627,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 0.5162110596756975
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 207.99104443909246,
+    "decode_fps_per_core": 7522.824234631526,
+    "h": 96,
+    "jpeg_bytes": 2393,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 6523.501149896617,
+    "n": 4340,
+    "raw_bytes": 27648,
+    "w": 96
+   },
+   "device": "cuda",
+   "env": "PushT",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'pymunk'"
+   },
+   "projected_to": [
+    "swm/PushT-Discrete-v1",
+    "swm/PushT-v1"
+   ],
+   "reference_id": "gym_pusht/PushT-v0",
+   "renderer_class": "PushT",
+   "seconds": 2.96,
+   "shape": "96x96",
+   "size": 96,
+   "state_dim": 5,
+   "states_source": "sample_states",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu/PushT.npy",
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9926362534327537,
+     "fps": 215.15423174275955,
+     "gb_per_s": 0.16136567380706965,
+     "loadavg": 17.73,
+     "peak_gb": 0.010073088,
+     "seconds_per_batch": 0.004647828638553619,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 4647.828638553619
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9934024123711424,
+     "fps": 2677.7530619045733,
+     "gb_per_s": 2.0083147964284302,
+     "loadavg": 17.73,
+     "peak_gb": 0.02179584,
+     "seconds_per_batch": 0.0059751588851213455,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 373.4474303200841
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9936985160490348,
+     "fps": 8362.178127432193,
+     "gb_per_s": 6.271633595574145,
+     "loadavg": 17.73,
+     "peak_gb": 0.057654272,
+     "seconds_per_batch": 0.007653508335351944,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 119.58606773987412
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9942655485811845,
+     "fps": 22734.55271767561,
+     "gb_per_s": 17.05091453825671,
+     "loadavg": 17.73,
+     "peak_gb": 0.203444736,
+     "seconds_per_batch": 0.01126039307564497,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 43.985910451738164
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9951684884431337,
+     "fps": 37060.33168683161,
+     "gb_per_s": 27.79524876512371,
+     "loadavg": 17.73,
+     "peak_gb": 0.779884032,
+     "seconds_per_batch": 0.027630621567368507,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 26.983028874383308
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9953673100999729,
+     "fps": 42714.22788118139,
+     "gb_per_s": 32.03567091088604,
+     "loadavg": 17.73,
+     "peak_gb": 3.089716736,
+     "seconds_per_batch": 0.09589310642331839,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 23.411402935380465
+    },
+    {
+     "batch": 8192,
+     "cpu_frac": 0.9955792730644234,
+     "fps": 43200.691548571005,
+     "gb_per_s": 32.40051866142825,
+     "loadavg": 17.27,
+     "peak_gb": 6.169908736,
+     "seconds_per_batch": 0.18962659407407045,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 23.14777759693243
+    },
+    {
+     "batch": 16384,
+     "size": null,
+     "skipped": "output would be 12.3 GB, over the 8.0 GB budget"
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 814.222089704488,
+    "decode_fps_per_core": 1085.6294529393174,
+    "h": 500,
+    "jpeg_bytes": 10773,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 1049.3438066053677,
+    "n": 160,
+    "raw_bytes": 750000,
+    "w": 500
+   },
+   "device": "cuda",
+   "env": "SimplePointMaze",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 60.78238716513019,
+     "gb_per_s": 0.04558679037384764,
+     "seconds_per_frame": 0.016452134354040027,
+     "us_per_frame": 16452.134354040027
+    },
+    "size": 500
+   },
+   "projected_to": [
+    "swm/SimplePointMaze-v0"
+   ],
+   "reference_id": "swm/SimplePointMaze-v0",
+   "renderer_class": "SimplePointMaze",
+   "seconds": 11.81,
+   "shape": "500x500",
+   "size": 500,
+   "state_dim": 2,
+   "states_source": "sample_states",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu/SimplePointMaze.npy",
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9933288850261511,
+     "fps": 753.2783724152446,
+     "gb_per_s": 0.11338948684292194,
+     "loadavg": 16.68,
+     "peak_gb": 0.012611584,
+     "seconds_per_batch": 0.0013275304809212685,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1327.5304809212685
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9935662949082237,
+     "fps": 11548.591292376528,
+     "gb_per_s": 1.738386350058854,
+     "loadavg": 16.68,
+     "peak_gb": 0.059276288,
+     "seconds_per_batch": 0.0013854503631591797,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 86.59064769744873
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.994022721660907,
+     "fps": 30136.579005625656,
+     "gb_per_s": 4.536398964558819,
+     "loadavg": 16.68,
+     "peak_gb": 0.20860416,
+     "seconds_per_batch": 0.002123665064573288,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 33.182266633957624
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9950392780974298,
+     "fps": 37753.0276878704,
+     "gb_per_s": 5.682887751799756,
+     "loadavg": 16.68,
+     "peak_gb": 0.810113536,
+     "seconds_per_batch": 0.006780913099646568,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 26.487941795494407
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9956398623525841,
+     "fps": 39575.25627005625,
+     "gb_per_s": 5.957184175819027,
+     "loadavg": 16.68,
+     "peak_gb": 0.926847488,
+     "seconds_per_batch": 0.02587475348263979,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.26831394789042
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9953241679322109,
+     "fps": 39629.02891636044,
+     "gb_per_s": 5.965278464721904,
+     "loadavg": 16.15,
+     "peak_gb": 1.388540416,
+     "seconds_per_batch": 0.10335857607424259,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.234027361875633
+    },
+    {
+     "batch": 8192,
+     "cpu_frac": 0.9951415444922831,
+     "fps": 39607.330085677684,
+     "gb_per_s": 5.96201218313689,
+     "loadavg": 16.15,
+     "peak_gb": 2.005529088,
+     "seconds_per_batch": 0.206830401904881,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.24785179502942
+    },
+    {
+     "batch": 16384,
+     "cpu_frac": 0.9946404828500611,
+     "fps": 39571.76106399566,
+     "gb_per_s": 5.956658049441139,
+     "loadavg": 15.74,
+     "peak_gb": 3.239506432,
+     "seconds_per_batch": 0.41403262224048376,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.27054579104515
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 680.3618013793097,
+    "decode_fps_per_core": 4519.835521493075,
+    "h": 224,
+    "jpeg_bytes": 4102,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4094.212629416696,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "TwoRoom",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 493.60963495954474,
+     "gb_per_s": 0.07430207113119035,
+     "seconds_per_frame": 0.002025892383729418,
+     "us_per_frame": 2025.892383729418
+    },
+    "size": 224
+   },
+   "projected_to": [
+    "swm/TwoRoom-v1"
+   ],
+   "reference_id": "swm/TwoRoom-v1",
+   "renderer_class": "TwoRoom",
+   "seconds": 9.94,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "states_source": "sample_states",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu/TwoRoom.npy",
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9942826028732209,
+     "fps": 586.9962858364303,
+     "gb_per_s": 0.08835937691438618,
+     "loadavg": 15.74,
+     "peak_gb": 0.012611584,
+     "seconds_per_batch": 0.001703588292002678,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1703.588292002678
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9941157558483349,
+     "fps": 9121.445799457275,
+     "gb_per_s": 1.3730329933007048,
+     "loadavg": 15.74,
+     "peak_gb": 0.0592768,
+     "seconds_per_batch": 0.0017541078850626945,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 109.63174281641841
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9945497925702094,
+     "fps": 20034.44736515274,
+     "gb_per_s": 3.0157452929817117,
+     "loadavg": 15.74,
+     "peak_gb": 0.208606208,
+     "seconds_per_batch": 0.003194497898221016,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 49.914029659703374
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9953403785655559,
+     "fps": 23586.58792146073,
+     "gb_per_s": 3.550441906641641,
+     "loadavg": 15.74,
+     "peak_gb": 0.81221888,
+     "seconds_per_batch": 0.01085362583398819,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 42.396975914016366
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9950926349058353,
+     "fps": 23805.063979108058,
+     "gb_per_s": 3.5833286706471776,
+     "loadavg": 15.74,
+     "peak_gb": 0.928977408,
+     "seconds_per_batch": 0.04301605746150017,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 42.00786861474626
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9950308237131883,
+     "fps": 23818.2062255264,
+     "gb_per_s": 3.5853069467160377,
+     "loadavg": 15.36,
+     "peak_gb": 1.39076864,
+     "seconds_per_batch": 0.1719692894257605,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 41.98468980121106
+    },
+    {
+     "batch": 8192,
+     "cpu_frac": 0.9946651069950992,
+     "fps": 23816.852545427762,
+     "gb_per_s": 3.5851031799581503,
+     "loadavg": 15.01,
+     "peak_gb": 2.007888384,
+     "seconds_per_batch": 0.3439581273123622,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 41.98707608793484
+    },
+    {
+     "batch": 16384,
+     "cpu_frac": 0.9946946710966872,
+     "fps": 23815.633462151192,
+     "gb_per_s": 3.5849196737906945,
+     "loadavg": 14.69,
+     "peak_gb": 3.242127872,
+     "seconds_per_batch": 0.6879514679312706,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 41.989225337601965
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 682.3143920835593,
+    "decode_fps_per_core": 4532.807132782999,
+    "h": 224,
+    "jpeg_bytes": 4170,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4076.9209006663054,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "TwoRoomTarget",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 365.0080615979887,
+     "gb_per_s": 0.05494393349622205,
+     "seconds_per_frame": 0.0027396655175834896,
+     "us_per_frame": 2739.6655175834894
+    },
+    "size": 224
+   },
+   "projected_to": [
+    "swm/TwoRoom-v1"
+   ],
+   "reference_id": "swm/TwoRoom-v1",
+   "renderer_class": "TwoRoomTarget",
+   "seconds": 14.63,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 4,
+   "states_source": "sample_states",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu/TwoRoomTarget.npy",
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.99360869112474,
+     "fps": 1657.0933766688736,
+     "gb_per_s": 0.2494389518032122,
+     "loadavg": 14.69,
+     "peak_gb": 0.012611584,
+     "seconds_per_batch": 0.0006034662947058678,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 603.4662947058678
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9931946323172771,
+     "fps": 25380.442409003477,
+     "gb_per_s": 3.8204672349424755,
+     "loadavg": 14.69,
+     "peak_gb": 0.059275776,
+     "seconds_per_batch": 0.0006304066628217697,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 39.40041642636061
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9935257982039358,
+     "fps": 46944.182815920976,
+     "gb_per_s": 7.066413950914953,
+     "loadavg": 14.69,
+     "peak_gb": 0.208601088,
+     "seconds_per_batch": 0.0013633212074637413,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.301893866620958
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9950186882120203,
+     "fps": 53787.07001745236,
+     "gb_per_s": 8.09646007558707,
+     "loadavg": 14.69,
+     "peak_gb": 0.810101248,
+     "seconds_per_batch": 0.0047595081850886345,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.59182884800248
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9951509163252868,
+     "fps": 54655.21166733019,
+     "gb_per_s": 8.22713970185988,
+     "loadavg": 14.69,
+     "peak_gb": 0.926798336,
+     "seconds_per_batch": 0.018735633231699467,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.29651682783151
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9955059974070096,
+     "fps": 54828.55997593852,
+     "gb_per_s": 8.253233476058075,
+     "loadavg": 14.47,
+     "peak_gb": 1.388343808,
+     "seconds_per_batch": 0.07470559142529964,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.238669781567296
+    },
+    {
+     "batch": 8192,
+     "cpu_frac": 0.995232921253339,
+     "fps": 54830.9264386695,
+     "gb_per_s": 8.253589694960043,
+     "loadavg": 14.47,
+     "peak_gb": 2.005135872,
+     "seconds_per_batch": 0.14940473437309265,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.23788261390291
+    },
+    {
+     "batch": 16384,
+     "cpu_frac": 0.9947472263981179,
+     "fps": 54786.48156747598,
+     "gb_per_s": 8.246899497389025,
+     "loadavg": 14.19,
+     "peak_gb": 3.23872,
+     "seconds_per_batch": 0.2990518743172288,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 18.25267787580742
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 445.3146020126833,
+    "decode_fps_per_core": 2958.35061923817,
+    "h": 224,
+    "jpeg_bytes": 3030,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2780.4833617712884,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "Piecewise",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 625.026710599806,
+     "gb_per_s": 0.09408402069316761,
+     "seconds_per_frame": 0.0015999316237866879,
+     "us_per_frame": 1599.9316237866879
+    },
+    "size": 224
+   },
+   "projected_to": [
+    "swm/Piecewise-v0"
+   ],
+   "reference_id": "swm/Piecewise-v0",
+   "renderer_class": "Piecewise",
+   "seconds": 8.44,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "states_source": "sample_states",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu/Piecewise.npy",
+   "supersample": 1
+  },
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9945678072682218,
+     "fps": 1111.8228690891733,
+     "gb_per_s": 0.1673604728382551,
+     "loadavg": 14.19,
+     "peak_gb": 0.013012992,
+     "seconds_per_batch": 0.0008994238451123238,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 899.4238451123238
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9950210963237908,
+     "fps": 17457.832797806677,
+     "gb_per_s": 2.627892655388244,
+     "loadavg": 14.19,
+     "peak_gb": 0.059677696,
+     "seconds_per_batch": 0.0009164940565824509,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 57.28087853640318
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9943949793111074,
+     "fps": 38686.84234034659,
+     "gb_per_s": 5.823453003807693,
+     "loadavg": 14.19,
+     "peak_gb": 0.209005568,
+     "seconds_per_batch": 0.001654309220612049,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.848581572063267
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.995012416295723,
+     "fps": 46167.706367926905,
+     "gb_per_s": 6.949532504151302,
+     "loadavg": 14.19,
+     "peak_gb": 0.810514944,
+     "seconds_per_batch": 0.0055450014770030975,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.66016201954335
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9951096205923292,
+     "fps": 46914.88414859901,
+     "gb_per_s": 7.062003681120312,
+     "loadavg": 14.19,
+     "peak_gb": 0.927248896,
+     "seconds_per_batch": 0.02182676177471876,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.31519704562379
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9948822647930692,
+     "fps": 46967.90371608944,
+     "gb_per_s": 7.069984610575511,
+     "loadavg": 14.19,
+     "peak_gb": 1.388941824,
+     "seconds_per_batch": 0.08720849081873894,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.291135453793686
+    },
+    {
+     "batch": 8192,
+     "cpu_frac": 0.995137005467545,
+     "fps": 46992.94264773149,
+     "gb_per_s": 7.073753670877727,
+     "loadavg": 13.94,
+     "peak_gb": 2.005930496,
+     "seconds_per_batch": 0.174324048217386,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.279791042161378
+    },
+    {
+     "batch": 16384,
+     "cpu_frac": 0.9946433381257881,
+     "fps": 46904.69480452359,
+     "gb_per_s": 7.060469899535327,
+     "loadavg": 13.94,
+     "peak_gb": 3.23990784,
+     "seconds_per_batch": 0.3493040530011058,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 21.319827453680773
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 427.63919903366667,
+    "decode_fps_per_core": 2840.9279272538442,
+    "h": 224,
+    "jpeg_bytes": 4181,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 2658.551466703144,
+    "n": 797,
+    "raw_bytes": 150528,
+    "w": 224
+   },
+   "device": "cuda",
+   "env": "PiecewiseZones",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 422.0549829838321,
+     "gb_per_s": 0.06353109247859028,
+     "seconds_per_frame": 0.002369359539200862,
+     "us_per_frame": 2369.359539200862
+    },
+    "size": 224
+   },
+   "projected_to": [
+    "swm/Piecewise-v0"
+   ],
+   "reference_id": "swm/Piecewise-v0",
+   "renderer_class": "PiecewiseZones",
+   "seconds": 9.02,
+   "shape": "224x224",
+   "size": 224,
+   "state_dim": 2,
+   "states_source": "sample_states",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu/PiecewiseZones.npy",
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "cuda": "12.6",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "device_total_gb": 25.3,
+  "driver": "575.57.08",
+  "git_commit": "d862e2ac14277821e3710573ebf79f6e41748e70",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "host": "gpu2113.oscar.ccv.brown.edu",
+  "loadavg_end": 13.62,
+  "loadavg_start": 18.14,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6349274",
+  "slurm_nodelist": "gpu2113",
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/raster2d-preB/stable_envs/__init__.py",
+  "timestamp": "2026-09-13T20:46:16-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 4,
+  "tree_root": "/oscar/scratch/sboughan/se6/raster2d-preB"
+ },
+ "reps": 15,
+ "ss_request": "native",
+ "states_in": null,
+ "states_out": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r2/states_gpu",
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

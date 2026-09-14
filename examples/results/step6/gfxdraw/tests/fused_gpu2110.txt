@@ -1,0 +1,7 @@
+ssss                                                                     [100%]
+================================== EMPTY RUN ===================================
+this run collected 4 test(s), 4 of them SKIPPED, and NOTHING passed, failed or errored. pytest reports that as success, and it is the exact shape of both coverage incidents this suite has had: the tests existed, they were parameterised over envs this interpreter does not have, and the run was green having measured nothing. Run with -rs to see the reasons; set SE_REQUIRE_ENV_MODULES to make a named family's absence fatal, or SE_ALLOW_EMPTY_RUN=1 if an all-skipped run is what was wanted.
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: gpu2110 slurm=mix reason=none reference-renderer={}
+4 skipped in 2.25s

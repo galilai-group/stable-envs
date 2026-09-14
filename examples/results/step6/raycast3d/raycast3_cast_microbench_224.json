@@ -1,0 +1,151 @@
+{
+  "host": "node1829.oscar.ccv.brown.edu",
+  "cpu": "x86_64",
+  "threads": 1,
+  "torch": "2.14.0+cu126",
+  "slurm_job": "6347142",
+  "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/render/raycast3d.py",
+  "rays_per_measurement": 4096,
+  "bar": {
+    "what": "cores_cpu >= 1 needs the whole frame inside one-core JPEG-q90 decode",
+    "ns_per_px_at_84": 21.4,
+    "source": "step6/cpu-3d design.md 4.1/4.3"
+  },
+  "backends": {
+    "cpp": {
+      "built": true,
+      "flags": "-O3 -march=native -ffp-contract=off -fno-fast-math",
+      "via": "g++ (no ninja)"
+    },
+    "numba": {
+      "available": false,
+      "why": "ModuleNotFoundError(\"No module named 'numba'\")"
+    }
+  },
+  "cells": {
+    "AntmazeMediumExplore": {
+      "spec": {
+        "K": 13,
+        "cap": 12,
+        "sph": 1,
+        "tests": 53248,
+        "decode": 2390.5,
+        "size": 224
+      },
+      "K": 13,
+      "N": 4096,
+      "ray_primitive_tests_per_measurement": 53248,
+      "torch_loop_ms": 23.537039756774902,
+      "torch_chunk1024_ms": 63.67109157145023,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 23.05530197918415,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": true,
+        "bit_identical_normal": false,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 0,
+        "t_max_abs_diff_on_hits": 0.0,
+        "ms": 1.2046899646520615
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 442.0267382206825,
+        "torch_chunk1024": 1195.7461608220071,
+        "torch_chunk4096": 432.9796795970581,
+        "cpp": 22.624135453952476
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 23537.039756774902,
+        "torch_chunk1024": 63671.09157145023,
+        "torch_chunk4096": 23055.30197918415,
+        "cpp": 1204.6899646520615
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 42.48622640458259,
+        "torch_chunk1024": 15.7057147179238,
+        "torch_chunk4096": 43.373971024229746,
+        "cpp": 830.0890929134783
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 56.265293538570404,
+        "torch_chunk1024": 152.20574440155178,
+        "torch_chunk4096": 55.11369938123971,
+        "cpp": 2.879811360500753
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 946.3738061456658,
+        "torch_chunk1024": 349.8422494457254,
+        "torch_chunk4096": 966.1481736449217,
+        "cpp": 18490.099987223133
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 56.2652935385704,
+        "torch_chunk1024": 152.20574440155178,
+        "torch_chunk4096": 55.11369938123971,
+        "cpp": 2.8798113605007525
+      }
+    },
+    "PointmazeLargeNavigate": {
+      "spec": {
+        "K": 1,
+        "cap": 0,
+        "sph": 1,
+        "tests": 4096,
+        "decode": 2390.5,
+        "size": 224
+      },
+      "K": 1,
+      "N": 4096,
+      "ray_primitive_tests_per_measurement": 4096,
+      "torch_loop_ms": 0.4020668566226959,
+      "torch_chunk1024_ms": 1.1437349021434784,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 0.43099746108055115,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": true,
+        "bit_identical_normal": true,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 0,
+        "t_max_abs_diff_on_hits": 0.0,
+        "ms": 0.033000484108924866
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 98.16085366765037,
+        "torch_chunk1024": 279.23215384362265,
+        "torch_chunk4096": 105.22398952161893,
+        "cpp": 8.056758815655485
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 402.0668566226959,
+        "torch_chunk1024": 1143.7349021434784,
+        "torch_chunk4096": 430.99746108055115,
+        "cpp": 33.000484108924866
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 2487.14855136247,
+        "torch_chunk1024": 874.328481299203,
+        "torch_chunk4096": 2320.199282596482,
+        "cpp": 30302.585765084383
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 0.9611408207565546,
+        "torch_chunk1024": 2.734098283573985,
+        "torch_chunk4096": 1.0302994307130575,
+        "cpp": 0.07888765726238489
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 4261.602370374681,
+        "torch_chunk1024": 1498.117322485478,
+        "torch_chunk4096": 3975.543301198574,
+        "cpp": 51921.93737451815
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 0.9611408207565546,
+        "torch_chunk1024": 2.734098283573985,
+        "torch_chunk4096": 1.0302994307130575,
+        "cpp": 0.07888765726238489
+      }
+    }
+  }
+}

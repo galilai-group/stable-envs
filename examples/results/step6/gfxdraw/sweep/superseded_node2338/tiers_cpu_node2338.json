@@ -1,0 +1,121 @@
+{
+ "before_shard": "examples/results/step6/gfxdraw/sweep/cpu_1thread_before_node2338.json",
+ "after_shard": "examples/results/step6/gfxdraw/sweep/cpu_1thread_after_node2338.json",
+ "rows": [
+  {
+   "env": "Acrobot",
+   "device": "cpu",
+   "best_batch": 64,
+   "fps_before": 60.452601815342824,
+   "fps_after": 257.7368671077141,
+   "ratio_before": 0.4822127826927814,
+   "ratio_after": 4.6447445379883705,
+   "cores_before": 0.052578701019507464,
+   "cores_after": 0.30147914334033993,
+   "tier_before": "CPU_REGRESSION",
+   "tier_after": "CPU_FASTER",
+   "qualifiers_before": [
+    "BELOW_G4"
+   ],
+   "qualifiers_after": [
+    "BELOW_G4"
+   ],
+   "host": "node2338.oscar.ccv.brown.edu",
+   "device_name": null,
+   "threads": 1,
+   "backend_class": "R"
+  },
+  {
+   "env": "CartPole",
+   "device": "cpu",
+   "best_batch": 64,
+   "fps_before": 77.79569651216686,
+   "fps_after": 396.2942236666798,
+   "ratio_before": 0.35762124536528683,
+   "ratio_after": 1.8155080268241561,
+   "cores_before": 0.06674979505167447,
+   "cores_after": 0.4123089193313224,
+   "tier_before": "CPU_REGRESSION",
+   "tier_after": "CPU_PARITY",
+   "qualifiers_before": [
+    "BELOW_G4"
+   ],
+   "qualifiers_after": [
+    "BELOW_G4"
+   ],
+   "host": "node2338.oscar.ccv.brown.edu",
+   "device_name": null,
+   "threads": 1,
+   "backend_class": "R"
+  },
+  {
+   "env": "MountainCar",
+   "device": "cpu",
+   "best_batch": 64,
+   "fps_before": 61.992261502641654,
+   "fps_after": 337.33980120893256,
+   "ratio_before": 0.2810713723255407,
+   "ratio_after": 2.9425284799610374,
+   "cores_before": 0.06735956231099316,
+   "cores_after": 0.36546919002063505,
+   "tier_before": "CPU_REGRESSION",
+   "tier_after": "CPU_FASTER",
+   "qualifiers_before": [
+    "BELOW_G4"
+   ],
+   "qualifiers_after": [
+    "BELOW_G4"
+   ],
+   "host": "node2338.oscar.ccv.brown.edu",
+   "device_name": null,
+   "threads": 1,
+   "backend_class": "R"
+  },
+  {
+   "env": "MountainCarContinuous",
+   "device": "cpu",
+   "best_batch": 16,
+   "fps_before": 61.15301253780143,
+   "fps_after": 390.3175515098134,
+   "ratio_before": 0.43728694959953396,
+   "ratio_after": 2.767593975535249,
+   "cores_before": 0.052077681371620464,
+   "cores_after": 0.3292763886261262,
+   "tier_before": "CPU_REGRESSION",
+   "tier_after": "CPU_FASTER",
+   "qualifiers_before": [
+    "BELOW_G4"
+   ],
+   "qualifiers_after": [
+    "BELOW_G4"
+   ],
+   "host": "node2338.oscar.ccv.brown.edu",
+   "device_name": null,
+   "threads": 1,
+   "backend_class": "R"
+  },
+  {
+   "env": "Pendulum",
+   "device": "cpu",
+   "best_batch": 16,
+   "fps_before": 64.22782937519155,
+   "fps_after": 460.47223647546826,
+   "ratio_before": 1.3769362115097097,
+   "ratio_after": 14.604152093869152,
+   "cores_before": 0.05465527674516902,
+   "cores_after": 0.498563455058318,
+   "tier_before": "CPU_PARITY",
+   "tier_after": "CPU_FASTER",
+   "qualifiers_before": [
+    "BELOW_G4"
+   ],
+   "qualifiers_after": [
+    "BELOW_G4"
+   ],
+   "host": "node2338.oscar.ccv.brown.edu",
+   "device_name": null,
+   "threads": 1,
+   "backend_class": "R"
+  }
+ ]
+}

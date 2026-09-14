@@ -1,0 +1,89 @@
+{
+  "host": "gpu2106.oscar.ccv.brown.edu",
+  "device": "cuda",
+  "batch": 64,
+  "headroom": 8,
+  "slurm_job": "6347000",
+  "configs": {
+    "AntmazeTeleportExplore": {
+      "config": "AntmazeTeleportExplore",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "cache_class": "OrderedDict",
+      "cache_max": 256,
+      "filler_inserted": 248,
+      "batch": 64,
+      "cache_len_after_first_render": 256,
+      "filler_survivors_after_first_render": 192,
+      "check_style_is_state_under_pressure": {
+        "max_abs_diff": 0,
+        "frames_differing": 0,
+        "px_differing": 0
+      },
+      "PASS": true
+    },
+    "HumanoidmazeMediumNavigate": {
+      "config": "HumanoidmazeMediumNavigate",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "cache_class": "OrderedDict",
+      "cache_max": 256,
+      "filler_inserted": 248,
+      "batch": 64,
+      "cache_len_after_first_render": 256,
+      "filler_survivors_after_first_render": 192,
+      "check_style_is_state_under_pressure": {
+        "max_abs_diff": 0,
+        "frames_differing": 0,
+        "px_differing": 0
+      },
+      "PASS": true
+    },
+    "AntmazeTeleportNavigate": {
+      "config": "AntmazeTeleportNavigate",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "cache_class": "OrderedDict",
+      "cache_max": 256,
+      "filler_inserted": 248,
+      "batch": 64,
+      "cache_len_after_first_render": 256,
+      "filler_survivors_after_first_render": 192,
+      "check_style_is_state_under_pressure": {
+        "max_abs_diff": 0,
+        "frames_differing": 0,
+        "px_differing": 0
+      },
+      "PASS": true
+    },
+    "HumanoidmazeLargeNavigate": {
+      "config": "HumanoidmazeLargeNavigate",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "cache_class": "OrderedDict",
+      "cache_max": 256,
+      "filler_inserted": 248,
+      "batch": 64,
+      "cache_len_after_first_render": 256,
+      "filler_survivors_after_first_render": 192,
+      "check_style_is_state_under_pressure": {
+        "max_abs_diff": 0,
+        "frames_differing": 0,
+        "px_differing": 0
+      },
+      "PASS": true
+    },
+    "PointmazeLargeNavigate": {
+      "config": "PointmazeLargeNavigate",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "cache_class": "OrderedDict",
+      "cache_max": 256,
+      "filler_inserted": 248,
+      "batch": 64,
+      "cache_len_after_first_render": 256,
+      "filler_survivors_after_first_render": 192,
+      "check_style_is_state_under_pressure": {
+        "max_abs_diff": 0,
+        "frames_differing": 0,
+        "px_differing": 0
+      },
+      "PASS": true
+    }
+  }
+}

@@ -1,0 +1,636 @@
+{
+  "workstream": "step6/gfxdraw",
+  "env": "CartPole",
+  "device": "cpu",
+  "baseline_commit": "",
+  "host": "node1829.oscar.ccv.brown.edu",
+  "gpu": null,
+  "cpu": "x86_64",
+  "threads": 1,
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "triton": "3.8.0",
+    "numpy": "2.5.3",
+    "mujoco": "3.12.0",
+    "dm-control": "1.0.45",
+    "mujoco-warp": "absent",
+    "warp-lang": "absent"
+  },
+  "slurm_job": "6346967",
+  "batches": {
+    "1": {
+      "batch": 1,
+      "set_state_ms": {
+        "ms_median": 0.05771219730377197,
+        "ms_min": 0.056315213441848755,
+        "ms_max": 0.06753392517566681,
+        "ms_stdev": 0.0033689146867678476,
+        "samples": 10
+      },
+      "render_ms": {
+        "ms_median": 39.285438135266304,
+        "ms_min": 38.86688873171806,
+        "ms_max": 40.02121835947037,
+        "ms_stdev": 0.30886999048715913,
+        "samples": 10
+      },
+      "trace": {
+        "phases": {
+          "other": {
+            "cpu_us": 16233.77399999991,
+            "device_us": 0.0,
+            "calls": 16589,
+            "cpu_pct": 42.416707388213105,
+            "device_pct": null
+          },
+          "host->device": {
+            "cpu_us": 3683.5270000000623,
+            "device_us": 0.0,
+            "calls": 2286,
+            "cpu_pct": 9.624569549606024,
+            "device_pct": null
+          },
+          "allocation": {
+            "cpu_us": 2706.207000000092,
+            "device_us": 0.0,
+            "calls": 3552,
+            "cpu_pct": 7.070961469029849,
+            "device_pct": null
+          },
+          "kernel/raster": {
+            "cpu_us": 15646.551999999883,
+            "device_us": 0.0,
+            "calls": 3576,
+            "cpu_pct": 40.882373859489434,
+            "device_pct": null
+          },
+          "synchronization": {
+            "cpu_us": 2.062000000000012,
+            "device_us": 0.0,
+            "calls": 1,
+            "cpu_pct": 0.005387733661593195,
+            "device_pct": null
+          }
+        },
+        "total_cpu_us": 38272.121999999945,
+        "total_device_us": 0,
+        "op_count": 26004,
+        "top_ops": [
+          {
+            "op": "aten::where",
+            "calls": 1391,
+            "cpu_us": 10296.036999999924,
+            "device_us": 0
+          },
+          {
+            "op": "aten::bitwise_and",
+            "calls": 1384,
+            "cpu_us": 4959.783000000018,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 717,
+            "cpu_us": 1852.806000000016,
+            "device_us": 0
+          },
+          {
+            "op": "aten::add",
+            "calls": 842,
+            "cpu_us": 1601.62599999999,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_to_copy",
+            "calls": 712,
+            "cpu_us": 1319.2480000000287,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 1116,
+            "cpu_us": 1046.9429999999657,
+            "device_us": 0
+          },
+          {
+            "op": "aten::__and__",
+            "calls": 1384,
+            "cpu_us": 1013.7050000000349,
+            "device_us": 0
+          },
+          {
+            "op": "aten::bitwise_not",
+            "calls": 457,
+            "cpu_us": 955.2630000000077,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty",
+            "calls": 1612,
+            "cpu_us": 898.2950000000669,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ge",
+            "calls": 96,
+            "cpu_us": 875.8760000000038,
+            "device_us": 0
+          },
+          {
+            "op": "aten::lt",
+            "calls": 284,
+            "cpu_us": 848.1489999999726,
+            "device_us": 0
+          },
+          {
+            "op": "aten::index",
+            "calls": 124,
+            "cpu_us": 808.193999999984,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ne",
+            "calls": 291,
+            "cpu_us": 762.7890000000384,
+            "device_us": 0
+          },
+          {
+            "op": "aten::mul",
+            "calls": 312,
+            "cpu_us": 736.4349999999724,
+            "device_us": 0
+          },
+          {
+            "op": "aten::sub",
+            "calls": 364,
+            "cpu_us": 708.7170000000383,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 25.454724383035604
+    },
+    "16": {
+      "batch": 16,
+      "set_state_ms": {
+        "ms_median": 0.05682092159986496,
+        "ms_min": 0.05618482828140259,
+        "ms_max": 0.05959533154964447,
+        "ms_stdev": 0.0009900711707519184,
+        "samples": 10
+      },
+      "render_ms": {
+        "ms_median": 199.02376178652048,
+        "ms_min": 198.54984246194363,
+        "ms_max": 202.08638347685337,
+        "ms_stdev": 0.9763172417505379,
+        "samples": 10
+      },
+      "trace": {
+        "phases": {
+          "other": {
+            "cpu_us": 49581.05200000015,
+            "device_us": 0.0,
+            "calls": 16649,
+            "cpu_pct": 25.638326356259338,
+            "device_pct": null
+          },
+          "host->device": {
+            "cpu_us": 22306.36999999994,
+            "device_us": 0.0,
+            "calls": 2320,
+            "cpu_pct": 11.534607895844351,
+            "device_pct": null
+          },
+          "allocation": {
+            "cpu_us": 2878.8459999997876,
+            "device_us": 0.0,
+            "calls": 3620,
+            "cpu_pct": 1.4886491976290883,
+            "device_pct": null
+          },
+          "kernel/raster": {
+            "cpu_us": 118617.41600000001,
+            "device_us": 0.0,
+            "calls": 3576,
+            "cpu_pct": 61.33698056556302,
+            "device_pct": null
+          },
+          "synchronization": {
+            "cpu_us": 2.77699999999993,
+            "device_us": 0.0,
+            "calls": 1,
+            "cpu_pct": 0.0014359847042239072,
+            "device_pct": null
+          }
+        },
+        "total_cpu_us": 193386.46099999986,
+        "total_device_us": 0,
+        "op_count": 26166,
+        "top_ops": [
+          {
+            "op": "aten::where",
+            "calls": 1391,
+            "cpu_us": 109007.51200000006,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 751,
+            "cpu_us": 20660.230999999956,
+            "device_us": 0
+          },
+          {
+            "op": "aten::bitwise_and",
+            "calls": 1384,
+            "cpu_us": 14231.82900000003,
+            "device_us": 0
+          },
+          {
+            "op": "aten::fill_",
+            "calls": 220,
+            "cpu_us": 8712.783000000149,
+            "device_us": 0
+          },
+          {
+            "op": "aten::le",
+            "calls": 22,
+            "cpu_us": 7118.2019999999575,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ge",
+            "calls": 96,
+            "cpu_us": 5069.385000000006,
+            "device_us": 0
+          },
+          {
+            "op": "aten::index",
+            "calls": 124,
+            "cpu_us": 2560.013000000039,
+            "device_us": 0
+          },
+          {
+            "op": "aten::flip",
+            "calls": 1,
+            "cpu_us": 2339.793000000005,
+            "device_us": 0
+          },
+          {
+            "op": "aten::add",
+            "calls": 842,
+            "cpu_us": 1968.9640000000873,
+            "device_us": 0
+          },
+          {
+            "op": "aten::amin",
+            "calls": 2,
+            "cpu_us": 1933.999000000018,
+            "device_us": 0
+          },
+          {
+            "op": "aten::mul",
+            "calls": 312,
+            "cpu_us": 1402.8810000000278,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_to_copy",
+            "calls": 712,
+            "cpu_us": 1208.5910000001502,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty_strided",
+            "calls": 1116,
+            "cpu_us": 1133.1939999998626,
+            "device_us": 0
+          },
+          {
+            "op": "aten::sub",
+            "calls": 364,
+            "cpu_us": 1011.9209999998384,
+            "device_us": 0
+          },
+          {
+            "op": "aten::empty",
+            "calls": 1646,
+            "cpu_us": 989.4000000000301,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 80.39241071707876
+    },
+    "64": {
+      "batch": 64,
+      "set_state_ms": {
+        "ms_median": 0.05778670310974121,
+        "ms_min": 0.057227909564971924,
+        "ms_max": 0.06888061761856079,
+        "ms_stdev": 0.0033548965045823525,
+        "samples": 10
+      },
+      "render_ms": {
+        "ms_median": 724.0149406716228,
+        "ms_min": 723.3752198517323,
+        "ms_max": 729.1772849857807,
+        "ms_stdev": 1.8093065307802951,
+        "samples": 10
+      },
+      "trace": {
+        "phases": {
+          "other": {
+            "cpu_us": 168182.39199999935,
+            "device_us": 0.0,
+            "calls": 16649,
+            "cpu_pct": 23.599283390126224,
+            "device_pct": null
+          },
+          "host->device": {
+            "cpu_us": 82681.3860000005,
+            "device_us": 0.0,
+            "calls": 2320,
+            "cpu_pct": 11.601817741434157,
+            "device_pct": null
+          },
+          "allocation": {
+            "cpu_us": 3001.570000000554,
+            "device_us": 0.0,
+            "calls": 3620,
+            "cpu_pct": 0.421179055684465,
+            "device_pct": null
+          },
+          "kernel/raster": {
+            "cpu_us": 458791.328,
+            "device_us": 0.0,
+            "calls": 3576,
+            "cpu_pct": 64.3774085839164,
+            "device_pct": null
+          },
+          "synchronization": {
+            "cpu_us": 2.2180000000000177,
+            "device_us": 0.0,
+            "calls": 1,
+            "cpu_pct": 0.0003112288387437169,
+            "device_pct": null
+          }
+        },
+        "total_cpu_us": 712658.8940000004,
+        "total_device_us": 0,
+        "op_count": 26166,
+        "top_ops": [
+          {
+            "op": "aten::where",
+            "calls": 1391,
+            "cpu_us": 436501.69499999913,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 751,
+            "cpu_us": 80962.69900000069,
+            "device_us": 0
+          },
+          {
+            "op": "aten::bitwise_and",
+            "calls": 1384,
+            "cpu_us": 49575.79600000012,
+            "device_us": 0
+          },
+          {
+            "op": "aten::fill_",
+            "calls": 220,
+            "cpu_us": 33814.587999999974,
+            "device_us": 0
+          },
+          {
+            "op": "aten::le",
+            "calls": 22,
+            "cpu_us": 27883.185000000012,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ge",
+            "calls": 96,
+            "cpu_us": 21842.85100000004,
+            "device_us": 0
+          },
+          {
+            "op": "aten::flip",
+            "calls": 1,
+            "cpu_us": 13593.646000000066,
+            "device_us": 0
+          },
+          {
+            "op": "aten::index",
+            "calls": 124,
+            "cpu_us": 7930.70700000014,
+            "device_us": 0
+          },
+          {
+            "op": "aten::amin",
+            "calls": 2,
+            "cpu_us": 7628.4740000000165,
+            "device_us": 0
+          },
+          {
+            "op": "aten::add",
+            "calls": 842,
+            "cpu_us": 3298.5420000001905,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_index_put_impl_",
+            "calls": 41,
+            "cpu_us": 3288.5600000000413,
+            "device_us": 0
+          },
+          {
+            "op": "aten::mul",
+            "calls": 312,
+            "cpu_us": 2899.422000000134,
+            "device_us": 0
+          },
+          {
+            "op": "aten::__lshift__",
+            "calls": 90,
+            "cpu_us": 2478.5250000000087,
+            "device_us": 0
+          },
+          {
+            "op": "aten::div",
+            "calls": 154,
+            "cpu_us": 2108.361000000208,
+            "device_us": 0
+          },
+          {
+            "op": "aten::__rshift__",
+            "calls": 147,
+            "cpu_us": 2034.1060000003636,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 88.39596589074704
+    },
+    "256": {
+      "batch": 256,
+      "set_state_ms": {
+        "ms_median": 0.06499700248241425,
+        "ms_min": 0.06422773003578186,
+        "ms_max": 0.06838329136371613,
+        "ms_stdev": 0.0011550997722602923,
+        "samples": 10
+      },
+      "render_ms": {
+        "ms_median": 2818.0956607684493,
+        "ms_min": 2812.5181030482054,
+        "ms_max": 2826.6647700220346,
+        "ms_stdev": 4.277752249891452,
+        "samples": 10
+      },
+      "trace": {
+        "phases": {
+          "other": {
+            "cpu_us": 675501.2839999951,
+            "device_us": 0.0,
+            "calls": 16649,
+            "cpu_pct": 23.962558002099296,
+            "device_pct": null
+          },
+          "host->device": {
+            "cpu_us": 328393.0370000016,
+            "device_us": 0.0,
+            "calls": 2320,
+            "cpu_pct": 11.649329739243154,
+            "device_pct": null
+          },
+          "allocation": {
+            "cpu_us": 3673.107000004261,
+            "device_us": 0.0,
+            "calls": 3620,
+            "cpu_pct": 0.13029884860369811,
+            "device_pct": null
+          },
+          "kernel/raster": {
+            "cpu_us": 1811416.296999998,
+            "device_us": 0.0,
+            "calls": 3576,
+            "cpu_pct": 64.25771365789245,
+            "device_pct": null
+          },
+          "synchronization": {
+            "cpu_us": 2.811999999999955,
+            "device_us": 0.0,
+            "calls": 1,
+            "cpu_pct": 9.97521613917504e-05,
+            "device_pct": null
+          }
+        },
+        "total_cpu_us": 2818986.536999999,
+        "total_device_us": 0,
+        "op_count": 26166,
+        "top_ops": [
+          {
+            "op": "aten::where",
+            "calls": 1391,
+            "cpu_us": 1735128.6769999997,
+            "device_us": 0
+          },
+          {
+            "op": "aten::copy_",
+            "calls": 751,
+            "cpu_us": 326476.8550000016,
+            "device_us": 0
+          },
+          {
+            "op": "aten::bitwise_and",
+            "calls": 1384,
+            "cpu_us": 181533.2729999991,
+            "device_us": 0
+          },
+          {
+            "op": "aten::le",
+            "calls": 22,
+            "cpu_us": 143374.4599999998,
+            "device_us": 0
+          },
+          {
+            "op": "aten::fill_",
+            "calls": 220,
+            "cpu_us": 138697.59700000047,
+            "device_us": 0
+          },
+          {
+            "op": "aten::ge",
+            "calls": 96,
+            "cpu_us": 98218.48200000112,
+            "device_us": 0
+          },
+          {
+            "op": "aten::flip",
+            "calls": 1,
+            "cpu_us": 53620.22399999993,
+            "device_us": 0
+          },
+          {
+            "op": "aten::amin",
+            "calls": 2,
+            "cpu_us": 30741.66399999993,
+            "device_us": 0
+          },
+          {
+            "op": "aten::index",
+            "calls": 124,
+            "cpu_us": 29745.355999998224,
+            "device_us": 0
+          },
+          {
+            "op": "aten::_index_put_impl_",
+            "calls": 41,
+            "cpu_us": 12781.15200000169,
+            "device_us": 0
+          },
+          {
+            "op": "aten::mul",
+            "calls": 312,
+            "cpu_us": 9470.3759999987,
+            "device_us": 0
+          },
+          {
+            "op": "aten::add",
+            "calls": 842,
+            "cpu_us": 8839.738000000361,
+            "device_us": 0
+          },
+          {
+            "op": "aten::__lshift__",
+            "calls": 90,
+            "cpu_us": 8676.315999997838,
+            "device_us": 0
+          },
+          {
+            "op": "aten::div",
+            "calls": 154,
+            "cpu_us": 7676.822000000044,
+            "device_us": 0
+          },
+          {
+            "op": "aten::__rshift__",
+            "calls": 147,
+            "cpu_us": 6614.075000000186,
+            "device_us": 0
+          }
+        ]
+      },
+      "fps": 90.84148688202902
+    }
+  },
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+  "pythonpath": "/oscar/scratch/sboughan/se6/baseline",
+  "size": 600,
+  "state_dim": 2,
+  "states_source": "examples/results/step4/states/CartPole.npz",
+  "states_source_note": "read from the baseline tree's copy of the frozen corpus; recorded by its repo-relative name because the two copies are the same file. The tree MEASURED is stable_envs_file."
+}

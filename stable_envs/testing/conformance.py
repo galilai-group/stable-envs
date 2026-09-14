@@ -377,6 +377,17 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     whether the two implementations draw the same picture, and that is a property of the arithmetic, not
     of the resolution — a disagreement in an edge rule or a normal direction shows up at 96px on four
     scenes just as surely as at 600px on sixteen, and shows up in seconds.
+
+    **There are two backends only where there is a CUDA device.** ``HAVE_TRITON`` says the
+    interpreter can import Triton; it says nothing about where the scene lives, and the fused kernel
+    is CUDA-only. Guarding on the import alone and then calling ``render_triton`` unconditionally is
+    the same defect this Step 6 fixed in ``raster2d.render`` -- on a Triton host a ``device="cpu"``
+    env reached ``with torch.cuda.device(scene.kind.device)`` and this check died with
+    ``ValueError: Expected a cuda device, but got: cpu``, taking the whole conformance row with it.
+    It is a defect here rather than a slow path there: a CPU env has one backend, so the question the
+    check asks does not arise, and the honest answer is that it does not apply -- which is what the
+    tilemap branch below already returns for the other reason a Scene2D comparison cannot be made.
+    The predicate is therefore the scene's device, read the same way ``raster2d.render`` reads it.
     """
     from ..render.raster2d import HAVE_TRITON, render_torch, render_triton
     if not HAVE_TRITON:
@@ -387,6 +398,9 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
         sc = env.scene(torch.as_tensor(st, device=env.device))
     except NotImplementedError:
         return {"skipped": "env renders without a Scene2D (tilemap path)"}
+    if sc.kind.device.type != "cuda":
+        return {"skipped": f"the fused kernel is CUDA-only and this scene is on "
+                           f"{sc.kind.device}; on a CPU device there is one backend, not two"}
     size = min(int(env.size), int(max_size))
     a = render_triton(sc, size, env.ss).cpu().numpy()
     b = render_torch(sc, size, env.ss).cpu().numpy()
@@ -515,6 +529,142 @@ def check_colors_apply_exactly(env) -> dict:
             if not (np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1) == 0).any():
                 wrong.append(f"{path}->{target}")
     return {"colors_not_applied": wrong}
+
+
+#: How close a pixel has to be to count as agreeing inside a task object's footprint. The same 8/255
+#: ``pixel_agreement`` already reports as ``within8_frac``, and for the same reason: an object's
+#: footprint is mostly SILHOUETTE — a 19-pixel disc at 84 px has almost no interior — so bit-exactness
+#: there would be measuring two rasterizers' coverage rules rather than whether the object is present.
+#:
+#: It feeds the two REPORTED ``presence_agree_*`` numbers and NOT the bound, because a fraction over a
+#: silhouette-dominated set is not stable enough to carry one: on ``DMCReacherHard``'s ~15 footprint
+#: pixels per frame the declared arm agrees on 60% of them on CPU and 26% on the GPU, which is the
+#: rasterizers' edge rule moving and not the object appearing. ``presence_margin`` is built from the
+#: mean ERROR instead — see the check.
+PRESENCE_TOL = 8
+
+
+def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -> dict:
+    """Is a DECLARED task-relevant object drawn when, and only when, the env says it is — and does
+    the official renderer agree? The complement to interior-pixel exactness, which cannot see this.
+
+    WHY THIS EXISTS, measured rather than argued. ``interior_mask`` keeps only pixels whose 3x3
+    neighbourhood in the reference is one flat colour, so an object that lands on a TEXTURED surface
+    contributes no interior pixels at all and can appear or disappear without moving
+    ``interior_exact_frac`` by anything. Step 5 hit exactly that on DM Control reacher: two renders
+    that differ by a whole red disc — mean |d| 0.459 against 0.171 — report interior exactness equal
+    to SIXTEEN digits and an identical ``interior_px``
+    (``examples/results/step5/reacher/parity_probe.json``). The frame's ``interior_frac`` is 0.000000
+    at 84 px, so the strong assertion is not merely blunted there, it is undefined.
+
+    Nothing here redefines or relaxes that metric. This measures a population the interior mask
+    excludes BY CONSTRUCTION and asserts a separate bound on it:
+
+    ``footprint``  the pixels our renderer attributes to the object, as the exact set where the frame
+                   with the knob at its declared value differs from the frame with it flipped. A
+                   footprint of zero means the declaration is inert and nothing else below has a
+                   subject.
+    ``per_row``    a style whose rows alternate between the two values must reproduce the all-declared
+                   render on one set of rows and the all-flipped render on the other, bit for bit.
+                   ``check_per_env_variation`` structurally cannot ask this of a ``Discrete`` leaf —
+                   it skips anything without ``.low`` — and per-row visibility is the whole point of
+                   putting visibility in the style rather than in a constructor argument.
+    ``presence``   inside that footprint, how far our frame sits from the OFFICIAL one under each
+                   value, POOLED OVER THE WHOLE STATE STACK -- one number per object, not one per
+                   row. (``per_row_max_abs_diff`` is the only per-row quantity here, and
+                   ``rows_with_footprint`` says how many frames contributed pixels to the pool at
+                   all.) Pooling is deliberate: a small object contributes a couple of hundred pixels
+                   per frame and a per-frame ratio would be noisy enough to need its own floor, while
+                   the failure this catches is a property of the configuration and applies to every
+                   frame at once. The env's declared default must be the arm that is CLOSER, by
+                   ``presence_margin = 1 - mean|d|(declared) / mean|d|(flipped)``. That is the
+                   question no other check in the suite asks: if we paint an object the reference does
+                   not paint, the declared arm is the FAR one, the ratio inverts and the margin goes
+                   sharply negative, while every existing number stays exactly where it was.
+
+                   A RATIO OF MEAN ERRORS rather than a fraction of agreeing pixels, and the
+                   difference is not cosmetic. An object's footprint is mostly silhouette, so the
+                   fraction of it that lands within 8/255 is a statement about two rasterizers' edge
+                   rules: on ``DMCReacherHard``'s ~15 footprint pixels per frame it is 0.60 on CPU and
+                   0.26 on a 3090, for one unchanged renderer. The mean error is not: an object drawn
+                   in the same place is a few levels away and an object one side does not draw at all
+                   is ~100/255 away, and nothing about an edge rule moves that by a factor of ten.
+                   Both fractions are still REPORTED, as ``presence_agree_*``, because they are what a
+                   human reads when the margin is marginal.
+
+    Applies to any env that declares a ``visibility.*`` leaf; ``{"skipped": ...}` otherwise, which is
+    every env that has no task-relevant object it can be asked to hide.
+    """
+    paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
+    if not paths:
+        return {"skipped": "the env declares no visibility.* leaf"}
+    if states is None:
+        states = env.sample_states(int(n), rng=np.random.default_rng(int(seed)))
+    states = np.asarray(states)
+    layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+    cls = type(env)
+    official, why_ref = None, "no official renderer is declared"
+    if getattr(cls, "reference_id", None) and hasattr(cls, "reference_env"):
+        try:
+            # through the process-wide cache, never cls.reference_env directly: a reference env bound
+            # to a local here is dropped on return, and for the MuJoCo families that RELEASES an EGL
+            # context while other envs still hold live ones. Same rule the parity test follows.
+            official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
+        except ImportError as e:                      # the package is absent HERE, not broken
+            why_ref = f"the official renderer is not installed in this interpreter ({e})"
+
+    out: dict = {"n_states": int(len(states)), "tol": int(PRESENCE_TOL), "objects": {}}
+    for path in paths:
+        node = env.variation_space
+        for part in path.split("."):
+            node = node[part]
+        declared = int(np.asarray(node.value).reshape(-1)[0])
+        other = 1 - declared
+        a = env.render(states, variation={path: declared}).cpu().numpy()
+        b = env.render(states, variation={path: other}).cpu().numpy()
+        M = (a != b).any(-1)                                  # the object's own pixels, exactly
+
+        # per-row, through the STYLE vector rather than the variation dict: that is the form a dataset
+        # stores and the form a per-environment appearance arrives in.
+        off, w = layout[path]
+        sty = np.tile(np.asarray(env.default_style(), np.float32), (len(states), 1))
+        odd = np.arange(len(states)) % 2 == 1
+        sty[:, off:off + w] = float(declared)
+        sty[odd, off:off + w] = float(other)
+        mix = env.render(states, style=sty).cpu().numpy()
+        per_row = int(max(np.abs(mix[~odd].astype(np.int16) - a[~odd].astype(np.int16)).max(initial=0),
+                          np.abs(mix[odd].astype(np.int16) - b[odd].astype(np.int16)).max(initial=0)))
+
+        row = {"declared_value": declared, "footprint_px": int(M.sum()),
+               "footprint_frac": float(M.mean()),
+               "rows_with_footprint": int((M.reshape(len(states), -1).any(1)).sum()),
+               "per_row_max_abs_diff": per_row}
+        if official is not None and M.any():
+            da = np.abs(a.astype(np.int16) - official).max(-1)[M]
+            db = np.abs(b.astype(np.int16) - official).max(-1)[M]
+            row["presence_agree_declared"] = float((da <= PRESENCE_TOL).mean())
+            row["presence_agree_flipped"] = float((db <= PRESENCE_TOL).mean())
+            row["presence_mean_abs_declared"] = float(da.mean())
+            row["presence_mean_abs_flipped"] = float(db.mean())
+            # 1 - near/far. One when the declared arm is exact, 0 when the two are equally wrong,
+            # and sharply negative when they are the wrong way round. The denominator cannot be zero
+            # unless the flipped arm is bit-exact on the object's own pixels, which would mean the
+            # object is not there at all -- reported as a margin of -inf via the guard below rather
+            # than divided by.
+            far = float(db.mean())
+            row["presence_margin"] = (1.0 - float(da.mean()) / far) if far > 0 else None
+            if far <= 0:
+                row["why_no_margin"] = (
+                    "the FLIPPED appearance is bit-exact against the official frame on the object's "
+                    "own pixels, so the official renderer is drawing the flipped configuration and "
+                    "the declared default is the wrong one")
+            row["reference_id"] = cls.reference_id
+        else:
+            row["presence_margin"] = None
+            row["why_no_reference"] = (why_ref if official is None
+                                       else "the object has an empty footprint on these states")
+        out["objects"][path] = row
+    return out
 
 
 def check_determinism(env) -> dict:

@@ -301,6 +301,11 @@ scratch/*/results/
 scratch/**/*.cu
 scratch/**/*.cuh
 scratch/**/*.cpp
+# ...except this one. RAYCAST-3's micro-benchmark kernel is a hand-written SOURCE, not build output:
+# examples/results/step6/raycast3d/findings.md cites it, and the whole go/no-go it reports is whether
+# that transcription is bit-identical to cast_nearest_torch -- which a reviewer can only judge by
+# reading it. The blanket rule above is for compiled artifacts.
+!scratch/step6/raycast3d/cast_kernel.cpp
 scratch/**/*.cc
 scratch/**/*.hpp
 scratch/**/*.h
