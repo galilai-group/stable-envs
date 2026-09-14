@@ -1,0 +1,238 @@
+{
+ "DMCCheetahRun": {
+  "n": 64,
+  "size": 84,
+  "sha256_frozen_ours": "d85349b01b2785907e7a8eebb41334fdc65e83073a31b7fe4416c39168a88608",
+  "share": {
+   "sky": 0.8255739795918368,
+   "floor": 0.13247590702947845,
+   "body": 0.04195011337868481
+  },
+  "body_px_per_frame_median": 296.0,
+  "body_bbox": {
+   "bbox_share_median": 0.1875,
+   "bbox_share_max": 0.21683673469387754,
+   "bbox_h_median": 27.0,
+   "bbox_w_median": 49.0,
+   "union_bbox_share": 0.2585034013605442
+  },
+  "sky_constant_across_states_ours": {
+   "pixels_with_2plus_states": 6305,
+   "constant_frac": 0.9946074544012689,
+   "within1_frac": 0.9946074544012689,
+   "spread_max": 108,
+   "spread_mean": 0.3655828707375099
+  },
+  "sky_constant_across_states_official": {
+   "pixels_with_2plus_states": 6305,
+   "constant_frac": 0.8255352894528152,
+   "within1_frac": 0.832355273592387,
+   "spread_max": 98,
+   "spread_mean": 5.103727200634417
+  },
+  "floor_constant_across_states_ours": {
+   "pixels_with_2plus_states": 1174,
+   "constant_frac": 0.0,
+   "within1_frac": 0.00596252129471891,
+   "spread_max": 104,
+   "spread_mean": 26.174616695059626
+  },
+  "distinct_colours_ours": {
+   "sky": 369,
+   "floor": 600,
+   "body": 902
+  },
+  "ours_vs_official_mean_abs": {
+   "all": 6.512261284722222,
+   "sky": 4.151224732844084,
+   "floor": 19.168293661406793,
+   "body": 13.01024070945946
+  },
+  "ours_vs_official_within1": {
+   "sky": 0.6502725204926827,
+   "floor": 0.002306766515110992,
+   "body": 0.09016047297297297
+  },
+  "floor_top_row": {
+   "min": 57,
+   "max": 59
+  }
+ },
+ "DMCHopperHop": {
+  "n": 64,
+  "size": 84,
+  "sha256_frozen_ours": "d8e5ef5df6cdbedc43c3daedf3a8d73e225a96757237d10ffda9872229d1cba6",
+  "share": {
+   "sky": 0.8535621279761905,
+   "floor": 0.12121997236394558,
+   "body": 0.025217899659863947
+  },
+  "body_px_per_frame_median": 179.0,
+  "body_bbox": {
+   "bbox_share_median": 0.07263321995464853,
+   "bbox_share_max": 0.18239795918367346,
+   "bbox_h_median": 19.0,
+   "bbox_w_median": 28.5,
+   "union_bbox_share": 0.40561224489795916
+  },
+  "sky_constant_across_states_ours": {
+   "pixels_with_2plus_states": 7056,
+   "constant_frac": 0.9968820861678005,
+   "within1_frac": 0.9968820861678005,
+   "spread_max": 144,
+   "spread_mean": 0.2576530612244898
+  },
+  "sky_constant_across_states_official": {
+   "pixels_with_2plus_states": 7056,
+   "constant_frac": 0.6312358276643991,
+   "within1_frac": 0.6346371882086168,
+   "spread_max": 126,
+   "spread_mean": 8.84750566893424
+  },
+  "floor_constant_across_states_ours": {
+   "pixels_with_2plus_states": 3183,
+   "constant_frac": 0.0,
+   "within1_frac": 0.0,
+   "spread_max": 90,
+   "spread_mean": 40.75526233113415
+  },
+  "distinct_colours_ours": {
+   "sky": 401,
+   "floor": 584,
+   "body": 799
+  },
+  "ours_vs_official_mean_abs": {
+   "all": 6.205217633928571,
+   "sky": 4.005894332671778,
+   "floor": 20.439177216346067,
+   "body": 12.22550052687039
+  },
+  "ours_vs_official_within1": {
+   "sky": 0.6505921573205692,
+   "floor": 0.0018998556840393855,
+   "body": 0.14892869687390237
+  },
+  "floor_top_row": {
+   "min": 46,
+   "max": 75
+  }
+ },
+ "DMCWalkerWalk": {
+  "n": 64,
+  "size": 84,
+  "sha256_frozen_ours": "6d488766fdbb415c146c39c0a02f743959a657fb79946c0e6eb65a7b7e0288f7",
+  "share": {
+   "sky": 0.5481040072278912,
+   "floor": 0.37951521754535145,
+   "body": 0.07238077522675737
+  },
+  "body_px_per_frame_median": 514.5,
+  "body_bbox": {
+   "bbox_share_median": 0.2767857142857143,
+   "bbox_share_max": 0.5412414965986394,
+   "bbox_h_median": 38.0,
+   "bbox_w_median": 55.5,
+   "union_bbox_share": 0.7976190476190477
+  },
+  "sky_constant_across_states_ours": {
+   "pixels_with_2plus_states": 6552,
+   "constant_frac": 0.9937423687423688,
+   "within1_frac": 0.9937423687423688,
+   "spread_max": 171,
+   "spread_mean": 0.5654761904761905
+  },
+  "sky_constant_across_states_official": {
+   "pixels_with_2plus_states": 6552,
+   "constant_frac": 0.5190781440781441,
+   "within1_frac": 0.5190781440781441,
+   "spread_max": 128,
+   "spread_mean": 17.32997557997558
+  },
+  "floor_constant_across_states_ours": {
+   "pixels_with_2plus_states": 4116,
+   "constant_frac": 0.0,
+   "within1_frac": 0.0007288629737609329,
+   "spread_max": 145,
+   "spread_mean": 56.439018464528665
+  },
+  "distinct_colours_ours": {
+   "sky": 363,
+   "floor": 1239,
+   "body": 1004
+  },
+  "ours_vs_official_mean_abs": {
+   "all": 15.561831242913833,
+   "sky": 4.158673211724542,
+   "floor": 32.89809957813785,
+   "body": 11.01281894389035
+  },
+  "ours_vs_official_within1": {
+   "sky": 0.6479728501302952,
+   "floor": 0.007567845118827422,
+   "body": 0.1970568439087071
+  },
+  "floor_top_row": {
+   "min": 34,
+   "max": 71
+  }
+ },
+ "DMCHumanoidStand": {
+  "n": 64,
+  "size": 84,
+  "sha256_frozen_ours": "c2672c3d7009777df67dde22059f7e8fc450db7be3a8e6fdb0d305b45c944b7d",
+  "share": {
+   "sky": 0.0,
+   "floor": 0.9616594033446711,
+   "body": 0.038340596655328796
+  },
+  "body_px_per_frame_median": 271.5,
+  "body_bbox": {
+   "bbox_share_median": 0.11472505668934241,
+   "bbox_share_max": 0.24985827664399093,
+   "bbox_h_median": 25.0,
+   "bbox_w_median": 31.0,
+   "union_bbox_share": 0.4685374149659864
+  },
+  "sky_constant_across_states_ours": {
+   "pixels_with_2plus_states": 0,
+   "constant_frac": null,
+   "within1_frac": null,
+   "spread_max": null,
+   "spread_mean": null
+  },
+  "sky_constant_across_states_official": {
+   "pixels_with_2plus_states": 0,
+   "constant_frac": null,
+   "within1_frac": null,
+   "spread_max": null,
+   "spread_mean": null
+  },
+  "floor_constant_across_states_ours": {
+   "pixels_with_2plus_states": 7056,
+   "constant_frac": 0.0,
+   "within1_frac": 0.0,
+   "spread_max": 186,
+   "spread_mean": 44.41269841269841
+  },
+  "distinct_colours_ours": {
+   "sky": 0,
+   "floor": 1716,
+   "body": 1042
+  },
+  "ours_vs_official_mean_abs": {
+   "all": 6.291496155753968,
+   "sky": NaN,
+   "floor": 5.830411955695765,
+   "body": 17.856416772554002
+  },
+  "ours_vs_official_within1": {
+   "sky": NaN,
+   "floor": 0.17640177769590348,
+   "body": 0.08091717685110315
+  },
+  "floor_top_row": {
+   "min": 0,
+   "max": 0
+  }
+ }
+}

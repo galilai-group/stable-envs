@@ -1,0 +1,1382 @@
+{
+ "config": "DMCHumanoidStand",
+ "domain": "humanoid",
+ "task": "stand",
+ "mujoco": "3.12.0",
+ "nq": 28,
+ "nbody": 17,
+ "geoms": [
+  {
+   "id": 0,
+   "name": "floor",
+   "type": "plane",
+   "body": 0,
+   "static": true,
+   "group": 0,
+   "size": [
+    100.0,
+    100.0,
+    0.2
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 0,
+   "material": "grid"
+  },
+  {
+   "id": 1,
+   "name": "torso",
+   "type": "capsule",
+   "body": 1,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.07,
+    0.07,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 2,
+   "name": "upper_waist",
+   "type": "capsule",
+   "body": 1,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.06,
+    0.06,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 3,
+   "name": "head",
+   "type": "sphere",
+   "body": 2,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.09,
+    0.0,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 4,
+   "name": "lower_waist",
+   "type": "capsule",
+   "body": 3,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.06,
+    0.06,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 5,
+   "name": "butt",
+   "type": "capsule",
+   "body": 4,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.09,
+    0.07,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 6,
+   "name": "right_thigh",
+   "type": "capsule",
+   "body": 5,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.06,
+    0.1700735135169495,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 7,
+   "name": "right_shin",
+   "type": "capsule",
+   "body": 6,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.049,
+    0.15,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 8,
+   "name": "right_right_foot",
+   "type": "capsule",
+   "body": 7,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.027,
+    0.10547511554864494,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 9,
+   "name": "left_right_foot",
+   "type": "capsule",
+   "body": 7,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.027,
+    0.10547511554864494,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 10,
+   "name": "left_thigh",
+   "type": "capsule",
+   "body": 8,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.06,
+    0.1700735135169495,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 11,
+   "name": "left_shin",
+   "type": "capsule",
+   "body": 9,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.049,
+    0.15,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 12,
+   "name": "left_left_foot",
+   "type": "capsule",
+   "body": 10,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.027,
+    0.10547511554864494,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 13,
+   "name": "right_left_foot",
+   "type": "capsule",
+   "body": 10,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.027,
+    0.10547511554864494,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 14,
+   "name": "right_upper_arm",
+   "type": "capsule",
+   "body": 11,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.04,
+    0.13856406460551018,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 15,
+   "name": "right_lower_arm",
+   "type": "capsule",
+   "body": 12,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.031,
+    0.13856406460551018,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 16,
+   "name": "right_hand",
+   "type": "sphere",
+   "body": 13,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.04,
+    0.0,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 17,
+   "name": "left_upper_arm",
+   "type": "capsule",
+   "body": 14,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.04,
+    0.13856406460551018,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 18,
+   "name": "left_lower_arm",
+   "type": "capsule",
+   "body": 15,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.031,
+    0.13856406460551018,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  },
+  {
+   "id": 19,
+   "name": "left_hand",
+   "type": "sphere",
+   "body": 16,
+   "static": false,
+   "group": 0,
+   "size": [
+    0.04,
+    0.0,
+    0.0
+   ],
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "matid": 1,
+   "material": "self"
+  }
+ ],
+ "visible_geoms_by_type": {
+  "static:plane": 1,
+  "mover:capsule": 16,
+  "mover:sphere": 3
+ },
+ "n_movers": 19,
+ "n_static": 1,
+ "nmesh": 0,
+ "nsite": 25,
+ "sites": [
+  {
+   "id": 0,
+   "name": "root",
+   "group": 3,
+   "body": 1,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 1,
+   "name": "torso",
+   "group": 3,
+   "body": 1,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 2,
+   "name": "head",
+   "group": 3,
+   "body": 2,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 3,
+   "name": "lower_waist",
+   "group": 3,
+   "body": 3,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 4,
+   "name": "butt",
+   "group": 3,
+   "body": 4,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 5,
+   "name": "right_hip",
+   "group": 3,
+   "body": 5,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 6,
+   "name": "right_thigh",
+   "group": 3,
+   "body": 5,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 7,
+   "name": "right_knee",
+   "group": 3,
+   "body": 6,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 8,
+   "name": "right_shin",
+   "group": 3,
+   "body": 6,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 9,
+   "name": "right_ankle",
+   "group": 3,
+   "body": 7,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 10,
+   "name": "right_right_foot",
+   "group": 3,
+   "body": 7,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 11,
+   "name": "left_right_foot",
+   "group": 3,
+   "body": 7,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 12,
+   "name": "left_hip",
+   "group": 3,
+   "body": 8,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 13,
+   "name": "left_thigh",
+   "group": 3,
+   "body": 8,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 14,
+   "name": "left_knee",
+   "group": 3,
+   "body": 9,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 15,
+   "name": "left_shin",
+   "group": 3,
+   "body": 9,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 16,
+   "name": "left_ankle",
+   "group": 3,
+   "body": 10,
+   "rgba": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "id": 17,
+   "name": "right_left_foot",
+   "group": 3,
+   "body": 10,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 18,
+   "name": "left_left_foot",
+   "group": 3,
+   "body": 10,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 19,
+   "name": "right_upper_arm",
+   "group": 3,
+   "body": 11,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 20,
+   "name": "right_lower_arm",
+   "group": 3,
+   "body": 12,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 21,
+   "name": "right_hand",
+   "group": 3,
+   "body": 13,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 22,
+   "name": "left_upper_arm",
+   "group": 3,
+   "body": 14,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 23,
+   "name": "left_lower_arm",
+   "group": 3,
+   "body": 15,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  },
+  {
+   "id": 24,
+   "name": "left_hand",
+   "group": 3,
+   "body": 16,
+   "rgba": [
+    0.0,
+    0.0,
+    1.0,
+    0.3
+   ]
+  }
+ ],
+ "cameras": [
+  {
+   "id": 0,
+   "name": "back",
+   "mode": "trackcom",
+   "body": 1,
+   "targetbody": -1,
+   "fovy": 45.0,
+   "pos": [
+    -3.0,
+    0.0,
+    1.0
+   ],
+   "quat": [
+    0.6015009550075456,
+    0.3717480344601845,
+    -0.3717480344601845,
+    -0.6015009550075456
+   ]
+  },
+  {
+   "id": 1,
+   "name": "side",
+   "mode": "trackcom",
+   "body": 1,
+   "targetbody": -1,
+   "fovy": 45.0,
+   "pos": [
+    0.0,
+    -3.0,
+    1.0
+   ],
+   "quat": [
+    0.8506508083520399,
+    0.5257311121191336,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "id": 2,
+   "name": "egocentric",
+   "mode": "fixed",
+   "body": 2,
+   "targetbody": -1,
+   "fovy": 80.0,
+   "pos": [
+    0.09,
+    0.0,
+    0.0
+   ],
+   "quat": [
+    0.5242861144024794,
+    0.4744724125223197,
+    -0.4744724125223197,
+    -0.5242861144024794
+   ]
+  }
+ ],
+ "lights": [
+  {
+   "id": 0,
+   "name": "top",
+   "mode": "trackcom",
+   "body": 1,
+   "type": 0,
+   "directional": null,
+   "castshadow": true,
+   "pos": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "attenuation": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "cutoff": 45.0,
+   "exponent": 10.0,
+   "ambient": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "diffuse": [
+    0.699999988079071,
+    0.699999988079071,
+    0.699999988079071
+   ],
+   "specular": [
+    0.30000001192092896,
+    0.30000001192092896,
+    0.30000001192092896
+   ]
+  }
+ ],
+ "headlight": {
+  "active": 1,
+  "ambient": [
+   0.4000000059604645,
+   0.4000000059604645,
+   0.4000000059604645
+  ],
+  "diffuse": [
+   0.800000011920929,
+   0.800000011920929,
+   0.800000011920929
+  ],
+  "specular": [
+   0.10000000149011612,
+   0.10000000149011612,
+   0.10000000149011612
+  ]
+ },
+ "vis": {
+  "znear": 0.009999999776482582,
+  "zfar": 50.0,
+  "extent": 2.0,
+  "shadowsize": 2048,
+  "offsamples": 4,
+  "numslices": 28,
+  "numstacks": 16,
+  "offwidth": 640,
+  "offheight": 480
+ },
+ "materials": [
+  {
+   "id": 0,
+   "name": "grid",
+   "rgba": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "texid": [
+    -1,
+    1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 1,
+   "reflectance": 0.20000000298023224,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 1,
+   "name": "self",
+   "rgba": [
+    0.7,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 2,
+   "name": "self_default",
+   "rgba": [
+    0.7,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 3,
+   "name": "self_highlight",
+   "rgba": [
+    0.0,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 4,
+   "name": "effector",
+   "rgba": [
+    0.7,
+    0.4,
+    0.2,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 5,
+   "name": "effector_default",
+   "rgba": [
+    0.7,
+    0.4,
+    0.2,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 6,
+   "name": "effector_highlight",
+   "rgba": [
+    0.0,
+    0.5,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 7,
+   "name": "decoration",
+   "rgba": [
+    0.3,
+    0.5,
+    0.7,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 8,
+   "name": "eye",
+   "rgba": [
+    0.0,
+    0.2,
+    1.0,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 9,
+   "name": "target",
+   "rgba": [
+    0.6,
+    0.3,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 10,
+   "name": "target_default",
+   "rgba": [
+    0.6,
+    0.3,
+    0.3,
+    1.0
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 11,
+   "name": "target_highlight",
+   "rgba": [
+    0.6,
+    0.3,
+    0.3,
+    0.4
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  },
+  {
+   "id": 12,
+   "name": "site",
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    0.3
+   ],
+   "texid": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+   ],
+   "texrepeat": [
+    1.0,
+    1.0
+   ],
+   "texuniform": 0,
+   "reflectance": 0.0,
+   "specular": 0.5,
+   "shininess": 0.5,
+   "emission": 0.0
+  }
+ ],
+ "textures": [
+  {
+   "id": 0,
+   "name": "skybox",
+   "type": 2,
+   "w": 800,
+   "h": 4800,
+   "nchannel": 3,
+   "distinct_colours": 307,
+   "bytes": 11520000,
+   "sha256": "f6a21dd7d85c1e5d",
+   "mean_rgb": [
+    52.54,
+    77.79,
+    103.03
+   ]
+  },
+  {
+   "id": 1,
+   "name": "grid",
+   "type": 0,
+   "w": 300,
+   "h": 300,
+   "nchannel": 3,
+   "distinct_colours": 2,
+   "bytes": 270000,
+   "sha256": "d6efb0698f2ef40f",
+   "mean_rgb": [
+    38.17,
+    63.67,
+    89.17
+   ]
+  }
+ ],
+ "corpus": {
+  "path": "examples/results/step4/states/DMCHumanoidStand.npz",
+  "n": 64,
+  "state_dim": 28,
+  "sha256": "a0daa64710a4a91a0583c6cc5522ca2a762980879823dafae11e896405859ed0"
+ },
+ "frozen_corpus_motion": {
+  "cam_xpos_min": [
+   -3.4525,
+   -0.4093,
+   1.552
+  ],
+  "cam_xpos_max": [
+   -2.3232,
+   0.4265,
+   3.2147
+  ],
+  "cam_xpos_spread": [
+   1.1294,
+   0.8358,
+   1.6627
+  ],
+  "cam_xmat_constant": true,
+  "cam_xmat": [
+   0.0,
+   0.447214,
+   -0.894427,
+   -1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.894427,
+   0.447214
+  ],
+  "light_xpos_spread": [
+   [
+    1.1294,
+    0.8358,
+    1.6627
+   ]
+  ],
+  "light_xdir_constant": true,
+  "light_rel_cam_spread": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ]
+  ],
+  "mover_world_aabb_min": [
+   -1.397,
+   -1.477,
+   -0.215
+  ],
+  "mover_world_aabb_max": [
+   1.642,
+   1.301,
+   2.775
+  ],
+  "mover_aabb_extent_median": [
+   1.428,
+   1.282,
+   0.973
+  ]
+ },
+ "mj_kinematics_us": 0.68,
+ "mj_forward_us": 8.05,
+ "mj_comPos_us": 0.41,
+ "mj_camlight_us": 0.28,
+ "host": "cis1b1zs2j3",
+ "cpu": "arm"
+}

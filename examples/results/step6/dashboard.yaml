@@ -11,6 +11,8 @@ incident_log:
   items paused (cpu-3d re-runs, gfxdraw job 6353993 pull, verification). Local work (RAYCAST-4/5 review, cpu-3d local changes) continues. Oscar integration copy last synced at 36de344.'
 - '2026-09-15: Oscar SSH restored by Sami; integration copy re-synced at f69ac31; gfxdraw, cpu-3d, verification and reacher agents resumed. Jobs at resume: 6353993 pending (gfxdraw exclusive shard), 6355272
   running (verify post-merge swmnav/raster on gpu2113).'
+- '2026-09-15: cpu-3d tip commit carried a Co-Authored-By AI trailer (harness default overriding the project rule); amended on the branch before the final merge; integration reset to 43e6bcc and re-merged.
+  Full integration history scanned clean.'
 workstreams:
 - workstream: texture-fidelity
   brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
@@ -460,10 +462,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-cpu-3d
   oscar_copy: $SCR/se6/cpu-3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 8b06a52 (review round 1 applied; awaiting RAYCAST-5 merge for the post-merge re-run)
+  head_sha: ff5232c5bcf3b06e16525eda855a26b9835b65d5 (merged; tip amended to strip an AI trailer, content identical)
   agent_model: fable
   wave: wave2
-  status: implementation (review changes applied; post-RAYCAST-5 re-run then merge)
+  status: merged (M1 complete; M2 fused SIMD kernel unauthorized; Fetch = measured blocker)
   authorization: Phase 2 implement (DMC four) + Fetch feasibility only
   goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
   affected_configs:
@@ -507,14 +509,16 @@ workstreams:
     gpu_after: unchanged (cuda IDENTICAL)
     batch_scales: null
     no_large_batch_regression: null
-  pixels_changed: no (cuda); CPU frames are new
+  pixels_changed: no (cuda); CPU frames are new, within one level of cuda on >=99.968% of pixels
   semantic_followup: none required (DINO tripwire optional)
   review:
     reviewer: opus (independent)
     verdict: 'APPROVE-WITH-CHANGES 2026-09-14: semantics verified line-for-line vs mujoco_warp render.py (camera, skybox, plane texgen, lighting, composition, headlight, constants, truncation); purity/order/chunk
       with mixed styles reproduced; window-vs-full-frame and footprint-vs-all-hits byte-identical at 42/84/168 px; dispatch proven CUDA-free by import guard; gl_rounding defect confirmed from source and
       signed pixels. Required: provenance stamps + re-run; inert --frac-bits knob and mislabelled ablation; document/test Swimmer6 construction raise on CPU; correct within-1/>2-level numbers; stale design
-      §2.3/§4.4; Fetch margin un-culled (~3.5-4.5x architecture-independent) + S_cpu arm; sweep shard gaps (batch 1024, self-label, max-load).'
+      §2.3/§4.4; Fetch margin un-culled (~3.5-4.5x architecture-independent) + S_cpu arm; sweep shard gaps (batch 1024, self-label, max-load). -> APPROVED after changes (8b06a52 + 042e49f + post-RAYCAST-5
+      re-run: cuda integration-vs-branch identical job 6358400; CPU cross-backend and 3.11 Gate-A fields identical to round 1 on Xeon, job 6358399; bounded cast changed no CPU pixel; Xeon-vs-EPYC float
+      divergence 2 px/451,584 recorded; certification host = Xeon 8268 batch partition).'
   slurm_jobs:
   - 6345025
   - 6354766
@@ -525,6 +529,8 @@ workstreams:
   - 6356330
   - 6356449
   - 6356450
+  - 6358399
+  - 6358400
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER,

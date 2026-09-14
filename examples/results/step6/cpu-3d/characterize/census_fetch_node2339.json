@@ -1,0 +1,4992 @@
+{
+ "host": "node2339",
+ "cpu": "x86_64",
+ "slurm_job": "6345025",
+ "mujoco_gl": "egl",
+ "scenes": {
+  "Reach": {
+   "scene": "Reach",
+   "mujoco": "3.11.0",
+   "nq": 15,
+   "ngeom": 24,
+   "nmesh": 18,
+   "ntex": 2,
+   "nmat": 35,
+   "nlight": 1,
+   "ncam": 5,
+   "nsite": 2,
+   "geoms": [
+    {
+     "id": 0,
+     "name": "floor0",
+     "type": "plane",
+     "visible": true,
+     "mover": false,
+     "body": 0,
+     "tris": 0,
+     "size": [
+      0.85,
+      0.7,
+      1.0
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 1,
+     "name": "geom1",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.7
+     ]
+    },
+    {
+     "id": 2,
+     "name": "geom2",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      1.0,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 3,
+     "name": "geom3",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      1.0,
+      0.001
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 4,
+     "name": "geom4",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      1.0
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 5,
+     "name": "robot0:base_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 3,
+     "tris": 4720,
+     "size": [
+      0.1943,
+      0.2642,
+      0.2917
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 6,
+     "name": "robot0:torso_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 4,
+     "tris": 1000,
+     "size": [
+      0.229,
+      0.1712,
+      0.2947
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 7,
+     "name": "robot0:head_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 5,
+     "tris": 2118,
+     "size": [
+      0.0608,
+      0.143,
+      0.1824
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 8,
+     "name": "robot0:head_tilt_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 6,
+     "tris": 706,
+     "size": [
+      0.055,
+      0.0705,
+      0.105
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 9,
+     "name": "robot0:shoulder_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 12,
+     "tris": 1312,
+     "size": [
+      0.0576,
+      0.0829,
+      0.1369
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 10,
+     "name": "robot0:shoulder_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 13,
+     "tris": 906,
+     "size": [
+      0.0567,
+      0.0597,
+      0.1274
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 11,
+     "name": "robot0:upperarm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 14,
+     "tris": 998,
+     "size": [
+      0.0564,
+      0.052,
+      0.13
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 12,
+     "name": "robot0:elbow_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 15,
+     "tris": 972,
+     "size": [
+      0.0572,
+      0.052,
+      0.1236
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 13,
+     "name": "robot0:forearm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 16,
+     "tris": 1000,
+     "size": [
+      0.0572,
+      0.052,
+      0.1297
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 14,
+     "name": "robot0:wrist_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 17,
+     "tris": 994,
+     "size": [
+      0.052,
+      0.065,
+      0.0882
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 15,
+     "name": "robot0:wrist_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 18,
+     "tris": 520,
+     "size": [
+      0.0232,
+      0.0519,
+      0.052
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 16,
+     "name": "robot0:gripper_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 19,
+     "tris": 1506,
+     "size": [
+      0.0403,
+      0.0617,
+      0.0631
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 17,
+     "name": "robot0:r_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 25,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 18,
+     "name": "robot0:l_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 26,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 19,
+     "name": "robot0:estop_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 27,
+     "tris": 7736,
+     "size": [
+      0.016,
+      0.0161,
+      0.0273
+     ],
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ]
+    },
+    {
+     "id": 20,
+     "name": "robot0:laser_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 28,
+     "tris": 7116,
+     "size": [
+      0.0296,
+      0.0583,
+      0.0211
+     ],
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ]
+    },
+    {
+     "id": 21,
+     "name": "robot0:torso_fixed_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 29,
+     "tris": 116,
+     "size": [
+      0.0721,
+      0.1554,
+      0.2309
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 22,
+     "name": "geom22",
+     "type": "box",
+     "visible": true,
+     "mover": false,
+     "body": 31,
+     "tris": 0,
+     "size": [
+      0.25,
+      0.35,
+      0.2
+     ],
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ]
+    },
+    {
+     "id": 23,
+     "name": "se:target",
+     "type": "sphere",
+     "visible": true,
+     "mover": true,
+     "body": 32,
+     "tris": 0,
+     "size": [
+      0.02,
+      0.02,
+      0.02
+     ],
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    }
+   ],
+   "meshes": {
+    "0": {
+     "name": "robot0:base_link",
+     "verts": 2362,
+     "faces": 4720
+    },
+    "11": {
+     "name": "robot0:torso_lift_link",
+     "verts": 505,
+     "faces": 1000
+    },
+    "6": {
+     "name": "robot0:head_pan_link",
+     "verts": 1061,
+     "faces": 2118
+    },
+    "7": {
+     "name": "robot0:head_tilt_link",
+     "verts": 355,
+     "faces": 706
+    },
+    "12": {
+     "name": "robot0:shoulder_pan_link",
+     "verts": 658,
+     "faces": 1312
+    },
+    "13": {
+     "name": "robot0:shoulder_lift_link",
+     "verts": 455,
+     "faces": 906
+    },
+    "14": {
+     "name": "robot0:upperarm_roll_link",
+     "verts": 501,
+     "faces": 998
+    },
+    "2": {
+     "name": "robot0:elbow_flex_link",
+     "verts": 488,
+     "faces": 972
+    },
+    "4": {
+     "name": "robot0:forearm_roll_link",
+     "verts": 502,
+     "faces": 1000
+    },
+    "15": {
+     "name": "robot0:wrist_flex_link",
+     "verts": 499,
+     "faces": 994
+    },
+    "16": {
+     "name": "robot0:wrist_roll_link",
+     "verts": 262,
+     "faces": 520
+    },
+    "5": {
+     "name": "robot0:gripper_link",
+     "verts": 755,
+     "faces": 1506
+    },
+    "3": {
+     "name": "robot0:estop_link",
+     "verts": 3857,
+     "faces": 7736
+    },
+    "9": {
+     "name": "robot0:laser_link",
+     "verts": 3563,
+     "faces": 7116
+    },
+    "17": {
+     "name": "robot0:torso_fixed_link",
+     "verts": 60,
+     "faces": 116
+    }
+   },
+   "visible_geoms_by_type": {
+    "static:plane": 1,
+    "mover:mesh": 15,
+    "mover:box": 2,
+    "static:box": 1,
+    "mover:sphere": 1
+   },
+   "triangles_visible_movers": 31720,
+   "triangles_visible_static": 0,
+   "n_movers": 18,
+   "n_static": 2,
+   "camera": {
+    "id": 0,
+    "fovy": 45.0,
+    "pos": [
+     2.9231364727020264,
+     -1.0526756644248962,
+     1.1548047065734863
+    ],
+    "quat": [
+     0.7356714168918131,
+     0.5747694985458837,
+     0.2206333399994138,
+     0.2823978030906199
+    ],
+    "mode": 0,
+    "defaults": {
+     "lookat": [
+      1.3,
+      0.75,
+      0.55
+     ],
+     "distance": 2.5,
+     "azimuth": 132.0,
+     "elevation": -14.0,
+     "fovy": 45.0
+    }
+   },
+   "lights": [
+    {
+     "id": 0,
+     "mode": 0,
+     "castshadow": false,
+     "type": 1,
+     "directional": null,
+     "pos": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "dir": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "attenuation": [
+      1.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "ambient": [
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224
+     ],
+     "diffuse": [
+      0.800000011920929,
+      0.800000011920929,
+      0.800000011920929
+     ],
+     "specular": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896
+     ]
+    }
+   ],
+   "headlight": {
+    "active": 1,
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   "vis": {
+    "znear": 0.009999999776482582,
+    "zfar": 50.0,
+    "extent": 2.774366648712765,
+    "offsamples": 4,
+    "shadowsize": 4096
+   },
+   "textures": [
+    {
+     "id": 0,
+     "name": null,
+     "type": 2,
+     "w": 32,
+     "h": 192
+    },
+    {
+     "id": 1,
+     "name": "texture_block",
+     "type": 1,
+     "w": 250,
+     "h": 1500
+    }
+   ],
+   "materials_used": [
+    {
+     "id": 11,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 16,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 17,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 18,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 19,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 20,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 21,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 22,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 23,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 24,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 25,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 26,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 27,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 28,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 29,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 30,
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 31,
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 32,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 33,
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 34,
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    }
+   ],
+   "mj_kinematics_us": 2.5257691740989685,
+   "mj_forward_us": 19.095368683338165,
+   "mover_aabb_extent_median_m": [
+    1.358,
+    0.977,
+    1.045
+   ],
+   "official": {
+    "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "official_fps_from_state_480": 38.55750213941453,
+    "official_fps_render_only_480": 45.70514420639351,
+    "decode_fps_per_core_480": 815.3555517938596,
+    "jpeg_bytes_480": 19750,
+    "plate_bake_s_480": 0.3751765750348568,
+    "plate_bake_s_480_warm": 0.010840289294719696,
+    "mover_px_share_official_minus_plate": 0.10458767361111111,
+    "mover_bbox_share_state0": 0.8946006944444445,
+    "plate_vs_official_static_exact": 0.8954123263888889
+   }
+  },
+  "Push": {
+   "scene": "Push",
+   "mujoco": "3.11.0",
+   "nq": 22,
+   "ngeom": 25,
+   "nmesh": 18,
+   "ntex": 2,
+   "nmat": 36,
+   "nlight": 1,
+   "ncam": 5,
+   "nsite": 3,
+   "geoms": [
+    {
+     "id": 0,
+     "name": "floor0",
+     "type": "plane",
+     "visible": true,
+     "mover": false,
+     "body": 0,
+     "tris": 0,
+     "size": [
+      0.85,
+      0.7,
+      1.0
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 1,
+     "name": "geom1",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.7
+     ]
+    },
+    {
+     "id": 2,
+     "name": "geom2",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      1.0,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 3,
+     "name": "geom3",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      1.0,
+      0.001
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 4,
+     "name": "geom4",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      1.0
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 5,
+     "name": "robot0:base_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 3,
+     "tris": 4720,
+     "size": [
+      0.1943,
+      0.2642,
+      0.2917
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 6,
+     "name": "robot0:torso_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 4,
+     "tris": 1000,
+     "size": [
+      0.229,
+      0.1712,
+      0.2947
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 7,
+     "name": "robot0:head_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 5,
+     "tris": 2118,
+     "size": [
+      0.0608,
+      0.143,
+      0.1824
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 8,
+     "name": "robot0:head_tilt_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 6,
+     "tris": 706,
+     "size": [
+      0.055,
+      0.0705,
+      0.105
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 9,
+     "name": "robot0:shoulder_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 12,
+     "tris": 1312,
+     "size": [
+      0.0576,
+      0.0829,
+      0.1369
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 10,
+     "name": "robot0:shoulder_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 13,
+     "tris": 906,
+     "size": [
+      0.0567,
+      0.0597,
+      0.1274
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 11,
+     "name": "robot0:upperarm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 14,
+     "tris": 998,
+     "size": [
+      0.0564,
+      0.052,
+      0.13
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 12,
+     "name": "robot0:elbow_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 15,
+     "tris": 972,
+     "size": [
+      0.0572,
+      0.052,
+      0.1236
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 13,
+     "name": "robot0:forearm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 16,
+     "tris": 1000,
+     "size": [
+      0.0572,
+      0.052,
+      0.1297
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 14,
+     "name": "robot0:wrist_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 17,
+     "tris": 994,
+     "size": [
+      0.052,
+      0.065,
+      0.0882
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 15,
+     "name": "robot0:wrist_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 18,
+     "tris": 520,
+     "size": [
+      0.0232,
+      0.0519,
+      0.052
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 16,
+     "name": "robot0:gripper_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 19,
+     "tris": 1506,
+     "size": [
+      0.0403,
+      0.0617,
+      0.0631
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 17,
+     "name": "robot0:r_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 25,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 18,
+     "name": "robot0:l_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 26,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 19,
+     "name": "robot0:estop_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 27,
+     "tris": 7736,
+     "size": [
+      0.016,
+      0.0161,
+      0.0273
+     ],
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ]
+    },
+    {
+     "id": 20,
+     "name": "robot0:laser_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 28,
+     "tris": 7116,
+     "size": [
+      0.0296,
+      0.0583,
+      0.0211
+     ],
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ]
+    },
+    {
+     "id": 21,
+     "name": "robot0:torso_fixed_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 29,
+     "tris": 116,
+     "size": [
+      0.0721,
+      0.1554,
+      0.2309
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 22,
+     "name": "geom22",
+     "type": "box",
+     "visible": true,
+     "mover": false,
+     "body": 31,
+     "tris": 0,
+     "size": [
+      0.25,
+      0.35,
+      0.2
+     ],
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ]
+    },
+    {
+     "id": 23,
+     "name": "object0",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 32,
+     "tris": 0,
+     "size": [
+      0.025,
+      0.025,
+      0.025
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 24,
+     "name": "se:target",
+     "type": "sphere",
+     "visible": true,
+     "mover": true,
+     "body": 33,
+     "tris": 0,
+     "size": [
+      0.02,
+      0.02,
+      0.02
+     ],
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    }
+   ],
+   "meshes": {
+    "0": {
+     "name": "robot0:base_link",
+     "verts": 2362,
+     "faces": 4720
+    },
+    "11": {
+     "name": "robot0:torso_lift_link",
+     "verts": 505,
+     "faces": 1000
+    },
+    "6": {
+     "name": "robot0:head_pan_link",
+     "verts": 1061,
+     "faces": 2118
+    },
+    "7": {
+     "name": "robot0:head_tilt_link",
+     "verts": 355,
+     "faces": 706
+    },
+    "12": {
+     "name": "robot0:shoulder_pan_link",
+     "verts": 658,
+     "faces": 1312
+    },
+    "13": {
+     "name": "robot0:shoulder_lift_link",
+     "verts": 455,
+     "faces": 906
+    },
+    "14": {
+     "name": "robot0:upperarm_roll_link",
+     "verts": 501,
+     "faces": 998
+    },
+    "2": {
+     "name": "robot0:elbow_flex_link",
+     "verts": 488,
+     "faces": 972
+    },
+    "4": {
+     "name": "robot0:forearm_roll_link",
+     "verts": 502,
+     "faces": 1000
+    },
+    "15": {
+     "name": "robot0:wrist_flex_link",
+     "verts": 499,
+     "faces": 994
+    },
+    "16": {
+     "name": "robot0:wrist_roll_link",
+     "verts": 262,
+     "faces": 520
+    },
+    "5": {
+     "name": "robot0:gripper_link",
+     "verts": 755,
+     "faces": 1506
+    },
+    "3": {
+     "name": "robot0:estop_link",
+     "verts": 3857,
+     "faces": 7736
+    },
+    "9": {
+     "name": "robot0:laser_link",
+     "verts": 3563,
+     "faces": 7116
+    },
+    "17": {
+     "name": "robot0:torso_fixed_link",
+     "verts": 60,
+     "faces": 116
+    }
+   },
+   "visible_geoms_by_type": {
+    "static:plane": 1,
+    "mover:mesh": 15,
+    "mover:box": 3,
+    "static:box": 1,
+    "mover:sphere": 1
+   },
+   "triangles_visible_movers": 31720,
+   "triangles_visible_static": 0,
+   "n_movers": 19,
+   "n_static": 2,
+   "camera": {
+    "id": 0,
+    "fovy": 45.0,
+    "pos": [
+     2.9231364727020264,
+     -1.0526756644248962,
+     1.1548047065734863
+    ],
+    "quat": [
+     0.7356714168918131,
+     0.5747694985458837,
+     0.2206333399994138,
+     0.2823978030906199
+    ],
+    "mode": 0,
+    "defaults": {
+     "lookat": [
+      1.3,
+      0.75,
+      0.55
+     ],
+     "distance": 2.5,
+     "azimuth": 132.0,
+     "elevation": -14.0,
+     "fovy": 45.0
+    }
+   },
+   "lights": [
+    {
+     "id": 0,
+     "mode": 0,
+     "castshadow": false,
+     "type": 1,
+     "directional": null,
+     "pos": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "dir": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "attenuation": [
+      1.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "ambient": [
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224
+     ],
+     "diffuse": [
+      0.800000011920929,
+      0.800000011920929,
+      0.800000011920929
+     ],
+     "specular": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896
+     ]
+    }
+   ],
+   "headlight": {
+    "active": 1,
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   "vis": {
+    "znear": 0.009999999776482582,
+    "zfar": 50.0,
+    "extent": 2.774366648712765,
+    "offsamples": 4,
+    "shadowsize": 4096
+   },
+   "textures": [
+    {
+     "id": 0,
+     "name": null,
+     "type": 2,
+     "w": 32,
+     "h": 192
+    },
+    {
+     "id": 1,
+     "name": "texture_block",
+     "type": 1,
+     "w": 250,
+     "h": 1500
+    }
+   ],
+   "materials_used": [
+    {
+     "id": 11,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 16,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 17,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 18,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 19,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 20,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 21,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 22,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 23,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 24,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 25,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 26,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 27,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 28,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 29,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 30,
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 31,
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 32,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 33,
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 34,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 35,
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    }
+   ],
+   "mj_kinematics_us": 2.566821873188019,
+   "mj_forward_us": 19.442379474639893,
+   "mover_aabb_extent_median_m": [
+    1.433,
+    0.977,
+    1.044
+   ],
+   "official": {
+    "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "official_fps_from_state_480": 37.59977608583599,
+    "official_fps_render_only_480": 44.1261333328,
+    "decode_fps_per_core_480": 776.2236620335984,
+    "jpeg_bytes_480": 20455,
+    "plate_bake_s_480": 0.4877508282661438,
+    "plate_bake_s_480_warm": 0.011488210409879684,
+    "mover_px_share_official_minus_plate": 0.10503472222222222,
+    "mover_bbox_share_state0": 0.8691145833333334,
+    "plate_vs_official_static_exact": 0.8949652777777778
+   }
+  },
+  "Slide": {
+   "scene": "Slide",
+   "mujoco": "3.11.0",
+   "nq": 22,
+   "ngeom": 25,
+   "nmesh": 18,
+   "ntex": 2,
+   "nmat": 36,
+   "nlight": 1,
+   "ncam": 5,
+   "nsite": 3,
+   "geoms": [
+    {
+     "id": 0,
+     "name": "floor0",
+     "type": "plane",
+     "visible": true,
+     "mover": false,
+     "body": 0,
+     "tris": 0,
+     "size": [
+      1.05,
+      0.7,
+      1.0
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 1,
+     "name": "geom1",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.7
+     ]
+    },
+    {
+     "id": 2,
+     "name": "geom2",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      1.0,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 3,
+     "name": "geom3",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      1.0,
+      0.001
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 4,
+     "name": "geom4",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      1.0
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 5,
+     "name": "robot0:base_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 3,
+     "tris": 4720,
+     "size": [
+      0.1943,
+      0.2642,
+      0.2917
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 6,
+     "name": "robot0:torso_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 4,
+     "tris": 1000,
+     "size": [
+      0.229,
+      0.1712,
+      0.2947
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 7,
+     "name": "robot0:head_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 5,
+     "tris": 2118,
+     "size": [
+      0.0608,
+      0.143,
+      0.1824
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 8,
+     "name": "robot0:head_tilt_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 6,
+     "tris": 706,
+     "size": [
+      0.055,
+      0.0705,
+      0.105
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 9,
+     "name": "robot0:shoulder_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 12,
+     "tris": 1312,
+     "size": [
+      0.0576,
+      0.0829,
+      0.1369
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 10,
+     "name": "robot0:shoulder_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 13,
+     "tris": 906,
+     "size": [
+      0.0567,
+      0.0597,
+      0.1274
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 11,
+     "name": "robot0:upperarm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 14,
+     "tris": 998,
+     "size": [
+      0.0564,
+      0.052,
+      0.13
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 12,
+     "name": "robot0:elbow_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 15,
+     "tris": 972,
+     "size": [
+      0.0572,
+      0.052,
+      0.1236
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 13,
+     "name": "robot0:forearm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 16,
+     "tris": 1000,
+     "size": [
+      0.0572,
+      0.052,
+      0.1297
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 14,
+     "name": "robot0:wrist_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 17,
+     "tris": 994,
+     "size": [
+      0.052,
+      0.065,
+      0.0882
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 15,
+     "name": "robot0:wrist_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 18,
+     "tris": 520,
+     "size": [
+      0.0232,
+      0.0519,
+      0.052
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 16,
+     "name": "robot0:gripper_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 19,
+     "tris": 1506,
+     "size": [
+      0.0403,
+      0.0617,
+      0.0631
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 17,
+     "name": "robot0:r_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 25,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 18,
+     "name": "robot0:l_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 26,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 19,
+     "name": "robot0:estop_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 27,
+     "tris": 7736,
+     "size": [
+      0.016,
+      0.0161,
+      0.0273
+     ],
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ]
+    },
+    {
+     "id": 20,
+     "name": "robot0:laser_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 28,
+     "tris": 7116,
+     "size": [
+      0.0296,
+      0.0583,
+      0.0211
+     ],
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ]
+    },
+    {
+     "id": 21,
+     "name": "robot0:torso_fixed_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 29,
+     "tris": 116,
+     "size": [
+      0.0721,
+      0.1554,
+      0.2309
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 22,
+     "name": "table0",
+     "type": "box",
+     "visible": true,
+     "mover": false,
+     "body": 31,
+     "tris": 0,
+     "size": [
+      0.625,
+      0.45,
+      0.2
+     ],
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ]
+    },
+    {
+     "id": 23,
+     "name": "object0",
+     "type": "cylinder",
+     "visible": true,
+     "mover": true,
+     "body": 32,
+     "tris": 0,
+     "size": [
+      0.025,
+      0.02,
+      0.0
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 24,
+     "name": "se:target",
+     "type": "sphere",
+     "visible": true,
+     "mover": true,
+     "body": 33,
+     "tris": 0,
+     "size": [
+      0.02,
+      0.02,
+      0.02
+     ],
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    }
+   ],
+   "meshes": {
+    "0": {
+     "name": "robot0:base_link",
+     "verts": 2362,
+     "faces": 4720
+    },
+    "11": {
+     "name": "robot0:torso_lift_link",
+     "verts": 505,
+     "faces": 1000
+    },
+    "6": {
+     "name": "robot0:head_pan_link",
+     "verts": 1061,
+     "faces": 2118
+    },
+    "7": {
+     "name": "robot0:head_tilt_link",
+     "verts": 355,
+     "faces": 706
+    },
+    "12": {
+     "name": "robot0:shoulder_pan_link",
+     "verts": 658,
+     "faces": 1312
+    },
+    "13": {
+     "name": "robot0:shoulder_lift_link",
+     "verts": 455,
+     "faces": 906
+    },
+    "14": {
+     "name": "robot0:upperarm_roll_link",
+     "verts": 501,
+     "faces": 998
+    },
+    "2": {
+     "name": "robot0:elbow_flex_link",
+     "verts": 488,
+     "faces": 972
+    },
+    "4": {
+     "name": "robot0:forearm_roll_link",
+     "verts": 502,
+     "faces": 1000
+    },
+    "15": {
+     "name": "robot0:wrist_flex_link",
+     "verts": 499,
+     "faces": 994
+    },
+    "16": {
+     "name": "robot0:wrist_roll_link",
+     "verts": 262,
+     "faces": 520
+    },
+    "5": {
+     "name": "robot0:gripper_link",
+     "verts": 755,
+     "faces": 1506
+    },
+    "3": {
+     "name": "robot0:estop_link",
+     "verts": 3857,
+     "faces": 7736
+    },
+    "9": {
+     "name": "robot0:laser_link",
+     "verts": 3563,
+     "faces": 7116
+    },
+    "17": {
+     "name": "robot0:torso_fixed_link",
+     "verts": 60,
+     "faces": 116
+    }
+   },
+   "visible_geoms_by_type": {
+    "static:plane": 1,
+    "mover:mesh": 15,
+    "mover:box": 2,
+    "static:box": 1,
+    "mover:cylinder": 1,
+    "mover:sphere": 1
+   },
+   "triangles_visible_movers": 31720,
+   "triangles_visible_static": 0,
+   "n_movers": 19,
+   "n_static": 2,
+   "camera": {
+    "id": 0,
+    "fovy": 45.0,
+    "pos": [
+     2.9231364727020264,
+     -1.0526756644248962,
+     1.1548047065734863
+    ],
+    "quat": [
+     0.7356714168918131,
+     0.5747694985458837,
+     0.2206333399994138,
+     0.2823978030906199
+    ],
+    "mode": 0,
+    "defaults": {
+     "lookat": [
+      1.3,
+      0.75,
+      0.55
+     ],
+     "distance": 2.5,
+     "azimuth": 132.0,
+     "elevation": -14.0,
+     "fovy": 45.0
+    }
+   },
+   "lights": [
+    {
+     "id": 0,
+     "mode": 0,
+     "castshadow": false,
+     "type": 1,
+     "directional": null,
+     "pos": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "dir": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "attenuation": [
+      1.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "ambient": [
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224
+     ],
+     "diffuse": [
+      0.800000011920929,
+      0.800000011920929,
+      0.800000011920929
+     ],
+     "specular": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896
+     ]
+    }
+   ],
+   "headlight": {
+    "active": 1,
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   "vis": {
+    "znear": 0.009999999776482582,
+    "zfar": 50.0,
+    "extent": 3.1201355828294854,
+    "offsamples": 4,
+    "shadowsize": 4096
+   },
+   "textures": [
+    {
+     "id": 0,
+     "name": null,
+     "type": 2,
+     "w": 32,
+     "h": 192
+    },
+    {
+     "id": 1,
+     "name": "texture_block",
+     "type": 1,
+     "w": 250,
+     "h": 1500
+    }
+   ],
+   "materials_used": [
+    {
+     "id": 11,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 16,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 17,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 18,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 19,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 20,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 21,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 22,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 23,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 24,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 25,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 26,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 27,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 28,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 29,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 30,
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 31,
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 32,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 33,
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 34,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 35,
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    }
+   ],
+   "mj_kinematics_us": 2.5733858346939087,
+   "mj_forward_us": 19.855983555316925,
+   "mover_aabb_extent_median_m": [
+    1.086,
+    0.977,
+    1.044
+   ],
+   "official": {
+    "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "official_fps_from_state_480": 32.04460758737727,
+    "official_fps_render_only_480": 39.59922206362498,
+    "decode_fps_per_core_480": 881.3723926733481,
+    "jpeg_bytes_480": 20853,
+    "plate_bake_s_480": 0.4616159610450268,
+    "plate_bake_s_480_warm": 0.013506047427654266,
+    "mover_px_share_official_minus_plate": 0.08295355902777778,
+    "mover_bbox_share_state0": 0.5023697916666666,
+    "plate_vs_official_static_exact": 0.9170464409722222
+   }
+  },
+  "PickAndPlace": {
+   "scene": "PickAndPlace",
+   "mujoco": "3.11.0",
+   "nq": 22,
+   "ngeom": 25,
+   "nmesh": 18,
+   "ntex": 2,
+   "nmat": 36,
+   "nlight": 1,
+   "ncam": 5,
+   "nsite": 3,
+   "geoms": [
+    {
+     "id": 0,
+     "name": "floor0",
+     "type": "plane",
+     "visible": true,
+     "mover": false,
+     "body": 0,
+     "tris": 0,
+     "size": [
+      0.85,
+      0.7,
+      1.0
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 1,
+     "name": "geom1",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.7
+     ]
+    },
+    {
+     "id": 2,
+     "name": "geom2",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      1.0,
+      0.005,
+      0.005
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 3,
+     "name": "geom3",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      1.0,
+      0.001
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 4,
+     "name": "geom4",
+     "type": "box",
+     "visible": false,
+     "mover": true,
+     "body": 2,
+     "tris": 0,
+     "size": [
+      0.005,
+      0.005,
+      1.0
+     ],
+     "rgba": [
+      0.0,
+      0.5,
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "id": 5,
+     "name": "robot0:base_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 3,
+     "tris": 4720,
+     "size": [
+      0.1943,
+      0.2642,
+      0.2917
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 6,
+     "name": "robot0:torso_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 4,
+     "tris": 1000,
+     "size": [
+      0.229,
+      0.1712,
+      0.2947
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 7,
+     "name": "robot0:head_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 5,
+     "tris": 2118,
+     "size": [
+      0.0608,
+      0.143,
+      0.1824
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 8,
+     "name": "robot0:head_tilt_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 6,
+     "tris": 706,
+     "size": [
+      0.055,
+      0.0705,
+      0.105
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 9,
+     "name": "robot0:shoulder_pan_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 12,
+     "tris": 1312,
+     "size": [
+      0.0576,
+      0.0829,
+      0.1369
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 10,
+     "name": "robot0:shoulder_lift_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 13,
+     "tris": 906,
+     "size": [
+      0.0567,
+      0.0597,
+      0.1274
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 11,
+     "name": "robot0:upperarm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 14,
+     "tris": 998,
+     "size": [
+      0.0564,
+      0.052,
+      0.13
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 12,
+     "name": "robot0:elbow_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 15,
+     "tris": 972,
+     "size": [
+      0.0572,
+      0.052,
+      0.1236
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 13,
+     "name": "robot0:forearm_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 16,
+     "tris": 1000,
+     "size": [
+      0.0572,
+      0.052,
+      0.1297
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 14,
+     "name": "robot0:wrist_flex_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 17,
+     "tris": 994,
+     "size": [
+      0.052,
+      0.065,
+      0.0882
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 15,
+     "name": "robot0:wrist_roll_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 18,
+     "tris": 520,
+     "size": [
+      0.0232,
+      0.0519,
+      0.052
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 16,
+     "name": "robot0:gripper_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 19,
+     "tris": 1506,
+     "size": [
+      0.0403,
+      0.0617,
+      0.0631
+     ],
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "id": 17,
+     "name": "robot0:r_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 25,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 18,
+     "name": "robot0:l_gripper_finger_link",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 26,
+     "tris": 0,
+     "size": [
+      0.0385,
+      0.007,
+      0.0135
+     ],
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ]
+    },
+    {
+     "id": 19,
+     "name": "robot0:estop_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 27,
+     "tris": 7736,
+     "size": [
+      0.016,
+      0.0161,
+      0.0273
+     ],
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ]
+    },
+    {
+     "id": 20,
+     "name": "robot0:laser_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 28,
+     "tris": 7116,
+     "size": [
+      0.0296,
+      0.0583,
+      0.0211
+     ],
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ]
+    },
+    {
+     "id": 21,
+     "name": "robot0:torso_fixed_link",
+     "type": "mesh",
+     "visible": true,
+     "mover": true,
+     "body": 29,
+     "tris": 116,
+     "size": [
+      0.0721,
+      0.1554,
+      0.2309
+     ],
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ]
+    },
+    {
+     "id": 22,
+     "name": "geom22",
+     "type": "box",
+     "visible": true,
+     "mover": false,
+     "body": 31,
+     "tris": 0,
+     "size": [
+      0.25,
+      0.35,
+      0.2
+     ],
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ]
+    },
+    {
+     "id": 23,
+     "name": "object0",
+     "type": "box",
+     "visible": true,
+     "mover": true,
+     "body": 32,
+     "tris": 0,
+     "size": [
+      0.025,
+      0.025,
+      0.025
+     ],
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ]
+    },
+    {
+     "id": 24,
+     "name": "se:target",
+     "type": "sphere",
+     "visible": true,
+     "mover": true,
+     "body": 33,
+     "tris": 0,
+     "size": [
+      0.02,
+      0.02,
+      0.02
+     ],
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    }
+   ],
+   "meshes": {
+    "0": {
+     "name": "robot0:base_link",
+     "verts": 2362,
+     "faces": 4720
+    },
+    "11": {
+     "name": "robot0:torso_lift_link",
+     "verts": 505,
+     "faces": 1000
+    },
+    "6": {
+     "name": "robot0:head_pan_link",
+     "verts": 1061,
+     "faces": 2118
+    },
+    "7": {
+     "name": "robot0:head_tilt_link",
+     "verts": 355,
+     "faces": 706
+    },
+    "12": {
+     "name": "robot0:shoulder_pan_link",
+     "verts": 658,
+     "faces": 1312
+    },
+    "13": {
+     "name": "robot0:shoulder_lift_link",
+     "verts": 455,
+     "faces": 906
+    },
+    "14": {
+     "name": "robot0:upperarm_roll_link",
+     "verts": 501,
+     "faces": 998
+    },
+    "2": {
+     "name": "robot0:elbow_flex_link",
+     "verts": 488,
+     "faces": 972
+    },
+    "4": {
+     "name": "robot0:forearm_roll_link",
+     "verts": 502,
+     "faces": 1000
+    },
+    "15": {
+     "name": "robot0:wrist_flex_link",
+     "verts": 499,
+     "faces": 994
+    },
+    "16": {
+     "name": "robot0:wrist_roll_link",
+     "verts": 262,
+     "faces": 520
+    },
+    "5": {
+     "name": "robot0:gripper_link",
+     "verts": 755,
+     "faces": 1506
+    },
+    "3": {
+     "name": "robot0:estop_link",
+     "verts": 3857,
+     "faces": 7736
+    },
+    "9": {
+     "name": "robot0:laser_link",
+     "verts": 3563,
+     "faces": 7116
+    },
+    "17": {
+     "name": "robot0:torso_fixed_link",
+     "verts": 60,
+     "faces": 116
+    }
+   },
+   "visible_geoms_by_type": {
+    "static:plane": 1,
+    "mover:mesh": 15,
+    "mover:box": 3,
+    "static:box": 1,
+    "mover:sphere": 1
+   },
+   "triangles_visible_movers": 31720,
+   "triangles_visible_static": 0,
+   "n_movers": 19,
+   "n_static": 2,
+   "camera": {
+    "id": 0,
+    "fovy": 45.0,
+    "pos": [
+     2.9231364727020264,
+     -1.0526756644248962,
+     1.1548047065734863
+    ],
+    "quat": [
+     0.7356714168918131,
+     0.5747694985458837,
+     0.2206333399994138,
+     0.2823978030906199
+    ],
+    "mode": 0,
+    "defaults": {
+     "lookat": [
+      1.3,
+      0.75,
+      0.55
+     ],
+     "distance": 2.5,
+     "azimuth": 132.0,
+     "elevation": -14.0,
+     "fovy": 45.0
+    }
+   },
+   "lights": [
+    {
+     "id": 0,
+     "mode": 0,
+     "castshadow": false,
+     "type": 1,
+     "directional": null,
+     "pos": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "dir": [
+      0.0,
+      0.0,
+      -1.0
+     ],
+     "attenuation": [
+      1.0,
+      0.0,
+      0.0
+     ],
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "ambient": [
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224
+     ],
+     "diffuse": [
+      0.800000011920929,
+      0.800000011920929,
+      0.800000011920929
+     ],
+     "specular": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896
+     ]
+    }
+   ],
+   "headlight": {
+    "active": 1,
+    "ambient": [
+     0.10000000149011612,
+     0.10000000149011612,
+     0.10000000149011612
+    ],
+    "diffuse": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "specular": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   "vis": {
+    "znear": 0.009999999776482582,
+    "zfar": 50.0,
+    "extent": 2.774366648712765,
+    "offsamples": 4,
+    "shadowsize": 4096
+   },
+   "textures": [
+    {
+     "id": 0,
+     "name": null,
+     "type": 2,
+     "w": 32,
+     "h": 192
+    },
+    {
+     "id": 1,
+     "name": "texture_block",
+     "type": 1,
+     "w": 250,
+     "h": 1500
+    }
+   ],
+   "materials_used": [
+    {
+     "id": 11,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 16,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 17,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 18,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 19,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 20,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 21,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 22,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 23,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 24,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 25,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 26,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 27,
+     "rgba": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 28,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 29,
+     "rgba": [
+      0.356,
+      0.361,
+      0.376,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 30,
+     "rgba": [
+      0.8,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 31,
+     "rgba": [
+      0.792,
+      0.82,
+      0.933,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 32,
+     "rgba": [
+      0.086,
+      0.506,
+      0.767,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.4000000059604645,
+     "shininess": 0.029999999329447746,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 33,
+     "rgba": [
+      0.93,
+      0.93,
+      0.93,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 34,
+     "rgba": [
+      0.2,
+      0.2,
+      0.2,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.0,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    },
+    {
+     "id": 35,
+     "rgba": [
+      1.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "reflectance": 0.0,
+     "specular": 0.5,
+     "shininess": 0.5,
+     "emission": 0.0,
+     "texid": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+     ]
+    }
+   ],
+   "mj_kinematics_us": 2.5694817304611206,
+   "mj_forward_us": 19.75436508655548,
+   "mover_aabb_extent_median_m": [
+    1.411,
+    0.977,
+    1.045
+   ],
+   "official": {
+    "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "official_fps_from_state_480": 37.35786520930487,
+    "official_fps_render_only_480": 53.30966481487271,
+    "decode_fps_per_core_480": 806.0691391353266,
+    "jpeg_bytes_480": 20204,
+    "plate_bake_s_480": 0.4534311145544052,
+    "plate_bake_s_480_warm": 0.010673634707927704,
+    "mover_px_share_official_minus_plate": 0.10511284722222222,
+    "mover_bbox_share_state0": 0.8747916666666666,
+    "plate_vs_official_static_exact": 0.8948871527777778
+   }
+  }
+ }
+}
