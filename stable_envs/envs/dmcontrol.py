@@ -187,6 +187,7 @@ import torch
 os.environ.setdefault("MUJOCO_GL", "egl")
 
 from ..core.env import StableEnv, register
+from ..render import cpu3d as C3
 from ..render import mjwarp as MW
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict, Discrete
@@ -2229,10 +2230,102 @@ class DMControlTrackCom(_DMCModel):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self._context(self.size)                     # build and capture up front, not mid-render
+        # DEVICE SELECTION IS HONEST. ``cuda`` gets MJWarp; ``cpu`` gets the CPU-native backend in
+        # ``stable_envs/render/cpu3d.py`` -- the same scene, camera, materials and lighting law drawn
+        # by an analytic caster over a baked skybox plate; anything else raises here rather than
+        # rendering somewhere the caller did not ask for. Step 3's "cpu" rows for these cells were
+        # MJWarp on the GPU behind a ``device="cpu"`` request (``DEVICE_NOT_HONOURED``); that path no
+        # longer exists.
+        if self.device.type == "cuda":
+            self._context(self.size)                 # build and capture up front, not mid-render
+        elif self.device.type == "cpu":
+            self._cpu_scene(self.size)
+        else:
+            raise ValueError(
+                f"{type(self).__name__}: no 3-D backend for device {self.device}; use "
+                f"device='cuda' (MJWarp) or device='cpu' (stable_envs.render.cpu3d)")
 
     def _context(self, size: int) -> _TCtx:
         return _tc_context(type(self), int(size), MJW_CHUNK)
+
+    # ---- the CPU backend ---------------------------------------------------
+
+    def _cpu_scene(self, size: int) -> "C3.Scene":
+        """One ``cpu3d.Scene`` per resolution: rays, the baked skybox, the plane, the movers."""
+        cache = self.__dict__.setdefault("_cpu_scenes", {})
+        hit = cache.get(int(size))
+        if hit is not None:
+            return hit
+        m, pr = self._model(), self._pristine()
+        for arr in {a for a, _ in self._slots()}:               # the canonical model, as _tc_context
+            getattr(m, arr)[:] = pr[arr]
+        m.mat_rgba[:] = pr["mat_rgba"]
+        m.light_diffuse[:] = pr["light_diffuse"]
+        m.geom_group[:] = pr["geom_group"]
+        # the geoms MJWarp draws: visible groups, resolved alpha > 0 (its zero-alpha pre-pass), no
+        # sites (it draws none); every non-plane geom is a "mover" whose world pose FK supplies,
+        # static ones included -- their pose is simply the same every frame
+        alpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
+        movers = [g for g in range(m.ngeom)
+                  if int(pr["geom_group"][g]) in VISIBLE_GROUPS and alpha[g] > 0
+                  and int(m.geom_type[g]) != C3.PLANE]
+        flags = dict(self.RENDER_FLAGS)
+        sc = C3.Scene(m, self.CAMERA, int(size), movers, groups=VISIBLE_GROUPS,
+                      enable_specular=bool(flags.get("enable_specular", True)),
+                      use_shadows=True, device=self.device)
+        cache[int(size)] = sc
+        return sc
+
+    def _cpu_poses(self, s: torch.Tensor, sc: "C3.Scene"):
+        """``(B, state_dim)`` -> camera, mover, light poses through MuJoCo's own FK.
+
+        ``mj_kinematics`` then ``mj_comPos`` then ``mj_camlight``: the trackcom camera and light read
+        ``subtree_com``, which kinematics alone never writes -- the same trap ``_tc_context`` records
+        for MJWarp's ``com_pos``. 3-10 us per state on the certification core.
+        """
+        import mujoco
+        m, d = self._model(), self._bundle(self.default_size)[2]
+        pr = self._pristine()
+        st = s.detach().cpu().numpy().astype(np.float64)
+        q, ep = st[:, :self.nq], st[:, self.nq:]
+        B, K = st.shape[0], len(sc.movers)
+        cam = np.empty((B, 3)); xp = np.empty((B, K, 3)); xm = np.empty((B, K, 3, 3))
+        lp = np.empty((B, m.nlight, 3)); ld = np.empty((B, m.nlight, 3))
+        slots = self._slots()
+        try:
+            for i in range(B):
+                for (arr, k), v in zip(slots, ep[i]):
+                    getattr(m, arr).reshape(-1)[k] = v
+                d.qpos[:] = q[i]
+                mujoco.mj_kinematics(m, d)
+                mujoco.mj_comPos(m, d)
+                mujoco.mj_camlight(m, d)
+                cam[i] = d.cam_xpos[self.CAMERA]
+                xp[i] = d.geom_xpos[sc.movers]
+                xm[i] = d.geom_xmat[sc.movers].reshape(K, 3, 3)
+                lp[i] = d.light_xpos
+                ld[i] = d.light_xdir
+        finally:
+            for arr in {a for a, _ in slots}:
+                getattr(m, arr)[:] = pr[arr]
+        t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)   # noqa: E731
+        return t(cam), t(xp), t(xm), t(lp), t(ld)
+
+    def _render_cpu(self, s: torch.Tensor, sty, size: int, buf: torch.Tensor) -> None:
+        import mujoco
+        sc = self._cpu_scene(size)
+        m, pr = self._model(), self._pristine()
+        B = int(s.shape[0])
+        cam, xp, xm, lp, ld = self._cpu_poses(s, sc)
+        mat = torch.as_tensor(pr["mat_rgba"][:, :3], dtype=torch.float32,
+                              device=self.device).unsqueeze(0).repeat(B, 1, 1)
+        for name in self._used_materials():
+            i = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_MATERIAL, name)
+            if i >= 0:
+                mat[:, i] = sty[f"material.{name}"][:B]
+        base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
+        ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
+        C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf)
 
     # ---- render -----------------------------------------------------------
 
@@ -2258,6 +2351,9 @@ class DMControlTrackCom(_DMCModel):
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
+        if self.device.type == "cpu":
+            self._render_cpu(s, sty, size, buf)
+            return buf.view(*lead, size, size, 3) if lead else buf
         c = self._context(size)
         for lo in range(0, B, MJW_CHUNK):
             hi = min(B, lo + MJW_CHUNK)
