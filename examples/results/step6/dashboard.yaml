@@ -72,7 +72,7 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-reacher-correctness
   oscar_copy: $SCR/se6/reacher-correctness
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 5a1897d6659fb3f5598bdd3807dfcb91c2b65754 (includes merge of integration 9da50ee)
+  head_sha: 8ec5bc459aba5ac7b6e51c13c58596146ae2b1be (VISIBILITY-1 fix merged)
   agent_model: opus
   wave: wave1
   status: merged
@@ -113,11 +113,15 @@ workstreams:
   - 6344904
   - 6346473(cancelled pre-merge)
   - 6346537
+  - 6356087
   notes:
   - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
   - 'PATCH 2026-09-13. Escalate to Sami: default stays target-VISIBLE (dm_control reference), SWM render_target=0 reproduced via knob; folding TASK_OBJECT_PRESENCE_MARGIN into frozen spec is a Step-8 call.
     NEW FINDING (not this branch): 4 trackcom cells (Cheetah/Hopper/Humanoid/Walker) do not reproduce frozen Step-4 digests at BASELINE (mean_pixel off 0.16-0.61/255, same mujoco/warp/driver/GPU, different
     venv+node) -> narrow ticket MJWARP-1 queued. MJWarp cannot carry per-row visibility (shader ignores alpha; hidden at context creation).'
+  - 'VISIBILITY-1 fixed (868fd2c): selector asked the renderer question (VISIBILITY_KNOB) while the body asserted the domain question (a visibility.* leaf); body now skips with the domain reason, guard
+    test prevents a vacuous sweep. Job 6356087 gpu2110, unfiltered test_reproducibility: sweep 4 pass/7 skip/0 fail. Unfiltered run also shows 368 fixture errors (16 envs x 23 tests: mujoco_warp/minigrid/gymnasium_robotics
+    absent; the env fixture calls se.make directly instead of _shared.make_or_skip) and 9 ogbench failures = NODE-1 class, also on gpu2110.'
 - workstream: raycast3d
   brief: STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md
   branch: step6/raycast3d
@@ -634,5 +638,8 @@ integration_verification:
   - 'minigrid absent from every Oscar venv: 7 registered envs outside the 49 never had GPU conformance run here'
   - test_rendernet.py::test_no_checkpoint_means_no_class fails on both trees (pytest 9 importorskip semantics)
   - 966 GPU-suite errors are missing packages (gymnasium_robotics, minigrid) in every Oscar venv - the GPU suite has never run fully there; Step 8 must build a complete certification venv
+  - 'NODE-1 is not node-specific: the official OGBench renderer is nondeterministic at 1/255 on gpu2110 too (job 6356087). Treat the repo''s own node-fault diagnostic and the dependent fresh-process ogbench
+    failures as a known class rather than excluding nodes.'
+  - tests/gpu/test_reproducibility.py's env fixture calls se.make directly instead of _shared.make_or_skip, turning missing optional packages into 368 errors instead of skips (Step 8).
   final_pass: 'ready: scratch/step6/verify/final.sbatch (dmc+ogb+swm shards, trackcom cells under se-step5 paired with se-step3, Gate A, full test_reproducibility, VISIBILITY-1 line) + cpu_verify.sbatch
     with CPUVENV=se-step6 (no mujoco_warp importable) + tests/unit; waiting for RAYCAST-5, cpu-3d, VISIBILITY-1 merges'
