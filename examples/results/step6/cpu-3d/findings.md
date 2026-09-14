@@ -236,30 +236,45 @@ unauthorized and is the only route to `cores_cpu >= 1`.
 
 # C. CPU3D-FETCH-1 -- feasibility of a shared CPU backend for Fetch at the frozen `CPU_FAST` bar (measurement only)
 
-**Classification: `BLOCKER` for `CPU_FAST` (measured on the real mesh set); a shared CPU backend at
-`CPU_PARITY`/`CPU_FASTER` is feasible.** No implementation, no decimation.
+**Classification: `BLOCKER` for `CPU_FAST` (measured on the real mesh set, backface-culled, phase-resolved);
+a shared CPU backend at `CPU_PARITY`/`CPU_FASTER` is feasible.** No implementation, no decimation.
 
-Job **6354890** (`node2334`, Xeon 8268, one core): `scratch/step6/cpu-3d/fetch_mesh_dump.py`
-(`se-s3b-fetch311`) put the ACTUAL visible mover meshes of `FetchReach` and `FetchPickAndPlace` --
-15 meshes, **31,720 triangles**, all in view -- through MuJoCo FK at 16 frozen states and the
-`se:cam` frustum at 480 px; `span_raster.c` (scalar C, `-O3 -march=native`, bbox-bounded
-edge-function scan, z-test, Gouraud normals, Blinn-Phong) rasterised them
-(`fetch_feasibility/`):
+Two measurements, both on the ACTUAL visible mover meshes of `FetchReach` and `FetchPickAndPlace`
+(15 meshes, **31,720 triangles**, all in view, **median triangle edge 0.50 px** at 480 px), put
+through MuJoCo FK at 16 frozen states and the `se:cam` frustum by `fetch_mesh_dump.py`
+(`se-s3b-fetch311`), then rasterised by `span_raster.c` (scalar C, `-O3 -march=native`, bbox-bounded
+edge-function scan, z-test, Gouraud normals, Blinn-Phong):
 
-| scene | triangles / frame | median triangle edge | ms / frame | fps (1 core) | ns / triangle | pixel writes / frame | bbox pixel tests / frame |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| FetchReach | 31,720 | **0.50 px** | 8.79-10.24 | **97.7-113.7** | 277-323 | 49,151 | 942,741 |
-| FetchPickAndPlace | 31,720 | 0.50 px | 9.18-10.37 | 96.4-108.9 | 289-327 | 49,109 | 941,704 |
+| job / node / core | mode | ms / frame | fps (1 core) | ns / triangle | pixel writes | bbox tests |
+|---|---|---:|---:|---:|---:|---:|
+| 6354890 / node2334 / Xeon 8268 (round 1) | un-culled (both windings) | 8.8-10.4 | 97-114 | 277-327 | 49,151 | 942,741 |
+| 6356048 / node2407 / **AMD EPYC 9684X**, load 134-140 (round 2) | un-culled | 6.79 | 147 | 214 | 49,151 | 942,741 |
+| " | **culled** (front faces only) | **4.28** | **234** | **135** | 36,609 | 501,433 |
+| " | culled, setup only (transform, bbox, area, cull) | 0.77 | 1,305 | **24** | -- | -- |
+| " | culled, setup + bbox scan + z-test, no shading | 3.20 | 313 | 101 | 36,609 | 501,433 |
 
-Against the frozen bars on the same host (design.md §3.2): decode **776-881 fps** -> `cores_cpu`
-**0.11-0.15**; official llvmpipe 39.6-53.3 fps -> `S_cpu` **1.8-2.9**. `CPU_FAST` needs <= 1.13-1.29
-ms per frame = **<= 36-41 ns per triangle including fill**; the measured scalar floor on the real
-set is 277-327 ns, **7-9x short**. The shape of the cost rules out closing it by architecture: the
-robot's triangles are **half a pixel** across at 480 px (31,720 triangles for ~24 k robot pixels;
-49 k pixel writes, 942 k bbox tests), so the pass is per-triangle setup and bbox scanning, not
-fill -- a binning/SIMD rasteriser removes most of the 942 k wasted bbox tests (2-3x) but not the
-per-triangle setup, and a BVH ray cast over the ~200 k-pixel robot bbox is the same order (design.md
-§4.4). What IS feasible: a shared span-rasteriser backend (the plate is exact and free; movers ~10
-ms/frame) at ~100 fps = `CPU_PARITY`/`CPU_FASTER` (S_cpu 1.8-2.9, borderline at the 2.0 floor),
-or option (g) llvmpipe at ~46 fps = `CPU_PARITY`. Verdict: **do not fund a Fetch CPU backend for
-`CPU_FAST`; fund one only if `device="cpu"` honoured at `CPU_PARITY` is wanted for its own sake.**
+(`fetch_feasibility/span_raster_*_node2334.jsonl`, `*_node2407.jsonl`, `provenance_node2407.json`;
+PickAndPlace within 1 % of Reach in every row.) Round 2 ran on a different, faster core than the
+certification Xeon and at load ~135, so its absolute numbers are not the Xeon's; the RATIOS between
+its rows are the finding: **culling is worth 1.59x** (the un-culled overdraw was 2x the visible
+pixels), and the culled cost splits **24 ns setup + 77 ns bbox scan/z-test + 34 ns shade** per
+triangle.
+
+Against the frozen bars on the Xeon (design.md §3.2): `CPU_FAST` needs <= 1.13-1.29 ms per frame =
+**<= 36-41 ns per triangle including fill**. Culled scalar on the EPYC is **135 ns, 3.3-3.8x short**
+(the un-culled round-1 figure of 7-9x is superseded); a rasteriser that wasted no bbox tests at all
+would still pay the 24 ns/triangle setup plus ~36 k pixel writes -- ~1.0-1.3 ms, i.e. AT the bar on a
+faster core than the certification host, with nothing left for the composite and the FK. That is the
+architecture-independent margin: **~3.5-4x short in scalar, and no better than break-even for a
+perfect SIMD binning rasteriser on the EPYC, worse on the Xeon.** The `S_cpu >= 5` conjunct also
+fails: 234 fps (EPYC, culled) against a same-node official that was not measured in this job; against
+the Xeon's llvmpipe 39.6-53.3 fps it would be 4.4-5.9x, and round 1's same-node pairing gave
+1.8-2.8x -- either way `cores_cpu` (0.27-0.30 even at 234 fps against the Xeon's 776-881 fps decode
+bar) fails `CPU_FAST` on its own. What IS feasible: a shared span-rasteriser backend (the plate is
+exact and free; movers 4-10 ms/frame) at 100-230 fps = `CPU_PARITY`/`CPU_FASTER`, or option (g)
+llvmpipe at ~46 fps = `CPU_PARITY`. Verdict unchanged: **do not fund a Fetch CPU backend for
+`CPU_FAST`; fund one only if `device="cpu"` honoured at `CPU_PARITY`/`CPU_FASTER` is wanted for its
+own sake.** The Phase-1 synthetic probe (`cost_floor tri`) was re-timed with triangle generation
+outside the timed region: 180-183 ns/triangle at 3 px edges on the EPYC
+(`fetch_feasibility/cost_floor_tri_node2407.jsonl`); design.md §4.1's Xeon figures included the
+generation and are superseded by the real-mesh rows above.

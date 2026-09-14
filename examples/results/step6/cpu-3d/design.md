@@ -367,7 +367,7 @@ from 31,720 triangles per frame (plus 2 boxes and a sphere):
 
 | architecture | per-frame cost, measured floor | fps | vs `S_cpu ≥ 5` (229) | vs `cores ≥ 1` (815) |
 |---|---|---|---|---|
-| (b) CPU z-buffer raster of the 31.7 k triangles, scalar C | Phase-1 estimate from the synthetic probe: 31.7 k × 600–800 ns = 19–25 ms. **Measured on the real mesh set (§12, CPU3D-FETCH-1): 277–327 ns/triangle, 8.8–10.4 ms, the triangles are 0.5 px across** | **97–114 measured** | ✗ (`CPU_FASTER`/`PARITY` band, 1.8–2.9× llvmpipe) | ✗ by 7–9× un-culled (~3.5–4.5× architecture-independent, §12) |
+| (b) CPU z-buffer raster of the 31.7 k triangles, scalar C | Phase-1 estimate from the synthetic probe: 31.7 k × 600–800 ns = 19–25 ms. **Measured on the real mesh set (§12, CPU3D-FETCH-1): backface-culled 135 ns/triangle = 4.3 ms (EPYC 9684X), un-culled 214–327 ns; the triangles are 0.5 px across; setup 24 + scan 77 + shade 34 ns/tri** | **97–234 measured** | ✗ (`CPU_FASTER`/`PARITY` band) | ✗ by 3.3–3.8× culled (setup alone is 60–68 % of the budget, §12) |
 | (b) the same, with a well-vectorised binning rasteriser (3–5× over scalar; not measured) | 4–8 ms | 125–250 | borderline | ✗ by 3–6× |
 | (a) analytic/BVH ray cast restricted to the movers' window — the bbox is **89 % of the frame** (the robot spans it), per-mesh bboxes ~10–15 % | 40–60 k rays × 300–500 ns BVH traversal (literature-class number, not measured here) = 12–30 ms | 30–80 | ✗ | ✗ by 10–25× |
 | (g) Mesa llvmpipe itself as the mover rasteriser (render movers only over the plate) | the official renderer's own 21.9 ms/frame; hiding 91 % of the geometry saves little because llvmpipe's cost here is per-frame overhead + fill, not triangle count (its 84 px and 480 px DMC numbers are within 20 %) | ~45 | ✗ (`CPU_PARITY` by construction) | ✗ by 18× |
@@ -713,9 +713,10 @@ cells (Walker's one FAIL is the corpus-vs-protocol downsample provenance defect,
 GPU path too; on the bound's own protocol the CPU path reproduces every recorded floor to
 <= 0.001); the frozen evaluator labels all four **`CPU_FASTER` + `BELOW_G4`** (S_cpu 4.93 / 6.86 /
 2.52 / 4.22, cores 0.017 / 0.028 / 0.008 / 0.006); the cuda frames are byte-identical before and
-after; and a span rasteriser over the real 31,720-triangle Fetch set measures 277-327 ns/triangle
-(97-114 fps at 480 px) against a `CPU_FAST` bar of 36-41 ns/triangle -- the Fetch blocker stands on
-the real meshes.
+after; and a span rasteriser over the real 31,720-triangle Fetch set measures 135 ns/triangle culled
+(234 fps at 480 px on an EPYC 9684X; 24 ns setup + 77 scan + 34 shade) against a `CPU_FAST` bar of
+36-41 ns/triangle -- 3.3-3.8x short, setup alone 60-68 % of the budget; the Fetch blocker stands on
+the real meshes (findings.md §C).
 
 
 ## 13. Coverage of `DMControlTrackCom` on CPU, and what `Scene.__init__` refuses
