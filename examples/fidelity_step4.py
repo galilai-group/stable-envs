@@ -327,9 +327,32 @@ def _resolution(env, states) -> dict:
     more than one size". ``test_the_downsampled_2x_render_lands_where_the_1x_render_does`` skips on
     exactly that exception; classifying it as an error here would turn six envs that are behaving as
     designed into Gate A failures.
+
+    The JUDGED number is measured on the bound's own protocol (``C.downsample_protocol_states``: the
+    8 states the floor was recorded on), not on the frozen corpus. The floor is a property of the
+    state set as much as of the renderer -- the same renderer measures 0.6188 on walker's 64-state
+    corpus and 0.6290, the recorded floor to six decimals, on the protocol's 8 (both mujoco
+    versions; ``examples/results/step6/texture-fidelity/resprobe31{1,2}.json``) -- so a floor applied
+    to another draw with a 0.005 margin failed the draw, not the renderer. The corpus number is still
+    measured and recorded beside it as ``frozen_corpus``, because Step 6 replays the corpus and a
+    regression that moves a shape shows up in either.
     """
+    # The draw first and on its own: the ``except ValueError`` below is the env saying it renders at
+    # one size only, and a ValueError out of ``sample_states`` is not that -- it must be an error,
+    # not a skip.
     try:
-        r = C.check_resolution_consistency(env, states)
+        proto = C.downsample_protocol_states(env)
+    except BLOCKING as e:
+        return {"status": "blocked_environment", "why": f"{type(e).__name__}: {str(e)[:300]}"}
+    except BaseException as e:                                              # noqa: BLE001
+        return {"status": "error", "why": f"protocol draw: {type(e).__name__}: {str(e)[:400]}",
+                "traceback": traceback.format_exc()[-1200:]}
+    try:
+        r = C.check_resolution_consistency(env, proto)
+        r["protocol"] = C.downsample_protocol(proto)
+        r["frozen_corpus"] = C.check_resolution_consistency(env, states)
+        r["frozen_corpus"]["n_states"] = int(len(states))
+        r["frozen_corpus"]["states_sha256"] = C.frames_digest(np.ascontiguousarray(states, np.float32))
     except ValueError as e:
         return {"status": "not_applicable", "why": f"{type(e).__name__}: {str(e)[:300]}"}
     except BLOCKING as e:
