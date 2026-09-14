@@ -63,7 +63,11 @@ SE6_LEG=after PYTHONPATH=$WS $PY scratch/step6/raycast3d/r6_certify_shard.py \
     --max-reference-spread 1.25 \
     --out "$SW/cpu_1thread_after_branch.json" || echo "SHARD_AFTER rc=$?"
 
-echo "######## tiers, from the shards themselves"
-PYTHONPATH=$WS $PY scratch/step3/certify.py --shards "$SW" --out "$SW" \
-    --doc "$SCR/logs/r6_tiers_${SLURM_JOB_ID}.md" 2>&1 | tail -20 || echo "CERTIFY rc=$?"
+# The tiers are read with scratch/step6/raycast3d/r6_tiers.py instead of by running
+# scratch/step3/certify.py here. certify.py takes no --doc (that flag was copied from another
+# workstream's script and made this step exit 2), and more importantly it REWRITES
+# docs/research/step3_benchmarks.md as a side effect -- a Step-3 document this workstream must not
+# touch. Run it out of tree if a label is wanted from the certifier itself.
+echo "######## tiers, read off the shard pair"
+PYTHONPATH=$WS $PY scratch/step6/raycast3d/r6_tiers.py 2>&1 | tail -20 || echo "TIERS rc=$?"
 echo "R6_SWEEP done"

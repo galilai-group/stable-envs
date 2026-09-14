@@ -6,6 +6,12 @@
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
 #SBATCH --output=/oscar/scratch/%u/logs/%x_%j.out
+# SUPERSEDED by r6_sweep.sbatch. This job's output describes the branch BEFORE RAYCAST-6 changed
+# raycast3d.composite, and on the two Pointmaze rows that is a tier difference. Its files now live
+# under examples/results/step6/raycast3d/sweep/superseded_r5_node2335/ with their before/after
+# tokens removed; re-running this script would re-create them under the ORIGINAL names and give
+# the report two after-legs again. See that directory's PROVENANCE_NOTE.md.
+#
 # Step-3-SHAPED shards for the Step-6 report generator, which labels tiers only from these and finds
 # none under this workstream's directory.
 #
