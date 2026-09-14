@@ -1593,6 +1593,7 @@ def _composite_window(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera,
                                    .to(torch.uint8))
     return out
 
+
 def _upsample_t(plate_t, H, W, ss):
     """Nearest-neighbour blow-up of the static ray parameter to the supersample grid.
 
