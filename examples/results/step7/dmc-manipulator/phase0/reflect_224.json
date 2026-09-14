@@ -1,0 +1,33 @@
+{
+ "size": 224,
+ "n": 16,
+ "grid_material_worn_by": [
+  "floor",
+  "wall1",
+  "wall2"
+ ],
+ "reference_reflection_signal_total": {
+  "px": 11,
+  "frac": 1.3701769770408163e-05,
+  "max": 20,
+  "mean": 0.0001669124681122449
+ },
+ "our_reflection_pass_contribution": {
+  "px": 5,
+  "frac": 6.228077168367347e-06,
+  "max": 22,
+  "mean": 0.00011210538903061225
+ },
+ "parity_with_reflection_pass": {
+  "px": 13562,
+  "frac": 0.01689303651147959,
+  "max": 204,
+  "mean": 0.25491395288584184
+ },
+ "parity_without_reflection_pass": {
+  "px": 13562,
+  "frac": 0.01689303651147959,
+  "max": 204,
+  "mean": 0.2549911810427296
+ }
+}

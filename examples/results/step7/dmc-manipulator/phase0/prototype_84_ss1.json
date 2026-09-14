@@ -1,0 +1,188 @@
+{
+ "size": 84,
+ "n": 64,
+ "draws": 2,
+ "supersample": 1,
+ "device": "cpu",
+ "mujoco": "3.12.0",
+ "dm_control": "1.0.45",
+ "reference_pair_note": "measured on mujoco 3.12.0 + dm_control 1.0.45 (local se6-venv); the declared DMC reference pair is mujoco 3.11.0 + dm_control 1.0.44 on Oscar's se-vis311/se-tex311",
+ "state_dim": 15,
+ "state_names": [
+  "arm_root",
+  "arm_shoulder",
+  "arm_elbow",
+  "arm_wrist",
+  "thumb",
+  "thumbtip",
+  "finger",
+  "fingertip",
+  "ball_x",
+  "ball_z",
+  "ball_y",
+  "target_ball_pos_x",
+  "target_ball_pos_z",
+  "target_ball_quat_qw",
+  "target_ball_quat_qy"
+ ],
+ "nq": 11,
+ "episode_slots": [
+  "body_pos[33]",
+  "body_pos[35]",
+  "body_quat[44]",
+  "body_quat[46]"
+ ],
+ "variation_space": [
+  "camera.fovy_scale",
+  "light.diffuse_scale",
+  "material.background",
+  "material.decoration",
+  "material.effector",
+  "material.grid",
+  "material.self",
+  "material.target"
+ ],
+ "movers": {
+  "geoms": [
+   "upper_arm",
+   "middle_arm",
+   "lower_arm",
+   "hand",
+   "palm1",
+   "palm2",
+   "thumb1",
+   "thumb2",
+   "thumbtip1",
+   "thumbtip2",
+   "finger1",
+   "finger2",
+   "fingertip1",
+   "fingertip2",
+   "ball",
+   "target_ball"
+  ],
+  "sites": []
+ },
+ "statics": {
+  "geoms": [
+   "floor",
+   "wall1",
+   "wall2",
+   "background",
+   "arm_root"
+  ],
+  "sites": []
+ },
+ "shadow_light_index_in_scene": 1,
+ "light_kinds": [
+  1,
+  1
+ ],
+ "light_castshadow": [
+  0,
+  1
+ ],
+ "reflectance_used": 0.20000000298023224,
+ "tendon": null,
+ "plate_shadow_differs": true,
+ "plate_norefl_differs": false,
+ "reflective_static_planes": [
+  {
+   "name": "floor",
+   "reflectance": 0.20000000298023224
+  },
+  {
+   "name": "wall1",
+   "reflectance": 0.20000000298023224
+  },
+  {
+   "name": "wall2",
+   "reflectance": 0.20000000298023224
+  }
+ ],
+ "per_draw": [
+  {
+   "mean_abs": 0.5471828054138322,
+   "exact_frac": 0.9779885912698413,
+   "within8_frac": 0.9846805909863946,
+   "max_abs": 187,
+   "interior_frac": 0.07502903178980984,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 33080,
+   "interior_bad_px": 0,
+   "ssim": 0.9870180561231323,
+   "bad_px": 9940,
+   "bad_inside_mover_region_frac": 1.0,
+   "plate_region_px": 441582,
+   "plate_region_exact_frac": 1.0,
+   "mover_region_px": 10002,
+   "mover_region_exact_frac": 0.0061987602479504095
+  },
+  {
+   "mean_abs": 0.5281874468537415,
+   "exact_frac": 0.9778756554705216,
+   "within8_frac": 0.9845012223639455,
+   "max_abs": 198,
+   "interior_frac": 0.07498366961823197,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 33060,
+   "interior_bad_px": 0,
+   "ssim": 0.9870858271635796,
+   "bad_px": 9991,
+   "bad_inside_mover_region_frac": 1.0,
+   "plate_region_px": 441531,
+   "plate_region_exact_frac": 1.0,
+   "mover_region_px": 10053,
+   "mover_region_exact_frac": 0.0061673132398289065
+  }
+ ],
+ "summary": {
+  "exact_frac": {
+   "min": 0.9778756554705216,
+   "median": 0.9779321233701814,
+   "max": 0.9779885912698413
+  },
+  "interior_exact_frac": {
+   "min": 1.0,
+   "median": 1.0,
+   "max": 1.0
+  },
+  "interior_frac": {
+   "min": 0.07498366961823197,
+   "median": 0.0750063507040209,
+   "max": 0.07502903178980984
+  },
+  "mean_abs": {
+   "min": 0.5281874468537415,
+   "median": 0.5376851261337869,
+   "max": 0.5471828054138322
+  },
+  "max_abs": {
+   "min": 187.0,
+   "median": 192.5,
+   "max": 198.0
+  },
+  "ssim": {
+   "min": 0.9870180561231323,
+   "median": 0.987051941643356,
+   "max": 0.9870858271635796
+  },
+  "plate_region_exact_frac": {
+   "min": 1.0,
+   "median": 1.0,
+   "max": 1.0
+  },
+  "mover_region_exact_frac": {
+   "min": 0.0061673132398289065,
+   "median": 0.006183036743889658,
+   "max": 0.0061987602479504095
+  },
+  "bad_inside_mover_region_frac": {
+   "min": 1.0,
+   "median": 1.0,
+   "max": 1.0
+  }
+ }
+}
