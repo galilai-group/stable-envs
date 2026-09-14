@@ -170,6 +170,8 @@ about 11 pixels of 2.3 million.
 """
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import torch
 
@@ -318,6 +320,92 @@ def _gaussian_dot(gy, gx, pos, radius) -> torch.Tensor:
     return torch.where(m > 0, dot / m, dot)
 
 
+#: WHY BOTH OF THIS MODULE'S STEP 6 OPTIMISATIONS ARE CPU-ONLY.
+#:
+#: ``_base_image`` keys its bake on the bytes of a style row and ``_blend_dot`` turns per-row windows
+#: into groups, and BOTH decide on the host from values that live on the device: one ``.cpu()`` for
+#: the key, one plus four scalar reductions for the windows, doubled for TwoRoomTarget's two dots.
+#: On a CPU those are copies. On a GPU they are synchronisations in the middle of a render, and they
+#: cost more than the work they save at every batch small enough that the saved work is small --
+#: measured on a 3090 (job 6349274, gpu2113), before against after:
+#:
+#:     batch                1      16      64     256    1024    4096
+#:     TwoRoom           1.25    0.48    0.55    1.41    1.40    1.41
+#:     TwoRoomTarget     0.86    0.32    0.40    1.11    1.13    1.13
+#:     Piecewise         0.58    0.19    0.35    0.99    0.98    0.98
+#:     PiecewiseZones    0.85    0.27    0.43    1.14    1.14    1.14
+#:
+#: A 5.3x regression at batch 16 that a best-batch summary does not show is still a regression, and
+#: section 7 names host/device synchronisation in a hot loop as a structural defect in its own right
+#: rather than a cost to be netted off against a gain somewhere else. ``raster2d._row_groups``'s cost
+#: model does not help here either: its two constants were measured on one CPU core, so on cuda it
+#: accepts groupings that lose.
+#:
+#: So on ``device.type == "cuda"`` both paths run the arithmetic they replaced, unchanged, and the
+#: GPU rows are identical code rather than an argument about which batches the qualifiers sample.
+#: Recovering the large-batch gain there is a separate piece of work with its own measurements: it
+#: needs the decisions made on the device (a device-side key, a device-side partition) or the cost
+#: model re-calibrated on the card, and neither is this ticket.
+_CUDA_IS_NOT_THE_CPU = True
+
+#: The smallest alpha ``_alpha_blend`` can act on, MEASURED against that function over every uint8
+#: contrast by ``scratch/step6/raster2d/alpha_bound.py``: 2.98e-8 = 2^-25, reached at img=1,
+#: colour=0. The two directions are not symmetric and the asymmetry is the whole point. Painting a
+#: bright colour onto a dark pixel needs ``a * |img - colour| >= 1`` before the truncation sees it,
+#: i.e. ``a >= 1/255``. Darkening a bright one goes through ``img * (1 - a)``, and ``1 - a`` rounds
+#: to exactly 1.0 in float32 for every ``a`` below the spacing at 1.0 -- so the threshold there is a
+#: property of float32 and is four orders of magnitude smaller. A bound has to hold for the pixel
+#: that is easiest to move, so this is the smaller of the two.
+#:
+#: The module docstring used to say the tail was effectively unbounded and that a Gaussian dot could
+#: not be cropped. It can: below this alpha the blend is the identity, and a normalised Gaussian is
+#: below it beyond 5.89 sigma.
+_ALPHA_FLOOR = 2.0 ** -25
+
+#: ``d/sigma`` at which the normalised dot drops under ``_ALPHA_FLOOR``, for a peak sitting exactly
+#: on a sample. ``exp(-d^2 / 2 s^2) < T`` gives ``d > s * sqrt(2 ln(1/T))``.
+_DOT_SIGMAS = math.sqrt(2.0 * math.log(1.0 / _ALPHA_FLOOR))
+
+
+def _dot_window(pos, sigma):
+    """``(k,4)`` int64 pixel windows outside which a normalised Gaussian dot cannot move a pixel.
+
+    ``_gaussian_dot`` divides by the frame's own maximum, so the profile that reaches
+    ``_alpha_blend`` is ``exp(-(d^2 - m^2) / 2 s^2)`` where ``m`` is the distance from the centre to
+    the largest sample IN THE FRAME -- not to the centre itself. Two consequences, and the second is
+    the one that is easy to get wrong:
+
+      * for a centre inside the frame, ``m`` is at most half a pixel in each axis, so the normalised
+        tail is the un-normalised one widened by a fraction of a sigma;
+      * for a centre OUTSIDE it -- which ``render(states)`` permits, since a caller may pass any
+        state and only ``step`` clamps -- ``m`` is the distance to the nearest in-frame sample and
+        can be large. The normalisation then rescales the whole dot so that its in-frame maximum is
+        1, and a bound that ignored that would crop a dot that is painting at full strength. So
+        ``m`` is measured rather than assumed, and the window grows with it.
+
+    The window always contains the in-frame argmax, which is what lets the caller take the maximum
+    over the window and get the frame's maximum: the Gaussian decreases with distance from the
+    centre, so its largest in-frame sample is the in-frame sample nearest the centre, and that
+    sample is within ``m <= d`` of the centre by construction.
+    """
+    x, y = pos[:, 0], pos[:, 1]
+    # the nearest in-frame SAMPLE; _grids puts samples on integers 0..IMG-1
+    mx = x.round().clamp(0, IMG - 1)
+    my = y.round().clamp(0, IMG - 1)
+    m2 = (x - mx) ** 2 + (y - my) ** 2
+    # Plus a pixel. The radius is exact for exact arithmetic and the reviewer's 108,000-state
+    # boundary scan found no failure without it, but every term in it -- the sqrt, the log inside
+    # _DOT_SIGMAS, the squares -- is float32 or float64 rounding away from the pixel it decides, and
+    # the bound has no slack of its own. One pixel of window costs a row of samples and buys the
+    # whole question.
+    d = torch.sqrt((sigma.reshape(-1) * _DOT_SIGMAS) ** 2 + m2) + 1.0
+    c0 = torch.ceil(x - d).clamp(0, IMG)
+    c1 = torch.floor(x + d).clamp(0, IMG - 1) + 1
+    r0 = torch.ceil(y - d).clamp(0, IMG)
+    r1 = torch.floor(y + d).clamp(0, IMG - 1) + 1
+    return torch.stack([r0, r1, c0, c1], dim=1).to(torch.int64)
+
+
 def _alpha_blend(img_u8: torch.Tensor, alpha: torch.Tensor, rgb: torch.Tensor) -> torch.Tensor:
     """``uint8 -> float32 -> img*(1-a) + c*a -> uint8``, exactly as the reference composites.
 
@@ -448,12 +536,139 @@ class _SWMNavBase(StableEnv):
     def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
         k = hi - lo
         sl = lambda p: sty[p][lo:hi]
-        return self.blend_dots(self.base_image(sl, k), s[lo:hi], sl, k)
+        return self.blend_dots(self._base_image(sty, lo, hi), s[lo:hi], sl, k)
+
+    #: Baked base images, keyed on the bytes of the style row that produced them. Bounded, and
+    #: cleared wholesale rather than evicted one at a time — the same shape, and for the same
+    #: reasons, as ``render/raster2d.py``'s ``_BASE_CACHE``.
+    _BAKE_CACHE: dict = {}
+    _BAKE_CACHE_MAX = 64
+
+    def _base_image(self, sty, lo: int, hi: int) -> torch.Tensor:
+        """``base_image`` for rows ``[lo, hi)``, built once per DISTINCT style row rather than per row.
+
+        The base image — background fill, wall stripe, doors, zone tints, border — is a pure function
+        of the style and of constants of the family. It is not a function of the state: the agent and
+        the target arrive later, through ``blend_dots``. Measured on Oscar at one thread and batch 64
+        it was 49% of TwoRoom's render, 32% of TwoRoomTarget's and 23% of Piecewise's, rebuilt from
+        scratch on every call and materialised at ``(k,224,224,3)`` even when every row of the batch
+        asked for the same picture. That is section 7's "repeated construction of static scene data",
+        and the batch-uniform case — which is every render at the default appearance, so every frozen
+        corpus and every benchmark row — is the one that pays for it k times over.
+
+        So the rows are grouped by the bytes of their style, each distinct row is built ONCE through
+        the subclass's own ``base_image``, and the result is expanded or gathered back to ``k``.
+
+        **The key is the whole style row, not the leaves this env happens to read.** A key listing
+        the relevant leaves would be smaller and would go stale the day somebody adds a leaf that
+        feeds the base image and forgets to declare it — a wrong key is a stale picture, which is the
+        one failure a cache must not have. Keying on everything can only cost a miss: two rows that
+        differ in ``agent.color`` alone are baked twice and draw the same thing.
+
+        Render purity holds because the key IS the content. Two calls with the same style get the
+        same bytes and therefore the same image no matter what ran in between, and a call with a
+        different style cannot reach the first one's entry. Batch and order invariance hold because a
+        row's group is decided by its own bytes: a permuted batch yields the same groups and the same
+        images, gathered back in the caller's order.
+
+        The expanded result is a read-only view of the cached tensor by construction — an in-place
+        write to an expanded tensor raises — and the only consumer, ``_alpha_blend``, widens it to
+        float32 first, which copies.
+        """
+        k = hi - lo
+        if self.device.type == "cuda":
+            return self.base_image(lambda p: sty[p][lo:hi], k)          # see _CUDA_IS_NOT_THE_CPU
+        rows = sty.values[lo:hi]
+        # ONE host transfer, the same trick ``raster2d._static_base`` uses: the bytes are needed for
+        # the key anyway, so the grouping comes free with them. On the CPU the transfer is a copy; on
+        # a GPU it is a SYNCHRONISATION, which is why the branch above exists.
+        blob = rows.detach().cpu().contiguous().numpy().tobytes()
+        w = blob and len(blob) // k or 0
+        keys = [blob[i * w:(i + 1) * w] for i in range(k)] if w else [b""] * k
+        order: dict = {}
+        for i, key in enumerate(keys):
+            order.setdefault(key, []).append(i)
+        if len(order) == k and k > 1:
+            # every row is different: grouping buys nothing and the gather would cost something
+            return self.base_image(lambda p: sty[p][lo:hi], k)
+
+        cls = type(self).__name__
+        plates = []
+        for key, idx in order.items():
+            ck = (cls, int(self.fixed_size), str(self.device), key)
+            hit = _SWMNavBase._BAKE_CACHE.get(ck)
+            if hit is None:
+                first = lo + idx[0]
+                hit = self.base_image(lambda p, a=first: sty[p][a:a + 1], 1)
+                if len(_SWMNavBase._BAKE_CACHE) >= self._BAKE_CACHE_MAX:
+                    _SWMNavBase._BAKE_CACHE.clear()
+                _SWMNavBase._BAKE_CACHE[ck] = hit
+            plates.append(hit)
+        if len(plates) == 1:
+            return plates[0].expand(k, IMG, IMG, 3)
+        pick = torch.empty(k, dtype=torch.long, device=self.device)
+        for g, (_, idx) in enumerate(order.items()):
+            pick[torch.as_tensor(idx, device=self.device)] = g
+        return torch.cat(plates, dim=0)[pick]
 
     def blend_dots(self, img, s, sl, k) -> torch.Tensor:
         """The alpha compositing half, identical in both official envs. Agent last, over everything."""
-        return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, s[:, 0:2], sl("agent.radius")),
-                            sl("agent.color"))
+        return self._blend_dot(img, s[:, 0:2], sl("agent.radius"), sl("agent.color"))
+
+    def _blend_dot(self, img, pos, sigma, colour) -> torch.Tensor:
+        """``_alpha_blend(img, _gaussian_dot(...), colour)``, evaluated only where it can act.
+
+        Same arithmetic, same lattice, fewer pixels. ``_dot_window`` gives the region outside which
+        the normalised dot is below ``_ALPHA_FLOOR``, and below that alpha the blend is the identity,
+        so every pixel outside the window keeps the value it already had — which is what ``img``
+        already holds. The window is a BOUND, derived from the reference's own arithmetic and
+        measured against it, so this cannot change a picture; ``tests/unit`` and the frozen replay
+        hold that rather than leaving it as an argument.
+
+        The batch is grouped by ``raster2d._row_groups``, the same partition the 2-D rasterizer uses
+        and for the same reason: one window over a batch of scattered agents is the whole frame
+        again, and quantising each row's window ORIGIN onto a grid of the window size gives a
+        partition whose size is bounded by the frame rather than by the batch. Sharing that function
+        means the repo has one grouping rule with one set of measured constants, rather than a second
+        one that nothing calibrated.
+
+        The maximum the normalisation divides by is taken over the WINDOW and is nonetheless the
+        frame's maximum: a Gaussian decreases with distance from its centre, so its largest in-frame
+        sample is the in-frame sample nearest the centre, and ``_dot_window`` always contains that
+        sample. That is the one property of this crop that is not obvious, and it is why the window
+        has to be built around the centre rather than around the frame.
+        """
+        from ..render.raster2d import _row_groups
+
+        k = int(pos.shape[0])
+        if self.device.type == "cuda":
+            return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
+        win = _dot_window(pos, sigma)
+        wins = _row_groups(win.cpu().numpy(), *(int(v) for v in
+                           (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max())))
+        if len(wins) == 1 and wins[0][0] is None:
+            r0, r1, c0, c1 = wins[0][1:]
+            if (r1 - r0) * (c1 - c0) >= IMG * IMG:
+                return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
+        # ``clone``, never ``contiguous``. ``img`` may BE a cached base plate -- at k == 1 an
+        # ``expand`` to its own shape returns the tensor itself and ``contiguous()`` on something
+        # already contiguous returns it again, so the loop below would paint the agent into the
+        # cache and every later render of that style would come back with a stale dot on it. Caught
+        # by the order-invariance and purity checks in scratch/step6/raster2d/cpu_digest.py, which
+        # is what they are for; ``clone`` copies unconditionally.
+        out = img.expand(k, IMG, IMG, 3).clone()
+        for rows, r0, r1, c0, c1 in wins:
+            if r1 <= r0 or c1 <= c0:
+                continue
+            gy, gx = self._gy[r0:r1, c0:c1], self._gx[r0:r1, c0:c1]
+            if rows is None:
+                dot = _gaussian_dot(gy, gx, pos, sigma)
+                out[:, r0:r1, c0:c1] = _alpha_blend(out[:, r0:r1, c0:c1], dot, colour)
+            else:
+                idx = torch.as_tensor(rows, device=out.device)
+                dot = _gaussian_dot(gy, gx, pos[idx], sigma.reshape(-1)[idx])
+                out[idx, r0:r1, c0:c1] = _alpha_blend(out[idx, r0:r1, c0:c1], dot, colour[idx])
+        return out
 
     def _fill(self, k, color) -> torch.Tensor:
         """``(k,H,W,3)`` uint8 flat fill — the reference's ``img[c].fill_(int(color[c]))``."""
@@ -737,9 +952,14 @@ class TwoRoomTarget(_TwoRoomBase):
         return super().step(action)
 
     def blend_dots(self, img, s, sl, k) -> torch.Tensor:
-        """Target first, agent over it — the reference's order, and visible where the two overlap."""
-        img = _alpha_blend(img, _gaussian_dot(self._gy, self._gx, s[:, 2:4], sl("target.radius")),
-                           sl("target.color"))
+        """Target first, agent over it — the reference's order, and visible where the two overlap.
+
+        Two windowed blends rather than two full-frame ones, and the order between them is what
+        makes that sound: each blend takes the uint8 image the previous one produced, so cropping
+        the first cannot move a pixel the second then reads differently — outside its own window the
+        first blend is the identity, which is exactly what the second would have read anyway.
+        """
+        img = self._blend_dot(img, s[:, 2:4], sl("target.radius"), sl("target.color"))
         return super().blend_dots(img, s, sl, k)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
