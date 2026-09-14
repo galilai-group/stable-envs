@@ -573,8 +573,9 @@ design question and it is open.
    without a resolver conflict into a venv LAYERED on `se-step6`** — a fresh venv whose
    site-packages inherits `se-step6`'s through a `.pth`, so torch 2.14.0+cu126 and pygame are the
    certified ones and `se-step6` itself was never written to (`$SCR/venvs/se6-gfxdraw-box2d`,
-   manifest in `characterize/venv_box2d_manifest.json`). That is evidence about a layered venv, not
-   about the shipping environment's resolver. It measured *level with or better than* `-O3` C++ on
+   `characterize/venv_box2d_manifest.json`: numba 0.67.0, llvmlite 0.49.0, torch 2.14.0+cu126,
+   numpy 2.5.3, pygame 2.6.1, gymnasium 1.3.0, Box2D 2.3.8, python 3.12.9). That is evidence about
+   a layered venv, not about the shipping environment's resolver. It measured *level with or better than* `-O3` C++ on
    three of four envs —
    so "a pip dependency and an LLVM JIT at import" is a live alternative to "a compiler in the
    build and a binary in the wheel", and it should be priced against `cpp_extension` rather than
@@ -662,9 +663,12 @@ because the kernel stores the frame directly: no planar surface, no transient, n
 
 The **VRAM figures above come from the sweep shards**, where `bench_gpu_vs_cpu.gpu_throughput`
 resets the peak counter per cell. The `peak_gb` recorded in the first committed `paired_gpu` run
-does NOT mean the same thing — it was a process high-water mark, so its "after" arm inherited the
-"before" arm's peak and says nothing about the kernel. `paired_gpu.py` now resets per arm and
-records `peak_gb_is_per_arm`; the claim rests on the sweep either way.
+did NOT mean the same thing — it was a process high-water mark, so its "after" arm inherited the
+"before" arm's peak and said nothing about the kernel. `paired_gpu.py` now resets per arm and
+records `peak_gb_is_per_arm`, and the re-run (job 6352593, `gpu2107`) **reproduces the sweep's
+figures independently**: 8.85 -> 3.12, 7.65 -> 3.00, 8.64 -> 3.00, 8.64 -> 3.00, 9.14 -> 3.13 GB.
+Two measurements taken by different code on different nodes agreeing to 0.02 GB is a better warrant
+than the one the corrected artifact replaces.
 
 Cumulatively against the pre-Step-6 baseline on a 3090: Acrobot 16,661 -> 160,896 frames/s, **9.7x**.
 
@@ -672,7 +676,7 @@ Cumulatively against the pre-Step-6 baseline on a 3090: Acrobot 16,661 -> 160,89
 
 | check | result |
 |---|---|
-| `tests/gpu/test_gfxdraw_classic.py` (both joints, 4 state classes, per-row style, chunk/order invariance, the CPU-path assertion) | **55 passed** |
+| `tests/gpu/test_gfxdraw_classic.py` (both joints x 4 state classes x 2 styles, the end-to-end per-row guard, chunk/order invariance, the CPU-path assertion) | **80 passed** (job 6352593) |
 | `tests/gpu/test_fast_paths.py -k gfxdraw-classic` (the two new cases: `env.render` with the kernel on vs off) | **10 passed** |
 | `tests/gpu/test_gfxdraw_fused.py` (CarRacing's own identity test), Box2D venv | **4 passed** |
 | frozen Step 4 replay **under the kernel**, cuda | **5/5**: every check status and every oracle digest, `distinct_colors` and `mean_pixel` **identical to Step 4** |
@@ -723,6 +727,20 @@ kernel, which is a different and much less general piece of work than this one.
 Also settled here: **CarRacing's own fused identity test, 4 passed** in the Box2D venv. In job
 6349362 it collected 4 cases and SKIPPED all four for want of Box2D, which the suite's coverage
 guard correctly reported as a failure rather than a pass.
+
+**Repeated on a second card (job 6352593, `gpu2107`), which is what makes the tier assignment
+robust rather than a property of one node.** The official renderer is slower there (Acrobot 324.6
+against 410.6 frames/s), so R comes out higher, and the speedup is the quantity that travels:
+
+| config | R after, `gpu2264` | R after, `gpu2107` | speedup, both nodes | clears R >= 500? |
+|---|---|---|---|---|
+| Acrobot | 389.8 | 440.1 | 4.30x / 4.29x | no, on both |
+| CartPole | 347.0 | 394.9 | 4.33x / 4.32x | no, on both |
+| MountainCar | 295.0 | 321.9 | 3.86x / 3.58x | no, on both |
+| MountainCarContinuous | 296.8 | 322.9 | 3.85x / 3.58x | no, on both |
+| Pendulum | 691.4 | 785.3 | 3.76x / 3.52x | **yes, on both** |
+
+`frames identical: True` on both nodes, for all five, checked inside each timing job.
 
 ### Two things to carry to Step 8 (recorded, not fixed — both off the certification path)
 
