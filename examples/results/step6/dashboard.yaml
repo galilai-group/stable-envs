@@ -420,10 +420,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-cpu-3d
   oscar_copy: $SCR/se6/cpu-3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 6505e71
+  head_sha: ccba12d (M1 PATCH, in review)
   agent_model: fable
   wave: wave2
-  status: implementation (Phase 2 approved by Sami 2026-09-14; M1 shared CPU-native backend for DMC trackcom four; Fetch = feasibility ticket CPU3D-FETCH-1)
+  status: 'review (M1 PATCH: stable_envs/render/cpu3d.py + honest dispatch; CPU3D-FETCH-1 BLOCKER measured)'
   authorization: Phase 2 implement (DMC four) + Fetch feasibility only
   goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
   affected_configs:
@@ -450,25 +450,31 @@ workstreams:
     hypothesis: 'DMC four: arch (d) baked skybox plate (99.4-99.7% constant) + analytic floor (MJWarp PLANE UV law) + compacted capsule cast on mover window + MJWarp-law shader -> 260-800 fps = CPU_FASTER
       (S_cpu 24-30, cores 0.04-0.12); CPU_FAST only via fused SIMD whole-frame kernel (M2), unproven; shared fused CPU cast to be owned by raycast3d'
   correctness:
-    targeted_tests: n/a
-    step4_replay: 'n/a (Phase 2 obligation: trackcom four byte-identical on cuda; new CPU shard)'
-    gate_a: unchanged
-    fidelity: 'OPEN: frozen MJWarp digests are a soft oracle (0.02% run-to-run noise; baseline misses trackcom digests by 0.16-0.61/255); proposed new cross-backend within-1/mean bound + per-device visual
-      declaration under 3.11 reference -> needs Sami'
+    targeted_tests: tests/unit/test_cpu3d.py 15 pass; tests/unit 674 pass / 2 pre-existing
+    step4_replay: 'cuda replay of the four cells integration vs branch IDENTICAL (job 6354766, gpu2106); CPU frames vs our MJWarp frames on 64 frozen states: exact 0.982-0.997, within-1 >= 0.9997, mean
+      0.004-0.018/255'
+    gate_a: 'CPU under declared 3.11 reference (job 6354767): all mandatory checks pass on all four; visual bounds PASS 5.12/0.872/0.662, 4.52/0.898/0.687, 8.03/0.711/0.825, 5.95/0.742/0.881 vs ceilings
+      6.5/5.7/10.5/8.2; Walker corpus downsample FAIL same as GPU (bound provenance); 3.12 arm BLOCKED by design'
+    fidelity: same declared visual-tier contract; backend_agreement_exact_frac_min=0.99 declared Scene2D-only/not_applicable here, would read 0.982-0.997 -> escalated, bound untouched
   performance:
     cpu_before: CPU_UNMEASURED / DEVICE_NOT_HONOURED (trackcom four); Fetch no CPU route
-    cpu_after: null
+    cpu_after: 'CPU_FASTER + BELOW_G4 on all four (node2333, paired llvmpipe spread 1.08-1.13): Cheetah 115.6 fps S_cpu 4.93 cores 0.017; Hopper 187.8 / 6.86 / 0.028; Walker 63.1 / 2.52 / 0.008; Humanoid
+      45.8 / 4.22 / 0.006; 60-75% of time in raycast3d unfused cast (RAYCAST-5 should lift). Fetch: span rasteriser on real 15 meshes/31,720 tris at 480px = 277-327 ns/tri, 97-114 fps, cores 0.11-0.15;
+      CPU_FAST needs <=36-41 ns/tri -> 7-9x short, setup-bound -> BLOCKER'
     gpu_before: unchanged
-    gpu_after: null
+    gpu_after: unchanged (cuda IDENTICAL)
     batch_scales: null
     no_large_batch_regression: null
-  pixels_changed: 'no'
-  semantic_followup: none now; DINO tripwire on CPU frames in Phase 2
+  pixels_changed: no (cuda); CPU frames are new
+  semantic_followup: none required (DINO tripwire optional)
   review:
-    reviewer: null
+    reviewer: opus (independent, spawned)
     verdict: null
   slurm_jobs:
   - 6345025
+  - 6354766
+  - 6354767
+  - 6354890
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'Phase-1 FINDING 2026-09-13. Coordinator: design direction (d) accepted in principle; Phase 2 NOT started. Escalated: (1) certification contract for a non-MJWarp CPU backend; (2) fund M1 (CPU_FASTER,
@@ -476,6 +482,9 @@ workstreams:
     (fused CPU cast, raycast3d-owned) queued after RAYCAST-2.'
   - '2026-09-14 Sami approved Phase 2 under the backend-may-differ/semantics-may-not policy (see decisions). Contract: same frozen visual-tier bounds vs the official reference under the declared 3.11 pair;
     Gate-A mandatory checks on CPU; backend-agreement bound handled per its declared applicability (escalate if it would fail a semantically-equal renderer at exact-frac level, never weaken).'
+  - 'M1 delivered 2026-09-14 (ccba12d). Escalations: (1) backend_agreement_exact_frac_min=0.99 is declared Scene2D-only; extending it to 3-D cross-backend would be a contract change (Step 8/Sami); (2) GPU
+    path captures its CUDA graph outside gl_rounding so certified GPU frames are truncated, not rounded - fixing moves the four cuda digests (re-freeze question, Sami/Step 8); CPU backend truncates to match.
+    No raycast3d interface change needed.'
 - workstream: tilemap
   brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
   branch: step6/tilemap
