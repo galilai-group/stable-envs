@@ -2352,3 +2352,38 @@ The diff against `step6/integration` is **+182/-0 lines in one file**: a pure in
 line of the old `composite` deleted or edited. That the off-path is verbatim is therefore visible in
 `git diff --stat` rather than something to be taken on trust, and it was also checked directly by
 extracting both bodies and comparing them character for character.
+
+## The CPU sweep: interleaved on the real function, then a Step-3-shaped pair
+
+Job **6366607**, `node2317`, `--partition=batch --qos=normal`, `OMP_NUM_THREADS=MKL_NUM_THREADS=1`,
+`torch.set_num_threads(1)`, Intel Xeon Platinum 8268. Both parts in ONE job on ONE node.
+
+### Part 1 — four interleaved legs, off/on/off/on, on this branch
+
+`off2/off1` is a ratio of two runs of IDENTICAL code, so it measures the harness and nothing else.
+RAYCAST-5 put that at 11.7 % on a shared batch node, which is why a single before/after pair is not
+evidence at this resolution.
+
+| env | B | off1 | off2 | **noise** | on1 | on2 | **signal** |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `PointmazeLargeNavigate` | 1 | 284.6 | 335.5 | 1.18 | 473.1 | 405.7 | 1.417 |
+| `PointmazeLargeNavigate` | 16 | 1,082.8 | 1,279.0 | 1.18 | 3,532.8 | 3,465.3 | **2.963** |
+| `PointmazeLargeNavigate` | 64 | 1,363.1 | 1,430.3 | 1.05 | 5,425.4 | 5,361.1 | **3.861** |
+| `PointmazeLargeNavigate` | 256 | 1,313.8 | 1,279.2 | 0.97 | 5,578.0 | 5,537.0 | **4.287** |
+| `PointmazeMediumNavigate` | 1 | 282.2 | 291.8 | 1.03 | 369.7 | 388.6 | 1.321 |
+| `PointmazeMediumNavigate` | 16 | 982.0 | 974.5 | 0.99 | 2,116.1 | 2,173.8 | **2.193** |
+| `PointmazeMediumNavigate` | 64 | 1,045.3 | 1,031.1 | 0.99 | 2,678.5 | 2,704.5 | **2.592** |
+| `PointmazeMediumNavigate` | 256 | 974.8 | 964.5 | 0.99 | 2,588.9 | 2,424.0 | **2.585** |
+| `AntmazeGiantNavigate` | 1 | 50.2 | 44.2 | 0.88 | 52.3 | 50.5 | 1.089 |
+| `AntmazeGiantNavigate` | 16 | 254.1 | 240.8 | 0.95 | 481.5 | 438.9 | **1.859** |
+| `AntmazeGiantNavigate` | 64 | 227.7 | 230.4 | 1.01 | 734.2 | 697.2 | **3.125** |
+| `AntmazeGiantNavigate` | 256 | 197.3 | 199.3 | 1.01 | 800.4 | 765.7 | **3.948** |
+| `HumanoidmazeMediumNavigate` | 1 | 33.8 | 33.6 | 0.99 | 38.9 | 40.3 | 1.175 |
+| `HumanoidmazeMediumNavigate` | 16 | 138.0 | 145.5 | 1.05 | 266.1 | 272.4 | **1.899** |
+| `HumanoidmazeMediumNavigate` | 64 | 111.0 | 120.7 | 1.09 | 218.9 | 225.9 | **1.919** |
+| `HumanoidmazeMediumNavigate` | 256 | 98.3 | 99.0 | 1.01 | 240.0 | 243.0 | **2.448** |
+
+**Worst off-vs-off spread on identical code, certification batches only: 1.181x.** Every signal at
+every certification batch clears it by a wide margin; the narrowest is `HumanoidmazeMediumNavigate`
+at B=64, 1.92x against 1.09x. B=1 is shown but does not gate — the frozen spec forbids certifying on
+it (`gpu.never_certify_on_batch`).
