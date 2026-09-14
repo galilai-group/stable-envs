@@ -265,10 +265,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raster2d
   oscar_copy: $SCR/se6/raster2d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: '15efce1f732322f877cd2efd376aafa2211ce172 (round 2: RASTER2D-1c, RASTER2D-2, SWMNAV-1)'
+  head_sha: 15cfaba0c917abea69718e93f6f9fd23cc2959c8 (merged)
   agent_model: opus
   wave: wave2
-  status: 'partially merged (through b0c94ad: RASTER2D-1c + RASTER2D-2); SWMNAV-1 (d862e2a) held for GPU small-batch regression fix'
+  status: merged
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts'
   affected_configs:
@@ -292,9 +292,10 @@ workstreams:
   performance:
     cpu_before: 'Step-5 baseline: PushT 115 fps, SimplePointMaze 3, TwoRoom 261, TwoRoomTarget 189, Piecewise 425, PiecewiseZones 215 (1 thread)'
     cpu_after: 'round 2 (node1828, job 6349273): PushT 2,046 (17.8x vs baseline, S_cpu 5.49), SPM 243 (81x, S_cpu 4.69), TwoRoom 1,623 (6.2x, S_cpu 5.08), TwoRoomTarget 731 (3.9x, 3.66), Piecewise 1,435
-      (3.4x, 3.79), PiecewiseZones 1,401 (6.5x, 5.28); cores_cpu 0.22-0.55 -> all CPU_FASTER, none CPU_FAST (residual = uint8 write bandwidth)'
+      (3.4x, 3.79), PiecewiseZones 1,401 (6.5x, 5.28); cores_cpu 0.22-0.55 -> all CPU_FASTER, none CPU_FAST (residual = uint8 write bandwidth); SWMNAV-1 re-confirmed on shipping code (job 6352386, node2334):
+      PushT 3.2x, SPM 2.3x, TwoRoom 4.7x, TwoRoomTarget 3.2x, Piecewise 2.9x, PiecewiseZones 5.2x vs round-1; S_cpu>=5 rows straddle by node (TwoRoom 4.32 node2334 vs 5.08 node1828); all CPU_FASTER (BELOW_G4)'
     gpu_before: PushT 1.93M fps, SPM 43.7k (3090)
-    gpu_after: PushT/SPM/Piecewise flat (0.98-0.99); TwoRoom 1.41x, PiecewiseZones 1.14x, TwoRoomTarget 1.13x (swm_nav has no kernel); no regression
+    gpu_after: 'cuda paths run the replaced arithmetic; same-process interleaved A/B (job 6353691, 3090): worst 0.979 (Piecewise B=1), 0.99-1.00 elsewhere, frames identical; PushT/SPM unchanged'
     batch_scales: n/a
     no_large_batch_regression: unchanged
   pixels_changed: 'no'
@@ -304,7 +305,8 @@ workstreams:
     verdict: 'Round 1 APPROVE-WITH-CHANGES (applied). Round 2 (2026-09-14): RASTER2D-1c and RASTER2D-2 APPROVE (grouping exact, deterministic, order-independent; alpha floor verified over all 65,536 pairs;
       108k-state boundary scan 0 diffs; mutation counts reproduced; merge-tree clean). SWMNAV-1 BLOCKED: committed gpu_before/after (job 6349274) shows TwoRoom 0.48x/0.55x, TwoRoomTarget 0.32x/0.40x, Piecewise
       0.19x/0.35x, PiecewiseZones 0.27x/0.43x at B=16/64 (4-6 host syncs per render, CPU-calibrated grouping on cuda) while findings said no regression; plus per-leg SHA stamping on GPU launcher, multi-plate
-      gather branch untested, citation mismatch.'
+      gather branch untested, citation mismatch. -> SWMNAV-1 GPU regression fixed (c96f886): cuda runs replaced arithmetic; worst 0.979 >= 0.97 bar; gather-branch test added; per-leg stamping; +1 px dot
+      margin. Merged.'
   slurm_jobs:
   - 6344858(cancelled)
   - 6346289
@@ -314,12 +316,18 @@ workstreams:
   - 6346490
   - 6349273
   - 6349274
+  - 6352385
+  - 6352386
+  - 6353295
+  - 6353691
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d).'
   - 'Round 2 2026-09-14: RASTER2D-2 row grouping by quantised box origin (group count bounded by frame; measured cost constants) 2.1-3.1x; SWMNAV-1 base_image per distinct whole style row + 5.89-sigma dot
     window (alpha floor 2^-25 measured) 3.1-12x; RASTER2D-1c conformance backend-agreement reads scene device. Mutation-checked tests; an aliasing bug (cached plate painted in place at k=1) was caught by
     purity/order columns and fixed. Per-leg SHA stamping fixed. All six configs digest-identical on cuda; 650/650 fuzz; GPU suite 183/0.'
+  - 'Shard layout: sweep/ top level holds only current-tree shards (certify.py:merge keys on env/device/host/threads, so a before/after pair collides); before legs in before_legs/, superseded rounds under
+    superseded_*/ with READMEs.'
 - workstream: gfxdraw
   brief: STEP_06_AGENT_BRIEFS/06_GFXDRAW.md
   branch: step6/gfxdraw
