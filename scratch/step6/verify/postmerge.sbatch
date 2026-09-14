@@ -43,6 +43,20 @@ for S in $SHARDS; do
   echo "SHARD $S rc=$?"
 done
 
+# ---- 1b. optional: the four trackcom cells under se-step5 ----------------------------------------
+# TRACKCOM5=1 adds the arm the coordinator names for these cells. It is a minute of work and it keeps
+# the pair from section 5 of the report alive, so a change under them could never be confused again
+# with the venv difference that closed MJWARP-1.
+if [ "${TRACKCOM5:-0}" = 1 ]; then
+  for LEG in baseline integration; do
+    [ "$LEG" = baseline ] && T=$BASE || T=$TREE
+    PYTHONPATH=$T $SCR/venvs/se-step5/bin/python "$TREE/scratch/step6/raycast3d/replay_step4.py" \
+        --device cuda --configs DMCCheetahRun DMCHopperHop DMCHumanoidStand DMCWalkerWalk \
+        --out "$OUT/trackcom_se-step5_${LEG}${TAG}.json" 2>&1 | tail -8
+    echo "TRACKCOM5 $LEG rc=$?"
+  done
+fi
+
 # ---- 2. the full tests/gpu suite, one file at a time ---------------------------------------------
 # Collection is asserted separately from execution: tests/gpu/test_fast_paths.py was hand-merged
 # between two workstreams' blocks, and a file that fails to COLLECT reports zero failures.
