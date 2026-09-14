@@ -1,0 +1,131 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9916470389059392,
+     "fps": 3486.6728493680916,
+     "gb_per_s": 0.16869917914382576,
+     "loadavg": 8.31,
+     "peak_gb": 0.683044864,
+     "seconds_per_batch": 0.0002868063747882843,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 286.8063747882843
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9940611020538119,
+     "fps": 38914.96897651493,
+     "gb_per_s": 1.8828618589596986,
+     "loadavg": 8.31,
+     "peak_gb": 0.683044864,
+     "seconds_per_batch": 0.00041115283966064453,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 25.697052478790283
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9935384112881075,
+     "fps": 99768.69041853226,
+     "gb_per_s": 4.827208317210265,
+     "loadavg": 8.31,
+     "peak_gb": 0.685150208,
+     "seconds_per_batch": 0.0006414838135242462,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 10.023184586316347
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9940370650355108,
+     "fps": 154085.7629590432,
+     "gb_per_s": 7.455285555010346,
+     "loadavg": 8.31,
+     "peak_gb": 0.695631872,
+     "seconds_per_batch": 0.0016614124178886414,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6.489892257377505
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9955584307935427,
+     "fps": 146631.50229833613,
+     "gb_per_s": 7.094618607202697,
+     "loadavg": 8.31,
+     "peak_gb": 0.745078784,
+     "seconds_per_batch": 0.006983492523431778,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 6.819816917413846
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 267.733091372267,
+    "decode_fps_per_core": 5533.504699327608,
+    "h": 112,
+    "jpeg_bytes": 7845,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 4252.548861869428,
+    "n": 2480,
+    "raw_bytes": 48384,
+    "w": 144
+   },
+   "device": "cpu",
+   "env": "CraftaxClassic",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "error": "ModuleNotFoundError: No module named 'jax'"
+   },
+   "projected_to": [
+    "swm/CraftaxClassicPixels-v1"
+   ],
+   "reference_id": "Craftax-Classic-Pixels-v1",
+   "renderer_class": "CraftaxClassic",
+   "seconds": 1.42,
+   "shape": "112x144",
+   "size": 16,
+   "state_dim": 127,
+   "states_source": "sample_states",
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "cpu_count_logical": 48,
+  "cpu_count_physical": 48,
+  "device": "cpu",
+  "git_commit": null,
+  "git_dirty": false,
+  "host": "node2333.oscar.ccv.brown.edu",
+  "loadavg_end": 8.31,
+  "loadavg_start": 8.31,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6350070",
+  "slurm_nodelist": "node2333",
+  "timestamp": "2026-09-13T20:47:19-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "states_in": null,
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}
