@@ -5,24 +5,38 @@ so this directory holds exactly one measurement of each leg and the earlier ones
 `superseded_*/` subdirectories with their own READMEs. Nothing has been edited: a shard is a record
 of a run, and correcting the record is worse than recording that it was wrong.
 
-## Authoritative
+## Layout, and why the before legs are not in this directory
 
-| file | leg | tree | SHA | host | load | job |
-|---|---|---|---|---|---|---|
-| `cpu_1thread_{before,after}_{swm,pusht}.json` | CPU, 1 thread | `raster2d-preB` / `raster2d` | `1103326` / `c96f886` | `node2334` | 40.3 | `6352386` |
-| `gpu_before.json`, `gpu_after.json` | GPU, legs in that order | as above | as above | `gpu2101` | 32.6 | `6353295` |
-| `gpu_after_first.json`, `gpu_before_second.json` | GPU, **order reversed** | as above | as above | `gpu2101` | 34.7 | `6353295` |
+`scratch/step3/certify.py:merge` keys a run on `(env, device, host, threads)`, and a before shard and
+an after shard of the same sweep share all four. Left side by side, the merger would keep whichever
+has more measured cells and label a tier from it — possibly the BEFORE tree's numbers, silently. So
+the top level holds only the shards a tier should be computed from, which is the current tree, and
+everything else is one directory down.
+
+| file | what it is |
+|---|---|
+| `cpu_1thread_after_{swm,pusht}.json` | **the CPU certification shards.** `raster2d`, `c96f886`, 1 thread, `node2334`, load 40.3, job `6352386` |
+| `gpu_after.json` | **the GPU certification shard.** `raster2d`, `c96f886`, `gpu2101`, load 32.6, job `6353295` |
+| `before_legs/` | the matching `1103326` legs of the same two jobs — same node, same job, one per file. These are the denominators of every ratio in the findings and are not a second measurement of the same thing. |
+| `order_check/` | `gpu_after_first.json` / `gpu_before_second.json`, the GPU pair repeated with the leg order reversed, and `gpu_same_process_ab.json`, the in-process interleaved A/B that settled it. See below. |
 
 `before` is `1103326`, the approved RASTER2D-1c + RASTER2D-2 patch; `after` is this branch's HEAD.
 So these shards measure SWMNAV-1 and nothing else. Both legs of each pair ran in ONE job on ONE node,
 and each carries its own `git_commit` alongside `stable_envs_file`, which is the field that cannot be
 wrong about which tree ran — it is written from the import that actually resolved.
 
-**Why the GPU pair is measured twice with the order reversed.** A leg that always runs second runs on
-a warmer card. The spread within one tree's two runs came out the same size as the difference between
-the trees — PiecewiseZones read 1,031 and 1,075 f/s for the same code at batch 1 — so a single
-ordering is reporting drift. `gpu_same_process_ab.json`, from
-`scratch/step6/raster2d/gpu_same_process_ab.py`, settles it in one process instead.
+`before` is `1103326`, the approved RASTER2D-1c + RASTER2D-2 patch; `after` is this branch's HEAD.
+So these shards measure SWMNAV-1 and nothing else. Both legs of each pair ran in ONE job on ONE node,
+and each carries its own `git_commit` alongside `stable_envs_file`, which is the field that cannot be
+wrong about which tree ran — it is written from the import that actually resolved.
+
+**Why `order_check/` exists.** A leg that always runs second runs on a warmer card. The spread
+within one tree's two runs came out the same size as the difference between the trees —
+PiecewiseZones read 1,031 and 1,075 f/s for the same code at batch 1 — so a single ordering is
+reporting drift, and reversing it only gives a second biased sample. `gpu_same_process_ab.json`, from
+`scratch/step6/raster2d/gpu_same_process_ab.py` (job `6353691`), settles it in one process:
+interleaved, one warmed card, worst ratio 0.979 with every frame identical. It is not a Step-3-shaped
+shard and is kept out of the top level for that reason as well.
 
 ## Superseded
 
