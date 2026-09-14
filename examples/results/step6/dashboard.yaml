@@ -439,7 +439,7 @@ workstreams:
   head_sha: ccba12d (M1 PATCH, in review)
   agent_model: fable
   wave: wave2
-  status: 'review (M1 PATCH: stable_envs/render/cpu3d.py + honest dispatch; CPU3D-FETCH-1 BLOCKER measured)'
+  status: implementation (applying review changes; post-RAYCAST-5 re-run pending)
   authorization: Phase 2 implement (DMC four) + Fetch feasibility only
   goal: 'DESIGN/CHARACTERIZATION ONLY: genuine fast CPU path for MJWarp-only scenes'
   affected_configs:
@@ -484,8 +484,11 @@ workstreams:
   pixels_changed: no (cuda); CPU frames are new
   semantic_followup: none required (DINO tripwire optional)
   review:
-    reviewer: opus (independent, spawned)
-    verdict: null
+    reviewer: opus (independent)
+    verdict: 'APPROVE-WITH-CHANGES 2026-09-14: semantics verified line-for-line vs mujoco_warp render.py (camera, skybox, plane texgen, lighting, composition, headlight, constants, truncation); purity/order/chunk
+      with mixed styles reproduced; window-vs-full-frame and footprint-vs-all-hits byte-identical at 42/84/168 px; dispatch proven CUDA-free by import guard; gl_rounding defect confirmed from source and
+      signed pixels. Required: provenance stamps + re-run; inert --frac-bits knob and mislabelled ablation; document/test Swimmer6 construction raise on CPU; correct within-1/>2-level numbers; stale design
+      §2.3/§4.4; Fetch margin un-culled (~3.5-4.5x architecture-independent) + S_cpu arm; sweep shard gaps (batch 1024, self-label, max-load).'
   slurm_jobs:
   - 6345025
   - 6354766
@@ -501,6 +504,10 @@ workstreams:
   - 'M1 delivered 2026-09-14 (ccba12d). Escalations: (1) backend_agreement_exact_frac_min=0.99 is declared Scene2D-only; extending it to 3-D cross-backend would be a contract change (Step 8/Sami); (2) GPU
     path captures its CUDA graph outside gl_rounding so certified GPU frames are truncated, not rounded - fixing moves the four cuda digests (re-freeze question, Sami/Step 8); CPU backend truncates to match.
     No raycast3d interface change needed.'
+  - 'Review escalations: E1 backend_agreement bound is Scene2D-specific (category error to apply) -> nothing in the frozen contract binds CPU/GPU agreement for these cells; reviewer recommends a cross-backend
+    within1_min/mean_abs_max (e.g. 0.9990/0.03) plus per-device visual-tier statement, noting CPU frames'' distance to the official reference equals MJWarp''s to 3 decimals (6.513 vs 6.512, 6.205, 15.562,
+    6.291) - Sami decision. E2 gl_rounding: every shipped GPU frame of these four cells is truncated; fix is one line, moves four cuda digests (re-freeze). E3 cpu3d is a new consumer of the CPU cast ->
+    re-run after RAYCAST-5 merges. E4 CPU reference arm is llvmpipe vs declared hardware EGL (margins safe; record GL string). E5 cuda replay is integration-vs-branch identical, not frozen-oracle pass.'
 - workstream: tilemap
   brief: STEP_06_AGENT_BRIEFS/08_TILE_ATLAS_CPU.md
   branch: step6/tilemap
