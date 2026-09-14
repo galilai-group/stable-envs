@@ -1450,8 +1450,11 @@ whole module without a device, so it has nothing to say about a CPU-only switch.
 B=8 bundle whose other seven rows are a different scene, and compares bit patterns. Job `6351415`,
 `node1827`: **27 passed** for that module (24 differential + 3 batch-invariance), and `tests/unit`
 overall **570 passed, 9 skipped, 2 failed** — both failures pre-existing and outside the authorised
-files (`render_mjwarp.py --help`, and the 9 stale citations from `dashboard.yaml` and two research
-docs).
+files: `render_mjwarp.py --help`, and `test_every_cited_scratch_path_resolves`, which after this
+commit is down to **two** unresolvable citations (`scratch/carracing/logs/` and
+`scratch/robocasa/out/corpus`), both cited from `docs/research/` and
+`examples/results/step6/texture-fidelity/findings.md` and neither from this workstream. Verified by
+re-running that module against the synced tree with this document in place.
 
 ### The five jobs this section is made of
 
