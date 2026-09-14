@@ -626,38 +626,55 @@ Cumulatively against the pre-Step-6 baseline on a 3090: Acrobot 16,661 -> 160,89
 |---|---|
 | `tests/gpu/test_gfxdraw_classic.py` (both joints, 4 state classes, per-row style, chunk/order invariance, the CPU-path assertion) | **55 passed** |
 | `tests/gpu/test_fast_paths.py -k gfxdraw-classic` (the two new cases: `env.render` with the kernel on vs off) | **10 passed** |
+| `tests/gpu/test_gfxdraw_fused.py` (CarRacing's own identity test), Box2D venv | **4 passed** |
 | frozen Step 4 replay **under the kernel**, cuda | **5/5**: every check status and every oracle digest, `distinct_colors` and `mean_pixel` **identical to Step 4** |
 | `replay_digests.py --device cuda` | **5/5 bit-identical** |
 | LunarLander and CarRacing on CUDA, baseline tree vs branch | **byte-identical**, both |
 
 **Pixels changed: no.** Semantic follow-up: **none** — section 15's first case.
 
-### R, and why this job does not settle it
+### R, settled by pairing (job 6351758, `gpu2264`, RTX 3090)
 
-R's denominator is the official CPU renderer, and it moved by a factor of two **between the two
-arms of one job on one node**: Acrobot 428.2 then 229.8 frames/s, CartPole 488.4 then 246.1, while
-MountainCar's barely moved (448.3 against 439.1). The reference is a single-threaded pygame loop on
-the same node whose CPU is feeding the GPU, and `bench_step3` times it in a block after the sweep
-rather than interleaved. So:
+In job 6349362 R's denominator moved by a factor of two **between the two arms of one job on one
+node** — Acrobot 428.2 then 229.8 frames/s, CartPole 488.4 then 246.1, while MountainCar's barely
+moved — and the class-R `GPU_FAST` bar of 500 sat inside the resulting range. The reference is a
+single-threaded pygame loop on the same node whose CPU is feeding the GPU, and `bench_step3` times
+it in a block after the sweep rather than interleaved.
 
-| config | R, conservative (higher) reference | R, after-arm reference | cores after |
-|---|---|---|---|
-| Acrobot | 376 | 700 | 161.6 |
-| CartPole | 381 | 756 | 163.3 |
-| MountainCar | 327 | 334 | 105.0 |
-| MountainCarContinuous | 325 | 332 | 104.9 |
-| Pendulum | 667 | 667 | 126.9 |
+`paired_gpu.py` interleaves it: a reference burst, then a render burst, round after round, in one
+process, both arms. The denominator is stable to within 2% across arms once paired (Acrobot 407.2
+against 410.6, CartPole 517.9/527.8, MountainCar 483.6/492.5, MCC 490.1/488.2, Pendulum
+254.7/253.8), which is what makes the ratio a measurement.
 
-**The class-R `GPU_FAST` bar of 500 sits inside that range**, so the tier for four of the five is
-undecided by this job: the two envs whose reference was STABLE land at 325-334, and the two whose
-reference halved read 376 or 756 depending on which half is believed. `cores` is 105-163 against a
-bar of 1, so `BELOW_G4` does not apply and R is the only open question.
+**B = 4,096, the headline batch:**
 
-Job **6351758** settles it the way `paired_cpu.py` settled `S_cpu`: `paired_gpu.py` interleaves a
-reference burst and a render burst round by round in one process, both arms, and reports the median
-of the per-round ratio with its spread. It also re-runs CarRacing's own fused identity test in the
-Box2D venv — in job 6349362 that test collected 4 cases and SKIPPED all four for want of Box2D,
-which the suite's coverage guard correctly reported as a failure rather than a pass.
+| config | f/s before | f/s after | x | official f/s | **R before** | **R after** | tier before -> after |
+|---|---|---|---|---|---|---|---|
+| Acrobot | 37,199 | 160,066 | 4.30x | 410.6 | 91.6 | **389.8** (385-394) | GPU_FASTER -> GPU_FASTER |
+| CartPole | 42,854 | 185,436 | 4.33x | 527.8 | 82.3 | **347.0** (341-354) | GPU_FASTER -> GPU_FASTER |
+| MountainCar | 37,522 | 144,691 | 3.86x | 492.5 | 77.5 | **295.0** (289-306) | GPU_FASTER -> GPU_FASTER |
+| MountainCarContinuous | 37,685 | 145,176 | 3.85x | 488.2 | 76.6 | **296.8** (290-300) | GPU_FASTER -> GPU_FASTER |
+| Pendulum | 46,694 | 175,462 | 3.76x | 253.8 | 183.1 | **691.4** (681-699) | GPU_FASTER -> **GPU_FAST** |
+
+At B = 1,024 the same pairing gives R 136-283 after, against 34-103 before: the ratio is still
+4.2-4.3x but the absolute R is lower, which is why 4,096 is the headline batch the spec names.
+
+`cores` is 105-163 against a bar of 1, so `BELOW_G4` does not apply and R was the only open
+question. **`frames identical: True` for all five between the two arms**, checked inside the timing
+job itself rather than inferred from a separate replay.
+
+**So: Pendulum reaches the target tier, and the other four do not.** R 295-390 against 500 is a
+shortfall of **1.28-1.69x**, down from the 5.8-6.5x this ticket started at. The honest summary is
+that the fused kernel closed most of the gap and not all of it, and the remaining factor is not a
+constant to be tuned: at B = 4,096 Acrobot now writes 160,066 x 250,000 x 3 bytes = **120 GB/s** of
+frame, which is ~13% of a 3090's peak, so there is headroom — but it is in the per-pixel walk (five
+op types with a bounding-box test each, a Wu inversion per edge, two table lookups per disc), not in
+the store. Taking it further means fewer ops per pixel, which means per-env specialisation of the
+kernel, which is a different and much less general piece of work than this one.
+
+Also settled here: **CarRacing's own fused identity test, 4 passed** in the Box2D venv. In job
+6349362 it collected 4 cases and SKIPPED all four for want of Box2D, which the suite's coverage
+guard correctly reported as a failure rather than a pass.
 
 ### The one thing that is decided already
 
