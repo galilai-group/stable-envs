@@ -2172,8 +2172,9 @@ verified byte-identical to this branch's merge commit before the change was appl
 | `maze2d`, branch vs integration, defaults | cpu | 4 | **identical** | `replay/r6cm_maze2d_branch_vs_integration.json` |
 | the four DMControl trackcom cells (`cpu3d.py`'s path) | cpu | 4 | **identical** | `replay/r6cm_trackcom_identity.json` |
 | `tests/gpu/test_fast_paths.py` at the envs' own sizes | cuda | — | **223 passed**, 179 skipped | job 6366547 |
-| `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **55 passed** | jobs 6366546 / 6366548 |
-| `tests/unit` | cpu | — | **786 passed**, 19 skipped, **2 failed** — the same two pre-existing failures, neither in the authorised file | job 6366546 |
+| `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **63 passed** | jobs 6366546 / 6366548 / 6366959 |
+| `tests/unit` | cpu | — | **794 passed**, 19 skipped, **2 failed** — the same two pre-existing failures, neither in the authorised file | job 6366959 |
+| branch vs integration, defaults, **re-taken on the HEAD that ships** | cpu | 21 live | **identical** | `replay/r6fin_cpu_branch_vs_integration.json` |
 
 The frozen-digest comparison is 20 of 21 on BOTH legs on cuda: `AntmazeTeleportExplore` fails on the
 branch and on integration alike, which is RAYCAST-2c's unreproducible frozen digest and not this
