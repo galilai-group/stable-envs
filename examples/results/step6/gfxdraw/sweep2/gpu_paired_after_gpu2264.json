@@ -1,0 +1,256 @@
+{
+ "schema_version": 1,
+ "step": 6,
+ "shard": "gfxdraw-paired-gpu-after",
+ "what_this_is": "the paired R measurement (scratch/step6/gfxdraw/paired_gpu.py) in the Step 3 shard schema. The reference is interleaved with our own render round by round; only B=1024 and B=4096 were timed, so BATCH_SCALES has no B=1 to compare against here (it is 1,687-1,990x in sweep2/superseded_gpu2110/, whose numerator is sound).",
+ "arm": "after",
+ "batches": [
+  1024,
+  4096
+ ],
+ "provenance": {
+  "device": "cuda",
+  "host": "gpu2264.oscar.ccv.brown.edu",
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "cpu_model": "x86_64",
+  "torch_threads": null,
+  "torch": "2.14.0+cu126",
+  "load_average": null,
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/gfxdraw/stable_envs/__init__.py",
+  "tree_commit": "339f07b85d7082d8e1476c71a16faaea9d0b70d3",
+  "official_renderer_timing": "paired: reference burst and render burst alternating, median of the per-round readings",
+  "fused_classic_kernel": true,
+  "derived_from": [
+   "examples/results/step6/gfxdraw/sweep2/paired_gpu_B1024_gpu2264.json",
+   "examples/results/step6/gfxdraw/sweep2/paired_gpu_B4096_gpu2264.json"
+  ]
+ },
+ "envs": [
+  {
+   "env": "Acrobot",
+   "device": "cuda",
+   "projected_to": [
+    "Acrobot"
+   ],
+   "cells": [
+    {
+     "batch": 1024,
+     "fps": 69781.96826201135,
+     "seconds_per_batch": 0.014674277976155283,
+     "us_per_frame": 14.330349586089143,
+     "fps_min": 67974.07725322101,
+     "fps_max": 70300.07731174836,
+     "peak_gb": null
+    },
+    {
+     "batch": 4096,
+     "fps": 160066.3708334642,
+     "seconds_per_batch": 0.02558938506990671,
+     "us_per_frame": 6.247408464332693,
+     "fps_min": 156157.3051661389,
+     "fps_max": 161944.2990080225,
+     "peak_gb": null
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "set_state_render": {
+     "fps": 413.33972743910994
+    },
+    "paired": {
+     "readings": 2,
+     "fps_median": 413.33972743910994,
+     "fps_min": 410.5972070477755,
+     "fps_max": 413.33972743910994,
+     "spread": 1.006679344974247
+    }
+   },
+   "decode": {
+    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
+    "kind": "not_measured_here"
+   },
+   "states_source": "examples/results/step4/states/Acrobot.npz"
+  },
+  {
+   "env": "CartPole",
+   "device": "cuda",
+   "projected_to": [
+    "CartPole"
+   ],
+   "cells": [
+    {
+     "batch": 1024,
+     "fps": 76053.61171469165,
+     "seconds_per_batch": 0.013464186340570448,
+     "us_per_frame": 13.148619473213328,
+     "fps_min": 73240.35677341904,
+     "fps_max": 76946.37652014724,
+     "peak_gb": null
+    },
+    {
+     "batch": 4096,
+     "fps": 185435.7608325615,
+     "seconds_per_batch": 0.02208851184695959,
+     "us_per_frame": 5.392703087636619,
+     "fps_min": 181621.71656987848,
+     "fps_max": 185862.54782081215,
+     "peak_gb": null
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "set_state_render": {
+     "fps": 529.1282336741702
+    },
+    "paired": {
+     "readings": 2,
+     "fps_median": 529.1282336741702,
+     "fps_min": 527.7802166356649,
+     "fps_max": 529.1282336741702,
+     "spread": 1.0025541257440422
+    }
+   },
+   "decode": {
+    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
+    "kind": "not_measured_here"
+   },
+   "states_source": "examples/results/step4/states/CartPole.npz"
+  },
+  {
+   "env": "MountainCar",
+   "device": "cuda",
+   "projected_to": [
+    "MountainCar"
+   ],
+   "cells": [
+    {
+     "batch": 1024,
+     "fps": 65696.35625248525,
+     "seconds_per_batch": 0.015586861409246922,
+     "us_per_frame": 15.221544344967697,
+     "fps_min": 64460.249626843884,
+     "fps_max": 66226.14116469197,
+     "peak_gb": null
+    },
+    {
+     "batch": 4096,
+     "fps": 144690.83554139148,
+     "seconds_per_batch": 0.028308634646236897,
+     "us_per_frame": 6.91128775542893,
+     "fps_min": 142085.36239037648,
+     "fps_max": 145456.57920977828,
+     "peak_gb": null
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "set_state_render": {
+     "fps": 492.5079411251104
+    },
+    "paired": {
+     "readings": 2,
+     "fps_median": 492.5079411251104,
+     "fps_min": 480.1916953260557,
+     "fps_max": 492.5079411251104,
+     "spread": 1.0256486022539224
+    }
+   },
+   "decode": {
+    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
+    "kind": "not_measured_here"
+   },
+   "states_source": "examples/results/step4/states/MountainCar.npz"
+  },
+  {
+   "env": "MountainCarContinuous",
+   "device": "cuda",
+   "projected_to": [
+    "MountainCarContinuous"
+   ],
+   "cells": [
+    {
+     "batch": 1024,
+     "fps": 65745.49960675697,
+     "seconds_per_batch": 0.015575210563838482,
+     "us_per_frame": 15.210166566248517,
+     "fps_min": 65120.22492424042,
+     "fps_max": 66340.0098477822,
+     "peak_gb": null
+    },
+    {
+     "batch": 4096,
+     "fps": 145176.3828549231,
+     "seconds_per_batch": 0.028213955461978916,
+     "us_per_frame": 6.888172720209696,
+     "fps_min": 142129.392193023,
+     "fps_max": 145522.05804210645,
+     "peak_gb": null
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "set_state_render": {
+     "fps": 488.2214915410862
+    },
+    "paired": {
+     "readings": 2,
+     "fps_median": 488.2214915410862,
+     "fps_min": 484.959347902549,
+     "fps_max": 488.2214915410862,
+     "spread": 1.0067266331758447
+    }
+   },
+   "decode": {
+    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
+    "kind": "not_measured_here"
+   },
+   "states_source": "examples/results/step4/states/MountainCarContinuous.npz"
+  },
+  {
+   "env": "Pendulum",
+   "device": "cuda",
+   "projected_to": [
+    "Pendulum"
+   ],
+   "cells": [
+    {
+     "batch": 1024,
+     "fps": 71942.0394587608,
+     "seconds_per_batch": 0.014233680441975594,
+     "us_per_frame": 13.90007855661679,
+     "fps_min": 71001.15659150784,
+     "fps_max": 72351.32324044693,
+     "peak_gb": null
+    },
+    {
+     "batch": 4096,
+     "fps": 175462.47161946478,
+     "seconds_per_batch": 0.023344023153185844,
+     "us_per_frame": 5.699224402633263,
+     "fps_min": 173974.05389570585,
+     "fps_max": 176133.99622921846,
+     "peak_gb": null
+    }
+   ],
+   "official_cpu": {
+    "frames": 24,
+    "set_state_render": {
+     "fps": 254.41545507171003
+    },
+    "paired": {
+     "readings": 2,
+     "fps_median": 254.41545507171003,
+     "fps_min": 253.8439929528746,
+     "fps_max": 254.41545507171003,
+     "spread": 1.0022512335714067
+    }
+   },
+   "decode": {
+    "absent": "not measured on this node; pairing these frames/s with another host's decode would be a cross-host ratio, so `cores` is not computed from this shard and the row is therefore capped at GPU_FASTER whatever R is. The magnitude is 105-163, measured on gpu2110 in the same job family (see sweep2/superseded_gpu2110/). A shard with a same-node decode bar comes from SLURM 6353690.",
+    "kind": "not_measured_here"
+   },
+   "states_source": "examples/results/step4/states/Pendulum.npz"
+  }
+ ],
+ "only_the_current_arm_is_a_certification_row": "Only the arm that reflects the CURRENT tree is a certification row. certify.merge keys runs on (env, device, host, threads) with no slot for an arm, so a before/after pair from one host collides and one silently supersedes the other. The before arm -- the per-primitive path on CPU, the kernel switched off on GPU -- is a Step 6 internal comparison and lives in the paired_*.json it came from, which is not Step-3-shaped and is not a shard."
+}
