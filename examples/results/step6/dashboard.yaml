@@ -720,6 +720,15 @@ decisions:
   by: coordinator
   decision: 'Methodology (second workstream to reach it from its own evidence): a row within ~25% of cores_cpu = 1 must not be labelled from a single shard; the one-core decode denominator moves 15-18%
     between legs/nodes on shared batch nodes. For the closure packet PointmazeMediumNavigate is reported as CPU_FASTER at the bar; PointmazeLargeNavigate as CPU_FAST.'
+- date: '2026-09-15'
+  by: Sami
+  decision: 'Step 6 CLOSED as ENGINEERING COMPLETE WITH DOCUMENTED CERTIFICATION BLOCKERS. Integration HEAD 76dc5116f432e61dd47fba8f9e879cf9212c8e46 is the completed Step-6 baseline (branches step6/closed
+    and sami/pre-step7-baseline pinned). Preserve all Step-6 reports, artifacts, frozen thresholds, blocker classifications and production-pipeline measurements. Do not reopen broad Step-6 optimisation:
+    no CPU-3D SIMD solely to clear cores_cpu, no further Fetch CPU/GPU work, no per-env gfxdraw specialisation, no swm_nav/2-D work solely to cross the frozen tier boundary — recorded as deferred opportunities.
+    Keep the frozen one-core decode metric and the matched production Lance benchmark as two distinct claims; no Step-2 contract change now; taxonomy reconsideration belongs to Step 8. Remaining gaps are
+    accepted findings. Step 7 (missing renderer coverage) authorized from 76dc511: CraftaxClassic missing components, CraftaxPixels, Manipulator, Quadruped, OGBCube, OGBScene, PFRocketLanding; plan first
+    from the Step-1 gap classification; smallest missing capability per gap, independent workstreams, shared capabilities over per-env hacks, same profile/diagnose -> smallest implementation -> independent
+    review -> integration pattern.'
 integration_verification:
   branch: step6/integration-verify (merged)
   head: 11dde0b (merged)
