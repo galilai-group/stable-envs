@@ -180,6 +180,25 @@ def _composite_compaction(on: bool):
 def _composite_frames(env, states, fast: bool):
     with _composite_compaction(fast):
         return env.render(states).clone()
+
+
+@contextlib.contextmanager
+def _composite_compact_merge(on: bool):
+    """Pin ``raycast3d.COMPOSITE_COMPACT_MERGE`` for the duration, and put it back whatever happens."""
+    assert R3.COMPOSITE_COMPACT_MERGE is True, (
+        "raycast3d.COMPOSITE_COMPACT_MERGE was already off when this test started, so an earlier "
+        "test leaked it and every comparison after that point has been the window path against "
+        "itself")
+    try:
+        R3.COMPOSITE_COMPACT_MERGE = on
+        yield
+    finally:
+        R3.COMPOSITE_COMPACT_MERGE = True
+
+
+def _compact_merge_frames(env, states, fast: bool):
+    with _composite_compact_merge(fast):
+        return env.render(states).clone()
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 
 
@@ -368,6 +387,35 @@ CASES: tuple[FastPath, ...] = (
         sizes=(None,),
         prepare=_states_prepare(0),
         frames=_composite_frames,
+        inapplicable=lambda env: (
+            None if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench", "maze2d")
+            else "does not render through raycast3d.composite"),
+    ),
+    FastPath(
+        id="composite-compact-merge",
+        why=("``raycast3d.composite`` sizes its window from the BOUND instead of from the ``tile`` "
+             "ceiling the caller passes, shades the covered (row, sample) pairs instead of their "
+             "union over the batch, and gathers/blends/scatters only the output pixels some row "
+             "covers. Three claims, all about values rather than tolerances: a ray outside the "
+             "projected span cannot reach a mover, so it gets ``t = INF`` and the composite writes "
+             "back the plate byte the broadcast already wrote; ``shade`` is elementwise in every "
+             "argument, so shading a gathered subset returns what the superset held there; and at "
+             "an output pixel with ``covf == 0`` the blend is ``patch * 1.0 + 0.0`` on a float that "
+             "came out of a uint8, which ``round`` returns and ``clamp`` cannot move. A difference "
+             "means one of those is wrong -- most likely the span bound is not conservative, and "
+             "the symptom would be a clipped edge of the agent where the old 32-pixel window had "
+             "slack and the fitted one does not. ``tests/unit/test_raycast3d_composite_compact.py`` "
+             "is the differential fuzz; this case is the same claim on the environments, at their "
+             "own sizes, because the span's lever arm is a far camera and a small primitive and "
+             "building a giant maze at 84 px shortens exactly the thing under test."),
+        names=tuple(n for n in sorted(se.REGISTRY)
+                    if n.startswith(("Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))),
+        modules=("ogbench", "maze2d"),
+        batch=8,
+        seed=1,
+        sizes=(None,),
+        prepare=_states_prepare(1),
+        frames=_compact_merge_frames,
         inapplicable=lambda env: (
             None if type(env).__module__.rsplit(".", 1)[-1] in ("ogbench", "maze2d")
             else "does not render through raycast3d.composite"),
@@ -588,6 +636,12 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert getattr(R3, "COVER_COMPACTION", None) is True, (
         "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
         "compaction off and has been comparing the compacted path against itself")
+    assert getattr(R3, "COMPOSITE_COMPACT_MERGE", None) is True, (
+        "raycast3d.COMPOSITE_COMPACT_MERGE is gone or already off, so the compact-merge case cannot "
+        "switch the compaction off and has been comparing the compacted path against itself")
+    assert callable(getattr(R3, "_composite_window", None)), (
+        "raycast3d._composite_window is gone, so COMPOSITE_COMPACT_MERGE=False has no verbatim body "
+        "to fall back to and the compact-merge case compares the new path against itself")
     assert "cull" in inspect.signature(R2.render_triton).parameters, (
         "raster2d.render_triton no longer takes cull=, so both culling cases are drawing the same "
         "picture twice")

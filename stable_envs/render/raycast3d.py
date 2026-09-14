@@ -1149,6 +1149,14 @@ FORCE_BACKEND: str | None = None
 #: the identical name for its own path.
 COVER_COMPACTION: bool = True
 
+#: ``composite`` sizes its window from the BOUND rather than from the caller's ``tile`` ceiling, and
+#: runs its tail over the covered output pixels rather than the whole window. ``False`` restores
+#: ``_composite_window``, the expression this replaced, verbatim -- same reason ``COVER_COMPACTION``
+#: and ``PRIMITIVE_BOUNDS`` are module-level switches: the property under test is a property of the
+#: whole composite, and a ``compact=`` argument threaded down the call sites would be testing the
+#: plumbing rather than the claim.
+COMPOSITE_COMPACT_MERGE: bool = True
+
 
 def _use_triton(o) -> bool:
     return HAVE_TRITON and o.is_cuda and o.dtype == torch.float32
@@ -1302,6 +1310,180 @@ def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Pr
     ENVIRONMENT. That is what makes batched appearance randomisation real rather than nominal: without
     it a batch of 4096 environments would all have to share one agent colour, and a caller sampling a
     style per environment would silently get the first row's appearance on every frame.
+    ``COMPOSITE_COMPACT_MERGE`` chooses the window from the bound rather than from ``tile`` and runs
+    the tail in the compact cover index space; ``_composite_window`` below is the expression it
+    replaces, kept verbatim.
+    """
+
+    if not COMPOSITE_COMPACT_MERGE:
+        return _composite_window(plate, plate_t, cam, prims, xpos, xmat, lights, H, W,
+                                 supersample, out, tile, mat_rgb, size_scale)
+
+    device = plate.device
+    B = xpos.shape[0]
+    ss = int(supersample)
+    Rh, Rw = H * ss, W * ss
+    o, d = cached_rays(cam, Rh, Rw, device)
+    P = prims.to(device)
+    ldir, lamb, ldif, lspec = lights.to(device)
+
+    if out is None:
+        out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=device)
+    else:
+        out = out.view(B, H, W, 3)
+
+    # THE WINDOW IS SIZED TO THE BOUND, NOT TO THE CALLER'S MAXIMUM, and at 224 px that is most of
+    # this function's cost. ``tile`` is a ceiling -- ogbench passes 32 and maze2d 48 -- while the
+    # span the bound actually reports is 9-28 output pixels depending on the body, and EVERY term
+    # below except the frame write and the shade is proportional to ``(tile*ss)^2``. Measured on the
+    # certification node at 224 px, ss=2, batch 64, PointmazeLargeNavigate: the window-sized terms
+    # (the cast, the two box averages, the per-environment ray gather) are 72% of the composite
+    # while 4.7% of those samples can be covered, and its span is 14x13 -- so nine tenths of that
+    # 72% is spent on samples the bound has already proved empty.
+    #
+    # Narrowing the window cannot change a value for the same reason the tiled path is allowed to
+    # exist at all: a ray outside the span cannot reach a mover, so ``intersect`` returns ``INF``,
+    # ``cov`` is False, ``col`` is +0.0 and the composite writes back the plate byte that
+    # ``out.copy_`` has already put there. That is the argument this function's docstring already
+    # makes against the full frame, applied one rung further in.
+    org = None
+    if tile is not None and tile < H and tile < W:
+        bs = 1.0 if size_scale is None else float(size_scale.max())
+        fit = _fit_tile(cam, prims, xpos, H, W, tile, device, bound_scale=bs)
+        if fit is not None:
+            org, tile = fit
+    if org is None:
+        N = Rh * Rw
+        oo = o.expand(B, N, 3)
+        dd = d.expand(B, N, 3)
+        bt = (plate_t if ss == 1 else _upsample_t(plate_t, H, W, ss)).expand(B, N)
+        obase = None
+    else:
+        # the window is chosen in OUTPUT pixels and then expanded, so a supersampled tile still lands
+        # on whole output pixels and the box average is the same one the full-frame path takes
+        idx = _expand_tile(org, tile, ss, Rw, device)
+        N = idx.shape[1]
+        oo = o.expand(B, N, 3)
+        dd = d[idx.reshape(-1)].view(B, N, 3)
+        # The occlusion threshold is read at the window's OUTPUT pixels and then blown up, rather
+        # than blown up over the whole frame and then read at the window. ``_upsample_t`` is
+        # nearest-neighbour, so ``base_t[(y*ss+a)*Rw + (x*ss+b)] == plate_t[y*W + x]`` exactly -- a
+        # pure data movement either way -- but the shipped spelling builds a ``(H*ss*W*ss,)``
+        # intermediate per call, which is the one term left in the tiled path that does not shrink
+        # with the window.
+        obase = _expand_tile(org, tile, 1, W, device)
+        bt = plate_t[obase].view(B, tile, 1, tile, 1).expand(B, tile, ss, tile, ss).reshape(B, N)
+
+    nprim = len(P["kind"])
+    sz = P["size"].view(1, nprim, 3)
+    if size_scale is not None:
+        sz = sz * size_scale.view(B, 1, 1)
+    t, n, i_hit = cast_nearest(P["kind"], sz.expand(B, nprim, 3), xpos, xmat, oo, dd)
+    cov = t < bt
+
+    # THE SHADED SET IS PER ROW, NOT THE UNION OVER THE BATCH. ``COVER_COMPACTION`` shades
+    # ``nonzero(cov.any(0))``, which is sound but far looser than it reads: the window origin tracks
+    # the movers' projected bound, and the agent's position INSIDE that window still drifts by
+    # several pixels across a batch, so at 224 px, ss=2, batch 64 the union is 785 of 4,096 samples
+    # while each row covers 193. Flattening ``(B, N)`` before the ``nonzero`` selects exactly the
+    # covered (row, sample) pairs -- 4.1x fewer -- and the ``where`` that discarded the union's
+    # uncovered members disappears with them, because every selected element is covered by
+    # construction.
+    #
+    # ``shade`` is elementwise in every argument it takes (its only reduction is ``_dot``, unrolled
+    # over the three components for exactly this reason, and ``lamb.sum()`` over the lights, which
+    # does not depend on the ray shape), so shading a gathered subset returns the values the
+    # superset held at those positions. ``col`` is therefore the same tensor either way: +0.0
+    # everywhere no row covers, the shaded colour everywhere one does.
+    col = torch.zeros((B, N, 3), device=device, dtype=n.dtype)
+    flat = torch.nonzero(cov.reshape(-1), as_tuple=False).reshape(-1)
+    if flat.numel():
+        rows = flat.div(N, rounding_mode="floor")
+        cols = flat - rows * N
+        ih = i_hit[rows, cols]
+        mat = P["mat"][ih] if mat_rgb is None else mat_rgb[rows, ih]
+        c = shade(n[rows, cols], -dd[rows, cols], ldir, lamb, ldif, lspec, lights.exponent,
+                  mat, P["tex"][ih], P["spec"][ih]) * 255.0
+        col.view(-1, 3).index_copy_(0, flat, c)
+
+    covf = cov.to(col.dtype)
+    if org is None:
+        col = col.view(B, H, ss, W, ss, 3).sum((2, 4)) / (ss * ss)
+        covf = covf.view(B, H, ss, W, ss).sum((2, 4)) / (ss * ss)
+        base = plate.to(col.dtype).unsqueeze(0)
+        out.copy_(torch.clamp(torch.round(base * (1 - covf.unsqueeze(-1)) + col), 0, 255).to(torch.uint8))
+        return out
+
+    # Tiled: box-average inside the window, write the plate everywhere and the COVERED pixels over it.
+    #
+    # The two box averages keep the spelling they had -- a four-element float sum has an association
+    # order and a compacted reduction is not obliged to reproduce it, and this function's contract is
+    # bit-exactness, not approximate agreement. What is compacted is everything after them, which is
+    # elementwise and therefore free of that question.
+    #
+    # A pixel the cover does not touch is ALREADY CORRECT in ``out``: ``covf`` is 0 there, so
+    # ``merged`` is ``patch * 1.0 + 0.0`` -- a plate byte promoted to float, which ``round`` returns
+    # and ``clamp(0,255)`` cannot move -- and the scatter would write back the byte the broadcast
+    # already wrote. So only the union of covered OUTPUT pixels needs gathering, blending, rounding
+    # and scattering at all; the rest of the window is a plate copy of a plate copy. And the gather
+    # takes the plate as the uint8 it is and promotes what it took, rather than promoting all 50,176
+    # pixels of the frame to float to use 1,024 of them.
+    col = col.view(B, tile, ss, tile, ss, 3).sum((2, 4)) / (ss * ss)
+    covf = covf.view(B, tile, ss, tile, ss).sum((2, 4)) / (ss * ss)
+    out.copy_(plate.view(1, H, W, 3).expand(B, H, W, 3))
+    covf = covf.reshape(B, -1)
+    ps = torch.nonzero((covf > 0).any(0), as_tuple=False).reshape(-1)
+    if ps.numel():
+        oidx = obase[:, ps].unsqueeze(-1).expand(B, ps.numel(), 3)
+        patch = torch.gather(plate.reshape(1, H * W, 3).expand(B, H * W, 3), 1, oidx).to(col.dtype)
+        merged = patch * (1 - covf[:, ps].unsqueeze(-1)) + col.reshape(B, -1, 3)[:, ps]
+        out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255)
+                                       .to(torch.uint8))
+    return out
+
+
+def _fit_tile(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, tile: int,
+              device, bound_scale: float = 1.0):
+    """``((x0, y0), tile)`` -- the window the BOUND asks for, or None if it does not fit ``tile``.
+
+    ``_tile_origin`` answers "does the caller's tile hold the movers"; this answers "what does the
+    bound actually need", which is the same question one rung finer. The span is projected once (one
+    device-to-host synchronisation, inside ``screen_span``) and the tile is then the largest extent
+    over the batch, capped by the caller's ceiling -- so a config whose movers already fill ``tile``
+    gets ``tile`` and behaves exactly as before, and a 13-pixel sphere in a 32-pixel window gets 13.
+
+    The clamp is safe at any tile: with ``t >= w`` the window ``[clamp(x0,0,W-t), +t)`` contains
+    ``[x0, x0+w) & [0, W)`` at both edges, which is the property ``_tile_origin`` already relies on.
+
+    Rungs are not rounded to a ladder. ``_expand_tile``'s memo is keyed on ``(tile, ss, width,
+    device)`` and holds 16 entries, so a process alternating between several configs re-derives a
+    ``(t*ss)^2`` integer grid now and then; that is microseconds against a frame, and it buys the
+    tightest window the bound permits rather than the nearest power of two -- which matters, because
+    the two Pointmaze rows this was measured for report spans of 14 and 21 and a power-of-two ladder
+    would have rounded the second one straight back to 32.
+    """
+    span = screen_span(cam, prims, xpos, H, W, device, bound_scale)
+    if span is None:
+        return None
+    x0, y0, w, h = span
+    need = max(int(w), int(h), 1)
+    if need > tile:
+        return None
+    return (x0.clamp(0, W - need), y0.clamp(0, H - need)), need
+
+
+@torch.no_grad()
+def _composite_window(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera,
+                      prims: Primitives, xpos: torch.Tensor, xmat: torch.Tensor, lights: Lights,
+                      H: int, W: int, supersample: int = 1, out: torch.Tensor | None = None,
+                      tile: int | None = None, mat_rgb: torch.Tensor | None = None,
+                      size_scale: torch.Tensor | None = None) -> torch.Tensor:
+    """The pre-RAYCAST-6 ``composite``: the caller's ``tile`` verbatim, the union cover
+    compaction, and the whole ``tile x tile`` window gathered, blended and scattered.
+
+    Kept expression for expression so ``COMPOSITE_COMPACT_MERGE`` has something to be diffed
+    against on the environments themselves, which is what ``tests/gpu/test_fast_paths.py``
+    does with it. See ``composite`` for what the arguments mean.
     """
     device = plate.device
     B = xpos.shape[0]
@@ -1410,7 +1592,6 @@ def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Pr
     out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255)
                                    .to(torch.uint8))
     return out
-
 
 def _upsample_t(plate_t, H, W, ss):
     """Nearest-neighbour blow-up of the static ray parameter to the supersample grid.
