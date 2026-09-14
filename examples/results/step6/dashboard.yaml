@@ -127,7 +127,7 @@ workstreams:
   head_sha: 3b9e81c (RAYCAST-4+5, PRIMITIVE_BOUNDS default True; in independent review)
   agent_model: opus
   wave: wave1
-  status: review (RAYCAST-4/5 range 082430e..3b9e81c)
+  status: implementation (applying RAYCAST-4/5 review changes; then merge)
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
   affected_configs:
@@ -184,7 +184,11 @@ workstreams:
     verdict: 'APPROVED after doc changes (4cca48e, 6e111ac) + LRU 17f28c0 authorized. Original: 2a APPROVE (bit-identity reproduced on arm64 vs pristine baseline module; all catenary branches reached; sweep
       legs verified same job/card with stable_envs_from). 2b APPROVE-WITH-CHANGES (docs: CPU numbers/residual/maze2d status/_expand_tile DMC reach missing from findings.md; _TILE_CACHE immutable, batch/chunk-safe;
       off-path verbatim). 2c APPROVE-WITH-CHANGES (reset correct+pixel-free; bake output is history-dependent and cross-process reproducible, not random - suspect persistent mujoco.Renderer per rkey; whether
-      the other plate is the frozen 06a2e039 untested). Required changes sent 2026-09-13.'
+      the other plate is the frozen 06a2e039 untested). Required changes sent 2026-09-13. | RAYCAST-4/5 (3b9e81c) APPROVE-WITH-CHANGES 2026-09-15: containment per kind OK; conservativeness vs the intersector
+      is a 16-ulp error-bound argument validated by fuzz/replay, not a proof; batch-invariance test genuinely prunes; acceptance and shard numbers reproduced; merge-tree clean; public signatures identical.
+      Required: _UNIT_D_TOL 1e-4 -> <=1.9e-6 (bit-identity false inside the old window; unreachable today, worst real 2.4e-7) + fuzz case + CPU identity re-run; rename the bounds-off control shard (leg_of
+      would read it as an after leg); doc corrections (bench measures any_blocking-shaped bound; API ''byte-identical'' -> signatures identical; comment at :525; ''provably'' -> within rounding budget;
+      no per-cell spread in shards; Mujoco* CPU identity inferred).'
   slurm_jobs:
   - 6343543
   - 6343544
@@ -225,6 +229,8 @@ workstreams:
     constraint for cpu-3d; identity on/off and vs baseline on 21 configs both devices; 39-row sacct ledger in findings.'
   - 'Default flipped to True (3b9e81c); identity re-taken with defaults on both legs: cpu 21/21 IDENTICAL (6355332), cuda 21/21 IDENTICAL (6355333); tests/unit 623 pass + 2 pre-existing. Own diff = raycast3d.py,
     test_fast_paths.py, test_raycast3d_primitive_bounds.py.'
+  - 'Review escalation: far-field hit/miss in _capsule/_sphere is decided at float32 rounding noise at ~100 m (HumanoidmazeGiant); the bound depends on a 16-ulp budget - any future intersector/association
+    change (compiled cast, cpu3d) must re-check. The 0.97 acceptance bar is a coordinator decision (recorded here).'
 - workstream: fetch-gpu
   brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
   branch: step6/fetch-gpu
