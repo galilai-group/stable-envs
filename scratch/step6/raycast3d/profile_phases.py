@@ -358,6 +358,8 @@ def main() -> None:
     # same branch with the bound off is the only leg that attributes anything to the bound alone.
     ap.add_argument("--primitive-bounds", choices=("on", "off"), default=None,
                     help="pin raycast3d.PRIMITIVE_BOUNDS on this interpreter's stable_envs")
+    ap.add_argument("--compact-merge", choices=("on", "off"), default=None,
+                    help="pin raycast3d.COMPOSITE_COMPACT_MERGE on this interpreter's stable_envs")
     args = ap.parse_args()
 
     os.environ.setdefault("MUJOCO_GL", "egl")
@@ -377,6 +379,16 @@ def main() -> None:
         R3.PRIMITIVE_BOUNDS = args.primitive_bounds == "on"
         switch = {"PRIMITIVE_BOUNDS": R3.PRIMITIVE_BOUNDS, "module": R3.__file__}
         print(f"[profile_phases] PRIMITIVE_BOUNDS={R3.PRIMITIVE_BOUNDS} in {R3.__file__}", flush=True)
+    if args.compact_merge is not None:
+        from stable_envs.render import raycast3d as R3
+        if not hasattr(R3, "COMPOSITE_COMPACT_MERGE"):
+            raise SystemExit("this stable_envs has no COMPOSITE_COMPACT_MERGE; pinning it would "
+                             "compare two runs of the same code and report the difference as a result")
+        R3.COMPOSITE_COMPACT_MERGE = args.compact_merge == "on"
+        switch = {**(switch or {}), "COMPOSITE_COMPACT_MERGE": R3.COMPOSITE_COMPACT_MERGE,
+                  "module": R3.__file__}
+        print(f"[profile_phases] COMPOSITE_COMPACT_MERGE={R3.COMPOSITE_COMPACT_MERGE} "
+              f"in {R3.__file__}", flush=True)
 
     note = {"tool": "profile_phases", "workstream": "step6/raycast3d", "env": args.env,
             "device": args.device, "baseline_commit": git_commit(),

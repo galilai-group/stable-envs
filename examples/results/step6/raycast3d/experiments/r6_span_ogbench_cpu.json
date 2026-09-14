@@ -1,0 +1,327 @@
+{
+  "host": "node2345.oscar.ccv.brown.edu",
+  "slurm_job": "6366736",
+  "device": "cpu",
+  "stable_envs_from": "$SCR/se6/integration/stable_envs/__init__.py",
+  "configs": {
+    "AntmazeGiantNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 13,
+        "h_max": 14,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 14,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 14,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "AntmazeLargeExplore": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "AntmazeMediumExplore": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 28,
+        "h_max": 27,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 28,
+        "h_max": 28,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 28,
+        "h_max": 28,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "AntmazeTeleportExplore": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "HumanoidmazeGiantNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 9,
+        "h_max": 9,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 11,
+        "h_max": 9,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 11,
+        "h_max": 9,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "HumanoidmazeLargeNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 10,
+        "h_max": 10,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 12,
+        "h_max": 12,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 12,
+        "h_max": 12,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "HumanoidmazeMediumNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 18,
+        "h_max": 18,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 19,
+        "h_max": 20,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 19,
+        "h_max": 20,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "PointmazeGiantNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 11,
+        "h_max": 10,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 11,
+        "h_max": 10,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 11,
+        "h_max": 10,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "PointmazeLargeNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 13,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 13,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 13,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "PointmazeMediumNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 21,
+        "h_max": 21,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 21,
+        "h_max": 21,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 21,
+        "h_max": 21,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    },
+    "PointmazeTeleportNavigate": {
+      "16": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 13,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "64": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 13,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      },
+      "256": {
+        "calls": 1,
+        "none": 0,
+        "w_max": 14,
+        "h_max": 13,
+        "size": 224,
+        "ss": 2,
+        "caller_tile": 32
+      }
+    }
+  }
+}

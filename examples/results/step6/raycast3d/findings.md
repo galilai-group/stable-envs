@@ -2032,3 +2032,234 @@ number that survived was arrived at.
 | `6356117` | `se6-raycast3d-r6cpu` | COMPLETED | 00:09:45 | `node2411` | review changes: the `_unit_rays` routing probe, the re-priced cost table, CPU identity on 21 (on-vs-off and vs baseline), `tests/unit` |
 | `6356123` | `se6-raycast3d-r6gpu` | COMPLETED | 00:02:04 | `gpu2108` | review changes: cuda identity on 21, fast-path suite, fuzz |
 | `6356311` | `se6-raycast3d-r6cost` | COMPLETED | 01:13:49 | `node1843` | **three independent runs of the per-kind cost table in the shape that ships** — the runs that retired the margin rule |
+
+
+---
+---
+
+# RAYCAST-6 — the window `composite` casts is the caller's ceiling, not the bound's answer
+
+`stable_envs/render/raycast3d.py`, `composite` only. Merged `step6/integration` at `5b327af` first,
+so everything below is measured on the tree this branch will merge back into; the **before** leg of
+every comparison is `$SCR/se6/integration`, NOT the pre-Step-6 baseline.
+
+Commits: `6c954c5` (implementation + the differential fuzz + the fast-path case).
+
+## The gap this ticket was given, and what re-measuring the residual changed
+
+RAYCAST-2b left `PointmazeLargeNavigate` at `cores_cpu` 0.618 and `PointmazeMediumNavigate` at
+0.472, needing **1.6x** and **2.1x** on the `cores_cpu >= 1` conjunct, and named the residual as
+"`composite`'s own gathers/patch merge at ss=2: 25.3 ms of 42.6". That phrase was the ticket's
+premise and it did not survive being opened. `composite`'s statements were timed one at a time
+through the public path (`env.render(states)`) on a batch node at one thread —
+`scratch/step6/raycast3d/r6_composite_profile.py`, job **6365780** (`node2348`, Intel Xeon Platinum
+8268), a statement-for-statement copy of the shipped body with each block timed, so the numbers carry
+~25 % instrumentation overhead and the PROPORTIONS are what they are for.
+
+`PointmazeLargeNavigate`, B=64, 224 px, ss=2, `tile=32` (composite 53.13 ms of a 56.60 ms render):
+
+| block | ms | share | sized by |
+|---|---:|---:|---|
+| `cast` | 16.19 | 30 % | **B x N** |
+| `box_avg_col` (`view(B,tile,ss,tile,ss,3).sum((2,4))`) | 11.66 | 22 % | **B x N** |
+| `shade` | 6.39 | 12 % | B x \|union\| |
+| `window_gather` (`d[idx]`, per environment) | 5.47 | 10 % | **B x N** |
+| `box_avg_cov` | 3.71 | 7 % | **B x N** |
+| `material_gather` | 2.14 | 4 % | B x \|union\| |
+| `col_scatter` (`where` + `index_copy_`) | 1.41 | 2.7 % | B x \|union\| |
+| `plate_broadcast_write` (`out.copy_(plate.expand)`) | 1.10 | 2.1 % | B x H x W |
+| `compact_nonzero` (zeros + `nonzero(cov.any(0))`) | 0.85 | 1.6 % | B x N |
+| the **patch merge** (`oidx`, plate promote, gather, blend, round, scatter) | **2.48** | **4.7 %** | B x tile^2 |
+| `tile_origin`, `upsample_t`, `cov`, `covf`, `setup`, `sizes` | 1.73 | 3.3 % | mixed |
+
+**The patch merge is 4.7 % of the composite, not the residual.** What the residual actually is:
+the terms proportional to `N = (tile*ss)^2` — cast, both box averages, the per-environment ray
+gather, the coverage tensors — which are **38.4 ms, 72 %**. That is also the answer to "why ss=2
+doubles them": it does not double them, it QUADRUPLES the sample count, because `N` is quadratic in
+`ss`; the box averages then fold `ss^2` samples back into one output pixel, so they read `N` and
+write `tile^2` and exist only at `ss > 1`.
+
+And the samples are nearly all empty. At the same cell, each row covers **193 of 4,096 samples
+(4.7 %)** and 56.5 of 1,024 output pixels.
+
+## Two numbers the design turns on, both measured
+
+**1. The caller's `tile` is a ceiling, and the bound asks for far less.**
+`scratch/step6/raycast3d/r6_span_probe.py` intercepts `screen_span` and records the `(w, h)` it
+returns, per config, over the frozen corpora (job **6365965**):
+
+| config | span w x h | `tile` asked | N at 32 | N at the span | saving |
+|---|---|---:|---:|---:|---:|
+| `PointmazeLargeNavigate` | 14 x 13 | 32 | 4,096 | 784 | **5.2x** |
+| `PointmazeMediumNavigate` | 21 x 21 | 32 | 4,096 | 1,764 | **2.3x** |
+| `PointmazeGiantNavigate` | 11 x 10 | 32 | 4,096 | 484 | 8.5x |
+| `PointmazeTeleportNavigate` | 14 x 13 | 32 | 4,096 | 784 | 5.2x |
+| `AntmazeGiantNavigate` | 14 x 14 | 32 | 4,096 | 784 | 5.2x |
+| `AntmazeLargeExplore` | 18 x 18 | 32 | 4,096 | 1,296 | 3.2x |
+| `AntmazeTeleportExplore` | 18 x 18 | 32 | 4,096 | 1,296 | 3.2x |
+| `AntmazeMediumExplore` | 28 x 28 | 32 | 4,096 | 3,136 | 1.3x |
+| `HumanoidmazeGiantNavigate` | 11 x 9 | 32 | 4,096 | 484 | 8.5x |
+| `HumanoidmazeLargeNavigate` | 12 x 12 | 32 | 4,096 | 576 | 7.1x |
+| `HumanoidmazeMediumNavigate` | 19 x 20 | 32 | 4,096 | 1,600 | 2.6x |
+| `maze2d` `PointMaze{Large,Medium,Open,UMaze}` | 18-30 | 48 | 9,216 | 1,296-3,600 | 2.6-7.1x |
+
+`w_max` is constant across B=16/64/256 on every row, so this is a property of the scene rather than
+of the batch. **A power-of-two ladder would have rounded `PointmazeMediumNavigate`'s 21 straight
+back to 32**, on the row with the worst gap; the rung is therefore the span itself.
+
+**2. `COVER_COMPACTION`'s union is four times the per-row cover.** The window origin tracks the
+movers' projected bound, but the agent still drifts several pixels inside that window across a
+batch, and the union is what gets shaded:
+
+| config, B=64 | covered samples per row | union over the batch | ratio |
+|---|---:|---:|---:|
+| `PointmazeLargeNavigate` | 193 | 785 | **4.06x** |
+| `PointmazeMediumNavigate` | 555 | 2,372 | **4.28x** |
+
+## The change
+
+`COMPOSITE_COMPACT_MERGE` (default on). Off restores `_composite_window`, the pre-RAYCAST-6 body
+kept verbatim. Three mechanisms, each an identity rather than an approximation:
+
+**(a) The window is sized to the bound.** `_fit_tile` returns `max(w, h)` capped by the caller's
+`tile`, or None when the span does not fit — which is exactly `_tile_origin`'s existing
+admissibility test, one rung finer. A ray outside the span cannot reach a mover, so `intersect`
+returns `INF`, `cov` is False, `col` is `+0.0` and the composite writes back the plate byte
+`out.copy_` already put there. **This is the argument the tiled path already makes against the full
+frame**, and the repo already asserts it (`tests/gpu/test_fast_paths.py`'s
+`mover-window-vs-full-frame`). The clamp is safe at any tile: with `t >= w` the window
+`[clamp(x0,0,W-t), +t)` contains `[x0, x0+w) & [0, W)` at both edges.
+
+**(b) The shaded set is per row, not the union.** `nonzero(cov.reshape(-1))` selects the covered
+`(row, sample)` pairs — 4.1x fewer than `nonzero(cov.any(0))` — and the `torch.where` that discarded
+the union's uncovered members disappears with them, because every selected element is covered by
+construction. `shade` is elementwise in every argument (its only reduction is `_dot`, unrolled over
+the three components for exactly this reason, and `lamb.sum()` over the lights, which does not
+depend on ray shape), so shading a gathered subset returns the values the superset held there.
+
+**(c) The patch merge runs at the covered output pixels.** At an output pixel with `covf == 0` the
+blend is `patch * 1.0 + 0.0` on a float that came out of a uint8 — `round` returns it, `clamp(0,255)`
+cannot move it — so the scatter would write back the byte the broadcast already wrote. Only
+`nonzero((covf > 0).any(0))` needs gathering, blending, rounding and scattering. And the gather takes
+the plate as the **uint8 it is** and promotes what it took, instead of promoting all 50,176 pixels of
+the frame to float to use 1,024 of them.
+
+Plus one term that does not shrink with the window and therefore had to go: `bt` is now read at the
+window's output pixels and blown up, rather than `_upsample_t` building a `(H*ss*W*ss,)` intermediate
+per call and being read at the window. Nearest-neighbour upsampling is pure data movement, so
+`base_t[(y*ss+a)*Rw + (x*ss+b)] == plate_t[y*W + x]` exactly.
+
+**What was deliberately NOT compacted: the two box averages.** A four-element float sum has an
+association order, a compacted reduction is not obliged to reproduce it, and this function's contract
+is bit-exactness rather than approximate agreement. They keep their spelling and shrink only because
+`N` shrank. That is the one place where a cheaper option was available and refused, and it is worth
+naming as such.
+
+## Identity — the acceptance test, not a tolerance
+
+Every leg below is `replay_step4.py` rendering the frozen corpora through the public path and
+diffing the raw uint8 dumps, not the digests: a digest says "it moved", a dump says by how much and
+where. **The before tree is `$SCR/se6/integration`**, whose `stable_envs/render/raycast3d.py` was
+verified byte-identical to this branch's merge commit before the change was applied.
+
+| check | device | configs | result | artifact |
+|---|---|---|---|---|
+| `COMPOSITE_COMPACT_MERGE` on vs off | cpu | 21 live | **identical** | `replay/r6cm_cpu_switch_identity.json` |
+| branch vs integration, **defaults on both legs** | cpu | 21 live | **identical** | `replay/r6cm_cpu_branch_vs_integration.json` |
+| branch vs integration, defaults | cuda | 21 live | **identical** | `replay/r6cm_cuda_identity.json` |
+| on vs off | cuda | 21 live | **identical** | `replay/r6cm_cuda_switch_identity.json` |
+| `maze2d` `PointMaze{Large,Medium,Open,UMaze}`, on vs off | cpu | 4 | **identical** | `replay/r6cm_maze2d_switch_identity.json` |
+| `maze2d`, branch vs integration, defaults | cpu | 4 | **identical** | `replay/r6cm_maze2d_branch_vs_integration.json` |
+| the four DMControl trackcom cells (`cpu3d.py`'s path) | cpu | 4 | **identical** | `replay/r6cm_trackcom_identity.json` |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | cuda | — | **223 passed**, 179 skipped | job 6366547 |
+| `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **55 passed** | jobs 6366546 / 6366548 |
+| `tests/unit` | cpu | — | **786 passed**, 19 skipped, **2 failed** — the same two pre-existing failures, neither in the authorised file | job 6366546 |
+
+The frozen-digest comparison is 20 of 21 on BOTH legs on cuda: `AntmazeTeleportExplore` fails on the
+branch and on integration alike, which is RAYCAST-2c's unreproducible frozen digest and not this
+change. On CPU it is 0 of 21 on both legs, because **every Step-4 digest was taken on cuda** and the
+CPU path has never been frozen — so the CPU evidence here is entirely the dump diff, which is the
+point of dumping rather than hashing.
+
+**Neither leg of the default comparison pins the switch.** With the default off, a replay taking the
+default would have compared the window path against itself and reported `ALL_IDENTICAL` for the wrong
+reason; the job log prints `COMPOSITE_COMPACT_MERGE=True in .../raycast3d.py` before each leg starts,
+so a vacuous run is visible in the log rather than inferred.
+
+### The fuzz, and whether it has teeth
+
+`tests/unit/test_raycast3d_composite_compact.py` — 55 cases: 13 pinned scenes (odd frame sizes at
+ss=1 and ss=2, a window that does not fit and falls back to the full frame, `plate_t = INF`, a mover
+behind the camera, batch 1 and batch 32, box and cylinder), 24 random ones, an explicit empty-cover
+and full-cover pair, a caller-supplied buffer against a fresh one, per-environment colour and scale,
+12 cases on `_fit_tile`'s containment property, and the switch-still-exists guard.
+
+A differential test that passes on the first run is a claim about the test as much as about the code,
+so three defects were injected and the suite re-run:
+
+| injected defect | caught by |
+|---|---|
+| window one output pixel too small | `_fit_tile` containment property (11 failures); **NOT by any pixel comparison** |
+| window three too small | 20 pixel comparisons |
+| window five too small | 26 pixel comparisons |
+| the patch merge compacted to `all(0)` instead of `any(0)` — i.e. per-batch instead of per-union | 24 pixel comparisons |
+| the per-row material lookup replaced by row 0's | the per-environment-appearance case |
+
+The first row is the useful one: **`screen_span` pads a pixel each way, so a one-pixel error is
+invisible in the output and only a property test on the bound catches it.** That is why the
+containment test exists beside the pixel diff rather than instead of it.
+
+## The cost model, written down before the measurement and then checked against it
+
+The model is arithmetic on the table above: window-sized terms scale by `N_new/N_old`, union-sized
+terms by the per-row-to-union ratio, the patch merge by the covered-pixel fraction, and the rest is
+unchanged. `PointmazeLargeNavigate` at B=64 (`composite` 45.67 ms before, `r6_composite_profile.py`
+with both bodies instrumented identically, job **6366736**, `node2345`):
+
+| group | before ms | factor | predicted ms | measured ms |
+|---|---:|---|---:|---:|
+| window-sized (cast, both box averages, ray gather, `cov`/`covf`, the zeros+`nonzero`) | 32.41 | x 784/4096 | 6.20 | 6.45 |
+| union-sized (`shade`, material gather, `col` scatter) | 8.86 | / 4.06 | 2.18 | 2.51 |
+| patch merge (`oidx`, promote, gather, blend, round, scatter) | 2.32 | x covered pixels | ~0.6 | 0.57 |
+| unchanged (frame write, `tile_origin`, `bt`, setup) | 2.08 | x 1 | 2.08 | 1.88 |
+| **total** | **45.67** | | **11.06** | **11.41** |
+
+Within 3 %. `PointmazeMediumNavigate` the same way: 62.97 -> predicted 23.07, measured 24.18, within
+5 %. The model is not a fit; it is the claim that these terms are proportional to the sample count,
+and that claim is what the change acts on.
+
+### Per-op, before and after, at B=64 (instrumented copies of both bodies, one job, one node)
+
+| block | `PointmazeLarge` before -> after | `PointmazeMedium` before -> after |
+|---|---|---|
+| `cast` | 14.15 -> **2.85** | 14.21 -> **6.53** |
+| `box_avg_col` | 9.44 -> **1.86** | 9.44 -> **4.03** |
+| `shade` | 5.90 -> **1.57** | 17.64 -> **3.89** |
+| `window_gather` | 4.57 -> **0.86** | 4.63 -> **1.83** |
+| `box_avg_cov` | 2.98 -> 0.59 | 2.98 -> 1.30 |
+| `material_gather` | 1.76 -> 0.81 | 5.03 -> 2.14 |
+| `col_scatter` | 1.20 -> 0.13 | 3.41 -> 0.35 |
+| `plate_broadcast_write` | 1.03 -> 1.00 | 1.00 -> 1.05 |
+| patch merge (6 blocks) | 2.32 -> 0.57 | 2.28 -> 1.13 |
+| `plate_promote` | 0.11 -> **0.00** | 0.10 -> **0.00** |
+| **composite** | **45.67 -> 11.41** | **62.97 -> 24.18** |
+
+The instrumented render, both bodies, all four envs the ticket names:
+
+| config | B=16 | B=64 | B=256 | `tile` chosen | N |
+|---|---|---|---|---|---|
+| `PointmazeLargeNavigate` | 13.98 -> 5.35 (2.61x) | 47.22 -> 12.50 (**3.78x**) | 209.29 -> 46.56 (4.50x) | 14 | 784 |
+| `PointmazeMediumNavigate` | 19.98 -> 8.67 (2.31x) | 64.95 -> 25.05 (**2.59x**) | 272.79 -> 97.29 (2.80x) | 21 | 1,764 |
+| `AntmazeGiantNavigate` | 62.32 -> 30.16 (2.07x) | 280.98 -> 80.44 (**3.49x**) | 1279.16 -> 306.20 (4.18x) | 14 | 784 |
+| `HumanoidmazeMediumNavigate` | 99.97 -> 62.70 (1.59x) | 534.45 -> 244.80 (**2.18x**) | 2478.31 -> 1000.89 (2.48x) | 18-20 | 1,296-1,600 |
+
+**These are attribution, not the result.** Both columns carry the instrument's overhead and neither
+is the shipped function; the ratio that goes in a report is the interleaved sweep below, which times
+the real `composite`.
+
+**The legged mazes were not supposed to gain and they did.** RAYCAST-2b measured `AntmazeMedium` and
+`HumanoidmazeMedium` gaining 1.03x and 1.07x from cover compaction and concluded they were
+cast-bound and out of this lever's reach. They still are cast-bound — `cast` is 254.8 of 286.0 ms on
+`AntmazeGiantNavigate` — but the cast runs over the WINDOW, so narrowing the window narrows the cast
+too. That is the part of the design that was not in the ticket's premise: shrinking `N` is not a
+compositing optimisation, it is a ray-count optimisation that the compositing path happened to own.

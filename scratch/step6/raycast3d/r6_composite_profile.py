@@ -39,30 +39,50 @@ def _root_tag(p: str) -> str:
 # --------------------------------------------------------------------------- the timed copy
 
 class Rec:
-    """One composite call's block timings (ms) and shapes."""
+    """One composite call's block timings (ms) and shapes.
+
+    A STACK rather than one ``(name, t0)`` pair, because the first version of this had neither and
+    a nested block silently wrote its parent's elapsed time under the CHILD's name -- so one column
+    read 0.00 ms for real work and another double-counted. An instrument that mis-attributes is
+    worse than one that is missing, because the number it prints looks like a result.
+    """
 
     def __init__(self):
         self.t = {}
         self.shape = {}
-        self._t0 = None
-        self._name = None
+        self._stack: list = []
+        self._pending = None
 
     def __call__(self, name):
-        self._name = name
+        self._pending = name
         return self
 
     def __enter__(self):
-        self._t0 = time.perf_counter()
+        self._stack.append((self._pending, time.perf_counter()))
+        self._pending = None
         return self
 
     def __exit__(self, *a):
-        dt = (time.perf_counter() - self._t0) * 1e3
-        self.t[self._name] = self.t.get(self._name, 0.0) + dt
+        name, t0 = self._stack.pop()
+        dt = (time.perf_counter() - t0) * 1e3
+        self.t[name] = self.t.get(name, 0.0) + dt
+        assert not self._stack, ("blocks must not nest: the total is their sum, and a nested block "
+                                 "would be counted inside its parent and again on its own")
         return False
 
 
-def make_instrumented(R3, sink: list):
-    """Return a ``composite`` with the shipped body, split into timed blocks."""
+def make_instrumented(R3, sink: list, variant: str = "window"):
+    """Return a ``composite`` split into timed blocks: the window body, or the compact one.
+
+    ``variant="window"`` mirrors ``_composite_window``, which is what the integration tree ships and
+    what the design was measured against. ``variant="compact"`` mirrors the RAYCAST-6 body, so the
+    same block names can be read down both columns and the saving attributed statement by statement
+    rather than inferred from an end-to-end ratio. Neither is the shipped code -- both are copies --
+    so the numbers here are attribution, and the ratio that goes in a report comes from the
+    interleaved sweep, which times the real function.
+    """
+    if variant == "compact":
+        return _make_compact(R3, sink)
     import torch
 
     @torch.no_grad()
@@ -197,9 +217,127 @@ def make_instrumented(R3, sink: list):
     return composite
 
 
+def _make_compact(R3, sink: list):
+    """The RAYCAST-6 body, same block names, so the two columns subtract."""
+    import torch
+
+    @torch.no_grad()
+    def composite(plate, plate_t, cam, prims, xpos, xmat, lights, H, W,
+                  supersample=1, out=None, tile=None, mat_rgb=None, size_scale=None):
+        r = Rec()
+        with r("setup"):
+            device = plate.device
+            B = xpos.shape[0]
+            ss = int(supersample)
+            Rh, Rw = H * ss, W * ss
+            o, d = R3.cached_rays(cam, Rh, Rw, device)
+            P = prims.to(device)
+            ldir, lamb, ldif, lspec = lights.to(device)
+            out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=device) if out is None \
+                else out.view(B, H, W, 3)
+
+        with r("tile_origin"):
+            org = None
+            ask = tile
+            if tile is not None and tile < H and tile < W:
+                bs = 1.0 if size_scale is None else float(size_scale.max())
+                fit = R3._fit_tile(cam, prims, xpos, H, W, tile, device, bound_scale=bs)
+                if fit is not None:
+                    org, tile = fit
+
+        with r("window_gather"):
+            if org is None:
+                N = Rh * Rw
+                oo, dd = o.expand(B, N, 3), d.expand(B, N, 3)
+                obase = None
+            else:
+                idx = R3._expand_tile(org, tile, ss, Rw, device)
+                N = idx.shape[1]
+                oo = o.expand(B, N, 3)
+                dd = d[idx.reshape(-1)].view(B, N, 3)
+                obase = R3._expand_tile(org, tile, 1, W, device)
+        with r("upsample_t"):
+            if org is None:
+                bt = (plate_t if ss == 1 else R3._upsample_t(plate_t, H, W, ss)).expand(B, N)
+            else:
+                bt = plate_t[obase].view(B, tile, 1, tile, 1) \
+                    .expand(B, tile, ss, tile, ss).reshape(B, N)
+
+        with r("sizes"):
+            nprim = len(P["kind"])
+            sz = P["size"].view(1, nprim, 3)
+            if size_scale is not None:
+                sz = sz * size_scale.view(B, 1, 1)
+        with r("cast"):
+            t, n, i_hit = R3.cast_nearest(P["kind"], sz.expand(B, nprim, 3), xpos, xmat, oo, dd)
+        with r("cov"):
+            cov = t < bt
+
+        with r("compact_nonzero"):
+            col = torch.zeros((B, N, 3), device=device, dtype=n.dtype)
+            flat = torch.nonzero(cov.reshape(-1), as_tuple=False).reshape(-1)
+        if flat.numel():
+            with r("material_gather"):
+                rows = flat.div(N, rounding_mode="floor")
+                cols = flat - rows * N
+                ih = i_hit[rows, cols]
+                mat = P["mat"][ih] if mat_rgb is None else mat_rgb[rows, ih]
+                nsel, dsel = n[rows, cols], -dd[rows, cols]
+            with r("shade"):
+                c = R3.shade(nsel, dsel, ldir, lamb, ldif, lspec, lights.exponent,
+                             mat, P["tex"][ih], P["spec"][ih]) * 255.0
+            with r("col_scatter"):
+                col.view(-1, 3).index_copy_(0, flat, c)
+
+        with r("covf"):
+            covf = cov.to(col.dtype)
+        if org is None:
+            with r("box_avg_full"):
+                col = col.view(B, H, ss, W, ss, 3).sum((2, 4)) / (ss * ss)
+                covf = covf.view(B, H, ss, W, ss).sum((2, 4)) / (ss * ss)
+            with r("full_merge"):
+                base = plate.to(col.dtype).unsqueeze(0)
+                out.copy_(torch.clamp(torch.round(base * (1 - covf.unsqueeze(-1)) + col),
+                                      0, 255).to(torch.uint8))
+            r.shape.update(B=B, N=N, ss=ss, H=H, W=W, tile=0, asked_tile=ask, nprim=nprim,
+                           js=int(flat.numel()) // max(B, 1), ps=-1)
+            sink.append(r)
+            return out
+
+        with r("box_avg_col"):
+            col = col.view(B, tile, ss, tile, ss, 3).sum((2, 4)) / (ss * ss)
+        with r("box_avg_cov"):
+            covf = covf.view(B, tile, ss, tile, ss).sum((2, 4)) / (ss * ss)
+        with r("plate_broadcast_write"):
+            out.copy_(plate.view(1, H, W, 3).expand(B, H, W, 3))
+        with r("oidx"):
+            covf = covf.reshape(B, -1)
+            ps = torch.nonzero((covf > 0).any(0), as_tuple=False).reshape(-1)
+        if ps.numel():
+            with r("patch_gather"):
+                oidx = obase[:, ps].unsqueeze(-1).expand(B, ps.numel(), 3)
+                patch = torch.gather(plate.reshape(1, H * W, 3).expand(B, H * W, 3), 1,
+                                     oidx).to(col.dtype)
+            with r("merge_arith"):
+                merged = patch * (1 - covf[:, ps].unsqueeze(-1)) + col.reshape(B, -1, 3)[:, ps]
+            with r("round_cast"):
+                px = torch.clamp(torch.round(merged), 0, 255).to(torch.uint8)
+            with r("scatter"):
+                out.view(B, H * W, 3).scatter_(1, oidx, px)
+        r.shape.update(B=B, N=N, ss=ss, H=H, W=W, tile=tile, asked_tile=ask, nprim=nprim,
+                       win_px=tile * tile, ps=int(ps.numel()),
+                       covered_pairs=int(flat.numel()),
+                       covered_per_row=float(flat.numel()) / max(B, 1))
+        sink.append(r)
+        return out
+
+    return composite
+
+
 # --------------------------------------------------------------------------- driver
 
-def run(cfg: str, batches, repeats: int, device: str, threads: int):
+def run(cfg: str, batches, repeats: int, device: str, threads: int,
+        variant: str = "window"):
     import numpy as np
     import torch
     import stable_envs as se
@@ -210,7 +348,7 @@ def run(cfg: str, batches, repeats: int, device: str, threads: int):
     pool = np.asarray(np.load(npz)["states"], np.float32) if npz.is_file() else None
 
     orig = R3.composite
-    out = {"config": cfg, "device": device, "threads": threads,
+    out = {"config": cfg, "device": device, "threads": threads, "variant": variant,
            "stable_envs_from": _root_tag(se.__file__),
            "COVER_COMPACTION": bool(R3.COVER_COMPACTION),
            "PRIMITIVE_BOUNDS": bool(getattr(R3, "PRIMITIVE_BOUNDS", None)),
@@ -224,7 +362,7 @@ def run(cfg: str, batches, repeats: int, device: str, threads: int):
                 st = env.sample_states(B, np.random.default_rng(0))
             env.render(st)                                      # warm every cache
             sink: list = []
-            R3.composite = make_instrumented(R3, sink)
+            R3.composite = make_instrumented(R3, sink, variant)
             walls = []
             for _ in range(repeats):
                 t0 = time.perf_counter()
@@ -267,14 +405,16 @@ def main():
     ap.add_argument("--repeats", type=int, default=5)
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--variant", default="window", choices=("window", "compact"),
+                    help="which body to attribute: the integration tree's, or RAYCAST-6's")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
 
     batches = [int(x) for x in a.batches.split(",") if x]
     res = {"host": socket.gethostname(), "slurm_job": os.environ.get("SLURM_JOB_ID"),
-           "configs": {}}
+           "variant": a.variant, "configs": {}}
     for cfg in [c for c in a.configs.split(",") if c]:
-        res["configs"][cfg] = run(cfg, batches, a.repeats, a.device, a.threads)
+        res["configs"][cfg] = run(cfg, batches, a.repeats, a.device, a.threads, a.variant)
 
     dst = Path(a.out) if a.out else (ROOT / "examples" / "results" / "step6" / "raycast3d"
                                      / "experiments" / f"r6_composite_profile_{a.device}.json")
