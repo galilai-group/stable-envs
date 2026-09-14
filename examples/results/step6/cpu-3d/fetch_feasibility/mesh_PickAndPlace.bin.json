@@ -1,0 +1,73 @@
+{
+ "scene": "PickAndPlace",
+ "n": 16,
+ "ntri": 31720,
+ "meshes": 15,
+ "res": 480,
+ "per_state": [
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4976174235343933
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.49418699741363525
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4961923360824585
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.49860548973083496
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.490034282207489
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4972536563873291
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.49186044931411743
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4992635250091553
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.49201714992523193
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.495678186416626
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4725898504257202
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4908559322357178
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4983052909374237
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4976416528224945
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4975905418395996
+  },
+  {
+   "tris_in_view": 31720,
+   "median_edge_px": 0.4975905418395996
+  }
+ ]
+}
