@@ -8,16 +8,16 @@ the disagreement is listed under *Where the dashboard and the artifacts disagree
 
 ## Baseline, integration, and where Step 6 stands
 
-| —                                    | value                                      | read from                                          |
-|--------------------------------------|--------------------------------------------|----------------------------------------------------|
-| baseline SHA                         | `89fa5ca81341dc4df7186ec325cb691431a2ef17` | `dashboard.yaml: baseline_sha`                     |
-| integration SHA                      | `72f98b582308f1a7eccee4d702de3548e95ad906` | `git rev-parse HEAD` in this tree (`step6/report`) |
-| integration branch                   | `step6/integration`                        | `dashboard.yaml`                                   |
-| baseline ancestry                    | the baseline is an ancestor of this tree   | `git merge-base --is-ancestor`                     |
-| workstreams                          | 8                                          | `dashboard.yaml: workstreams`                      |
-| workstreams with code on this branch | 5 of 8                                     | `git log --merges`                                 |
-| workstreams whose status says merged | 3 of 8                                     | `dashboard.yaml: status`                           |
-| merge commits on this branch         | 5                                          | `git log --merges`                                 |
+| —                                    | value                                      | read from                                                                                                                  |
+|--------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| baseline SHA                         | `89fa5ca81341dc4df7186ec325cb691431a2ef17` | `dashboard.yaml: baseline_sha`                                                                                             |
+| integration SHA                      | `f9caa1f3db7ba9c8550365f7e66d8dbc164077c7` | `git rev-parse HEAD` in this tree (`step6/report`) when the page was generated; the commit that adds the page is its child |
+| integration branch                   | `step6/integration`                        | `dashboard.yaml`                                                                                                           |
+| baseline ancestry                    | the baseline is an ancestor of this tree   | `git merge-base --is-ancestor`                                                                                             |
+| workstreams                          | 8                                          | `dashboard.yaml: workstreams`                                                                                              |
+| workstreams with code on this branch | 5 of 8                                     | `git log --merges`                                                                                                         |
+| workstreams whose status says merged | 3 of 8                                     | `dashboard.yaml: status`                                                                                                   |
+| merge commits on this branch         | 5                                          | `git log --merges`                                                                                                         |
 
 !!! warning "`dashboard.yaml` does not parse as YAML and was repaired in order to read it"
     The repairs are textual and minimal, and they are listed here so that the source file

@@ -570,8 +570,12 @@ def build(results: Path, repo: Path, args) -> str:
     branch = git(repo, "rev-parse", "--abbrev-ref", "HEAD")
     base = args.baseline_sha or dash.get("baseline_sha")
     base_how = "`--baseline-sha`" if args.baseline_sha else "`dashboard.yaml: baseline_sha`"
+    # The page names the tree it was generated FROM, which is necessarily the parent of the commit
+    # that carries the page. Saying so is cheaper than the alternative, which is a reader wondering
+    # why the SHA on the page is one behind the branch.
     head_how = ("`--integration-sha`" if args.integration_sha else
-                (f"`git rev-parse HEAD` in this tree (`{branch}`)" if head
+                (f"`git rev-parse HEAD` in this tree (`{branch}`) when the page was generated; the "
+                 f"commit that adds the page is its child" if head
                  else "unavailable: this tree is not a git checkout"))
     anc = git(repo, "merge-base", "--is-ancestor", str(base), "HEAD")
     ancestry = ("the baseline is an ancestor of this tree" if anc == "" else
