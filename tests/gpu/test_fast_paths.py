@@ -228,6 +228,29 @@ def _classic_prepare(seed: int, extreme: bool):
     return prepare
 
 
+@contextlib.contextmanager
+def _primitive_bounds(on: bool):
+    """Pin ``raycast3d.PRIMITIVE_BOUNDS`` for the duration, and put back whatever it was.
+
+    Both legs are pinned explicitly, so the comparison is real whatever the module default is -- and
+    the default MOVES: RAYCAST-4 shipped it on, RAYCAST-5 turned it off while the maze regression was
+    open. Restoring a hard ``True`` here (as this did) would have quietly turned the bound back on for
+    every later test in the process the moment the default changed.
+    """
+    was = R3.PRIMITIVE_BOUNDS
+    try:
+        R3.PRIMITIVE_BOUNDS = on
+        yield
+    finally:
+        R3.PRIMITIVE_BOUNDS = was
+
+
+def _bounds_frames(env, states, fast: bool):
+    """Both legs through the TORCH cast: the bound is the CPU path and the fused kernel has no bound."""
+    with _forced_backend("torch"), _primitive_bounds(fast):
+        return env.render(states).clone()
+
+
 def _scene_prepare(seed: int):
     return lambda env: _scene(env, env.B, seed)
 
@@ -293,6 +316,35 @@ CASES: tuple[FastPath, ...] = (
         frames=_mover_frames,
         inapplicable=lambda env: (None if hasattr(env, "_mover_idx")
                                   else "does not use the windowed mover path"),
+    ),
+    FastPath(
+        id="raycast3d-primitive-bounds",
+        why=("``raycast3d``'s torch cast tests a primitive only against the rays whose line passes "
+             "within that primitive's own bounding sphere. The claim is that a ray outside the "
+             "INFLATED bound misses within the intersector's own rounding budget (k = 16 ulp) -- not "
+             "in exact arithmetic, because _capsule in float32 at 100 m reports hits outside the "
+             "primitive's true bound -- so intersect returns INF there and loses the ``t < best`` "
+             "test, and skipping it cannot change t, the normal or the winning index. A difference "
+             "means a bound is too SMALL somewhere, and the pixels it drops are on a silhouette "
+             "where nothing else looks. Both legs are forced through the torch backend because the bound "
+             "is the CPU path: the fused Triton kernel keeps every primitive in registers and has no "
+             "bound to switch off, which is also why the GPU digests cannot move. The unit-ray "
+             "invariant the bound rests on is checked at runtime, so a bundle that violated it would "
+             "take the unbounded path and this case would pass vacuously -- "
+             "tests/unit/test_raycast3d_primitive_bounds.py is what stops that being silent."),
+        names=tuple(n for n in sorted(se.REGISTRY)
+                    if n.startswith(("DMC", "Mujoco", "Antmaze", "Pointmaze", "Humanoidmaze",
+                                     "PointMaze"))),
+        modules=RAYCAST_MODULES,
+        batch=8,
+        seed=0,
+        # THE ENV'S OWN SIZE, not 84. This case first ran at 84 px only and passed on every env while
+        # the CPU replay of the same change moved a pixel on HumanoidmazeGiantNavigate at its
+        # certified 224 px. The bound's failure mode is a long lever arm -- a far camera and a small
+        # primitive -- and building a giant maze at 84 px shortens exactly the thing under test.
+        sizes=(None,),
+        prepare=_states_prepare(0),
+        frames=_bounds_frames,
     ),
     FastPath(
         id="composite-cover-compaction",
@@ -522,6 +574,17 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert hasattr(R3, "FORCE_BACKEND"), (
         "raycast3d.FORCE_BACKEND is gone, so the fused-vs-torch case cannot pin either backend and has "
         "been comparing the default against itself")
+    # NOT "is True": the default is a release decision that moves, and pinning it here would make
+    # this assertion fail for a reason that has nothing to do with reachability. What the case needs
+    # is that the switch EXISTS and that turning it on actually reaches the bound -- i.e. that at
+    # least one kind is bounded. A `_BOUNDED_KINDS` emptied by a future measurement would make the
+    # case compare the unbounded path against itself, and that is the failure worth catching.
+    assert isinstance(getattr(R3, "PRIMITIVE_BOUNDS", None), bool), (
+        "raycast3d.PRIMITIVE_BOUNDS is gone, so the per-primitive-bound case cannot switch the bound "
+        "off and has been comparing the bounded path against itself")
+    assert getattr(R3, "_BOUNDED_KINDS", frozenset()), (
+        "raycast3d._BOUNDED_KINDS is empty, so PRIMITIVE_BOUNDS=True bounds NOTHING and the "
+        "per-primitive-bound case compares the unbounded path against itself")
     assert getattr(R3, "COVER_COMPACTION", None) is True, (
         "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
         "compaction off and has been comparing the compacted path against itself")
