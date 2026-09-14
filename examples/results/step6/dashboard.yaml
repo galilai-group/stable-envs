@@ -710,7 +710,7 @@ decisions:
     (marginal) pending one repeat on a quiet node.'
 integration_verification:
   branch: step6/integration-verify (merged)
-  head: 50e1716 (merged)
+  head: 237a7cd (merged)
   verdict: 'FINAL: PASS-WITH-KNOWN-DELTAS on 83bd778 (raster/fetch/trackcom re-measured there; dmc/ogb/swm + 25-config CPU at 43e6bcc with library files byte-identical between the two except the new cpu3d.py
     and added trackcom methods)'
   jobs:
@@ -754,6 +754,8 @@ integration_verification:
   - '3.12 arm is interpreter-dependent: texture-fidelity''s certify312_protocol (se-step5: digests d314a7ea/.../1801687, downsample 0.53385/0.62895, no FAIL) vs the verify 3.12 arm in se-step3 (reproduces
     the frozen digests 1fc511ea/13b88aad; downsample 0.52223/0.61258 -> 3 FAIL). Same node/GPU/driver/versions, stable_envs identical: two different renders. The contract judges these cells under 3.11 where
     all arms agree PASS x4; ''no FAIL under 3.12'' must not be asserted and certify312_protocol must name its interpreter (se-step5).'
+  - 'swm subset at 83aa187 (jobs 6367990 gpu2264 / 6367991): swm shard 6/6 nothing moved under the fused kernel; test_navdot_fused 24/0; test_fast_paths 213 pass/184 skip/0 fail; CPU 25/25 byte-identical
+    (21 raycast3d rows included by a ${RAY:-} default bug, now ${RAY-}); unit 732 pass + 2 pre-existing.'
   final_pass: 'ready: scratch/step6/verify/final.sbatch (dmc+ogb+swm shards, trackcom cells under se-step5 paired with se-step3, Gate A, full test_reproducibility, VISIBILITY-1 line) + cpu_verify.sbatch
     with CPUVENV=se-step6 (no mujoco_warp importable) + tests/unit; waiting for RAYCAST-5, cpu-3d, VISIBILITY-1 merges'
 step6_status: CODE COMPLETE 2026-09-15 at integration 83bd778 (+ verification/docs merges). All eight workstreams merged and closed. Remaining items are Sami decisions (see decisions/notes) and Step-8 carry-overs;
