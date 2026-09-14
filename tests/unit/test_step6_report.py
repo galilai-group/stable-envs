@@ -143,3 +143,85 @@ def test_the_generator_survives_a_tree_with_no_git_and_an_unreadable_artifact(tm
         junk.unlink()
     assert "deadbeef" in page and "_test_unreadable.json" in page, (
         "an unparseable artifact must appear in the appendix rather than stopping the report")
+
+
+def test_a_superseded_shard_is_excluded_and_listed_with_its_reason(tmp_path):
+    """A shard the workstream withdrew must not label a tier, and must not disappear either.
+
+    Workstreams quarantine a measurement they no longer stand behind by moving it into a
+    `superseded_*` directory beside the replacement — gfxdraw's node2338 CPU sweep and raster2d's
+    round-1 node2344 sweep are both withdrawn for the same reason, a host load average that makes
+    the shard a measurement of the node. The page has to honour that (or it reports a tier nobody
+    claims) and has to print it (or a withdrawn measurement vanishes from the record).
+    """
+    pytest.importorskip("yaml")
+    spec = importlib.util.spec_from_file_location("step6_report_sup", GEN)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    live = json.loads((RESULTS / "tilemap" / "sweep" / "cpu_after.json").read_text())
+    ws = RESULTS / "_test_supersession"
+    quarantine = ws / "sweep" / "superseded_loaded_node"
+    quarantine.mkdir(parents=True)
+    (quarantine / "cpu_after.json").write_text(json.dumps(live))
+    (quarantine / "README.md").write_text("# withdrawn\n\nload average 44 on a shared node.\n")
+    stamped = ws / "sweep" / "gpu_after.json"
+    stamped.write_text(json.dumps(dict(live, unusable="the before leg ran on a different card")))
+    try:
+        class Args:
+            baseline_sha = None
+            integration_sha = None
+
+        page = mod.build(RESULTS, ROOT, Args())
+        A = mod.Artifacts(RESULTS)
+    finally:
+        for f in (quarantine / "cpu_after.json", quarantine / "README.md", stamped):
+            f.unlink()
+        for d in (quarantine, ws / "sweep", ws):
+            d.rmdir()
+
+    paths = {p for p, _ in A.superseded}
+    assert "examples/results/step6/_test_supersession/sweep/superseded_loaded_node/cpu_after.json" in paths
+    assert "examples/results/step6/_test_supersession/sweep/gpu_after.json" in paths
+    assert not any(o["ws"] == "_test_supersession"
+                   for v in A.tier_observations().values() for o in v), (
+        "a withdrawn shard was still labelled with a tier")
+    assert "load average 44 on a shared node." in page, "the README's reason did not reach the page"
+    assert "the before leg ran on a different card" in page, "the `unusable` reason did not reach the page"
+
+
+def test_wave0_profile_jobs_count_as_recorded_for_every_workstream(report):
+    """The shared wave-0 profiling jobs are recorded once at the top of the dashboard, not eight
+    times, and must not be reported as eight unrecorded jobs."""
+    import yaml
+
+    dash, _ = yaml.safe_load((RESULTS / "dashboard.yaml").read_text()), None
+    wave0 = [str(j) for j in (dash.get("wave0_profile_jobs") or [])]
+    if not wave0:
+        pytest.skip("the dashboard records no wave0_profile_jobs")
+    section = report.split("## Where the dashboard and the artifacts disagree", 1)[-1]
+    section = section.split("## Appendix", 1)[0]
+    named = [j for j in wave0 if j in section]
+    assert not named, f"wave-0 job(s) {named} are still reported as unrecorded disagreements"
+
+
+def test_the_page_is_reproducible(tmp_path):
+    """Two runs over the same artifacts must produce the same bytes.
+
+    A generated page that churns is a page whose diff stops meaning anything, and the way it churns
+    here is silent: an ordering that falls out of set iteration changes between processes without a
+    single measurement changing.
+    """
+    pytest.importorskip("yaml")
+    pages = []
+    for i in range(2):
+        spec = importlib.util.spec_from_file_location(f"step6_report_rep{i}", GEN)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        class Args:
+            baseline_sha = None
+            integration_sha = "fixed"
+
+        pages.append(mod.build(RESULTS, ROOT, Args()))
+    assert pages[0] == pages[1], "the generator is not deterministic over one unchanged tree"

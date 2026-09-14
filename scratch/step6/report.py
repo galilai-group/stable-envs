@@ -185,6 +185,41 @@ def step3_representative(labels: list[dict], C) -> dict[tuple[str, str], dict]:
 
 # ------------------------------------------------------------------------------ artifact index
 
+#: A workstream quarantines a shard it no longer stands behind by moving it into a `superseded_*`
+#: directory beside the replacement, or by stamping the file itself. Both forms are honoured: a
+#: measurement the people who took it have withdrawn must not be the one this page labels a tier
+#: from, and it must not simply vanish either — it is listed with the reason, in the appendix.
+def superseded_dir(rel: Path) -> bool:
+    return any(part.lower() == "superseded" or part.lower().startswith("superseded_")
+               for part in rel.parts)
+
+
+def readme_reason(path: Path, stop: Path) -> str | None:
+    """The first prose line of the nearest README at or above ``path``'s directory.
+
+    The reason a shard was withdrawn is written where the shard was moved to, by the person who
+    moved it. Reading it here means the appendix carries their sentence rather than this file's guess
+    at why a directory is named what it is named.
+    """
+    d = path.parent
+    while True:
+        for r in sorted(d.glob("README*")):
+            title = None
+            for raw in r.read_text(errors="replace").splitlines():
+                line = raw.strip()
+                if not line or set(line) <= set("=-_"):
+                    continue
+                if line.startswith("#"):                  # a title, not yet the reason
+                    title = title or line.lstrip("#").strip()
+                    continue
+                return f"{line} (`{r.name}`)"
+            if title:                                     # a README that is only a title
+                return f"{title} (`{r.name}`)"
+        if d == stop or stop not in d.parents:
+            return None
+        d = d.parent
+
+
 def leg_of(rel: Path) -> str | None:
     """``before`` / ``after`` for an artifact, from the DEEPEST path component that says so.
 
@@ -214,6 +249,8 @@ class Artifacts:
         self.pixel: list[tuple[Path, dict]] = []          # before/after pixel comparisons
         self.replay_legs: list[tuple[Path, dict]] = []    # one leg of a Step-4 replay, with a summary
         self.kind: dict[str, str] = {}                    # every JSON -> what it was recognised as
+        self.superseded: list[tuple[str, str]] = []       # withdrawn by the workstream, with the reason
+        self.superseded_other: int = 0
         self.other_files: list[str] = []
         self._census = None
         self._C = None
@@ -228,19 +265,57 @@ class Artifacts:
         for p in sorted(self.results.rglob("*")):
             if not p.is_file():
                 continue
+            quarantined = superseded_dir(p.relative_to(self.results))
             if p.suffix != ".json":
-                self.other_files.append(self.rel(p))
+                if quarantined:
+                    if p.name.lower().startswith("readme"):
+                        self.superseded.append((self.rel(p), "the note that records the withdrawal"))
+                    else:
+                        self.superseded_other += 1
+                else:
+                    self.other_files.append(self.rel(p))
                 continue
             try:
                 d = json.loads(p.read_text())
             except Exception as e:
                 self.unknown.append((self.rel(p), f"does not parse as JSON: {type(e).__name__}"))
                 continue
+            why = self._withdrawn(p, d, quarantined)
+            if why is not None:
+                self.superseded.append((self.rel(p), why))
+                continue
             try:
                 self._classify(p, d)
             except Exception as e:                        # a shape that looked known and was not
                 self.unknown.append(
                     (self.rel(p), f"recognised but could not be read: {type(e).__name__}: {e}"))
+
+    def _withdrawn(self, p: Path, d, quarantined: bool) -> str | None:
+        """The reason this artifact was withdrawn, or None if it still counts.
+
+        Three forms, all of them the workstream's own statement and none of them this file's opinion:
+        a `superseded_*` directory, a `"superseded": true` stamp, or an `"unusable": "<reason>"`
+        string. gfxdraw's node2338 shards and raster2d's round-1 node2344 shards are quarantined this
+        way because their host load averages make them a measurement of the node.
+        """
+        reasons = []
+        if quarantined:
+            reasons.append("superseded by the workstream")
+        if isinstance(d, dict):
+            u = d.get("unusable")
+            if isinstance(u, str) and u.strip():
+                reasons.append(f"marked unusable: {u.strip()}")
+            sup = d.get("superseded")
+            if isinstance(sup, str) and sup.strip():
+                reasons.append(f"marked superseded: {sup.strip()}")
+            elif sup is True:
+                reasons.append("marked `superseded: true`")
+        if not reasons:
+            return None
+        note = readme_reason(p, self.results)
+        if note and quarantined:
+            reasons.append(note)
+        return "; ".join(reasons)
 
     def _classify(self, p: Path, d) -> None:
         if p.name == "plan.json":
@@ -765,12 +840,15 @@ def build(results: Path, repo: Path, args) -> str:
     P(f"length. {remeasured['cpu']} CPU cell(s) and {remeasured['gpu']} GPU cell(s) in the table above")
     P("were re-measured by a Step 6 artifact; the rest still carry their Step 3 label:")
     P("")
+    # The tie-break on the name is not decoration: without it the order of two equally-populated
+    # tiers comes out of set iteration, and the page churns between runs that measured nothing new.
     order = sorted({t for d in dist.values() for t in d},
-                   key=lambda t: (t.split("_")[0], -dist["cpu"][t] - dist["gpu"][t]))
+                   key=lambda t: (t.split("_")[0], -dist["cpu"][t] - dist["gpu"][t], t))
     L.extend(tbl([[t, str(dist["cpu"].get(t, 0)), str(dist["gpu"].get(t, 0))] for t in order],
                  ["tier after Step 6", "CPU configs", "GPU configs"]))
 
     # ---------------------------------------------------------------- per workstream
+    wave0 = {str(x) for x in (dash.get("wave0_profile_jobs") or [])}
     walls = A.wall_times()
     replays = A.replay_summaries()
     jobs = A.slurm_jobs()
@@ -911,11 +989,15 @@ def build(results: Path, repo: Path, args) -> str:
                              f"{len(r['moved'])} configuration(s) are not identical in "
                              f"{r['what']}: " + ", ".join(r["moved"]), r["path"])
 
-        recorded = {str(x) for x in (w.get("slurm_jobs") or [])}
+        # The wave-0 profiling jobs produced the `profile_before` notes for several workstreams at
+        # once, so the dashboard records them once at the top level rather than eight times. They
+        # count as recorded for every workstream; without that they are eight false disagreements.
+        recorded = {str(x) for x in (w.get("slurm_jobs") or [])} | wave0
         extra = sorted(j for j in jobs.get(name, set()) if j.isdigit() and j not in recorded)
         if extra:
             flag(f"`{name}`: `slurm_jobs`",
-                 f"{len(recorded)} job(s) recorded, not including these",
+                 f"{len(recorded)} job(s) recorded for this workstream (its own plus the "
+                 f"{len(wave0)} wave-0 profile job(s)), not including these",
                  "artifacts under this workstream were written by job(s) " + ", ".join(extra),
                  f"examples/results/step6/{name}/")
         P("")
@@ -1043,6 +1125,17 @@ def build(results: Path, repo: Path, args) -> str:
     P("artifact nobody is checking, and this list is the to-do for the next run.")
     P("")
     L.extend(tbl([[f"`{p}`", why] for p, why in A.unknown], ["artifact", "why it is not summarised"]))
+    if A.superseded or A.superseded_other:
+        P(f"{len(A.superseded)} artifact(s) were **withdrawn by the workstream that took them** — "
+          "moved into a")
+        P("`superseded_*` directory, or stamped `superseded` / `unusable` — and nothing on this page")
+        P("is computed from them. They are listed with the reason rather than deleted, because a")
+        P("measurement that was taken and then not stood behind is part of the record:")
+        P("")
+        L.extend(tbl([[f"`{p}`", why] for p, why in A.superseded], ["artifact", "why it was withdrawn"]))
+        if A.superseded_other:
+            P(f"A further {A.superseded_other} non-JSON file(s) sit beside them in those directories.")
+            P("")
     # Recognised is not the same as used. Anything whose path has not appeared anywhere on the page by
     # now is something the report read and then rested nothing on, and saying so is the difference
     # between an artifact that was considered and one that was skipped.
