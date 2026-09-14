@@ -426,12 +426,22 @@ seams, wrappers only), `replay_digests.py` (the seconds-long replay loop), `cons
 
 ---
 
-## GFXDRAW-2-CPU — the design, measured. **Recommendation: do not build the fused CPU kernel.**
+## GFXDRAW-2-CPU — the design, measured. **Recommendation: do not build a PER-PIXEL-WALK CPU kernel.**
 
 The ticket asked whether `cores_cpu >= 1` needs a non-torch mechanism and which one. It does need
-one, and **none of the three candidates is it**: on the certification host a fused per-pixel CPU
-kernel is **1.03-1.51x** faster than the torch path already shipped, and **1.6-2.4x short** of the
-bar. The architecture that looked obvious from the laptop does not survive being measured.
+one, and **the mechanism measured here is not it**: on the certification host a fused **per-pixel
+walk** — the classic-control frame as one loop over pixels, each asking every primitive whether it
+covers it — is **1.03-1.51x** faster than the torch path already shipped and **1.6-2.4x short** of
+the bar, whether written in C++ or in numba. The architecture that looked obvious from the laptop
+does not survive being measured.
+
+**Scope of that negative, stated precisely.** It is a result about ONE design. A per-pixel walk
+pays a bounding-box test and a branch per pixel PER primitive, over every pixel of the frame,
+including the ~97% of the frame no primitive touches. SDL_gfx itself does not work that way and
+neither does the torch path: both touch only the pixels a primitive covers. **`cores_cpu >= 1` is
+therefore NOT shown to be unreachable on CPU** — what is shown is that this particular fused shape
+does not reach it, and that the two mechanisms available for it (a compiled extension, numba) make
+no difference to that because the shape is what costs.
 
 ### What was measured, and where
 
@@ -511,29 +521,61 @@ it is the single cheapest thing on this list — worth taking on its own, not as
 four envs (6.82 vs 7.77, 9.78 vs 11.87, 7.47 vs 9.34, 6.33 vs 7.89). The 8268 downclocks on
 AVX-512, and this is a warning for the one lever that is left.
 
-**And the one that does not fall out: SIMD is untested.** Everything above is scalar. The per-pixel
-walk is lane-parallel across a row — integer, no data-dependent branching within a primitive except
-the bounding box — and AVX-512 is 16 int32 lanes, so 3.1-4.5x is arithmetically available. Whether
-it is *realisable* on an 8268 that throttles under AVX-512 is exactly the open question, and it is
-the same question `cpu-3d` §4.3 and `raycast3d`'s RAYCAST-3 both end on.
+**And the two that do not fall out.**
+
+*SIMD is untested.* Everything above is scalar. The per-pixel walk is lane-parallel across a row —
+integer, no data-dependent branching within a primitive except the bounding box — and AVX-512 is 16
+int32 lanes, so 3.1-4.5x is arithmetically available. Whether it is *realisable* on an 8268 that
+throttles under AVX-512 (see the `-march=native` result above) is the open question, and it is the
+same one `cpu-3d` §4.3 and `raycast3d`'s RAYCAST-3 both end on.
+
+*And a whole design was not measured: a **span/scanline rasterizer writing `(H,W,3)` directly**.*
+This is what SDL_gfx does and what the official renderer this family is benchmarked against IS.
+Its cost is not per FRAME pixel but per PRIMITIVE pixel: fill the background once, then for each
+primitive walk only its own rows and, within a row, only the span the 16.16 fill computes —
+`hline(y, x0, x1)` on an interleaved surface, the Wu fringe as a short scatter, the disc as its
+offset stencil. It writes the caller's layout as it goes, so **the interleave disappears entirely**
+rather than costing 44-61% of the budget, and the ~97% of the frame no primitive covers is written
+once by the background fill instead of being visited four or five times.
+
+Rough arithmetic, NOT a measurement: CartPole's primitives cover roughly 8,000 of 240,000 pixels,
+so the per-primitive work is ~3% of what the per-pixel walk does, and the floor becomes the
+background fill plus the spans — order 0.2-0.3 ms per frame against a 0.868 ms budget. That is the
+shape of the official renderer's own 400-460 frames/s (2.2-2.5 ms/frame including its per-call
+surface allocation and its Python), so a compiled span rasterizer plausibly sits several times
+under it. **This is the design that should be costed before anyone concludes `CPU_FAST` is out of
+reach for this family**, and costing it is a `cost_floor` variant, not an integration: the same op
+blob, a different loop.
+
+What it would give up is the thing the per-pixel walk gives for free — painter's order and the
+AA-before-fill interleaving are register updates there, and become real read-modify-write traffic
+in a span rasterizer, which is exactly the trade `gfxdraw.py`'s own history is about. It is a real
+design question and it is open.
 
 ### Recommendation
 
-1. **Do not build a fused CPU kernel for gfxdraw.** It is measured at 1.03-1.51x over the torch path
-   and 1.6-2.4x short of the bar, so it cannot deliver `CPU_FAST` and it does not even deliver a
-   tier. The five rows stay `CPU_PARITY` (four) and `CPU_REGRESSION` (Acrobot, 0.94) with `BELOW_G4`.
+1. **Do not build a per-pixel-walk CPU kernel for gfxdraw.** Measured at 1.03-1.51x over the torch
+   path and 1.6-2.4x short of the bar, in both C++ and numba, so it cannot deliver `CPU_FAST` and
+   it does not even deliver a tier. The five rows stay `CPU_PARITY` (four) and `CPU_REGRESSION`
+   (Acrobot, 0.94) with `BELOW_G4`. This is not a statement that CPU is finished — see 3.
 2. **Take the interleave win in torch.** ~0.15 ms/frame, no new dependency, no new arithmetic: swap
    the three `copy_`s for numpy strided assignment on the CPU branch of `Canvas.rgb`. Worth roughly
    8% of the frame and it is the only free thing on this list. (Not done here: it is a change to a
    path this ticket's GPU half does not touch, and it wants its own replay.)
-3. **If the coordinator still wants `CPU_FAST` for this family, the gate is a SIMD micro-benchmark
-   and nothing else.** `cost_floor.cpp` is the scaffolding for it — the op blob, the checksum and
-   the harness already exist, so the gate is "vectorise the inner loop across 16 pixels and measure
-   `<= 1.8 ns/px` on the 8268". Go/no-go before any integration, as `cpu-3d` M2 proposes for itself.
+3. **If the coordinator still wants `CPU_FAST` for this family, cost the span rasterizer first,
+   and the SIMD per-pixel walk second.** Both are `cost_floor` variants over the op blob that
+   already exists, not integrations, and both are go/no-go before any integration as `cpu-3d` M2
+   proposes for itself. The span form is the more promising by a wide margin and the cheaper to
+   write; the SIMD form's gate is "vectorise the inner loop across 16 pixels and measure
+   `<= 1.8 ns/px` on the 8268", against a `-march=native` result that is currently a pessimisation.
 4. **Packaging, the shared recommendation.** `cpu-3d` §6 asks for one build decision across the
-   three workstreams. This workstream's evidence adds two things to it. **numba installs cleanly
-   beside the certified pins** (numba 0.67.0 with torch 2.14.0+cu126, `pip install numba`, no
-   resolver conflict) and measured *level with or better than* `-O3` C++ on three of four envs —
+   three workstreams. This workstream's evidence adds two things to it. **numba 0.67.0 installed
+   without a resolver conflict into a venv LAYERED on `se-step6`** — a fresh venv whose
+   site-packages inherits `se-step6`'s through a `.pth`, so torch 2.14.0+cu126 and pygame are the
+   certified ones and `se-step6` itself was never written to (`$SCR/venvs/se6-gfxdraw-box2d`,
+   manifest in `characterize/venv_box2d_manifest.json`). That is evidence about a layered venv, not
+   about the shipping environment's resolver. It measured *level with or better than* `-O3` C++ on
+   three of four envs —
    so "a pip dependency and an LLVM JIT at import" is a live alternative to "a compiler in the
    build and a binary in the wheel", and it should be priced against `cpp_extension` rather than
    assumed away. And **this family needs none of the float discipline** the other two do, so if a
@@ -618,6 +660,12 @@ because the kernel stores the frame directly: no planar surface, no transient, n
 `BATCH_SCALES` (1,687-1,990x against a 20x bar) and `NO_LARGE_BATCH_REGRESSION` (7.2-8.2 against
 0.9) pass in both arms.
 
+The **VRAM figures above come from the sweep shards**, where `bench_gpu_vs_cpu.gpu_throughput`
+resets the peak counter per cell. The `peak_gb` recorded in the first committed `paired_gpu` run
+does NOT mean the same thing — it was a process high-water mark, so its "after" arm inherited the
+"before" arm's peak and says nothing about the kernel. `paired_gpu.py` now resets per arm and
+records `peak_gb_is_per_arm`; the claim rests on the sweep either way.
+
 Cumulatively against the pre-Step-6 baseline on a 3090: Acrobot 16,661 -> 160,896 frames/s, **9.7x**.
 
 ### Correctness — every gate green
@@ -675,6 +723,29 @@ kernel, which is a different and much less general piece of work than this one.
 Also settled here: **CarRacing's own fused identity test, 4 passed** in the Box2D venv. In job
 6349362 it collected 4 cases and SKIPPED all four for want of Box2D, which the suite's coverage
 guard correctly reported as a failure rather than a pass.
+
+### Two things to carry to Step 8 (recorded, not fixed — both off the certification path)
+
+**`PLATE_B` is a `tl.constexpr`.** It is the number of rows in MountainCar's baked terrain plate:
+1 when the batch shares one appearance, `B` when it does not. As a constexpr it takes part in
+Triton's specialisation key, so **every distinct batch size rendered with more than one distinct
+`(background.color, terrain.color)` pair triggers a fresh JIT compile** — a few hundred milliseconds
+each, once per (batch size, style-diversity) pair per process. It is a constexpr because as a
+runtime scalar both the modulo that picks the plate row and the int64 widening beside it are
+mixed-type expressions whose lowering varies by Triton version, and the kernel had not run on a
+device when that choice was made. Now that it has, the runtime form can be tried and measured.
+Nothing on the certification path hits this: every sweep, replay and parity run uses one
+appearance, so `PLATE_B` is 1 and there is one specialisation.
+
+**`plate.contiguous()` copies `(3, B, H, W)` per render** when the plate is per-environment
+(`render_classic`, the `plate.contiguous() if plate is not None` argument). `_terrain_base` builds
+it with `index_select(...).transpose(0, 1)`, which is not contiguous, so the copy is real: **2.9 GB
+of transient at B = 4,096** on a 500x500 frame, on top of the 3.0 GB the kernel already peaks at.
+Again not on the certification path — a shared appearance takes the `(3,1,H,W)` broadcast branch,
+which is already contiguous — but a caller rendering 4,096 environments with per-row terrain would
+double the kernel's memory. The fix is to build the gathered plate contiguous in `_terrain_base`
+rather than to copy it at the call site, which is a change to MountainCar's bake and wants its own
+replay.
 
 ### The one thing that is decided already
 
