@@ -119,21 +119,21 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-gfxdraw
     oscar_copy: $SCR/se6/gfxdraw
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
+    head_sha: 62136732a5e34dc67e2869d04113a7196d2fcbd3
     agent_model: opus
     wave: wave2
-    status: profiling
+    status: review (PATCH) + GFXDRAW-2 authorized (GPU fused path implement; CPU mechanism design-first)
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU"
     affected_configs: ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"]
-    bottleneck: {measured: null, hypothesis: null}
-    correctness: {targeted_tests: null, step4_replay: null, gate_a: null, fidelity: null}
-    performance: {cpu_before: null, cpu_after: null, gpu_before: null, gpu_after: null, batch_scales: null, no_large_batch_regression: null}
-    pixels_changed: null
-    semantic_followup: null
-    review: {reviewer: null, verdict: null}
-    slurm_jobs: []
-    notes: ["wave2 spawned 2026-09-13T18:25"]
+    bottleneck: {measured: "B>=16: 68-74% StyleCanvas.paint + 11-14% scanline mask = (B,H,W,3) temporaries per primitive; torch.where on interleaved surface 340 Mpx/s vs 4.8 Gpx/s planar; B=1: dispatch, clip_line 33-38% over 8 calls; 26,477 ops/render Acrobot", hypothesis: "planar (3,B,H,W) canvas + bounded primitives (per-env static windows, disc stencils, per-edge kmax) + one clip_line per polygon -> ops halved (12,970 CPU / 20,859 CUDA); remaining: three-plane interleave ~0.17 ms/frame floor for torch ops on one core -> fused per-pixel path (GFXDRAW-2)"}
+    correctness: {targeted_tests: "test_gfxdraw_fused + test_fast_paths 123/0; conformance+reproducibility -k five 358 pass/93 skip/0 fail; CPU conformance 5/5; tests/unit 2 pre-existing failures; new tests/unit/test_gfxdraw_select.py (select_ branches bit-equal)", step4_replay: "fidelity_step4 cuda + cpu on all 5: every check status and every digest unchanged; 512 states/env (half unreachable) byte-identical; LunarLander _AARecorder write list identical", gate_a: "PASS (unchanged)", fidelity: "unchanged"}
+    performance: {cpu_before: "S_cpu 0.17-0.28 (CPU_REGRESSION), 20-30 fps B=1", cpu_after: "S_cpu 0.94-1.92 paired on node1829 (CPU_PARITY on 4/5; Acrobot 0.94); 5.5-7.1x; cores_cpu 0.22-0.50 still BELOW_G4", gpu_before: "R 37-71 (GPU_FASTER) on 3090", gpu_after: "R 83-179 (GPU_FASTER), 2.2-2.5x at every batch, VRAM 9.8-10.3 -> 7.6-9.1 GB at B=4096; bar R>=500", batch_scales: "PASS 1,179-1,890x (was never the blocker; plan.json miscounted a satisfied qualifier string)", no_large_batch_regression: "PASS"}
+    pixels_changed: no
+    semantic_followup: none
+    review: {reviewer: "fable (independent, spawned)", verdict: null}
+    slurm_jobs: [6346430, 6346431, 6346933, 6346967, 6346999, 6346954(cancelled)]
+    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the baseline tree."]
   - workstream: cpu-3d
     brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
     branch: step6/cpu-3d
