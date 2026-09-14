@@ -1,0 +1,11 @@
+tests/gpu/test_rendernet.py::test_the_frame_is_exactly_the_cheap_render_put_through_the_corrector[learned-decoder-EMPTY] SKIPPED [ 10%]
+tests/gpu/test_rendernet.py::test_the_corrector_is_actually_applied[learned-decoder-EMPTY] SKIPPED [ 20%]
+tests/gpu/test_rendernet.py::test_the_same_states_twice_give_the_same_bytes[learned-decoder-EMPTY] SKIPPED [ 30%]
+tests/gpu/test_rendernet.py::test_a_frame_does_not_depend_on_how_many_frames_were_asked_for[learned-decoder-EMPTY-sizes0] SKIPPED [ 40%]
+tests/gpu/test_rendernet.py::test_a_size_the_checkpoint_was_not_fitted_for_is_refused[learned-decoder-EMPTY] SKIPPED [ 50%]
+tests/gpu/test_rendernet.py::test_this_corrector_refuses_every_other_registered_cell[learned-decoder-EMPTY] SKIPPED [ 60%]
+tests/gpu/test_rendernet.py::test_the_declaration_travels_with_the_weights[learned-decoder-EMPTY] SKIPPED [ 70%]
+tests/gpu/test_rendernet.py::test_the_declared_numbers_beat_the_render_they_replace[learned-decoder-EMPTY] SKIPPED [ 80%]
+tests/gpu/test_rendernet.py::test_the_compiled_configuration_is_the_declared_one[learned-decoder-EMPTY] SKIPPED [ 90%]
+tests/gpu/test_rendernet.py::test_no_checkpoint_means_no_class FAILED    [100%]
+========================= 1 failed, 9 skipped in 0.27s =========================
