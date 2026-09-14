@@ -319,6 +319,13 @@ class _Composite:
                 + mtex.view(1, 1, N_MOB, t, t, 3) * am)
         return comp.reshape(N_COMPOSITE * t, t * 3).contiguous()
 
+    #: How many (device, tile size) tables to keep. A table is up to 51 MiB at
+    #: :data:`ATLAS_MAX_TILE_PX`, and a caller sweeping sizes would otherwise retain one per size
+    #: for the life of the process. Dropping the whole dict rather than evicting one entry is the
+    #: same rule ``render/tilemap.py``'s recoloured-atlas cache uses, and it is safe because a
+    #: render already holds its own reference to the table it is gathering from.
+    _MAX_ENTRIES = 8
+
     @classmethod
     def get(cls, device: torch.device, t: int, want_float: bool):
         """``(f32_or_None, u8)``. ``f32`` is materialised only once a gain path has asked for it."""
@@ -328,6 +335,8 @@ class _Composite:
             return have
         f32 = cls._build(device, t)
         u8 = have[1] if have is not None else f32.round().clamp_(0, 255).to(torch.uint8)
+        if have is None and len(cls._cache) >= cls._MAX_ENTRIES:
+            cls._cache.clear()
         cls._cache[key] = (f32 if want_float else None, u8)
         return cls._cache[key]
 

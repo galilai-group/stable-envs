@@ -204,3 +204,20 @@ def test_leading_dimensions_are_preserved():
     assert img.shape == (2, 3, OBS_H * 16, OBS_W * 16, 3)
     assert torch.equal(img.reshape(6, OBS_H * 16, OBS_W * 16, 3),
                        env.render(states.reshape(6, env.state_dim)))
+
+
+def test_the_table_cache_is_bounded():
+    """A caller sweeping tile sizes must not retain one table per size for the life of the process."""
+    _Composite._cache.clear()
+    env = _env(16, batch=1)
+    states = env.sample_states(1, np.random.default_rng(0))
+    for size in range(4, 4 + _Composite._MAX_ENTRIES + 3):
+        env.render(states, size=size)
+        assert len(_Composite._cache) <= _Composite._MAX_ENTRIES, \
+            f"the composited-atlas cache grew to {len(_Composite._cache)} entries"
+    # and the frames are still right after an eviction
+    for size in (7, 16):
+        blk, mob, pid = _decode(env, states)
+        sty = env.resolve_style(None, None, batch=1)
+        assert torch.equal(env._render_atlas(blk, mob, pid, size, sty, None),
+                           env._render_blend(blk, mob, pid, size, sty))
