@@ -46,7 +46,7 @@ def git_commit(tree: Path) -> str:
         return "unknown"
 
 
-def main() -> None:
+def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     ap.add_argument("--envs", default=",".join(CLASSIC))
@@ -65,6 +65,13 @@ def main() -> None:
     #: shard over the bound is written and marked, never silently dropped: it is the evidence that
     #: the node was unusable, and a missing file would look like a job that never ran.
     ap.add_argument("--max-reference-spread", type=float, default=1.25)
+    #: Abort BEFORE measuring anything if the node is already busy. The spread check catches a
+    #: perturbed reference after the fact and costs a whole job to find out; this costs a second.
+    #: 4 on a 48-core node is generous -- an exclusive allocation settles near 0 -- and it is a
+    #: pre-condition on the measurement, not a threshold on the result.
+    ap.add_argument("--max-load", type=float, default=0.0,
+                    help="abort and write a rejected shard if the 1-minute load average exceeds "
+                         "this at start; 0 disables the check")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
@@ -85,6 +92,26 @@ def main() -> None:
     except ImportError:
         pass
 
+    load0 = os.getloadavg()
+    if a.max_load and load0[0] > a.max_load:
+        doc = {"schema_version": 1, "step": 6, "shard": f"gfxdraw-paired-{a.arm}",
+               "arm": a.arm, "envs": [],
+               "certifiable": False,
+               "not_certifiable_because":
+                   f"the node's 1-minute load average was {load0[0]:.1f} at the start of this job, "
+                   f"over the {a.max_load} bound, so the official renderer and the decode bar would "
+                   f"have been timed against co-tenants. Nothing was measured; aborting before the "
+                   f"measurement is cheaper than discovering it in the reference spread afterwards.",
+               "load_average_at_start": load0,
+               "provenance": {**B3.provenance(a.device, torch.get_num_threads()),
+                              "load_average": load0,
+                              "stable_envs_file": se.__file__,
+                              "tree_commit": git_commit(Path(se.__file__).resolve().parents[1])}}
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text(json.dumps(doc, indent=1))
+        print(f"ABORTED: load average {load0[0]:.1f} > {a.max_load} at start; wrote {a.out}")
+        return 2
+
     batches = B3.batches_for(a.device, optional=False)
     universe = B3.matched_universe()
     scratch = Path(os.environ.get("SCR", "/tmp")) / ".cache"
@@ -95,7 +122,8 @@ def main() -> None:
                            "decode bar, a denominator that is a median over the whole run",
            "arm": a.arm, "batches": batches,
            "provenance": {**B3.provenance(a.device, torch.get_num_threads()),
-                          "load_average": os.getloadavg(),
+                          "load_average": load0,
+                          "load_average_at_end": None,
                           "stable_envs_file": se.__file__,
                           "tree_commit": git_commit(Path(se.__file__).resolve().parents[1]),
                           "official_renderer_timing": "paired: one reference burst between every "
@@ -181,9 +209,14 @@ def main() -> None:
             f"rather than the renderer. The numerator (our frames/s) is unaffected.")
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(doc, indent=1))
+    doc["provenance"]["load_average_at_end"] = os.getloadavg()
+    doc["load_average_at_start"] = load0
+    Path(a.out).write_text(json.dumps(doc, indent=1))
     print(f"wrote {a.out}  worst reference spread {worst:.2f}x  "
-          f"certifiable={doc['certifiable']}")
+          f"certifiable={doc['certifiable']}  load {load0[0]:.1f} -> "
+          f"{doc['provenance']['load_average_at_end'][0]:.1f}")
+    return 0 if doc["certifiable"] else 3
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
