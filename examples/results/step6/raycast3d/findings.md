@@ -2173,10 +2173,11 @@ verified byte-identical to this branch's merge commit before the change was appl
 | `maze2d` `PointMaze{Large,Medium,Open,UMaze}`, on vs off | cpu | 4 | **identical** | `replay/r6cm_maze2d_switch_identity.json` |
 | `maze2d`, branch vs integration, defaults | cpu | 4 | **identical** | `replay/r6cm_maze2d_branch_vs_integration.json` |
 | the four DMControl trackcom cells (`cpu3d.py`'s path) | cpu | 4 | **identical** | `replay/r6cm_trackcom_identity.json` |
-| `tests/gpu/test_fast_paths.py` at the envs' own sizes | cuda | — | **223 passed**, 179 skipped | job 6366547 |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | cuda | — | **223 passed**, 179 skipped | jobs 6366547 / 6366853 / 6368356 |
 | `tests/unit/test_raycast3d_composite_compact.py` | cpu | — | **55 passed** (jobs 6366546, 6366548) -> **63 passed** (job 6366959, after the batch-invariance cases) -> **75 passed** (after the review's `bt`-gather and clamp cases, local) | jobs 6366546 / 6366548 / 6366959 |
 | `tests/unit` | cpu | — | **794 passed**, 19 skipped, **2 failed** — the same two pre-existing failures, neither in the authorised file | job 6366959 |
 | branch vs integration, defaults, **re-taken on the HEAD that ships** | cpu | 21 live | **identical** | `replay/r6fin_cpu_branch_vs_integration.json` |
+| branch vs integration, defaults, **re-taken again after the review changes** | cuda | 21 live | **identical** | `replay/r6rev_cuda_identity.json` (job 6368356, gpu2107) |
 
 The frozen-digest comparison is 20 of 21 on BOTH legs on cuda: `AntmazeTeleportExplore` fails on the
 branch and on integration alike, which is RAYCAST-2c's unreproducible frozen digest and not this
@@ -2561,6 +2562,29 @@ environments the old one did not.
 **This is a judgment call and it is reversible.** If the coordinator would rather keep both pairs
 live and accept the disagreement flag, the note says how.
 
+## The review round, and what it changed
+
+Independent review of `a802849` returned APPROVE-WITH-CHANGES and found **no defect in the shipped
+path** — the window-containment argument, the AST-identical off-path body, the untouched box averages
+and the per-leg identity logs all held up, and the numbers recompute from the shards. What it found
+was in the evidence around the path, and two of those were real holes:
+
+1. **The `bt` gather had no test.** Transposing the occlusion-threshold blow-up passed 63 of 63,
+   because every scene in the fuzz had `plate_t` either `INF` or a smooth floor far behind the
+   movers. Fixed with a `"band"` mode; the transposition now fails 5 cases (§ the fuzz).
+2. **`mover-at-frame-edge` never reached an edge** — `spread=0.05` centres the sphere, so the origin
+   clamp was the identity on every row. Replaced by four clamped cases plus one at ss=2 with a
+   per-row `size_scale`, and an assertion that the clamp still engages.
+3. Provenance corrections (node names, which legs print the switch, the per-job test counts, where
+   the tier label came from) and per-leg commit stamping — all recorded in place.
+4. **The one authorized repeat shard retracted `PointmazeMediumNavigate`'s tier.** That is the
+   substantive change and it is above.
+
+The renderer itself is byte-identical across the review round: `git diff a802849 HEAD --
+stable_envs/` is empty. The post-review job **6368356** (gpu2107) is the control that says so from
+the outside — cuda identity on all 21, `tests/gpu/test_fast_paths.py` 223 passed, `tests/unit` 807
+passed with the same two pre-existing failures.
+
 ## What is still open after RAYCAST-6
 
 1. **`COVER_COMPACTION` is now dead code on the shipped path.** It governs `_composite_window` only.
@@ -2601,6 +2625,7 @@ All mine, all named `se6-raycast3d-*`. No job I did not submit was touched; one 
 | `6366853` | `se6-raycast3d-r6gt` | COMPLETED | 00:02:41 | `gpu2116` | the fast-path suite after the cover-compaction case was re-pointed |
 | `6366959` | `se6-raycast3d-r6fin` | COMPLETED | 00:04:28 | `node2349` | identity re-taken on the HEAD that ships, plus `tests/unit` |
 | `6368126` | `se6-raycast3d-r6rpt` | COMPLETED | 00:01:49 | `node1946` | **the authorized repeat shard**, load-guarded, which retracted `PointmazeMediumNavigate`'s tier |
+| `6368356` | `se6-raycast3d-r6rev` | COMPLETED | 00:04:15 | `gpu2107` | post-review control: cuda identity on 21, fast paths, `tests/unit`, on the shipping HEAD |
 
 ## Report
 
