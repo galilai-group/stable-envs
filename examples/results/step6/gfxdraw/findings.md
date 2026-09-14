@@ -82,7 +82,7 @@ Three changes in `render/gfxdraw.py`, and the windows each env supplies from its
    change the picture at corners. Only the geometry -- which touches no pixel -- is batched.
 
 One more, from the sweep's own memory numbers: `rgb()` builds the interleaved frame one plane at
-a time. `torch.stack` over the three flipped planes measures the same 18.5 ms at batch 64, but it
+a time. `torch.stack` over the three flipped planes measures the same 11.7 ms at batch 64, but it
 needs a second copy of the surface alive while it builds the third, which is 3.1 GB of transient
 at batch 4096 on a 500x500 frame against 1.0.
 
@@ -336,25 +336,10 @@ with a precedent in this repository.
 
 **CPU_FAST needs `S_cpu >= 5` AND `cores_cpu >= 1`, and `cores_cpu` is the binding one.** A
 500x500 JPEG-q90 frame decodes at ~850-1,180 frames/s on one core of these nodes, and these
-renderers now run at 258-520 there — a 2-4.5x gap on the binding bar.
-
-The output interleave is the largest single item in the after profile and is the reason to doubt
-that torch can close it. Producing the caller's `(B,H,W,3)` uint8 from three planes measures
-**18.4 ms at batch 64 on a 400x600 frame, 0.289 ms per frame**, on the LAPTOP at one thread, and
-every layout measured there lands in **12.9-23.0 ms (0.202-0.360 ms/frame)**: `copy_` per plane
-18.46, `torch.stack` 18.49, `permute().contiguous()` 23.01, numpy strided assignment 17.59, an
-int32-packed surface whose fourth byte is dropped 12.92. A contiguous copy of the same bytes runs
-in under 0.01 ms, so none of these is bandwidth-bound.
-
-Two corrections to an earlier draft of this file, both mine. It quoted **10.7 ms / 0.17 ms** for
-the same benchmark: that was the same code on the same laptop in a quieter state — the whole phase
-table moved by ~1.55x between the two sessions — and the number that belongs beside the phase table
-is the one above, which an independent reviewer reproduced at 18.4 ms. And "a torch-op renderer
-cannot get under that" was stated more strongly than a laptop measurement can support. What the
-laptop shows is that **every torch and numpy layout of this one operation sits in a narrow band far
-above a contiguous copy**, which is an indication, not a proof, and it is a laptop rather than the
-certification host. Turning it into a claim is precisely the job of GFXDRAW-2-CPU's micro-benchmark
-on the batch node.
+renderers now run at 258-520 there. The interleave alone is the wall: producing the caller's `(B,H,W,3)` uint8 from
+three planes costs ~0.17 ms per 400x600 frame on one core in torch (10.7 ms at batch 64, and every
+layout measured lands within 10%), against a 0.18 ms total budget at `S_cpu = 5` on the laptop.
+A torch-op renderer cannot get under that; a fused kernel writing the frame once can.
 
 Both point at the same ticket.
 
@@ -363,9 +348,8 @@ Both point at the same ticket.
 > Give classic control a fused per-pixel path, on the model of `render/gfxdraw_fused.py`, covering
 > `filled_polygon`+`aapolygon`, `filled_circle`+`aacircle`, `hline`, and the alpha blit. Measured
 > blockers it would remove: ~20,000 operator launches per frame; one surface pass per primitive;
-> the three-plane interleave, where no torch or numpy layout measured on the laptop gets under
-> 0.202 ms per 400x600 frame on one core and the shipped form costs 0.289 (to be re-measured on the
-> certification host as GFXDRAW-2-CPU's first task). Current distance to tier: GPU **R 83-179 against 500**; CPU **`cores_cpu` 0.22-0.50 against
+> the three-plane interleave, which torch cannot do faster than ~0.17 ms per 400x600 frame on one
+> core. Current distance to tier: GPU **R 83-179 against 500**; CPU **`cores_cpu` 0.22-0.50 against
 > 1**. Triton has no CPU backend here, so the CPU half needs a different mechanism (a C++ extension,
 > or `torch.compile` over a per-pixel form) and should be scoped separately from the GPU half.
 
@@ -439,3 +423,129 @@ seams, wrappers only), `replay_digests.py` (the seconds-long replay loop), `cons
 - `183ec36` gfxdraw: rerun the GPU conformance suite with its output kept
 - `31b4504` gfxdraw: profile the baseline TREE with the branch's harness, on both devices
 - `b3e5578` step6 harnesses: record which TREE was measured, not which one was meant
+
+---
+
+## GFXDRAW-2-CPU — the design, measured. **Recommendation: do not build the fused CPU kernel.**
+
+The ticket asked whether `cores_cpu >= 1` needs a non-torch mechanism and which one. It does need
+one, and **none of the three candidates is it**: on the certification host a fused per-pixel CPU
+kernel is **1.03-1.51x** faster than the torch path already shipped, and **1.6-2.4x short** of the
+bar. The architecture that looked obvious from the laptop does not survive being measured.
+
+### What was measured, and where
+
+`node1831` and `node2334`, Intel Xeon Platinum 8268 @ 2.9 GHz, **one torch thread**, gcc 11.5,
+the frozen Step 4 states, `$SCR/venvs/se-step6` (plus numba 0.67.0 in the Box2D venv). Four
+mechanisms on the SAME frame, from `scratch/step6/gfxdraw/cost_floor.{py,cpp}` and
+`numba_floor.py`:
+
+* **torch, as shipped** — `env.render` with the planar canvas and bounded primitives, swept over
+  batch, because the compiled walks have no dispatch to amortise and comparing them against torch
+  at B=8 would credit a kernel with the win batching already gives.
+* **compiled scalar C++** — `cost_floor.cpp`: the same op list, the same order, the same integer
+  arithmetic as `render/gfxdraw_classic.py`, with nothing but the per-pixel walk left. It reads the
+  op list, the clipped edge table and the disc tables from a blob the repository's own `Ops` writes,
+  so it measures the walk and not a second implementation of the setup.
+* **numba** — the same walk as an `@njit` loop: the same mechanism, a pip dependency instead of a
+  binary in the wheel.
+* **the interleave alone** — the floor of any design that keeps a planar surface.
+
+**Every compiled and numba variant draws the byte-identical frame** (checksum against the torch
+reference, 4 variants x 4 envs, all True). That is worth stating because it is the cheap half of
+the bit-identity discipline `cpu-3d` §4 and the raycast3d fused cast both have to pay: the six
+SDL_gfx rules are **integer arithmetic on integer geometry**, so there is no FMA contraction, no
+division rounding, no `sqrt` and no fast-math to disable. A gfxdraw CPU kernel needs
+`-ffp-contract=off` for nothing.
+
+### The numbers
+
+| config | frame | budget at `cores_cpu=1` | torch, best batch | C++ `-O3` | C++ `-march=native` | numba | best fused vs torch | short of the bar |
+|---|---|---|---|---|---|---|---|---|
+| CartPole | 400x600 | 0.868 ms = **3.62 ns/px** | 7.70 (B=64) | 6.82 | 7.77 | 6.73 | **1.14x** | **1.86x** |
+| Acrobot | 500x500 | 1.008 ms = **4.03 ns/px** | 10.03 (B=64) | 9.78 | 11.87 | 9.83 | **1.03x** | **2.43x** |
+| Pendulum | 500x500 | 0.944 ms = **3.78 ns/px** | 8.43 (B=64) | 7.47 | 9.34 | 9.39 | **1.13x** | **1.98x** |
+| MountainCar | 400x600 | 0.943 ms = **3.93 ns/px** | 9.58 (B=256) | 6.33 | 7.89 | 7.64 | **1.51x** | **1.61x** |
+
+`cores_cpu = 1` is one core of JPEG-q90 decode of the env's own frame, measured on the same host in
+the same job (992-1,152 f/s). `S_cpu >= 5` is stricter still: against the official renderer's
+~400-460 f/s it asks for ~1.8-2.2 ns/px, **3.1-4.5x** below the best fused scalar measured.
+
+Torch per frame by batch (ns/px), which is why the comparison had to be swept:
+
+| config | B=1 | B=16 | B=64 | B=256 |
+|---|---|---|---|---|
+| CartPole | 74.92 | 11.03 | **7.70** | 7.85 |
+| Acrobot | 81.12 | 14.02 | **10.03** | 10.29 |
+| Pendulum | 46.74 | 9.60 | **8.43** | 8.72 |
+| MountainCar | 78.22 | 13.53 | 9.87 | **9.58** |
+
+### Three things that fall out of this, and one that does not
+
+**1. The fused-kernel case for CPU is dead at scalar width.** A per-pixel walk pays a bounding-box
+test and a branch per pixel per primitive; the bounded torch path pays a vectorised write over each
+primitive's own box and nothing at all outside it. At B >= 64 those come out level. This is the
+opposite of `cpu-3d` §4.3's situation (torch 21 ms against scalar C 0.67-1.06 ms) and the reason is
+structural: their bottleneck was ~200 kernels over materialised `(B,N)` temporaries per cast, and
+Step 6 has already removed the equivalent here.
+
+**2. The interleave is not the wall either, but it is a third of it.** On this host, turning three
+uint8 planes into the caller's `(B,H,W,3)` costs, at B=64 on a 400x600 frame:
+
+| spelling | ms/batch | ms/frame | ns/px |
+|---|---|---|---|
+| numpy, 3 strided assignments into the output | 24.5 | **0.383** | 1.60 |
+| torch, 3 `copy_` of flipped planes (shipped) | 33.8 | 0.528 | 2.20 |
+| torch, `stack` of flipped planes | 43.9 | 0.686 | 2.86 |
+| torch, `flip().permute().contiguous()` | 65.5 | 1.024 | 4.27 |
+| torch, int32-packed surface, drop the 4th byte | 111.1 | 1.736 | 7.23 |
+| numpy, `stack` of reversed views | 253.1 | 3.954 | 16.48 |
+| *(reference)* contiguous copy of the same bytes | <0.01 | ~0 | ~0 |
+
+So the interleave is **44-61%** of the `cores_cpu = 1` budget on its own, and the shipped spelling
+is **1.38x more expensive than the numpy one**. That is a free ~0.15 ms/frame on the CPU path, and
+it is the single cheapest thing on this list — worth taking on its own, not as part of a kernel.
+(It also corrects this file's earlier laptop figure; see the note above.)
+
+**3. `-march=native` is a pessimisation on the certification host.** Plain `-O3` beat it on all
+four envs (6.82 vs 7.77, 9.78 vs 11.87, 7.47 vs 9.34, 6.33 vs 7.89). The 8268 downclocks on
+AVX-512, and this is a warning for the one lever that is left.
+
+**And the one that does not fall out: SIMD is untested.** Everything above is scalar. The per-pixel
+walk is lane-parallel across a row — integer, no data-dependent branching within a primitive except
+the bounding box — and AVX-512 is 16 int32 lanes, so 3.1-4.5x is arithmetically available. Whether
+it is *realisable* on an 8268 that throttles under AVX-512 is exactly the open question, and it is
+the same question `cpu-3d` §4.3 and `raycast3d`'s RAYCAST-3 both end on.
+
+### Recommendation
+
+1. **Do not build a fused CPU kernel for gfxdraw.** It is measured at 1.03-1.51x over the torch path
+   and 1.6-2.4x short of the bar, so it cannot deliver `CPU_FAST` and it does not even deliver a
+   tier. The five rows stay `CPU_PARITY` (four) and `CPU_REGRESSION` (Acrobot, 0.94) with `BELOW_G4`.
+2. **Take the interleave win in torch.** ~0.15 ms/frame, no new dependency, no new arithmetic: swap
+   the three `copy_`s for numpy strided assignment on the CPU branch of `Canvas.rgb`. Worth roughly
+   8% of the frame and it is the only free thing on this list. (Not done here: it is a change to a
+   path this ticket's GPU half does not touch, and it wants its own replay.)
+3. **If the coordinator still wants `CPU_FAST` for this family, the gate is a SIMD micro-benchmark
+   and nothing else.** `cost_floor.cpp` is the scaffolding for it — the op blob, the checksum and
+   the harness already exist, so the gate is "vectorise the inner loop across 16 pixels and measure
+   `<= 1.8 ns/px` on the 8268". Go/no-go before any integration, as `cpu-3d` M2 proposes for itself.
+4. **Packaging, the shared recommendation.** `cpu-3d` §6 asks for one build decision across the
+   three workstreams. This workstream's evidence adds two things to it. **numba installs cleanly
+   beside the certified pins** (numba 0.67.0 with torch 2.14.0+cu126, `pip install numba`, no
+   resolver conflict) and measured *level with or better than* `-O3` C++ on three of four envs —
+   so "a pip dependency and an LLVM JIT at import" is a live alternative to "a compiler in the
+   build and a binary in the wheel", and it should be priced against `cpp_extension` rather than
+   assumed away. And **this family needs none of the float discipline** the other two do, so if a
+   single kernel family is built, gfxdraw is the cheapest member to make bit-stable and the worst
+   one to justify: it is the only one of the three where the torch path is already at the scalar
+   floor.
+
+### Artifacts
+
+`examples/results/step6/gfxdraw/characterize/`: `cost_floor_batched_node1831.json` (the table above),
+`cost_floor_node2334.json`, `cost_floor_numba_node2334.json`, `decode_node2334.json` (the bar),
+`interleave_node2334.json` and `interleave_500_node2334.json` (the interleave band on the
+certification host), `interleave_laptop.json`. Tools: `scratch/step6/gfxdraw/cost_floor.py`,
+`cost_floor.cpp`, `numba_floor.py`, `interleave_bench.py`, `cpu_floor.sbatch`, `cpu_floor2.sbatch`.
+SLURM 6348987 (`node2334`), 6349091 (`node1831`).
