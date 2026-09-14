@@ -552,8 +552,9 @@ def _rays_near(pos_k, rad, o, d, dd):
     ``|oc x d|^2 <= r^2 |d|^2`` is the perpendicular-distance test with ``|d|^2`` multiplied through,
     so a degenerate ``d = 0`` reads ``0 <= 0`` and INCLUDES the ray rather than producing a NaN that
     would silently exclude it. The cross product rather than ``|oc|^2|d|^2 - (oc.d)^2`` because the
-    latter cancels catastrophically when the primitive is far away -- see ``_BOUND_SLACK_SCALE``. The
-    second term drops rays whose whole bound lies behind the origin, where ``intersect``'s own
+    latter cancels catastrophically when the primitive is far away, and ``_BOUND_SLACK_NOISE`` on top
+    because the INTERSECTOR cancels there too -- both measured, both at ``_BOUND_SLACK_REL`` above.
+    The second term drops rays whose whole bound lies behind the origin, where ``intersect``'s own
     ``t > 0`` would reject them anyway.
     """
     oc = pos_k - o
