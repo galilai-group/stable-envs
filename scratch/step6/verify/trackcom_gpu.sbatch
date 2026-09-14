@@ -50,13 +50,22 @@ for ARM in se-step5 se-step3; do
   echo "ARM $ARM DIFF rc=$?"
 done
 
-# the full check battery on the frozen corpus, in the frozen shard's own interpreter, so Gate A for
-# these four cells is answered rather than inferred from digests
-PYTHONPATH=$TREE $SCR/venvs/se-step3/bin/python examples/fidelity_step4.py --configs "$CFG" \
-    --device cuda --states-dir "$TREE/examples/results/step4/states" \
-    --out "$OUT/trackcom_cuda_battery${TAG}.json" 2>&1 | tail -12
+# The full check battery, in each shard's own frozen interpreter. The dmc shard rather than the four
+# cells alone, because it costs nine minutes and it moves those four cells' Gate A onto the SAME SHA
+# as everything else in the final table instead of leaving it to be inferred; raster and fetch for the
+# same reason -- they were last measured at e0182f6/f7b07d7 and nothing between those and this SHA
+# touches a gfxdraw, scene or mjwarp path, but "nothing touches it" is an argument and this is a
+# report. ogb and swm stay where job 6358407 measured them: raycast3d.py and swm_nav.py are
+# byte-identical across the two SHAs.
 CDIR=$OUT/certify_trackcom${TAG}; mkdir -p "$CDIR/conformance"
-cp -f "$OUT/trackcom_cuda_battery${TAG}.json" "$CDIR/conformance/dmc.json"
+for S in ${SHARDS:-"dmc raster fetch"}; do
+  PY=$(venv_for "$S")/bin/python
+  echo "######################## battery: shard $S via $PY"
+  PYTHONPATH=$TREE $PY examples/fidelity_step4.py --shard "$S" --device cuda \
+      --states-dir "$TREE/examples/results/step4/states" --out "$OUT/${S}${TAG}.json" 2>&1 | tail -25
+  echo "BATTERY $S rc=$?"
+  cp -f "$OUT/${S}${TAG}.json" "$CDIR/conformance/${S}.json" 2>/dev/null
+done
 PYTHONPATH=$TREE $SCR/venvs/se-step3/bin/python scratch/step4/certify.py --shards "$CDIR" \
     --out "$CDIR" --doc "$SCR/logs/trackcom_cuda_${SLURM_JOB_ID}.md" 2>&1 | tail -3
 rm -rf "$D"
