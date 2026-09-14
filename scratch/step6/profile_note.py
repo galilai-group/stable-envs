@@ -84,6 +84,16 @@ def git_commit() -> str:
         return "unknown"
 
 
+def stable_envs_file() -> str:
+    """The ``stable_envs`` package actually imported, resolved.
+
+    A before/after pair taken by switching ``PYTHONPATH`` between two checkouts is only evidence if
+    each leg records which checkout it loaded; the git commit of the harness does not answer that.
+    """
+    import stable_envs
+    return str(Path(stable_envs.__file__).resolve())
+
+
 def versions() -> dict:
     import importlib.metadata as md
     out = {}
@@ -197,6 +207,12 @@ def main() -> None:
 
     note: dict = {
         "workstream": args.workstream, "env": args.env, "device": args.device,
+        # WHICH TREE WAS MEASURED. ``baseline_commit`` is the commit of the tree this SCRIPT lives
+        # in, which is not the tree that was imported when a before-leg runs the branch's harness
+        # against the baseline checkout through PYTHONPATH. Without this line a before and an after
+        # taken in the same job are indistinguishable in the artifact.
+        "stable_envs_file": stable_envs_file(),
+        "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
         "baseline_commit": git_commit(), "host": socket.gethostname(),
         "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "cpu": platform.processor() or platform.machine(),
@@ -248,6 +264,9 @@ def main() -> None:
     # env and the directory becomes a mix of two machines -- which is section 12's "different
     # machines for numerator and denominator", arrived at by filename collision rather than by
     # choice. Acrobot read 109 fps locally and 20 fps on Oscar; one file cannot hold both.
+    # ``note``, not ``n``: the scaffolding commit wrote ``n["host"]`` here, which is the parameter
+    # name of ``render_note`` and is not bound in this function. Every run therefore printed its
+    # timings, raised ``NameError`` and wrote NO file -- the profile existed only in the SLURM log.
     host = note["host"].split(".")[0]
     tag = f"{args.env}_{args.device.replace(':', '')}_{host}"
     (args.out / f"{tag}.json").write_text(json.dumps(note, indent=2))
@@ -262,6 +281,8 @@ def render_note(n: dict) -> str:
          f"- baseline commit: `{n['baseline_commit'][:12]}`",
          f"- host: {n['host']}  ·  gpu: {n['gpu'] or 'none'}  ·  cpu: {n['cpu']}  "
          f"·  threads: {n['threads']}",
+         f"- tree measured: `{n.get('stable_envs_file', 'unrecorded')}`"
+         + (f"  ·  load average {n['load_average'][0]:.1f}" if n.get("load_average") else ""),
          f"- frame: {n['size']}px  ·  state_dim: {n['state_dim']}",
          f"- states: `{n['states_source']}`",
          f"- torch {n['versions'].get('torch')}  ·  triton {n['versions'].get('triton')}", ""]

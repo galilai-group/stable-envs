@@ -377,6 +377,17 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     whether the two implementations draw the same picture, and that is a property of the arithmetic, not
     of the resolution — a disagreement in an edge rule or a normal direction shows up at 96px on four
     scenes just as surely as at 600px on sixteen, and shows up in seconds.
+
+    **There are two backends only where there is a CUDA device.** ``HAVE_TRITON`` says the
+    interpreter can import Triton; it says nothing about where the scene lives, and the fused kernel
+    is CUDA-only. Guarding on the import alone and then calling ``render_triton`` unconditionally is
+    the same defect this Step 6 fixed in ``raster2d.render`` -- on a Triton host a ``device="cpu"``
+    env reached ``with torch.cuda.device(scene.kind.device)`` and this check died with
+    ``ValueError: Expected a cuda device, but got: cpu``, taking the whole conformance row with it.
+    It is a defect here rather than a slow path there: a CPU env has one backend, so the question the
+    check asks does not arise, and the honest answer is that it does not apply -- which is what the
+    tilemap branch below already returns for the other reason a Scene2D comparison cannot be made.
+    The predicate is therefore the scene's device, read the same way ``raster2d.render`` reads it.
     """
     from ..render.raster2d import HAVE_TRITON, render_torch, render_triton
     if not HAVE_TRITON:
@@ -387,6 +398,9 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
         sc = env.scene(torch.as_tensor(st, device=env.device))
     except NotImplementedError:
         return {"skipped": "env renders without a Scene2D (tilemap path)"}
+    if sc.kind.device.type != "cuda":
+        return {"skipped": f"the fused kernel is CUDA-only and this scene is on "
+                           f"{sc.kind.device}; on a CPU device there is one backend, not two"}
     size = min(int(env.size), int(max_size))
     a = render_triton(sc, size, env.ss).cpu().numpy()
     b = render_torch(sc, size, env.ss).cpu().numpy()

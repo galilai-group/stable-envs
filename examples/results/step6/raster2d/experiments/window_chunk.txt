@@ -1,0 +1,10 @@
+host torch 2.14.0, 1 thread(s), tree /Users/samib/stable-envs-step6-raster2d/stable_envs/__init__.py
+SimplePointMaze agent disc, 500 px, batch 64, one thread. Chunk the BATCH:
+   chunk   64:    93.67 ms   first window (0, 500, 0, 500)
+   chunk   32:    92.79 ms   first window (0, 500, 0, 500)
+   chunk   16:    92.02 ms   first window (0, 500, 0, 500)
+   chunk    8:    82.06 ms   first window (0, 500, 0, 500)
+   chunk    4:    58.80 ms   first window (74, 500, 0, 500)
+   chunk    2:    25.49 ms   first window (74, 319, 0, 263)
+   chunk    1:     2.53 ms   first window (295, 319, 239, 263)
+   -> the gain arrives only at a chunk of one, which is a Python loop over the batch and O(B) dispatch. Rejected; see --mode group.
