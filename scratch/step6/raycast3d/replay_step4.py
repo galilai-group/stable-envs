@@ -168,6 +168,9 @@ def main() -> None:
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--sample-states", type=int, default=None,
                     help="seed for configs with no frozen corpus (self-consistency only)")
+    ap.add_argument("--primitive-bounds", choices=("on", "off"), default=None,
+                    help="pin raycast3d.PRIMITIVE_BOUNDS, to diff the per-primitive-bounded CPU cast "
+                         "against the expression it replaced on the device the change targets")
     ap.add_argument("--cover-compaction", choices=("on", "off"), default=None,
                     help="pin raycast3d.COVER_COMPACTION, to diff the compacted composite against "
                          "the expression it replaced on the device the change targets")
@@ -189,10 +192,18 @@ def main() -> None:
               + f"  wrote {args.out}", flush=True)
         return
 
-    if args.cover_compaction is not None:
+    if args.cover_compaction is not None or args.primitive_bounds is not None:
         import stable_envs.render.raycast3d as R3
-        R3.COVER_COMPACTION = args.cover_compaction == "on"
-        print(f"COVER_COMPACTION={R3.COVER_COMPACTION} in {R3.__file__}", flush=True)
+        if args.cover_compaction is not None:
+            R3.COVER_COMPACTION = args.cover_compaction == "on"
+        if args.primitive_bounds is not None:
+            if not hasattr(R3, "PRIMITIVE_BOUNDS"):
+                raise SystemExit("this stable_envs has no PRIMITIVE_BOUNDS; pinning it would compare "
+                                 "the same path with itself and report a false identity")
+            R3.PRIMITIVE_BOUNDS = args.primitive_bounds == "on"
+        print(f"COVER_COMPACTION={getattr(R3, 'COVER_COMPACTION', None)} "
+              f"PRIMITIVE_BOUNDS={getattr(R3, 'PRIMITIVE_BOUNDS', None)} in {R3.__file__}",
+              flush=True)
 
     frozen = frozen_oracles()
     cfgs = list(args.configs)
