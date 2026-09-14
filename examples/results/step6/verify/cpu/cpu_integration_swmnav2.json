@@ -1,0 +1,839 @@
+{
+  "host": "node2318.oscar.ccv.brown.edu",
+  "device": "cpu",
+  "slurm_job": "6367991",
+  "code_root": "/oscar/scratch/sboughan/se6/verify7",
+  "configs": {
+    "TwoRoom": {
+      "config": "TwoRoom",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/TwoRoom.npz",
+      "size": 224,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 225.65891769305378,
+      "digest_ours_default_style": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+      "frozen": {
+        "digest_ours": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+        "digest_ours_default_style": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+        "size": 224,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "TwoRoom.npy"
+    },
+    "TwoRoomTarget": {
+      "config": "TwoRoomTarget",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/TwoRoomTarget.npz",
+      "size": 224,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 224.7399692665152,
+      "digest_ours_default_style": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+      "frozen": {
+        "digest_ours": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+        "digest_ours_default_style": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+        "size": 224,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "TwoRoomTarget.npy"
+    },
+    "Piecewise": {
+      "config": "Piecewise",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/Piecewise.npz",
+      "size": 224,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 236.113103126993,
+      "digest_ours_default_style": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+      "frozen": {
+        "digest_ours": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+        "digest_ours_default_style": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+        "size": 224,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "Piecewise.npy"
+    },
+    "PiecewiseZones": {
+      "config": "PiecewiseZones",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PiecewiseZones.npz",
+      "size": 224,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 211.78783847523385,
+      "digest_ours_default_style": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+      "frozen": {
+        "digest_ours": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+        "digest_ours_default_style": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+        "size": 224,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "PiecewiseZones.npy"
+    },
+    "AntmazeGiantNavigate": {
+      "config": "AntmazeGiantNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeGiantNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "d09340387be9242250ee20b22050eeb886158f91e0de25deddc5b0f6c8f360d0",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 176.07693595626728,
+      "digest_ours_default_style": "d09340387be9242250ee20b22050eeb886158f91e0de25deddc5b0f6c8f360d0",
+      "frozen": {
+        "digest_ours": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+        "digest_ours_default_style": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "AntmazeGiantNavigate.npy"
+    },
+    "AntmazeLargeExplore": {
+      "config": "AntmazeLargeExplore",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeLargeExplore.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "fe740d9c33bd2f391e7f731f0f61dbcc5f91409c7ee6350e37ef71a41ec81724",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 186.91192543912095,
+      "digest_ours_default_style": "fe740d9c33bd2f391e7f731f0f61dbcc5f91409c7ee6350e37ef71a41ec81724",
+      "frozen": {
+        "digest_ours": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+        "digest_ours_default_style": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "AntmazeLargeExplore.npy"
+    },
+    "AntmazeMediumExplore": {
+      "config": "AntmazeMediumExplore",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeMediumExplore.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "5381a4075833340d30713ecdb8269b5e8b5047f0c248fb1bc79bd9b85dc46c16",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 182.90201480372423,
+      "digest_ours_default_style": "5381a4075833340d30713ecdb8269b5e8b5047f0c248fb1bc79bd9b85dc46c16",
+      "frozen": {
+        "digest_ours": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+        "digest_ours_default_style": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "AntmazeMediumExplore.npy"
+    },
+    "AntmazeTeleportExplore": {
+      "config": "AntmazeTeleportExplore",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeTeleportExplore.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "16ce5a5a62b5e4de2a3350b04ac8b33b02d834f7084eca26025d1dc0236eb6fb",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 187.51070430003057,
+      "digest_ours_default_style": "16ce5a5a62b5e4de2a3350b04ac8b33b02d834f7084eca26025d1dc0236eb6fb",
+      "frozen": {
+        "digest_ours": "06a2e039e1fdf3ad0c926f84550bb1dd7ebff910c50c096d59aa8e502c29a805",
+        "digest_ours_default_style": "06a2e039e1fdf3ad0c926f84550bb1dd7ebff910c50c096d59aa8e502c29a805",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "AntmazeTeleportExplore.npy"
+    },
+    "HumanoidmazeGiantNavigate": {
+      "config": "HumanoidmazeGiantNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/HumanoidmazeGiantNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "a6eab1fd354cd763599a5a7cc96278ec7f842b667427ad3ab78378bfa9befe8b",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 173.00999834748353,
+      "digest_ours_default_style": "a6eab1fd354cd763599a5a7cc96278ec7f842b667427ad3ab78378bfa9befe8b",
+      "frozen": {
+        "digest_ours": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+        "digest_ours_default_style": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "HumanoidmazeGiantNavigate.npy"
+    },
+    "HumanoidmazeLargeNavigate": {
+      "config": "HumanoidmazeLargeNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/HumanoidmazeLargeNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "8d174314c013d924aab4ace539d364f50d4183677ee8ec5c88a0697cb1eb76d5",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 184.91403758769133,
+      "digest_ours_default_style": "8d174314c013d924aab4ace539d364f50d4183677ee8ec5c88a0697cb1eb76d5",
+      "frozen": {
+        "digest_ours": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+        "digest_ours_default_style": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "HumanoidmazeLargeNavigate.npy"
+    },
+    "HumanoidmazeMediumNavigate": {
+      "config": "HumanoidmazeMediumNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/HumanoidmazeMediumNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "c6c50a79c3121104c6227a26d12c5317b29ced23bf2aeb91c71fb348954af542",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 182.8887281352971,
+      "digest_ours_default_style": "c6c50a79c3121104c6227a26d12c5317b29ced23bf2aeb91c71fb348954af542",
+      "frozen": {
+        "digest_ours": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+        "digest_ours_default_style": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "HumanoidmazeMediumNavigate.npy"
+    },
+    "PointmazeGiantNavigate": {
+      "config": "PointmazeGiantNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeGiantNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "918165302142f2c715013e0d8b2ecd183537fffe88d0fa5fac8b331e11e4bef5",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 176.05761625328842,
+      "digest_ours_default_style": "918165302142f2c715013e0d8b2ecd183537fffe88d0fa5fac8b331e11e4bef5",
+      "frozen": {
+        "digest_ours": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+        "digest_ours_default_style": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "PointmazeGiantNavigate.npy"
+    },
+    "PointmazeLargeNavigate": {
+      "config": "PointmazeLargeNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeLargeNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "0c80dbd90185da30fa6baaf5c793a2279361711d3762ef19e1c2fc1ded96fbf2",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 186.8716336204892,
+      "digest_ours_default_style": "0c80dbd90185da30fa6baaf5c793a2279361711d3762ef19e1c2fc1ded96fbf2",
+      "frozen": {
+        "digest_ours": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+        "digest_ours_default_style": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "PointmazeLargeNavigate.npy"
+    },
+    "PointmazeMediumNavigate": {
+      "config": "PointmazeMediumNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeMediumNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "8827797880e87413ea1b018e073c5b0d5f5a97864f2a657e202bcf6a5a9aaed8",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 182.7900136311849,
+      "digest_ours_default_style": "8827797880e87413ea1b018e073c5b0d5f5a97864f2a657e202bcf6a5a9aaed8",
+      "frozen": {
+        "digest_ours": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+        "digest_ours_default_style": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "PointmazeMediumNavigate.npy"
+    },
+    "PointmazeTeleportNavigate": {
+      "config": "PointmazeTeleportNavigate",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeTeleportNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "f3f71a3844f66846002a60a673ae80507c14778638ff88c57aabc94215dbd4fd",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 187.47569856189546,
+      "digest_ours_default_style": "f3f71a3844f66846002a60a673ae80507c14778638ff88c57aabc94215dbd4fd",
+      "frozen": {
+        "digest_ours": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+        "digest_ours_default_style": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "PointmazeTeleportNavigate.npy"
+    },
+    "DMCAcrobotSwingup": {
+      "config": "DMCAcrobotSwingup",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCAcrobotSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "3049a91a17eac25d68beca57ee9bc45fa418838b8552739c13fcd3f360079958",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 77.51469051162131,
+      "digest_ours_default_style": "3049a91a17eac25d68beca57ee9bc45fa418838b8552739c13fcd3f360079958",
+      "frozen": {
+        "digest_ours": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+        "digest_ours_default_style": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCAcrobotSwingup.npy"
+    },
+    "DMCBallInCupCatch": {
+      "config": "DMCBallInCupCatch",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCBallInCupCatch.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "db402588811ab9f39247355fd6365c4ef30255c3edb84dc6451c842963f4b08c",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 59.244457288123584,
+      "digest_ours_default_style": "db402588811ab9f39247355fd6365c4ef30255c3edb84dc6451c842963f4b08c",
+      "frozen": {
+        "digest_ours": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+        "digest_ours_default_style": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCBallInCupCatch.npy"
+    },
+    "DMCCartpoleBalance": {
+      "config": "DMCCartpoleBalance",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleBalance.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "88256d45ba8a7803e84e9289d79d856aaeb270fb0739edbd3951d522637959a9",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.1376775970805,
+      "digest_ours_default_style": "88256d45ba8a7803e84e9289d79d856aaeb270fb0739edbd3951d522637959a9",
+      "frozen": {
+        "digest_ours": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+        "digest_ours_default_style": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCartpoleBalance.npy"
+    },
+    "DMCCartpoleSwingup": {
+      "config": "DMCCartpoleSwingup",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "77535c51616ae27b6f2914d0d5de77968263696e3bd31e92618003371abab095",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.39277447089947,
+      "digest_ours_default_style": "77535c51616ae27b6f2914d0d5de77968263696e3bd31e92618003371abab095",
+      "frozen": {
+        "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "digest_ours_default_style": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCartpoleSwingup.npy"
+    },
+    "DMCFingerSpin": {
+      "config": "DMCFingerSpin",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerSpin.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "2353ad1d9d85b771b7ef709bb55283a138b20f58fabf628edc7010f3b2bff9e2",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 63.968723426870746,
+      "digest_ours_default_style": "2353ad1d9d85b771b7ef709bb55283a138b20f58fabf628edc7010f3b2bff9e2",
+      "frozen": {
+        "digest_ours": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+        "digest_ours_default_style": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCFingerSpin.npy"
+    },
+    "DMCFingerTurnEasy": {
+      "config": "DMCFingerTurnEasy",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerTurnEasy.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "b578a8cd8a8b7eec4c737f136403e596ae613ec8821e956213f0ad389b57f80c",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 64.70070241638322,
+      "digest_ours_default_style": "b578a8cd8a8b7eec4c737f136403e596ae613ec8821e956213f0ad389b57f80c",
+      "frozen": {
+        "digest_ours": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+        "digest_ours_default_style": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCFingerTurnEasy.npy"
+    },
+    "DMCFingerTurnHard": {
+      "config": "DMCFingerTurnHard",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerTurnHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "c6ccf7fc301e10c489ab45cc96d7a75a9dbc0aee67e545ae386155c8a2a18f93",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 64.10034308862434,
+      "digest_ours_default_style": "c6ccf7fc301e10c489ab45cc96d7a75a9dbc0aee67e545ae386155c8a2a18f93",
+      "frozen": {
+        "digest_ours": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+        "digest_ours_default_style": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCFingerTurnHard.npy"
+    },
+    "DMCPendulumSwingup": {
+      "config": "DMCPendulumSwingup",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCPendulumSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "5723b14ebe009c26b33648063d4abba84278c78b0bcb1c8385bc0910bd285f83",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 75.0857883952192,
+      "digest_ours_default_style": "5723b14ebe009c26b33648063d4abba84278c78b0bcb1c8385bc0910bd285f83",
+      "frozen": {
+        "digest_ours": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+        "digest_ours_default_style": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCPendulumSwingup.npy"
+    },
+    "DMCReacherEasy": {
+      "config": "DMCReacherEasy",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherEasy.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "58757da2abb7cee8f7bef957d81f8cfde265230f4d98937087fa75247fed7a9b",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 80.13745172548185,
+      "digest_ours_default_style": "58757da2abb7cee8f7bef957d81f8cfde265230f4d98937087fa75247fed7a9b",
+      "frozen": {
+        "digest_ours": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+        "digest_ours_default_style": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCReacherEasy.npy"
+    },
+    "DMCReacherHard": {
+      "config": "DMCReacherHard",
+      "device": "cpu",
+      "stable_envs_from": "$SCR/se6/verify7/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "49e13070344ddb1c3ab6e409f7063a289957deb14f8d6b5fceed0dc5f1b4eadc",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.0580290710034,
+      "digest_ours_default_style": "49e13070344ddb1c3ab6e409f7063a289957deb14f8d6b5fceed0dc5f1b4eadc",
+      "frozen": {
+        "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "digest_ours_default_style": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCReacherHard.npy"
+    }
+  },
+  "summary": {
+    "pass": 4,
+    "fail": 21,
+    "error": 0,
+    "total": 25
+  }
+}

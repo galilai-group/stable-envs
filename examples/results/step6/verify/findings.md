@@ -495,3 +495,26 @@ reproduce.
 |---|---|---|
 | **6365966** | gpu / gpu2109 | `dmc` shard + Gate A under 3.12 (`se-step3`); the four visual cells + Gate A under the declared 3.11 pair (`se6-verify-vis311`) |
 | **6365967** | batch / node2320 | the four visual cells on CPU under the declared 3.11 pair (`se6-verify-tex311`) + `tests/unit` |
+
+
+---
+
+## 8. SWMNAV-2/2b, the fused swm_nav GPU kernel — integration `83aa187`
+
+New file `stable_envs/render/navdot.py` plus `swm_nav.py`. Jobs **6367990** (gpu / gpu2264, RTX 3090)
+and **6367991** (batch).
+
+| what | result |
+|---|---|
+| `swm` shard frozen replay on cuda | **6 of 6 configs measured, nothing moved** — `digest_ours`, `digest_ours_default_style`, `digest_official`, the corpus-style digest and every check status identical to the frozen oracle, under the fused kernel |
+| `tests/gpu/test_navdot_fused.py` | 24 collected, **24 passed, 0 failed** |
+| `tests/gpu/test_fast_paths.py` | 397 collected, **213 passed, 184 skipped, 0 failed** (up from 348/168 — the kernel adds its own fast-path cases) |
+| CPU at 1 thread (`se-step6`) | **25 of 25 configs byte-identical** to the baseline tree; the four swm_nav configs' CPU digests unchanged AND still equal to their frozen CUDA digests |
+| `tests/unit` | **732 passed, 22 skipped, 2 failed** — the same two pre-existing failures |
+
+The CPU leg covered 25 configs rather than the four asked for, because `RAY=` on the sbatch line did
+not clear the default: `${RAY:-...}` treats an explicitly empty value as unset. Harmless here — it
+bought 21 extra byte-identical raycast3d rows at this SHA for free — but a subset flag that quietly
+ignores you is not one to certify with, so `cpu_verify.sbatch` now uses `${RAY-...}`.
+
+**SWMNAV-2/2b changed no pixel on either device.**
