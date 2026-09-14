@@ -1,0 +1,39 @@
+# Step 7 coordinator dashboard (machine-readable).
+step: 7
+parent_baseline_sha: 76dc5116f432e61dd47fba8f9e879cf9212c8e46
+integration_branch: step7/integration
+coverage_target: 40/40 pixel-producing SWM ids at full (33 done + CraftaxClassic partial->full + 6 gaps)
+workstreams:
+- workstream: craftax-classic-full
+  targets:
+  - swm/CraftaxClassicPixels-v1 (partial->full)
+  status: queued
+  capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
+- workstream: craftax-full
+  targets:
+  - swm/CraftaxPixels-v1
+  status: queued
+  capability: full-atlas _Composite generalisation + layers
+- workstream: dmc-manipulator
+  targets:
+  - swm/ManipulatorDMControl-v0
+  status: queued
+  capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
+- workstream: dmc-quadruped
+  targets:
+  - swm/QuadrupedDMControl-v0
+  status: queued
+  capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
+- workstream: ogb-manipulation
+  targets:
+  - swm/OGBCube-v0
+  - swm/OGBScene-v0
+  status: queued
+  capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
+- workstream: rocket-landing
+  targets:
+  - swm/PFRocketLanding-v0
+  status: queued (feasibility gate)
+  capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
+decisions: []
+incident_log: []
