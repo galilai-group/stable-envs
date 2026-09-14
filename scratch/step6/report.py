@@ -45,11 +45,19 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-#: Tiers that satisfy the section-26 stop condition, per device. Named here rather than inferred, so
-#: the page can say which bar it counted against. The ladder that produces them is frozen in Step 2
-#: and evaluated by `scratch/step3/certify.py`; nothing in this file decides a tier.
-CPU_OK = ("CPU_FAST", "CPU_EXCEPTIONAL")
-GPU_OK = ("GPU_FAST", "GPU_EXCEPTIONAL")
+#: The role whose performance the frozen contract actually requires. Step 2 §4.2: "The configuration
+#: being certified must be the registered SWM default", and §12.2 puts `ENVIRONMENT_DONE` on that
+#: default alone. A render-parameter-space cell is certified for CORRECTNESS — it exists to prove the
+#: renderer answers the whole parameter space, not to carry a throughput obligation — so counting one
+#: as a performance blocker invents an obligation the contract never wrote down. Correctness
+#: accounting stays over all 49; performance completion is over these.
+OWES_PERFORMANCE = "registered_default"
+
+#: Where the normative prose and the machine-readable bar live. Both are read, neither is restated:
+#: the minimum tiers come out of `ladder.environment_done_min_tiers` in the frozen spec, so this file
+#: contains no bound of its own.
+SPEC_JSON = "scratch/certification.json"
+SPEC_MD = "docs/research/certification.md"
 
 #: Cluster paths appear inside artifacts (`shard`, `replay`, `states_source`, `before_dir`). They
 #: must never reach the page: `/oscar/scratch/sboughan/...` contains the literal `scratch/...` that
@@ -156,6 +164,49 @@ def first_word(x) -> str:
 
 
 # ------------------------------------------------------------------------------ step 3 evaluator
+
+def spec_bar() -> dict:
+    """The `ENVIRONMENT_DONE` performance bar, read from the frozen Step 2 spec.
+
+    `{"cpu": "CPU_FAST", "gpu": "GPU_FAST"}` plus the conjuncts each backend certification requires.
+    Read rather than restated: Step 2 froze these before any Step 3 number existed, and a report that
+    retyped them would be a second copy able to drift from the first.
+    """
+    d = json.loads((ROOT / SPEC_JSON).read_text())["ladder"]
+    return {"min": d["environment_done_min_tiers"],
+            "requires": d.get("environment_done_requires", []),
+            "backend": d.get("backend_certified_requires", {})}
+
+
+def spec_quote(section: str, kind: str = "bold") -> str | None:
+    """The sentence the normative document writes for a section, quoted live rather than paraphrased.
+
+    `kind="bold"` takes the first bolded claim under the heading, `kind="fence"` the first fenced
+    block. If the document is reorganised the quote disappears rather than silently going stale, and
+    the page says which section it could not find.
+    """
+    md = ROOT / SPEC_MD
+    if not md.is_file():
+        return None
+    lines = md.read_text(errors="replace").splitlines()
+    start = next((i for i, l in enumerate(lines) if l.strip().startswith("#")
+                  and l.lstrip("# ").startswith(section + " ")), None)
+    if start is None:
+        return None
+    body, fence = [], []
+    infence = False
+    for l in lines[start + 1:]:
+        if l.strip().startswith("#") and not infence:
+            break
+        if l.strip().startswith("```"):
+            infence = not infence
+            continue
+        (fence if infence else body).append(l)
+    if kind == "fence":
+        return " / ".join(x.strip() for x in fence if x.strip()) or None
+    m = re.search(r"\*\*(.+?)\*\*", " ".join(body))
+    return m.group(1).strip() if m else None
+
 
 def load_step3():
     """Import ``scratch/step3/certify.py`` without putting the repo root on ``sys.path``."""
@@ -467,6 +518,31 @@ class Artifacts:
                                      f"{len(st)} digest(s)"})
         return rows
 
+    def replay_identity(self) -> dict[str, dict]:
+        """`{config: {identical, moved, sources}}` over every committed pixel/digest comparison.
+
+        Correctness accounting is owed for all 49 cells whatever their role, and "did the frames move"
+        is the part of it that no dashboard sentence can summarise per configuration. Counted here
+        from the comparisons themselves so the per-config column is evidence rather than a claim.
+        """
+        out: dict[str, dict] = defaultdict(lambda: {"identical": 0, "moved": 0, "sources": []})
+        for p, d in self.pixel:
+            if isinstance(d.get("configs"), dict):
+                for cfg, v in d["configs"].items():
+                    if not isinstance(v, dict) or v.get("identical") is None:
+                        continue
+                    out[cfg]["identical" if v["identical"] else "moved"] += 1
+                    out[cfg]["sources"].append(self.rel(p))
+            elif d.get("config"):
+                st = [x.get("status") for x in (d.get("digests") or []) if isinstance(x, dict)]
+                cmp_ = [x for x in st if x not in self.NOT_COMPARED]
+                if not cmp_:
+                    continue
+                moved = any(x not in self.SAME for x in cmp_) or bool(d.get("changed"))
+                out[d["config"]]["moved" if moved else "identical"] += 1
+                out[d["config"]]["sources"].append(self.rel(p))
+        return out
+
     def wall_times(self) -> dict[str, list[dict]]:
         """``{workstream: [row]}`` — render wall time before vs after, paired on the SAME host.
 
@@ -616,6 +692,27 @@ def sentences(text) -> list[str]:
 #: A sentence in the dashboard that contains one of these is a decision that has not been taken.
 #: Keyword extraction, not judgement: the sentence is reprinted verbatim so the words stay the
 #: coordinator's.
+#: A sentence naming work that was identified and not done inside Step 6. Used only when the
+#: dashboard has no `deferred_work` entries, so that an unpopulated field cannot read as an empty
+#: backlog. Keyword extraction, verbatim output: the sentence stays the workstream's.
+DEFERRED_WORDS = ("step-8", "step 8", "deferred", "residual", "out of scope", "not funded",
+                  "next target", "follow-on", "carry-over", "carry over", "do not build",
+                  "remains possible", "unfunded")
+
+
+def candidate_deferred(ws_list) -> list[list[str]]:
+    rows = []
+    for w in ws_list:
+        blobs = [("notes", t) for t in (w.get("notes") or [])]
+        if (w.get("review") or {}).get("verdict"):
+            blobs.append(("review", w["review"]["verdict"]))
+        for field, blob in blobs:
+            for sent in sentences(blob):
+                if any(k in sent.lower() for k in DEFERRED_WORDS):
+                    rows.append([f"`{w['workstream']}`", f"`{field}`", sent])
+    return rows
+
+
 ESCALATION_WORDS = ("escalat", "sami", "held", "pending", "open question", "not authorized",
                     "sign-off", "decide", "decision", "approval", "blocker", "unresolved")
 
@@ -697,7 +794,17 @@ def build(results: Path, repo: Path, args) -> str:
          "`dashboard.yaml: status`"],
         ["merge commits on this branch", str(sum(len(v) for v in merges.values())),
          "`git log --merges`"],
-    ], ["", "value", "read from"]))
+    ] + ([["Step 6 status", dash["step6_status"], "`dashboard.yaml: step6_status`"]]
+         if dash.get("step6_status") else []),
+        ["", "value", "read from"]))
+    iv = dash.get("integration_verification")
+    if isinstance(iv, dict):
+        P("The integration branch was verified as a whole, separately from the per-workstream")
+        P("evidence below. That record, in full:")
+        P("")
+        L.extend(tbl([[f"`{k}`", v if not isinstance(v, list) else ", ".join(str(x) for x in v)]
+                      for k, v in iv.items()],
+                     ["field", "`dashboard.yaml: integration_verification`"]))
 
     if repairs:
         P("!!! warning \"`dashboard.yaml` does not parse as YAML and was repaired in order to read it\"")
@@ -732,35 +839,76 @@ def build(results: Path, repo: Path, args) -> str:
     tier_obs = A.tier_observations()
     decl = compare_txt(results)
 
-    P("## The 49 frozen configurations after Step 6")
+    bar = spec_bar()
+    C3 = load_step3()
+    rank = C3._tier_rank
+    ident = A.replay_identity()
+
+    def missing(t) -> bool:
+        """No measurement at all, as distinct from a measurement that came out low."""
+        return not t or t.endswith("UNMEASURED")
+
+    def meets(t, dev: str) -> bool:
+        return bool(t) and rank(t) >= rank(bar["min"][dev])
+
+    P("## Scope: which cells owe correctness, and which owe throughput")
     P("")
-    P("Step 4 froze 49 render-distinct configurations; Step 3 labelled environment rows. This table")
-    P("carries both forward through Step 6 under one rule, stated here because the rule is the whole")
-    P("content of the table:")
+    P("These are not the same set, and Step 6 spent a week reporting them as if they were.")
     P("")
-    P("- **Gate A** is the Step 4 status, *overridden only where a Step 6 certification artifact states")
-    P("  a status for that configuration*. Where two Step 6 arms disagree — the texture-fidelity 3.11")
-    P("  and 3.12 reference pairs are two arms of one diagnosis — the arm that ran under the declared")
-    P("  reference, the one whose certifier blocked nothing, is the status; both arms are printed in")
-    P("  the detail column and the disagreement is never hidden.")
-    P("- **CPU tier / GPU tier** are the representative Step 3 labels, *overridden only where a Step 6")
-    P("  artifact re-measures that row*. A re-measured tier is either read from a tier artifact or")
-    P("  computed from the raw shard by `scratch/step3/certify.py` — Step 3's own evaluator against")
-    P("  Step 2's frozen ladder, never a second implementation of it.")
-    P("- A configuration Step 3 never benchmarked keeps no tier. That is an absence of evidence, it is")
-    P("  counted separately from a failure, and it is never folded into one.")
+    q42, q122 = spec_quote("4.2"), spec_quote("12.2", "fence")
+    P(f"Step 2 §4.2 — `{SPEC_MD}`: " + (f"**{q42}**" if q42
+      else "_(the section could not be located in the document; the rule below is applied from the "
+           "machine-readable spec alone)_"))
+    P("")
+    P(f"Step 2 §12.2 puts completion on that same default — `{SPEC_MD}`:")
+    P("")
+    if q122:
+        P("```text")
+        for line in q122.split(" / "):
+            P(line)
+        P("```")
+    else:
+        P("_(the section could not be located in the document)_")
+    P("")
+    P("So the accounting splits, and the page splits with it:")
+    P("")
+    L.extend(tbl([
+        ["correctness and fidelity — Gate A, replay identity, digests",
+         f"all {len(step4)} render-distinct cells",
+         "a parameter-space cell exists to prove the renderer answers the whole parameter space; "
+         "getting it wrong is a defect wherever it happens"],
+        ["performance completion — CPU_FAST+, GPU_FAST+, remaining blockers",
+         f"the {sum(1 for c in step4.values() if c.get('role') == OWES_PERFORMANCE)} "
+         f"`{OWES_PERFORMANCE}` cells only",
+         "§4.2 and §12.2 put the certified configuration and `ENVIRONMENT_DONE` on the registered "
+         "SWM default; no other cell is owed a tier"],
+    ], ["accounting", "denominator", "why that denominator"]))
+    P("The bar itself is read from the frozen spec, not restated here — "
+      f"`{SPEC_JSON}`, `ladder.environment_done_min_tiers`: "
+      + ", ".join(f"**{d.upper()} >= `{t}`**" for d, t in sorted(bar["min"].items())) + ".")
     P("")
 
-    table, cpu_ok, gpu_ok, gate_ok, blockers = [], 0, 0, 0, []
-    dist: dict[str, dict[str, int]] = {"cpu": defaultdict(int), "gpu": defaultdict(int)}
-    remeasured = {"cpu": 0, "gpu": 0}
+    # ------------------------------------------------------------ correctness, all 49
+    P(f"## Correctness after Step 6 — all {len(step4)} frozen configurations")
+    P("")
+    P("- **Gate A** is the Step 4 status, *overridden only where a Step 6 certification artifact")
+    P("  states a status for that configuration*. Where two Step 6 arms disagree — the")
+    P("  texture-fidelity 3.11 and 3.12 reference pairs are two arms of one diagnosis — the arm that")
+    P("  ran under the declared reference, the one whose certifier blocked nothing, is the status;")
+    P("  both arms are printed in the detail column and the disagreement is never hidden.")
+    P("- **replay identity** counts the committed before/after pixel and digest comparisons that")
+    P("  mention the cell. `identical xN` means N comparisons found no moved pixel; a cell with no")
+    P("  comparison says so rather than being credited with one.")
+    P("")
+
+    table, gate_ok = [], 0
+    gate_of, tier_of, ident_of = {}, {}, {}
     for cfg in sorted(step4):
         c4 = step4[cfg]
         g4 = c4.get("gate_a")
-        obs = gate_obs.get(cfg, [])
+        obs = sorted(gate_obs.get(cfg, []), key=lambda o: o["path"])
         detail: list[str] = []
         if obs:
-            obs = sorted(obs, key=lambda o: o["path"])
             clean = [o for o in obs if not o["blocked"]]
             chosen = (clean or obs)[0]
             gate, gate_src = chosen["status"], src.key(chosen["path"])
@@ -789,15 +937,49 @@ def build(results: Path, repo: Path, args) -> str:
             else:
                 r = rep3.get((cfg, dev))
                 cells[dev] = ((r or {}).get("tier"), src.key(S3) if r else None, False)
-        (ct, cs, cdis), (gt, gs, gdis) = cells["cpu"], cells["gpu"]
-        if cdis:
+        if cells["cpu"][2]:
             detail.append("**CPU after-legs disagree**")
-        if gdis:
+        if cells["gpu"][2]:
             detail.append("**GPU after-legs disagree**")
 
+        ri = ident.get(cfg)
+        if ri and not ri["moved"]:
+            id_txt, id_src = f"identical x{ri['identical']}", src.key(sorted(ri["sources"])[0])
+        elif ri:
+            id_txt, id_src = (f"**moved in {ri['moved']} of {ri['moved'] + ri['identical']}**",
+                              src.key(sorted(ri["sources"])[0]))
+        else:
+            id_txt, id_src = "no committed comparison", None
+
         gate_ok += gate == "PASS"
-        cpu_ok += ct in CPU_OK
-        gpu_ok += gt in GPU_OK
+        gate_of[cfg], tier_of[cfg], ident_of[cfg] = (gate, gate_src), cells, (id_txt, id_src)
+        table.append([f"`{cfg}`", c4.get("role", ""), g4, gate, gate_src, id_txt, id_src or "—",
+                      "; ".join(detail) or "—"])
+    L.extend(tbl(table, ["config", "role", "Gate A (Step 4)", "Gate A (after Step 6)", "src",
+                         "replay identity", "src", "detail"]))
+
+    # ------------------------------------------------------------ performance, registered defaults
+    owed = sorted(c for c in step4 if step4[c].get("role") == OWES_PERFORMANCE)
+    other = sorted(c for c in step4 if step4[c].get("role") != OWES_PERFORMANCE)
+    P(f"## Performance after Step 6 — the {len(owed)} registered/default configurations")
+    P("")
+    P("The cells §4.2 and §12.2 put the contract on. **CPU tier / GPU tier** are the representative")
+    P("Step 3 labels, *overridden only where a Step 6 artifact re-measures that row*; a re-measured")
+    P("tier is read from a tier artifact or computed from the raw shard by `scratch/step3/certify.py`,")
+    P("Step 3's own evaluator against Step 2's frozen ladder, never a second implementation of it.")
+    P("`missing` is an absence of evidence — no measurement exists — and is counted apart from a")
+    P("measurement that came out below the bar.")
+    P("")
+    perf, cpu_ok, gpu_ok, cpu_missing, gpu_below, blockers = [], 0, 0, 0, 0, []
+    dist: dict[str, dict[str, int]] = {"cpu": defaultdict(int), "gpu": defaultdict(int)}
+    remeasured = {"cpu": 0, "gpu": 0}
+    for cfg in owed:
+        (ct, cs, _), (gt, gs, _) = tier_of[cfg]["cpu"], tier_of[cfg]["gpu"]
+        gate = gate_of[cfg][0]
+        cpu_ok += meets(ct, "cpu")
+        gpu_ok += meets(gt, "gpu")
+        cpu_missing += missing(ct)
+        gpu_below += not meets(gt, "gpu")
         dist["cpu"][ct or "never benchmarked"] += 1
         dist["gpu"][gt or "never benchmarked"] += 1
         remeasured["cpu"] += bool(cs and cs != src.keys.get(S3))
@@ -805,40 +987,81 @@ def build(results: Path, repo: Path, args) -> str:
         why = []
         if gate != "PASS":
             why.append(f"Gate A {gate}")
-        if ct not in CPU_OK:
-            why.append(f"CPU {ct or 'never benchmarked'}")
-        if gt not in GPU_OK:
-            why.append(f"GPU {gt or 'never benchmarked'}")
+        if missing(ct):
+            why.append(f"CPU missing ({ct or 'never benchmarked'})")
+        elif not meets(ct, "cpu"):
+            why.append(f"CPU {ct} below {bar['min']['cpu']}")
+        if missing(gt):
+            why.append(f"GPU missing ({gt or 'never benchmarked'})")
+        elif not meets(gt, "gpu"):
+            why.append(f"GPU {gt} below {bar['min']['gpu']}")
         if why:
-            blockers.append([f"`{cfg}`", c4.get("role", ""), "; ".join(why)])
-        table.append([f"`{cfg}`", c4.get("role", ""), g4, gate, gate_src,
-                      ct or "never benchmarked", cs or "—", gt or "never benchmarked", gs or "—",
-                      "; ".join(detail) or "—"])
+            blockers.append([f"`{cfg}`", "; ".join(why),
+                             ", ".join(f"{lbl} {k}" for lbl, k in
+                                       (("CPU", cs), ("GPU", gs), ("Gate A", gate_of[cfg][1])) if k)])
+        perf.append([f"`{cfg}`", ct or "never benchmarked", cs or "—", gt or "never benchmarked",
+                     gs or "—", "yes" if not why else "no"])
+    L.extend(tbl(perf, ["config", "CPU tier", "src", "GPU tier", "src", "meets the §12.2 bar"]))
 
-    L.extend(tbl(table, ["config", "role", "Gate A (Step 4)", "Gate A (after Step 6)", "src",
-                         "CPU tier", "src", "GPU tier", "src", "detail"]))
-    P("Every `src` key above:")
+    # ------------------------------------------------------------ parameter space
+    P(f"## Render-parameter-space configurations — the other {len(other)}")
+    P("")
+    P("These cells are certified for **correctness**: they exist to show that the renderer answers")
+    P("the whole declared parameter space, not only the registered default. The frozen contract asks")
+    P("them for no tier, so a tier measured here is **reported, not owed**, and none of them is ever")
+    P("counted as a performance blocker. Reporting them as blockers — which this page did until")
+    P("Sami's 2026-09-15 decision — inflates the remaining work with an obligation nobody wrote down.")
+    P("")
+    L.extend(tbl([[f"`{cfg}`", step4[cfg].get("role", ""), gate_of[cfg][0], gate_of[cfg][1],
+                   ident_of[cfg][0], ident_of[cfg][1] or "—",
+                   tier_of[cfg]["cpu"][0] or "not measured",
+                   tier_of[cfg]["gpu"][0] or "not measured",
+                   "not required by the frozen contract"] for cfg in other],
+                 ["config", "role", "Gate A (after Step 6)", "src", "replay identity", "src",
+                  "CPU tier (reported)", "GPU tier (reported)", "performance"]))
+
+    P("Every `src` key on this page:")
     P("")
     L.extend(tbl(src.legend(), ["key", "file"]))
 
-    n = len(step4)
-    P("### The section-25 counts")
+    # ------------------------------------------------------------ the summary
+    n, m = len(step4), len(owed)
+    P("### The section-25 summary")
     P("")
     L.extend(tbl([
-        ["covered configs Gate-A pass", f"{gate_ok} / {n}"],
-        ["covered configs CPU_FAST+", f"{cpu_ok} / {n}"],
-        ["covered configs GPU_FAST+", f"{gpu_ok} / {n}"],
-        ["remaining blockers", f"{len(blockers)} / {n}"],
-    ], ["count", "value"]))
-    P("`CPU_FAST+` is " + " or ".join(f"`{t}`" for t in CPU_OK) + "; `GPU_FAST+` is "
-      + " or ".join(f"`{t}`" for t in GPU_OK) + ". A configuration is a remaining blocker when it")
-    P("fails any one of the three, which is section 26's stop condition read literally. Every blocker,")
-    P("with the reason it is one:")
+        ["Gate-A pass", f"{gate_ok} / {n}", f"all {n} render-distinct cells"],
+        ["registered/default CPU_FAST+", f"{cpu_ok} / {m}", f"tier >= `{bar['min']['cpu']}`"],
+        ["registered/default GPU_FAST+", f"{gpu_ok} / {m}", f"tier >= `{bar['min']['gpu']}`"],
+        ["registered/default rows with CPU missing", f"{cpu_missing} / {m}",
+         "no CPU measurement exists for the row"],
+        ["registered/default rows below the GPU target", f"{gpu_below} / {m}",
+         f"does not reach `{bar['min']['gpu']}` (a missing measurement included, and named as such "
+         f"in the row below)"],
+        ["remaining registered/default blockers", f"{len(blockers)} / {m}",
+         "fails any conjunct of §12.2"],
+    ], ["count", "value", "what it means"]))
+    P("Each remaining blocker, with the conjunct that blocks it and the artifact each cell was read")
+    P("from:")
     P("")
-    L.extend(tbl(blockers, ["config", "role", "why it is still a blocker"]))
-    P("The same table counted by tier, which is the shape of the remaining work rather than its")
-    P(f"length. {remeasured['cpu']} CPU cell(s) and {remeasured['gpu']} GPU cell(s) in the table above")
-    P("were re-measured by a Step 6 artifact; the rest still carry their Step 3 label:")
+    # The whole-branch verification counted Gate A too, on its own run. Two independent counts of the
+    # same quantity is a gift, and printing both without comparing them would waste it.
+    iv_gate = str(((dash.get("integration_verification") or {}).get("gate_a")) or "")
+    m = re.search(r"(\d+)\s*PASS", iv_gate)
+    if m and int(m.group(1)) != gate_ok:
+        flag("Gate-A pass count", f"`integration_verification.gate_a`: {iv_gate}",
+             f"{gate_ok} of {n} computed from the Step-4 certification and the Step-6 certification "
+             f"artifacts on this branch", "examples/results/step6/dashboard.yaml")
+    L.extend(tbl(blockers, ["config", "blocking conjunct", "src"]))
+    P("A blocker on this list is a cell that has not reached the bar. It is **not** a statement that")
+    P("nothing further can be done for it: the work that was identified and then not funded is listed")
+    P("under *Deferred possible work*, and the cases where an attempt was made and the ceiling was")
+    P("measured are under *Demonstrated blockers*. Reading this table without those two sections")
+    P("turns \"not done\" into \"impossible\", which is the one conclusion the evidence does not")
+    P("support.")
+    P("")
+    P(f"Counted by tier over the {m} registered/default cells. {remeasured['cpu']} CPU cell(s) and")
+    P(f"{remeasured['gpu']} GPU cell(s) were re-measured by a Step 6 artifact; the rest still carry")
+    P("their Step 3 label:")
     P("")
     # The tie-break on the name is not decoration: without it the order of two equally-populated
     # tiers comes out of set iteration, and the page churns between runs that measured nothing new.
@@ -1003,7 +1226,15 @@ def build(results: Path, repo: Path, args) -> str:
         P("")
 
     # ---------------------------------------------------------------- escalations
-    P("## Decisions pending, and what was escalated")
+    P("## Decisions taken, decisions pending")
+    P("")
+    if dash.get("decisions"):
+        P("Decisions already taken and recorded, verbatim:")
+        P("")
+        L.extend(tbl([[d.get("date", "—"), d.get("by", "—"),
+                       " ".join(str(v) for k, v in d.items() if k not in ("date", "by"))]
+                      if isinstance(d, dict) else ["—", "—", str(d)]
+                      for d in dash["decisions"]], ["date", "by", "decision"]))
     P("")
     P("Extracted from the dashboard's own `status`, `notes` and review verdicts: every sentence that")
     P("records an escalation, a held commit, a pending decision or an open question. Verbatim, so the")
@@ -1034,6 +1265,68 @@ def build(results: Path, repo: Path, args) -> str:
         P("")
 
     # ---------------------------------------------------------------- not done
+    # ---------------------------------------------------------------- deferred / demonstrated
+    P("## Deferred possible work")
+    P("")
+    P("Read from `dashboard.yaml: deferred_work` — items that were identified, costed or designed and")
+    P("then not funded inside Step 6. They are listed so that the blocker table above is read as a")
+    P("state of the work rather than as a ceiling: a cell below its tier with an unfunded design")
+    P("behind it is a decision, not a physical limit.")
+    P("")
+    deferred = []
+    for entry in (dash.get("deferred_work") or []):
+        if isinstance(entry, dict):
+            deferred.append(["(project)", entry.get("item"), entry.get("reason"),
+                             entry.get("status", "deferred")])
+        else:
+            deferred.append(["(project)", entry, "—", "deferred"])
+    for w in ws_list:
+        for entry in (w.get("deferred_work") or []):
+            if isinstance(entry, dict):
+                deferred.append([f"`{w['workstream']}`", entry.get("item"), entry.get("reason"),
+                                 entry.get("status", "deferred")])
+            else:
+                deferred.append([f"`{w['workstream']}`", entry, "—", "deferred"])
+    if deferred:
+        L.extend(tbl(deferred, ["where", "item", "reason", "status"]))
+    else:
+        P("**The dashboard records no `deferred_work` entries.** That is an empty field, not a proof")
+        P("that the possibilities are exhausted. The candidates below were extracted from the same")
+        P("notes and review verdicts by keyword, and none of them has a `deferred_work` entry yet:")
+        P("")
+        L.extend(tbl(candidate_deferred(ws_list), ["workstream", "field", "what the note says"]))
+        P("Until the field is populated, this section under-reports what remains possible — and says")
+        P("so rather than reading as complete.")
+        P("")
+
+    P("## Demonstrated blockers")
+    P("")
+    P("Where an attempt was made and the ceiling was measured rather than assumed. Read from the")
+    P("dashboard's `decisions` entries that use the phrase, and from the workstream fields that do.")
+    P("")
+    demo = []
+    for dec in (dash.get("decisions") or []):
+        txt = " ".join(str(v) for k, v in dec.items() if k not in ("date", "by")) \
+            if isinstance(dec, dict) else str(dec)
+        if "demonstrated blocker" in txt.lower():
+            who = f"{dec.get('by', '?')} {dec.get('date', '')}".strip() if isinstance(dec, dict) else "decision"
+            demo.append([who, "`dashboard.yaml: decisions`", txt])
+    for w in ws_list:
+        for field in ("status", "goal"):
+            v = str(w.get(field) or "")
+            if "demonstrated blocker" in v.lower() or "demonstrated:" in v.lower():
+                demo.append([f"`{w['workstream']}`", f"`{field}`", v])
+        for note in (w.get("notes") or []):
+            for sent in sentences(note):
+                if "demonstrated blocker" in sent.lower():
+                    demo.append([f"`{w['workstream']}`", "`notes`", sent])
+    if demo:
+        L.extend(tbl(demo, ["where", "field", "what was demonstrated"]))
+    else:
+        P("_No `decisions` entry and no workstream field uses the phrase. Nothing on this page is a")
+        P("demonstrated ceiling._")
+        P("")
+
     P("## What Step 6 did not do")
     P("")
     P("Derived from the dashboard's `status`, `authorization`, `performance` and `correctness` fields")
@@ -1115,7 +1408,15 @@ def build(results: Path, repo: Path, args) -> str:
         P("page prints the artifact value everywhere above; the rows are listed here so the dashboard")
         P("gets corrected, rather than the page acquiring a special case for each one.")
         P("")
-    L.extend(tbl(flags, ["where", "the dashboard says", "the artifact says", "artifact"]))
+    # Two artifacts can say the same thing about the same cell — a second sweep on a second card, for
+    # instance. That is one disagreement with two sources, not two disagreements, and rendering it as
+    # two would make the table look worse than the evidence does.
+    grouped: dict[tuple[str, str, str], list[str]] = {}
+    for where, says, art, path in flags:
+        grouped.setdefault((where, says, art), []).append(path)
+    L.extend(tbl([[w, d_, a, ", ".join(dict.fromkeys(paths))]
+                  for (w, d_, a), paths in grouped.items()],
+                 ["where", "the dashboard says", "the artifact says", "artifact"]))
 
     # ---------------------------------------------------------------- appendix
     P("## Appendix — artifacts not summarised")
