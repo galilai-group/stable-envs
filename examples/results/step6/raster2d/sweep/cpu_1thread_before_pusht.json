@@ -12,72 +12,72 @@
    "cells": [
     {
      "batch": 1,
-     "cpu_frac": 0.9929793419687325,
-     "fps": 60.26405730525483,
-     "gb_per_s": 0.0016661806563756855,
-     "loadavg": 45.01,
-     "peak_gb": 0.681402368,
-     "seconds_per_batch": 0.01659363880753517,
+     "cpu_frac": 0.9939263503003405,
+     "fps": 159.41559453450142,
+     "gb_per_s": 0.004407522357689896,
+     "loadavg": 40.74,
+     "peak_gb": 0.667611136,
+     "seconds_per_batch": 0.00627291202545166,
      "size": null,
      "supersample": 1,
-     "us_per_frame": 16593.63880753517
+     "us_per_frame": 6272.91202545166
     },
     {
      "batch": 16,
-     "cpu_frac": 0.9937423832810469,
-     "fps": 115.29030281718497,
-     "gb_per_s": 0.0031875462922895297,
-     "loadavg": 45.01,
-     "peak_gb": 0.698441728,
-     "seconds_per_batch": 0.13878010213375092,
+     "cpu_frac": 0.9942673032357175,
+     "fps": 621.1343019727781,
+     "gb_per_s": 0.017173121180943367,
+     "loadavg": 40.74,
+     "peak_gb": 0.678199296,
+     "seconds_per_batch": 0.025759324431419373,
      "size": null,
      "supersample": 1,
-     "us_per_frame": 8673.756383359432
+     "us_per_frame": 1609.9577769637108
     },
     {
      "batch": 64,
-     "cpu_frac": 0.9921593176851431,
-     "fps": 106.86260107355434,
-     "gb_per_s": 0.0029545371944816306,
-     "loadavg": 45.01,
-     "peak_gb": 0.765657088,
-     "seconds_per_batch": 0.5988998897373676,
+     "cpu_frac": 0.9948194935651616,
+     "fps": 473.291840520841,
+     "gb_per_s": 0.013085572806720212,
+     "loadavg": 40.68,
+     "peak_gb": 0.73377792,
+     "seconds_per_batch": 0.13522312138229609,
      "size": null,
      "supersample": 1,
-     "us_per_frame": 9357.81077714637
+     "us_per_frame": 2112.8612715983763
     },
     {
      "batch": 256,
-     "cpu_frac": 0.995140141049427,
-     "fps": 91.04498109421733,
-     "gb_per_s": 0.002517211637292921,
-     "loadavg": 45.0,
-     "peak_gb": 1.008242688,
-     "seconds_per_batch": 2.811796948313713,
+     "cpu_frac": 0.9946755089434758,
+     "fps": 431.7808340201855,
+     "gb_per_s": 0.011937876498990089,
+     "loadavg": 40.71,
+     "peak_gb": 0.960479232,
+     "seconds_per_batch": 0.5928933843970299,
      "size": null,
      "supersample": 1,
-     "us_per_frame": 10983.581829350442
+     "us_per_frame": 2315.989782800898
     },
     {
      "batch": 1024,
-     "cpu_frac": 0.9949801385707153,
-     "fps": 50.99441730618228,
-     "gb_per_s": 0.0014098936496813276,
-     "loadavg": 45.03,
-     "peak_gb": 1.350569984,
-     "seconds_per_batch": 20.080629490315914,
+     "cpu_frac": 0.9944405523351856,
+     "fps": 350.3890988766911,
+     "gb_per_s": 0.009687557805742755,
+     "loadavg": 40.45,
+     "peak_gb": 1.657782272,
+     "seconds_per_batch": 2.9224653486162424,
      "size": null,
      "supersample": 1,
-     "us_per_frame": 19609.989736636635
+     "us_per_frame": 2853.970067008049
     }
    ],
    "decode": {
-    "decode_MBps_raw": 203.83630107777634,
-    "decode_fps_per_core": 7372.551398935776,
+    "decode_MBps_raw": 219.40314464328455,
+    "decode_fps_per_core": 7935.588275581762,
     "h": 96,
     "jpeg_bytes": 2388,
     "jpeg_quality": 90,
-    "load_decode_fps_per_core": 6451.139338461039,
+    "load_decode_fps_per_core": 7220.009508702878,
     "n": 4340,
     "raw_bytes": 27648,
     "w": 96
@@ -88,16 +88,16 @@
    "official_cpu": {
     "frames": 60,
     "render_only": {
-     "fps": 370.1896438094029,
-     "gb_per_s": 0.01023500327204237,
-     "seconds_per_frame": 0.002701318139831225,
-     "us_per_frame": 2701.318139831225
+     "fps": 372.2679610561237,
+     "gb_per_s": 0.010292464587279707,
+     "seconds_per_frame": 0.0026862370781600476,
+     "us_per_frame": 2686.2370781600475
     },
     "set_state_render": {
-     "fps": 336.65143330628536,
-     "gb_per_s": 0.009307738828052177,
-     "seconds_per_frame": 0.0029704314346114796,
-     "us_per_frame": 2970.4314346114797
+     "fps": 341.6862006411498,
+     "gb_per_s": 0.00944694007532651,
+     "seconds_per_frame": 0.0029266619433959327,
+     "us_per_frame": 2926.6619433959327
     },
     "size": 96
    },
@@ -107,12 +107,12 @@
    ],
    "reference_id": "gym_pusht/PushT-v0",
    "renderer_class": "PushT",
-   "seconds": 241.28,
+   "seconds": 40.6,
    "shape": "96x96",
    "size": 96,
    "state_dim": 5,
    "states_source": "sample_states",
-   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep/states/PushT.npy",
+   "states_written": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r3/states/PushT.npy",
    "supersample": 1
   }
  ],
@@ -123,24 +123,27 @@
   "cpu_count_logical": 48,
   "cpu_count_physical": 48,
   "device": "cpu",
-  "git_commit": null,
-  "git_dirty": false,
-  "host": "node2344.oscar.ccv.brown.edu",
-  "loadavg_end": 45.03,
-  "loadavg_start": 45.01,
+  "git_commit": "1103326",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "host": "node2334.oscar.ccv.brown.edu",
+  "loadavg_end": 40.45,
+  "loadavg_start": 40.74,
   "mujoco_gl": "egl",
   "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
   "python": "3.12.9",
-  "slurm_job_id": "6346291",
-  "slurm_nodelist": "node2344",
-  "timestamp": "2026-09-13T19:13:38-0400",
+  "slurm_job_id": "6352386",
+  "slurm_nodelist": "node2334",
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/raster2d-preB/stable_envs/__init__.py",
+  "timestamp": "2026-09-13T21:24:42-0400",
   "torch": "2.14.0+cu126",
-  "torch_threads": 1
+  "torch_threads": 1,
+  "tree_root": "/oscar/scratch/sboughan/se6/raster2d-preB"
  },
  "reps": 15,
  "ss_request": "native",
  "states_in": null,
- "states_out": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep/states",
+ "states_out": "/oscar/scratch/sboughan/se6/raster2d/examples/results/step6/raster2d/sweep_r3/states",
  "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
  "what": "Step 3 raw renderer benchmark shard"
 }

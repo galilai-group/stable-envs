@@ -77,4 +77,18 @@ STABLE_ENVS_GIT_COMMIT=$(sha "$AFT") PYTHONPATH=$AFT $P5 $AFT/examples/bench_ste
     --reps 15 --max-cell-s 60 --optional-batches --states-in "$ST" \
     --out "$RES/sweep$TAG/gpu_after.json" || echo "GPU_SWEEP_AFTER rc=$?"
 
+# 5. the same two legs again with the ORDER REVERSED.
+#
+# The first run of this put the after leg second every time and the whole table came back 0.96-1.00,
+# including the two rows whose cuda code is byte-identical between the trees. A sweep that always
+# measures one tree on a colder card than the other has a systematic bias, and 2-4% is the size of
+# it. Running the pair both ways and taking each leg's best cancels the position rather than
+# arguing about it.
+STABLE_ENVS_GIT_COMMIT=$(sha "$AFT") PYTHONPATH=$AFT $P5 $AFT/examples/bench_step3.py --device cuda \
+    --threads 0 --envs "$CFG" --reps 15 --max-cell-s 60 --optional-batches --states-in "$ST" \
+    --out "$RES/sweep$TAG/gpu_after_first.json" || echo "GPU_SWEEP_AFTER2 rc=$?"
+STABLE_ENVS_GIT_COMMIT=$(sha "$BEF") PYTHONPATH=$BEF $P5 $BEF/examples/bench_step3.py --device cuda \
+    --threads 0 --envs "$CFG" --reps 15 --max-cell-s 60 --optional-batches --states-in "$ST" \
+    --out "$RES/sweep$TAG/gpu_before_second.json" || echo "GPU_SWEEP_BEFORE2 rc=$?"
+
 echo "GPU_CHECK_DONE"

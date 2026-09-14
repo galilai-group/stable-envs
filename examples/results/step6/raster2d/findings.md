@@ -507,9 +507,9 @@ uint8 output, so the remaining factor of two is bandwidth on the write, not arit
 | Piecewise | 54,831 | 53,823 | 0.98 |
 | PiecewiseZones | 46,993 | **53,730** | **1.14** |
 
-No healthy GPU row regressed. The three that improved are the `swm_nav` envs: that path has no fused
-kernel and runs the same torch arithmetic on both devices, so SWMNAV-1 helps it on the GPU too. The
-Scene2D rows are flat because `render_triton` was not touched.
+**This table was best-batch only and it was wrong to stop there — see §15.** Per batch, the same
+artifact shows TwoRoom 0.48x at B=16 and Piecewise 0.19x. SWMNAV-1 was held at review on exactly
+that, correctly.
 
 ### Correctness, round 2
 
@@ -535,3 +535,121 @@ being right is what made it visible.
   `gfxdraw` wants the same partition the interface is in §9. Not touched here.
 - **`stable_envs/testing/conformance.py`** was edited by this workstream (§8) after the coordinator
   confirmed it; `swm_nav.py` likewise, under SWMNAV-1.
+
+
+---
+
+# Round 3 — SWMNAV-1 held, and why
+
+## 15. The GPU regression I reported as "no regression"
+
+Round 2's §13 tabulated best-batch f/s and concluded no healthy GPU row regressed. The per-batch
+numbers, from the artifact I committed alongside that sentence (job `6349274`, `gpu2113`, now in
+`sweep/superseded_round2_node1828/`):
+
+| config | B=1 | B=16 | B=64 | B=256 | B=1024 | B=4096 |
+|---|---|---|---|---|---|---|
+| TwoRoom | 1.25 | **0.48** | **0.55** | 1.41 | 1.40 | 1.41 |
+| TwoRoomTarget | 0.86 | **0.32** | **0.40** | 1.11 | 1.13 | 1.13 |
+| Piecewise | 0.58 | **0.19** | **0.35** | 0.99 | 0.98 | 0.98 |
+| PiecewiseZones | 0.85 | **0.27** | **0.43** | 1.14 | 1.14 | 1.14 |
+
+A 5.3x regression at batch 16 that a best-batch summary does not show is still a regression, and the
+summary was mine. Best-batch is the right statistic for a tier, because the tier is defined at the
+certified batch; it is the wrong statistic for "did anything get worse", and I used it for both.
+
+**Mechanism.** Both SWMNAV-1 optimisations decide on the HOST from values living on the device: one
+`.cpu()` for the bake key, one plus four scalar reductions for the dot windows, doubled for
+TwoRoomTarget's two dots. On a CPU those are copies. On a GPU they are synchronisations in the middle
+of a render, and they cost more than the work they save at every batch where the saved work is small.
+Section 7 names host/device synchronisation in a hot loop as a structural defect in its own right,
+not a cost to net off against a gain elsewhere. `raster2d._row_groups` does not rescue it: both its
+constants were measured on one CPU core, so on cuda it accepts groupings that lose.
+
+**Fix.** On `device.type == "cuda"` both paths run the arithmetic they replaced, unchanged. The GPU
+rows are identical code rather than an argument about which batches the qualifiers sample. Recovering
+the large-batch gain there — 1.41x on TwoRoom was real — needs the decisions made on the device or
+the cost model re-calibrated on the card, and that is its own ticket.
+
+## 16. The full per-batch GPU table, and how it was taken
+
+Two SLURM legs turned out not to be able to answer this. A GPU render at batch 1 is host-launch
+bound, the legs run minutes apart on a shared node, and the spread *within* one tree's two runs came
+out the same size as the difference between the trees: PiecewiseZones read **1,031 and 1,075 f/s for
+the same code** at batch 1. Job `6352385` ran the pair once each and every row came back 0.96-1.00
+*including PushT and SimplePointMaze, whose cuda code is byte-identical between the two trees* —
+which is how the bias was spotted rather than argued about. Job `6353295` repeated the pair with the
+order reversed and the low cells moved with the position.
+
+So the decisive measurement is in ONE process, interleaved, on one warmed card
+(`scratch/step6/raster2d/gpu_same_process_ab.py`, job `6353691`, `gpu2264`, artifact
+`sweep/gpu_same_process_ab.json`). `swm_nav`'s two methods take their branch from
+`self.device.type`, so binding them to the expressions they replaced *is* the pre-SWMNAV-1 render:
+
+| config | B=1 | B=16 | B=64 | B=256 | B=1024 | B=4096 |
+|---|---|---|---|---|---|---|
+| TwoRoom | 0.992 | 0.991 | 0.995 | 1.000 | 1.000 | 0.999 |
+| TwoRoomTarget | 0.987 | 0.987 | 0.997 | 0.999 | 1.000 | 1.000 |
+| Piecewise | **0.979** | 0.981 | 0.992 | 0.999 | 1.000 | 0.999 |
+| PiecewiseZones | 0.985 | 0.986 | 0.992 | 0.999 | 1.002 | 1.000 |
+
+**Worst 0.979, bar 0.97, and every cell reports its frames identical.** The residual is explained
+rather than absorbed: at batch 1 a Piecewise GPU render is 0.667 ms and the cuda branch adds one
+Python call for `_base_image`, one for `_blend_dot` and two attribute compares — about 14 us, which
+is 2.1% of 0.667 ms and nothing at all by batch 256. It could be removed by binding the
+implementation once at construction instead of branching per call; that trades a real interaction
+with subclass init and with the tests that rebind these methods for 2% at batch 1 on a path that is
+not the certified one, so it was not done.
+
+And the four-leg cross-process table (`sweep/gpu_{before,after,after_first,before_second}.json`, job
+`6353295`, `gpu2101`), for completeness — this is the one whose noise floor is the effect size:
+
+| config | B=1 | B=16 | B=64 | B=256 | B=1024 | B=4096 |
+|---|---|---|---|---|---|---|
+| PushT (control, identical cuda code) | 0.99 | 0.98 | 0.99 | 0.99 | 0.99 | 0.99 |
+| SimplePointMaze (control) | 1.00 | 0.99 | 1.02 | 0.98 | 0.99 | 1.00 |
+| TwoRoom | 0.98 | 0.98 | 0.98 | 1.00 | 1.00 | 1.00 |
+| TwoRoomTarget | 0.98 | 0.99 | 0.99 | 1.00 | 1.00 | 1.00 |
+| Piecewise | 0.97 | 0.99 | 0.98 | 1.00 | 1.00 | 1.00 |
+| PiecewiseZones | 0.94 | 0.95 | 0.98 | 1.00 | 1.00 | 1.00 |
+
+The two control rows sit at 0.98-1.02 for code that cannot have changed, which is the measurement's
+own floor and why the in-process table above is the one to read.
+
+## 17. CPU gains re-confirmed on the shipping code
+
+Job `6352386`, `node2334`, load average 40.3, both legs in one job, before = `1103326`,
+after = this branch. Provenance per leg: the before shards carry `1103326` and
+`.../raster2d-preB/stable_envs/__init__.py`, the after shards `c96f886` and `.../raster2d/...`.
+
+| config | best B | before f/s | after f/s | speed-up | `S_cpu` after | `cores_cpu` after |
+|---|---|---|---|---|---|---|
+| PushT | 1024 | 621 | **1,981** | 3.2x | **5.51** | 0.24 |
+| SimplePointMaze | 16 | 106 | **242** | 2.3x | 4.91 | 0.22 |
+| TwoRoom | 16 | 290 | **1,359** | 4.7x | 4.32 | 0.41 |
+| TwoRoomTarget | 1 | 197 | **638** | 3.2x | 3.20 | 0.16 |
+| Piecewise | 16 | 426 | **1,243** | 2.9x | 3.21 | 0.37 |
+| PiecewiseZones | 16 | 233 | **1,205** | 5.2x | 4.48 | 0.34 |
+
+Compared with round 2 on `node1828`, `S_cpu` for TwoRoom reads 4.32 against 5.08 and PiecewiseZones
+4.48 against 5.28 — **the rows that straddle the `S_cpu = 5` line straddle it by node**, so the
+honest statement is that PushT clears it on both nodes and TwoRoom and PiecewiseZones clear it on one
+of the two. `cores_cpu` is unchanged in its verdict: still well under 1, so `BELOW_G4` still caps
+every row at `CPU_FASTER`.
+
+Pixels, round 3: all six configs replay identical on cuda (`replay_r3/`, `replay_r4/`), 650/650 fuzz
+on the card, 60 unit tests (the two new files) and 183 GPU tests passed, four CPU digests unchanged.
+
+## 18. Where the shards live
+
+`sweep/` now holds exactly one measurement of each leg, because the Step 6 report generator labels a
+tier from every Step-3-shaped shard it finds there and two rounds side by side would give one env two
+tiers. Earlier rounds are in `sweep/superseded_*/`, each with a README saying what it measured and
+why it is not the one to read; `sweep/README.md` is the index. Nothing was edited — a shard is a
+record of a run, and correcting the record is worse than recording that it was wrong, which is what
+`superseded_round2_node1828/PROVENANCE_NOTE.md` does for the SHA that was stamped once per job
+instead of once per leg.
+
+Full job list for this workstream: `6322230` (wave-0 profile), `6344858`, `6346289`, `6346290`,
+`6346291`, `6346300`, `6346490` (round 1), `6349273`, `6349274` (round 2), `6352385`, `6352386`
+(round 3), `6353295` (order-reversed GPU), `6353691` (same-process GPU A/B).
