@@ -48,7 +48,11 @@ RAY=${RAY:-"AntmazeGiantNavigate AntmazeLargeExplore AntmazeMediumExplore Antmaz
 GFXC=${GFXC:-"Acrobot CartPole MountainCar MountainCarContinuous Pendulum"}
 ALL="$RASTER $RAY"
 [ "${GFX:-0}" = 1 ] && ALL="$ALL $GFXC"
-PY=$(venv_for verify)/bin/python
+# CPUVENV names the interpreter. It defaults to se6-verify, but the cpu-3d backend must be
+# measured in an interpreter that does NOT have mujoco_warp, or "the CPU path works" could be
+# MJWarp answering -- so the trackcom leg is run with CPUVENV=se-step6 on the coordinator's
+# instruction, and se6-verify chains se-step6 first, which is not the same thing.
+PY=$SCR/venvs/${CPUVENV:-se6-verify}/bin/python
 R=$TREE/scratch/step6/raycast3d/replay_step4.py
 echo "configs: $ALL"
 rm -rf "$D"; mkdir -p "$D/baseline" "$D/integration"
