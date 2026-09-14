@@ -593,24 +593,71 @@ same split `raycast3d` keeps between `cast_nearest_torch` and its Triton kernel,
 `tests/gpu/test_gfxdraw_classic.py` asserts both joints separately so a failure says which file to
 open.
 
-### Status
+### Results (job 6349362, `gpu2110`, RTX 3090, both arms in one process on one card)
 
-Implemented and verified as far as a laptop can verify it. **Not yet measured on a device**: the
-`gpu` QOS is estimating 45+ minutes per submission tonight, and the identity tests, the frozen
-replay and the mandatory sweep are one job (6349362) so the wait is paid once. What is established:
+The "before" arm is this tree with `use_fused_render` False, which is the code 6213673 shipped;
+flipping a class default rather than a `PYTHONPATH` makes the two arms same-card and same-process
+by construction and removes the failure mode that costs a GPU job — measuring the same tree twice.
 
-| check | where | result |
-|---|---|---|
-| the op list describes what the per-primitive path draws | CPU, all five, 4 state classes | **0 differing pixels** |
-| the same, under per-row colours AND mixed antialias in one batch | CPU, all five | **0 differing pixels** |
-| the per-pixel closed form vs the Triton kernel | CUDA | queued (6349362) |
-| `env.render` with the kernel on vs off | CUDA, `test_fast_paths.py`, 2 new cases | queued |
-| frozen Step 4 replay under the kernel | CUDA | queued |
-| CarRacing's own fused identity test | CUDA | queued |
-| mandatory sweep, kernel on and off, one card one process | CUDA | queued |
+| config | B=1 | B=16 | B=64 | B=256 | B=1024 | B=4096 | peak GB @4096 |
+|---|---|---|---|---|---|---|---|
+| Acrobot before | 22 | 338 | 1,327 | 5,004 | 16,356 | 36,891 | 8.85 |
+| Acrobot **after** | **89** | **1,412** | **5,519** | **20,913** | **67,454** | **160,896** | **3.10** |
+| CartPole before | 22 | 348 | 1,364 | 5,227 | 17,594 | 42,746 | 7.65 |
+| CartPole **after** | **94** | **1,513** | **5,774** | **22,590** | **75,193** | **186,137** | **2.98** |
+| MountainCar before | 23 | 362 | 1,416 | 5,349 | 17,866 | 37,640 | 8.64 |
+| MountainCar **after** | **87** | **1,365** | **5,322** | **20,241** | **64,492** | **146,514** | **2.98** |
+| MountainCarContinuous before | 23 | 362 | 1,417 | 5,345 | 17,922 | 37,631 | 8.64 |
+| MountainCarContinuous **after** | **87** | **1,362** | **5,368** | **20,257** | **64,952** | **146,466** | **2.98** |
+| Pendulum before | 39 | 609 | 2,377 | 8,812 | 26,112 | 46,639 | 9.14 |
+| Pendulum **after** | **91** | **1,451** | **5,662** | **21,558** | **71,199** | **176,078** | **3.09** |
 
-The two new `test_fast_paths.py` cases (`gfxdraw-classic-fused-vs-per-primitive` and its `-extreme`
-twin) and `tests/gpu/test_gfxdraw_classic.py` (55 cases) are in the tree and green on the CPU half.
+**3.8-4.4x at every batch size**, batch 1 included — the kernel removes launches and passes rather
+than amortising them. **Peak VRAM at 4,096 falls from 7.65-9.14 GB to 2.98-3.10 GB**, a 2.9x cut,
+because the kernel stores the frame directly: no planar surface, no transient, no interleave.
+`BATCH_SCALES` (1,687-1,990x against a 20x bar) and `NO_LARGE_BATCH_REGRESSION` (7.2-8.2 against
+0.9) pass in both arms.
+
+Cumulatively against the pre-Step-6 baseline on a 3090: Acrobot 16,661 -> 160,896 frames/s, **9.7x**.
+
+### Correctness — every gate green
+
+| check | result |
+|---|---|
+| `tests/gpu/test_gfxdraw_classic.py` (both joints, 4 state classes, per-row style, chunk/order invariance, the CPU-path assertion) | **55 passed** |
+| `tests/gpu/test_fast_paths.py -k gfxdraw-classic` (the two new cases: `env.render` with the kernel on vs off) | **10 passed** |
+| frozen Step 4 replay **under the kernel**, cuda | **5/5**: every check status and every oracle digest, `distinct_colors` and `mean_pixel` **identical to Step 4** |
+| `replay_digests.py --device cuda` | **5/5 bit-identical** |
+| LunarLander and CarRacing on CUDA, baseline tree vs branch | **byte-identical**, both |
+
+**Pixels changed: no.** Semantic follow-up: **none** — section 15's first case.
+
+### R, and why this job does not settle it
+
+R's denominator is the official CPU renderer, and it moved by a factor of two **between the two
+arms of one job on one node**: Acrobot 428.2 then 229.8 frames/s, CartPole 488.4 then 246.1, while
+MountainCar's barely moved (448.3 against 439.1). The reference is a single-threaded pygame loop on
+the same node whose CPU is feeding the GPU, and `bench_step3` times it in a block after the sweep
+rather than interleaved. So:
+
+| config | R, conservative (higher) reference | R, after-arm reference | cores after |
+|---|---|---|---|
+| Acrobot | 376 | 700 | 161.6 |
+| CartPole | 381 | 756 | 163.3 |
+| MountainCar | 327 | 334 | 105.0 |
+| MountainCarContinuous | 325 | 332 | 104.9 |
+| Pendulum | 667 | 667 | 126.9 |
+
+**The class-R `GPU_FAST` bar of 500 sits inside that range**, so the tier for four of the five is
+undecided by this job: the two envs whose reference was STABLE land at 325-334, and the two whose
+reference halved read 376 or 756 depending on which half is believed. `cores` is 105-163 against a
+bar of 1, so `BELOW_G4` does not apply and R is the only open question.
+
+Job **6351758** settles it the way `paired_cpu.py` settled `S_cpu`: `paired_gpu.py` interleaves a
+reference burst and a render burst round by round in one process, both arms, and reports the median
+of the per-round ratio with its spread. It also re-runs CarRacing's own fused identity test in the
+Box2D venv — in job 6349362 that test collected 4 cases and SKIPPED all four for want of Box2D,
+which the suite's coverage guard correctly reported as a failure rather than a pass.
 
 ### The one thing that is decided already
 
