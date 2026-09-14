@@ -518,3 +518,81 @@ bought 21 extra byte-identical raycast3d rows at this SHA for free — but a sub
 ignores you is not one to certify with, so `cpu_verify.sbatch` now uses `${RAY-...}`.
 
 **SWMNAV-2/2b changed no pixel on either device.**
+
+
+---
+
+## 9. RAYCAST-6, and the closing state — integration `547c887`
+
+The last code merge of Step 6. `raycast3d`'s composite is the file it touches, and `cpu3d.py` calls
+that composite through the public API, so both the 21 raycast3d configurations and the four trackcom
+cells are downstream of it.
+
+| subset | SHA | job / node | result |
+|---|---|---|---|
+| `dmc` shard, cuda (`se-step3`) | `547c887` | 6368955 / gpu2107 | **14 of 14 digests identical**, 0 check statuses moved |
+| `ogb` shard, cuda (`se-step3`) | `547c887` | 6368955 / gpu2107 | 11 configs, **1 digest moved** — `AntmazeTeleportExplore`, the known bake nondeterminism — 0 check statuses moved |
+| the 21 raycast3d configs, CPU 1 thread (`se-step6`) | `547c887` | 6368956 | **21 of 21 byte-identical** to the baseline tree, `max_abs_diff` 0 |
+| the 4 trackcom cells, CPU (`se-step6`, no `mujoco_warp`) | `547c887` | 6368957 | digests **byte-identical to the `83bd778` run**: `f42baac6795257a3`, `fc33f1da9e33fa4e`, `883fb1df2041f486`, `291f1ebcb22288c8`. The composite change did not reach `cpu3d`'s output. |
+| the 4 trackcom cells, cuda (`se-step5`) | `547c887` | 6368955 | baseline vs integration **identical x4** |
+| `tests/gpu/test_fast_paths.py` | `547c887` | 6368955 | 426 collected, **238 passed, 188 skipped, 0 failed** |
+| `tests/unit` (incl. `test_raycast3d_composite_compact.py`) | `547c887` | 6368956, 6368957 | **807 passed, 22 skipped, 2 failed** |
+| Gate A on CPU, 4 trackcom cells, 3.12 arm | `547c887` | 6368957 | **BLOCKED x4, no FAIL** — the downsample check now passes and only `check_visual_fidelity` is blocked by design |
+
+`tests/gpu/test_fast_paths.py` has grown 348 -> 397 -> **426** collected across the gfxdraw, swm_nav
+and raycast3d merges, and has never once failed.
+
+### Gate A over all 49 at the closing state
+
+`examples/results/step6/verify/replay/final_547c887/certification.json`, assembled from the newest
+measurement of each shard and certified in one pass:
+
+| | frozen Step 4 | **closing state** |
+|---|---|---|
+| PASS | 43 | **48** |
+| PARTIAL | 1 | 1 (`CraftaxClassic`) |
+| BLOCKED | 0 | **0** |
+| FAIL | 5 | **0** |
+
+| shard | SHA | why that is the current measurement |
+|---|---|---|
+| `dmc` (10 parity cells), `ogb` | `547c887` | measured here |
+| `dmcvis` (the 4 visual cells, declared 3.11 pair) | `7e0862c` | their cuda path is MJWarp, which RAYCAST-6 does not touch; their CPU path is proven byte-identical across the two SHAs in the row above |
+| `swm` | `83aa187` | SWMNAV-2/2b; `navdot.py`/`swm_nav.py` unchanged since |
+| `raster`, `fetch` | `83bd778` | `gfxdraw*`, `scene` and `mjwarp` paths unchanged since |
+
+## 10. Final classification
+
+**PASS-WITH-KNOWN-DELTAS**, and the known deltas are now one class plus two pre-existing test
+failures.
+
+Across every merge of Step 6, measured against the frozen Step-4 corpus and against the Step-5
+baseline tree on the same hardware:
+
+- **48 of 49 configurations reproduce `digest_ours` bit-exactly**; the 49th,
+  `AntmazeTeleportExplore`, moves its mean pixel by **0.00024/255**.
+- **49 of 49 reproduce `digest_official`** in the interpreter their shard was frozen in.
+- **No configuration lost a check.** Every one gained `check_task_object_visibility`.
+- **Gate A: 43 PASS / 5 FAIL / 1 PARTIAL -> 48 PASS / 0 FAIL / 0 BLOCKED / 1 PARTIAL.**
+- **Every CPU configuration the baseline could draw is byte-identical**, and ten it could not draw at
+  all — `PushT`, `SimplePointMaze` and the four trackcom cells, plus the four swm_nav configs' new
+  kernel path on GPU — now draw.
+- **Every GPU test file that can run here is green**: `test_fast_paths` 238/0 at 426 collected,
+  `test_navdot_fused` 24/0, `test_gfxdraw_classic` 80/0, `test_gfxdraw_fused` 4/0, `test_crash_
+  isolation` 2/0, `test_rollout_on_device` 57/0, Fetch 372/0 in its own 3.11 interpreter.
+
+### What remains, in full
+
+| item | status |
+|---|---|
+| **NODE-1** — the OFFICIAL OGBench renderer is nondeterministic at 1/255 for the Pointmaze Teleport and maze2d cells, on **gpu2108, gpu2110, gpu2113 and gpu2116**, identically on the baseline tree. Causes 2 `reference_renderer_is_deterministic`, 4 `state_is_sufficient` and 5 `fresh_process` failures, and aborts the session by its own diagnostic. | **environment**, not a branch defect; not node-specific, so the exclusion list is not grown |
+| `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]` | **pre-existing** (hardcoded path) |
+| `test_every_cited_scratch_path_resolves` | **pre-existing** |
+| `test_rendernet.py::test_no_checkpoint_means_no_class` | **environment** — pytest 9's `importorskip` does not swallow an `ImportError` from inside a module that exists; fails identically on the baseline tree |
+| `minigrid` installed in no venv on Oscar (7 registered envs, outside the 49) | **environment**; Step-8 ticket |
+| `test_distributed.py` | **not run** — `needs 2 GPUs`, and this agent holds one |
+| the `certify312_protocol` venv dependence (section 7) | **record-keeping**: that record was taken in `se-step5`, whose frames do not reproduce the frozen corpus. It does not move the verdict, because the contract judges those cells under 3.11 where every arm agrees, but the record should name its interpreter. |
+
+**No regression was found, at any SHA, that survives comparison with the Step-5 baseline tree on the
+same card.** The one defect this workstream did find — VISIBILITY-1 — was a test selector; it was
+fixed and confirmed fixed.
