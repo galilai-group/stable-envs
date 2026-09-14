@@ -2335,3 +2335,19 @@ The single-pair readings from 6366547 are not published: `profile_phases.py` wri
 classifies as unaccounted artifacts. They were deleted rather than renamed, because the interleaved
 run supersedes them and keeping a superseded reading that the page cannot classify is how a
 misleading number survives.
+
+## Public surface: checked, not asserted
+
+`cpu-3d` builds on `raycast3d`'s public functions, so this is compared rather than claimed. Parsing
+both trees and diffing the argument lists of `cast_nearest`, `any_blocking`, `shade`, `composite`,
+`cast_nearest_torch`, `any_blocking_torch`, `intersect`, `static_depth`, `screen_span`,
+`cached_rays`, `_expand_tile`, `_tile_origin` and `_upsample_t`: **every signature and default is
+identical**, **no module-level name was removed**, and exactly two were added — `_composite_window`
+and `_fit_tile`, both private. Return shapes are guaranteed by the 21-config bit-identical replays on
+both devices. `shade` was not touched at all, and `cpu3d.py` reaches this module only through
+`cast_nearest`, `any_blocking`, `Primitives.radii` and `INF` — it never enters `composite`.
+
+The diff against `step6/integration` is **+183/-2 lines in one file**, and the two deleted lines are a
+blank line and a wrapped signature: the off-path body is preserved literally, which is visible in the
+diff rather than needing to be taken on trust. Verified by extracting both bodies and comparing
+them character for character.
