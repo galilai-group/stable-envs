@@ -204,14 +204,17 @@ shard is **`certifiable: False`**: the interleaved official renderer's readings 
 (bound 1.25) on that node, so the pattern refuses to derive a tier from it; the numerator stands.
 The `CPU_FASTER` labels above therefore rest on the node2333 shard (spread 1.08-1.13, certifiable,
 no 1024 cells for Walker/Humanoid, no SHA); a sweep-only job with the load guard re-enabled
-(`sweep_cpu.sbatch`, `--max-load 12`) is queued to produce one shard that has all three: cells, SHA,
-and a reference spread inside the bound. Its result is reported when a quiet node lands.
+(`sweep_cpu.sbatch`, `--max-load 12`) was run three times (jobs 6356330, 6356449, 6356450) and
+aborted at start every time (loads 39 / 126 / 29: every batch node in rotation is shared); the
+rejected shards are filed under `sweep/rejected/` with a README. A shard with all three -- cells,
+SHA, spread inside the bound -- needs a quiet node or an exclusive allocation (which pends under the
+per-user QOS CPU limit); the job is ready to resubmit.
 
 ## Oscar runs of this review round
 
 1. `certify_cpu.sbatch` — job 6356047, done (above).
 2. `fetch_feasibility.sbatch` — job 6356048, done (§C).
-3. `sweep_cpu.sbatch` — queued (load-guarded sweep for a certifiable all-cell shard).
+3. `sweep_cpu.sbatch` — jobs 6356330 / 6356449 / 6356450, all aborted on load at start; pending a quiet node.
 
 ## SLURM
 
