@@ -5,8 +5,8 @@
 on the three `*_before_*` shards and on `gpu_before.json`.
 
 **What is right, and is what the reader should use:** `provenance.stable_envs_file`. The before legs
-carry `/oscar/scratch/sboughan/se6/raster2d-preB/stable_envs/__init__.py` and the after legs
-`/oscar/scratch/sboughan/se6/raster2d/stable_envs/__init__.py`. That field is written from the
+carry `$SCR/se6/raster2d-preB/stable_envs/__init__.py` and the after legs
+`$SCR/se6/raster2d/stable_envs/__init__.py`. That field is written from the
 import that actually resolved, so it cannot be wrong in the way the SHA was: it is the tree the
 measurement ran out of. `raster2d-preB` was built by overwriting exactly two files —
 `stable_envs/render/raster2d.py` and `stable_envs/envs/swm_nav.py` — with their `1103326` contents,
