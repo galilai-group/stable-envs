@@ -1,0 +1,46 @@
+{
+ "what_this_is": "the state of the batch partition while this workstream tried to obtain a trustworthy 1-thread CPU certification shard, recorded because it is the reason two attempts were contaminated and the third is queued behind a four-hour wait",
+ "sampled_at": "2026-09-13T22:09:09-04:00",
+ "partition": "batch",
+ "nodes": {
+  "allocated": 134,
+  "mixed": 47,
+  "drained": 3
+ },
+ "cpus_allocated_idle_other_total": [
+  12136,
+  632,
+  160,
+  12928
+ ],
+ "idle_fraction": 0.04888613861386139,
+ "attempts": [
+  {
+   "job": 6346431,
+   "node": "node2338",
+   "mechanism": "bench_step3, reference timed once in a block after the sweep",
+   "load_average": 47,
+   "outcome": "rejected: the same official renderer measured 125.4 and 55.5 frames/s in the two arms of the one job, a 2.3x swing in the denominator, and nothing in the shard recorded it"
+  },
+  {
+   "job": 6353689,
+   "node": "node2339",
+   "mechanism": "certify_shard.py, reference interleaved between every batch cell, spread recorded",
+   "reference_spread": {
+    "CartPole": 10.37,
+    "Acrobot": 4.52,
+    "Pendulum": 1.35,
+    "MountainCar": 1.34,
+    "MountainCarContinuous": 1.26
+   },
+   "outcome": "rejected by its own spread check (certifiable: false)"
+  },
+  {
+   "job": 6353993,
+   "node": null,
+   "mechanism": "certify_shard.py on an --exclusive 48-core node, 75 s settle, abort if the 1-minute load average exceeds 4",
+   "outcome": "queued; estimated start 2026-09-14T02:03, four hours after submission, because the partition has 632 of 12,928 CPUs idle and no whole node free"
+  }
+ ],
+ "why_exclusivity_is_needed": "S_cpu is a ratio to a single-threaded pygame loop. OverSubscribe is NO on this partition, so no other job takes our core -- but jobs do share a NODE, and a co-tenant on the other 40 cores is inside the denominator through memory bandwidth and cache. Both contaminated attempts were on shared nodes."
+}

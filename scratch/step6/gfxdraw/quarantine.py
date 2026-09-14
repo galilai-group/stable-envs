@@ -69,6 +69,18 @@ def main() -> int:
         p.write_text(json.dumps(d, indent=1))
         print(f"  excluded {rel}")
         changed += 1
+    # the generator infers a shard's LEG from a path component containing "before"/"after"
+    # (report.py's leg_of); a shard without one is recognised and then unused, which is how the
+    # paired CPU row sat on the page as Step 3's CPU_REGRESSION. Naming is load-bearing here.
+    for p in sorted(BASE.rglob("*.json")):
+        try:
+            d = json.loads(p.read_text())
+        except Exception:                                                 # noqa: BLE001
+            continue
+        if isinstance(d.get("provenance"), dict) and d.get("envs"):
+            if not any(k in part for part in p.parts for k in ("before", "after")):
+                print(f"  WARNING {p.relative_to(BASE)} has rows but no 'before'/'after' in its "
+                      f"path, so report.py cannot infer its leg and will list it unused")
     live = []
     for p in sorted(BASE.rglob("*.json")):
         try:
