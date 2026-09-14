@@ -307,7 +307,7 @@ workstreams:
   head_sha: cc01fa70b7de1a4687a90261b5eb8794add36da4 (SWMNAV-2, in review)
   agent_model: opus
   wave: wave2
-  status: 'review (SWMNAV-2 fused swm_nav GPU kernel: bit-identical, ~2x, R 124-211 vs 500 -> stays GPU_FASTER)'
+  status: implementation (SWMNAV-2 review changes + one bounded exactness-preserving attempt SWMNAV-2b)
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts'
   affected_configs:
@@ -347,7 +347,10 @@ workstreams:
       108k-state boundary scan 0 diffs; mutation counts reproduced; merge-tree clean). SWMNAV-1 BLOCKED: committed gpu_before/after (job 6349274) shows TwoRoom 0.48x/0.55x, TwoRoomTarget 0.32x/0.40x, Piecewise
       0.19x/0.35x, PiecewiseZones 0.27x/0.43x at B=16/64 (4-6 host syncs per render, CPU-calibrated grouping on cuda) while findings said no regression; plus per-leg SHA stamping on GPU launcher, multi-plate
       gather branch untested, citation mismatch. -> SWMNAV-1 GPU regression fixed (c96f886): cuda runs replaced arithmetic; worst 0.979 >= 0.97 bar; gather-branch test added; per-leg stamping; +1 px dot
-      margin. Merged.'
+      margin. Merged. | SWMNAV-2 (cc01fa7) APPROVE-WITH-CHANGES 2026-09-15: arithmetic traced both sides (all four exactness knobs applied on every path; full-lattice max exact; quantise between dots; two-dot
+      order pinned by replay); fuzz verified from the job log; measured tree md5 == 6a47b59; sweep reproduces; merge-tree clean. Required: provenance stamp (artifacts stamped the parent cc02ff7) and a per-row-style
+      pytest case using env.blend_dots as reference. Reviewer''s lever: float64 exp at 1/64 rate on the 3090 evaluated twice per pixel per dot -> window-restrict both passes (exact by the SWMNAV-1 window
+      proof) = SWMNAV-2b, one bounded attempt authorized; base-image kernel NOT authorized.'
   slurm_jobs:
   - 6344858(cancelled)
   - 6346289
