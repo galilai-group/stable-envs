@@ -367,3 +367,26 @@ sbatch --export=ALL,TREE=$SCR/se6/verify3,RASTER='PushT,SimplePointMaze,TwoRoom,
 sbatch --export=ALL,TREE=$SCR/se6/verify3,SHARDS='ogb dmc',TAG='_raycast5'     scratch/step6/verify/replay.sbatch
 ```
 
+
+---
+
+## 6. Incremental pass on `e0182f6` (SWMNAV-1 + the gfxdraw shard rename), partial
+
+Integration moved again while section 5 was being written. This worktree is at `a56ac36`
+(merge of integration `e0182f6`); the Oscar copy is `$SCR/se6/verify3`.
+
+**Done and clean:**
+
+| what | job | node | result |
+|---|---|---|---|
+| `swm` shard replayed on cuda | 6355272 | gpu2113 (RTX 3090) | all 6 configs measured; `digest_ours`, `digest_ours_default_style`, `digest_official`, the corpus-style digest and every check status **identical** to the frozen oracle. SWMNAV-1 changed no pixel. |
+| CPU identity, 33 configs at 1 thread | 6355274 | batch | **31 of 31 comparable byte-identical** to the baseline tree; `Piecewise`, `PiecewiseZones`, `TwoRoom`, `TwoRoomTarget` each still reproduce their frozen CUDA digest on CPU |
+| `tests/unit` | 6355274 | batch | **662 passed, 3 skipped, 2 failed** — the same two pre-existing failures and no others (the count rises 611 -> 662 with SWMNAV-1's and the report generator's new tests) |
+
+**Still running when SSH access to Oscar was lost** (job 6355272 continues on the cluster): the
+`raster` shard replay, and `test_conformance.py`, `test_reproducibility.py`, `test_fast_paths.py`,
+`test_gfxdraw_classic.py` on `a56ac36`. Nothing about them is blocked; only the reading of them is.
+
+**Still owed** once RAYCAST-5 and cpu-3d merge: the 21 raycast3d configs on CPU and cuda, the four
+swm_nav configs on both, and the four DM Control trackcom cells on CPU under the new backend. The
+scripts already take that subset without modification — see the invocations at the end of section 5.
