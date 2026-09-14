@@ -119,10 +119,10 @@ workstreams:
     worktree: /Users/samib/stable-envs-step6-gfxdraw
     oscar_copy: $SCR/se6/gfxdraw
     baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-    head_sha: 62136732a5e34dc67e2869d04113a7196d2fcbd3
+    head_sha: d921607bc90a177665739ea8092c6becdf2d4f8c (review fixes + GFXDRAW-2-CPU study + GFXDRAW-2-GPU implemented, GPU job 6349362 pending)
     agent_model: opus
     wave: wave2
-    status: implementation (fixing review blocker: LunarLander regression) then GFXDRAW-2
+    status: implementation (review fixes verified on Box2D host; GFXDRAW-2-GPU awaiting GPU verification then review; merge held)
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU"
     affected_configs: ["Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum"]
@@ -132,8 +132,8 @@ workstreams:
     pixels_changed: no
     semantic_followup: none
     review: {reviewer: "fable (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: classic-control patch bit-exact (reviewer fuzz 170-175 states/env incl. off-screen cart, 24-turn angles; bounds derivations checked; select_ identity exact; layout/strides identical; measurements paired and honest). BLOCKING: aaline_emit passes (1,)-shaped weight; lunarlander _AARecorder.blend_at indexes w[ok] -> IndexError in LunarLander.__init__ on Box2D hosts (Box2D absent on Oscar, consumer_digests swallowed the error). Required: fix + recorder test + Box2D-host verification; commit bound fuzz test; correct interleave figure (0.287 ms/frame measured, not 0.17); hoist paint_disc colour tensor."}
-    slurm_jobs: [6346430, 6346431, 6346933, 6346967, 6346999, 6346954(cancelled)]
-    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the baseline tree.", "Review escalations: no Step-6 gate covers LunarLander/CarRacing consumers on Oscar (no Box2D) -> fresh venv verification ordered; plan.json BATCH_SCALES miscount confirmed at scratch/step3/certify.py:266 (satisfied qualifier counted as blocker) -> recheck other rows; adopt paired S_cpu measurement for all CPU rows (shared-node swings 2.3x)."]
+    slurm_jobs: [6346430, 6346431, 6346933, 6346967, 6346999, 6346954(cancelled), 6348411, 6348468, 6348987, 6349091, 6349362]
+    notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the baseline tree.", "Review escalations: no Step-6 gate covers LunarLander/CarRacing consumers on Oscar (no Box2D) -> fresh venv verification ordered; plan.json BATCH_SCALES miscount confirmed at scratch/step3/certify.py:266 (satisfied qualifier counted as blocker) -> recheck other rows; adopt paired S_cpu measurement for all CPU rows (shared-node swings 2.3x).", "Review fixes 2026-09-14: aaline_emit weight expanded (stride-0 view), recorder contract test over 4 quad classes pinned to 89fa5ca, bounds fuzz test committed, interleave figure corrected (0.289 ms/frame laptop), paint_disc colour hoisted. Box2D venv se6-gfxdraw-box2d: LunarLander byte-identical baseline vs branch; CarRacing cannot render on CPU on EITHER tree (Triton-only, device=cpu not honoured - not in frozen 49; record for Step 7/8). GFXDRAW-2-CPU verdict: do NOT build a fused CPU kernel - C++ -O3 / numba gain 1.03-1.51x, still 1.6-2.4x short of cores_cpu=1 (budget 3.6-4.0 ns/px; interleave 44-61% of budget); numba installs cleanly beside certified pins (third answer to packaging); numpy strided interleave 1.38x cheaper (proposed). GFXDRAW-2-GPU: stable_envs/render/gfxdraw_classic.py one-pass per-pixel kernel + baked plate, 0 differing pixels on CPU form for all five; _use_fused CUDA+Triton only."]
   - workstream: cpu-3d
     brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
     branch: step6/cpu-3d
