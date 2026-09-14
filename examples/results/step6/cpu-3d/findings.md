@@ -216,6 +216,33 @@ the faster EPYC) were measured on a non-certifiable node and are therefore **rep
 certified**; they live in `sweep/rejected/` with `envs: []` and the cells under
 `envs_measured_not_certified`, so no evaluator derives a tier from them.
 
+## Post-merge re-run (RAYCAST-4/5 merged: `61f4fd7`; jobs 6358399 CPU / 6358400 cuda; commit `19a7f3f`)
+
+`raycast3d.PRIMITIVE_BOUNDS = True` on the merged tree (confirmed in the job log): cpu3d's
+`cast_nearest`/`any_blocking` calls now take the per-kind bounded path. Identity was claimed and is
+verified:
+
+- **cuda replay** (gpu2106, `--exclude=gpu2108,gpu2113`): integration-vs-branch **identical** on all
+  four cells; the same-tree cuda stack has the same digests as before the merge (`d85349b0…`,
+  `d8e5ef5d…`, `6d488766…`, `c2672c3d…`). Not the frozen Step-4 oracle (pre-existing drift, both trees).
+- **cross-backend + 3.11 Gate-A arm on CPU** (`node2329`, Xeon 8268 -- the round-1 node family;
+  `replay/postmerge/`): **every field identical to round 1 (`node2333`, Xeon) to the last float
+  digit** -- cross-backend `mean_abs`/`exact`/`within1`/`max`/`gt2_px` per surface, the declared
+  metrics vs official, and every Gate-A observation (3 PASS + Walker's downsample FAIL at 0.6185, the
+  visual numbers 5.120307628259638 / 4.523738662131519 / 8.03309018920068 / 5.950547406462585).
+  The bounded cast changed no CPU pixel.
+- **Disclosed, and new**: round 2 ran on an AMD EPYC 9684X (`node2407`), and against it the Xeon
+  frames differ on 2 of 451,584 pixels on Walker (exact 0.9851080 vs 0.9851035) and in the
+  6th-7th decimal of the means/SSIM on three cells -- the CPU backend is bit-reproducible within a
+  CPU family and not across families (libm/FMA in `pow`/`sqrt`), the same class of residual as
+  MJWarp's own run-to-run noise and far inside every bound. Certification numbers are therefore
+  quoted per host family; the certifying host is the Xeon 8268 batch partition.
+
+Local (Apple M5, 1 thread) the bounded cast makes the CPU path **2.1-2.7x faster** (703 / 888 / 277 /
+228 fps at 84 px vs 258 / 459 / 156 / 110); on the certification host the effect will show in the
+next paired sweep (not re-run here: the partition cannot currently produce a certifiable shard, see
+above).
+
 ## Oscar runs of this review round
 
 1. `certify_cpu.sbatch` — job 6356047, done (above).
@@ -226,7 +253,8 @@ certified**; they live in `sweep/rejected/` with `envs: []` and the cells under
 
 6345025 (Phase 1 characterisation), 6354766 (cuda replay), 6354767 (CPU certification, round 1),
 6354890 (CPU3D-FETCH-1, round 1), 6356047 (certification, round 2, stamped), 6356048 (CPU3D-FETCH-1,
-round 2, culled + phases), and the queued load-guarded sweep.
+round 2, culled + phases), 6356330 / 6356449 / 6356450 (load-guarded sweeps, aborted), 6358399
+(post-merge CPU), 6358400 (post-merge cuda).
 
 ## Open questions for the coordinator
 
