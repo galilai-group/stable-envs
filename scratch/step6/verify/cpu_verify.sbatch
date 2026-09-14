@@ -40,12 +40,12 @@ cd "$TREE" || exit 1
 banner
 
 # raster2d's six + CraftaxClassic (tilemap) -- the 2-D CPU paths that were merged.
-RASTER=${RASTER:-"PushT SimplePointMaze TwoRoom TwoRoomTarget Piecewise PiecewiseZones CraftaxClassic"}
+RASTER=${RASTER-"PushT SimplePointMaze TwoRoom TwoRoomTarget Piecewise PiecewiseZones CraftaxClassic"}
 # raycast3d's 21 LIVE configs. The other four DM Control cells (Cheetah/Hopper/Humanoid/Walker) are
 # MJWarp-only and have no CPU renderer at all, which is the cpu-3d workstream's open problem.
-RAY=${RAY:-"AntmazeGiantNavigate AntmazeLargeExplore AntmazeMediumExplore AntmazeTeleportExplore HumanoidmazeGiantNavigate HumanoidmazeLargeNavigate HumanoidmazeMediumNavigate PointmazeGiantNavigate PointmazeLargeNavigate PointmazeMediumNavigate PointmazeTeleportNavigate DMCAcrobotSwingup DMCBallInCupCatch DMCCartpoleBalance DMCCartpoleSwingup DMCFingerSpin DMCFingerTurnEasy DMCFingerTurnHard DMCPendulumSwingup DMCReacherEasy DMCReacherHard"}
+RAY=${RAY-"AntmazeGiantNavigate AntmazeLargeExplore AntmazeMediumExplore AntmazeTeleportExplore HumanoidmazeGiantNavigate HumanoidmazeLargeNavigate HumanoidmazeMediumNavigate PointmazeGiantNavigate PointmazeLargeNavigate PointmazeMediumNavigate PointmazeTeleportNavigate DMCAcrobotSwingup DMCBallInCupCatch DMCCartpoleBalance DMCCartpoleSwingup DMCFingerSpin DMCFingerTurnEasy DMCFingerTurnHard DMCPendulumSwingup DMCReacherEasy DMCReacherHard"}
 # gfxdraw's five. OFF by default: dashboard.yaml has gfxdraw at status "review", not merged.
-GFXC=${GFXC:-"Acrobot CartPole MountainCar MountainCarContinuous Pendulum"}
+GFXC=${GFXC-"Acrobot CartPole MountainCar MountainCarContinuous Pendulum"}
 ALL="$RASTER $RAY"
 [ "${GFX:-0}" = 1 ] && ALL="$ALL $GFXC"
 # CPUVENV names the interpreter. It defaults to se6-verify, but the cpu-3d backend must be
