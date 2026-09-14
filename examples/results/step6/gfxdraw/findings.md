@@ -82,7 +82,7 @@ Three changes in `render/gfxdraw.py`, and the windows each env supplies from its
    change the picture at corners. Only the geometry -- which touches no pixel -- is batched.
 
 One more, from the sweep's own memory numbers: `rgb()` builds the interleaved frame one plane at
-a time. `torch.stack` over the three flipped planes measures the same 11.7 ms at batch 64, but it
+a time. `torch.stack` over the three flipped planes measures the same 18.5 ms at batch 64, but it
 needs a second copy of the surface alive while it builds the third, which is 3.1 GB of transient
 at batch 4096 on a 500x500 frame against 1.0.
 
@@ -336,10 +336,25 @@ with a precedent in this repository.
 
 **CPU_FAST needs `S_cpu >= 5` AND `cores_cpu >= 1`, and `cores_cpu` is the binding one.** A
 500x500 JPEG-q90 frame decodes at ~850-1,180 frames/s on one core of these nodes, and these
-renderers now run at 258-520 there. The interleave alone is the wall: producing the caller's `(B,H,W,3)` uint8 from
-three planes costs ~0.17 ms per 400x600 frame on one core in torch (10.7 ms at batch 64, and every
-layout measured lands within 10%), against a 0.18 ms total budget at `S_cpu = 5` on the laptop.
-A torch-op renderer cannot get under that; a fused kernel writing the frame once can.
+renderers now run at 258-520 there — a 2-4.5x gap on the binding bar.
+
+The output interleave is the largest single item in the after profile and is the reason to doubt
+that torch can close it. Producing the caller's `(B,H,W,3)` uint8 from three planes measures
+**18.4 ms at batch 64 on a 400x600 frame, 0.289 ms per frame**, on the LAPTOP at one thread, and
+every layout measured there lands in **12.9-23.0 ms (0.202-0.360 ms/frame)**: `copy_` per plane
+18.46, `torch.stack` 18.49, `permute().contiguous()` 23.01, numpy strided assignment 17.59, an
+int32-packed surface whose fourth byte is dropped 12.92. A contiguous copy of the same bytes runs
+in under 0.01 ms, so none of these is bandwidth-bound.
+
+Two corrections to an earlier draft of this file, both mine. It quoted **10.7 ms / 0.17 ms** for
+the same benchmark: that was the same code on the same laptop in a quieter state — the whole phase
+table moved by ~1.55x between the two sessions — and the number that belongs beside the phase table
+is the one above, which an independent reviewer reproduced at 18.4 ms. And "a torch-op renderer
+cannot get under that" was stated more strongly than a laptop measurement can support. What the
+laptop shows is that **every torch and numpy layout of this one operation sits in a narrow band far
+above a contiguous copy**, which is an indication, not a proof, and it is a laptop rather than the
+certification host. Turning it into a claim is precisely the job of GFXDRAW-2-CPU's micro-benchmark
+on the batch node.
 
 Both point at the same ticket.
 
@@ -348,8 +363,9 @@ Both point at the same ticket.
 > Give classic control a fused per-pixel path, on the model of `render/gfxdraw_fused.py`, covering
 > `filled_polygon`+`aapolygon`, `filled_circle`+`aacircle`, `hline`, and the alpha blit. Measured
 > blockers it would remove: ~20,000 operator launches per frame; one surface pass per primitive;
-> the three-plane interleave, which torch cannot do faster than ~0.17 ms per 400x600 frame on one
-> core. Current distance to tier: GPU **R 83-179 against 500**; CPU **`cores_cpu` 0.22-0.50 against
+> the three-plane interleave, where no torch or numpy layout measured on the laptop gets under
+> 0.202 ms per 400x600 frame on one core and the shipped form costs 0.289 (to be re-measured on the
+> certification host as GFXDRAW-2-CPU's first task). Current distance to tier: GPU **R 83-179 against 500**; CPU **`cores_cpu` 0.22-0.50 against
 > 1**. Triton has no CPU backend here, so the CPU half needs a different mechanism (a C++ extension,
 > or `torch.compile` over a per-pixel form) and should be scoped separately from the GPU half.
 

@@ -402,7 +402,7 @@ class Canvas:
     trailing axis of 3 and the write runs at 340 Mpx/s, while planar it broadcasts across the outer
     axis over a contiguous ``B*H*W`` block and runs at 4.8 Gpx/s. Measured at batch 64 on a 400x600
     surface: 45.4 ms per primitive against 3.2. The cost is paid once at the end, where the three
-    planes are interleaved into the ``(B,H,W,3)`` the caller asked for (10.7 ms at that size), rather
+    planes are interleaved into the ``(B,H,W,3)`` the caller asked for (18.4 ms at that size), rather
     than once per primitive.
 
     ``flat`` is correspondingly ``(3, B*H*W+1)``: a scatter still touches all three channels in one
@@ -438,6 +438,18 @@ class Canvas:
         if self.gfx is not None:
             return self.gfx.solid
         return torch.tensor([SOLID], dtype=torch.int64, device=self.device)
+
+    def color_u8(self, color) -> torch.Tensor:
+        """A python colour literal as a cached ``(3,)`` uint8 tensor.
+
+        ``torch.tensor([...], device=...)`` in a draw call is a host-to-device copy in the hot path,
+        which is rule 6 -- and under CUDA-graph capture it is not merely slow, it makes the render
+        uncapturable. Cached on the ``Gfx`` where every other constant lives; the fallback allocates
+        only for a bare ``Canvas`` built without one.
+        """
+        if self.gfx is not None:
+            return self.gfx.color_u8(color)
+        return torch.tensor([int(v) for v in color], dtype=torch.uint8, device=self.device)
 
     def always(self) -> torch.Tensor:
         """An all-true ``valid``, cached as one element; callers ``expand`` it to their write count."""
@@ -486,9 +498,7 @@ class Canvas:
         """
         idx = self._disc_index(cy, cx, off)
         n = off.shape[0] * cy.shape[0]
-        c = torch.tensor([int(v) for v in color], dtype=torch.uint8,
-                         device=self.device).view(3, 1).expand(3, n)
-        self.flat[:, idx] = c
+        self.flat[:, idx] = self.color_u8(color).view(3, 1).expand(3, n)
 
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
         """Blend ``color_t`` ``(3,1)`` int64 at flat-indexed pixels; ``valid`` False goes to the trash."""
@@ -507,7 +517,7 @@ class Canvas:
         FRAME, against the one per PRIMITIVE it removes.
 
         One plane at a time, although ``stack`` over the three flipped planes measures the same
-        11.7 ms at batch 64: the whole-surface form needs a second copy of the surface alive while
+        18.5 ms at batch 64: the whole-surface form needs a second copy of the surface alive while
         it builds the third, and at batch 4096 on a 500x500 frame that is 3.1 GB of peak rather than
         1.0. Same instruction count, a third of the transient.
         """
@@ -844,6 +854,13 @@ class Gfx:
         key = ("v", tuple(map(tuple, vals)))
         if key not in self._k:
             self._k[key] = torch.tensor(vals, dtype=torch.float64, device=self.device)
+        return self._k[key]
+
+    def color_u8(self, c) -> torch.Tensor:
+        """A ``(3,)`` uint8 colour literal, cached. The opaque-fill twin of :meth:`color`."""
+        key = ("u8", tuple(int(v) for v in c))
+        if key not in self._k:
+            self._k[key] = torch.tensor(key[1], dtype=torch.uint8, device=self.device)
         return self._k[key]
 
     def color(self, c) -> torch.Tensor:

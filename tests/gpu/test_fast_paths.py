@@ -107,6 +107,14 @@ def _raster_size(env):
     return (env.H, env.W) if hasattr(env, "H") and hasattr(env, "W") else env.size
 
 
+def _classic_enabled() -> bool:
+    try:
+        from stable_envs.render import gfxdraw_classic as FC
+    except ImportError:
+        return False
+    return bool(FC.HAVE_TRITON)
+
+
 # ------------------------------------------------------------------ the cases
 
 
@@ -154,6 +162,54 @@ def _mover_frames(env, states, fast: bool):
         return env.render(states).clone()
     with _unbounded(type(env)):
         return env.render(states).clone()
+
+
+CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
+
+
+def _classic_frames(env, states, fast: bool):
+    """``render`` with the fused per-pixel kernel on, then off. One state list, two spellings."""
+    was = env.use_fused_render
+    try:
+        env.use_fused_render = bool(fast)
+        return env.render(states).clone()
+    finally:
+        env.use_fused_render = was
+
+
+def _classic_prepare(seed: int, extreme: bool):
+    """The frozen corpus, or states chosen to put every primitive in its awkward case.
+
+    ``extreme`` is not "more random". Each row below is a case the per-primitive path and the fused
+    one could disagree on and nothing else would notice: a cart driven off the surface exercises
+    SDL_gfx's line clipping, which restarts the Wu accumulator from a clipped endpoint; an angle
+    many turns from zero exercises the truncation of a large float to Sint16; a MountainCar position
+    outside the track puts the car's box entirely off-screen, where the fill's span clamps do the
+    work; and ``|torque| > 2`` drives Pendulum's sprite index to the end of its baked table.
+    """
+    def prepare(env):
+        import numpy as np
+        n = env.B
+        if not extreme:
+            import pathlib
+            npz = (pathlib.Path(__file__).resolve().parents[2]
+                   / "examples/results/step4/states" / f"{type(env).__name__}.npz")
+            if npz.is_file():
+                pool = np.load(npz)["states"]
+                return np.asarray(pool[np.arange(n) % len(pool)], np.float32)
+            return sampled_states(env, n, seed)
+        rng = np.random.default_rng(seed)
+        wide = {"CartPole": lambda: np.stack([rng.uniform(-8, 8, n),
+                                              rng.uniform(-15, 15, n)], 1),
+                "Pendulum": lambda: np.stack([rng.uniform(-40, 40, n),
+                                              rng.uniform(-6, 6, n)], 1),
+                "Acrobot": lambda: rng.uniform(-40, 40, (n, 2)),
+                "MountainCar": lambda: rng.uniform(-5, 4, (n, 1)),
+                "MountainCarContinuous": lambda: rng.uniform(-5, 4, (n, 1))}
+        gen = wide.get(type(env).__name__)
+        return None if gen is None else np.asarray(gen(), np.float32)
+
+    return prepare
 
 
 def _scene_prepare(seed: int):
@@ -243,6 +299,47 @@ CASES: tuple[FastPath, ...] = (
         sizes=(None,),
         prepare=_scene_prepare(0),
         frames=_cull_frames_factory(None),
+    ),
+    FastPath(
+        id="gfxdraw-classic-fused-vs-per-primitive",
+        why=("``render/gfxdraw.py``'s per-primitive path is the executable specification of six "
+             "measured SDL_gfx rules, and ``render/gfxdraw_classic.py`` is a rewrite of the same "
+             "rules into one closed form per pixel. The rewrite is admissible only while the two "
+             "agree to the bit, and the places they can stop agreeing are specific: the order two "
+             "edges of a polygon write a shared vertex (a scatter reads every destination before "
+             "writing any, a register walk cannot), the two passes of the aacircle fringe, the "
+             "fringe-before-fill order inside one primitive, SDL's blit rule for Pendulum's sprite "
+             "against SDL_gfx's pixel writer, and the 16.16 scanline fill's span clamps. Every one "
+             "of those is worth a handful of pixels, which is why the bar is zero."),
+        names=CLASSIC,
+        modules=(),
+        batch=8,
+        seed=0,
+        sizes=(None,),
+        prepare=_classic_prepare(0, extreme=False),
+        frames=_classic_frames,
+        inapplicable=lambda env: (None if getattr(env, "fused_capable", False)
+                                  else "no fused kernel describes this frame"),
+        enabled=lambda: _classic_enabled(),
+        disabled_reason="triton is unavailable, so there is no fused path to compare against",
+    ),
+    FastPath(
+        id="gfxdraw-classic-fused-vs-per-primitive-extreme",
+        why=("The same claim on states the corpus does not reach. The fused path's windows and its "
+             "clipped edge table are BOUNDS; a corpus chosen for coverage of the reachable set "
+             "cannot test a bound. These states put the cart off the surface, the angles many turns "
+             "from zero, the car outside the track and the torque past the end of its sprite table."),
+        names=CLASSIC,
+        modules=(),
+        batch=8,
+        seed=11,
+        sizes=(None,),
+        prepare=_classic_prepare(11, extreme=True),
+        frames=_classic_frames,
+        inapplicable=lambda env: (None if getattr(env, "fused_capable", False)
+                                  else "no fused kernel describes this frame"),
+        enabled=lambda: _classic_enabled(),
+        disabled_reason="triton is unavailable, so there is no fused path to compare against",
     ),
     FastPath(
         id="raster2d-tile-culling-ss2",
