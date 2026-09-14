@@ -21,7 +21,10 @@ default 16 px tile size (**95x**) or a 9,261-byte frame at the 7 px agent size (
 
 Parity against the official renderer, measured on 64 sampled states at both tile sizes:
 **100% of all pixels exact, mean |diff| 0.000, max |diff| 0.** Throughput on one H200: **707,019
-frames/s at batch 16384** (34 GB/s of frame output).
+frames/s at batch 16384** (34 GB/s of frame output). That figure is a **floor**: it was taken before
+Step 6 baked the composite into :class:`_Composite`, which left the pixels byte-identical and made
+the CPU path 62x faster (`examples/results/step6/tilemap/findings.md`). It is left as measured
+rather than rescaled, because the H200 is not available to re-measure on.
 
 The env is a *partial-observation* renderer, and precisely:
 
