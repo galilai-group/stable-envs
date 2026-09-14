@@ -202,7 +202,11 @@ workstreams:
       would read it as an after leg); doc corrections (bench measures any_blocking-shaped bound; API ''byte-identical'' -> signatures identical; comment at :525; ''provably'' -> within rounding budget;
       no per-cell spread in shards; Mujoco* CPU identity inferred). -> APPROVED after changes (6802559): _UNIT_D_TOL 1e-6 (94 calls/0 rejected/worst 2.384e-7 = 4.19x headroom; 3 fuzz cases one ulp inside
       the window); control shard renamed; per-kind table re-derived with the cast_nearest-shaped bound and a constant-free rule (ratio > 1 at every width in every run: SPHERE 0.27-0.46 unbounded; BOX 1.11-1.13,
-      CYLINDER 1.23-1.24, CAPSULE 1.47-1.48 bounded; membership unchanged); identity ALL_IDENTICAL cpu on/off, cpu vs baseline, cuda vs baseline on 21; fuzz 51; unit 629.'
+      CYLINDER 1.23-1.24, CAPSULE 1.47-1.48 bounded; membership unchanged); identity ALL_IDENTICAL cpu on/off, cpu vs baseline, cuda vs baseline on 21; fuzz 51; unit 629. | RAYCAST-6 (a802849) APPROVE-WITH-CHANGES
+      2026-09-15 (fable): window conservativeness holds (same screen_span/bound; per-row shaded set is a superset of every nonzero-contribution pair); off-path AST-identical to old composite; box averages
+      untouched; identity logs verified per leg; tiers recomputed (Large cores 2.703, Medium 1.207 with 1.02-1.21 across denominators, decode moved -15%/+11% within one job -> MARGINAL). Required: fuzz
+      case exercising the bt gather (a transposed index passed 63/63) + real clamped-window cases; provenance fixes (node2349, pinned-leg switch print, certify CLI --doc, STABLE_ENVS_GIT_COMMIT stamp);
+      label Medium marginal + one repeat shard on a quiet node; README for the superseded r5 shards.'
   slurm_jobs:
   - 6343543
   - 6343544
@@ -699,6 +703,11 @@ decisions:
     cores_cpu kept separate). Then: merge only through the normal gates; regenerate the report with performance scope = registered/default; keep the 49-cell corpus for correctness; retain Fetch CPU/GPU
     as documented blockers unless the Lance experiment reveals a factual measurement error; no SIMD CPU-3D, no gfxdraw specialisation, no Fetch megakernel, no new campaigns; no threshold changes. Then produce
     the Step 6 closure packet and recommend FULLY CERTIFIED / ENGINEERING COMPLETE WITH DOCUMENTED CERTIFICATION BLOCKERS / CONTINUE FOR <finite tickets>. Step 7 does not start before the packet.'
+- date: '2026-09-15'
+  by: coordinator
+  decision: 'Methodology escalation for Sami: on shared batch nodes the one-core decode denominator moved -15%/+11% within one job (RAYCAST-6, node2317, load ~40), which decides any cores_cpu ~ 1 call.
+    A rule (median of per-leg decodes, or a load cap with pre-flight spread check as gfxdraw certify_shard.py does) is needed before further CPU_FAST labels are asserted; PointmazeMedium is stated as CPU_FAST
+    (marginal) pending one repeat on a quiet node.'
 integration_verification:
   branch: step6/integration-verify (merged)
   head: 50e1716 (merged)
@@ -771,6 +780,9 @@ deferred_work:
 - item: swm_nav per-family base-image kernel (or a predicate IR the fused kernel interprets)
   reason: after SWMNAV-2b the base image is 36-84% of the render and R is 184-440 vs 500; Piecewise (smallest base share) is at 88% of the bar
   status: deferred
+- item: raycast3d COVER_COMPACTION switch is dead on the shipped composite path (governs the verbatim off-path only)
+  reason: kept deliberately as the off-path; cleanup belongs to Step 8
+  status: deferred (Step 8 cleanup)
 report_generator:
   branch: step6/report (merged through b81f3e8)
   scope: correctness over all 49; performance completion over the 36 registered/default rows per Step 2 §4.2/§12.2 (bar read live from scratch/certification.json ladder.environment_done_min_tiers); parameter-space
