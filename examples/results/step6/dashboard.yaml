@@ -120,10 +120,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-raycast3d
   oscar_copy: $SCR/se6/raycast3d
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: b77f266 (RAYCAST-4+5 on branch; default flip to True pending; then review + merge)
+  head_sha: 3b9e81c (RAYCAST-4+5, PRIMITIVE_BOUNDS default True; in independent review)
   agent_model: opus
   wave: wave1
-  status: implementation (RAYCAST-5 accepted; flipping PRIMITIVE_BOUNDS default; then independent review and merge)
+  status: review (RAYCAST-4/5 range 082430e..3b9e81c)
   authorization: PROFILE ONLY
   goal: 'PROFILE ONLY: raycast3d CPU bottleneck + BallInCup GPU outlier; also diagnose check_style_is_state FAIL on AntmazeTeleportExplore/HumanoidmazeMediumNavigate'
   affected_configs:
@@ -176,7 +176,7 @@ workstreams:
   pixels_changed: 'no'
   semantic_followup: none
   review:
-    reviewer: fable (independent)
+    reviewer: fable (independent, spawned for RAYCAST-4/5)
     verdict: 'APPROVED after doc changes (4cca48e, 6e111ac) + LRU 17f28c0 authorized. Original: 2a APPROVE (bit-identity reproduced on arm64 vs pristine baseline module; all catenary branches reached; sweep
       legs verified same job/card with stable_envs_from). 2b APPROVE-WITH-CHANGES (docs: CPU numbers/residual/maze2d status/_expand_tile DMC reach missing from findings.md; _TILE_CACHE immutable, batch/chunk-safe;
       off-path verbatim). 2c APPROVE-WITH-CHANGES (reset correct+pixel-free; bake output is history-dependent and cross-process reproducible, not random - suspect persistent mujoco.Renderer per rkey; whether
@@ -200,6 +200,8 @@ workstreams:
   - 6352389
   - 6353212
   - 6354150
+  - 6355332
+  - 6355333
   notes:
   - wave1 spawned 2026-09-13T17:50 (agents run on their own branch; coordinator merges)
   - 'FINDING 2026-09-13 (ticket 1). Ownership: BallInCup fix lives in dmcontrol.py tendon FK (raycast3d agent authorized; reacher agent concurrently edits dmcontrol.py target code - sequence merges). Out-of-corpus
@@ -217,6 +219,8 @@ workstreams:
     Held for RAYCAST-5: per-primitive-kind bounding from a committed op-cost measurement (spheres unbounded by mechanism), acceptance >=0.97x every row; then default True.'
   - 'RAYCAST-5 delivered 2026-09-14 (b77f266): predicate derived from measured per-kind intersector/bound cost ratio, not fitted; public API byte-identical to baseline (nine entry points) - no sequencing
     constraint for cpu-3d; identity on/off and vs baseline on 21 configs both devices; 39-row sacct ledger in findings.'
+  - 'Default flipped to True (3b9e81c); identity re-taken with defaults on both legs: cpu 21/21 IDENTICAL (6355332), cuda 21/21 IDENTICAL (6355333); tests/unit 623 pass + 2 pre-existing. Own diff = raycast3d.py,
+    test_fast_paths.py, test_raycast3d_primitive_bounds.py.'
 - workstream: fetch-gpu
   brief: STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md
   branch: step6/fetch-gpu
