@@ -368,7 +368,11 @@ workstreams:
       margin. Merged. | SWMNAV-2 (cc01fa7) APPROVE-WITH-CHANGES 2026-09-15: arithmetic traced both sides (all four exactness knobs applied on every path; full-lattice max exact; quantise between dots; two-dot
       order pinned by replay); fuzz verified from the job log; measured tree md5 == 6a47b59; sweep reproduces; merge-tree clean. Required: provenance stamp (artifacts stamped the parent cc02ff7) and a per-row-style
       pytest case using env.blend_dots as reference. Reviewer''s lever: float64 exp at 1/64 rate on the 3090 evaluated twice per pixel per dot -> window-restrict both passes (exact by the SWMNAV-1 window
-      proof) = SWMNAV-2b, one bounded attempt authorized; base-image kernel NOT authorized.'
+      proof) = SWMNAV-2b, one bounded attempt authorized; base-image kernel NOT authorized. | SWMNAV-2b (e86b40b) APPROVE 2026-09-15 (opus): tile-skip proven exact by construction (half-open overlap; one
+      window function shared with the CPU path; window computed from the same float32 buffer the kernel reads; clipped window always contains the clamped nearest sample = in-frame argmax) and by execution
+      (reviewer re-implemented both kernels'' control flow on CPU: 0 diffs across 32-px boundary sweeps, tile-corner grid, off-frame to 1e6, sigma 1e-7..200, stacked dots incl. coincident/straddling/one-off-frame
+      on the tightest base/colour pairs); fuzz 1,600 cuda cases confirmed executed at 2cd278e; per-row pytest genuine (env.blend_dots reference, both dot counts); sweep same job/card, git_commit from rev-parse,
+      ''none reaches 500'' robust to denominator choice. No revert needed.'
   slurm_jobs:
   - 6344858(cancelled)
   - 6346289
