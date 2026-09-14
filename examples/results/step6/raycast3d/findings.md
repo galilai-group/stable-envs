@@ -1714,6 +1714,14 @@ filename, and under its old name this control was taken for a second *after* leg
 made the page report "CPU after-legs disagree" on `DMCFingerSpin` and `DMCBallInCupCatch`, the two
 rows whose tier change is the whole point of the shard. It is a control, not an after.
 
+That rename regressed once before it stuck, and the mechanism is worth recording because it is not
+specific to this file: the shard job on the cluster had written the OLD name, so the next
+`rsync` pull of the results directory re-created it alongside the new one and it was committed back.
+A rename is not complete until the producer is renamed too — the `.sbatch` now writes the control
+name — and until the stale copy is removed at the source. This workstream has now been bitten twice
+by a pull re-materialising something it had deliberately changed; the first time it was
+`findings.md`, which is why the pulls carry `--exclude findings.md`.
+
 CPU: `node2335`, job `6354672`, 1 thread, Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz. Classified here with `scratch/step3/certify.py:classify`.
 
 The **bound on** column is what the branch now ships.
