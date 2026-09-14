@@ -3,7 +3,7 @@
 baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
 baseline_branch: sami/pre-step6-baseline
 integration_branch: step6/integration
-integration_sha: see git log (merges: texture-fidelity, reacher-correctness, raycast3d)
+integration_sha: see git log (merges: texture-fidelity, reacher-correctness, raycast3d, tilemap)
 oscar_capacity_note: condo QOS cs-3090-gcondo saturated by simclr_cifar10 (cpu 240/240, gpu 30/32); Step-6 GPU jobs routed to gpu/norm-gpu; HOME quota 100% full, all caches on scratch
 incident_log:
   - "2026-09-13 ~19:00: API monthly spend limit terminated 5 agents mid-work (raster2d Commit B, gfxdraw primitives, raycast3d 2a, cpu-3d start, reacher reviewer start). Plan upgraded; all resumed with context and uncommitted work intact."
@@ -164,7 +164,7 @@ workstreams:
     head_sha: 55bf7643c6ccf0c74f844677bb3520a4bf10086c
     agent_model: opus
     wave: wave3
-    status: review (PATCH)
+    status: merged
     authorization: per brief
     goal: "tile/atlas CPU optimisation (not full Craftax coverage)"
     affected_configs: ["CraftaxClassic"]
@@ -173,6 +173,6 @@ workstreams:
     performance: {cpu_before: "CPU_REGRESSION BELOW_G4: 1,867 f/s @B=16 (cores 0.43), node1831 1 thread, NO_REFERENCE ladder (no jax)", cpu_after: "CPU_EXCEPTIONAL: 116,448 f/s @B=1024 (cores 23.4) = 62.4x; confirmed quiet node2333 154,086 f/s (cores 27.85, 61x)", gpu_before: "GPU_FAST: 145,110 f/s @4096, cores 25.7 (matches Step-3 frozen 144,738 to 0.3%)", gpu_after: "GPU_EXCEPTIONAL: 1,206,822 f/s @4096 (8.3x), cores 262.4; VRAM 3,790 -> 221 MiB; confirmed gpu2104 1,229,787", batch_scales: "637.9x PASS (was 97.6x)", no_large_batch_regression: "3.167 PASS"}
     pixels_changed: no
     semantic_followup: none
-    review: {reviewer: "fable (independent, spawned)", verdict: null}
+    review: {reviewer: "fable (independent)", verdict: "APPROVE 2026-09-14: cache keyed (device, tile size), bounded 8, never mutated; all 3 style leaves folded/applied; folds exact (mob-0 alpha exactly 0; slot 4 == block bit-for-bit); coverage unchanged; gain detection global per call, mixed batches correct; reviewer cross-tree diff 102 blocks incl. sizes 65/96 identical; tier.py reproduces frozen Step-3 labels; before leg matches Step 3 to 0.26%; merge-tree clean."}
     slurm_jobs: [6349384, 6350070, 6349394, 6351158]
     notes: ["wave3 spawned 2026-09-13 late (CPU-only; no file overlap with other workstreams)", "PATCH 2026-09-14. Residual tickets: TILEMAP-2 channel_gain path (float table gather, 21x slower on CPU, off certification path); TILEMAP-3 GPU gather at 153 GB/s vs 1.1 TB/s possible via _blit_kernel (out of scope, CPU was the failing bar). Hazard: rsync pull of examples/results/step6/<ws>/ overwrote findings.md (recovered from git) - same incident as raycast3d. Docs table in pixel_native.md describes replaced pipeline (H200 number left as floor)."]
