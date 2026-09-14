@@ -251,7 +251,7 @@
      "observed": {
       "exact_frac": 0.5310949900793651,
       "max_abs": 166,
-      "mean_abs": 3.156308313255858
+      "mean_abs": 3.1563075751133787
      },
      "raw_status": "measured",
      "status": "pass",
@@ -1051,7 +1051,7 @@
      "observed": {
       "exact_frac": 0.609516723356009,
       "max_abs": 149,
-      "mean_abs": 2.4016343950774752
+      "mean_abs": 2.401633656934996
      },
      "raw_status": "measured",
      "status": "pass",
@@ -1145,7 +1145,7 @@
      "observed": {
       "interior_exact_frac": 0.004578155657292348,
       "mean_abs": 5.98515447845805,
-      "ssim": 0.8795150169884168,
+      "ssim": 0.8795150201422396,
       "within8_frac": 0.7391780931122449
      },
      "raw_status": "measured",
@@ -1487,7 +1487,7 @@
      "observed": {
       "exact_frac": 0.6185383007369615,
       "max_abs": 199,
-      "mean_abs": 2.7158092403628116
+      "mean_abs": 2.7157944775132274
      },
      "raw_status": "measured",
      "status": "fail",
@@ -1582,8 +1582,8 @@
      "judged_against_wrong_reference": "fail",
      "observed": {
       "interior_exact_frac": 0.0,
-      "mean_abs": 16.16677738803855,
-      "ssim": 0.5336919863822904,
+      "mean_abs": 16.16677517361111,
+      "ssim": 0.5336919926997808,
       "within8_frac": 0.5478072739512472
      },
      "raw_status": "measured",

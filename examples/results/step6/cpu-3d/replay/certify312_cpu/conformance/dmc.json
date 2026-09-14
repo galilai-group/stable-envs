@@ -100,7 +100,7 @@
    "env": "DMCCheetahRun",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.32,
+     "seconds": 0.2,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -108,7 +108,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.29,
+     "seconds": 0.2,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -116,7 +116,7 @@
       "exact_frac": 0.5310949900793651,
       "factor": 2,
       "max_abs": 166,
-      "mean_abs": 3.156308313255858,
+      "mean_abs": 3.1563075751133787,
       "size": 84
      },
      "status": "measured"
@@ -130,7 +130,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 2.54,
+     "seconds": 1.41,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -147,7 +147,7 @@
       "ssim": 0.5782823019335946,
       "within8_frac": 0.7931370464852607
      },
-     "seconds": 4.48,
+     "seconds": 5.9,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -165,7 +165,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 1.05,
+     "seconds": 0.62,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -179,7 +179,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 3.17,
+     "seconds": 1.77,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -193,21 +193,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 3.61,
+     "seconds": 2.0,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 1.4,
+     "seconds": 0.82,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 1.38,
+     "seconds": 0.82,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -276,7 +276,7 @@
        "torch_cuda_transposed"
       ]
      },
-     "seconds": 6.16,
+     "seconds": 3.41,
      "status": "measured"
     },
     "check_order_independence": {
@@ -284,14 +284,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 1.13,
+     "seconds": 0.64,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 2.37,
+     "seconds": 1.4,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -301,7 +301,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 1.64,
+     "seconds": 0.93,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -309,28 +309,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.31,
+     "seconds": 0.21,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 7.08,
+     "seconds": 4.07,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.39,
+     "seconds": 0.24,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 2.04,
+     "seconds": 0.84,
      "status": "measured"
     }
    },
@@ -369,7 +369,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 57.4,
+   "seconds": 36.2,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -513,7 +513,7 @@
    "env": "DMCHopperHop",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.27,
+     "seconds": 0.15,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -521,7 +521,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.26,
+     "seconds": 0.15,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -543,7 +543,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 1.74,
+     "seconds": 0.93,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -560,7 +560,7 @@
       "ssim": 0.5431172856960468,
       "within8_frac": 0.78371022888322
      },
-     "seconds": 3.52,
+     "seconds": 1.71,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -578,7 +578,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.74,
+     "seconds": 0.43,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -592,7 +592,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 1.98,
+     "seconds": 1.11,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -606,21 +606,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 2.36,
+     "seconds": 1.3,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.97,
+     "seconds": 0.54,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 0.96,
+     "seconds": 0.55,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -689,7 +689,7 @@
        "torch_cuda_transposed"
       ]
      },
-     "seconds": 3.9,
+     "seconds": 2.12,
      "status": "measured"
     },
     "check_order_independence": {
@@ -697,14 +697,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 0.74,
+     "seconds": 0.4,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 1.79,
+     "seconds": 1.0,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -714,7 +714,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 1.05,
+     "seconds": 0.58,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -722,28 +722,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.25,
+     "seconds": 0.16,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 4.0,
+     "seconds": 2.33,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.28,
+     "seconds": 0.16,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 1.3,
+     "seconds": 0.56,
      "status": "measured"
     }
    },
@@ -765,7 +765,7 @@
     "n_states": 64,
     "reference_id": "dm_control/hopper-hop",
     "reference_stable": {
-     "seconds": 0.01,
+     "seconds": 0.0,
      "status": "error",
      "traceback": "boughan/se6/cpu-3d/examples/fidelity_step4.py\", line 165, in run\n    r = fn(*a, **kw)\n        ^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/cpu-3d/stable_envs/testing/conformance.py\", line 135, in check_reference_renderer_is_stable\n    env = cls(batch=1, size=size, device=\"cuda\")\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se6/cpu-3d/stable_envs/envs/dmcontrol.py\", line 2232, in __init__\n    super().__init__(*a, **kw)\n  File \"/oscar/scratch/sboughan/se6/cpu-3d/stable_envs/envs/dmcontrol.py\", line 898, in __init__\n    super().__init__(batch=batch, size=size,\n  File \"/oscar/scratch/sboughan/se6/cpu-3d/stable_envs/core/env.py\", line 517, in __init__\n    self._state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/cuda/__init__.py\", line 591, in _lazy_init\n    torch._C._cuda_init()\nRuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx\n",
      "why": "RuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx"
@@ -782,7 +782,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 32.9,
+   "seconds": 17.5,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -945,7 +945,7 @@
    "env": "DMCHumanoidStand",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.64,
+     "seconds": 0.38,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -953,7 +953,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.62,
+     "seconds": 0.39,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -961,7 +961,7 @@
       "exact_frac": 0.609516723356009,
       "factor": 2,
       "max_abs": 149,
-      "mean_abs": 2.4016343950774752,
+      "mean_abs": 2.401633656934996,
       "size": 84
      },
      "status": "measured"
@@ -975,7 +975,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 6.5,
+     "seconds": 3.54,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -989,10 +989,10 @@
       "max_abs": 226,
       "mean_abs": 5.98515447845805,
       "n_states": 64,
-      "ssim": 0.8795150169884168,
+      "ssim": 0.8795150201422396,
       "within8_frac": 0.7391780931122449
      },
-     "seconds": 9.07,
+     "seconds": 3.95,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -1010,7 +1010,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 2.42,
+     "seconds": 1.45,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -1024,7 +1024,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 8.15,
+     "seconds": 4.63,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -1038,21 +1038,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 7.97,
+     "seconds": 4.24,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 3.56,
+     "seconds": 1.94,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 3.44,
+     "seconds": 1.95,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -1121,7 +1121,7 @@
        "torch_cuda_transposed"
       ]
      },
-     "seconds": 16.75,
+     "seconds": 8.6,
      "status": "measured"
     },
     "check_order_independence": {
@@ -1129,14 +1129,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 3.15,
+     "seconds": 1.63,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 5.38,
+     "seconds": 2.9,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -1146,7 +1146,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 4.43,
+     "seconds": 2.34,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -1154,28 +1154,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.65,
+     "seconds": 0.39,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 45.42,
+     "seconds": 25.12,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.65,
+     "seconds": 0.39,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 4.48,
+     "seconds": 1.97,
      "status": "measured"
     }
    },
@@ -1184,7 +1184,7 @@
     "device": "cpu",
     "digest_official": "b8b642fbb0f82bfac603f65b401e494bf19e9b7f7246676082a65f8e5760231f",
     "digest_ours": "883fb1df2041f486067a7def65f51b16517ae4ef0a0a8ca1f764b87ab9c99b01",
-    "digest_ours_corpus_style": "b218dbee1a7cebd28b794886317bdcca78151c1dcbb43729db85d55e39a5e70d",
+    "digest_ours_corpus_style": "53884ed1b651e7c5c10414d1d48b324975b558578a1a5741b148f05c088e2c78",
     "digest_ours_default_style": "883fb1df2041f486067a7def65f51b16517ae4ef0a0a8ca1f764b87ab9c99b01",
     "distinct_colors": 2702,
     "frames_shape": [
@@ -1214,7 +1214,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 142.1,
+   "seconds": 75.6,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -1379,7 +1379,7 @@
    "env": "DMCWalkerWalk",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.36,
+     "seconds": 0.23,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -1387,7 +1387,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.36,
+     "seconds": 0.23,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -1395,7 +1395,7 @@
       "exact_frac": 0.6185383007369615,
       "factor": 2,
       "max_abs": 199,
-      "mean_abs": 2.7158092403628116,
+      "mean_abs": 2.7157944775132274,
       "size": 84
      },
      "status": "measured"
@@ -1409,7 +1409,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 4.51,
+     "seconds": 2.42,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -1421,12 +1421,12 @@
       "interior_mean_abs": 29.326321325269525,
       "interior_px": 3803,
       "max_abs": 195,
-      "mean_abs": 16.16677738803855,
+      "mean_abs": 16.16677517361111,
       "n_states": 64,
-      "ssim": 0.5336919863822904,
+      "ssim": 0.5336919926997808,
       "within8_frac": 0.5478072739512472
      },
-     "seconds": 4.87,
+     "seconds": 2.67,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -1444,7 +1444,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 1.6,
+     "seconds": 0.9,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -1458,7 +1458,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 5.66,
+     "seconds": 3.03,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -1472,21 +1472,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 5.28,
+     "seconds": 2.75,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 2.41,
+     "seconds": 1.32,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 2.34,
+     "seconds": 1.32,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -1555,7 +1555,7 @@
        "torch_cuda_transposed"
       ]
      },
-     "seconds": 11.63,
+     "seconds": 5.99,
      "status": "measured"
     },
     "check_order_independence": {
@@ -1563,14 +1563,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 2.04,
+     "seconds": 1.12,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 3.74,
+     "seconds": 2.08,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -1580,7 +1580,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 3.08,
+     "seconds": 1.63,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -1588,28 +1588,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.37,
+     "seconds": 0.25,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 11.95,
+     "seconds": 6.62,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.43,
+     "seconds": 0.26,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 3.42,
+     "seconds": 1.33,
      "status": "measured"
     }
    },
@@ -1617,9 +1617,9 @@
     "batch": 64,
     "device": "cpu",
     "digest_official": "406deff795bd10273a8346ee3491ae937e2b703d4ddc4f9223aba608cc85b150",
-    "digest_ours": "291f1ebcb22288c88758058f45561dd53881c53a788dd45b1b217782cb47bd64",
+    "digest_ours": "732dbb3b7cd6868df28d6fbf423eeee6d1426273a01ffb5db7a17769bfd21e8a",
     "digest_ours_corpus_style": "9b6aeed389ddc8579797f49bbcbf4aeba29e6dc3c6e2a0f6cebd24ba13efecff",
-    "digest_ours_default_style": "291f1ebcb22288c88758058f45561dd53881c53a788dd45b1b217782cb47bd64",
+    "digest_ours_default_style": "732dbb3b7cd6868df28d6fbf423eeee6d1426273a01ffb5db7a17769bfd21e8a",
     "distinct_colors": 2521,
     "frames_shape": [
      64,
@@ -1627,7 +1627,7 @@
      84,
      3
     ],
-    "mean_pixel": 70.95262823011149,
+    "mean_pixel": 70.95262527754157,
     "n_states": 64,
     "reference_id": "dm_control/walker-walk",
     "reference_stable": {
@@ -1648,7 +1648,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 77.5,
+   "seconds": 40.6,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -1697,12 +1697,12 @@
  },
  "provenance": {
   "check_seed": 4041,
-  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "cpu": "AMD EPYC 9684X 96-Core Processor",
   "device": "cpu",
-  "git_commit": null,
-  "git_commit_source": null,
+  "git_commit": "5f020fed2b2341068dabe6a2d5c8e41ffec4d45c",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
   "git_dirty": null,
-  "host": "node2333.oscar.ccv.brown.edu",
+  "host": "node2407.oscar.ccv.brown.edu",
   "import_errors": {
    "carracing": "ImportError: CarRacing-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
    "fetch": "ImportError: the Fetch family renders its 18 robot meshes with mujoco_warp's batch raytracer, which this interpreter cannot run: missing warp, mujoco_warp; mujoco is 3.12.0 and mujoco_warp requires >= 3.11. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-fetch, built with `python -m venv --system-site-packages` so that only mujoco is shadowed and gymnasium, gymnasium-robotics, torch, triton and scipy stay shared. See docs/research/fetch.md",
@@ -1812,10 +1812,10 @@
    "TwoRoom",
    "TwoRoomTarget"
   ],
-  "slurm_job_id": "6354767",
-  "slurm_nodelist": "node2333",
+  "slurm_job_id": "6356047",
+  "slurm_nodelist": "node2407",
   "state_seed": 20260909,
-  "timestamp": "2026-09-13T22:52:33-0400",
+  "timestamp": "2026-09-13T23:47:38-0400",
   "torch": "2.14.0+cu126"
  },
  "schema_version": 1,

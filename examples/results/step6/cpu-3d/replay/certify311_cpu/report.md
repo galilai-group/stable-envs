@@ -33,7 +33,7 @@ symbolic ids carry no renderer and are outside this step by construction.
 
 | shard | interpreter | configurations | host |
 |---|---|---|---|
-| `dmc` | python 3.12.9, torch 2.14.0+cu126, mujoco 3.11.0 | 4 | Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz on `node2333.oscar.ccv.brown.edu` |
+| `dmc` | python 3.12.9, torch 2.14.0+cu126, mujoco 3.11.0 | 4 | AMD EPYC 9684X 96-Core Processor on `node2407.oscar.ccv.brown.edu` |
 
 ## Gate A
 
@@ -178,7 +178,7 @@ digest that changes says *something* moved; the metrics in the tables above say 
 | DMCCheetahRun    | 84x84 | f42baac67952 | 71fbb5d9503c    | 1781    | —                     |
 | DMCHopperHop     | 84x84 | fc33f1da9e33 | 4e2d73d0271a    | 1719    | —                     |
 | DMCHumanoidStand | 84x84 | 883fb1df2041 | cf6cbdd9a889    | 2702    | —                     |
-| DMCWalkerWalk    | 84x84 | 291f1ebcb222 | 33f0839d1dd0    | 2521    | —                     |
+| DMCWalkerWalk    | 84x84 | 732dbb3b7cd6 | 33f0839d1dd0    | 2521    | —                     |
 
 ## Render-configuration collapse, re-measured
 

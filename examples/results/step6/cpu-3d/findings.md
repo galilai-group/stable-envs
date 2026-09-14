@@ -188,21 +188,36 @@ unauthorized and is the only route to `cores_cpu >= 1`.
   the visual tier (bound 0.25) is the proportionate check if the coordinator wants one -- the CPU
   frames are within 0.02/255 of frames that sit far inside it.
 
-## Pending Oscar runs (queued; SSH to Oscar was denied at authentication when they were due)
+## Round 2 (review): provenance-stamped re-run, job **6356047**, `node2407` (AMD EPYC 9684X, load 124-136), commit `5f020fe`
 
-1. `scratch/step6/cpu-3d/certify_cpu.sbatch` on the reviewed tree: both certification arms and the
-   cross-backend comparison re-run with `STABLE_ENVS_GIT_COMMIT` stamped, the GL vendor string
-   recorded (`replay/gl_renderer_<node>.json`), the sweep through `certify_shard_cpu3d.py` (label
-   `cpu-3d-paired-after`, `tree_commit` from the env, reps and OMP/MKL env recorded, `--max-cell-s 60`
-   so the Walker/Humanoid 1024 cells are measured, `max_load_policy` recorded).
-2. `scratch/step6/cpu-3d/fetch_feasibility.sbatch`: the span rasteriser with backface culling and the
-   setup/bbox/shade phase breakdown (`full|nocull|setup|bbox` modes), provenance JSON, mesh dumps kept,
-   plus `cost_floor tri` re-timed with triangle generation outside the timed region.
+`replay/certify311_cpu/`, `replay/certify312_cpu/` (both `provenance.git_commit = 5f020fe…`,
+`git_commit_source = env:STABLE_ENVS_GIT_COMMIT`), `replay/gl_renderer_node2407.json`
+(`llvmpipe (LLVM 19.1.7, 256 bits)`, vendor Mesa, GL 4.5 Mesa 24.2.8), `replay/cross_backend_node2407/`:
+**every verdict and every printed number is identical to round 1** (3.11 arm 3 PASS + Walker's
+downsample FAIL at 0.6185; 3.12 arm 3 BLOCKED + the same FAIL; cross-backend mean 0.018 / 0.018 /
+0.016 / 0.004, exact 0.982 / 0.983 / 0.985 / 0.997) — on a different CPU family, which is the
+determinism claim made twice over. The sweep step (`sweep/after/cpu_1thread_paired_after_node2407.json`,
+label `cpu-3d-paired-after`, `tree_commit` stamped, reps 10, OMP/MKL 1 recorded, `max_load_policy`
+recorded) measured **all mandatory cells including 1024** — Cheetah 209.9, Hopper 333.6, Walker
+114.9, Humanoid 81.7 fps at B=1024, flat against B=256 (209.2 / 332.4 / 118.3 / 81.4) — but the
+shard is **`certifiable: False`**: the interleaved official renderer's readings spread **1.67×**
+(bound 1.25) on that node, so the pattern refuses to derive a tier from it; the numerator stands.
+The `CPU_FASTER` labels above therefore rest on the node2333 shard (spread 1.08-1.13, certifiable,
+no 1024 cells for Walker/Humanoid, no SHA); a sweep-only job with the load guard re-enabled
+(`sweep_cpu.sbatch`, `--max-load 12`) is queued to produce one shard that has all three: cells, SHA,
+and a reference spread inside the bound. Its result is reported when a quiet node lands.
+
+## Oscar runs of this review round
+
+1. `certify_cpu.sbatch` — job 6356047, done (above).
+2. `fetch_feasibility.sbatch` — job 6356048, done (§C).
+3. `sweep_cpu.sbatch` — queued (load-guarded sweep for a certifiable all-cell shard).
 
 ## SLURM
 
-6345025 (Phase 1 characterisation), 6354766 (cuda replay), 6354767 (CPU certification), 6354890
-(CPU3D-FETCH-1 measurement).
+6345025 (Phase 1 characterisation), 6354766 (cuda replay), 6354767 (CPU certification, round 1),
+6354890 (CPU3D-FETCH-1, round 1), 6356047 (certification, round 2, stamped), 6356048 (CPU3D-FETCH-1,
+round 2, culled + phases), and the queued load-guarded sweep.
 
 ## Open questions for the coordinator
 

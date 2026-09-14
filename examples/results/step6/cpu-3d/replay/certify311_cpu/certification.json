@@ -249,7 +249,7 @@
      "observed": {
       "exact_frac": 0.5310949900793651,
       "max_abs": 166,
-      "mean_abs": 3.156308313255858
+      "mean_abs": 3.1563075751133787
      },
      "raw_status": "measured",
      "status": "pass",
@@ -1015,7 +1015,7 @@
      "observed": {
       "exact_frac": 0.609516723356009,
       "max_abs": 149,
-      "mean_abs": 2.4016343950774752
+      "mean_abs": 2.401633656934996
      },
      "raw_status": "measured",
      "status": "pass",
@@ -1105,7 +1105,7 @@
      "observed": {
       "interior_exact_frac": 0.004658004412846286,
       "mean_abs": 5.950547406462585,
-      "ssim": 0.881063672136075,
+      "ssim": 0.881063676358837,
       "within8_frac": 0.7424178004535147
      },
      "raw_status": "measured",
@@ -1438,7 +1438,7 @@
      "observed": {
       "exact_frac": 0.6185383007369615,
       "max_abs": 199,
-      "mean_abs": 2.7158092403628116
+      "mean_abs": 2.7157944775132274
      },
      "raw_status": "measured",
      "status": "fail",
@@ -1529,8 +1529,8 @@
      "group": "family_specific",
      "observed": {
       "interior_exact_frac": 0.0014388489208633094,
-      "mean_abs": 8.03309018920068,
-      "ssim": 0.8252567047616783,
+      "mean_abs": 8.033087974773242,
+      "ssim": 0.8252567025493599,
       "within8_frac": 0.710913141298186
      },
      "raw_status": "measured",
