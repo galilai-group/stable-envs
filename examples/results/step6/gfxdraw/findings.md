@@ -398,19 +398,53 @@ Tools added under `scratch/step6/gfxdraw/`: `phase_profile.py` (phase timers at 
 seams, wrappers only), `replay_digests.py` (the seconds-long replay loop), `consumer_digests.py`,
 `conformance_cpu.py`, `paired_cpu.py`, `tiers.py`, and the four sbatch scripts.
 
-## SLURM jobs
+## SLURM jobs — every job that wrote an artifact under this directory
 
-| job | id | node | what |
+| job | name | node / card | what it wrote |
 |---|---|---|---|
-| `se6-gfxdraw-cpu` | 6346431 | node2338 | CPU sweep both arms, profile notes, `tests/unit`, CPU conformance, CPU replay |
-| `se6-gfxdraw-gpu` | 6346430 | gpu2104 (RTX 3090) | Step 4 replay on CUDA, path tests, GPU sweep both arms, GPU profile-after |
-| `se6-gfxdraw-gputests` | 6346933 | gpu2104 | conformance + reproducibility with their output kept |
-| `se6-gfxdraw-paired` | 6346967 | (batch) | paired `S_cpu`, both arms, and the same-node profile pair |
-| `se6-gfxdraw-gpuprof` | 6346999 | gpu2104 | GPU profile-BEFORE, the branch's harness against the baseline tree |
-| `se6-gfxdraw-paired` | 6346954 | — | cancelled by me before it ran, to add the measured-tree provenance |
+| **6322230** | wave-0 profile | `node2314` | `profile_before/*_cpu_node2314.{json,md}` — the pre-implementation profile, run before this workstream had a branch. It is the only job here that predates the worktree, which is why it appears in no earlier list in this file: it was inherited with the scaffolding commit rather than launched by it. |
+| 6346430 | `se6-gfxdraw-gpu` | `gpu2104` (3090) | Step 4 replay on cuda, path tests, GPU sweep both arms, `profile_after_gpu/` |
+| 6346431 | `se6-gfxdraw-cpu` | `node2338` | CPU sweep both arms (**superseded**, see `sweep/superseded_node2338/`), `profile_after/`, `tests/unit`, CPU conformance, CPU replay |
+| 6346933 | `se6-gfxdraw-gputests` | `gpu2104` | `tests/conformance_reproducibility.txt`, `tests/gfxdraw_fused_fast_paths.txt` |
+| 6346954 | `se6-gfxdraw-paired` | — | cancelled by me before it ran, to add the measured-tree provenance. **Wrote nothing.** |
+| 6346967 | `se6-gfxdraw-paired` | `node1829` | `sweep/paired_{before,after}_B*_node1829.json`, `profile_{before,after}_samenode/` |
+| 6346999 | `se6-gfxdraw-gpuprof` | `gpu2104` | `profile_before_gpu/` |
+| 6348411 | `se6-gfxdraw-box2d` | `node1831` | first attempt at the Box2D venv; **wrote nothing** (se-step6 has no pip) |
+| 6348468 | `se6-gfxdraw-box2d` | `node1831` | `consumers/consumers_{baseline,gfxdraw}_node1831.json` |
+| 6348986 | `se6-gfxdraw-gpuclassic` | — | cancelled by me while pending, to merge two GPU jobs into one. **Wrote nothing.** |
+| 6348987 | `se6-gfxdraw-cpufloor` | `node2334` | `characterize/{interleave,interleave_500,cost_floor,cost_floor_numba,decode}_node2334.json` |
+| 6349091 | `se6-gfxdraw-cpufloor2` | `node1831` | `characterize/cost_floor_batched_node1831.json` |
+| 6349362 | `se6-gfxdraw-gpuclassic` | `gpu2110` (3090) | `consumers/consumers_cuda_*`, `tests/classic_kernel_gpu2110.txt`, `replay/step4_replay_fused_cuda.json`, `sweep2/gpu_{before,after}_gpu2110.json` (**superseded**, see `sweep2/superseded_gpu2110/`) |
+| 6351758 | `se6-gfxdraw-gpupaired` | `gpu2264` (3090) | `tests/fused_box2d_gpu2264.txt`, `sweep2/paired_gpu_B{1024,4096}_gpu2264.json` |
+| 6352593 | `se6-gfxdraw-mixedrow` | `gpu2107` (3090) | `tests/classic_kernel_mixedrow_gpu2107.txt`, `sweep2/paired_gpu_B4096_perarmpeak_gpu2107.json`, `characterize/venv_box2d_manifest.json` |
+| 6353689 | `se6-gfxdraw-shardcpu` | (batch) | `sweep/cpu_1thread_paired_<node>.json` — a self-contained CPU shard with a paired denominator **and a same-node decode bar** |
+| 6353690 | `se6-gfxdraw-shardgpu` | (3090) | `sweep2/gpu_paired_{before,after}_<node>.json` — the same for GPU |
 
-`se6-gfxdraw-paired` 6346967 landed on `node1829` (load average 30-41), the frozen sweep on
-`node2338` (load average 47). Every artifact records its own host.
+Jobs whose artifacts carry their own `slurm_job` field: 6322230, 6346430, 6346431, 6346967,
+6346999, 6349362. The rest are recorded here because their outputs are test logs, sweeps or
+characterisation files whose schemas have no such field — which is the gap this table closes.
+
+**Which shards the report generator should label from.** `scratch/step6/report.py` runs
+`certify.classify` over every Step-3-shaped shard it finds, so a shard that is unusable, that
+describes superseded code, or that is one arm of a before/after pair has to be out of its reach
+rather than merely contradicted in prose. After this pass it sees exactly three:
+
+| shard | rows |
+|---|---|
+| `sweep/cpu_1thread_paired_node1829.json` | CPU: Acrobot `CPU_REGRESSION` (0.96), the other four `CPU_PARITY` (1.12-1.96) |
+| `sweep2/gpu_paired_after_gpu2264.json` | GPU: R 294-690 |
+| `sweep2/gpu_paired_after_gpu2107.json` | GPU: R 322-785 |
+
+and three directories are out of it: `sweep/superseded_node2338/` (collapsed denominator),
+`sweep2/superseded_gpu2110/` (the same, and it would publish `GPU_FAST` for two rows), and
+`sweep/wave1_pre_gfxdraw2/` (superseded code, plus a colliding before/after pair).
+
+**One known under-statement.** `decode` is absent from the two converted GPU shards — it was not
+measured on `gpu2264` or `gpu2107`, and borrowing another host's decode would be a cross-host
+ratio — so `cores` is not computed and the rows cap at `GPU_FASTER`. **Pendulum's R of 690-785 is
+over the class-R bar and its `cores` is 127-163 where the bar is 1, so its true tier is
+`GPU_FAST`**; the page will under-state it until 6353690's self-contained shard lands. The
+direction is deliberate: a missing denominator must never inflate a tier.
 
 ## Commits on `step6/gfxdraw`
 
