@@ -280,11 +280,22 @@ _GROUP_MIN_SPREAD = 4.0
 #: refused the grouping on every scene that wanted it.
 #:
 #: One group is ~20 torch ops on small tensors. Timed directly on a scene built so the grouped pixel
-#: work is fixed and only the group count varies (B discs in B distinct cells at 64 px, one group
-#: per row): 68.2 / 56.3 / 59.0 / 61.7 us per group at B = 8 / 32 / 128 / 512 -- flat, as dispatch
-#: should be. A window pixel costs 6-20 ns on one core over the same scenes, so one group buys
-#: itself at 60 us / 6 ns = 10,000 window pixels, taking the cheapest per-pixel figure because that
-#: is the one that makes a group hardest to justify.
+#: work is fixed and only the group count varies (B discs in B distinct cells at 64 px, one group per
+#: row) by ``scratch/step6/raster2d/window_experiment.py --mode pergroup``, whose committed output is
+#: ``examples/results/step6/raster2d/experiments/window_pergroup.txt``:
+#:
+#:     B                  8      32     128     512
+#:     us per group    72.0    57.1    56.3    60.1      -- flat, as dispatch should be
+#:
+#: and from the same file, the pixel side: at B=512 grouping turns 15.494 ms into 7.003 ms while
+#: removing ~1.4 M window pixels, i.e. ~6 ns a pixel. One group therefore buys itself at
+#: 60 us / 6 ns = 10,000 window pixels. The cheapest per-pixel figure is the one taken, because it is
+#: the one that makes a group hardest to justify.
+#:
+#: BOTH NUMBERS ARE THE CPU'S. On a device where the plan's ``.cpu()`` is a synchronisation rather
+#: than a copy, this model accepts groupings that lose -- measured, and the reason
+#: ``envs/swm_nav.py`` calls this only on the CPU path. A caller on another device needs constants
+#: measured on it.
 #:
 #: The margin is 1.25 rather than 2: with the constant measured rather than assumed, a larger margin
 #: only refuses grouping that wins. Scanned against wall time over the frozen corpora at B = 1, 16,

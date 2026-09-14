@@ -320,6 +320,34 @@ def _gaussian_dot(gy, gx, pos, radius) -> torch.Tensor:
     return torch.where(m > 0, dot / m, dot)
 
 
+#: WHY BOTH OF THIS MODULE'S STEP 6 OPTIMISATIONS ARE CPU-ONLY.
+#:
+#: ``_base_image`` keys its bake on the bytes of a style row and ``_blend_dot`` turns per-row windows
+#: into groups, and BOTH decide on the host from values that live on the device: one ``.cpu()`` for
+#: the key, one plus four scalar reductions for the windows, doubled for TwoRoomTarget's two dots.
+#: On a CPU those are copies. On a GPU they are synchronisations in the middle of a render, and they
+#: cost more than the work they save at every batch small enough that the saved work is small --
+#: measured on a 3090 (job 6349274, gpu2113), before against after:
+#:
+#:     batch                1      16      64     256    1024    4096
+#:     TwoRoom           1.25    0.48    0.55    1.41    1.40    1.41
+#:     TwoRoomTarget     0.86    0.32    0.40    1.11    1.13    1.13
+#:     Piecewise         0.58    0.19    0.35    0.99    0.98    0.98
+#:     PiecewiseZones    0.85    0.27    0.43    1.14    1.14    1.14
+#:
+#: A 5.3x regression at batch 16 that a best-batch summary does not show is still a regression, and
+#: section 7 names host/device synchronisation in a hot loop as a structural defect in its own right
+#: rather than a cost to be netted off against a gain somewhere else. ``raster2d._row_groups``'s cost
+#: model does not help here either: its two constants were measured on one CPU core, so on cuda it
+#: accepts groupings that lose.
+#:
+#: So on ``device.type == "cuda"`` both paths run the arithmetic they replaced, unchanged, and the
+#: GPU rows are identical code rather than an argument about which batches the qualifiers sample.
+#: Recovering the large-batch gain there is a separate piece of work with its own measurements: it
+#: needs the decisions made on the device (a device-side key, a device-side partition) or the cost
+#: model re-calibrated on the card, and neither is this ticket.
+_CUDA_IS_NOT_THE_CPU = True
+
 #: The smallest alpha ``_alpha_blend`` can act on, MEASURED against that function over every uint8
 #: contrast by ``scratch/step6/raster2d/alpha_bound.py``: 2.98e-8 = 2^-25, reached at img=1,
 #: colour=0. The two directions are not symmetric and the asymmetry is the whole point. Painting a
@@ -365,7 +393,12 @@ def _dot_window(pos, sigma):
     mx = x.round().clamp(0, IMG - 1)
     my = y.round().clamp(0, IMG - 1)
     m2 = (x - mx) ** 2 + (y - my) ** 2
-    d = torch.sqrt((sigma.reshape(-1) * _DOT_SIGMAS) ** 2 + m2)
+    # Plus a pixel. The radius is exact for exact arithmetic and the reviewer's 108,000-state
+    # boundary scan found no failure without it, but every term in it -- the sqrt, the log inside
+    # _DOT_SIGMAS, the squares -- is float32 or float64 rounding away from the pixel it decides, and
+    # the bound has no slack of its own. One pixel of window costs a row of samples and buys the
+    # whole question.
+    d = torch.sqrt((sigma.reshape(-1) * _DOT_SIGMAS) ** 2 + m2) + 1.0
     c0 = torch.ceil(x - d).clamp(0, IMG)
     c1 = torch.floor(x + d).clamp(0, IMG - 1) + 1
     r0 = torch.ceil(y - d).clamp(0, IMG)
@@ -543,9 +576,12 @@ class _SWMNavBase(StableEnv):
         float32 first, which copies.
         """
         k = hi - lo
+        if self.device.type == "cuda":
+            return self.base_image(lambda p: sty[p][lo:hi], k)          # see _CUDA_IS_NOT_THE_CPU
         rows = sty.values[lo:hi]
         # ONE host transfer, the same trick ``raster2d._static_base`` uses: the bytes are needed for
-        # the key anyway, so the grouping comes free with them.
+        # the key anyway, so the grouping comes free with them. On the CPU the transfer is a copy; on
+        # a GPU it is a SYNCHRONISATION, which is why the branch above exists.
         blob = rows.detach().cpu().contiguous().numpy().tobytes()
         w = blob and len(blob) // k or 0
         keys = [blob[i * w:(i + 1) * w] for i in range(k)] if w else [b""] * k
@@ -605,6 +641,8 @@ class _SWMNavBase(StableEnv):
         from ..render.raster2d import _row_groups
 
         k = int(pos.shape[0])
+        if self.device.type == "cuda":
+            return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
         win = _dot_window(pos, sigma)
         wins = _row_groups(win.cpu().numpy(), *(int(v) for v in
                            (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max())))

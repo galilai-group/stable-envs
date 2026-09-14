@@ -154,6 +154,62 @@ def test_a_per_row_style_is_not_collapsed_to_one_plate(cfg):
         f"{cfg}: six different backgrounds produced fewer than six different frames")
 
 
+@pytest.mark.parametrize("cfg", CONFIGS)
+def test_two_styles_with_repeats_take_the_gather_branch(cfg):
+    """The branch between "one plate, expanded" and "every row different, no bake".
+
+    ``_base_image`` has three outcomes: all rows identical (one plate, expanded), all rows distinct
+    (no bake at all), and the case in between -- a few distinct styles with repeats, which builds one
+    plate each and GATHERS them back with an index. Only the third exercises ``torch.cat(plates)[pick]``,
+    and until this test nothing did: the suite's per-row-style case has six distinct rows and takes the
+    fallback, and every other case has one. An index built in the wrong order there would hand row i
+    the wrong style's background and every digest above would still pass.
+
+    Two styles across six rows, interleaved rather than blocked, so a gather that merely preserved
+    grouping order would be caught.
+    """
+    env = se.make(cfg, batch=6, device="cpu")
+    env.rng = np.random.default_rng(11)
+    st = np.asarray(env.sample_states(6), np.float32)
+    base = np.asarray(env.default_style(), np.float32)
+    off = dict((p, o) for p, o, _ in env.variation_space.flat_layout())["background.color"]
+    rows = np.tile(base, (6, 1))
+    which = [0, 1, 0, 1, 1, 0]                      # interleaved, three of each
+    for i, w in enumerate(which):
+        rows[i, off:off + 3] = [20.0, 200.0, 40.0] if w == 0 else [180.0, 30.0, 90.0]
+    sty = env.resolve_style(rows, None, batch=6)
+    want = _reference(env, st, sty)
+    got = env.render(st, style=rows)
+    assert torch.equal(want, got), f"{cfg}: two styles with repeats"
+
+    # the gather really was the branch taken, not the expand and not the fallback
+    plates = {}
+    for i in range(6):
+        plates.setdefault(tuple(rows[i, off:off + 3]), []).append(i)
+    assert len(plates) == 2 and all(len(v) == 3 for v in plates.values())
+
+    # rows sharing a style must share a background, and the two styles must differ
+    flat = got.reshape(6, -1)
+    a, b = list(plates.values())
+    assert not torch.equal(got[a[0]][0, 0], got[b[0]][0, 0]), (
+        f"{cfg}: the two styles produced the same corner pixel, so the gather collapsed them")
+    for i in a[1:]:
+        assert torch.equal(got[i][0, 0], got[a[0]][0, 0]), f"{cfg}: row {i} got the wrong plate"
+    for i in b[1:]:
+        assert torch.equal(got[i][0, 0], got[b[0]][0, 0]), f"{cfg}: row {i} got the wrong plate"
+
+    # and the invariants, on the branch that has an index in it
+    assert torch.equal(env.render(st, style=rows), got), f"{cfg}: gather branch is not pure"
+    perm = np.array([4, 0, 5, 2, 1, 3])
+    assert torch.equal(env.render(np.ascontiguousarray(st[perm]),
+                                  style=np.ascontiguousarray(rows[perm]))[np.argsort(perm)], got), (
+        f"{cfg}: gather branch is not order invariant")
+    solo = se.make(cfg, batch=1, device="cpu")
+    for i in range(6):
+        assert torch.equal(solo.render(st[i:i + 1], style=rows[i:i + 1])[0], got[i]), (
+            f"{cfg}: row {i} differs when rendered alone, so a plate is stale or misindexed")
+
+
 def test_the_alpha_floor_is_the_measured_one():
     """The crop rests on this number; if somebody widens it the crop stops being a bound.
 

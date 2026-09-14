@@ -35,8 +35,12 @@ P5=$SCR/venvs/se-step5/bin/python        # the only one with stable_worldmodel +
 mkdir -p "$RES/replay$TAG" "$RES/sweep$TAG"
 # rsync drops .git, so the SHA reaches the shard through the environment or a
 # GIT_COMMIT file at the tree root -- otherwise every artifact records git_commit: null.
-export STABLE_ENVS_GIT_COMMIT=${STABLE_ENVS_GIT_COMMIT:-$(cat "$AFT/GIT_COMMIT" 2>/dev/null || true)}
-echo "measuring tree $AFT at ${STABLE_ENVS_GIT_COMMIT:-unknown}"
+# PER LEG, not once for the job. Exporting one SHA here stamped gpu_before.json with the AFTER
+# tree's commit; stable_envs_file still told them apart, but a provenance field that is right only
+# because a different one is checked is not provenance. Same fix as cpu_sweep.sbatch.
+sha () { cat "$1/GIT_COMMIT" 2>/dev/null || echo unknown; }
+echo "before tree $BEF at $(sha "$BEF")"
+echo "after  tree $AFT at $(sha "$AFT")"
 nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
 echo "node=$(hostname) job=$SLURM_JOB_ID"
 set -x
@@ -66,11 +70,11 @@ PYTHONPATH=$AFT $P6 -m pytest tests/gpu/test_conformance.py tests/gpu/test_repro
 
 # 4. the GPU sweep, before and after, same card
 ST=$RES/sweep$TAG/states_gpu; mkdir -p "$ST"
-PYTHONPATH=$BEF $P5 $BEF/examples/bench_step3.py --device cuda --threads 0 --envs "$CFG" \
-    --reps 15 --max-cell-s 12 --optional-batches --states-out "$ST" \
+STABLE_ENVS_GIT_COMMIT=$(sha "$BEF") PYTHONPATH=$BEF $P5 $BEF/examples/bench_step3.py --device cuda --threads 0 --envs "$CFG" \
+    --reps 15 --max-cell-s 60 --optional-batches --states-out "$ST" \
     --out "$RES/sweep$TAG/gpu_before.json" || echo "GPU_SWEEP_BEFORE rc=$?"
-PYTHONPATH=$AFT $P5 $AFT/examples/bench_step3.py --device cuda --threads 0 --envs "$CFG" \
-    --reps 15 --max-cell-s 12 --optional-batches --states-in "$ST" \
+STABLE_ENVS_GIT_COMMIT=$(sha "$AFT") PYTHONPATH=$AFT $P5 $AFT/examples/bench_step3.py --device cuda --threads 0 --envs "$CFG" \
+    --reps 15 --max-cell-s 60 --optional-batches --states-in "$ST" \
     --out "$RES/sweep$TAG/gpu_after.json" || echo "GPU_SWEEP_AFTER rc=$?"
 
 echo "GPU_CHECK_DONE"
