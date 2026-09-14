@@ -58,6 +58,13 @@ def main() -> None:
     ap.add_argument("--decode-frames", type=int, default=40)
     ap.add_argument("--arm", default="after", choices=["before", "after"],
                     help="'before' forces the per-primitive path (classic control only)")
+    #: The reference is now sampled across the whole run, so its SPREAD is evidence about the node
+    #: and not just noise to average away. node2339 returned 4.52x on Acrobot and 10.37x on
+    #: CartPole while node1829 and gpu2264 returned 1.02-1.11x; a ratio built on the first is not a
+    #: measurement, and the only reason that is visible at all is that the spread is recorded. A
+    #: shard over the bound is written and marked, never silently dropped: it is the evidence that
+    #: the node was unusable, and a missing file would look like a job that never ran.
+    ap.add_argument("--max-reference-spread", type=float, default=1.25)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
@@ -162,9 +169,20 @@ def main() -> None:
               f"ratio {best/med:8.2f}   decode {(rec['decode'] or {}).get('decode_fps_per_core', 0):.0f}",
               flush=True)
 
+    worst = max(((e["official_cpu"].get("paired") or {}).get("spread") or 1.0)
+                for e in doc["envs"]) if doc["envs"] else 1.0
+    doc["reference_spread_worst"] = worst
+    doc["certifiable"] = worst <= a.max_reference_spread
+    if not doc["certifiable"]:
+        doc["not_certifiable_because"] = (
+            f"the official renderer's throughput varied {worst:.2f}x across the interleaved "
+            f"readings on this host, over the {a.max_reference_spread}x bound. S_cpu/R is a ratio "
+            f"to that number, so a tier computed from this shard would describe the node's load "
+            f"rather than the renderer. The numerator (our frames/s) is unaffected.")
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(doc, indent=1))
-    print(f"wrote {a.out}")
+    print(f"wrote {a.out}  worst reference spread {worst:.2f}x  "
+          f"certifiable={doc['certifiable']}")
 
 
 if __name__ == "__main__":

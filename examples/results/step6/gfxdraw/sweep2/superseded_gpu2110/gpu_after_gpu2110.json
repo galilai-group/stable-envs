@@ -38,7 +38,7 @@
   1024,
   4096
  ],
- "envs": [
+ "envs_not_for_certification": [
   {
    "env": "Acrobot",
    "projected_to": [
@@ -594,5 +594,8 @@
     "load_decode_fps_per_core": 1345.2701401315462
    }
   }
- ]
+ ],
+ "envs": [],
+ "excluded_from_certification": "block-timed denominator that would publish GPU_FAST for two rows; see the README",
+ "how_this_exclusion_works": "certify.merge reads d.get('envs', []), so an empty list contributes no runs and no tier. The rows are kept under 'envs_not_for_certification'. Structural, so it does not depend on the report generator's directory traversal."
 }
