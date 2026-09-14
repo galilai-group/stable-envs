@@ -9,6 +9,8 @@ incident_log:
   and uncommitted work intact.'
 - '2026-09-14 late: SSH to Oscar fails with ''Permission denied (keyboard-interactive)'' (key auth no longer accepted; not a VPN refusal). Sami alerted. Agents told not to retry in loops; cluster-dependent
   items paused (cpu-3d re-runs, gfxdraw job 6353993 pull, verification). Local work (RAYCAST-4/5 review, cpu-3d local changes) continues. Oscar integration copy last synced at 36de344.'
+- '2026-09-15: Oscar SSH restored by Sami; integration copy re-synced at f69ac31; gfxdraw, cpu-3d, verification and reacher agents resumed. Jobs at resume: 6353993 pending (gfxdraw exclusive shard), 6355272
+  running (verify post-merge swmnav/raster on gpu2113).'
 workstreams:
 - workstream: texture-fidelity
   brief: STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md
