@@ -127,9 +127,10 @@ static void run_tri(int W, int T, float S, int frames, int seed) {
   srand(seed);
   int N = W * W; float *zb = malloc(sizeof(float) * N); uint8_t *img = malloc(3 * N);
   float *tri = malloc(sizeof(float) * 18 * T); /* per tri: 3 x (x, y, z, nx, ny, nz) */
+  /* triangles are generated OUTSIDE the timed region (one set, reused per frame) */
+  for (int t = 0; t < T; t++) { float cx = frand()*W, cy = frand()*W, cz = frand(); v3 nn = nrm(V(frand()-0.5f, frand()-0.5f, frand())); for (int v = 0; v < 3; v++) { float a = 6.28f*frand(); float *p = tri + 18*t + 6*v; p[0] = cx + S*0.6f*cosf(a); p[1] = cy + S*0.6f*sinf(a); p[2] = cz + 0.01f*frand(); p[3] = nn.x + 0.1f*frand(); p[4] = nn.y + 0.1f*frand(); p[5] = nn.z; } }
   double t0 = now(); long covered = 0, bboxpx = 0;
   for (int fr = 0; fr < frames; fr++) {
-    for (int t = 0; t < T; t++) { float cx = frand()*W, cy = frand()*W, cz = frand(); v3 nn = nrm(V(frand()-0.5f, frand()-0.5f, frand())); for (int v = 0; v < 3; v++) { float a = 6.28f*frand(); float *p = tri + 18*t + 6*v; p[0] = cx + S*0.6f*cosf(a); p[1] = cy + S*0.6f*sinf(a); p[2] = cz + 0.01f*frand(); p[3] = nn.x + 0.1f*frand(); p[4] = nn.y + 0.1f*frand(); p[5] = nn.z; } }
     for (int i = 0; i < N; i++) zb[i] = INF; memset(img, 0, 3*N);
     for (int t = 0; t < T; t++) { const float *a = tri + 18*t, *b = a + 6, *c = a + 12;
       int x0 = (int)floorf(fminf(a[0], fminf(b[0], c[0]))), x1 = (int)ceilf(fmaxf(a[0], fmaxf(b[0], c[0]))), y0 = (int)floorf(fminf(a[1], fminf(b[1], c[1]))), y1 = (int)ceilf(fmaxf(a[1], fmaxf(b[1], c[1])));

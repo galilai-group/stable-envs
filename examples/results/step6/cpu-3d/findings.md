@@ -35,6 +35,14 @@ toward the camera, spot cutoff and `pow(cos, exponent)`, shadow factor **0.3**, 
 `cpu` -> `cpu3d`; anything else raises `ValueError` -- `device="cpu"` can no longer reach the GPU.
 Per-env appearance (`material.*`, `light.diffuse_scale`) is applied as tables, as on the GPU path;
 `VISIBILITY_KNOB`/`CAMERA_KNOB` stay `False` on both devices (same variation space per device).
+**Coverage**: the four cells above on CPU; **`DMCSwimmerSwimmer6`** (the fifth `DMControlTrackCom`
+cell, outside the frozen 49, no replay obligation) is **refused at construction** on `device="cpu"`
+with `ValueError: DMCSwimmerSwimmer6 (swimmer-swimmer6) has no CPU 3-D backend: ... movers include
+mjGEOM_ELLIPSOID (mjtGeom 4) ...` -- its bodies are ellipsoids, which no CPU intersector covers; it
+used to render on the GPU behind a CPU request. Everything else the megakernel does is implemented
+or refused at `Scene.__init__` (design.md §13: POINT/IMAGE lights, intrinsics, directional shadow
+casters, `light_active`, the `nlight == 0` fallback, texel-(0,0) modulation, the plane as an
+occluder, the backface cull, two per-chunk shadow preconditions).
 
 ## Bottleneck / mechanism (measured, `design.md` §4, §11)
 
@@ -70,11 +78,13 @@ byte-identical in this ticket.**
   6354766); the frozen-digest comparison shows the known baseline drift (`mean_pixel` 79.24->79.08
   etc., reacher-correctness), identical on both trees.
 
-## Step-4 replay -- cuda (job **6354766**, `gpu2106`, RTX 3090, driver 575.57.08, one job, two trees)
+## cuda replay: integration-vs-branch identical (job **6354766**, `gpu2106`, RTX 3090, driver 575.57.08, one job, two trees)
 
 `verify_pixels.py` (reacher-correctness's method) on the four cells, `$SCR/se6/integration` vs this
 branch: **`cuda_pixels_identical=True` on all four; `CUDA PIXEL VERDICT: IDENTICAL`**
-(`replay/gpu/pixels_{before_integration,after_branch}.json`). The GPU path did not move by a bit.
+(`replay/gpu/pixels_{before_integration,after_branch}.json`). The GPU path did not move by a bit. **This does NOT reproduce the frozen Step-4 digests** -- the
+pre-existing baseline drift (reacher-correctness) is present on both trees identically, so the cuda
+replay is "integration-vs-branch identical", never "passes the frozen oracle".
 The same-tree cuda frame stack (`replay/gpu/frames_cuda_gpu2106.npz`) is bit-identical to the
 texture-fidelity stack from gpu2108/gpu2113, so MJWarp is stable across nodes in `se-step5`; the
 frozen Step-4 digests (a different venv, job 6176998) remain the soft oracle they were.
@@ -83,13 +93,19 @@ frozen Step-4 digests (a different venv, job 6176998) remain the soft oracle the
 
 | cell | mean abs /255 | exact | within 1 | max | sky exact | floor exact | body exact | > 2 levels |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| DMCCheetahRun | 0.018 | 0.982 | 0.99998 | 65 | 0.980 | 0.9985 | 0.969 | 1.7e-5 |
-| DMCHopperHop | 0.018 | 0.983 | 0.99999 | 66 | 0.981 | 0.998 | 0.974 | 1.2e-5 |
-| DMCWalkerWalk | 0.016 | 0.985 | 0.9997 | 65 | 0.977 | 0.998 | 0.982 | 1.5e-5 |
-| DMCHumanoidStand | 0.004 | 0.997 | 0.99996 | 115 | -- | 0.9986 | 0.945 | 1.6e-5 |
+| DMCCheetahRun | 0.018 | 0.98209 | 0.99998007 | 65 | 0.980 | 0.9985 | 0.969 | 5 px / stack (1.107e-5) |
+| DMCHopperHop | 0.018 | 0.98256 | 0.99998893 | 66 | 0.981 | 0.998 | 0.974 | 3 px (6.64e-6) |
+| DMCWalkerWalk | 0.016 | 0.98511 | 0.99968555 | 65 | 0.977 | 0.998 | 0.982 | 6 px (1.329e-5) |
+| DMCHumanoidStand | 0.004 (no sky pixels in this frame) | 0.99653 | 0.99996457 | 115 | -- | 0.9986 | 0.945 | 7 px (1.550e-5) |
 
-(`replay/cross_backend_vs_fresh_cuda_local.json`, `m1_local/compare_frozen.json`.) The pixels beyond
-two levels are ~1 per frame: silhouette hit/miss flips between two analytic intersectors. **The
+(`replay/cross_backend_vs_fresh_cuda_local.json`, `m1_local/compare_frozen.json` with SIGNED
+statistics: the +1/-1 channel fractions are balanced, 0.4-0.5 % each, mean signed difference
+|0.0008| or less -- no offset remains.) The pixels beyond two levels are 3-7 per 64-frame stack
+(0.047-0.109 per frame): silhouette hit/miss flips between two analytic intersectors. Within-1 is
+>= 0.99968 on every cell (Walker 0.99968555). Ablations: `m1_local_quant_round/` (the ROUNDING
+quantiser, relabelled from the misnamed `m1_local_frac0`: exact 0.09-0.72, +1 channel fractions
+0.16-0.61 -- the one-level offset), `m1_local_frac0/` (float texture weights, `TEX_FRAC_BITS=0`,
+knob now live: exact moves by +-0.001-0.002 with no consistent sign). **The
 declared bound `backend_agreement_exact_frac_min = 0.99`** (`tests/gpu/test_conformance.py::
 test_backend_agreement`) is declared for the Scene2D Triton-vs-torch check and is `not_applicable`
 on these configs; *applied as written* to CPU-vs-MJWarp it would read 0.982-0.997 exact -- **below
@@ -104,7 +120,11 @@ from this spread, alongside the visual-tier declaration.
 Job 6354767 ran the existing machinery unchanged (`examples/fidelity_step4.py --device cpu`,
 `scratch/step4/certify.py`, `scratch/step6/gfxdraw/certify_shard.py`, the frozen Step-3 evaluator).
 Node load was 23-26 throughout (a shared node; the paired reference spread of 1.08-1.13 is inside
-the 1.25 bound, `certifiable: True`).
+the 1.25 bound, `certifiable: True`). `--max-load` was left disabled by policy, recorded in the shard
+(`provenance.max_load_policy`): batch nodes are shared, the reference is PAIRED so load enters the
+ratio symmetrically, and the spread bound is what rejects a node whose load moved the reference.
+These artifacts carry no tree SHA (`git_commit: null`, the rsync has no `.git`); the re-run queued in
+§"Pending Oscar runs" stamps it through `STABLE_ENVS_GIT_COMMIT`/`GIT_COMMIT` (`sync.sh`).
 
 **(i) Gate A under the declared reference (`se-vis311`: mujoco 3.11.0 + dm_control 1.0.44) --
 `replay/certify311_cpu/certification.json`: 3 PASS, 1 FAIL.** Every mandatory check passes on all
@@ -139,7 +159,8 @@ the local table above to every printed digit (mean 0.018 / 0.018 / 0.016 / 0.004
 0.983 / 0.985 / 0.997, within-1 >= 0.999).
 
 **Performance -- the paired Step-3-shaped sweep** (`sweep/after/cpu_1thread_paired_after_node2333.json`,
-labels by the frozen evaluator in `sweep/tiers_after_node2333.json`; 1 torch thread; official =
+labelled by the frozen Step-3 evaluator (`scratch/step3/certify.py`, which the report generator applies
+to the raw shard itself; the ad-hoc `tiers_after_*.json` was dropped); 1 torch thread; official =
 dm_control's own renderer on the same node = Mesa llvmpipe, interleaved between cells):
 
 | cell | ours fps B=1 / best (batch) | official llvmpipe fps, median [min-max] | decode fps/core | **S_cpu** | **cores_cpu** | **tier** |
@@ -153,7 +174,8 @@ Honestly: `S_cpu >= 2` on all four (`CPU_FASTER`), 2.5-6.9x the official rendere
 core; `cores_cpu` 0.006-0.028, i.e. 35-160x short of the decode bar, so `BELOW_G4` caps every row
 and none is `CPU_FAST` -- the outcome the design predicted for M1 (§4.2: 260-800 fps estimated on
 an idle core; 46-188 fps measured on a node at load 24 with `raycast3d`'s unfused cast still on the
-path). Hopper clears `S_cpu >= 5`; the other three would need 1.02-2x, which RAYCAST-5's bounded
+path). The Walker and Humanoid 1024 cells were skipped by the 12 s per-cell budget; the queued re-run
+keeps them (`--max-cell-s 60`, reps recorded). Hopper clears `S_cpu >= 5`; the other three would need 1.02-2x, which RAYCAST-5's bounded
 CPU cast is expected to give without touching `cpu3d.py`. M2 (the fused SIMD kernel) remains
 unauthorized and is the only route to `cores_cpu >= 1`.
 
@@ -165,6 +187,17 @@ unauthorized and is the only route to `cores_cpu >= 1`.
 - Semantic follow-up: none required for the GPU frames; for the CPU frames the DINO tripwire on
   the visual tier (bound 0.25) is the proportionate check if the coordinator wants one -- the CPU
   frames are within 0.02/255 of frames that sit far inside it.
+
+## Pending Oscar runs (queued; SSH to Oscar was denied at authentication when they were due)
+
+1. `scratch/step6/cpu-3d/certify_cpu.sbatch` on the reviewed tree: both certification arms and the
+   cross-backend comparison re-run with `STABLE_ENVS_GIT_COMMIT` stamped, the GL vendor string
+   recorded (`replay/gl_renderer_<node>.json`), the sweep through `certify_shard_cpu3d.py` (label
+   `cpu-3d-paired-after`, `tree_commit` from the env, reps and OMP/MKL env recorded, `--max-cell-s 60`
+   so the Walker/Humanoid 1024 cells are measured, `max_load_policy` recorded).
+2. `scratch/step6/cpu-3d/fetch_feasibility.sbatch`: the span rasteriser with backface culling and the
+   setup/bbox/shade phase breakdown (`full|nocull|setup|bbox` modes), provenance JSON, mesh dumps kept,
+   plus `cost_floor tri` re-timed with triangle generation outside the timed region.
 
 ## SLURM
 

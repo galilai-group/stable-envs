@@ -2270,9 +2270,21 @@ class DMControlTrackCom(_DMCModel):
                   if int(pr["geom_group"][g]) in VISIBLE_GROUPS and alpha[g] > 0
                   and int(m.geom_type[g]) != C3.PLANE]
         flags = dict(self.RENDER_FLAGS)
-        sc = C3.Scene(m, self.CAMERA, int(size), movers, groups=VISIBLE_GROUPS,
-                      enable_specular=bool(flags.get("enable_specular", True)),
-                      use_shadows=True, device=self.device)
+        try:
+            sc = C3.Scene(m, self.CAMERA, int(size), movers, groups=VISIBLE_GROUPS,
+                          enable_specular=bool(flags.get("enable_specular", True)),
+                          use_shadows=True, device=self.device)
+        except ValueError as e:
+            # A cell the CPU backend cannot draw refuses HERE, at construction, naming itself. It
+            # used to render on the GPU behind the caller's back; the policy is an honest raise.
+            # swimmer is the case: its bodies are mjGEOM_ELLIPSOID, which no analytic CPU
+            # intersector in raycast3d covers, and the GPU path remains device='cuda' only.
+            raise ValueError(
+                f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) has no CPU 3-D backend: {e}. "
+                f"device='cuda' draws it through MJWarp; device='cpu' is refused rather than "
+                f"silently served by the GPU") from e
+        if len(cache) >= 4:                        # a scene is one ray grid + one skybox plate per size
+            cache.clear()
         cache[int(size)] = sc
         return sc
 

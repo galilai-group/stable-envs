@@ -29,7 +29,13 @@ What makes it a CPU design rather than a port (measured in
   their projected window through ``raycast3d.cast_nearest`` (the shared intersectors, bit-identical
   to the fused CUDA kernel), never over the full frame.
 * **Shadow rays run only where a shadow can land**: on mover hits, and on floor hits inside the
-  movers' light-space footprint — every other floor pixel is provably unshadowed.
+  movers' light-space footprint. Two PRECONDITIONS make that bound exact, and both are checked
+  rather than assumed: the shadow casters are point/spot lights (a directional caster is refused at
+  construction), and the light sits strictly above the plane in every frame (checked per chunk;
+  then no upward shadow ray can hit the plane's front face, so the plane occludes nothing outside
+  the tested set -- inside it the plane IS tested, as the megakernel tests its whole BVH). A third
+  precondition, the camera outside every mover's bounding sphere (checked per chunk), makes the
+  megakernel's primary-ray backface cull a no-op, and it is applied anyway.
 
 Everything is elementwise per ray or per (ray, primitive), and the per-ray reductions are written
 unrolled for the reason ``raycast3d._mv`` gives, so the frame is batch-size, order and chunk
@@ -55,8 +61,13 @@ from . import raycast3d as R3
 #: mjtGeom codes this backend draws as movers (the ones ``raycast3d`` intersects) and the plane.
 PLANE, SPHERE, CAPSULE, CYLINDER, BOX = 0, 2, 3, 5, 6
 MOVER_KINDS = (SPHERE, CAPSULE, CYLINDER, BOX)
-#: mjtLightType: 0 spot, 1 directional (``mujoco_warp`` reads ``lighttype == 1`` as directional).
-LIGHT_SPOT, LIGHT_DIRECTIONAL = 0, 1
+GEOM_NAMES = {0: "mjGEOM_PLANE", 1: "mjGEOM_HFIELD", 2: "mjGEOM_SPHERE", 3: "mjGEOM_CAPSULE",
+              4: "mjGEOM_ELLIPSOID", 5: "mjGEOM_CYLINDER", 6: "mjGEOM_BOX", 7: "mjGEOM_MESH",
+              8: "mjGEOM_SDF"}
+#: mjtLightType: 0 SPOT, 1 DIRECTIONAL, 2 POINT, 3 IMAGE. The megakernel treats every non-directional
+#: light as positional and applies the spot cone when the model has any spot light; this backend
+#: implements SPOT and DIRECTIONAL and refuses POINT/IMAGE at ``Scene`` construction.
+LIGHT_SPOT, LIGHT_DIRECTIONAL, LIGHT_POINT, LIGHT_IMAGE = 0, 1, 2, 3
 #: MuJoCo's material defaults, which the megakernel uses for a geom without a material.
 DEFAULT_MAT_SPECULAR, DEFAULT_MAT_SHININESS, MAX_SHININESS = 0.5, 0.5, 128.0
 #: ``NO_LIGHT_AMBIENT_FALLBACK``: what MJWarp multiplies a shadowed light's contribution by. Not 0.
@@ -74,6 +85,14 @@ MJ_MINVAL = 1e-15
 #: on the frozen states (examples/results/step6/cpu-3d/m1_local*): rounding leaves 83-91 % of floor
 #: and body pixels exactly one level ABOVE MJWarp's; truncating removes that offset.
 QUANT = "trunc"
+
+#: TEST SWITCHES. ``FORCE_FULL_FRAME`` casts the movers over every ray instead of their projected
+#: window; ``SHADOW_TEST_ALL_HITS`` sends a shadow ray from every lit hit instead of only those inside
+#: the movers' light-space footprint. Both must give the identical frame -- the window and the
+#: footprint are conservative bounds, not approximations -- and ``tests/unit/test_cpu3d.py`` asserts
+#: it byte for byte. Module-level for the reason ``raycast3d.FORCE_BACKEND`` is.
+FORCE_FULL_FRAME: bool = False
+SHADOW_TEST_ALL_HITS: bool = False
 
 #: Frames per compacted pass. Sixteen 84 px frames keep every (B,N) intermediate inside L2 on the
 #: certification core, where an elementwise op costs 0.9 ns/element; at 64 frames it is 2.2 ns.
@@ -98,7 +117,7 @@ def texture_array(m, tex: int) -> np.ndarray:
     return np.repeat(a, 3, -1) if nc == 1 else np.ascontiguousarray(a[..., :3])
 
 
-def bilinear(tex: torch.Tensor, u: torch.Tensor, v: torch.Tensor, frac_bits: int = TEX_FRAC_BITS
+def bilinear(tex: torch.Tensor, u: torch.Tensor, v: torch.Tensor, frac_bits: int | None = None
              ) -> torch.Tensor:
     """Sample ``tex (h,w,3)`` float32 at normalised ``(u, v)`` the way a CUDA texture unit does.
 
@@ -108,6 +127,8 @@ def bilinear(tex: torch.Tensor, u: torch.Tensor, v: torch.Tensor, frac_bits: int
     and ``v`` into [0, 1) themselves, as MJWarp does, so clamping only decides the half-texel at
     the seam.
     """
+    if frac_bits is None:                      # bound at CALL time, so the module switch reaches here
+        frac_bits = TEX_FRAC_BITS
     h, w = int(tex.shape[0]), int(tex.shape[1])
     x = u * w - 0.5
     y = v * h - 0.5
@@ -179,6 +200,7 @@ def sample_skybox(sky: torch.Tensor, face_w: int, d: torch.Tensor) -> torch.Tens
 @dataclass
 class Light:
     kind: int                    # LIGHT_SPOT or LIGHT_DIRECTIONAL
+    active: bool                 # ``light_active``: the megakernel skips an inactive light entirely
     castshadow: bool
     cutoff_deg: float
     exponent: float
@@ -212,6 +234,12 @@ class Scene:
         if mode not in (0, 2):                         # fixed, trackcom: orientation is constant
             raise ValueError(f"cpu3d: camera {camera} has mode {mode}; only a camera whose "
                              f"orientation is a constant of the model (fixed/trackcom) is drawn here")
+        if int(m.cam_projection[camera]) != 0:
+            raise ValueError(f"cpu3d: camera {camera} has cam_projection {int(m.cam_projection[camera])}; "
+                             f"only the perspective projection (0) is drawn")
+        if float(np.abs(np.asarray(m.cam_sensorsize[camera])).max()) != 0.0:
+            raise ValueError(f"cpu3d: camera {camera} has a non-zero cam_sensorsize (intrinsics); the "
+                             f"fovy frustum is the only one implemented")
         self.xmat = np.asarray(d.cam_xmat[camera], np.float64).reshape(3, 3)
         self.fovy = float(m.cam_fovy[camera])
         self.dirs = self._rays(self.xmat, self.fovy, self.res)              # (N,3) float32 world
@@ -251,9 +279,12 @@ class Scene:
         # movers: the geoms whose pose the state decides
         self.movers = [int(g) for g in movers]
         kinds = [int(m.geom_type[g]) for g in self.movers]
-        bad = [k for k in kinds if k not in MOVER_KINDS]
+        bad = sorted({k for k in kinds if k not in MOVER_KINDS})
         if bad:
-            raise ValueError(f"cpu3d: mover geom types {bad} are not analytic primitives")
+            names = [f"{GEOM_NAMES.get(k, k)} (mjtGeom {k})" for k in bad]
+            raise ValueError(
+                f"cpu3d draws the analytic primitives {[GEOM_NAMES[k] for k in MOVER_KINDS]} and this "
+                f"model's movers include {names}; there is no CPU intersector for them")
         self.kinds = kinds
         self.sizes = torch.as_tensor(np.asarray([m.geom_size[g] for g in self.movers], np.float64),
                                      dtype=torch.float32, device=self.device).reshape(-1, 3)
@@ -273,6 +304,16 @@ class Scene:
             spec[i] = float(m.mat_specular[i])
             shin[i] = float(m.mat_shininess[i]) * MAX_SHININESS
             emis[i] = float(m.mat_emission[i])
+        # a textured NON-plane geom: ``sample_texture`` derives no UV for it and samples (0, 0), i.e.
+        # the corner texel of its material's RGB texture modulates the base colour. Reproduced per
+        # material as a constant colour (ones when untextured).
+        tex00 = np.ones((nmat + 1, 3))
+        for i in range(nmat):
+            t = m.mat_texid[i]
+            tex = int(t[1]) if np.ndim(t) else int(t)
+            if tex >= 0:
+                tex00[i] = texture_array(m, tex)[0, 0].astype(np.float64) / 255.0
+        self.mat_tex00 = torch.as_tensor(tex00, dtype=torch.float32, device=self.device)
         self.mat_spec = torch.as_tensor(spec, dtype=torch.float32, device=self.device)
         self.mat_shin = torch.as_tensor(shin, dtype=torch.float32, device=self.device)
         self.mat_emis = torch.as_tensor(emis, dtype=torch.float32, device=self.device)
@@ -290,6 +331,7 @@ class Scene:
         # lights, in model order; the headlight from vis
         self.lights = [Light(kind=int(m.light_type[i]) if hasattr(m, "light_type")
                              else (LIGHT_DIRECTIONAL if bool(m.light_directional[i]) else LIGHT_SPOT),
+                             active=bool(m.light_active[i]) if hasattr(m, "light_active") else True,
                              castshadow=bool(m.light_castshadow[i]),
                              cutoff_deg=float(m.light_cutoff[i]), exponent=float(m.light_exponent[i]),
                              ambient=np.asarray(m.light_ambient[i], np.float64),
@@ -299,6 +341,13 @@ class Scene:
                                  np.asarray(m.light_attenuation[i], np.float32), [1.0, 0.0, 0.0])))
                        for i in range(int(m.nlight))]
         for L in self.lights:
+            if L.kind not in (LIGHT_SPOT, LIGHT_DIRECTIONAL):
+                raise ValueError(f"cpu3d: light type {L.kind} (mjtLightType: 2 POINT, 3 IMAGE) is not "
+                                 f"implemented; SPOT (0) and DIRECTIONAL (1) are")
+            if L.castshadow and L.kind == LIGHT_DIRECTIONAL and self.use_shadows:
+                raise ValueError("cpu3d: a shadow-casting DIRECTIONAL light is not implemented (the "
+                                 "megakernel casts its shadow rays with max_t = 1e8; the footprint "
+                                 "bound here is written for a point light)")
             if not L.attenuation_default:
                 raise ValueError("cpu3d: non-default light attenuation is not implemented "
                                  "(the megakernel folds the default at compile time; add the "
@@ -466,6 +515,21 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
     # ---- everything relative to the camera: the origin is 0 for every env
     xpos_rel = xpos - cam.view(B, 1, 3)
     lrel = light_pos - cam.view(B, 1, 3)                                    # (B,L,3)
+    # PRECONDITIONS (see the module docstring), checked on every chunk rather than assumed:
+    if K:
+        inside = (torch.sqrt(_dot(xpos_rel, xpos_rel)) <= scene.radii.view(1, K)).any()
+        if bool(inside):
+            raise ValueError("cpu3d: the camera is inside a mover's bounding sphere in this batch; the "
+                             "megakernel's backface cull would then change which hit is returned and "
+                             "this backend does not reproduce that case")
+    pn = torch.as_tensor(scene.plane_mat[:, 2], dtype=torch.float32, device=dev)
+    ppos_w = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev)
+    for li, L in enumerate(scene.lights):
+        if L.active and L.castshadow and scene.use_shadows:
+            above = _dot(light_pos[:, li] - ppos_w, pn) > 0
+            if not bool(above.all()):
+                raise ValueError("cpu3d: a shadow-casting light is on or below the plane in this batch; "
+                                 "the footprint bound on shadow rays assumes the light above the plane")
     ppos = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev).view(1, 3) - cam  # (B,3)
     pm = torch.as_tensor(scene.plane_mat, dtype=torch.float32, device=dev)
 
@@ -491,7 +555,7 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
     nrm = n_plane.view(1, 1, 3).expand(B, N, 3).clone()
 
     # ---- the movers, cast only inside their window, through the shared intersectors
-    win = _mover_window(scene, xpos_rel) if K else "empty"
+    win = "empty" if not K else (None if FORCE_FULL_FRAME else _mover_window(scene, xpos_rel))
     if win != "empty":
         if win is None:
             idx = None
@@ -504,6 +568,10 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
             oo = torch.zeros(dd.shape, device=dev)
         tm, nm, im = R3.cast_nearest(scene.kinds, scene.sizes.unsqueeze(0).expand(B, K, 3),
                                      xpos_rel, xmat, oo, dd)
+        # the megakernel's backface cull on primary rays (``enable_backface_culling``): a hit whose
+        # normal faces away from the ray is dropped. With the camera outside every mover (checked
+        # above) no nearest hit is back-facing, so this is exact rather than an approximation.
+        tm = torch.where(_dot(nm, dd) > 0, torch.full_like(tm, INF), tm)
         if idx is None:
             upd = tm < t_best
             t_best = torch.where(upd, tm, t_best)
@@ -535,6 +603,9 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
         mat_idx = scene.prim_mat[pid]                                        # material slot
         own = torch.where(mat_idx == scene.nmat, scene.nmat + 1 + pid, mat_idx)
         base = table[env, own]
+        # textured non-plane geoms: the megakernel's texel (0, 0); ones for the plane and untextured
+        base = base * torch.where((pid > 0).unsqueeze(-1), scene.mat_tex00[mat_idx],
+                                  torch.ones_like(base))
         # texture: the plane's one bilinear tap under MJWarp's PLANE texgen law
         if scene.plane_tex is not None:
             on_plane = pid == 0
@@ -558,23 +629,30 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
         hl_amb, hl_dif, hl_spec = (torch.as_tensor(x, dtype=torch.float32, device=dev) for x in scene.headlight)
         if scene.headlight_active:
             result = result + base * hl_amb
+        elif not scene.lights:
+            result = result + base * SHADOW_VISIBLE            # NO_LIGHT_AMBIENT_FALLBACK, nlight == 0
         for li, L in enumerate(scene.lights):
-            result = result + base * torch.as_tensor(L.ambient, dtype=torch.float32, device=dev)
+            if L.active:
+                result = result + base * torch.as_tensor(L.ambient, dtype=torch.float32, device=dev)
 
         # shadow candidates: mover hits, and plane hits inside the movers' light footprint
         if scene.use_shadows and K and any(L.castshadow for L in scene.lights):
             cand = pid > 0
             for li, L in enumerate(scene.lights):
-                if not L.castshadow or L.kind == LIGHT_DIRECTIONAL:
+                if not L.active or not L.castshadow or L.kind == LIGHT_DIRECTIONAL:
                     continue
                 lo_xy, hi_xy, unb = _light_footprint(scene, xpos_rel, lrel[:, li], cam)
                 pw = (p + cam[env])[:, :2]
                 inside = ((pw >= lo_xy[env]) & (pw <= hi_xy[env])).all(-1) | unb[env]
                 cand = cand | ((pid == 0) & inside)
+            if SHADOW_TEST_ALL_HITS:
+                cand = torch.ones_like(pid, dtype=torch.bool)
         else:
             cand = torch.zeros_like(pid, dtype=torch.bool)
 
         for li, L in enumerate(scene.lights):
+            if not L.active:
+                continue
             if L.kind == LIGHT_DIRECTIONAL:
                 Lv = -light_dir[env, li]
                 Ldir, _ = _normalize(Lv)
@@ -599,6 +677,20 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
                     d_s = Ldir[q]
                     lim = (dist[q] - SHADOW_MAX_T_EPS)
                     blocked = _any_blocking_flat(scene, xpos_rel, xmat, env[q], o_s, d_s, lim)
+                    # the plane occludes too (the megakernel shadows against its whole BVH):
+                    # ``ray_plane`` from the shadow origin, front face only, inside the bounds
+                    o_w = o_s + cam[env[q]]
+                    lz = _dot(d_s, pn)
+                    fr = lz <= -MJ_MINVAL
+                    tp = _dot(ppos_w - o_w, pn) / torch.where(fr, lz, torch.full_like(lz, -1.0))
+                    okp = fr & (tp >= 0) & (tp < lim)
+                    if sx > 0 or sy > 0:
+                        hp = o_w + d_s * tp.unsqueeze(-1) - ppos_w
+                        if sx > 0:
+                            okp = okp & (_dot(hp, pm[:, 0]).abs() <= sx)
+                        if sy > 0:
+                            okp = okp & (_dot(hp, pm[:, 1]).abs() <= sy)
+                    blocked = blocked | okp
                     vis_q = torch.where(blocked, torch.full_like(lim, SHADOW_VISIBLE), torch.ones_like(lim))
                     visible = visible.clone()
                     visible[q] = vis_q

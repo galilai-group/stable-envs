@@ -178,8 +178,9 @@ has to be computed, but it is one plane.
 ### 2.3 What MJWarp computes per pixel (what a CPU path must reproduce)
 
 Read off `stable_envs/render/mjwarp_lightspec.py` (the vendored megakernel; the DMC context runs it
-with `use_textures=True, use_shadows=True, render_skybox=True`, `gl_rounding()` active,
-`enable_specular` default on — swimmer alone turns it off — and no reflection pass because MJWarp
+with `use_textures=True, use_shadows=True, render_skybox=True`, `enable_specular` default on
+(and, as §11 found, the TRUNCATING quantiser: `gl_rounding()` covers the context build and the
+warm-up but not the captured graph) — swimmer alone turns it off — and no reflection pass because MJWarp
 has none) and off `characterize/mujoco_warp_sampling_source.txt` (job 6345025, mujoco_warp 3.12.0,
 byte-identical to 3.11.0 on these functions per texture-fidelity):
 
@@ -199,7 +200,7 @@ shade    result = base·headlight_ambient(.4)                                  [
                     shadow: any-hit from p + 1e-4·n toward L, max_t = dist − 1e-3 → hit ⇒ visible = 0.3   (NO_LIGHT_AMBIENT_FALLBACK, not 0)
                     w = att·visible;  result += base·(diffuse·ndotl·w) + specular·mat_spec·max(0, n·H)^(128·mat_shininess)·w,  H = normalize(L + view)
          headlight: directional L = −cam_fwd (toward the camera), no shadow, diffuse .8, specular .1, same specular law
-         clamp to [0,1], ×255, round-to-nearest (gl_rounding), pack; then the BGRA→RGB swap in the env
+         clamp to [0,1], ×255, TRUNCATE (C int(); the captured graph is outside gl_rounding, §11), pack; then the BGRA→RGB swap in the env
 ```
 
 Two MJWarp-specific details a CPU path has to copy rather than "do right": the shadow term is
@@ -366,7 +367,7 @@ from 31,720 triangles per frame (plus 2 boxes and a sphere):
 
 | architecture | per-frame cost, measured floor | fps | vs `S_cpu ≥ 5` (229) | vs `cores ≥ 1` (815) |
 |---|---|---|---|---|
-| (b) CPU z-buffer raster of the 31.7 k triangles, scalar C | 31.7 k × 600–800 ns (the robot's triangles are 1–3 px at 480 px: 24 k covered pixels / 31.7 k tris) = **19–25 ms** | **40–50** | ✗ (≈ `CPU_PARITY`, ties llvmpipe at 46) | ✗ by 16–20× |
+| (b) CPU z-buffer raster of the 31.7 k triangles, scalar C | Phase-1 estimate from the synthetic probe: 31.7 k × 600–800 ns = 19–25 ms. **Measured on the real mesh set (§12, CPU3D-FETCH-1): 277–327 ns/triangle, 8.8–10.4 ms, the triangles are 0.5 px across** | **97–114 measured** | ✗ (`CPU_FASTER`/`PARITY` band, 1.8–2.9× llvmpipe) | ✗ by 7–9× un-culled (~3.5–4.5× architecture-independent, §12) |
 | (b) the same, with a well-vectorised binning rasteriser (3–5× over scalar; not measured) | 4–8 ms | 125–250 | borderline | ✗ by 3–6× |
 | (a) analytic/BVH ray cast restricted to the movers' window — the bbox is **89 % of the frame** (the robot spans it), per-mesh bboxes ~10–15 % | 40–60 k rays × 300–500 ns BVH traversal (literature-class number, not measured here) = 12–30 ms | 30–80 | ✗ | ✗ by 10–25× |
 | (g) Mesa llvmpipe itself as the mover rasteriser (render movers only over the plate) | the official renderer's own 21.9 ms/frame; hiding 91 % of the geometry saves little because llvmpipe's cost here is per-frame overhead + fill, not triangle count (its 84 px and 480 px DMC numbers are within 20 %) | ~45 | ✗ (`CPU_PARITY` by construction) | ✗ by 18× |
@@ -675,20 +676,21 @@ round-to-nearest the CPU frames sit exactly one level above MJWarp's on 83–91 
 pixels (floor exact 0.14, within-1 1.00); with truncation the offset vanishes (floor exact 0.998).
 The CPU backend therefore truncates by default, to draw the picture as certified; `QUANT="round"`
 is one constant away for the day the GPU capture is moved inside the block (which would change the
-four cuda digests and is not this workstream's edit). The 8-bit texture-weight emulation made no
-measurable difference on these textures (2-colour checker, gradient sky) and is kept switchable.
+four cuda digests and is not this workstream's edit). The 8-bit texture-weight emulation (`TEX_FRAC_BITS`, now bound at call time) moves exactness by
+±0.001–0.002 per cell with no consistent sign (`m1_local_frac0/`: float weights are better on Walker and
+Humanoid, 8-bit on Cheetah and Hopper), so it is kept switchable at its CUDA-faithful default of 8.
 
 **Cross-backend agreement on the 64 frozen states per cell, local (Apple M5, 1 thread), against
 `localize312/frames/frozen_ours` (MJWarp, `se-step5`, RTX 3090):**
 
 | cell | mean \|d\| /255 | exact | within 1 | max | sky exact / w1 | floor exact / w1 | body exact / w1 | pixels > 2 levels | CPU vs official (mean / w8 / ssim) | MJWarp vs official |
 |---|---:|---:|---:|---:|---|---|---|---:|---|---|
-| DMCCheetahRun | 0.018 | 0.982 | 0.99994 | 65 | .980 / .99999 | .9985 / 1.0 | .969 / .9997 | 1.7e-5 | 6.513 / 0.797 / 0.583 | 6.512 / 0.797 / 0.583 |
-| DMCHopperHop | 0.018 | 0.983 | 0.99995 | 66 | .981 / .99999 | .998 / .99998 | .974 / .9999 | 1.2e-5 | 6.205 / 0.809 / 0.551 | 6.205 / 0.809 / 0.551 |
-| DMCWalkerWalk | 0.016 | 0.985 | 0.9995 | 65 | .977 / .9995 | .998 / .99999 | .982 / .9999 | 1.5e-5 | 15.562 / 0.565 / 0.559 | 15.562 / 0.565 / 0.559 |
-| DMCHumanoidStand | 0.004 | 0.997 | 0.9998 | 115 | — | .9986 / .99998 | .945 / .9996 | 1.6e-5 | 6.291 / 0.739 / 0.869 | 6.291 / 0.739 / 0.869 |
+| DMCCheetahRun | 0.018 | 0.98209 | 0.99998007 | 65 | .980 / .99999 | .9985 / 1.0 | .969 / .9997 | 5 px / stack = 1.107e-5 | 6.513 / 0.797 / 0.583 | 6.512 / 0.797 / 0.583 |
+| DMCHopperHop | 0.018 | 0.98256 | 0.99998893 | 66 | .981 / .99999 | .998 / .99998 | .974 / .9999 | 3 px = 6.64e-6 | 6.205 / 0.809 / 0.551 | 6.205 / 0.809 / 0.551 |
+| DMCWalkerWalk | 0.016 | 0.98511 | 0.99968555 | 65 | .977 / .9995 | .998 / .99999 | .982 / .9999 | 6 px = 1.329e-5 | 15.562 / 0.565 / 0.559 | 15.562 / 0.565 / 0.559 |
+| DMCHumanoidStand | 0.004 | 0.99653 | 0.99996457 | 115 | — (no sky pixels in this frame, hence the lower mean) | .9986 / .99998 | .945 / .9996 | 7 px = 1.550e-5 | 6.291 / 0.739 / 0.869 | 6.291 / 0.739 / 0.869 |
 
-The pixels beyond two levels are ~1 per frame: silhouette rays that `raycast3d`'s intersector and
+The pixels beyond two levels are 3–7 per 64-frame stack (0.047–0.109 per frame; `m1_local/compare_frozen.json`, signed statistics included): silhouette rays that `raycast3d`'s intersector and
 MJWarp's resolve on opposite sides of a hit/miss decision (max 65–115 is a body-vs-sky or
 floor-edge flip), which is the residual the design predicted. The declared-metric distance of the
 CPU frames from the official reference is MJWarp's to three decimals on every cell, i.e. the CPU
@@ -714,3 +716,24 @@ GPU path too; on the bound's own protocol the CPU path reproduces every recorded
 after; and a span rasteriser over the real 31,720-triangle Fetch set measures 277-327 ns/triangle
 (97-114 fps at 480 px) against a `CPU_FAST` bar of 36-41 ns/triangle -- the Fetch blocker stands on
 the real meshes.
+
+
+## 13. Coverage of `DMControlTrackCom` on CPU, and what `Scene.__init__` refuses
+
+| cell | CPU | why |
+|---|---|---|
+| DMCCheetahRun, DMCHopperHop, DMCWalkerWalk, DMCHumanoidStand | **yes** (`cpu3d`) | capsules/spheres over one plane, spot + headlight |
+| DMCSwimmerSwimmer6 (fifth trackcom cell, outside the frozen 49) | **refused at construction** with `ValueError: DMCSwimmerSwimmer6 (swimmer-swimmer6) has no CPU 3-D backend: … movers include mjGEOM_ELLIPSOID …` | its bodies are ellipsoids, for which `raycast3d` has no intersector; it used to render on the GPU behind `device="cpu"` — the policy is an honest raise (`test_swimmer_is_refused_on_cpu_by_name_and_geom_type`) |
+
+Everything the megakernel does that this backend does not is now either implemented or refused at
+`Scene.__init__`, per the reviewer's list: camera mode (fixed/trackcom only), `cam_projection != 0`
+and non-zero `cam_sensorsize` refused; light types POINT/IMAGE refused (enum: SPOT 0, DIRECTIONAL 1,
+POINT 2, IMAGE 3), a shadow-casting DIRECTIONAL light refused, non-default attenuation refused;
+`light_active` read where upstream gates on it; the `nlight == 0` ambient fallback (0.3) implemented;
+a textured non-plane geom modulated by its texture's (0,0) texel as upstream samples it; the plane
+included among the shadow occluders on the tested set; the primary-ray backface cull applied. Two
+shadow preconditions are checked per chunk and raise if violated: the shadow-casting light is
+strictly above the plane (so no upward shadow ray can hit the plane's front face outside the tested
+set) and the camera is outside every mover's bounding sphere (so no nearest hit is back-facing and
+the cull is exact). All of these are unreachable on the four certified cells, which is why the
+certified numbers did not move when they were added (`m1_local/`, regenerated).

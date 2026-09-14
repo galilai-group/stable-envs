@@ -60,12 +60,56 @@ def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
     assert f.shape == (2, env.size, env.size, 3) and f.dtype == torch.uint8 and f.device.type == "cpu"
 
 
-def test_unknown_device_raises_rather_than_falling_back(se):
+@pytest.mark.parametrize("device", ["mps", "meta"])
+def test_unknown_device_raises_rather_than_falling_back(se, device):
+    """No silent fallback: a device with no 3-D backend is refused by name, whether torch can host
+    tensors on it (mps on this Mac, meta anywhere) or not."""
     cls = se.REGISTRY["DMCHopperHop"]
-    with pytest.raises((ValueError, RuntimeError)) as e:
-        cls(batch=1, device="meta")
-    # either our own message or torch refusing the device before we get there -- never a CUDA render
-    assert "no 3-D backend" in str(e.value) or "meta" in str(e.value)
+    if device == "mps" and not torch.backends.mps.is_available():
+        pytest.skip("no mps device on this host")
+    with pytest.raises((ValueError, RuntimeError, NotImplementedError)) as e:
+        cls(batch=1, device=device)
+    msg = str(e.value)
+    assert "no 3-D backend" in msg or device in msg
+
+
+def test_swimmer_is_refused_on_cpu_by_name_and_geom_type(se):
+    """DMCSwimmerSwimmer6's bodies are mjGEOM_ELLIPSOID, which no CPU intersector covers. It used to
+    render on the GPU behind a device='cpu' request; now it raises, naming the env and the geom."""
+    if "DMCSwimmerSwimmer6" not in se.REGISTRY:
+        pytest.skip("swimmer not registered")
+    with pytest.raises(ValueError) as e:
+        se.REGISTRY["DMCSwimmerSwimmer6"](batch=1, device="cpu")
+    msg = str(e.value)
+    assert "DMCSwimmerSwimmer6" in msg and "ELLIPSOID" in msg and "no CPU 3-D backend" in msg
+
+
+def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
+    env = se.make("DMCCheetahRun", batch=2, device="cpu")
+    env.render(_states("DMCCheetahRun", 2))
+    assert "warp" not in sys.modules and "mujoco_warp" not in sys.modules
+
+
+@pytest.mark.parametrize("cell", CELLS)
+@pytest.mark.parametrize("size", [42, 84, 168])
+def test_window_and_footprint_bounds_are_exact(se, cell, size):
+    """The mover window and the shadow footprint are conservative BOUNDS: casting every ray and
+    shadow-testing every lit hit must give the identical frame, byte for byte, at every size."""
+    from stable_envs.render import cpu3d
+    st = _states(cell, 6)
+    env = se.make(cell, batch=6, device="cpu")
+    ref = env.render(st, size=size).numpy()
+    try:
+        cpu3d.FORCE_FULL_FRAME = True
+        full = env.render(st, size=size).numpy()
+        cpu3d.FORCE_FULL_FRAME = False
+        cpu3d.SHADOW_TEST_ALL_HITS = True
+        allhits = env.render(st, size=size).numpy()
+    finally:
+        cpu3d.FORCE_FULL_FRAME = False
+        cpu3d.SHADOW_TEST_ALL_HITS = False
+    assert np.array_equal(full, ref), "window cast differs from the full-frame cast"
+    assert np.array_equal(allhits, ref), "footprint-bounded shadows differ from testing every hit"
 
 
 @pytest.mark.parametrize("cell", CELLS)
@@ -83,6 +127,15 @@ def test_batch_chunk_and_order_invariance(se, cell):
     perm = np.random.default_rng(0).permutation(n)
     c = env.render(st[perm]).numpy()
     assert np.array_equal(c, a[perm]), "frame depends on batch order"
+    # the same three properties with a DIFFERENT appearance per row (materials and light per env)
+    sty = env.sample_style(n, rng=np.random.default_rng(1))
+    d1 = env.render(st, style=sty).numpy()
+    assert np.array_equal(d1, env.render(st, style=sty).numpy())
+    for i in (0, cpu3d.CPU_CHUNK, n - 1):
+        assert np.array_equal(env.render(st[i:i + 1], style=sty[i:i + 1]).numpy()[0], d1[i]), \
+            f"frame {i} with a per-row style depends on its batch"
+    assert np.array_equal(env.render(st[perm], style=sty[perm]).numpy(), d1[perm])
+    assert not np.array_equal(d1, a), "the per-row styles should have changed the picture"
 
 
 @pytest.mark.parametrize("cell", CELLS)

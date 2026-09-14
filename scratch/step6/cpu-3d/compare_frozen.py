@@ -21,12 +21,20 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 def stats(a: np.ndarray, b: np.ndarray, mask: np.ndarray) -> dict:
-    d = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1)[mask]
+    """Unsigned agreement, plus the SIGNED per-channel difference ``a - b`` so a systematic offset
+    (one renderer a level above the other) is visible as such rather than hidden by ``abs``."""
+    sd = (a.astype(np.int16) - b.astype(np.int16))[mask]          # (px, 3) signed
+    d = np.abs(sd).max(-1)
     if d.size == 0:
         return {"px": 0}
+    ch = sd.reshape(-1)
     return {"px": int(d.size), "mean_abs": float(d.mean()), "exact": float((d == 0).mean()),
             "within1": float((d <= 1).mean()), "within2": float((d <= 2).mean()),
-            "within8": float((d <= 8).mean()), "max": int(d.max())}
+            "within8": float((d <= 8).mean()), "max": int(d.max()),
+            "gt2_px": int((d > 2).sum()),
+            "signed": {"mean": float(ch.mean()), "frac_minus1": float((ch == -1).mean()),
+                       "frac_zero": float((ch == 0).mean()), "frac_plus1": float((ch == 1).mean()),
+                       "frac_below_minus1": float((ch < -1).mean()), "frac_above_plus1": float((ch > 1).mean())}}
 
 
 def main():
@@ -36,6 +44,7 @@ def main():
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--n", type=int, default=64)
     ap.add_argument("--frac-bits", type=int, default=None)
+    ap.add_argument("--quant", default=None, choices=[None, "trunc", "round"])
     ap.add_argument("--sheet", action="store_true")
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
@@ -46,6 +55,8 @@ def main():
     from stable_envs.testing.conformance import pixel_agreement, ssim
     if a.frac_bits is not None:
         cpu3d.TEX_FRAC_BITS = a.frac_bits
+    if a.quant is not None:
+        cpu3d.QUANT = a.quant
     res = {}
     for cfg in a.configs.split(","):
         z = np.load(a.frames_dir / f"{cfg}.npz")
@@ -67,7 +78,8 @@ def main():
              "mjwarp_vs_official": {"all": stats(ours_gpu, off, np.ones_like(sky))},
              "declared_metric_cpu_vs_official": {**pixel_agreement(cpu, off), "ssim": ssim(cpu, off)},
              "declared_metric_mjwarp_vs_official": {**pixel_agreement(ours_gpu, off), "ssim": ssim(ours_gpu, off)},
-             "frac_bits": cpu3d.TEX_FRAC_BITS}
+             "frac_bits": cpu3d.TEX_FRAC_BITS, "quant": cpu3d.QUANT,
+             "gt2_px_per_stack": int((np.abs(cpu.astype(np.int16) - ours_gpu.astype(np.int16)).max(-1) > 2).sum())}
         # which pixels disagree with MJWarp by more than a level, by surface (is it structure or a level?)
         d = np.abs(cpu.astype(np.int16) - ours_gpu.astype(np.int16)).max(-1)
         r["vs_mjwarp"]["gt2_share_by_surface"] = {"sky": float((d[sky] > 2).mean()) if sky.any() else None,
