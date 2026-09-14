@@ -360,10 +360,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-gfxdraw
   oscar_copy: $SCR/se6/gfxdraw
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: 5b54fa562972d2c30925a00c149f814ac6c0dbd1 (merged)
+  head_sha: 0410fc38d2d8d75d2c3adde4c62918966393b550 (merged; workstream closed)
   agent_model: opus
   wave: wave2
-  status: merged
+  status: merged (closed)
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU'
   affected_configs:
@@ -417,6 +417,8 @@ workstreams:
   - 6353689
   - 6353690
   - 6353993
+  - 6356085
+  - 6356102
   notes:
   - wave2 spawned 2026-09-13T18:25
   - 'PATCH 2026-09-13 late. node2338 S_cpu ratios unusable (load avg 47) -> paired re-measure on node1829. $SCR/se6/baseline still carries the profile_note NameError: run the branch harness against the
@@ -440,6 +442,10 @@ workstreams:
     row.'
   - Paired CPU shard renamed as an after leg so the page labels it (CPU_PARITY x4, Acrobot CPU_REGRESSION 0.96; cores_cpu absent). Exclusive-node certify_shard attempt job 6353993 queued (~4h; 632/12,928
     CPUs idle, no whole node free); accept only spread <= 1.25x, else record partition cannot produce a trustworthy 1-thread shard.
+  - 'CPU decode-bar campaign closed 2026-09-15: attempts on node2339 (spread 4.5-10x), node2407 (load 133, 1.62x pre-flight), node2422 (best node in partition, load/core 0.29, 1.65x pre-flight) all rejected
+    at the 1.25x bar; --exclusive never ran (QOSMaxCpuPerUserLimit: normal QOS cpu=64 vs 48/192-core nodes). S_cpu is certifiable (paired); cores_cpu unasserted (0.22-0.50 on three other nodes, BELOW_G4
+    not in doubt); no borrowed decode bar. Evidence: characterize/cpu_shard_attempts.json, sweep/rejected_no_quiet_node/README.md. Pre-flight reference-spread check (12 timings before the sweep) is the
+    right instrument on shared nodes.'
 - workstream: cpu-3d
   brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
   branch: step6/cpu-3d
@@ -583,6 +589,10 @@ decisions:
   decision: 'CPU 3-D backend work APPROVED. Policy: backend implementation may differ by device, renderer semantics may not; CPU backend certified against the same frozen contract; no MJWarp-on-CPU for
     symmetry; one shared CPU-native backend for the MJWarp-only scenes (Fetch if feasible), no bespoke per-env approximations; device="cpu" must be a genuine CPU backend, never silent CUDA fallback; minimize
     coupling toward a later Scene3D extraction without blocking Step 6; Fetch CPU feasibility to be quantified before a large implementation.'
+- date: '2026-09-15'
+  by: coordinator
+  decision: Certification partition cannot provide a sole-tenant CPU node under the normal QOS (cpu=64 cap vs whole-node exclusive charge); 1-thread cores_cpu shards with a same-node decode bar are not
+    obtainable there for gfxdraw. S_cpu rows stand; cores_cpu left unasserted rather than borrowed. Needs a QOS with a node-sized CPU cap or free 48-core nodes (escalate to Sami / Step 8).
 integration_verification:
   branch: step6/integration-verify (merged)
   head: bcd2e44
