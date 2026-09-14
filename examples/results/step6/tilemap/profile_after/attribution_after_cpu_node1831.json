@@ -1,0 +1,483 @@
+{
+  "what": "craftax tile/atlas phase attribution",
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/tilemap/stable_envs/__init__.py",
+  "label": "after",
+  "device": "cpu",
+  "size": 16,
+  "threads": 1,
+  "host": "node1831.oscar.ccv.brown.edu",
+  "cpu": "x86_64",
+  "gpu": null,
+  "slurm_job": "6349384",
+  "load_average": [
+    38.68,
+    36.16,
+    33.5
+  ],
+  "caches": "L1d cache:                               1.5 MiB (48 instances); L1i cache:                               1.5 MiB (48 instances); L2 cache:                                48 MiB (48 instances); L3 cache:                                71.5 MiB (2 instances)",
+  "torch": "2.14.0+cu126",
+  "pipeline": "atlas",
+  "states": "/oscar/scratch/sboughan/se6/tilemap/examples/results/step4/states/CraftaxClassic.npz",
+  "batches": {
+    "1": {
+      "batch": 1,
+      "stages": {
+        "decode (atlas indexing)": {
+          "ms_median": 0.05401088856160641,
+          "ms_min": 0.05328492261469364,
+          "ms_max": 0.05719205364584923,
+          "ms_stdev": 0.0008994269851992036
+        },
+        "blend: tile gather": {
+          "ms_median": 0.04836916923522949,
+          "ms_min": 0.04816381260752678,
+          "ms_max": 0.0633911695331335,
+          "ms_stdev": 0.004880087497552081
+        },
+        "blend: gather + layout": {
+          "ms_median": 0.06377906538546085,
+          "ms_min": 0.06331503391265869,
+          "ms_max": 0.0710710883140564,
+          "ms_stdev": 0.0018379498059402368
+        },
+        "blend: player composite": {
+          "ms_median": 0.05074217915534973,
+          "ms_min": 0.05037500523030758,
+          "ms_max": 0.06384588778018951,
+          "ms_stdev": 0.003295114947160572
+        },
+        "blend: mob alpha layer": {
+          "ms_median": 0.08317106403410435,
+          "ms_min": 0.08292798884212971,
+          "ms_max": 0.09536999277770519,
+          "ms_stdev": 0.003322251696462237
+        },
+        "blend: mob composite": {
+          "ms_median": 0.1409510150551796,
+          "ms_min": 0.1392299309372902,
+          "ms_max": 0.15693018212914467,
+          "ms_stdev": 0.004648332779521753
+        },
+        "blend: channel gain (recolour)": {
+          "ms_median": 0.06327102892100811,
+          "ms_min": 0.054241856560111046,
+          "ms_max": 0.06919517181813717,
+          "ms_stdev": 0.00467992318037643
+        },
+        "blend: output conversion": {
+          "ms_median": 0.044530024752020836,
+          "ms_min": 0.044001033529639244,
+          "ms_max": 0.054066069424152374,
+          "ms_stdev": 0.0024028196453478486
+        },
+        "blend: whole pipeline": {
+          "ms_median": 0.5041111726313829,
+          "ms_min": 0.49833906814455986,
+          "ms_max": 0.5104748997837305,
+          "ms_stdev": 0.0037737091703866727
+        },
+        "allocation: empty uint8 frame": {
+          "ms_median": 0.0027169007807970047,
+          "ms_min": 0.0026728957891464233,
+          "ms_max": 0.0032100360840559006,
+          "ms_stdev": 0.0001359609612256967
+        },
+        "allocation: empty float frame": {
+          "ms_median": 0.002674991264939308,
+          "ms_min": 0.0026060733944177628,
+          "ms_max": 0.0029259826987981796,
+          "ms_stdev": 9.560252919645009e-05
+        },
+        "atlas: index build": {
+          "ms_median": 0.09240000508725643,
+          "ms_min": 0.09185890667140484,
+          "ms_max": 0.1196970697492361,
+          "ms_stdev": 0.006901215333822813
+        },
+        "atlas: gather into uint8 output": {
+          "ms_median": 0.008833128958940506,
+          "ms_min": 0.008732080459594727,
+          "ms_max": 0.01589907333254814,
+          "ms_stdev": 0.001753550703607715
+        },
+        "atlas: bake (once per device+size)": {
+          "ms_median": 0.4705921746790409,
+          "ms_min": 0.4545999690890312,
+          "ms_max": 0.5086208693683147,
+          "ms_stdev": 0.02265732632649472
+        },
+        "atlas: gain path (whole render)": {
+          "ms_median": 0.5677449516952038,
+          "ms_min": 0.5574638489633799,
+          "ms_max": 0.592334195971489,
+          "ms_stdev": 0.008071341506698419
+        }
+      },
+      "render_official": {
+        "ms_median": 0.32952590845525265,
+        "ms_min": 0.31976797617971897,
+        "ms_max": 0.35789795219898224,
+        "ms_stdev": 0.010053672184079168
+      },
+      "fps_official": 3034.662751368435,
+      "set_state": {
+        "ms_median": 0.03947410732507706,
+        "ms_min": 0.03893580287694931,
+        "ms_max": 0.05639204755425453,
+        "ms_stdev": 0.004249345220388652
+      },
+      "bytes": {
+        "frame_uint8": 48384,
+        "frame_float32": 193536,
+        "blend_float_temporaries_per_frame": 1935360,
+        "blend_float_temporaries_per_batch": 1935360,
+        "atlas_table_uint8": 522240
+      }
+    },
+    "16": {
+      "batch": 16,
+      "stages": {
+        "decode (atlas indexing)": {
+          "ms_median": 0.0624009408056736,
+          "ms_min": 0.061928993090987206,
+          "ms_max": 0.06990088149905205,
+          "ms_stdev": 0.0019171649625286476
+        },
+        "blend: tile gather": {
+          "ms_median": 0.6954760756343603,
+          "ms_min": 0.6903600879013538,
+          "ms_max": 0.7028800901025534,
+          "ms_stdev": 0.0032350631245289013
+        },
+        "blend: gather + layout": {
+          "ms_median": 0.959472032263875,
+          "ms_min": 0.9507841896265745,
+          "ms_max": 0.9972061961889267,
+          "ms_stdev": 0.011511056208979825
+        },
+        "blend: player composite": {
+          "ms_median": 0.08755992166697979,
+          "ms_min": 0.08579296991229057,
+          "ms_max": 0.09654508903622627,
+          "ms_stdev": 0.0031181322329748512
+        },
+        "blend: mob alpha layer": {
+          "ms_median": 1.5705828554928303,
+          "ms_min": 1.4977927785366774,
+          "ms_max": 1.6131801530718803,
+          "ms_stdev": 0.0324462764545294
+        },
+        "blend: mob composite": {
+          "ms_median": 2.8757539112120867,
+          "ms_min": 2.716552000492811,
+          "ms_max": 3.134810132905841,
+          "ms_stdev": 0.14078847715359472
+        },
+        "blend: channel gain (recolour)": {
+          "ms_median": 0.8263599593192339,
+          "ms_min": 0.8208369836211205,
+          "ms_max": 0.8343569934368134,
+          "ms_stdev": 0.0033720955355048517
+        },
+        "blend: output conversion": {
+          "ms_median": 0.7883771322667599,
+          "ms_min": 0.7816138677299023,
+          "ms_max": 0.7967681158334017,
+          "ms_stdev": 0.003957674134492331
+        },
+        "blend: whole pipeline": {
+          "ms_median": 8.204720914363861,
+          "ms_min": 7.689750054851174,
+          "ms_max": 8.786662947386503,
+          "ms_stdev": 0.28590140024499416
+        },
+        "allocation: empty uint8 frame": {
+          "ms_median": 0.002727145329117775,
+          "ms_min": 0.002683838829398155,
+          "ms_max": 0.003277091309428215,
+          "ms_stdev": 0.00015721110500458712
+        },
+        "allocation: empty float frame": {
+          "ms_median": 0.0022819731384515762,
+          "ms_min": 0.0022319145500659943,
+          "ms_max": 0.002624932676553726,
+          "ms_stdev": 0.00011205678309222526
+        },
+        "atlas: index build": {
+          "ms_median": 0.1422239001840353,
+          "ms_min": 0.13885297812521458,
+          "ms_max": 0.15242607332766056,
+          "ms_stdev": 0.00400828912658796
+        },
+        "atlas: gather into uint8 output": {
+          "ms_median": 0.061135971918702126,
+          "ms_min": 0.060613034293055534,
+          "ms_max": 0.09388895705342293,
+          "ms_stdev": 0.008660338433101586
+        },
+        "atlas: bake (once per device+size)": {
+          "ms_median": 0.5754081066697836,
+          "ms_min": 0.569561030715704,
+          "ms_max": 0.6662029772996902,
+          "ms_stdev": 0.04424372230354183
+        },
+        "atlas: gain path (whole render)": {
+          "ms_median": 2.384511986747384,
+          "ms_min": 2.3045139387249947,
+          "ms_max": 2.5835030246526003,
+          "ms_stdev": 0.08549314258908393
+        }
+      },
+      "render_official": {
+        "ms_median": 0.4881939385086298,
+        "ms_min": 0.4787610378116369,
+        "ms_max": 0.5031551700085402,
+        "ms_stdev": 0.006725366858886744
+      },
+      "fps_official": 32773.86042292528,
+      "set_state": {
+        "ms_median": 0.04700501449406147,
+        "ms_min": 0.045419903472065926,
+        "ms_max": 0.05827401764690876,
+        "ms_stdev": 0.004498146696508914
+      },
+      "bytes": {
+        "frame_uint8": 48384,
+        "frame_float32": 193536,
+        "blend_float_temporaries_per_frame": 1935360,
+        "blend_float_temporaries_per_batch": 30965760,
+        "atlas_table_uint8": 522240
+      }
+    },
+    "64": {
+      "batch": 64,
+      "stages": {
+        "decode (atlas indexing)": {
+          "ms_median": 0.08480693213641644,
+          "ms_min": 0.08426513522863388,
+          "ms_max": 0.09385193698108196,
+          "ms_stdev": 0.00228699192529673
+        },
+        "blend: tile gather": {
+          "ms_median": 2.8462731279432774,
+          "ms_min": 2.8320318087935448,
+          "ms_max": 2.8864711057394743,
+          "ms_stdev": 0.01547512038107379
+        },
+        "blend: gather + layout": {
+          "ms_median": 5.239791003987193,
+          "ms_min": 5.127228097990155,
+          "ms_max": 5.309461848810315,
+          "ms_stdev": 0.044129023319205075
+        },
+        "blend: player composite": {
+          "ms_median": 0.22949115373194218,
+          "ms_min": 0.2273439895361662,
+          "ms_max": 0.24826801382005215,
+          "ms_stdev": 0.0055420196419212935
+        },
+        "blend: mob alpha layer": {
+          "ms_median": 6.889192154631019,
+          "ms_min": 6.6272178664803505,
+          "ms_max": 7.314243819564581,
+          "ms_stdev": 0.20057619338331997
+        },
+        "blend: mob composite": {
+          "ms_median": 16.270952997729182,
+          "ms_min": 15.287752961739898,
+          "ms_max": 17.602997133508325,
+          "ms_stdev": 0.5540731727228194
+        },
+        "blend: channel gain (recolour)": {
+          "ms_median": 3.700770204886794,
+          "ms_min": 3.6410579923540354,
+          "ms_max": 5.412769038230181,
+          "ms_stdev": 0.4303381489163265
+        },
+        "blend: output conversion": {
+          "ms_median": 3.472265787422657,
+          "ms_min": 3.325000870972872,
+          "ms_max": 4.07628295943141,
+          "ms_stdev": 0.1852443944249737
+        },
+        "blend: whole pipeline": {
+          "ms_median": 38.24562509544194,
+          "ms_min": 37.349452963098884,
+          "ms_max": 44.24362094141543,
+          "ms_stdev": 2.0553836920068767
+        },
+        "allocation: empty uint8 frame": {
+          "ms_median": 0.0023490283638238907,
+          "ms_min": 0.002325046807527542,
+          "ms_max": 0.0029799994081258774,
+          "ms_stdev": 0.00015725802160756856
+        },
+        "allocation: empty float frame": {
+          "ms_median": 0.002446817234158516,
+          "ms_min": 0.002323184162378311,
+          "ms_max": 0.00930088572204113,
+          "ms_stdev": 0.00171025661458133
+        },
+        "atlas: index build": {
+          "ms_median": 0.2284720540046692,
+          "ms_min": 0.22070412524044514,
+          "ms_max": 0.23716595023870468,
+          "ms_stdev": 0.005334881908804774
+        },
+        "atlas: gather into uint8 output": {
+          "ms_median": 0.2241909969598055,
+          "ms_min": 0.22390298545360565,
+          "ms_max": 0.2316639292985201,
+          "ms_stdev": 0.0026791072321065102
+        },
+        "atlas: bake (once per device+size)": {
+          "ms_median": 0.47007808461785316,
+          "ms_min": 0.4538060165941715,
+          "ms_max": 0.5298960022628307,
+          "ms_stdev": 0.03271535383374704
+        },
+        "atlas: gain path (whole render)": {
+          "ms_median": 9.794455952942371,
+          "ms_min": 8.984952932223678,
+          "ms_max": 10.43392182327807,
+          "ms_stdev": 0.42513001117795485
+        }
+      },
+      "render_official": {
+        "ms_median": 0.843157060444355,
+        "ms_min": 0.8218900766223669,
+        "ms_max": 0.925509026274085,
+        "ms_stdev": 0.025864685645192682
+      },
+      "fps_official": 75905.19370883421,
+      "set_state": {
+        "ms_median": 0.061372993513941765,
+        "ms_min": 0.06002490408718586,
+        "ms_max": 0.06693601608276367,
+        "ms_stdev": 0.0019213320519799802
+      },
+      "bytes": {
+        "frame_uint8": 48384,
+        "frame_float32": 193536,
+        "blend_float_temporaries_per_frame": 1935360,
+        "blend_float_temporaries_per_batch": 123863040,
+        "atlas_table_uint8": 522240
+      }
+    },
+    "256": {
+      "batch": 256,
+      "stages": {
+        "decode (atlas indexing)": {
+          "ms_median": 0.17346395179629326,
+          "ms_min": 0.17235800623893738,
+          "ms_max": 0.18172687850892544,
+          "ms_stdev": 0.0030155715435585865
+        },
+        "blend: tile gather": {
+          "ms_median": 18.902945099398494,
+          "ms_min": 17.965595005080104,
+          "ms_max": 19.390532048419118,
+          "ms_stdev": 0.4120409585458952
+        },
+        "blend: gather + layout": {
+          "ms_median": 34.450900042429566,
+          "ms_min": 33.79622893407941,
+          "ms_max": 34.99383805319667,
+          "ms_stdev": 0.30521679016511793
+        },
+        "blend: player composite": {
+          "ms_median": 0.9750979952514172,
+          "ms_min": 0.9675899054855108,
+          "ms_max": 1.0375920683145523,
+          "ms_stdev": 0.01617974981796408
+        },
+        "blend: mob alpha layer": {
+          "ms_median": 48.77015412785113,
+          "ms_min": 48.24726306833327,
+          "ms_max": 50.218157935887575,
+          "ms_stdev": 0.46507123508950526
+        },
+        "blend: mob composite": {
+          "ms_median": 104.70542404800653,
+          "ms_min": 103.67916291579604,
+          "ms_max": 105.662354035303,
+          "ms_stdev": 0.5232583494615194
+        },
+        "blend: channel gain (recolour)": {
+          "ms_median": 22.17173296958208,
+          "ms_min": 21.17360895499587,
+          "ms_max": 22.844588849693537,
+          "ms_stdev": 0.4274383925343062
+        },
+        "blend: output conversion": {
+          "ms_median": 26.13211702555418,
+          "ms_min": 25.29330994002521,
+          "ms_max": 26.532134972512722,
+          "ms_stdev": 0.4078151754191601
+        },
+        "blend: whole pipeline": {
+          "ms_median": 246.79892207495868,
+          "ms_min": 244.69142104499042,
+          "ms_max": 247.71690811030567,
+          "ms_stdev": 0.8337796178331793
+        },
+        "allocation: empty uint8 frame": {
+          "ms_median": 0.00234297476708889,
+          "ms_min": 0.0023099128156900406,
+          "ms_max": 0.003934837877750397,
+          "ms_stdev": 0.00039725884254411396
+        },
+        "allocation: empty float frame": {
+          "ms_median": 0.009574927389621735,
+          "ms_min": 0.00919494777917862,
+          "ms_max": 0.01002405770123005,
+          "ms_stdev": 0.00025595268629030187
+        },
+        "atlas: index build": {
+          "ms_median": 0.5522370338439941,
+          "ms_min": 0.544736860319972,
+          "ms_max": 0.5790370050817728,
+          "ms_stdev": 0.009080649093088583
+        },
+        "atlas: gather into uint8 output": {
+          "ms_median": 0.9989398531615734,
+          "ms_min": 0.8843578398227692,
+          "ms_max": 1.1910730972886086,
+          "ms_stdev": 0.10025111864155012
+        },
+        "atlas: bake (once per device+size)": {
+          "ms_median": 0.5148299969732761,
+          "ms_min": 0.49398397095501423,
+          "ms_max": 0.6549530662596226,
+          "ms_stdev": 0.0714765548120224
+        },
+        "atlas: gain path (whole render)": {
+          "ms_median": 53.22887795045972,
+          "ms_min": 52.39599198102951,
+          "ms_max": 53.776046028360724,
+          "ms_stdev": 0.3363553545336358
+        }
+      },
+      "render_official": {
+        "ms_median": 2.4714008904993534,
+        "ms_min": 2.2467279341071844,
+        "ms_max": 2.583822002634406,
+        "ms_stdev": 0.09471440380153912
+      },
+      "fps_official": 103584.97521957051,
+      "set_state": {
+        "ms_median": 0.13129995204508305,
+        "ms_min": 0.12769782915711403,
+        "ms_max": 0.14401786029338837,
+        "ms_stdev": 0.00451607354230688
+      },
+      "bytes": {
+        "frame_uint8": 48384,
+        "frame_float32": 193536,
+        "blend_float_temporaries_per_frame": 1935360,
+        "blend_float_temporaries_per_batch": 495452160,
+        "atlas_table_uint8": 522240
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "config": "CraftaxClassic",
+  "compared_against": "swm.json",
+  "reference_kind": "frozen Step-4 oracle",
+  "replay": "/oscar/scratch/sboughan/se6/tilemap/examples/results/step6/tilemap/replay/cuda_after_final.json",
+  "device_frozen": "cuda",
+  "device_replay": "cuda",
+  "size_frozen": 16,
+  "size_replay": 16,
+  "n_states_frozen": 64,
+  "n_states_replay": 64,
+  "frames_shape_identical": true,
+  "mean_pixel": [
+    93.84458414713542,
+    93.84458414713542
+  ],
+  "distinct_colors": [
+    277,
+    277
+  ],
+  "registered_default_coverage": "partial",
+  "digests": [
+    {
+      "digest": "digest_ours",
+      "frozen": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "replay": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "status": "identical"
+    },
+    {
+      "digest": "digest_ours_default_style",
+      "frozen": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "replay": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "status": "identical"
+    },
+    {
+      "digest": "digest_ours_corpus_style",
+      "frozen": "e80818fa414e2b1306cd824b8dd9c5d03f0e2527bb969cf2cf2914d44ab519b2",
+      "replay": "e80818fa414e2b1306cd824b8dd9c5d03f0e2527bb969cf2cf2914d44ab519b2",
+      "status": "identical"
+    },
+    {
+      "digest": "style_digest",
+      "frozen": "0514b876ec45f00ac3d67f13d1167ccc71eb04b6b4374d31423269632eefaa62",
+      "replay": "0514b876ec45f00ac3d67f13d1167ccc71eb04b6b4374d31423269632eefaa62",
+      "status": "identical"
+    },
+    {
+      "digest": "digest_official",
+      "frozen": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "replay": null,
+      "status": "unavailable"
+    }
+  ],
+  "changed": [],
+  "unavailable": [
+    "digest_official"
+  ],
+  "verdict": "PIXELS UNCHANGED"
+}
