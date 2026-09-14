@@ -2292,3 +2292,46 @@ under `$SCR/se6/integration` and under this branch and diffing the raw frames, w
 **identical**, all four. `cpu3d.py` reaches `raycast3d` through `cast_nearest` and `any_blocking` and
 does not call `composite` or `shade` at all, so identity there is the expected result and the check
 is a control — but a control that had not been run would have been an assumption.
+
+## GPU: no regression, and one reading that had to be taken twice
+
+The fused Triton cast is untouched and `composite`'s arithmetic is unchanged, so the cuda digests
+cannot move and do not (21 configs, identical, twice over). Throughput is the separate question, and
+the first attempt at it got it wrong. Job **6366547** ran each leg ONCE per cell and returned
+`AntmazeMediumExplore` at **0.53x** at B=4096 and `PointmazeMediumNavigate` at **1.39x** at B=1024 —
+two numbers that cannot both describe a change that is bit-identical on both devices.
+
+Job **6366608** re-took it INTERLEAVED, int/br/int/br on one card (gpu2104, RTX 3090) in one job, and
+`int2/int1` is a ratio of two runs of identical code:
+
+| env | B | noise (int2/int1) | signal (br/int) | reading |
+|---|---:|---:|---:|---|
+| `PointmazeLargeNavigate` | 64 | 1.00 | 0.993 | unchanged |
+| `PointmazeLargeNavigate` | 256 | 1.02 | 0.975 | unchanged (inside noise) |
+| `PointmazeLargeNavigate` | 1024 | 1.01 | 1.048 | slight gain |
+| `PointmazeLargeNavigate` | 4096 | 1.01 | **1.387** | real gain |
+| `PointmazeMediumNavigate` | 64 | 0.99 | 0.986 | unchanged |
+| `PointmazeMediumNavigate` | 256 | 0.97 | 0.968 | unchanged (inside noise) |
+| `PointmazeMediumNavigate` | 1024 | 0.99 | **1.350** | real gain |
+| `PointmazeMediumNavigate` | 4096 | 1.00 | **1.688** | real gain |
+| `AntmazeMediumExplore` | 64 | 0.98 | 0.995 | unchanged |
+| `AntmazeMediumExplore` | 256 | 0.98 | 1.007 | unchanged |
+| `AntmazeMediumExplore` | 1024 | 1.00 | 1.269 | gain |
+| `AntmazeMediumExplore` | 4096 | **0.44** | 1.249 | **unreadable** |
+| `HumanoidmazeMediumNavigate` | 64 | 0.99 | 0.981 | unchanged |
+| `HumanoidmazeMediumNavigate` | 256 | **0.77** | 1.143 | unreadable |
+| `HumanoidmazeMediumNavigate` | 1024 | **1.99** | 1.029 | unreadable |
+| `HumanoidmazeMediumNavigate` | 4096 | 1.03 | 1.227 | gain |
+
+**The 0.53x was the harness.** The same cell's off-vs-off ratio on identical code is 0.44x, and a
+cell whose noise is 2.3x cannot answer a question about 2x. At the batches where the harness IS
+stable the answer is: **unchanged at B=64 and B=256 (0.968-1.007), a real gain at the large
+batches** where the frame write stops dominating — `PointmazeMediumNavigate` 1.69x at B=4096 against
+a 1.00 noise floor. No cell shows a regression outside its own noise, which is the check this ticket
+owed.
+
+The single-pair readings from 6366547 are not published: `profile_phases.py` writes a directory, and
+`--out` ending in `.json` produced six directories named `*.json` that the Step-6 report scanner
+classifies as unaccounted artifacts. They were deleted rather than renamed, because the interleaved
+run supersedes them and keeping a superseded reading that the page cannot classify is how a
+misleading number survives.
