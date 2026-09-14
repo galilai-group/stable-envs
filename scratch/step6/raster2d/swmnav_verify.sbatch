@@ -16,6 +16,10 @@
 #   4. the frozen Step 4 replay         -- the four configs' digests on cuda;
 #   5. the mandatory sweep, before and after, same card same job.
 set -uo pipefail
+# The SHA is stamped by the submitting worktree (see scratch/step6/raster2d/sync.sh), not read from
+# whatever the tree last carried: gpu_after.json, gpu_profile_after.json and replay/swmnav2.json
+# were measured before their commit existed and name its parent. swmnav2/PROVENANCE_NOTE.md holds
+# the md5s that say what they actually measured.
 export SCR=/oscar/scratch/$USER
 export XDG_CACHE_HOME=$SCR/.cache TORCH_HOME=$SCR/.torch HF_HOME=$SCR/.cache/huggingface
 export TRITON_CACHE_DIR=$SCR/.cache/triton WARP_CACHE_PATH=$SCR/.cache/warp

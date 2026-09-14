@@ -68,6 +68,53 @@ def test_fused_matches_on_states_the_env_would_never_sample(cfg):
 
 
 @pytest.mark.parametrize("cfg", CONFIGS)
+def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
+    """Every row a different dot colour and radius, checked against ``env.blend_dots``.
+
+    Two things this asserts that the tests above do not. First the REFERENCE is the class's own
+    method rather than a composition spelled out here, so if a subclass ever changes the order it
+    blends its dots in, or adds one, this fails instead of quietly comparing the kernel against a
+    copy of the old order. TwoRoomTarget blends target then agent and each blend quantises to uint8,
+    so a swap is a different picture wherever the two overlap — the frozen replay pins it and the
+    scratch fuzz pins it, and neither is run by pytest.
+
+    Second, per-row styles: the kernel indexes ``pos``, ``den``, ``max`` and ``colour`` by row, and a
+    kernel that read row 0 for the whole batch would pass every uniform-style test in this file.
+    """
+    B = 6
+    env = se.make(cfg, batch=B, device="cuda")
+    env.rng = np.random.default_rng(5)
+    st = torch.as_tensor(np.asarray(env.sample_states(B), np.float32), device="cuda")
+
+    rows = np.tile(np.asarray(env.default_style(), np.float32), (B, 1))
+    lay = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+    rng = np.random.default_rng(6)
+    for path in ("agent.color", "agent.radius", "target.color", "target.radius"):
+        if path not in lay:
+            continue
+        o, w = lay[path]
+        rows[:, o:o + w] = (rng.uniform(0, 255, (B, w)) if path.endswith("color")
+                            else rng.uniform(7.0, 14.0, (B, w)))
+    sty = env.resolve_style(rows, None, batch=B)
+    sl = lambda p: sty[p][0:B]                                             # noqa: E731
+    base = env._base_image(sty, 0, B).expand(B, SN.IMG, SN.IMG, 3).contiguous()
+
+    want = env.blend_dots(base, st, sl, B)               # the class's own torch path, in its order
+    pos, sig, col = env._dots(st, sl, B)
+    got = navdot.blend_dots(base.clone(), pos, sig, col)
+    assert torch.equal(want, got), f"{cfg}: per-row styles through the fused kernel"
+
+    # no two rows may have collapsed onto one another's style
+    flat = got.reshape(B, -1)
+    assert len({tuple(flat[i].tolist()) for i in range(B)}) == B, (
+        f"{cfg}: {B} different dot styles produced fewer than {B} different frames")
+
+    # and through render(), which is what a caller reaches
+    assert torch.equal(env.render(st.cpu().numpy(), style=rows), want), (
+        f"{cfg}: render() with per-row styles disagrees with the torch path")
+
+
+@pytest.mark.parametrize("cfg", CONFIGS)
 def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     """``render`` takes the kernel here, and the contracts hold across it."""
     env = se.make(cfg, batch=8, device="cuda")

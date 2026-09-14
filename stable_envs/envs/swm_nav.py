@@ -361,50 +361,17 @@ _CUDA_IS_NOT_THE_CPU = True
 #: The module docstring used to say the tail was effectively unbounded and that a Gaussian dot could
 #: not be cropped. It can: below this alpha the blend is the identity, and a normalised Gaussian is
 #: below it beyond 5.89 sigma.
-_ALPHA_FLOOR = 2.0 ** -25
-
-#: ``d/sigma`` at which the normalised dot drops under ``_ALPHA_FLOOR``, for a peak sitting exactly
-#: on a sample. ``exp(-d^2 / 2 s^2) < T`` gives ``d > s * sqrt(2 ln(1/T))``.
-_DOT_SIGMAS = math.sqrt(2.0 * math.log(1.0 / _ALPHA_FLOOR))
+#: ONE definition of the bound, in ``render/navdot.py``, used by the CPU path below and by the
+#: kernel. Two copies of a bound is two bounds, and the fast path is only the slow path if they agree
+#: about what "outside" means. The derivation, the measurement behind ``ALPHA_FLOOR`` and the
+#: argmax-containment property the kernel depends on live in that module's ``dot_window``.
+_ALPHA_FLOOR = navdot.ALPHA_FLOOR
+_DOT_SIGMAS = navdot.DOT_SIGMAS
 
 
 def _dot_window(pos, sigma):
-    """``(k,4)`` int64 pixel windows outside which a normalised Gaussian dot cannot move a pixel.
-
-    ``_gaussian_dot`` divides by the frame's own maximum, so the profile that reaches
-    ``_alpha_blend`` is ``exp(-(d^2 - m^2) / 2 s^2)`` where ``m`` is the distance from the centre to
-    the largest sample IN THE FRAME -- not to the centre itself. Two consequences, and the second is
-    the one that is easy to get wrong:
-
-      * for a centre inside the frame, ``m`` is at most half a pixel in each axis, so the normalised
-        tail is the un-normalised one widened by a fraction of a sigma;
-      * for a centre OUTSIDE it -- which ``render(states)`` permits, since a caller may pass any
-        state and only ``step`` clamps -- ``m`` is the distance to the nearest in-frame sample and
-        can be large. The normalisation then rescales the whole dot so that its in-frame maximum is
-        1, and a bound that ignored that would crop a dot that is painting at full strength. So
-        ``m`` is measured rather than assumed, and the window grows with it.
-
-    The window always contains the in-frame argmax, which is what lets the caller take the maximum
-    over the window and get the frame's maximum: the Gaussian decreases with distance from the
-    centre, so its largest in-frame sample is the in-frame sample nearest the centre, and that
-    sample is within ``m <= d`` of the centre by construction.
-    """
-    x, y = pos[:, 0], pos[:, 1]
-    # the nearest in-frame SAMPLE; _grids puts samples on integers 0..IMG-1
-    mx = x.round().clamp(0, IMG - 1)
-    my = y.round().clamp(0, IMG - 1)
-    m2 = (x - mx) ** 2 + (y - my) ** 2
-    # Plus a pixel. The radius is exact for exact arithmetic and the reviewer's 108,000-state
-    # boundary scan found no failure without it, but every term in it -- the sqrt, the log inside
-    # _DOT_SIGMAS, the squares -- is float32 or float64 rounding away from the pixel it decides, and
-    # the bound has no slack of its own. One pixel of window costs a row of samples and buys the
-    # whole question.
-    d = torch.sqrt((sigma.reshape(-1) * _DOT_SIGMAS) ** 2 + m2) + 1.0
-    c0 = torch.ceil(x - d).clamp(0, IMG)
-    c1 = torch.floor(x + d).clamp(0, IMG - 1) + 1
-    r0 = torch.ceil(y - d).clamp(0, IMG)
-    r1 = torch.floor(y + d).clamp(0, IMG - 1) + 1
-    return torch.stack([r0, r1, c0, c1], dim=1).to(torch.int64)
+    """``(k,4)`` int64 pixel windows outside which a normalised dot cannot move a pixel."""
+    return navdot.dot_window(pos, sigma.reshape(pos.shape[0]), IMG, IMG)
 
 
 def _alpha_blend(img_u8: torch.Tensor, alpha: torch.Tensor, rgb: torch.Tensor) -> torch.Tensor:
