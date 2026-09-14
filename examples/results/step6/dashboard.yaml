@@ -101,7 +101,7 @@ workstreams:
     head_sha: 11033262c018b95f006011e4bb6ce4865c474ac8
     agent_model: opus
     wave: wave2
-    status: review (PATCH) + RASTER2D-1c/RASTER2D-2/SWMNAV-1 authorized
+    status: implementation (applying review changes) + RASTER2D-1c/RASTER2D-2/SWMNAV-1
     authorization: PROFILE FIRST
     goal: "PROFILE FIRST: Scene2D CPU path CPU_FAST; known finding: auto dispatch routes cpu scenes into Triton on Triton hosts"
     affected_configs: ["Piecewise", "PiecewiseZones", "PushT", "SimplePointMaze", "TwoRoom", "TwoRoomTarget"]
@@ -110,7 +110,7 @@ workstreams:
     performance: {cpu_before: "PushT 115 fps (S_cpu 0.34 CPU_REGRESSION); SimplePointMaze 3 fps (S_cpu 0.06)", cpu_after: "PushT 590 fps (5.1x, S_cpu 1.50 CPU_PARITY); SimplePointMaze 112 fps (41.2x, S_cpu 2.21 CPU_FASTER); cores_cpu 0.08/0.13 -> CPU_FAST not reached; swm_nav four rows unchanged (not patched)", gpu_before: "PushT 1,933,431 fps; SPM 43,682 (3090)", gpu_after: "within 1%: PushT 1,926,247; SPM 43,317; render_triton untouched", batch_scales: "n/a (GPU unchanged)", no_large_batch_regression: "unchanged"}
     pixels_changed: no
     semantic_followup: none (PushT cuda digest_ours unchanged cecda14a; GPU path not modified)
-    review: {reviewer: "fable (independent, spawned)", verdict: null}
+    review: {reviewer: "fable (independent)", verdict: "APPROVE-WITH-CHANGES 2026-09-13: implementation correct (bounds match _bbox_kernel incl. INF cases, CPU rule a superset; uint8 canvas exact because compositing is pure replacement; reviewer fuzz 1,100 adversarial cases 0 failures; legs verified byte-level preB vs after). Required: commit CPU differential-fuzz regression test under tests/unit; record or retract chunk-window numbers and the 1,650-case count; correct §7b (Gaussian dot IS boundable: alpha underflow at 2^-24, ~5.8 sigma); bench_step3 must record tree identity."}
     slurm_jobs: [6344858(cancelled), 6346289, 6346290, 6346291, 6346300, 6346490]
     notes: ["wave2 spawned 2026-09-13T18:25", "PATCH 2026-09-13 late. Tooling: rsync --delete to $SCR/se6/<ws> deletes results a running job just wrote (documented in sbatch header). Legs verified separate (raster2d-preB vs raster2d)."]
   - workstream: gfxdraw
