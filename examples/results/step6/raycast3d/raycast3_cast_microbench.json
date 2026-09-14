@@ -1,0 +1,388 @@
+{
+  "host": "node1829.oscar.ccv.brown.edu",
+  "cpu": "x86_64",
+  "threads": 1,
+  "torch": "2.14.0+cu126",
+  "slurm_job": "6347404",
+  "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/render/raycast3d.py",
+  "rays_per_measurement": 7056,
+  "bar": {
+    "what": "cores_cpu >= 1 needs the whole frame inside one-core JPEG-q90 decode",
+    "ns_per_px_at_84": 21.4,
+    "source": "step6/cpu-3d design.md 4.1/4.3"
+  },
+  "backends": {
+    "cpp": {
+      "built": true,
+      "flags": "-O3 -march=native -ffp-contract=off -fno-fast-math",
+      "via": "g++ (no ninja)"
+    },
+    "numba": {
+      "available": false,
+      "why": "ModuleNotFoundError(\"No module named 'numba'\")"
+    }
+  },
+  "cells": {
+    "DMCReacherHard": {
+      "spec": {
+        "K": 4,
+        "cap": 2,
+        "sph": 2,
+        "tests": 80884,
+        "decode": 7014.9,
+        "size": 84
+      },
+      "K": 4,
+      "N": 7056,
+      "ray_primitive_tests_per_measurement": 28224,
+      "torch_loop_ms": 6.093716248869896,
+      "torch_chunk1024_ms": 23.01712892949581,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 8.939763531088829,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": true,
+        "bit_identical_normal": false,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 0,
+        "t_max_abs_diff_on_hits": 0.0,
+        "normal_components_differing": 13,
+        "normal_components_total": 21168,
+        "normal_rays_differing": 5,
+        "normal_max_ulp": 3,
+        "normal_ulp_histogram": {
+          "1": 7,
+          "2": 4,
+          "3": 2
+        },
+        "normal_max_abs_diff": 1.1920928955078125e-07,
+        "ms": 0.5072280764579773
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 215.90547933921115,
+        "torch_chunk1024": 815.5161893954015,
+        "torch_chunk4096": 316.7433223883514,
+        "cpp": 17.97151631441246
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 17463.298790872755,
+        "torch_chunk1024": 65962.21146305765,
+        "torch_chunk4096": 25619.46688805941,
+        "cpp": 1453.6081255749375
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 57.26294968523661,
+        "torch_chunk1024": 15.160195175688632,
+        "torch_chunk4096": 39.03281845673669,
+        "cpp": 687.943320077738
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 122.50329468809329,
+        "torch_chunk1024": 462.71831719220313,
+        "torch_chunk4096": 179.71799827304795,
+        "cpp": 10.196915640095629
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 660.2597930605823,
+        "torch_chunk1024": 174.80181137156615,
+        "torch_chunk4096": 450.06065489952687,
+        "cpp": 7932.202526218159
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 122.50329468809328,
+        "torch_chunk1024": 462.71831719220313,
+        "torch_chunk4096": 179.71799827304795,
+        "cpp": 10.196915640095629
+      }
+    },
+    "DMCFingerSpin": {
+      "spec": {
+        "K": 7,
+        "cap": 5,
+        "sph": 2,
+        "tests": 93401,
+        "decode": 7125.3,
+        "size": 84
+      },
+      "K": 7,
+      "N": 7056,
+      "ray_primitive_tests_per_measurement": 49392,
+      "torch_loop_ms": 11.291349306702614,
+      "torch_chunk1024_ms": 42.92031191289425,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 16.685351729393005,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": false,
+        "bit_identical_normal": false,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 1,
+        "t_max_abs_diff_on_hits": 1.1920928955078125e-07,
+        "normal_components_differing": 18,
+        "normal_components_total": 21168,
+        "normal_rays_differing": 6,
+        "normal_max_ulp": 17,
+        "normal_ulp_histogram": {
+          "1": 10,
+          "2": 5,
+          "3": 1,
+          "12": 1,
+          "17": 1
+        },
+        "normal_max_abs_diff": 3.5762786865234375e-07,
+        "ms": 0.9074714034795761
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 228.60684537379765,
+        "torch_chunk1024": 868.9729493216361,
+        "torch_chunk4096": 337.8148633259031,
+        "cpp": 18.37284182619809
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 21352.107964758077,
+        "torch_chunk1024": 81162.94243959013,
+        "torch_chunk4096": 31552.246049502675,
+        "cpp": 1716.0417994087277
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 46.83378342084597,
+        "torch_chunk1024": 12.320893870306682,
+        "torch_chunk4096": 31.69346481486892,
+        "cpp": 582.7363880906373
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 152.14017488129073,
+        "torch_chunk1024": 578.3103137648116,
+        "torch_chunk4096": 224.8192187765214,
+        "cpp": 12.227312633327006
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 613.9141096221122,
+        "torch_chunk1024": 161.50671668287853,
+        "torch_chunk4096": 415.44935752509684,
+        "cpp": 7638.718563997813
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 152.14017488129068,
+        "torch_chunk1024": 578.3103137648116,
+        "torch_chunk4096": 224.81921877652138,
+        "cpp": 12.227312633327008
+      }
+    },
+    "DMCBallInCupCatch": {
+      "spec": {
+        "K": 36,
+        "cap": 33,
+        "sph": 3,
+        "tests": 279972,
+        "decode": 7186.9,
+        "size": 84
+      },
+      "K": 36,
+      "N": 7056,
+      "ray_primitive_tests_per_measurement": 254016,
+      "torch_loop_ms": 70.1942928135395,
+      "torch_chunk1024_ms": 265.7531872391701,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 103.23931090533733,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": true,
+        "bit_identical_normal": false,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 0,
+        "t_max_abs_diff_on_hits": 0.0,
+        "normal_components_differing": 74,
+        "normal_components_total": 21168,
+        "normal_rays_differing": 31,
+        "normal_max_ulp": 16,
+        "normal_ulp_histogram": {
+          "1": 45,
+          "2": 19,
+          "3": 2,
+          "4": 3,
+          "8": 3,
+          "16": 2
+        },
+        "normal_max_abs_diff": 1.7881393432617188e-07,
+        "ms": 5.474254488945007
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 276.33807639494955,
+        "torch_chunk1024": 1046.2064879345005,
+        "torch_chunk4096": 406.42837815467266,
+        "cpp": 21.5508254950279
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 77366.92392444682,
+        "torch_chunk1024": 292908.52283999795,
+        "torch_chunk4096": 113788.56588872003,
+        "cpp": 6033.627715493952
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 12.925420183133513,
+        "torch_chunk1024": 3.414035174887187,
+        "torch_chunk4096": 8.78822922311855,
+        "cpp": 165.73776957303266
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 556.0283455526068,
+        "torch_chunk1024": 2105.1042627987813,
+        "torch_chunk4096": 817.7870441856419,
+        "cpp": 43.363079028483476
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 503.5210924755119,
+        "torch_chunk1024": 132.99673795148334,
+        "torch_chunk4096": 342.35318594316703,
+        "cpp": 6456.46034074512
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 556.0283455526068,
+        "torch_chunk1024": 2105.104262798781,
+        "torch_chunk4096": 817.7870441856419,
+        "cpp": 43.363079028483476
+      }
+    },
+    "AntmazeMediumExplore": {
+      "spec": {
+        "K": 13,
+        "cap": 12,
+        "sph": 1,
+        "tests": 53248,
+        "decode": 2390.5,
+        "size": 224
+      },
+      "K": 13,
+      "N": 7056,
+      "ray_primitive_tests_per_measurement": 91728,
+      "torch_loop_ms": 25.374073535203934,
+      "torch_chunk1024_ms": 97.22519107162952,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 37.647075951099396,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": true,
+        "bit_identical_normal": false,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 0,
+        "t_max_abs_diff_on_hits": 0.0,
+        "normal_components_differing": 25,
+        "normal_components_total": 21168,
+        "normal_rays_differing": 10,
+        "normal_max_ulp": 8,
+        "normal_ulp_histogram": {
+          "1": 17,
+          "2": 7,
+          "8": 1
+        },
+        "normal_max_abs_diff": 1.1920928955078125e-07,
+        "ms": 2.0101647824048996
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 276.6229890023105,
+        "torch_chunk1024": 1059.9292590226487,
+        "torch_chunk4096": 410.4207652090899,
+        "cpp": 21.914407622589607
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 14729.620918395027,
+        "torch_chunk1024": 56439.113184438,
+        "torch_chunk4096": 21854.08490585362,
+        "cpp": 1166.8983770876514
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 67.89040977634082,
+        "torch_chunk1024": 17.718208943717613,
+        "torch_chunk4096": 45.75803582295729,
+        "cpp": 856.9726547189166
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 35.21115880542331,
+        "torch_chunk1024": 134.91770006739904,
+        "torch_chunk4096": 52.242189967443075,
+        "cpp": 2.7894705704280307
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 1512.247872733987,
+        "torch_chunk1024": 394.67023210001065,
+        "torch_chunk4096": 1019.2528305797238,
+        "cpp": 19088.92696861446
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 35.21115880542332,
+        "torch_chunk1024": 134.91770006739904,
+        "torch_chunk4096": 52.242189967443075,
+        "cpp": 2.7894705704280307
+      }
+    },
+    "PointmazeLargeNavigate": {
+      "spec": {
+        "K": 1,
+        "cap": 0,
+        "sph": 1,
+        "tests": 4096,
+        "decode": 2390.5,
+        "size": 224
+      },
+      "K": 1,
+      "N": 7056,
+      "ray_primitive_tests_per_measurement": 7056,
+      "torch_loop_ms": 0.45576319098472595,
+      "torch_chunk1024_ms": 1.7158761620521545,
+      "torch_chunk1024_bit_identical": true,
+      "torch_chunk4096_ms": 0.7088165730237961,
+      "torch_chunk4096_bit_identical": true,
+      "cpp": {
+        "bit_identical_t": true,
+        "bit_identical_normal": true,
+        "same_winner_index": true,
+        "t_ulp_mismatches": 0,
+        "t_max_abs_diff_on_hits": 0.0,
+        "normal_components_differing": 0,
+        "normal_components_total": 21168,
+        "normal_rays_differing": 0,
+        "normal_max_ulp": 0,
+        "normal_ulp_histogram": {},
+        "normal_max_abs_diff": 0.0,
+        "ms": 0.060012564063072205
+      },
+      "ns_per_ray_primitive_test": {
+        "torch_loop": 64.59228897175821,
+        "torch_chunk1024": 243.1797281819947,
+        "torch_chunk4096": 100.45586352378062,
+        "cpp": 8.50518198172792
+      },
+      "cast_only_frame_us": {
+        "torch_loop": 264.57001562832164,
+        "torch_chunk1024": 996.0641666334503,
+        "torch_chunk4096": 411.46721699340543,
+        "cpp": 34.83722539715756
+      },
+      "cast_only_fps_ceiling": {
+        "torch_loop": 3779.717809764351,
+        "torch_chunk1024": 1003.9513853608972,
+        "torch_chunk4096": 2430.327274447303,
+        "cpp": 28704.92665818306
+      },
+      "fraction_of_decode_budget": {
+        "torch_loop": 0.6324546223595029,
+        "torch_chunk1024": 2.381091390337263,
+        "torch_chunk4096": 0.9836123822227357,
+        "cpp": 0.08327838731190515
+      },
+      "tests_affordable_in_full_budget": {
+        "torch_loop": 6476.353963101771,
+        "torch_chunk1024": 1720.219566801186,
+        "torch_chunk4096": 4164.242006331794,
+        "cpp": 49184.42986484744
+      },
+      "test_count_reduction_needed": {
+        "torch_loop": 0.6324546223595028,
+        "torch_chunk1024": 2.381091390337263,
+        "torch_chunk4096": 0.9836123822227356,
+        "cpp": 0.08327838731190515
+      }
+    }
+  }
+}

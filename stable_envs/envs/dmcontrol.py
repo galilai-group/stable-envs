@@ -541,9 +541,18 @@ def catenary(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
     v_off = -_cosh_sinh(h_off / bh)[0] * bh
     pts = np.empty((npoints, 3))
     pts[0], pts[npoints - 1] = x0, x1
-    for i in range(1, npoints - 1):
-        hor = i * h / npoints
-        pts[i] = x0 + ac * hor + up * (bh * _cosh_sinh((hor - h_off) / bh)[0] + v_off)
+    # The interior points, written as ONE numpy expression rather than as a Python loop of (3,)
+    # temporaries. ``_cosh_sinh`` stays SCALAR and stays ``math.exp``: the 0-ULP validation against
+    # libmujoco's ``mjv_catenary`` (scratch/dmcontrol/probe_catenary.py, 440 inputs) depends on
+    # calling the same libm that MuJoCo's ``mju_*`` macros expand to, and ``np.exp`` is a different
+    # implementation. What is vectorised is only the assembly, which is elementwise in the same
+    # association order -- ``(x0 + ac*hor) + up*w``, componentwise -- so it is bit-identical.
+    # Measured on DMCBallInCupCatch at batch 256: 24.5 ms -> ~8 ms of a 88 ms ``_fk``.
+    if npoints > 2:
+        hor = np.arange(1, npoints - 1, dtype=np.float64) * h / npoints
+        w = np.fromiter((bh * _cosh_sinh((hh - h_off) / bh)[0] + v_off for hh in hor),
+                        np.float64, npoints - 2)
+        pts[1:npoints - 1] = x0 + ac * hor[:, None] + up * w[:, None]
     return pts
 
 
@@ -583,6 +592,47 @@ def _chain_capsules(pts: np.ndarray, nseg: int):
     x /= np.maximum(np.linalg.norm(x, axis=1, keepdims=True), _MJMINVAL)
     y = np.cross(z, x)
     return 0.5 * (lo + hi), np.stack([x, y, z], axis=2), half
+
+
+def _chain_capsules_batch(pts: np.ndarray, nseg: int):
+    """``_chain_capsules`` with a BATCH axis. ``pts`` ``(M, K+1, 3)`` -> ``(M,nseg,3)``,
+    ``(M,nseg,3,3)``, ``(M,nseg)``.
+
+    THE WHOLE POINT IS THAT IT IS THE SAME ARITHMETIC. Every line below is the single-polyline
+    version with one more leading axis: the products and differences are elementwise, ``norm`` and
+    ``argmin`` reduce the SAME trailing axis of length 3, and ``cross`` is component arithmetic. A
+    leading axis cannot change a per-row result, and ``tests/unit/test_dmcontrol_tendon.py`` asserts
+    that against ``_chain_capsules`` on the frozen ball_in_cup states rather than leaving it as an
+    argument.
+
+    Why it exists: ``_fk`` called ``_chain_capsules`` ONCE PER ENVIRONMENT, and at batch 256 that was
+    512 ``numpy.cross`` dispatches and 768 ``numpy.linalg.norm`` dispatches on ``(28,3)`` arrays --
+    46% of ``_fk``, which was itself 90.7% of a DMCBallInCupCatch render on a 3090 (the card was 5.3%
+    utilised). The work is trivially batched because the polylines differ only in their VALUES; they
+    are grouped by segment count, of which ball_in_cup's tendon has exactly three possible values
+    (1 taut, 2 near-vertical, 28 catenary).
+    """
+    M, npts, _ = pts.shape
+    K = npts - 1
+    if nseg % K:
+        raise RuntimeError(f"a tendon drawn as {K} segments cannot be split into {nseg} pieces "
+                           f"without resampling it; {nseg} must be a multiple of every branch's "
+                           f"segment count")
+    per = nseg // K
+    p0 = np.asarray(pts[:, :-1], np.float64).reshape(M, K, 1, 3)
+    p1 = np.asarray(pts[:, 1:], np.float64).reshape(M, K, 1, 3)
+    t = (np.arange(per, dtype=np.float64) / per).reshape(1, 1, per, 1)
+    lo = (p0 + (p1 - p0) * t).reshape(M, nseg, 3)
+    hi = (p0 + (p1 - p0) * (t + 1.0 / per)).reshape(M, nseg, 3)
+    axis = hi - lo
+    half = np.linalg.norm(axis, axis=-1) * 0.5
+    z = axis / np.maximum(np.linalg.norm(axis, axis=-1, keepdims=True), _MJMINVAL)
+    ref = np.zeros_like(z)
+    np.put_along_axis(ref, np.argmin(np.abs(z), axis=-1)[..., None], 1.0, axis=-1)
+    x = np.cross(ref, z)
+    x /= np.maximum(np.linalg.norm(x, axis=-1, keepdims=True), _MJMINVAL)
+    y = np.cross(z, x)
+    return 0.5 * (lo + hi), np.stack([x, y, z], axis=-1), half
 
 
 class _Tendon:
@@ -649,25 +699,41 @@ def _tendon_frame(m, d, td: _Tendon):
     A random policy leaves ``ball_in_cup`` taut in 35-44% of the states it visits, so this is not a
     branch a renderer can decline: skipping it would paint a third of the dataset's strings grey.
     """
+    pts, rgb = _tendon_polyline(m, d, td)
+    pos, mat, half = _chain_capsules(pts, td.nseg)
+    return pos, mat, half, rgb
+
+
+def _tendon_polyline(m, d, td: "_Tendon"):
+    """``(pts, rgb)``: the chain's POLYLINE and its colour, for one state. ``mj_forward`` must have run.
+
+    Split out of ``_tendon_frame`` so that the part which must run per environment (it reads ``d``,
+    which holds one state at a time) is separated from the part which must NOT (``_chain_capsules``,
+    which is pure array arithmetic on the polyline and batches over the whole call). ``_tendon_frame``
+    is unchanged in behaviour and is what the single-polyline tests compare against.
+
+    The polyline has two, three or ``ncat`` points depending on the branch, which is why ``_fk``
+    groups the batch by point count before batching the chain.
+    """
     import mujoco
     adr, num = int(d.ten_wrapadr[td.id]), int(d.ten_wrapnum[td.id])
     w = np.asarray(d.wrap_xpos, np.float64).reshape(-1, 3)[adr:adr + num]
     if float(d.ten_length[td.id]) < td.upper:
-        pts = catenary(w[0], w[1], td.gravity, td.upper, td.ncat)
-        rgb = td.grey
-    else:
-        pts = w[:2]
-        imp = 0.0
-        if int(d.nefc):
-            et = np.asarray(d.efc_type, np.int64)
-            ei = np.asarray(d.efc_id, np.int64)
-            hit = np.flatnonzero((et == int(mujoco.mjtConstraint.mjCNSTR_LIMIT_TENDON))
-                                 & (ei == td.id))
-            if len(hit):
-                imp = float(np.asarray(d.efc_KBIP)[hit[0], 2])
-        rgb = (1.0 - imp) * td.grey + imp * td.constraint
-    pos, mat, half = _chain_capsules(pts, td.nseg)
-    return pos, mat, half, rgb
+        return catenary(w[0], w[1], td.gravity, td.upper, td.ncat), td.grey
+    # A COPY, not ``w[:2]``. ``np.asarray(d.wrap_xpos, np.float64)`` returns the MjData buffer itself
+    # when it is already float64, so the slice is a live view; the caller now keeps polylines until
+    # the whole batch has been walked, and the next environment's ``mj_forward`` would rewrite this
+    # one under it. The slack branch above already returns a fresh array.
+    pts = np.array(w[:2])
+    imp = 0.0
+    if int(d.nefc):
+        et = np.asarray(d.efc_type, np.int64)
+        ei = np.asarray(d.efc_id, np.int64)
+        hit = np.flatnonzero((et == int(mujoco.mjtConstraint.mjCNSTR_LIMIT_TENDON))
+                             & (ei == td.id))
+        if len(hit):
+            imp = float(np.asarray(d.efc_KBIP)[hit[0], 2])
+    return pts, (1.0 - imp) * td.grey + imp * td.constraint
 
 
 class _Lights:
@@ -1625,18 +1691,30 @@ class DMControlSuite(_DMCModel):
         because the tendon's capsules change LENGTH and COLOUR with the state and there is no useful
         way to say that only sometimes.
 
-        A pure function of the state, a couple of microseconds a call, and a Python loop over the batch
-        — which reads like the bottleneck and measurably is not: 17 ms of cartpole's 232 ms at
-        B=1024. What costs the rest is that three of the ray passes are FULL-FRAME. The movers can be
-        tiled (they are 0.2-3.0% of the frame), but the shadow test starts from every STATIC pixel and
-        the reflection test from every floor pixel, so those two scale with the image rather than with
-        the movers. Bounding them to the movers' light-space and screen-space footprints is the next
-        thing worth doing here; a batched GPU forward kinematics is not.
+        A pure function of the state, and a Python loop over the batch. On the domains without a
+        tendon that loop is cheap -- 17 ms of cartpole's 232 ms at B=1024 -- and what costs the rest
+        is that three of the ray passes are FULL-FRAME: the movers can be tiled (they are 0.2-3.0% of
+        the frame), but the shadow test starts from every STATIC pixel and the reflection test from
+        every floor pixel. Bounding those two to the movers' light-space and screen-space footprints
+        is still the next thing worth doing here.
+
+        ON ``ball_in_cup`` THE LOOP WAS THE BOTTLENECK, and this docstring used to say it was not.
+        Measured on a 3090 at batch 4096: the render was 1,314 ms of which the card did 66.7 ms
+        (5.1% utilised) and this function was 97%. Inside it, ``mj_forward`` -- which the paragraph
+        below blames, correctly, for being necessary -- was 3%, and the tendon's pure-Python/numpy
+        geometry was 78%: ``_chain_capsules`` once per environment (512 ``numpy.cross`` and 768
+        ``numpy.linalg.norm`` dispatches on ``(28,3)`` arrays at batch 256) and ``catenary``'s
+        29-point interior loop once per environment. Both are array code with no batch axis, so the
+        loop now collects POLYLINES and ``_chain_capsules_batch`` builds every chain at once, grouped
+        by point count. 3,272 -> 9,816 fps at batch 4096, bit-identical, and the row goes
+        GPU_PARITY/BELOW_G4 -> GPU_FAST. A batched GPU forward kinematics is still not the answer;
+        giving the numpy a batch axis was.
 
         A scene with a tendon runs ``mj_forward`` rather than ``mj_kinematics``, and pays for it: the
         colour of a taut tendon is its limit constraint's impedance, which only exists once the
-        constraint set has been built. ``ball_in_cup`` is 4 dof and 6 geoms, so the extra work is
-        microseconds; a domain where it were not could not use this path.
+        constraint set has been built. ``ball_in_cup`` is 4 dof and 6 geoms, so the extra work really
+        is microseconds (3.50 ms over 256 environments); a domain where it were not could not use
+        this path.
         """
         import mujoco
         gmov, smov = sc.movers
@@ -1653,6 +1731,9 @@ class DMControlSuite(_DMCModel):
         m, d = sc.model, sc.data
         slots = self._slots()
         pr = self._pristine()
+        gid = np.asarray(gmov, np.intp)
+        sid = np.asarray(smov, np.intp)
+        polys: list = []
         try:
             for i in range(B):
                 # The episode's draw goes into the MODEL and then through the same kinematics as the
@@ -1669,21 +1750,39 @@ class DMControlSuite(_DMCModel):
                 else:
                     d.qvel[:] = 0
                     mujoco.mj_forward(m, d)
+                # ``np.take(..., out=)`` rather than ``d.geom_xpos[ids]``: fancy indexing ALLOCATES a
+                # fresh array per call and the reshape allocates a second, where this writes the same
+                # bytes straight into the destination row. Identical values, no temporaries; the same
+                # change ``ogbench._fk`` already documents having made.
                 if gmov:
-                    xp[i, :len(gmov)] = d.geom_xpos[gmov]
-                    xm[i, :len(gmov)] = d.geom_xmat[gmov].reshape(-1, 3, 3)
+                    np.take(d.geom_xpos, gid, axis=0, out=xp[i, :len(gmov)])
+                    np.take(d.geom_xmat, gid, axis=0, out=xm[i, :len(gmov)].reshape(-1, 9))
                 if smov:
-                    xp[i, len(gmov):nmov] = d.site_xpos[smov]
-                    xm[i, len(gmov):nmov] = d.site_xmat[smov].reshape(-1, 3, 3)
+                    np.take(d.site_xpos, sid, axis=0, out=xp[i, len(gmov):nmov])
+                    np.take(d.site_xmat, sid, axis=0, out=xm[i, len(gmov):nmov].reshape(-1, 9))
                 if td is not None:
-                    tp, tm, half, trgb = _tendon_frame(m, d, td)
-                    xp[i, nmov:] = tp
-                    xm[i, nmov:] = tm
-                    size[i, nmov:, 1] = half
+                    # ONLY the polyline here. The chain of capsules it becomes is the same arithmetic
+                    # for every row and is built once for the whole batch below -- see
+                    # ``_chain_capsules_batch``.
+                    pts, trgb = _tendon_polyline(m, d, td)
+                    polys.append(pts)
                     rgb[i, nmov:] = trgb
         finally:
             for arr in {a for a, _ in slots}:                 # never leave a state row in the model
                 getattr(m, arr)[:] = pr[arr]
+        if td is not None:
+            # Grouped by point count, because the three branches of ``mjv_catenary`` produce polylines
+            # of different lengths and a batch holds states from all three at once. ball_in_cup has
+            # exactly three possible counts, so this is at most three batched calls in place of B.
+            by_len: dict = {}
+            for i, pts in enumerate(polys):
+                by_len.setdefault(len(pts), []).append(i)
+            for npts, rows in by_len.items():
+                idx = np.asarray(rows, np.intp)
+                tp, tm, half = _chain_capsules_batch(np.stack([polys[i] for i in rows]), td.nseg)
+                xp[idx, nmov:] = tp
+                xm[idx, nmov:] = tm
+                size[idx, nmov:, 1] = half
         t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)   # noqa: E731
         return t(xp), t(xm), t(size), t(rgb)
 

@@ -1,0 +1,87 @@
+{
+  "before_dir": "$SCR/se6/_dumps/2a2/before",
+  "after_dir": "$SCR/se6/_dumps/2a2/after",
+  "configs": {
+    "DMCAcrobotSwingup": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCBallInCupCatch": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCCartpoleBalance": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCCartpoleSwingup": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCFingerSpin": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCFingerTurnEasy": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCFingerTurnHard": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCPendulumSwingup": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCReacherEasy": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    },
+    "DMCReacherHard": {
+      "identical": true,
+      "max_abs_diff": 0,
+      "px_differing": 0,
+      "px_total": 451584,
+      "frames_differing": 0,
+      "mean_abs_diff": 0.0
+    }
+  },
+  "all_identical": true
+}

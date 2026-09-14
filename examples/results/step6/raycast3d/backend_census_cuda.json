@@ -1,0 +1,1307 @@
+{
+  "host": "gpu2101.oscar.ccv.brown.edu",
+  "device": "cuda",
+  "slurm_job": "6343664",
+  "configs": {
+    "Acrobot": {
+      "declared_backends": [
+        "gfxdraw"
+      ],
+      "shard": "raster",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 500,
+      "oracle_supersample": 1,
+      "digest_ours": "9d0b92b300657194461f8d830f4eb9c4e77573a1b4ba61be12c08716b042ca01",
+      "digest_official": "9d0b92b300657194461f8d830f4eb9c4e77573a1b4ba61be12c08716b042ca01",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "AntmazeGiantNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "AntmazeGiantStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+      "digest_official": "7cf28b5fd5e36c3b8ed2081ff0dfe6fa1eb67253508996398632427bf35ad73a",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 107,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "AntmazeLargeExplore": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "AntmazeLargeNavigate",
+        "AntmazeLargeStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+      "digest_official": "17a587719abba345527e974da866e2a957862aef3a9580a81de830cd21f3e454",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 63,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "AntmazeMediumExplore": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "AntmazeMediumNavigate",
+        "AntmazeMediumStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+      "digest_official": "859b5a3014eed11f898bb3151c3e794431a1fff518310edfc873565de017ba9f",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 39,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "AntmazeTeleportExplore": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "FAIL",
+      "failures": [
+        "check_style_is_state"
+      ],
+      "siblings": [
+        "AntmazeTeleportNavigate",
+        "AntmazeTeleportStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "06a2e039e1fdf3ad0c926f84550bb1dd7ebff910c50c096d59aa8e502c29a805",
+      "digest_official": "9d638b65a124b25afb93ffbad75ac07df2e1e8e75c372425cdb03551ccf8003e",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 69,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "CartPole": {
+      "declared_backends": [
+        "gfxdraw"
+      ],
+      "shard": "raster",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 600,
+      "oracle_supersample": 1,
+      "digest_ours": "88761ad2c36b1d7ce8c8b2f3d8b62fa447fe1842534745bf9e672865759fab4a",
+      "digest_official": "88761ad2c36b1d7ce8c8b2f3d8b62fa447fe1842534745bf9e672865759fab4a",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "CraftaxClassic": {
+      "declared_backends": [],
+      "shard": "swm",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PARTIAL",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 16,
+      "oracle_supersample": 1,
+      "digest_ours": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "digest_official": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+      "oracle_host": "gpu2116.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "DMCAcrobotSwingup": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+      "digest_official": "2cd0bc3b63fed081ea7a72898934a1a892cb8a98ac90d5542025e05bc9dcec5c",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 2,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCBallInCupCatch": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+      "digest_official": "530cdea3210389434bff2000ba8fc0e26199a814cd61645804d4be4e287453c4",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 2,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCCartpoleBalance": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+      "digest_official": "9c3b5aa9cd8fd186be05cc316587f79812222a013512ae05223aa9209421ab02",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 4,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCCartpoleSwingup": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+      "digest_official": "a1ea0908f5a2eb974ac081783f8bab62df058ae573d7ffa6211238af100c9d91",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 4,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCCheetahRun": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "visual",
+      "gate_a": "FAIL",
+      "failures": [
+        "check_resolution_consistency",
+        "check_visual_fidelity"
+      ],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+      "digest_official": "b122be595cd033fdb963a8ddab115938afea54c3e5aafdd72039c605af100c17",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "error": "ModuleNotFoundError(\"No module named 'warp'\")",
+      "raycast3d_on_render_path": "error"
+    },
+    "DMCFingerSpin": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+      "digest_official": "ef58708ebf896e2910ab7f36ed9221b4a8cf6fe77519a21d104a3e65791356d7",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 2,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCFingerTurnEasy": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+      "digest_official": "6055da19c15d49702a69da87170eb6de73f1da6fc102e90bd4370ffd84db4b5f",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 2,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCFingerTurnHard": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+      "digest_official": "719f9122df534e9c6ad62974f603f4de13b3820ed78b826580fc3ebd192b8e2d",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 2,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCHopperHop": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "visual",
+      "gate_a": "FAIL",
+      "failures": [
+        "check_resolution_consistency",
+        "check_visual_fidelity"
+      ],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+      "digest_official": "a5f16ae5cd7b891756afd48d58ca8d2e9515be5cbe34a764021c5d570aa17b70",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "error": "ModuleNotFoundError(\"No module named 'warp'\")",
+      "raycast3d_on_render_path": "error"
+    },
+    "DMCHumanoidStand": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "visual",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+      "digest_official": "4f908dbd3b7076a4f5353013634ff0fbef2ae84737ea5760e1293790ee22211f",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "error": "ModuleNotFoundError(\"No module named 'warp'\")",
+      "raycast3d_on_render_path": "error"
+    },
+    "DMCPendulumSwingup": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+      "digest_official": "67b2e1f79808b1f4909d52db7fed60f30648ffef3d7b93821a2e59adc644155a",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 2,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCReacherEasy": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+      "digest_official": "9cb9dc873bd7f39a246040d3626aa63a89a74a17d8fc0bcbc247f562b246ca11",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 7,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCReacherHard": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+      "digest_official": "5ab2f947802fe0d130190a030996e3582ba1336585ae3ef55cb6b229c6440cf5",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "DMControlSuite",
+      "render_module": "stable_envs.envs.dmcontrol",
+      "raycast3d_entry_calls": {
+        "any_blocking": 2,
+        "cached_rays": 1,
+        "cast_nearest": 2,
+        "intersect": 7,
+        "screen_span": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "DMCWalkerWalk": {
+      "declared_backends": [
+        "mjwarp",
+        "raycast3d"
+      ],
+      "shard": "dmc",
+      "role": "registered_default",
+      "tier": "visual",
+      "gate_a": "FAIL",
+      "failures": [
+        "check_resolution_consistency",
+        "check_visual_fidelity"
+      ],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 84,
+      "oracle_supersample": 1,
+      "digest_ours": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+      "digest_official": "67568604de87b644a5c1cdd9d20434ed7254d6ac69911626a6a495ea7b6432be",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "error": "ModuleNotFoundError(\"No module named 'warp'\")",
+      "raycast3d_on_render_path": "error"
+    },
+    "FetchPickAndPlace": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+      "digest_official": "1ec3da702c214bb643346b3c82809260f5a05d715f887b8a167f69520aa6357c",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchPickAndPlaceDense": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+      "digest_official": "1ec3da702c214bb643346b3c82809260f5a05d715f887b8a167f69520aa6357c",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchPickAndPlaceDict": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+      "digest_official": "1ec3da702c214bb643346b3c82809260f5a05d715f887b8a167f69520aa6357c",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchPush": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+      "digest_official": "d8530814692cd200e769a4515f0a2ea1f56457679b2d892542c56d0f6d0e365d",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchPushDense": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+      "digest_official": "d8530814692cd200e769a4515f0a2ea1f56457679b2d892542c56d0f6d0e365d",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchPushDict": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+      "digest_official": "d8530814692cd200e769a4515f0a2ea1f56457679b2d892542c56d0f6d0e365d",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchReach": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+      "digest_official": "0a69f73915b88d14f0619440091b5789f6331c13bd8a5625b9498e5efb7793be",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchReachDense": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+      "digest_official": "0a69f73915b88d14f0619440091b5789f6331c13bd8a5625b9498e5efb7793be",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchReachDict": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+      "digest_official": "0a69f73915b88d14f0619440091b5789f6331c13bd8a5625b9498e5efb7793be",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchSlide": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+      "digest_official": "b002108cfc845e2655a7be6c570d5290238a56d8add258e1d8bbba972bd8eae3",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchSlideDense": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+      "digest_official": "b002108cfc845e2655a7be6c570d5290238a56d8add258e1d8bbba972bd8eae3",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "FetchSlideDict": {
+      "declared_backends": [
+        "mjwarp"
+      ],
+      "shard": "fetch",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 480,
+      "oracle_supersample": 1,
+      "digest_ours": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+      "digest_official": "b002108cfc845e2655a7be6c570d5290238a56d8add258e1d8bbba972bd8eae3",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "HumanoidmazeGiantNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "HumanoidmazeGiantStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+      "digest_official": "fadd55e72a2f987f0c32fabdbe8190243e9a2f0ee17891ef6ca9a2e8663bc084",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 107,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "HumanoidmazeLargeNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "HumanoidmazeLargeStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+      "digest_official": "b9ff40208789dc4efe76216a53efebc2037a05b9bb51e8ac72ead8c576025c87",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 63,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "HumanoidmazeMediumNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "FAIL",
+      "failures": [
+        "check_style_is_state"
+      ],
+      "siblings": [
+        "HumanoidmazeMediumStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+      "digest_official": "f8639a3e42502e93ace2887ce059084b26de8d869b42dd10c509e3c41c4ce480",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 39,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "MountainCar": {
+      "declared_backends": [
+        "gfxdraw"
+      ],
+      "shard": "raster",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 600,
+      "oracle_supersample": 1,
+      "digest_ours": "174ed92e5d896d8527126343b89c2df7c42d414980852df6b634a4035ecad487",
+      "digest_official": "174ed92e5d896d8527126343b89c2df7c42d414980852df6b634a4035ecad487",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "MountainCarContinuous": {
+      "declared_backends": [
+        "gfxdraw"
+      ],
+      "shard": "raster",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 600,
+      "oracle_supersample": 1,
+      "digest_ours": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+      "digest_official": "01f599409aef602077de2f47bb9a5b9c5d1055f354ca528edea8122ae7425f57",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "Pendulum": {
+      "declared_backends": [
+        "gfxdraw"
+      ],
+      "shard": "raster",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 500,
+      "oracle_supersample": 1,
+      "digest_ours": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+      "digest_official": "050e7bf85435ac689474b8d83fae5662e762326e399642160e96731957b4d1b5",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "Piecewise": {
+      "declared_backends": [],
+      "shard": "swm",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 1,
+      "digest_ours": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+      "digest_official": "30d2f0bad5423f4534e0c6da7e5ecd3c895e6bb1964f197aed4fc0b7ce9ee716",
+      "oracle_host": "gpu2116.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "PiecewiseZones": {
+      "declared_backends": [],
+      "shard": "swm",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 1,
+      "digest_ours": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+      "digest_official": "7502cecbc68c180dbc7897822bfa8095110623239168658c636dd2a99ce7da20",
+      "oracle_host": "gpu2116.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "PointmazeGiantNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "PointmazeGiantStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+      "digest_official": "a49b2d593d47313e54a8b4a2372d9b1cca6c44aeefad759323914a4b69f9f577",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 107,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "PointmazeLargeNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "PointmazeLargeStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+      "digest_official": "3138bd27c8c76a660a6ea913fdcfc61fd9ebbcb5df56b816f613c04ade3be810",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 63,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "PointmazeMediumNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "PointmazeMediumStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+      "digest_official": "9087b9edb6efdcdbada2c94e9dbc5b20a99394e2a2d81ac5264f634b7f265378",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 39,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "PointmazeTeleportNavigate": {
+      "declared_backends": [
+        "raycast3d"
+      ],
+      "shard": "ogb",
+      "role": "parameter_space",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [
+        "PointmazeTeleportStitch"
+      ],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 2,
+      "digest_ours": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+      "digest_official": "e709c36f90b4dc4ea2327864d75a97f8d2d3064fa92355e2d5f8b8b9f23297ea",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "render_class": "OGBenchMaze",
+      "render_module": "stable_envs.envs.ogbench",
+      "raycast3d_entry_calls": {
+        "cached_rays": 2,
+        "cast_nearest": 1,
+        "composite": 1,
+        "intersect": 69,
+        "screen_span": 1,
+        "shade": 1,
+        "static_depth": 1
+      },
+      "raycast3d_on_render_path": true
+    },
+    "PushT": {
+      "declared_backends": [
+        "scene"
+      ],
+      "shard": "raster",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 96,
+      "oracle_supersample": 1,
+      "digest_ours": "cecda14accd3f029b86275da4845b235b678af7bf3bd1259721a8b1fc0d14e2d",
+      "digest_official": "f9185ed11d1cb9ea17da991c91a2cbbd0aee543ad25fb1d80fad3d23673af6a2",
+      "oracle_host": "gpu2105.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "SimplePointMaze": {
+      "declared_backends": [
+        "scene"
+      ],
+      "shard": "swm",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 500,
+      "oracle_supersample": 1,
+      "digest_ours": "23cda999c9447184553ab6cebcfc7339da028f63faacf007dfc3fc124e5ffe66",
+      "digest_official": "8d9c7f4b841c1bb5bb1da721d829195295debb5aed0ce8d15ce09bf11440cda1",
+      "oracle_host": "gpu2116.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "TwoRoom": {
+      "declared_backends": [],
+      "shard": "swm",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 1,
+      "digest_ours": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+      "digest_official": "84d2563b5ea8b0a42114d2d3d08624f0ae5f8bc4567f9cf82ab9499b1a44c5b9",
+      "oracle_host": "gpu2116.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    },
+    "TwoRoomTarget": {
+      "declared_backends": [],
+      "shard": "swm",
+      "role": "registered_default",
+      "tier": "parity",
+      "gate_a": "PASS",
+      "failures": [],
+      "siblings": [],
+      "oracle_device": "cuda",
+      "oracle_batch": 64,
+      "oracle_size": 224,
+      "oracle_supersample": 1,
+      "digest_ours": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+      "digest_official": "61ae5c707170dabb46c5a9a324739e606c23271cd01a7b882242902f8f0eaa67",
+      "oracle_host": "gpu2116.oscar.ccv.brown.edu",
+      "oracle_gpu": "NVIDIA GeForce RTX 3090",
+      "raycast3d_on_render_path": null
+    }
+  },
+  "summary": {
+    "declared_raycast3d": [
+      "AntmazeGiantNavigate",
+      "AntmazeLargeExplore",
+      "AntmazeMediumExplore",
+      "AntmazeTeleportExplore",
+      "DMCAcrobotSwingup",
+      "DMCBallInCupCatch",
+      "DMCCartpoleBalance",
+      "DMCCartpoleSwingup",
+      "DMCCheetahRun",
+      "DMCFingerSpin",
+      "DMCFingerTurnEasy",
+      "DMCFingerTurnHard",
+      "DMCHopperHop",
+      "DMCHumanoidStand",
+      "DMCPendulumSwingup",
+      "DMCReacherEasy",
+      "DMCReacherHard",
+      "DMCWalkerWalk",
+      "HumanoidmazeGiantNavigate",
+      "HumanoidmazeLargeNavigate",
+      "HumanoidmazeMediumNavigate",
+      "PointmazeGiantNavigate",
+      "PointmazeLargeNavigate",
+      "PointmazeMediumNavigate",
+      "PointmazeTeleportNavigate"
+    ],
+    "actually_on_render_path": [
+      "AntmazeGiantNavigate",
+      "AntmazeLargeExplore",
+      "AntmazeMediumExplore",
+      "AntmazeTeleportExplore",
+      "DMCAcrobotSwingup",
+      "DMCBallInCupCatch",
+      "DMCCartpoleBalance",
+      "DMCCartpoleSwingup",
+      "DMCFingerSpin",
+      "DMCFingerTurnEasy",
+      "DMCFingerTurnHard",
+      "DMCPendulumSwingup",
+      "DMCReacherEasy",
+      "DMCReacherHard",
+      "HumanoidmazeGiantNavigate",
+      "HumanoidmazeLargeNavigate",
+      "HumanoidmazeMediumNavigate",
+      "PointmazeGiantNavigate",
+      "PointmazeLargeNavigate",
+      "PointmazeMediumNavigate",
+      "PointmazeTeleportNavigate"
+    ],
+    "declared_but_not_on_path": []
+  }
+}

@@ -1,0 +1,431 @@
+{
+  "tool": "profile_phases",
+  "workstream": "step6/raycast3d",
+  "env": "PointmazeLargeNavigate",
+  "device": "cpu",
+  "baseline_commit": "",
+  "host": "node2339.oscar.ccv.brown.edu",
+  "gpu": null,
+  "cpu": "x86_64",
+  "threads": 1,
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "triton": "3.8.0",
+    "numpy": "2.5.3",
+    "mujoco": "3.12.0",
+    "dm-control": "1.0.45",
+    "mujoco-warp": "absent",
+    "warp-lang": "absent"
+  },
+  "slurm_job": "6346706",
+  "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+  "pythonpath": "$SCR/se6/raycast3d",
+  "batches": {
+    "1": {
+      "batch": 1,
+      "set_state_ms": {
+        "ms_median": 0.05001947283744812,
+        "ms_min": 0.04739686846733093,
+        "ms_max": 0.05337968468666077,
+        "ms_stdev": 0.002311760403830192,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 3.3301860094070435,
+        "ms_min": 3.3069029450416565,
+        "ms_max": 3.369521349668503,
+        "ms_stdev": 0.02325377784854073,
+        "samples": 5
+      },
+      "fps": 300.28352685862586,
+      "kernels": {
+        "op_calls": 948,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 2731.1670000000054,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 2.6425843437512717,
+          "self_ms": 1.4586386581261952,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 0.4259881873925527,
+          "self_ms": 0.4259881873925527,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 0.396043062210083,
+          "self_ms": 0.396043062210083,
+          "calls": 1.0
+        },
+        "shade": {
+          "incl_ms": 0.35384918252627057,
+          "self_ms": 0.35384918252627057,
+          "calls": 1.0
+        },
+        "isect:sphere": {
+          "incl_ms": 0.2973191440105438,
+          "self_ms": 0.2973191440105438,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.1283350090185801,
+          "self_ms": 0.1283350090185801,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.05463510751724243,
+          "self_ms": 0.05463510751724243,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.04776318868001302,
+          "self_ms": 0.04776318868001302,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.008065253496170044,
+          "self_ms": 0.008065253496170044,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 1,
+          "max": 1,
+          "sum_per_render": 1.0
+        },
+        "cast_kinds": [
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 3.1706367929776507
+    },
+    "16": {
+      "batch": 16,
+      "set_state_ms": {
+        "ms_median": 0.041153281927108765,
+        "ms_min": 0.039946287870407104,
+        "ms_max": 0.04253163933753967,
+        "ms_stdev": 0.0008730141313322768,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 11.280674487352371,
+        "ms_min": 11.154614388942719,
+        "ms_max": 11.34791225194931,
+        "ms_stdev": 0.06497863408832182,
+        "samples": 5
+      },
+      "fps": 1418.3549058116007,
+      "kernels": {
+        "op_calls": 971,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 10502.657000000008,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 11.337555944919586,
+          "self_ms": 6.500557065010071,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 3.4509189426898956,
+          "self_ms": 3.4509189426898956,
+          "calls": 1.0
+        },
+        "isect:sphere": {
+          "incl_ms": 2.5608129799365997,
+          "self_ms": 2.5608129799365997,
+          "calls": 1.0
+        },
+        "shade": {
+          "incl_ms": 0.9682724873224894,
+          "self_ms": 0.9682724873224894,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 0.4096391300360362,
+          "self_ms": 0.4096391300360362,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.13438860575358072,
+          "self_ms": 0.13438860575358072,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.06302570303281148,
+          "self_ms": 0.06302570303281148,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.04894410570462545,
+          "self_ms": 0.04894410570462545,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.008168319861094156,
+          "self_ms": 0.008168319861094156,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 1,
+          "max": 1,
+          "sum_per_render": 1.0
+        },
+        "cast_kinds": [
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 65536,
+          "max": 65536,
+          "sum_per_render": 65536.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 14.144727339347204
+    },
+    "64": {
+      "batch": 64,
+      "set_state_ms": {
+        "ms_median": 0.0394769012928009,
+        "ms_min": 0.03915652632713318,
+        "ms_max": 0.04192814230918884,
+        "ms_stdev": 0.0010187197131952253,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 42.63663291931152,
+        "ms_min": 42.197804898023605,
+        "ms_max": 43.232984840869904,
+        "ms_stdev": 0.33647638042785744,
+        "samples": 5
+      },
+      "fps": 1501.0566177005105,
+      "kernels": {
+        "op_calls": 973,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 51517.333999999995,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 43.42167700330416,
+          "self_ms": 25.31471475958824,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 13.444544126590094,
+          "self_ms": 13.444544126590094,
+          "calls": 1.0
+        },
+        "isect:sphere": {
+          "incl_ms": 9.793151170015335,
+          "self_ms": 9.793151170015335,
+          "calls": 1.0
+        },
+        "shade": {
+          "incl_ms": 4.136870304743449,
+          "self_ms": 4.136870304743449,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 0.5139571925004324,
+          "self_ms": 0.5139571925004324,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.16785040497779846,
+          "self_ms": 0.16785040497779846,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.07986028989156087,
+          "self_ms": 0.07986028989156087,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.06274630626042683,
+          "self_ms": 0.06274630626042683,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.011590619881947836,
+          "self_ms": 0.011590619881947836,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 1,
+          "max": 1,
+          "sum_per_render": 1.0
+        },
+        "cast_kinds": [
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 262144,
+          "max": 262144,
+          "sum_per_render": 262144.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 53.52528517444929
+    },
+    "256": {
+      "batch": 256,
+      "set_state_ms": {
+        "ms_median": 0.04252046346664429,
+        "ms_min": 0.04108995199203491,
+        "ms_max": 0.04507601261138916,
+        "ms_stdev": 0.001427850072950363,
+        "samples": 5
+      },
+      "render_ms": {
+        "ms_median": 203.74411344528198,
+        "ms_min": 191.07307493686676,
+        "ms_max": 212.47902512550354,
+        "ms_stdev": 7.806156770617646,
+        "samples": 5
+      },
+      "fps": 1256.4780187809058,
+      "kernels": {
+        "op_calls": 973,
+        "cuda_launches": 0,
+        "device_us_total": 0,
+        "device_us_memcpy": 0,
+        "host_op_us_total": 202158.46500000008,
+        "top_device": []
+      },
+      "phases": {
+        "composite": {
+          "incl_ms": 185.55011972784996,
+          "self_ms": 99.43572680155437,
+          "calls": 1.0
+        },
+        "cast_nearest": {
+          "incl_ms": 68.9529466132323,
+          "self_ms": 68.9529466132323,
+          "calls": 1.0
+        },
+        "isect:sphere": {
+          "incl_ms": 52.810644110043846,
+          "self_ms": 52.810644110043846,
+          "calls": 1.0
+        },
+        "shade": {
+          "incl_ms": 16.466071208318073,
+          "self_ms": 16.466071208318073,
+          "calls": 1.0
+        },
+        "screen_span(+sync)": {
+          "incl_ms": 0.6836168467998505,
+          "self_ms": 0.6836168467998505,
+          "calls": 1.0
+        },
+        "agent_appearance": {
+          "incl_ms": 0.18235420187314352,
+          "self_ms": 0.18235420187314352,
+          "calls": 1.0
+        },
+        "fk (per-env mujoco loop)": {
+          "incl_ms": 0.08393451571464539,
+          "self_ms": 0.08393451571464539,
+          "calls": 1.0
+        },
+        "scene(bake)": {
+          "incl_ms": 0.06667152047157288,
+          "self_ms": 0.06667152047157288,
+          "calls": 1.0
+        },
+        "cached_rays": {
+          "incl_ms": 0.011758257945378622,
+          "self_ms": 0.011758257945378622,
+          "calls": 1.0
+        }
+      },
+      "facts": {
+        "cast_K": {
+          "per_render_calls": 1.0,
+          "min": 1,
+          "max": 1,
+          "sum_per_render": 1.0
+        },
+        "cast_kinds": [
+          "sphere"
+        ],
+        "cast_rays": {
+          "per_render_calls": 1.0,
+          "min": 1048576,
+          "max": 1048576,
+          "sum_per_render": 1048576.0
+        },
+        "cast_N_per_env": {
+          "per_render_calls": 1.0,
+          "min": 4096,
+          "max": 4096,
+          "sum_per_render": 4096.0
+        }
+      },
+      "phase_overhead_ms": 238.69372407595318
+    }
+  },
+  "size": 224,
+  "state_dim": 2,
+  "scene": {
+    "class": "PointmazeLargeNavigate",
+    "mover_primitives": 1,
+    "mover_kind_histogram": {
+      "sphere": 1
+    },
+    "tendon_segments": 0,
+    "movers": null,
+    "shadow_light": null,
+    "reflectance": null,
+    "size": 224,
+    "supersample": 2,
+    "fk_kernel": "closed-form GPU",
+    "agent_geoms": 1
+  },
+  "states_source": "examples/results/step4/states/PointmazeLargeNavigate.npz"
+}
