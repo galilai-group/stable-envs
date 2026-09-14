@@ -302,7 +302,72 @@ replay set, so none was touched.
 
 ## 8. GPU — before and after on the same card
 
-*Job `6349394` (`--partition=gpu --qos=norm-gpu --constraint=geforce3090`).*
+Job `6349394`, `--partition=gpu --qos=norm-gpu --gres=gpu:1 --constraint=geforce3090`, **one
+allocation, one card**: `gpu2106`, NVIDIA GeForce RTX 3090. Both legs measured in that allocation,
+each recording the checkout it imported. GPU was already healthy for this env, so the job of this
+run was to prove it *stayed* healthy — and in particular that the two frozen qualifiers still hold,
+because removing most of the per-render work lifts small batches more than large ones and
+`BATCH_SCALES` is `fps(4096) >= 20 * fps(1)`. A patch can make every batch faster and still fail
+that bar.
+
+### Certification sweep, all six mandatory batches
+
+| | before | after |
+|---|---|---|
+| fps at B=1 | 1,487 | 1,892 |
+| fps at B=16 | 23,687 | 30,108 |
+| fps at B=64 | 74,753 | 119,150 |
+| fps at B=256 | 127,090 | 381,039 |
+| fps at B=1024 | 141,484 | 836,415 |
+| fps at B=4096 | **145,110** | **1,206,822** |
+| one-core JPEG-q90 decode | 5,636 f/s | 4,599 f/s |
+| `cores` | 25.7 | **262.4** |
+| `BATCH_SCALES` (bar: 20x) | **pass**, 97.6x | **pass**, 637.9x |
+| `NO_LARGE_BATCH_REGRESSION` (bar: 0.9) | **pass**, 1.142 | **pass**, 3.167 |
+| `HOST_BOUND` (bar: `cpu_frac >= 1.5`) | no, 0.995 | no, 0.994 |
+| **tier** | **`GPU_FAST`** (`NO_REFERENCE`) | **`GPU_EXCEPTIONAL`** (`NO_REFERENCE`) |
+
+**8.3x at the certified batch, and both qualifiers pass by a wider margin than before**, because
+B=1 barely moved: at B=1 this renderer is bound by Python dispatch (232 operator calls), not by the
+device, so the patch cannot lift it much — which is exactly what `BATCH_SCALES` is designed to
+reward. The before leg reproduces Step 3's frozen 3090 number for this env (144,738 f/s) to within
+0.3%, which is the check that the two legs are comparable at all.
+
+### Peak device memory, which is the same finding said differently
+
+| B | peak VRAM before | after |
+|---|---|---|
+| 256 | 243 MiB | 16 MiB |
+| 1024 | 954 MiB | 58 MiB |
+| 4096 | **3,790 MiB** | **221 MiB** |
+
+17x less at B=4096. The old pipeline's peak *was* the image-sized float32 temporaries; the new one's
+peak is the output frame plus the gather index, and the 522 KiB table.
+
+Operator calls per render fell from 271–277 to 232–238. The device→host synchronisation introduced
+by `torch.all(gain == 1.0)` is inside those numbers and is not measurable against them: B=1 rose
+from 1,487 to 1,892 f/s *despite* it.
+
+### Frozen Step-4 replay on CUDA — the oracle's own device
+
+`PIXELS UNCHANGED`. `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` and
+`style_digest` are all byte-identical to the frozen record, as are `frames_shape`
+`[64, 112, 144, 3]`, `mean_pixel` 93.84458414713542 and `distinct_colors` 277. The baseline leg was
+replayed on the same node for the same comparison and also came back `PIXELS UNCHANGED`, so a
+difference would have indicted the patch rather than the node. `digest_official` is `unavailable`
+(no `jax`). Files: `replay/cuda_vs_frozen.json`, `replay/cuda_before_vs_frozen.json`.
+
+### Targeted GPU tests
+
+`tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py tests/gpu/test_fast_paths.py -k
+CraftaxClassic` → **30 passed, 14 skipped, 3481 deselected**. No failures.
+
+### Re-measured on the final commit
+
+The first GPU job finished in 58 seconds and three docstring-only commits landed in the same minute,
+so the artifact does not pin which text the after leg imported. Job `6351158` re-takes the sweep,
+the CUDA replay and the GPU tests on the offered commit, with the file's md5 printed into the log:
+see `sweep/tier_gpu_final.json`, `replay/cuda_final_vs_frozen.json`.
 
 ---
 
