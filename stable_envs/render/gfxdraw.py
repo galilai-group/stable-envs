@@ -261,9 +261,30 @@ def fill_polygon_mask(vx, vy, ys, xs, W) -> torch.Tensor:
     BIG = 1 << 40
     xa = _round16(torch.where(act, X, BIG).amin(1) + 1).clamp_min(0)  # (B,H)
     xb = _round16(torch.where(act, X, -BIG).amax(1) - 1).clamp_max(W - 1)
-    ok = act.sum(1) >= 2
+    # A row with fewer than two crossings draws nothing. Folded into the span rather than kept as a
+    # third term, because ``ok`` is (B,H) and the term it would join is (B,H,W): an empty span
+    # already selects no column, so the row test costs H elements instead of H*W.
+    xa = torch.where(act.sum(1) >= 2, xa, torch.full_like(xa, W))
     x = xs.view(1, 1, -1)
-    return ok.unsqueeze(-1) & (x >= xa.unsqueeze(-1)) & (x <= xb.unsqueeze(-1))
+    return (x >= xa.unsqueeze(-1)) & (x <= xb.unsqueeze(-1))
+
+
+def disc_offsets(r: int) -> list[tuple[int, int]]:
+    """``gfxdraw.filled_circle``'s painted pixels as ``(dy, dx)`` offsets from the centre. Rule 3.
+
+    The same spans as ``fill_circle_mask``, enumerated instead of tested. A disc's write set is a
+    constant of its RADIUS, so a filled circle is a scatter of a few hundred pixels rather than a
+    predicate over a window -- and that matters because a disc's window is not small: MountainCar's
+    wheels ride a sine, so their rows span 341 of 400 even though each wheel is 17 px across, and the
+    window form evaluated 205,000 pixels per wheel to paint 200.
+    """
+    hw = circle_hw(int(r))
+    out = []
+    for dy in range(-int(r), int(r) + 1):
+        h = hw[abs(dy)]
+        for dx in range(-h, h + 1):
+            out.append((dy, dx))
+    return out
 
 
 def fill_circle_mask(cx, cy, r, ys, xs, hw_t) -> torch.Tensor:
@@ -353,45 +374,157 @@ def clip_line(x1, y1, x2, y2, W, H, iters: int = 6):
 
 
 # --------------------------------------------------------------------------- canvas
+def select_(dst, mask, src) -> None:
+    """``dst = mask ? src : dst``, in place, over whatever shapes broadcast. Integer, exact.
+
+    The obvious spelling is ``torch.where(mask, src, dst, out=dst)`` and it is what CUDA gets, but on
+    the CPU it runs at ~340 Mpx/s on an interleaved ``(B,H,W,3)`` surface and ~2.6 Gpx/s on a plane,
+    because ``where`` over a broadcast bool takes a scalar path. The bitwise identity
+    ``d ^= (d ^ s) * m`` is three vectorised uint8 passes and measures 4.8 Gpx/s on the same plane --
+    3.7x -- at the cost of one temporary. Both compute the same integers; this is a codegen
+    difference, not a numerical one, and the choice is by device rather than by taste.
+    """
+    if dst.device.type == "cuda":
+        torch.where(mask, src, dst, out=dst)
+    else:
+        dst.bitwise_xor_((dst ^ src) * mask.view(torch.uint8))
+
+
 class Canvas:
     """A batch of RGB surfaces, in the reference's PRE-FLIP orientation (y down).
 
     One trailing trash pixel absorbs every out-of-bounds anti-aliasing write, so clipping costs an
     index clamp instead of the boolean-mask host sync that ``buf[mask]`` would force (rule 6).
+
+    PLANAR, ``(3, B, H, W)``, not interleaved ``(B, H, W, 3)``, and that is a throughput decision
+    with one number behind it. Every opaque primitive writes ``mask ? colour : surface``, where the
+    mask is per PIXEL and the colour is per channel; interleaved, the mask has to broadcast across a
+    trailing axis of 3 and the write runs at 340 Mpx/s, while planar it broadcasts across the outer
+    axis over a contiguous ``B*H*W`` block and runs at 4.8 Gpx/s. Measured at batch 64 on a 400x600
+    surface: 45.4 ms per primitive against 3.2. The cost is paid once at the end, where the three
+    planes are interleaved into the ``(B,H,W,3)`` the caller asked for (18.4 ms at that size), rather
+    than once per primitive.
+
+    ``flat`` is correspondingly ``(3, B*H*W+1)``: a scatter still touches all three channels in one
+    indexing operation, because the channel axis is the one NOT being indexed.
     """
 
-    def __init__(self, B, H, W, device, sh, ys, xs, bg=(255, 255, 255)):
+    def __init__(self, B, H, W, device, sh, ys, xs, bg=(255, 255, 255), gfx=None):
         self.B, self.H, self.W = B, H, W
         self.device = device
-        self.flat = torch.empty((B * H * W + 1, 3), dtype=torch.uint8, device=device)
-        self.buf = self.flat[:-1].view(B, H, W, 3)
+        self.flat = torch.empty((3, B * H * W + 1), dtype=torch.uint8, device=device)
+        self.buf = self.flat[:, :-1].view(3, B, H, W)
         for c in range(3):
-            self.buf[..., c].fill_(int(bg[c]))
+            self.buf[c].fill_(int(bg[c]))
         self.ys, self.xs, self.sh = ys, xs, sh
         self.trash = B * H * W
+        self.gfx = gfx
+
+    def steps(self, kmax: int) -> torch.Tensor:
+        """``arange(kmax+1)`` as a row. Cached: it is a constant of the primitive, and rule 6 says a
+        draw call may not build a tensor from the host."""
+        if self.gfx is not None:
+            return self.gfx.steps(kmax)
+        return torch.arange(kmax + 1, device=self.device).view(1, -1)
+
+    def solid(self) -> torch.Tensor:
+        """The ``pixelColor`` weight, cached as ONE element. Callers ``expand`` it to their write count.
+
+        An edge used to allocate and fill a ``B*(kmax+1)`` vector of a constant before every scatter
+        -- three allocations per edge that the profile counted and the picture never used. A
+        stride-0 ``expand`` of this removes the allocation while keeping ``len(w) == len(valid)``,
+        which ``blend_at`` overrides are entitled to rely on.
+        """
+        if self.gfx is not None:
+            return self.gfx.solid
+        return torch.tensor([SOLID], dtype=torch.int64, device=self.device)
+
+    def color_u8(self, color) -> torch.Tensor:
+        """A python colour literal as a cached ``(3,)`` uint8 tensor.
+
+        ``torch.tensor([...], device=...)`` in a draw call is a host-to-device copy in the hot path,
+        which is rule 6 -- and under CUDA-graph capture it is not merely slow, it makes the render
+        uncapturable. Cached on the ``Gfx`` where every other constant lives; the fallback allocates
+        only for a bare ``Canvas`` built without one.
+        """
+        if self.gfx is not None:
+            return self.gfx.color_u8(color)
+        return torch.tensor([int(v) for v in color], dtype=torch.uint8, device=self.device)
+
+    def always(self) -> torch.Tensor:
+        """An all-true ``valid``, cached as one element; callers ``expand`` it to their write count."""
+        if self.gfx is not None:
+            return self.gfx.always
+        return torch.ones(1, dtype=torch.bool, device=self.device)
+
+    def window(self, win):
+        """``self.buf`` restricted to ``(y0, y1, x0, x1)``; the whole surface when ``win`` is None."""
+        return self.buf if win is None else self.buf[:, :, win[0]:win[1], win[2]:win[3]]
+
+    def rows(self, win):
+        """The row and column index vectors a primitive with window ``win`` evaluates over."""
+        if win is None:
+            return self.ys, self.xs
+        return self.ys[win[0]:win[1]], self.xs[win[2]:win[3]]
 
     def fill_from(self, base: torch.Tensor) -> None:
-        """Start from a prebaked ``(H,W,3)`` layer instead of a flat colour."""
-        self.buf[...] = base
+        """Start from a prebaked ``(3,1,H,W)`` or ``(3,B,H,W)`` layer instead of a flat colour."""
+        self.buf.copy_(base)
 
-    def paint(self, mask, color) -> None:
+    def paint(self, mask, color, window=None) -> None:
         """Opaque fill: three scalar ``masked_fill_``, so no allocation and no host copy."""
+        buf = self.window(window)
         for c in range(3):
-            self.buf[..., c].masked_fill_(mask, int(color[c]))
+            buf[c].masked_fill_(mask, int(color[c]))
+
+    def _disc_index(self, cy, cx, off, gate=None):
+        """Flat indices of a disc stencil placed at per-environment centres; out of range -> trash."""
+        B = cy.shape[0]
+        y = cy.view(-1, 1) + off[:, 0].view(1, -1)
+        x = cx.view(-1, 1) + off[:, 1].view(1, -1)
+        ok = (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
+        if gate is not None:
+            ok = ok & gate.view(-1, 1)
+        b = torch.arange(B, device=self.device).view(-1, 1)
+        return torch.where(ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W
+                           + x.clamp(0, self.W - 1), self.trash).reshape(-1)
+
+    def paint_disc(self, cy, cx, off, color) -> None:
+        """``filled_circle`` as a scatter of its own pixels. Same write set as the window form.
+
+        Offsets within one disc are distinct and discs of different environments land in different
+        frames, so no two writes of this scatter share a destination and there is no ordering to
+        lose -- the out-of-range ones all go to the trash pixel, whose value nothing reads.
+        """
+        idx = self._disc_index(cy, cx, off)
+        n = off.shape[0] * cy.shape[0]
+        self.flat[:, idx] = self.color_u8(color).view(3, 1).expand(3, n)
 
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
-        """Blend ``color_t`` ``(1,3)`` int64 at flat-indexed pixels; ``valid`` False goes to the trash."""
+        """Blend ``color_t`` ``(3,1)`` int64 at flat-indexed pixels; ``valid`` False goes to the trash."""
         ok = valid & (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
         flat = torch.where(ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W
                            + x.clamp(0, self.W - 1), self.trash)
-        dst = self.flat[flat].to(torch.int64)
-        self.flat[flat] = blend(color_t, dst, w.view(-1, 1), self.sh).to(torch.uint8)
+        dst = self.flat[:, flat].to(torch.int64)
+        self.flat[:, flat] = blend(color_t, dst, w.reshape(1, -1),
+                                   self.sh.view(3, 1)).to(torch.uint8)
 
     def rgb(self, out=None) -> torch.Tensor:
-        """The finished frame, with the reference's final ``transform.flip(surf, False, True)``."""
+        """The finished frame, with the reference's final ``transform.flip(surf, False, True)``.
+
+        The flip is a row reversal of the planes and the interleave is the transpose back to the
+        caller's ``(B,H,W,3)``; this is the one pass over the surface the planar canvas costs per
+        FRAME, against the one per PRIMITIVE it removes.
+
+        One plane at a time, although ``stack`` over the three flipped planes measures the same
+        18.5 ms at batch 64: the whole-surface form needs a second copy of the surface alive while
+        it builds the third, and at batch 4096 on a 500x500 frame that is 3.1 GB of peak rather than
+        1.0. Same instruction count, a third of the transient.
+        """
         if out is None:
-            return torch.flip(self.buf, dims=(1,))
-        out.copy_(torch.flip(self.buf, dims=(1,)))
+            out = torch.empty((self.B, self.H, self.W, 3), dtype=torch.uint8, device=self.device)
+        for c in range(3):
+            out[..., c].copy_(self.buf[c].flip(1))
         return out
 
 
@@ -425,8 +558,8 @@ class StyleCanvas(Canvas):
     """
 
     def __init__(self, gfx: "Gfx", B: int, bg):
-        super().__init__(B, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs, (0, 0, 0))
-        self.buf[...] = to_u8(bg).view(B, 1, 1, 3)
+        super().__init__(B, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs, (0, 0, 0), gfx=gfx)
+        self.buf.copy_(to_u8(bg).t().view(3, B, 1, 1))
         self.col = None
         self.aa = None
         self.gate = None
@@ -444,6 +577,10 @@ class StyleCanvas(Canvas):
     def paint(self, mask, color=None, window=None) -> None:
         """Opaque fill. ``window`` is ``(y0, y1, x0, x1)`` and makes ``mask`` cover that box only.
 
+        The window is what ``polygon``/``circle`` build their mask over as well (``Canvas.rows``), so
+        a primitive with a known bounding box neither evaluates its span rule nor writes its colour
+        outside that box.
+
         The window is a throughput argument, not a correctness one, and it is the difference between
         a usable renderer and an unusable one when a scene has many small primitives: without it every
         primitive reads and rewrites the whole ``(B, H, W, 3)`` buffer, so LunarLander's 31 polygons
@@ -453,9 +590,8 @@ class StyleCanvas(Canvas):
         """
         if self.gate is not None:
             mask = mask & self.gate.view(-1, 1, 1)
-        c = to_u8(self.col if color is None else color).view(self.B, 1, 1, 3)
-        buf = self.buf if window is None else self.buf[:, window[0]:window[1], window[2]:window[3]]
-        buf.copy_(torch.where(mask.unsqueeze(-1), c, buf))
+        c = to_u8(self.col if color is None else color).t().reshape(3, self.B, 1, 1)
+        select_(self.window(window), mask.contiguous().unsqueeze(0), c)
 
     def paint_at(self, offsets, color=None, gate=None) -> None:
         """Write a colour at a CONSTANT set of frame-relative flat pixel offsets, per environment.
@@ -472,29 +608,35 @@ class StyleCanvas(Canvas):
         if g is not None:
             idx = torch.where(g.view(-1, 1), idx, torch.full_like(idx, self.trash))
         c = to_u8(self.col if color is None else color)
-        self.flat[idx.reshape(-1)] = c.view(self.B, 1, 3).expand(self.B, n, 3).reshape(-1, 3)
+        self.flat[:, idx.reshape(-1)] = c.t().reshape(3, self.B, 1).expand(3, self.B, n).reshape(3, -1)
+
+    def paint_disc(self, cy, cx, off, color=None) -> None:
+        B, S = cy.shape[0], off.shape[0]
+        idx = self._disc_index(cy, cx, off, self.gate)
+        c = to_u8(self.col if color is None else color)
+        self.flat[:, idx] = c.t().reshape(3, B, 1).expand(3, B, S).reshape(3, -1)
 
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
         if self.aa is not None:
             valid = valid & self.aa[b]
         if self.gate is not None:
             valid = valid & self.gate[b]
-        super().blend_at(b, y, x, self.col.to(torch.int64)[b], w, valid)
+        super().blend_at(b, y, x, self.col.to(torch.int64).t()[:, b], w, valid)
 
 
 # --------------------------------------------------------------------------- primitives
-def aaline(cv: Canvas, x1, y1, x2, y2, color_t, kmax, bidx) -> None:
-    """``_aalineColor(..., draw_endpoint=0)``: clip, solid initial pixel, then the Wu pairs. Rule 4.
+def edge_setup(x1, y1, x2, y2, W, H):
+    """``clip_line`` plus the Wu walk's constants, for a FLAT batch of edges. Rule 4.
 
-    ``kmax`` is a STATIC bound on the step count, supplied by the caller from the primitive's own
-    geometry. Deriving it from the data would need ``.max().item()`` and a host sync per edge.
+    Split out of ``aaline`` because it is the whole of the per-edge python cost and none of the
+    per-edge order. Six Cohen-Sutherland iterations are ~180 tiny operator calls whatever the edge's
+    length, so at batch 1 they are the renderer: 3.1 ms of an 8.1 ms CartPole frame, 38%, in eight
+    calls. Computing them for every edge of a polygon at once makes that one call. The WRITES stay
+    per edge and in order -- two edges of a polygon can land on the same pixel at a shared vertex,
+    and a batched scatter would read every destination before writing any of them, so merging them
+    would change the picture at corners.
     """
-    dev = x1.device
-    B = x1.shape[0]
-    draw, x1, y1, x2, y2 = clip_line(x1, y1, x2, y2, cv.W, cv.H)
-    cv.blend_at(bidx, y1, x1, color_t,
-                torch.full((B,), SOLID, dtype=torch.int64, device=dev), draw)
-
+    draw, x1, y1, x2, y2 = clip_line(x1, y1, x2, y2, W, H)
     flip = y1 > y2
     xx0 = torch.where(flip, x2, x1)
     yy0 = torch.where(flip, y2, y1)
@@ -502,27 +644,47 @@ def aaline(cv: Canvas, x1, y1, x2, y2, color_t, kmax, bidx) -> None:
     dy = torch.where(flip, y1, y2) - yy0
     xdir = torch.where(dxs >= 0, 1, -1)
     dx = dxs.abs()
-
     vert = dx == 0
     horiz = (dy == 0) & ~vert
-    k = torch.arange(kmax + 1, device=dev).view(1, -1)
-    bb = bidx.view(-1, 1).expand(B, kmax + 1).reshape(-1)
-    solid = torch.full((B * (kmax + 1),), SOLID, dtype=torch.int64, device=dev)
-    dw = draw.view(-1, 1)
-    # axis-aligned edges: SDL_gfx short-circuits to a solid vline/hline, with no AA whatsoever
-    cv.blend_at(bb, (yy0.view(-1, 1) + k).reshape(-1),
-                xx0.view(-1, 1).expand(B, kmax + 1).reshape(-1), color_t, solid,
-                (dw & vert.view(-1, 1) & (dy > 0).view(-1, 1) & (k <= dy.view(-1, 1))).reshape(-1))
-    lo = torch.minimum(xx0, xx0 + xdir * dx)
-    cv.blend_at(bb, yy0.view(-1, 1).expand(B, kmax + 1).reshape(-1),
-                (lo.view(-1, 1) + k).reshape(-1), color_t, solid,
-                (dw & horiz.view(-1, 1) & (k <= dx.view(-1, 1))).reshape(-1))
-
-    gen = ~vert & ~horiz
     ymaj = dy > dx
     major = torch.where(ymaj, dy, dx)
     minor = torch.where(ymaj, dx, dy)
     E = torch.div(minor << 16, major.clamp_min(1), rounding_mode="floor")
+    lo = torch.minimum(xx0, xx0 + xdir * dx)
+    return (draw, x1, y1, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
+
+
+def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
+    """The five scatters of ``_aalineColor(..., draw_endpoint=0)``, for one already-clipped edge.
+
+    ``kmax`` is a STATIC bound on the step count, supplied by the caller from the primitive's own
+    geometry. Deriving it from the data would need ``.max().item()`` and a host sync per edge.
+    """
+    draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = p
+    B = xx0.shape[0]
+    # ONE weight per write, as a stride-0 view of a cached scalar. ``blend`` would broadcast a
+    # 1-element weight, but ``blend_at`` is an overridable seam and a subclass is entitled to index
+    # the weight by its own mask -- LunarLander's _AARecorder does exactly that to bake the flag
+    # fringe, and a (1,) weight against a (B*(kmax+1),) mask is an IndexError inside its __init__.
+    # ``expand`` keeps what the cache was for (no allocation, no host copy, rule 6) and keeps the
+    # contract the baseline had: len(w) == len(valid).
+    solid = cv.solid()
+    cv.blend_at(bidx, sy, sx, color_t, solid.expand(B), draw)
+
+    k = cv.steps(kmax)
+    n = B * (kmax + 1)
+    run = solid.expand(n)
+    bb = bidx.view(-1, 1).expand(B, kmax + 1).reshape(-1)
+    dw = draw.view(-1, 1)
+    # axis-aligned edges: SDL_gfx short-circuits to a solid vline/hline, with no AA whatsoever
+    cv.blend_at(bb, (yy0.view(-1, 1) + k).reshape(-1),
+                xx0.view(-1, 1).expand(B, kmax + 1).reshape(-1), color_t, run,
+                (dw & vert.view(-1, 1) & (dy > 0).view(-1, 1) & (k <= dy.view(-1, 1))).reshape(-1))
+    cv.blend_at(bb, yy0.view(-1, 1).expand(B, kmax + 1).reshape(-1),
+                (lo.view(-1, 1) + k).reshape(-1), color_t, run,
+                (dw & horiz.view(-1, 1) & (k <= dx.view(-1, 1))).reshape(-1))
+
+    gen = ~vert & ~horiz
     kk = k[:, 1:]
     acc = kk * E.view(-1, 1)
     wraps = acc >> 16
@@ -539,8 +701,13 @@ def aaline(cv: Canvas, x1, y1, x2, y2, color_t, kmax, bidx) -> None:
     cv.blend_at(bk, yb.reshape(-1), xb.reshape(-1), color_t, wgt.reshape(-1), live)
 
 
+def aaline(cv: Canvas, x1, y1, x2, y2, color_t, kmax, bidx) -> None:
+    """``_aalineColor(..., draw_endpoint=0)``: clip, solid initial pixel, then the Wu pairs. Rule 4."""
+    aaline_emit(cv, edge_setup(x1, y1, x2, y2, cv.W, cv.H), color_t, kmax, bidx)
+
+
 def polygon(cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True,
-            fill_first: bool = False) -> None:
+            fill_first: bool = False, window=None) -> None:
     """The gymnasium idiom: ``aapolygon`` then ``filled_polygon``, on the same float64 vertices.
 
     The AA fringe is blended against the canvas at draw time and the hard fill then overwrites the
@@ -550,27 +717,47 @@ def polygon(cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True,
     THEN ``gfxdraw.aapolygon``). It is a different picture, not a reordering of the same one: with the
     fill last the rim survives only outside it, and with the fill first the rim is blended over the
     fill's own edge pixels as well.
+
+    ``kmax`` may be one bound for every edge or one PER edge. A rotated rectangle's edges alternate
+    between the long and the short side, and the Wu pass costs ``kmax`` steps whether or not the edge
+    is that long, so a single bound makes every short edge pay the long edge's price.
+
+    ``window`` is ``(y0, y1, x0, x1)``, a STATIC superset of the polygon's footprint supplied by the
+    caller from its own geometry. It bounds the scanline fill only -- the fringe is a scatter and
+    clips itself -- and it is why a primitive no longer reads and rewrites the whole surface.
     """
     vi = torch.trunc(verts).to(torch.int64)
     vx, vy = vi[..., 0], vi[..., 1]
     n = vx.shape[1]
+    km = [kmax] * n if isinstance(kmax, int) else list(kmax)
 
     def _aa():
+        # one clip for every edge of the polygon, then the writes edge by edge and in order
+        nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
+        pars = edge_setup(vx.t().reshape(-1), vy.t().reshape(-1),
+                          nx.t().reshape(-1), ny.t().reshape(-1), cv.W, cv.H)
+        B = vx.shape[0]
         for e in range(n):
-            aaline(cv, vx[:, e], vy[:, e], vx[:, (e + 1) % n], vy[:, (e + 1) % n], color_t, kmax, bidx)
+            aaline_emit(cv, tuple(t[e * B:(e + 1) * B] for t in pars), color_t, km[e], bidx)
 
     if aa and not fill_first:
         _aa()
-    cv.paint(fill_polygon_mask(vx, vy, cv.ys, cv.xs, cv.W), color)
+    ys, xs = cv.rows(window)
+    cv.paint(fill_polygon_mask(vx, vy, ys, xs, cv.W), color, window)
     if aa and fill_first:
         _aa()
 
 
-def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True) -> None:
+def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True,
+           window=None, disc=None) -> None:
     """``aacircle`` (fringe stencil) then ``filled_circle``.
 
     ``stencil`` is a per-pass list of ``(dy, dx, w)`` tensors: ``aaellipseColor`` writes a few pixels
     twice and the two writes must land in order, so they cannot share a scatter.
+
+    ``disc`` is the filled disc's own ``(S,2)`` offset stencil (``Gfx.disc``). When it is given the
+    fill is a scatter of exactly the pixels it paints; ``hw_t``/``window`` are then unused and the
+    predicate form is kept only as the readable definition the scatter is checked against.
     """
     if aa and stencil is not None:
         B = cx.shape[0]
@@ -582,8 +769,12 @@ def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool 
             cv.blend_at(bb, (cy.view(-1, 1) + st[:, 0].view(1, -1)).reshape(-1),
                         (cx.view(-1, 1) + st[:, 1].view(1, -1)).reshape(-1), color_t,
                         st[:, 2].view(1, -1).expand(B, S).reshape(-1),
-                        torch.ones(B * S, dtype=torch.bool, device=cv.device))
-    cv.paint(fill_circle_mask(cx, cy, r, cv.ys, cv.xs, hw_t), color)
+                        cv.always().expand(B * S))
+    if disc is not None:
+        cv.paint_disc(cy, cx, disc, color)
+    else:
+        ys, xs = cv.rows(window)
+        cv.paint(fill_circle_mask(cx, cy, r, ys, xs, hw_t), color, window)
 
 
 def rotate(v, a):
@@ -613,11 +804,21 @@ class Gfx:
         self.sh = torch.tensor(SHIFT, dtype=torch.int64, device=self.device)
         self._hw: dict[int, torch.Tensor] = {}
         self._st: dict[int, list[torch.Tensor]] = {}
+        self._disc: dict[int, torch.Tensor] = {}
         self._bi: dict[int, torch.Tensor] = {}
         self._k: dict[tuple, torch.Tensor] = {}
+        self._steps: dict[int, torch.Tensor] = {}
+        self.solid = torch.tensor([SOLID], dtype=torch.int64, device=self.device)
+        self.always = torch.ones(1, dtype=torch.bool, device=self.device)
 
     def canvas(self, B: int, bg=(255, 255, 255)) -> Canvas:
-        return Canvas(B, self.H, self.W, self.device, self.sh, self.ys, self.xs, bg)
+        return Canvas(B, self.H, self.W, self.device, self.sh, self.ys, self.xs, bg, gfx=self)
+
+    def steps(self, kmax: int) -> torch.Tensor:
+        k = int(kmax)
+        if k not in self._steps:
+            self._steps[k] = torch.arange(k + 1, device=self.device).view(1, -1)
+        return self._steps[k]
 
     def batch_index(self, B: int) -> torch.Tensor:
         if B not in self._bi:
@@ -628,6 +829,13 @@ class Gfx:
         if r not in self._hw:
             self._hw[r] = torch.tensor(circle_hw(int(r)), dtype=torch.int64, device=self.device)
         return self._hw[r]
+
+    def disc(self, r: int) -> torch.Tensor:
+        """``(S,2)`` int64 offsets of the filled disc of radius ``r``, cached (rule 6)."""
+        if r not in self._disc:
+            self._disc[r] = torch.tensor(disc_offsets(int(r)), dtype=torch.int64,
+                                         device=self.device).view(-1, 2)
+        return self._disc[r]
 
     def stencil(self, r: int) -> list[torch.Tensor]:
         if r not in self._st:
@@ -648,8 +856,15 @@ class Gfx:
             self._k[key] = torch.tensor(vals, dtype=torch.float64, device=self.device)
         return self._k[key]
 
+    def color_u8(self, c) -> torch.Tensor:
+        """A ``(3,)`` uint8 colour literal, cached. The opaque-fill twin of :meth:`color`."""
+        key = ("u8", tuple(int(v) for v in c))
+        if key not in self._k:
+            self._k[key] = torch.tensor(key[1], dtype=torch.uint8, device=self.device)
+        return self._k[key]
+
     def color(self, c) -> torch.Tensor:
         key = ("c", tuple(int(v) for v in c))
         if key not in self._k:
-            self._k[key] = torch.tensor(key[1], dtype=torch.int64, device=self.device).view(1, 3)
+            self._k[key] = torch.tensor(key[1], dtype=torch.int64, device=self.device).view(3, 1)
         return self._k[key]

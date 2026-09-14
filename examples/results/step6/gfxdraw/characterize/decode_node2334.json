@@ -1,0 +1,46 @@
+{
+ "CartPole": {
+  "h": 400,
+  "w": 600,
+  "jpeg_quality": 90,
+  "jpeg_bytes": 7323,
+  "raw_bytes": 720000,
+  "n": 166,
+  "decode_fps_per_core": 1152.2478876840644,
+  "decode_MBps_raw": 829.6184791325263,
+  "load_decode_fps_per_core": 947.6884375988809
+ },
+ "Acrobot": {
+  "h": 500,
+  "w": 500,
+  "jpeg_quality": 90,
+  "jpeg_bytes": 8598,
+  "raw_bytes": 750000,
+  "n": 160,
+  "decode_fps_per_core": 992.0511833014456,
+  "decode_MBps_raw": 744.0383874760843,
+  "load_decode_fps_per_core": 772.2484788005075
+ },
+ "Pendulum": {
+  "h": 500,
+  "w": 500,
+  "jpeg_quality": 90,
+  "jpeg_bytes": 6726,
+  "raw_bytes": 750000,
+  "n": 160,
+  "decode_fps_per_core": 1059.1792610184427,
+  "decode_MBps_raw": 794.3844457638321,
+  "load_decode_fps_per_core": 795.4036202696424
+ },
+ "MountainCar": {
+  "h": 400,
+  "w": 600,
+  "jpeg_quality": 90,
+  "jpeg_bytes": 11188,
+  "raw_bytes": 720000,
+  "n": 166,
+  "decode_fps_per_core": 1060.5393106748118,
+  "decode_MBps_raw": 763.5883036858646,
+  "load_decode_fps_per_core": 801.2012925149544
+ }
+}
