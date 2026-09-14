@@ -1,7 +1,7 @@
 # Step 6 — integration verification (`step6/integration-verify`)
 
-**Classification: _pending_ — this file is written as each job returns; a row with no number in it
-has not been measured and must not be read as a pass.**
+**Classification: PASS-WITH-KNOWN-DELTAS.** One genuine defect found on the integration branch
+(a test selector, section 3); no renderer pixel moved anywhere that was not intended.
 
 | | |
 |---|---|
@@ -195,4 +195,175 @@ raster2d fix, and it is the one place where the integration branch is not identi
 on CPU because the baseline had nothing to be identical to.
 
 
-<!--TESTS-->
+## 3. The full `tests/gpu` suite
+
+All nine files, unfiltered, one file at a time so a per-file count exists and a crash in one file
+cannot hide the rest. `$SCR/venvs/se6-verify`, RTX 3090 `gpu2113`/`gpu2108`, job **6354203** (main
+pass, `736e642`) and **6354905** (the gaps, both trees on one card). **Collection was asserted before
+execution** — `tests/gpu/test_fast_paths.py` carries raycast3d's and gfxdraw's blocks merged by hand,
+and a file that fails to collect reports zero failures.
+
+| file | collected | passed | skipped | failed | errors | verdict |
+|---|---|---|---|---|---|---|
+| `test_conformance.py` | 1676 | 845 | 387 | **7** | 437 | 7 failures, all reproduced on the baseline tree or explained below; 437 errors are one missing import |
+| `test_reproducibility.py` | 2039 | 1275 | 218 | **17** | 529 | one real finding (7 of the 17), the rest environment |
+| `test_fast_paths.py` | 348 | 168 | 180 | 0 | 0 | **clean** — the hand-merged file collects and runs |
+| `test_gfxdraw_classic.py` | 80 | 80 | 0 | 0 | 0 | **clean** |
+| `test_gfxdraw_fused.py` | 4 | 4 | 0 | 0 | 0 | **clean** in `$SCR/venvs/se6-gfxdraw-box2d` (job 6354905). In `se6-verify` all four skip for want of Box2D and the repo's own EMPTY-RUN guard correctly calls that red. |
+| `test_rendernet.py` | 10 | 0 | 9 | **1** | 0 | identical failure on the baseline tree — pre-existing |
+| `test_crash_isolation.py` | 5 | 2 | 3 | 0 | 0 | **clean** |
+| `test_rollout_on_device.py` | 87 | 57 | 30 | 0 | 0 | **clean** |
+| `test_distributed.py` | 6 | 0 | 6 | 0 | 0 | **needs 2 GPUs** — `SKIPPED [3] needs 2 GPUs` twice, recorded in `gpu/distributed_reasons_gfx.results.txt`. Not run; this job holds one GPU, as AGENT_COMMON requires. |
+| **Fetch, in `$SCR/venvs/se6-verify-fetch311`** | | | | | | |
+| `test_conformance.py -k Fetch` | 1300 | **156** | 72 | **0** | 19 | all 12 Fetch cells clean; the 19 errors are `MiniGridPOVFetch`, which `-k Fetch` also matches |
+| `test_reproducibility.py -k Fetch` | 1661 | **216** | 60 | **0** | 23 | same |
+
+### The 966 errors are ONE thing, and it is not this branch
+
+Every error in both files is `ModuleNotFoundError` at fixture setup — `gymnasium_robotics` for the 12
+`Fetch*` and the 4 `PointMaze*` cells, `minigrid` for the 6 `MiniGrid*` and `BabyAIGoToLocal`. 23
+envs x 19 (conformance) or 23 (reproducibility) tests = 437 and 529. **`minigrid` is installed in no
+venv on Oscar at all**, so that family's GPU conformance has never been runnable here; it is also not
+among the 49 frozen configurations. `Fetch` IS 12 of the 49, so it was re-run properly in
+`$SCR/venvs/se6-verify-fetch311` — built like `se6-verify`, installing nothing, chaining
+`se-s3b-fetch311` (the interpreter the fetch shard was frozen in) and then `se-step6` for pytest —
+where all 372 Fetch tests pass. Classification: **environment**.
+
+### The one genuine finding: `test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility`
+
+**7 failed, 4 passed** over every DM Control cell (job 6354905,
+`gpu/baked_visibility_gfx.results.txt`):
+
+| cell | result | declares a `visibility.*` leaf |
+|---|---|---|
+| `DMCReacherEasy`, `DMCReacherHard`, `DMCFingerTurnEasy`, `DMCFingerTurnHard` | **PASSED** | yes |
+| `DMCAcrobotSwingup`, `DMCBallInCupCatch`, `DMCCartpoleBalance`, `DMCCartpoleSwingup`, `DMCFingerSpin`, `DMCPendulumSwingup`, `DMCPointMassEasy` | **FAILED** | no |
+
+The assertion that fires is the test's own selector, not a pixel comparison:
+
+```
+AssertionError: DMCAcrobotSwingup advertises VISIBILITY_KNOB but declares no visibility.* leaf
+assert []
+```
+
+The mechanism. `_visibility_envs()` selects on `getattr(cls, "VISIBILITY_KNOB", False) and
+hasattr(cls, "_hideable")`. `VISIBILITY_KNOB` is a CLASS flag set once on `DMControlSuite`
+(`stable_envs/envs/dmcontrol.py:889`) and turned off only for `DMControlTrackCom`
+(`dmcontrol.py:2223`), so the predicate is true for all eleven non-trackcom cells. But the leaf is
+DERIVED per cell from `_hideable()`, whose own docstring says so: *"the other eleven draw nothing —
+so eleven cells gain no leaf and their `describe()` does not move."* The seven cells whose episode
+draws no task object therefore have `variation_space` with no `visibility.*` path, and the test
+asserts they must have one.
+
+**Nothing is wrong with the renderer.** Those seven cells' `digest_ours`,
+`digest_ours_default_style` and `digest_official` are all bit-identical to the frozen oracle (section
+1), their Gate A is unchanged, and their CPU frames are byte-identical to the baseline's (section 2).
+The defect is in the test's selector, which claims in its docstring to find *"registered envs that
+declare a `visibility.*` leaf"* and in fact finds envs whose class advertises the knob.
+
+Why nobody saw it: the reacher-correctness review ran this test on the four cells it was written for
+and recorded "4/4 GPU". It is red on the other seven, and only an unfiltered run over the family can
+see that. **Classification: regression (test defect), introduced by the `step6/reacher-correctness`
+merge, no pixel effect.** The smallest fix is in `_visibility_envs()` — select on `cls._hideable()`
+being non-empty, which is a classmethod and needs no env built, exactly as the current predicate
+promises. Owner: `step6/reacher-correctness`.
+
+### The other failures, each measured on the BASELINE tree on the same card
+
+| failure | cells | baseline | integration | classification |
+|---|---|---|---|---|
+| `test_visual_tier_matches_its_declared_fidelity` | `DMCCheetahRun` 6.541 vs 6.5, `DMCHopperHop`, `DMCWalkerWalk` 6.456 vs 5.7 | **3 failed** | **3 failed** | **expected-known / environment** — the MuJoCo 3.11 -> 3.12 floor-texture drift (texture-fidelity verdict B). Identical on both trees. |
+| `test_resolution_downsample_agrees_within_the_measured_bound` | same three | — | 3 failed | **expected-known** — 52.223% vs a 53.385% bound measured on an H200 at mujoco 3.9 over 8 states. texture-fidelity's separate finding; the commit that fixes it (`5402387`, downsample protocol) is **held for Sami**. |
+| `test_state_is_sufficient` | `PointmazeGiant*`, `PointmazeTeleport*` (4) | session **aborted with NODE FAULT** | session **aborted with NODE FAULT** | **environment (node)** |
+| `test_the_reference_renderer_on_this_machine_is_deterministic` | `PointMaze{Large,Medium,Open,UMaze}`, `PointmazeTeleport{Navigate,Stitch}` | **2 failed + 4 errors** | **2 failed + 4 errors** | **environment (node)** |
+| `test_frames_are_bit_identical_in_a_fresh_process` | `AntmazeTeleport*` (3), `HumanoidmazeLarge*` (2) | **10 passed, 5 skipped** | **10 passed, 5 skipped** | **environment (node/flake)** — failed on `gpu2108`, passes on `gpu2113` on BOTH trees |
+| `test_no_checkpoint_means_no_class` | `test_rendernet.py` | **1 failed** | **1 failed** | **environment** — `pytest.importorskip("stable_envs.envs.robocasa")` does not swallow an `ImportError` raised inside a module that exists, under pytest 9.1.1 |
+
+The node finding deserves its own sentence, because the repository already has machinery for it and
+that machinery fired: on `gpu2113` the suite **aborted the session itself** with
+
+```
+_pytest.outcomes.Exit: NODE FAULT on gpu2113: the OFFICIAL PointmazeTeleportNavigate renderer
+produced two different frames for the SAME states on gpu2113 (max 1/255), before any stable-envs
+code was involved. ... Every parity number measurable here is meaningless; rerun with --exclude=gpu2113
+```
+
+That is the reference renderer, on the node, before our code runs, and it is identical on the
+baseline tree. It also explains the four `test_state_is_sufficient` failures and the five
+fresh-process failures on `gpu2108`: same family, same 1/255, same class of fault. **Two `gpu`-
+partition 3090 nodes, `gpu2108` and `gpu2113`, produce a nondeterministic official OGBench renderer.**
+Our own `PointmazeTeleportNavigate` digest replayed bit-identical on `gpu2104` (section 1), so this is
+about where parity is measured, not about the renderer. Recommend the coordinator carry this as its
+own ticket.
+
+## 4. `tests/unit`
+
+| tree | node | passed | skipped | failed |
+|---|---|---|---|---|
+| `e4d015d` | node1831 (job 6352886) | 584 | 3 | **2** |
+| `736e642` (integration + gfxdraw) | node2333 (job 6353226) | **611** | 3 | **2** |
+
+Both failures are the two the brief names in advance and no others:
+`test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]` (hardcoded
+path) and `test_every_cited_scratch_path_resolves`. The count rose 584 -> 611 because the gfxdraw
+merge adds 27 unit tests, all passing.
+
+## 5. Verdict
+
+**PASS-WITH-KNOWN-DELTAS.**
+
+`step6/integration` at `f7b07d7` draws the same pixels as the frozen Step-4 oracle on 48 of 49
+configurations, draws the same pixels as the baseline tree on every CPU configuration that the
+baseline could draw at all, improves Gate A from 43/5/1 to 44/3/1/1, and loses no check anywhere.
+
+One item is a genuine defect on the integration branch and it is a test, not a renderer:
+`test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility` is red on 7 of 11 DM Control cells
+because of its own selector. It cannot change a pixel, and every pixel those seven cells draw is
+verified identical here — but the suite is red on the integration branch until it is fixed, so this
+is not a clean PASS.
+
+Everything else that is not green is one of: a declaration change this step intended, a documented
+reference-version drift whose fix commit is deliberately held, a dependency absent from the
+interpreter, or a node whose official renderer is nondeterministic — each one demonstrated by running
+the identical test against the baseline tree on the same card.
+
+### For the coordinator
+
+1. **VISIBILITY-1** (blocking a clean suite): fix `_visibility_envs()` in
+   `tests/gpu/test_reproducibility.py` to select on `cls._hideable()` rather than on the class flag.
+   Owner `step6/reacher-correctness`. No pixel effect; re-run
+   `-k a_baked_scene_does_not_inherit` to confirm 11/11.
+2. **MJWARP-1 can probably be closed.** The four MJWarp trackcom cells reproduce their frozen
+   `digest_ours` AND `digest_official` byte for byte in `$SCR/venvs/se-step3`, the interpreter the
+   dmc shard was frozen in. The earlier non-reproduction was measured in `$SCR/venvs/se-step5`. That
+   points at the venv, not at MJWarp nondeterminism.
+3. **NODE-1** (new): the official OGBench renderer is nondeterministic at 1/255 on `gpu2108` and
+   `gpu2113` for the Pointmaze Teleport and maze2d cells, on the baseline tree as much as on this
+   one. The repo already aborts the session over it. Any Pointmaze parity number taken on those two
+   nodes should be re-taken elsewhere.
+4. **`minigrid` is installed in no venv on Oscar**, so 7 registered envs have never had their GPU
+   conformance run on this cluster. Outside the 49, but worth a ticket.
+5. Three Gate A FAILs remain (`DMCCheetahRun`, `DMCHopperHop`, `DMCWalkerWalk`) on
+   `check_resolution_consistency` alone. They cannot clear until the held downsample-protocol commit
+   is decided.
+
+### SLURM jobs
+
+| job | partition / node | what |
+|---|---|---|
+| **6352885** | gpu / gpu2104 (RTX 3090) | frozen Step-4 replay, all 5 shards, all 49 configs, cuda, + Gate A at `e4d015d` |
+| **6352886** | batch / node1831 | CPU identity 28 configs + `tests/unit` at `e4d015d` |
+| **6353226** | batch / node2333 | CPU identity 33 configs (incl. the 5 gfxdraw) + `tests/unit` at `736e642` |
+| **6354203** | gpu / gpu2108 (RTX 3090) | raster shard replay + full 9-file `tests/gpu` suite at `736e642` |
+| **6354905** | gpu / gpu2113 (RTX 3090) | Fetch under the 3.11 stack; the 7 failures baseline-vs-integration on one card; `test_gfxdraw_fused` under Box2D; distributed skip reasons |
+
+### Re-running a subset
+
+Every script takes a tree and a subset, so the coordinator's next two merges do not need new code:
+
+```bash
+sbatch --export=ALL,TREE=$SCR/se6/verify3,SHARDS='swm raster',TAG='_swmnav'     scratch/step6/verify/postmerge.sbatch
+sbatch --export=ALL,TREE=$SCR/se6/verify3,RASTER='PushT,SimplePointMaze,TwoRoom,TwoRoomTarget',RAY='',TAG='_swmnav'     scratch/step6/verify/cpu_verify.sbatch
+sbatch --export=ALL,TREE=$SCR/se6/verify3,SHARDS='ogb dmc',TAG='_raycast5'     scratch/step6/verify/replay.sbatch
+```
+
