@@ -23,7 +23,7 @@ R3 = pytest.importorskip("stable_envs.render.raycast3d")
 KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
 
 
-def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False):
+def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0):
     g = torch.Generator().manual_seed(rng)
     r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)          # noqa: E731
     kinds = [KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)]
@@ -39,7 +39,17 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
                      2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x),
                      2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
                     -1).view(B, K, 3, 3)
+    # ``far`` puts the camera metres away from a small cluster, which is the GIANT maze's geometry:
+    # ~100 m to a 5 cm capsule. That is the regime the first version of the bound got wrong, and the
+    # regime this file did not cover until the cluster found it -- |oc|^2|d|^2 and (oc.d)^2 are each
+    # ~1e4 there and differ by ~r^2 ~ 2.5e-3, which is float32's resolution at that magnitude, so the
+    # subtraction cancelled away exactly the quantity it was meant to produce and one true hit was
+    # pruned. Without this case the suite passed and one pixel of 3,211,264 still moved.
     o = ((r(B, N, 3) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4])).contiguous()
+    if far:
+        sizes = sizes * 0.05                              # centimetre-scale primitives...
+        pos = pos * 0.05
+        o = o + torch.tensor([0.0, -float(far), 0.35 * float(far)])      # ...seen from far away
     if tangent:
         # aim a third of the rays exactly at each primitive's bound radius: the grazing case, which is
         # where a bound that is one ulp too small drops a pixel.
@@ -90,11 +100,18 @@ CASES = [
     dict(rng=5, B=2, K=5, N=333, tangent=True),
     dict(rng=6, B=2, K=5, N=333, nonunit_d=True),
     dict(rng=7, B=2, K=7, N=200, degenerate=True, tangent=True, nonunit_d=True),
+    # the far field, at three lever arms; `tangent` aims the rays AT the bound, which is where a
+    # cancelling distance test prunes a real hit.
+    dict(rng=8, B=2, K=6, N=512, far=30.0, tangent=True),
+    dict(rng=9, B=2, K=6, N=512, far=100.0, tangent=True),
+    dict(rng=10, B=2, K=6, N=512, far=300.0, tangent=True),
+    dict(rng=11, B=1, K=9, N=1024, far=100.0),
 ]
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: "-".join(
-    [f"B{c['B']}K{c['K']}N{c['N']}"] + [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]))
+    [f"B{c['B']}K{c['K']}N{c['N']}"] + [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]
+    + ([f"far{int(c['far'])}"] if c.get("far") else [])))
 def test_cast_nearest_is_unchanged_by_the_bound(case):
     kinds, sizes, pos, R, o, d = _rand_scene(**case)
     (bt, bn, bi), (st, sn, si) = _both(R3.cast_nearest_torch, kinds, sizes, pos, R, o, d)
@@ -104,7 +121,8 @@ def test_cast_nearest_is_unchanged_by_the_bound(case):
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: "-".join(
-    [f"B{c['B']}K{c['K']}N{c['N']}"] + [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]))
+    [f"B{c['B']}K{c['K']}N{c['N']}"] + [k for k in ("degenerate", "tangent", "nonunit_d") if c.get(k)]
+    + ([f"far{int(c['far'])}"] if c.get("far") else [])))
 def test_any_blocking_is_unchanged_by_the_bound(case):
     kinds, sizes, pos, R, o, d = _rand_scene(**case)
     B, N = o.shape[0], o.shape[1]

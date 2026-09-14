@@ -495,12 +495,39 @@ def _unit_rays(dd) -> bool:
     return bool(torch.all((dd - 1.0).abs() <= _UNIT_D_TOL))
 
 
-#: The bound is inflated by this before it is used to EXCLUDE a ray. The test is a handful of float32
-#: operations on values of order 1-1700 (zfar), so its relative error is ~1e-6; a 1e-3 relative slack
-#: plus an absolute floor is three orders of margin, and being over-inclusive costs only speed while
-#: being under-inclusive would drop a pixel. The radii are already conservative (a capsule's is
-#: ``r + hh`` against a true extent of ``sqrt(r^2 + hh^2)``), so this is slack on top of slack.
-_BOUND_SLACK_REL, _BOUND_SLACK_ABS = 1.001, 1e-6
+#: The bound is inflated before it is used to EXCLUDE a ray, by a relative term, an absolute floor,
+#: and -- the one that matters -- a term proportional to the DISTANCE to the primitive.
+#:
+#: THE SCALE TERM IS NOT DEFENSIVE PADDING, IT IS THE FIX FOR A MEASURED FAILURE. The first version of
+#: this bound computed the squared perpendicular distance as ``|oc|^2 |d|^2 - (oc.d)^2``. On
+#: ``HumanoidmazeGiantNavigate`` -- the largest maze, so the camera is ~100 m from a 5 cm capsule --
+#: those two terms are each ~1e4 and differ by ~2.5e-3, which is at float32's resolution there: the
+#: subtraction cancels away exactly the quantity it is meant to produce. One ray was pruned that the
+#: primitive actually hit, and one pixel of 3,211,264 moved by 22/255 (job 6348207). Twenty of the
+#: twenty-one live configs were unaffected, which is what a precision failure that needs a long lever
+#: arm looks like.
+#:
+#: ``|oc x d|`` is the same geometry without the cancellation: its components are differences of
+#: products of order ``|oc||d|`` but the RESULT is of order ``r|d|``, so the absolute error is
+#: ~``eps*|oc||d|`` rather than ~``eps*|oc|^2|d|^2``. Inflating the radius by ``8*eps*|oc|`` covers
+#: that with margin -- 9.5e-5 m against a 5 cm capsule at 100 m -- and costs six multiplies.
+#: AND THE LARGER TERM: the bound has to absorb the INTERSECTOR's own resolution, not only its own.
+#: ``_capsule`` forms ``c = olx^2 + oly^2 - r^2`` in float32. At ``|ol| = 100`` m the first two terms
+#: are ~1e4, where float32's resolution is 1.2e-3 -- and a 2 cm capsule's ``r^2`` is 4e-4, so **the
+#: radius is entirely lost** and ``disc > 0`` decides hit-or-miss on rounding noise. Measured: at
+#: ``|ol| = 100`` m the shipped intersector reports a hit for a ray whose true perpendicular distance
+#: (float64) is 0.0277 m from a capsule whose own bounding radius is 0.0221 m -- **a hit outside the
+#: primitive's own bound**. That is a property of the CPU cast as shipped, not of this bound, and it
+#: is why ``HumanoidmazeGiantNavigate`` -- the largest maze, so the longest lever arm -- was the one
+#: configuration of twenty-one whose pixel moved.
+#:
+#: A bound that is geometrically exact is therefore NOT conservative against that intersector. The
+#: uncertainty in the effective radius is ``|ol| * sqrt(eps)`` (0.0345 m at 100 m), so it is added in
+#: QUADRATURE -- invisible when ``r >> |ol| sqrt(eps)``, which is every DM Control cell, and dominant
+#: only where the intersector has already stopped being able to tell. It costs almost no pruning:
+#: at 100 m the effective radius becomes 0.14 m, which is well under a pixel on a giant maze.
+_BOUND_SLACK_REL, _BOUND_SLACK_ABS = 1.01, 1e-6
+_BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7         # (|oc| * sqrt(this))^2, added to r^2
 
 
 def _bound_radius(kind: int, size):
@@ -522,17 +549,18 @@ def _bound_radius(kind: int, size):
 def _rays_near(pos_k, rad, o, d, dd):
     """``(B,N)`` bool: could this ray hit a sphere of radius ``rad`` about ``pos_k`` at ``t > 0``?
 
-    Written without a division so a degenerate ``d = 0`` includes the ray rather than producing a NaN
-    that would silently exclude it: the perpendicular-distance test ``|oc|^2 - (oc.d)^2/|d|^2 <= r^2``
-    is multiplied through by ``|d|^2``, which at ``d = 0`` becomes ``0 <= 0``. The second term drops
-    rays whose whole bound lies behind the origin, where ``intersect``'s own ``t > 0`` would reject
-    them anyway.
+    ``|oc x d|^2 <= r^2 |d|^2`` is the perpendicular-distance test with ``|d|^2`` multiplied through,
+    so a degenerate ``d = 0`` reads ``0 <= 0`` and INCLUDES the ray rather than producing a NaN that
+    would silently exclude it. The cross product rather than ``|oc|^2|d|^2 - (oc.d)^2`` because the
+    latter cancels catastrophically when the primitive is far away -- see ``_BOUND_SLACK_SCALE``. The
+    second term drops rays whose whole bound lies behind the origin, where ``intersect``'s own
+    ``t > 0`` would reject them anyway.
     """
     oc = pos_k - o
-    b = _dot(oc, d)
-    lhs = _dot(oc, oc) * dd - b * b
-    r = rad * _BOUND_SLACK_REL + _BOUND_SLACK_ABS
-    return (lhs <= r * r * dd) & (b + r * torch.sqrt(dd) >= 0)
+    cr = torch.cross(oc.expand_as(d), d, dim=-1)
+    r0 = rad * _BOUND_SLACK_REL + _BOUND_SLACK_ABS
+    r2 = r0 * r0 + _BOUND_SLACK_NOISE * _dot(oc, oc)
+    return (_dot(cr, cr) <= r2 * dd) & (_dot(oc, d) + torch.sqrt(r2 * dd) >= 0)
 
 
 def cast_nearest_torch(kinds, sizes, pos, R, o, d):

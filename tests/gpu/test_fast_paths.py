@@ -278,7 +278,11 @@ CASES: tuple[FastPath, ...] = (
         modules=RAYCAST_MODULES,
         batch=8,
         seed=0,
-        sizes=(84,),
+        # THE ENV'S OWN SIZE, not 84. This case first ran at 84 px only and passed on every env while
+        # the CPU replay of the same change moved a pixel on HumanoidmazeGiantNavigate at its
+        # certified 224 px. The bound's failure mode is a long lever arm -- a far camera and a small
+        # primitive -- and building a giant maze at 84 px shortens exactly the thing under test.
+        sizes=(None,),
         prepare=_states_prepare(0),
         frames=_bounds_frames,
     ),
