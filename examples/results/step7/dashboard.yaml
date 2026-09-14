@@ -7,33 +7,49 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: queued
+  status: phase 0 (diagnosis, local; cluster items pending Oscar access)
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
+  wave: 1
+  branch: step7/craftax-classic-full
+  worktree: /Users/samib/stable-envs-step7-craftax-classic-full
+  agent_model: opus
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
   status: queued
   capability: full-atlas _Composite generalisation + layers
+  wave: 2
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: queued
+  status: phase 0 (diagnosis, local; cluster items pending Oscar access)
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
+  wave: 1
+  branch: step7/dmc-manipulator
+  worktree: /Users/samib/stable-envs-step7-dmc-manipulator
+  agent_model: opus
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: queued
+  status: phase 0 (diagnosis, local; cluster items pending Oscar access)
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
+  wave: 1
+  branch: step7/dmc-quadruped
+  worktree: /Users/samib/stable-envs-step7-dmc-quadruped
+  agent_model: fable
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
   status: queued
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
+  wave: 2
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
   status: queued (feasibility gate)
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
+  wave: 2
 decisions: []
-incident_log: []
+incident_log:
+- '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
