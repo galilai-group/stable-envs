@@ -76,6 +76,13 @@ job **6366909**.
 | `shared` — **NFS v3 / RDMA** | 2,276 (1,092–11,091) | 14,152 (5,328–101,459) | 0.986 (0.784–1.017) / 1.000 (0.876–1.161) | 4.28% (2.15–15.70%) |
 | `jobtmp` — **GPFS** | 2,282 (1,095–12,721) | 14,310 (5,232–104,287) | 0.998 (0.828–1.023) / 1.004 (0.901–1.174) | 3.65% (1.95–15.09%) |
 
+The one place the filesystem *is* visible is the read term taken on its own. The instrumented run
+records `read_fps`, `read_frac`, `read_MB/s`, `decode_MB/s` and the host-side output rate for every
+arm (e.g. `DMCReacherHard`, one process: tmpfs 222,629 read f/s = 535 MB/s of JPEG; GPFS 216,994 =
+521 MB/s; **NFS 141,037 = 339 MB/s**, a genuine 1.6× penalty). It just does not matter: the read is
+5.4% of the chunk on tmpfs and 8.3% on NFS, so a 1.6× slower read moves the end-to-end number by
+under 3%.
+
 Within-arm spread across envs is three orders of magnitude; between-arm spread is under 2% at the
 median. The read term is 2–16% of the chunk and everything else is `decode_jpeg`. Combined with
 Finding S2 (§1) the conclusion is unambiguous: **on Oscar, at this working-set size, the storage
