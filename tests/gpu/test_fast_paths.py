@@ -174,6 +174,25 @@ def _composite_frames(env, states, fast: bool):
         return env.render(states).clone()
 
 
+@contextlib.contextmanager
+def _primitive_bounds(on: bool):
+    """Pin ``raycast3d.PRIMITIVE_BOUNDS`` for the duration, and put it back whatever happens."""
+    assert R3.PRIMITIVE_BOUNDS is True, (
+        "raycast3d.PRIMITIVE_BOUNDS was already off when this test started, so an earlier test leaked "
+        "it and every comparison after that point has been the slow path against itself")
+    try:
+        R3.PRIMITIVE_BOUNDS = on
+        yield
+    finally:
+        R3.PRIMITIVE_BOUNDS = True
+
+
+def _bounds_frames(env, states, fast: bool):
+    """Both legs through the TORCH cast: the bound is the CPU path and the fused kernel has no bound."""
+    with _forced_backend("torch"), _primitive_bounds(fast):
+        return env.render(states).clone()
+
+
 def _scene_prepare(seed: int):
     return lambda env: _scene(env, env.B, seed)
 
@@ -239,6 +258,29 @@ CASES: tuple[FastPath, ...] = (
         frames=_mover_frames,
         inapplicable=lambda env: (None if hasattr(env, "_mover_idx")
                                   else "does not use the windowed mover path"),
+    ),
+    FastPath(
+        id="raycast3d-primitive-bounds",
+        why=("``raycast3d``'s torch cast tests a primitive only against the rays whose line passes "
+             "within that primitive's own bounding sphere. The claim is that a ray outside the bound "
+             "provably misses -- ``intersect`` would return INF and lose the ``t < best`` test -- so "
+             "skipping it cannot change t, the normal or the winning index. A difference means a "
+             "bound is too SMALL somewhere, and the pixels it drops are on a silhouette where "
+             "nothing else looks. Both legs are forced through the torch backend because the bound "
+             "is the CPU path: the fused Triton kernel keeps every primitive in registers and has no "
+             "bound to switch off, which is also why the GPU digests cannot move. The unit-ray "
+             "invariant the bound rests on is checked at runtime, so a bundle that violated it would "
+             "take the unbounded path and this case would pass vacuously -- "
+             "tests/unit/test_raycast3d_primitive_bounds.py is what stops that being silent."),
+        names=tuple(n for n in sorted(se.REGISTRY)
+                    if n.startswith(("DMC", "Mujoco", "Antmaze", "Pointmaze", "Humanoidmaze",
+                                     "PointMaze"))),
+        modules=RAYCAST_MODULES,
+        batch=8,
+        seed=0,
+        sizes=(84,),
+        prepare=_states_prepare(0),
+        frames=_bounds_frames,
     ),
     FastPath(
         id="composite-cover-compaction",
@@ -427,6 +469,9 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert hasattr(R3, "FORCE_BACKEND"), (
         "raycast3d.FORCE_BACKEND is gone, so the fused-vs-torch case cannot pin either backend and has "
         "been comparing the default against itself")
+    assert getattr(R3, "PRIMITIVE_BOUNDS", None) is True, (
+        "raycast3d.PRIMITIVE_BOUNDS is gone or already off, so the per-primitive-bound case cannot "
+        "switch the bound off and has been comparing the bounded path against itself")
     assert getattr(R3, "COVER_COMPACTION", None) is True, (
         "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
         "compaction off and has been comparing the compacted path against itself")

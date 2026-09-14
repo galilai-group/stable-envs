@@ -1106,6 +1106,87 @@ scatter/gather versus a contiguous tile blit, and the box average at `ss=2` — 
 benchmark in any RAYCAST-3 implementation ticket, and for Pointmaze it is the larger half.
 
 
+# RAYCAST-4 — per-primitive bounds in the CPU cast
+
+`stable_envs/render/raycast3d.py`, the torch cast only. Design first, then the implementation and its
+evidence.
+
+## Design
+
+**The lever, restated from RAYCAST-3.** `DMCReacherHard` issues **80,884 ray-primitive tests for a
+7,056-pixel frame — 11.5 tests per pixel for a FOUR-primitive scene.** The four ray passes each run
+over a window that is 64–95 % of the frame, because the window is a rectangle around *all* the movers
+and a reacher arm is long, thin and diagonal. A single capsule covers a small part of it. Nothing
+between the window and the intersector bounds a primitive to the rays it can reach.
+
+**The bound: ray/bounding-sphere distance, not a screen box.** A screen-space box is the obvious
+answer and is the wrong one here. The cast is handed `o`, `d` and the primitive arrays — no camera,
+no pixel indices — and for the reflection pass the origins are per-ray floor points rather than one
+pinhole, so "which pixel is this ray" is not a question it can answer without threading a camera
+through five call sites. The distance from a primitive's origin to a ray's line needs none of that:
+
+    perpendicular distance^2 <= radius^2   <=>   |oc|^2 |d|^2 - (oc.d)^2 <= r^2 |d|^2 ,   oc = pos - o
+
+multiplied through by `|d|^2` so that a degenerate `d = 0` reads `0 <= 0` and includes the ray
+instead of producing a NaN that would silently drop it. A second term, `oc.d + r|d| >= 0`, drops rays
+whose whole bound lies behind the origin — where `intersect`'s own `t > 0` would reject them anyway.
+About **8 elementwise ops per primitive per ray, against the ~200 an intersector costs**.
+
+**Per primitive, per row.** The radius comes from the `sizes` tensor the caller actually passed, not
+from `Primitives.bound_radius`, so a per-environment `size_scale` (which `composite` applies before
+calling) is already in it and cannot drift out of sync:
+
+| kind | radius about the primitive's own origin |
+|---|---|
+| `SPHERE` | `size[0]` |
+| `CAPSULE`, `CYLINDER` | `size[0] + size[1]` (conservative; the tight bound is `sqrt(r^2+hh^2)`) |
+| `BOX` | `sqrt(sx^2+sy^2+sz^2)` |
+| `PLANE`, anything unknown | **unbounded — always tested** |
+
+`pos` is `(B,K,3)`, so the bound is per row for free: the mask is `(B,N)` and costs four broadcasts.
+
+**Grouping without a Python loop over primitives or rows.** There is none. The mask is one vectorised
+expression over the whole `(B,N)` bundle; the ray set for primitive `k` is
+`nonzero(mask.any(0))` — **the union over the batch of the rays near that primitive in ANY row** —
+and the intersector then runs once on `o[:, js]`, `d[:, js]`. The existing Python loop over `K` is
+untouched (K is 1–36 and it is the shipped structure); what disappears is the *width* of each
+iteration. Restricting the set row-wise instead would need a ragged gather per row, which is the
+Python loop over rows the brief rules out, and is unnecessary: the union is already small because
+the rows of a chunk hold the same scene at nearby states.
+
+This is the same shape as `raster2d`'s tile binning — a conservative per-primitive bound, evaluated
+once, used to skip work that provably cannot contribute — but keyed on ray geometry rather than on a
+pixel tile, because that is the information this function has.
+
+**Why it is the identity, not an approximation.** A ray whose line passes further from the primitive's
+origin than the primitive's bounding radius cannot intersect it, so `intersect` returns `INF` there,
+so `t < best` is False and `best`/`nrm`/`idx` are unchanged; in `any_blocking`, `hit` is False and
+`blocked |= hit` is a no-op. The bound is inflated by `1.001x + 1e-6` before it is used to EXCLUDE
+anything: the test is a handful of float32 operations on values of order 1–1700, relative error
+~1e-6, so three orders of margin, and being over-inclusive costs only speed.
+
+**The invariant it rests on, and why it is checked.** The intersectors assume unit rays — `_sphere`
+solves `t^2 - 2bt + c = 0` with the leading `|d|^2` dropped — so with a non-unit `d` the `t` they
+return is not the geometric ray parameter and a geometrically exact bound disagrees with them. Every
+call site normalises, but the cast now *checks* (`|d|^2` within 1e-4 of 1) and routes a violating
+bundle to the unbounded path, the way `_packed` routes an exotic layout to the torch loop. **The
+differential fuzz found this rather than my reading it off the source**: feeding `d` scaled by 0–3x
+moved 23 of 400 shadow-ray answers before the check existed.
+
+**Scope: the CPU path only.** `_launch`'s fused Triton kernel keeps the whole primitive loop in
+registers and has nothing to gain from skipping one; it is untouched, which is why the cuda digests
+cannot move and the cuda replay is a control rather than a risk. `nonzero` synchronises on CUDA, so
+the torch fallback on a CUDA device pays K syncs per call — that path exists for the tests that diff
+the two backends, not for throughput, and the switch makes that explicit.
+
+**Expected effect.** Per-primitive rather than per-window, so tests/pixel should fall from 11.5
+towards the number of primitives whose bound actually covers a given pixel — 1–2 for the DM Control
+cells, where the movers are small and disjoint, and less for `ball_in_cup`, whose 28 tendon capsules
+lie along one thin chain that most rays miss entirely. It does **not** help `PointmazeLargeNavigate`
+(K=1: there is nothing to prune against) and it cannot help the passes whose cost is not the cast.
+Measured numbers below, not promised ones.
+
+
 ---
 
 ## Merge record

@@ -441,16 +441,12 @@ def intersect(kind: int, size, pos, R, o, d):
 # diff the fused kernel against it. The fused kernel is the one that removes the traffic, by keeping
 # the whole primitive loop in registers and writing only the answer.
 
-def cast_nearest_torch(kinds, sizes, pos, R, o, d):
-    """Nearest primitive hit over a ray bundle: ``(t, normal, index)``. The readable definition.
+def _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d):
+    """``cast_nearest_torch`` with every primitive tested against every ray. THE DEFINITION.
 
-    ``kinds`` (K,) host-side ints; ``sizes`` (B,K,S), ``pos`` (B,K,3), ``R`` (B,K,3,3); ``o``/``d``
-    (B,N,3). Returns ``t`` (B,N), world-space unit ``normal`` (B,N,3) and the winning primitive's index
-    (B,N), with ``t = INF`` where nothing is hit.
-
-    The nearest-hit reduction is a per-primitive ``t < best`` in primitive ORDER, not a ``torch.min``
-    over a primitive axis: ``min`` does not promise the lowest index on a tie and this does, which is
-    what makes two primitives touching at a pixel resolve the same way in every implementation of it.
+    Kept verbatim as the thing ``PRIMITIVE_BOUNDS`` has to be bit-identical to, for the reason
+    ``raster2d.render_torch`` is kept: a fast path is admissible only against a slow one somebody can
+    read, and ``tests/gpu/test_fast_paths.py`` diffs the two on the envs themselves.
     """
     B, N = o.shape[0], o.shape[1]
     best = torch.full((B, N), INF, device=o.device, dtype=o.dtype)
@@ -465,8 +461,143 @@ def cast_nearest_torch(kinds, sizes, pos, R, o, d):
     return best, nrm, idx
 
 
-def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
-    """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above."""
+#: Test a primitive only against the rays whose line passes within its own bounding sphere, instead of
+#: against every ray in the bundle. ``False`` restores ``_cast_nearest_torch_unbounded`` /
+#: ``_any_blocking_torch_unbounded`` verbatim, which is what the differential tests diff against.
+#:
+#: WHY THIS AND NOT A SCREEN BOX. The cast is handed ``o``/``d`` and nothing else -- no camera, no
+#: pixel indices, and for the reflection pass the origins are per-ray floor points rather than one
+#: pinhole -- so a screen-space box is not computable here without threading a camera through five
+#: call sites. The ray/sphere distance test needs none of that, is exact in the sense that matters (a
+#: ray outside the bound provably misses the primitive, so skipping it is the identity), and costs
+#: ~8 elementwise ops against the ~200 an intersector costs.
+#:
+#: THIS IS THE CPU PATH ONLY. ``_launch``'s fused Triton kernel keeps every primitive in registers and
+#: has nothing to gain from skipping one; it is untouched, which is also why the GPU digests cannot
+#: move. ``nonzero`` synchronises on CUDA, so the torch fallback on a CUDA device pays K syncs per
+#: call -- that path exists for the tests that diff the two backends, not for throughput.
+PRIMITIVE_BOUNDS: bool = True
+
+#: The bound is valid only for UNIT ray directions, and that is a fact about the INTERSECTORS rather
+#: than about the bound. ``_sphere`` solves ``t^2 - 2bt + c = 0`` with the leading coefficient dropped,
+#: which is the unit-ray quadratic; hand it ``|d| = 2`` and the ``t`` it returns is not the geometric
+#: ray parameter, so a geometrically exact bound and the intersector disagree about which rays hit.
+#: Every call site in this repo passes normalised directions -- ``cached_rays`` normalises, the
+#: reflection of a unit vector about a unit normal is unit, and the shadow rays are normalised at
+#: construction -- so this is an invariant, and it is CHECKED rather than assumed: a bundle that
+#: violates it takes the unbounded path, the way ``_packed`` routes an exotic layout to the torch loop.
+#: The differential fuzz in tests/unit/test_raycast3d_primitive_bounds.py found this by feeding it
+#: ``d`` scaled by 0-3x; without the check, 23 of 400 shadow-ray answers moved.
+_UNIT_D_TOL = 1e-4
+
+
+def _unit_rays(dd) -> bool:
+    return bool(torch.all((dd - 1.0).abs() <= _UNIT_D_TOL))
+
+
+#: The bound is inflated by this before it is used to EXCLUDE a ray. The test is a handful of float32
+#: operations on values of order 1-1700 (zfar), so its relative error is ~1e-6; a 1e-3 relative slack
+#: plus an absolute floor is three orders of margin, and being over-inclusive costs only speed while
+#: being under-inclusive would drop a pixel. The radii are already conservative (a capsule's is
+#: ``r + hh`` against a true extent of ``sqrt(r^2 + hh^2)``), so this is slack on top of slack.
+_BOUND_SLACK_REL, _BOUND_SLACK_ABS = 1.001, 1e-6
+
+
+def _bound_radius(kind: int, size):
+    """``(B,1)`` radius containing the primitive about its own origin, or ``None`` if unbounded.
+
+    Computed from the SIZES THE CALLER PASSED rather than from ``Primitives.bound_radius``, so a
+    per-environment ``size_scale`` (which ``composite`` applies before calling) is already in it and
+    cannot drift out of sync with the geometry being tested.
+    """
+    if kind == SPHERE:
+        return size[..., 0]
+    if kind in (CAPSULE, CYLINDER):
+        return size[..., 0] + size[..., 1]
+    if kind == BOX:
+        return torch.sqrt(size[..., 0] ** 2 + size[..., 1] ** 2 + size[..., 2] ** 2)
+    return None                       # PLANE, and any future unbounded kind: always tested
+
+
+def _rays_near(pos_k, rad, o, d, dd):
+    """``(B,N)`` bool: could this ray hit a sphere of radius ``rad`` about ``pos_k`` at ``t > 0``?
+
+    Written without a division so a degenerate ``d = 0`` includes the ray rather than producing a NaN
+    that would silently exclude it: the perpendicular-distance test ``|oc|^2 - (oc.d)^2/|d|^2 <= r^2``
+    is multiplied through by ``|d|^2``, which at ``d = 0`` becomes ``0 <= 0``. The second term drops
+    rays whose whole bound lies behind the origin, where ``intersect``'s own ``t > 0`` would reject
+    them anyway.
+    """
+    oc = pos_k - o
+    b = _dot(oc, d)
+    lhs = _dot(oc, oc) * dd - b * b
+    r = rad * _BOUND_SLACK_REL + _BOUND_SLACK_ABS
+    return (lhs <= r * r * dd) & (b + r * torch.sqrt(dd) >= 0)
+
+
+def cast_nearest_torch(kinds, sizes, pos, R, o, d):
+    """Nearest primitive hit over a ray bundle: ``(t, normal, index)``. The readable definition.
+
+    ``kinds`` (K,) host-side ints; ``sizes`` (B,K,S), ``pos`` (B,K,3), ``R`` (B,K,3,3); ``o``/``d``
+    (B,N,3). Returns ``t`` (B,N), world-space unit ``normal`` (B,N,3) and the winning primitive's index
+    (B,N), with ``t = INF`` where nothing is hit.
+
+    The nearest-hit reduction is a per-primitive ``t < best`` in primitive ORDER, not a ``torch.min``
+    over a primitive axis: ``min`` does not promise the lowest index on a tie and this does, which is
+    what makes two primitives touching at a pixel resolve the same way in every implementation of it.
+
+    WHAT THE BOUND BUYS, AND WHY IT IS THE IDENTITY. Each primitive used to be evaluated against every
+    ray in the bundle: measured on the certification host, ``DMCReacherHard`` issued 80,884
+    ray-primitive tests for a 7,056-pixel frame -- **11.5 tests per pixel for a four-primitive scene**
+    -- because the four ray passes each run over a window that is 64-95% of the frame. The window is a
+    rectangle around ALL the movers; a single capsule covers a small part of it.
+
+    A ray whose line passes further from a primitive's origin than that primitive's bounding radius
+    cannot intersect it, so ``intersect`` would return ``INF`` there and ``t < best`` would be False.
+    Skipping it therefore cannot change ``best``, ``nrm`` or ``idx`` -- not approximately, at all. The
+    set is the UNION over the batch of the rays near the primitive in ANY row, so the argument holds
+    row by row even though the primitive moves per row. Unbounded kinds (the plane) keep the full
+    bundle.
+    """
+    if not PRIMITIVE_BOUNDS:
+        return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
+    B, N = o.shape[0], o.shape[1]
+    best = torch.full((B, N), INF, device=o.device, dtype=o.dtype)
+    # (B,N,3) explicitly rather than ``zeros_like(o)``: ``o`` arrives expanded from one origin, and
+    # this one is written into by index below rather than rebuilt by ``where``. Same values.
+    nrm = torch.zeros((B, N, 3), device=o.device, dtype=o.dtype)
+    idx = torch.zeros((B, N), device=o.device, dtype=torch.long)
+    dd = _dot(d, d)
+    if not _unit_rays(dd):
+        return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
+    for k, kind in enumerate(int(x) for x in kinds):
+        js = None
+        rad = _bound_radius(kind, sizes[:, k:k + 1])
+        if rad is not None:
+            js = torch.nonzero(_rays_near(pos[:, k:k + 1], rad, o, d, dd).any(0),
+                               as_tuple=False).reshape(-1)
+            if js.numel() == 0:
+                continue
+            if js.numel() == N:            # nothing pruned; the gather would be pure overhead
+                js = None
+        oo, ddir = (o, d) if js is None else (o[:, js], d[:, js])
+        t, n = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1], oo, ddir)
+        if js is None:
+            upd = t < best
+            best = torch.where(upd, t, best)
+            nrm = torch.where(upd.unsqueeze(-1), n.expand(B, N, 3), nrm)
+            idx = torch.where(upd, torch.full_like(idx, k), idx)
+        else:
+            bs = best[:, js]
+            upd = t < bs
+            best[:, js] = torch.where(upd, t, bs)
+            nrm[:, js] = torch.where(upd.unsqueeze(-1), n.expand(B, js.numel(), 3), nrm[:, js])
+            idx[:, js] = torch.where(upd, k, idx[:, js])
+    return best, nrm, idx
+
+
+def _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip=None):
+    """``any_blocking_torch`` with every primitive tested against every ray. THE DEFINITION."""
     B, N = o.shape[0], o.shape[1]
     blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)
     for k, kind in enumerate(int(x) for x in kinds):
@@ -475,6 +606,45 @@ def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
         if skip is not None:
             hit = hit & (skip != k)
         blocked |= hit
+    return blocked
+
+
+def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
+    """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above.
+
+    Same bound and the same argument: a ray outside a primitive's bounding sphere gets ``t = INF``,
+    so ``hit`` is False and ``blocked |= hit`` leaves it alone.
+    """
+    if not PRIMITIVE_BOUNDS:
+        return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
+    B, N = o.shape[0], o.shape[1]
+    blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)
+    dd = _dot(d, d)
+    if not _unit_rays(dd):
+        return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
+    for k, kind in enumerate(int(x) for x in kinds):
+        js = None
+        rad = _bound_radius(kind, sizes[:, k:k + 1])
+        if rad is not None:
+            js = torch.nonzero(_rays_near(pos[:, k:k + 1], rad, o, d, dd).any(0),
+                               as_tuple=False).reshape(-1)
+            if js.numel() == 0:
+                continue
+            if js.numel() == N:
+                js = None
+        if js is None:
+            t, _ = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1], o, d)
+            hit = (t > 0) & (t < lim)
+            if skip is not None:
+                hit = hit & (skip != k)
+            blocked |= hit
+        else:
+            t, _ = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1],
+                             o[:, js], d[:, js])
+            hit = (t > 0) & (t < lim[:, js])
+            if skip is not None:
+                hit = hit & (skip[:, js] != k)
+            blocked[:, js] |= hit
     return blocked
 
 

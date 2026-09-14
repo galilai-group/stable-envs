@@ -153,6 +153,9 @@ def install(env, device: str):
     def intersect(kind, size, pos, R, o, d):
         if not REC.on:
             return raw_isect(kind, size, pos, R, o, d)
+        # The ray-primitive TEST COUNT, which is the quantity RAYCAST-4 exists to reduce: one
+        # intersect call tests d.shape[0] x d.shape[1] (row, ray) pairs against one primitive.
+        REC.note("ray_primitive_tests", int(d.shape[0]) * int(d.shape[1]))
         if REC.sync is not None:
             REC.sync()
         t0 = time.perf_counter()
