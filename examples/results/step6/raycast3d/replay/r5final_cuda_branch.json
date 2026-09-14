@@ -1,0 +1,707 @@
+{
+  "host": "gpu2116.oscar.ccv.brown.edu",
+  "device": "cuda",
+  "slurm_job": "6355333",
+  "code_root": "$SCR/se6/raycast3d",
+  "configs": {
+    "AntmazeGiantNavigate": {
+      "config": "AntmazeGiantNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeGiantNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 175.83360581170945,
+      "digest_ours_default_style": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+      "frozen": {
+        "digest_ours": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+        "digest_ours_default_style": "9da286404b65dc66078d631d225d148b7f9007bac6d6b17e0d36e9d81b45a139",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "AntmazeGiantNavigate.npy"
+    },
+    "AntmazeLargeExplore": {
+      "config": "AntmazeLargeExplore",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeLargeExplore.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 186.6640551301087,
+      "digest_ours_default_style": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+      "frozen": {
+        "digest_ours": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+        "digest_ours_default_style": "42bcc3bc09465341938eaa034c0017514f59a713c617ef130d85054d56f3b011",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "AntmazeLargeExplore.npy"
+    },
+    "AntmazeMediumExplore": {
+      "config": "AntmazeMediumExplore",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeMediumExplore.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 182.8481730766037,
+      "digest_ours_default_style": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+      "frozen": {
+        "digest_ours": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+        "digest_ours_default_style": "5229789db19a24b7bd5ee6ba1d2be29cf04c77c455e064c9bc49d79078a35346",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "AntmazeMediumExplore.npy"
+    },
+    "AntmazeTeleportExplore": {
+      "config": "AntmazeTeleportExplore",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/AntmazeTeleportExplore.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 187.2603219998937,
+      "digest_ours_default_style": "483968227d628c591b45c1dfa5097a1a0f05d4fb3b17ca8c03027982b893d0aa",
+      "frozen": {
+        "digest_ours": "06a2e039e1fdf3ad0c926f84550bb1dd7ebff910c50c096d59aa8e502c29a805",
+        "digest_ours_default_style": "06a2e039e1fdf3ad0c926f84550bb1dd7ebff910c50c096d59aa8e502c29a805",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "AntmazeTeleportExplore.npy"
+    },
+    "HumanoidmazeGiantNavigate": {
+      "config": "HumanoidmazeGiantNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/HumanoidmazeGiantNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 172.77139365267593,
+      "digest_ours_default_style": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+      "frozen": {
+        "digest_ours": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+        "digest_ours_default_style": "542e3d8975e63b3a353cc962782c19ac0ffc027754e8d6d32df96de2aa1690b2",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "HumanoidmazeGiantNavigate.npy"
+    },
+    "HumanoidmazeLargeNavigate": {
+      "config": "HumanoidmazeLargeNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/HumanoidmazeLargeNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 184.66504072332057,
+      "digest_ours_default_style": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+      "frozen": {
+        "digest_ours": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+        "digest_ours_default_style": "5eba59e2ba7b32eb1eb11fc3b4aff8e6544d7cabfff498f95e54b4c6d3ef094f",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "HumanoidmazeLargeNavigate.npy"
+    },
+    "HumanoidmazeMediumNavigate": {
+      "config": "HumanoidmazeMediumNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/HumanoidmazeMediumNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 182.83480388615408,
+      "digest_ours_default_style": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+      "frozen": {
+        "digest_ours": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+        "digest_ours_default_style": "93e0baf75e8d174731ce34c7bbbbd73d6f34e83e95e6e9ded3a2e3c379ab932a",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "HumanoidmazeMediumNavigate.npy"
+    },
+    "PointmazeGiantNavigate": {
+      "config": "PointmazeGiantNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeGiantNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 175.81441326530611,
+      "digest_ours_default_style": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+      "frozen": {
+        "digest_ours": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+        "digest_ours_default_style": "de659acb4f7a30c301ef4cffdf21fafc68494e39400e64f427c21e2627360ace",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "PointmazeGiantNavigate.npy"
+    },
+    "PointmazeLargeNavigate": {
+      "config": "PointmazeLargeNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeLargeNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 186.6240362050582,
+      "digest_ours_default_style": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+      "frozen": {
+        "digest_ours": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+        "digest_ours_default_style": "e00fd8b6e1805c9a5b68aaabd4e107f01bf20d6c6b4789e96aceebab95448bed",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "PointmazeLargeNavigate.npy"
+    },
+    "PointmazeMediumNavigate": {
+      "config": "PointmazeMediumNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeMediumNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 182.73627996120322,
+      "digest_ours_default_style": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+      "frozen": {
+        "digest_ours": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+        "digest_ours_default_style": "7a287e4f02a0336cf4d0c222ba6a27af4106ab163a1e3d2880555aad06a5d9f0",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "PointmazeMediumNavigate.npy"
+    },
+    "PointmazeTeleportNavigate": {
+      "config": "PointmazeTeleportNavigate",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/PointmazeTeleportNavigate.npz",
+      "size": 224,
+      "supersample": 2,
+      "batch": 64,
+      "digest_ours": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 187.22562444777716,
+      "digest_ours_default_style": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+      "frozen": {
+        "digest_ours": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+        "digest_ours_default_style": "a5ae0b25bef0eb8b6a234c7d978b0a930fbc144e5c588f63f8f1ab7d154b9180",
+        "size": 224,
+        "supersample": 2,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "PointmazeTeleportNavigate.npy"
+    },
+    "DMCAcrobotSwingup": {
+      "config": "DMCAcrobotSwingup",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCAcrobotSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 77.10355696097884,
+      "digest_ours_default_style": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+      "frozen": {
+        "digest_ours": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+        "digest_ours_default_style": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCAcrobotSwingup.npy"
+    },
+    "DMCBallInCupCatch": {
+      "config": "DMCBallInCupCatch",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCBallInCupCatch.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 58.84612829506803,
+      "digest_ours_default_style": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+      "frozen": {
+        "digest_ours": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+        "digest_ours_default_style": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCBallInCupCatch.npy"
+    },
+    "DMCCartpoleBalance": {
+      "config": "DMCCartpoleBalance",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleBalance.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 77.88875233253023,
+      "digest_ours_default_style": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+      "frozen": {
+        "digest_ours": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+        "digest_ours_default_style": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCCartpoleBalance.npy"
+    },
+    "DMCCartpoleSwingup": {
+      "config": "DMCCartpoleSwingup",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.14292579010771,
+      "digest_ours_default_style": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+      "frozen": {
+        "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "digest_ours_default_style": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCCartpoleSwingup.npy"
+    },
+    "DMCFingerSpin": {
+      "config": "DMCFingerSpin",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerSpin.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 63.60093507889267,
+      "digest_ours_default_style": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+      "frozen": {
+        "digest_ours": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+        "digest_ours_default_style": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCFingerSpin.npy"
+    },
+    "DMCFingerTurnEasy": {
+      "config": "DMCFingerTurnEasy",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerTurnEasy.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 64.34121521872638,
+      "digest_ours_default_style": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+      "frozen": {
+        "digest_ours": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+        "digest_ours_default_style": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCFingerTurnEasy.npy"
+    },
+    "DMCFingerTurnHard": {
+      "config": "DMCFingerTurnHard",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerTurnHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 63.734306352749435,
+      "digest_ours_default_style": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+      "frozen": {
+        "digest_ours": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+        "digest_ours_default_style": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCFingerTurnHard.npy"
+    },
+    "DMCPendulumSwingup": {
+      "config": "DMCPendulumSwingup",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCPendulumSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 74.9983908493953,
+      "digest_ours_default_style": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+      "frozen": {
+        "digest_ours": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+        "digest_ours_default_style": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCPendulumSwingup.npy"
+    },
+    "DMCReacherEasy": {
+      "config": "DMCReacherEasy",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherEasy.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 80.1058127243953,
+      "digest_ours_default_style": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+      "frozen": {
+        "digest_ours": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+        "digest_ours_default_style": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCReacherEasy.npy"
+    },
+    "DMCReacherHard": {
+      "config": "DMCReacherHard",
+      "device": "cuda",
+      "stable_envs_from": "$SCR/se6/raycast3d/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.02629780210695,
+      "digest_ours_default_style": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+      "frozen": {
+        "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "digest_ours_default_style": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": true,
+        "digest_ours_default_style": true,
+        "shape_matches": true
+      },
+      "PASS": true,
+      "dump": "DMCReacherHard.npy"
+    }
+  },
+  "summary": {
+    "pass": 20,
+    "fail": 1,
+    "error": 0,
+    "total": 21
+  }
+}

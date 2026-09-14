@@ -1611,9 +1611,26 @@ a ratio of two runs of *identical code* and therefore measures nothing but the h
 and B=1 is the batch the frozen spec **forbids** certifying on (`gpu.never_certify_on_batch`,
 because the corpus median there is 0.6x the official renderer and it measures launch overhead).
 
-Per the ticket's instruction I report that and **do not add a second predicate**, and I have not
-flipped the default: whether 0.969-inside-5.8 %-noise at an uncertifiable batch clears a 0.97 bar
-is a release decision.
+Per the ticket's instruction I reported that and added **no second predicate**, and I did not flip
+the default on my own judgment: whether 0.969-inside-5.8 %-noise at an uncertifiable batch clears a
+0.97 bar is a release decision. The coordinator took it — acceptance holds — and the default is now
+`True`, verified as below.
+
+## The default is on, and the identity is re-taken without pinning anything
+
+`PRIMITIVE_BOUNDS = True` (jobs `6355332` CPU, `6355333` GPU). This is the run that matters now:
+**neither leg pins the switch**, so it is the pristine pre-Step-6 baseline against the branch exactly
+as a caller gets it. Every earlier identity run had to force the bound on, because with the default
+off a replay taking the default would have compared the unbounded path against itself and reported
+`ALL_IDENTICAL` for the wrong reason — the job log prints the branch's own
+`PRIMITIVE_BOUNDS = True kinds [3, 5, 6]` before it starts, so the leg cannot be silently vacuous.
+
+| check | result |
+|---|---|
+| cpu, pristine baseline vs branch, all 21 live configs, **defaults on both legs** | **identical** (`replay/r5final_cpu_identity.json`) |
+| cuda, pristine baseline vs branch, all 21 | **identical** (`replay/r5final_cuda_identity.json`) |
+| `tests/gpu/test_fast_paths.py` at the envs' own sizes | **176 passed**, 33 skipped |
+| `tests/unit` | **623 passed**, 9 skipped, 2 failed — the same two pre-existing failures, neither in the authorised files |
 
 ## Step-3-shaped shards, so the dashboard can label these rows
 
@@ -1621,11 +1638,14 @@ is a release decision.
 back-converted from the profile notes: a shard needs `decode` and `official_cpu`, which are the
 **denominators of both tier bars**, and copying those from the frozen `node2349` row onto a
 measurement taken elsewhere would bury a cross-host ratio in a file whose whole purpose is to be
-classified as if it were Step 3. Three CPU legs because the release decision is open.
+classified as if it were Step 3. Three CPU legs because the release decision was open when they were taken; the
+`bound on` leg is the shipped build.
 
 CPU: `node2335`, job `6354672`, 1 thread, Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz. Classified here with `scratch/step3/certify.py:classify`.
 
-| env | baseline | branch, bound off | branch, bound **on** |
+The **bound on** column is what the branch now ships.
+
+| env | baseline | branch, bound off | branch, bound **on** (shipped) |
 |---|---|---|---|
 | `DMCBallInCupCatch` | CPU_PARITY · S_cpu 1.40 · cores 0.0026 | CPU_PARITY · S_cpu 1.45 · cores 0.0027 | CPU_FASTER · S_cpu 4.74 · cores 0.0089 |
 | `DMCFingerSpin` | CPU_PARITY · S_cpu 1.76 · cores 0.0078 | CPU_PARITY · S_cpu 1.95 · cores 0.0097 | CPU_FASTER · S_cpu 4.01 · cores 0.0194 |
@@ -1905,3 +1925,5 @@ number that survived was arrived at.
 | `6354150` | `se6-raycast3d-r5noise` | COMPLETED | 00:25:05 | `node1831` | RAYCAST-5 **noise floor**: four interleaved legs, off/on/off/on |
 | `6354672` | `se6-raycast3d-r5shardcpu` | COMPLETED | 00:27:49 | `node2335` | RAYCAST-5 Step-3-shaped CPU shards, three legs |
 | `6354674` | `se6-raycast3d-r5shardgpu` | COMPLETED | 00:01:05 | `gpu2105` | RAYCAST-5 Step-3-shaped GPU shards, two legs |
+| `6355332` | `se6-raycast3d-r5finalcpu` | COMPLETED | 00:04:28 | `node2333` | **final identity with the default ON, neither leg pinning the switch**, plus `tests/unit` |
+| `6355333` | `se6-raycast3d-r5finalgpu` | COMPLETED | 00:02:09 | `gpu2116` | final cuda identity with the default ON, plus the fast-path suite |

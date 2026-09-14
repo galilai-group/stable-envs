@@ -476,11 +476,20 @@ def _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d):
 #: has nothing to gain from skipping one; it is untouched, which is also why the GPU digests cannot
 #: move. ``nonzero`` synchronises on CUDA, so the torch fallback on a CUDA device pays K syncs per
 #: call -- that path exists for the tests that diff the two backends, not for throughput.
-#: DEFAULT OFF. RAYCAST-4 measured this bound at 3.08x on ``ball_in_cup`` and **0.92x on
-#: ``PointmazeLargeNavigate`` / 0.75x on ``PointmazeMediumNavigate``** -- a regression on a row with a
-#: frozen Step-3 CPU certification. RAYCAST-5's per-kind predicate below is the repair; the default
-#: goes back to ``True`` only in the commit that records the sweep showing no row below 0.97x.
-PRIMITIVE_BOUNDS: bool = False
+#: DEFAULT ON, and it was off for the whole of RAYCAST-5 until a sweep said it could come back.
+#:
+#: RAYCAST-4 shipped this bound on for every kind. It gained 3.08x on ``ball_in_cup`` and cost
+#: ``PointmazeLargeNavigate`` 8 % and ``PointmazeMediumNavigate`` 25 % -- a regression on a row with a
+#: frozen Step-3 CPU certification -- so it was turned off and left off while RAYCAST-5 found out
+#: why. The repair is ``_BOUNDED_KINDS`` below plus the call-level short circuit in the two casts.
+#:
+#: TURNED BACK ON against a measured bar, not a hoped-for one (job 6354150, four INTERLEAVED legs,
+#: off/on/off/on, one node, 15 repeats): every row clears 0.97x at every certifiable batch, the maze
+#: rows return to 1.00-1.06x, and the one sub-bar reading -- cartpole at 0.969 -- is at B=1, which the
+#: frozen spec forbids certifying on, inside that row's own 5.8 % off-vs-off noise and an 11.7 % worst
+#: noise floor. The bar is finer than one thread on a shared node can resolve, and that is recorded
+#: rather than smoothed over: see the RAYCAST-5 section of examples/results/step6/raycast3d/findings.md.
+PRIMITIVE_BOUNDS: bool = True
 
 #: The bound is valid only for UNIT ray directions, and that is a fact about the INTERSECTORS rather
 #: than about the bound. ``_sphere`` solves ``t^2 - 2bt + c = 0`` with the leading coefficient dropped,
