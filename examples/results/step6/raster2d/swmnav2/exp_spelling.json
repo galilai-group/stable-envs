@@ -1,0 +1,31 @@
+{
+  "n": 4194304,
+  "torch": "2.14.0+cu126",
+  "triton": "3.8.0",
+  "card": "NVIDIA GeForce RTX 3090",
+  "rows": [
+    {
+      "spelling": "tl.exp(float64)",
+      "differing": 0,
+      "n": 4194304,
+      "max_abs_diff": 0.0
+    },
+    {
+      "spelling": "tl.math.exp(float64)",
+      "differing": 0,
+      "n": 4194304,
+      "max_abs_diff": 0.0
+    },
+    {
+      "spelling": "libdevice.exp(float64)",
+      "error": "UnsupportedLanguageConstruct: at 2:4:\ndef _k_libdevice_exp(a_p, o_p, N, BLOCK: tl.constexpr):\n    from triton.language.extra import libdevice\n    ^\nunsupported AST node type: ImportFrom"
+    },
+    {
+      "spelling": "tl.exp(float32) [control]",
+      "differing": 3162766,
+      "n": 4194304,
+      "max_abs_diff": 1.1920928955078125e-07
+    }
+  ],
+  "exact": "tl.exp(float64)"
+}

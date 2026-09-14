@@ -176,6 +176,7 @@ import numpy as np
 import torch
 
 from ..core.env import StableEnv, register
+from ..render import navdot
 from ..spaces import Box, Dict, Discrete, RGBBox
 
 #: The official canvas. Every constant below is in these pixels; see "Output size" above.
@@ -536,7 +537,22 @@ class _SWMNavBase(StableEnv):
     def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
         k = hi - lo
         sl = lambda p: sty[p][lo:hi]
-        return self.blend_dots(self._base_image(sty, lo, hi), s[lo:hi], sl, k)
+        base = self._base_image(sty, lo, hi)
+        if navdot.available(self.device):
+            pos, sig, col = self._dots(s[lo:hi], sl, k)
+            return navdot.blend_dots(base.expand(k, IMG, IMG, 3).contiguous(), pos, sig, col)
+        return self.blend_dots(base, s[lo:hi], sl, k)
+
+    def _dots(self, s, sl, k):
+        """``(k,ND,2)`` centres, ``(k,ND)`` radii, ``(k,ND,3)`` colours, IN COMPOSITING ORDER.
+
+        The order is the contract: the reference blends the target first and the agent over it, and
+        each blend quantises to uint8, so two dots swapped are a different picture where they
+        overlap. One method per family rather than a flag, so a subclass that adds a dot declares it
+        in the same place it declares how to draw it.
+        """
+        return (s[:, 0:2].reshape(k, 1, 2), sl("agent.radius").reshape(k, 1),
+                sl("agent.color").reshape(k, 1, 3))
 
     #: Baked base images, keyed on the bytes of the style row that produced them. Bounded, and
     #: cleared wholesale rather than evicted one at a time — the same shape, and for the same
@@ -950,6 +966,14 @@ class TwoRoomTarget(_TwoRoomBase):
         line per concrete class is the cost of being covered.
         """
         return super().step(action)
+
+    def _dots(self, s, sl, k):
+        """Target then agent: the reference's order, and visible where the two overlap."""
+        return (torch.cat([s[:, 2:4].reshape(k, 1, 2), s[:, 0:2].reshape(k, 1, 2)], dim=1),
+                torch.cat([sl("target.radius").reshape(k, 1),
+                           sl("agent.radius").reshape(k, 1)], dim=1),
+                torch.cat([sl("target.color").reshape(k, 1, 3),
+                           sl("agent.color").reshape(k, 1, 3)], dim=1))
 
     def blend_dots(self, img, s, sl, k) -> torch.Tensor:
         """Target first, agent over it — the reference's order, and visible where the two overlap.
