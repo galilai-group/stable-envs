@@ -334,10 +334,10 @@ workstreams:
   worktree: /Users/samib/stable-envs-step6-gfxdraw
   oscar_copy: $SCR/se6/gfxdraw
   baseline_sha: 89fa5ca81341dc4df7186ec325cb691431a2ef17
-  head_sha: b29b2bc314b6cba75030c27701fd1aa66d2e2d99 (merged incl. provenance shards)
+  head_sha: 6fde85c19dac0be3c559c1476646aaeaa2e342c8 (merged)
   agent_model: opus
   wave: wave2
-  status: merged (self-contained paired shards with decode bar pending jobs 6353689/6353690)
+  status: merged
   authorization: PROFILE FIRST
   goal: 'PROFILE FIRST: primitive dispatch / full-frame per-primitive cost on CPU and GPU'
   affected_configs:
@@ -408,6 +408,9 @@ workstreams:
     PLATE_B constexpr recompile per batch size with >1 terrain pair; plate.contiguous() 2.9 GB transient at B=4096 (off certification path).'
   - 'Provenance 2026-09-14: node2338 CPU shards and gpu2110 GPU shard (block-timed official denominator, 2.3x swing) quarantined under superseded_*; paired node1829 CPU and gpu2264/gpu2107 GPU shards committed
     Step-3-shaped; Pendulum''s GPU_FAST under-stated on the page until a same-node decode bar lands (a missing denominator must never inflate a tier).'
+  - 'Provenance 2 (jobs 6353689 rejected: reference spread 4.5-10x; 6353690 gpu2264 clean, spread 1.10x, decode same card): Pendulum GPU_FAST published with cores 105-151; quarantine is structural (rows
+    moved to envs_not_for_certification) since directory names do not survive rsync; certify.merge collides before/after legs from one host (no arm slot) -> only the current-tree arm is a certification
+    row.'
 - workstream: cpu-3d
   brief: STEP_06_AGENT_BRIEFS/07_CPU_3D_ARCHITECTURE.md
   branch: step6/cpu-3d
