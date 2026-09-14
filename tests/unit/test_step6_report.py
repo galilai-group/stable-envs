@@ -291,3 +291,48 @@ def test_the_page_is_reproducible(tmp_path):
 
         pages.append(mod.build(RESULTS, ROOT, Args()))
     assert pages[0] == pages[1], "the generator is not deterministic over one unchanged tree"
+
+
+def test_the_current_gate_a_record_is_the_newest_by_ancestry(report):
+    """Two runs of one certification are two records; only the newest is the verdict.
+
+    texture-fidelity certified the DMC visual cells twice under each reference arm — once before the
+    downsample-protocol fix and once after it, the second stamped with a commit that has the first as
+    an ancestor. Picking by path order gave the OLD record and printed `DMCWalkerWalk FAIL` on a tree
+    where the re-run says PASS. The rule is ancestry on the reported tree, per declared reference
+    version, and the records it displaces have to be listed rather than dropped.
+    """
+    pytest.importorskip("yaml")
+    spec = importlib.util.spec_from_file_location("step6_report_order", GEN)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    A = mod.Artifacts(RESULTS)
+    order = mod.CommitOrder(ROOT)
+
+    obs = A.gate_a_observations()
+    stamped = [o for v in obs.values() for o in v if o.get("commit")]
+    if not stamped:
+        pytest.skip("no Gate-A certification carries a stamped git_commit in this checkout")
+    assert all(o.get("ref") for o in stamped), (
+        "a certification with no declared reference version cannot be grouped into an arm")
+
+    checked = 0
+    for cfg, rows in obs.items():
+        groups = {}
+        for o in rows:
+            groups.setdefault(o["ref"], []).append(o)
+        for ref, group in groups.items():
+            if len(group) < 2:
+                continue
+            cur, old = order.newest(group)
+            checked += 1
+            for o in old:
+                if order.on_tree(o["commit"]) and order.on_tree(cur["commit"]) and o["commit"] != cur["commit"]:
+                    assert not order._is_ancestor(cur["commit"], o["commit"]), (
+                        f"{cfg}/{ref}: the record chosen as current ({cur['commit'][:8]}) is an "
+                        f"ancestor of one it superseded ({o['commit'][:8]})")
+                assert f"`{o['path']}`" in report, (
+                    f"{cfg}/{ref}: the superseded record {o['path']} is not listed on the page")
+    assert checked, "no configuration has two records under one reference; the rule went untested"
+    assert "## Correctness after Step 6" in report
+    assert "Superseded certification records" in report

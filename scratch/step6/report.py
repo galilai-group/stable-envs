@@ -99,6 +99,66 @@ def merge_commits(repo: Path, ref: str = "HEAD") -> dict[str, list[tuple[str, st
     return out
 
 
+class CommitOrder:
+    """Which of two stamped measurements is the CURRENT one, on the tree being reported.
+
+    A workstream re-runs a certification and commits the new record beside the old one; both are
+    evidence, only one is the verdict. "Newest" is decided by **ancestry on the reported tree** —
+    `git merge-base --is-ancestor` — because a timestamp is a property of the machine that wrote the
+    file and ancestry is a property of the history the page describes. Two records on branches that
+    never saw each other are incomparable by ancestry; those fall back to committer date, and then to
+    the hash, so the answer is total and the page does not churn.
+
+    A commit that is unstamped, unknown here, or not on the reported tree cannot be ordered this way
+    at all; those fall back to file mtime and then path, and say so.
+    """
+
+    def __init__(self, repo: Path):
+        self.repo = repo
+        self._anc: dict[tuple[str, str], bool] = {}
+        self._date: dict[str, int] = {}
+        self._on: dict[str, bool] = {}
+
+    def on_tree(self, c: str | None) -> bool:
+        if not c:
+            return False
+        if c not in self._on:
+            self._on[c] = git(self.repo, "merge-base", "--is-ancestor", c, "HEAD") == ""
+        return self._on[c]
+
+    def _is_ancestor(self, a: str, b: str) -> bool:
+        if (a, b) not in self._anc:
+            self._anc[(a, b)] = git(self.repo, "merge-base", "--is-ancestor", a, b) == ""
+        return self._anc[(a, b)]
+
+    def _when(self, c: str) -> int:
+        if c not in self._date:
+            v = git(self.repo, "show", "-s", "--format=%ct", c)
+            self._date[c] = int(v) if v and v.isdigit() else 0
+        return self._date[c]
+
+    def newest(self, obs: list[dict]) -> tuple[dict, list[dict]]:
+        """``(current record, superseded records)`` over records of one config and one reference."""
+        rankable = [o for o in obs if self.on_tree(o.get("commit"))]
+        if not rankable:                                  # unstamped, or a tree with no git
+            ordered = sorted(obs, key=lambda o: (o.get("mtime") or 0, o["path"]))
+            return ordered[-1], ordered[:-1]
+
+        def cmp(x, y) -> int:
+            a, b = x["commit"], y["commit"]
+            if a == b:
+                return (x["path"] > y["path"]) - (x["path"] < y["path"])
+            if self._is_ancestor(a, b):
+                return -1
+            if self._is_ancestor(b, a):
+                return 1
+            return ((self._when(a), a) > (self._when(b), b)) - ((self._when(a), a) < (self._when(b), b))
+
+        import functools
+        ordered = sorted(rankable, key=functools.cmp_to_key(cmp))
+        return ordered[-1], ordered[:-1] + [o for o in obs if o not in rankable]
+
+
 # ------------------------------------------------------------------------------ dashboard
 
 #: The dashboard is hand-maintained and has drifted out of valid YAML more than once: an unquoted
@@ -305,6 +365,7 @@ class Artifacts:
         self.other_files: list[str] = []
         self._census = None
         self._C = None
+        self._cert_prov_cache: dict[Path, tuple[str | None, str]] = {}
         self._read()
 
     # -------------------------------------------------------------- reading
@@ -424,15 +485,58 @@ class Artifacts:
         r = p.relative_to(self.results)
         return r.parts[0] if len(r.parts) > 1 else "(top level)"
 
+    def _cert_provenance(self, p: Path, d: dict) -> tuple[str | None, str]:
+        """``(git_commit, declared reference version)`` for a Gate-A certification.
+
+        A `certification.json` is a VERDICT computed from a shard, and it is the shard that carries
+        the provenance — the commit the measurement ran at and the reference packages it ran against.
+        Both are followed here rather than guessed from the directory name, because "which record is
+        current" and "which reference arm is this" are the two questions the verdict rule turns on,
+        and a directory name is a label somebody typed.
+        """
+        if p.parent in self._cert_prov_cache:
+            return self._cert_prov_cache[p.parent]
+        commit = ((d.get("provenance") or {}).get("git_commit")
+                  if isinstance(d.get("provenance"), dict) else None)
+        ref: dict = {}
+        shards = [d]
+        for q in sorted(p.parent.rglob("*.json")):
+            if q == p:
+                continue
+            try:
+                shards.append(json.loads(q.read_text()))
+            except Exception:
+                continue
+        for cand in shards:
+            if not isinstance(cand, dict):
+                continue
+            provs = []
+            if isinstance(cand.get("provenance"), dict):
+                provs.append(cand["provenance"])
+            for sh in (cand.get("shards") or {}).values() if isinstance(cand.get("shards"), dict) else []:
+                if isinstance(sh, dict) and isinstance(sh.get("provenance"), dict):
+                    provs.append(sh["provenance"])
+            for prov in provs:
+                commit = commit or prov.get("git_commit")
+                rp = prov.get("reference_packages")
+                if isinstance(rp, dict) and not ref:
+                    ref = {k: v for k, v in rp.items() if v}
+        label = ", ".join(f"{k} {ref[k]}" for k in sorted(ref) if k in ("mujoco", "dm_control")) \
+            or p.parent.name
+        self._cert_prov_cache[p.parent] = (commit, label)
+        return commit, label
+
     def gate_a_observations(self) -> dict[str, list[dict]]:
-        """``{config: [{status, blocked, path, ws}]}`` — every Step-6 Gate-A statement per config."""
+        """``{config: [{status, blocked, path, ws, arm, commit, ref, mtime}]}``."""
         out: dict[str, list[dict]] = defaultdict(list)
         for p, d in self.certs:
+            commit, ref = self._cert_provenance(p, d)
             for cfg, v in d["configs"].items():
                 if isinstance(v, dict):
                     out[cfg].append({"status": v.get("gate_a"), "blocked": list(v.get("blocked") or []),
                                      "path": self.rel(p), "ws": self.workstream_of(p),
-                                     "arm": p.parent.name})
+                                     "arm": p.parent.name, "commit": commit, "ref": ref,
+                                     "mtime": p.stat().st_mtime})
         return out
 
     def tier_observations(self) -> dict[tuple[str, str], list[dict]]:
@@ -903,17 +1007,34 @@ def build(results: Path, repo: Path, args) -> str:
 
     table, gate_ok = [], 0
     gate_of, tier_of, ident_of = {}, {}, {}
+    order = CommitOrder(repo)
+    superseded_certs: list[list[str]] = []
     for cfg in sorted(step4):
         c4 = step4[cfg]
         g4 = c4.get("gate_a")
-        obs = sorted(gate_obs.get(cfg, []), key=lambda o: o["path"])
+        allobs = sorted(gate_obs.get(cfg, []), key=lambda o: o["path"])
         detail: list[str] = []
+        # Two records of the same config under the SAME declared reference are two runs of one
+        # measurement, and only the newest is the verdict. Grouping by reference first is what keeps
+        # that from silently collapsing the 3.11 and 3.12 arms, which are two different questions.
+        by_ref: dict[str, list[dict]] = defaultdict(list)
+        for o in allobs:
+            by_ref[o["ref"]].append(o)
+        obs = []
+        for ref in sorted(by_ref):
+            cur, old_ones = order.newest(by_ref[ref])
+            obs.append(cur)
+            for o in old_ones:
+                superseded_certs.append(
+                    [f"`{cfg}`", o["ref"], o["arm"], o["status"] + (" (blocked)" if o["blocked"] else ""),
+                     f"`{(o['commit'] or 'unstamped')[:12]}`",
+                     f"`{(cur['commit'] or 'unstamped')[:12]}` ({cur['arm']})", f"`{o['path']}`"])
         if obs:
             clean = [o for o in obs if not o["blocked"]]
             chosen = (clean or obs)[0]
             gate, gate_src = chosen["status"], src.key(chosen["path"])
             for o in obs:
-                detail.append(f"{o['arm']}: {o['status']}"
+                detail.append(f"{o['ref']} @ `{(o['commit'] or 'unstamped')[:8]}`: {o['status']}"
                               f"{' (blocked)' if o['blocked'] else ''} [{src.key(o['path'])}]")
             if len({o["status"] for o in obs}) > 1:
                 detail.append("**arms disagree**")
@@ -957,6 +1078,18 @@ def build(results: Path, repo: Path, args) -> str:
                       "; ".join(detail) or "—"])
     L.extend(tbl(table, ["config", "role", "Gate A (Step 4)", "Gate A (after Step 6)", "src",
                          "replay identity", "src", "detail"]))
+    P("### Superseded certification records")
+    P("")
+    P("A workstream that re-runs a certification commits the new record beside the old one. Both are")
+    P("evidence; only one is the verdict. Among records for the same configuration **and the same")
+    P("declared reference version**, the current record is the one whose stamped `git_commit` is")
+    P("newest by ancestry on the tree reported above (`git merge-base --is-ancestor`; committer date")
+    P("then hash where two commits are on branches that never saw each other; file mtime only where")
+    P("a record is unstamped). The rest are listed here and were used for nothing:")
+    P("")
+    L.extend(tbl(superseded_certs,
+                 ["config", "declared reference", "record", "it said", "at commit",
+                  "superseded by", "artifact"]))
 
     # ------------------------------------------------------------ performance, registered defaults
     owed = sorted(c for c in step4 if step4[c].get("role") == OWES_PERFORMANCE)
