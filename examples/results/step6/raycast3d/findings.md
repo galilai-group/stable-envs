@@ -2263,3 +2263,32 @@ cast-bound and out of this lever's reach. They still are cast-bound — `cast` i
 `AntmazeGiantNavigate` — but the cast runs over the WINDOW, so narrowing the window narrows the cast
 too. That is the part of the design that was not in the ticket's premise: shrinking `N` is not a
 compositing optimisation, it is a ray-count optimisation that the compositing path happened to own.
+
+### One thing this change RETIRES, and it had to be said out loud
+
+`COVER_COMPACTION` no longer does anything on the shipped path. RAYCAST-6's composite compacts per
+row, which is a strictly tighter set than the union that switch selects, so `composite` never reads
+it; it now governs `_composite_window` alone. That is a live hazard rather than a tidy-up, because
+`tests/gpu/test_fast_paths.py`'s `composite-cover-compaction` case flips exactly that flag: left
+alone it would have flipped a switch the running code ignores, compared the compact path with itself
+and gone **green for the wrong reason** — the same shape of false pass as the empty-directory
+`compare_dumps` bug this workstream fixed in RAYCAST-2b. The case now pins
+`COMPOSITE_COMPACT_MERGE` off for its duration, so RAYCAST-2b's claim keeps being tested on the path
+where it still applies, and `test_every_declared_fast_path_is_actually_reachable` asserts both halves
+of that arrangement — the pin in the case, and the `COVER_COMPACTION` branch inside
+`_composite_window` — so a later edit cannot quietly remove either.
+
+### What the trackcom check could and could not be
+
+The brief asked for the four DMControl trackcom cells through `scratch/step6/cpu-3d`'s cross-backend
+comparison script. **That script cannot run: its inputs are gone.** `compare_frozen.py` reads
+`localize312/frames/<cfg>.npz` (`frozen_ours`, `frozen_official`, `frozen_seg`) from the
+texture-fidelity workstream, and no such directory exists anywhere under `$SCR/se6` any more.
+
+What it would have answered is a FIDELITY question — how the CPU backend compares with MJWarp and
+with the official renderer — and the question this ticket owes is narrower: did this change move a
+pixel on the path `cpu3d.py` uses. That is answered decisively by rendering the four cells on CPU
+under `$SCR/se6/integration` and under this branch and diffing the raw frames, which is what was run:
+**identical**, all four. `cpu3d.py` reaches `raycast3d` through `cast_nearest` and `any_blocking` and
+does not call `composite` or `shade` at all, so identity there is the expected result and the check
+is a control — but a control that had not been run would have been an assumption.

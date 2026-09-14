@@ -271,6 +271,26 @@ def test_the_compact_tail_does_not_depend_on_cover_compaction_being_on():
     _assert_identical(a, b, "compact tail with COVER_COMPACTION off")
 
 
+@pytest.mark.parametrize("seed", range(8))
+def test_a_row_renders_the_same_alone_as_it_does_in_a_batch(seed):
+    """The fitted tile is derived from the batch's WORST span, so the batch can change the window.
+
+    It must not change the picture. That is not automatic and it is not what the identity argument
+    above says: the argument is that any admissible window gives the same frame, and this is the test
+    that the window the batch happens to pick is still admissible for every row in it. RAYCAST-4 made
+    the same distinction for its per-primitive bound -- batch invariance is a claim there, not an
+    identity -- and it earned its own test for the same reason.
+    """
+    sc = _scene(seed=4000 + seed, B=8, K=2, spread=0.2 + 0.1 * seed)
+    R3.COMPOSITE_COMPACT_MERGE = True
+    together = R3.composite(**sc, tile=16).clone()
+    for i in range(sc["xpos"].shape[0]):
+        one = dict(sc, xpos=sc["xpos"][i:i + 1].contiguous(),
+                   xmat=sc["xmat"][i:i + 1].contiguous())
+        alone = R3.composite(**one, tile=16).clone()
+        _assert_identical(alone, together[i:i + 1], f"row {i} alone vs in a batch of 8")
+
+
 def test_the_switch_exists_and_defaults_on():
     """A renamed switch would leave every case above comparing the shipped path with itself."""
     assert isinstance(R3.COMPOSITE_COMPACT_MERGE, bool) and R3.COMPOSITE_COMPACT_MERGE
