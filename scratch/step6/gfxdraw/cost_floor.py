@@ -98,6 +98,8 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--reps", type=int, default=5)
     ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--torch-batches", default="16,64,256",
+                    help="batch sizes to time the torch arm at; the compiled walks do not vary")
     ap.add_argument("--cc", default="")
     ap.add_argument("--out", default="")
     a = ap.parse_args()
@@ -146,6 +148,19 @@ def main() -> None:
         ops = env._ops(s, sty).finish()
         ref = FC.render_classic_torch(ops).cpu().numpy()
 
+        # Torch per FRAME falls with batch (dispatch amortises); the compiled and numba walks are
+        # batch-independent by construction, having no dispatch to amortise. Comparing a fused
+        # kernel against torch at B=8 would therefore credit the kernel with a win that batching
+        # already provides, so the torch arm is swept and the certified batch is the one to read.
+        rec["torch_by_batch"] = {}
+        for bb in [int(v) for v in a.torch_batches.split(",") if v]:
+            e2 = se.make(name, batch=bb, device="cpu")
+            st2 = (np.asarray(pool[np.arange(bb) % len(pool)], np.float32) if pool is not None
+                   else np.asarray(e2.sample_states(bb), np.float32))
+            dt = time_torch(e2, st2, max(2, a.reps // 2))
+            rec["torch_by_batch"][str(bb)] = {"ms_per_frame": dt * 1e3,
+                                              "ns_per_px": dt / (H * W) * 1e9}
+            del e2
         rec["torch_shipped_ms_per_frame"] = time_torch(env, states, a.reps) * 1e3
         rec["torch_shipped_ns_per_px"] = rec["torch_shipped_ms_per_frame"] * 1e6 / (H * W)
 
@@ -189,8 +204,9 @@ def main() -> None:
             f"{k.replace('cpp_', '')} {v['ns_per_px']:6.2f} ns/px {v['ms_per_frame']:6.3f} ms/f"
             f"{'' if v.get('draws_the_same_frame') else ' [DIFFERENT FRAME]'}"
             for k, v in rec.items() if isinstance(v, dict) and "ns_per_px" in v)
-        print(f"[{name:22s}] torch {rec['torch_shipped_ns_per_px']:6.2f} ns/px "
-              f"{rec['torch_shipped_ms_per_frame']:6.3f} ms/f   {line}")
+        tb = "  ".join(f"B{k} {v['ns_per_px']:5.2f}" for k, v in rec["torch_by_batch"].items())
+        print(f"[{name:22s}] torch@B{a.batch} {rec['torch_shipped_ns_per_px']:6.2f} ns/px "
+              f"{rec['torch_shipped_ms_per_frame']:6.3f} ms/f  [torch ns/px {tb}]   {line}")
 
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
