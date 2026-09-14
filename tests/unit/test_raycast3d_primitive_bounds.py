@@ -151,3 +151,38 @@ def test_the_switch_exists_and_defaults_on():
     assert R3.PRIMITIVE_BOUNDS is True
     assert callable(R3._cast_nearest_torch_unbounded)
     assert callable(R3._any_blocking_torch_unbounded)
+
+
+@pytest.mark.parametrize("rng", [21, 22, 23])
+def test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH(rng):
+    """Row 0's pixels must not depend on rows 1..7, and for THIS design that is not free.
+
+    The bound's ray set for a primitive is the union over the batch -- the rays near it in ANY row --
+    because a per-row set would need a ragged gather. So batching changes WHICH rays reach the
+    intersector, and the claim that it does not change the ANSWER is a claim about the bound being
+    conservative, not an identity anyone can read off the code. The suite above compares bounded
+    against unbounded at a fixed B; this compares one row against ITSELF at two different B, which is
+    the property a dataset loader actually depends on and the one a too-tight bound would break
+    asymmetrically -- row 0 alone would lose a hit that row 0 in company keeps.
+    """
+    kinds, s1, p1, R1, o1, d1 = _rand_scene(rng=rng, B=1, K=6, N=311)
+    # Rows 1..7 are a DIFFERENT scene and different rays, so the union is genuinely wider.
+    _, s8, p8, R8, o8, d8 = _rand_scene(rng=rng + 100, B=8, K=6, N=311)
+    def cat(one, many):                       # row 0 from the B=1 case, rows 1..7 from the other
+        out = torch.cat([one, many[1:]], 0).contiguous()
+        assert out.shape[0] == 8 and torch.equal(out[0], one[0])
+        return out
+    s8, p8, R8 = cat(s1, s8), cat(p1, p8), cat(R1, R8)
+    o8, d8 = cat(o1, o8), cat(d1, d8)
+
+    t1, n1, i1 = R3.cast_nearest_torch(kinds, s1, p1, R1, o1, d1)
+    t8, n8, i8 = R3.cast_nearest_torch(kinds, s8, p8, R8, o8, d8)
+    _same(t1[0], t8[0], "t, row 0 alone vs row 0 in a batch of 8")
+    _same(n1[0], n8[0], "normal, row 0 alone vs row 0 in a batch of 8")
+    _same(i1[0], i8[0], "index, row 0 alone vs row 0 in a batch of 8")
+
+    lim1 = torch.rand(1, 311) * 6.0
+    lim8 = torch.cat([lim1, torch.rand(7, 311) * 6.0], 0).contiguous()
+    b1 = R3.any_blocking_torch(kinds, s1, p1, R1, o1, d1, lim1)
+    b8 = R3.any_blocking_torch(kinds, s8, p8, R8, o8, d8, lim8)
+    _same(b1[0], b8[0], "blocked, row 0 alone vs row 0 in a batch of 8")
