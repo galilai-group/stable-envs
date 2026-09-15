@@ -85,7 +85,7 @@ from __future__ import annotations
 
 import contextlib
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -107,6 +107,10 @@ TEXTURED_OK = (0, 7)                                    # PLANE, MESH
 #: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
 #: (``examples/results/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
 TEXTURE_SAMPLER_OK = (0,)                               # mjTEXTURE_2D
+#: OpenGL's ``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180``; anything else is
+#: ``GL_INVALID_VALUE`` and the parameter is left at its default 180, i.e. NOT a spotlight. MuJoCo's
+#: renderer follows that, and ``mujoco_warp`` does not -- see ``neutralise_illegal_spots``.
+GL_SPOT_CUTOFF_MAX = 90.0
 
 
 def effective_alpha(m, kind: str = "geom") -> np.ndarray:
@@ -135,13 +139,80 @@ class Prepared:
     hidden_sites: list[int]
     groups: tuple[int, ...]
     restore: dict
+    #: Lights whose out-of-range spot cutoff was neutralised; see ``neutralise_illegal_spots``.
+    neutralised_spots: list[int] = field(default_factory=list)
 
     def summary(self) -> str:
-        return (f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
-                f"sites moved out of groups {self.groups}")
+        out = (f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
+               f"sites moved out of groups {self.groups}")
+        if self.neutralised_spots:
+            out += (f"; {len(self.neutralised_spots)} spot light(s) with an out-of-range cutoff "
+                    f"given MuJoCo's semantics (no angular attenuation)")
+        return out
 
 
-def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0) -> Prepared:
+def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
+    """Make MJWarp treat an out-of-range spot cutoff the way MuJoCo does. IN PLACE.
+
+    ``mujoco_warp``'s shader attenuates a spot light as::
+
+        cos_theta  = dot(-L, lightdir)
+        if cos_theta < cos(cutoff_rad): return          # hard cone
+        attenuation *= pow(max(cos_theta, 0), exponent)
+
+    MuJoCo does neither when the cutoff is out of range, because OpenGL's ``GL_SPOT_CUTOFF`` accepts
+    ``[0, 90]`` or the sentinel ``180`` and rejects everything else with ``GL_INVALID_VALUE``,
+    leaving the default **180 = not a spotlight**. Measured on ``swm/OGBCube-v0``, whose one spot is
+    ``cutoff = 100°, exponent = 10`` (``examples/results/step7/ogb-manipulation/m1/``):
+
+    ========================================  ============  ==================
+    MuJoCo-side change                         frame mean    vs shipped
+    ========================================  ============  ==================
+    shipped (SPOT, cutoff 100, exponent 10)        57.339    --
+    **exponent 10 -> 0**, cutoff still 100         57.339    **0 pixels, max 0**
+    cutoff -> 90                                   49.943    94.60 %, max 68
+    light disabled                                 47.851    94.68 %, max 73
+    ========================================  ============  ==================
+
+    At an illegal cutoff the angular term is **bit-inert** in MuJoCo and the frame sits at its
+    brightest: MuJoCo is lighting the scene with that light unattenuated by angle. MJWarp meanwhile
+    applies ``cos^10`` and extinguishes it off-axis, which is why it comes out uniformly 3-8 levels
+    darker. Neutralising the angular term on the MJWarp model moves ``swm/OGBCube-v0`` from
+    **0.0091 to 0.3507** interior-exact and mean |diff| from 8.90 to 2.79, and moves the signed
+    interior difference from a systematic -3..-8 to centred on zero with +/-1 tails.
+
+    **DO NOT "FIX" THIS BY RE-TYPING THE LIGHT TO POINT.** It is the obvious reading of "GL disables
+    the spot" and it is measurably wrong on the REFERENCE side: in MuJoCo a POINT light in this scene
+    renders **identically to the light being switched off**, 9.5 levels of mean darker than shipped.
+    The two renderers are asymmetric here, which is why the correction touches only what MJWarp
+    reads. (On the MJWarp side POINT, ``exponent = 0`` and ``cutoff = 180`` all land within 0.001 of
+    each other, so the minimal form is the one used here.)
+
+    Only ``light_exponent`` is written: setting it to 0 makes ``pow(cos_theta, 0) == 1``. The cone
+    itself needs no change, because ``cos(cutoff)`` for any cutoff above 90° is negative and rejects
+    essentially nothing -- and leaving ``light_cutoff`` alone keeps the model's own declaration
+    readable for anyone diffing it.
+
+    A spot with a LEGAL cutoff is left untouched: MuJoCo honours those, so MJWarp agreeing with the
+    model is agreeing with MuJoCo.
+    """
+    hit, restore = [], {"light_exponent": np.array(m.light_exponent, copy=True)}
+    for i in range(int(m.nlight)):
+        if hasattr(m, "light_type"):
+            is_spot = int(m.light_type[i]) == 0
+        else:                                        # older mujoco: directional flag only
+            is_spot = not int(m.light_directional[i])
+        if not is_spot:
+            continue
+        cutoff = float(m.light_cutoff[i])
+        if not (0.0 <= cutoff <= GL_SPOT_CUTOFF_MAX):
+            m.light_exponent[i] = 0.0
+            hit.append(i)
+    return hit, restore
+
+
+def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0,
+                  spot_semantics: bool = True) -> Prepared:
     """Move zero-alpha geometry out of the visible groups, IN PLACE. Returns what to restore.
 
     MJWarp draws every geom in an enabled group at full opacity because its shader never reads the
@@ -160,12 +231,18 @@ def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0) -> Prepared:
         m.geom_group[gh] = HIDDEN_GROUP
     if sh:
         m.site_group[sh] = HIDDEN_GROUP
-    return Prepared(gh, sh, tuple(groups), restore)
+    spots = []
+    if spot_semantics:
+        spots, spot_restore = neutralise_illegal_spots(m)
+        restore.update(spot_restore)
+    return Prepared(gh, sh, tuple(groups), restore, spots)
 
 
 def restore_model(m, p: Prepared) -> None:
     m.geom_group[:] = p.restore["geom_group"]
     m.site_group[:] = p.restore["site_group"]
+    if "light_exponent" in p.restore:
+        m.light_exponent[:] = p.restore["light_exponent"]
 
 
 def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
