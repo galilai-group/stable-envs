@@ -1,0 +1,19 @@
+{
+ "n": 200,
+ "exact": 199,
+ "max_diff_px": 1,
+ "mean_diff_px": 0.005,
+ "pos_err_max": 3.552713678800501e-15,
+ "q_err_max": 1.1102230246251565e-16,
+ "recipe": "stable_envs.envs.rocket_landing._reference_frame (renormalised, float32-aware)",
+ "nonzero": [
+  {
+   "i": 124,
+   "h": 425.1970994515496,
+   "diff_px": 1,
+   "pos_err": 0.0,
+   "q_err": -2.220446049250313e-16
+  }
+ ],
+ "s": 9.1
+}

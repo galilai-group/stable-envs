@@ -1,0 +1,220 @@
+{
+ "host": "gpu2264.oscar.ccv.brown.edu",
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "slurm_job": "6407256",
+ "sha": "cf355a3a2a7d75891f85a13e5a4b46febc282418",
+ "torch": "2.14.0+cu126",
+ "allow_tf32_matmul": false,
+ "float32_matmul_precision": "highest",
+ "row0_vs_B1": {
+  "24": {
+   "inputs_xp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "inputs_xm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "view": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "mvp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "pos": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "nrm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "wp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   }
+  },
+  "31": {
+   "inputs_xp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "inputs_xm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "view": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "mvp": {
+    "elements_differing": 46,
+    "max_abs": 1.5020370483398438e-05,
+    "max_ulp": 930873344
+   },
+   "pos": {
+    "elements_differing": 1282,
+    "max_abs": 1.5020370483398438e-05,
+    "max_ulp": 64512
+   },
+   "nrm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "wp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   }
+  },
+  "32": {
+   "inputs_xp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "inputs_xm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "view": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "mvp": {
+    "elements_differing": 46,
+    "max_abs": 1.5020370483398438e-05,
+    "max_ulp": 930873344
+   },
+   "pos": {
+    "elements_differing": 1282,
+    "max_abs": 1.5020370483398438e-05,
+    "max_ulp": 64512
+   },
+   "nrm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "wp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   }
+  },
+  "64": {
+   "inputs_xp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "inputs_xm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "view": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "mvp": {
+    "elements_differing": 46,
+    "max_abs": 1.5020370483398438e-05,
+    "max_ulp": 930873344
+   },
+   "pos": {
+    "elements_differing": 1282,
+    "max_abs": 1.5020370483398438e-05,
+    "max_ulp": 64512
+   },
+   "nrm": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   },
+   "wp": {
+    "elements_differing": 0,
+    "max_abs": 0.0,
+    "max_ulp": 0
+   }
+  }
+ },
+ "spmm_alone_vs_B1": {
+  "24": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  },
+  "31": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  },
+  "32": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  },
+  "64": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  }
+ },
+ "dense_gemm_alone_vs_B1": {
+  "24": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  },
+  "31": {
+   "elements_differing": 46,
+   "max_abs": 1.5020370483398438e-05,
+   "max_ulp": 930873344
+  },
+  "32": {
+   "elements_differing": 46,
+   "max_abs": 1.5020370483398438e-05,
+   "max_ulp": 930873344
+  },
+  "64": {
+   "elements_differing": 46,
+   "max_abs": 1.5020370483398438e-05,
+   "max_ulp": 930873344
+  }
+ },
+ "rasterize_alone_vs_B1": {
+  "24": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  },
+  "32": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  },
+  "64": {
+   "elements_differing": 0,
+   "max_abs": 0.0,
+   "max_ulp": 0
+  }
+ }
+}

@@ -1,0 +1,74 @@
+{
+ "spec_frame": {
+  "side_+x": {
+   "spec_px": 190,
+   "npx": 341,
+   "pred_world_z": 190,
+   "pred_view_z": 67,
+   "r_world": [
+    0.432,
+    -0.259,
+    0.864
+   ],
+   "r_view": [
+    -0.259,
+    0.817,
+    0.516
+   ]
+  },
+  "side_-y": {
+   "spec_px": 190,
+   "npx": 341,
+   "pred_world_z": 190,
+   "pred_view_z": 30,
+   "r_world": [
+    0.432,
+    -0.259,
+    0.864
+   ],
+   "r_view": [
+    0.432,
+    0.834,
+    0.344
+   ]
+  },
+  "above": {
+   "spec_px": 190,
+   "npx": 2209,
+   "pred_world_z": 190,
+   "pred_view_z": 190,
+   "r_world": [
+    0.432,
+    -0.259,
+    0.864
+   ],
+   "r_view": [
+    0.432,
+    -0.259,
+    0.864
+   ]
+  },
+  "diag": {
+   "spec_px": 190,
+   "npx": 1793,
+   "pred_world_z": 190,
+   "pred_view_z": 131,
+   "r_world": [
+    0.432,
+    -0.259,
+    0.864
+   ],
+   "r_view": [
+    -0.455,
+    0.526,
+    0.718
+   ]
+  }
+ },
+ "tex_offsets": {
+  "pixel_off0.0_texel_off0.0": 1.0,
+  "pixel_off0.0_texel_off0.5": 1.0,
+  "pixel_off0.5_texel_off0.0": 0.992218017578125,
+  "pixel_off0.5_texel_off0.5": 0.99609375
+ }
+}

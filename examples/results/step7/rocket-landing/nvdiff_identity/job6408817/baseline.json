@@ -1,0 +1,62 @@
+{
+ "phase": "baseline",
+ "pythonpath": "/oscar/scratch/sboughan/se7/baseline",
+ "stable_envs_file": "/oscar/scratch/sboughan/se7/baseline/stable_envs/__init__.py",
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "cells": {
+  "MujocoHalfCheetah": {
+   "sha256": "94429bf02436b3c823adae1fa9f43188711d3e50a760b5378ab6011ff39ab193",
+   "shape": [
+    64,
+    240,
+    240,
+    3
+   ]
+  },
+  "MujocoHopper": {
+   "sha256": "48194a0b589679fb48baa7e372cd7dea44ba1b45e6285a83f943f9d55003ddd4",
+   "shape": [
+    64,
+    240,
+    240,
+    3
+   ]
+  },
+  "MujocoWalker2d": {
+   "sha256": "0536c91c700dd6827733dba747200a8df980f8cda651395c23997185f90cd8bc",
+   "shape": [
+    64,
+    240,
+    240,
+    3
+   ]
+  },
+  "MujocoAnt": {
+   "sha256": "f173343d183fb675adfe8c26dc2874cba6aa10c346f188c9bdda3fa26c638a4b",
+   "shape": [
+    64,
+    240,
+    240,
+    3
+   ]
+  },
+  "MujocoHumanoid": {
+   "sha256": "32e0a365c91f4c9780f893c1ffe3b0567304fe98d6c914355bafa6cc9af44f0d",
+   "shape": [
+    64,
+    240,
+    240,
+    3
+   ]
+  },
+  "MujocoSwimmer": {
+   "sha256": "a33f185580b4b8cb309a7bdba9b9061fbd1471097eea990b2745308341edc955",
+   "shape": [
+    64,
+    240,
+    240,
+    3
+   ]
+  }
+ }
+}

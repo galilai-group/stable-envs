@@ -1,0 +1,134 @@
+{
+ "a_teleport": {
+  "base_pose_roundtrip_max_abs": 2.0816681711721685e-17,
+  "post_step_vs_post_teleport_same_pose_diff_px": 18214,
+  "link_cached_pos_change_after_teleport_max_abs": 0.1392839900975673,
+  "link_fk_pos_change_after_teleport_max_abs": 0.0,
+  "post_step_cached_vs_fk_max_abs": 0.1392856821170767,
+  "post_teleport_cached_vs_fk_max_abs": 1.4435114167099528e-05,
+  "post_step_link0_minus_base": [
+   5e-05,
+   -0.00044,
+   0.13927
+  ],
+  "post_teleport_link0_minus_base": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "seg_px_post_step": {
+   "1:-1": 11709,
+   "1:1": 193,
+   "1:2": 15,
+   "1:3": 521,
+   "1:4": 2476,
+   "1:5": 2485,
+   "1:6": 43,
+   "1:7": 4,
+   "1:8": 40,
+   "1:9": 57
+  },
+  "seg_px_post_teleport": {
+   "1:-1": 15262,
+   "1:1": 201,
+   "1:3": 688,
+   "1:4": 3343,
+   "1:5": 3337,
+   "1:6": 44,
+   "1:7": 6,
+   "1:8": 43,
+   "1:9": 61
+  },
+  "diff_px_by_link_post_step_mask": {
+   "1:-1": 7563,
+   "1:1": 185,
+   "1:2": 15,
+   "1:3": 323,
+   "1:4": 1201,
+   "1:5": 1209,
+   "1:6": 29,
+   "1:7": 3,
+   "1:8": 1,
+   "1:9": 48
+  },
+  "diff_px_by_link_post_teleport_mask": {
+   "1:-1": 11116,
+   "1:1": 193,
+   "1:3": 490,
+   "1:4": 2068,
+   "1:5": 2061,
+   "1:6": 30,
+   "1:7": 5,
+   "1:8": 4,
+   "1:9": 52
+  },
+  "teleport_after_a_step_vs_post_step_diff_px": 18214
+ },
+ "b_light": {
+  "default_twice_diff_px": 0,
+  "explicit_-5_200_-40_vs_default_diff_px": 22979,
+  "default_after_explicit_vs_default_before_diff_px": 22979,
+  "default_after_explicit_vs_explicit_diff_px": 0,
+  "candidate_default_light_direction_diff_px_vs_default": {
+   "eye_pos": 22811,
+   "eye_minus_target": 22781,
+   "minus_forward": 22781,
+   "forward": 22985,
+   "z_up": 21900,
+   "z_down": 22985,
+   "y": 22955,
+   "-5_200_-40": 22979,
+   "1_1_1": 22828,
+   "x": 22898
+  },
+  "body_rgba": [
+   0.050980392156862744,
+   0.8666666666666667,
+   0.023529411764705882
+  ],
+  "ambient_only_body_unique": [
+   [
+    13,
+    221,
+    6
+   ]
+  ],
+  "int_255c": [
+   13,
+   221,
+   6
+  ],
+  "default_body_max_rgb": [
+   12,
+   219,
+   5
+  ],
+  "default_body_min_rgb": [
+   7,
+   132,
+   3
+  ],
+  "default_body_mode_rgb": [
+   12,
+   208,
+   5
+  ],
+  "int_255c_x0.6": [
+   7,
+   132,
+   3
+  ],
+  "int_255c_x1.0": [
+   13,
+   221,
+   6
+  ],
+  "int_255c_x0.65": [
+   8,
+   143,
+   3
+  ]
+ },
+ "c_hand_recolour_exact_diff_px": 0,
+ "c_hand_recolour_exact_low_altitude_diff_px": 0
+}
