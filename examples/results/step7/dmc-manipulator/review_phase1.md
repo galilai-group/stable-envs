@@ -465,3 +465,303 @@ cd <tree> && ... $PY examples/fidelity_step4.py --shard dmc --device cpu --out r
 Artifacts under `/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-.../scratchpad/`:
 `w3_gate_224.json`, `w3_gate_84.json`, `ident_base.json`, `ident_branch.json`, `w3_dims.txt`,
 `w3_swmleaf.txt`, `w3_unit_{base,branch}.txt`, `replay_{base,branch}.json`.
+
+---
+---
+
+# RE-REVIEW — tip `0013050e80a5c6ec9af9a86efbb43c8ff3b7350e` (2026-09-15)
+
+**Verdict: APPROVE-WITH-CHANGES.** Every item the coordinator listed was re-run and reproduced. The
+cell-level work is complete and correct. Two **required** hardenings remain, both inside the new
+SHARED rule in `stable_envs/testing/conformance.py`, and both demonstrated with a working false
+positive rather than argued. One small new regression (D3). Nothing found invalidates a measurement:
+the shipped env's signature is honest and complete for everything its own state can reach, and I
+verified grant/refuse on all 15 dimensions in both styles.
+
+Commits reviewed since `a635d3a`: `8b39e94`, `4396163`, `0013050`. Worktree read-only throughout;
+`git status` clean, HEAD unmoved. Environment unchanged (`/Users/samib/se6-venv`, mujoco 3.12.0 /
+dm_control 1.0.45, `MUJOCO_GL=glfw`, CPU). **The 3.11.0/1.0.44 arm and the CUDA arm are cluster-only
+and I could not re-run them**; for those I verified only internal consistency of the committed
+artifacts and that the declared pins are recorded.
+
+## (1) C1-C4 and R2/R3/R4 — satisfied as specified
+
+| item | verdict |
+|---|---|
+| **C1** `_movers` body-slot id space | **Done.** Explicit `if kind == "geom" / elif kind == "site"`, body and light skipped with the reason in the docstring. |
+| **C2** four `check_default_style_is_official` overclaims | **Done.** Every surviving mention (`dmcontrol.py:295`, `:961`, the `:1253` error message, `findings_phase1.md:33`) now states the check's blind spot rather than claiming it. The `a635d3a` commit body cannot be edited and the correction is recorded in §9. |
+| **C3/R5** corpus | **Done, verified below (6).** |
+| **C4/R8** float32 + `floor.color` | **Done, and better than my finding.** The author traced the real cause: applied directly, `7/6` writes `light_diffuse = 0.699999988079071`, which *is* `float32(0.7)`, delta 0.0; the `+2.4e-07` I saw comes from `render`'s style-group key `np.round(…, 6)` → scale `1.166667`. Measured 0 px moved. `floor.color` is now stated as a RANGE gap. |
+| **R2** multi-geom body tests | **Done.** Two synthetic-model tests: a 4-geom body (2 drawn, 1 alpha-0, 1 group-3) must resolve to exactly the 2 drawn; a body with drawn geoms *and* drawn sites must raise. Both reachable from no registered env, which is why they are synthetic. |
+| **R3** group-name collision | **Done.** `make_variation_space` raises if a `SHAPE_KNOBS` geom name collides with an existing variation group. |
+| **R4** stale `geom_rbound`/`geom_aabb` | **Done**, with the mechanism (rendering never reads them; the only knobbed geom is `ghost` with `contype = conaffinity = 0`; nothing steps physics). |
+| **R1** `light_pos` | Recorded, no action — correct: it is a live shipped cell's behaviour and belongs to Step 8. |
+| **R6** 0.9829 | Recorded, not promoted to a floor. The 41-draw cluster arm's worst is **0.98273**, below my 0.982834, which vindicates the caution. `parity_all_exact_min` is `None` on the class. |
+
+## (2) The exclusion rule — minimal, but TWO demonstrated false positives
+
+What is right, verified by running `_validate_render_invariant` on **all 15** dimensions:
+
+```
+arm_root/arm_shoulder/arm_elbow/arm_wrist/thumb/thumbtip/finger/fingertip,
+ball_x, ball_z, target_ball_pos_x, target_ball_pos_z   -> REFUSED ("changed geom_xpos")
+ball_y, target_ball_quat_qw, target_ball_quat_qy       -> GRANTED ("rotates only the sphere geom(s)")
+```
+
+- **Name alone excludes nothing**: emptying `RENDER_INVARIANT_DIMS` returns the three to
+  `dead_dims` with no `excluded_dims` key (run below).
+- **Reported visibly**: `check_state_dims_matter` returns `excluded_dims` as `{name: full reason}`,
+  and `fidelity_step4.run()` puts the whole dict under `evidence`, so it reaches the Gate-A record
+  verbatim. `gate.py` has no summary that projects only `dead_dims` (its `is_excluded` is about check
+  *names*). One reporting caveat: because `dead_dims` is now `[]`, a downstream consumer that judges
+  purely on `dead_dims` sees a plain pass — the evidence is present but a terse summary could elide
+  it. Worth a line in the certifier's renderer, not a defect in the rule.
+- **Undeclared envs untouched**: confirmed end-to-end by the frozen replay — see (5).
+
+### D1 (REQUIRED) — a frozen field the env does not emit is SILENTLY SKIPPED
+
+`_validate_render_invariant` iterates `for k in _RENDER_INVARIANT_FROZEN: if k not in a: continue`.
+A signature that omits a field is not an error; that field is simply never compared. So the
+enumeration the docstring calls a bound ("bounded by an enumeration rather than by a promise") is
+advisory. **This code path is already live**: the shipped env omits `mat_texid`, which is therefore
+unchecked today.
+
+Demonstrated false positive (`w3_attack.py`). `thumbtip` rotates *only* the two `fingertip`-class
+SPHERES (`thumbtip1`, `thumbtip2`) and also translates them, so `geom_xpos` is the single field
+standing between it and a grant:
+
+```
+honest signature   -> granted = False | "...changed geom_xpos, which a claim of sphere-orientation-only..."
+geom_xpos omitted  -> granted = True  | "...rotates only the sphere geom(s) ['thumbtip1','thumbtip2']..."
+thumbtip moves 60 px (max 206/255)    -> that grant is WRONG
+```
+
+**Fix:** treat the frozen set as required. Refuse with a reason naming the missing key, e.g.
+
+```python
+missing = [k for k in _RENDER_INVARIANT_FROZEN if k not in a]
+if missing:
+    return False, (f"render_scene_signature omits {missing}, which the render-invariance rule must "
+                   f"compare; an omitted field is not an unchanged one")
+```
+
+and either emit `mat_texid` from `DMControlSuite.render_scene_signature` or move it to an explicit,
+documented `_RENDER_INVARIANT_OPTIONAL` tuple. Silence is the wrong default for a rule whose whole
+purpose is to be un-gameable.
+
+### D2 (REQUIRED) — `geom_is_sphere` is supplied by the env being judged and never cross-checked
+
+The single most load-bearing predicate in the rule is read straight from the signature:
+`sphere = np.asarray(a.get("geom_is_sphere"), bool)`. Conformance already receives and compares
+`geom_type`, but never checks that the two agree. So the check does not, in fact, own the definition
+of "sphere" — the env does.
+
+Demonstrated false positive, with `geom_type` left entirely honest:
+
+```
+honest signature, BOX target        -> granted = False | "...rotated NON-sphere geoms ['target_ball']..."
+geom_is_sphere = all True, BOX      -> granted = True  | "...rotates only the sphere geom(s) ['target_ball']..."
+```
+
+This matters beyond a lying env: it is a plausible *bug* surface for the next author of a signature,
+and W4's quadruped brings `ELLIPSOID`, which is emphatically not rotation-invariant while being the
+most sphere-like thing in the suite.
+
+**Fix (one line, and it makes the design claim literally true):** derive the predicate in
+conformance from the field it already freezes —
+
+```python
+sphere = np.asarray(a["geom_type"]) == SPHERE_TYPE      # and drop geom_is_sphere from the contract
+```
+
+or, if the env is to keep supplying it, refuse on disagreement:
+
+```python
+if not np.array_equal(sphere, np.asarray(a["geom_type"]) == SPHERE_TYPE):
+    return False, "geom_is_sphere disagrees with geom_type; the rule defines sphere, not the env"
+```
+
+### Signature completeness against `_prims` / `_static_t` / the plate — as asked
+
+I walked every render-side reader against the signature's fields.
+
+| reader | fields | covered? |
+|---|---|---|
+| `_prims` (movers and statics) | `geom_type`, `geom_size`, `d.geom_xpos`, `d.geom_xmat`, `geom_matid`→`mat_rgba`/`geom_rgba`, `mat_specular`, `mat_shininess`; same for sites | **yes** — geoms and sites are concatenated into one primitive list, which is the right call and fixes the group-3-site false refusal the docstring records |
+| `_static_t` | the same static prims | **yes** |
+| `sc.floor` | reflective plane `geom_size`/`xpos`/`xmat`, `mat_reflectance` | **yes** (it is a drawn geom) |
+| `_Lights` | light pos/dir/diffuse/specular/ambient/castshadow | **yes** |
+| plate bake (MuJoCo) | the above plus textures, `m.vis.headlight`, `geom_group`/`site_group`, skybox | textures/`m.vis` are **not** in the signature but are **not writable from a state dimension**, so unreachable; a group change alters the drawn set and is caught because `geom_names` differs and `geom_names` *is* frozen |
+| camera | `cam_pos`, `cam_quat`, `cam_fovy` (MODEL arrays) | **yes for a fixed camera**, which is every `DMControlSuite` cell |
+
+**Two gaps that are unreachable today and become live for a future cell** (note, not a defect now):
+
+- **N1 — tendon.** `_fk` builds the tendon's capsule chain and colour from `mj_forward`; nothing about
+  it is in the signature. `ball_in_cup` declares no candidates, so it cannot be hit — but a tendon
+  domain that ever declares one would have its tendon invisible to the rule.
+- **N2 — resolved camera pose.** Only the model `cam_pos`/`cam_quat` are compared, not `d.cam_xpos`/
+  `d.cam_xmat`. Harmless while every cell using this is `mode="fixed"` on the world body; a
+  body-mounted or `trackcom` camera moves with `qpos` and the rule would not see it.
+
+Cheapest durable fix for both: have `_validate_render_invariant` refuse outright when the env's model
+carries a tendon or a non-fixed camera, unless the signature reports them.
+
+**N3 (minor) — the validation perturbation is not the one that proved deadness.** Deadness is decided
+by donor substitution across the whole batch plus `±25 / 1.0 / 0.5` nudges; the validation then applies
+`+0.2` to **row 0 only** (`states[:1]`). The two never have to agree. It is benign here (validation is
+only reached once a dim is dead under every one of those), but validating with the same perturbations
+that were tried would remove the gap for free.
+
+## (3) Regression, both directions — reproduced independently
+
+`w3_both.py`, 16 states at seed 8181 (mine, not the author's):
+
+```
+224 px SPHERE   ball_y 0 px  quat_qw 0 px  quat_qy 0 px      all GRANTED
+224 px BOX      ball_y 0 px GRANTED | quat_qw 221 px max 151 REFUSED | quat_qy 221 px max 151 REFUSED
+ 84 px SPHERE   ball_y 0 px  quat_qw 0 px  quat_qy 0 px      all GRANTED
+ 84 px BOX      ball_y 0 px GRANTED | quat_qw  27 px max 145 REFUSED | quat_qy  27 px max 145 REFUSED
+negatives       arm_root / ball_x / target_ball_pos_x -> all REFUSED ("changed geom_xpos")
+declared        {'dead_dims': [], 'excluded_dims': {ball_y, target_ball_quat_qw, target_ball_quat_qy}}
+emptied         {'dead_dims': ['ball_y','target_ball_quat_qw','target_ball_quat_qy']}   # no excluded_dims key
+```
+
+Author reported 201 px / max 145 at 224 and 28 px at 84; I get 221 / 151 and 27 on a different draw —
+same magnitude, same verdict. The refusal reason is the `NON-sphere` branch in both cases, and
+`ball_y` correctly stays granted under the box because it orients the `ball` prop, which
+`target_ball.shape` does not switch.
+
+## (4) Order-dependence fix does not alter `render()`
+
+`w3_order.py`, two processes. The `dirty` one runs, before every measurement: a BOX render (leaving a
+box scene cached and on the shared model), a full `check_state_dims_matter` (15 signature probes, each
+mutating the shared `MjModel` and clearing `_SCENE_CACHE`), a bare `render_scene_signature` under the
+box variation, a hidden-target render, and a direct `_validate_render_invariant` under the box.
+
+```
+                       clean              dirty
+default_ss1            1dc63a62c3b3e10f   1dc63a62c3b3e10f   OK
+box_ss1                41a62d1b75c1dfeb   41a62d1b75c1dfeb   OK
+default_ss2            f9d288ae183345f7   f9d288ae183345f7   OK   <- forces a fresh _static_t
+default_ss1_again      1dc63a62c3b3e10f   1dc63a62c3b3e10f   OK
+hidden_ss2             d51f0fbdf7c32eb1   d51f0fbdf7c32eb1   OK
+size84                 593c670741760e5c   593c670741760e5c   OK
+                       + post-probe re-renders at ss1 and ss2: identical again
+DIFFERING: none
+```
+
+The `_apply_variation(m, pr, None)` + `_SCENE_CACHE.clear()` pair in the `finally` restores the
+pre-existing invariant exactly. Note for the record that clearing a module-global cache is a real
+side-effect of a conformance probe — it drops every *other* env's baked scenes too — but it is a pure
+memo, so the cost is time, not pixels.
+
+## (5) Regression suite
+
+- **Frozen Step-4 `dmc` shard, `76dc511` vs `0013050`, both run by me on this machine:
+  14 configs, 0 differing** (after dropping only `seconds` and absolute-path `traceback` strings) —
+  `digest_ours`, `digest_official`, `digest_ours_default_style`, `digest_ours_corpus_style`,
+  `mean_pixel`, `distinct_colors` all equal. And the shared change is provably inert for undeclared
+  envs: their payload is still exactly `{"dead_dims": []}` with no new keys.
+- **All 17 cells byte-identical across four digests.** 16 pre-existing cells vs `76dc511`: 0
+  differing on `size`/`state_dim`/`state_names`/`leaves`/`_slots`/`_hideable`/every `init_value`/
+  `states_sha`/default digest/two moved-style digests/an 84-px digest. And
+  `DMCManipulatorBringBall` is **identical between `a635d3a` and `0013050`** on all of those — the
+  three follow-up commits moved no pixel anywhere.
+- **`tests/unit`** (deselecting `test_examples.py`): **1 failed, 726 passed, 6 skipped** vs baseline
+  **1 failed, 713 passed** — +13 new tests, same single pre-existing failure. **But see D3.**
+- **No other check or threshold touched**: the only hunk in `stable_envs/testing/` is inside
+  `check_state_dims_matter` plus the two new module-level helpers; `dead_dims` keeps its meaning and
+  the return dict gains keys only when non-empty.
+
+### D3 (new, small) — `test_every_cited_scratch_path_resolves`'s broken-path set GREW by 2
+
+The test was already red on the baseline, so the headline "same failure" is true — but its content is
+not the same. At `a635d3a` the set was **identical** to `76dc511` (32 paths, `diff` empty). At
+`0013050` it is **34**, and both additions come from `4396163`:
+
+```
++ examples/results/step7/dmc-manipulator/profile/DMCManipulatorBringBall_cuda_gpu2104.md:6
++ scratch/sboughan/se7/dmc-manipulator/stable_envs/__init__.py
+```
+
+from that note's provenance lines:
+
+```
+line  6: - tree measured: `/oscar/scratch/sboughan/se7/dmc-manipulator/stable_envs/__init__.py`
+line 10: - measured tree: `$SCR/se7/dmc-manipulator/stable_envs/__init__.py`
+```
+
+It mirrors an existing wart in the Step-6 profile notes, so it is not a new *class* of problem, and it
+changes no measurement. But the previous tip added none, and a repo-contract test whose failure list
+grows silently is how that test stops being read. **Fix:** in the committed note, render the measured
+tree as plain text rather than a backticked path (or drop the duplicate line 10), so the contract test
+does not treat it as a citation. Coordinator's call whether to hold the merge for it.
+
+## (6) Corpus
+
+```
+states: (64, 15) float32                       # the SELECTION, not the pool
+meta keys ⊇ Step-4's exactly: env, indices, kept, n_extreme, n_spread, n_typical, pool,
+           seed, selection, sha256, state_dim, state_names  (+ provenance extras)
+seed 20260909 == fidelity_step4.STATE_SEED     pool 256 == POOL     kept 64 == N_STATES
+declared sha256 48db2b1adf54a75d816eb068f815257ffa7e1ab238218c4f9e64568873b749d8
+recomputed      48db2b1adf54a75d816eb068f815257ffa7e1ab238218c4f9e64568873b749d8   MATCH
+indices: 64 unique, all < 256
+corpus_for(env, "DMCManipulatorBringBall", …) -> (64, 15)
+pool kept aside at corpus/pool/DMCManipulatorBringBall_pool.npz  (256, 15)
+```
+
+Generated at the declared pin (`meta` records mujoco 3.11.0 / dm_control 1.0.44, node2306). Exactly as
+specified.
+
+## (7) Hygiene
+
+```
+trailers 76dc5116..HEAD                     -> 0
+authors                                     -> sami-bg <samibghanem@gmail.com>
+examples/results/step4|5|6 changed           -> (none)
+raycast3d / render/ changed                  -> (none)
+DMControlTrackCom region                     -> untouched (context lines only)
+git status in the worktree                   -> clean, HEAD unmoved
+```
+
+## Cluster artifacts — consistency only (cannot re-run locally)
+
+- **41-draw declaration arm** at mujoco 3.11.0 / dm_control 1.0.44: 41 draws at 224, `interior_exact_frac`
+  1.0 on every one, **0 bad of 56,575,531**; worst all-pixel 0.98273. 84 px likewise 41 draws, interior
+  1.0, 0 bad, worst 0.97745. `declaration` records `parity_interior_min = 1.0`, no all-exact floor.
+- **CUDA identity**: 16 common cells, 0 differing; 1 new. Consistent with the claim.
+- **O1** — I checked this rather than taking "benign". The diff's `counts` and `visual` are **empty**,
+  and the `episode_draw` census is **identical on both sides**
+  (`body_pos[33]`, `body_pos[35]`, `body_quat[44]`, `body_quat[46]`), which is the load-bearing
+  question. The `geoms`/`sites`/`materials`/`textures` entries are an asset-**table rotation**, not a
+  scene difference: resolving by name, **every geom's effective material name is identical**, every
+  material's rgba is identical except `target` (alpha 0 = SWM's `render_target = 0` default), every
+  texture sha matches by name (`skybox` f6a21dd7, `grid` d6efb069, `background` 1217cedb), and the one
+  light differs by diffuse 0.6 vs 0.7 = SWM's `light.intensity` default. All three are exactly the
+  leaves already declared. O1 is benign, and now for a stated reason.
+
+## Re-review verdict
+
+**APPROVE-WITH-CHANGES.** Required: **D1** and **D2** (both in `_validate_render_invariant`, both
+demonstrated, both a few lines). **D3** is small and the coordinator's call. **N1/N2/N3** are notes for
+whoever declares the second cell. Everything else on the list is verified done and reproduced:
+C1-C4, R2-R4, the exclusion rule's minimality and reporting, both regression directions at both
+sizes, order-independence byte-identity, 14/14 replay configs, 17/17 cells across four digests, the
+corpus, and hygiene.
+
+### Re-review commands
+
+```bash
+git worktree add --detach .../scratchpad/w3base2 76dc5116
+cd <tree> && MUJOCO_GL=glfw PYTHONPATH=<tree> $PY examples/fidelity_step4.py --shard dmc --device cpu --out replay_{base,branch2}.json
+cd tip   && MUJOCO_GL=glfw $PY -m pytest tests/unit -q -p no:randomly --deselect tests/unit/test_examples.py
+cd tip   && ... $PY .../w3_ident.py   --out ident_tip.json      # 17 cells x 4 digests
+cd tip   && ... $PY .../w3_attack.py                            # D1, D2 false positives
+cd tip   && ... $PY .../w3_both.py                              # granted/refused both directions
+cd tip   && ... $PY .../w3_order.py {clean,dirty}               # order-independence
+cd tip   && ... $PY .../w3_corpus.py                            # corpus_for + sha256
+```
+
+Artifacts: `w3_attack.txt`, `w3_both.txt`, `w3_order_{clean,dirty}.json`, `ident_tip.json`,
+`replay_branch2.json`, `w3_unit_branch2.txt`, `paths_branch2.txt`.

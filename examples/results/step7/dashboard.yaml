@@ -190,7 +190,7 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: cluster results + exclusion mechanism committed; formal re-review (incl. shared conformance.py change) requested; paired replay 6395850 running; merge after APPROVE
+  status: 're-review APPROVE-WITH-CHANGES on 0013050: two hardenings of the shared exclusion rule (missing-key skip; env-supplied sphere flag) + citation regression; fix requested; then verify + merge'
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
@@ -283,6 +283,21 @@ workstreams:
         - R3 variation-group name-collision raise
         - R4 stale rbound/aabb note
         after: 16 cells byte-identical across four digests; tests/unit 831 passed, same 2 pre-existing failures
+      rereview_0013050:
+        verdict: APPROVE-WITH-CHANGES
+        required:
+        - D1 rule skips frozen fields the env omits -> false positive demonstrated (thumbtip granted with geom_xpos omitted; moves 60 px). Refuse on missing keys; emit mat_texid or declare optional
+        - D2 geom_is_sphere read from the judged env, never cross-checked vs frozen geom_type -> false positive with a lying flag on a BOX. Derive from geom_type in conformance
+        - D3 cited-scratch-path broken set grew 32 -> 34 from the cuda profile note
+        verified:
+        - 'C1-C4, R2-R4 done (C4 root cause: style-key np.round(...,6), 0 px)'
+        - 'validator on all 15 dims: 12 refuse on geom_xpos, 3 grant; name alone excludes nothing; excluded_dims reaches the Gate-A record'
+        - signature complete for this cell; gaps N1 tendons, N2 non-fixed camera (future cells)
+        - both directions reproduced (box quat dims 221 px max 151 refused at 224; 27 px at 84; ball_y granted)
+        - 'order-independence: six digests identical under a hostile sequence'
+        - dmc shard 14/0; 17 cells byte-identical on four digests; tests/unit 1/726 vs 1/713
+        - corpus (64,15) Step-4 schema, sha matches, corpus_for 64 rows
+        - 'O1 checked: episode_draw census identical; asset-table rotation only; differences = the three leaves'
   cluster:
     copies: '$SCR/se7/dmc-manipulator (8b39e94 after re-sync); $SCR/se7/baseline = git archive 76dc511 (note: $SCR/se6/baseline is the Step-6 baseline 89fa5ca8)'
     O1_6394687: 'COMPLETED (se-step5, mujoco 3.12 caveat): SWM mjcf round-trip vs suite.load differs only by a benign material/texture table rotation (same sets, names, bytes; geom/site order identical;
@@ -634,6 +649,8 @@ incident_log:
   item: W3 cluster results (4396163) and validated exclusion (0013050) landed; formal re-review requested
 - date: '2026-09-15'
   item: W6 formal APPROVE on cf355a3; merge gated on cluster job 6395707
+- date: '2026-09-15'
+  item: 'W3 re-review: shared exclusion rule needs two hardenings (demonstrated false positives); fix requested'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
