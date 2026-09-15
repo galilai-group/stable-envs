@@ -196,6 +196,12 @@ workstreams:
       purely from the reference. Live on both devices today (jax present -> harness finds a reference).'
     asserted: 'GPU_EXCEPTIONAL and CPU_FASTER must not be recorded as this cell''s tiers (performance_record_cpu/gpu + s_cpu_note on the class with must_not_be_recorded_as_the_tier; test guards). Recommendation:
       NO_REFERENCE row (CPU_REGRESSION / GPU_FAST) because cores cannot be gamed by a reference.'
+  reference_label_ruling:
+    finding: 'neither existing jitted-official timing meets the ruling''s conditions: CPU 610.6 f/s (node2356) - jax''s XLA thread pool ignored the one-core pin while ours was pinned; GPU 386.7 f/s (gpu2107)
+      - JAX_PLATFORMS=cpu in env_header.sh, so the reference never ran on the card; both were the baseline leg''s reference, not the branch''s'
+    retake: '6409541 CPU (taskset -c 0 both sides; XLA single-thread flags) and 6409542 GPU (jax on the same card; XLA_PYTHON_CLIENT_PREALLOCATE=false); provenance: jax backend/devices, affinity mask, torch
+      threads, env vars; warm, compile excluded'
+    expected_movement: S_cpu likely up (one-core reference slower), R likely down (reference on the card faster); cores unchanged 0.263 / 15.40
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -1346,6 +1352,8 @@ incident_log:
   item: W5 MERGED and CLOSED (24d1054); coverage 39/40 merged; only PFRocketLanding open (contract decision)
 - date: '2026-09-15'
   item: Sami's closure rulings recorded; Rocket re-freeze authorized under verification conditions; Craftax reference rule; Step-7 close sequence
+- date: '2026-09-15'
+  item: 'W1: prior jitted timings inadmissible under the ruling''s conditions; re-take jobs submitted'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
