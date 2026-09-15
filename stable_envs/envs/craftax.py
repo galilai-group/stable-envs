@@ -729,8 +729,39 @@ class CraftaxClassic(StableEnv):
     #: and the strip layout. ``jax`` is here for a reason that is not obvious and is load-bearing:
     #: see :meth:`reference_env`, which refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
-    #: What the parity bound is, and what it is not. The declared versions above are corroborated
-    #: here rather than left as bare numbers.
+    #: Where ``check_resolution_consistency`` applies to this env, and where it cannot -- **decided by
+    #: an experiment on the OFFICIAL renderer, not by argument from this one**. The check renders at
+    #: S and 2S, box-downsamples, and asks how much agrees. Running its exact protocol on craftax's
+    #: own renderer (un-jitted, each state's own ``state_rng``, craftax's own
+    #: ``load_all_textures_given_size(32)``) over the frozen Step-7 corpus splits into two
+    #: independent mechanisms, each confined to one region of the frame
+    #: (``examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json``):
+    #:
+    #: * **world rows.** Official 1.0000 at daylight and at dusk; **0.1634 at night**, because the
+    #:   noise field is drawn at ``(7t, 9t)`` -- the frame's own resolution -- so element ``i`` of the
+    #:   32 px field is a different threefry counter from element ``i`` of the 16 px one. This
+    #:   renderer measures **0.1634 too**: not merely also-inconsistent, but inconsistent by exactly
+    #:   the reference's amount, which is what reproducing its noise bit for bit implies. The quantity
+    #:   the check is defined to measure is undefined when the two renders draw different noise, so
+    #:   below :data:`NIGHT_THRESHOLD` the check is **not applicable**, on the reference's evidence.
+    #: * **strip rows.** Official **0.6815-0.6946 in every band, daylight included**, because its
+    #:   icon is ``int(0.8*t)`` and its digit ``int(0.6*t)`` and neither scales by two (12 and 9 at
+    #:   16 px; 25 and 19 at 32 px). This renderer measures **1.0000**, because it resamples the
+    #:   finished cell rather than re-laying it out -- see :func:`_strip_cells`. That makes it
+    #:   *stricter* than the reference at 2S, at a size which has no official frame to be parity
+    #:   against (:meth:`reference_env` refuses any size craftax does not ship), and it is what keeps
+    #:   the frozen daylight bound meetable. Matching craftax's 32 px re-layout instead would break
+    #:   that bound and buy no parity.
+    #:
+    #: Parity at the two supported sizes is unaffected and still exact: the same experiment records
+    #: ``exact_frac`` 1.0 against the official at S in every band.
+    resolution_consistency_applicability = {
+        "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
+        "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there "
+                             "(official world rows 0.1634; this renderer 0.1634, the same number)",
+        "evidence": "examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+        "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
+    }
     #: 100% of all pixels exact over the whole observation, so the strong bound is declared rather
     #: than left at None. It is guarded by ``reference_versions`` above: a different craftax or jax
     #: blocks the check instead of failing it, which is the right verdict for a comparison that is no

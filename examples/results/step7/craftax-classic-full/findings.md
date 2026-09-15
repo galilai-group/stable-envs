@@ -731,6 +731,68 @@ Independent review confirmed both weaken nothing.
   carrying — so a parity env could not declare a reference version at all. The rule is unchanged: a
   version may not be declared without prose in the class that says the same thing.
 
+## 12b. Decision A — the oracle experiment, and what it settled
+
+Sami's ruling: neither "split bound" nor "not applicable" may be chosen from our implementation
+alone. The verdict has to come from running the check's exact protocol on the **official** renderer.
+
+**Protocol** (`scratch/step7/craftax-classic-full/oracle_resolution.py`, artifact
+`oracle/resolution_oracle_S16.json`): the frozen Step-7 corpus split by band, plus
+`check_resolution_consistency`'s own draw (`render_worker.sample_inputs(env, 8)` at `STATE_SEED`,
+default appearance) so the states the frozen bound is judged on are covered; craftax's renderer
+**un-jitted**, the same reference as parity, with each state's own `state_rng` written back so both
+resolutions see the same PRNG state; craftax's own `load_all_textures_given_size(32)` for the 2S
+textures — craftax caches only 7, 16 and 64, so the renderer is built through a patched lookup
+rather than a reimplementation, and every pixel is still craftax's; then the check's own
+`_box_downsample` and its own statistic.
+
+**Result — `exact_frac` at S=16, 2S=32, split by region because the two regions fail for different
+reasons:**
+
+| pool | official world | **ours** world | official strip | **ours** strip | parity vs official @16 |
+|---|---|---|---|---|---|
+| corpus daylight (16) | 1.0000 | **1.0000** | 0.6933 | **1.0000** | 1.0000 |
+| corpus dusk (25) | 1.0000 | **1.0000** | 0.6928 | **1.0000** | 1.0000 |
+| corpus night (23) | **0.1634** | **0.1634** | 0.6815 | **1.0000** | 1.0000 |
+| the check's own 8-state draw | 0.7639 | **0.7639** | 0.6743 | **1.0000** | 1.0000 |
+| that draw, night rows only (2) | 0.0557 | **0.0557** | 0.6946 | **1.0000** | 1.0000 |
+
+Two independent mechanisms, each confined to one region:
+
+1. **The world rows, at night: the official renderer is not resolution-consistent, and this renderer
+   is inconsistent by *exactly* the same amount — 0.1634 against 0.1634, 0.0557 against 0.0557.**
+   Not "also bad": the same number, which is what reproducing the reference's noise field bit for
+   bit implies. The noise is drawn at `(7t, 9t)`, so element `i` of the 32 px field is a different
+   threefry counter from element `i` of the 16 px one, and the quantity the check is defined to
+   measure — "does the disagreement stay where geometry is" — is undefined when the two renders draw
+   different noise. It is not a geometry question at all.
+2. **The strip rows: the official is inconsistent in *every* band, daylight included (0.68–0.69),
+   and this renderer is at 1.0000.** That is the `int(0.8*t)` / `int(0.6*t)` re-layout — 12 and 9 at
+   16 px, 25 and 19 at 32 px. Resampling the finished cell rather than re-laying it out (§6.2) makes
+   this renderer *stricter* than the reference at 2S, at a size that has no official frame to be
+   parity against, and it is what keeps the frozen daylight bound meetable at all. Matching
+   craftax's 32 px re-layout would break that bound and buy no parity.
+
+**Ruling, following Sami's rule:** the official renderer *is* itself resolution-inconsistent under
+night, so `check_resolution_consistency` is **NOT APPLICABLE below `light_level = 0.5`**, cited to
+that official-reference result. Where the official is consistent — the world rows at dusk and
+daylight — **the bound stays asserted and is met exactly (1.000)**. The frozen Step-2 threshold is
+not edited; the per-band applicability is declared on the class as
+`CraftaxClassic.resolution_consistency_applicability`, carrying the evidence path and the reference
+versions, and `test_the_declared_resolution_applicability_matches_measurement` fails if the
+declaration goes stale.
+
+**Exact parity at both supported resolutions is unaffected and still required**: the same experiment
+records `exact_frac` 1.0 against the official at 16 px in every band, and §8.1 records the same at
+7 px.
+
+One thing the experiment turned up that the framing had not anticipated: the strip makes the
+official renderer fail its own consistency check **in daylight**, which is the band everyone assumed
+was clean. Had the strip been re-laid-out to match craftax at 32 px, this env would have gone from
+`exact_frac` 1.000 to ~0.69 at daylight and the regression would have looked like a night problem.
+
+---
+
 ## 13. Independent review — four required changes, all landed
 
 Review of `a1ebf57`: **APPROVE-WITH-CHANGES**. The reviewer regenerated the golden file from jax

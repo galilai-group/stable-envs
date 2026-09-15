@@ -439,3 +439,42 @@ def test_the_key_is_assembled_only_where_it_can_matter(env, states):
     halves = out[-1]
     assert halves.shape == (len(states), 4) and halves.dtype == torch.float32
     assert float(halves.max()) < 65536.0 and float(halves.min()) >= 0.0
+
+
+def test_the_declared_resolution_applicability_matches_measurement(env, states):
+    """The declaration is a claim about numbers; this checks the numbers.
+
+    ``check_resolution_consistency`` is declared applicable at ``light_level >= 0.5`` and not below,
+    because the OFFICIAL renderer is itself inconsistent below it (the oracle experiment in
+    ``examples/results/step7/craftax-classic-full/oracle/``). What can be asserted without jax is
+    our side of it: that we meet the frozen bound where the declaration says we do, and do not where
+    it says the check does not apply.
+    """
+    from stable_envs.testing.conformance import check_resolution_consistency
+    d = CraftaxClassic.resolution_consistency_applicability
+    assert set(d) >= {"light_level >= 0.5", "light_level < 0.5", "evidence", "measured_against"}
+    assert "not_applicable" in d["light_level < 0.5"]
+    for light in (1.0, 0.75, 0.5):
+        r = check_resolution_consistency(env, _set(states, light=light))
+        assert r["exact_frac"] >= 1.0 - 0.005, (light, r)
+    for light in (0.45, 0.1):
+        r = check_resolution_consistency(env, _set(states, light=light))
+        assert r["exact_frac"] < 1.0 - 0.005, (
+            f"light={light} now meets the bound; the declared non-applicability is stale", r)
+
+
+def test_the_strip_is_resolution_consistent_in_every_band(env, states):
+    """The strip must not be what takes the daylight bound down; the official's would.
+
+    craftax re-lays the strip out at each size (icon ``int(0.8*t)``, digit ``int(0.6*t)``), which
+    scores ~0.69 under the check in every band including daylight. Resampling the finished cell
+    instead keeps this side at 1.000, which is what makes the frozen bound meetable at all.
+    """
+    from stable_envs.testing.conformance import _box_downsample
+    w = OBS_H * 16
+    for light in (1.0, 0.75, 0.1):
+        st = _set(states, light=light)
+        a = env.render(st, size=16).numpy()[:, w:]
+        b = env.render(st, size=32).numpy()[:, OBS_H * 32:]
+        d = np.abs(_box_downsample(b, 2).astype(np.int16) - a.astype(np.int16))
+        assert float((d.max(-1) == 0).mean()) == 1.0, (light, int(d.max()))
