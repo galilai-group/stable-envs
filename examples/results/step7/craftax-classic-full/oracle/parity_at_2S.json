@@ -1,0 +1,33 @@
+{
+ "what": "parity against craftax at 32 px -- a size craftax ships no textures for, whose renderer is therefore CONSTRUCTED through craftax load_all_textures_given_size(32). Not a certification size and not a parity obligation; measured because the resolution-consistency argument turns on what differs at 2S and where.",
+ "jax": "0.11.1",
+ "reference": "craftax 1.6.1 un-jitted, textures via load_all_textures_given_size(32)",
+ "corpus": "examples/results/step7/craftax-classic-full/corpus/states.npz",
+ "bands": {
+  "daylight": {
+   "n_states": 16,
+   "world_rows_exact_frac": 1.0,
+   "world_rows_max_abs": 0,
+   "strip_rows_exact_frac": 0.820404052734375,
+   "strip_rows_max_abs": 255,
+   "strip_rows_differing_frac": 0.179595947265625
+  },
+  "dusk": {
+   "n_states": 25,
+   "world_rows_exact_frac": 1.0,
+   "world_rows_max_abs": 0,
+   "strip_rows_exact_frac": 0.8201193576388889,
+   "strip_rows_max_abs": 255,
+   "strip_rows_differing_frac": 0.17988064236111112
+  },
+  "night": {
+   "n_states": 23,
+   "world_rows_exact_frac": 1.0,
+   "world_rows_max_abs": 0,
+   "strip_rows_exact_frac": 0.8141110922403382,
+   "strip_rows_max_abs": 255,
+   "strip_rows_differing_frac": 0.18588890775966183
+  }
+ },
+ "conclusion": "the WORLD rows are 100% exact against craftax at 32 px in every band, night included, so the 2S divergence is entirely the inventory strip: ~18% of strip pixels, by design (the finished cell is resampled rather than re-laid-out). craftax ships no 32 px textures, which is why 32 px is not a declared parity size -- not because its frames would disagree."
+}

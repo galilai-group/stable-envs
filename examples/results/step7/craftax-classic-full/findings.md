@@ -800,9 +800,25 @@ Two independent mechanisms, each confined to one region:
 2. **The strip rows: the official is inconsistent in *every* band, daylight included (0.68–0.69),
    and this renderer is at 1.0000.** That is the `int(0.8*t)` / `int(0.6*t)` re-layout — 12 and 9 at
    16 px, 25 and 19 at 32 px. Resampling the finished cell rather than re-laying it out (§6.2) makes
-   this renderer *stricter* than the reference at 2S, at a size that has no official frame to be
-   parity against, and it is what keeps the frozen daylight bound meetable at all. Matching
-   craftax's 32 px re-layout would break that bound and buy no parity.
+   this renderer *stricter* than the reference at 2S, at a size craftax **ships no textures for**,
+   and it is what keeps the frozen daylight bound meetable at all. Matching craftax's 32 px
+   re-layout would break that bound and buy no parity.
+
+   **"No shipped textures at 2S" is the accurate phrasing, not "no official frame"** — a wording the
+   re-review corrected, and worth stating precisely because the loose version implies the two
+   renderers disagree at 32 px and they do not. craftax's own `load_all_textures_given_size(32)`
+   builds a perfectly good 32 px renderer, and measured against it on the frozen corpus
+   (`oracle/parity_at_2S.json`):
+
+   | band | world rows exact | world max abs | strip rows exact | strip differing |
+   |---|---|---|---|---|
+   | daylight | **1.000000** | **0** | 0.820404 | 17.96% |
+   | dusk | **1.000000** | **0** | 0.820119 | 17.99% |
+   | night | **1.000000** | **0** | 0.814111 | 18.59% |
+
+   The world rows are exact against craftax at 32 px **in every band, night included**. The entire
+   2S divergence is the strip, ~18% of its pixels, by design. 32 px is not a declared parity size
+   because there is no shipped art to certify against — not because the frames would disagree.
 
 **Ruling, following Sami's rule:** the official renderer *is* itself resolution-inconsistent under
 night, so `check_resolution_consistency` is **NOT APPLICABLE below `light_level = 0.5`**, cited to
@@ -816,6 +832,21 @@ declaration goes stale.
 **Exact parity at both supported resolutions is unaffected and still required**: the same experiment
 records `exact_frac` 1.0 against the official at 16 px in every band, and §8.1 records the same at
 7 px.
+
+### 12b.1 What Step 8 must do with this, and what happens until it does
+
+**The declaration is not yet wired into the certifier, and the consequence belongs in the record
+rather than in a later surprise.** `certify.py` runs `check_resolution_consistency` on the check's
+own mixed 8-state protocol draw, which contains night rows, and gets **0.8164** — the official
+renderer gets **0.7440** on the same draw. Against the frozen `DOWNSAMPLE_EXACT_FRAC >= 0.995` that
+**records as a FAIL on this config**, for a reason the oracle shows belongs to the reference and in
+a band where the check is declared not applicable.
+
+Until the Step-8 certifier either reads `CraftaxClassic.resolution_consistency_applicability` or
+judges this check on the `light_level >= 0.5` subset, that failure will appear in the record. It is
+a **certifier gap, not a renderer regression**, and the evidence to close it is already frozen here:
+`oracle/resolution_oracle_S16.json` has the official renderer at 0.1634 on the world rows where this
+one is at 0.1634. **The frozen threshold must not be edited to make it go away.**
 
 One thing the experiment turned up that the framing had not anticipated: the strip makes the
 official renderer fail its own consistency check **in daylight**, which is the band everyone assumed
