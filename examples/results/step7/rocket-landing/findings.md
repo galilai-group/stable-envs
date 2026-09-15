@@ -153,7 +153,14 @@ consistency, visual fidelity).
 
 RC-1 (blocking): float32 quaternions failed the reference's float64 pose assertion (36/64 of draw 0)
 and the fidelity loop aborted before writing anything — fixed as above; the loop now records a failed
-draw instead of aborting and checkpoints the JSON after every stage. RC-2 (blocking): my findings
+draw instead of aborting and checkpoints the JSON after every stage. Evidence after the fix
+(`reference/rc1_evidence.json`, `scratch/step7/rocket-landing/validate_rc1.py`): the exact `measure_tier`
+draw-0 seed (`default_rng(1000)`, 64 float32 `sample_states`, |q| off by up to 3.0e-8) gives **0
+rejections**; the first 100 corpus states from the float64 obs reproduce **100/100 frames exactly**
+(0 rejections); the same 100 from float32 `state13` give 0 rejections and **2/100 exact, up to 79 px,
+mean 11.5 px** — that is the float32 rounding of the STATE (3e-5 m at 400 m, 3e-8 in q), a term that
+sits inside a consumer's residual and is therefore reported alongside the float64 replay, never
+folded into it. RC-2 (blocking): my findings
 text re-cited two dead scratch paths and claimed parity with the baseline's failures — corrected here
 with measured numbers. RC-3: `measure_tier.py` never certifies on B = 1, caps the tier at `GPU_PARITY`
 when `BATCH_SCALES` fails, measures `cpu_frac` (process CPU / wall of the timed loop; `HOST_BOUND` at

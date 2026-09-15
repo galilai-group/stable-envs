@@ -52,14 +52,72 @@ def main():
          "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
          "versions": {k: _v(k) for k in ("torch", "nvdiffrast", "PyFlyt", "pybullet", "stable-worldmodel", "numpy", "scipy")}}
 
+    sha_file = os.path.join(ROOT, ".git_sha")
+    R["provenance"] = {"sha": (open(sha_file).read().strip() if os.path.exists(sha_file)
+                               else os.popen(f"git -C {ROOT} rev-parse HEAD 2>/dev/null").read().strip() or None),
+                       "host": platform.node(), "slurm_job": os.environ.get("SLURM_JOB_ID"),
+                       "threads": torch.get_num_threads(),
+                       "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
+                       "gpu": torch.cuda.get_device_name(0)}
+    R["gates"] = {}                                                       # name -> {"pass": bool, "evidence": ...}
+    gates_txt = os.path.join(OUTDIR, "gates.txt")
+
+    def gate(name, ok, evidence):
+        R["gates"][name] = {"pass": bool(ok), "evidence": evidence, **R["provenance"]}
+        line = f"{'PASS' if ok else 'FAIL'}  {name}  {evidence}  [sha {R['provenance']['sha']} host {R['provenance']['host']} job {R['provenance']['slurm_job']}]"
+        print("GATE", line, flush=True)
+        with open(gates_txt, "a") as fh:
+            fh.write(line + "\n")
+
     def checkpoint():
         """Written after EVERY stage, so a failure downstream never costs the numbers upstream."""
         with open(out, "w") as fh:
             json.dump(R, fh, indent=1, default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o))
+    open(gates_txt, "w").close()
     if "PFRocketLanding" not in se.REGISTRY:
-        raise SystemExit(f"PFRocketLanding not registered: {RL.missing_backend()} / {se.envs.import_errors()}")
+        gate("first_render", False, f"not registered: {RL.missing_backend()} / {se.envs.import_errors()}")
+        checkpoint()
+        raise SystemExit(1)
     env = se.make("PFRocketLanding", batch=16, device="cuda")
     R["describe"] = {k: v for k, v in env.describe().items() if k not in ("visual_fidelity",)}
+
+    # ---- the job's FIRST result: one successful render, before any measurement
+    from PIL import Image
+    env.rng = np.random.default_rng(0)
+    s1 = torch.as_tensor(env.sample_states(1), device="cuda")
+    fr1 = env.render(s1).cpu().numpy()[0]
+    Image.fromarray(fr1).save(os.path.join(OUTDIR, "first_render.png"))
+    R["first_render"] = {"shape": list(fr1.shape), "dtype": str(fr1.dtype), "mean": float(fr1.mean()),
+                         "non_white_px": int((fr1 != 255).any(-1).sum()),
+                         "distinct_colours": int(len(np.unique(fr1.reshape(-1, 3), axis=0))),
+                         "state": s1.cpu().numpy()[0].tolist(), "png": "tier/first_render.png"}
+    gate("first_render", fr1.shape == (480, 480, 3) and 5000 < R["first_render"]["non_white_px"] < 200000,
+         f"shape {fr1.shape} non-white px {R['first_render']['non_white_px']} distinct colours {R['first_render']['distinct_colours']}")
+    checkpoint()
+
+    # ---- coexistence: PyBullet DIRECT (+ the numba JIT) and an EGL context in the SAME process as the
+    # CUDA raster context, then the same state rendered again must be byte-identical.
+    if not a.skip_reference:
+        coex = {}
+        try:
+            ref = RL.PFRocketLanding.reference_env(480)                   # PyBullet DIRECT, numba JIT (~57 s)
+            coex["pybullet_direct"] = "ok"
+            coex["reference_frame_shape"] = list(ref.unwrapped.render().shape)
+        except Exception as e:                                             # pragma: no cover
+            coex["pybullet_direct"] = f"FAILED {type(e).__name__}: {e}"
+        try:
+            import mujoco
+            gl = mujoco.GLContext(64, 64)
+            gl.make_current()
+            coex["egl"] = "ok"
+        except Exception as e:                                             # pragma: no cover
+            coex["egl"] = f"FAILED {type(e).__name__}: {e}"
+        fr2 = env.render(s1).cpu().numpy()[0]
+        coex["render_after_identical"] = bool(np.array_equal(fr1, fr2))
+        R["coexistence"] = coex
+        gate("coexistence_direct_egl_cuda", coex.get("pybullet_direct") == "ok" and coex["render_after_identical"]
+             and coex.get("egl", "").startswith("ok"), json.dumps(coex))
+        checkpoint()
 
     # ---- corpus replay (no reference package needed)
     S = np.load(os.path.join(REF, "states.npz"))
@@ -93,6 +151,8 @@ def main():
         if label == "float64_obs":
             np.savez_compressed(os.path.join(OUTDIR, "corpus_replay_ours.npz"), frames=ours[:16], idx=np.arange(16))
         print("corpus replay", label, json.dumps({k: v for k, v in rep.items() if k != "by_height"}), flush=True)
+        gate(f"corpus_replay_{label}", True, f"mean_abs {rep.get('mean_abs')} within8 {rep.get('within8_frac')} "
+             f"ssim {rep['ssim']:.4f} interior_exact {rep.get('interior_exact_frac')} (reported, no bar until declared)")
         checkpoint()
     # NOTE: the env casts states to float32 on entry, so the float64 replay differs from the float32 one
     # only through lagged_pose's float64 renormalisation of a float32 quaternion -- both are reported.
@@ -108,6 +168,16 @@ def main():
         except Exception as e:                                                      # pragma: no cover
             R["mandatory"][name] = f"ERROR {type(e).__name__}: {e}"
         print(name, R["mandatory"][name], flush=True)
+        r_ = R["mandatory"][name]
+        if name == "check_state_dims_matter" and isinstance(r_, dict):
+            vel = [n_ for n_ in RL.PFRocketLanding.state_names if "vel" in n_]
+            dead = r_.get("dead_dims", [])
+            gate("state_dims_matter_velocity_dims", not any(d in dead for d in vel),
+                 f"velocity dims {vel} dead {[d for d in dead if d in vel]} all dead {dead}")
+        else:
+            gate(name, isinstance(r_, dict) and not str(r_).startswith("ERROR") and all(
+                (v == 0 or v is True or v == "pass") for k, v in r_.items() if k in ("max_abs_diff", "differing", "ok", "status")),
+                 str(r_)[:200])
     checkpoint()
 
     # ---- throughput, with cpu_frac = process CPU seconds / wall seconds of the timed loop (HOST_BOUND
@@ -142,6 +212,9 @@ def main():
                          "fps_4096_over_fps_1": round(f4096 / f1, 2) if (f4096 and f1) else None,
                          "fps_4096_over_fps_256": round(f4096 / f256, 3) if (f4096 and f256) else None}
     print("batch checks", R["batch_checks"], flush=True)
+    gate("BATCH_SCALES", R["batch_checks"]["BATCH_SCALES"], f"fps(4096)/fps(1) = {R['batch_checks']['fps_4096_over_fps_1']} (bar 20)")
+    gate("NO_LARGE_BATCH_REGRESSION", R["batch_checks"]["NO_LARGE_BATCH_REGRESSION"],
+         f"fps(4096)/fps(256) = {R['batch_checks']['fps_4096_over_fps_256']} (bar 0.9)")
     checkpoint()
 
     # ---- the two comparators ON THIS NODE, same job (certification §6.3): the official renderer's
@@ -200,6 +273,9 @@ def main():
                      "R": round(Rr, 2), "cores": round(cores, 3), "tier": tier, "qualifiers": quals,
                      "threads": R["threads"], "load_average": R["load_average"], "slurm_job": R["slurm_job"]}
         print("tier", R["tier"], flush=True)
+        gate("tier_frozen_definitions_same_node", True,
+             f"{tier} {quals} R={Rr:.2f} (ours {best} f/s at B={best_b} vs official {official:.2f} f/s same node) "
+             f"cores={cores:.3f} (vs {decode:.1f} f/s one-core decode) cpu_frac={cf}")
         checkpoint()
 
     # ---- visual fidelity against the live reference (PyFlyt + TinyRenderer)
@@ -223,11 +299,16 @@ def main():
             R["visual_fidelity"]["worst"] = worst
             R["visual_fidelity"]["spread"] = {k_: [min(r[k_] for r in vf), max(r[k_] for r in vf)]
                                               for k_ in ("mean_abs", "within8_frac", "ssim")}
+        gate("visual_fidelity_4x64", len(vf) == a.draws and not failures,
+             f"draws {len(vf)}/{a.draws} rejections {len(failures)} worst {R['visual_fidelity'].get('worst')} "
+             f"spread {R['visual_fidelity'].get('spread')}")
         try:
             R["variation_fidelity"] = C.check_visual_fidelity_under_variation(env, n=a.n, seed=7)
         except Exception as e:                                                      # pragma: no cover
             R["variation_fidelity"] = f"ERROR {type(e).__name__}: {e}"
         print("under variation:", R["variation_fidelity"], flush=True)
+        gate("visual_fidelity_under_variation", isinstance(R["variation_fidelity"], dict) and "skipped" not in R["variation_fidelity"],
+             str(R["variation_fidelity"])[:300])
         checkpoint()
     R["seconds"] = round(time.time() - t0, 1)
     checkpoint()

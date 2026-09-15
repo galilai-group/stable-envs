@@ -31,7 +31,7 @@ WS=$SCR/se7/rocket-landing
 BASE=$SCR/se7/baseline
 OUT=$WS/examples/results/step7/rocket-landing
 mkdir -p "$OUT/tier" "$OUT/nvdiff_identity" "$SCR/logs"
-echo "NODE $(hostname -s) JOB $SLURM_JOB_ID GPU $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
+echo "NODE $(hostname -s) JOB $SLURM_JOB_ID GPU $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1) SHA $(cat $WS/.git_sha 2>/dev/null) LOAD $(cat /proc/loadavg | cut -d" " -f1-3)"
 which nvcc; nvcc --version | tail -1
 set -x
 cd "$WS"
@@ -68,4 +68,6 @@ PYTHONPATH=$WS $PY "$WS/scratch/step7/rocket-landing/measure_tier.py" --draws 4 
 # 3. the conformance suite restricted to this cell (Gate A on the card; reference needs PyFlyt)
 PYTHONPATH=$WS $PY -m pytest tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py -q -p no:cacheprovider \
   -k "PFRocketLanding" 2>&1 | tail -25 | tee "$OUT/tier/conformance_PFRocketLanding.txt"
+echo "===== GATES (tier/gates.txt) ====="; cat "$OUT/tier/gates.txt" 2>/dev/null
+echo "===== nvdiff identity ====="; cat "$OUT/nvdiff_identity/compare.json" 2>/dev/null | head -40
 echo "S7GPU rc=$?"
