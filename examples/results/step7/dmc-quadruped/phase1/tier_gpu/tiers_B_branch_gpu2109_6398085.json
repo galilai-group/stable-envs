@@ -1,0 +1,167 @@
+{
+ "shard": "/Users/samib/stable-envs-step7-dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/tier_gpu/paired_B_branch_gpu2109_6398085.json",
+ "labels": [
+  {
+   "env": "DMCCheetahRun",
+   "device": "gpu",
+   "backend_class": "S",
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "projected_to": [
+    "swm/CheetahDMControl-v0"
+   ],
+   "host": "gpu2109.oscar.ccv.brown.edu",
+   "device_name": "NVIDIA GeForce RTX 3090",
+   "threads": 1,
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "evidence": {
+    "best_batch": 4096,
+    "se_fps": 105717.25033214768,
+    "official_cpu_fps": 376.3277743198455,
+    "decode_fps_per_core": 7253.648209846898,
+    "shape": "84x84",
+    "supersample": 1,
+    "size": 84,
+    "max_cpu_frac": 0.9955292198234991,
+    "cores": 14.574355865319673,
+    "ratio": 280.91801229185205,
+    "batch_scales": 72.42545825227147,
+    "large_batch_ratio": 1.0333747608527055
+   },
+   "tier": "GPU_EXCEPTIONAL"
+  },
+  {
+   "env": "DMCHopperHop",
+   "device": "gpu",
+   "backend_class": "S",
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "projected_to": [
+    "swm/HopperDMControl-v0"
+   ],
+   "host": "gpu2109.oscar.ccv.brown.edu",
+   "device_name": "NVIDIA GeForce RTX 3090",
+   "threads": 1,
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "evidence": {
+    "best_batch": 4096,
+    "se_fps": 106643.79477537739,
+    "official_cpu_fps": 381.67910605422026,
+    "decode_fps_per_core": 8475.49292393801,
+    "shape": "84x84",
+    "supersample": 1,
+    "size": 84,
+    "max_cpu_frac": 0.9983741118452235,
+    "cores": 12.582606785520971,
+    "ratio": 279.4069496699876,
+    "batch_scales": 71.8256765329077,
+    "large_batch_ratio": 1.0336480407416695
+   },
+   "tier": "GPU_EXCEPTIONAL"
+  },
+  {
+   "env": "DMCHumanoidStand",
+   "device": "gpu",
+   "backend_class": "S",
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "projected_to": [
+    "swm/HumanoidDMControl-v0"
+   ],
+   "host": "gpu2109.oscar.ccv.brown.edu",
+   "device_name": "NVIDIA GeForce RTX 3090",
+   "threads": 1,
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "evidence": {
+    "best_batch": 4096,
+    "se_fps": 92189.5100117315,
+    "official_cpu_fps": 345.95791449664915,
+    "decode_fps_per_core": 8841.714498731757,
+    "shape": "84x84",
+    "supersample": 1,
+    "size": 84,
+    "max_cpu_frac": 0.9955764288214394,
+    "cores": 10.426655376053484,
+    "ratio": 266.4760832133656,
+    "batch_scales": 71.93875914357564,
+    "large_batch_ratio": 1.082259024923248
+   },
+   "tier": "GPU_EXCEPTIONAL"
+  },
+  {
+   "env": "DMCQuadrupedWalk",
+   "device": "gpu",
+   "backend_class": "unknown",
+   "backends": [],
+   "projected_to": [
+    "DMCQuadrupedWalk"
+   ],
+   "host": "gpu2109.oscar.ccv.brown.edu",
+   "device_name": "NVIDIA GeForce RTX 3090",
+   "threads": 1,
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "evidence": {
+    "best_batch": 4096,
+    "se_fps": 44373.63996664647,
+    "official_cpu_fps": 341.50266099786484,
+    "decode_fps_per_core": 3260.1779472153435,
+    "shape": "224x224",
+    "supersample": 1,
+    "size": 224,
+    "max_cpu_frac": 0.9946143463812267,
+    "cores": 13.61080305587242,
+    "ratio": 129.93643984204243,
+    "batch_scales": 73.23940024786623,
+    "large_batch_ratio": 1.1257037947586488
+   },
+   "tier": "unknown"
+  },
+  {
+   "env": "DMCWalkerWalk",
+   "device": "gpu",
+   "backend_class": "S",
+   "backends": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "projected_to": [
+    "swm/WalkerDMControl-v0"
+   ],
+   "host": "gpu2109.oscar.ccv.brown.edu",
+   "device_name": "NVIDIA GeForce RTX 3090",
+   "threads": 1,
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "evidence": {
+    "best_batch": 4096,
+    "se_fps": 99519.55533159744,
+    "official_cpu_fps": 376.4524466381533,
+    "decode_fps_per_core": 7044.119760458416,
+    "shape": "84x84",
+    "supersample": 1,
+    "size": 84,
+    "max_cpu_frac": 0.994676900210248,
+    "cores": 14.128032843825602,
+    "ratio": 264.3615580675341,
+    "batch_scales": 69.54484115247132,
+    "large_batch_ratio": 1.0289585040201243
+   },
+   "tier": "GPU_EXCEPTIONAL"
+  }
+ ]
+}

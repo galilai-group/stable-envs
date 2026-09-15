@@ -542,3 +542,65 @@ pre-existing citation test; its set is the baseline's 9); **CPU byte-identity 8/
 tree `1d9dccb`** — `DMCCheetahRun, DMCHopperHop, DMCWalkerWalk, DMCHumanoidStand, DMCQuadrupedWalk,
 DMCManipulatorBringBall, DMCReacherHard, DMCCartpoleSwingup`, sampled states seed 0, 0 px differing
 (`phase1/replay_hook/cpu_hook_vs_integration_identity.json`): the hook moved no pixel and no state.
+
+## P7. The tiers (quiet-window retry, authorized): GPU measured; CPU pending the window
+
+**Protocol** (`sweep_quiet_{gpu,cpu}.sbatch`): the job waits at start for node load < 12 (5-min
+polls; 2 h cap on the GPU node so a card is not held idle, 6 h on the batch node) and gives up with a
+`QUARANTINED-LOAD` record rather than measure on a loaded node; then the Step-3 paired protocol
+(`scratch/step6/cpu-3d/certify_shard_cpu3d.py`: same-node official renderer interleaved, one-core
+decode bar from `bench_vs_decode.decode_baseline`, `--max-load 12` live at every shard) in three legs
+— A baseline 76dc511 on the four certified trackcom cells (the floor gate), B branch on the four +
+`DMCQuadrupedWalk` at its 224 px default, C baseline again (spread ≤ 1.25x) — load recorded before
+and after every leg; on CPU the three kind-cost runs follow in the same window. The first pair of
+jobs (6396525 cpu / 6396526 gpu) found its window on the GPU side (gpu2109, load 8.95 after 75 min)
+and lost leg B to a corpus lookup: `certify_shard_cpu3d.py` read a cell's states from the hard-coded
+Step-4 corpus, which a cell that landed after the freeze does not have (the `| tail` hid the
+`FileNotFoundError` behind the usual EGL `__del__` noise). The script now resolves Step-4 first, then
+`examples/results/step7/*/phase1/corpus/states/` (`_states_file`, additive), the waiting CPU job was
+cancelled (my own; nothing measured yet) and both were resubmitted as **6398084 (cpu)** and
+**6398085 (gpu)**.
+
+**GPU tier — measured** (job 6398085, gpu2109, RTX 3090, driver 575.57.08, `se-step5`; load at the
+start of A/B/C 8.8 / 9.2 / 11.5, all three shards `certifiable: true`, `tier_gpu/`):
+
+| leg | tree | four certified cells, best fps (Cheetah / Hopper / Walker / Humanoid) | evaluator tier |
+|---|---|---|---|
+| A | 76dc511 | 97,668 / 98,045 / 92,377 / 82,101 | GPU_EXCEPTIONAL ×4 (S 230-256, cores 10.8-14.6) |
+| B | branch | 105,717 / 106,644 / 99,520 / 92,190 | GPU_EXCEPTIONAL ×4 (S 264-281, cores 10.4-14.6) |
+| C | 76dc511 | 98,258 / 98,549 / 92,925 / 83,066 | GPU_EXCEPTIONAL ×4 (S 243-266, cores 10.7-14.7) |
+
+Spread A vs C on ours **1.005-1.012x**, on the official 1.02-1.05x — inside 1.25x; the floor holds
+(the four cells keep their certified label on every leg). Leg B's +8-12 % over both baseline legs on
+the four MJWarp cells is recorded as observed and not claimed: the cuda frames are byte-identical
+(§P6) and the branch touches nothing on their cuda path; it is the node between legs.
+
+**`DMCQuadrupedWalk`, cuda, 224 px, SWM default** (leg B): **606 fps at B = 1, 9,651 at 16, 37,158
+at 64, 39,419 at 256, 44,111 at 1024, 44,374 at 4096** (`BATCH_SCALES`); same-node official
+`physics.render` **341.5 fps** (7 paired readings, spread 1.014); one-core JPEG-90 decode bar at 224
+px **3,260 fps/core** → **S = 129.9, cores = 13.6**. The frozen evaluator (`scratch/step3/certify.py`
+via `tiers_after.py`) labels it **`unknown`** for one reason: `backend_class` finds no census entry
+for a cell that landed after the Step-4 freeze (the Step-8 item). Walked through the evaluator's own
+`_tier_from` on the class-S ladder — the class its declared backends (`mjwarp`, `raycast3d`, `cpu3d`)
+put it in, as `DMCCheetahRun`'s do — the row is **GPU_EXCEPTIONAL** (R ≥ 40 and cores ≥ 10). Reported
+as "GPU_EXCEPTIONAL under class S, pending the census entry", not as a certified label.
+
+**CPU tier — `CPU_UNMEASURED`, with the load evidence.** Job 6398084 (node2301, Xeon Platinum
+8268, `batch`/`normal`) waited the full 6 h cap — 73 polls at 5-min spacing from 06:06 to 12:06 UTC,
+load1 **34.1-43.6, never below the 12 guard** (`tier_cpu/load_wait_node2301_6398084.txt`) — and
+exited with the `QUARANTINED-LOAD` record (`tier_cpu/QUARANTINED_LOAD_node2301_6398084.json`,
+`tier: CPU_UNMEASURED`) without measuring; the earlier attempts saw the same partition: node1913 at
+34.5 (6394722), node2330 at 32.4 (6395512), node1932 at 32-51 (6396525, cancelled unmeasured). Four
+batch nodes, one day, no quiet window — the situation Step 6 recorded on the same partition. No
+shard, no tier, nothing relabelled: the cell is **`CPU_UNMEASURED`** at the Step-8 freeze with this
+evidence, as authorized. The kind-cost re-take was queued behind the wait and therefore did not run:
+ELLIPSOID's `_BOUNDED_KINDS` question stays as §P6 left it (unbounded, the loaded-node measurement
+committed as undecided). The local Apple-M5 CPU numbers (§P2: 224 px ≈ 25 fps, 84 px ≈ 164 fps at
+B = 64, 1 thread) remain reported, not certified. Oscar SSH was denied 07:40-13:00 UTC while the job
+ran; the artifacts were pulled into a staging directory afterwards and copied in (`tier_cpu/`,
+`tier_{cpu,gpu}/logs/`), `assemble_f.py` applied (GPU gate ok, CPU quarantined).
+
+**Tier lines for the freeze:** `DMCQuadrupedWalk` — **GPU: GPU_EXCEPTIONAL under class S** (R = 129.9
+vs same-node official at 224 px, cores = 13.6 vs the one-core decode bar, `BATCH_SCALES`; A/C floor
+gate 1.045x ≤ 1.25x; the evaluator's own label is `unknown` until the census carries the cell) —
+**CPU: CPU_UNMEASURED** (four load-quarantined attempts on the batch partition).
