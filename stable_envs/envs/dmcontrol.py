@@ -1969,6 +1969,9 @@ class DMControlSuite(_DMCModel):
                 "mat_reflectance": np.array(m.mat_reflectance, copy=True),
                 "mat_specular": np.array(m.mat_specular, copy=True),
                 "mat_shininess": np.array(m.mat_shininess, copy=True),
+                # mat_texid too: a texture swap is a colour change on every geom wearing the material,
+                # and the rule REFUSES a signature that omits any frozen field rather than skipping it
+                "mat_texid": np.array(m.mat_texid, copy=True),
                 "light_pos": np.array(m.light_pos, copy=True),
                 "light_dir": np.array(m.light_dir, copy=True),
                 "light_diffuse": np.array(m.light_diffuse, copy=True),

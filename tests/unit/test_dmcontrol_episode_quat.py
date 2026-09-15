@@ -382,3 +382,92 @@ def test_an_env_that_declares_nothing_is_unaffected(cell):
         assert "excluded_dims" not in r, r
     finally:
         del env.RENDER_INVARIANT_DIMS       # back to the class attribute
+
+
+# ------------------------------------------------- the two false positives review demonstrated (D1/D2)
+#
+# Both are about the rule trusting the ENV for something it must establish itself. Each is reproduced
+# here as a WORKING false positive against the real cell -- the signature is wrapped, not faked -- so
+# that removing either guard fails a test rather than silently widening the escape.
+
+
+class _Wrapped:
+    """The real env with its ``render_scene_signature`` filtered. Everything else is delegated."""
+
+    def __init__(self, env, fn):
+        self._env, self._fn = env, fn
+
+    def __getattr__(self, k):
+        return getattr(self._env, k)
+
+    def render_scene_signature(self, states, variation=None):
+        kw = {} if variation is None else {"variation": variation}
+        return self._fn(self._env.render_scene_signature(states, **kw))
+
+
+def test_a_missing_frozen_field_is_refused_and_named_not_skipped(cell):
+    """D1. ``thumbtip`` rotates only the two fingertip SPHERES -- and TRANSLATES them.
+
+    With ``geom_xpos`` dropped from the signature the old rule GRANTED it, because a frozen field the
+    env does not emit was skipped. ``thumbtip`` moves 60 px at max 206/255, so that exclusion would
+    have hidden a dimension the renderer draws perfectly well. A missing key must be a refusal that
+    NAMES the key.
+    """
+    from stable_envs.testing import conformance as C
+    env = cell(batch=8, size=224, device="cpu", seed=0)
+    names = list(env.state_names)
+    st = env.sample_states(8, np.random.default_rng(4))
+    d = names.index("thumbtip")
+
+    # it is a real, visible dimension
+    base = env.render(torch.as_tensor(st)).cpu().numpy()
+    pert = st.copy()
+    pert[:, d] = pert[:, d] + 0.2
+    moved = env.render(torch.as_tensor(pert)).cpu().numpy()
+    assert not np.array_equal(base, moved), "thumbtip draws nothing; this test has lost its subject"
+
+    blind = _Wrapped(env, lambda sig: {k: v for k, v in sig.items() if k != "geom_xpos"})
+    ok, why = C._validate_render_invariant(blind, st, d)
+    assert not ok, f"a signature missing geom_xpos granted thumbtip an exclusion: {why}"
+    assert "geom_xpos" in why, why
+    # and the unwrapped env refuses it too, on the positional change itself
+    ok2, why2 = C._validate_render_invariant(env, st, d)
+    assert not ok2 and "geom_xpos" in why2, why2
+
+
+def test_a_lying_sphere_flag_cannot_grant_an_exclusion(cell):
+    """D2. ``geom_is_sphere`` is an assertion by the party being judged.
+
+    Set to all-True with a BOX target it granted the two quaternion dims, which move 201 px there.
+    Sphere-ness is now derived from ``geom_type`` inside the rule, and a disagreeing flag is refused
+    rather than ignored. ``mjGEOM_ELLIPSOID`` is why this matters beyond a hostile test: it is the
+    sphere-LIKE kind that is not rotation-invariant, and it is in the registry now.
+    """
+    from stable_envs.testing import conformance as C
+    env = cell(batch=8, size=224, device="cpu", seed=0)
+    names = list(env.state_names)
+    st = env.sample_states(8, np.random.default_rng(4))
+    box = {"target_ball.shape": [0]}
+
+    def all_spheres(sig):
+        sig = dict(sig)
+        sig["geom_is_sphere"] = np.ones(np.asarray(sig["geom_type"]).reshape(-1).shape, bool)
+        return sig
+
+    liar = _Wrapped(env, all_spheres)
+    for nm in ("target_ball_quat_qw", "target_ball_quat_qy"):
+        d = names.index(nm)
+        ok, why = C._validate_render_invariant(liar, st, d, variation=box)
+        assert not ok, f"a lying geom_is_sphere granted {nm} with a BOX target: {why}"
+        assert "geom_is_sphere" in why or "NON-sphere" in why, why
+
+
+def test_the_rule_derives_sphereness_even_when_the_env_omits_the_flag(cell):
+    """The flag is now optional evidence, not the basis of the decision."""
+    from stable_envs.testing import conformance as C
+    env = cell(batch=8, size=224, device="cpu", seed=0)
+    names = list(env.state_names)
+    st = env.sample_states(8, np.random.default_rng(4))
+    noflag = _Wrapped(env, lambda sig: {k: v for k, v in sig.items() if k != "geom_is_sphere"})
+    ok, why = C._validate_render_invariant(noflag, st, names.index("ball_y"))
+    assert ok, f"the rule could not derive sphere-ness from geom_type alone: {why}"

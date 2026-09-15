@@ -541,3 +541,49 @@ pre-existing failures that reproduce on a clean `76dc511`.
 **Gate A summary for this cell now reads:** every mandatory check passes, with
 `check_state_dims_matter` passing and carrying three reported exclusions. This shared-testing change
 goes back to the independent reviewer before merge.
+
+---
+
+## 12. Re-review follow-up (D1–D3)
+
+Two of the three were **working false positives** the reviewer built against the real cell, not style
+points. Both are now regression tests, so removing either guard fails a test rather than quietly
+widening the escape.
+
+**D1 — a missing frozen field was a skip, so the enumeration was advisory.** `_validate_render_invariant`
+did `if k not in a: continue`, which means a field the env does not emit is a field the rule does not
+check — and the enumeration is the entire bound on the exclusion. Demonstrated: `thumbtip` rotates only
+the two fingertip SPHERES and also TRANSLATES them; with `geom_xpos` dropped from the signature the
+rule GRANTED it, for a dimension that moves **60 px at max 206/255**. The shipped env was itself
+omitting `mat_texid`, so this was live, not hypothetical. Now a missing frozen key is a **refusal that
+names the key**, `mat_texid` is emitted, and `_RENDER_INVARIANT_OPTIONAL` exists and is **empty** — its
+only purpose is to force a future omission to be argued in the rule rather than granted by a `continue`.
+
+**D2 — sphere-ness was an assertion by the party being judged.** `geom_is_sphere` came from the env and
+was never cross-checked against the `geom_type` the rule already freezes; set to all-True with a BOX
+target it GRANTED the two quaternion dims, which move 201 px there. Sphere-ness is now **derived inside
+conformance** as `geom_type == mjGEOM_SPHERE (2)`; if the env still emits the flag it must AGREE, and a
+disagreement is a loud refusal rather than an ignored field. The reviewer's reason for insisting is the
+right one and is recorded in the constant: **`mjGEOM_ELLIPSOID` is the sphere-LIKE kind that is
+emphatically not rotation-invariant**, and it is in the registry now through W4's quadruped work.
+
+**D3 — the broken-citation set had grown from my own artifact.** Two lines of the generated CUDA profile
+note carried the Oscar tree path, and `test_every_cited_scratch_path_resolves` scans for `scratch/...`
+anywhere in a `.md` and cannot tell a cluster path from a repo citation. Rewritten to `$SCR/...`, the
+spelling every sbatch in this workstream already uses, with the reason inline. **Verified by
+reconstructing the baseline worktree at `76dc511` and diffing the two broken sets: identical, 9 entries
+each** (the reviewer's 32/34 counts occurrences; either way the delta is zero and no `se7` entry
+remains). No measurement in that note was touched.
+
+**N1/N2, recorded in the rule's docstring, no action:** the signature describes geoms, materials,
+lights and the camera, and does NOT describe spatial TENDON geometry (MuJoCo synthesises it per frame
+from wrap points, not from any model array) or a non-FIXED camera's actual POSE (`cam_*` are model
+arrays; a `trackcom` camera's pose lives in `data.cam_xpos`). Both are out of reach of every dimension
+any current cell declares, and both must be added before one that is not. **N3** (perturb-on-row-0 vs
+donor substitution) is benign and left alone.
+
+**Verification after the fixes:** `tests/unit` **839 passed**, 6 skipped, the same 2 pre-existing
+failures, and the broken-citation set is byte-identical to the baseline's. Frozen Step-4 **dmc shard:
+14 configs, 0 differing**. **17 DM Control cells byte-identical across four digests.** The exclusion
+still behaves in both directions: the three dims excluded under the sphere, the two quaternion dims
+refused and live (201 px / 28 px) under the box.

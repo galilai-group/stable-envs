@@ -3,11 +3,11 @@
 - workstream: `step7/dmc-manipulator`
 - baseline commit: ``
 - host: gpu2104.oscar.ccv.brown.edu  ·  gpu: NVIDIA GeForce RTX 3090  ·  cpu: x86_64  ·  threads: 4
-- tree measured: `/oscar/scratch/sboughan/se7/dmc-manipulator/stable_envs/__init__.py`  ·  load average 38.0
+- tree measured: $SCR/se7/dmc-manipulator/stable_envs/\_\_init\_\_.py  (an Oscar path, written with $SCR as every sbatch in this workstream does: spelled out as /oscar/scratch/<user>/ it is matched by test_every_cited_scratch_path_resolves, which scans for `scratch/...` anywhere in a .md and cannot tell a cluster path from a repo citation)  ·  load average 38.0
 - frame: 224px  ·  state_dim: 15
 - states: `env.sample_states (no frozen corpus for this env)`
 - torch 2.14.0+cu126  ·  triton 3.8.0
-- measured tree: `$SCR/se7/dmc-manipulator/stable_envs/__init__.py`
+- measured tree: $SCR/se7/dmc-manipulator/stable_envs/\_\_init\_\_.py (Oscar path, not a repo path)
 
 ## batch 1
 

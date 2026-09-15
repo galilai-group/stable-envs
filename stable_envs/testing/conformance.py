@@ -426,6 +426,22 @@ _RENDER_INVARIANT_FROZEN = ("geom_xpos", "geom_size", "geom_type", "geom_rgba", 
                             "light_specular", "light_ambient", "light_castshadow", "cam_pos",
                             "cam_quat", "cam_fovy")
 
+#: Frozen fields an env may legitimately omit, with the reason it may. EMPTY, deliberately: this tuple
+#: exists so that a future omission has to be argued here, in the rule, rather than being granted by a
+#: ``continue``. The enumeration in ``_RENDER_INVARIANT_FROZEN`` is the whole bound on the exclusion,
+#: so a field the env does not emit is a field the rule is not checking -- and review demonstrated the
+#: false positive that produces: ``thumbtip`` rotates only the two fingertip SPHERES and TRANSLATES
+#: them, so with ``geom_xpos`` absent the rule grants an exclusion for a dimension that moves 60 px at
+#: max 206/255. A missing key is now a REFUSAL that names the key.
+_RENDER_INVARIANT_OPTIONAL: dict[str, str] = {}
+
+#: ``mjtGeom.mjGEOM_SPHERE``. The rule derives sphere-ness from ``geom_type`` ITSELF rather than
+#: trusting a flag the env under test supplies, because the flag is an assertion by the party being
+#: judged: review showed that ``geom_is_sphere = all True`` grants a BOX target. It matters beyond a
+#: hostile case -- ``mjGEOM_ELLIPSOID`` (4) is the sphere-LIKE kind that is emphatically NOT
+#: rotation-invariant, and it is now in the registry through the quadruped cell.
+_MJGEOM_SPHERE = 2
+
 
 def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     """``(ok, reason)``: may dimension ``d`` be excluded as render-invariant sphere orientation?
@@ -433,6 +449,26 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     Asks the ENV for a signature of the render-side scene at two states that differ only in ``d``, and
     decides HERE. The env supplies model facts; this function owns the rule, so there is exactly one
     definition of what the exclusion means and it lives with the check that grants it.
+
+    TWO THINGS THE RULE TAKES FROM ITSELF RATHER THAN FROM THE ENV, both because review produced a
+    working false positive for each:
+
+      * a frozen field that is MISSING is a refusal, not a skip. The enumeration is the whole bound on
+        the exclusion, so an unreported field is an unchecked one -- with ``geom_xpos`` absent, the
+        rule granted ``thumbtip``, which rotates only the two fingertip SPHERES but also TRANSLATES
+        them and moves 60 px at max 206/255.
+      * sphere-ness is DERIVED from ``geom_type``, never read from a ``geom_is_sphere`` the env
+        supplies, because that flag is an assertion by the party being judged -- set to all-True it
+        granted a BOX target. ``mjGEOM_ELLIPSOID`` is the sphere-like kind that is emphatically not
+        rotation-invariant and is now in the registry.
+
+    WHAT THE SIGNATURE DOES NOT YET COVER, recorded so the next cell does not assume it does. The
+    enumeration describes geoms, materials, lights and the camera. It does NOT describe (1) SPATIAL
+    TENDON geometry, which MuJoCo synthesises per frame from wrap points rather than from any model
+    array -- a domain whose excluded dimension could move a tendon needs it added first; nor (2) a
+    non-FIXED camera POSE, since ``cam_pos``/``cam_quat``/``cam_fovy`` are model arrays and a
+    ``trackcom`` camera's actual pose lives in ``data.cam_xpos``. Both are out of reach of every
+    dimension any current cell declares, and both must be added before one that is not.
     """
     sig = getattr(env, "render_scene_signature", None)
     if sig is None:
@@ -449,12 +485,34 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     b = sig(moved, **kw)
     if set(a) != set(b):
         return False, "render_scene_signature returned different keys for the two states"
-    sphere = np.asarray(a.get("geom_is_sphere"), bool)
+    # EVERY frozen field must be PRESENT, not merely unchanged. A field the env does not emit is a
+    # field this rule is not checking, and the enumeration is the entire bound on the exclusion.
+    missing = [k for k in _RENDER_INVARIANT_FROZEN
+               if k not in a and k not in _RENDER_INVARIANT_OPTIONAL]
+    if missing:
+        return False, (f"render_scene_signature does not emit {missing}, and the frozen enumeration "
+                       f"is the whole bound on this exclusion -- a field that is not reported is a "
+                       f"field that is not checked. Emit it, or add it to "
+                       f"_RENDER_INVARIANT_OPTIONAL with the reason it cannot change a pixel")
+    if "geom_type" not in a:
+        return False, "render_scene_signature must emit geom_type; sphere-ness is derived from it"
+    # DERIVED HERE, never taken from the env. ``geom_is_sphere`` would otherwise be an assertion by
+    # the party being judged, and a wrong one grants an exclusion for a BOX. If the env still emits
+    # the flag it must AGREE, so a disagreement is a loud refusal rather than a silently ignored field.
+    kind = np.asarray(a["geom_type"]).reshape(-1)
+    sphere = kind == _MJGEOM_SPHERE
+    claimed = a.get("geom_is_sphere")
+    if claimed is not None:
+        claimed = np.asarray(claimed, bool).reshape(-1)
+        if claimed.shape != sphere.shape or not np.array_equal(claimed, sphere):
+            return False, ("render_scene_signature's geom_is_sphere disagrees with the geom_type it "
+                           "reports; sphere-ness is derived from geom_type here and a disagreement "
+                           "means one of the two is wrong")
     if sphere.size == 0 or not sphere.any():
         return False, "the model has no sphere geoms, so no dimension can be sphere-orientation-only"
     for k in _RENDER_INVARIANT_FROZEN:
         if k not in a:
-            continue
+            continue                                  # only reachable via _RENDER_INVARIANT_OPTIONAL
         if not np.array_equal(np.asarray(a[k]), np.asarray(b[k])):
             return False, (f"perturbing this dimension changed {k}, which a claim of "
                            f"sphere-orientation-only invariance forbids")
