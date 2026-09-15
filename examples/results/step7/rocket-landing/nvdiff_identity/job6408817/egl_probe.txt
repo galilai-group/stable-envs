@@ -1,0 +1,2 @@
+  File "$SCR/venvs/se7-rocket/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

@@ -1,24 +1,28 @@
 # Step 7 / W6 — `swm/PFRocketLanding-v0`: feasibility gate (Phase 0) and implementation (Phase 1)
 
-**Classification: BLOCKER (M4).** Phase 0 (below, unchanged) recommended GO in the visual tier;
-Phase 1 (M1-M3, authorised) is implemented, unit-tested and independently reviewed (APPROVE at
-`cf355a3`); M4 ran every cluster gate twice on one RTX 3090 — five of seven pass, the fidelity and
-throughput numbers are measured and stable, and two gates expose defects in `stable_envs/` code
-(the frame depends on the batch size through the transform's batched GEMM; the reference bridge
-rejects near-ground states the cell's own `sample_states` draws). Per the M4 rule the code is not
-touched and `visual_fidelity` stays `UNMEASURED`; section M4 has the gate table, the mechanisms,
-and the numbers that would be declared.
+**Classification: BLOCKER (M5), narrowed to ONE contract decision.** Phase 0 (below, unchanged)
+recommended GO in the visual tier; Phase 1 (M1-M3, authorised) is implemented, unit-tested and
+independently reviewed (APPROVE at `cf355a3`); M4 ran every cluster gate twice on one RTX 3090 and
+found two defects in `stable_envs/` code; **M5 fixed both and re-ran the whole chain (job 6408817)**.
+Defect B is fixed, verified and kept. Defect A is fixed and the mandatory batch-size gate now passes —
+but the fix cannot keep the six locomotion nvdiff cells byte-identical to the baseline, which was the
+hard condition it was authorized under, so it is **reverted** (`283865b`) and the question goes back to
+the coordinator: the batch-invariant transform and bit-compatibility with a batch-dependent baseline
+are incompatible propositions, and only one of them can be kept. `visual_fidelity` therefore stays
+`UNMEASURED` — the numbers exist and are stable, they simply do not describe the shipped tree.
+Section M5 has the gate table, both mechanisms, the numbers that would be declared and the two options;
+section M4 is the earlier run, kept as the record of the tree that is shipped today.
 
 | | |
 |---|---|
 | baseline SHA | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` (Step 6 closed) |
 | branch | `step7/rocket-landing`, worktree `/Users/samib/stable-envs-step7-rocket-landing` |
-| milestone commits | Phase 0 `c6772f7` · M1 `4bb93a4` · M2 `83db3cc` · M3 `13ca91b` (+ review D1/D2 `cf355a3`, the measured tree) · M4 = the commit carrying this file (evidence and harness only; no `stable_envs/` or `tests/` change) |
+| milestone commits | Phase 0 `c6772f7` · M1 `4bb93a4` · M2 `83db3cc` · M3 `13ca91b` (+ review D1/D2 `cf355a3`) · M4 `e74d0bd` (evidence and harness only) · M5a `d1e61a1` (both defect fixes; the tree job 6408817 measured) · M5b `283865b` (reverts the defect-A change only; `nvdiff.py` and `test_nvdiff_triangles.py` are byte-identical to `e74d0bd` again) · M5 = the commit carrying this file |
 | hardware | Apple M5 Mac, CPU only; PyBullet DIRECT (`connectionMethod: 2`) = TinyRenderer software rasteriser. **Local timings are not certification numbers.** |
 | venv (local) | `/Users/samib/se7-rocket-venv` (Python 3.12.11): PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, gymnasium 1.3.0, torch 2.14.0, Pillow 12.3.0, trimesh 5.1.0, imageio 2.37.4, numba 0.67.0, stable-worldmodel 0.1.1, opencv-python-headless 5.0.0.93 (it moved numpy 1.26.4 -> 2.5.3); unit tests run under `/Users/samib/se6-venv` with `MUJOCO_GL=cgl` (the env modules `setdefault` egl, which is invalid on macOS) |
 | Oscar | sync recipe: `git rev-parse HEAD > .git_sha` in the worktree, then the rsync (which excludes `.git`) — the job refuses to start without the file and stamps every number with it as `harness_commit` (never the `$SCR/se7/baseline` copy). SSH restored during Phase 1: `$SCR/se7/rocket-landing/` (this branch, rsynced), `$SCR/se7/baseline/` (76dc511, `git archive`), venv build job `se7-rocket-venv` **6394857** (`scratch/step7/rocket-landing/oscar_venv.sbatch`); the GPU job `oscar_gpu.sbatch` is submitted after it completes (one GPU job at a time; 3090, `gpu`/`norm-gpu`, nodes gpu2108/2113/2110/2116 excluded) |
 | affected configs | none existing; one new cell `PFRocketLanding` (480 px, swm's registered default: 480 x 480 x 3 = 691,200 B per observation, confirmed from `RocketLandingEnv.__init__(render_resolution=(480, 480))` and the frame the probe recorded) |
-| files touched (Phase 1) | `stable_envs/render/nvdiff.py` (M2), `stable_envs/envs/rocket_landing.py` (M3, new), `tests/unit/test_nvdiff_triangles.py` (new), `tests/unit/test_rocket_landing.py` (new), `examples/results/step7/rocket-landing/{reference,phase0,findings.md}`, `scratch/step7/rocket-landing/` (`phase0_probe.py`, `phase0_probe_b.py`, `tiny_law_probe.py`, `tiny_law_probe2.py`, `build_reference_corpus.py`, `validate_reference_trick.py`, `validate_env_math.py`, `cpu_raster_probe.py`, `measure_tier.py`, `nvdiff_identity.py`, `oscar_venv.sbatch`, `oscar_gpu.sbatch`; the `.log` files beside them are run output and are gitignored) |
+| files touched (Phase 1) | `stable_envs/render/nvdiff.py` (M2), `stable_envs/envs/rocket_landing.py` (M3, new), `tests/unit/test_nvdiff_triangles.py` (new), `tests/unit/test_rocket_landing.py` (new), `examples/results/step7/rocket-landing/{reference,phase0,findings.md}`, `scratch/step7/rocket-landing/` (`phase0_probe.py`, `phase0_probe_b.py`, `tiny_law_probe.py`, `tiny_law_probe2.py`, `build_reference_corpus.py`, `validate_reference_trick.py`, `validate_env_math.py`, `cpu_raster_probe.py`, `measure_tier.py`, `nvdiff_identity.py`, `probe_batch_size.py`, `probe_clip_ulps.py`, `probe_reference_rejections.py`, `fill_declaration.py`, `oscar_venv.sbatch`, `oscar_gpu.sbatch`; the `.log` files beside them are run output and are gitignored) |
 
 ## Phase 1 — what was built, what was measured, what is pending
 
@@ -342,6 +346,166 @@ none). On the card (`tier/unit_tests_gpu_node.txt`): the two nvdiff test files a
 SLURM: **6395707** (se7-rocket-gpu, 00:03:31), **6406061** (se7-rocket-gpu, 00:03:11, run of record),
 **6407151** (se7-rocket-probe, 00:00:11), **6407256** (se7-rocket-probe) — all `gpu`/`norm-gpu`, one at a
 time, gpu2109; none cancelled; no simclr job touched.
+
+### M5 · the two defect fixes on the card (job 6408817) — defect B FIXED, defect A fixed then REVERTED, declaration still NOT filled
+
+**Classification for this milestone: BLOCKER (narrowed).** Both defects were fixed (`d1e61a1`), the
+whole chain was re-run once on one RTX 3090, and **every gate that was failing for a code reason now
+passes** — `check_batch_size_invariance` is 0 over a 4,096-state stack, the reference bridge no longer
+rejects a state its own `sample_states` draws, and the four fidelity draws complete with 0 rejections.
+But the defect-A fix was authorized under a hard condition — *the six locomotion nvdiff cells must
+remain byte-identical baseline-vs-branch on the same card* — and that condition **failed**. Under the
+condition's own rule (if any pixel moves: stop, revert, report) the mvp change is reverted in `283865b`;
+`stable_envs/render/nvdiff.py` and `tests/unit/test_nvdiff_triangles.py` are byte-identical to `e74d0bd`
+again. The defect-B fix is kept. `visual_fidelity` therefore **stays `UNMEASURED`**: on the shipped tree
+the frame is batch-dependent again, and a renderer whose pixels depend on the batch size does not have
+one number to declare. What would be declared is recorded below, measured, with its provenance.
+
+Provenance common to every number in this section: measured tree **`d1e61a1efafdfa2eb144909b034db5f735466008`**
+(stamped into every gate line and every JSON as `sha`; `stable_envs_file` = `$SCR/se7/rocket-landing/stable_envs/__init__.py`),
+SLURM job **6408817** (`se7-rocket-gpu`, `gpu`/`norm-gpu`, `--gres=gpu:1 --constraint=geforce3090
+--cpus-per-task=4 --mem=48G`, elapsed **00:03:39**, `COMPLETED`), host **gpu2109.oscar.ccv.brown.edu**,
+**NVIDIA GeForce RTX 3090**, `$SCR/venvs/se7-rocket` (torch 2.14.0+cu126, nvdiffrast 0.4.0, PyFlyt 0.29.0,
+pybullet 3.2.7, stable-worldmodel 0.1.1), **4 threads**, node **load average 31.32 / 32.54 / 32.95** at job
+start and **32.96 / 32.83 / 33.04** at the tier measurement (the node was shared; the GPU numbers moved
+< 1 %, the two CPU comparators moved 3-6 % against job 6406061). Artifacts: `tier/job6408817/`,
+`nvdiff_identity/job6408817/`, log `logs/se7-rocket-gpu_6408817.out` (verbatim; in the `.txt` copies the
+Oscar scratch root is written `$SCR`). The EGL messages at job exit are cosmetic. One GPU job at a time;
+no `simclr` job touched; nothing cancelled.
+
+#### The seven gates
+
+| # | gate | result | evidence (job 6408817) / mechanism on failure |
+|---|---|---|---|
+| 1 | six locomotion nvdiff cells, baseline (`76dc511`) vs branch, same job, same card | **FAIL** | `nvdiff_identity/job6408817/compare.json`: `all_identical: false`, `same_gpu: true`. Per cell, 64 states at 240 px, differing px of 3,686,400 and max abs: HalfCheetah 13 / 1, Hopper 8 / 1, Walker2d 4 / 1, Ant 32 / 8, Humanoid 14 / 81, Swimmer 180 / 67. **Mechanism:** the batch-invariant mvp computes ONE rounding of `proj @ view @ M` (float64, cast once); the baseline's frames are the rounding cuBLAS's batched 4x4 GEMM happened to produce at the batch width each call used. The two differ by <= 1 ulp of the transform, which flips a few edge pixels. This is not a bug in either result — it is the same ulp mechanism as defect A, seen from the other side. The cells' own `test_visual_tier_matches_its_declared_fidelity` could not be run as a cross-check: `mujoco.GLContext` fails on gpu2109 (`nvdiff_identity/job6408817/egl_probe.txt`), the node EGL problem already recorded for gpu2104. |
+| 2 | first successful `PFRocketLanding` render | **PASS** | 480x480x3 uint8, 19,721 non-white px, 161 distinct colours, `tier/job6408817/first_render.png`; printed before any measurement. (19,720 px on the pre-fix tree — the one-pixel difference is the same ulp term.) |
+| 3 | 4 x 64 visual fidelity + under variation | **PASS** | `default_rng(1000..1003)`, 64 float32 `sample_states`, default appearance, 480 px, ss 1, vs PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer at the lagged pose. mean_abs **7.4816 / 7.6781 / 7.5727 / 7.7090**, within-8 **0.96225 / 0.96175 / 0.96200 / 0.96129**, SSIM **0.8632 / 0.8545 / 0.8684 / 0.8595**, exact 0.9594-0.9606, interior-exact 0.9675-0.9688. **0 rejections, 0 unreachable rows** in all four draws. Worst of four: **mean_abs 7.709, within-8 0.9613, SSIM 0.8545** (identical over all rows and over reachable rows, because no row was flagged). Under variation (seed 7): 7.646 / 0.9580 / 0.8961, exact 0.9030, 0 unreachable rows. |
+| 4 | corpus replay (200 frozen frames) | **PASS** | ours(`state13`) vs the frozen frames: mean_abs **6.9677**, exact 0.95736, within-8 **0.96067**, SSIM **0.8901**, interior-exact 0.96677, worst frame 13.505 (index 85). The state-quantisation term alone, `reference_render(state13)` vs the same frames: 200/200 rendered, 0 rejections, 1 exact, mean 0.002/255, max 118 differing px. |
+| 5 | mandatory conformance | **PASS (all four)** | `check_batch_invariance` 0; **`check_batch_size_invariance` `{'max_abs_diff': 0, 'batch_sizes': (1, 7, 64, 4096), 'n': 4096}`** — was 255 at `e74d0bd`; `check_determinism` identical; `check_state_dims_matter` no dead dims (the six velocity dims all move pixels). The suite's own `test_frame_i_is_independent_of_batch_size` (sizes 1/3/7/8/64/1024) **passes**. Prefix-batch probe (`tier/job6408817/probe_batch/`): row 0 vs its single render is **0 px at every prefix 1, 2, 3, 4, 7, 8, 15, 16, 17, 24, 31, 32, 33, 40, 48, 63, 64 and in a batch of 1024**; **0 of the 64 rows** differ from their single renders; 64-render deterministic; `row0_diffmask_6408817.png` is empty. MujocoHopper control: 0 everywhere, as before. |
+| 6 | GPU sweep, tier | **PASS as a measurement; `BATCH_SCALES` FAIL; `NO_LARGE_BATCH_REGRESSION` PASS; not `HOST_BOUND`** | f/s at B = 1 / 16 / 64 / 256 / 1024 / 4096: **232.2 / 2028.3 / 3015.4 / 2712.1 / 3195.6 / 3381.1**; `cpu_frac` 0.991 / 0.992 / 0.994 / 0.994 / 1.156 / **1.054** at the certified batch (< 1.5, so no `HOST_BOUND`, but 1.05 says the wall clock is one host core: the per-row float64 kinematics and camera in `render()` plus two host->device uploads). `BATCH_SCALES` fps(4096)/fps(1) = **14.56** (bar 20) **FAIL**; `NO_LARGE_BATCH_REGRESSION` fps(4096)/fps(256) = **1.247** (bar 0.9) PASS. Same-node comparators: official TinyRenderer through the swm env **14.52 f/s**, one-core JPEG-q90 decode of this env's own frames **1312.7 f/s** (`decode_cpu_frac` 0.993, 14,741 B/frame). Class S: **R = 232.81**, **cores = 2.576** at B = 4096; tier **`GPU_PARITY`, qualifier `BATCH_SCALES_FAIL`** (capped from the R/cores tier by section 6.7). |
+| 7 | PyBullet DIRECT + EGL + CUDA raster coexistence across the numba JIT | **PASS** | one process: reference env created (DIRECT, ~57 s JIT paid), `mujoco.GLContext` created (`egl: ok` inside the process even though the standalone probe failed on this node), the same state re-rendered **byte-identical**. |
+
+Conformance suite on the card (`tier/job6408817/conformance_PFRocketLanding.txt`, full `-rA` output):
+**30 passed, 9 skipped, 3 failed** — down from 4 failed at `cf355a3`; the batch-size failure is gone.
+The three, each with its mechanism:
+
+* `test_visual_tier_matches_its_declared_fidelity` — **not a fidelity failure**: the declaration is still
+  the `UNMEASURED` placeholder, so the comparison is `7.709 <= None`. The measured numbers are in gate 3
+  and clear the ceilings that would be declared with 23-30 % margin. It passes as soon as the
+  declaration is filled, which is what gate 1 is blocking.
+* `test_color_knobs_apply_the_requested_color` — **known, escalated to Sami, not acted on**: TinyRenderer's
+  law MULTIPLIES the material colour by `0.6 + 0.35*max(0, n.l) + 0.05*max(0, r_z)^2`, which is < 1 at
+  every pixel (with `l` the normalised `(-50, 30, 100)`, `n.l = 1` forces `r_z = 0.864`), and truncates,
+  so `int(255*c*f) < 255*c` for every channel and the requested colour is never literally in the frame.
+  The official PyFlyt frame does not contain it either (Phase 0: the brightest body pixel is `0.991*int(255*c)`).
+  The check's premise is flat shading; on a lit cell it measures the shading law, not the knob wiring
+  (which `test_variations_all_do_something` and the under-variation fidelity number cover). `tests/` is frozen.
+* `test_resolution_downsample_agrees_within_the_measured_bound` — **known Step-8 freeze item, not acted on**:
+  `DOWNSAMPLE_EXACT_FRAC` has no `PFRocketLanding` entry. Measured on the card at the test's own protocol
+  (8 states, `default_rng(render_worker.STATE_SEED)`, default appearance): **`DOWNSAMPLE_EXACT_FRAC` =
+  0.95614**, mean 0.9920/255, max 255, on the RTX 3090 at torch 2.14.0+cu126 / nvdiffrast 0.4.0. `tests/` is frozen.
+
+#### Defect A — fixed, measured, and reverted
+
+The fix (`d1e61a1`, `stable_envs/render/nvdiff.py`): `mvp_rows(proj, view, M)` replaced
+`(proj @ view)[:, None] @ M` in `Scene.clip`. It computes both 4x4 products as unrolled elementwise
+products summed in a fixed order, in float64, cast once to float32 — no matmul, no reduction kernel,
+so no kernel choice and no dependence on how many rows share the launch. Generic, the default path for
+every caller, no per-env branch, plus two CPU unit tests (row-wise bitwise equality across prefix
+batches 1..4096 at the rocket's 100-500 m coordinate scale, and equality to the correctly rounded
+float64 product; `Scene.clip` row 0 alone == row 0 of 64).
+
+**It works.** Gate 5 above: the mandatory check is 0 at windows 1/7/64/4096 over 4,096 states, the
+prefix probe is 0 px everywhere, and the suite's own test passes. That is the whole of defect A.
+
+**It cannot satisfy the condition it was authorized under, and neither can any fix of this shape.**
+The baseline's locomotion frames *are* the output of the batch-dependent GEMM. A batch-invariant mvp
+computes one fixed rounding; cuBLAS's rounding at whatever batch width a call used is a different one
+for some entries; the gap is <= 1 ulp of the transform and flips a handful of edge pixels (gate 1:
+4-180 px of 3,686,400 per cell, i.e. <= 4.9e-5 of the frame area, max |diff| 1-81). "Batch-invariant"
+and "bit-identical to a batch-dependent baseline" are incompatible propositions, and the authorization
+forbids reconciling them with a per-env branch. So this is a contract decision, not an implementation
+one, and it is put to the coordinator rather than taken here:
+
+* **(a) accept the re-baseline.** Take the fix, and re-verify the six locomotion cells' declared
+  fidelity on a node with working EGL (their declarations carry 1.3x ceilings and the change is
+  <= 4.9e-5 of pixels, so they will pass — but that is an argument, not a measurement, and gpu2109's
+  EGL failure means it was not made in this job). Every cell in the repo then renders batch-invariantly
+  and `PFRocketLanding` certifies.
+* **(b) keep bit-compatibility.** `PFRocketLanding` keeps failing a mandatory gate and cannot be
+  registered at any tier; the batch dependence stays latent in every nvdiff cell (invisible today only
+  because the locomotion cells' ~1 m coordinates, rounded quantisation and smooth shading hide the ulp).
+
+The reverted patch is recoverable at `d1e61a1`; `283865b` restores `e74d0bd`'s `nvdiff.py` byte for byte.
+
+#### Defect B — fixed, kept, and declared as an exclusion
+
+`_reference_frame_flagged(env, state, style_row, contact_fallback=True)` returns `(frame, unreachable)`.
+When the velocity fixed point does not reach the requested pose **and** the requested pose is in the
+contact band — any link collision AABB within `CONTACT_BAND_MARGIN` = 5 cm of the pad top
+`PAD_TOP_Z` = 0.152 m / the ground — the lagged picture is unreachable by this bridge by construction
+(the recipe's one gravity-off substep contains a ground contact, which Bullet resolves with a
+split-impulse position correction the fixed point cannot absorb). The frame returned is then swm's
+**synced** picture of the requested pose, which is swm's own goal-image convention, and the row is
+flagged in `PFRocketLanding.last_reference_unreachable`. A failure **outside** the band still raises;
+`_reference_frame` keeps the strict form for the validators. `sample_states` is **not** narrowed.
+
+How the exclusion reaches the numbers: `check_visual_fidelity` in `stable_envs/testing/conformance.py`
+is not edited. It calls `cls.reference_render(ref, states)` and gets a full stack back, so it can no
+longer abort; it then computes over **all** rows, flagged ones included, which is the conservative
+direction (a synced picture differs from the lagged one by the one-substep lag). The measurement
+harness `scratch/step7/rocket-landing/measure_tier.py` mirrors that function line for line in
+`fidelity_draw()` — same rng consumption, same reference, same metrics — reads the flags immediately
+after the call, and reports both: the all-rows numbers the shared check computes and the
+reachable-rows numbers the declaration would carry, with the flagged count on every draw.
+
+Measured share, to be declared with the mechanism: **`REFERENCE_UNREACHABLE_SHARE` = 1/960**
+(`tier/reference_rejections_local.json`: 15 seeds x 64 `sample_states`, one rejection — seed 1 index 56,
+height 2.07 m, tilt 3.4 deg, |v| 10.4 m/s). Verified on this machine at `d1e61a1`
+(`/Users/samib/se7-rocket-venv`, PyBullet DIRECT): that state is now **flagged, not raised**, classified
+"in the contact band"; all 63 other states of that seed and all 64 of seeds 1000 and 1001 are unflagged;
+`reference_render` returns `(64, 480, 480, 3)` with `last_reference_unreachable` true at index 56 only.
+On the card, the four certification draws and the under-variation draw flagged **0 rows** and rejected
+**0 states** (gate 3) — consistent with 1/960. Unrelated and pre-existing, recorded again: one frame per
+64-state seed is not bit-reproducible across PyBullet call order (the reviewer's index-124 observation);
+it is not a function of this change.
+
+#### What would be declared, and why it is still not
+
+Worst of four draws over the reachable rows (which is also the worst over all rows, since none was
+flagged): **mean_abs 7.709, within-8 0.9613, SSIM 0.8545**; spread 7.4816-7.7090 / 0.96129-0.96225 /
+0.8545-0.8684; interior-exact 0.9675-0.9688; exact 0.9594-0.9606; under variation 7.646 / 0.9580 / 0.8961.
+Under the family's convention (DMC: ceiling ~1.3x the worst draw, floors ~0.93-0.95x, round numbers,
+never tuned to the number) the declaration would be **`mean_abs_max` 10.0** (1.297x), **`within8_min`
+0.91** (0.947x), **`ssim_min` 0.80** (0.936x), with `measured_at` naming 480 px / ss 1 / default
+appearance / worst of 4 x 64 over the rows the bridge reaches / RTX 3090 gpu2109 / job 6408817 / tree
+`d1e61a1`, `reference_versions {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}`, `measured_with`
+{"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"}`, and `reference_unreachable_share` 1/960 with the
+contact-band mechanism. `scratch/step7/rocket-landing/fill_declaration.py` prints that block from the
+tier JSON for a human to paste; it does not edit the module, and the ceilings it prints are the
+convention applied to the measurement (`round(1.3 * worst)`, `round(0.95 * worst, 2)`,
+`round(0.94 * worst, 2)`) rather than numbers chosen to clear it — run on this job's JSON it emits
+exactly 10.0 / 0.91 / 0.80 (`tier/job6408817/declaration_block.json`).
+
+**Not filled**, for one reason only: gate 1. The numbers above were measured on `d1e61a1`, and `283865b`
+reverted the change that made the frame batch-independent. On the shipped tree the same state renders
+differently in a batch of 24 and a batch of 31, so there is no single number to declare, and
+`tests/unit/test_rocket_landing.py::test_the_visual_declaration_is_complete_and_marked_unmeasured` is
+left as it is. The moment the coordinator rules on option (a), the declaration is one paste and one
+test flip away and needs no further GPU time: these numbers already are the numbers.
+
+#### Tests run for M5 (local, at `283865b`)
+
+`tests/unit` under `/Users/samib/se6-venv` (`MUJOCO_GL=glfw`, `test_examples.py` deselected):
+**747 passed, 7 skipped, 1 failed** — the one is `test_every_cited_scratch_path_resolves` with its 9
+pre-existing Step-6 citations, unchanged. `tests/unit/test_rocket_landing.py` under
+`/Users/samib/se7-rocket-venv`: **17 passed**. On the card at `d1e61a1`
+(`tier/job6408817/unit_tests_gpu_node.txt`): the two nvdiff test files and the rocket file, **48 passed**
+(46 at `cf355a3`; the two extra were the reverted mvp tests).
+
+SLURM: **6408817** (`se7-rocket-gpu`, 00:03:39, `COMPLETED`, gpu2109) — one GPU job at a time, on
+`gpu`/`norm-gpu`, excluding gpu2108/gpu2110/gpu2113/gpu2116 (and gpu2104); none cancelled; no `simclr`
+job touched.
 
 ---
 
