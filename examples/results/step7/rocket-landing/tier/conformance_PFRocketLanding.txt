@@ -1,0 +1,237 @@
+.......F.s.s.sFsss...sF.F.............s.s.                               [100%]
+=================================== FAILURES ===================================
+_________ test_color_knobs_apply_the_requested_color[PFRocketLanding] __________
+
+env = <stable_envs.envs.rocket_landing.PFRocketLanding object at 0x7f2c34d52f00>
+
+    def test_color_knobs_apply_the_requested_color(env):
+        r = C.check_colors_apply_exactly(env)
+>       assert not r["colors_not_applied"], (
+            f"colour knobs that did not put the requested colour in the frame: {r['colors_not_applied']} — "
+            f"a knob wired to the wrong primitive, scaled, or channel-swapped still passes the weaker "
+            f"'does it change anything' check")
+E       AssertionError: colour knobs that did not put the requested colour in the frame: ['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'] — a knob wired to the wrong primitive, scaled, or channel-swapped still passes the weaker 'does it change anything' check
+E       assert not ['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', ...]
+
+tests/gpu/test_conformance.py:255: AssertionError
+_______ test_visual_tier_matches_its_declared_fidelity[PFRocketLanding] ________
+
+env = <stable_envs.envs.rocket_landing.PFRocketLanding object at 0x7f2c34d52f00>
+
+    @pytest.mark.reference
+    def test_visual_tier_matches_its_declared_fidelity(env):
+        """A VISUAL-tier env must hit the numbers it declares. Its own thresholds, separately checkable.
+    
+        Three assertions, on three quantities that fail for different reasons, because one aggregate would
+        let a real regression hide: ``mean_abs`` catches a global shift (a light, a material, a colour
+        resolution rule), ``within8_frac`` catches a REGION going wrong while the mean stays small, and
+        ``ssim`` catches structure — a surface losing its texture moves SSIM and can leave both of the
+        others where they were.
+    
+        The thresholds live on the env, not here, and they are measured before they are declared; the env
+        also carries the measurements themselves so the margin between "what it does" and "what it must
+        do" is visible rather than implied. What this test deliberately does NOT do is assert anything
+        about interior-pixel exactness: the visual tier does not claim it, and asserting a low floor on it
+        would turn a number that is reported for honesty into a target.
+        """
+        cls = type(env)
+        if env.fidelity_tier != "visual":
+            pytest.skip(f"{cls.__name__} is a parity env; test_render_parity_with_official_renderer "
+                        f"applies to it")
+        try:
+>           r = C.check_visual_fidelity(env)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_conformance.py:427: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/testing/conformance.py:302: in check_visual_fidelity
+    official = cls.reference_render(ref, states)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/rocket_landing.py:684: in reference_render
+    return np.stack([_reference_frame(env, st[i], sty[i]) for i in range(len(st))])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = <OrderEnforcing<PassiveEnvChecker<RocketLandingEnv<swm/PFRocketLanding-v0>>>>
+state = array([-4.01210606e-01,  1.31963655e-01, -1.44506371e+00,  2.44850870e-02,
+       -7.81124607e-02, -6.67266190e-01,  7...1, -1.20679750e+01,
+       -1.18004789e+01, -6.00639877e+01,  1.16999412e+00,  2.14480311e-01,
+        2.13183618e+00])
+style_row = array([  0., 255., 255., 255., 255., 204.,   0.,  51.,  51.,  51.,  51.,
+        51.,  51.,   0.,   0.,   0.])
+
+    def _reference_frame(env, state: np.ndarray, style_row: np.ndarray) -> np.ndarray:
+        """One official frame at an arbitrary state: the previous-substep teleport with a velocity fixed point."""
+        import pybullet as p
+        u = env.unwrapped
+        c, rid, pad = u.env._client, u.env.drones[0].Id, u.landing_pad_id
+        _reference_apply_style(p, c, rid, pad, style_row)
+        pos, q, pos_prev, q_prev, v, w = (a[0] for a in lagged_pose(state))
+        p.setGravity(0, 0, 0, physicsClientId=c)
+        v_set, w_set = v.copy(), w.copy()
+        for _ in range(6):
+            p.resetBasePositionAndOrientation(rid, list(pos_prev), list(q_prev), physicsClientId=c)
+            p.resetBaseVelocity(rid, list(v_set), list(w_set), physicsClientId=c)
+            p.stepSimulation(physicsClientId=c)
+            v1, w1 = (np.array(a) for a in p.getBaseVelocity(rid, physicsClientId=c))
+            if np.abs(v1 - v).max() < 1e-13 and np.abs(w1 - w).max() < 1e-13:
+                break
+            v_set, w_set = v_set + (v - v1), w_set + (w - w1)
+        p.setGravity(0, 0, -9.81, physicsClientId=c)
+        got_pos, got_q = (np.array(a) for a in p.getBasePositionAndOrientation(rid, physicsClientId=c))
+        # ``q`` is unit (lagged_pose renormalised it); Bullet's is too. Compare ROTATIONS, sign-free:
+        # 1 - |q . q_got| is 0 for the same rotation and ~theta^2/8 for a small angle theta.
+        pos_err = float(np.abs(got_pos - pos).max())
+        rot_err = float(1.0 - abs(np.dot(got_q / np.linalg.norm(got_q), q)))
+        if pos_err > 1e-6 or rot_err > 1e-9:
+>           raise AssertionError(f"PFRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
+                                 f"1-|q.q'| {rot_err:.3e}); every fidelity number computed from it would compare two "
+                                 f"different scenes")
+E           AssertionError: PFRocketLanding: the reference did not reach the requested pose (pos 2.662e-01 m, 1-|q.q'| 7.850e-06); every fidelity number computed from it would compare two different scenes
+
+stable_envs/envs/rocket_landing.py:490: AssertionError
+----------------------------- Captured stdout call -----------------------------
+argv[0]=
+[A                             [A
+----------------------------- Captured stderr call -----------------------------
+pybullet build time: Sep 14 2026 23:35:15
+__________ test_frame_i_is_independent_of_batch_size[PFRocketLanding] __________
+
+env = <stable_envs.envs.rocket_landing.PFRocketLanding object at 0x7f2a7b42a210>
+
+    def test_frame_i_is_independent_of_batch_size(env):
+        """Row ``i`` renders the same alone, in 3, in 7, in 8, in 64, and in ~1024.
+    
+        The one test that deliberately uses a large batch, because the batch size IS the subject. Odd
+        sizes are included on purpose: a kernel launched over ``cdiv(H*W, BLOCK)`` blocks with a masked
+        tail, or an output offset computed in int32, is correct at every power of two and wrong at 7 or at
+        the size that first overflows — this repo has already shipped one 64-bit offset fix for exactly
+        that, found at 224px and batch 16383.
+    
+        It is also the check that found ``RAYCAST_CAPSULE_BATCH_DEPENDENCE`` (see the comment above), and
+        3 and 8 are in the sweep because 8 is where that one was localised; the existing 1-versus-16
+        batch-invariance check never saw it, because 16 happens to agree with 1 on the states it draws.
+        """
+        big = _big_batch(env)
+        states = env.sample_states(big, rng=np.random.default_rng(11))
+        r = C.check_batch_size_invariance(env, states, sizes=BATCH_SIZES + (big,))
+>       assert r["max_abs_diff"] == 0, (
+            f"{type(env).__name__}: the same state renders differently depending on how many other "
+            f"environments share the launch (max {r['max_abs_diff']}/255, {r['worst_case']}) — a loader's "
+            f"last partial batch would then produce different pixels from every batch before it: {r}")
+E       AssertionError: PFRocketLanding: the same state renders differently depending on how many other environments share the launch (max 255/255, row 0 in a batch of 1) — a loader's last partial batch would then produce different pixels from every batch before it: {'max_abs_diff': 255, 'worst_case': 'row 0 in a batch of 1', 'batch_sizes': (1, 3, 7, 8, 64, 1024), 'n': 1024}
+E       assert 255 == 0
+
+tests/gpu/test_reproducibility.py:354: AssertionError
+_ test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding] _
+
+env = <stable_envs.envs.rocket_landing.PFRocketLanding object at 0x7f2a7b42a210>
+inputs = (array([[ 1.32429600e+00,  4.06833380e-01,  7.80462325e-01,
+         1.64787516e-01,  1.32296875e-01,  5.70273459e-01,...7625  ,
+         91.08717  , 161.73526  , 147.28235  ,   2.8052623, 132.49982  ,
+        227.65758  ]], dtype=float32))
+
+    def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
+        """Rendering at 2S then box-downsampling, against rendering at S — to a measured, per-env bound.
+    
+        Deliberately not an equality. Two rasterizations at different sampling rates disagree at every
+        edge, and the tile-atlas families disagree for a second reason: their atlas is resampled from the
+        source art at the requested tile size, so 2S is a different picture rather than a supersampled
+        one. Asserting equality would either fail on correct renderers or force a tolerance so loose it
+        could not detect a shape moving.
+    
+        What is asserted is the recorded floor on exact-pixel agreement. A geometry regression — an
+        off-by-half-pixel in the sampling grid, a scale that is applied in output pixels instead of world
+        units — moves a shape, and that collapses ``exact_frac``. Anti-aliasing does not touch it.
+    
+        The default appearance is used rather than a sampled style, so the number is a property of the
+        geometry and is reproducible from the recorded seed alone.
+        """
+        name = type(env).__name__
+        if hasattr(type(env), "PLATE_PATHS") and name not in PLATE_REPRESENTATIVES:
+            pytest.skip(f"{name}: covered by {sorted(PLATE_REPRESENTATIVES)} — see PLATE_REPRESENTATIVES")
+        states, _ = inputs
+        try:
+            _skip_if_size_is_not_resolution(env)
+            r = C.check_resolution_consistency(env, states)
+        except ValueError as e:                       # an env that renders at one size only says so
+            pytest.skip(f"{name} cannot render at another size: {e}")
+        if "skipped" in r:
+            pytest.skip(f"{name}: {r['skipped']}")
+        print(f"\n{name} 2S->S: exact {100*r['exact_frac']:.3f}%  mean {r['mean_abs']:.4f}/255  "
+              f"max {r['max_abs']}/255")
+        measured = DOWNSAMPLE_EXACT_FRAC.get(name)
+>       assert measured is not None, (
+            f"{name} has no measured downsample bound recorded. Run "
+            f"stable_envs.testing.conformance.check_resolution_consistency on it and add the number to "
+            f"DOWNSAMPLE_EXACT_FRAC with its provenance — a guessed bound is worse than no test, because "
+            f"it either fails on a correct renderer or passes on a broken one")
+E       AssertionError: PFRocketLanding has no measured downsample bound recorded. Run stable_envs.testing.conformance.check_resolution_consistency on it and add the number to DOWNSAMPLE_EXACT_FRAC with its provenance — a guessed bound is worse than no test, because it either fails on a correct renderer or passes on a broken one
+E       assert None is not None
+
+tests/gpu/test_reproducibility.py:677: AssertionError
+----------------------------- Captured stdout call -----------------------------
+
+PFRocketLanding 2S->S: exact 95.614%  mean 0.9920/255  max 255/255
+=============================== warnings summary ===============================
+tests/gpu/test_conformance.py::test_describe_is_complete[PFRocketLanding]
+  $SCR/se7/rocket-landing/stable_envs/render/nvdiff.py:768: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+    self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
+
+tests/gpu/test_conformance.py::test_describe_is_complete[PFRocketLanding]
+  $SCR/se7/rocket-landing/stable_envs/render/nvdiff.py:769: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+    (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]
+  $SCR/venvs/se7-rocket/lib/python3.12/site-packages/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: gpu2109 slurm=mix reason=none reference-renderer={'skipped': 'no EGL-backed reference env in this selection'}
+=========================== short test summary info ============================
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_determinism[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PFRocketLanding]
+SKIPPED [1] tests/gpu/test_conformance.py:268: env renders without a Scene2D (tilemap path)
+SKIPPED [1] tests/gpu/test_conformance.py:300: the env declares no visibility.* leaf
+SKIPPED [1] tests/gpu/test_conformance.py:350: PFRocketLanding declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: PFRocketLanding draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:506: a renderer's agreement does not depend on where the camera is pointed; this measurement exists for decoders that were FITTED at one appearance
+SKIPPED [1] tests/gpu/test_conformance.py:551: PFRocketLanding: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: PFRocketLanding: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1077: the HuggingFace round-trip needs `datasets`
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: PFRocketLanding: no CUDA-graph-captured step
+FAILED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[PFRocketLanding]
+FAILED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]
+4 failed, 29 passed, 9 skipped, 2782 deselected, 3 warnings in 44.05s

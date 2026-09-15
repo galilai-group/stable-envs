@@ -1,0 +1,206 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6406061
+##  Job Name : se7-rocket-gpu
+##  Nodelist : gpu2109
+##      CPUs : 
+##  Mem/Node : 49152 MB
+## Directory : /oscar/scratch/sboughan/se7/rocket-landing
+##   Job Started : Tue Sep 15 09:17:56 AM EDT 2026
+###############################################################################
+NODE gpu2109 JOB 6406061 GPU NVIDIA GeForce RTX 3090 SHA cf355a3a2a7d75891f85a13e5a4b46febc282418 LOAD 38.03 37.98 39.11
+/oscar/rt/9.6/25/spack/x86_64_v3/cuda-12.9.0-cinrl2oeqemd3szbcakkugp2vtk2fh5t/bin/nvcc
+Build cuda_12.9.r12.9/compiler.35813241_0
++ cd /oscar/scratch/sboughan/se7/rocket-landing
++ tee /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/plugin_build.txt
++ tail -3
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python -c 'import nvdiffrast.torch as dr, torch; dr.RasterizeCudaContext(device='\''cuda'\''); print('\''nvdiffrast ok'\'', torch.cuda.get_device_name(0))'
+nvdiffrast ok NVIDIA GeForce RTX 3090
++ grep -q 'nvdiffrast ok' /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/plugin_build.txt
++ EGL_OK=1
++ grep -q 'egl ok'
++ tail -2
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python -c 'import mujoco; c = mujoco.GLContext(64, 64); c.make_current(); print('\''egl ok'\'')'
++ tee /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/egl_probe.txt
+++ hostname -s
++ echo 'EGL CONTEXT FAILED on gpu2109: the locomotion reference test is skipped'
+EGL CONTEXT FAILED on gpu2109: the locomotion reference test is skipped
++ EGL_OK=0
++ tee /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/tier/unit_tests_gpu_node.txt
++ tail -5
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python -m pytest tests/unit/test_nvdiff_triangles.py tests/unit/test_nvdiff_texgen.py tests/unit/test_rocket_landing.py -q -p no:cacheprovider
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: gpu2109 slurm=mix reason=none reference-renderer={}
+46 passed, 2 warnings in 1.30s
++ PYTHONPATH=/oscar/scratch/sboughan/se7/baseline
++ tail -12
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python /oscar/scratch/sboughan/se7/rocket-landing/scratch/step7/rocket-landing/nvdiff_identity.py --phase baseline --out /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity
+/oscar/scratch/sboughan/se7/baseline/stable_envs/render/nvdiff.py:608: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
+/oscar/scratch/sboughan/se7/baseline/stable_envs/render/nvdiff.py:609: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+baseline MujocoHalfCheetah {'sha256': '94429bf02436b3c823adae1fa9f43188711d3e50a760b5378ab6011ff39ab193', 'shape': [64, 240, 240, 3]}
+baseline MujocoHopper {'sha256': '48194a0b589679fb48baa7e372cd7dea44ba1b45e6285a83f943f9d55003ddd4', 'shape': [64, 240, 240, 3]}
+baseline MujocoWalker2d {'sha256': '0536c91c700dd6827733dba747200a8df980f8cda651395c23997185f90cd8bc', 'shape': [64, 240, 240, 3]}
+baseline MujocoAnt {'sha256': 'f173343d183fb675adfe8c26dc2874cba6aa10c346f188c9bdda3fa26c638a4b', 'shape': [64, 240, 240, 3]}
+baseline MujocoHumanoid {'sha256': '32e0a365c91f4c9780f893c1ffe3b0567304fe98d6c914355bafa6cc9af44f0d', 'shape': [64, 240, 240, 3]}
+baseline MujocoSwimmer {'sha256': 'a33f185580b4b8cb309a7bdba9b9061fbd1471097eea990b2745308341edc955', 'shape': [64, 240, 240, 3]}
++ tail -12
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python /oscar/scratch/sboughan/se7/rocket-landing/scratch/step7/rocket-landing/nvdiff_identity.py --phase branch --out /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity
+/oscar/scratch/sboughan/se7/rocket-landing/stable_envs/render/nvdiff.py:768: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
+/oscar/scratch/sboughan/se7/rocket-landing/stable_envs/render/nvdiff.py:769: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+branch MujocoHalfCheetah {'sha256': '94429bf02436b3c823adae1fa9f43188711d3e50a760b5378ab6011ff39ab193', 'shape': [64, 240, 240, 3]}
+branch MujocoHopper {'sha256': '48194a0b589679fb48baa7e372cd7dea44ba1b45e6285a83f943f9d55003ddd4', 'shape': [64, 240, 240, 3]}
+branch MujocoWalker2d {'sha256': '0536c91c700dd6827733dba747200a8df980f8cda651395c23997185f90cd8bc', 'shape': [64, 240, 240, 3]}
+branch MujocoAnt {'sha256': 'f173343d183fb675adfe8c26dc2874cba6aa10c346f188c9bdda3fa26c638a4b', 'shape': [64, 240, 240, 3]}
+branch MujocoHumanoid {'sha256': '32e0a365c91f4c9780f893c1ffe3b0567304fe98d6c914355bafa6cc9af44f0d', 'shape': [64, 240, 240, 3]}
+branch MujocoSwimmer {'sha256': 'a33f185580b4b8cb309a7bdba9b9061fbd1471097eea990b2745308341edc955', 'shape': [64, 240, 240, 3]}
++ tail -20
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python /oscar/scratch/sboughan/se7/rocket-landing/scratch/step7/rocket-landing/nvdiff_identity.py --phase compare --out /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity
+   "identical": true
+  },
+  "MujocoHopper": {
+   "identical": true
+  },
+  "MujocoWalker2d": {
+   "identical": true
+  },
+  "MujocoAnt": {
+   "identical": true
+  },
+  "MujocoHumanoid": {
+   "identical": true
+  },
+  "MujocoSwimmer": {
+   "identical": true
+  }
+ },
+ "all_identical": true
+}
++ rm -f /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/baseline_MujocoAnt.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/baseline_MujocoHalfCheetah.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/baseline_MujocoHopper.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/baseline_MujocoHumanoid.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/baseline_MujocoSwimmer.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/baseline_MujocoWalker2d.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/branch_MujocoAnt.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/branch_MujocoHalfCheetah.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/branch_MujocoHopper.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/branch_MujocoHumanoid.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/branch_MujocoSwimmer.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/branch_MujocoWalker2d.npz
++ '[' 0 = 1 ']'
++ tail -40
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ tee /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/tier/measure_tier_stdout.txt
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python /oscar/scratch/sboughan/se7/rocket-landing/scratch/step7/rocket-landing/measure_tier.py --draws 4 --n 64
+  self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
+/oscar/scratch/sboughan/se7/rocket-landing/stable_envs/render/nvdiff.py:769: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+GATE PASS  first_render  shape (480, 480, 3) non-white px 19720 distinct colours 161  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+/oscar/scratch/sboughan/venvs/se7-rocket/lib/python3.12/site-packages/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+pybullet build time: Sep 14 2026 23:35:15
+argv[0]=
+[A                             [A
+GATE PASS  coexistence_direct_egl_cuda  {"pybullet_direct": "ok", "reference_frame_shape": [480, 480, 3], "egl": "ok", "render_after_identical": true}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+corpus replay ours(state13) vs frozen {"mean_abs": 6.967724934895833, "exact_frac": 0.9573565755208333, "within8_frac": 0.9606666015625, "max_abs": 255, "interior_frac": 0.9232193679420854, "interior_exact_frac": 0.966772898539179, "interior_mean_abs": 5.676099669832615, "interior_px": 42364875, "interior_bad_px": 1407662, "ssim": 0.8900540869781403, "worst_frame_mean_abs": 13.508877314814814, "worst_frame_index": 85, "contains": "renderer residual + float32 state quantisation (see state_quantisation_term)"}
+GATE PASS  corpus_replay_ours_state13_vs_frozen  mean_abs 6.967724934895833 within8 0.9606666015625 ssim 0.8901 interior_exact 0.966772898539179 (reported; contains both terms)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+check_batch_invariance {'max_abs_diff': 0}
+GATE PASS  check_batch_invariance  {'max_abs_diff': 0}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+check_batch_size_invariance {'max_abs_diff': 255, 'worst_case': 'row 0 in a batch of 1', 'batch_sizes': (1, 7, 64), 'n': 64}
+GATE FAIL  check_batch_size_invariance  {'max_abs_diff': 255, 'worst_case': 'row 0 in a batch of 1', 'batch_sizes': (1, 7, 64), 'n': 64}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+check_determinism {'identical': True}
+GATE PASS  check_determinism  {'identical': True}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+check_state_dims_matter {'dead_dims': []}
+GATE PASS  state_dims_matter_velocity_dims  velocity dims ['ang_vel_x', 'ang_vel_y', 'ang_vel_z', 'lin_vel_x', 'lin_vel_y', 'lin_vel_z'] dead [] all dead []  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+throughput 1 249.7 cpu_frac 0.993
+throughput 16 2069.8 cpu_frac 0.993
+throughput 64 3038.1 cpu_frac 0.993
+throughput 256 2738.8 cpu_frac 0.994
+throughput 1024 3218.7 cpu_frac 1.156
+throughput 4096 3407.5 cpu_frac 1.054
+batch checks {'BATCH_SCALES': False, 'NO_LARGE_BATCH_REGRESSION': True, 'fps_4096_over_fps_1': 13.65, 'fps_4096_over_fps_256': 1.244}
+GATE FAIL  BATCH_SCALES  fps(4096)/fps(1) = 13.65 (bar 20)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+GATE PASS  NO_LARGE_BATCH_REGRESSION  fps(4096)/fps(256) = 1.244 (bar 0.9)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+GATE PASS  corpus_replay_state_quantisation_term  reference_render(state13) vs frozen: exact 1/200 mean_abs 0.002 max diff px 118 (the term the ours-vs-frozen row contains besides the renderer's)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+tier {'class': 'S (3-D scene)', 'official_fps_same_node': 13.72, 'one_core_jpeg_q90_decode_fps_same_node': 1075.6, 'decode_cpu_frac': 0.994, 'jpeg_bytes_mean': 14741, 'best_certified_batch': 4096, 'fps_at_best': 3407.5, 'cpu_frac_at_best': 1.054, 'R': 248.38, 'cores': 3.168, 'tier': 'GPU_PARITY', 'qualifiers': ['BATCH_SCALES_FAIL'], 'threads': 4, 'load_average': [37.25, 37.78, 39.0], 'slurm_job': '6406061'}
+GATE PASS  tier_frozen_definitions_same_node  GPU_PARITY ['BATCH_SCALES_FAIL'] R=248.38 (ours 3407.5 f/s at B=4096 vs official 13.72 f/s same node) cores=3.168 (vs 1075.6 f/s one-core decode) cpu_frac=1.054  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+visual_fidelity draw 0 {"mean_abs": 7.481524726019965, "exact_frac": 0.960577392578125, "within8_frac": 0.9622481960720486, "max_abs": 255, "interior_frac": 0.8653775643847438, "interior_exact_frac": 0.9684767880883246, "interior_mean_abs": 6.24464213680881, "interior_px": 12707398, "interior_bad_px": 400578, "ssim": 0.8632026925478501, "n_states": 64, "draw": 0}
+visual_fidelity draw 1 {"mean_abs": 7.6781035020616315, "exact_frac": 0.9603058539496527, "within8_frac": 0.961754625108507, "max_abs": 255, "interior_frac": 0.8986833761184793, "interior_exact_frac": 0.9680068939658703, "interior_mean_abs": 6.489943900140553, "interior_px": 13196468, "interior_bad_px": 422196, "ssim": 0.8544951693599663, "n_states": 64, "draw": 1}
+visual_fidelity draw 2 {"mean_abs": 7.572731594509548, "exact_frac": 0.960307142469618, "within8_frac": 0.9620040554470486, "max_abs": 255, "interior_frac": 0.9004601809397623, "interior_exact_frac": 0.9687686778330882, "interior_mean_abs": 6.22759104345838, "interior_px": 13222559, "interior_bad_px": 412958, "ssim": 0.8683998720958684, "n_states": 64, "draw": 2}
+visual_fidelity draw 3 {"mean_abs": 7.70912346733941, "exact_frac": 0.9593863932291666, "within8_frac": 0.9612877739800347, "max_abs": 255, "interior_frac": 0.877455083768812, "interior_exact_frac": 0.9674847321410347, "interior_mean_abs": 6.420210423999788, "interior_px": 12884747, "interior_bad_px": 418951, "ssim": 0.8594825564589949, "n_states": 64, "draw": 3}
+GATE PASS  visual_fidelity_4x64  draws 4/4 rejections 0 worst {'mean_abs': 7.70912346733941, 'within8_frac': 0.9612877739800347, 'ssim': 0.8544951693599663} spread {'mean_abs': [7.481524726019965, 7.70912346733941], 'within8_frac': [0.9612877739800347, 0.9622481960720486], 'ssim': [0.8544951693599663, 0.8683998720958684]}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+under variation: {'mean_abs': 7.645836995442708, 'exact_frac': 0.9030187310112847, 'within8_frac': 0.9579737006293403, 'max_abs': 255, 'interior_frac': 0.8596779782166222, 'interior_exact_frac': 0.9307931332990698, 'interior_mean_abs': 6.659192262429474, 'interior_px': 12623704, 'interior_bad_px': 873647, 'ssim': 0.896077641351101, 'n_states': 64, 'seed': 7}
+GATE PASS  visual_fidelity_under_variation  {'mean_abs': 7.645836995442708, 'exact_frac': 0.9030187310112847, 'within8_frac': 0.9579737006293403, 'max_abs': 255, 'interior_frac': 0.8596779782166222, 'interior_exact_frac': 0.9307931332990698, 'interior_mean_abs': 6.659192262429474, 'interior_px': 12623704, 'interior_bad_px': 873647, 'ssim': 0.  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+wrote /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/tier/gpu2109.json
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python -m pytest tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py -q -rA -p no:cacheprovider -k PFRocketLanding
++ tail -25 /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/tier/conformance_PFRocketLanding.txt
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PFRocketLanding]
+SKIPPED [1] tests/gpu/test_conformance.py:268: env renders without a Scene2D (tilemap path)
+SKIPPED [1] tests/gpu/test_conformance.py:300: the env declares no visibility.* leaf
+SKIPPED [1] tests/gpu/test_conformance.py:350: PFRocketLanding declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: PFRocketLanding draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:506: a renderer's agreement does not depend on where the camera is pointed; this measurement exists for decoders that were FITTED at one appearance
+SKIPPED [1] tests/gpu/test_conformance.py:551: PFRocketLanding: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: PFRocketLanding: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1077: the HuggingFace round-trip needs `datasets`
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: PFRocketLanding: no CUDA-graph-captured step
+FAILED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[PFRocketLanding]
+FAILED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]
+4 failed, 29 passed, 9 skipped, 2782 deselected, 3 warnings in 44.05s
++ echo '===== GATES (tier/gates.txt) ====='
+===== GATES (tier/gates.txt) =====
++ cat /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/tier/gates.txt
+PASS  first_render  shape (480, 480, 3) non-white px 19720 distinct colours 161  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  coexistence_direct_egl_cuda  {"pybullet_direct": "ok", "reference_frame_shape": [480, 480, 3], "egl": "ok", "render_after_identical": true}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  corpus_replay_ours_state13_vs_frozen  mean_abs 6.967724934895833 within8 0.9606666015625 ssim 0.8901 interior_exact 0.966772898539179 (reported; contains both terms)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  check_batch_invariance  {'max_abs_diff': 0}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+FAIL  check_batch_size_invariance  {'max_abs_diff': 255, 'worst_case': 'row 0 in a batch of 1', 'batch_sizes': (1, 7, 64), 'n': 64}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  check_determinism  {'identical': True}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  state_dims_matter_velocity_dims  velocity dims ['ang_vel_x', 'ang_vel_y', 'ang_vel_z', 'lin_vel_x', 'lin_vel_y', 'lin_vel_z'] dead [] all dead []  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+FAIL  BATCH_SCALES  fps(4096)/fps(1) = 13.65 (bar 20)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  NO_LARGE_BATCH_REGRESSION  fps(4096)/fps(256) = 1.244 (bar 0.9)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  corpus_replay_state_quantisation_term  reference_render(state13) vs frozen: exact 1/200 mean_abs 0.002 max diff px 118 (the term the ours-vs-frozen row contains besides the renderer's)  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  tier_frozen_definitions_same_node  GPU_PARITY ['BATCH_SCALES_FAIL'] R=248.38 (ours 3407.5 f/s at B=4096 vs official 13.72 f/s same node) cores=3.168 (vs 1075.6 f/s one-core decode) cpu_frac=1.054  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  visual_fidelity_4x64  draws 4/4 rejections 0 worst {'mean_abs': 7.70912346733941, 'within8_frac': 0.9612877739800347, 'ssim': 0.8544951693599663} spread {'mean_abs': [7.481524726019965, 7.70912346733941], 'within8_frac': [0.9612877739800347, 0.9622481960720486], 'ssim': [0.8544951693599663, 0.8683998720958684]}  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
+PASS  visual_fidelity_under_variation  {'mean_abs': 7.645836995442708, 'exact_frac': 0.9030187310112847, 'within8_frac': 0.9579737006293403, 'max_abs': 255, 'interior_frac': 0.8596779782166222, 'interior_exact_frac': 0.9307931332990698, 'interior_mean_abs': 6.659192262429474, 'interior_px': 12623704, 'interior_bad_px': 873647, 'ssim': 0.  [sha cf355a3a2a7d75891f85a13e5a4b46febc282418 host gpu2109.oscar.ccv.brown.edu job 6406061]
++ echo '===== nvdiff identity ====='
+===== nvdiff identity =====
++ head -40
++ cat /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/nvdiff_identity/compare.json
+{
+ "same_gpu": true,
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "cells": {
+  "MujocoHalfCheetah": {
+   "identical": true
+  },
+  "MujocoHopper": {
+   "identical": true
+  },
+  "MujocoWalker2d": {
+   "identical": true
+  },
+  "MujocoAnt": {
+   "identical": true
+  },
+  "MujocoHumanoid": {
+   "identical": true
+  },
+  "MujocoSwimmer": {
+   "identical": true
+  }
+ },
+ "all_identical": true
+}+ echo 'S7GPU rc=0'
+S7GPU rc=0

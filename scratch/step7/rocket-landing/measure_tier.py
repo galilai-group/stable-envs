@@ -55,9 +55,11 @@ def main():
     sha_file = os.path.join(ROOT, ".git_sha")
     sha = (open(sha_file).read().strip() if os.path.exists(sha_file)
            else os.popen(f"git -C {ROOT} rev-parse HEAD 2>/dev/null").read().strip() or "unknown")
-    # profile_note.py's two provenance fields: the commit of the tree this script lives in, and the
+    # profile_note.py's two provenance fields (its `baseline_commit` is named `harness_commit` here so it
+    # cannot be misread as the $SCR/se7/baseline copy, 76dc511): the commit of the tree this script lives in, and the
     # stable_envs package ACTUALLY imported, resolved -- the only proof of which checkout was measured.
-    R["provenance"] = {"sha": sha, "baseline_commit": sha, "stable_envs_file": os.path.realpath(se.__file__),
+    R["provenance"] = {"sha": sha, "harness_commit": sha,   # the commit of THIS tree (never $SCR/se7/baseline = 76dc511)
+                       "stable_envs_file": os.path.realpath(se.__file__),
                        "host": platform.node(), "slurm_job": os.environ.get("SLURM_JOB_ID"),
                        "threads": torch.get_num_threads(),
                        "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
@@ -167,7 +169,10 @@ def main():
         if fn is None:
             continue
         try:
-            R["mandatory"][name] = fn(env)
+            if name == "check_batch_size_invariance":       # signature (env, states, ...): windows of 1/7/64
+                R["mandatory"][name] = fn(env, env.sample_states(64, rng=np.random.default_rng(11)))
+            else:
+                R["mandatory"][name] = fn(env)
         except Exception as e:                                                      # pragma: no cover
             R["mandatory"][name] = f"ERROR {type(e).__name__}: {e}"
         print(name, R["mandatory"][name], flush=True)

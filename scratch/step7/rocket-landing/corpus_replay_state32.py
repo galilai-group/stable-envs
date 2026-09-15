@@ -37,7 +37,8 @@ def main():
     sha = subprocess.run(["git", "-C", ROOT, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     out = {"measurement": "reference_render(state13 float32) vs frozen frames (recorded from float64 physics)",
            "result": sq,
-           "provenance": {"sha": sha, "baseline_commit": sha, "stable_envs_file": os.path.realpath(se.__file__),
+           "provenance": {"sha": sha, "harness_commit": sha,   # the commit of THIS tree (never $SCR/se7/baseline = 76dc511)
+                          "stable_envs_file": os.path.realpath(se.__file__),
                           "host": platform.node(), "slurm_job": os.environ.get("SLURM_JOB_ID"),
                           "threads": 1, "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
                           "renderer": "PyBullet DIRECT / TinyRenderer via PyFlyt (CPU)",

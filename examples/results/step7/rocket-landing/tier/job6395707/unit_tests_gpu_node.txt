@@ -1,0 +1,5 @@
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: gpu2109 slurm=mix reason=none reference-renderer={}
+46 passed, 2 warnings in 2.57s
