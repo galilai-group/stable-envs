@@ -1,0 +1,188 @@
+{
+  "tag": "mac",
+  "device": "cpu",
+  "n": 64,
+  "seed": 20260915,
+  "torch": "2.14.0",
+  "reference": {
+    "craftax": "1.6.1",
+    "jax": "0.11.1",
+    "jax_threefry_partitionable": true
+  },
+  "parity": {
+    "10": {
+      "size": 10,
+      "n": 64,
+      "shape": [
+        64,
+        130,
+        110,
+        3
+      ],
+      "exact_frac": 1.0,
+      "mean_abs": 0.0,
+      "max_abs": 0,
+      "world_exact_frac": 1.0,
+      "strip_exact_frac": 1.0,
+      "digest_ours": "66483f75df25bb14b069dcc855a6bc1afdb145a5e1d4d9e0912fca937d7175bd",
+      "digest_official": "66483f75df25bb14b069dcc855a6bc1afdb145a5e1d4d9e0912fca937d7175bd",
+      "reference_seconds_per_frame": 0.3639638730455772,
+      "per_band": {
+        "fast_uint8": {
+          "n": 22,
+          "exact_frac": 1.0,
+          "max_abs": 0
+        },
+        "lit_no_prng": {
+          "n": 21,
+          "exact_frac": 1.0,
+          "max_abs": 0
+        },
+        "night_prng": {
+          "n": 21,
+          "exact_frac": 1.0,
+          "max_abs": 0
+        }
+      }
+    },
+    "16": {
+      "size": 16,
+      "n": 64,
+      "shape": [
+        64,
+        208,
+        176,
+        3
+      ],
+      "exact_frac": 1.0,
+      "mean_abs": 0.0,
+      "max_abs": 0,
+      "world_exact_frac": 1.0,
+      "strip_exact_frac": 1.0,
+      "digest_ours": "f563db64efcaeca4a0c71022a578dcf69b7980a2267ef80262d9719ebd782499",
+      "digest_official": "f563db64efcaeca4a0c71022a578dcf69b7980a2267ef80262d9719ebd782499",
+      "reference_seconds_per_frame": 0.3657481243590155,
+      "per_band": {
+        "fast_uint8": {
+          "n": 22,
+          "exact_frac": 1.0,
+          "max_abs": 0
+        },
+        "lit_no_prng": {
+          "n": 21,
+          "exact_frac": 1.0,
+          "max_abs": 0
+        },
+        "night_prng": {
+          "n": 21,
+          "exact_frac": 1.0,
+          "max_abs": 0
+        }
+      }
+    }
+  },
+  "gate_a": {
+    "check_state_roundtrip": {
+      "max_abs_err": 0.0
+    },
+    "check_state_dims_matter": {
+      "dead_dims": []
+    },
+    "check_batch_invariance": {
+      "max_abs_diff": 0
+    },
+    "check_determinism": {
+      "identical": true
+    },
+    "check_render_is_pure": {
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0,
+      "state_changed_by_double_set": 0.0,
+      "frame_changed_by_double_set": 0
+    },
+    "check_order_independence": {
+      "permutation_max_abs_diff": 0,
+      "duplicate_max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+      "max_abs_diff": 0,
+      "worst_case": "",
+      "batch_sizes": [
+        1,
+        7,
+        64
+      ],
+      "n": 16
+    },
+    "check_chunked_render_matches": {
+      "max_abs_diff": 0,
+      "worst_case": "",
+      "chunks": [
+        1,
+        7,
+        64,
+        4096
+      ]
+    },
+    "check_input_form_invariance": {
+      "disagreements": {},
+      "forms": [
+        "numpy_f32",
+        "numpy_f64",
+        "numpy_strided",
+        "list",
+        "torch_cpu_f32",
+        "torch_cpu_f64",
+        "torch_cuda_f32",
+        "torch_cuda_f64",
+        "torch_cuda_strided",
+        "torch_cuda_transposed"
+      ]
+    },
+    "check_set_state_copies": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+    },
+    "check_style_is_state": {
+      "max_abs_diff": 0
+    },
+    "check_default_style_is_official": {
+      "max_abs_diff": 0
+    },
+    "check_variations_do_something": {
+      "inert_variations": []
+    },
+    "check_colors_apply_exactly": {
+      "colors_not_applied": []
+    },
+    "check_resolution_consistency": {
+      "exact_frac": 0.7945367132867133,
+      "mean_abs": 0.292995337995338,
+      "max_abs": 11,
+      "size": 10,
+      "factor": 2
+    },
+    "variations_by_batch": {
+      "1": {
+        "inert_variations": []
+      },
+      "2": {
+        "inert_variations": []
+      },
+      "4": {
+        "inert_variations": []
+      },
+      "16": {
+        "inert_variations": []
+      }
+    },
+    "dims_by_batch": {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": [],
+      "8": [],
+      "16": []
+    }
+  }
+}
