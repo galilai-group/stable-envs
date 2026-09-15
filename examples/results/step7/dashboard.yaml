@@ -32,7 +32,7 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: phase 1 (implementation authorized in the DMControlSuite region of dmcontrol.py; cluster items pending Oscar)
+  status: phase 1 PATCH delivered (HEAD a635d3a); independent review running; cluster items pending Oscar
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
@@ -47,6 +47,48 @@ workstreams:
   decisions: "parity vs suite.load with the suite default appearance; SWM default reproduced through leaves (visibility.target, target.shape, light.diffuse_scale) and asserted by Gate F (Reacher precedent);\
     \ certify at 224 px; dead-dims: no widening of the shared check and no Gate A partial \u2014 escalated to Sami as a validated per-class exclusion proposal; W3 owns the DMControlSuite region of dmcontrol.py,\
     \ W4 the TrackCom region + raycast3d ellipsoid"
+  phase1:
+    classification: PATCH
+    head: a635d3a
+    hygiene: 0 trailers; only stable_envs/envs/dmcontrol.py (DMControlSuite region) under stable_envs/; raycast3d + TrackCom untouched; step4/5/6 untouched
+    changes:
+    - '_episode_slots guard (''_size'',''_quat'',''_dir'') -> (''_size'',''_dir''): orientation is per-row via geom_xmat'
+    - _hideable resolves drawn body -> drawn geoms (raises if body mixes geoms and sites); enables visibility.target_ball
+    - SHAPE_KNOBS + target_ball.shape style leaf Discrete(3) (SWM .015 box, SWM .015 sphere, dm_control .02 sphere; pristine index = init_value); geom_type/geom_size in _pristine/_apply_variation
+    - DOMAINS entry DMCManipulatorBringBall (swm/ManipulatorDMControl-v0), DEFAULT_SIZES 224, STATE_DIMS_NOTE
+    - tests/unit/test_dmcontrol_episode_quat.py (6)
+    - docs/research/dmcontrol.md, swm_coverage.md
+    results_local_apple_m5_312:
+      parity_224px_12x64:
+        interior_exact_frac: 1.0
+        all_pixel_exact_worst: 0.982859
+        mean_abs_worst: 0.267
+        ssim_worst: 0.99366
+      parity_84px:
+        interior_exact_frac: 1.0
+        all_pixel_exact: 0.9777-0.9780
+      gate_a: all mandatory checks pass at 224 and 84 except check_state_dims_matter; task_object_visibility presence_margin 0.8696 (224) / 0.7978 (84); resolution_consistency 0.848 / 0.443
+      state_dims_matter: FAIL recorded on ball_y, target_ball_quat_qw, target_ball_quat_qy (untextured sphere rotation-invariant under analytic shading; MuJoCo tessellation moves <=896 px max 55/255); no
+        check widening, no partial; validated-exclusion contract proposed in STATE_DIMS_NOTE (escalated to Sami)
+      swm_default_via_leaves: visibility.target_ball=0 + target_ball.shape + light.diffuse_scale=7/6 together move 17,780 px (2.21%)
+      regression: 15 pre-existing DMC cells byte-identical vs 76dc511 at default style and at an all-leaves style; frozen Step-4 DMC replay 14 configs 0 differing; tests/unit 829 passed 6 skipped 2 pre-existing
+        failures
+      fps_not_certification:
+        224px_b1: 43
+        224px_b64: 54
+        224px_b256: 38
+    candidate_corpus: examples/results/step7/dmc-manipulator/corpus/ (256x15 states, seed 20260915, Step-4 format, digests at 224 and 84)
+    pending_cluster:
+    - oscar_o1_signature.sbatch + probe_swm_signature.py (O1 mjcf round-trip signature diff, se-step5)
+    - oscar_certify311.sbatch (3.11.0/1.0.44 arm on se-vis311, >=40 draws at 224 and 84, DMC shard, corpus at declared pin)
+    - oscar_gpu.sbatch (15 cells before/after on one 3090, GPU conformance, throughput sweep)
+    - tests/gpu, paired sweeps
+    open_for_coordinator:
+    - approval of the validated-exclusion contract (with Sami's dead-dims escalation)
+    - floor.color stays a Gate-F gap (measurement proposal in findings)
+    - Discrete(3) shape leaf vs SWM's two alternatives
+    semantic_followup: none (no existing pixels move; new cell is parity)
+    reviewer: independent reviewer (opus family) spawned 2026-09-15, read-only
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -161,6 +203,8 @@ incident_log:
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
 - date: '2026-09-15'
   item: W4 phase 1 (9188c2c) and W6 feasibility gate (c6772f7) delivered; W4 reviewer spawned; W6 phase 1 authorized; Oscar SSH still denied so all cluster items remain queued
+- date: '2026-09-15'
+  item: W3 phase 1 (a635d3a) delivered; hygiene clean; reviewer spawned
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
