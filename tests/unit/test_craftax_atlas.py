@@ -1,18 +1,23 @@
 """The Craftax composited-tile atlas is the pre-Step-6 per-frame composite, precomputed.
 
 Step 6 replaced a dozen ``B x 7t x 9t x 3`` float32 temporaries per frame with a gather from a
-680-entry table of already-composited tiles. That is only admissible because the table holds exactly
-what the per-frame arithmetic produced, so this module is the differential test that says so —
-``CraftaxClassic._render_blend`` is the pre-Step-6 render body kept verbatim, and every case below
-asserts the atlas path reproduces it on every pixel rather than approximately.
+table of already-composited tiles; Step 7 grew that table to 976 entries — a sixth player slot for
+the sleeping sprite, and the inventory strip's 160 ``(cell, count)`` cells — so that the whole
+observation is still one gather. That is only admissible because the table holds exactly what the
+per-frame arithmetic produced, so this module is the differential test that says so —
+``CraftaxClassic._render_blend`` is that arithmetic written out, and every case below asserts the
+atlas path reproduces it on every pixel rather than approximately.
 
 Three of the assertions are not about speed at all and would each hide a plausible, invisible bug:
 
 * ``mobs_visible = 0`` is folded into mob id 0 rather than into a zeroed alpha. That is the identity
   only because mob 0's alpha table is exactly zero, so the table is checked, not assumed.
-* ``player_visible = 0`` and every non-centre tile share player slot 4, which must be the block
-  texture untouched — not "the block texture blended with a transparent sprite", which would be a
-  different float32 expression.
+* ``player_visible = 0`` and every non-centre tile share player slot :data:`NO_PLAYER` (5 since the
+  sleeping sprite took slot 4), which must be the block texture untouched — not "the block texture
+  blended with a transparent sprite", which would be a different float32 expression.
+* ``is_sleeping`` takes the batch off the uint8 fast path, because the desaturation multiplies before
+  the rounding. The two paths must still agree exactly, so the fuzz mixes sleeping and awake rows
+  inside one batch rather than testing them separately.
 * The table is a cache. A render that wrote through it would corrupt every later frame in the
   process, and nothing downstream would flag it, so the table's bytes are checked after rendering.
 
@@ -26,8 +31,9 @@ import pytest
 import torch
 
 from stable_envs.core.style import StyleTensor
-from stable_envs.envs.craftax import (ATLAS_MAX_TILE_PX, N_BLOCK, N_COMPOSITE, N_MOB, N_PLAYER,
-                                      NO_PLAYER, OBS_H, OBS_W, CraftaxClassic, _Assets, _Composite)
+from stable_envs.envs.craftax import (ATLAS_MAX_TILE_PX, N_BLOCK, N_COUNT, N_FACING,
+                                      N_KEY_HALVES, N_MOB, N_PLAYER, N_STRIP, N_TILE, NO_PLAYER,
+                                      OBS_H, OBS_W, STRIP_H, CraftaxClassic, _Assets, _Composite)
 
 #: 7 and 16 are the sizes craftax ships textures for; 32 and 64 exercise the nearest-resample path
 #: and the top of the atlas budget; 65 is the first size that must fall back to the blend path.
@@ -36,6 +42,17 @@ SIZES = (7, 16, 32, 64)
 
 def _env(size: int, batch: int = 8) -> CraftaxClassic:
     return CraftaxClassic(batch=batch, size=size, device="cpu")
+
+
+def _with(st: np.ndarray, **kw) -> np.ndarray:
+    """``sample_states`` output with ``is_sleeping`` and/or ``light_level`` pinned."""
+    out = np.array(st, np.float32, copy=True)
+    j = OBS_H * OBS_W * 2 + 1 + N_STRIP
+    if "is_sleeping" in kw:
+        out[:, j] = kw["is_sleeping"]
+    if "light" in kw:
+        out[:, j + 1] = kw["light"]
+    return out
 
 
 def _style(env: CraftaxClassic, n: int, **fields) -> torch.Tensor:
@@ -56,8 +73,21 @@ def _cases(rng: np.random.Generator, env: CraftaxClassic, n: int):
         "uniform_ids": np.stack([
             np.concatenate([rng.integers(0, N_BLOCK, OBS_H * OBS_W),
                             rng.integers(0, N_MOB, OBS_H * OBS_W),
-                            rng.integers(0, N_PLAYER, 1)]).astype(np.float32)
+                            rng.integers(0, N_FACING, 1),
+                            rng.integers(0, N_COUNT, N_STRIP),
+                            rng.integers(0, 2, 1),
+                            rng.random(1),                       # light_level anywhere in [0, 1]
+                            rng.integers(0, 65536, N_KEY_HALVES)]).astype(np.float32)
             for _ in range(n)]),
+        # every row asleep, and every row awake, so neither path is only ever seen mixed
+        "all_asleep": _with(env.sample_states(n, rng), is_sleeping=1.0),
+        "all_awake": _with(env.sample_states(n, rng), is_sleeping=0.0),
+        # the three lighting bands, each on its own, and one batch holding all of them
+        "all_night": _with(env.sample_states(n, rng), light=0.1),
+        "all_dusk": _with(env.sample_states(n, rng), light=0.75),
+        "all_daylight": _with(env.sample_states(n, rng), light=1.0, is_sleeping=0.0),
+        "mixed_light": _with(env.sample_states(n, rng),
+                             light=np.where(rng.random(n) < 0.5, 1.0, rng.random(n))),
         # out of range in both directions, and fractional so the round() is exercised too
         "out_of_range": (rng.random((n, dim)).astype(np.float32) * 80.0 - 30.0),
     }
@@ -82,10 +112,7 @@ def _cases(rng: np.random.Generator, env: CraftaxClassic, n: int):
 def _decode(env: CraftaxClassic, states: np.ndarray):
     """The class-id decode ``render`` does, so the two paths are fed identical integers."""
     s = torch.as_tensor(states, dtype=torch.float32).reshape(-1, env.state_dim)
-    n, nb = s.shape[0], OBS_H * OBS_W
-    return (s[:, :nb].round().remainder(N_BLOCK).long().view(n, OBS_H, OBS_W),
-            s[:, nb:2 * nb].round().remainder(N_MOB).long().view(n, OBS_H, OBS_W),
-            s[:, 2 * nb].round().remainder(N_PLAYER).long())
+    return env._decode(s, s.shape[0])
 
 
 @pytest.mark.parametrize("size", SIZES)
@@ -95,11 +122,11 @@ def test_atlas_path_equals_the_pre_step6_per_frame_composite(size):
     env = _env(size)
     n = 8
     for name, states, vals in _cases(rng, env, n):
-        blk, mob, pid = _decode(env, states)
+        dec = _decode(env, states)
         sty = StyleTensor(vals, env.resolve_style(None, None, batch=n)._layout_list())
-        fast = env._render_atlas(blk, mob, pid, size, sty, None)
-        slow = env._render_blend(blk, mob, pid, size, sty)
-        assert fast.shape == slow.shape == (n, OBS_H * size, OBS_W * size, 3)
+        fast = env._render_atlas(*dec, size, sty, None)
+        slow = env._render_blend(*dec, size, sty)
+        assert fast.shape == slow.shape == (n, (OBS_H + STRIP_H) * size, OBS_W * size, 3)
         diff = (fast.int() - slow.int()).abs().max().item()
         assert diff == 0, f"size={size} case={name}: max|diff| = {diff}, atlas != per-frame blend"
 
@@ -121,12 +148,14 @@ def test_mob_zero_alpha_is_exactly_zero():
 
 @pytest.mark.parametrize("size", (7, 16))
 def test_player_slot_4_is_the_block_texture_untouched(size):
-    """Non-centre tiles and ``player_visible = 0`` both use slot 4, which must add nothing."""
+    """Non-centre tiles and ``player_visible = 0`` both use NO_PLAYER, which must add nothing."""
     block, *_ = _Assets.get(torch.device("cpu"), size)
     f32 = _Composite.get(torch.device("cpu"), size, want_float=True)[0]
-    tiles = f32.reshape(N_PLAYER + 1, N_BLOCK, N_MOB, size, size, 3)
+    # only the world half of the table has this shape; the strip cells follow it
+    world = f32[:(N_PLAYER + 1) * N_BLOCK * N_MOB * size]
+    tiles = world.reshape(N_PLAYER + 1, N_BLOCK, N_MOB, size, size, 3)
     assert torch.equal(tiles[NO_PLAYER, :, 0], block), \
-        "player slot 4 with no mob is not the block texture; the 'no player' identity is broken"
+        "the NO_PLAYER slot with no mob is not the block texture; the identity is broken"
 
 
 @pytest.mark.parametrize("size", (7, 16))
@@ -146,16 +175,19 @@ def test_atlas_is_not_written_through_by_a_render(size):
 
 
 def test_atlas_shape_and_budget():
-    """The table is 680 tiles, and the size at which it stops being a table is documented."""
-    assert N_COMPOSITE == (N_PLAYER + 1) * N_BLOCK * N_MOB == 680
+    """The table is 976 tiles, and the size at which it stops being a table is documented."""
+    from stable_envs.envs.craftax import N_COMPOSITE, STRIP_BASE
+    assert N_COMPOSITE == (N_PLAYER + 1) * N_BLOCK * N_MOB == 816
+    assert N_TILE == STRIP_BASE + N_STRIP * N_COUNT == 976
     f32, u8 = _Composite.get(torch.device("cpu"), 16, want_float=True)
-    assert f32.shape == (N_COMPOSITE * 16, 16 * 3) and u8.shape == f32.shape
-    assert u8.numel() == N_COMPOSITE * 16 * 16 * 3
+    assert f32.shape == (N_TILE * 16, 16 * 3) and u8.shape == f32.shape
+    assert u8.numel() == N_TILE * 16 * 16 * 3
     # above the budget render must not build a table at all
     env = _env(ATLAS_MAX_TILE_PX + 1, batch=1)
     states = env.sample_states(1, np.random.default_rng(0))
     img = env.render(states)
-    assert img.shape == (1, OBS_H * (ATLAS_MAX_TILE_PX + 1), OBS_W * (ATLAS_MAX_TILE_PX + 1), 3)
+    assert img.shape == (1, (OBS_H + STRIP_H) * (ATLAS_MAX_TILE_PX + 1),
+                         OBS_W * (ATLAS_MAX_TILE_PX + 1), 3)
     assert (torch.device("cpu").__str__(), ATLAS_MAX_TILE_PX + 1) not in _Composite._cache, \
         "a tile size past the budget still baked an atlas"
 
@@ -186,7 +218,7 @@ def test_out_buffer_receives_the_frame_and_is_the_returned_tensor(size):
     """``out=`` is written in place on both the uint8 gather and the gain path."""
     env = _env(size, batch=5)
     states = env.sample_states(5, np.random.default_rng(12))
-    shape = (5, OBS_H * size, OBS_W * size, 3)
+    shape = (5, (OBS_H + STRIP_H) * size, OBS_W * size, 3)
     for variation in ({}, {"channel_gain": [0.5, 1.0, 1.75]}):
         buf = torch.full(shape, 7, dtype=torch.uint8)
         got = env.render(states, variation=variation or None, out=buf)
@@ -201,8 +233,8 @@ def test_leading_dimensions_are_preserved():
     env = _env(16, batch=6)
     states = env.sample_states(6, np.random.default_rng(1)).reshape(2, 3, env.state_dim)
     img = env.render(states)
-    assert img.shape == (2, 3, OBS_H * 16, OBS_W * 16, 3)
-    assert torch.equal(img.reshape(6, OBS_H * 16, OBS_W * 16, 3),
+    assert img.shape == (2, 3, (OBS_H + STRIP_H) * 16, OBS_W * 16, 3)
+    assert torch.equal(img.reshape(6, (OBS_H + STRIP_H) * 16, OBS_W * 16, 3),
                        env.render(states.reshape(6, env.state_dim)))
 
 
@@ -217,7 +249,7 @@ def test_the_table_cache_is_bounded():
             f"the composited-atlas cache grew to {len(_Composite._cache)} entries"
     # and the frames are still right after an eviction
     for size in (7, 16):
-        blk, mob, pid = _decode(env, states)
+        dec = _decode(env, states)
         sty = env.resolve_style(None, None, batch=1)
-        assert torch.equal(env._render_atlas(blk, mob, pid, size, sty, None),
-                           env._render_blend(blk, mob, pid, size, sty))
+        assert torch.equal(env._render_atlas(*dec, size, sty, None),
+                           env._render_blend(*dec, size, sty))

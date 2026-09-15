@@ -676,7 +676,14 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     for name, cls in sorted(se.REGISTRY.items()):
         rv = reference_versions_of(cls)
         if rv:
-            rows.append((name, rv, str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))))
+            # A visual env corroborates its declared versions with ``visual_fidelity["measured_at"]``.
+            # A PARITY env cannot: ``check_fidelity_declaration`` forbids it from carrying
+            # ``visual_fidelity`` at all, so its provenance text is ``parity_note`` -- the field that
+            # already exists to say what the declared bound is and is not. Either way the rule is the
+            # same and is the point of this check: a version may not be declared without prose in the
+            # class that says the same thing, so a bump to one without the other is caught.
+            at = str((getattr(cls, "visual_fidelity", {}) or {}).get("measured_at", ""))
+            rows.append((name, rv, at or str(getattr(cls, "parity_note", "") or "")))
     for name, vf in sorted(_dmc_declaration_table().items()):
         for key in (REFERENCE_VERSIONS_KEY, MEASURED_WITH_KEY):
             if key in vf:

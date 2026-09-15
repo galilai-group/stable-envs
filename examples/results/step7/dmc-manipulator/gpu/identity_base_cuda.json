@@ -1,0 +1,246 @@
+{
+ "n": 8,
+ "device": "cuda",
+ "cells": {
+  "DMCAcrobotSwingup": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "shoulder",
+    "elbow"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "bf0fb24c6ddb42e4",
+   "default_sha": "d9ef2820e4149175",
+   "moved_style_sha": "bbdc653cce4ab37a"
+  },
+  "DMCBallInCupCatch": {
+   "size": 84,
+   "state_dim": 4,
+   "state_names": [
+    "cup_x",
+    "cup_z",
+    "ball_x",
+    "ball_z"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "94d6b4e297b4615c",
+   "default_sha": "7e1db8ade6a884fb",
+   "moved_style_sha": "bee397785ef7184c"
+  },
+  "DMCCartpoleBalance": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "slider",
+    "hinge_1"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "3d581309d29e494f",
+   "default_sha": "3f4376199adc5149",
+   "moved_style_sha": "c1751e5b1330254a"
+  },
+  "DMCCartpoleSwingup": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "slider",
+    "hinge_1"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "5df7d4986af8a561",
+   "default_sha": "4ebeb4ae947a6f21",
+   "moved_style_sha": "6a7566404f04df27"
+  },
+  "DMCCheetahRun": {
+   "SKIP": "ModuleNotFoundError: No module named 'warp'"
+  },
+  "DMCFingerSpin": {
+   "size": 84,
+   "state_dim": 3,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "a30b37a16fd67c38",
+   "default_sha": "215c9dad00597a84",
+   "moved_style_sha": "ec3c486255d06109"
+  },
+  "DMCFingerTurnEasy": {
+   "size": 84,
+   "state_dim": 5,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge",
+    "target_pos_x",
+    "target_pos_z"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "aee98e27d19be76d",
+   "default_sha": "02c0862e654bb43e",
+   "moved_style_sha": "885871adad5fcbdc"
+  },
+  "DMCFingerTurnHard": {
+   "size": 84,
+   "state_dim": 5,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge",
+    "target_pos_x",
+    "target_pos_z"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "aee98e27d19be76d",
+   "default_sha": "33948dc4bca62b1a",
+   "moved_style_sha": "885871adad5fcbdc"
+  },
+  "DMCHopperHop": {
+   "SKIP": "ModuleNotFoundError: No module named 'warp'"
+  },
+  "DMCHumanoidStand": {
+   "SKIP": "ModuleNotFoundError: No module named 'warp'"
+  },
+  "DMCPendulumSwingup": {
+   "size": 84,
+   "state_dim": 1,
+   "state_names": [
+    "hinge"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "ec11b71a0b3e2133",
+   "default_sha": "71497fabf16dc8f0",
+   "moved_style_sha": "2c8c3b19424a0c9f"
+  },
+  "DMCPointMassEasy": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "root_x",
+    "root_y"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self",
+    "material.target"
+   ],
+   "states_sha": "30a7792073fd07f5",
+   "default_sha": "717273c7f6b34aef",
+   "moved_style_sha": "4c276b3b5cd529c1"
+  },
+  "DMCReacherEasy": {
+   "size": 84,
+   "state_dim": 4,
+   "state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "0e6c9b4a0fa0ebea",
+   "default_sha": "95eefdc4c76d837c",
+   "moved_style_sha": "71a006a48645c8c7"
+  },
+  "DMCReacherHard": {
+   "size": 84,
+   "state_dim": 4,
+   "state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "0e6c9b4a0fa0ebea",
+   "default_sha": "dcf99f3f58fb88d8",
+   "moved_style_sha": "71a006a48645c8c7"
+  },
+  "DMCSwimmerSwimmer6": {
+   "SKIP": "ModuleNotFoundError: No module named 'warp'"
+  },
+  "DMCWalkerWalk": {
+   "SKIP": "ModuleNotFoundError: No module named 'warp'"
+  }
+ }
+}

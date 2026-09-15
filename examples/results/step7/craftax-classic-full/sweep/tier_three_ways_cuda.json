@@ -1,0 +1,43 @@
+{
+ "env": "CraftaxClassic",
+ "device": "cuda",
+ "evaluator": "scratch/step3/certify.py:classify (frozen Step-2 ladder, not restated here)",
+ "jitted_official_fps": 386.71317624569355,
+ "unjitted_official_fps": 1.581005514656074,
+ "baseline_label": "GPU_FAST",
+ "baseline_fps": 1174912.833797808,
+ "labels": {
+  "as_measured": {
+   "tier": "GPU_EXCEPTIONAL",
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "ratio": 29213.89612802754,
+   "cores": 15.396100103559037,
+   "fps": 46187.33088300127,
+   "best_batch": 4096
+  },
+  "vs_jitted": {
+   "tier": "GPU_FASTER",
+   "qualifiers": [
+    "BATCH_SCALES"
+   ],
+   "ratio": 119.43562754028507,
+   "cores": 15.396100103559037,
+   "fps": 46187.33088300127,
+   "best_batch": 4096
+  },
+  "no_reference": {
+   "tier": "GPU_FAST",
+   "qualifiers": [
+    "NO_REFERENCE",
+    "BATCH_SCALES"
+   ],
+   "ratio": null,
+   "cores": 15.396100103559037,
+   "fps": 46187.33088300127,
+   "best_batch": 4096
+  }
+ },
+ "note": "as_measured is what the harness produces and it is NOT a defensible performance claim: the ratio is against a renderer nobody runs. Which of vs_jitted and no_reference is correct is Sami's ruling; both are recorded so it can be made on numbers."
+}

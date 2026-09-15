@@ -1,0 +1,158 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024,
+  4096
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.9929354411617161,
+     "fps": 1466.0192567106305,
+     "gb_per_s": 0.07093187571668715,
+     "loadavg": 6.6,
+     "peak_gb": 0.000756224,
+     "seconds_per_batch": 0.0006821192800998688,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 682.1192800998688
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9922585799999044,
+     "fps": 23066.667182246856,
+     "gb_per_s": 1.1160576249458318,
+     "loadavg": 6.6,
+     "peak_gb": 0.001595392,
+     "seconds_per_batch": 0.0006936416029930115,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 43.35260018706322
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.991943193397447,
+     "fps": 92891.77422476953,
+     "gb_per_s": 4.4944756040912495,
+     "loadavg": 6.6,
+     "peak_gb": 0.004282368,
+     "seconds_per_batch": 0.0006889738142490387,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 10.76521584764123
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9925250997596611,
+     "fps": 312547.3656404495,
+     "gb_per_s": 15.122291739147512,
+     "loadavg": 6.6,
+     "peak_gb": 0.015225856,
+     "seconds_per_batch": 0.0008190758526325226,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 3.1995150493457913
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9927551167718578,
+     "fps": 753422.487573971,
+     "gb_per_s": 36.45359363877901,
+     "loadavg": 6.6,
+     "peak_gb": 0.058809344,
+     "seconds_per_batch": 0.0013591311872005463,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 1.3272765500005335
+    },
+    {
+     "batch": 4096,
+     "cpu_frac": 0.9948036329367244,
+     "fps": 1174912.833797808,
+     "gb_per_s": 56.84698255047315,
+     "loadavg": 6.63,
+     "peak_gb": 0.231343104,
+     "seconds_per_batch": 0.0034862160682678223,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 0.8511269697919488
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 172.8293971099027,
+    "decode_fps_per_core": 3572.036150584959,
+    "h": 112,
+    "jpeg_bytes": 7845,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 3166.939807467527,
+    "n": 2480,
+    "raw_bytes": 48384,
+    "w": 144
+   },
+   "device": "cuda",
+   "env": "CraftaxClassic",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 386.71317624569355,
+     "gb_per_s": 0.00029699571935669263,
+     "seconds_per_frame": 0.002585895856221517,
+     "us_per_frame": 2585.8958562215166
+    },
+    "size": 16
+   },
+   "projected_to": [
+    "swm/CraftaxClassicPixels-v1"
+   ],
+   "reference_id": "Craftax-Classic-Pixels-v1",
+   "renderer_class": "CraftaxClassic",
+   "seconds": 15.66,
+   "shape": "112x144",
+   "size": 16,
+   "state_dim": 127,
+   "states_source": "sample_states",
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "AMD EPYC 7532 32-Core Processor",
+  "cpu_count_logical": 64,
+  "cpu_count_physical": 64,
+  "cuda": "12.6",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce RTX 3090",
+  "device_total_gb": 25.3,
+  "driver": "575.57.08",
+  "git_commit": null,
+  "git_commit_source": null,
+  "git_dirty": null,
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "loadavg_end": 7.0,
+  "loadavg_start": 6.6,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6395847",
+  "slurm_nodelist": "gpu2107",
+  "stable_envs_file": "/oscar/scratch/sboughan/se7/baseline/stable_envs/__init__.py",
+  "timestamp": "2026-09-15T00:36:35-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1,
+  "tree_root": "/oscar/scratch/sboughan/se7/baseline"
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "states_in": null,
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

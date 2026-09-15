@@ -1,0 +1,40 @@
+{
+ "host": "gpu2107.oscar.ccv.brown.edu",
+ "device": "cuda",
+ "spread_max": 1.25,
+ "loadavg_at_verdict": [
+  7.17,
+  7.05,
+  8.75
+ ],
+ "loadavg_source": "this process",
+ "cells": {
+  "baseA": {
+   "batch": 4096,
+   "fps": 1174912.833797808
+  },
+  "branch": {
+   "batch": 4096,
+   "fps": 46187.33088300127
+  },
+  "baseB": {
+   "batch": 4096,
+   "fps": 1149219.989188353
+  }
+ },
+ "baseline_spread": 1.0224,
+ "baseline_mean_fps": 1162066,
+ "baseline_known_fps": 1206822.0,
+ "baseline_frac_of_known": 0.9629,
+ "node_cores": 64,
+ "load_per_core": 0.11,
+ "cpus_allocated": 4,
+ "ratio_branch_over_baseline": 0.0397,
+ "verdict": "USABLE",
+ "why": "baseline legs agree to 1.022x, the baseline reproduces its known 1,206,822 f/s to 0.96x, and loadavg is 0.11 per node core",
+ "gates": {
+  "spread": true,
+  "baseline_floor": true,
+  "load": true
+ }
+}

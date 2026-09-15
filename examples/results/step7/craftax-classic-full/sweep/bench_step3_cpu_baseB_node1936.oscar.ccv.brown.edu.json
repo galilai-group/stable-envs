@@ -1,0 +1,141 @@
+{
+ "batches": [
+  1,
+  16,
+  64,
+  256,
+  1024
+ ],
+ "envs": [
+  {
+   "backend": "auto",
+   "cells": [
+    {
+     "batch": 1,
+     "cpu_frac": 0.993350674347481,
+     "fps": 1222.8653636336717,
+     "gb_per_s": 0.059167117754051576,
+     "loadavg": 15.6,
+     "peak_gb": 0.622108672,
+     "seconds_per_batch": 0.0008177515119314194,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 817.7515119314194
+    },
+    {
+     "batch": 16,
+     "cpu_frac": 0.9941673829239802,
+     "fps": 1195.894027668103,
+     "gb_per_s": 0.0578621366346935,
+     "loadavg": 15.6,
+     "peak_gb": 0.637771776,
+     "seconds_per_batch": 0.013379111886024475,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 836.1944928765297
+    },
+    {
+     "batch": 64,
+     "cpu_frac": 0.9952689907365816,
+     "fps": 1258.9968806612467,
+     "gb_per_s": 0.06091530507391376,
+     "loadavg": 15.71,
+     "peak_gb": 0.686710784,
+     "seconds_per_batch": 0.05083412118256092,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 794.2831434775144
+    },
+    {
+     "batch": 256,
+     "cpu_frac": 0.9956053090980542,
+     "fps": 1016.3424208217729,
+     "gb_per_s": 0.04917471168904066,
+     "loadavg": 15.71,
+     "peak_gb": 0.894332928,
+     "seconds_per_batch": 0.2518836120143533,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 983.9203594310675
+    },
+    {
+     "batch": 1024,
+     "cpu_frac": 0.9959330721817898,
+     "fps": 1041.899840683212,
+     "gb_per_s": 0.050411281891616526,
+     "loadavg": 15.52,
+     "peak_gb": 1.689214976,
+     "seconds_per_batch": 0.9828199986368418,
+     "size": null,
+     "supersample": 1,
+     "us_per_frame": 959.7851549187908
+    }
+   ],
+   "decode": {
+    "decode_MBps_raw": 186.5199436336631,
+    "decode_fps_per_core": 3854.992221264532,
+    "h": 112,
+    "jpeg_bytes": 7845,
+    "jpeg_quality": 90,
+    "load_decode_fps_per_core": 3339.8135208214494,
+    "n": 2480,
+    "raw_bytes": 48384,
+    "w": 144
+   },
+   "device": "cpu",
+   "env": "CraftaxClassic",
+   "fidelity_tier": "parity",
+   "official_cpu": {
+    "frames": 60,
+    "set_state_render": {
+     "fps": 372.42955712264853,
+     "gb_per_s": 0.00028602589987019407,
+     "seconds_per_frame": 0.0026850715279579163,
+     "us_per_frame": 2685.0715279579163
+    },
+    "size": 16
+   },
+   "projected_to": [
+    "swm/CraftaxClassicPixels-v1"
+   ],
+   "reference_id": "Craftax-Classic-Pixels-v1",
+   "renderer_class": "CraftaxClassic",
+   "seconds": 24.31,
+   "shape": "112x144",
+   "size": 16,
+   "state_dim": 127,
+   "states_source": "sample_states",
+   "supersample": 1
+  }
+ ],
+ "provenance": {
+  "arch": "x86_64",
+  "certification_spec_version": 1,
+  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "cpu_count_logical": 48,
+  "cpu_count_physical": 48,
+  "device": "cpu",
+  "git_commit": null,
+  "git_commit_source": null,
+  "git_dirty": null,
+  "host": "node1936.oscar.ccv.brown.edu",
+  "loadavg_end": 15.6,
+  "loadavg_start": 15.6,
+  "mujoco_gl": "egl",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "python": "3.12.9",
+  "slurm_job_id": "6395321",
+  "slurm_nodelist": "node1936",
+  "stable_envs_file": "/oscar/scratch/sboughan/se6/baseline/stable_envs/__init__.py",
+  "timestamp": "2026-09-15T00:04:09-0400",
+  "torch": "2.14.0+cu126",
+  "torch_threads": 1,
+  "tree_root": "/oscar/scratch/sboughan/se6/baseline"
+ },
+ "reps": 25,
+ "ss_request": "native",
+ "states_in": null,
+ "states_out": null,
+ "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the stable-envs envs that back them",
+ "what": "Step 3 raw renderer benchmark shard"
+}

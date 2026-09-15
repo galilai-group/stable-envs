@@ -126,7 +126,18 @@ running `N_DRAWS = 6` real episodes and diffing every model array a renderer rea
 | `fish-swim` | `geom_pos['target']` x,y,z | all three | nq + **3** |
 | **`finger-spin`** | `site_rgba['target'/'tip']` alpha → 0, `dof_damping` | **nothing** | nq |
 | **`fish-upright`** | `geom_rgba['target']` alpha → 0 | **nothing** | nq |
+| `manipulator-bring_ball` | `body_pos['target_ball']` x,z, `body_quat['target_ball']` qw,qy | all four | nq + **4** |
 | `ball_in_cup-catch`, `cheetah`, `walker`, `hopper`, `humanoid` | nothing | nothing | nq |
+
+`manipulator` is the row that made the census's GUARD wrong rather than its method. It is the only
+domain here whose episode draws a **body** rather than a geom or a site, and the only one that draws an
+**orientation** — `Bring.initialize_episode` writes `model.body_quat[target, ['qw','qy']]`. Both had
+consequences. The guard refused every `*_quat` slot on the grounds that "the mover primitives carry one
+size and one orientation for the whole batch", which is true of size (`_prims` reads `geom_size` once at
+bake time and `screen_span` bounds from it) and false of orientation (`_fk` runs `mj_kinematics` and
+reads `d.geom_xmat` into a per-row `(B,P,3,3)`) — so it is now `("_size", "_dir")`. And `_hideable`
+skipped any slot that was not a geom or a site, so the cell declared no `visibility.*` leaf at all; a
+body slot now resolves to the drawn geoms hanging off it, named by the body.
 
 `finger-spin` and `fish-upright` write their model at *every* reset and write the same value every
 time, so one reset cannot separate a task constant from an episode draw and six can. The consequence is
@@ -594,7 +605,8 @@ because the plate holds that falloff exactly — MuJoCo painted it.
 |---|---|---|
 | `fish-swim`, `fish-upright` | top-down camera over a spotlit floor that fills 97% of the frame; MJWarp renders the radial falloff flat (mean 24.9/255, 1.2% within 8) | **no.** A spotlight-aware shader, or a backend with per-world moving lights and a mipmapped floor. The state is measured and would be `qpos + 3`. |
 | `dog`, `quadruped` | the only two suite XMLs with `<mesh>`; `quadruped` compiles to `nmesh = 0` but `dog` does not | mesh assets are out of scope for an analytic caster, as in RoboCasa. MJWarp ships a BVH mesh intersector, so a visual-tier port is not blocked on geometry. |
-| `manipulator`, `stacker` | not re-probed since the first pass; both have fixed cameras and `nmesh = 0`, so the plate design should apply | untested, not refuted. |
+| ~~`manipulator`~~ | **measured in Step 7 and it SHIPS** as `DMCManipulatorBringBall`. The plate design applied with no new renderer capability: the directional `castshadow` light, the `fovy = 4` camera and the three textured planes all went through unchanged. What it needed was the `_episode_slots` guard narrowed from `("_size", "_quat", "_dir")` to `("_size", "_dir")` — its episode draws `body_quat['target_ball']`, and orientation is already per row through `mj_kinematics` → `d.geom_xmat` → `(B,P,3,3)` while a SIZE really is shared at bake time. Interior-pixel agreement **1.000000, 0 bad of 16,612,773** over 12 draws of 64 states at 224 px. | resolved. One declared residual: `check_state_dims_matter` fails on `ball_y` and the two `target_ball` quaternion slots, which orient untextured SPHERES — see `STATE_DIMS_NOTE` and §2.1. |
+| `stacker` | not re-probed since the first pass; fixed camera and `nmesh = 0`, and `manipulator` is now the worked precedent for exactly that configuration | untested, not refuted — but no longer speculative: the sibling shipped. |
 
 None of these is a NO-GO on the thesis. Every one of the 17 domains passes state sufficiency with zero
 dead dimensions; what varies is how much renderer each needs.

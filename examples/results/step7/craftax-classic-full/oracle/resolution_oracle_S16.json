@@ -1,0 +1,272 @@
+{
+ "what": "check_resolution_consistency's exact protocol applied to the OFFICIAL craftax renderer, to decide whether night resolution-inconsistency is a property of the reference or of this port",
+ "size_S": 16,
+ "factor": 2,
+ "reference": "craftax 1.6.1, un-jitted, per-state state_rng",
+ "jax": "0.11.1",
+ "jax_threefry_partitionable": true,
+ "official_textures_at_2S": "craftax.craftax_classic.constants.load_all_textures_given_size(32)",
+ "downsample": "stable_envs.testing.conformance._box_downsample (the check's own)",
+ "corpus": "examples/results/step7/craftax-classic-full/corpus/states.npz",
+ "protocol": {
+  "n": 8,
+  "state_seed": 20260809,
+  "draw": "render_worker.sample_inputs(env, n)",
+  "style": "default appearance",
+  "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)",
+  "states_sha256": "b8ccf78b080e118fcf6f2fa361c617c4f8fd5dce71993ca45754b44fe154dbda",
+  "n_states": 8
+ },
+ "bands": {
+  "corpus_night": {
+   "n_states": 23,
+   "light_min": 0.0006578052998520434,
+   "light_max": 0.4946337044239044,
+   "official": {
+    "frame": {
+     "exact_frac": 0.2785368022007515,
+     "mean_abs": 6.941595656646985,
+     "max_abs": 255
+    },
+    "world_rows": {
+     "exact_frac": 0.16341011042098,
+     "mean_abs": 3.665129147975615,
+     "max_abs": 38
+    },
+    "strip_rows": {
+     "exact_frac": 0.6814802234299517,
+     "mean_abs": 18.40922843699678,
+     "max_abs": 255
+    }
+   },
+   "ours": {
+    "frame": {
+     "exact_frac": 0.34931897477187335,
+     "mean_abs": 2.850656003981034,
+     "max_abs": 38
+    },
+    "world_rows": {
+     "exact_frac": 0.16341011042098,
+     "mean_abs": 3.665129147975615,
+     "max_abs": 38
+    },
+    "strip_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    }
+   },
+   "parity_at_S": {
+    "exact_frac": 1.0,
+    "mean_abs": 0.0,
+    "max_abs": 0
+   },
+   "states_sha256": "c008fe499c44aa55",
+   "official_is_resolution_consistent": {
+    "frame": false,
+    "world_rows": false,
+    "strip_rows": false
+   }
+  },
+  "corpus_dusk": {
+   "n_states": 25,
+   "light_min": 0.5066707134246826,
+   "light_max": 0.9999908208847046,
+   "official": {
+    "frame": {
+     "exact_frac": 0.9317322530864197,
+     "mean_abs": 3.9057536008230453,
+     "max_abs": 255
+    },
+    "world_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    },
+    "strip_rows": {
+     "exact_frac": 0.6927951388888889,
+     "mean_abs": 17.575891203703705,
+     "max_abs": 255
+    }
+   },
+   "ours": {
+    "frame": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    },
+    "world_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    },
+    "strip_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    }
+   },
+   "parity_at_S": {
+    "exact_frac": 1.0,
+    "mean_abs": 0.0,
+    "max_abs": 0
+   },
+   "states_sha256": "6d9ce9327ceaccf6",
+   "official_is_resolution_consistent": {
+    "frame": false,
+    "world_rows": true,
+    "strip_rows": false
+   }
+  },
+  "corpus_daylight": {
+   "n_states": 16,
+   "light_min": 1.0,
+   "light_max": 1.0,
+   "official": {
+    "frame": {
+     "exact_frac": 0.9318546248070988,
+     "mean_abs": 3.8960362815072016,
+     "max_abs": 255
+    },
+    "world_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    },
+    "strip_rows": {
+     "exact_frac": 0.6933458116319444,
+     "mean_abs": 17.53216326678241,
+     "max_abs": 255
+    }
+   },
+   "ours": {
+    "frame": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    },
+    "world_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    },
+    "strip_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    }
+   },
+   "parity_at_S": {
+    "exact_frac": 1.0,
+    "mean_abs": 0.0,
+    "max_abs": 0
+   },
+   "states_sha256": "e98d61a778c0a98c",
+   "official_is_resolution_consistent": {
+    "frame": false,
+    "world_rows": true,
+    "strip_rows": false
+   }
+  },
+  "downsample_protocol_draw": {
+   "n_states": 8,
+   "light_min": 0.16707907617092133,
+   "light_max": 1.0,
+   "official": {
+    "frame": {
+     "exact_frac": 0.7439959490740741,
+     "mean_abs": 4.9349340117026745,
+     "max_abs": 255
+    },
+    "world_rows": {
+     "exact_frac": 0.7639198908730159,
+     "mean_abs": 0.9944067253637566,
+     "max_abs": 21
+    },
+    "strip_rows": {
+     "exact_frac": 0.6742621527777778,
+     "mean_abs": 18.72677951388889,
+     "max_abs": 255
+    }
+   },
+   "ours": {
+    "frame": {
+     "exact_frac": 0.816382137345679,
+     "mean_abs": 0.7734274530606996,
+     "max_abs": 21
+    },
+    "world_rows": {
+     "exact_frac": 0.7639198908730159,
+     "mean_abs": 0.9944067253637566,
+     "max_abs": 21
+    },
+    "strip_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    }
+   },
+   "parity_at_S": {
+    "exact_frac": 1.0,
+    "mean_abs": 0.0,
+    "max_abs": 0
+   },
+   "states_sha256": "827104067f0ebc80",
+   "official_is_resolution_consistent": {
+    "frame": false,
+    "world_rows": false,
+    "strip_rows": false
+   }
+  },
+  "protocol_draw_night_only": {
+   "n_states": 2,
+   "light_min": 0.16707907617092133,
+   "light_max": 0.23758666217327118,
+   "official": {
+    "frame": {
+     "exact_frac": 0.1976514274691358,
+     "mean_abs": 6.947538901748971,
+     "max_abs": 255
+    },
+    "world_rows": {
+     "exact_frac": 0.055679563492063495,
+     "mean_abs": 3.9776269014550265,
+     "max_abs": 21
+    },
+    "strip_rows": {
+     "exact_frac": 0.6945529513888888,
+     "mean_abs": 17.34223090277778,
+     "max_abs": 255
+    }
+   },
+   "ours": {
+    "frame": {
+     "exact_frac": 0.26552854938271603,
+     "mean_abs": 3.0937098122427984,
+     "max_abs": 21
+    },
+    "world_rows": {
+     "exact_frac": 0.055679563492063495,
+     "mean_abs": 3.9776269014550265,
+     "max_abs": 21
+    },
+    "strip_rows": {
+     "exact_frac": 1.0,
+     "mean_abs": 0.0,
+     "max_abs": 0
+    }
+   },
+   "parity_at_S": {
+    "exact_frac": 1.0,
+    "mean_abs": 0.0,
+    "max_abs": 0
+   },
+   "states_sha256": "32e58676073d7477",
+   "official_is_resolution_consistent": {
+    "frame": false,
+    "world_rows": false,
+    "strip_rows": false
+   }
+  }
+ }
+}
