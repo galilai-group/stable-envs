@@ -1,0 +1,103 @@
+{
+  "tag": "ref_gpu2109.oscar.ccv.brown.edu",
+  "device": "cuda",
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "machine": "x86_64",
+  "torch": "2.14.0+cu126",
+  "threads": 1,
+  "note": "one torch thread; a local laptop number is NOT a certification number",
+  "jax_default_backend": "cpu",
+  "jax_devices": [
+    "cpu:0"
+  ],
+  "jax_version": "0.11.1",
+  "allowed_cpus": [
+    38,
+    39,
+    40,
+    41
+  ],
+  "n_allowed_cpus": 4,
+  "slurm_cpus_per_task": "4",
+  "omp_num_threads": null,
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "bands": {
+    "10px_B256": {
+      "level0_day": {
+        "fps": 111021.84300380532,
+        "ms_per_frame": 0.009007236530614292
+      },
+      "underground_lit": {
+        "fps": 110816.13930461103,
+        "ms_per_frame": 0.009023956314262163
+      },
+      "underground_dark": {
+        "fps": 88304.91977512902,
+        "ms_per_frame": 0.011324397355736558
+      },
+      "level0_dusk": {
+        "fps": 88346.85333438225,
+        "ms_per_frame": 0.011319022265740693
+      },
+      "level0_night": {
+        "fps": 36859.73565399003,
+        "ms_per_frame": 0.027129874434998858
+      },
+      "sleeping": {
+        "fps": 53070.709427935246,
+        "ms_per_frame": 0.01884278561148501
+      }
+    },
+    "10px_B4096": {
+      "level0_day": {
+        "fps": 939154.6825391742,
+        "ms_per_frame": 0.0010647873226765155
+      },
+      "underground_lit": {
+        "fps": 937134.4533387877,
+        "ms_per_frame": 0.001067082739768277
+      },
+      "underground_dark": {
+        "fps": 217414.6392129329,
+        "ms_per_frame": 0.0045995062872496535
+      },
+      "level0_dusk": {
+        "fps": 218043.05506199863,
+        "ms_per_frame": 0.004586250177588362
+      },
+      "level0_night": {
+        "fps": 44652.30903337709,
+        "ms_per_frame": 0.02239525842331046
+      },
+      "sleeping": {
+        "fps": 94319.71013522733,
+        "ms_per_frame": 0.010602237841552816
+      }
+    }
+  },
+  "mixed": {
+    "10px_B256": {
+      "fps": 52801.952672148,
+      "ms_per_frame": 0.01893869354054174
+    },
+    "10px_B4096": {
+      "fps": 94343.85554335677,
+      "ms_per_frame": 0.010599524412487455
+    }
+  },
+  "band_summary": {
+    "at": "10px_B4096",
+    "fastest_band": "level0_day",
+    "slowest_band": "level0_night",
+    "ratio_fastest_over_slowest": 21.032611814926902,
+    "tier_is": "the mixed-corpus number; the bands are diagnostics",
+    "flagged_slower_band": "level0_night -- the reference performs a per-pixel float post-process there (light map, noise field, tint, daylight blend) against a single uint8 gather when the frame is fully lit and awake"
+  },
+  "decode_bar": {
+    "size": 10,
+    "fps_per_core": 4323.26774983142,
+    "jpeg_q90_bytes": 10081,
+    "frame_bytes": 42900
+  }
+}

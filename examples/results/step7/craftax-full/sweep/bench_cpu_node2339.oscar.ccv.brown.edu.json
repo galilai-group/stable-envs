@@ -1,0 +1,248 @@
+{
+  "tag": "node2339.oscar.ccv.brown.edu",
+  "device": "cpu",
+  "host": "node2339.oscar.ccv.brown.edu",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "machine": "x86_64",
+  "torch": "2.14.0+cu126",
+  "threads": 1,
+  "note": "one torch thread; a local laptop number is NOT a certification number",
+  "jax_default_backend": "cpu",
+  "jax_devices": [
+    "cpu:0"
+  ],
+  "jax_version": "0.11.1",
+  "allowed_cpus": [
+    1
+  ],
+  "n_allowed_cpus": 1,
+  "slurm_cpus_per_task": "1",
+  "omp_num_threads": "1",
+  "bands": {
+    "10px_B1": {
+      "level0_day": {
+        "fps": 813.7225281674665,
+        "ms_per_frame": 1.2289201360223334
+      },
+      "underground_lit": {
+        "fps": 827.0474100227884,
+        "ms_per_frame": 1.2091205266847351
+      },
+      "underground_dark": {
+        "fps": 612.5193271103013,
+        "ms_per_frame": 1.632601545354865
+      },
+      "level0_dusk": {
+        "fps": 606.697763615145,
+        "ms_per_frame": 1.648267160309402
+      },
+      "level0_night": {
+        "fps": 329.74209012601625,
+        "ms_per_frame": 3.0326732011003927
+      },
+      "sleeping": {
+        "fps": 329.73068221930924,
+        "ms_per_frame": 3.032778124466087
+      }
+    },
+    "10px_B16": {
+      "level0_day": {
+        "fps": 5559.101549157468,
+        "ms_per_frame": 0.1798851830925015
+      },
+      "underground_lit": {
+        "fps": 5512.512321243841,
+        "ms_per_frame": 0.18140549022380426
+      },
+      "underground_dark": {
+        "fps": 1601.9149772440965,
+        "ms_per_frame": 0.6242528562410851
+      },
+      "level0_dusk": {
+        "fps": 1599.83033323721,
+        "ms_per_frame": 0.6250662831079901
+      },
+      "level0_night": {
+        "fps": 716.7394265601849,
+        "ms_per_frame": 1.3952071881956525
+      },
+      "sleeping": {
+        "fps": 1503.568688497989,
+        "ms_per_frame": 0.6650843474260987
+      }
+    },
+    "10px_B256": {
+      "level0_day": {
+        "fps": 9164.800302816508,
+        "ms_per_frame": 0.10911312488638537
+      },
+      "underground_lit": {
+        "fps": 9159.486896129829,
+        "ms_per_frame": 0.10917642127121023
+      },
+      "underground_dark": {
+        "fps": 1688.998388720697,
+        "ms_per_frame": 0.5920668762493213
+      },
+      "level0_dusk": {
+        "fps": 1751.3706162347507,
+        "ms_per_frame": 0.5709813735198362
+      },
+      "level0_night": {
+        "fps": 548.675471007705,
+        "ms_per_frame": 1.8225709965918213
+      },
+      "sleeping": {
+        "fps": 1380.415865673951,
+        "ms_per_frame": 0.7244193759768016
+      }
+    },
+    "16px_B1": {
+      "level0_day": {
+        "fps": 747.2872475275344,
+        "ms_per_frame": 1.3381735113352835
+      },
+      "underground_lit": {
+        "fps": 748.1440848556596,
+        "ms_per_frame": 1.3366409228416627
+      },
+      "underground_dark": {
+        "fps": 489.20238317775284,
+        "ms_per_frame": 2.044143762146489
+      },
+      "level0_dusk": {
+        "fps": 474.7846912963655,
+        "ms_per_frame": 2.1062178674497103
+      },
+      "level0_night": {
+        "fps": 231.13885191572066,
+        "ms_per_frame": 4.326403768608431
+      },
+      "sleeping": {
+        "fps": 231.73014945410767,
+        "ms_per_frame": 4.315364238773954
+      }
+    },
+    "16px_B16": {
+      "level0_day": {
+        "fps": 3330.272489404126,
+        "ms_per_frame": 0.3002757291427905
+      },
+      "underground_lit": {
+        "fps": 3284.3096344209544,
+        "ms_per_frame": 0.30447799120995683
+      },
+      "underground_dark": {
+        "fps": 1122.881557864021,
+        "ms_per_frame": 0.8905658775821645
+      },
+      "level0_dusk": {
+        "fps": 1111.311007803404,
+        "ms_per_frame": 0.8998381128038863
+      },
+      "level0_night": {
+        "fps": 313.3554452700146,
+        "ms_per_frame": 3.19126415415667
+      },
+      "sleeping": {
+        "fps": 633.2266238460672,
+        "ms_per_frame": 1.5792134479852393
+      }
+    },
+    "16px_B256": {
+      "level0_day": {
+        "fps": 4359.125954880499,
+        "ms_per_frame": 0.22940378652752508
+      },
+      "underground_lit": {
+        "fps": 4353.29404335482,
+        "ms_per_frame": 0.22971110842523296
+      },
+      "underground_dark": {
+        "fps": 700.7965235822248,
+        "ms_per_frame": 1.4269477178459056
+      },
+      "level0_dusk": {
+        "fps": 705.5339319196871,
+        "ms_per_frame": 1.4173662736235808
+      },
+      "level0_night": {
+        "fps": 133.2235090537657,
+        "ms_per_frame": 7.506182708311826
+      },
+      "sleeping": {
+        "fps": 377.93484971741475,
+        "ms_per_frame": 2.645958690360809
+      }
+    }
+  },
+  "mixed": {
+    "10px_B1": {
+      "fps": 338.25871393056656,
+      "ms_per_frame": 2.95631704023231
+    },
+    "10px_B16": {
+      "fps": 1355.0323372768592,
+      "ms_per_frame": 0.7379897678380503
+    },
+    "10px_B256": {
+      "fps": 1296.2597458170167,
+      "ms_per_frame": 0.7714503233067014
+    },
+    "16px_B1": {
+      "fps": 232.7504068594658,
+      "ms_per_frame": 4.296447913853908
+    },
+    "16px_B16": {
+      "fps": 626.116068872875,
+      "ms_per_frame": 1.5971479566084057
+    },
+    "16px_B256": {
+      "fps": 387.4184960709323,
+      "ms_per_frame": 2.5811880695982836
+    }
+  },
+  "band_summary": {
+    "at": "10px_B256",
+    "fastest_band": "level0_day",
+    "slowest_band": "level0_night",
+    "ratio_fastest_over_slowest": 16.70349922146931,
+    "tier_is": "the mixed-corpus number; the bands are diagnostics",
+    "flagged_slower_band": "level0_night -- the reference performs a per-pixel float post-process there (light map, noise field, tint, daylight blend) against a single uint8 gather when the frame is fully lit and awake"
+  },
+  "decode_bar": {
+    "size": 10,
+    "fps_per_core": 4106.038126424945,
+    "jpeg_q90_bytes": 9992,
+    "frame_bytes": 42900
+  },
+  "official": {
+    "10": {
+      "unjitted_bridge_fps": 0.4302072488789429,
+      "jitted_renderer_fps": 613.434177671612,
+      "ratio": 1425.9038620807335
+    },
+    "16": {
+      "unjitted_bridge_fps": 0.5043222369927777,
+      "jitted_renderer_fps": 268.9635983008956,
+      "ratio": 533.3169520834502
+    }
+  },
+  "S_cpu": {
+    "10": {
+      "ours_mixed_fps": 1296.2597458170167,
+      "vs_unjitted": 3013.1053095801612,
+      "vs_jitted": 2.1131195375144873,
+      "ruling": "NEITHER certifies anything yet. The parity claim requires the un-jitted reference and the Step-3 denominator is read through the same reference_render hook; the two differ by ~500x. Escalated with W1's."
+    },
+    "16": {
+      "ours_mixed_fps": 387.4184960709323,
+      "vs_unjitted": 768.1963388746638,
+      "vs_jitted": 1.440412377430787,
+      "ruling": "NEITHER certifies anything yet. The parity claim requires the un-jitted reference and the Step-3 denominator is read through the same reference_render hook; the two differ by ~500x. Escalated with W1's."
+    }
+  },
+  "cores_cpu": {
+    "10": 0.3156959837939077
+  }
+}
