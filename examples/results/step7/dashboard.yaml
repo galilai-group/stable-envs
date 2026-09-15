@@ -673,7 +673,7 @@ workstreams:
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: ab3c6b6c (job 6398530 results; button-bit fix; re-measurement 6398733 queued)
+  head_sha: f60a4947 (item 5 bounded)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -780,6 +780,13 @@ workstreams:
       regression: tests/unit 763/1/6 same pre-existing failure; 15 local families + locomotion/trackcom/quadruped/manipulator models identical to 76dc5116; no OGB name in mjwarp.py
     item5_ruling: 'documented coverage limit; bounding checks requested: (1) if any of the 49 frozen Step-4 configs is RoboCasa/MetaWorld/HumanoidBench, replay its frozen digest in Step 6''s venv for that
       shard; (2) static grep of those families'' light cutoffs where assets are reachable; remainder = Step-8 carry-over'
+    item5_result:
+      check1: zero of the 49 frozen Step-4 configs belong to robocasa/metaworld/humanoidbench (static from the registering source; corroborated by four Oscar venv registries) -> no frozen digest needs replay
+      check2: 'RoboCasa pinned kitchen scratch/robocasa/out/pinned_scene.xml has exactly one light: directional, castshadow false, no cutoff -> rule provably cannot fire; MetaWorld/HumanoidBench XMLs unreachable
+        in every venv -> unanswerable, recorded'
+      claim: no registered, frozen or certified artifact is affected; 'these families are unaffected' is NOT shown for MetaWorld/HumanoidBench (Step-8 carry-over)
+      correction: 'the three do not refuse without CUDA; real causes: RoboCasa kitchen cache + mujoco 3.3.1 pin; metaworld absent + 3.3.0 pin; HumanoidBench deliberately unregistered (mujoco_warp batched
+        render not bit-reproducible in long sessions)'
   cells:
     commit: 527cc9f
     state: OGBCube/OGBScene at visual tier, unregistered until _MEASURED is filled from job 6398530
@@ -1074,6 +1081,8 @@ incident_log:
   item: W2 MERGED (d024c1a); coverage 37/40 merged
 - date: '2026-09-15'
   item: 'W5: sweeps clean where families build; three families structurally unsweepable -> bounded coverage limit; Scene button-bit bug fixed; re-measurement queued'
+- date: '2026-09-15'
+  item: 'W5 item 5 bounded: no frozen config from the three families; RoboCasa kitchen has no spot light; MetaWorld/HumanoidBench unanswerable (Step 8)'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
