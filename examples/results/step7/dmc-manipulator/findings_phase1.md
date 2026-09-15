@@ -474,6 +474,14 @@ what the local run gives (**14 configs, 0 differing** against a `76dc511` checko
 job `6395850` adds at the 3.11 pin, running BOTH trees in one job on one node — the rule
 `AGENT_COMMON` states for GPU before/after numbers, applied to a CPU digest.
 
+**Job `6395850` landed: COMPLETED 34:44 on node2306, and the paired arm is clean — 14 configs
+compared, 0 differing**, every config `measured`, digests populated on both sides (e.g.
+`digest_ours 3049a91a…` / `digest_official b78de6c2…`). So the regression claim now holds on both
+interpreters and both machines: 14/0 locally at mujoco 3.12.0, and 14/0 on Oscar at the declared
+3.11.0 / 1.0.44 pin with baseline and head in the same job on the same node. It measured `8b39e94`'s
+tree; the two commits since are the conformance rule and a docs/artifact edit, neither of which can
+move an existing cell's pixels, and the local 14/0 was re-run on the current HEAD after both.
+
 ---
 
 ## 11. The render-invariant exclusion (Sami: APPROVED; implemented as a validated contract)
