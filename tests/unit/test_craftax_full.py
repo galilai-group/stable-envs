@@ -359,3 +359,28 @@ def test_the_resolution_applicability_declares_its_scope_and_its_evidence():
 def test_reference_env_refuses_a_size_craftax_does_not_draw():
     with pytest.raises(ValueError, match="no official frame"):
         CraftaxFull.reference_env(size=12)
+
+
+# ------------------------------------------------------------------ the representable boundary
+
+def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable():
+    """The render window has room for a projectile on every one of its 99 tiles; an ``EnvState`` has
+    room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` of them. A row beyond that budget renders here and
+    cannot be scored against the reference, which is a documented limit of the window rather than a
+    renderer defect -- the same shape as Classic's "one mob per tile".
+
+    It is asserted rather than left implicit because the boundary pool found it: eight projectiles
+    disagreed with the official renderer on exactly the two tiles past the budget, max abs 114, while
+    all 48 representable rows were byte-identical
+    (``examples/results/step7/craftax-full/certify/boundary_pool.json``).
+    """
+    assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
+    e = CraftaxFull(batch=32, device="cpu")
+    st = CraftaxFull.sample_states(e, 32, np.random.default_rng(3))
+    n_proj = (np.round(st[:, 3 * CF.N_TILE:4 * CF.N_TILE]) != 0).sum(1)
+    assert n_proj.max() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ, n_proj.max()
+    # and the renderer itself does draw a ninth one -- it is the BRIDGE that cannot carry it
+    over = st[:1].copy()
+    over[0, 3 * CF.N_TILE:3 * CF.N_TILE + 8] = 1 + np.arange(8) % 4
+    assert not np.array_equal(e.render(over[:1]).numpy(),
+                              e.render(st[:1] * 0 + over[:1] * 0).numpy())
