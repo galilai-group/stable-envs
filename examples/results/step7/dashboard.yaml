@@ -395,7 +395,8 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: phase 1 PATCH_CANDIDATE at 6e50f34; independent review running on the code; GPU job 6395009 (afterok venv 6395008) supplies fidelity, tier, six-cell nvdiff identity; M4 commit after
+  status: 'reviewed APPROVE-WITH-CHANGES: RC-1 (float32 quaternion assertion aborts check_visual_fidelity -> GPU job would write nothing) and RC-2 (findings re-cites break two unit tests) BLOCKING; fix
+    + resubmit requested; RC-3..5 before certification'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -446,6 +447,35 @@ workstreams:
     m3: PFRocketLanding 480 px, state obs[:13], style 5 RGB + flame bit by path, sky_color not offered, cpu raises; scene 382 verts / 486 tris; silhouette IoU 0.995 vs TinyRenderer; camera vs computeViewMatrix
       4.4e-4 over 200 attitudes; visual_fidelity UNMEASURED with reference_versions PyFlyt 0.29.0 / pybullet 3.2.7
     reviewer: independent reviewer (opus family) spawned 2026-09-15 on 6e50f34, read-only
+    review:
+      verdict: APPROVE-WITH-CHANGES
+      report: examples/results/step7/rocket-landing/review_phase1.md
+      reviewed_head: 92d9b28
+      blocking:
+      - 'RC-1 _reference_frame err>1e-8 on float32 states: 36/64 raise at measure_tier''s draw-0 seed; check_visual_fidelity raises before json.dump -> no output; 199/200 identity holds for float64 states
+        only'
+      - RC-2 findings.md lines 68-69 re-cite scratch paths -> tests/unit 2 failed on branch vs 1 on baseline; 'same two pre-existing failures' claim false
+      before_certification:
+      - 'RC-3 measure_tier: exclude B=1 from best; cap tier at GPU_PARITY if BATCH_SCALES fails; measure cpu_frac/HOST_BOUND; profile_note conventions; pin decode threads; no local numbers mixed'
+      - RC-4 visual_fidelity placeholders -> None + UNMEASURED; local registration test
+      - RC-5 missing_backend must list scipy, pybullet_data, PIL
+      - camera test tolerance 1e-3 vs measured 1.009e-3
+      verified:
+      - 'nvdiff defaults unchanged: Scene inputs for all six locomotion models hashed bit-identical on both checkouts'
+      - TinyShading = measured law (162/158 back-face reproduced by hand)
+      - M1 corpus stepped; 99/100 exact reproduced; lag law on fresh rollouts to 1e-16
+      - cell contract obs[:13]; sky_color dead; cpu raises with no fallback
+      - colour law incl. pad 3-decimal rounding (max 1.19e-8)
+      - geometry/camera numbers reproduced exactly (IoU 0.99486, link frames 1.9e-6, camera 4.44e-4)
+      - hygiene clean
+      cluster_only:
+      - six-cell nvdiff byte-identity
+      - PFRocketLanding renders (mipmap=False + textured)
+      - fidelity numbers
+      - R/cores/batch qualifiers/HOST_BOUND; B=4096 memory
+      - state_dims_matter on the six velocity dims (1/240 s lag only)
+      - sub-pixel claims
+      - DIRECT+EGL+CUDA coexistence across numba JIT
   rulings:
   - no AI trailers (project rule wins over harness reminder)
   - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
@@ -511,6 +541,8 @@ incident_log:
 - date: '2026-09-15'
   item: 'NODE-2 RETRACTED: gpu2104 EGL ''failure'' was interpreter-exit GLContext.__del__ noise; official renderer worked on gpu2104 (W3 6394689, W4 6394721). Exclude list reverts to gpu2108,gpu2113,gpu2110,gpu2116;
     gpu2104 exclusion optional'
+- date: '2026-09-15'
+  item: 'W6 review: RC-1 blocking (would void GPU job 6395009); fix + resubmit requested'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
