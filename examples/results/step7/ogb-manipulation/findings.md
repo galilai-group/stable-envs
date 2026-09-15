@@ -59,10 +59,17 @@ Two registration facts that matter downstream:
   `(cos, sin)`, gripper opening x3, gripper contact, then per-cube position/quat/yaw). It is not
   invertible to `qpos`, and it is **not** the renderer's input. The renderer's input is `qpos` plus
   the extras in §3.
-* **The goal image is not in the observation.** `_render_goal` is `False` at the registered
-  default, so `get_reset_info()` carries `goal` (a 28-D/40-D observation of the goal state) and
-  `goal_rendered = None`. The goal reaches the *frame* only as the translucent `target_object_0`
-  marker and, for Scene, the target mocap pose.
+* **The goal image is in neither the observation nor the info dict.** `_render_goal` is `False` at
+  the registered default, and swm's `get_reset_info` / `get_step_info` overrides drop ogbench's
+  `goal_rendered` key entirely and rename `goal` to **`target`** — the 28-D/40-D goal *observation*,
+  not an image. Measured: the reset-info keys are exactly `{qpos, qvel, target, success, time,
+  control, env_name, prev_qpos, prev_qvel, proprio/*, privileged/*}` (+ `button_states`,
+  `prev_button_states` and the drawer/window/button privileged keys for Scene). The goal reaches the
+  *frame* only through the translucent `target_object_0` marker and its mocap pose.
+* **The info dict already exposes almost all of the render-relevant state.** `qpos`, `qvel` and (for
+  Scene) `button_states` are all there. The one thing it does NOT expose is `mocap_pos` /
+  `mocap_quat`, which position the goal marker and are the remaining 7 floats of §3's state vector.
+  A cell would have to read them off `data` rather than off `info`.
 * **`pixel_transparent_arm` is inert at the registered default.** It only fires under
   `ob_type == 'pixels'`, where ogbench recolours the Robotiq materials purple and drops the arm's
   materials to alpha 0.1. At `ob_type='states'` the arm is opaque and wears its own UR5e materials.
@@ -162,6 +169,12 @@ OGBScene has one further wrinkle: **the official renderer is not quite bit-stabl
 32 renders of one unchanged state gave **2 distinct frames**, 0.01 % of pixels moving by **1/255**
 — four pixels. Almost certainly the two coincident translucent window-glass geoms under 4x MSAA.
 It bounds what an "exact" claim can mean and must be re-measured under EGL on Linux (queued).
+
+**Provenance note for the cluster leg.** The local numbers use the `stable_worldmodel` source
+checkout at `/Users/samib/stable-worldmodel` (`sha256` prefixes: `cube_env.py` `143e5e81f424ff7a`,
+`scene_env.py` `d0eebdce0131f86e`, `envs/__init__.py` `118a262677a647c6`); the Oscar venv installs
+`stable-worldmodel==0.0.6` from PyPI, and job 6394784 prints the same three digests so the two can
+be compared rather than assumed equal.
 
 **Bytes.**
 
