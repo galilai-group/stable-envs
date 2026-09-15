@@ -397,7 +397,8 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: commit (e) ad842a8 under bounded re-check; one load-gated paired-sweep retry authorized (f); merge (e) after re-check
+  status: (e) re-check APPROVE-WITH-CHANGES (bounds-test Step-7 branch unsatisfiable for a straddling kind; 12 new broken citations from committed Oscar captures); fix (e2) requested; quiet-window tier
+    jobs 6396525/6396526 running; merge after (e2) verification
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
@@ -501,6 +502,18 @@ workstreams:
     tier: 'NOT reached: paired sweep load-aborted twice (34.5, 32.4 > 12 at start); local M5 numbers not certified; retry authorized with an in-job load wait; else CPU_UNMEASURED/GPU_UNMEASURED at the freeze'
     bounded_kinds: 'ELLIPSOID left OUT of _BOUNDED_KINDS: kind-cost ratio 0.69-1.43 on a load-34 node (undecided); aggregator reads a Step-7 aggregate when a quiet run lands'
     tests: cert host 719 passed 22 skipped 1 pre-existing; local affected files 160 passed
+    review:
+      verdict: APPROVE-WITH-CHANGES
+      report: examples/results/step7/dmc-quadruped/review_commit_e.md
+      verified:
+      - 'scope: dmcontrol declaration block + bounds test only'
+      - declaration recomputes exactly from visual_calib_311; thresholds inside family band, only tightened
+      - identity 25/25 both devices; kept results gpu2107
+      - ELLIPSOID absent from _BOUNDED_KINDS; admission not silent
+      - 'no pixel moved: 6/6 CPU digests vs 0a029bd; tests 735 passed'
+      required:
+      - 'A bounds test Step-7 branch: use min(worst) <= 1.0 for unbounded, not max(best) < 1.0'
+      - "B citation set 9 -> 21 from four committed Oscar stdout captures; scrub; fix \xA7P6 claim"
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -780,6 +793,8 @@ incident_log:
   item: W5 phase 0 FINDING; phase 1 authorized (attribution first); texture_gaps shared fix assigned; OGBScene button texture escalated
 - date: '2026-09-15'
   item: Sami overnight directive recorded; closure table issued
+- date: '2026-09-15'
+  item: W4 (e) re-check APPROVE-WITH-CHANGES; fix (e2) requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
