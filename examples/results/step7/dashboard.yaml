@@ -7,12 +7,22 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: phase 0 (diagnosis, local; cluster items pending Oscar access)
+  status: 'phase 1 (authorized: prng.py -> strip + sleeping sprite -> night with reductions; cluster items pending Oscar)'
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
+  head_sha: 6fe1bbf (phase 0)
+  phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
+    (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
+    reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
+    Blockers: (1) night parity is a claim against jax >= 0.4.36 with jax_threefry_partitionable=True -> declaration; (2) night breaks the frozen DOWNSAMPLE_EXACT_FRAC (1.0 -> 0.282 at light 0.45, 0.035
+    at 0.1) while check_state_dims_matter needs night states in the pool; (3) the night chain as prototyped costs 62-159x the world render on one core. State window 127 -> 149 floats (key as two 16-bit
+    halves). Random-policy pools leave 10/12 inventory cells dead -> sample counts directly.'
+  decisions: frozen Step-4 record unchanged; replay = world rows byte-identical at light 1.0 + new full-observation corpus under step7; DOWNSAMPLE bound not edited, FAIL recorded under night pending Sami
+    (re-declare with provenance vs not_applicable); no silent CPU regression (daylight path stays fast; night reductions mandatory; tier reported honestly); prng.py owned by W1, reviewed by W2; channel_gain
+    over the whole frame
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -77,3 +87,7 @@ escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
     itself (an excluded dim may move only sphere-geom orientation); alternative = leave the check FAIL recorded. Sami to decide; no shared-check widening, no misuse of Gate A partial.'
+- date: '2026-09-15'
+  item: 'CraftaxClassic night: the frozen DOWNSAMPLE_EXACT_FRAC (1.0, margin 0.005) cannot hold on night states because the noise field is drawn at frame resolution (0.282 at light 0.45, 0.035 at light
+    0.1, 1.000 at >= 0.5), while check_state_dims_matter requires night states in the pool. Options for Sami: re-declare the bound for this config with provenance (Step-8 freeze), or mark it not_applicable
+    under night with the mechanism recorded. Also: night parity is declared against jax >= 0.4.36 with jax_threefry_partitionable=True.'
