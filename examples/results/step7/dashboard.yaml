@@ -199,14 +199,13 @@ workstreams:
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
-  status: 'reviewed APPROVE-WITH-CHANGES (six non-pixel fixes: docstring limits, gather count, dead test citation, uint8_fast_path_share 2/6 -> 1/4, W1 path citation, fifth sampler guard for inv_ench_bow
-    at batch 1); follow-up requested; Gate-F swm evidence in progress; merge after re-check'
+  status: review follow-up landed (six items; 0 dead dims over 200 seeds at batch 1; broken citations back to 11); re-check requested; Gate-F swm job 6398628 queued; merge after re-check
   capability: full-atlas _Composite generalisation + layers
   wave: 2
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
-  head_sha: 59ab465 (PATCH complete; code frozen since 35127de)
+  head_sha: ab42355 (review follow-up; digests unchanged)
   phase0:
     classification: PATCH_CANDIDATE (all three layers already bit-exact)
     registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
@@ -302,6 +301,17 @@ workstreams:
       - vacuous last assertion in the >6 projectile test
       - Step-7 corpora lack the meta key corpus_for reads (Step 8, W1 too)
       - 'paired CPU tier at loadavg 38.9/48 with contention: lower bound'
+      followup:
+        commit: ab42355
+        done:
+        - 'real limits: second entity of the same kind on a tile (two melee mobs 156; two mob projectiles 237/253), 6-projectile budget in class docstring'
+        - seven index_selects / three selects
+        - citation fixed
+        - uint8_fast_path_share 0.25, tolerance <= 1/64; band() documented as lighting classifier
+        - paired_verdict citation; broken citations 12 -> 11
+        - 'fifth sampler guard: 0 dead dims / 200 seeds at batch 1'
+        - 'nits: jit gap scoped to the pool; vacuous assertion fixed (exposed a wrong batch-axis slice); CPU tier = lower bound; Step-8 carry-overs'
+        tests: branch 2/931/7 vs ada4075 2/905/7 same failures
   cluster:
     x86_gate_a_parity_6397697: 'COMPLETED node2352: parity 1.0 / 0 at 10 and 16 px, digests identical to the Mac (b3dcba4dea708d15 / 43414708ce31a3d7); dead_dims [] at batch 1..16 x 12 seeds; resolution
       consistency 0.7945; 24 tests passed'
@@ -316,6 +326,10 @@ workstreams:
   - conformance.check_reference_renderer_is_stable hard-codes device='cuda' (shared; Step 8)
   - 'run_swm_workflow Gate F evidence: stable_worldmodel being installed into se7-craftax from the checkout'
   tests: tests/unit 773 passed 39 skipped one pre-existing failure
+  gate_f:
+    job: '6398628 queued: swm checkout 176d545 installed -e under a pinned constraints file into se7-craftax; fails loudly on a pin move; Gate F + parity re-certify'
+    local_probe_finding: 'SWM wrapper jits env.step -> a live workflow sees the JITTED frame: 0.99963 exact, max abs 1, 39/41 identical vs our un-jitted-certified frames (the ~1.5e-5 fusion gap at uint8
+      boundaries; same as Classic; not a renderer defect)'
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -1030,6 +1044,8 @@ incident_log:
   item: W5 shared fixes landed (cutoff sentinel; 8/8 identical); cells written unregistered; GPU job 6398530 queued
 - date: '2026-09-15'
   item: W5 shared changes re-verified APPROVE conditional on job 6398530
+- date: '2026-09-15'
+  item: W2 follow-up landed (ab42355); re-check requested; Gate-F job queued with the jitted-wrapper observation
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
