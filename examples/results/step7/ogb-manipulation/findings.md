@@ -1,4 +1,7 @@
-# Step 7 / W5 `ogb-manipulation` — phase 0 findings
+# Step 7 / W5 `ogb-manipulation` — findings
+
+Phase 0 (census, purity, bars, feasibility) is §1-§9. **Phase 1** is §10 onward: M1
+attribution, M2 the `texture_gaps` fix, and the Q11 numbers prepared for Sami.
 
 **Classification: `FINDING`.** Diagnosis only; no renderer written, no shared file touched.
 Two sub-verdicts, both measured:
@@ -610,3 +613,113 @@ One GPU job in flight. No `simclr` job was touched.
     colour via the existing `bake_primitive_textures` recipe, which is a declared approximation on
     two small geoms; (c) drop `OGBScene` from Step 7 and ship `OGBCube` alone. (b) is cheap and in
     keeping with the RoboCasa precedent, but it is a fidelity decision, not an engineering one.
+
+---
+
+# Phase 1
+
+Authorised by the coordinator after phase 0, with rulings on all eleven open questions. Milestones
+**M1 attribution -> M2 `texture_gaps` -> M3 OGBCube cell -> M4 tiers -> M5 OGBScene (pending Sami)**.
+
+## 10. M1 — the interior gap is one term, and it is upstream
+
+Full report and data: `m1/attribution.md`, `m1/m1_attribution.json`, `m1/m1_mujoco_spot_cutoff.json`.
+Job **6396646**, `gpu2109`, RTX 3090, 8 real states, 224 px, `gl_rounding` throughout. Each term is
+neutralised **in the `MjModel`** and BOTH renderers are then driven from that same model, so the
+measurement isolates the term instead of changing one side's picture.
+
+| term neutralised on both sides | interior exact | Δ | interior mean abs |
+|---|---:|---:|---:|
+| *baseline* | 0.0082 | — | 8.78 |
+| **spot light** | **0.4568** | **+0.4486** | **1.54** |
+| headlight | 0.0454 | +0.0372 | 8.25 |
+| MSAA 4x -> 1x | 0.0111 | +0.0029 | 8.89 |
+| specular | 0.0078 | −0.0004 | 9.56 |
+| shadows | 0.0040 | −0.0042 | 13.06 |
+| skybox | 0.0039 | −0.0043 | 8.90 |
+
+The signed histogram confirms it: spread over **−3 to −8** at baseline — MJWarp uniformly darker,
+which is not a quantisation signature — collapsing to **{0: 61.8 %, +1: 21.3 %}** once the spot is
+removed, which is exactly what one shading law quantised twice looks like.
+
+**Mechanism, read from both sources.** `mujoco_warp` attenuates a spot as
+`cos_theta < cos(cutoff) -> unlit`, then `pow(cos_theta, exponent)`. This scene's spot is
+`cutoff = 100°`, `exponent = 10`. MuJoCo never applies that, because it **discards** the cutoff:
+measured through MuJoCo alone, `cutoff = 100°` renders **bit-identically to 180°** (max abs **0**)
+while a valid `90°` changes **95.2 %** of pixels and darkens the frame by 7.4 levels of mean. That is
+`GL_SPOT_CUTOFF`'s rule — `[0, 90]` or the sentinel `180`, anything else `GL_INVALID_VALUE` and left
+at 180 = not a spotlight — reproduced exactly at its boundary. **`mujoco_warp` honours an
+out-of-range spot cutoff that MuJoCo silently discards.** Not per-env, and not predicted by any Fetch
+correction, because the Fetch scene has no spot light.
+
+**Two sharp caveats on reading the interior number here.** The interior mask on this scene is
+**99.2 % floor** (static 0.9917, sky 0.0043, mover 0.0040), so the whole-frame interior figure is
+almost entirely a statement about the plate the shipped cell bakes through MuJoCo exactly.
+`interior_exact_mover` is 0.667 at baseline and 0.852 with the headlight neutralised, but over 0.4 %
+of interior pixels — it is reported with that sample size, not quoted as a mover-pass parity number.
+
+## 11. M2 — `texture_gaps` was a false all-clear (shared-file fix, assigned)
+
+`stable_envs/render/mjwarp.py`. The helper classified by geom **type** alone and never looked at the
+texture or the mesh, so `swm/OGBScene-v0` returned an **empty** gap list and then killed the renderer.
+
+**Root cause, read from `mujoco_warp` and confirmed on the model** — sharper than phase 0's
+"cube maps are a different sampler". `sample_texture`'s MESH branch reads
+`mesh_texcoord[mesh_texcoord_offsets[mesh_id] + mesh_facetexcoord[face_adr][i]]` with no guard, and
+OGBScene's two button geoms wear mesh `stopbuttonrim` with **`texcoordadr = -1, texcoordnum = 0`** —
+no UVs at all — so the index is computed from a negative offset. A cube-mapped mesh normally carries
+no UVs, because MuJoCo generates cube texgen from position and normal; that is why the two symptoms
+travel together. `OGBCube` has **zero** textured mesh geoms and does not crash.
+
+Two conditions added, both checked regardless of geom type because the case that found them is a
+MESH — the type the old rule declared safe: a texture whose `tex_type` is not 2-D, and a textured
+mesh with `mesh_texcoordnum == 0`. They are independent (a 2-D texture on a UV-less mesh crashes with
+no cube map in sight). Every texture role is examined rather than `np.max` over `mat_texid`.
+
+Proof it is additive: **21 synthetic unit cases** (`tests/unit/test_mjwarp_texture_gaps.py`);
+a registry sweep running BOTH implementations, the old one reproduced verbatim — **40 families build
+locally (25 OGBench maze, 11 DM Control, 4 Mujoco) and all 40 give identical answers**, including
+models containing cube and skybox textures no rendered geom wears; a **positive control** so the
+sweep can tell a correct fix from a no-op (`swm/OGBScene-v0` goes 0 -> 2, naming the two button
+geoms); and `tests/unit` at **830 passed, 2 failed**, both reproducing identically at the stashed
+baseline. Data: `m2/texture_gaps_sweep.json`. Still owed on the cluster: the sweep where the
+cuda-only families build (Fetch above all) and a Fetch/DMC byte-identity replay — job 6396748,
+pending behind a saturated GPU partition (346 queued).
+
+## 12. Q11 — the three OGBScene options, priced for Sami (nothing chosen)
+
+Full memo: `m5/q11_for_sami.md`, data `m5/q11_button_bake.json`. Option (b), the bake, measured
+MuJoCo-against-MuJoCo so no MJWarp term is mixed in, 8 states, 200 px:
+
+| quantity | value |
+|---|---:|
+| the two button geoms | 36 px/frame = **0.090 %** of the frame |
+| pixels changed by the bake | 55.5 px/frame = **0.139 %** |
+| max abs / mean abs on the buttons | 37/255 · 21.6/255 |
+| mean abs over the whole frame | **0.023/255** |
+| **`interior_exact` (baked vs official)** | **1.00000** |
+
+The residual touches **no interior pixel**: every changed pixel fails the 3x3-flat test. Fetch's
+accepted alpha `parity_note` is 1.2–1.5 % of pixels; this is a tenth of that. Recorded alongside, so
+the decision is not made on the residual alone: **(b) is not a call to `bake_primitive_textures`** —
+the shipped helper refuses this material twice (non-2-D texture; a material worn by MESH geoms is
+classified `mixed`) — so it is a change to a shared helper, ~a dozen lines plus tests; **(a)** is ~3
+lines in a third-party `wp.func` whose real cost is the delivery route, and it is the only option
+that costs no pixels and fixes the general case; **(c)** is 39/40 coverage and reversible. The
+escalation stays open.
+
+## 13. Two lessons the coordinator asked to be recorded
+
+* **PyPI `stable-worldmodel==0.0.6` is not the source checkout.** Same version string, different
+  code: the PyPI build's `data/dataset.py` imports `h5py`, the checkout's `data/__init__.py` imports
+  its own `formats.lance` and never does. A cluster number taken against the wheel would not have
+  measured the registration the local census measured. The checkout is rsynced to `$SCR/se7/swm-src`
+  and put on `PYTHONPATH`, the wheel uninstalled, and the three file digests confirmed identical
+  (`cube_env.py` `143e5e81f424ff7a`, `scene_env.py` `d0eebdce0131f86e`, `envs/__init__.py`
+  `118a262677a647c6`).
+* **llvmpipe versus Metal changed a verdict, not a decimal.** macOS GLFW gets a Metal-accelerated GL
+  running the official renderer at 159.9 f/s; the certification `batch` node gets Mesa llvmpipe at
+  **6.31 f/s**, and `S_cpu` is defined against the latter. Against the laptop a 38 f/s span
+  rasteriser scores `S_cpu` 0.24 and fails every tier; against the certification host it scores 6.07
+  and clears `CPU_FASTER`. The phase-0 CPU verdict written from laptop numbers was wrong, and only
+  the Oscar leg caught it.
