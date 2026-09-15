@@ -337,7 +337,30 @@ workstreams:
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
   head_sha: c6772f7 (feasibility gate; phase 1 in progress)
-decisions: []
+decisions:
+- date: '2026-09-15'
+  by: Sami
+  topic: Manipulator dead dims
+  decision: 'APPROVED narrow per-class exclusion for ball_y, target_ball_quat_qw, target_ball_quat_qy: render-invariant because the geometry is spherical. Scope only to the spherical class where invariance
+    is established; document the geometric reason; regression test that excluded dims leave pixels unchanged; the same dims must still matter for non-spherical geometry (box shape). Render-contract exception,
+    not a relaxation of state_dims_matter. Do not record a renderer FAIL for a dim mathematically incapable of changing the image.'
+- date: '2026-09-15'
+  by: Sami
+  topic: CraftaxClassic night resolution-consistency
+  decision: Run one oracle experiment on the official Craftax renderer (same night state, same PRNG, both check resolutions, same box-downsample protocol). If the official is itself not resolution-consistent
+    under night (noise field intrinsically resolution-dependent) mark check_resolution_consistency not applicable for the night band with that result as justification; if it is consistent, derive and enforce
+    a night-specific bound with the existing provenance discipline. No weakened or invented bound. Exact parity at each supported resolution remains required.
+- date: '2026-09-15'
+  by: Sami
+  topic: CraftaxClassic performance tier
+  decision: ONE registered/default certification tier from mixed-corpus throughput; no separate daylight/night env tiers. Report mixed (tier), daylight-only (diagnostic), night-only (diagnostic), the daylight/night
+    ratio, and flag the slower band. Mixed benchmark uses the frozen Step-2 protocol's state corpus/distribution if specified, else a documented reproducible distribution representative of the registered
+    default.
+- date: '2026-09-15'
+  by: Sami
+  topic: Step 7 continuation
+  decision: Continue W1/W3 fix-ups and merge after review gates; continue W2/W5/W6; shared renderer work prefers generic capabilities (nvdiff triangle scenes, per-row material/colour, shared primitives)
+    over env-specific hacks.
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
@@ -357,16 +380,21 @@ incident_log:
   item: 'W1 Oscar certification: parity and Gate A reproduced on x86-64 with byte-identical digests (8e4506c)'
 - date: '2026-09-15'
   item: W1 review APPROVE-WITH-CHANGES; follow-up requested
+- date: '2026-09-15'
+  item: 'Sami rulings received: sphere-rotation exclusion approved (W3), night oracle experiment (W1), single mixed perf tier with band diagnostics (W1); forwarded'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
     itself (an excluded dim may move only sphere-geom orientation); alternative = leave the check FAIL recorded. Sami to decide; no shared-check widening, no misuse of Gate A partial.'
+  resolved: 2026-09-15 by Sami (see decisions)
 - date: '2026-09-15'
   item: 'CraftaxClassic night: the frozen DOWNSAMPLE_EXACT_FRAC (1.0, margin 0.005) cannot hold on night states because the noise field is drawn at frame resolution (0.282 at light 0.45, 0.035 at light
     0.1, 1.000 at >= 0.5), while check_state_dims_matter requires night states in the pool. Options for Sami: re-declare the bound for this config with provenance (Step-8 freeze), or mark it not_applicable
     under night with the mechanism recorded. Also: night parity is declared against jax >= 0.4.36 with jax_threefry_partitionable=True.'
+  resolved: 2026-09-15 by Sami (see decisions)
 - date: '2026-09-15'
   from: W1
   topic: CraftaxClassic performance tier declaration
   question: certify per band (daylight vs lit) and declare both, or a single mixed-corpus number that hides a ~100x split whose cause is the reference's per-pixel float post-process
   recommendation: per band, both declared
+  resolved: 2026-09-15 by Sami (see decisions)
