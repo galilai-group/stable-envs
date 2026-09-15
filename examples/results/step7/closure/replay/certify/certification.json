@@ -14516,6 +14516,690 @@
    ],
    "tier": "parity"
   },
+  "Piecewise": {
+   "backends": [],
+   "blocked": [],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "parity",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "ValueError: Piecewise renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re-sam"
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_task_object_visibility": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "bound": {
+      "all_exact_frac_min": 0.9,
+      "interior_exact_frac_min": 0.999995,
+      "mean_abs_max": 4.0
+     },
+     "bound_from": "the env's own declaration, defaulting to tests/gpu/test_conformance.py:INTERIOR_EXACT_MIN",
+     "group": "family_specific",
+     "observed": {
+      "exact_frac": 0.9999610745176977,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.8098974567153975,
+      "interior_px": 2577625,
+      "max_abs": 1,
+      "mean_abs": 3.892548230229592e-05,
+      "ssim": 0.999999982936628
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/Piecewise-v0"
+    }
+   ],
+   "config_id": "Piecewise",
+   "corpus": {
+    "env": "Piecewise",
+    "indices": [
+     173,
+     28,
+     56,
+     230,
+     0,
+     183,
+     79,
+     18,
+     60,
+     80,
+     179,
+     243,
+     111,
+     116,
+     148,
+     76,
+     252,
+     174,
+     15,
+     210,
+     125,
+     215,
+     29,
+     149,
+     141,
+     38,
+     226,
+     82,
+     222,
+     204,
+     73,
+     176,
+     153,
+     217,
+     50,
+     93,
+     163,
+     225,
+     255,
+     143,
+     150,
+     241,
+     105,
+     24,
+     242,
+     245,
+     121,
+     63,
+     62,
+     78,
+     180,
+     54,
+     20,
+     81,
+     51,
+     202,
+     104,
+     133,
+     43,
+     187,
+     103,
+     88,
+     25,
+     128
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/Piecewise.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "485bfd613f54358077446969d3e9fb486534ef3c53d04b38fdf6989a09b11cee",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.999995,
+    "parity_note": "1 ulp of exp, not geometry. Run on the CPU with the reference's own float32 exp this renderer reproduces the official frame BIT FOR BIT and the device contributes nothing (measured both ways); the residual is entirely that our exp is correctly rounded and torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic and not in float32, and the 41 px Gaussian tail is flat enough that the reference's own 3x3 neighbourhood cannot see the quantisation contour. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel. See the module docstring."
+   },
+   "failures": [],
+   "gate_a": "PASS",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_resolution_consistency",
+    "check_task_object_visibility",
+    "check_visual_fidelity",
+    "check_visual_fidelity_under_variation"
+   ],
+   "physics": {
+    "bound": {
+     "agent_max_err_lt": 0.001,
+     "block_median_err_lt": 2.0
+    },
+    "bound_from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+    "observed": {
+     "agent_max_err": 0.0,
+     "block_median_err": 0.0,
+     "exact_frac": 1.0,
+     "steps": 100
+    },
+    "status": "pass",
+    "violations": []
+   },
+   "reference_id": "swm/Piecewise-v0",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "adhoc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-piecewise",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/Piecewise-v0",
+     "size": 224,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 10,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color"
+     ]
+    },
+    "describe_digest": "586139bf93671248"
+   },
+   "swm_ids": [
+    "swm/Piecewise-v0"
+   ],
+   "tier": "parity"
+  },
+  "PiecewiseZones": {
+   "backends": [],
+   "blocked": [],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "parity",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "ValueError: PiecewiseZones renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to r"
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_task_object_visibility": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "bound": {
+      "all_exact_frac_min": 0.9,
+      "interior_exact_frac_min": 0.999995,
+      "mean_abs_max": 4.0
+     },
+     "bound_from": "the env's own declaration, defaulting to tests/gpu/test_conformance.py:INTERIOR_EXACT_MIN",
+     "group": "family_specific",
+     "observed": {
+      "exact_frac": 0.9999735306720344,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.8127120870116029,
+      "interior_px": 2586583,
+      "max_abs": 1,
+      "mean_abs": 2.6469327965561223e-05,
+      "ssim": 0.9999999864492101
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/Piecewise-v0"
+    }
+   ],
+   "config_id": "PiecewiseZones",
+   "corpus": {
+    "env": "PiecewiseZones",
+    "indices": [
+     173,
+     28,
+     56,
+     230,
+     0,
+     183,
+     79,
+     18,
+     60,
+     80,
+     179,
+     243,
+     111,
+     116,
+     148,
+     76,
+     252,
+     174,
+     15,
+     210,
+     125,
+     215,
+     29,
+     149,
+     141,
+     38,
+     226,
+     82,
+     222,
+     204,
+     73,
+     176,
+     153,
+     217,
+     50,
+     93,
+     163,
+     225,
+     255,
+     143,
+     150,
+     241,
+     105,
+     24,
+     242,
+     245,
+     121,
+     63,
+     62,
+     78,
+     180,
+     54,
+     20,
+     81,
+     51,
+     202,
+     104,
+     133,
+     43,
+     187,
+     103,
+     88,
+     25,
+     128
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/PiecewiseZones.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "485bfd613f54358077446969d3e9fb486534ef3c53d04b38fdf6989a09b11cee",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.999995,
+    "parity_note": "1 ulp of exp, not geometry. Run on the CPU with the reference's own float32 exp this renderer reproduces the official frame BIT FOR BIT and the device contributes nothing (measured both ways); the residual is entirely that our exp is correctly rounded and torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic and not in float32, and the 41 px Gaussian tail is flat enough that the reference's own 3x3 neighbourhood cannot see the quantisation contour. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel. See the module docstring."
+   },
+   "failures": [],
+   "gate_a": "PASS",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_resolution_consistency",
+    "check_task_object_visibility",
+    "check_visual_fidelity",
+    "check_visual_fidelity_under_variation"
+   ],
+   "physics": {
+    "bound": {
+     "agent_max_err_lt": 0.001,
+     "block_median_err_lt": 2.0
+    },
+    "bound_from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+    "observed": {
+     "agent_max_err": 0.0,
+     "block_median_err": 0.0,
+     "exact_frac": 1.0,
+     "steps": 100
+    },
+    "status": "pass",
+    "violations": []
+   },
+   "reference_id": "swm/Piecewise-v0",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "adhoc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-piecewise-zones",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/Piecewise-v0",
+     "size": 224,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 22,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color",
+      "zones.color_0",
+      "zones.color_1",
+      "zones.color_2",
+      "zones.color_3"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "border.color",
+      "zones.color_0",
+      "zones.color_1",
+      "zones.color_2",
+      "zones.color_3"
+     ]
+    },
+    "describe_digest": "28a8235c6ffe0f8d"
+   },
+   "swm_ids": [
+    "swm/Piecewise-v0"
+   ],
+   "tier": "parity"
+  },
   "PointmazeGiantNavigate": {
    "backends": [
     "raycast3d"
@@ -16354,6 +17038,1061 @@
    "swm_ids": [
     "swm/PushT-Discrete-v1",
     "swm/PushT-v1"
+   ],
+   "tier": "parity"
+  },
+  "SimplePointMaze": {
+   "backends": [
+    "scene"
+   ],
+   "blocked": [],
+   "checks": {
+    "check_backend_agreement": {
+     "bound": ">= 0.99",
+     "bound_from": "tests/gpu/test_conformance.py:test_backend_agreement",
+     "group": "family_specific",
+     "observed": 1.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "parity",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "ValueError: SimplePointMaze renders at 500px only: the reference is a 5x5 inch matplotlib figure at 100 dpi and its axes spine is a 0.8 pt line, i.e. a constant in OUTPUT PIXELS with no world-unit description. Asked for 1000."
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_task_object_visibility": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "bound": {
+      "all_exact_frac_min": 0.9,
+      "interior_exact_frac_min": 1.0,
+      "mean_abs_max": 4.0
+     },
+     "bound_from": "the env's own declaration, defaulting to tests/gpu/test_conformance.py:INTERIOR_EXACT_MIN",
+     "group": "family_specific",
+     "observed": {
+      "exact_frac": 0.999696,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.9661142801635335,
+      "interior_px": 15396059,
+      "max_abs": 241,
+      "mean_abs": 0.0179025,
+      "ssim": 0.9995054257215078
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/SimplePointMaze-v0"
+    }
+   ],
+   "config_id": "SimplePointMaze",
+   "corpus": {
+    "env": "SimplePointMaze",
+    "indices": [
+     238,
+     195,
+     0,
+     21,
+     46,
+     253,
+     61,
+     13,
+     111,
+     227,
+     103,
+     152,
+     65,
+     97,
+     163,
+     251,
+     147,
+     191,
+     22,
+     133,
+     215,
+     7,
+     148,
+     36,
+     174,
+     219,
+     23,
+     223,
+     154,
+     254,
+     20,
+     120,
+     241,
+     209,
+     40,
+     248,
+     29,
+     84,
+     150,
+     180,
+     51,
+     116,
+     63,
+     198,
+     50,
+     104,
+     156,
+     66,
+     54,
+     204,
+     18,
+     224,
+     75,
+     139,
+     165,
+     69,
+     212,
+     146,
+     77,
+     72,
+     177,
+     92,
+     41,
+     128
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/SimplePointMaze.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "555d913d0f2ca51057db19e3dfd19e2e8998c544c1b3a535b0f78f6aae78dc0c",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "parity_note": ""
+   },
+   "failures": [],
+   "gate_a": "PASS",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_resolution_consistency",
+    "check_task_object_visibility",
+    "check_visual_fidelity",
+    "check_visual_fidelity_under_variation"
+   ],
+   "physics": {
+    "bound": {
+     "agent_max_err_lt": 0.001,
+     "block_median_err_lt": 2.0
+    },
+    "bound_from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+    "observed": {
+     "agent_max_err": 0.0,
+     "block_median_err": 0.0,
+     "exact_frac": 1.0,
+     "steps": 100
+    },
+    "status": "pass",
+    "violations": []
+   },
+   "reference_id": "swm/SimplePointMaze-v0",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "adhoc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-simple-point-maze",
+     "parity_interior_min": 1.0,
+     "reference_id": "swm/SimplePointMaze-v0",
+     "size": 500,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 35,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "walls.color",
+      "walls.number",
+      "walls.positions",
+      "walls.shape"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "walls.color",
+      "walls.number",
+      "walls.positions",
+      "walls.shape"
+     ]
+    },
+    "describe_digest": "8add05867975e297"
+   },
+   "swm_ids": [
+    "swm/SimplePointMaze-v0"
+   ],
+   "tier": "parity"
+  },
+  "TwoRoom": {
+   "backends": [],
+   "blocked": [],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "parity",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "ValueError: TwoRoom renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re-sampl"
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_task_object_visibility": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "bound": {
+      "all_exact_frac_min": 0.9,
+      "interior_exact_frac_min": 0.999995,
+      "mean_abs_max": 4.0
+     },
+     "bound_from": "the env's own declaration, defaulting to tests/gpu/test_conformance.py:INTERIOR_EXACT_MIN",
+     "group": "family_specific",
+     "observed": {
+      "exact_frac": 0.9999831841916454,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.7921839495063243,
+      "interior_px": 2521249,
+      "max_abs": 1,
+      "mean_abs": 1.6815808354591835e-05,
+      "ssim": 0.9999999942600183
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/TwoRoom-v1"
+    }
+   ],
+   "config_id": "TwoRoom",
+   "corpus": {
+    "env": "TwoRoom",
+    "indices": [
+     49,
+     51,
+     0,
+     141,
+     97,
+     208,
+     170,
+     124,
+     7,
+     245,
+     205,
+     8,
+     155,
+     45,
+     63,
+     122,
+     37,
+     197,
+     181,
+     99,
+     101,
+     218,
+     232,
+     243,
+     55,
+     114,
+     156,
+     144,
+     117,
+     11,
+     9,
+     78,
+     150,
+     42,
+     195,
+     27,
+     244,
+     61,
+     35,
+     119,
+     56,
+     118,
+     95,
+     126,
+     209,
+     48,
+     111,
+     248,
+     177,
+     235,
+     252,
+     24,
+     38,
+     16,
+     85,
+     68,
+     212,
+     146,
+     228,
+     112,
+     215,
+     3,
+     116,
+     15
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/TwoRoom.npz",
+    "n_extreme": 4,
+    "n_spread": 59,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "cc690c68808441c7c74ff992fbfba1fbe3c97cddfe4019d7191d2051c2b7cb21",
+    "state_dim": 2,
+    "state_names": [
+     "agent_x",
+     "agent_y"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.999995,
+    "parity_note": "1 ulp of exp, not geometry. Run on the CPU with the reference's own float32 exp this renderer reproduces the official frame BIT FOR BIT and the device contributes nothing (measured both ways); the residual is entirely that our exp is correctly rounded and torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic and not in float32, and the 41 px Gaussian tail is flat enough that the reference's own 3x3 neighbourhood cannot see the quantisation contour. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel. See the module docstring."
+   },
+   "failures": [],
+   "gate_a": "PASS",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_resolution_consistency",
+    "check_task_object_visibility",
+    "check_visual_fidelity",
+    "check_visual_fidelity_under_variation"
+   ],
+   "physics": {
+    "bound": {
+     "agent_max_err_lt": 0.001,
+     "block_median_err_lt": 2.0
+    },
+    "bound_from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+    "observed": {
+     "agent_max_err": 0.0,
+     "block_median_err": 0.0,
+     "exact_frac": 1.0,
+     "steps": 100
+    },
+    "status": "pass",
+    "violations": []
+   },
+   "reference_id": "swm/TwoRoom-v1",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "adhoc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-two-room",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/TwoRoom-v1",
+     "size": 224,
+     "state_dim": 2,
+     "state_names": [
+      "agent_x",
+      "agent_y"
+     ],
+     "style_dim": 22,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ]
+    },
+    "describe_digest": "9bf8113a770e9c19"
+   },
+   "swm_ids": [
+    "swm/TwoRoom-v1"
+   ],
+   "tier": "parity"
+  },
+  "TwoRoomTarget": {
+   "backends": [],
+   "blocked": [],
+   "checks": {
+    "check_backend_agreement": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_batch_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_batch_size_invariance": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_chunked_render_matches": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_colors_apply_exactly": {
+     "bound": "an RGB knob puts that colour in the frame",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_default_style_is_official": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_determinism": {
+     "bound": "identical",
+     "group": "mandatory",
+     "observed": true,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_fidelity_declaration": {
+     "bound": "describe() reports the declared tier",
+     "group": "mandatory",
+     "observed": "parity",
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_input_form_invariance": {
+     "bound": "every input form gives one frame",
+     "group": "mandatory",
+     "observed": {},
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_order_independence": {
+     "bound": "both == 0",
+     "group": "mandatory",
+     "observed": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_per_env_variation": {
+     "bound": "no variation collapses across the batch",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_render_is_pure": {
+     "bound": "all == 0",
+     "group": "mandatory",
+     "observed": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_resolution_consistency": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "ValueError: TwoRoomTarget renders at 224px only, and asking for 448 is not a resolution change. Every length in the reference is in output pixels \u2014 a 4 px border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column 112 \u2014 with no world-unit description underneath, so there is nothing to re"
+    },
+    "check_set_state_copies": {
+     "bound": "set_state copies and does not rebind",
+     "group": "mandatory",
+     "observed": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_dims_matter": {
+     "bound": "no dead state dimension",
+     "group": "mandatory",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_state_roundtrip": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0.0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_style_is_state": {
+     "bound": "== 0",
+     "group": "mandatory",
+     "observed": 0,
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_task_object_visibility": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "bound": "no declared variation is inert",
+     "group": "family_specific",
+     "observed": [],
+     "raw_status": "measured",
+     "status": "pass"
+    },
+    "check_visual_fidelity": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "check_visual_fidelity_under_variation": {
+     "group": "family_specific",
+     "raw_status": "not_applicable",
+     "status": "not_applicable",
+     "why": "declares the PARITY tier; held to interior-pixel exactness instead"
+    },
+    "render_parity_with_official_renderer": {
+     "bound": {
+      "all_exact_frac_min": 0.9,
+      "interior_exact_frac_min": 0.999995,
+      "mean_abs_max": 4.0
+     },
+     "bound_from": "the env's own declaration, defaulting to tests/gpu/test_conformance.py:INTERIOR_EXACT_MIN",
+     "group": "family_specific",
+     "observed": {
+      "exact_frac": 0.9999673025948661,
+      "interior_exact_frac": 1.0,
+      "interior_frac": 0.7210553072653784,
+      "interior_px": 2294871,
+      "max_abs": 1,
+      "mean_abs": 3.269740513392857e-05,
+      "ssim": 0.9999999656151597
+     },
+     "raw_status": "measured",
+     "status": "pass",
+     "violations": []
+    }
+   },
+   "claimed_by": [
+    {
+     "axis": "registered_default",
+     "detail": "exact_reference_match",
+     "swm_id": "swm/TwoRoom-v1"
+    }
+   ],
+   "config_id": "TwoRoomTarget",
+   "corpus": {
+    "env": "TwoRoomTarget",
+    "indices": [
+     228,
+     51,
+     0,
+     56,
+     143,
+     141,
+     97,
+     112,
+     219,
+     207,
+     227,
+     125,
+     22,
+     127,
+     212,
+     153,
+     3,
+     128,
+     150,
+     175,
+     245,
+     223,
+     154,
+     61,
+     169,
+     49,
+     114,
+     177,
+     36,
+     37,
+     145,
+     170,
+     239,
+     136,
+     168,
+     64,
+     191,
+     192,
+     135,
+     19,
+     163,
+     186,
+     229,
+     124,
+     214,
+     182,
+     144,
+     252,
+     81,
+     188,
+     117,
+     213,
+     230,
+     236,
+     248,
+     199,
+     101,
+     27,
+     226,
+     85,
+     221,
+     162,
+     46,
+     172
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step4/states/TwoRoomTarget.npz",
+    "n_extreme": 8,
+    "n_spread": 55,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "eda3ee1a080a281e9ced1a049df339914ff0a24eb1f1ab98ce934e7bb4a6503e",
+    "state_dim": 4,
+    "state_names": [
+     "agent_x",
+     "agent_y",
+     "target_x",
+     "target_y"
+    ]
+   },
+   "declared_parity": {
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.999995,
+    "parity_note": "1 ulp of exp, not geometry. Run on the CPU with the reference's own float32 exp this renderer reproduces the official frame BIT FOR BIT and the device contributes nothing (measured both ways); the residual is entirely that our exp is correctly rounded and torch's CPU float32 exp is only faithful. That ulp changes a pixel only where the dot's colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic and not in float32, and the 41 px Gaussian tail is flat enough that the reference's own 3x3 neighbourhood cannot see the quantisation contour. Worst of 800 seeded draws: 2 pixels of 2.3 million, 1/255, one channel. See the module docstring."
+   },
+   "failures": [],
+   "gate_a": "PASS",
+   "no_declared_bound": [],
+   "not_applicable": [
+    "check_backend_agreement",
+    "check_resolution_consistency",
+    "check_task_object_visibility",
+    "check_visual_fidelity",
+    "check_visual_fidelity_under_variation"
+   ],
+   "physics": {
+    "bound": {
+     "agent_max_err_lt": 0.001,
+     "block_median_err_lt": 2.0
+    },
+    "bound_from": "tests/gpu/test_conformance.py:test_gpu_step_tracks_the_reference_simulator",
+    "observed": {
+     "agent_max_err": 0.0,
+     "block_median_err": 0.0,
+     "exact_frac": 1.0,
+     "steps": 100
+    },
+    "status": "pass",
+    "violations": []
+   },
+   "reference_id": "swm/TwoRoom-v1",
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "shard": "adhoc",
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "swm-two-room-target",
+     "parity_interior_min": 0.999995,
+     "reference_id": "swm/TwoRoom-v1",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "agent_x",
+      "agent_y",
+      "target_x",
+      "target_y"
+     ],
+     "style_dim": 26,
+     "style_names": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "target.color",
+      "target.radius",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.radius",
+      "background.color",
+      "door.color",
+      "door.number",
+      "door.position",
+      "door.size",
+      "target.color",
+      "target.radius",
+      "wall.axis",
+      "wall.color",
+      "wall.thickness"
+     ]
+    },
+    "describe_digest": "143275c72035e0f1"
+   },
+   "swm_ids": [
+    "swm/TwoRoom-v1"
    ],
    "tier": "parity"
   }

@@ -100,7 +100,7 @@
    "env": "DMCCheetahRun",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.41,
+     "seconds": 0.31,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -108,7 +108,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.41,
+     "seconds": 0.33,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -148,7 +148,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 0.42,
+     "seconds": 0.32,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -165,7 +165,7 @@
       "ssim": 0.6613030930236491,
       "within8_frac": 0.8820440936791383
      },
-     "seconds": 0.92,
+     "seconds": 0.73,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -183,7 +183,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.42,
+     "seconds": 0.32,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -197,7 +197,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 0.02,
+     "seconds": 0.01,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -211,21 +211,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 0.09,
+     "seconds": 0.07,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.41,
+     "seconds": 0.31,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 0.41,
+     "seconds": 0.34,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -294,7 +294,7 @@
        "torch_cuda_transposed"
       ]
      },
-     "seconds": 0.03,
+     "seconds": 0.02,
      "status": "measured"
     },
     "check_order_independence": {
@@ -302,14 +302,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 0.01,
+     "seconds": 0.0,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 1.05,
+     "seconds": 0.78,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -327,28 +327,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.41,
+     "seconds": 0.31,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 2.1,
+     "seconds": 1.6,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.41,
+     "seconds": 0.37,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.42,
+     "seconds": 0.32,
      "status": "measured"
     }
    },
@@ -373,7 +373,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.15,
+     "seconds": 0.12,
      "status": "measured"
     },
     "size": 84,
@@ -388,7 +388,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 19.4,
+   "seconds": 17.1,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -532,7 +532,7 @@
    "env": "DMCHopperHop",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.34,
+     "seconds": 0.26,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -540,7 +540,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.33,
+     "seconds": 0.27,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -580,7 +580,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 0.34,
+     "seconds": 0.26,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -597,7 +597,7 @@
       "ssim": 0.6842567132942957,
       "within8_frac": 0.9042193700396826
      },
-     "seconds": 0.84,
+     "seconds": 0.67,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -615,7 +615,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.34,
+     "seconds": 0.26,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -629,7 +629,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 0.02,
+     "seconds": 0.01,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -643,21 +643,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 0.08,
+     "seconds": 0.07,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.34,
+     "seconds": 0.28,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 0.34,
+     "seconds": 0.26,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -741,7 +741,7 @@
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 0.91,
+     "seconds": 0.68,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -759,28 +759,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.34,
+     "seconds": 0.28,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 1.71,
+     "seconds": 1.3,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.34,
+     "seconds": 0.26,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.34,
+     "seconds": 0.28,
      "status": "measured"
     }
    },
@@ -805,7 +805,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.15,
+     "seconds": 0.13,
      "status": "measured"
     },
     "size": 84,
@@ -820,7 +820,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 8.7,
+   "seconds": 6.8,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -983,7 +983,7 @@
    "env": "DMCHumanoidStand",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.78,
+     "seconds": 0.58,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -991,7 +991,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.78,
+     "seconds": 0.58,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -1031,7 +1031,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 0.79,
+     "seconds": 0.58,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -1048,7 +1048,7 @@
       "ssim": 0.8671576597740404,
       "within8_frac": 0.7317044005102041
      },
-     "seconds": 1.31,
+     "seconds": 1.05,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -1066,7 +1066,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.79,
+     "seconds": 0.59,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -1080,7 +1080,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 0.02,
+     "seconds": 0.01,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -1094,21 +1094,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 0.1,
+     "seconds": 0.08,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.78,
+     "seconds": 0.58,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 0.78,
+     "seconds": 0.58,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -1185,14 +1185,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 0.01,
+     "seconds": 0.0,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 1.11,
+     "seconds": 0.83,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -1202,7 +1202,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 0.01,
+     "seconds": 0.0,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -1210,28 +1210,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.78,
+     "seconds": 0.58,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 4.31,
+     "seconds": 3.18,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.78,
+     "seconds": 0.61,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.78,
+     "seconds": 0.58,
      "status": "measured"
     }
    },
@@ -1256,7 +1256,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.19,
+     "seconds": 0.15,
      "status": "measured"
     },
     "size": 84,
@@ -1271,7 +1271,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 16.2,
+   "seconds": 12.2,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -1436,7 +1436,7 @@
    "env": "DMCWalkerWalk",
    "family_specific": {
     "check_backend_agreement": {
-     "seconds": 0.49,
+     "seconds": 0.37,
      "status": "not_applicable",
      "why": "env renders without a Scene2D (tilemap path)"
     },
@@ -1444,7 +1444,7 @@
      "evidence": {
       "colors_not_applied": []
      },
-     "seconds": 0.48,
+     "seconds": 0.37,
      "status": "measured"
     },
     "check_resolution_consistency": {
@@ -1484,7 +1484,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 0.49,
+     "seconds": 0.38,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -1501,7 +1501,7 @@
       "ssim": 0.8244778992740531,
       "within8_frac": 0.7136501736111112
      },
-     "seconds": 1.0,
+     "seconds": 0.78,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -1519,7 +1519,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.5,
+     "seconds": 0.38,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -1533,7 +1533,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 0.02,
+     "seconds": 0.01,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -1547,21 +1547,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 0.09,
+     "seconds": 0.07,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.49,
+     "seconds": 0.37,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 0.49,
+     "seconds": 0.37,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -1638,14 +1638,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 0.01,
+     "seconds": 0.0,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 0.98,
+     "seconds": 0.73,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -1655,7 +1655,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 0.01,
+     "seconds": 0.0,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -1663,28 +1663,28 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.5,
+     "seconds": 0.38,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 2.53,
+     "seconds": 1.9,
      "status": "measured"
     },
     "check_state_roundtrip": {
      "evidence": {
       "max_abs_err": 0.0
      },
-     "seconds": 0.49,
+     "seconds": 0.37,
      "status": "measured"
     },
     "check_style_is_state": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.49,
+     "seconds": 0.37,
      "status": "measured"
     }
    },
@@ -1709,7 +1709,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 0.17,
+     "seconds": 0.13,
      "status": "measured"
     },
     "size": 84,
@@ -1724,7 +1724,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 11.5,
+   "seconds": 8.7,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -1780,7 +1780,7 @@
   "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
   "git_dirty": null,
   "gpu": "NVIDIA GeForce RTX 3090",
-  "host": "gpu2107.oscar.ccv.brown.edu",
+  "host": "gpu2101.oscar.ccv.brown.edu",
   "import_errors": {
    "carracing": "ImportError: CarRacing-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
    "griddly": "ImportError: griddly is not importable (ModuleNotFoundError: No module named 'griddly'). The atlas is composed of tiles griddly's own Vulkan renderer draws, so there is no degraded mode. `pip install griddly==1.6.7` \u2014 the only release, from 2023-03-15; upstream's last commit is 2024-04-07 and there is no successor.",
@@ -1907,10 +1907,10 @@
    "TwoRoom",
    "TwoRoomTarget"
   ],
-  "slurm_job_id": "6413321",
-  "slurm_nodelist": "gpu2107",
+  "slurm_job_id": "6417172",
+  "slurm_nodelist": "gpu2101",
   "state_seed": 20260909,
-  "timestamp": "2026-09-15T14:31:41-0400",
+  "timestamp": "2026-09-15T16:09:05-0400",
   "torch": "2.14.0+cu126"
  },
  "schema_version": 1,

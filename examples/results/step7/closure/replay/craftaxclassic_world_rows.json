@@ -1,0 +1,43 @@
+{
+ "cell_state_dim": 149,
+ "device": "cuda",
+ "frozen_digest_ours": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+ "frozen_frames_shape": [
+  64,
+  112,
+  144,
+  3
+ ],
+ "frozen_mean_pixel": 93.84458414713542,
+ "frozen_states": "examples/results/step4/states/CraftaxClassic.npz",
+ "frozen_states_state_dim": 127,
+ "full_frame_shape": [
+  64,
+  144,
+  144,
+  3
+ ],
+ "git_sha": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+ "host": "gpu2101.oscar.ccv.brown.edu",
+ "machine": "x86_64",
+ "size": 16,
+ "slurm_job": "6417172",
+ "strip_rows_are_black": true,
+ "strip_rows_shape": [
+  64,
+  32,
+  144,
+  3
+ ],
+ "verdict": "WORLD ROWS IDENTICAL",
+ "what_this_is": "CraftaxClassic's Step-4 replay obligation under the partial->full coverage change: the WORLD ROWS at light_level 1.0 must reproduce the frozen digest",
+ "world_rows_digest": "1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d",
+ "world_rows_identical_to_frozen": true,
+ "world_rows_mean_pixel": 93.84458414713542,
+ "world_rows_shape": [
+  64,
+  112,
+  144,
+  3
+ ]
+}

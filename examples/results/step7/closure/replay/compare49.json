@@ -1,13 +1,8 @@
 {
  "n_frozen": 49,
- "n_replayed": 43,
+ "n_replayed": 48,
  "not_replayed": [
-  "CraftaxClassic",
-  "Piecewise",
-  "PiecewiseZones",
-  "SimplePointMaze",
-  "TwoRoom",
-  "TwoRoomTarget"
+  "CraftaxClassic"
  ],
  "rows": [
   {
@@ -38,7 +33,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "AntmazeGiantNavigate",
@@ -68,7 +63,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "AntmazeLargeExplore",
@@ -98,7 +93,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "AntmazeMediumExplore",
@@ -128,7 +123,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "AntmazeTeleportExplore",
@@ -161,7 +156,7 @@
    "verdict": "expected-known",
    "known_note": "documented bake nondeterminism; digest does not reproduce at BASELINE",
    "gate_a_frozen": "FAIL",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "CartPole",
@@ -191,7 +186,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCAcrobotSwingup",
@@ -221,7 +216,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCBallInCupCatch",
@@ -251,7 +246,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCCartpoleBalance",
@@ -281,7 +276,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCCartpoleSwingup",
@@ -311,7 +306,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCCheetahRun",
@@ -348,7 +343,7 @@
    "verdict": "expected-known",
    "known_note": "MJWarp trackcom: visual checks BLOCKED under the 3.12 reference; digest does not reproduce at BASELINE either (texture-fidelity verdict B + MJWARP-1)",
    "gate_a_frozen": "FAIL",
-   "gate_a_replay": "FAIL"
+   "gate_a_replay": null
   },
   {
    "config": "DMCFingerSpin",
@@ -378,7 +373,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCFingerTurnEasy",
@@ -411,7 +406,7 @@
    "verdict": "expected-known",
    "known_note": "declaration only (style_dim 17->18, visibility leaf; reacher-correctness)",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCFingerTurnHard",
@@ -444,7 +439,7 @@
    "verdict": "expected-known",
    "known_note": "declaration only (style_dim 17->18, visibility leaf; reacher-correctness)",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCHopperHop",
@@ -481,7 +476,7 @@
    "verdict": "expected-known",
    "known_note": "MJWarp trackcom: as DMCCheetahRun",
    "gate_a_frozen": "FAIL",
-   "gate_a_replay": "FAIL"
+   "gate_a_replay": null
   },
   {
    "config": "DMCHumanoidStand",
@@ -518,7 +513,7 @@
    "verdict": "expected-known",
    "known_note": "MJWarp trackcom: as DMCCheetahRun",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "BLOCKED"
+   "gate_a_replay": null
   },
   {
    "config": "DMCPendulumSwingup",
@@ -548,7 +543,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCReacherEasy",
@@ -581,7 +576,7 @@
    "verdict": "expected-known",
    "known_note": "declaration only (style_dim 17->18, visibility leaf; reacher-correctness)",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCReacherHard",
@@ -614,7 +609,7 @@
    "verdict": "expected-known",
    "known_note": "declaration only (style_dim 17->18, visibility leaf; reacher-correctness)",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "DMCWalkerWalk",
@@ -651,7 +646,7 @@
    "verdict": "expected-known",
    "known_note": "MJWarp trackcom: as DMCCheetahRun",
    "gate_a_frozen": "FAIL",
-   "gate_a_replay": "FAIL"
+   "gate_a_replay": null
   },
   {
    "config": "FetchPickAndPlace",
@@ -681,7 +676,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchPickAndPlaceDense",
@@ -711,7 +706,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchPickAndPlaceDict",
@@ -741,7 +736,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchPush",
@@ -771,7 +766,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchPushDense",
@@ -801,7 +796,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchPushDict",
@@ -831,7 +826,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchReach",
@@ -861,7 +856,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchReachDense",
@@ -891,7 +886,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchReachDict",
@@ -921,7 +916,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchSlide",
@@ -951,7 +946,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchSlideDense",
@@ -981,7 +976,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "FetchSlideDict",
@@ -1011,7 +1006,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "HumanoidmazeGiantNavigate",
@@ -1041,7 +1036,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "HumanoidmazeLargeNavigate",
@@ -1071,7 +1066,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "HumanoidmazeMediumNavigate",
@@ -1098,10 +1093,10 @@
     "check_task_object_visibility"
    ],
    "checks_lost": {},
-   "verdict": "gate A improved",
+   "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "FAIL",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "MountainCar",
@@ -1131,7 +1126,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "MountainCarContinuous",
@@ -1161,7 +1156,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "Pendulum",
@@ -1191,7 +1186,67 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
+  },
+  {
+   "config": "Piecewise",
+   "shard": "swm",
+   "replay_status": "measured",
+   "frozen_status": "measured",
+   "why": "",
+   "pixel_changed": [],
+   "official_changed": [],
+   "style_changed": [],
+   "declaration_changed": false,
+   "digest_ours_frozen": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+   "digest_ours_replay": "ae2f7872ad9b8836e1c51dddb6a8f32083632042639e30ff6810c14f9ae5c77f",
+   "mean_pixel_frozen": 236.113103126993,
+   "mean_pixel_replay": 236.113103126993,
+   "checks_total_frozen": 21,
+   "checks_total_replay": 22,
+   "checks_moved": {
+    "check_task_object_visibility": "None->not_applicable"
+   },
+   "checks_identical": false,
+   "unexplained": [],
+   "checks_gained": [
+    "check_task_object_visibility"
+   ],
+   "checks_lost": {},
+   "verdict": "identical",
+   "known_note": "",
+   "gate_a_frozen": "PASS",
+   "gate_a_replay": null
+  },
+  {
+   "config": "PiecewiseZones",
+   "shard": "swm",
+   "replay_status": "measured",
+   "frozen_status": "measured",
+   "why": "",
+   "pixel_changed": [],
+   "official_changed": [],
+   "style_changed": [],
+   "declaration_changed": false,
+   "digest_ours_frozen": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+   "digest_ours_replay": "520bf80a296b9164aaa361997bf0e6d8bdaefd3f5afbaa4de5924d75ac2603a1",
+   "mean_pixel_frozen": 211.78783847523385,
+   "mean_pixel_replay": 211.78783847523385,
+   "checks_total_frozen": 21,
+   "checks_total_replay": 22,
+   "checks_moved": {
+    "check_task_object_visibility": "None->not_applicable"
+   },
+   "checks_identical": false,
+   "unexplained": [],
+   "checks_gained": [
+    "check_task_object_visibility"
+   ],
+   "checks_lost": {},
+   "verdict": "identical",
+   "known_note": "",
+   "gate_a_frozen": "PASS",
+   "gate_a_replay": null
   },
   {
    "config": "PointmazeGiantNavigate",
@@ -1221,7 +1276,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "PointmazeLargeNavigate",
@@ -1251,7 +1306,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "PointmazeMediumNavigate",
@@ -1281,7 +1336,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "PointmazeTeleportNavigate",
@@ -1311,7 +1366,7 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
   },
   {
    "config": "PushT",
@@ -1341,7 +1396,97 @@
    "verdict": "identical",
    "known_note": "",
    "gate_a_frozen": "PASS",
-   "gate_a_replay": "PASS"
+   "gate_a_replay": null
+  },
+  {
+   "config": "SimplePointMaze",
+   "shard": "swm",
+   "replay_status": "measured",
+   "frozen_status": "measured",
+   "why": "",
+   "pixel_changed": [],
+   "official_changed": [],
+   "style_changed": [],
+   "declaration_changed": false,
+   "digest_ours_frozen": "23cda999c9447184553ab6cebcfc7339da028f63faacf007dfc3fc124e5ffe66",
+   "digest_ours_replay": "23cda999c9447184553ab6cebcfc7339da028f63faacf007dfc3fc124e5ffe66",
+   "mean_pixel_frozen": 215.365318,
+   "mean_pixel_replay": 215.365318,
+   "checks_total_frozen": 21,
+   "checks_total_replay": 22,
+   "checks_moved": {
+    "check_task_object_visibility": "None->not_applicable"
+   },
+   "checks_identical": false,
+   "unexplained": [],
+   "checks_gained": [
+    "check_task_object_visibility"
+   ],
+   "checks_lost": {},
+   "verdict": "identical",
+   "known_note": "",
+   "gate_a_frozen": "PASS",
+   "gate_a_replay": null
+  },
+  {
+   "config": "TwoRoom",
+   "shard": "swm",
+   "replay_status": "measured",
+   "frozen_status": "measured",
+   "why": "",
+   "pixel_changed": [],
+   "official_changed": [],
+   "style_changed": [],
+   "declaration_changed": false,
+   "digest_ours_frozen": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+   "digest_ours_replay": "617d18cd684f8671f3d0f5fed4bf5f9e1140c0745eae20736156461df6ee0d08",
+   "mean_pixel_frozen": 225.65891769305378,
+   "mean_pixel_replay": 225.65891769305378,
+   "checks_total_frozen": 21,
+   "checks_total_replay": 22,
+   "checks_moved": {
+    "check_task_object_visibility": "None->not_applicable"
+   },
+   "checks_identical": false,
+   "unexplained": [],
+   "checks_gained": [
+    "check_task_object_visibility"
+   ],
+   "checks_lost": {},
+   "verdict": "identical",
+   "known_note": "",
+   "gate_a_frozen": "PASS",
+   "gate_a_replay": null
+  },
+  {
+   "config": "TwoRoomTarget",
+   "shard": "swm",
+   "replay_status": "measured",
+   "frozen_status": "measured",
+   "why": "",
+   "pixel_changed": [],
+   "official_changed": [],
+   "style_changed": [],
+   "declaration_changed": false,
+   "digest_ours_frozen": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+   "digest_ours_replay": "2918fe75f1193311e04ead37bfd909597e3693f3f3821c91a1f636fcfed61cb0",
+   "mean_pixel_frozen": 224.7399692665152,
+   "mean_pixel_replay": 224.7399692665152,
+   "checks_total_frozen": 21,
+   "checks_total_replay": 22,
+   "checks_moved": {
+    "check_task_object_visibility": "None->not_applicable"
+   },
+   "checks_identical": false,
+   "unexplained": [],
+   "checks_gained": [
+    "check_task_object_visibility"
+   ],
+   "checks_lost": {},
+   "verdict": "identical",
+   "known_note": "",
+   "gate_a_frozen": "PASS",
+   "gate_a_replay": null
   }
  ]
 }
