@@ -199,14 +199,13 @@ workstreams:
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
-  status: phase 1 implemented locally (cell, corpus, parity 1.0/0 at 10 and 16 px, Gate A clean, Gate F); independent review running (fable family); Oscar jobs 6397697 (x86 Gate A + parity), 6397698 (CPU
-    tier, --exclusive -> paired fallback advised), 6397699 (CUDA Gate A + GPU tier) queued
+  status: PATCH complete pending independent review; parity digests identical on arm64 CPU, x86 CPU and RTX 3090; tiers reported; Gate F swm evidence being produced on Oscar
   capability: full-atlas _Composite generalisation + layers
   wave: 2
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
-  head_sha: 38e3a7f (artifacts; code identical to 35127de)
+  head_sha: 59ab465 (PATCH complete; code frozen since 35127de)
   phase0:
     classification: PATCH_CANDIDATE (all three layers already bit-exact)
     registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
@@ -282,7 +281,15 @@ workstreams:
       consistency 0.7945; 24 tests passed'
     cpu_tier: --exclusive 6397698 scheduled 4 h out (QOS cpu=64) -> cancelled; paired job 6397916 RUNNING (CraftaxClassic on $SCR/se7/baseline = 76dc511, md5-verified, as the node-qualifying floor; branch
       absolute number is the tier or quarantined)
-    gpu_6397699: 'RUNNING gpu2106: CUDA Gate A + parity + GPU tier per band'
+    gpu_6397699: 'COMPLETED gpu2106: CUDA parity 1.0/0 with the SAME digests as both CPUs; Gate A identical; check_reference_renderer_is_stable 0; GPU 94,187 f/s mixed at B=4096 (19.3 cores of decode),
+      daylight 928,434, night 44,607, ratio 20.8x (night flagged)'
+    cpu_tier_6397916: 'USABLE (spread 1.020x; floor 0.853x of 115,166; load 0.81/core): 1,337 f/s at B=64/10 px; cores_cpu 0.356 (BELOW_G4); S_cpu 3.81 vs jitted, 1,870 vs un-jitted (1,144x apart through
+      the same hook) - neither certifies pending Sami'
+  docs: 'docs/research/swm_coverage.md: CraftaxPixels row gap -> landed; counts 27->28 covered, 13->12 gaps'
+  carryovers:
+  - conformance.check_reference_renderer_is_stable hard-codes device='cuda' (shared; Step 8)
+  - 'run_swm_workflow Gate F evidence: stable_worldmodel being installed into se7-craftax from the checkout'
+  tests: tests/unit 773 passed 39 skipped one pre-existing failure
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -935,6 +942,8 @@ incident_log:
   item: W5 attribution done (visual tier); shared spot correction + bake helper landed; shared-change reviewer spawned; cells authorized
 - date: '2026-09-15'
   item: 'W4 tier retry: leg B failed on the hard-coded Step-4 states path for a post-freeze cell; script fixed additively; jobs resubmitted'
+- date: '2026-09-15'
+  item: 'W2 PATCH complete: three-backend identical digests; tiers reported; awaiting review'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
