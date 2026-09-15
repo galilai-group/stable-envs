@@ -20,7 +20,8 @@ Two sub-verdicts, both measured:
 Baseline `76dc5116f432e61dd47fba8f9e879cf9212c8e46`; branch `step7/ogb-manipulation`.
 Hardware/venvs: Apple M5 (`arm64`, macOS 26.6.2), new local venv `/Users/samib/se7-ogb-venv`
 (python 3.12.11, ogbench 1.2.1, mujoco 3.12.0, torch 2.14.0, numpy 2.5.3, gymnasium 1.3.0,
-dm_control 1.0.45, scipy, pillow 12.3.0, plus the worktree installed `-e`), with
+dm_control 1.0.45, scipy 1.18.1, pillow 12.3.0, plus the worktree installed `-e`; full freeze in
+`examples/results/step7/ogb-manipulation/venv_se7-ogb-venv_m5.txt`), with
 `stable_worldmodel` taken from the source checkout `/Users/samib/stable-worldmodel` via
 `PYTHONPATH`. Local numbers are NOT certification numbers; the Oscar legs are queued (below).
 
