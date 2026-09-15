@@ -318,6 +318,114 @@ def texture_mean_rgb(m, tex: int) -> np.ndarray:
     return (a[..., :3].mean((0, 1)) if nc >= 3 else np.repeat(a.mean((0, 1)), 3)) / 255.0
 
 
+def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[int]]:
+    """``{material id: [geom ids]}`` for materials MJWarp cannot sample AT ALL on their wearers.
+
+    This is the *crash* half of ``texture_gaps``, grouped by material so a bake can act on it. A geom
+    qualifies when its material carries a texture and either
+
+    * the texture is not 2-D (``wp.Texture2D`` cannot address a cube or skybox map), or
+    * the geom is a MESH with no texture coordinates (``sample_texture`` indexes ``mesh_texcoord``
+      unconditionally, so a UV-less mesh reads off the allocation).
+
+    Distinct from the UV half of ``texture_gaps``: a textured BOX renders one flat texel, which is
+    wrong but survives. These kill the renderer. ``swm/OGBScene-v0`` is the worked example — one
+    512x512 cube map on two UV-less button meshes.
+    """
+    import mujoco
+    out: dict[int, list[int]] = {}
+    for g in range(m.ngeom):
+        if int(m.geom_group[g]) not in groups:
+            continue
+        mid = int(m.geom_matid[g])
+        if mid < 0:
+            continue
+        tex_ids = [int(x) for x in np.atleast_1d(m.mat_texid[mid]) if int(x) >= 0]
+        if not tex_ids:
+            continue
+        bad_kind = any(int(m.tex_type[t]) not in TEXTURE_SAMPLER_OK for t in tex_ids)
+        bad_uv = False
+        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
+            mi = int(m.geom_dataid[g])
+            bad_uv = mi >= 0 and int(m.mesh_texcoordnum[mi]) == 0
+        if bad_kind or bad_uv:
+            out.setdefault(mid, []).append(g)
+    return out
+
+
+def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
+    """Replace a texture MJWarp cannot sample with its MEAN colour, IN PLACE. A DECLARED residual.
+
+    THIS CHANGES THE PICTURE AND MUST BE DECLARED WHEREVER IT IS USED. It exists because the
+    alternative is not a worse picture but no picture: the materials it targets are the ones that
+    make ``mujoco_warp`` die with ``Warp CUDA error 700: an illegal memory access`` (see
+    ``unsamplable_texture_materials``), so the choice is a flat mean colour or a scene that does not
+    render.
+
+    Deliberately generic, and separate from ``bake_primitive_textures``. That function answers "the
+    UVs are wrong here, is a flat colour closer?" -- a fidelity trade it measurably LOSES on
+    RoboCasa. This one answers "this texture cannot be read at all", where a mean colour is the only
+    thing on offer. Mixing them would let a per-scene crash workaround silently change scenes that
+    render perfectly well.
+
+    **Measured cost on the case that motivated it**, ``swm/OGBScene-v0``'s ``btn_metal`` cube map on
+    two button meshes, MuJoCo against MuJoCo over 8 states at 200 px
+    (``examples/results/step7/ogb-manipulation/m5/q11_button_bake.json``):
+
+    ====================================  =========
+    quantity                                  value
+    ====================================  =========
+    the two button geoms                   36 px/frame = 0.090 % of frame
+    pixels changed by the bake             55.5 px/frame = **0.139 %**
+    max abs / mean abs on those geoms      37/255 · 21.6/255
+    mean abs over the whole frame          0.023/255
+    **interior_exact vs official**         **1.00000**
+    ====================================  =========
+
+    Every changed pixel fails the 3x3-flat test, so the residual is invisible to the interior metric.
+    For scale, the alpha ``parity_note`` already accepted for Fetch is 1.2-1.5 % of pixels.
+
+    The zero-pixel alternative is to fix ``mujoco_warp``'s sampler — guard the MESH branch when the
+    mesh has no texcoords, ~3 lines — which costs no fidelity at all and fixes every future scene
+    rather than this one. That remains the better answer and is documented in
+    ``examples/results/step7/ogb-manipulation/m5/q11_for_sami.md``; this helper is the one that lands
+    without a third-party patch.
+
+    Returns the per-GEOM record a declaration needs — which geoms, which texture, what mean colour —
+    rather than only a count, because a caller has to be able to state the residual, not just apply
+    it.
+    """
+    import mujoco
+    rgb_role = int(getattr(mujoco.mjtTextureRole, "mjTEXROLE_RGB", 1))
+    restore = {"mat_texid": np.array(m.mat_texid, copy=True),
+               "mat_rgba": np.array(m.mat_rgba, copy=True)}
+    targets = unsamplable_texture_materials(m, groups)
+    baked = []
+    for mid, geoms in sorted(targets.items()):
+        t = m.mat_texid[mid]
+        ids = [int(x) for x in np.atleast_1d(t) if int(x) >= 0]
+        tex = int(t[rgb_role]) if np.ndim(t) and int(t[rgb_role]) >= 0 else (ids[0] if ids else -1)
+        if tex < 0:
+            continue
+        mean = texture_mean_rgb(m, tex)
+        m.mat_rgba[mid, :3] = mean
+        if np.ndim(t):
+            m.mat_texid[mid, :] = -1
+        else:
+            m.mat_texid[mid] = -1
+        baked.append({
+            "material": mid,
+            "material_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, mid),
+            "texture": tex,
+            "texture_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tex),
+            "tex_type": int(m.tex_type[tex]),
+            "mean_rgb": [round(float(x), 6) for x in mean],
+            "geoms": geoms,
+            "geom_names": [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) for g in geoms]})
+    return {"baked": baked, "n_materials": len(baked),
+            "n_geoms": sum(len(b["geoms"]) for b in baked), "restore": restore}
+
+
 def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:
     """Replace the texture on geoms MJWarp cannot UV with that texture's MEAN colour, IN PLACE.
 

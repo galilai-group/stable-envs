@@ -47,6 +47,8 @@ def models_from_env(env):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
+    ap.add_argument("--bake", action="store_true",
+                    help="also sweep bake_unsamplable_textures (see sweep_bake below)")
     a = ap.parse_args()
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
 
@@ -104,7 +106,51 @@ def main():
     print(f"families carrying a spot light at all: {nspot or 'none'}")
     for r in bad:
         print("  INCORRECT", r["env"], r["expected_neutralised"], r["reported"], r["actually_changed"])
+    if a.bake:
+        sweep_bake(a.out)
 
+
+
+
+# --- appended: the same no-change obligation for `bake_unsamplable_textures` ------------------
+# Run with --bake. The helper is opt-in (nothing calls it automatically), so the obligation is
+# weaker than for prepare_model -- but "which registered families would it touch if called?" is
+# exactly what a reviewer needs, and the answer must be NONE.
+def sweep_bake(out):
+    import json
+    import numpy as np
+    import stable_envs as se
+    from stable_envs.render.mjwarp import (bake_unsamplable_textures, restore_primitive_textures,
+                                           unsamplable_texture_materials)
+    rows, touched = [], []
+    for name in sorted(se.REGISTRY):
+        try:
+            env = se.make(name, batch=1, device="cpu")
+        except Exception:
+            continue
+        m = models_from_env(env)
+        if m is None:
+            continue
+        targets = unsamplable_texture_materials(m)
+        rgba, texid = np.array(m.mat_rgba, copy=True), np.array(m.mat_texid, copy=True)
+        b = bake_unsamplable_textures(m)
+        changed = not (np.array_equal(m.mat_rgba, rgba) and np.array_equal(m.mat_texid, texid))
+        restore_primitive_textures(m, b)
+        restored = np.array_equal(m.mat_rgba, rgba) and np.array_equal(m.mat_texid, texid)
+        rows.append({"env": name, "n_unsamplable_materials": len(targets),
+                     "n_baked": b["n_materials"], "changed": bool(changed),
+                     "restored_exactly": bool(restored)})
+        if changed:
+            touched.append(name)
+        try:
+            env.close()
+        except Exception:
+            pass
+    doc = {"built": len(rows), "families_touched": touched,
+           "all_restored": all(r["restored_exactly"] for r in rows), "rows": rows}
+    (Path(out) / "bake_unsamplable_sweep.json").write_text(json.dumps(doc, indent=1, sort_keys=True))
+    print(f"bake sweep: built {len(rows)}  would touch: {touched or 'NONE'}  "
+          f"all restored exactly: {doc['all_restored']}")
 
 if __name__ == "__main__":
     main()
