@@ -558,13 +558,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: phase 1 authorized 2026-09-15 (M1 fidelity attribution -> M2 texture_gaps fix -> M3 OGBCube cell -> M4 tiers -> M5 OGBScene pending Sami's button-texture ruling)
+  status: 'phase 1: M1 done (gap = spot-light cutoff semantics, upstream), M2 shared texture_gaps fix done with registry-wide proof, M3 gate: exponent=0 gives 0.35 interior, residue = spot distance + headlight;
+    one more attribution pass authorized; shared spot correction in prepare_model; then cells; Q11 (b) as generic bake extension with declared residual'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: e3bebde (phase 0)
+  head_sha: e24fb34e (M1 attribution, M2 texture_gaps fix, M3 gate)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -598,6 +599,23 @@ workstreams:
   - phase 1 M1 = term-by-term attribution of the 0.0092 interior before any cell
   - "BATCH_SCALES fail -> tier capped at GPU_PARITY per \xA76.7, declared with raw fps"
   - OGBScene button cube-map = fidelity decision for Sami (numbers for (a) patch mujoco_warp, (b) bake to mean colour residual, (c) Cube-only)
+  phase1:
+    m1_attribution:
+      baseline: 0.0082
+      spot_removed: 0.4568
+      headlight_removed: 0.0454
+      msaa_1x: 0.0111
+      others: ~0 or negative
+      mechanism: "mujoco_warp applies cos_theta < cos(cutoff) then pow(cos_theta, exponent); MuJoCo discards an out-of-range cutoff (100\xB0 == 180\xB0; a valid 90\xB0 changes 94.5% of pixels). Not per-env;\
+        \ Fetch has no spot light"
+      counter_finding: MuJoCo POINT light renders identically to light off (so 'treat as POINT' is wrong)
+      self_corrections: 'two: contaminated baseline in the first tables; a cited JSON never written -> probe now seeds, fresh env, noise floor, verdict flags'
+    m2_texture_gaps: 'root cause: sample_texture''s MESH branch indexes mesh_texcoord unconditionally; OGBScene''s button mesh has texcoordadr -1 (no UVs). Two conditions added (non-2-D texture; textured
+      mesh without texcoords) regardless of geom type; 21 unit cases; 40/40 registered families identical locally and on CUDA; positive control fires; DMCReacherEasy/PointmazeMediumNavigate/FetchReach/FetchPickAndPlace
+      byte-identical on the same card'
+    m3_gate: 'exponent=0 on the MJWarp model: interior 0.0091 -> 0.3507 (38x), mean |diff| 8.90 -> 2.79; below M1''s no-spot row (0.4568) -> residue = spot distance term + headlight; no cell written yet'
+    q11_numbers: 'bake T_btn to mean grey: 0.139% of pixels (55.5 px/frame), max 37/255, mean 0.023/255, interior_exact 1.0; (b) is not a bake_primitive_textures call (it refuses this material twice) ->
+      shared helper extension; (a) ~3 lines in a third-party wp.func, zero pixels; (c) 39/40 reversible'
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -848,6 +866,9 @@ incident_log:
   item: W4 certification merged (e0a416c); integration tests 812 passed + citation scanner picking up review docs (to fix on integration)
 - date: '2026-09-15'
   item: 'W3 CLOSED: CPU tier CPU_REGRESSION recorded and merged'
+- date: '2026-09-15'
+  item: 'W5 M1-M3 gate: fidelity gap attributed to mujoco_warp spot-cutoff semantics; texture_gaps shared fix proven; one more attribution pass + shared spot correction + Q11 (b) generic bake authorized
+    under the overnight rule'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -885,7 +906,7 @@ escalations:
   topic: OGBScene button cube-map texture (MJWarp cannot sample it; crashes)
   question: (a) patch mujoco_warp's cube sampling, (b) bake the button texture to its mean colour via bake_primitive_textures as a declared approximation on two small geoms (RoboCasa precedent), or (c)
     ship OGBCube only and record OGBScene as blocked
-  status: open; W5 measuring the residual of (b) and the cost of (a) so the decision is on numbers
+  status: open for Sami's override; coordinator authorized (b) as a generic bake extension with the declared residual (0.139% px, interior 1.0), (a) documented as the zero-pixel alternative
   coordinator_note: '(b) is a declared texture bake through the existing shared recipe, not a per-env renderer; still a fidelity call Under the overnight directive: W5 proceeds with (b) ONLY if the measured
     residual on the two button geoms is small enough to be a declared residual within the cell''s visual ceilings (no threshold change, no per-env renderer); otherwise OGBScene is recorded as blocked on
     (a) and Sami decides. Sami may override either way.'
