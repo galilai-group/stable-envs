@@ -989,8 +989,8 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'BLOCKED ON A CONTRACT DECISION (Sami): the batch-invariant mvp fix passes check_batch_size_invariance (max_abs 0) but moves 4-180 px on the six frozen locomotion nvdiff cells (ulp re-baseline);
-    reverted per the hard condition. Defect B closed. All other gates pass; fidelity measured (7.709/0.9613/0.8545, ceilings 10.0/0.91/0.80) but not declared on the reverted tree.'
+  status: 'PATCH: batch-size invariance 255 -> 0; six locomotion cells moved <= 5 px by >1 level each (ULP-level); NO Step-4 frozen digest existed for them (0 files touched); fidelity 3 improve / 3 shift
+    at 1e-6..1e-9; declaration 7.71/0.961/0.854 vs 10.0/0.91/0.80; final reviewer verifying Sami''s nine conditions; merge on APPROVE'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1018,7 +1018,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 7224222 (d1e61a1 both fixes measured; 283865b reverts defect-A change; 7224222 M5 evidence)
+  head_sha: 7b2e45c (batch-invariant mvp re-applied under Sami's ruling; re-freeze evidence; declaration filled)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -1153,6 +1153,23 @@ workstreams:
       emits them); left UNMEASURED because the shipped tree (reverted) has no single number
     tier_line: GPU_PARITY [BATCH_SCALES_FAIL]
     tests: tests/unit 745/7/1 (9 citations); test_rocket_landing 17; on the card at d1e61a1 48 passed
+  refreeze_6410105_gpu2106:
+    per_cell:
+      HalfCheetah: max 1, 13 px (3.5e-6), 0 >1 level
+      Hopper: 1, 8, 0
+      Walker2d: 1, 4, 0
+      Ant: 8, 32 (8.7e-6), 5 >1 level (1.4e-6)
+      Humanoid: 81, 14, 3 (8.1e-7)
+      Swimmer: 67, 180 (4.9e-5), 2 (5.4e-7)
+    fidelity_before_after: Swimmer/HalfCheetah/Hopper improve on every metric; Walker2d SSIM -2.9e-9; Ant mean_abs +2.7e-6 SSIM -2.6e-7; Humanoid mean_abs +3.5e-6 SSIM -1.9e-7; all inside declared thresholds
+      by 3-5 orders
+    frozen_artifacts: the six cells have no frame digest under examples/results/step4 (not among the 49); only bounds.downsample_exact_frac (mirrored from tests/gpu) which moves <= 8.7e-6 with 1.2e-3..5.8e-3
+      headroom -> 0 files touched; authorization unused
+    gate_a_six_cells: all PASS incl. batch-size invariance 0 at (1,3,7,8,64,256)
+    step5_surfaces: 'PushT [scene], DMCReacher [mjwarp, raycast3d]: digests equal both legs; 0 nvdiff calls'
+    rocket: seven gates PASS except BATCH_SCALES 14.17; declaration 7.71/0.961/0.854 vs 10.0/0.91/0.80 identical on two 3090s; reference_unreachable_share 1/960; tier GPU_PARITY [BATCH_SCALES_FAIL] R 241.5
+      cores 2.61 NO_LARGE_BATCH_REGRESSION 1.253
+    tests: tests/unit 747/7/1; test_rocket_landing 17; GPU conformance 228/63/3 known
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1388,6 +1405,8 @@ incident_log:
   item: 'W1 tier-final merged: CPU_FASTER / GPU_FASTER under admissible references'
 - date: '2026-09-15'
   item: 'W2 tier-final merged: CPU_FASTER / GPU_FASTER under admissible references; classifier census blocker recorded for Step 8'
+- date: '2026-09-15'
+  item: 'W6 re-freeze evidence delivered (7b2e45c): batch-size invariance passes; no frozen digest existed for the six cells; final review requested'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
