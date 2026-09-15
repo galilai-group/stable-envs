@@ -403,3 +403,13 @@ band is inside the silhouette residual already counted (the interior mask finds 
   modified default appearance or against `suite.load`), O3 (`partial` vs widening
   `check_state_dims_matter`), plus ownership of `stable_envs/envs/dmcontrol.py` between W3 and W4 and
   the `default_size` question (family 84 vs registered 224 — parity holds at both).
+
+---
+
+> **Phase 1 landed.** The plan above was implemented on this branch; see
+> [`findings_phase1.md`](findings_phase1.md) for what changed and what it measured. Two items in §7
+> above were settled by coordinator ruling rather than by me: O1/O2 (certify against `suite.load`,
+> reach the SWM default through leaves — the Reacher pattern) and O3 (no Gate A `partial`, no
+> widening of `check_state_dims_matter`; the three sphere-orientation dims ship as a recorded FAIL
+> with a validated-exclusion contract proposed for approval). `floor.color` stays a Gate-F gap with a
+> proposed measurement. `stable_envs/render/raycast3d.py` was never touched — W4 owns it.

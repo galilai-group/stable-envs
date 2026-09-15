@@ -1,0 +1,378 @@
+{
+ "n": 8,
+ "cells": {
+  "DMCAcrobotSwingup": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "shoulder",
+    "elbow"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "bf0fb24c6ddb42e4",
+   "default_sha": "b2ad8603bbd2ea05",
+   "moved_style_sha": "f6c1befeeb9c83ae"
+  },
+  "DMCBallInCupCatch": {
+   "size": 84,
+   "state_dim": 4,
+   "state_names": [
+    "cup_x",
+    "cup_z",
+    "ball_x",
+    "ball_z"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "94d6b4e297b4615c",
+   "default_sha": "562e7496be3b5cd5",
+   "moved_style_sha": "1ebf63b3bece61ff"
+  },
+  "DMCCartpoleBalance": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "slider",
+    "hinge_1"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "3d581309d29e494f",
+   "default_sha": "dc76f19c6cd17f30",
+   "moved_style_sha": "37faf10278ad2a64"
+  },
+  "DMCCartpoleSwingup": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "slider",
+    "hinge_1"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "5df7d4986af8a561",
+   "default_sha": "ba81c60b2685cb53",
+   "moved_style_sha": "15eb7c92c4fee6ae"
+  },
+  "DMCCheetahRun": {
+   "size": 84,
+   "state_dim": 9,
+   "state_names": [
+    "rootx",
+    "rootz",
+    "rooty",
+    "bthigh",
+    "bshin",
+    "bfoot",
+    "fthigh",
+    "fshin",
+    "ffoot"
+   ],
+   "leaves": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "1a654553aaf13db3",
+   "default_sha": "b30777aff743a165",
+   "moved_style_sha": "49846c560106c678"
+  },
+  "DMCFingerSpin": {
+   "size": 84,
+   "state_dim": 3,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "a30b37a16fd67c38",
+   "default_sha": "edb2b1325a7382ce",
+   "moved_style_sha": "647b94193e490d96"
+  },
+  "DMCFingerTurnEasy": {
+   "size": 84,
+   "state_dim": 5,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge",
+    "target_pos_x",
+    "target_pos_z"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "aee98e27d19be76d",
+   "default_sha": "9bfa93d216c8b68f",
+   "moved_style_sha": "86579b9c078851e9"
+  },
+  "DMCFingerTurnHard": {
+   "size": 84,
+   "state_dim": 5,
+   "state_names": [
+    "proximal",
+    "distal",
+    "hinge",
+    "target_pos_x",
+    "target_pos_z"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "aee98e27d19be76d",
+   "default_sha": "ae9720336e9c103a",
+   "moved_style_sha": "86579b9c078851e9"
+  },
+  "DMCHopperHop": {
+   "size": 84,
+   "state_dim": 7,
+   "state_names": [
+    "rootx",
+    "rootz",
+    "rooty",
+    "waist",
+    "hip",
+    "knee",
+    "ankle"
+   ],
+   "leaves": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "47a9b588908875a4",
+   "default_sha": "2b4361e6c910d53b",
+   "moved_style_sha": "a809f6fa8f978572"
+  },
+  "DMCHumanoidStand": {
+   "size": 84,
+   "state_dim": 28,
+   "state_names": [
+    "root_x",
+    "root_y",
+    "root_z",
+    "root_qw",
+    "root_qx",
+    "root_qy",
+    "root_qz",
+    "abdomen_z",
+    "abdomen_y",
+    "abdomen_x",
+    "right_hip_x",
+    "right_hip_z",
+    "right_hip_y",
+    "right_knee",
+    "right_ankle_y",
+    "right_ankle_x",
+    "left_hip_x",
+    "left_hip_z",
+    "left_hip_y",
+    "left_knee",
+    "left_ankle_y",
+    "left_ankle_x",
+    "right_shoulder1",
+    "right_shoulder2",
+    "right_elbow",
+    "left_shoulder1",
+    "left_shoulder2",
+    "left_elbow"
+   ],
+   "leaves": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "e8491dd733d12f9a",
+   "default_sha": "5b17a21136136db8",
+   "moved_style_sha": "28f9949297fd1d17"
+  },
+  "DMCManipulatorBringBall": {
+   "size": 224,
+   "state_dim": 15,
+   "state_names": [
+    "arm_root",
+    "arm_shoulder",
+    "arm_elbow",
+    "arm_wrist",
+    "thumb",
+    "thumbtip",
+    "finger",
+    "fingertip",
+    "ball_x",
+    "ball_z",
+    "ball_y",
+    "target_ball_pos_x",
+    "target_ball_pos_z",
+    "target_ball_quat_qw",
+    "target_ball_quat_qy"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.background",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "target_ball.shape",
+    "visibility.target_ball"
+   ],
+   "states_sha": "b5d54053b6bd99e4",
+   "default_sha": "1dc63a62c3b3e10f",
+   "moved_style_sha": "a4ce80a3434a0332"
+  },
+  "DMCPendulumSwingup": {
+   "size": 84,
+   "state_dim": 1,
+   "state_names": [
+    "hinge"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "ec11b71a0b3e2133",
+   "default_sha": "2ff376224ef5cfe0",
+   "moved_style_sha": "a4ffb89e210f685c"
+  },
+  "DMCPointMassEasy": {
+   "size": 84,
+   "state_dim": 2,
+   "state_names": [
+    "root_x",
+    "root_y"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.grid",
+    "material.self",
+    "material.target"
+   ],
+   "states_sha": "30a7792073fd07f5",
+   "default_sha": "f122e88dd6e8bd0d",
+   "moved_style_sha": "003c6a59d2e0743c"
+  },
+  "DMCReacherEasy": {
+   "size": 84,
+   "state_dim": 4,
+   "state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "0e6c9b4a0fa0ebea",
+   "default_sha": "6ee8be69e5fdb876",
+   "moved_style_sha": "1482da149f04fecf"
+  },
+  "DMCReacherHard": {
+   "size": 84,
+   "state_dim": 4,
+   "state_names": [
+    "shoulder",
+    "wrist",
+    "target_pos_x",
+    "target_pos_y"
+   ],
+   "leaves": [
+    "camera.fovy_scale",
+    "light.diffuse_scale",
+    "material.decoration",
+    "material.effector",
+    "material.grid",
+    "material.self",
+    "material.target",
+    "visibility.target"
+   ],
+   "states_sha": "0e6c9b4a0fa0ebea",
+   "default_sha": "f89787ff0b22830f",
+   "moved_style_sha": "1482da149f04fecf"
+  },
+  "DMCSwimmerSwimmer6": {
+   "SKIP": "ValueError: DMCSwimmerSwimmer6 (swimmer-swimmer6) has no CPU 3-D backend: cpu3d draws the analytic primitives ['mjGEOM_SPHERE', 'mjGEOM_CAPSULE', 'mjGEOM_CYLINDER', 'mjGEOM_BOX'] and this model's movers include ['mjGEOM_ELLIPSOID (mjtGeom 4)']; there is no CPU intersector for them. device='cuda' draws it through MJWarp; device='cpu' is refused rather than silently served by the GPU"
+  },
+  "DMCWalkerWalk": {
+   "size": 84,
+   "state_dim": 9,
+   "state_names": [
+    "rootz",
+    "rootx",
+    "rooty",
+    "right_hip",
+    "right_knee",
+    "right_ankle",
+    "left_hip",
+    "left_knee",
+    "left_ankle"
+   ],
+   "leaves": [
+    "light.diffuse_scale",
+    "material.grid",
+    "material.self"
+   ],
+   "states_sha": "3f71a70d1b034ad2",
+   "default_sha": "c7fb265011c47265",
+   "moved_style_sha": "94f08decd417ea88"
+  }
+ }
+}

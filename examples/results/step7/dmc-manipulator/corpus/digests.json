@@ -1,0 +1,75 @@
+{
+ "meta": {
+  "config_id": "DMCManipulatorBringBall",
+  "reference_id": "dm_control/manipulator-bring_ball",
+  "seed": 20260915,
+  "n": 256,
+  "corpus": 64,
+  "state_dim": 15,
+  "state_names": [
+   "arm_root",
+   "arm_shoulder",
+   "arm_elbow",
+   "arm_wrist",
+   "thumb",
+   "thumbtip",
+   "finger",
+   "fingertip",
+   "ball_x",
+   "ball_z",
+   "ball_y",
+   "target_ball_pos_x",
+   "target_ball_pos_z",
+   "target_ball_quat_qw",
+   "target_ball_quat_qy"
+  ],
+  "default_size": 224,
+  "sizes": [
+   224,
+   84
+  ],
+  "mujoco": "3.12.0",
+  "dm_control": "1.0.45",
+  "node": "cis1b1zs2j3.ad.brown.edu",
+  "step": 7,
+  "workstream": "dmc-manipulator",
+  "sampler": "sample_states: the domain's own initialize_episode plus random actions, seeded; the episode half of each state is read out of the model the episode wrote it into",
+  "note": "CANDIDATE corpus for the Step-8 freeze. Not frozen in Step 7 and not a replacement for anything under examples/results/step4."
+ },
+ "digests": {
+  "224": {
+   "digest_ours": "3be2af89de3579737807abedb7267728b6efce43560225bdef0594680a601a48",
+   "digest_official": "280cbe0b590f1ecab79c9716246ea991c700136884343a66769cf0b09236dfa1",
+   "supersample": 1,
+   "parity": {
+    "mean_abs": 0.2620226801658163,
+    "exact_frac": 0.9829774194834183,
+    "within8_frac": 0.9934075803172832,
+    "max_abs": 204,
+    "interior_frac": 0.43517207012005066,
+    "interior_exact_frac": 1.0,
+    "interior_mean_abs": 0.0,
+    "interior_px": 1385003,
+    "interior_bad_px": 0,
+    "ssim": 0.9936951887696339
+   }
+  },
+  "84": {
+   "digest_ours": "294d2b1104c86f62c5989da3d26801e7975998c3f6dbfa649d3e1250011ee8da",
+   "digest_official": "40661a4d5d891691d3d1c409caa327e5f681da0e03355b483bba092093656a7a",
+   "supersample": 1,
+   "parity": {
+    "mean_abs": 0.5334112811791383,
+    "exact_frac": 0.9777405753968254,
+    "within8_frac": 0.9844525049603174,
+    "max_abs": 199,
+    "interior_frac": 0.07503810422412542,
+    "interior_exact_frac": 1.0,
+    "interior_mean_abs": 0.0,
+    "interior_px": 33084,
+    "interior_bad_px": 0,
+    "ssim": 0.9872504325775332
+   }
+  }
+ }
+}

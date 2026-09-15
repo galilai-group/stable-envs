@@ -253,8 +253,15 @@ _COMPONENT = {3: ("x", "y", "z"), 4: ("qw", "qx", "qy", "qz")}
 #:     body, so the static scene moves with the state and there is no plate to bake. Five of them ship
 #:     in the VISUAL tier below, through a backend that draws the whole scene every frame.
 #:   * dog and quadruped carry ``<mesh>`` assets, which an analytic caster does not intersect.
+#:   * stacker is the one fixed-camera, mesh-free domain still out, and it is out only for want of
+#:     measurement — ``manipulator`` is its worked precedent.
 #: ``ball_in_cup`` is here because the spatial tendon is now a mover kind the caster has: MuJoCo draws
 #: it as a hanging CATENARY of 28 capsules, and ``catenary`` reproduces ``mjv_catenary`` bit-for-bit.
+#: ``manipulator`` is here because a per-episode ORIENTATION turned out to need nothing from the
+#: renderer that a per-episode position does not already need (``_episode_slots``), and because a
+#: per-episode BODY resolves to the geoms hanging off it (``_hideable``). Its camera is ``fovy = 4``,
+#: nearly orthographic from 16 m, and its one model light is DIRECTIONAL with ``castshadow = 1`` —
+#: both of which the existing bake and cast handled unchanged.
 DOMAINS: dict[str, tuple[str, str, int]] = {
     "DMCCartpoleSwingup": ("cartpole", "swingup", 0),
     "DMCCartpoleBalance": ("cartpole", "balance", 0),
@@ -267,6 +274,30 @@ DOMAINS: dict[str, tuple[str, str, int]] = {
     "DMCFingerTurnEasy": ("finger", "turn_easy", 0),
     "DMCFingerTurnHard": ("finger", "turn_hard", 0),
     "DMCBallInCupCatch": ("ball_in_cup", "catch", 0),
+    "DMCManipulatorBringBall": ("manipulator", "bring_ball", 0),
+}
+
+#: Cells whose registered SWM default is rendered at something other than the family's 84 px, so the
+#: size the conformance suite builds them at is the size they are certified at. ``manipulator`` is
+#: ``stable_worldmodel``'s ``DMControlWrapper.render(width=224, height=224)``.
+DEFAULT_SIZES: dict[str, int] = {"DMCManipulatorBringBall": 224}
+
+#: ``_SMALL_TARGET`` in ``stable_worldmodel.envs.dmcontrol.manipulator``: the edge/radius its
+#: ``target.shape`` knob writes for both of its alternatives.
+_SWM_SMALL_TARGET = 0.015
+
+#: Per-cell ``SHAPE_KNOBS``. ONE cell, because one cell's registered wrapper offers a shape knob.
+#: ``stable_worldmodel``'s ``target.shape`` is ``Discrete(2)`` over a 0.015 box and a 0.015 sphere, and
+#: neither is the compiled model's own target (``sphere size=.02``, from ``manipulator.xml``'s ``ghost``
+#: class) — so the leaf carries THREE alternatives and its default is index 2, the model's own. That is
+#: what keeps ``check_default_style_is_official`` a statement about the compiled model while still
+#: making the registered SWM default reachable, which is the Gate-F obligation.
+SHAPE_KNOB_SPECS: dict[str, dict] = {
+    "DMCManipulatorBringBall": {
+        "target_ball": ((R3.BOX, (_SWM_SMALL_TARGET,) * 3),            # swm target.shape = 0
+                        (R3.SPHERE, (_SWM_SMALL_TARGET, 0.0, 0.0)),    # swm target.shape = 1
+                        (R3.SPHERE, (0.02, 0.0, 0.0))),                # dm_control's own, the default
+    },
 }
 
 #: The domains whose camera 0 rides the body, drawn by MJWarp in the VISUAL tier. ``fish`` is measured
@@ -429,6 +460,28 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
     The model is left on the LAST draw, which is deterministic (the task's ``RandomState`` is seeded by
     ``task_kwargs={"random": 0}`` and the count is fixed), so this doubles as "apply the task's
     constant model edits" — ``finger-spin``'s two zero-alpha sites reach the model only this way.
+
+    WHAT THE GUARD BELOW REFUSES, AND WHY IT USED TO REFUSE MORE. A per-episode SIZE really is a
+    different renderer: ``_prims`` reads each mover's ``geom_size`` ONCE at bake time, the whole batch
+    shares it, and ``screen_span`` derives its conservative bound from ``sc.prims.size`` — so a size in
+    the state would have to become a per-row tensor through every intersection routine and through the
+    window projection. A per-episode light ``_dir`` is refused for the matching reason: ``_Lights`` is
+    captured once per bake and ``_shade`` reads one direction for the whole batch.
+
+    ORIENTATION IS NOT IN THAT CLASS, and the guard used to say it was. ``_fk`` writes the drawn slot
+    into the model, runs ``mj_kinematics``, and reads ``d.geom_xmat``/``d.site_xmat`` into ``xm``, which
+    is ``(B, P, 3, 3)`` — a PER-ROW rotation. ``_cast`` -> ``R3.cast_nearest(kind, sizes, xpos, xmat,
+    ...)``, ``_occluded`` -> ``R3.any_blocking(..., xmat, ...)`` and ``_reflect`` all consume it per row,
+    and ``screen_span`` never reads it at all (its bound is the bounding SPHERE, which no rotation
+    moves). So a per-episode ``*_quat`` needs nothing from the renderer that a per-episode ``*_pos``
+    does not already need.
+
+    Measured rather than reasoned: ``manipulator-bring_ball`` draws ``body_quat['target_ball']`` qw and
+    qy every episode, and with only the ``_quat`` term removed from the guard the shipped bake and
+    mover pass render it at interior-pixel agreement 1.000000 — 0 bad of 4,154,763 over 3 draws of 64
+    states at 224 px (``examples/results/step7/dmc-manipulator/``). ``tests/unit/test_dmcontrol_
+    episode_quat.py`` asserts the per-row claim directly, so a future change that makes ``xmat`` batch-
+    shared fails there rather than silently drawing every environment at one draw's orientation.
     """
     have = [k for k in EPISODE_ARRAYS if hasattr(m, k)]
     draws = []
@@ -440,18 +493,18 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
         stack = np.stack([dr[k] for dr in draws]).astype(np.float64)
         for i in np.flatnonzero(stack.max(0) - stack.min(0) > 0):
             slots.append((k, int(i)))
-    bad = [s for s in slots if s[0].endswith(("_size", "_quat", "_dir"))]
+    bad = [s for s in slots if s[0].endswith(("_size", "_dir"))]
     if bad:
-        # Not "unsupported for now": a per-episode SIZE is a different renderer. The mover
-        # primitives' sizes are read once at bake time and shared by the whole batch, so a size in the
-        # state would have to become a per-row tensor through every intersection routine. Nothing in
-        # the shipped set draws one, and a domain that starts to must fail loudly rather than render
-        # every environment at one draw's size.
+        # Not "unsupported for now": see the docstring. A size is shared by the batch at bake time and
+        # a light direction is captured once per bake, so either in the state would render every
+        # environment at one draw's value. A domain that starts to draw one must fail loudly.
         raise RuntimeError(
             f"{env.__class__.__name__}: the episode draws {[_slot_name(m, a, i) for a, i in bad]}, "
-            f"which change a primitive's SIZE or ORIENTATION rather than its position. The mover "
-            f"primitives carry one size and one orientation for the whole batch, so this domain needs "
-            f"a per-row size/quat path before it can be honest.")
+            f"which change a primitive's SIZE or a light's DIRECTION rather than a pose. The mover "
+            f"primitives carry one size for the whole batch and the lights are captured once per "
+            f"bake, so this domain needs a per-row size/light path before it can be honest. "
+            f"(Orientation is NOT in this class: a per-episode *_quat goes through mj_kinematics "
+            f"into the per-row xmat and is supported.)")
     return tuple(slots)
 
 
@@ -888,6 +941,19 @@ class _DMCModel(StableEnv):
     #: (``MW.prepare_model`` in ``_tc_context``), which is once per (domain, res, worlds) and not per
     #: world. See ``DMControlTrackCom``.
     VISIBILITY_KNOB = True
+    #: Discrete SHAPE alternatives for a drawn geom: ``{geom name: ((mjtGeom, (sx, sy, sz)), ...)}``,
+    #: declared per cell and empty on all but ``DMCManipulatorBringBall``. The leaf is
+    #: ``<geom name>.shape`` and it is a PLATE path like every other leaf, so a group of environments
+    #: that share it share one bake; ``_prims`` reads ``geom_type`` and ``geom_size`` off the model AT
+    #: BAKE TIME, so the alternative reaches the mover set with no per-row machinery. That is the whole
+    #: reason it can exist while a per-EPISODE size still cannot (``_episode_slots``): a style is
+    #: constant over a bake group and an episode draw is not.
+    #:
+    #: EXACTLY ONE alternative must match the compiled model, and that index becomes the leaf's
+    #: ``init_value`` — so ``check_default_style_is_official`` is true by construction rather than by a
+    #: transcribed constant, and a model whose target changes shape upstream fails loudly here instead
+    #: of silently redefining what "default" means.
+    SHAPE_KNOBS: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
 
     def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
                  device: str = "cuda", backend: str = "auto", seed: int = 0):
@@ -939,7 +1005,13 @@ class _DMCModel(StableEnv):
                         light_diffuse=np.array(m.light_diffuse, copy=True),
                         light_specular=np.array(m.light_specular, copy=True),
                         mat_reflectance=np.array(m.mat_reflectance, copy=True),
-                        cam_fovy=np.array(m.cam_fovy, copy=True))
+                        cam_fovy=np.array(m.cam_fovy, copy=True),
+                        # geom_type/geom_size are here for ``SHAPE_KNOBS``, and unconditionally, so
+                        # that ``_apply_variation``'s restore is one shape for every cell. They are two
+                        # small arrays and the alternative is a branch in the hottest correctness path
+                        # in this file.
+                        geom_type=np.array(m.geom_type, copy=True),
+                        geom_size=np.array(m.geom_size, copy=True))
         for arr in {a for a, _ in slots}:
             pristine[arr] = np.array(getattr(m, arr), copy=True)
         # ONE Renderer, kept for the life of the process. Material colours, light colours and the
@@ -959,17 +1031,30 @@ class _DMCModel(StableEnv):
         return tuple(_slot_name(m, arr, i) for arr, i in cls._slots())
 
     @classmethod
-    def _hideable(cls) -> tuple[tuple[str, str, int], ...]:
-        """``((kind, element name, id), ...)`` the visibility knob covers: what the EPISODE DRAWS.
+    def _hideable(cls) -> tuple[tuple[str, str, tuple[int, ...]], ...]:
+        """``((kind, name, (id, ...)), ...)`` the visibility knob covers: what the EPISODE DRAWS.
 
         DERIVED, never a name list. ``_episode_slots`` already measured which model entries the task
         writes per episode, by diffing real episodes rather than transcribing a task's source, and
         those entries ARE the scene's task-relevant landmarks: they are the reason the state is widened
         (``_DMCModel.__init__``) and the reason ``_movers`` has to treat a world-body geom as a mover
-        at all. Measured over all sixteen shipped cells (``scratch/step6/reacher-correctness``): the
-        two reachers draw a ``target`` GEOM, the two finger-turn cells a ``target`` SITE, swimmer a
-        ``target`` geom and a ``target_light``, and the other eleven draw nothing — so eleven cells
-        gain no leaf and their ``describe()`` does not move.
+        at all. Measured over all seventeen shipped cells: the two reachers draw a ``target`` GEOM, the
+        two finger-turn cells a ``target`` SITE, swimmer a ``target`` geom and a ``target_light``,
+        ``manipulator`` a ``target_ball`` BODY, and the other eleven draw nothing — so eleven cells gain
+        no leaf and their ``describe()`` does not move.
+
+        A BODY SLOT IS AN INDIRECTION, and it is the reason the third field is a tuple rather than an
+        id. ``reacher`` and ``finger-turn`` draw the element that is drawn; ``manipulator``'s
+        ``initialize_episode`` writes ``body_pos``/``body_quat`` of ``target_ball``, which is a FRAME
+        and has no rgba of its own — what MuJoCo draws is the geoms hanging off it. So a body slot
+        resolves to every DRAWN geom on that body, named by the BODY, and hiding the leaf zeroes each
+        of their alphas. That is the faithful reading of ``stable_worldmodel``'s own
+        ``render_target = 0``, which sets the ``target`` MATERIAL's alpha to zero and hides exactly the
+        ``target_ball`` geom.
+
+        The census is taken against the PRISTINE snapshot, for the reason ``_used_materials`` records:
+        the shared ``MjModel`` carries the last bake's appearance, so reading the live one would make
+        the DECLARED space depend on what the previous env most recently drew.
 
         Lights are excluded because visibility is not what an rgba alpha means for one: MuJoCo draws no
         geometry for a light, it only lights the scene, and "hide the light" is ``light_diffuse``,
@@ -977,25 +1062,50 @@ class _DMCModel(StableEnv):
         a function of the model and not of a set's iteration order.
         """
         import mujoco
-        m = cls._model()
-        out: list[tuple[str, str, int]] = []
-        seen: dict[str, tuple[str, int]] = {}
+        m, pr = cls._model(), cls._pristine()
+        galpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
+        salpha = _effective_alpha(m, "site", rgba=pr["site_rgba"], mat_rgba=pr["mat_rgba"])
+        out: list[tuple[str, str, tuple[int, ...]]] = []
+        seen: dict[str, tuple[str, tuple[int, ...]]] = {}
         for arr, k in cls._slots():
             kind, eid = _slot_element(m, arr, k)
-            if kind not in ("geom", "site"):
+            if kind == "body":
+                # The drawn geoms on the body, from the pristine groups and alphas. A body that also
+                # carried a drawn SITE would need two leaves or one ambiguous ``kind``; nothing in the
+                # shipped set does (manipulator's ``target_ball`` site is in group 3), so it raises
+                # rather than silently hiding half the marker.
+                ids = tuple(i for i in range(m.ngeom) if int(m.geom_bodyid[i]) == eid
+                            and int(pr["geom_group"][i]) in VISIBLE_GROUPS and galpha[i] > 0)
+                bad = [i for i in range(m.nsite) if int(m.site_bodyid[i]) == eid
+                       and int(pr["site_group"][i]) in VISIBLE_GROUPS and salpha[i] > 0]
+                if bad:
+                    raise RuntimeError(
+                        f"{cls.__name__}: the episode draws body "
+                        f"{mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid)!r}, which carries both "
+                        f"drawn geoms {list(ids)} and drawn sites {bad}; one visibility leaf cannot "
+                        f"name both kinds")
+                if not ids:
+                    # A drawn body with nothing drawn on it is not hideable, and advertising a leaf for
+                    # it would fail check_variations_do_something on a knob that was never real.
+                    continue
+                kind, name = "geom", (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid)
+                                      or f"body{eid}")
+            elif kind in ("geom", "site"):
+                obj = {"geom": mujoco.mjtObj.mjOBJ_GEOM, "site": mujoco.mjtObj.mjOBJ_SITE}[kind]
+                name = mujoco.mj_id2name(m, obj, eid) or f"{kind}{eid}"
+                ids = (eid,)
+            else:
                 continue
-            obj = {"geom": mujoco.mjtObj.mjOBJ_GEOM, "site": mujoco.mjtObj.mjOBJ_SITE}[kind]
-            name = mujoco.mj_id2name(m, obj, eid) or f"{kind}{eid}"
-            if name in seen and seen[name] != (kind, eid):
+            if name in seen and seen[name] != (kind, ids):
                 # Two different elements would claim one variation path, and the second would silently
                 # win. A domain that does this needs a naming rule chosen deliberately, not here.
                 raise RuntimeError(
                     f"{cls.__name__}: the episode draws two different elements both named {name!r} "
-                    f"({seen[name]} and {(kind, eid)}); visibility.{name} would be ambiguous")
+                    f"({seen[name]} and {(kind, ids)}); visibility.{name} would be ambiguous")
             if name in seen:
                 continue
-            seen[name] = (kind, eid)
-            out.append((kind, name, eid))
+            seen[name] = (kind, ids)
+            out.append((kind, name, ids))
         return tuple(out)
 
     @classmethod
@@ -1108,11 +1218,30 @@ class _DMCModel(StableEnv):
                                                       init_value=[1.0])})
         vis = {}
         if self.VISIBILITY_KNOB:
-            for kind, name, eid in self._hideable():
-                a = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])[eid]
-                vis[name] = Discrete(2, init_value=int(float(a) > 0))
+            for kind, name, eids in self._hideable():
+                a = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
+                # ANY of the leaf's elements drawn means the leaf's default is "drawn". A body leaf
+                # covers every drawn geom on the body, and ``_hideable`` has already dropped the ones
+                # the pristine model does not draw, so this is 1 for a body and is still read from the
+                # PRISTINE alphas rather than from whatever the last bake left on the model.
+                vis[name] = Discrete(2, init_value=int(any(float(a[i]) > 0 for i in eids)))
         if vis:
             space["visibility"] = Dict(vis)
+        for gname, alts in self.SHAPE_KNOBS.items():
+            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
+            if gid < 0:
+                raise RuntimeError(f"{type(self).__name__}: SHAPE_KNOBS names geom {gname!r}, which "
+                                   f"this model does not have")
+            cur = [k for k, (t, s) in enumerate(alts)
+                   if int(t) == int(pr["geom_type"][gid])
+                   and np.allclose(np.asarray(s, np.float64), pr["geom_size"][gid])]
+            if len(cur) != 1:
+                raise RuntimeError(
+                    f"{type(self).__name__}: {len(cur)} of the {len(alts)} declared shapes for "
+                    f"{gname!r} match the compiled model (type {int(pr['geom_type'][gid])}, size "
+                    f"{list(pr['geom_size'][gid])}); exactly one must, or the leaf's default is not "
+                    f"the official appearance")
+            space[gname] = Dict({"shape": Discrete(len(alts), init_value=cur[0])})
         return Dict(space)
 
     def _var(self, variation, path):
@@ -1312,6 +1441,8 @@ class DMControlSuite(_DMCModel):
         m.geom_rgba[:] = pr["geom_rgba"]
         m.site_rgba[:] = pr["site_rgba"]
         m.mat_reflectance[:] = pr["mat_reflectance"]
+        m.geom_type[:] = pr["geom_type"]
+        m.geom_size[:] = pr["geom_size"]
         # groups too, so a bake that raises part-way cannot leave the movers hidden for the next one
         m.geom_group[:] = pr["geom_group"]
         m.site_group[:] = pr["site_group"]
@@ -1328,6 +1459,17 @@ class DMControlSuite(_DMCModel):
         m.light_diffuse[:] = np.clip(
             pr["light_diffuse"] * float(self._var(variation, "light.diffuse_scale")[0]), 0, 1)
         m.light_specular[:] = pr["light_specular"]
+        # SHAPE, before visibility so that hiding still wins. Absolute assignment from the pristine
+        # arrays restored above, so baking B after A gives the same model as baking B first.
+        for gname, alts in self.SHAPE_KNOBS.items():
+            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
+            k = int(round(float(self._var(variation, f"{gname}.shape")[0])))
+            if not 0 <= k < len(alts):
+                raise ValueError(f"{type(self).__name__}: {gname}.shape = {k} is outside "
+                                 f"[0, {len(alts)})")
+            t, s = alts[k]
+            m.geom_type[gid] = int(t)
+            m.geom_size[gid] = np.asarray(s, np.float64)
         # VISIBILITY, last, and expressed the way MuJoCo expresses it: the element's own rgba alpha.
         # Everything downstream already reads that — ``_effective_alpha`` resolves it, ``_visible``
         # drops a zero-alpha element, ``_movers`` therefore never lists it, and the three plate shots
@@ -1338,12 +1480,13 @@ class DMControlSuite(_DMCModel):
         # element knob hides 43 (84 px, scratch/step6/reacher-correctness/probe_hide.py). On reacher
         # the target geom is the material's only wearer and the two coincide exactly, which is what
         # makes this a faithful reading of stable_worldmodel's ``render_target = 0``.
-        for kind, name, eid in self._hideable():
+        for kind, name, eids in self._hideable():
             # ``>= 0.5`` rather than ``!= 0``: the value arrives as a float32 style column, and a
             # Discrete leaf only ever holds 0 or 1, so the threshold is a guard on a caller who writes
             # a style row by hand rather than a semantic.
             if float(self._var(variation, f"visibility.{name}")[0]) < 0.5:
-                getattr(m, f"{kind}_rgba")[eid, 3] = 0.0
+                for eid in eids:                      # one id for an element leaf, N for a body leaf
+                    getattr(m, f"{kind}_rgba")[eid, 3] = 0.0
 
     @staticmethod
     def _visible(m, kind: str) -> list[int]:
@@ -2603,11 +2746,51 @@ PARITY_NOTE = (
     "happened to be fully covered, while a blended edge almost never is.")
 
 
+#: State dimensions that reach the OFFICIAL frame and cannot reach this renderer's, with the mechanism.
+#: This is a DECLARATION, not an exemption: ``check_state_dims_matter`` is mandatory (certification.md
+#: S4.1), it is NOT widened here, and ``DMCManipulatorBringBall`` therefore ships with that check
+#: RECORDED AS FAILING on these three dimensions. The note exists so the failure is a known, measured,
+#: bounded property rather than a surprise, and so that the contract change it asks for is written down
+#: somewhere a reviewer can approve or refuse it.
+STATE_DIMS_NOTE: dict[str, str] = {
+    "DMCManipulatorBringBall": (
+        "check_state_dims_matter FAILS on three of fifteen dimensions -- ball_y, "
+        "target_ball_quat_qw and target_ball_quat_qy -- and the failure is REAL rather than a probe "
+        "artefact. All three do exactly one thing: they orient an UNTEXTURED SPHERE (`ball` is "
+        "sphere size=.022 on material `self`, `target_ball` is sphere size=.02 on material `target`, "
+        "and neither material carries a texture). MuJoCo draws a sphere as a TESSELLATED mesh shaded "
+        "PER VERTEX, so rotating it rotates the mesh and moves the Gouraud interpolation and the "
+        "specular vertex; an analytic per-pixel sphere is EXACTLY rotation-invariant and cannot move. "
+        "Measured over 16 states at 224 px (examples/results/step7/dmc-manipulator/): the official "
+        "renderer moves 896 px at max 55/255 for ball_y and 734 px at max 33/255 for each quaternion "
+        "slot, while this renderer moves 0. It is bounded twice over -- the moved pixels lie INSIDE "
+        "the silhouette band that already disagrees (all-pixel exactness after each perturbation is "
+        "0.98275-0.98277 against a 0.98280 baseline, and interior-pixel agreement stays 1.000000), "
+        "and the two quaternion slots become LIVE under target_ball.shape = 0, where the target is a "
+        "BOX and rotating it is visible. Closing it inside this design would mean reproducing "
+        "MuJoCo's icosphere tessellation and per-vertex shading in the mover pass, i.e. replacing the "
+        "analytic caster for EVERY DM Control cell to recover ~800 px at <= 55/255 on one of them. "
+        "PROPOSED CONTRACT CHANGE, for approval rather than applied here: a per-class declared "
+        "exclusion list that check_state_dims_matter itself VALIDATES -- an excluded dimension must "
+        "be shown to move ONLY the orientation of sphere geoms and nothing else (same qpos/slot "
+        "write, compare geom_xpos, geom_size, geom_type and every non-sphere geom_xmat before and "
+        "after), so the escape can only be taken by a dimension that is provably rotation-invariant "
+        "geometry and never by a dimension the renderer simply dropped. Until that is approved this "
+        "cell records the check as FAIL with this note."),
+}
+
+
 def _make_classes():
     made = {}
     for cname, (dom, task, cam) in DOMAINS.items():
         extra = ({"parity_all_exact_min": ALL_EXACT_FLOOR[cname], "parity_note": PARITY_NOTE}
                  if cname in ALL_EXACT_FLOOR else {})
+        if cname in DEFAULT_SIZES:
+            extra["default_size"] = DEFAULT_SIZES[cname]
+        if cname in SHAPE_KNOB_SPECS:
+            extra["SHAPE_KNOBS"] = SHAPE_KNOB_SPECS[cname]
+        if cname in STATE_DIMS_NOTE:
+            extra["state_dims_note"] = STATE_DIMS_NOTE[cname]
         cls = register(type(cname, (DMControlSuite,), dict(
             **extra,
             DOMAIN=dom, TASK=task, CAMERA=cam,
