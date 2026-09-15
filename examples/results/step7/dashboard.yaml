@@ -7,7 +7,7 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: follow-up + oracle + tier landed (7a1a138); bounded re-review requested; CPU tier job 6395167 pending; merge after re-review
+  status: MERGED into step7/integration at 9ca318f (branch 7a1a138; re-review APPROVE); CPU tier job 6395167 pending -> separate commit; W2 starts from the merged tree
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
@@ -116,6 +116,17 @@ workstreams:
         - 'parity_note/docstrings: ''on this pool'' + mechanism'
         - 'findings: frozen Step-4 digest 1aeabbe8bc6a9a2e reproduces on CPU (frames_digest hashes shape+dtype first)'
         tests: tests/unit 838 passed 37 skipped; parity byte-identical re-verified after every edit
+      recheck:
+        verdict: APPROVE
+        head: 7a1a138
+        verified:
+        - four changes satisfied; daylight per-call now row growth + ~0.02 ms
+        - prng API change breaks nothing; tests/unit 760/7/1 same pre-existing failure
+        - parity 1.0/0 at 7 and 16 px; digests reproduced
+        - oracle faithful to the check; numbers reproduced independently (0.1634/0.1634)
+        - strip characterisation correct; wording refinement forwarded
+        step8_note: certifier still runs check_resolution_consistency on the mixed 8-state draw (ours 0.8164, official 0.7440); Step-8 certifier must read resolution_consistency_applicability or judge on
+          the light >= 0.5 subset
   decision_A_oracle:
     commit: b399fbb
     protocol: check_resolution_consistency's exact protocol on un-jitted craftax (per-state state_rng, load_all_textures_given_size(32)), split by region and band
@@ -137,6 +148,11 @@ workstreams:
     gpu: 'RTX 3090 gpu2113, job 6394893, B=4096/16 px: mixed 45,203 f/s (tier input); daylight 796,702; night 24,353; ratio 32.7x; slower band = light_level < 0.5 (flagged)'
     cpu: 'NOT reported: job 6394647 contended (daylight 6,219 f/s vs Step-6 certified 115k-154k on this cluster); re-queued as 6395167 --exclusive with /proc/loadavg before/after, Step-3 harness headline
       + Step-6 tree daylight comparison in the same job'
+  merge:
+    integration_sha: 9ca318f
+    date: '2026-09-15'
+    gate: hygiene 0 trailers; step4/5/6 untouched; review APPROVE-WITH-CHANGES -> re-check APPROVE; integration tests running
+    auto_merged: tests/unit/test_declarations.py (W4 + W1 hunks)
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -469,6 +485,8 @@ incident_log:
   item: W6 phase 1 PATCH_CANDIDATE (6e50f34); reviewer spawned; CPU triangle backend deferred
 - date: '2026-09-15'
   item: W1 follow-up/oracle/tier landed (7a1a138); night check not applicable below light 0.5 on official evidence; GPU mixed 45,203 f/s; CPU tier pending exclusive re-run
+- date: '2026-09-15'
+  item: W1 merged (9ca318f); W2 worktree created from ada4075
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -489,3 +507,6 @@ deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
   status: deferred to Step 8 by coordinator ruling 2026-09-15; not a Step-7 blocker (cell declares CPU missing, honest raise)
+step8_carryovers:
+- item: certifier must honour per-cell resolution_consistency_applicability (CraftaxClassic night band) or judge on the light >= 0.5 subset
+  source: W1 review re-check 2026-09-15
