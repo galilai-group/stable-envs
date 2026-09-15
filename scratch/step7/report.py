@@ -134,7 +134,8 @@ def main() -> None:
     P("|---|---|")
     P(f"| parent baseline | `{as_written(dash.get('parent_baseline_sha'))}` |")
     P(f"| integration branch | `{as_written(dash.get('integration_branch'))}` |")
-    P(f"| integration HEAD reported on | `{sha}` |")
+    P(f"| integration HEAD verified | `{matrix.get('integration_head_verified') or sha}` |")
+    P(f"| closure branch tip this page was generated at | `{sha}` |")
     P(f"| coverage target | {as_written(dash.get('coverage_target'))} |")
     P(f"| closure branch | `step7/closure` (this page and everything under "
       f"`examples/results/step7/closure/`) |")

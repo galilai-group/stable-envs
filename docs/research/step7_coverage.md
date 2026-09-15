@@ -8,7 +8,8 @@
 |---|---|
 | parent baseline | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` |
 | integration branch | `step7/integration` |
-| integration HEAD reported on | `8b6d15db081634154d6ec28aa2171c328da91f02` |
+| integration HEAD verified | `275970cc2d9e0d92eebf5297ee175b08944b7d04` |
+| closure branch tip this page was generated at | `32e97664669b82bbf62cec535a84260717ace129` |
 | coverage target | 40/40 pixel-producing SWM ids at full (33 done + CraftaxClassic partial->full + 6 gaps) |
 | closure branch | `step7/closure` (this page and everything under `examples/results/step7/closure/`) |
 

@@ -358,6 +358,12 @@ def main() -> None:
     ga4, ga4_src_per_config, ga4_src = _gate_a_frozen(a.closure)
     sha = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
                          capture_output=True, text=True).stdout.strip() or None
+    # The SHA a row's "merged" field must name is the INTEGRATION head this sweep verified, not the
+    # closure branch's own tip, which moves with every artifact commit and is not where anything was
+    # merged. It is the merge-base with step7/integration; if that branch is not present the value
+    # is left null rather than silently falling back to HEAD.
+    integ = subprocess.run(["git", "-C", str(ROOT), "merge-base", "HEAD", "step7/integration"],
+                           capture_output=True, text=True).stdout.strip() or None
 
     rows, counts = [], {"pixel_producing": 0, "pixel_covered": 0, "symbolic": 0,
                         "gate_a": {}, "cpu_tier": {}, "gpu_tier": {}}
@@ -376,7 +382,8 @@ def main() -> None:
             "closed_in_step7": bool(s7),
             "merged": {"yes": bool(envs), "sha": (s7 or {}).get("merged_sha"),
                        "tier_merge_sha": (s7 or {}).get("tier_merge_sha"),
-                       "integration_head": sha},
+                       "integration_head_verified": integ,
+                       "closure_branch_head": sha},
         }
         if not pixel:
             counts["symbolic"] += 1
@@ -498,7 +505,8 @@ def main() -> None:
 
     doc = {"schema_version": 1, "step": 7,
            "what_this_is": __doc__.strip().splitlines()[0],
-           "integration_head": sha,
+           "integration_head_verified": integ,
+           "closure_branch_head": sha,
            "sources": {
                "swm_registry": "scratch/swm_matrix.json (live swm registry probe)",
                "declarations": "the stable-envs classes at the integration HEAD, unioned over "

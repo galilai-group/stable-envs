@@ -1,4 +1,5 @@
 {
+ "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
  "counts": {
   "cpu_tier": {
    "CPU_FAST": 1,
@@ -23,7 +24,7 @@
   "pixel_producing": 40,
   "symbolic": 2
  },
- "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+ "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
  "rows": [
   {
    "closed_in_step7": false,
@@ -58,7 +59,8 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -133,7 +135,8 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -210,7 +213,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -289,7 +293,8 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -363,7 +368,8 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -472,7 +478,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -624,7 +631,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "9ca318f",
     "tier_merge_sha": "b1f61b1",
     "yes": true
@@ -661,7 +669,8 @@
     "rung": null
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": false
@@ -780,7 +789,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "d024c1a",
     "tier_merge_sha": "00c7c8d",
     "yes": true
@@ -817,7 +827,8 @@
     "rung": null
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": false
@@ -866,7 +877,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -941,7 +953,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1016,7 +1029,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1091,7 +1105,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1166,7 +1181,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1241,7 +1257,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1316,7 +1333,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1388,7 +1406,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1460,7 +1479,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1532,7 +1552,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1607,7 +1628,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1682,7 +1704,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1757,7 +1780,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1867,7 +1891,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1976,7 +2001,8 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2098,7 +2124,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "1d9dccb",
     "tier_merge_sha": null,
     "yes": true
@@ -2179,7 +2206,8 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2247,7 +2275,8 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2395,7 +2424,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "24d1054",
     "tier_merge_sha": null,
     "yes": true
@@ -2470,7 +2500,8 @@
     "rung": "documented_manual"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2619,7 +2650,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "24d1054",
     "tier_merge_sha": null,
     "yes": true
@@ -2734,7 +2766,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "fd2b8ef",
     "tier_merge_sha": null,
     "yes": true
@@ -2810,7 +2843,8 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2883,7 +2917,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2958,7 +2993,8 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3048,7 +3084,8 @@
     "rung": "same_scene_as"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3131,7 +3168,8 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3295,7 +3333,8 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": "0a029bd",
     "tier_merge_sha": "e0a416c",
     "yes": true
@@ -3371,7 +3410,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3446,7 +3486,8 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3520,7 +3561,8 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3640,7 +3682,8 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "8b6d15db081634154d6ec28aa2171c328da91f02",
+    "closure_branch_head": "32e97664669b82bbf62cec535a84260717ace129",
+    "integration_head_verified": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
