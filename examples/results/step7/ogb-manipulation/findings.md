@@ -3,12 +3,18 @@
 **Classification: `FINDING`.** Diagnosis only; no renderer written, no shared file touched.
 Two sub-verdicts, both measured:
 
-* **GPU: feasible on the `fetch.py` pattern, and the Fetch blocker probably does not transfer.**
-  Every precondition the Fetch cell needed is satisfied here and two of them are satisfied MORE
-  cleanly (a model camera instead of a recovered free camera; zero texture gaps). The one Step-6
-  `fetch-gpu` blocker — `BATCH_SCALES` 7.6–11.7x against a required 20x — was recorded as a
-  **480 px** failure that the same scene PASSES at ≤240 px (26–99x). These two envs render at
-  **224 px and 200 px**, inside that passing regime. The measurement is queued (job 6395176).
+* **GPU: the scene goes through the existing MJWarp backend unmodified, and `BATCH_SCALES` FAILS
+  — worse than Fetch, not better.** Measured on an RTX 3090 (job 6395461): `OGBCube` builds at
+  193,113 triangles and renders at **2,198 f/s at B=1 rising to 6,352 f/s at B=1024**, so
+  **`BATCH_SCALES` = 2.89x** against a required 20x. **This refutes the hypothesis this file carried
+  before the GPU leg landed** — that Fetch's 7.6–11.7x failure was a 480 px effect these 224/200 px
+  scenes would escape. It is not: at 224 px the per-frame device cost is small enough that `fps(1)`
+  is *already* 2,198 f/s and throughput saturates by B=64, so there is nothing left for batching to
+  amortise. VRAM is not the limit either (148 MiB at B=1024). Raw fidelity out of the box, with only
+  `gl_rounding` applied and no plate bake or per-env correction, is **0.0092 interior-exact,
+  mean |Δ| 10.4/255** — a long way from Fetch's 0.9988, and the first thing phase 1 would have to
+  explain. `OGBScene`'s row from that job is **void** (CUDA context poisoned by `OGBCube`'s
+  teardown); re-running one env per process as job 6395736.
 * **CPU: `BLOCKER` for `CPU_FAST` on the `cores_cpu` conjunct; `CPU_FASTER` is feasible.**
   Measured on the certification host (`node2351`, `batch`/`normal`, one thread, Mesa llvmpipe
   through EGL): the official renderer runs at **6.31 / 5.17 f/s** and one-core JPEG-q90 decode at

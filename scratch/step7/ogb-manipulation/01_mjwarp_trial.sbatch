@@ -45,6 +45,13 @@ eval "$(PYTHONPATH=$PYTHONPATH "$VENV/bin/python" \
   scratch/step7/ogb-manipulation/gl_probe.py --require egl 2>&1 | tee /dev/stderr | tail -1)"
 [ "$MUJOCO_GL" = "__NONE__" ] && { echo "FATAL: EGL unusable on $(hostname) -- node fault"; exit 9; }
 
-"$VENV/bin/python" scratch/step7/ogb-manipulation/probe_mjwarp_trial.py --out "$OUT" \
-  --batches 1 16 64 256 1024 || echo "MJWARP rc=$?"
+# One env per process. In job 6395461 both ran in one interpreter: OGBCube swept to B=1024, then
+# OGBScene died in wp_cuda_graph_begin_capture with CUDA error 700 after a storm of the same error
+# from wp_free_device_async -- the context was already poisoned by the first env's teardown, so the
+# OGBScene row was not evidence about OGBScene.
+for E in swm/OGBCube-v0 swm/OGBScene-v0; do
+  echo "=== $E"
+  "$VENV/bin/python" scratch/step7/ogb-manipulation/probe_mjwarp_trial.py --out "$OUT" \
+    --envs "$E" --batches 1 16 64 256 1024 4096 || echo "MJWARP $E rc=$?"
+done
 ls -l "$OUT" | tail -10

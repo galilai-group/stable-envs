@@ -13,6 +13,13 @@ registered resolution and the registered `front_pixels` camera.  What it answers
   MuJoCo's own EGL frame at the same state, with `gl_rounding` on (the Fetch correction) -- whole
   frame, interior, and the share owned by the one translucent goal marker MJWarp cannot draw.
 
+**One env per process.** Run 6395461 measured both in one interpreter: `OGBCube` built and swept to
+B=1024, and `OGBScene` then died in `wp_cuda_graph_begin_capture` with
+`Warp CUDA error 700: an illegal memory access`, preceded by a storm of the same error from
+`wp_free_device_async` -- i.e. the CUDA context was already poisoned by the first env's teardown.
+A second env measured in a poisoned context is not evidence about that env, so `--envs` now takes
+exactly one id and the sbatch invokes the script once per env.
+
 Nothing is written outside the given --out.
 """
 from __future__ import annotations
@@ -26,7 +33,9 @@ import numpy as np
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
-    ap.add_argument("--envs", nargs="+", default=["swm/OGBCube-v0", "swm/OGBScene-v0"])
+    ap.add_argument("--envs", nargs=1, default=["swm/OGBCube-v0"],
+                    help="exactly one id: a CUDA context poisoned by the first env's teardown "
+                         "makes the second env's result meaningless (job 6395461)")
     ap.add_argument("--batches", nargs="+", type=int, default=[1, 16, 64, 256, 1024])
     ap.add_argument("--states", type=int, default=16)
     ap.add_argument("--repeat", type=int, default=7)

@@ -1,0 +1,32 @@
+{
+ "batch_rows": [],
+ "build_error": "RuntimeError: Warp CUDA error 700: an illegal memory access was encountered (in function wp_cuda_graph_begin_capture, /builds/omniverse/warp/warp/native/warp.cu:3477)",
+ "built": false,
+ "camera_id": 1,
+ "env_id": "swm/OGBScene-v0",
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "host": "gpu2101.oscar.ccv.brown.edu",
+ "mujoco": "3.12.0",
+ "mujoco_gl": "egl",
+ "mujoco_warp": "3.12.0",
+ "nq": 25,
+ "partial_alpha_visible_geoms": [
+  [
+   "target_object_0",
+   0.20000000298023224
+  ],
+  [
+   "//unnamed_geom_60",
+   0.10000000149011612
+  ],
+  [
+   "//unnamed_geom_73",
+   0.10000000149011612
+  ]
+ ],
+ "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+ "res": 200,
+ "texture_gaps": [],
+ "torch": "2.14.0+cu126",
+ "warp_lang": "1.17.0"
+}
