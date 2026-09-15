@@ -71,6 +71,25 @@ nothing, on every scene here), and **no heightfields or SDF geoms** (skipped).
 This module is deliberately env-agnostic and imports neither ``mujoco`` nor ``nvdiffrast`` at module
 scope; both are looked up inside the functions that need them, so importing ``stable_envs`` on a machine
 without either still works.
+
+**Four generic extensions (Step 7), every one of them OFF by default so that every existing caller
+renders byte-for-byte what it rendered before:**
+
+* ``Scene.from_triangles`` — a scene from a triangle soup and a per-geom appearance table, with no
+  ``MjModel``. The ``MjModel`` constructor is unchanged and builds the same members.
+* ``BatchRenderer.render(..., mat_rgb=)`` — a PER-ROW ``(B, G, 3)`` material colour, one gather instead
+  of one ``Scene`` per distinct colour (``gather_material``).
+* ``BatchRenderer(shading="tiny", tiny=TinyShading(...))`` — Bullet's TinyRenderer fixed-function law
+  beside MuJoCo's (``shade_tiny``): one world-fixed directional light, the specular term MULTIPLIED into
+  the material colour with an infinite-viewer reflection whose exponent is a parameter, coefficients
+  ``ambient + diffuse*max(0, n.l) + specular*max(0, r_z)^e``. Measured on real frames before it was
+  written (``scratch/step7/rocket-landing/tiny_law_probe.py``, ``tiny_law_probe2.py``): the light is
+  world-fixed (not head-lamp), the exponent is 2, ``r_z`` is the WORLD z of the reflection, and the
+  output is TRUNCATED to uint8 (``quant="trunc"``).
+* ``BatchRenderer(tex_filter="nearest")`` and ``sample_offset=(ox, oy)`` — unfiltered texel lookup, and
+  a sub-pixel shift of the whole frame for renderers that sample pixel CORNERS rather than centres
+  (TinyRenderer tests integer pixel coordinates, bottom-up; nvdiffrast tests ``i + 0.5``; ``(0.5, 0.5)``
+  makes the two agree, measured 25/25 columns and 13/13 rows in ``tiny_law_probe.py``).
 """
 from __future__ import annotations
 
@@ -111,6 +130,79 @@ def QUANT(x, mode: str = "round"):
     else:
         raise ValueError(f"unknown quantisation mode {mode!r}")
     return y.to(torch.uint8)
+
+
+# --------------------------------------------------------------------------- generic pieces
+# Pure torch, no nvdiffrast, no mujoco: each of these is unit-tested on the CPU against numbers that were
+# MEASURED on the renderer they emulate (``tests/unit/test_nvdiff_triangles.py``).
+
+
+@dataclass
+class TinyShading:
+    """Bullet TinyRenderer's fixed-function law, as ``TinyRendererVisualShapeConverter::render`` applies it.
+
+    ``out = base * (ambient + diffuse * max(0, n.l) + specular * max(0, r_z) ** exponent) * color`` with
+    ``r = 2 (n.l) n - l`` the reflection of the light about the normal and ``r_z`` its WORLD z component
+    (an infinite viewer looking down -z, whatever the camera does). ``dir`` points TOWARD the light and is
+    normalised here. The defaults are Bullet's own for a z-up world: direction ``(-50, 30, 100)``,
+    coefficients 0.6 / 0.35 / 0.05, white light, exponent 2 -- each reproduces the default frame with
+    0 differing pixels when passed explicitly (``examples/results/step7/rocket-landing/phase0/
+    phase0_light_sweep.json``; the exponent from ``tiny_law2.json``: 190/255 = 0.8639 ** 2).
+    """
+
+    dir: tuple = (-50.0, 30.0, 100.0)
+    ambient: float = 0.6
+    diffuse: float = 0.35
+    specular: float = 0.05
+    exponent: float = 2.0
+    color: tuple = (1.0, 1.0, 1.0)
+
+    def unit_dir(self) -> np.ndarray:
+        d = np.asarray(self.dir, np.float64)
+        return d / np.linalg.norm(d)
+
+
+def shade_tiny(n, base, law: TinyShading):
+    """``n`` unit WORLD normals ``(..., 3)``, ``base`` material colour ``(..., 3)`` -> unclamped colour."""
+    import torch
+    l = torch.as_tensor(law.unit_dir(), dtype=base.dtype, device=base.device)
+    ndl = (n * l).sum(-1, keepdim=True)
+    r = 2.0 * ndl * n - l
+    rz = r[..., 2:3].clamp_min(0.0)
+    term = law.ambient + law.diffuse * ndl.clamp_min(0.0) + law.specular * torch.pow(rz, law.exponent)
+    col = torch.as_tensor(np.asarray(law.color, np.float32), dtype=base.dtype, device=base.device)
+    return base * term * col
+
+
+def gather_material(mat, gid):
+    """``mat (G, 3)`` shared, or ``(B, G, 3)`` per row; ``gid (B, H, W)`` -> ``(B, H, W, 3)``.
+
+    The per-row form is what makes a batch of B appearances ONE render: colour is otherwise a per-geom
+    constant baked into the ``Scene`` (``mujoco_locomotion.py`` says why its visual tier refuses to offer
+    the knob), and a different ``Scene`` per colour is a different rasterization per colour.
+    """
+    import torch
+    if mat.dim() == 2:
+        return mat[gid]
+    b = torch.arange(gid.shape[0], device=gid.device).view(-1, 1, 1)
+    return mat[b, gid]
+
+
+def offset_clip(pos, R: int, offset) -> "torch.Tensor":
+    """Shift clip-space vertices ``(B, V, 4)`` by ``offset`` PIXELS at resolution ``R`` (x right, y UP).
+
+    nvdiffrast tests coverage at pixel centres ``(i + 0.5, j + 0.5)`` in a bottom-up frame; a rasterizer
+    that tests integer corners ``(i, j)`` sees the same picture only if the geometry is moved by half a
+    pixel first, which is what ``(0.5, 0.5)`` does. The shift is applied in clip space, scaled by ``w``,
+    so it is exactly a screen-space translation after the divide.
+    """
+    ox, oy = float(offset[0]), float(offset[1])
+    if ox == 0.0 and oy == 0.0:
+        return pos
+    out = pos.clone()
+    out[..., 0] = out[..., 0] + ox * (2.0 / R) * out[..., 3]
+    out[..., 1] = out[..., 1] + oy * (2.0 / R) * out[..., 3]
+    return out
 
 
 # --------------------------------------------------------------------------- tessellation
@@ -536,17 +628,85 @@ class Scene:
             self.geoms.append(g)
 
         dev = torch.device(device)
-        self.vert = torch.as_tensor(np.concatenate(V), dtype=torch.float32, device=dev)
-        self.norm = torch.as_tensor(np.concatenate(N), dtype=torch.float32, device=dev)
-        self.uv = torch.as_tensor(np.concatenate(U), dtype=torch.float32, device=dev)
-        self.vgeom = torch.as_tensor(np.concatenate(GI), dtype=torch.int64, device=dev)
-        self.face = torch.as_tensor(np.concatenate(F), dtype=torch.int32, device=dev)
-        self.fgeom = torch.as_tensor(np.concatenate(FG), dtype=torch.int64, device=dev)
+        self._assemble(np.concatenate(V), np.concatenate(N), np.concatenate(U), np.concatenate(GI),
+                       np.concatenate(F), np.concatenate(FG), dev)
+        self._appearance(m, dev)
+        self._sparse(dev)
+
+    def _assemble(self, vert, norm, uv, vgeom, face, fgeom, dev) -> None:
+        import torch
+        self.vert = torch.as_tensor(vert, dtype=torch.float32, device=dev)
+        self.norm = torch.as_tensor(norm, dtype=torch.float32, device=dev)
+        self.uv = torch.as_tensor(uv, dtype=torch.float32, device=dev)
+        self.vgeom = torch.as_tensor(vgeom, dtype=torch.int64, device=dev)
+        self.face = torch.as_tensor(face, dtype=torch.int32, device=dev)
+        self.fgeom = torch.as_tensor(fgeom, dtype=torch.int64, device=dev)
         self.V, self.G = int(self.vert.shape[0]), len(self.geoms)
         self.mjgeom = torch.as_tensor(np.asarray(self.geoms, np.int64), device=dev)
 
-        self._appearance(m, dev)
+    @classmethod
+    def from_triangles(cls, vert, norm, face, vert_geom, rgba, *, uv=None, specular=None, shininess=None,
+                       emission=None, textures=None, tex_of_geom=None, device="cuda",
+                       tex_policy: str = "pot") -> "Scene":
+        """A scene from a triangle soup, with no ``MjModel``: the same members, the same render.
+
+        ``vert (V,3)`` in each geom's OWN frame, ``norm (V,3)``, ``face (F,3)`` indices, ``vert_geom (V,)``
+        the geom each vertex belongs to (``0..G-1``, every vertex of a triangle in the same geom),
+        ``rgba (G,4)``; optional ``uv (V,2|3)``, per-geom ``specular``/``shininess``/``emission`` ``(G,)``,
+        ``textures {tex_id: HxWx3|4 array}`` and ``tex_of_geom (G,)`` (``-1`` for none). Geoms are drawn
+        in the order given and ``render`` expects ``xpos``/``xmat`` in that order.
+
+        This is the entry a scene that is not a MuJoCo model uses -- a URDF's primitives, an OBJ -- and
+        the reason it is a constructor on this class rather than a new one is that everything after
+        assembly (the sparse transform, the appearance gather, the texture pyramids) is shared and must
+        stay shared, so a fix to one path is a fix to both.
+        """
+        import torch
+        self = cls.__new__(cls)
+        self.groups = ()
+        self.tex_policy = tex_policy
+        self.device = device
+        vert = np.asarray(vert, np.float64).reshape(-1, 3)
+        norm = np.asarray(norm, np.float64).reshape(-1, 3)
+        face = np.asarray(face, np.int64).reshape(-1, 3)
+        vgeom = np.asarray(vert_geom, np.int64).reshape(-1)
+        rgba = np.asarray(rgba, np.float64).reshape(-1, 4)
+        G = len(rgba)
+        if len(vgeom) != len(vert) or len(norm) != len(vert):
+            raise ValueError(f"vert {vert.shape}, norm {norm.shape} and vert_geom {vgeom.shape} must agree")
+        if vgeom.min() < 0 or vgeom.max() >= G:
+            raise ValueError(f"vert_geom must index rgba's {G} geoms")
+        fgeom = vgeom[face[:, 0]]
+        if not (np.all(vgeom[face[:, 1]] == fgeom) and np.all(vgeom[face[:, 2]] == fgeom)):
+            raise ValueError("every triangle must lie in one geom")
+        if uv is None:
+            uv3 = np.zeros((len(vert), 3))
+        else:
+            uv = np.asarray(uv, np.float64).reshape(len(vert), -1)
+            uv3 = np.concatenate([uv, np.zeros((len(vert), 3 - uv.shape[1]))], -1) if uv.shape[1] < 3 else uv
+        self.geoms = list(range(G))
+        dev = torch.device(device)
+        self._assemble(vert, norm, uv3, vgeom, face, fgeom, dev)
+        z = np.zeros(G)
+        self.mat_rgb = torch.as_tensor(rgba[:, :3], dtype=torch.float32, device=dev)
+        self.alpha = torch.as_tensor(rgba[:, 3], dtype=torch.float32, device=dev)
+        self.spec = torch.as_tensor(z if specular is None else np.asarray(specular, np.float64),
+                                    dtype=torch.float32, device=dev)
+        self.shininess = torch.as_tensor(z if shininess is None else np.asarray(shininess, np.float64),
+                                         dtype=torch.float32, device=dev)
+        self.emission = torch.as_tensor(z if emission is None else np.asarray(emission, np.float64),
+                                        dtype=torch.float32, device=dev)
+        texid = np.full(G, -1, np.int64) if tex_of_geom is None else np.asarray(tex_of_geom, np.int64)
+        self.texid = torch.as_tensor(texid, device=dev)
+        self.texid_np = texid
+        self.texcube_np = np.zeros(G, bool)
+        self.textures = {}
+        for t in sorted({int(x) for x in texid if x >= 0}):
+            if textures is None or t not in textures:
+                raise ValueError(f"tex_of_geom names texture {t} but textures has no such entry")
+            self.textures[t] = prepare_texture_array(np.asarray(textures[t]), dev, tex_policy)
         self._sparse(dev)
+        return self
 
     # -- geometry ----------------------------------------------------------
 
@@ -687,10 +847,25 @@ def prepare_texture(m, t: int, dev, policy: str = "pot") -> dict:
     ``mjTEXTURE_CUBE`` / ``mjTEXTURE_SKYBOX`` arrive as a vertical strip of six faces in OpenGL cube
     order (+X, -X, +Y, -Y, +Z, -Z) and are split into the ``(6, h, w, 3)`` nvdiffrast wants.
     """
-    import torch
     a = texture_array(m, t).astype(np.float32) / 255.0
     kind = int(m.tex_type[t])
-    cube = kind != 0
+    return prepare_texture_array(a, dev, policy, cube=kind != 0)
+
+
+def prepare_texture_array(a: np.ndarray, dev, policy: str = "pot", cube: bool = False) -> dict:
+    """``prepare_texture`` for an array: float ``[0,1]`` ``HxWx3`` (a uint8 ``HxWx3|4`` is converted).
+
+    The MuJoCo path calls this after reading the model's texel block; a scene built with
+    ``Scene.from_triangles`` calls it directly. One function so the power-of-two policy and the cube-strip
+    handling cannot drift between the two.
+    """
+    import torch
+    a = np.asarray(a)
+    if a.dtype == np.uint8:
+        a = a.astype(np.float32) / 255.0
+    if a.ndim == 3 and a.shape[-1] == 4:
+        a = a[..., :3]
+    a = np.ascontiguousarray(a, dtype=np.float32)
     if cube:
         # MuJoCo stores a cube/skybox texture as a VERTICAL STRIP of six square faces -- except when
         # the model gave it one image for all six sides, in which case it stores that image once. A
@@ -750,13 +925,28 @@ class BatchRenderer:
     ``render_qpos`` is the convenience wrapper that runs MuJoCo's own CPU kinematics.
     """
 
-    def __init__(self, m, res: int = 224, groups=DEFAULT_GROUPS, device: str = "cuda",
+    def __init__(self, m=None, res: int = 224, groups=DEFAULT_GROUPS, device: str = "cuda",
                  textures: bool = True, mipmap: bool = True, skybox: bool = True,
                  quant: str = "round", nslice: int = NUMSLICES, nstack: int = NUMSTACKS,
-                 supersample: int = 1, tex_policy: str = "pot", aniso: int = 1):
+                 supersample: int = 1, tex_policy: str = "pot", aniso: int = 1, *,
+                 scene: "Scene | None" = None, shading: str = "mujoco", tiny: "TinyShading | None" = None,
+                 tex_filter: str = "linear", sample_offset=(0.0, 0.0)):
+        """``m`` an ``MjModel``, or ``scene=`` a prebuilt ``Scene`` (``Scene.from_triangles``) and no model.
+
+        The keyword-only options are the Step-7 extensions and their defaults select the paths every
+        earlier caller used: ``shading="mujoco"`` (``_shade``), ``tex_filter="linear"`` (the mipmapped
+        pyramid when ``mipmap`` is on), ``sample_offset=(0, 0)`` (pixel centres). ``shading="tiny"`` needs
+        ``tiny=TinyShading(...)`` (or takes its defaults) and lights set with ``set_lights`` are ignored.
+        """
         import torch
 
         import nvdiffrast.torch as dr
+        if scene is None and m is None:
+            raise ValueError("BatchRenderer needs an MjModel (m=) or a prebuilt Scene (scene=)")
+        if shading not in ("mujoco", "tiny"):
+            raise ValueError(f"shading must be 'mujoco' or 'tiny', got {shading!r}")
+        if tex_filter not in ("linear", "nearest"):
+            raise ValueError(f"tex_filter must be 'linear' or 'nearest', got {tex_filter!r}")
         self.m = m
         self.res = int(res)
         self.ss = int(supersample)
@@ -767,8 +957,12 @@ class BatchRenderer:
         self.quant = quant
         self.tex_policy = tex_policy
         self.aniso = int(aniso)
-        self.scene = Scene(m, groups, device=device, nslice=nslice, nstack=nstack,
-                           tex_policy=tex_policy)
+        self.shading = shading
+        self.tiny = tiny if tiny is not None else (TinyShading() if shading == "tiny" else None)
+        self.tex_filter = tex_filter
+        self.sample_offset = (float(sample_offset[0]), float(sample_offset[1]))
+        self.scene = scene if scene is not None else Scene(m, groups, device=device, nslice=nslice,
+                                                           nstack=nstack, tex_policy=tex_policy)
         self.ctx = dr.RasterizeCudaContext(device=self.device)
         self.lights: Lights | None = None
         self.background = np.array([0.0, 0.0, 0.0])
@@ -798,6 +992,8 @@ class BatchRenderer:
     def set_skybox(self, m) -> None:
         """Attach the model's skybox texture, if it has one."""
         import mujoco
+        if m is None:
+            return
         for t in range(m.ntex):
             if int(m.tex_type[t]) == int(mujoco.mjtTexture.mjTEXTURE_SKYBOX):
                 self.skybox_tex = prepare_texture(m, t, self.device, self.tex_policy)
@@ -821,11 +1017,12 @@ class BatchRenderer:
 
     # -- the frame ---------------------------------------------------------
 
-    def render(self, xpos, xmat, cam: Camera, out=None):
+    def render(self, xpos, xmat, cam: Camera, out=None, mat_rgb=None):
         """``xpos (B,G,3)``, ``xmat (B,G,3,3)`` on device -> ``(B,H,W,3)`` uint8 on device.
 
         ``G`` is the number of geoms this scene DRAWS (``scene.geoms`` maps them back to model ids), so
-        a caller holding full ``geom_xpos`` should index it with ``scene.mjgeom`` first.
+        a caller holding full ``geom_xpos`` should index it with ``scene.mjgeom`` first. ``mat_rgb``, if
+        given, is a PER-ROW ``(B, G, 3)`` material colour replacing the scene's ``mat_rgb`` for this call.
         """
         import torch
 
@@ -842,6 +1039,7 @@ class BatchRenderer:
                                  dtype=torch.float32, device=self.device)
 
         pos, nrm, wpos = S.clip(xpos, xmat, view, proj)
+        pos = offset_clip(pos, R, self.sample_offset)                # identity at (0, 0)
         rast, db = dr.rasterize(self.ctx, pos, S.face, resolution=[R, R], grad_db=self.mipmap)
 
         attr = torch.cat([nrm, wpos], -1)                            # (B,V,6)
@@ -854,9 +1052,12 @@ class BatchRenderer:
         hit = tid > 0
         gid = torch.where(hit, S.fgeom[(tid - 1).clamp_min(0)], torch.zeros_like(tid))
 
-        base = S.mat_rgb[gid]
-        col = self._shade(n, p, base, S.spec[gid], S.shininess[gid], S.emission[gid],
-                          campos, camfwd)
+        base = gather_material(S.mat_rgb if mat_rgb is None else mat_rgb, gid)
+        if self.shading == "tiny":
+            col = shade_tiny(n, base, self.tiny)
+        else:
+            col = self._shade(n, p, base, S.spec[gid], S.shininess[gid], S.emission[gid],
+                              campos, camfwd)
         if self.use_tex:
             col = col * self._texture(S, rast, db, gid)
         # CLAMP AFTER THE TEXTURE, never before. The primary colour routinely exceeds 1 -- on a floor
@@ -992,7 +1193,9 @@ class BatchRenderer:
             else:
                 uv = uv3[..., :2].contiguous()
                 uv_da = uv3_da[..., :4].contiguous()
-                if self.mipmap and spec["mipmap_ok"]:
+                if self.tex_filter == "nearest":
+                    c = dr.texture(spec["tex"][None], uv, filter_mode="nearest", boundary_mode="wrap")
+                elif self.mipmap and spec["mipmap_ok"]:
                     c = self._sample(spec["tex"], uv, uv_da)
                 else:
                     c = dr.texture(spec["tex"][None], uv, filter_mode="linear",
