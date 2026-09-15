@@ -202,6 +202,8 @@ workstreams:
     retake: '6409541 CPU (taskset -c 0 both sides; XLA single-thread flags) and 6409542 GPU (jax on the same card; XLA_PYTHON_CLIENT_PREALLOCATE=false); provenance: jax backend/devices, affinity mask, torch
       threads, env vars; warm, compile excluded'
     expected_movement: S_cpu likely up (one-core reference slower), R likely down (reference on the card faster); cores unchanged 0.263 / 15.40
+    round2: '6409541 FAILED (taskset invalid under SLURM cpuset) -> 6409933 with --cpus-per-task=1; 6409542 COMPLETED but jax backend was cpu (jax[cpu] venv) -> reference timed on CPU at 258.9 f/s (0.67x
+      the earlier 386.7 on another host: why cross-machine inference is forbidden); 6409934 builds $SCR/venvs/se7-craftax-gpu (jax[cuda12]==0.11.1) and verifies default_backend()==''gpu'' before timing'
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -361,6 +363,12 @@ workstreams:
     gate: 'hygiene 0 trailers; step4/5/6 untouched; reviewer APPROVE; parity 1.0/0 on three backends; Gate A clean; integration tests: craftax subset 104 passed; tests/unit 838 passed + the pre-existing
       citation failure'
     auto_merged: docs/research/swm_coverage.md
+  reference_label_ruling:
+    gpu: '6409535 cancelled before producing an inadmissible artifact (se7-craftax is jax[cpu]); will re-take on W1''s se7-craftax-gpu venv; note: NO_REFERENCE would be the MORE favourable label (cores
+      19.3 -> GPU_FAST) whereas a measured R around 470 would demote to GPU_FASTER, so it must be measured'
+    cpu: '6397916 used --cpus-per-task=4 (one-core held for torch, not for jax): inadmissible; re-take 6409963 with --cpus-per-task=1 (cgroup) logging affinity/backend/loadavg'
+    cpu_label_from_current_numbers_via_repo_classifier: CPU_FASTER [BELOW_G4] (S_cpu 3.81 vs jitted 350.94 f/s same node; cores 0.356) - stands only if 6409963 reproduces it; tier_anchors block is not the
+      live rungs
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -1354,6 +1362,8 @@ incident_log:
   item: Sami's closure rulings recorded; Rocket re-freeze authorized under verification conditions; Craftax reference rule; Step-7 close sequence
 - date: '2026-09-15'
   item: 'W1: prior jitted timings inadmissible under the ruling''s conditions; re-take jobs submitted'
+- date: '2026-09-15'
+  item: 'Craftax reference re-takes: CPU under cgroup one-core; GPU needs a CUDA-jax venv (building); W2''s GPU job cancelled before an inadmissible artifact'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
