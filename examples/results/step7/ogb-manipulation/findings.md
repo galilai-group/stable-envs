@@ -8,7 +8,7 @@ Two sub-verdicts, both measured:
   cleanly (a model camera instead of a recovered free camera; zero texture gaps). The one Step-6
   `fetch-gpu` blocker — `BATCH_SCALES` 7.6–11.7x against a required 20x — was recorded as a
   **480 px** failure that the same scene PASSES at ≤240 px (26–99x). These two envs render at
-  **224 px and 200 px**, inside that passing regime. The measurement is queued (job 6394785).
+  **224 px and 200 px**, inside that passing regime. The measurement is queued (job 6394992).
 * **CPU: `BLOCKER`, and roughly an order of magnitude harder than the Fetch blocker.** The binding
   CPU bar leaves **0.75 ns per triangle** for 193,113 triangles. The Step-6 `CPU3D-FETCH-1` span
   rasteriser's *setup-only* floor — transform, bbox, area, cull, no fill, no shade — is 24 ns per
@@ -360,14 +360,22 @@ prepared, per the coordinator's mid-task update. Scripts are versioned under
 
 | job | script | partition | what it settles |
 |---|---|---|---|
-| **6394784** | `00_build_venv_and_bars.sbatch` | `batch` / `normal`, 4 cpu, 48G, 3 h | builds `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); then proves both envs render under **EGL** headless and retakes the census, the bars, the purity probes and the interior/MSAA probe at 1 thread on a certification node |
-| **6394785** | `01_mjwarp_trial.sbatch` | `gpu` / `norm-gpu`, 1x geforce3090, `--exclude=gpu2108,gpu2113,gpu2110,gpu2116`, 2 h, `afterok:6394784` | puts the registered `MjModel` through the **existing** `MJ.BatchRenderer` at the registered resolution and `front_pixels` camera: does it build at 193k triangles, VRAM, first fidelity numbers against MuJoCo's own EGL frames with `gl_rounding`, and **`BATCH_SCALES` = fps(1024)/fps(1)** |
+| **6394991** | `00_build_venv_and_bars.sbatch` | `batch` / `normal`, 4 cpu, 48G, 3 h | builds `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); then proves both envs render under **EGL** headless and retakes the census, the bars, the purity probes and the interior/MSAA probe at 1 thread on a certification node |
+| **6394992** | `01_mjwarp_trial.sbatch` | `gpu` / `norm-gpu`, 1x geforce3090, `--exclude=gpu2108,gpu2113,gpu2110,gpu2116`, 2 h, `afterok:6394991` | puts the registered `MjModel` through the **existing** `MJ.BatchRenderer` at the registered resolution and `front_pixels` camera: does it build at 193k triangles, VRAM, first fidelity numbers against MuJoCo's own EGL frames with `gl_rounding`, and **`BATCH_SCALES` = fps(1024)/fps(1)** |
 
-A first attempt (**6394700** / **6394701**) failed and is recorded rather than hidden: a bare
-`python3` on a `batch` node is **3.9**, `pip install -q` for the 3.12-only wheels failed silently,
-and the venv imported nothing. The script now loads `python/3.12.8-zr3c`, asserts the version, drops
-`-q`, and refuses to exit 0 unless the named output files exist — so the dependent GPU job cannot be
-chained onto an empty result. `6394701` was cancelled by the `afterok` dependency, as intended.
+Two earlier attempts failed and are recorded rather than hidden, because both failure modes are
+traps a later phase would hit again:
+
+* **6394700 / 6394701** — a bare `python3` on a `batch` node is **3.9**, so every `pip install -q`
+  for a 3.12-only wheel failed *silently* and the venv imported nothing. The script now loads
+  `python/3.12.8-zr3c`, asserts the version, drops `-q`, and refuses to exit 0 unless the named
+  output files exist — so a dependent GPU job cannot be chained onto an empty result. `6394701` was
+  cancelled by the `afterok` dependency, as intended.
+* **6394784** — `torch==2.14.0` came from the cu126 index but `torchvision` was resolved later from
+  PyPI, which picks the default-variant wheel; `import torchvision` (pulled in by
+  `stable_worldmodel`) then dies with `RuntimeError: operator torchvision::nms does not exist`. Both
+  now come from the cu126 index in one resolve, `stable-worldmodel` installs `--no-deps`, and the
+  import assertion covers `torchvision` explicitly.
 
 One GPU job in flight. No `simclr` job was touched.
 
