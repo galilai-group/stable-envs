@@ -665,15 +665,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'job 6398530: sweeps 40/40 + 15/15 identical on GPU and batch nodes; Fetch control byte-identical; RoboCasa/MetaWorld/HumanoidBench structurally unsweepable (kitchen cache + mujoco 3.3.1 pin;
-    metaworld absent/pinned; HumanoidBench unregistered by design) -> ruling: documented coverage limit with two bounding checks (frozen Step-4 membership replay; static cutoff grep); Scene button bits
-    were not applied in render() (fixed via swm''s _apply_button_states as a per-world delta); re-measurement 6398733 queued; then registration, corpora, Gate F, tiers'
+  status: both cells registered at visual with measured 3-draw numbers and 0 inert dims; final job 6399587 queued (Step-4-schema corpora, Gate F arm D, M4 tiers with same-node comparators); then cell review
+    + merge
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: f60a4947 (item 5 bounded)
+  head_sha: b591517a (cells measured + registered)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -804,6 +803,25 @@ workstreams:
       assertions)'
     - mocap_quat[0] inert was the probe (normalisation); Gate A now rotates quaternions and flips bits
     ogbcube_3draws_3090: 'worst: mean_abs 4.788, within8 0.808, ssim 0.944, interior_exact 0.351; Gate A determinism/batch/order/sufficiency pass'
+    measured_6398733_gpu2101_3x64:
+      OGBCube:
+        mean_abs: 4.7972
+        within8: 0.8073
+        ssim: 0.9428
+        interior_exact: 0.351
+        inert_dims: 0
+        spread: 4.751-4.797
+      OGBScene:
+        mean_abs: 10.0041
+        within8: 0.7045
+        ssim: 0.9023
+        interior_exact: 0.367
+        inert_dims: 0
+        spread: 9.942-10.004
+      thresholds: mean_abs_max 7.2 / 15.1; within8_min 0.75 / 0.65; ssim_min 0.85 / 0.85 (round numbers with margin, fetch.py discipline)
+      tests: 859 passed, 2 pre-existing failures
+    scene_bar_decision: 'coordinator: accept the Scene at visual with the residual attributed (directional light, spot distance attenuation, headlight on movers); a further attribution pass on the directional-light
+      term (+0.355 interior on the Cube) is recorded as a Step-8 fidelity opportunity, not required for coverage'
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1083,6 +1101,8 @@ incident_log:
   item: 'W5: sweeps clean where families build; three families structurally unsweepable -> bounded coverage limit; Scene button-bit bug fixed; re-measurement queued'
 - date: '2026-09-15'
   item: 'W5 item 5 bounded: no frozen config from the three families; RoboCasa kitchen has no spot light; MetaWorld/HumanoidBench unanswerable (Step 8)'
+- date: '2026-09-15'
+  item: W5 cells measured and registered (Cube 4.80/0.807/0.943; Scene 10.00/0.705/0.902; 0 inert dims); final corpora/Gate F/tiers job queued
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1135,6 +1155,9 @@ deferred_work:
 - item: 'DMC suite CPU path: batch axis for _fk and mover-footprint bounding of shadow/reflection passes (would move DMCManipulatorBringBall off CPU_REGRESSION)'
   evidence: 'W3 CPU tier: 15.5 f/s vs official 22.2 at 224 px; throughput falls with batch'
   status: deferred to Step 8 (shared-path optimisation)
+- item: 'OGB manipulation fidelity: attribute/correct the directional-light (castshadow) term in MJWarp vs MuJoCo (worth ~+0.355 interior on OGBCube); would lift both cells'' visual numbers'
+  evidence: W5 M1b attribution
+  status: deferred to Step 8
 step8_carryovers:
 - item: certifier must honour per-cell resolution_consistency_applicability (CraftaxClassic night band) or judge on the light >= 0.5 subset
   source: W1 review re-check 2026-09-15
