@@ -117,13 +117,14 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: phase 1 reviewed APPROVE-WITH-CHANGES (C1-C4 required); cluster jobs running on Oscar; merge after follow-up + cluster results
+  status: review follow-up landed (8b39e94); certification arm re-running on 8b39e94; O1 accepted (benign); official-arm timing job authorized; sphere-rotation exclusion mechanism pending; then re-review
+    and merge
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: a635d3a (phase 1; in review)
+  head_sha: 8b39e94 (phase 1 + review follow-up C1-C4, R2-R4)
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -199,6 +200,27 @@ workstreams:
       - 'light_pos allowed while _dir refused: probable latent family defect (Swimmer6 carries two)'
       - do not promote 0.9829 to a floor
       - shape-leaf fidelity vs SWM recompiled MJCF is O1
+      followup:
+        commit: 8b39e94
+        done:
+        - C1 explicit geom/site/body branch
+        - C2 four overclaims reworded
+        - C3 corpus = selected 64 in exact Step-4 schema (sha256 48db2b1a, n_typical 1 / n_extreme 25 / n_spread 38); pool kept aside
+        - C4 wording + mechanism (light.intensity delta +2.4e-7 from 6-decimal style-key rounding, 0 px); floor.color = range gap
+        - R2 two synthetic-model tests
+        - R3 variation-group name-collision raise
+        - R4 stale rbound/aabb note
+        after: 16 cells byte-identical across four digests; tests/unit 831 passed, same 2 pre-existing failures
+  cluster:
+    copies: '$SCR/se7/dmc-manipulator (8b39e94 after re-sync); $SCR/se7/baseline = git archive 76dc511 (note: $SCR/se6/baseline is the Step-6 baseline 89fa5ca8)'
+    O1_6394687: 'COMPLETED (se-step5, mujoco 3.12 caveat): SWM mjcf round-trip vs suite.load differs only by a benign material/texture table rotation (same sets, names, bytes; geom/site order identical;
+      all name-keyed paths yield the identical leaf sequence) plus exactly the three declared leaves (target_ball size .02->.015, target alpha 1->0, light diffuse .6->.7). Ruling: accepted, no registration
+      change.'
+    gpu_6394689: 'COMPLETED gpu2104 RTX 3090: cuda identity 16 cells 0 differing (5 trackcom skip: no warp in se-step6, pre-existing); test_conformance 13 passed 1 failed (the declared dead-dims) 5 skipped;
+      reference max_abs_diff 0; throughput 224 px B=1 182, B=16 2030, B=64 6620, B=256 10823, B=1024 10972, B=4096 11524 f/s; 48% device time H2D (_fk CPU loop, family shape); tier GPU_UNMEASURED until
+      the official arm is timed on the same node (job authorized)'
+    cert311_6394688: 'declaration at mujoco 3.11.0 + dm_control 1.0.44, 41 draws: interior_exact_frac 1.0 at 224 (0 bad of 56,575,531) and 84 px (0 bad of 1,358,147); all-pixel worst 0.98273 / 0.97745;
+      SSIM worst 0.99348 / 0.98562. Run had mixed provenance after a mid-run rsync -> archived to _pre_review_run/; full re-run on 8b39e94 queued (also regenerates the C3-format corpus at the pin)'
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -382,6 +404,8 @@ incident_log:
   item: W1 review APPROVE-WITH-CHANGES; follow-up requested
 - date: '2026-09-15'
   item: 'Sami rulings received: sphere-rotation exclusion approved (W3), night oracle experiment (W1), single mixed perf tier with band diagnostics (W1); forwarded'
+- date: '2026-09-15'
+  item: W3 follow-up 8b39e94; O1 benign (accepted); 3.11 declaration interior 1.0 over 41 draws; re-run queued for clean provenance
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
