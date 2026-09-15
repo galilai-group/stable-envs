@@ -1,0 +1,26 @@
+[
+ {
+  "config": "DMCPointMassEasy",
+  "states": "sample_states(8, seed 0)",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "MujocoPusher",
+  "states": "sample_states(8, seed 0)",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   240,
+   240,
+   3
+  ]
+ }
+]
