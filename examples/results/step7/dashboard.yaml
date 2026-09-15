@@ -607,8 +607,7 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: attribution complete -> tier visual; three shared mjwarp changes committed with registry-wide proofs (independent review running, fable family); OGBCube cell authorized at visual, then OGBScene
-    with the bake, then tiers
+  status: shared changes reviewed APPROVE-WITH-CHANGES (5 required, incl. cutoff=180 completion); fix requested; cells in progress
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
@@ -681,6 +680,25 @@ workstreams:
     bake_helper: 'fd5fbb4: bake_unsamplable_textures + unsamplable_texture_materials (generic; per-geom record; separate from bake_primitive_textures); 9 unit cases; registry sweep touches none of 40; OGBScene
       bakes exactly btn_metal; OGBCube no-op'
   shared_reviewer: independent reviewer (fable family) spawned 2026-09-15 on 4264f202 for the three shared changes
+  shared_review:
+    verdict: APPROVE-WITH-CHANGES
+    report: examples/results/step7/ogb-manipulation/review_shared.md
+    verified:
+    - helpers additive/generic; identical on 15 local families + 5 trackcom locomotion models
+    - tests +46, single pre-existing failure
+    - MuJoCo semantics reproduced on 3.12 CPU GL incl. POINT==off
+    - CUDA frames byte-equal
+    required:
+    - 'spot rule incomplete: also write light_cutoff = 180 (MuJoCo discards the whole cone); fix docstring + boundary tests'
+    - 'version-bind the crash: unguarded in mujoco_warp <= 3.12.0, fixed upstream 58d8c77 (3.13.0) -> Q11 (a) = venv bump'
+    - bake record misattributes in the multi-role case
+    - provenance for jobs 6397885/6398026; honest sweep denominator (40 of 88 ids buildable)
+    - run sweeps on RoboCasa/MetaWorld/HumanoidBench where they build
+    cuda_only:
+    - shader response to exponent=0
+    - crash = texcoord index; OGBScene renders after the bake
+    - Fetch identity (3.11 stack)
+    - anything on mujoco_warp >= 3.13.0
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -944,6 +962,8 @@ incident_log:
   item: 'W4 tier retry: leg B failed on the hard-coded Step-4 states path for a post-freeze cell; script fixed additively; jobs resubmitted'
 - date: '2026-09-15'
   item: 'W2 PATCH complete: three-backend identical digests; tiers reported; awaiting review'
+- date: '2026-09-15'
+  item: 'W5 shared-change review: spot rule needs cutoff=180 completion; upstream fix exists in mujoco_warp 3.13.0'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -985,6 +1005,7 @@ escalations:
   coordinator_note: '(b) is a declared texture bake through the existing shared recipe, not a per-env renderer; still a fidelity call Under the overnight directive: W5 proceeds with (b) ONLY if the measured
     residual on the two button geoms is small enough to be a declared residual within the cell''s visual ceilings (no threshold change, no per-env renderer); otherwise OGBScene is recorded as blocked on
     (a) and Sami decides. Sami may override either way.'
+  update_2026-09-15: 'reviewer: the crash is already fixed upstream (mujoco_warp 58d8c77, in 3.13.0); option (a) is a venv bump to be measured, not a source patch'
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
