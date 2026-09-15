@@ -473,3 +473,71 @@ a CPU replay compares two renderers. The valid control is baseline-vs-head on on
 what the local run gives (**14 configs, 0 differing** against a `76dc511` checkout at 3.12) and what
 job `6395850` adds at the 3.11 pin, running BOTH trees in one job on one node — the rule
 `AGENT_COMMON` states for GPU before/after numbers, applied to a CPU digest.
+
+---
+
+## 11. The render-invariant exclusion (Sami: APPROVED; implemented as a validated contract)
+
+`check_state_dims_matter` no longer reports `ball_y`, `target_ball_quat_qw` and
+`target_ball_quat_qy` as dead. They are **excluded**, and reported as excluded with their reason.
+This is a render-contract exception, not a relaxation: the check itself is unchanged for every other
+env and every other dimension, and nothing is excluded by name.
+
+**Shape of the mechanism.** Three parts, deliberately split so no one of them can grant an exclusion
+alone:
+
+1. the ENV DECLARES candidates — `DMControlSuite.RENDER_INVARIANT_DIMS`, set per cell in
+   `_make_classes` and empty everywhere else;
+2. the ENV SUPPLIES MODEL FACTS — `render_scene_signature(states, variation=None)` returns the
+   render-side scene after `mj_forward`: the DRAWN primitive list (geoms then sites, through the same
+   `_visible` census the bake and mover pass use) with `prim`-level names, sphere flags, `xpos`,
+   `xmat`, `size`, `type`, `rgba`, `matid`, plus every material, light and camera array;
+3. the CHECK OWNS THE RULE — `conformance._validate_render_invariant` perturbs the dimension and
+   grants the exclusion only if **`geom_xmat` changed on SPHERE entries and nothing else did**, with
+   `geom_xpos`, `geom_size`, `geom_type`, `geom_rgba`, `geom_matid`, every non-sphere orientation and
+   all 14 material/light/camera arrays bit-identical. Anything else is a REFUSAL, and a refused
+   candidate is reported dead exactly as before.
+
+Granted exclusions appear in `excluded_dims` with the reason; refusals appear in
+`refused_exclusions` AND in `dead_dims`. `dead_dims` keeps its old meaning, so no existing caller
+changes behaviour and an env that declares nothing is untouched.
+
+**Why the escape cannot be abused.** A dimension the renderer merely failed to draw moves a position,
+a size, a colour, or a non-sphere orientation — and every one of those is compared. The bound is an
+enumeration, not a promise.
+
+**Evidence, both directions** (`tests/unit/test_dmcontrol_episode_quat.py`, 13 tests):
+
+| | 224 px | 84 px |
+|---|---|---|
+| the three dims, **default (sphere)** appearance | **0 px** | **0 px** |
+| `target_ball_quat_*` under **`target_ball.shape = 0` (box)** | **201 px, max 145** | **28 px, max 145** |
+
+and under the box the validator **refuses** both quaternion dims — *"rotated NON-sphere geoms
+['target_ball']"* — while still granting `ball_y`, correctly, since `ball` is a sphere in both styles.
+Negative tests: `arm_root`, `ball_x` and `target_ball_pos_x` are all refused because they move a
+position; and with `RENDER_INVARIANT_DIMS` emptied, the three are reported dead exactly as before.
+
+**Two defects found while building it, both fixed and documented in the source:**
+
+* The signature first compared **every** site, so the group-3, never-drawn `ball` and `target_ball`
+  sites rotating with their bodies refused the exclusion for a reason with no bearing on the picture.
+  It now reports only drawn elements — an element MuJoCo does not draw cannot reach a pixel, so
+  including it would let an invisible element veto a claim about visible ones.
+* Reading `geom_type` off `_scene(variation)` was **order-dependent**: a cache hit does not re-bake,
+  so the shared model carried the previous bake's appearance and the default probe reported a BOX
+  after a box scene had been built, silently refusing a claim it should have granted. The signature
+  now applies the appearance itself from the pristine snapshot **and clears `_SCENE_CACHE`
+  afterwards**, because `_static_t` is cast lazily and re-derives its primitives from the live model —
+  the hazard `_bake` already documents. Verified order-independent, and `render(states)` is
+  byte-identical across a probe including after a supersample change.
+
+**Blast radius.** `conformance.py` gains only the validated-exclusion path — no threshold and no other
+check touched. The frozen Step-4 **dmc shard is 14 configs, 0 differing** against the pre-exclusion
+replay, so existing cells' Gate A output is byte-identical. All 17 DM Control cells remain
+byte-identical across four digests. `tests/unit`: **836 passed**, 6 skipped, and the same 2
+pre-existing failures that reproduce on a clean `76dc511`.
+
+**Gate A summary for this cell now reads:** every mandatory check passes, with
+`check_state_dims_matter` passing and carrying three reported exclusions. This shared-testing change
+goes back to the independent reviewer before merge.

@@ -275,3 +275,110 @@ def test_a_body_carrying_both_drawn_geoms_and_drawn_sites_raises():
     cls = _synth_cls(extra_site='<site name="marker_s" type="sphere" size=".02" group="0"/>')
     with pytest.raises(RuntimeError, match="drawn geoms .* and drawn sites"):
         cls._hideable()
+
+
+# --------------------------------------------------------- render-invariant exclusion (Sami, approved)
+#
+# The three dimensions ball_y / target_ball_quat_qw / target_ball_quat_qy orient an UNTEXTURED SPHERE,
+# which an analytic per-pixel intersector cannot draw a difference for. They are excluded from
+# check_state_dims_matter by a VALIDATED contract: the env declares candidates, the check verifies
+# against the compiled model that perturbing one moves only sphere geom_xmat, and refuses otherwise.
+#
+# These tests hold both halves. If the exclusion ever became a name-based pass, or the renderer ever
+# started ignoring rotation generally, one of them fails.
+
+_INVARIANT = ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")
+
+
+def _rotate(states, names, dim, amount=0.6):
+    p = states.copy()
+    if names[dim].startswith("target_ball_quat"):
+        iw, iy = names.index("target_ball_quat_qw"), names.index("target_ball_quat_qy")
+        a = 2.0 * np.arctan2(p[:, iy], p[:, iw]) + amount
+        p[:, iw], p[:, iy] = np.cos(a / 2), np.sin(a / 2)
+    else:
+        p[:, dim] = p[:, dim] + amount
+    return p
+
+
+def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell):
+    """``check_state_dims_matter`` excludes the three, REPORTS them with a reason, and finds no dead
+    dimension. An excluded dim must never simply vanish from the output."""
+    from stable_envs.testing import conformance as C
+    env = cell(batch=8, device="cpu", seed=0)
+    r = C.check_state_dims_matter(env, n=8)
+    assert r["dead_dims"] == [], r
+    assert set(r.get("excluded_dims", {})) == set(_INVARIANT), r
+    assert not r.get("refused_exclusions"), r
+    for name, why in r["excluded_dims"].items():
+        assert "sphere orientation" in why, (name, why)
+
+
+def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
+    """Regression A: the claim is about PIXELS, so it is asserted on pixels and not only on the model."""
+    for size in (224, 84):
+        env = cell(batch=16, size=size, device="cpu", seed=0)
+        names = list(env.state_names)
+        st = env.sample_states(16, np.random.default_rng(55))
+        base = env.render(torch.as_tensor(st)).cpu().numpy()
+        for nm in _INVARIANT:
+            moved = env.render(torch.as_tensor(_rotate(st, names, names.index(nm)))).cpu().numpy()
+            assert np.array_equal(base, moved), (
+                f"{nm} changed pixels at {size} px, so it is NOT render-invariant and must not be "
+                f"excluded from check_state_dims_matter")
+
+
+def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
+    """Regression B, and the one that makes the exclusion a statement about GEOMETRY.
+
+    Under ``target_ball.shape = 0`` the target is a BOX. The two quaternion dims then move pixels, and
+    the validated exclusion must REFUSE them -- if it did not, the mechanism would be excusing a
+    renderer that ignores rotation rather than one drawing a rotation-invariant solid.
+
+    ``ball_y`` stays excluded under the box, correctly: it orients the ``ball`` prop, which is a sphere
+    in both styles and is not what ``target_ball.shape`` switches.
+    """
+    from stable_envs.testing import conformance as C
+    box = {"target_ball.shape": [0]}
+    env = cell(batch=16, size=224, device="cpu", seed=0)
+    names = list(env.state_names)
+    st = env.sample_states(16, np.random.default_rng(55))
+    base = env.render(torch.as_tensor(st), variation=box).cpu().numpy()
+    for nm in ("target_ball_quat_qw", "target_ball_quat_qy"):
+        d = names.index(nm)
+        moved = env.render(torch.as_tensor(_rotate(st, names, d)), variation=box).cpu().numpy()
+        assert not np.array_equal(base, moved), f"{nm} is dead even with a BOX target"
+        ok, why = C._validate_render_invariant(env, st, d, variation=box)
+        assert not ok, f"{nm} was excluded under a BOX target: {why}"
+        assert "NON-sphere" in why, why
+    d = names.index("ball_y")
+    ok, _ = C._validate_render_invariant(env, st, d, variation=box)
+    assert ok, "ball_y orients the spherical ball prop and stays invariant whatever the target is"
+
+
+def test_a_dimension_that_moves_position_is_refused_for_exclusion(cell):
+    """The negative case the mechanism exists to catch: a dim the renderer merely failed to draw.
+
+    Every remaining dimension moves a POSITION (arm joints, the ball's x/z, the target's x/z), which
+    the frozen-array comparison forbids. None of them may be excludable, whatever an env declares.
+    """
+    from stable_envs.testing import conformance as C
+    env = cell(batch=8, size=224, device="cpu", seed=0)
+    names = list(env.state_names)
+    st = env.sample_states(8, np.random.default_rng(12))
+    for nm in ("arm_root", "ball_x", "target_ball_pos_x"):
+        ok, why = C._validate_render_invariant(env, st, names.index(nm))
+        assert not ok, f"{nm} was granted a render-invariance exclusion: {why}"
+
+
+def test_an_env_that_declares_nothing_is_unaffected(cell):
+    """The mechanism is opt-in: with no declaration, a dead dim is dead exactly as before."""
+    from stable_envs.testing import conformance as C
+    env = cell(batch=8, device="cpu", seed=0)
+    env.RENDER_INVARIANT_DIMS = ()
+    try:
+        r = C.check_state_dims_matter(env, n=8)
+        assert set(r["dead_dims"]) == set(_INVARIANT), r
+        assert "excluded_dims" not in r, r
+    finally:
+        del env.RENDER_INVARIANT_DIMS       # back to the class attribute

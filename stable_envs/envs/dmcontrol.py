@@ -483,9 +483,9 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
     Measured rather than reasoned: ``manipulator-bring_ball`` draws ``body_quat['target_ball']`` qw and
     qy every episode, and with only the ``_quat`` term removed from the guard the shipped bake and
     mover pass render it at interior-pixel agreement 1.000000 — 0 bad of 4,154,763 over 3 draws of 64
-    states at 224 px (``examples/results/step7/dmc-manipulator/``). ``tests/unit/test_dmcontrol_
-    episode_quat.py`` asserts the per-row claim directly, so a future change that makes ``xmat`` batch-
-    shared fails there rather than silently drawing every environment at one draw's orientation.
+    states at 224 px (``examples/results/step7/dmc-manipulator/``). The per-row claim is asserted directly
+    in ``tests/unit/test_dmcontrol_episode_quat.py``, so a future change that makes ``xmat`` batch-shared
+    fails there rather than silently drawing every environment at one draw's orientation.
     """
     have = [k for k in EPISODE_ARRAYS if hasattr(m, k)]
     draws = []
@@ -1876,6 +1876,127 @@ class DMControlSuite(_DMCModel):
         sc.static_t[int(ss)] = t
         return t
 
+    # ---- render-invariance evidence --------------------------------------
+
+    #: State dimensions this cell OFFERS to ``check_state_dims_matter`` as render-invariant. Declaring
+    #: one excludes NOTHING by itself: the check validates every candidate against the compiled model
+    #: through ``render_scene_signature`` and refuses any whose perturbation moves anything but the
+    #: orientation of SPHERE geoms. Set per cell in ``_make_classes``; empty everywhere else.
+    RENDER_INVARIANT_DIMS: tuple[str, ...] = ()
+
+    def render_invariant_dims(self) -> tuple[str, ...]:
+        return tuple(self.RENDER_INVARIANT_DIMS)
+
+    def render_scene_signature(self, states, variation=None) -> dict:
+        """Everything a frame is a function of, for ONE state, read off the model after kinematics.
+
+        The evidence half of the render-invariance contract: this supplies MODEL FACTS and
+        ``conformance._validate_render_invariant`` owns the RULE, so there is one definition of what
+        the exclusion means and it lives with the check that grants it.
+
+        Built the way ``_fk`` builds a frame -- the episode slots written into the model, then
+        ``mj_kinematics`` -- so what is returned is the scene the renderer would actually draw and not
+        a restatement of the state.
+
+        ONLY DRAWN ELEMENTS ARE REPORTED, through the same ``_visible`` census the bake and the mover
+        pass use (a visible GROUP and a non-zero resolved ALPHA). That is not a loosening, it is the
+        definition of the render-side scene: an element MuJoCo does not draw cannot reach a pixel, so
+        including it would let an invisible element veto a claim about visible ones. It is also the
+        difference between a correct refusal and a wrong one -- manipulator's ``ball`` and
+        ``target_ball`` bodies each carry a group-3 site that rotates with them, and comparing those
+        refused the exclusion for a reason that has nothing to do with the picture.
+
+        Geoms and sites are concatenated into ONE primitive list, exactly as ``_prims`` builds the
+        mover set, so a drawn spherical SITE gets the same treatment as a drawn spherical geom rather
+        than a stricter one by accident.
+
+        ``prim_is_sphere`` is read from the LIVE type arrays, which is what makes the exclusion
+        evaporate under ``target_ball.shape = 0``: with a BOX target the quaternion slots rotate a
+        non-sphere, the validation refuses, and the dimensions are live again.
+        """
+        import mujoco
+        m, d = self._bundle(self.size)[1], self._bundle(self.size)[2]
+        slots = self._slots()
+        pr = self._pristine()
+        st = np.asarray(states, np.float64).reshape(-1, self.state_dim)[0]
+        try:
+            # APPLY THE APPEARANCE HERE rather than reading it off ``_scene(variation)``. The scene
+            # cache means a hit does NOT re-bake, so the shared ``MjModel`` carries whatever the LAST
+            # bake applied -- and this function reads ``geom_type``/``geom_size``/``geom_rgba`` off
+            # that model. Asking for the default scene after a box-target scene had been baked
+            # therefore reported the BOX, and the validation silently refused a claim it should have
+            # granted. Measured while writing this: ball_y excluded, then the two quaternion dims
+            # refused, purely because of call ORDER. Same live-model class as the ``_used_materials``
+            # and ``_static_t`` defects this file already records; ``_apply_variation`` restores from
+            # the pristine snapshot first, so this is absolute rather than incremental.
+            self._apply_variation(m, pr, variation)
+            for (arr, k), v in zip(slots, st[self.nq:]):
+                getattr(m, arr).reshape(-1)[k] = v
+            d.qpos[:] = st[:self.nq]
+            d.qvel[:] = 0
+            mujoco.mj_forward(m, d)
+            g = self._visible(m, "geom")
+            si = self._visible(m, "site")
+            names = ([mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, i) or f"geom{i}" for i in g]
+                     + [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_SITE, i) or f"site{i}" for i in si])
+            def stack(rows, dtype=np.float64):
+                return (np.asarray(rows, dtype) if len(rows)
+                        else np.zeros((0,), dtype))
+            xpos = stack([np.asarray(d.geom_xpos[i], np.float64) for i in g]
+                         + [np.asarray(d.site_xpos[i], np.float64) for i in si])
+            xmat = stack([np.asarray(d.geom_xmat[i], np.float64).reshape(3, 3) for i in g]
+                         + [np.asarray(d.site_xmat[i], np.float64).reshape(3, 3) for i in si])
+            size = stack([np.asarray(m.geom_size[i], np.float64) for i in g]
+                         + [np.asarray(m.site_size[i], np.float64) for i in si])
+            kind = np.asarray([int(m.geom_type[i]) for i in g]
+                              + [int(m.site_type[i]) for i in si], np.int64)
+            rgba = stack([np.asarray(m.geom_rgba[i], np.float64) for i in g]
+                         + [np.asarray(m.site_rgba[i], np.float64) for i in si])
+            matid = np.asarray([int(m.geom_matid[i]) for i in g]
+                               + [int(m.site_matid[i]) for i in si], np.int64)
+            out = {
+                # the DRAWN primitive list, geoms then sites, as _prims assembles it
+                "geom_names": names,
+                "geom_is_sphere": kind == R3.SPHERE,
+                "geom_xmat": xmat,
+                "geom_xpos": xpos,
+                "geom_size": size,
+                "geom_type": kind,
+                "geom_rgba": rgba,
+                "geom_matid": matid,
+                # and everything else a pixel is a function of
+                "mat_rgba": np.array(m.mat_rgba, copy=True),
+                "mat_reflectance": np.array(m.mat_reflectance, copy=True),
+                "mat_specular": np.array(m.mat_specular, copy=True),
+                "mat_shininess": np.array(m.mat_shininess, copy=True),
+                "light_pos": np.array(m.light_pos, copy=True),
+                "light_dir": np.array(m.light_dir, copy=True),
+                "light_diffuse": np.array(m.light_diffuse, copy=True),
+                "light_specular": np.array(m.light_specular, copy=True),
+                "light_ambient": np.array(m.light_ambient, copy=True),
+                "light_castshadow": np.array(m.light_castshadow, copy=True),
+                "cam_pos": np.array(m.cam_pos, copy=True),
+                "cam_quat": np.array(m.cam_quat, copy=True),
+                "cam_fovy": np.array(m.cam_fovy, copy=True),
+            }
+        finally:
+            # never leave a probe's state row OR its appearance on the shared model -- the same rule
+            # ``_fk`` follows for the state, extended to the appearance this function now applies
+            for arr in {a for a, _ in slots}:
+                getattr(m, arr)[:] = pr[arr]
+            self._apply_variation(m, pr, None)
+            # AND DROP THE SCENE CACHE, which is the part that is easy to miss. ``_static_t`` is cast
+            # LAZILY, per (scene, supersample), and it re-derives its primitives from the LIVE model --
+            # the hazard ``_bake`` documents. A cached scene whose static depth had not yet been cast
+            # would therefore be finished against whatever appearance this probe last left behind.
+            # Today the bake is the only other writer and it re-applies its own appearance first, so
+            # clearing the cache restores exactly the invariant that held before this method existed:
+            # the first ``_static_t`` of a scene runs while that scene's appearance is on the model.
+            # The cost is a re-bake per probed dimension inside one conformance check, which is
+            # milliseconds, and the alternative is a silent wrong static depth.
+            _SCENE_CACHE.clear()
+        return out
+
     # ---- forward kinematics ----------------------------------------------
 
     def _fk(self, states: torch.Tensor, sc: _Scene):
@@ -2803,31 +2924,46 @@ PARITY_NOTE = (
 #: RECORDED AS FAILING on these three dimensions. The note exists so the failure is a known, measured,
 #: bounded property rather than a surprise, and so that the contract change it asks for is written down
 #: somewhere a reviewer can approve or refuse it.
+#: Candidate render-invariant dimensions per cell, OFFERED to ``check_state_dims_matter``. A name here
+#: excludes nothing: the check validates each one against the compiled model and refuses any whose
+#: perturbation moves anything but the orientation of SPHERE geoms. See ``STATE_DIMS_NOTE``.
+RENDER_INVARIANT_DIMS: dict[str, tuple[str, ...]] = {
+    "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy"),
+}
+
 STATE_DIMS_NOTE: dict[str, str] = {
     "DMCManipulatorBringBall": (
-        "check_state_dims_matter FAILS on three of fifteen dimensions -- ball_y, "
-        "target_ball_quat_qw and target_ball_quat_qy -- and the failure is REAL rather than a probe "
-        "artefact. All three do exactly one thing: they orient an UNTEXTURED SPHERE (`ball` is "
-        "sphere size=.022 on material `self`, `target_ball` is sphere size=.02 on material `target`, "
-        "and neither material carries a texture). MuJoCo draws a sphere as a TESSELLATED mesh shaded "
-        "PER VERTEX, so rotating it rotates the mesh and moves the Gouraud interpolation and the "
-        "specular vertex; an analytic per-pixel sphere is EXACTLY rotation-invariant and cannot move. "
-        "Measured over 16 states at 224 px (examples/results/step7/dmc-manipulator/): the official "
-        "renderer moves 896 px at max 55/255 for ball_y and 734 px at max 33/255 for each quaternion "
-        "slot, while this renderer moves 0. It is bounded twice over -- the moved pixels lie INSIDE "
-        "the silhouette band that already disagrees (all-pixel exactness after each perturbation is "
-        "0.98275-0.98277 against a 0.98280 baseline, and interior-pixel agreement stays 1.000000), "
-        "and the two quaternion slots become LIVE under target_ball.shape = 0, where the target is a "
-        "BOX and rotating it is visible. Closing it inside this design would mean reproducing "
-        "MuJoCo's icosphere tessellation and per-vertex shading in the mover pass, i.e. replacing the "
-        "analytic caster for EVERY DM Control cell to recover ~800 px at <= 55/255 on one of them. "
-        "PROPOSED CONTRACT CHANGE, for approval rather than applied here: a per-class declared "
-        "exclusion list that check_state_dims_matter itself VALIDATES -- an excluded dimension must "
-        "be shown to move ONLY the orientation of sphere geoms and nothing else (same qpos/slot "
-        "write, compare geom_xpos, geom_size, geom_type and every non-sphere geom_xmat before and "
-        "after), so the escape can only be taken by a dimension that is provably rotation-invariant "
-        "geometry and never by a dimension the renderer simply dropped. Until that is approved this "
-        "cell records the check as FAIL with this note."),
+        "Three of fifteen dimensions -- ball_y, target_ball_quat_qw and target_ball_quat_qy -- are "
+        "EXCLUDED from check_state_dims_matter as render-invariant, under the validated contract that "
+        "check documents. They are not dead and they are not undrawn: they are geometrically incapable "
+        "of changing THIS renderer's image, and the reason is a property of the solid rather than of "
+        "the implementation. All three orient an UNTEXTURED SPHERE -- `ball` is sphere size=.022 on "
+        "material `self`, `target_ball` is sphere size=.02 on material `target`, and neither material "
+        "carries a texture -- and a sphere is a surface of revolution about every axis through its "
+        "centre, so an analytic per-pixel intersector returns the same hit point, the same normal and "
+        "therefore the same colour for every rotation of it. Exactly, not approximately. "
+        "NOTHING IS EXCLUDED BY NAME: this class only OFFERS the three (RENDER_INVARIANT_DIMS), and "
+        "check_state_dims_matter grants the exclusion only after verifying against the compiled model "
+        "that perturbing the dimension changes nothing but the geom_xmat of SPHERE geoms -- geom_xpos, "
+        "geom_size, geom_type, every non-sphere orientation and every material, light and camera array "
+        "bit-identical. A dimension the renderer merely failed to draw moves one of those and is "
+        "refused. Each granted exclusion is REPORTED in the check's excluded_dims with its reason; none "
+        "of them is a silent pass. "
+        "MEASURED, both directions. Under the default (sphere) appearance the three move 0 pixels here "
+        "at 224 px and at 84 px, while the OFFICIAL renderer moves 896 px at max 55/255 for ball_y and "
+        "734 px at max 33/255 for each quaternion slot -- MuJoCo draws a sphere as a TESSELLATED mesh "
+        "shaded PER VERTEX, so rotating it moves the Gouraud interpolation and the specular vertex. "
+        "That residual is the same class this family already declares as a one-level rim on curved "
+        "silhouettes: it is bounded (all-pixel exactness after each perturbation is 0.98275-0.98277 "
+        "against a 0.98280 baseline, interior-pixel agreement stays 1.000000), and closing it would "
+        "mean reproducing MuJoCo's icosphere tessellation in the mover pass for EVERY DM Control cell "
+        "to recover ~800 px at <= 55/255 on one of them. "
+        "AND THE EXCLUSION EVAPORATES WHEN THE GEOMETRY CHANGES, which is what makes it a statement "
+        "about spheres rather than about rotation: under target_ball.shape = 0 the target is a BOX, the "
+        "validation refuses both quaternion dimensions because they now rotate a non-sphere, and they "
+        "measure 201 px (max 145/255) at 224 px and 28 px at 84 px. ball_y stays excluded there, "
+        "correctly -- it orients the `ball` prop, which is a sphere in both styles. "
+        "tests/unit/test_dmcontrol_episode_quat.py asserts every clause of this."),
 }
 
 
@@ -2842,6 +2978,8 @@ def _make_classes():
             extra["SHAPE_KNOBS"] = SHAPE_KNOB_SPECS[cname]
         if cname in STATE_DIMS_NOTE:
             extra["state_dims_note"] = STATE_DIMS_NOTE[cname]
+        if cname in RENDER_INVARIANT_DIMS:
+            extra["RENDER_INVARIANT_DIMS"] = RENDER_INVARIANT_DIMS[cname]
         cls = register(type(cname, (DMControlSuite,), dict(
             **extra,
             DOMAIN=dom, TASK=task, CAMERA=cam,
