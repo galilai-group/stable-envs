@@ -829,3 +829,62 @@ and restores exactly. On `OGBScene` it bakes exactly `btn_metal` on the two butt
 | **M3** OGBCube cell | **not written** — next; tier is `visual` by §16 |
 | **M4** tiers | not started (`BATCH_SCALES` 2.93x and CPU bars already measured) |
 | **M5** OGBScene cell | helper ready; cell not written; Q11 escalation open for Sami |
+
+## 19. M3 — the two cells, written and registered at the `visual` tier
+
+`stable_envs/envs/ogb_manip.py`. The `fetch.py` pattern: a plate baked through MuJoCo and asserted
+bit-constant per class, MJWarp movers composited by MJWarp's own segmentation buffer, `gl_rounding`
+and the shared spot correction, the model camera `front_pixels`, and swm's registered defaults
+(224 px Cube, 200 px Scene).
+
+**Measured, job 6398733, `gpu2101` (RTX 3090), three independent 64-state draws per cell against
+swm's own EGL frames. The declared value is the WORST of the three.**
+
+| cell | state_dim | mean_abs | within8 | ssim | all_exact | interior_exact |
+|---|---:|---:|---:|---:|---:|---:|
+| `OGBCube` | 28 | **4.7972** | 0.8073 | 0.9428 | 0.278 | 0.351 |
+| `OGBScene` | 34 | **10.0041** | 0.7045 | 0.9023 | 0.269 | 0.367 |
+
+Per-draw spread 4.751–4.797 and 9.942–10.004 on `mean_abs`. Thresholds are round numbers with
+margin and do not track the measurements: `mean_abs_max` 7.2 / 15.1, `within8_min` 0.75 / 0.65,
+`ssim_min` 0.85 / 0.85.
+
+**Gate A passes completely on both** — determinism, batch invariance, order invariance, state
+sufficiency, and **zero inert state dimensions**.
+
+### Three defects the first GPU run found, and what each was
+
+The first run (6398193 / 6398530) is worth recording because two of the three were real:
+
+1. **`qvel` reached no pixel.** 20 of 48 dimensions moved nothing under perturbation. The mover pass
+   runs `kinematics`, which reads `qpos` and the mocap pose and nothing else, so `qvel` is out —
+   `check_state_dims_matter` would correctly have failed it, and `fetch.py` made the same call when
+   it dropped mocap from its own state. swm's `reset(options={'state'})` contract is still
+   `concat(qpos, qvel)`; the RENDER state is the part that reaches a pixel.
+2. **The Scene's button bits reached no pixel either** — a real bug in the cell, not in the state.
+   They drive `geom_rgba`/`mat_rgba`, those are model fields, MJWarp reads model fields when the
+   context is built, and `render()` never applied them. `geom_rgba`/`mat_rgba` are now per-world and
+   each world's colours come from its own bits, via tables captured by **calling** swm's
+   `_apply_button_states` rather than reimplementing its rule, applied as a delta so the texture
+   bake is not silently undone. Worth 10.325 → 10.004 `mean_abs` and 0.897 → 0.902 `ssim` on its own.
+3. **`mocap_quat[0]` reading as inert was my PROBE lying**, not a state defect: adding 0.05 to the
+   `w` of `(1,0,0,0)` normalises straight back to `(1,0,0,0)`. Gate A now perturbs a quaternion as a
+   0.3 rad rotation and a discrete bit by flipping it, and records which rule it used.
+
+### The cell mutated the reference model, and that is fixed
+
+`_context` now deep-copies the `MjModel`. `_bundle.model` is the swm env's OWN model — the object
+`reference_render` and `_bake_plate` render the reference through — and `prepare_model` mutates in
+place and is left applied for the life of the context. Applying it to the shared model moved the
+reference too: the spot correction would have rewritten the reference's own light and the cell would
+have "agreed" by corrupting what it is measured against. On this scene that happens to be invisible,
+because MuJoCo renders cutoff 100 and 180 identically — which is the very finding this workstream
+made — but agreeing by luck is not agreeing.
+
+### Honest reading of these numbers
+
+`interior_exact` 0.35–0.37 and `all_exact` ~0.27 are `visual`-tier numbers and nothing more. The
+residual is attributed term by term in §16 and declared in each class's `visual_note`. The Scene is
+the weaker of the two (`ssim` 0.902, `mean_abs` 10.0/255 against the Cube's 0.943 and 4.8); the next
+lever on it is the `global` directional-light term, worth +0.355 interior on the Cube, which would
+be a further attribution pass rather than anything the current bound permits.
