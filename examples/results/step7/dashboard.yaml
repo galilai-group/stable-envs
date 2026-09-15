@@ -1207,6 +1207,16 @@ workstreams:
     - baseline .git_sha written after a 59-file manifest match to git show 76dc5116
     - reference_render(return_flags=True) returns per-row flags; class attribute kept only for check_visual_fidelity_under_variation (Step-8 carry-over to delete)
     - 'ssim_min 0.80 justified: 0.9368x measurement, margin/spread 3.86 (tightest in the repo)'
+  closure1:
+    finding: the x86 CPU one-ulp batch dependence at widths 1-3 is in the sparse per-vertex stage (torch.sparse.mm(S4,.)), not mvp_rows (already matmul-free since d1e61a1); each element is a 4-term sum
+      whose order the kernel picks by column count; the sweep's widths (1,2,7,8,31,32,63) could not see width 3
+    fix_measured: 'explicit contraction in float32 reproduces torch.sparse.mm bit for bit on arm64 and x86 at every thread count (test 18 passed on x86); on CUDA (job 6419904, gpu2106) it moves four cells
+      vs the re-freeze: Walker2d SSIM +1.2e-10, Ant mean_abs +2.7e-7 SSIM -3.8e-10, Humanoid SSIM -1.3e-9, Swimmer SSIM +5.9e-11 (cuSPARSE accumulates differently) -> a second re-freeze; reverted; patch
+      4dc3d4b + evidence closure1/ kept'
+    ruling: 'coordinator, within Sami''s rules: no second re-freeze in Step 7 (CPU-only, no consumer, certified device invariant); nvdiff.py stays at 4eb1c35; the Step-7 unit test is corrected to assert
+      the certified property (cuda bitwise; cpu bitwise for widths >= 4; widths 1-3 x86 documented); DOCUMENTED_LIMITATION; option (1) is the Step-8 candidate under the clean re-verification pass; reported
+      to Sami in the closure packet'
+    gpu_subset_with_fix: 2 failed (known) / 229 passed; all seven declared-fidelity tests PASS
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1459,6 +1469,8 @@ incident_log:
 - date: '2026-09-15'
   item: 'CLOSURE SWEEP: frozen universe clean; OGBCube/OGBScene fail tests/gpu in se7-ogb (never run pre-merge) -> fixes assigned to W5 with the gpu suite as the gate; nvdiff CPU ulp test failure -> W6;
     closure held'
+- date: '2026-09-15'
+  item: CLOSURE-1 localised to the sparse stage; second re-freeze declined in Step 7; test scoped to the certified property; Step-8 candidate recorded
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1558,6 +1570,10 @@ step8_carryovers:
 - item: 'Step-3 classify() returns ''unknown'' for CraftaxFull: the frozen census under scratch/census predates the cell AND NO_BACKEND_MODULE_CLASS keys on module name ''craftax'' -> R which ''craftax_full''
     does not match. Step 8 must regenerate the census and widen the map (also DMCQuadrupedWalk/DMCManipulatorBringBall/OGB/Rocket entries)'
   source: W2 tier-final
+- item: 'CLOSURE-1: nvdiff sparse per-vertex stage is batch-dependent by one float32 ulp at widths 1-3 on x86 CPU (no consumer); explicit-contraction patch 4dc3d4b is batch-invariant everywhere but moves
+    four locomotion cells on CUDA at 1e-7..1e-10 (second ULP re-freeze). Decide in Step 8''s clean re-verification pass.'
+  classification: DOCUMENTED_LIMITATION
+  source: W6 closure
 blocked_on_oscar_ssh:
   since: 2026-09-15 ~08:00 UTC
   items:
