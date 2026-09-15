@@ -62,17 +62,22 @@ change to that shared helper, not a call to it. Smallest form: let a caller opt 
 material whose texture the sampler cannot address even on a UV-able geom — the same predicate
 `texture_gaps` now computes. Roughly a dozen lines plus tests, in a file five families share.
 
-## Option (a) — patch `mujoco_warp`'s mesh sampling
+## Option (a) — **already fixed upstream**; this is a venv bump, not a patch
 
-The guard is one condition in `sample_texture`: if the mesh has no texcoords, return the material's
-flat colour instead of indexing `mesh_texcoord`. That is ~3 lines in a `@wp.func` in a third-party
-package, so the real cost is not the edit but the route: a vendored patch in this repo (rejected
-elsewhere as a fork), an upstream PR on someone else's release cadence, or a monkeypatch of the kind
-`create_render_context` already applies in `stable_envs/render/mjwarp.py`. A monkeypatch is the only
-one that lands inside Step 7, and it would be the second in that module. It also fixes the *general*
-case — any textured UV-less mesh in any future family — where (b) fixes only this scene, and unlike
-(b) it costs **no** pixels: the buttons would then sample the cube map the way MuJoCo does, which
-option (b) approximates away.
+Corrected by the independent reviewer, and it makes (a) much cheaper than this memo first said.
+`mujoco_warp` guards the MESH branch from **3.13.0** (commit `58d8c77`, PR #1608, 2026-08-26). The
+pin everything here was measured on, **3.12.0**, predates it — which is why the crash reproduces on
+Oscar and why the sampler looked unguarded when read.
+
+So (a) is not "write ~3 lines into a third-party `@wp.func`" with all the delivery problems that
+implies. It is **bump the venv and re-measure**. It costs **no pixels** — the buttons would sample
+their cube map the way MuJoCo does, which (b) approximates away — and it fixes the *general* case,
+any textured UV-less mesh in any future family, where (b) fixes only this scene.
+
+What it is not is free: 3.13.0 moves more than one thing, and this repo's own history (DM Control
+declared under mujoco 3.11.0 and judged under 3.12.0, where finite-plane texture anchoring had
+changed) is the argument for measuring a version bump rather than assuming it. The honest cost is
+therefore **one GPU job to re-measure the MJWarp-backed families under 3.13.0**, not a fork.
 
 ## Option (c) — ship `OGBCube` only
 
@@ -82,8 +87,9 @@ state contract, plate and camera are already measured, so (c) is reversible at a
 ## The one thing worth weighing
 
 (b) is cheap, measured, and provably invisible to the interior metric — but it is an approximation
-applied to make a **crash** go away, and the frozen record would carry "these two button faces are a
+applied to make a **crash that upstream has already fixed** go away, and the frozen record would carry "these two button faces are a
 flat grey because the renderer could not read their texture" rather than "MJWarp cannot sample a
-UV-less mesh". (a) removes the cause; (b) removes the symptom on one scene at 0.139 % of pixels;
-(c) removes the scene. The numbers say (b) is affordable. Whether affordable is the right test is
-yours.
+UV-less mesh". (a) removes the cause and is now known to be a version bump rather than a patch; (b) removes the
+symptom on one scene at 0.139 % of pixels; (c) removes the scene. The numbers say (b) is affordable,
+and the reviewer's correction says (a) is cheaper than it looked. Whether affordable is the right
+test when the upstream fix already exists is yours.

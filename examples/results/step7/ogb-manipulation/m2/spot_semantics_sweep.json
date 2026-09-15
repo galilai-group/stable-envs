@@ -1,9 +1,30 @@
 {
  "built": 40,
  "correct": 40,
+ "coverage_note": "Families that need a package this interpreter lacks, or that expose no MjModel (the 2-D families), are counted here rather than dropped. Fetch in particular is cuda-and-mujoco-3.11 only and is covered by its CUDA byte-identity replays, not by this sweep.",
  "families_touched": [],
  "incorrect": 0,
  "incorrect_rows": [],
+ "n_no_mjmodel": 24,
+ "n_skipped_not_constructible": 12,
+ "n_with_reachable_mjmodel": 40,
+ "provenance": {
+  "dm-control": "1.0.45",
+  "git_sha": "e12c58f076b20ef9372c3da3ab76f57b69570b1d",
+  "gpu": null,
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "mujoco": "3.12.0",
+  "mujoco-warp": null,
+  "mujoco_gl": "glfw",
+  "numpy": "2.5.3",
+  "ogbench": "1.2.1",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.12.11",
+  "slurm_job": null,
+  "torch": "2.14.0",
+  "warp-lang": null
+ },
+ "registry_ids_total": 76,
  "rows": [
   {
    "env": "Acrobot",

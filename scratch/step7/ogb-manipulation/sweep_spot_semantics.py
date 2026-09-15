@@ -10,13 +10,42 @@ bit-identical `light_exponent`.
 """
 from __future__ import annotations
 
-import argparse, json, sys
+import argparse, json, os, sys
 from pathlib import Path
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
+
+
+def _provenance() -> dict:
+    """Host, GPU, package versions and the tree's git SHA, in the artifact itself.
+
+    A sweep result with no provenance is a number without a machine. Recorded in the JSON rather
+    than only in a SLURM log, because logs are rotated and artifacts are committed.
+    """
+    import importlib.metadata as md
+    import platform, socket, subprocess
+    out = {"host": socket.gethostname(), "platform": platform.platform(),
+           "python": sys.version.split()[0], "slurm_job": os.environ.get("SLURM_JOB_ID"),
+           "mujoco_gl": os.environ.get("MUJOCO_GL")}
+    try:
+        out["git_sha"] = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                                        capture_output=True, text=True, timeout=30).stdout.strip()
+    except Exception:
+        out["git_sha"] = None
+    for pkg in ("mujoco", "mujoco-warp", "warp-lang", "torch", "numpy", "ogbench", "dm-control"):
+        try:
+            out[pkg] = md.version(pkg)
+        except Exception:
+            out[pkg] = None
+    try:
+        import torch
+        out["gpu"] = torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
+    except Exception:
+        out["gpu"] = None
+    return out
 
 
 def models_from_env(env):
@@ -98,7 +127,20 @@ def main():
     ok = [r for r in rows if r.get("status") == "ok"]
     bad = [r for r in ok if not r["correct"]]
     doc = {"built": len(ok), "correct": len(ok) - len(bad), "incorrect": len(bad),
-           "families_touched": touched, "incorrect_rows": bad, "rows": rows}
+           "families_touched": touched, "incorrect_rows": bad,
+           "provenance": _provenance(),
+           # The denominator, stated rather than implied. "40 identical" is only meaningful next to
+           # how many ids exist and how many could not be reached in THIS interpreter.
+           "registry_ids_total": len(rows),
+           "n_with_reachable_mjmodel": len(ok),
+           "n_skipped_not_constructible": sum(1 for r in rows if r.get("status") == "skip"),
+           "n_no_mjmodel": sum(1 for r in rows if r.get("status") == "no-mjmodel"),
+           "coverage_note": (
+               "Families that need a package this interpreter lacks, or that expose no MjModel "
+               "(the 2-D families), are counted here rather than dropped. Fetch in particular is "
+               "cuda-and-mujoco-3.11 only and is covered by its CUDA byte-identity replays, not by "
+               "this sweep."),
+           "rows": rows}
     (out / "spot_semantics_sweep.json").write_text(json.dumps(doc, indent=1, sort_keys=True))
     print(f"built {len(ok)}  correct {len(ok)-len(bad)}  incorrect {len(bad)}")
     print(f"families whose light_exponent changed at all: {touched or 'NONE'}")
@@ -146,7 +188,7 @@ def sweep_bake(out):
             env.close()
         except Exception:
             pass
-    doc = {"built": len(rows), "families_touched": touched,
+    doc = {"built": len(rows), "families_touched": touched, "provenance": _provenance(),
            "all_restored": all(r["restored_exactly"] for r in rows), "rows": rows}
     (Path(out) / "bake_unsamplable_sweep.json").write_text(json.dumps(doc, indent=1, sort_keys=True))
     print(f"bake sweep: built {len(rows)}  would touch: {touched or 'NONE'}  "

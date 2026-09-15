@@ -51,26 +51,32 @@ def main():
             "frac_differing_from_100": float((f != base).any(-1).mean()),
             "max_abs": int(np.abs(f.astype(np.int16) - base.astype(np.int16)).max()),
             "frame_mean": float(f.mean())})
-    for i in spot:
-        m.light_cutoff[i] = 100.0
-    base2 = u.render().copy()
+    # ---- exponent sweep, in its own FRESH env ------------------------------------------------
+    # The first version ran this on the model the cutoff sweep had been mutating and reported the
+    # exponent as worth 2.40 % of pixels, contradicting the light-forms table on the same claim by
+    # the same probe. A fresh env is the only restoration that is obviously complete; the verdict
+    # below asserts the two tables now agree before either is believed.
+    env3 = gym.make(a.env); u3 = env3.unwrapped
+    env3.reset(seed=21); m3, d3 = u3.model, u3.data
+    env3.action_space.seed(21)
+    for _ in range(8):
+        env3.step(env3.action_space.sample())
+    spot3 = [i for i in range(m3.nlight) if int(m3.light_type[i]) == 0]
+    base2 = u3.render().copy()
+    _rep3 = u3.render().copy()
+    _n3 = np.abs(_rep3.astype(np.int16) - base2.astype(np.int16)).max()
+    rec["exponent_sweep_noise_max_abs"] = int(_n3)
     for ex in (10.0, 0.0, 1.0, 50.0):
-        for i in spot:
-            m.light_exponent[i] = ex
-        f = u.render().copy()
+        sv_e3 = m3.light_exponent.copy()
+        for i in spot3:
+            m3.light_exponent[i] = ex
+        f = u3.render().copy()
+        m3.light_exponent[:] = sv_e3
         rec["exponent_sweep"].append({
             "exponent": ex,
             "frac_differing_from_10": float((f != base2).any(-1).mean()),
             "max_abs": int(np.abs(f.astype(np.int16) - base2.astype(np.int16)).max())})
-    for i in spot:
-        m.light_exponent[i] = 10.0
-    sv = m.light_active.copy()
-    for i in spot:
-        m.light_active[i] = 0
-    f = u.render().copy()
-    rec["spot_off"] = {"frac_differing": float((f != base2).any(-1).mean()),
-                       "max_abs": int(np.abs(f.astype(np.int16) - base2.astype(np.int16)).max())}
-    m.light_active[:] = sv
+    env3.close()
 
     # ---- what "discarded" actually means: the forms this light can take --------------------
     # The obvious reading of "MuJoCo discards an out-of-range cutoff" is "so it is a point light".
@@ -137,6 +143,12 @@ def main():
     # their frame means legitimately differ by a few levels. What must hold is that the table's own
     # "shipped" row agrees with the baseline it is measured against, to within this host's render
     # noise -- that is the check the first two versions of this block failed.
+    # The two tables must now agree about the exponent, which is the claim the shared correction's
+    # docstring cites. Judged against each table's own render-noise floor.
+    _e0 = [r for r in rec["exponent_sweep"] if r["exponent"] == 0.0]
+    rec["verdict_exponent_tables_agree"] = bool(
+        _e0 and _e0[0]["max_abs"] <= max(1, rec.get("exponent_sweep_noise_max_abs", 0))
+        and rec["light_forms"][1]["max_abs"] <= max(1, rec["render_noise_floor"]["max_abs"]))
     rec["verdict_shipped_row_matches_its_baseline"] = bool(
         rec["light_forms"][0]["max_abs"] <= max(1, rec["render_noise_floor"]["max_abs"]))
     rec["note_cross_table_means_differ"] = (
@@ -154,9 +166,12 @@ def main():
         print(f"  {r['form']:38s} mean {r['frame_mean']:8.4f}  "
               f"differs {r['frac_differing_from_shipped']*100:7.3f}%  max {r['max_abs']:3d}")
     print("  exponent inert at illegal cutoff:", rec["verdict_exponent_is_inert_at_illegal_cutoff"])
+    print("  exponent tables agree:", rec["verdict_exponent_tables_agree"],
+          "| exponent_sweep:", [(r["exponent"], r["max_abs"]) for r in rec["exponent_sweep"]],
+          "| noise", rec.get("exponent_sweep_noise_max_abs"))
     print("  POINT == disabled:", rec["verdict_point_equals_disabled"])
     print(json.dumps({k: rec[k] for k in ("cutoff", "exponent", "verdict_100_equals_180",
-                                          "verdict_89_is_honoured", "spot_off")}, indent=1))
+                                          "verdict_89_is_honoured")}, indent=1))
     for r in rec["cutoff_sweep"]:
         print(f"  cutoff {r['cutoff']:6.1f}  differs {r['frac_differing_from_100']*100:6.2f}%  "
               f"max {r['max_abs']:3d}  mean {r['frame_mean']:.3f}")

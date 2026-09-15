@@ -2,6 +2,22 @@
  "all_restored": true,
  "built": 40,
  "families_touched": [],
+ "provenance": {
+  "dm-control": "1.0.45",
+  "git_sha": "e12c58f076b20ef9372c3da3ab76f57b69570b1d",
+  "gpu": null,
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "mujoco": "3.12.0",
+  "mujoco-warp": null,
+  "mujoco_gl": "glfw",
+  "numpy": "2.5.3",
+  "ogbench": "1.2.1",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "python": "3.12.11",
+  "slurm_job": null,
+  "torch": "2.14.0",
+  "warp-lang": null
+ },
  "rows": [
   {
    "changed": false,

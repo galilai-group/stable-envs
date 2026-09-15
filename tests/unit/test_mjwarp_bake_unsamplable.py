@@ -123,3 +123,37 @@ def test_an_untextured_model_is_a_no_op():
         '<mujoco><worldbody><geom type="plane" size="1 1 .1" group="1"/></worldbody></mujoco>')
     assert unsamplable_texture_materials(m) == {}
     assert bake_unsamplable_textures(m)["n_materials"] == 0
+
+
+def test_the_record_names_EVERY_removed_texture_not_just_the_rgb_role():
+    """The multi-role misattribution the reviewer caught.
+
+    A material can wear a 2-D albedo in the RGB role and a CUBE map in another. The bake clears ALL
+    roles, so a record that names only the RGB one reports ``tex_type = 0`` for a removal whose
+    whole reason was a cube map — a declaration describing the wrong object.
+    """
+    m = mujoco.MjModel.from_xml_string(
+        '<mujoco><asset>'
+        '<texture name="a" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
+        '<texture name="c" type="cube" builtin="checker" rgb1="0 0 1" rgb2="1 1 0" width="8" height="48"/>'
+        f'<mesh name="mm" {_NO_UV}/>'
+        '<material name="m" texture="a"/></asset>'
+        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>')
+    T = np.atleast_2d(np.asarray(m.mat_texid))
+    if T.shape[1] < 2:
+        pytest.skip("scalar mat_texid on this mujoco build; multi-role is not expressible")
+    cube = [i for i in range(m.ntex) if int(m.tex_type[i]) == 1][0]
+    m.mat_texid[0, T.shape[1] - 1] = cube          # a cube map in a second role
+    rec = bake_unsamplable_textures(m)["baked"][0]
+    assert rec["n_removed"] == 2, "both roles were cleared, so both must be recorded"
+    types = sorted(r["tex_type"] for r in rec["removed_textures"])
+    assert types == [0, 1], f"the record must name the 2-D AND the cube texture, got {types}"
+    assert any(r["unsamplable"] for r in rec["removed_textures"]), \
+        "the record must say WHICH removed texture the sampler could not address"
+
+
+def test_the_single_role_record_still_names_its_texture():
+    m = _cube_on_uvless_mesh()
+    rec = bake_unsamplable_textures(m)["baked"][0]
+    assert rec["n_removed"] >= 1
+    assert rec["removed_textures"][0]["tex_type"] == int(mujoco.mjtTexture.mjTEXTURE_CUBE)

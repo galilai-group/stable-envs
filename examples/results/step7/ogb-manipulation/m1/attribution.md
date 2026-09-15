@@ -74,20 +74,26 @@ Same probe, in a fresh env with a measured render-noise floor of 0 (`light_forms
 
 | MuJoCo-side change | frame mean | pixels differing | max abs |
 |---|---:|---:|---:|
-| *shipped: SPOT, cutoff 100, exponent 10* | 57.339 | — | — |
-| **exponent 10 → 0**, cutoff still 100 | **57.339** | **0.000 %** | **0** |
-| cutoff → 90 | 49.943 | 94.60 % | 68 |
-| cutoff → 45 | 49.922 | 94.60 % | 68 |
-| light disabled | 47.851 | 94.68 % | 73 |
-| **re-typed to POINT** | **47.851** | 94.68 % | 73 |
+| *shipped: SPOT, cutoff 100, exponent 10* | 58.147 | — | — |
+| **exponent 10 → 0**, cutoff still 100 | **58.147** | 0.014 % | **1** (= host noise) |
+| cutoff → 90 | 50.521 | 93.95 % | 76 |
+| cutoff → 45 | 50.504 | 93.95 % | 76 |
+| light disabled | 48.392 | 93.88 % | 87 |
+| **re-typed to POINT** | **48.392** | 93.88 % | 87 |
 
 Two things follow, and the second killed a plausible cell design before it was written:
 
 1. **At an out-of-range cutoff the angular term is gone entirely.** The exponent is *bit-inert* —
-   10 → 0 changes nothing at all — and the frame is at its brightest. MuJoCo is lighting the scene
+   10 → 0 changes nothing beyond this host's render noise, and the standalone exponent sweep now
+   agrees (exponents 0, 1 and 50 all at **max abs 0** against exponent 10), which it did not before:
+   that sweep used to run on the model the cutoff sweep had been mutating and reported the exponent
+   as worth 2.40 % of pixels, contradicting this table by the same probe. It now runs in its own
+   fresh env and `verdict_exponent_tables_agree` asserts the two before either is read. The frame is
+   at its brightest. MuJoCo is lighting the scene
    with this light unattenuated by angle, which is exactly "not a spotlight", while `mujoco_warp`
    applies both the cone and `cos^10`. That is the disagreement.
-2. **Re-typing the light to POINT does not express that.** In MuJoCo a POINT light here renders
+2. **Re-typing the light to POINT does not express that.** In MuJoCo's classic GL renderer at
+   mujoco 3.12.0 — the pin all of this is measured on — a POINT light here renders
    **identically to the light being switched off** — 9.5 levels of mean darker than shipped. So the
    tempting correction "make MJWarp see a POINT light, since that is what GL is doing" is measurably
    false on the reference side, and a cell built on it would have been wrong. The correction that

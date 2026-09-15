@@ -25,8 +25,8 @@ import pytest
 
 mujoco = pytest.importorskip("mujoco")
 
-from stable_envs.render.mjwarp import (GL_SPOT_CUTOFF_MAX, neutralise_illegal_spots, prepare_model,
-                                       restore_model)
+from stable_envs.render.mjwarp import (GL_SPOT_CUTOFF_MAX, GL_SPOT_CUTOFF_OFF,
+                                       neutralise_illegal_spots, prepare_model, restore_model)
 
 _XML = """<mujoco><worldbody>
   <light name="bad"  type="spot" pos="0 0 1" dir="0 0 -1" cutoff="{bad}" exponent="10"/>
@@ -40,28 +40,60 @@ def _m(bad="100"):
     return mujoco.MjModel.from_xml_string(_XML.format(bad=bad))
 
 
-def test_the_constant_is_the_gl_rule():
+def test_the_constants_are_the_gl_rule():
     assert GL_SPOT_CUTOFF_MAX == 90.0
+    assert GL_SPOT_CUTOFF_OFF == 180.0, "the sentinel GL leaves an illegal cutoff at"
 
 
 @pytest.mark.parametrize("bad", ["100", "120", "180", "-5"])
-def test_an_out_of_range_cutoff_loses_its_angular_term(bad):
+def test_an_out_of_range_cutoff_loses_BOTH_halves_of_its_attenuation(bad):
+    """Exponent AND cone. The first version of this rule cleared only the exponent.
+
+    ``mujoco_warp`` runs ``if cos_theta < cos(cutoff_rad): return`` before it applies the exponent,
+    so clearing the exponent alone leaves the cone. At ``cutoff = 100`` that still discards
+    everything past 100 degrees, which MuJoCo does not -- and at a NEGATIVE cutoff it is far worse,
+    because ``cos(-5 deg) = 0.996`` is a 5-degree cone that extinguishes almost the whole scene.
+    """
     m = _m(bad)
     hit, restore = neutralise_illegal_spots(m)
     assert hit == [0], f"cutoff {bad} is outside [0, 90] and must be neutralised"
     assert float(m.light_exponent[0]) == 0.0, "pow(cos, 0) == 1, i.e. no angular attenuation"
+    assert float(m.light_cutoff[0]) == GL_SPOT_CUTOFF_OFF, "cos(180) = -1, so the cone never fires"
     assert float(m.light_exponent[1]) == 7.0, "the legal spot must be untouched"
-    assert float(restore["light_exponent"][0]) == 10.0, "the original must be recoverable"
+    assert float(m.light_cutoff[1]) == 45.0, "the legal spot keeps its cone"
+    assert float(restore["light_exponent"][0]) == 10.0, "the original exponent must be recoverable"
+    assert float(restore["light_cutoff"][0]) == float(bad), "the original cutoff must be recoverable"
+
+
+def test_a_negative_cutoff_would_have_left_a_five_degree_cone():
+    """The regression the reviewer caught, asserted as a number rather than as a rule.
+
+    Written against ``np.cos`` directly so it fails if someone reverts to clearing the exponent
+    only: with ``cutoff = -5`` left in place, ``mujoco_warp``'s test is ``cos_theta < 0.996``, i.e.
+    everything more than 5 degrees off-axis is unlit.
+    """
+    m = _m("-5")
+    assert float(np.cos(np.deg2rad(-5.0))) > 0.99, "a -5 cutoff is a tight cone, not a wide one"
+    neutralise_illegal_spots(m)
+    assert float(np.cos(np.deg2rad(float(m.light_cutoff[0])))) == -1.0
 
 
 @pytest.mark.parametrize("ok", ["0", "45", "89", "90"])
 def test_a_legal_cutoff_is_left_exactly_alone(ok):
     """The boundary matters: 90 is legal, 90.0001 is not. MuJoCo honours the former."""
     m = mujoco.MjModel.from_xml_string(_XML.format(bad=ok))
-    before = np.array(m.light_exponent, copy=True)
+    before = np.array(m.light_exponent, copy=True), np.array(m.light_cutoff, copy=True)
     hit, _ = neutralise_illegal_spots(m)
     assert hit == []
-    assert np.array_equal(m.light_exponent, before)
+    assert np.array_equal(m.light_exponent, before[0])
+    assert np.array_equal(m.light_cutoff, before[1])
+
+
+def test_just_past_the_boundary_is_neutralised():
+    """90 is honoured and 90.0001 is not, so the rule is tested at the discontinuity itself."""
+    m = mujoco.MjModel.from_xml_string(_XML.format(bad="90.0001"))
+    assert neutralise_illegal_spots(m)[0] == [0]
+    assert float(m.light_cutoff[0]) == GL_SPOT_CUTOFF_OFF
 
 
 def test_non_spot_lights_are_never_touched():
@@ -86,11 +118,13 @@ def test_the_light_type_is_never_rewritten():
     assert np.array_equal(m.light_type, types_before), "only light_exponent may be written"
 
 
-def test_the_cutoff_itself_is_left_readable():
-    """Only the exponent is written, so a reader diffing the model still sees its declaration."""
+def test_prepare_model_restores_the_cutoff_too():
     m = _m()
-    neutralise_illegal_spots(m)
-    assert float(m.light_cutoff[0]) == 100.0
+    before = np.array(m.light_cutoff, copy=True)
+    p = prepare_model(m)
+    assert float(m.light_cutoff[0]) == GL_SPOT_CUTOFF_OFF
+    restore_model(m, p)
+    assert np.array_equal(m.light_cutoff, before)
 
 
 def test_prepare_model_applies_it_and_reports_it():
@@ -115,6 +149,7 @@ def test_prepare_model_can_opt_out():
     p = prepare_model(m, spot_semantics=False)
     assert p.neutralised_spots == []
     assert float(m.light_exponent[0]) == 10.0
+    assert float(m.light_cutoff[0]) == 100.0
 
 
 def test_a_model_with_no_lights_is_fine():
