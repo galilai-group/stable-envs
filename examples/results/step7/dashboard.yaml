@@ -409,6 +409,8 @@ workstreams:
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; reviewer APPROVE; Gate A all mandatory pass with 3 reported exclusions; parity interior 1.0 at the 3.11 pin; paired replay 14/0; integration tests running
     auto_merged: stable_envs/envs/dmcontrol.py (W3 suite region + W4 trackcom region)
+    integration_tests: 'tests/unit on 1d9dccb: 811 passed, 7 skipped, 1 FAILED = W4''s loader-drift guard test_cpu3d.py::test_the_swm_quadruped_loader_overrides... (W3 changed _DMCModel._bundle; W4''s _SWMQuadrupedModel
+      copy drifted). Not a pixel regression; fix assigned to W4 (e2): replace the copy with a load hook in _DMCModel'
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -812,6 +814,9 @@ incident_log:
   item: W4 (e) re-check APPROVE-WITH-CHANGES; fix (e2) requested
 - date: '2026-09-15'
   item: W3 MERGED (1d9dccb); coverage 36/40 pending integration tests
+- date: '2026-09-15'
+  item: 'INTEG-1: after W3 merge, W4''s _bundle drift guard fails on integration (expected interaction: W3 extended _DMCModel._bundle). Fix assigned to W4 (e2) via a single load hook; integration stays
+    at 1d9dccb with the known failure until (e2) merges'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
