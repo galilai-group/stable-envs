@@ -402,7 +402,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: review fixes landed (13ca91b); bounded re-check requested; GPU job 6395516 queued on the fixed tree (6395009 cancelled before start); M4 after numbers
+  status: formal re-review on aa54c2c pending; GPU job 6395707 queued (6395516 cancelled); results accepted only on APPROVE without further code change; M4 after
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -430,7 +430,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 13ca91b (RC-1..RC-5 landed)
+  head_sha: aa54c2c (fixes + gate list + RC-1 evidence)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -495,6 +495,8 @@ workstreams:
   - no AI trailers (project rule wins over harness reminder)
   - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
   merge_gate: 'per Sami 2026-09-15: reviewer APPROVE on the fixed tree AND all seven cluster gates pass; job 6395516 results accepted only if no further code change is required'
+  rc1_evidence: 'reference/rc1_evidence.json: measure_tier draw-0 seed (64 float32 states, |q| off <= 3e-8) 0 rejections; first 100 corpus states from float64 obs 100/100 exact; float32 state13 0 rejections,
+    2/100 exact, up to 79 px mean 11.5 (state-rounding term, reported alongside, never folded in)'
 decisions:
 - date: '2026-09-15'
   by: Sami
