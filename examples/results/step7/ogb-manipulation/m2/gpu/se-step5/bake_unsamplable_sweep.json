@@ -1,0 +1,128 @@
+{
+ "all_restored": true,
+ "built": 15,
+ "families_touched": [],
+ "provenance": {
+  "dm-control": "1.0.45",
+  "git_sha": "",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "mujoco": "3.12.0",
+  "mujoco-warp": "3.12.0",
+  "mujoco_gl": "egl",
+  "numpy": "2.5.3",
+  "ogbench": null,
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "python": "3.12.9",
+  "slurm_job": "6398530",
+  "torch": "2.14.0+cu126",
+  "warp-lang": "1.17.0"
+ },
+ "rows": [
+  {
+   "changed": false,
+   "env": "DMCAcrobotSwingup",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCBallInCupCatch",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCCartpoleBalance",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCCartpoleSwingup",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCFingerSpin",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCFingerTurnEasy",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCFingerTurnHard",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCPendulumSwingup",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCPointMassEasy",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCReacherEasy",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "DMCReacherHard",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "MujocoInvertedDoublePendulum",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "MujocoInvertedPendulum",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "MujocoPusher",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  },
+  {
+   "changed": false,
+   "env": "MujocoReacher",
+   "n_baked": 0,
+   "n_unsamplable_materials": 0,
+   "restored_exactly": true
+  }
+ ]
+}

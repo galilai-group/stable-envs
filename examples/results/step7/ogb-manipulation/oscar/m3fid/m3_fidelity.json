@@ -1,0 +1,210 @@
+{
+ "cells": {
+  "OGBCube": {
+   "draws": [
+    {
+     "all_exact_frac": 0.27935853296396684,
+     "draw": 0,
+     "interior_exact_frac": 0.35113208612368646,
+     "interior_frac": 0.411846583482475,
+     "max_abs": 209,
+     "mean_abs": 4.788048361434417,
+     "ssim": 0.9437388026018761,
+     "within8_frac": 0.8083577058753189
+    },
+    {
+     "all_exact_frac": 0.2780677639708227,
+     "draw": 1,
+     "interior_exact_frac": 0.35169029900458687,
+     "interior_frac": 0.41271346950471555,
+     "max_abs": 205,
+     "mean_abs": 4.7518043777569625,
+     "ssim": 0.9443289172915399,
+     "within8_frac": 0.8095500712492028
+    },
+    {
+     "all_exact_frac": 0.27792950065768496,
+     "draw": 2,
+     "interior_exact_frac": 0.35084574059395257,
+     "interior_frac": 0.41343739317098677,
+     "max_abs": 217,
+     "mean_abs": 4.727023689114318,
+     "ssim": 0.9448050962574139,
+     "within8_frac": 0.810693546217315
+    }
+   ],
+   "gate_a": {
+    "batch_invariance_identical": true,
+    "batch_invariance_max_abs": 0,
+    "determinism_identical": true,
+    "dim_names_that_move_no_pixel": [
+     "mocap_quat[0]"
+    ],
+    "dims_that_move_no_pixel": [
+     24
+    ],
+    "order_invariance_identical": true,
+    "order_invariance_max_abs": 0,
+    "per_dim_max_abs": [
+     253,
+     254,
+     253,
+     248,
+     252,
+     246,
+     233,
+     158,
+     192,
+     168,
+     215,
+     215,
+     221,
+     219,
+     234,
+     235,
+     231,
+     226,
+     226,
+     226,
+     226,
+     235,
+     235,
+     236,
+     0,
+     235,
+     235,
+     235
+    ],
+    "state_sufficiency_identical": true,
+    "state_sufficiency_max_abs": 0
+   },
+   "name": "OGBCube",
+   "size": 224,
+   "state_dim": 28,
+   "state_names_head": [
+    "qpos[0]",
+    "qpos[1]",
+    "qpos[2]",
+    "qpos[3]",
+    "qpos[4]",
+    "qpos[5]"
+   ],
+   "worst_of_draws": {
+    "mean_abs": 4.788048361434417,
+    "ssim": 0.9437388026018761,
+    "within8_frac": 0.8083577058753189
+   }
+  },
+  "OGBScene": {
+   "draws": [
+    {
+     "all_exact_frac": 0.270605859375,
+     "draw": 0,
+     "interior_exact_frac": 0.37094531941148823,
+     "interior_frac": 0.27785638304588267,
+     "max_abs": 255,
+     "mean_abs": 10.325160807291667,
+     "ssim": 0.8972353204569494,
+     "within8_frac": 0.702894140625
+    },
+    {
+     "all_exact_frac": 0.272562109375,
+     "draw": 1,
+     "interior_exact_frac": 0.3741057574606689,
+     "interior_frac": 0.27945987790712357,
+     "max_abs": 255,
+     "mean_abs": 10.1460125,
+     "ssim": 0.9002069219444085,
+     "within8_frac": 0.7047421875
+    },
+    {
+     "all_exact_frac": 0.27049765625,
+     "draw": 2,
+     "interior_exact_frac": 0.37004527486898026,
+     "interior_frac": 0.2787859681573698,
+     "max_abs": 255,
+     "mean_abs": 10.111292447916666,
+     "ssim": 0.9006938464332045,
+     "within8_frac": 0.703285546875
+    }
+   ],
+   "gate_a": {
+    "batch_invariance_identical": true,
+    "batch_invariance_max_abs": 0,
+    "determinism_identical": true,
+    "dim_names_that_move_no_pixel": [
+     "mocap_quat[0]",
+     "button_state_0",
+     "button_state_1"
+    ],
+    "dims_that_move_no_pixel": [
+     28,
+     32,
+     33
+    ],
+    "order_invariance_identical": true,
+    "order_invariance_max_abs": 0,
+    "per_dim_max_abs": [
+     254,
+     254,
+     253,
+     252,
+     251,
+     241,
+     234,
+     222,
+     243,
+     241,
+     223,
+     170,
+     226,
+     172,
+     233,
+     233,
+     234,
+     232,
+     233,
+     232,
+     233,
+     246,
+     246,
+     235,
+     255,
+     232,
+     232,
+     234,
+     0,
+     232,
+     198,
+     232,
+     0,
+     0
+    ],
+    "state_sufficiency_identical": true,
+    "state_sufficiency_max_abs": 0
+   },
+   "name": "OGBScene",
+   "size": 200,
+   "state_dim": 34,
+   "state_names_head": [
+    "qpos[0]",
+    "qpos[1]",
+    "qpos[2]",
+    "qpos[3]",
+    "qpos[4]",
+    "qpos[5]"
+   ],
+   "worst_of_draws": {
+    "mean_abs": 10.325160807291667,
+    "ssim": 0.8972353204569494,
+    "within8_frac": 0.702894140625
+   }
+  }
+ },
+ "draws": 3,
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "host": "gpu2107.oscar.ccv.brown.edu",
+ "mujoco_gl": "egl",
+ "n": 64,
+ "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34"
+}
