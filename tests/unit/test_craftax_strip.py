@@ -513,21 +513,23 @@ def test_the_performance_record_says_what_it_does_not_certify():
     """
     from stable_envs.envs.craftax import CraftaxClassic as C
     p, n = C.performance_record_cpu, C.s_cpu_note
-    assert p["tier"] == "CPU_REGRESSION"
+    assert p["tier"] == "CPU_FASTER"
     assert abs(p["cores_cpu"] - p["mixed_default_fps"] / p["decode_bar_fps"]) < 0.005
     assert p["daylight_diagnostic_cores_cpu"] > 10 > p["cores_cpu"], (
         "the diagnostic and the tier must stay visibly different numbers")
     assert abs(p["daylight_over_night"]
                - p["daylight_diagnostic_fps"] / p["night_diagnostic_fps"]) < 60
-    assert "NEITHER CERTIFIES" in n["status"].upper()
+    assert n["status"].startswith("RULED")
+    assert n["ruled_labels"] == {"cpu": "CPU_FASTER", "gpu": "GPU_FASTER"}
+    assert len(n["rejected_reference_timings"]) == 3, (
+        "the rejected reference timings are the evidence that the conditions were checked")
     assert n["s_cpu_vs_unjitted"] / n["s_cpu_vs_jitted"] > 100, (
         "the whole point of the note is that the two references disagree by orders of magnitude")
     # the labels the frozen evaluator produces three ways, and the two that must never be quoted
     assert n["labels_cpu"]["no_reference"] == "CPU_REGRESSION"
-    assert n["labels_gpu"]["as_measured"] == "GPU_EXCEPTIONAL"
     assert n["labels_gpu"]["no_reference"] == "GPU_FAST"
-    for bad in n["must_not_be_recorded_as_the_tier"]:
-        assert "as_measured" in bad
     g = C.performance_record_gpu
-    assert g["tier_as_measured_DO_NOT_USE"] == "GPU_EXCEPTIONAL"
+    assert g["tier"] == "GPU_FASTER"
+    assert g["tier_if_reference_not_jitted_DO_NOT_USE"] == "GPU_EXCEPTIONAL"
+    assert p["tier"] == "CPU_FASTER" and p["qualifier"] == "BELOW_G4"
     assert abs(g["cores"] - g["mixed_default_fps"] / g["decode_bar_fps"]) < 0.02

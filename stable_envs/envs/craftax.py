@@ -793,13 +793,15 @@ class CraftaxClassic(StableEnv):
     #: ``examples/results/step7/craftax-classic-full/sweep/``.
     performance_record_cpu = {
         "mixed_default_fps": 1150.6, "mixed_default_batch": 64,
-        "decode_bar_fps": 4367.4, "cores_cpu": 0.263, "tier": "CPU_REGRESSION",
+        "decode_bar_fps": 4367.4, "cores_cpu": 0.263, "tier": "CPU_FASTER",
+        "qualifier": "BELOW_G4", "S_cpu": 2.80, "official_jitted_fps": 213.44,
         "daylight_diagnostic_cores_cpu": 24.2, "daylight_diagnostic_fps": 105742,
         "night_diagnostic_fps": 656, "daylight_over_night": 104.9,
         "why_lower_than_step6": ("the Step-6 tier was measured on an observation that could not "
                                  "represent night; this one is the full observation, about three "
                                  "quarters of which is lit. The daylight path itself is unchanged."),
-        "job": "6395527", "host": "node2356.oscar.ccv.brown.edu",
+        "job": "6395527 (throughput), 6409933 (reference)",
+        "host": "node2356 / node2335", "reference_conditions": "cgroup affinity [8] -- one core",
     }
     #: **The speed ratio and the parity claim cannot use the same reference, and this env is where
     #: that first bites.** :meth:`reference_env` returns the renderer UN-JITTED, because the jitted
@@ -817,8 +819,19 @@ class CraftaxClassic(StableEnv):
     s_cpu_note = {
         "official_fps_unjitted": 2.18, "official_fps_jitted": 610.6,
         "s_cpu_vs_unjitted": 528.0, "s_cpu_vs_jitted": 1.9,
-        "status": "NEITHER CERTIFIES ANYTHING until the ruling; the CPU tier above is taken on the "
-                  "NO_REFERENCE cores_cpu ladder",
+        "status": "RULED. The reference is the official renderer as craftax runs it -- jitted, warm, "
+                  "compile excluded -- timed on the certification host under the required "
+                  "conditions (one core for CPU, the same card for GPU, the same job). Parity is "
+                  "unchanged and remains against the UN-JITTED function as a uint8 claim. Labels: "
+                  "CPU_FASTER (BELOW_G4) and GPU_FASTER.",
+        "ruled_labels": {"cpu": "CPU_FASTER", "gpu": "GPU_FASTER"},
+        "rejected_reference_timings": {
+            "610.6 f/s node2356 CPU": "jax ran on all allocated cpus while ours ran on one; XLA's "
+                                      "CPU backend ignores OMP_NUM_THREADS",
+            "386.7 f/s gpu2107 GPU": "env_header.sh exports JAX_PLATFORMS=cpu, so the reference "
+                                     "never touched the card it was compared on",
+            "258.9 f/s gpu2104 GPU": "JAX_PLATFORMS unset, but the venv carries jax[cpu]: no CUDA "
+                                     "jaxlib, so jax reported backend 'cpu' anyway"},
         # Step 3's own evaluator, run on the real records three ways. The GPU pair is the proof that
         # this is not a quibble: measured on ONE 3090 in ONE job, the Step-6 tree does 1,174,913 f/s
         # against a jitted reference and labels GPU_FAST, while this branch does 46,187 f/s -- 25x
@@ -827,10 +840,10 @@ class CraftaxClassic(StableEnv):
                        "no_reference": "CPU_REGRESSION"},
         "labels_gpu": {"as_measured": "GPU_EXCEPTIONAL", "vs_jitted": "GPU_FASTER",
                        "no_reference": "GPU_FAST"},
-        "must_not_be_recorded_as_the_tier": ["GPU_EXCEPTIONAL (as_measured)",
-                                             "CPU_FASTER (as_measured)"],
-        "recommended": "the NO_REFERENCE row: cores compares the renderer against decoding its own "
-                       "frame, which needs no reference and so cannot be gamed by one",
+        "must_not_be_recorded_as_the_tier": ["GPU_EXCEPTIONAL (ratio vs the un-jitted reference)"],
+        "label_is_invariant_to_the_pairing": ("both a sweep-based and a same-process paired ratio "
+                                              "were computed (CPU 5.39 vs 2.80, GPU 304.5 vs 316.0) "
+                                              "and give the same label on both devices"),
         "evidence": "examples/results/step7/craftax-classic-full/sweep/tier_three_ways_*.json",
     }
     #: The GPU side of :attr:`performance_record_cpu`. Oscar ``gpu2107``, one RTX 3090, paired
@@ -839,11 +852,15 @@ class CraftaxClassic(StableEnv):
     performance_record_gpu = {
         "mixed_default_fps": 46187.3, "mixed_default_batch": 4096,
         "decode_bar_fps": 2999.9, "cores": 15.40,
-        "tier_no_reference": "GPU_FAST", "tier_vs_jitted": "GPU_FASTER",
-        "tier_as_measured_DO_NOT_USE": "GPU_EXCEPTIONAL",
+        "tier": "GPU_FASTER", "qualifier": "BATCH_SCALES", "R": 315.98,
+        "official_jitted_fps": 151.68,
+        "tier_no_reference_alternative": "GPU_FAST",
+        "tier_if_reference_not_jitted_DO_NOT_USE": "GPU_EXCEPTIONAL",
         "daylight_diagnostic_fps": 796702, "night_diagnostic_fps": 24353,
         "batch_scales": 238.0, "no_large_batch_regression": 1.093,
-        "job": "6395847", "host": "gpu2107", "card": "NVIDIA GeForce RTX 3090",
+        "job": "6395847 (throughput), 6409934 (reference)", "host": "gpu2107 / gpu2109",
+        "card": "NVIDIA GeForce RTX 3090",
+        "reference_conditions": "jax backend 'gpu', CudaDevice(id=0) -- the same card as torch",
     }
     resolution_consistency_applicability = {
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
