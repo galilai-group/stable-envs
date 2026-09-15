@@ -665,16 +665,68 @@ agent is in a quarter of the time.
 performs — noise field, luminance enhance, tint, daylight blend — against a single uint8 gather at
 full daylight.
 
-**The CPU tier is not yet measurable and is not being guessed.** Job `6394647` on `node2410`
-measured the *daylight* path — an unchanged uint8 gather — at **6,219 f/s** where this laptop
-measures 126,845 and where Step 6 certified 115,166–154,086 on this cluster. That is contention, not
-this renderer, and a tier taken on a contended node is not a tier. Job `6395167` re-takes it with
-`--exclusive`, prints `/proc/loadavg` before and after, runs Step 3's own harness for the headline
-and the Step-6 tree in the same job for the daylight comparison. It is queued; the number will be
-reported when it lands, with its load average beside it.
+**Numbers (CPU, Oscar `node2356`, job `6395527`, one torch thread, paired verdict `USABLE`):**
 
-For orientation only, one Apple arm64 core at one thread (**not** a certification number): mixed
-1,990 f/s at 16 px and 9,973 at 7 px; daylight 151,894 and 309,910; night 1,317 and 6,684.
+| | mixed (**the tier**) | daylight (diagnostic) | night (diagnostic) | daylight/night |
+|---|---|---|---|---|
+| 16 px, `bench_step3` certified batch | **1,150.6 f/s** (B=64) | — | — | — |
+| 16 px, B=256 (`bench_bands`) | 1,111 | 68,833 | 656 | **104.9x** |
+| 16 px, B=1024 | 980 | 105,742 | 389 | 272x |
+| 7 px, B=256 | 5,958 | — | — | — |
+
+**Slower band, flagged: `light_level < 0.5`** — a per-pixel float post-process the reference
+performs, against a single uint8 gather at full daylight. Attribution at B=256/16 px, all night:
+336.8 ms, of which the threefry field 123.5 ms (37%).
+
+**The measurement is paired and gated** (`sweep/paired_verdict_node2356*.json`). The Step-6-closed
+tree was measured on either side of the branch in the same job: 165,922 and 165,181 f/s, a
+**1.0045x spread**, and **1.44x the 115,166 f/s Step 6 certified for that tree on this cluster**.
+Node load 0.86 per core over 192 cores. All three gates pass.
+
+### 9.2 The tier this produces, and why it goes to Sami
+
+`bench_step3` measures the decode bar per run: **4,367 f/s** for the 144x144 frame (5,489 for the
+old 112x144 one — the frame grew 1.29x, so the bar fell). On the frozen `NO_REFERENCE` ladder:
+
+| | `cores_cpu` | tier |
+|---|---|---|
+| **mixed corpus — the registered default** | **1,150.6 / 4,367 = 0.263** | **`CPU_REGRESSION`** |
+| daylight only (diagnostic, not a tier) | 105,742 / 4,367 = 24.2 | would be `CPU_EXCEPTIONAL` |
+
+**So the registered-default CPU tier falls from `CPU_EXCEPTIONAL` to `CPU_REGRESSION`, and that is
+the coverage change rather than a slower renderer.** The Step-6 tier was measured on an observation
+that could not represent night; this one is measured on the full observation, three quarters of
+which is lit. The daylight path itself is unchanged (§9). Per the Q3 ruling — "if it falls below
+`CPU_FAST` it goes to Sami with numbers" — **it does, and these are the numbers.**
+
+### 9.3 A trap I introduced, and it must not reach a certification
+
+With jax now on Oscar, `bench_step3` can measure the official renderer, and it reports
+**`official_cpu` = 2.18 f/s (0.459 s/frame)** for this branch against **610.6 f/s** for the
+Step-6 tree. That is not a 280x slowdown in craftax. It is §8.2: `reference_env` now returns the
+**un-jitted** renderer, because the jitted one disagrees with itself in uint8 and cannot be the
+thing a parity claim is made against.
+
+The consequence is that `S_cpu` — the speedup-over-official ratio the Step-3 ladder prefers when a
+reference is available — would read **1150.6 / 2.18 = 528x** for this env, which is nonsense as a
+performance statement: nobody runs craftax un-jitted except a parity harness.
+
+**The two comparisons need two different references, and this is the general rule rather than a
+quirk of this env:**
+
+* **parity** must use the reference as *written* — un-jitted — because that is the only one with a
+  single well-defined answer;
+* **a speed ratio** must use the reference as a *user would run it* — jitted — because that is what
+  the port is replacing.
+
+Against the jitted official (610.6 f/s, from the baseline leg), `S_cpu` is about **1.9x**, which is
+a real number and a modest one. **Recommendation: this env's CPU tier should be taken on the
+`NO_REFERENCE` `cores_cpu` ladder (0.263, `CPU_REGRESSION`), and `S_cpu` should be suppressed for it
+until the harness can be told which reference a speed ratio is entitled to use.** Left alone, this
+would certify `CPU_EXCEPTIONAL` on a 528x speedup against a renderer nobody runs.
+
+For orientation only, one Apple arm64 core (**not** a certification number): mixed 1,990 f/s at
+16 px and 9,973 at 7 px; daylight 151,894 and 309,910; night 1,317 and 6,684.
 
 ## 10. `check_resolution_consistency` — the frozen bound, and the two options
 

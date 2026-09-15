@@ -1,0 +1,27 @@
+{
+ "host": "node1936.oscar.ccv.brown.edu",
+ "spread_max": 1.25,
+ "loadavg_at_verdict": [
+  15.55,
+  14.96,
+  14.58
+ ],
+ "cells": {
+  "baseA": {
+   "batch": 16,
+   "fps": 1483.7243512802013
+  },
+  "branch": {
+   "batch": 64,
+   "fps": 609.1089222239896
+  },
+  "baseB": {
+   "batch": 64,
+   "fps": 1258.9968806612467
+  }
+ },
+ "baseline_spread": 1.1785,
+ "ratio_branch_over_baseline": 0.4442,
+ "verdict": "USABLE",
+ "why": "the two baseline legs agree to 1.178x, so the node held still and the branch/baseline ratio is a property of the renderer"
+}
