@@ -676,15 +676,19 @@ MESH — the type the old rule declared safe: a texture whose `tex_type` is not 
 mesh with `mesh_texcoordnum == 0`. They are independent (a 2-D texture on a UV-less mesh crashes with
 no cube map in sight). Every texture role is examined rather than `np.max` over `mat_texid`.
 
-Proof it is additive: **21 synthetic unit cases** (`tests/unit/test_mjwarp_texture_gaps.py`);
+**Proof it is additive** — all obligations now discharged. **21 synthetic unit cases** (`tests/unit/test_mjwarp_texture_gaps.py`);
 a registry sweep running BOTH implementations, the old one reproduced verbatim — **40 families build
 locally (25 OGBench maze, 11 DM Control, 4 Mujoco) and all 40 give identical answers**, including
 models containing cube and skybox textures no rendered geom wears; a **positive control** so the
 sweep can tell a correct fix from a no-op (`swm/OGBScene-v0` goes 0 -> 2, naming the two button
 geoms); and `tests/unit` at **830 passed, 2 failed**, both reproducing identically at the stashed
-baseline. Data: `m2/texture_gaps_sweep.json`. Still owed on the cluster: the sweep where the
-cuda-only families build (Fetch above all) and a Fetch/DMC byte-identity replay — job 6396748,
-pending behind a saturated GPU partition (346 queued).
+baseline. On the cluster (jobs **6397397**, **6397454**, RTX 3090): the sweep builds 40 families
+there too with **40/40 identical** and the control firing, and branch-versus-pristine-`76dc511`
+frames are **byte-identical on the same card** for `DMCReacherEasy` (max abs 0),
+`PointmazeMediumNavigate` (0), **`FetchReach` (0)** and **`FetchPickAndPlace` (0)** — Fetch on
+`se-s3b-fetch311`, since it asserts mujoco 3.11. A helper that only reports is supposed to change no
+pixel; that is now asserted rather than assumed. Data: `m2/texture_gaps_sweep.json`,
+`m2/cuda/byte_identity*.json`.
 
 ## 12. Q11 — the three OGBScene options, priced for Sami (nothing chosen)
 
@@ -723,3 +727,38 @@ escalation stays open.
   rasteriser scores `S_cpu` 0.24 and fails every tier; against the certification host it scores 6.07
   and clears `CPU_FASTER`. The phase-0 CPU verdict written from laptop numbers was wrong, and only
   the Oscar leg caught it.
+
+## 14. M3 design gate — the spot correction is real, and not sufficient
+
+Full report: `m3/design_gate.md`, data `m3/m3_corrections.json`. Job **6397454**, `gpu2101`, RTX
+3090, 8 states, 224 px. The reference is always the **unmutated** MuJoCo model; only what MJWarp
+reads is changed, which is model surgery of the same shape as `fetch.py`'s four corrections.
+
+| MJWarp-side correction | interior exact | interior mean abs | within 8 | signed interior |
+|---|---:|---:|---:|---|
+| *baseline* | 0.0091 | 8.900 | 0.5567 | −8: 14.8 %, −4: 12.6 %, −6: 11.8 % |
+| **`exponent = 0` (+ `cutoff = 180`)** | **0.3507** | **2.786** | 0.8003 | 0: 54.6 %, +1: 15.2 %, −1: 6.5 % |
+| re-typed to POINT (contrast) | 0.3497 | 3.051 | 0.7957 | 0: 54.0 %, +1: 14.9 % |
+
+Interior exactness rises **38x** and the signed distribution moves from a systematic −3..−8
+darkening to **centred on zero with ±1 tails** — two implementations of one law rather than two
+laws. All three neutralisations land within 0.001 of each other, so `exponent = 0` alone is the
+minimal form. This does not contradict M1's MuJoCo-side result that POINT equals the light switched
+off: the two sides are asymmetric, which is why the correction touches the MJWarp model only.
+
+**But 0.3507 is not parity**, and it is also *below* M1's `no_spot` row (0.4568, light removed from
+both sides). The residue is the spot's distance term — MJWarp takes
+`attenuation = 1/(1,d,d²)·(1,0,0) = 1`, i.e. no falloff — plus the headlight, M1's second term,
+untouched here. **No cell has been written**: each correction is a line of the cell's model surgery
+and the set of them is what the cell is, so the remaining attribution comes first. A cell built
+today would declare `visual`, not `parity`.
+
+## 15. State of the milestones
+
+| milestone | state |
+|---|---|
+| **M1** attribution | **done** — §10, `m1/attribution.md`; one term, upstream, mechanism read from both sources |
+| **M2** `texture_gaps` | **done** — §11, shared-file fix + 21 unit cases + 40/40 sweep + 4 byte-identical replays |
+| **M3** OGBCube cell | **design gate done** (§14); cell **not written** — parity not reachable until the spot-distance and headlight terms are closed |
+| **M4** tiers | not started; `BATCH_SCALES` 2.93x and the CPU bars are already measured (§4, §5) |
+| **M5** OGBScene | blocked on Sami's Q11 ruling; numbers prepared (§12) |
