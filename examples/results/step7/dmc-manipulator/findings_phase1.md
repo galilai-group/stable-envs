@@ -334,3 +334,142 @@ measurement. (ii) **0.9829 is not promoted to a floor** — the reviewer's indep
 below my worst 0.982859, which is exactly the margin-of-luck problem `PARITY_NOTE` records; the cell
 declares `parity_interior_min = 1.0` and no all-exact floor. (iii) The shape leaf's fidelity against
 SWM's *recompiled* MJCF is O1's question, not one this branch can answer locally.
+
+---
+
+## 10. Cluster results (Oscar restored; measured against `8b39e94`)
+
+Code at `$SCR/se7/dmc-manipulator` (`.GIT_COMMIT = 8b39e94`); `$SCR/se7/baseline` created from
+`git archive 76dc511` (it did not exist — `$SCR/se6/baseline` is the Step-6 baseline `89fa5ca8`).
+
+| job | what | node | state |
+|---|---|---|---|
+| `6394687` | O1 signature diff (`se-step5`) | node2330 | COMPLETED 0:43 |
+| `6394689` | CUDA identity + GPU conformance + profile (`se-step6`) | **gpu2104** | COMPLETED 2:58 |
+| `6394688` | certification arm, **pre-review tree** | node2354 | COMPLETED 21:26 — archived to `_pre_review_run/` |
+| `6395126` | certification arm re-run vs `8b39e94` | node1946 | COMPLETED 27:19 |
+| `6395157` | official-renderer economics arm (`se-step6`) | **gpu2107** | COMPLETED 1:07 |
+| `6395804` | corpus at the 3.11 pin, flag fix (`se-vis311`) | node2306 | COMPLETED 0:46 |
+| `6395850` | paired baseline/head replay at the 3.11 pin | — | submitted |
+
+### O1 — the SWM mjcf round-trip, and why it is benign (coordinator: ACCEPTED)
+
+`order_and_names_identical = False`: the **material and texture tables are rotated**, `background`
+moving from last to first, so all 21 `geom_matid`, all 9 `site_matid` and 2 `mat_texid` differ as
+integers. Every one of them **resolves to the same named element on both sides** (checked; zero
+mismatches). Geom and site ORDER are identical, counts, cameras, the visual/quality block and the
+**texture bytes** (`skybox f6a21dd7…`, `grid d6efb069…`, `background 1217cedb…`) are identical by
+name, and the discovered episode draw is byte-identical: `body_pos[33], body_pos[35], body_quat[44],
+body_quat[46]`. Replaying `_used_materials`' own rule against both signatures returns the identical
+sequence `['grid','background','decoration','self','effector','target']`, so even the declared leaf
+ORDER is unchanged — everything material-facing here is name-keyed (`mj_id2name` / `mj_name2id`).
+
+The only three substantive per-element differences are **exactly the three leaves the registration
+already carries**, which confirms the design rather than threatening it:
+
+| element | `suite.load` | SWM after reset | leaf |
+|---|---|---|---|
+| geom `target_ball` size | `.02` | `.015` | `target_ball.shape = 1` |
+| material `target` rgba alpha | `1.0` | `0.0` | `visibility.target_ball = 0` |
+| light `light` diffuse | `.6` | `.7` | `light.diffuse_scale = 7/6` |
+
+SWM's own row confirms `camera_id = 0`, `action_repeat = 2`, frame `[224,224,3]`, 9 leaves.
+**Caveat, recorded as written:** O1 ran on `se-step5`, which is mujoco **3.12.0 / dm_control 1.0.45**
+— the only venv carrying `stable_worldmodel`. Both models are compiled by the same interpreter, so the
+diff is sound; per the coordinator's ruling no 3.11 re-run is needed, because the question O1 answers
+is whether SWM's MJCF edits change the render model, which is a property of the same-interpreter
+compile and not of the renderer version.
+
+### The declaration arm, at the declared pin (mujoco 3.11.0 + dm_control 1.0.44), 41 draws × 64
+
+| | 224 px (certified) | 84 px (supplementary) |
+|---|---|---|
+| **`interior_exact_frac`** worst / median / best | **1.000000 / 1.000000 / 1.000000** | **1.000000 / 1.000000 / 1.000000** |
+| **interior bad px** | **0 of 56,575,531** | **0 of 1,358,147** |
+| `exact_frac` worst / median | 0.9827280 / 0.9829569 | 0.9774505 / 0.9777361 |
+| `mean_abs` worst | 0.26801 / 255 | 0.54552 / 255 |
+| `max_abs` worst | 219 | 204 |
+| SSIM worst | 0.993476 | 0.985623 |
+
+**Declared: `fidelity_tier = "parity"`, `parity_interior_min = 1.0` (not relaxed), and NO
+`parity_all_exact_min`** — the worst of 41 draws clears the suite's shared 0.90 bar by 0.08 at both
+sizes. Per the reviewer, **0.9829 is not promoted to a floor**.
+
+A free control fell out of the re-run: these numbers are **byte-identical to the pre-review
+(`a635d3a`) arm's**, so C1–C4 moved no pixel at the declared pin either, not only locally at 3.12.
+
+### Candidate frozen corpus, at the pin
+
+`corpus/states/DMCManipulatorBringBall.npz` — **(64, 15)**, exact Step-4 schema, **no Step-4 key
+missing**; `seed 20260909`, `n_typical 1 / n_extreme 25 / n_spread 38`, `mujoco 3.11.0`,
+`dm_control 1.0.44`, node2306. **`sha256 48db2b1adf54a75d816eb068f815257ffa7e1ab238218c4f9e64568873b749d8`
+— identical to the local 3.12 run's**, so the selected states are interpreter-independent even though
+the frames are not. Digests at the pin: 224 px `digest_ours 5abb0064…` / `digest_official 5f2d519b…`,
+exact 0.983229, **interior 1.0, 0 bad of 1,380,761**; 84 px `3f3aeb07…` / `870d9896…`, exact 0.978307,
+**interior 1.0, 0 bad of 33,131**. The 256-row pool sits beside it, out of `corpus_for`'s path.
+**Candidate only; not frozen in Step 7.**
+
+*Recorded because it nearly shipped wrong:* the first run of the certification arm wrote a **(256,15)**
+corpus. `oscar_certify311.sbatch` still passed `--n 256` to `probe_freeze.py`, whose flags C3 had just
+redefined (`--pool` is the sample, `--n` the SELECTED corpus), so `select()` kept all 256 rows — the
+exact defect C3 existed to fix, reproduced in the arm that matters. Job `6395804` re-ran that step
+alone with `--pool 256 --n 64`; the sbatch now spells both flags out with the reason.
+
+### CUDA arm (gpu2104, RTX 3090)
+
+**Byte-identity: 16 cells compared, 0 differing**; only `DMCManipulatorBringBall` is new. (5 trackcom
+cells skip on BOTH trees — `No module named 'warp'` in `se-step6`, a pre-existing venv gap.)
+`tests/gpu/test_conformance.py -k DMCManipulatorBringBall`: **13 passed, 1 failed, 5 skipped**, the
+single failure being `test_every_state_dim_reaches_the_render` on the three declared dims — the state
+this branch's next commit changes to a validated exclusion. The run's own footer records
+`reference-renderer={'env': 'DMCManipulatorBringBall', 'size': 224, 'max_abs_diff': 0}`.
+
+### Performance: the tier is `GPU_FAST`
+
+`examples/bench_vs_decode.py` on **gpu2107**, all three columns in ONE process on ONE node, which is
+what makes the ratio legitimate:
+
+| quantity | value |
+|---|---|
+| official `dm_control` renderer | **262.06 f/s** |
+| ours, best batch | **8,396.35 f/s** (batch 4096, ss 1) |
+| one-core JPEG-q90 decode of its own frames | **2,255.85 f/s** (12,322 B/frame vs 60 B of state) |
+| **R** | **32.04** |
+| **cores** | **3.72** |
+
+Class S: `GPU_FAST` is `R >= 4 and cores >= 1` — **met**. `GPU_EXCEPTIONAL` (`R >= 40 and cores >= 10`)
+is **not**, on either conjunct. Qualifiers: `BATCH_SCALES` **61.3x** (bar 20) PASS;
+`NO_LARGE_BATCH_REGRESSION` **1.017** (bar 0.9) PASS; **`HOST_BOUND` APPLIES** — `cpu_frac = 1.603` at
+the certified batch against a bar of 1.5, so per §6.7 this row must be quoted with **threads 4,
+loadavg 11.85, gpu2107** and **may not be quoted as a device capability or compared across nodes**.
+(A separate `profile_note` run on gpu2104 read 11,524 f/s at batch 4096 with a phase-attribution
+`cpu/device` of 0.64. That is a different quantity from `cpu_frac` and a different node; the
+declaration is taken from the single-job economics run, which is the only one where ours, the official
+renderer and the decode share a machine.)
+
+### EGL: node-vs-venv, answered
+
+W4 reported its GPU job failing inside the OFFICIAL renderer on gpu2104 under `se-vis311` and
+`se-step5`. Two pieces of evidence say neither venv is broken:
+
+* **My job 6394689 ran the official renderer on gpu2104 successfully** under `se-step6` —
+  `check_reference_renderer_is_stable` reported `max_abs_diff 0` and the parity test passed. The only
+  `EGLError`s in that log are 2 occurrences inside `Exception ignored in: <function GLContext.__del__>`
+  at interpreter teardown, which every job in this family emits.
+* The new **EGL device probe** — a real offscreen context plus one rendered frame, run BEFORE any
+  measurement — returned **`se-step6=0 se-vis311=0 se-step5=0`** on gpu2107, with `se-step6` and
+  `se-vis311` producing the identical frame mean `12.350341796875`.
+
+So `se-vis311` and `se-step5` can create EGL contexts, and gpu2104 is not broken for EGL in general.
+gpu2104 stays on the exclude list as instructed (`gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`), and the
+probe is now in the sbatch so any recurrence surfaces by name instead of as a missing number.
+
+### The frozen Step-4 replay at the pin, and a comparison that would have been wrong
+
+`--shard dmc --device cpu` on `se-vis311`: 14 configs, all `measured`. Its digests differ from
+`examples/results/step4/conformance/dmc.json` on 10 of 14 cells — and **that is not a regression
+signal**: the frozen shard's own provenance records `device: cuda` on gpu2105, so comparing it against
+a CPU replay compares two renderers. The valid control is baseline-vs-head on one machine, which is
+what the local run gives (**14 configs, 0 differing** against a `76dc511` checkout at 3.12) and what
+job `6395850` adds at the 3.11 pin, running BOTH trees in one job on one node — the rule
+`AGENT_COMMON` states for GPU before/after numbers, applied to a CPU digest.

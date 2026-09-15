@@ -45,8 +45,11 @@ $PY examples/fidelity_step4.py --shard dmc --device cpu \
     --states-dir "$SCR/se7/$WS/examples/results/step4/states" \
     --out "$OUT/replay/dmc_cpu_oscar311.json"
 
-# 3. the new cell's own frozen corpus (states + digests), proposed for the Step-8 freeze
-$PY scratch/step7/$WS/probe_freeze.py --size 224 --n 256 --out "$OUT/corpus"
+# 3. the new cell's own frozen corpus (states + digests), proposed for the Step-8 freeze.
+# --pool is the sample, --n is the SELECTED corpus. These were one flag before the C3 fix, and this
+# line still said "--n 256" after it -- which made select() keep all 256 rows and reproduced exactly
+# the defect C3 was fixing, in the arm that matters. The flags are spelled out now.
+$PY scratch/step7/$WS/probe_freeze.py --size 224 --pool 256 --n 64 --out "$OUT/corpus"
 
 set +x
 ls -la "$OUT/oscar" "$OUT/corpus" || true

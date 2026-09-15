@@ -101,48 +101,48 @@
    224,
    84
   ],
-  "mujoco": "3.12.0",
-  "dm_control": "1.0.45",
-  "node": "cis1b1zs2j3.ad.brown.edu",
+  "mujoco": "3.11.0",
+  "dm_control": "1.0.44",
+  "node": "node2306.oscar.ccv.brown.edu",
   "status": "CANDIDATE for the Step-8 freeze; not frozen in Step 7 and not a replacement for anything under examples/results/step4"
  },
  "digests": {
   "224": {
    "n": 64,
    "states_sha256": "48db2b1adf54a75d816eb068f815257ffa7e1ab238218c4f9e64568873b749d8",
-   "digest_ours": "0327b3b423429da1ed03319cfa3987d76f1a0c32d8ff30d3586239e09ff318f9",
-   "digest_official": "73c43f90d4c4d04913e92d1240f3e097a23de752f06a6680c998b72fa7323b0b",
+   "digest_ours": "5abb0064a7c46903cfd0bc76ec77a03e787394cff58952a6ef025a05ac0ea91c",
+   "digest_official": "5f2d519be0c33d5f21c8af46cc52905060afd40e0cdffd4b2467fdffecee5d38",
    "supersample": 1,
    "parity": {
-    "mean_abs": 0.2569393235809949,
-    "exact_frac": 0.9832296566087373,
-    "within8_frac": 0.9935408611686862,
+    "mean_abs": 0.2555660325653699,
+    "exact_frac": 0.983228722397162,
+    "within8_frac": 0.9935757384008291,
     "max_abs": 204,
-    "interior_frac": 0.4355569687707374,
+    "interior_frac": 0.4338392210782441,
     "interior_exact_frac": 1.0,
     "interior_mean_abs": 0.0,
-    "interior_px": 1386228,
+    "interior_px": 1380761,
     "interior_bad_px": 0,
-    "ssim": 0.9941408077955539
+    "ssim": 0.9941749087733232
    }
   },
   "84": {
    "n": 64,
    "states_sha256": "48db2b1adf54a75d816eb068f815257ffa7e1ab238218c4f9e64568873b749d8",
-   "digest_ours": "bb2b48ad9197e0e4371bfbc45ec9c47eae21e6603ead2430e670a2fa9379c5d8",
-   "digest_official": "1367ea838183fdf0fe179665cea330ef589545a5dbfb9bb07d21f9fa9eb89154",
+   "digest_ours": "3f3aeb075b232f66fce1f7f605c12ea4d1c85e5480b47310073d23173b7768dd",
+   "digest_official": "870d9896ab9cbd190d0e8badcb6a1f3d4258e6cb27189954e68dd3cb608777df",
    "supersample": 1,
    "parity": {
-    "mean_abs": 0.529155151643991,
-    "exact_frac": 0.9783096832482994,
-    "within8_frac": 0.9848887471655329,
-    "max_abs": 204,
-    "interior_frac": 0.07503129989838873,
+    "mean_abs": 0.5265199829931972,
+    "exact_frac": 0.9783074688208617,
+    "within8_frac": 0.9848378153344671,
+    "max_abs": 201,
+    "interior_frac": 0.07514470532733343,
     "interior_exact_frac": 1.0,
     "interior_mean_abs": 0.0,
-    "interior_px": 33081,
+    "interior_px": 33131,
     "interior_bad_px": 0,
-    "ssim": 0.9866199054803789
+    "ssim": 0.9867238108343721
    }
   }
  }

@@ -1,0 +1,4145 @@
+{
+ "mujoco": "3.12.0",
+ "dm_control": "1.0.45",
+ "suite_load": {
+  "counts": {
+   "nq": 11,
+   "nv": 11,
+   "nbody": 12,
+   "ngeom": 21,
+   "nsite": 9,
+   "nmat": 14,
+   "ntex": 3,
+   "nlight": 1,
+   "ncam": 2,
+   "ntendon": 2,
+   "nmesh": 0,
+   "nhfield": 0
+  },
+  "geoms": [
+   {
+    "id": 0,
+    "name": "floor",
+    "type": 0,
+    "group": 0,
+    "matid": 0,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "wall1",
+    "type": 0,
+    "group": 0,
+    "matid": 0,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "wall2",
+    "type": 0,
+    "group": 0,
+    "matid": 0,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "background",
+    "type": 0,
+    "group": 0,
+    "matid": 13,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     1.0,
+     0.5,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "arm_root",
+    "type": 5,
+    "group": 0,
+    "matid": 7,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.024,
+     0.022,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "upper_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 1,
+    "body": "upper_arm",
+    "size": [
+     0.02,
+     0.09,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "middle_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 2,
+    "body": "middle_arm",
+    "size": [
+     0.017,
+     0.075,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "lower_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 3,
+    "body": "lower_arm",
+    "size": [
+     0.014,
+     0.06,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "hand",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.011,
+     0.015,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 9,
+    "name": "palm1",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 10,
+    "name": "palm2",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 11,
+    "name": "thumb1",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 6,
+    "body": "thumb",
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 12,
+    "name": "thumb2",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 6,
+    "body": "thumb",
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 13,
+    "name": "thumbtip1",
+    "type": 2,
+    "group": 0,
+    "matid": 4,
+    "bodyid": 7,
+    "body": "thumbtip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 14,
+    "name": "thumbtip2",
+    "type": 2,
+    "group": 0,
+    "matid": 4,
+    "bodyid": 7,
+    "body": "thumbtip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 15,
+    "name": "finger1",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 8,
+    "body": "finger",
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 16,
+    "name": "finger2",
+    "type": 3,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 8,
+    "body": "finger",
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 17,
+    "name": "fingertip1",
+    "type": 2,
+    "group": 0,
+    "matid": 4,
+    "bodyid": 9,
+    "body": "fingertip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 18,
+    "name": "fingertip2",
+    "type": 2,
+    "group": 0,
+    "matid": 4,
+    "bodyid": 9,
+    "body": "fingertip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 19,
+    "name": "ball",
+    "type": 2,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 10,
+    "body": "ball",
+    "size": [
+     0.022,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 20,
+    "name": "target_ball",
+    "type": 2,
+    "group": 0,
+    "matid": 9,
+    "bodyid": 11,
+    "body": "target_ball",
+    "size": [
+     0.02,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   }
+  ],
+  "sites": [
+   {
+    "id": 0,
+    "name": "grasp",
+    "type": 2,
+    "group": 3,
+    "matid": 12,
+    "bodyid": 4,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "palm_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 12,
+    "bodyid": 4,
+    "size": [
+     0.025,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "pinch",
+    "type": 2,
+    "group": 3,
+    "matid": 12,
+    "bodyid": 5,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "thumb_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 12,
+    "bodyid": 6,
+    "size": [
+     0.018,
+     0.005,
+     0.005
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "thumbtip_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 12,
+    "bodyid": 7,
+    "size": [
+     0.012,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "finger_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 12,
+    "bodyid": 8,
+    "size": [
+     0.018,
+     0.005,
+     0.005
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "fingertip_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 12,
+    "bodyid": 9,
+    "size": [
+     0.012,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "ball",
+    "type": 2,
+    "group": 3,
+    "matid": 12,
+    "bodyid": 10,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "target_ball",
+    "type": 2,
+    "group": 3,
+    "matid": 12,
+    "bodyid": 11,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   }
+  ],
+  "materials": [
+   {
+    "id": 0,
+    "name": "grid",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.20000000298023224,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 1,
+    "name": "self",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 2,
+    "name": "self_default",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 3,
+    "name": "self_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 4,
+    "name": "effector",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 5,
+    "name": "effector_default",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 6,
+    "name": "effector_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 7,
+    "name": "decoration",
+    "rgba": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 8,
+    "name": "eye",
+    "rgba": [
+     0.0,
+     0.20000000298023224,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 9,
+    "name": "target",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 10,
+    "name": "target_default",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 11,
+    "name": "target_highlight",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     0.4000000059604645
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 12,
+    "name": "site",
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     0.30000001192092896
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 13,
+    "name": "background",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     2,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   }
+  ],
+  "textures": [
+   {
+    "id": 0,
+    "name": "skybox",
+    "type": 2,
+    "h": 4800,
+    "w": 800,
+    "sha": "f6a21dd7d85c1e5d"
+   },
+   {
+    "id": 1,
+    "name": "grid",
+    "type": 0,
+    "h": 300,
+    "w": 300,
+    "sha": "d6efb0698f2ef40f"
+   },
+   {
+    "id": 2,
+    "name": "background",
+    "type": 0,
+    "h": 800,
+    "w": 800,
+    "sha": "1217cedb5d3b98ea"
+   }
+  ],
+  "cameras": [
+   {
+    "id": 0,
+    "name": "fixed",
+    "mode": 0,
+    "fovy": 4.0,
+    "pos": [
+     0.0,
+     -16.0,
+     0.4
+    ],
+    "quat": [
+     0.7071067811865476,
+     0.7071067811865475,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "hand",
+    "mode": 1,
+    "fovy": 45.0,
+    "pos": [
+     0.0,
+     -0.3,
+     0.0
+    ],
+    "quat": [
+     0.7071067811865476,
+     0.7071067811865475,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "lights": [
+   {
+    "id": 0,
+    "name": "light",
+    "type": 1,
+    "directional": null,
+    "mode": 0,
+    "castshadow": 1,
+    "pos": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "dir": [
+     0.0,
+     0.0,
+     -1.0
+    ],
+    "ambient": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "diffuse": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "specular": [
+     0.30000001192092896,
+     0.30000001192092896,
+     0.30000001192092896
+    ],
+    "cutoff": 45.0,
+    "exponent": 10.0
+   }
+  ],
+  "visual": {
+   "shadowsize": 2048,
+   "offsamples": 4,
+   "numslices": 28,
+   "shadowclip": 0.5,
+   "headlight_active": 1,
+   "headlight_ambient": [
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645
+   ],
+   "headlight_diffuse": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929
+   ],
+   "headlight_specular": [
+    0.10000000149011612,
+    0.10000000149011612,
+    0.10000000149011612
+   ]
+  },
+  "episode_draw": [
+   "body_pos[33]",
+   "body_pos[35]",
+   "body_quat[44]",
+   "body_quat[46]"
+  ]
+ },
+ "swm": {
+  "camera_id": 0,
+  "action_repeat": 2,
+  "variation_leaves": [
+   "agent.color",
+   "agent.hand_density",
+   "agent.upper_arm_density",
+   "agent.upper_arm_length",
+   "floor.color",
+   "light.intensity",
+   "rendering.render_target",
+   "target.color",
+   "target.shape"
+  ]
+ },
+ "swm_as_constructed": {
+  "counts": {
+   "nq": 11,
+   "nv": 11,
+   "nbody": 12,
+   "ngeom": 21,
+   "nsite": 9,
+   "nmat": 14,
+   "ntex": 3,
+   "nlight": 1,
+   "ncam": 2,
+   "ntendon": 2,
+   "nmesh": 0,
+   "nhfield": 0
+  },
+  "geoms": [
+   {
+    "id": 0,
+    "name": "floor",
+    "type": 0,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "wall1",
+    "type": 0,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "wall2",
+    "type": 0,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "background",
+    "type": 0,
+    "group": 0,
+    "matid": 0,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     1.0,
+     0.5,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "arm_root",
+    "type": 5,
+    "group": 0,
+    "matid": 8,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.024,
+     0.022,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "upper_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 1,
+    "body": "upper_arm",
+    "size": [
+     0.02,
+     0.09,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "middle_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 2,
+    "body": "middle_arm",
+    "size": [
+     0.017,
+     0.075,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "lower_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 3,
+    "body": "lower_arm",
+    "size": [
+     0.014,
+     0.06,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "hand",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.011,
+     0.015,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 9,
+    "name": "palm1",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 10,
+    "name": "palm2",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 11,
+    "name": "thumb1",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 6,
+    "body": "thumb",
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 12,
+    "name": "thumb2",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 6,
+    "body": "thumb",
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 13,
+    "name": "thumbtip1",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 7,
+    "body": "thumbtip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 14,
+    "name": "thumbtip2",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 7,
+    "body": "thumbtip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 15,
+    "name": "finger1",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 8,
+    "body": "finger",
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 16,
+    "name": "finger2",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 8,
+    "body": "finger",
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 17,
+    "name": "fingertip1",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 9,
+    "body": "fingertip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 18,
+    "name": "fingertip2",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 9,
+    "body": "fingertip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 19,
+    "name": "ball",
+    "type": 2,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 10,
+    "body": "ball",
+    "size": [
+     0.022,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 20,
+    "name": "target_ball",
+    "type": 2,
+    "group": 0,
+    "matid": 10,
+    "bodyid": 11,
+    "body": "target_ball",
+    "size": [
+     0.02,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   }
+  ],
+  "sites": [
+   {
+    "id": 0,
+    "name": "grasp",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 4,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "palm_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 4,
+    "size": [
+     0.025,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "pinch",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 5,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "thumb_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 6,
+    "size": [
+     0.018,
+     0.005,
+     0.005
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "thumbtip_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 7,
+    "size": [
+     0.012,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "finger_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 8,
+    "size": [
+     0.018,
+     0.005,
+     0.005
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "fingertip_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 9,
+    "size": [
+     0.012,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "ball",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 10,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "target_ball",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 11,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   }
+  ],
+  "materials": [
+   {
+    "id": 0,
+    "name": "background",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     0,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 1,
+    "name": "grid",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.20000000298023224,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     2,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 2,
+    "name": "self",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 3,
+    "name": "self_default",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 4,
+    "name": "self_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 5,
+    "name": "effector",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 6,
+    "name": "effector_default",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 7,
+    "name": "effector_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 8,
+    "name": "decoration",
+    "rgba": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 9,
+    "name": "eye",
+    "rgba": [
+     0.0,
+     0.20000000298023224,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 10,
+    "name": "target",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 11,
+    "name": "target_default",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 12,
+    "name": "target_highlight",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     0.4000000059604645
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 13,
+    "name": "site",
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     0.30000001192092896
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   }
+  ],
+  "textures": [
+   {
+    "id": 0,
+    "name": "background",
+    "type": 0,
+    "h": 800,
+    "w": 800,
+    "sha": "1217cedb5d3b98ea"
+   },
+   {
+    "id": 1,
+    "name": "skybox",
+    "type": 2,
+    "h": 4800,
+    "w": 800,
+    "sha": "f6a21dd7d85c1e5d"
+   },
+   {
+    "id": 2,
+    "name": "grid",
+    "type": 0,
+    "h": 300,
+    "w": 300,
+    "sha": "d6efb0698f2ef40f"
+   }
+  ],
+  "cameras": [
+   {
+    "id": 0,
+    "name": "fixed",
+    "mode": 0,
+    "fovy": 4.0,
+    "pos": [
+     0.0,
+     -16.0,
+     0.4
+    ],
+    "quat": [
+     0.7071067811865476,
+     0.7071067811865475,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "hand",
+    "mode": 1,
+    "fovy": 45.0,
+    "pos": [
+     0.0,
+     -0.3,
+     0.0
+    ],
+    "quat": [
+     0.7071067811865476,
+     0.7071067811865475,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "lights": [
+   {
+    "id": 0,
+    "name": "light",
+    "type": 1,
+    "directional": null,
+    "mode": 0,
+    "castshadow": 1,
+    "pos": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "dir": [
+     0.0,
+     0.0,
+     -1.0
+    ],
+    "ambient": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "diffuse": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "specular": [
+     0.30000001192092896,
+     0.30000001192092896,
+     0.30000001192092896
+    ],
+    "cutoff": 45.0,
+    "exponent": 10.0
+   }
+  ],
+  "visual": {
+   "shadowsize": 2048,
+   "offsamples": 4,
+   "numslices": 28,
+   "shadowclip": 0.5,
+   "headlight_active": 1,
+   "headlight_ambient": [
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645
+   ],
+   "headlight_diffuse": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929
+   ],
+   "headlight_specular": [
+    0.10000000149011612,
+    0.10000000149011612,
+    0.10000000149011612
+   ]
+  }
+ },
+ "swm_after_reset": {
+  "counts": {
+   "nq": 11,
+   "nv": 11,
+   "nbody": 12,
+   "ngeom": 21,
+   "nsite": 9,
+   "nmat": 14,
+   "ntex": 3,
+   "nlight": 1,
+   "ncam": 2,
+   "ntendon": 2,
+   "nmesh": 0,
+   "nhfield": 0
+  },
+  "geoms": [
+   {
+    "id": 0,
+    "name": "floor",
+    "type": 0,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "wall1",
+    "type": 0,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "wall2",
+    "type": 0,
+    "group": 0,
+    "matid": 1,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "background",
+    "type": 0,
+    "group": 0,
+    "matid": 0,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     1.0,
+     0.5,
+     10.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "arm_root",
+    "type": 5,
+    "group": 0,
+    "matid": 8,
+    "bodyid": 0,
+    "body": "world",
+    "size": [
+     0.024,
+     0.022,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "upper_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 1,
+    "body": "upper_arm",
+    "size": [
+     0.02,
+     0.09,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "middle_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 2,
+    "body": "middle_arm",
+    "size": [
+     0.017,
+     0.075,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "lower_arm",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 3,
+    "body": "lower_arm",
+    "size": [
+     0.014,
+     0.06,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "hand",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.011,
+     0.015,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 9,
+    "name": "palm1",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 10,
+    "name": "palm2",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 4,
+    "body": "hand",
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 11,
+    "name": "thumb1",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 6,
+    "body": "thumb",
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 12,
+    "name": "thumb2",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 6,
+    "body": "thumb",
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 13,
+    "name": "thumbtip1",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 7,
+    "body": "thumbtip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 14,
+    "name": "thumbtip2",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 7,
+    "body": "thumbtip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 15,
+    "name": "finger1",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 8,
+    "body": "finger",
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 16,
+    "name": "finger2",
+    "type": 3,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 8,
+    "body": "finger",
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 17,
+    "name": "fingertip1",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 9,
+    "body": "fingertip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 18,
+    "name": "fingertip2",
+    "type": 2,
+    "group": 0,
+    "matid": 5,
+    "bodyid": 9,
+    "body": "fingertip",
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 19,
+    "name": "ball",
+    "type": 2,
+    "group": 0,
+    "matid": 2,
+    "bodyid": 10,
+    "body": "ball",
+    "size": [
+     0.022,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 20,
+    "name": "target_ball",
+    "type": 2,
+    "group": 0,
+    "matid": 10,
+    "bodyid": 11,
+    "body": "target_ball",
+    "size": [
+     0.014999999664723873,
+     0.0,
+     0.0
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   }
+  ],
+  "sites": [
+   {
+    "id": 0,
+    "name": "grasp",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 4,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "palm_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 4,
+    "size": [
+     0.025,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "pinch",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 5,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "thumb_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 6,
+    "size": [
+     0.018,
+     0.005,
+     0.005
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "thumbtip_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 7,
+    "size": [
+     0.012,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "finger_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 8,
+    "size": [
+     0.018,
+     0.005,
+     0.005
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "fingertip_touch",
+    "type": 6,
+    "group": 4,
+    "matid": 13,
+    "bodyid": 9,
+    "size": [
+     0.012,
+     0.005,
+     0.008
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "ball",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 10,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "target_ball",
+    "type": 2,
+    "group": 3,
+    "matid": 13,
+    "bodyid": 11,
+    "size": [
+     0.003,
+     0.003,
+     0.003
+    ],
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     1.0
+    ]
+   }
+  ],
+  "materials": [
+   {
+    "id": 0,
+    "name": "background",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     0,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 1,
+    "name": "grid",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.20000000298023224,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     2,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 2,
+    "name": "self",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 3,
+    "name": "self_default",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 4,
+    "name": "self_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 5,
+    "name": "effector",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 6,
+    "name": "effector_default",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 7,
+    "name": "effector_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 8,
+    "name": "decoration",
+    "rgba": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 9,
+    "name": "eye",
+    "rgba": [
+     0.0,
+     0.20000000298023224,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 10,
+    "name": "target",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     0.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 11,
+    "name": "target_default",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 12,
+    "name": "target_highlight",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     0.4000000059604645
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   },
+   {
+    "id": 13,
+    "name": "site",
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     0.30000001192092896
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": [
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1,
+     -1
+    ]
+   }
+  ],
+  "textures": [
+   {
+    "id": 0,
+    "name": "background",
+    "type": 0,
+    "h": 800,
+    "w": 800,
+    "sha": "1217cedb5d3b98ea"
+   },
+   {
+    "id": 1,
+    "name": "skybox",
+    "type": 2,
+    "h": 4800,
+    "w": 800,
+    "sha": "f6a21dd7d85c1e5d"
+   },
+   {
+    "id": 2,
+    "name": "grid",
+    "type": 0,
+    "h": 300,
+    "w": 300,
+    "sha": "d6efb0698f2ef40f"
+   }
+  ],
+  "cameras": [
+   {
+    "id": 0,
+    "name": "fixed",
+    "mode": 0,
+    "fovy": 4.0,
+    "pos": [
+     0.0,
+     -16.0,
+     0.4
+    ],
+    "quat": [
+     0.7071067811865476,
+     0.7071067811865475,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "hand",
+    "mode": 1,
+    "fovy": 45.0,
+    "pos": [
+     0.0,
+     -0.3,
+     0.0
+    ],
+    "quat": [
+     0.7071067811865476,
+     0.7071067811865475,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "lights": [
+   {
+    "id": 0,
+    "name": "light",
+    "type": 1,
+    "directional": null,
+    "mode": 0,
+    "castshadow": 1,
+    "pos": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "dir": [
+     0.0,
+     0.0,
+     -1.0
+    ],
+    "ambient": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "diffuse": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ],
+    "specular": [
+     0.30000001192092896,
+     0.30000001192092896,
+     0.30000001192092896
+    ],
+    "cutoff": 45.0,
+    "exponent": 10.0
+   }
+  ],
+  "visual": {
+   "shadowsize": 2048,
+   "offsamples": 4,
+   "numslices": 28,
+   "shadowclip": 0.5,
+   "headlight_active": 1,
+   "headlight_ambient": [
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645
+   ],
+   "headlight_diffuse": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929
+   ],
+   "headlight_specular": [
+    0.10000000149011612,
+    0.10000000149011612,
+    0.10000000149011612
+   ]
+  },
+  "episode_draw": [
+   "body_pos[33]",
+   "body_pos[35]",
+   "body_quat[44]",
+   "body_quat[46]"
+  ]
+ },
+ "swm_frame_shape": [
+  224,
+  224,
+  3
+ ],
+ "diff": {
+  "counts": {},
+  "visual": {},
+  "geoms": [
+   {
+    "id": 0,
+    "name_A": "floor",
+    "name_B": "floor",
+    "fields": {
+     "matid": [
+      0,
+      1
+     ]
+    }
+   },
+   {
+    "id": 1,
+    "name_A": "wall1",
+    "name_B": "wall1",
+    "fields": {
+     "matid": [
+      0,
+      1
+     ]
+    }
+   },
+   {
+    "id": 2,
+    "name_A": "wall2",
+    "name_B": "wall2",
+    "fields": {
+     "matid": [
+      0,
+      1
+     ]
+    }
+   },
+   {
+    "id": 3,
+    "name_A": "background",
+    "name_B": "background",
+    "fields": {
+     "matid": [
+      13,
+      0
+     ]
+    }
+   },
+   {
+    "id": 4,
+    "name_A": "arm_root",
+    "name_B": "arm_root",
+    "fields": {
+     "matid": [
+      7,
+      8
+     ]
+    }
+   },
+   {
+    "id": 5,
+    "name_A": "upper_arm",
+    "name_B": "upper_arm",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 6,
+    "name_A": "middle_arm",
+    "name_B": "middle_arm",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 7,
+    "name_A": "lower_arm",
+    "name_B": "lower_arm",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 8,
+    "name_A": "hand",
+    "name_B": "hand",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 9,
+    "name_A": "palm1",
+    "name_B": "palm1",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 10,
+    "name_A": "palm2",
+    "name_B": "palm2",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 11,
+    "name_A": "thumb1",
+    "name_B": "thumb1",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 12,
+    "name_A": "thumb2",
+    "name_B": "thumb2",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 13,
+    "name_A": "thumbtip1",
+    "name_B": "thumbtip1",
+    "fields": {
+     "matid": [
+      4,
+      5
+     ]
+    }
+   },
+   {
+    "id": 14,
+    "name_A": "thumbtip2",
+    "name_B": "thumbtip2",
+    "fields": {
+     "matid": [
+      4,
+      5
+     ]
+    }
+   },
+   {
+    "id": 15,
+    "name_A": "finger1",
+    "name_B": "finger1",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 16,
+    "name_A": "finger2",
+    "name_B": "finger2",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 17,
+    "name_A": "fingertip1",
+    "name_B": "fingertip1",
+    "fields": {
+     "matid": [
+      4,
+      5
+     ]
+    }
+   },
+   {
+    "id": 18,
+    "name_A": "fingertip2",
+    "name_B": "fingertip2",
+    "fields": {
+     "matid": [
+      4,
+      5
+     ]
+    }
+   },
+   {
+    "id": 19,
+    "name_A": "ball",
+    "name_B": "ball",
+    "fields": {
+     "matid": [
+      1,
+      2
+     ]
+    }
+   },
+   {
+    "id": 20,
+    "name_A": "target_ball",
+    "name_B": "target_ball",
+    "fields": {
+     "size": [
+      [
+       0.02,
+       0.0,
+       0.0
+      ],
+      [
+       0.014999999664723873,
+       0.0,
+       0.0
+      ]
+     ],
+     "matid": [
+      9,
+      10
+     ]
+    }
+   }
+  ],
+  "sites": [
+   {
+    "id": 0,
+    "name_A": "grasp",
+    "name_B": "grasp",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 1,
+    "name_A": "palm_touch",
+    "name_B": "palm_touch",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 2,
+    "name_A": "pinch",
+    "name_B": "pinch",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 3,
+    "name_A": "thumb_touch",
+    "name_B": "thumb_touch",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 4,
+    "name_A": "thumbtip_touch",
+    "name_B": "thumbtip_touch",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 5,
+    "name_A": "finger_touch",
+    "name_B": "finger_touch",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 6,
+    "name_A": "fingertip_touch",
+    "name_B": "fingertip_touch",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 7,
+    "name_A": "ball",
+    "name_B": "ball",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   },
+   {
+    "id": 8,
+    "name_A": "target_ball",
+    "name_B": "target_ball",
+    "fields": {
+     "matid": [
+      12,
+      13
+     ]
+    }
+   }
+  ],
+  "materials": [
+   {
+    "id": 0,
+    "name_A": "grid",
+    "name_B": "background",
+    "fields": {
+     "name": [
+      "grid",
+      "background"
+     ],
+     "texid": [
+      [
+       -1,
+       1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      [
+       -1,
+       0,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ]
+     ],
+     "reflectance": [
+      0.20000000298023224,
+      0.0
+     ]
+    }
+   },
+   {
+    "id": 1,
+    "name_A": "self",
+    "name_B": "grid",
+    "fields": {
+     "rgba": [
+      [
+       0.699999988079071,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ],
+      [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     ],
+     "name": [
+      "self",
+      "grid"
+     ],
+     "texid": [
+      [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      [
+       -1,
+       2,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ]
+     ],
+     "reflectance": [
+      0.0,
+      0.20000000298023224
+     ]
+    }
+   },
+   {
+    "id": 2,
+    "name_A": "self_default",
+    "name_B": "self",
+    "fields": {
+     "name": [
+      "self_default",
+      "self"
+     ]
+    }
+   },
+   {
+    "id": 3,
+    "name_A": "self_highlight",
+    "name_B": "self_default",
+    "fields": {
+     "rgba": [
+      [
+       0.0,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ],
+      [
+       0.699999988079071,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ]
+     ],
+     "name": [
+      "self_highlight",
+      "self_default"
+     ]
+    }
+   },
+   {
+    "id": 4,
+    "name_A": "effector",
+    "name_B": "self_highlight",
+    "fields": {
+     "rgba": [
+      [
+       0.699999988079071,
+       0.4000000059604645,
+       0.20000000298023224,
+       1.0
+      ],
+      [
+       0.0,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ]
+     ],
+     "name": [
+      "effector",
+      "self_highlight"
+     ]
+    }
+   },
+   {
+    "id": 5,
+    "name_A": "effector_default",
+    "name_B": "effector",
+    "fields": {
+     "name": [
+      "effector_default",
+      "effector"
+     ]
+    }
+   },
+   {
+    "id": 6,
+    "name_A": "effector_highlight",
+    "name_B": "effector_default",
+    "fields": {
+     "rgba": [
+      [
+       0.0,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ],
+      [
+       0.699999988079071,
+       0.4000000059604645,
+       0.20000000298023224,
+       1.0
+      ]
+     ],
+     "name": [
+      "effector_highlight",
+      "effector_default"
+     ]
+    }
+   },
+   {
+    "id": 7,
+    "name_A": "decoration",
+    "name_B": "effector_highlight",
+    "fields": {
+     "rgba": [
+      [
+       0.30000001192092896,
+       0.5,
+       0.699999988079071,
+       1.0
+      ],
+      [
+       0.0,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ]
+     ],
+     "name": [
+      "decoration",
+      "effector_highlight"
+     ]
+    }
+   },
+   {
+    "id": 8,
+    "name_A": "eye",
+    "name_B": "decoration",
+    "fields": {
+     "rgba": [
+      [
+       0.0,
+       0.20000000298023224,
+       1.0,
+       1.0
+      ],
+      [
+       0.30000001192092896,
+       0.5,
+       0.699999988079071,
+       1.0
+      ]
+     ],
+     "name": [
+      "eye",
+      "decoration"
+     ]
+    }
+   },
+   {
+    "id": 9,
+    "name_A": "target",
+    "name_B": "eye",
+    "fields": {
+     "rgba": [
+      [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       1.0
+      ],
+      [
+       0.0,
+       0.20000000298023224,
+       1.0,
+       1.0
+      ]
+     ],
+     "name": [
+      "target",
+      "eye"
+     ]
+    }
+   },
+   {
+    "id": 10,
+    "name_A": "target_default",
+    "name_B": "target",
+    "fields": {
+     "rgba": [
+      [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       1.0
+      ],
+      [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       0.0
+      ]
+     ],
+     "name": [
+      "target_default",
+      "target"
+     ]
+    }
+   },
+   {
+    "id": 11,
+    "name_A": "target_highlight",
+    "name_B": "target_default",
+    "fields": {
+     "rgba": [
+      [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       0.4000000059604645
+      ],
+      [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       1.0
+      ]
+     ],
+     "name": [
+      "target_highlight",
+      "target_default"
+     ]
+    }
+   },
+   {
+    "id": 12,
+    "name_A": "site",
+    "name_B": "target_highlight",
+    "fields": {
+     "rgba": [
+      [
+       0.5,
+       0.5,
+       0.5,
+       0.30000001192092896
+      ],
+      [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       0.4000000059604645
+      ]
+     ],
+     "name": [
+      "site",
+      "target_highlight"
+     ]
+    }
+   },
+   {
+    "id": 13,
+    "name_A": "background",
+    "name_B": "site",
+    "fields": {
+     "rgba": [
+      [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      [
+       0.5,
+       0.5,
+       0.5,
+       0.30000001192092896
+      ]
+     ],
+     "name": [
+      "background",
+      "site"
+     ],
+     "texid": [
+      [
+       -1,
+       2,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ]
+     ]
+    }
+   }
+  ],
+  "textures": [
+   {
+    "id": 0,
+    "name_A": "skybox",
+    "name_B": "background",
+    "fields": {
+     "name": [
+      "skybox",
+      "background"
+     ],
+     "h": [
+      4800,
+      800
+     ],
+     "type": [
+      2,
+      0
+     ],
+     "sha": [
+      "f6a21dd7d85c1e5d",
+      "1217cedb5d3b98ea"
+     ]
+    }
+   },
+   {
+    "id": 1,
+    "name_A": "grid",
+    "name_B": "skybox",
+    "fields": {
+     "w": [
+      300,
+      800
+     ],
+     "name": [
+      "grid",
+      "skybox"
+     ],
+     "h": [
+      300,
+      4800
+     ],
+     "type": [
+      0,
+      2
+     ],
+     "sha": [
+      "d6efb0698f2ef40f",
+      "f6a21dd7d85c1e5d"
+     ]
+    }
+   },
+   {
+    "id": 2,
+    "name_A": "background",
+    "name_B": "grid",
+    "fields": {
+     "w": [
+      800,
+      300
+     ],
+     "name": [
+      "background",
+      "grid"
+     ],
+     "h": [
+      800,
+      300
+     ],
+     "sha": [
+      "1217cedb5d3b98ea",
+      "d6efb0698f2ef40f"
+     ]
+    }
+   }
+  ],
+  "lights": [
+   {
+    "id": 0,
+    "name_A": "light",
+    "name_B": "light",
+    "fields": {
+     "diffuse": [
+      [
+       0.6000000238418579,
+       0.6000000238418579,
+       0.6000000238418579
+      ],
+      [
+       0.699999988079071,
+       0.699999988079071,
+       0.699999988079071
+      ]
+     ]
+    }
+   }
+  ],
+  "episode_draw": [
+   [
+    "body_pos[33]",
+    "body_pos[35]",
+    "body_quat[44]",
+    "body_quat[46]"
+   ],
+   [
+    "body_pos[33]",
+    "body_pos[35]",
+    "body_quat[44]",
+    "body_quat[46]"
+   ]
+  ],
+  "order_and_names_identical": false
+ }
+}
