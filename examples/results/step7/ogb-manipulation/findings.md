@@ -454,10 +454,11 @@ Oscar SSH was denied at spawn time and is now restored; the jobs below were **su
 prepared, per the coordinator's mid-task update. Scripts are versioned under
 `scratch/step7/ogb-manipulation/`.
 
-| job | script | partition | what it settles |
+| job | script | partition | outcome |
 |---|---|---|---|
-| **6395175** | `00_build_venv_and_bars.sbatch` | `batch` / `normal`, 4 cpu, 48G, 3 h | builds `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); then proves both envs render under **EGL** headless and retakes the census, the bars, the purity probes and the interior/MSAA probe at 1 thread on a certification node |
-| **6395176** | `01_mjwarp_trial.sbatch` | `gpu` / `norm-gpu`, 1x geforce3090, `--exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`, 2 h, `afterok:6395175` | puts the registered `MjModel` through the **existing** `MJ.BatchRenderer` at the registered resolution and `front_pixels` camera: does it build at 193k triangles, VRAM, first fidelity numbers against MuJoCo's own EGL frames with `gl_rounding`, and **`BATCH_SCALES` = fps(1024)/fps(1)** |
+| **6395175** | `00_build_venv_and_bars.sbatch` | `batch`/`normal`, node2351 | **COMPLETED.** Built `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); proved both envs render headless; reproduced the census exactly; took the certification bars, the purity probes and the interior/MSAA probe at 1 thread. §4. |
+| **6395461** | `01_mjwarp_trial.sbatch` | `gpu`/`norm-gpu`, gpu2101, RTX 3090 | **COMPLETED.** `OGBCube` builds through the existing `MJ.BatchRenderer` at 193 k triangles; `BATCH_SCALES` 2.89x; raw fidelity 0.0092 interior. §5. The `OGBScene` row is **void** — CUDA context poisoned by `OGBCube`'s teardown in the same interpreter (an error-700 storm from `wp_free_device_async`, then `wp_cuda_graph_begin_capture` failed). |
+| **6395736** | `01_mjwarp_trial.sbatch` (one env per process) | `gpu`/`norm-gpu` | **the one item still outstanding**: does `OGBScene` build through MJWarp, and its `BATCH_SCALES` (now swept to B=4096). Everything else in this file is measured. |
 
 Two earlier attempts failed and are recorded rather than hidden, because both failure modes are
 traps a later phase would hit again:
