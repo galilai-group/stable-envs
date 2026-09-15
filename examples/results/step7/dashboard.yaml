@@ -262,6 +262,16 @@ workstreams:
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; independent review APPROVE-WITH-CHANGES satisfied; integration tests/unit run recorded separately
     integration_tests: 'tests/unit on 0a029bd: 735 passed, 6 skipped (test_examples and the pre-existing test_every_cited_scratch_path_resolves deselected)'
+  cluster_jobs:
+    gpu_declare_6394721: PENDING norm-gpu 3090 (cuda identity 21 raycast3d cells under se-step6 + 4 trackcom under se-step5; ellipsoid twin tests; 3-draw x 64 visual_calib at 224 px under se-vis311 = the
+      declaration; Gate A cuda both arms; localize stacks)
+    certify_cpu_6394722: PENDING afterany:6394721 (CPU identity 25 configs incl. mazes; Gate A CPU under se-vis311/se-step6; cross-backend; paired sweep; r5_kind_cost x3 with ELLIPSOID; unit suite)
+    copies: $SCR/se7/dmc-quadruped = fa4ac53 (MERGED_COMMIT 0a029bd); $SCR/se7/baseline = git archive 76dc511
+    script_fixes_for_commit_e:
+    - Gate A via gateA_local.py on the cluster (frozen Step-4 universe lacks the cell)
+    - identity replay split by venv (se-step5 lacks ogbench, se-step6 lacks mujoco_warp)
+    - r5_kind_cost ELLIPSOID row
+    - measure_cell.per_surface scipy-free fallback
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
