@@ -713,8 +713,7 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'CLOSED: merged at 24d1054 (final review APPROVE); OGBCube/OGBScene at visual (interior-exact 0.958/0.922; worst-of-three declared; floors by the 0.04-margin rule); shared MJWarp corrections merged;
-    tiers GPU_PARITY capped by BATCH_SCALES; CPU raises (CPU3D-OGB-1); OGBScene ships with the declared button-texture bake residual (Sami may override)'
+  status: 'closure fixes in progress: roundtrip + citation fixed; gate job 6420033 (tests/gpu OGB rows in se7-ogb with tracebacks + 8-draw fidelity) running; then re-review and follow-on merge'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
@@ -986,6 +985,13 @@ workstreams:
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
+  closure_fixes:
+    head: 2c32151e
+    closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
+    citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
+    sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
+      ValueError, not the zero-size crash -> the gate suite (job 6420033, se7-ogb, full tracebacks) is the arbiter'
+    closure4_ceiling: re-measuring over 8 draws; ceiling = worst-of-8 x1.3 by rule
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
