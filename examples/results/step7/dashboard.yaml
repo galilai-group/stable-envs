@@ -679,14 +679,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'C1-C3 landed (stale text removed; import-time _bundle removed, registry 78 without swm; worst-of-three declared; floors widened by the stated 0.04-margin rule: within8 0.85/0.80, ssim 0.85/0.85);
-    final check requested; merge on APPROVE'
+  status: 'CLOSED: merged at 24d1054 (final review APPROVE); OGBCube/OGBScene at visual (interior-exact 0.958/0.922; worst-of-three declared; floors by the 0.04-margin rule); shared MJWarp corrections merged;
+    tiers GPU_PARITY capped by BATCH_SCALES; CPU raises (CPU3D-OGB-1); OGBScene ships with the declared button-texture bake residual (Sami may override)'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: f62625e9 (C1-C3 + recommendations)
+  head_sha: f62625e9 (merged 24d1054)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -947,6 +947,11 @@ workstreams:
       - m3_fidelity.json superseded
       - check_order_invariance absent in this build
       - floors 0.007-0.016 below worst vs DMC 0.04-0.06
+  merge:
+    integration_sha: 24d1054
+    date: '2026-09-15'
+    gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
+      failure
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1303,6 +1308,8 @@ incident_log:
   item: W5 C1-C3 landed (f62625e9); final check requested
 - date: '2026-09-15'
   item: 'W6: batch-invariant fix conflicts with six frozen locomotion digests -> escalated as a contract decision; defect B closed; evidence at 7224222'
+- date: '2026-09-15'
+  item: W5 MERGED and CLOSED (24d1054); coverage 39/40 merged; only PFRocketLanding open (contract decision)
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
