@@ -31,8 +31,11 @@ uv pip install --python "$VENV/bin/python" \
 # and dies with "the NVIDIA driver on your system is too old" the moment it touches the card, which
 # is how job 6394648 failed in 14 seconds after successfully printing the GPU's name. cu126 is the
 # build every Step-6 venv already carries on this cluster, so this matches rather than invents.
+# --reinstall-package is load-bearing: "+cu130" and "+cu126" both satisfy "==2.14.0", so without it
+# uv audits the already-installed cu130 wheel as a match and changes nothing (job 6394833: "Audited
+# 1 package", then the assert below fired on cuda 13.0).
 uv pip install --python "$VENV/bin/python" --index-url https://download.pytorch.org/whl/cu126 \
-  "torch==2.14.0"
+  --reinstall-package torch "torch==2.14.0"
 "$VENV/bin/python" - <<'PY'
 import jax, craftax, torch, numpy
 print("jax", jax.__version__, "partitionable", bool(jax.config.jax_threefry_partitionable))
