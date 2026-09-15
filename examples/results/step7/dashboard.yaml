@@ -50,7 +50,7 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: phase 1 PATCH delivered (HEAD 9188c2c); independent review running; cluster items pending Oscar
+  status: phase 1 reviewed APPROVE-WITH-CHANGES (3 required); fix-up commit (d) requested; merge after; cluster items pending Oscar
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
@@ -93,6 +93,30 @@ workstreams:
     - 'scratch/step7/dmc-quadruped/certify_cpu.sbatch: CPU identity incl. mazes, Gate A CPU under se-vis311, cross-backend, paired sweep for the tier, r5_kind_cost for the ELLIPSOID bound'
     reviewer: independent reviewer (opus family) spawned 2026-09-15, read-only
     notes: Provisional VISUAL_FIDELITY entry is CPU-measured until the MJWarp declaration lands. Untracked official 3.11 corpora npz remain in the worktree phase0/corpus (not committed).
+    review:
+      verdict: APPROVE-WITH-CHANGES
+      report: examples/results/step7/dmc-quadruped/review_phase1.md
+      verified:
+      - 'ellipsoid vs independent numpy.roots reference: 0 mismatches / 6000 scenes; 0 inward normals; 0 bound violations'
+      - 14/14 CPU byte-identity reproduced with reviewer's own harness
+      - 'tests: same single pre-existing failure on both trees'
+      - dmcontrol hunks outside DMControlSuite/_DMCModel
+      - SWM default verified against /Users/samib/stable-worldmodel @176d545 (camera 2, 224 px, six mjcf edits)
+      - Gate A reproduced bit-for-bit at 9188c2c
+      - no swimmer SWM id exists; no per-env code in shared renderers
+      unverified_locally:
+      - Triton twin never executed (no Triton locally)
+      - 11 OGBench maze CPU identity (ogbench missing)
+      - 3.11 arm numbers
+      required_changes:
+      - tempfile.mkdtemp leak in _swm_quadruped_env per sample_states/reference_env call
+      - pupil/torso site residual undeclared in shipped visual_note
+      - stale swimmer comment in _cpu_scene handler
+      recommended:
+      - _bundle duplication guard
+      - regenerate Gate A artifact at HEAD (recorded 68b411c dirty)
+      - commit-or-delete untracked corpus npz
+      - Oscar items must not lapse
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
