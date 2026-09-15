@@ -7,13 +7,13 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: 'phase 1 (authorized: prng.py -> strip + sleeping sprite -> night with reductions; cluster items pending Oscar)'
+  status: phase 1 PATCH delivered (HEAD 53fcb15); independent review running; Oscar venv job 6394425 + certify_cpu queued by the author
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 'd33288c (phase 1 in progress: prng.py landed)'
+  head_sha: 53fcb15 (phase 1)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -23,6 +23,60 @@ workstreams:
   decisions: frozen Step-4 record unchanged; replay = world rows byte-identical at light 1.0 + new full-observation corpus under step7; DOWNSAMPLE bound not edited, FAIL recorded under night pending Sami
     (re-declare with provenance vs not_applicable); no silent CPU regression (daylight path stays fast; night reductions mandatory; tier reported honestly); prng.py owned by W1, reviewed by W2; channel_gain
     over the whole frame
+  phase1:
+    classification: PATCH
+    head: 53fcb15
+    commits:
+      prng: d33288c
+      strip_and_sleeping_sprite: 538ca69
+      night: fb316e9
+      sbatch_fix: 53fcb15
+    hygiene: '0 trailers; step4/5/6 untouched; files: stable_envs/envs/craftax.py, stable_envs/render/prng.py, examples/fidelity_step4.py (jax in reference_packages), tests/unit/test_declarations.py (parity_note
+      as corroborating prose)'
+    parity_local: '64 states, 7 px and 16 px: exact_frac 1.0, max abs 0 vs un-jitted craftax 1.6.1 / jax 0.11.1; digests equal; jitted reference differs from its un-jitted self by 1.5e-5 (visible only on
+      sleeping rows: 99.79%/99.72% exact, max 1) -> reference_env returns the un-jitted function; declaration is a uint8 claim'
+    state_dim: 127 -> 144 (strip + sleeping sprite) -> 149 (night)
+    render_shape: (112,144,3) -> (144,144,3)
+    reductions:
+      landed:
+      - int32 threefry (bit-identical, 2.3x)
+      - skip noise field where intensity == 0 exactly
+      - in-place arithmetic (dusk 16 px 1,720 -> 2,770 f/s)
+      refused: algebraic collapse a1*world + a2*lum + c (different float32 rounding; would cost bit equality)
+    fps_one_core_b256_not_certification:
+      daylight:
+        7px: 260262
+        16px: 132006
+      dusk:
+        7px: 14051
+        16px: 2770
+      night:
+        7px: 6487
+        16px: 1306
+      mixed:
+        7px: 9955
+        16px: 1986
+    night_attribution_16px: 194.8 ms per B=256; threefry 77.5 ms (40%)
+    downsample_measured_16_to_32:
+      light_1.0: 1.0
+      light_0.75: 1.0
+      light_0.5: 1.0
+      light_0.45: 0.591
+      light_0.10: 0.28
+      mixed: 0.76
+      mechanism: noise field drawn at the frame's own resolution; 2S is a different field, not a supersample
+    dead_dims_fix: 'sample_states stratifies by row index (band i%4, row 0 awake, row 3 asleep): no dead dim at batch 1,2,3,4,8,16 over 12 seeds (before: key slots reported dead ~2/3 of batch=1 draws)'
+    tests: tests/unit 832 passed 37 skipped; pre-existing test_every_cited_scratch_path_resolves failure (none of its citations from this workstream)
+    step4_replay: world-rows-only per ruling, asserted three ways incl. uint8-gather vs float-chain bit-identity at daylight
+    new_corpus: examples/results/step7/craftax-classic-full/corpus/ (64 states, three bands, 30 sleeping, all 16 cells 0..9; both renderers byte-identical)
+    gate_f_local: obs 127 -> 149, render (144,144,3), info keys unchanged; full evidence needs stable_worldmodel on Oscar
+    semantic_followup: paired Gate H (coverage change, not pixel drift) - to schedule in Step 8 or at merge, coordinator decision
+    cluster: Oscar SSH returned mid-session; $SCR/se7/craftax-classic-full synced; job 6394425 builds $SCR/venvs/se7-craftax (first jax venv on Oscar); watcher submits 02_certify_cpu.sbatch on completion;
+      03_sweep_cpu and 04_gpu ready (04 carries world-row digest vs frozen Step-4 record on a 3090)
+    recommendations_for_sami:
+    - 'Q3 tier: certify per band and declare both (daylight vs lit differ ~100x; cause is in the reference)'
+    - 'Q2 night bound: option 2 split by band - assert >=0.995 on light>=0.5, not_applicable below with the mechanism'
+    reviewer: independent reviewer (fable family) spawned 2026-09-15, read-only
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -229,6 +283,8 @@ incident_log:
   item: W4 merged (0a029bd); W5 slot freed
 - date: '2026-09-15'
   item: integration tests/unit green at 0a029bd; W5 ogb-manipulation phase 0 spawned (opus)
+- date: '2026-09-15'
+  item: W1 phase 1 (53fcb15) delivered, byte-identical parity; reviewer spawned; Oscar SSH restored (reported by W1, being confirmed)
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -237,3 +293,8 @@ escalations:
   item: 'CraftaxClassic night: the frozen DOWNSAMPLE_EXACT_FRAC (1.0, margin 0.005) cannot hold on night states because the noise field is drawn at frame resolution (0.282 at light 0.45, 0.035 at light
     0.1, 1.000 at >= 0.5), while check_state_dims_matter requires night states in the pool. Options for Sami: re-declare the bound for this config with provenance (Step-8 freeze), or mark it not_applicable
     under night with the mechanism recorded. Also: night parity is declared against jax >= 0.4.36 with jax_threefry_partitionable=True.'
+- date: '2026-09-15'
+  from: W1
+  topic: CraftaxClassic performance tier declaration
+  question: certify per band (daylight vs lit) and declare both, or a single mixed-corpus number that hides a ~100x split whose cause is the reference's per-pixel float post-process
+  recommendation: per band, both declared
