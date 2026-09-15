@@ -1,0 +1,37 @@
+{
+ "host": "node1936.oscar.ccv.brown.edu",
+ "spread_max": 1.25,
+ "loadavg_at_verdict": [
+  3.4130859375,
+  4.10205078125,
+  4.43359375
+ ],
+ "cells": {
+  "baseA": {
+   "batch": 16,
+   "fps": 1483.7243512802013
+  },
+  "branch": {
+   "batch": 64,
+   "fps": 609.1089222239896
+  },
+  "baseB": {
+   "batch": 64,
+   "fps": 1258.9968806612467
+  }
+ },
+ "baseline_spread": 1.1785,
+ "baseline_mean_fps": 1371,
+ "baseline_known_fps": 115166.0,
+ "baseline_frac_of_known": 0.0119,
+ "cpus_allocated": 18,
+ "load_per_cpu": 0.19,
+ "ratio_branch_over_baseline": 0.4442,
+ "verdict": "QUARANTINED",
+ "why": "the baseline leg re-measures a tree Step 6 certified at 115,166 f/s on this cluster and got 1,371 (0.012x): the node is not measuring the renderer, and a ratio taken under that contention is biased towards 1",
+ "gates": {
+  "spread": true,
+  "baseline_floor": false,
+  "load": true
+ }
+}
