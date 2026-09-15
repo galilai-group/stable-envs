@@ -331,7 +331,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: phase 1 authorized 2026-09-15 (M1 corpus -> M2 nvdiff extensions -> M3 cell; M4 as cluster scripts); feasibility gate GO at c6772f7
+  status: M1-M3 committed locally (477c36c); Oscar venv 6395008 + GPU job 6395009 (fidelity, tier, nvdiff-user identity) in flight; reviewer after GPU numbers
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -359,7 +359,22 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: c6772f7 (feasibility gate; phase 1 in progress)
+  head_sha: 477c36c (M1 4bb93a4, M2 83db3cc, M3 309c371, scripts 477c36c)
+  phase1:
+    files:
+    - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
+    - stable_envs/envs/rocket_landing.py (new cell)
+    - tests/unit/test_nvdiff_triangles.py (14)
+    - tests/unit/test_rocket_landing.py (14)
+    - examples/results/step7/rocket-landing/{findings.md, reference/, phase0/}
+    - scratch/step7/rocket-landing/*
+    tests_local: nvdiff files 29/29; rocket 13 passed 1 skipped (pybullet_data); tests/unit 805 passed 36 skipped, 2 pre-existing baseline failures (render_mjwarp --help, dead scratch citations)
+    cpu_feasibility_ruling1: 'naive single-thread torch rasteriser, 486 tris at 480 px: 1.92 f/s (521 ms) = 0.056x official 34.25 f/s (bar >= 171) and 0.0016 cores (bar >= 1,191): both bars missed by 2-3
+      orders; CPU coverage declared missing, device=''cpu'' raises honestly'
+    local_preview_vs_frozen_corpus: 'third-rasteriser pipeline preview: 95.15% bit-exact, mean 5.9/255, within-8 95.6%, SSIM 0.86; residual is silhouette/aliasing (sub-pixel far-ground checker)'
+    cluster: 'venv 6395008 (nvdiffrast built with cuda/12.9.0, no-build-isolation, arch 8.0;8.6;8.9); GPU 6395009 afterok: nvdiff unit tests, byte-identity of the six locomotion nvdiff cells baseline-vs-branch
+      on one card, measure_tier.py (4x64 visual fidelity vs PyFlyt, under-variation, corpus replay, mandatory checks, throughput 1/16/64/256), conformance for PFRocketLanding; visual_fidelity declaration
+      UNMEASURED until then'
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -409,6 +424,8 @@ incident_log:
   item: W3 follow-up 8b39e94; O1 benign (accepted); 3.11 declaration interior 1.0 over 41 draws; re-run queued for clean provenance
 - date: '2026-09-15'
   item: 'NODE-2: gpu2104 EGL context errors in the official MuJoCo renderer (torch/cuda fine); added to the exclude list for EGL work (gpu2108,gpu2113,gpu2110,gpu2116,gpu2104); W3/W5/W6 informed'
+- date: '2026-09-15'
+  item: W6 M1-M3 landed locally (477c36c); CPU feasibility number reported and stopped; Oscar GPU job pending
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
