@@ -3,66 +3,62 @@
   "OGBCube": {
    "draws": [
     {
-     "all_exact_frac": 0.27935853296396684,
+     "all_exact_frac": 0.2780795973174426,
      "draw": 0,
-     "interior_exact_frac": 0.35113208612368646,
-     "interior_frac": 0.411846583482475,
-     "max_abs": 209,
-     "mean_abs": 4.788048361434417,
-     "ssim": 0.9437388026018761,
-     "within8_frac": 0.8083577058753189
+     "interior_exact_frac": 0.35053704041403655,
+     "interior_frac": 0.4117972536145911,
+     "max_abs": 201,
+     "mean_abs": 4.797168965242347,
+     "ssim": 0.943114481338999,
+     "within8_frac": 0.8072684151785714
     },
     {
-     "all_exact_frac": 0.2780677639708227,
+     "all_exact_frac": 0.2772132717833227,
      "draw": 1,
-     "interior_exact_frac": 0.35169029900458687,
-     "interior_frac": 0.41271346950471555,
+     "interior_exact_frac": 0.3499348073687521,
+     "interior_frac": 0.4115945926923928,
      "max_abs": 205,
-     "mean_abs": 4.7518043777569625,
-     "ssim": 0.9443289172915399,
-     "within8_frac": 0.8095500712492028
+     "mean_abs": 4.773761152410183,
+     "ssim": 0.9428222555263536,
+     "within8_frac": 0.8086572763871174
     },
     {
-     "all_exact_frac": 0.27792950065768496,
+     "all_exact_frac": 0.27823965890066965,
      "draw": 2,
-     "interior_exact_frac": 0.35084574059395257,
-     "interior_frac": 0.41343739317098677,
-     "max_abs": 217,
-     "mean_abs": 4.727023689114318,
-     "ssim": 0.9448050962574139,
-     "within8_frac": 0.810693546217315
+     "interior_exact_frac": 0.3520265852794173,
+     "interior_frac": 0.4113847051016509,
+     "max_abs": 224,
+     "mean_abs": 4.751386162375106,
+     "ssim": 0.9451933651586478,
+     "within8_frac": 0.8095584791533801
     }
    ],
    "gate_a": {
     "batch_invariance_identical": true,
     "batch_invariance_max_abs": 0,
     "determinism_identical": true,
-    "dim_names_that_move_no_pixel": [
-     "mocap_quat[0]"
-    ],
-    "dims_that_move_no_pixel": [
-     24
-    ],
+    "dim_names_that_move_no_pixel": [],
+    "dims_that_move_no_pixel": [],
     "order_invariance_identical": true,
     "order_invariance_max_abs": 0,
     "per_dim_max_abs": [
-     253,
-     254,
-     253,
-     248,
      252,
-     246,
-     233,
-     158,
-     192,
+     254,
+     242,
+     237,
+     252,
+     232,
+     207,
+     185,
+     220,
+     196,
+     207,
+     175,
+     190,
      168,
-     215,
-     215,
-     221,
-     219,
-     234,
-     235,
-     231,
+     226,
+     236,
+     236,
      226,
      226,
      226,
@@ -70,11 +66,12 @@
      235,
      235,
      236,
-     0,
      235,
      235,
+     226,
      235
     ],
+    "perturbation": "+0.05 for a scalar; a 0.3 rad ROTATION for a quaternion component (adding to w and renormalising is a no-op); a BIT FLIP for a discrete state bit (0 + 0.05 rounds back to 0)",
     "state_sufficiency_identical": true,
     "state_sufficiency_max_abs": 0
    },
@@ -90,96 +87,89 @@
     "qpos[5]"
    ],
    "worst_of_draws": {
-    "mean_abs": 4.788048361434417,
-    "ssim": 0.9437388026018761,
-    "within8_frac": 0.8083577058753189
+    "mean_abs": 4.797168965242347,
+    "ssim": 0.9428222555263536,
+    "within8_frac": 0.8072684151785714
    }
   },
   "OGBScene": {
    "draws": [
     {
-     "all_exact_frac": 0.270605859375,
+     "all_exact_frac": 0.26930078125,
      "draw": 0,
-     "interior_exact_frac": 0.37094531941148823,
-     "interior_frac": 0.27785638304588267,
+     "interior_exact_frac": 0.36741846758349705,
+     "interior_frac": 0.2761432002979723,
      "max_abs": 255,
-     "mean_abs": 10.325160807291667,
-     "ssim": 0.8972353204569494,
-     "within8_frac": 0.702894140625
+     "mean_abs": 9.94184375,
+     "ssim": 0.902555401689385,
+     "within8_frac": 0.704854296875
     },
     {
-     "all_exact_frac": 0.272562109375,
+     "all_exact_frac": 0.26830078125,
      "draw": 1,
-     "interior_exact_frac": 0.3741057574606689,
-     "interior_frac": 0.27945987790712357,
+     "interior_exact_frac": 0.3650995075240178,
+     "interior_frac": 0.2767267556374839,
      "max_abs": 255,
-     "mean_abs": 10.1460125,
-     "ssim": 0.9002069219444085,
-     "within8_frac": 0.7047421875
+     "mean_abs": 10.004062369791667,
+     "ssim": 0.9022947220772075,
+     "within8_frac": 0.704476171875
     },
     {
-     "all_exact_frac": 0.27049765625,
+     "all_exact_frac": 0.27094375,
      "draw": 2,
-     "interior_exact_frac": 0.37004527486898026,
-     "interior_frac": 0.2787859681573698,
+     "interior_exact_frac": 0.36782563511697,
+     "interior_frac": 0.27943423145880153,
      "max_abs": 255,
-     "mean_abs": 10.111292447916666,
-     "ssim": 0.9006938464332045,
-     "within8_frac": 0.703285546875
+     "mean_abs": 9.961335677083333,
+     "ssim": 0.9023324640097989,
+     "within8_frac": 0.704984375
     }
    ],
    "gate_a": {
     "batch_invariance_identical": true,
     "batch_invariance_max_abs": 0,
     "determinism_identical": true,
-    "dim_names_that_move_no_pixel": [
-     "mocap_quat[0]",
-     "button_state_0",
-     "button_state_1"
-    ],
-    "dims_that_move_no_pixel": [
-     28,
-     32,
-     33
-    ],
+    "dim_names_that_move_no_pixel": [],
+    "dims_that_move_no_pixel": [],
     "order_invariance_identical": true,
     "order_invariance_max_abs": 0,
     "per_dim_max_abs": [
-     254,
+     255,
      254,
      253,
-     252,
-     251,
-     241,
-     234,
-     222,
+     253,
+     253,
      243,
-     241,
-     223,
-     170,
+     236,
+     166,
+     235,
+     235,
+     237,
      226,
-     172,
-     233,
-     233,
-     234,
-     232,
-     233,
-     232,
-     233,
+     230,
+     170,
+     220,
+     228,
+     225,
+     219,
+     220,
+     219,
+     220,
      246,
      246,
      235,
      255,
-     232,
-     232,
-     234,
-     0,
-     232,
-     198,
-     232,
-     0,
-     0
+     214,
+     215,
+     215,
+     214,
+     214,
+     214,
+     214,
+     181,
+     180
     ],
+    "perturbation": "+0.05 for a scalar; a 0.3 rad ROTATION for a quaternion component (adding to w and renormalising is a no-op); a BIT FLIP for a discrete state bit (0 + 0.05 rounds back to 0)",
     "state_sufficiency_identical": true,
     "state_sufficiency_max_abs": 0
    },
@@ -195,15 +185,15 @@
     "qpos[5]"
    ],
    "worst_of_draws": {
-    "mean_abs": 10.325160807291667,
-    "ssim": 0.8972353204569494,
-    "within8_frac": 0.702894140625
+    "mean_abs": 10.004062369791667,
+    "ssim": 0.9022947220772075,
+    "within8_frac": 0.704476171875
    }
   }
  },
  "draws": 3,
  "gpu": "NVIDIA GeForce RTX 3090",
- "host": "gpu2107.oscar.ccv.brown.edu",
+ "host": "gpu2101.oscar.ccv.brown.edu",
  "mujoco_gl": "egl",
  "n": 64,
  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34"

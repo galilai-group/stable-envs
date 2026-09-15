@@ -627,7 +627,12 @@ def _renderer(cell: str, res: int):
 import os as _os
 
 _MEASURED: dict = {
-    # cell: (mean_abs, within8_frac, ssim)  -- worst of three 64-state draws
+    # cell: (mean_abs, within8_frac, ssim) -- the WORST of three independent 64-state draws,
+    # job 6398733 on gpu2101 (RTX 3090), mujoco 3.12.0 / mujoco_warp 3.12.0 / warp 1.17.0, against
+    # swm's own EGL frames at the registered resolution. Per-draw spread was 4.751-4.797 (Cube) and
+    # 9.942-10.004 (Scene) on mean_abs, so the declared value is not a lucky draw.
+    "Cube": (4.797169, 0.807268, 0.942822),
+    "Scene": (10.004062, 0.704476, 0.902295),
 }
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
