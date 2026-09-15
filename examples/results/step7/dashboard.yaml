@@ -989,8 +989,9 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'final review APPROVE-WITH-CHANGES: nine conditions PASS (condition 5 judged not a regression); RD-1 comparator labels/tolerance to fix (post-process); one conformance run at the final tip; then
-    merge'
+  status: 'CLOSED: merged at fd2b8ef. Visual tier 7.71/0.961/0.854 (ceilings 10.0/0.91/0.80); batch-size invariance 255 -> 0 via the batch-invariant mvp (six locomotion cells ULP_LEVEL/SUB_NOISE_SHIFT,
+    refreeze_ok true, no frozen Step-4 artifact touched); Gate A mandatory PASS; GPU_PARITY [BATCH_SCALES_FAIL] R 241.5 cores 2.61; CPU missing by design (raises; 1.92 f/s feasibility); conformance at the
+    tip 229 passed / 2 known failures (colour knobs law; downsample table entry)'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1018,7 +1019,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 7b2e45c (batch-invariant mvp re-applied under Sami's ruling; re-freeze evidence; declaration filled)
+  head_sha: 4eb1c35 (merged fd2b8ef)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -1186,6 +1187,20 @@ workstreams:
     - ssim_min x0.94 vs family realised x0.967-0.979
     - last_reference_unreachable mutable class state invisible to the shared check
     - baseline leg sha unknown
+  merge:
+    integration_sha: fd2b8ef
+    date: '2026-09-15'
+    gate: reviewer APPROVE-WITH-CHANGES with RD-1 satisfied (refreeze_ok true; labels ULP_LEVEL x3, SUB_NOISE_SHIFT x3); nine Sami conditions PASS; step4/5/6 untouched; integration tests/unit 925 passed
+      + the pre-existing citation failure; rocket+nvdiff tests 36 passed
+  rd1_fix:
+    commit: 4eb1c35
+    rule: EXPLAINED (|delta| <= pixel budget from counted pixels) and IMMATERIAL (|delta| <= 1% of declaration headroom); labels IDENTICAL/ULP_LEVEL/SUB_NOISE_SHIFT/MEANINGFUL_CHANGE with GT1_FRAC_MAX 1e-5
+      stated
+    final_tip_conformance: 'job 6411148 gpu2101: 229 passed / 63 skipped / 2 failed (colour knobs; downsample bound) - test_visual_tier_matches_its_declared_fidelity PASSED for all seven cells (observed)'
+    minors:
+    - baseline .git_sha written after a 59-file manifest match to git show 76dc5116
+    - reference_render(return_flags=True) returns per-row flags; class attribute kept only for check_visual_fidelity_under_variation (Step-8 carry-over to delete)
+    - 'ssim_min 0.80 justified: 0.9368x measurement, margin/spread 3.86 (tightest in the repo)'
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1425,6 +1440,8 @@ incident_log:
   item: 'W6 re-freeze evidence delivered (7b2e45c): batch-size invariance passes; no frozen digest existed for the six cells; final review requested'
 - date: '2026-09-15'
   item: 'W6 final review: nine conditions PASS; RD-1 comparator fix + one conformance run before merge'
+- date: '2026-09-15'
+  item: 'W6 MERGED and CLOSED (fd2b8ef): 40/40 pixel-producing ids covered; closure sweep next'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1532,3 +1549,6 @@ blocked_on_oscar_ssh:
   - 'W5: sync fixed tree (md5 check), submit the re-measurement chain, pull, register, corpora, Gate A/F, tiers, slurm logs'
   agents: each holds with a single 30-minute SSH probe; no polling loops
   resolved: '2026-09-15: VPN restored by Sami; W4 (f) merged; W6/W5 resumed'
+coverage:
+  pixel_producing: 40/40 merged on step7/integration (33 pre-Step-7 + CraftaxClassic partial->full + CraftaxPixels, Manipulator, Quadruped, OGBCube, OGBScene, PFRocketLanding)
+  symbolic: 2/2 intentionally renderer-free (to be confirmed by the closure sweep)
