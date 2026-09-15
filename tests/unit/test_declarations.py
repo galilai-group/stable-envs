@@ -657,7 +657,8 @@ def _dmc_declaration_table() -> dict:
     import ast
     src = (ROOT / "stable_envs" / "envs" / "dmcontrol.py").read_text()
     want = {"_AT", "_SWIMMER_AT", "_AT_VERSIONS", "_SWIMMER_AT_VERSIONS", "_AT_MEASURED_WITH",
-            "_SWIMMER_AT_MEASURED_WITH", "VISUAL_FIDELITY"}
+            "_SWIMMER_AT_MEASURED_WITH", "_QUADRUPED_AT", "_QUADRUPED_AT_MEASURED_WITH",
+            "VISUAL_FIDELITY"}
     keep = [n for n in ast.parse(src).body
             if isinstance(n, (ast.Assign, ast.AnnAssign))
             and any(isinstance(t, ast.Name) and t.id in want

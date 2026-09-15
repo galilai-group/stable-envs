@@ -277,6 +277,10 @@ TRACKCOM_DOMAINS: dict[str, tuple[str, str, int]] = {
     "DMCHopperHop": ("hopper", "hop", 0),
     "DMCHumanoidStand": ("humanoid", "stand", 0),
     "DMCSwimmerSwimmer6": ("swimmer", "swimmer6", 0),
+    # Step 7: ``swm/QuadrupedDMControl-v0`` -- quadruped-walk at CAMERA 2 (``y``, on the torso,
+    # trackcom), the camera SWM registers; the model is SWM's (``_SWMQuadrupedModel``), not
+    # ``suite.load``'s. The one ELLIPSOID (the torso) is drawn by ``raycast3d._ellipsoid`` on CPU.
+    "DMCQuadrupedWalk": ("quadruped", "walk", 2),
 }
 
 _SCENE_CACHE: dict = {}
@@ -2239,6 +2243,12 @@ class DMControlTrackCom(_DMCModel):
         if self.device.type == "cuda":
             self._context(self.size)                 # build and capture up front, not mid-render
         elif self.device.type == "cpu":
+            reason = CPU_UNCERTIFIED.get(type(self).__name__)
+            if reason:
+                raise ValueError(
+                    f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) is not certified on the CPU "
+                    f"backend and is refused on device='cpu' by CPU_UNCERTIFIED ({reason}); "
+                    f"device='cuda' draws it through MJWarp")
             self._cpu_scene(self.size)
         else:
             raise ValueError(
@@ -2247,6 +2257,26 @@ class DMControlTrackCom(_DMCModel):
 
     def _context(self, size: int) -> _TCtx:
         return _tc_context(type(self), int(size), MJW_CHUNK)
+
+    @classmethod
+    def _used_materials(cls) -> list[str]:
+        """``_DMCModel._used_materials`` restricted to GEOM wearers: neither MJWarp nor cpu3d draws
+        a site, so a material worn only by sites cannot move a pixel on this tier and must not be a
+        declared knob (``check_variations_do_something`` moves every leaf and fails when the frame
+        does not follow). Reachable on exactly one cell: quadruped's ``eye`` material is worn by the
+        two pupil sites alone. The other cells' sites are hidden (group 3/4 or alpha 0) and their
+        lists are unchanged (asserted in tests/unit/test_cpu3d.py)."""
+        import mujoco
+        m, pr = cls._model(), cls._pristine()
+        alpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
+        used: list[int] = []
+        for i in range(m.ngeom):
+            if int(pr["geom_group"][i]) not in VISIBLE_GROUPS or alpha[i] <= 0:
+                continue
+            mid = int(m.geom_matid[i])
+            if mid >= 0 and mid not in used:
+                used.append(mid)
+        return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
     # ---- the CPU backend ---------------------------------------------------
 
@@ -2277,8 +2307,10 @@ class DMControlTrackCom(_DMCModel):
         except ValueError as e:
             # A cell the CPU backend cannot draw refuses HERE, at construction, naming itself. It
             # used to render on the GPU behind the caller's back; the policy is an honest raise.
-            # swimmer is the case: its bodies are mjGEOM_ELLIPSOID, which no analytic CPU
-            # intersector in raycast3d covers, and the GPU path remains device='cuda' only.
+            # Since Step 7 no shipped trackcom cell reaches this branch by geom type (raycast3d
+            # covers the ellipsoid too); swimmer is refused earlier, by name, through
+            # CPU_UNCERTIFIED (no CPU certification). This stays for the next unsupported kind,
+            # light type or camera mode Scene.__init__ refuses.
             raise ValueError(
                 f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) has no CPU 3-D backend: {e}. "
                 f"device='cuda' draws it through MJWarp; device='cpu' is refused rather than "
@@ -2474,6 +2506,141 @@ TRACKCOM_RENDER_FLAGS: dict[str, dict] = {
     "DMCSwimmerSwimmer6": {"enable_specular": False},
 }
 
+#: Cells refused on ``device="cpu"`` BY NAME, with the reason. Until Step 7 swimmer was refused by
+#: geom type -- its bodies are ``mjGEOM_ELLIPSOID`` and ``cpu3d`` had no intersector -- and the
+#: intersector now exists (``raycast3d._ellipsoid``, added for the quadruped torso), so without this
+#: list swimmer would be DRAWN on CPU with no certification behind the frames. It is not an SWM id;
+#: Step 8 decides whether to certify it and delete the entry. The GPU path is unaffected.
+CPU_UNCERTIFIED: dict[str, str] = {
+    "DMCSwimmerSwimmer6": "no CPU certification (Step 7 allow-list; not an SWM id; Step 8 decides)",
+}
+
+
+def _swm_quadruped_env(seed: int):
+    """The env ``swm/QuadrupedDMControl-v0`` registers, built the way ``stable_worldmodel`` builds it.
+
+    SWM's ``QuadrupedDMControlWrapper`` does not call ``suite.load``: it takes
+    ``quadruped.make_model(floor_size=20 * 0.5)`` (the suite's ``walk`` model), round-trips it
+    through ``dm_control.mjcf`` applying its variation space's DEFAULT values at every reset, and
+    drives ``quadruped.Move(desired_speed=0.5)`` (the suite's ``walk`` task) under
+    ``action_scale.Wrapper``. Measured against ``suite.load("quadruped", "walk")``
+    (``examples/results/step7/dmc-quadruped/phase0/swm_model_roundtrip.json``): geometry, cameras,
+    lights, texture bytes and ``qpos0`` identical, the material/texture tables permuted, and TWO
+    defaults that differ from the suite -- material ``self`` is rgba (0.6, 0.3, 0.3, 1) where the suite
+    has (0.7, 0.5, 0.3, 1) (mean 1.34/255 between the two on the same qpos), and ``foot_back_left``
+    has density 1000 where the suite's ``body`` class gives 500 (a mass, so the visited distribution).
+    The certified configuration is the registered default (Step 2 S4.2), so this is the model the cell
+    draws and the reference renders; the suite's own appearance is one ``material.self`` knob away.
+    The lines below are SWM's ``modify_mjcf_model`` at ``init_value``, transcribed.
+    """
+    import os
+    import tempfile
+
+    from dm_control import mjcf
+    from dm_control.rl import control
+    from dm_control.suite import quadruped
+    from dm_control.suite.wrappers import action_scale
+
+    speed = 0.5                                                    # _TASK_SPEEDS["walk"]
+    xml = quadruped.make_model(floor_size=20 * speed).replace(b'file="./common/', b'file="common/')
+    model = mjcf.from_xml_string(xml, model_dir=os.path.dirname(quadruped.__file__),
+                                 assets=quadruped.common.ASSETS or {})
+    grid = model.find("texture", "grid")
+    grid.rgb1 = np.array([0.1, 0.2, 0.3])
+    grid.rgb2 = np.array([0.2, 0.3, 0.4])
+    model.find("material", "self").rgba = np.array([0.6, 0.3, 0.3, 1.0], np.float32)
+    floor = model.find("geom", "floor")
+    fr = (np.array([1.0, 0.005, 0.0001], np.float32) if floor.friction is None
+          else np.asarray(floor.friction, np.float32).copy())
+    fr[0] = 1.0
+    floor.friction = fr
+    model.find("geom", "torso").density = 1000.0
+    model.find("geom", "foot_back_left").density = 1000.0
+    model.find("light", "light").diffuse = 0.7 * np.ones(3, np.float32)
+    # The export exists only to be compiled: ``Physics.from_xml_path`` reads the XML and its assets
+    # into the MjModel at once, so the directory is scoped to the call and removed on exit (SWM keeps
+    # its ``TemporaryDirectory`` on the wrapper for its lifetime; a ``mkdtemp`` here leaked one
+    # directory per ``sample_states``/``reference_env`` call -- review of 9188c2c).
+    with tempfile.TemporaryDirectory(prefix="se_swm_quadruped_") as td:
+        mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
+        physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))
+    task = quadruped.Move(desired_speed=speed, random=seed)
+    env = control.Environment(physics, task, time_limit=20, control_timestep=0.02)
+    return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
+
+
+class _SWMQuadrupedModel:
+    """Mixin: the three places ``_DMCModel`` loads its env, pointed at ``_swm_quadruped_env``.
+
+    ``_bundle``, ``sample_states`` and ``reference_env`` are the base class's, with ``suite.load``
+    replaced; they are overridden here rather than through a loader hook on ``_DMCModel`` so that
+    this workstream's edits stay inside the TrackCom region while another edits the suite region
+    (the hook is the obvious cleanup once both land). ``default_size`` is SWM's ``render()`` default.
+    """
+
+    default_size = 224
+
+    @classmethod
+    def _bundle(cls, size: int):
+        key = (cls.DOMAIN, cls.TASK, int(size))
+        hit = _ENV_CACHE.get(key)
+        if hit is not None:
+            return hit
+        import mujoco
+        env = _swm_quadruped_env(0)
+        p = env.physics
+        m = p.model.ptr if hasattr(p.model, "ptr") else p.model
+        m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(size))
+        m.vis.global_.offheight = max(int(m.vis.global_.offheight), int(size))
+        slots = _episode_slots(env, m)
+        d = mujoco.MjData(m)
+        pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
+                        geom_rgba=np.array(m.geom_rgba, copy=True),
+                        site_rgba=np.array(m.site_rgba, copy=True),
+                        geom_group=np.array(m.geom_group, copy=True),
+                        site_group=np.array(m.site_group, copy=True),
+                        light_diffuse=np.array(m.light_diffuse, copy=True),
+                        light_specular=np.array(m.light_specular, copy=True),
+                        mat_reflectance=np.array(m.mat_reflectance, copy=True),
+                        cam_fovy=np.array(m.cam_fovy, copy=True))
+        for arr in {a for a, _ in slots}:
+            pristine[arr] = np.array(getattr(m, arr), copy=True)
+        r = mujoco.Renderer(m, height=int(size), width=int(size))
+        _ENV_CACHE[key] = (env, m, d, pristine, r, slots)
+        return _ENV_CACHE[key]
+
+    def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
+        rng = rng or self.rng
+        seed = int(rng.integers(0, 2 ** 31 - 1))
+        env = _swm_quadruped_env(seed)
+        p = env.physics
+        m = p.model.ptr if hasattr(p.model, "ptr") else p.model
+        spec = env.action_spec()
+        r2 = np.random.default_rng(seed)
+        slots = self._slots()
+        out = np.empty((int(batch), self.state_dim), np.float64)
+        for i in range(int(batch)):
+            env.reset()
+            for _ in range(int(r2.integers(0, 40))):
+                env.step(r2.uniform(spec.minimum, spec.maximum))
+            out[i, :self.nq] = np.asarray(p.data.qpos, np.float64)
+            for j, (arr, k) in enumerate(slots):
+                out[i, self.nq + j] = np.asarray(getattr(m, arr)).reshape(-1)[k]
+        return out.astype(np.float32)
+
+    @classmethod
+    def reference_env(cls, size: int = 224):
+        env = _swm_quadruped_env(0)
+        env.reset()
+        env._se_size = int(size)
+        return env
+
+
+#: Extra bases per trackcom cell, for the one whose model is not ``suite.load``'s.
+TRACKCOM_BASES: dict[str, tuple[type, ...]] = {
+    "DMCQuadrupedWalk": (_SWMQuadrupedModel,),
+}
+
 _AT = ("84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a "
        "0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, "
        "mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0")
@@ -2496,6 +2663,19 @@ _AT_VERSIONS = {"mujoco": "3.11.0"}
 _AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 _SWIMMER_AT_VERSIONS = {"mujoco": "3.11.0"}
 _SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
+
+#: Quadruped (Step 7): PROVISIONAL, measured through the CPU backend (``stable_envs/render/cpu3d.py``,
+#: torch 2.14.0) on one draw, because Oscar was unreachable when the cell landed; the family's
+#: convention is three MJWarp draws on the GPU, which replaces this entry -- numbers and this string --
+#: when the cluster returns (the CPU backend sits within 0.02/255 of MJWarp on the sibling cells, so the
+#: numbers are expected to hold). The reference is the declared 3.11.0 pair; the registered default
+#: (camera 2, 224 px, SWM's appearance) is what is measured, Step 2 S4.2.
+_QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 1 draw from sample_states (SWM's "
+                 "model and default appearance: material self rgba .6 .3 .3, foot_back_left density "
+                 "1000), CPU backend cpu3d with torch 2.14.0 on an Apple M5, against "
+                 "physics.render under mujoco 3.11.0 + dm_control 1.0.44 with MUJOCO_GL=glfw "
+                 "(scratch/step7/dmc-quadruped/measure_cell.py); PROVISIONAL until the MJWarp draws")
+_QUADRUPED_AT_MEASURED_WITH = {"torch": "2.14.0"}
 
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
@@ -2560,6 +2740,17 @@ VISUAL_FIDELITY: dict[str, dict] = {
         "mean_abs_max": 4.8, "within8_min": 0.85, "ssim_min": 0.94, "measured_at": _SWIMMER_AT,
         "reference_versions": _SWIMMER_AT_VERSIONS,
         "measured_with": _SWIMMER_AT_MEASURED_WITH},
+    # quadruped at the registered SWM default (camera 2, 224 px). Three residuals, per surface off the
+    # segmentation buffer (examples/results/step7/dmc-quadruped/findings.md S5): the floor near the
+    # body -- the body's REFLECTION in the reflectance-0.2 floor and its shadow -- carries ~half of
+    # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
+    # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).
+    "DMCQuadrupedWalk": {
+        "mean_abs": 3.42, "within8_frac": 0.902, "ssim": 0.957,
+        "interior_exact_frac": 0.188, "interior_frac": 0.0295, "all_exact_frac": 0.153,
+        "skybox_share": 0.151, "floor_share": 0.802,
+        "mean_abs_max": 4.7, "within8_min": 0.84, "ssim_min": 0.90, "measured_at": _QUADRUPED_AT,
+        "reference_versions": _AT_VERSIONS, "measured_with": _QUADRUPED_AT_MEASURED_WITH},
 }
 
 VISUAL_NOTE = (
@@ -2575,6 +2766,22 @@ VISUAL_NOTE = (
     "eval pixel distributions differ by the amount above and nothing here measures what that costs a "
     "policy. Closing it needs plane-texture level-of-detail in mujoco_warp's render kernel, which "
     "needs ray differentials it does not compute.")
+
+#: The quadruped's third residual, named as the other trackcom cells name theirs. Not an
+#: approximation this cell introduced: no backend here draws reflections, and that is a statement of
+#: the renderer's semantics on every trackcom cell (the others' floors reflect too; the quadruped's
+#: camera is 4.5 m from a body over an 80 % floor, so it shows).
+QUADRUPED_NOTE = (
+    "(3) the floor material has reflectance 0.2, so dm_control draws the body's MIRROR IMAGE in the "
+    "floor beside its shadow; MJWarp and cpu3d draw no reflection (the shadow is a 0.3 any-hit factor "
+    "against a 2048 shadow map). Measured off the segmentation buffer at the registered default "
+    "(camera 2, 224 px): the floor within the body's box and its mirror is 35 % of the frame and "
+    "carries 57 % of the residual; the far checker 29 %, the skybox 6.5 %, the body 7 %, the "
+    "ellipsoid torso 1.2 %. (4) physics.render draws three SITES that neither backend draws -- the "
+    "two pupil spheres (material eye) and the red torso site -- up to ~50 of the 50,176 px of a 224 "
+    "px frame (0.01-0.1 %), max 186/255, 0.5 % of the residual; the eye material is therefore not "
+    "an appearance knob here. The cell draws SWM's default appearance (material self .6 .3 .3); the "
+    "suite's own (.7 .5 .3) is the material.self knob.")
 
 
 #: All-pixel floors that differ from the suite's shared 0.90, with the mechanism in ``PARITY_NOTE``.
@@ -2620,13 +2827,16 @@ def _make_classes():
     for cname, (dom, task, cam) in TRACKCOM_DOMAINS.items():
         vf = VISUAL_FIDELITY[cname]
         flags = TRACKCOM_RENDER_FLAGS.get(cname, {})
-        cls = register(type(cname, (DMControlTrackCom,), dict(
+        note = VISUAL_NOTE + (" " + SPECULAR_NOTE if flags else "")
+        if cname == "DMCQuadrupedWalk":
+            note = note + " " + QUADRUPED_NOTE
+        cls = register(type(cname, TRACKCOM_BASES.get(cname, ()) + (DMControlTrackCom,), dict(
             DOMAIN=dom, TASK=task, CAMERA=cam,
             name=f"dmc-{dom.replace('_', '-')}-{task.replace('_', '-')}",
             reference_id=f"dm_control/{dom}-{task}",
             visual_fidelity=vf,
             RENDER_FLAGS=flags,
-            visual_note=VISUAL_NOTE + (" " + SPECULAR_NOTE if flags else ""),
+            visual_note=note,
             __doc__=(
                 f"DM Control {dom}-{task} at camera {cam}, a mode=\"trackcom\" camera.\n\n"
                 f"VISUAL TIER -- these are NOT the official pixels. The frame is MJWarp's raytrace of "

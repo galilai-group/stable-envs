@@ -50,7 +50,7 @@ except ImportError:                                    # reported by the rendere
     HAVE_TRITON = False
 
 #: mjtGeom codes, so a scene can be built straight from an MjModel without a translation table
-PLANE, SPHERE, CAPSULE, CYLINDER, BOX = 0, 2, 3, 5, 6
+PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
 
 INF = 1e30
 
@@ -231,6 +231,8 @@ class Primitives:
                 out[i] = s[i, 0] + s[i, 1]
             elif k == BOX:
                 out[i] = float(np.linalg.norm(s[i]))
+            elif k == ELLIPSOID:
+                out[i] = float(s[i].max())            # the largest semi-axis contains it
             else:
                 out[i] = INF
         return out
@@ -297,6 +299,44 @@ def _sphere(o, d, pos, r):
     t = torch.where(hit, t, torch.full_like(t, INF))
     n = (oc + t.unsqueeze(-1).clamp(max=1e6) * d) / r.unsqueeze(-1)
     return t, n
+
+
+def _ellipsoid(o, d, pos, R, size):
+    """Ray / ellipsoid with semi-axes ``size`` (...,3), closed form, in the geom frame.
+
+    Scale the ray into the frame where the ellipsoid is the unit sphere -- ``ol' = ol / size``,
+    ``dl' = dl / size`` componentwise -- and it is the sphere quadratic with a leading coefficient:
+    ``|dl'|^2 t^2 + 2 (ol'.dl') t + |ol'|^2 - 1 = 0``, nearer positive root first, ``disc > 0`` and
+    ``t > 0`` as ``_sphere``. The normal is the gradient of ``sum (x_i / s_i)^2`` at the hit,
+    ``p_l / size^2``, normalised and rotated back. With three equal semi-axes it is the sphere.
+    A zero semi-axis is a miss rather than a division: MuJoCo compiles none, and the fuzz feeds
+    them. Same association order as ``_sphere`` and the same ``_mtv``/``_mv`` frame change as
+    ``_capsule``, for the reason ``_mv`` gives; the fused twin in ``_tri_isect`` is line for line.
+    """
+    ol = _mtv(R, o - pos)
+    dl = _mtv(R, d)
+    inv = 1.0 / torch.clamp(size, min=1e-12)
+    olx = ol[..., 0] * inv[..., 0]
+    oly = ol[..., 1] * inv[..., 1]
+    olz = ol[..., 2] * inv[..., 2]
+    dlx = dl[..., 0] * inv[..., 0]
+    dly = dl[..., 1] * inv[..., 1]
+    dlz = dl[..., 2] * inv[..., 2]
+    a = dlx * dlx + dly * dly + dlz * dlz
+    b = olx * dlx + oly * dly + olz * dlz
+    c = olx * olx + oly * oly + olz * olz - 1.0
+    disc = b * b - a * c
+    sq = torch.sqrt(torch.clamp(disc, min=0))
+    a_safe = torch.clamp(a, min=1e-12)
+    t = (-b - sq) / a_safe
+    t = torch.where(t > 0, t, (-b + sq) / a_safe)
+    hit = ((disc > 0) & (t > 0) & (a > 1e-12)
+           & (size[..., 0] > 0) & (size[..., 1] > 0) & (size[..., 2] > 0))
+    t = torch.where(hit, t, torch.full_like(t, INF))
+    pl = ol + t.unsqueeze(-1).clamp(max=1e6) * dl
+    nl = pl * inv * inv
+    nl = nl / torch.clamp(torch.sqrt(_dot(nl, nl)).unsqueeze(-1), min=1e-12)
+    return t, _mv(R, nl)
 
 
 def _capsule(o, d, pos, R, r, hh):
@@ -412,6 +452,8 @@ def intersect(kind: int, size, pos, R, o, d):
         return _cylinder(o, d, pos, R, size[..., 0:1].squeeze(-1), size[..., 1:2].squeeze(-1))
     if kind == BOX:
         return _box(o, d, pos, R, size)
+    if kind == ELLIPSOID:
+        return _ellipsoid(o, d, pos, R, size)
     if kind == PLANE:
         return _plane(o, d, pos, R, size)
     raise ValueError(f"raycast3d has no intersector for mjtGeom {kind}; scenes here are primitive-only")
@@ -641,6 +683,8 @@ def _bound_radius(kind: int, size):
         return size[..., 0] + size[..., 1]
     if kind == BOX:
         return torch.sqrt(size[..., 0] ** 2 + size[..., 1] ** 2 + size[..., 2] ** 2)
+    if kind == ELLIPSOID:
+        return torch.maximum(torch.maximum(size[..., 0], size[..., 1]), size[..., 2])
     return None                       # PLANE, and any future unbounded kind: always tested
 
 
@@ -947,6 +991,52 @@ if HAVE_TRITON:
             ny = r10 * nlx + r11 * nly + r12 * nlz
             nz = r20 * nlx + r21 * nly + r22 * nlz
 
+        elif kind == 4:                                                            # ELLIPSOID
+            # ``_ellipsoid`` line for line: the ray in the geom frame, scaled to the unit sphere
+            ax = ox - px
+            ay = oy - py
+            az = oz - pz
+            olx0 = r00 * ax + r10 * ay + r20 * az
+            oly0 = r01 * ax + r11 * ay + r21 * az
+            olz0 = r02 * ax + r12 * ay + r22 * az
+            dlx0 = r00 * dx + r10 * dy + r20 * dz
+            dly0 = r01 * dx + r11 * dy + r21 * dz
+            dlz0 = r02 * dx + r12 * dy + r22 * dz
+            ivx = tl.math.div_rn(1.0, tl.maximum(s0, 1e-12))
+            ivy = tl.math.div_rn(1.0, tl.maximum(s1, 1e-12))
+            ivz = tl.math.div_rn(1.0, tl.maximum(s2, 1e-12))
+            olx = olx0 * ivx
+            oly = oly0 * ivy
+            olz = olz0 * ivz
+            dlx = dlx0 * ivx
+            dly = dly0 * ivy
+            dlz = dlz0 * ivz
+            a = dlx * dlx + dly * dly + dlz * dlz
+            b = olx * dlx + oly * dly + olz * dlz
+            c = olx * olx + oly * oly + olz * olz - 1.0
+            disc = b * b - a * c
+            sq = tl.sqrt_rn(tl.maximum(disc, 0.0))
+            a_safe = tl.maximum(a, 1e-12)
+            tt = tl.math.div_rn(-b - sq, a_safe)
+            tt = tl.where(tt > 0, tt, tl.math.div_rn(-b + sq, a_safe))
+            hit = ((disc > 0) & (tt > 0) & (a > 1e-12)
+                   & (s0 > 0) & (s1 > 0) & (s2 > 0))
+            t = tl.where(hit, tt, INF)
+            tc = tl.minimum(t, 1e6)
+            plx = olx0 + tc * dlx0
+            ply = oly0 + tc * dly0
+            plz = olz0 + tc * dlz0
+            gx = plx * ivx * ivx
+            gy = ply * ivy * ivy
+            gz = plz * ivz * ivz
+            den = tl.maximum(tl.sqrt_rn(gx * gx + gy * gy + gz * gz), 1e-12)
+            nlx = tl.math.div_rn(gx, den)
+            nly = tl.math.div_rn(gy, den)
+            nlz = tl.math.div_rn(gz, den)
+            nx = r00 * nlx + r01 * nly + r02 * nlz
+            ny = r10 * nlx + r11 * nly + r12 * nlz
+            nz = r20 * nlx + r21 * nly + r22 * nlz
+
         elif kind == 6:                                                            # BOX
             ax = ox - px
             ay = oy - py
@@ -1106,7 +1196,8 @@ def _kind_tensor(kinds, device) -> torch.Tensor:
     if hit is None:
         # The kernel's last branch IS the plane, so an unrecognised code would be drawn as one
         # instead of raising the way ``intersect`` does. Same error, at the same place, either path.
-        bad = sorted({k for k in key[1] if k not in (PLANE, SPHERE, CAPSULE, CYLINDER, BOX)})
+        bad = sorted({k for k in key[1]
+                      if k not in (PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)})
         if bad:
             raise ValueError(f"raycast3d has no intersector for mjtGeom {bad}; scenes here are "
                              f"primitive-only")
