@@ -603,6 +603,8 @@ workstreams:
       required:
       - 'A bounds test Step-7 branch: use min(worst) <= 1.0 for unbounded, not max(best) < 1.0'
       - "B citation set 9 -> 21 from four committed Oscar stdout captures; scrub; fix \xA7P6 claim"
+  gpu_tier_interim: 'quiet-window GPU job 6398085: class-S ladder GPU_EXCEPTIONAL (R 129.9 >= 40, cores 13.6 >= 10, BATCH_SCALES pass); evaluator prints ''unknown'' only because the census entry is a Step-8
+    freeze item; CPU job 6398084 running on node2301; commit (f) after'
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
