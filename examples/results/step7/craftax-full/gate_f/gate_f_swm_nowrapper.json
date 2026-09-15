@@ -1,0 +1,52 @@
+{
+  "steps": 40,
+  "seed": 7,
+  "jax": "0.11.1",
+  "jax_threefry_partitionable": true,
+  "craftax": "1.6.1",
+  "stable_worldmodel": {
+    "error": "ModuleNotFoundError: No module named 'stable_worldmodel'"
+  },
+  "source": "craftax.craftax_env.make_craftax_env_from_name('Craftax-Pixels-v1') -- what the swm wrapper wraps; the wrapper layer itself is NOT exercised",
+  "obs_shape": [
+    130,
+    110,
+    3
+  ],
+  "obs_dtype": "float32",
+  "obs_min": 0.0,
+  "obs_max": 1.0,
+  "obs_shape_matches_registration": true,
+  "window": {
+    "state_dim": 544,
+    "bytes": 2176,
+    "frame_bytes": 42900,
+    "compression": 19.715073529411764,
+    "tiles_not_representable": {
+      "shared_mob_tiles": 0,
+      "shared_projectile_tiles": 0
+    }
+  },
+  "pixel_equality": {
+    "protocol": "round(swm_obs * 255) vs CraftaxFull.render(window_from_envstate(state))",
+    "exact_frac": 0.9996281767013474,
+    "max_abs": 1,
+    "mean_abs": 0.00012564671101256467,
+    "frames": 41,
+    "frames_identical": 39,
+    "per_band": {
+      "lit_no_prng": {
+        "n": 41,
+        "exact_frac": 0.9996281767013474,
+        "max_abs": 1,
+        "frames_identical": 39
+      }
+    },
+    "note": "the wrapper jits env.step, so what a live workflow sees is the JITTED reference. This cell is certified against the UN-JITTED one, which disagrees with its own jitted self by up to 1.53e-05 in float32 -- enough to move a uint8 pixel wherever the picture is compressed towards one value. Any residual here is that."
+  },
+  "against_the_unjitted_reference": {
+    "n": 8,
+    "exact_frac": 1.0,
+    "max_abs": 0
+  }
+}

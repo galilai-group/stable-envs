@@ -1,0 +1,294 @@
+{
+  "alpha_alphabets_by_tile_px": {
+    "10": {
+      "full_map_player_textures_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "melee_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "passive_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "ranged_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "projectile_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "item_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "sword_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "arrow_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "armour_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "number_textures_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      }
+    },
+    "16": {
+      "full_map_player_textures_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "melee_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "passive_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "ranged_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "projectile_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "item_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "sword_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "arrow_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "armour_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "number_textures_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      }
+    },
+    "64": {
+      "full_map_player_textures_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "melee_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "passive_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "ranged_mob_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "projectile_texture_alphas": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "item_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "sword_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "arrow_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "armour_enchantment_textures[a]": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      },
+      "number_textures_alpha": {
+        "n": 2,
+        "values": [
+          0.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "all_world_overlay_alphas_binary": {
+    "10": true,
+    "16": true,
+    "64": true
+  },
+  "boss_substitution": {
+    "pixels_moved": 274,
+    "rows_moved": [
+      0,
+      9
+    ],
+    "cols_moved": [
+      1,
+      19
+    ],
+    "confined_to_the_two_necromancer_tiles": true,
+    "reads": "melee_mobs.mask[level].sum(), ranged_mobs.mask[level].sum(), boss_timesteps_to_spawn_this_round -- ALL of them off-screen-inclusive"
+  },
+  "ladder_substitution": {
+    "pixels_moved": 168,
+    "confined_to_tile_0_0": true,
+    "reads": "monsters_killed[player_level] >= MONSTERS_KILLED_TO_CLEAR_LEVEL"
+  },
+  "candidate_tables": {
+    "block only": {
+      "entries": 37,
+      "uint8_bytes_at_10px": 11100,
+      "uint8_bytes_at_16px": 28416,
+      "float32_bytes_at_16px": 113664
+    },
+    "block x item": {
+      "entries": 185,
+      "uint8_bytes_at_10px": 55500,
+      "uint8_bytes_at_16px": 142080,
+      "float32_bytes_at_16px": 568320
+    },
+    "block x item x player": {
+      "entries": 1110,
+      "uint8_bytes_at_10px": 333000,
+      "uint8_bytes_at_16px": 852480,
+      "float32_bytes_at_16px": 3409920
+    },
+    "block x item x mob": {
+      "entries": 3700,
+      "uint8_bytes_at_10px": 1110000,
+      "uint8_bytes_at_16px": 2841600,
+      "float32_bytes_at_16px": 11366400
+    },
+    "block x item x player x mob": {
+      "entries": 22200,
+      "uint8_bytes_at_10px": 6660000,
+      "uint8_bytes_at_16px": 17049600,
+      "float32_bytes_at_16px": 68198400
+    },
+    "block x item x player x mob x projectile": {
+      "entries": 732600,
+      "uint8_bytes_at_10px": 219780000,
+      "uint8_bytes_at_16px": 562636800,
+      "float32_bytes_at_16px": 2250547200
+    },
+    "Classic's own table (player x block x mob)": {
+      "entries": 816,
+      "uint8_bytes_at_10px": 244800,
+      "uint8_bytes_at_16px": 626688,
+      "float32_bytes_at_16px": 2506752
+    }
+  },
+  "overlay_alphabet": {
+    "n_player_slots": 6,
+    "n_mob_slots": 20,
+    "n_projectile_slots": 33,
+    "n_block": 37,
+    "n_item": 5
+  }
+}

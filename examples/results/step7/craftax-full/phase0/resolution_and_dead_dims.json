@@ -1,0 +1,87 @@
+{
+  "S": 10,
+  "twoS": 20,
+  "official_resolution_consistency": {
+    "all": {
+      "n_states": 49,
+      "exact_frac": 0.4895304695304695,
+      "world_exact_frac": 0.28851027279598707,
+      "strip_exact_frac": 0.941825912183055,
+      "mean_abs": 4.483962703962704,
+      "max_abs": 191
+    },
+    "day": {
+      "n_states": 8,
+      "exact_frac": 0.6227331002331002,
+      "world_exact_frac": 0.4817087542087542,
+      "strip_exact_frac": 0.9400378787878788,
+      "mean_abs": 3.588347902097902,
+      "max_abs": 191
+    },
+    "dusk": {
+      "n_states": 27,
+      "exact_frac": 0.5180583613916947,
+      "world_exact_frac": 0.32947125576755204,
+      "strip_exact_frac": 0.9423793490460157,
+      "mean_abs": 4.769479409479409,
+      "max_abs": 191
+    },
+    "night": {
+      "n_states": 14,
+      "exact_frac": 0.3583966033966034,
+      "world_exact_frac": 0.09911495911495911,
+      "strip_exact_frac": 0.941780303030303,
+      "mean_abs": 4.44510323010323,
+      "max_abs": 191
+    },
+    "level0": {
+      "n_states": 41,
+      "exact_frac": 0.46353971232020014,
+      "world_exact_frac": 0.2508130081300813,
+      "strip_exact_frac": 0.9421747967479674,
+      "mean_abs": 4.658716811643641,
+      "max_abs": 191
+    },
+    "level_gt0": {
+      "n_states": 8,
+      "exact_frac": 0.6227331002331002,
+      "world_exact_frac": 0.4817087542087542,
+      "strip_exact_frac": 0.9400378787878788,
+      "mean_abs": 3.588347902097902,
+      "max_abs": 191
+    }
+  },
+  "strip_geometry_scales_by_two": {
+    "int(0.8*S)": 8,
+    "int(0.8*2S)": 16,
+    "int(0.4*S)": 4,
+    "int(0.4*2S)": 8,
+    "left_space_S": 1,
+    "left_space_2S": 2,
+    "scales_exactly": true,
+    "note": "unlike Classic at 16->32 (int(0.8*16)=12 but int(0.8*32)=25), full Craftax's 10->20 geometry does scale by two -- but the ICONS are loaded by resampling the source PNG at each size, which is not 2x replication of the S icon. Measured above."
+  },
+  "dead_dim_risk": {
+    "light_map_window_min_by_level": {
+      "0": {
+        "min": 1.0,
+        "max": 1.0,
+        "all_one": true
+      }
+    },
+    "state_rng_moves_pixels": {
+      "level0_day": 0,
+      "level0_night": 29697,
+      "level1_light0.1": 0,
+      "level4_light0.1": 0,
+      "level8_light0.1": 0
+    },
+    "light_level_moves_pixels": {
+      "level1": 0,
+      "level4": 0,
+      "level8": 0,
+      "level0": 29700
+    },
+    "conclusion": "The four PRNG-key slots reach a pixel only where BOTH player_level == 0 and light_level < 0.5; light_level reaches a pixel only on level 0; the per-tile light_map slots reach a pixel only where the level is not fully lit. A pool that is not stratified over (level, band) therefore reports dead dimensions that are properties of the reference."
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "n_rollout_states": 4014,
+  "seed": 20260915,
+  "n_steps": 4000,
+  "rollout_levels_visited": [
+    0
+  ],
+  "rollout_light_bands": {
+    "day_1.0": 19,
+    "dusk_0.5_1.0": 2667,
+    "night_lt_0.5": 1328
+  },
+  "rollout_sleeping": 770,
+  "rollout_field_ranges": {
+    "inventory.wood": [
+      0.0,
+      3.0
+    ],
+    "inventory.stone": [
+      0.0,
+      0.0
+    ],
+    "inventory.coal": [
+      0.0,
+      0.0
+    ],
+    "inventory.iron": [
+      0.0,
+      0.0
+    ],
+    "inventory.diamond": [
+      0.0,
+      0.0
+    ],
+    "inventory.sapling": [
+      0.0,
+      1.0
+    ],
+    "inventory.pickaxe": [
+      0.0,
+      0.0
+    ],
+    "inventory.sword": [
+      0.0,
+      1.0
+    ],
+    "inventory.bow": [
+      0.0,
+      0.0
+    ],
+    "inventory.arrows": [
+      0.0,
+      0.0
+    ],
+    "inventory.torches": [
+      0.0,
+      0.0
+    ],
+    "inventory.ruby": [
+      0.0,
+      0.0
+    ],
+    "inventory.sapphire": [
+      0.0,
+      0.0
+    ],
+    "inventory.books": [
+      0.0,
+      0.0
+    ],
+    "player_health": [
+      0.0,
+      9.0
+    ],
+    "player_food": [
+      0.0,
+      9.0
+    ],
+    "player_drink": [
+      0.0,
+      9.0
+    ],
+    "player_energy": [
+      4.0,
+      9.0
+    ],
+    "player_mana": [
+      9.0,
+      9.0
+    ],
+    "player_xp": [
+      0.0,
+      0.0
+    ],
+    "player_dexterity": [
+      1.0,
+      1.0
+    ],
+    "player_strength": [
+      1.0,
+      1.0
+    ],
+    "player_intelligence": [
+      1.0,
+      1.0
+    ],
+    "sword_enchantment": [
+      0.0,
+      0.0
+    ],
+    "bow_enchantment": [
+      0.0,
+      0.0
+    ],
+    "inventory.armour": [
+      0.0,
+      0.0
+    ],
+    "inventory.potions": [
+      0.0,
+      0.0
+    ],
+    "armour_enchantments": [
+      0.0,
+      0.0
+    ],
+    "learned_spells": [
+      0.0,
+      0.0
+    ]
+  },
+  "onscreen_entity_counts": {
+    "melee": {
+      "max": 1,
+      "mean": 0.05105853051058531
+    },
+    "passive": {
+      "max": 3,
+      "mean": 1.0485678704856787
+    },
+    "ranged": {
+      "max": 2,
+      "mean": 0.14072229140722292
+    },
+    "mob_proj": {
+      "max": 2,
+      "mean": 0.05603985056039851
+    },
+    "player_proj": {
+      "max": 0,
+      "mean": 0.0
+    }
+  },
+  "tile_overlaps_over_800_frames": {
+    "mob_on_mob": 0,
+    "proj_on_proj": 0,
+    "proj_on_mob": 0,
+    "any_tile_ge3": 0
+  },
+  "max_entities_on_one_tile": 1,
+  "level_shifted": {
+    "n": 9,
+    "up_ladders": [
+      [
+        21,
+        4
+      ],
+      [
+        19,
+        25
+      ],
+      [
+        21,
+        36
+      ],
+      [
+        24,
+        23
+      ],
+      [
+        30,
+        37
+      ],
+      [
+        8,
+        28
+      ],
+      [
+        10,
+        14
+      ],
+      [
+        18,
+        31
+      ],
+      [
+        23,
+        22
+      ]
+    ]
+  }
+}

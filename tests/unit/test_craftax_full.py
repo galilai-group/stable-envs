@@ -1,0 +1,425 @@
+"""What full Craftax's renderer promises, asserted without jax.
+
+The repo ships no jax and no interpreter outside ``$SCR/venvs/se7-craftax`` has one, so a test that
+imported jax would skip everywhere and assert nothing. The facts that *come from* craftax are frozen
+into ``tests/data/craftax_full_golden.json`` by ``scratch/step7/craftax-full/gen_golden.py``, which
+records the craftax and jax versions it was frozen under -- a golden vector that does not say where it
+came from is worthless.
+
+The parity number itself lives in ``examples/results/step7/craftax-full/certify/`` and is taken by
+``scratch/step7/craftax-full/certify.py`` in the jax venv; what is asserted here is everything that
+can be checked against the frozen facts and against the renderer's own internal invariants.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import numpy as np
+import pytest
+import torch
+
+from stable_envs.envs import craftax_full as CF
+from stable_envs.envs.craftax_full import CraftaxFull
+
+GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "data"
+                     / "craftax_full_golden.json").read_text())
+
+
+@pytest.fixture(scope="module")
+def env():
+    return CraftaxFull(batch=8, device="cpu")
+
+
+def states(n=8, seed=0):
+    e = CraftaxFull(batch=n, device="cpu")
+    return e, CraftaxFull.sample_states(e, n, np.random.default_rng(seed))
+
+
+# ------------------------------------------------------------------ shape and contract
+
+def test_the_state_window_is_the_size_it_says_it_is():
+    assert CraftaxFull.state_dim == 544
+    assert len(CraftaxFull.state_names) == CraftaxFull.state_dim
+    assert len(set(CraftaxFull.state_names)) == CraftaxFull.state_dim
+    # 5 per-tile layers, four per-frame world numbers, four key halves, 41 strip numbers
+    assert CraftaxFull.state_dim == 5 * 99 + 4 + 4 + 41
+
+
+def test_the_frame_is_the_registered_observation():
+    """``swm/CraftaxPixels-v1`` declares (130, 110, 3) and that is 13x11 tiles at 10 px."""
+    e, st = states(4)
+    assert tuple(e.render(st).shape) == (4, 130, 110, 3)
+    assert tuple(e.render(st, size=16).shape) == (4, 208, 176, 3)
+    g = GOLDEN["geometry"]
+    assert [CF.OBS_H, CF.OBS_W] == g["OBS_DIM"]
+    assert CF.STRIP_H == g["INVENTORY_OBS_HEIGHT"]
+    assert CF.N_BLOCK == g["n_block"] and CF.N_ITEM == g["n_item"]
+    assert CraftaxFull.default_size == g["registered_tile_px"]
+    assert CF.N_COUNT == g["inventory_cap"] + 1
+
+
+def test_counts_are_capped_at_99_not_at_9():
+    """Classic's strip counts stop at 9; ``clip_inventory_and_intrinsics`` stops these at 99, so a
+    cell renders a two-digit number and the decode must wrap at 100 rather than at 10."""
+    assert CF.STRIP_MOD[CF._SLOT["wood"]] == 100
+    assert CF.STRIP_MOD[CF._SLOT["xp"]] == 10          # an attribute digit is a 10-entry gather
+    e, st = states(2)
+    j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES
+    a, b = st.copy(), st.copy()
+    a[:, j + CF._SLOT["wood"]], b[:, j + CF._SLOT["wood"]] = 7, 87
+    assert not np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+
+
+# ------------------------------------------------------------------ the two traps
+
+def test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide():
+    """XLA lowers ``x / scalar`` in float32 as ``x * (1/scalar)``, and against a true divide that is
+    one ULP out on thousands of elements -- enough to move a uint8 pixel through the night mask."""
+    for t in (10, 16):
+        h, w = CF.OBS_H * t, CF.OBS_W * t
+        v = CF.night_vignette(torch.device("cpu"), h, w)[..., 0].numpy()
+        assert hashlib.sha256(np.ascontiguousarray(v).tobytes()).hexdigest() \
+            == GOLDEN["vignette_sha256"][str(t)], f"vignette is not craftax's at {t} px"
+        for key, want in GOLDEN["vignette_probe"][str(t)].items():
+            r, c = (int(z) for z in key.split(","))
+            assert float(v[r, c]) == want
+        x = (np.arange(h, dtype=np.float32) - (h // 2))[:, None]
+        y = (np.arange(w, dtype=np.float32) - (w // 2))[None, :]
+        raw = np.sqrt(x ** 2 + y ** 2).astype(np.float32)
+        naive = (raw / raw.max()).astype(np.float32)
+        n_bad = int((naive != v).sum())
+        assert n_bad == GOLDEN["naive_divide_differs"][str(t)] and n_bad > 0, (
+            "the naive divide must still be wrong; if it stopped being wrong the test stopped "
+            "testing anything")
+
+
+def test_item_slot_zero_is_never_drawn():
+    """``ItemType.NONE`` is slot 0, the reference's scan starts at 1, and ``debug.png`` is opaque."""
+    for src in CF.BAKED_TILE_PX:
+        a = CF._unpack("item_a", src)
+        assert a[CF.I_NONE].max() == 0, "NONE would paint a debug tile over every empty square"
+        assert a[CF.I_LADDER_DOWN].max() == 1
+
+
+def test_every_overlay_alpha_is_binary():
+    """The whole design rests on it: a binary alpha makes a layer a select, which is what lets the
+    frame be four gathers instead of a 732,600-entry product bake."""
+    for src in CF.BAKED_TILE_PX:
+        for name in ("item_a", "player_a", "mob_a", "proj_a"):
+            u = set(np.unique(CF._unpack(name, src)).tolist())
+            assert u <= {0, 1}, f"{name} at {src} px is {u}"
+        for t, tabs in GOLDEN["alpha_alphabets"].items():
+            for k, v in tabs.items():
+                assert set(v) <= {0.0, 1.0}, f"craftax's own {k} at {t} px is {v}"
+
+
+# ------------------------------------------------------------------ the fast paths are the identity
+
+def test_the_uint8_gather_and_the_float_chain_agree_bit_for_bit():
+    """A fully lit, awake, unit-gain batch takes the uint8 tables. It must be the same picture the
+    float path draws, or the fast path is a second renderer."""
+    e, st = states(8, seed=3)
+    st[:, 4 * CF.N_TILE:5 * CF.N_TILE] = 1.0                  # light_map all 1
+    st[:, 5 * CF.N_TILE + 1] = 0.0                            # awake
+    st[:, 5 * CF.N_TILE + 3] = 1.0                            # full daylight
+    fast = e.render(st).numpy()
+    forced = st.copy()
+    forced[0, 5 * CF.N_TILE + 1] = 1.0                        # one sleeper forces the float path
+    slow = e.render(forced).numpy()
+    assert np.array_equal(fast[1:], slow[1:]), "the float path disagrees with the uint8 gather"
+
+
+def test_the_night_skip_changes_no_bits():
+    """``night_intensity`` is exactly 0 for ``daylight >= 0.5``, so a row above the threshold gets no
+    threefry evaluation. Asserted against a chain that always draws the field."""
+    n, h, w = 4, 30, 40
+    g = torch.Generator().manual_seed(11)
+    world = torch.rand(n, h, w, 3, generator=g) * 255
+    lm = torch.rand(n, h, w, 1, generator=g)
+    keys = torch.tensor([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=torch.int32)
+    day = torch.tensor([1.0, 0.75, 0.5, 0.2])
+    sleep = torch.tensor([False, True, False, True])
+    got = CF.light_night_and_sleep(world.clone(), lm, day, sleep, keys)
+
+    from stable_envs.render import prng
+    px = world * lm
+    noise = (prng.uniform(keys, (h, w)) * 95 + 32).unsqueeze(-1)
+    dl = day.view(n, 1, 1, 1)
+    mask = CF.night_vignette(torch.device("cpu"), h, w) * torch.clamp_min(2.0 * (0.5 - dl), 0.0)
+    night = (1.0 - mask) * px + mask * noise
+    night = torch.tensor(CF.NIGHT_TINT) * 0.5 + 0.5 * night
+    want = (dl * px + (1 - dl) * night) * (1.0 - sleep.view(n, 1, 1, 1).float() * 0.5)
+    assert torch.equal(got, want)
+
+
+def test_the_daylight_override_makes_eight_of_nine_levels_noise_free():
+    """``daylight = select(player_level == 0, light_level, 1.0)``: off the overworld the night chain
+    is the identity, so ``light_level`` and the PRNG key reach no pixel there."""
+    e, st = states(2)
+    j = 5 * CF.N_TILE
+    for lvl in (1, 4, 8):
+        a = st.copy()
+        a[:, j + 2] = lvl
+        a[:, j + 3] = 0.0
+        b = a.copy()
+        b[:, j + 3] = 1.0
+        assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+        c = a.copy()
+        c[:, j + 4:j + 8] = (a[:, j + 4:j + 8] + 137) % 65536
+        assert np.array_equal(e.render(a).numpy(), e.render(c).numpy())
+    a = st.copy()
+    a[:, j + 2] = 0
+    a[:, j + 3] = 0.2
+    c = a.copy()
+    c[:, j + 4:j + 8] = (a[:, j + 4:j + 8] + 137) % 65536
+    assert not np.array_equal(e.render(a).numpy(), e.render(c).numpy()), \
+        "on level 0 at night the key MUST reach pixels, or the state window is wrong"
+
+
+# ------------------------------------------------------------------ the strip
+
+def test_the_level_digit_is_the_one_thing_the_strip_reads_from_the_world():
+    e, st = states(4, seed=7)
+    wh = CF.OBS_H * e.size
+    j = 5 * CF.N_TILE
+    a, b = st.copy(), st.copy()
+    a[:, j + 2], b[:, j + 2] = 0, 7
+    assert not np.array_equal(e.render(a).numpy()[:, wh:], e.render(b).numpy()[:, wh:])
+
+
+def test_the_strip_is_not_lit():
+    """Measured rather than inferred from the concatenation order: the reference concatenates the
+    strip after the light map, the night chain and the sleep halving, so it is the same picture at
+    midnight underground as at noon on the surface."""
+    e, st = states(6, seed=5)
+    wh = CF.OBS_H * e.size
+    base = e.render(st).numpy()[:, wh:]
+    j = 5 * CF.N_TILE
+    # player_level is deliberately NOT varied here: it is the one lighting-adjacent field the strip
+    # DOES read, because the level digit is drawn in cell (6, 0).
+    for lm, light, sleep in ((1.0, 1.0, 0), (0.2, 0.05, 1), (0.0, 0.5, 1), (0.7, 0.9, 0)):
+        a = st.copy()
+        a[:, 4 * CF.N_TILE:5 * CF.N_TILE] = lm
+        a[:, j + 1], a[:, j + 3] = sleep, light
+        assert np.array_equal(e.render(a).numpy()[:, wh:], base), \
+            f"the strip moved at light_map={lm} light={light} sleeping={sleep}"
+    a = st.copy()
+    a[:, j + 4:j + 8] = (st[:, j + 4:j + 8] + 999) % 65536
+    assert np.array_equal(e.render(a).numpy()[:, wh:], base)
+
+
+def test_the_eight_unwritten_strip_cells_stay_black():
+    e, st = states(3)
+    img = e.render(st).numpy()
+    t = e.size
+    written = {(x, y) for (x, y, *_r) in CF.STRIP_CELLS}
+    blanks = [(x, y) for y in range(CF.STRIP_H) for x in range(CF.OBS_W) if (x, y) not in written]
+    assert len(blanks) == 8
+    for x, y in blanks:
+        r0 = CF.OBS_H * t + y * t
+        assert img[:, r0:r0 + t, x * t:(x + 1) * t].max() == 0, f"cell ({x},{y}) is not black"
+
+
+def test_the_strip_cell_table_is_the_size_the_spec_says():
+    assert len(CF.STRIP_CELLS) == 36
+    assert CF.N_STRIP_ICON == 410
+    assert CF.N_DIGIT_ENTRY == 200
+    assert CF.N_BG == CF.N_BLOCK * CF.N_ITEM + 1 + CF.N_STRIP_ICON
+    assert CF.N_OVERLAY == CF.N_MOB_SLOT * CF.N_PROJ_SLOT == 660
+
+
+# ------------------------------------------------------------------ resampling and consistency
+
+def test_a_render_at_twice_the_size_resamples_from_the_size_that_divides_it():
+    """20 px comes from the 10 px art, not from the nearer 16 px art. This is what makes the world
+    rows exactly 2x-consistent where craftax -- which re-resamples every PNG at every size with
+    ``Image.NEAREST`` -- is not."""
+    assert CF._source_size(20) == 10
+    assert CF._source_size(32) == 16
+    assert CF._source_size(10) == 10 and CF._source_size(16) == 16
+    e, st = states(4, seed=9)
+    st[:, 4 * CF.N_TILE:5 * CF.N_TILE] = 1.0
+    st[:, 5 * CF.N_TILE + 1] = 0.0
+    st[:, 5 * CF.N_TILE + 3] = 1.0
+    small = e.render(st, size=10).numpy()
+    big = e.render(st, size=20).numpy()
+    assert np.array_equal(big[:, ::2, ::2], small), "20 px is not a 2x replication of 10 px"
+
+
+def test_exactly_one_mob_sprite_is_fully_opaque_and_the_sampler_knows():
+    for src in CF.BAKED_TILE_PX:
+        a = CF._unpack("mob_a", src).astype(bool)
+        opaque = [i for i in range(a.shape[0]) if a[i].all()]
+        assert opaque == [17], opaque
+        assert 17 not in set(CF.transparent_mob_slots(src).tolist())
+
+
+# ------------------------------------------------------------------ the sampler's stratification
+
+def test_the_sampler_stratifies_so_a_batch_of_one_still_has_every_dimension_live():
+    from stable_envs.testing.conformance import check_state_dims_matter
+    for b in (1, 2, 3, 4, 8):
+        for seed in range(3):
+            e = CraftaxFull(batch=b, device="cpu")
+            rng = np.random.default_rng(seed)
+            e.sample_states = lambda n, _r=rng, _e=e: CraftaxFull.sample_states(_e, n, _r)
+            assert check_state_dims_matter(e)["dead_dims"] == [], f"batch {b} seed {seed}"
+
+
+def test_the_declared_certification_distribution_matches_the_sampler():
+    d = CraftaxFull.certification_state_distribution
+    e = CraftaxFull(batch=64, device="cpu")
+    st = CraftaxFull.sample_states(e, 64, np.random.default_rng(0))
+    j = 5 * CF.N_TILE
+    lvl = np.round(st[:, j + 2]).astype(int) % CF.N_LEVEL
+    light = CF._tent_np(st[:, j + 3])
+    day = np.where(lvl == 0, light, 1.0)
+    lit = (CF._tent_np(st[:, 4 * CF.N_TILE:5 * CF.N_TILE]) == 1.0).all(1)
+    # a row stays on the uint8 gather only if it is fully lit AND awake: the lighting bands give 2/6
+    # and the independent i % 4 sleeping stratification takes a quarter of them away, so the answer
+    # is exactly 0.25 at a batch of 64. The tolerance is ONE ROW, not 0.1 -- a 0.1 slack is what let
+    # a declared 2/6 (an error of 0.083) survive until independent review caught it.
+    fast = ((day == 1.0) & lit & (st[:, j + 1] <= 0.5)).mean()
+    assert abs(fast - d["uint8_fast_path_share"]) <= 1 / 64, (fast, d["uint8_fast_path_share"])
+    assert abs((st[:, j + 1] > 0.5).mean() - d["sleeping_share"]) < 1e-6
+    # the band shares are exact only when the batch is a multiple of six; 64 is not, so the tolerance
+    # is the one row the remainder can move
+    assert abs((day < CF.NIGHT_THRESHOLD).mean() - d["level0_night_share"]) <= 1 / 64
+
+
+def test_the_sampler_respects_the_simulators_mob_budgets():
+    """A window with four zombies cannot be written into an ``EnvState`` at all, so a state carrying
+    one is not a state the parity bridge can score."""
+    e = CraftaxFull(batch=32, device="cpu")
+    st = CraftaxFull.sample_states(e, 32, np.random.default_rng(1))
+    k = CF.N_TILE
+    centre = (CF.OBS_H // 2) * CF.OBS_W + (CF.OBS_W // 2)
+    mob = np.round(st[:, 2 * k:3 * k]).astype(int)
+    prj = np.round(st[:, 3 * k:4 * k]).astype(int)
+    for i in range(32):
+        m = mob[i]
+        assert m[centre] == 0 and prj[i][centre] == 0, "an entity on the player's tile"
+        n_melee = ((m >= CF.MOB_BASE["melee"]) & (m < CF.MOB_BASE["melee"] + CF.N_MELEE)).sum()
+        n_pass = ((m >= CF.MOB_BASE["passive"]) & (m < CF.MOB_BASE["passive"] + CF.N_PASSIVE)).sum()
+        n_rang = ((m >= CF.MOB_BASE["ranged"]) & (m < CF.MOB_BASE["ranged"] + CF.N_RANGED)).sum()
+        assert n_melee <= CF.MAX_MELEE and n_pass <= CF.MAX_PASSIVE and n_rang <= CF.MAX_RANGED
+        assert (prj[i] != 0).sum() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ
+
+
+# ------------------------------------------------------------------ decode rules
+
+def test_out_of_range_ids_wrap_rather_than_clamp():
+    """A clamping decoder makes a slot that already holds the last class insensitive to the
+    conformance suite's +25 probe, which is then reported as a dead dimension."""
+    e, st = states(2)
+    a = st.copy()
+    a[:, 0] = 2.0
+    b = a.copy()
+    b[:, 0] = 2.0 + CF.N_BLOCK
+    assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+
+
+def test_the_two_light_floats_fold_on_a_tent_and_are_the_identity_inside_the_range():
+    x = torch.tensor([0.0, 0.25, 1.0, -0.5, 1.5, 25.0, -25.0])
+    t = CF._tent(x)
+    assert torch.equal(t[:3], x[:3]), "an in-range value must pass through bit-exact"
+    assert float(t[3]) == 0.5 and float(t[4]) == 0.5
+    assert float(t[5]) == 1.0, "the +25 probe must land somewhere the renderer can see"
+    assert np.allclose(CF._tent_np(x.numpy()), t.numpy())
+
+
+def test_the_health_slot_is_lifted_to_one_the_way_the_reference_lifts_it():
+    """The reference draws ``max(floor(player_health), 1)``, so a health of 0 shows a 1."""
+    e, st = states(2)
+    j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES + CF._SLOT["health"]
+    a, b = st.copy(), st.copy()
+    a[:, j], b[:, j] = 0.0, 1.0
+    assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+
+
+# ------------------------------------------------------------------ declarations
+
+def test_the_declaration_names_what_the_parity_claim_depends_on():
+    assert CraftaxFull.reference_versions == {"craftax": "1.6.1", "jax": "0.11.1"}
+    assert CraftaxFull.parity_all_exact_min == 1.0
+    note = CraftaxFull.parity_note
+    for phrase in ("jax_threefry_partitionable", "do_night_noise", "un-jitted", "UINT8"):
+        assert phrase in note, f"parity_note does not mention {phrase}"
+    assert GOLDEN["craftax"] == CraftaxFull.reference_versions["craftax"]
+    assert GOLDEN["jax"] == CraftaxFull.reference_versions["jax"]
+    assert GOLDEN["jax_threefry_partitionable"] is True
+
+
+def test_the_resolution_applicability_declares_its_scope_and_its_evidence():
+    d = CraftaxFull.resolution_consistency_applicability
+    assert "all bands" in d and d["all bands"].startswith("not_applicable")
+    assert Path(d["evidence"]).name == "resolution_and_dead_dims.json"
+    assert "broader" in d["scope_note"]
+    assert "still_required" in d
+
+
+def test_reference_env_refuses_a_size_craftax_does_not_draw():
+    with pytest.raises(ValueError, match="no official frame"):
+        CraftaxFull.reference_env(size=12)
+
+
+# ------------------------------------------------------------------ the representable boundary
+
+def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable():
+    """The render window has room for a projectile on every one of its 99 tiles; an ``EnvState`` has
+    room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` of them. A row beyond that budget renders here and
+    cannot be scored against the reference, which is a documented limit of the window rather than a
+    renderer defect -- the same shape as Classic's "one mob per tile".
+
+    It is asserted rather than left implicit because the boundary pool found it: eight projectiles
+    disagreed with the official renderer on exactly the two tiles past the budget, max abs 114, while
+    all 48 representable rows were byte-identical
+    (``examples/results/step7/craftax-full/certify/boundary_pool.json``).
+    """
+    assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
+    e = CraftaxFull(batch=32, device="cpu")
+    st = CraftaxFull.sample_states(e, 32, np.random.default_rng(3))
+    n_proj = (np.round(st[:, 3 * CF.N_TILE:4 * CF.N_TILE]) != 0).sum(1)
+    assert n_proj.max() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ, n_proj.max()
+    # and the renderer itself DOES draw the seventh and eighth -- it is the BRIDGE that cannot carry
+    # them. Compared against the same row holding only the first six, so the difference is exactly
+    # the two projectiles the reference would drop, not an all-zero straw man.
+    six = st[:1].copy()
+    six[0, 3 * CF.N_TILE:3 * CF.N_TILE + 99] = 0
+    six[0, 3 * CF.N_TILE:3 * CF.N_TILE + 6] = 1 + np.arange(6) % 4
+    eight = six.copy()
+    eight[0, 3 * CF.N_TILE + 6:3 * CF.N_TILE + 8] = 1 + np.arange(6, 8) % 4
+    a, b = e.render(six).numpy(), e.render(eight).numpy()
+    assert not np.array_equal(a, b), "the renderer drops a projectile the state asked for"
+    t = e.size
+    moved = (a[0] != b[0]).any(-1)          # [0]: the batch axis, or the tile scan below slices it
+    for p in range(CF.N_TILE):
+        r0, c0 = (p // CF.OBS_W) * t, (p % CF.OBS_W) * t
+        if moved[r0:r0 + t, c0:c0 + t].any():
+            assert p in (6, 7), f"tile {p} moved, but only the 7th and 8th projectile were added"
+
+
+def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
+    """The fifth sampler guard forces at least one arrow onto band-0 rows, because the reference
+    draws ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]`` and a row with no arrows
+    makes ``inv_ench_bow`` unobservable.
+
+    It is a CLAMP, not a redraw, so it consumes no draw from ``rng`` and the pool is bit-identical.
+    Asserted against the sha256 the frozen corpus recorded BEFORE the guard existed, which is the
+    only way to show the guard changed no committed digest.
+    """
+    import hashlib
+    import json as _json
+    rec = _json.loads((Path(__file__).resolve().parents[2] / "examples" / "results" / "step7"
+                       / "craftax-full" / "corpus" / "corpus.json").read_text())
+    e = CraftaxFull(batch=rec["kept"], device="cpu")
+    pool = CraftaxFull.sample_states(e, rec["pool"], np.random.default_rng(rec["seed"]))
+    assert hashlib.sha256(np.ascontiguousarray(pool).tobytes()).hexdigest() == rec["pool_sha256"]
+    kept = pool[rec["indices"]]
+    assert hashlib.sha256(np.ascontiguousarray(kept).tobytes()).hexdigest() == rec["sha256"]
+    # and the guard is genuinely inert on this pool rather than accidentally so
+    band0 = np.arange(rec["pool"]) % 6 == 0
+    j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES
+    assert pool[band0, j + CF._SLOT["arrows"]].min() >= 1

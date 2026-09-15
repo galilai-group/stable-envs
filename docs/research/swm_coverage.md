@@ -24,10 +24,11 @@ commented out of the file entirely. Reading the directory names gives a differen
 both. Reproduce with `scratch/swm_registry.py`, which also records, per id, whether it constructs
 here and what it puts in `info`.
 
-**42 ids are registered. 27 are covered by stable-envs, 2 have no frame to render, and 13 are not.**
-The 27 are every id whose frame is drawn in 2-D, plus the three DM Control ids whose domains render
-from a fixed camera, plus the 12 Fetch ids; the 13 split into 9 DM Control, 2 OGBench manipulation,
-1 PyFlyt rocket and 1 full-Craftax.
+**42 ids are registered. 28 are covered by stable-envs, 2 have no frame to render, and 12 are not.**
+The 28 are every id whose frame is drawn in 2-D, plus the three DM Control ids whose domains render
+from a fixed camera, plus the 12 Fetch ids; the 12 split into 9 DM Control, 2 OGBench manipulation
+and 1 PyFlyt rocket. (`swm/CraftaxPixels-v1` moved from the gap list to the covered one in Step 7 —
+see the row below.)
 
 ---
 
@@ -52,7 +53,7 @@ rejected), **not registered** (in the source tree, absent from the live registry
 | `swm/PendulumControl-v1` | yes | `Pendulum` | **covered** | as above |
 | `swm/CraftaxClassicPixels-v1` | no (`jax` absent) | `CraftaxClassic` | **covered** | 100% of all pixels, max abs diff 0 |
 | `swm/CraftaxClassicSymbolic-v1` | no (`jax` absent) | — | n/a | symbolic observations; there is no frame to render |
-| `swm/CraftaxPixels-v1` | no (`jax` absent) | — | **gap** | full Craftax (9 levels); we ship Craftax **Classic** only |
+| `swm/CraftaxPixels-v1` | no (`jax` absent) | `CraftaxFull` | **landed here** | full Craftax, 9 levels, 130x110: 100% of all pixels exact, max abs diff 0 at 10 px and 16 px, identical frame digests on arm64, x86-64 and CUDA. [`examples/results/step7/craftax-full/findings.md`](../../examples/results/step7/craftax-full/findings.md) |
 | `swm/CraftaxSymbolic-v1` | no (`jax` absent) | — | n/a | symbolic |
 | `swm/OGBCube-v0` | builds, render needs EGL | — | **gap** | OGBench *manipulation*; we cover the mazes only. Not gated in this pass |
 | `swm/OGBScene-v0` | builds, render needs EGL | — | **gap** | as above |
@@ -64,13 +65,13 @@ rejected), **not registered** (in the source tree, absent from the live registry
 | `swm/ImagePositioning-v1` | **not registered** | — | **NO-GO** | see [ImagePositioning](#imagepositioning-not-registered-and-not-renderable) |
 | `ALE/*` | not registered (`ale-py` absent) | — | **NO-GO** | [`pixel_native.md`](pixel_native.md); identical 128 B of RAM gives different frames on 13.75% of pairs |
 
-Counting ids: **27 covered** — PushT, PushT-Discrete, TwoRoom, Piecewise, SimplePointMaze, OGBMaze,
-five classic-control ids, CraftaxClassicPixels, CartpoleDMControl / PendulumDMControl /
-AcrobotDMControl, and the 12 Fetch ids. That undercounts the work behind them: the single
+Counting ids: **28 covered** — PushT, PushT-Discrete, TwoRoom, Piecewise, SimplePointMaze, OGBMaze,
+five classic-control ids, CraftaxClassicPixels, **CraftaxPixels**, CartpoleDMControl /
+PendulumDMControl / AcrobotDMControl, and the 12 Fetch ids. That undercounts the work behind them: the single
 `swm/OGBMaze-v0` id stands for 25 registered stable-envs environments, TwoRoom and Piecewise for two
 apiece, and `CartpoleDMControl` for two; it also overcounts Fetch, whose 12 ids are 4 distinct scenes.
-**2 more have no frame** (`CraftaxClassicSymbolic`, `CraftaxSymbolic`). The remaining **13** are
-9 DM Control, `OGBCube`, `OGBScene`, `PFRocketLanding` and `CraftaxPixels`.
+**2 more have no frame** (`CraftaxClassicSymbolic`, `CraftaxSymbolic`). The remaining **12** are
+9 DM Control, `OGBCube`, `OGBScene` and `PFRocketLanding`.
 
 The blunt statement is: **every swm environment whose frame is drawn in 2-D is now covered, and so is
 the first 3-D manipulation family.** What is left is 3-D scenes that need a camera or an asset kind we
