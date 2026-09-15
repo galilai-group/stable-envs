@@ -944,11 +944,27 @@ the full-batch prefix).
 | 3 | identical | **26 of 96 differ**, 3.05e-05 | identical | identical (with the fix) |
 | 7, 8, 31, 32, 63 | identical | identical | identical | identical |
 
-So the defect is `torch.sparse.mm`, not the mvp, and it reaches **width 3** as well — the sweep
-sampled 1, 2, 7, 8, 31, 32, 63 and could not have seen that. `S4` has exactly four nonzeros per row
-(vertex `v`'s homogeneous local position in geom `g(v)`'s four columns), so every output element is a
-sum of four products whose order is the kernel's to choose, and it chooses by the dense operand's
-column count, `4·B`. It is the same class of defect `mvp_rows` fixed, one product later.
+So the defect is `torch.sparse.mm`, not the mvp. `S4` has exactly four nonzeros per row (vertex `v`'s
+homogeneous local position in geom `g(v)`'s four columns), so every output element is a sum of four
+products whose order is the kernel's to choose, and it chooses by the dense operand's column count,
+`4·B`. It is the same class of defect `mvp_rows` fixed, one product later.
+
+**A correction to that table, and to the sweep's.** Both sampled widths that skip 4-6, so both
+understated the limitation. A full sweep of 1-10, 12, 14, 16, 20, 24, 32, 48, 63 on x86-64
+(login010, torch 2.14.0+cu126, 1 thread, `closure1/probe_clip_cpu_batch_x86_widthsweep.json`):
+
+| quantity | bitwise on x86-64 CPU | otherwise |
+|---|---|---|
+| clip positions | widths **>= 7** | widths **1-6**, exactly one float32 ulp (3.05e-05 at a 300 m scale) |
+| clip normals | every width **except 4 and 8** | widths **4 and 8**, exactly one float32 ulp (5.96e-08 near 1.0) |
+| clip world positions | every width | — |
+
+So the positions recover at 7 rather than at 4, and the **normals move too** — which neither the
+sweep's sample (1, 2, 7, 8, 31, 32, 63) nor this workstream's first probe (which added 3) could see,
+because the normals' only bad widths are 4 and 8 and the sweep's width 8 measured a different
+quantity. Everything is bitwise at every width on arm64 and on cuda. The practical consequence: the
+deferred patch fixes the POSITIONS only; the normals share the same sparse stage and would need the
+same treatment, and that is now written into both the test and the cell's note.
 
 #### The fix, and why it is the float32 one
 
@@ -1016,14 +1032,17 @@ So, in Step 7:
 * **the test I authored is corrected to assert what is certified**, which is the part of this that was
   actually wrong: it claimed bitwise invariance at every width on whatever device it ran on.
   `tests/unit/test_nvdiff_triangles.py::test_from_triangles_clip_row_is_independent_of_batch_size` now
-  asserts **cuda, when available: bitwise at every width** (1, 2, 3, 4, 7, 31, 63) and **cpu: bitwise
-  for widths >= 4**, with widths 1-3 on CPU bounded to **one float32 ulp** rather than ignored -- a
-  bound that fails loudly if the residual ever grows past the summation-order explanation. Normals and
-  world positions are asserted bitwise on every device at every width. The mechanism, the probe
-  artifacts and the reason the fix is deferred are written into the test's own docstring. This is a
-  Step-7 test correcting its own over-claim, not a Gate-A change: nothing that was enforced stops
-  being enforced, and the cuda claim gets **stronger** (it now runs on the card too, at seven widths
-  including 2 and 3, where before it ran on the CPU path only).
+  asserts **cuda, when available: bitwise at every width** (1, 2, 3, 4, 5, 6, 7, 8, 16, 31, 63) for
+  positions, normals and world positions alike, and **cpu: within one float32 ulp at every width** for
+  all three. The ruling asked for "cpu bitwise for widths >= 4"; the width sweep above says that is
+  false (positions recover at 7, normals move at 4 and 8), so the test asserts the claim that is both
+  true and portable and RECORDS the measured per-architecture bitwise boundary in its docstring
+  instead. Asserting a machine-specific boundary is the same mistake in a new place. The ulp bound is
+  an assertion, not an exemption: it fails the moment the residual grows past what a reordered
+  four-term sum can account for. This is a Step-7 test correcting its own over-claim, not a Gate-A
+  change: nothing that was enforced stops being enforced, and the cuda claim gets **stronger** (it now
+  runs on the card too, at eleven widths and on all three outputs, where before it ran on the CPU path
+  only, at three widths).
 * the limitation is declared where a consumer reads it: `rocket_landing.DOCUMENTED_LIMITATIONS`,
   appended to `PFRocketLanding.visual_note` and therefore surfaced by `describe()`, naming the widths,
   the architecture, the mechanism, the fact that no frame this cell produces is affected

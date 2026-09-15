@@ -466,8 +466,12 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 #: DOCUMENTED_LIMITATION (Step 7, CLOSURE-1). The shared ``nvdiff`` transform is bitwise independent of
 #: the batch width on cuda -- the device every nvdiff cell renders on, and the one the mandatory
 #: ``check_batch_size_invariance`` is measured on (0 at 1, 7, 64 and 4096 for this cell) -- and on
-#: arm64 CPU. On x86-64 CPU the CLIP POSITIONS differ from their full-batch values by ONE float32 ulp
-#: at batch widths 1, 2 and 3 only.
+#: arm64 CPU. On x86-64 CPU the clip outputs differ from their full-batch values by ONE float32 ulp at
+#: some narrow widths: POSITIONS at widths 1-6 (3.05e-05 at a 300 m coordinate scale) and NORMALS at
+#: widths 4 and 8 (5.96e-08 near 1.0); world positions never. Bitwise from width 7 up for positions and
+#: at every other width for normals. The width sweep is
+#: ``closure1/probe_clip_cpu_batch_x86_widthsweep.json``; two earlier samples skipped widths 4-6 and so
+#: reported a narrower limitation than this.
 #:
 #: It reaches no frame this cell produces: ``PFRocketLanding`` raises on ``device="cpu"`` by design, so
 #: its CPU transform path exists only so the geometry can be unit-tested without a GPU. The cause is
@@ -482,12 +486,14 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 #: kernel's freedom, but on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of
 #: mean_abs and 1e-09 of SSIM (``closure1/digest_vs_refreeze.json``), and a re-freeze requires a
 #: certification failure with a causal reason rather than an implementation that merely differs. It is
-#: the Step-8 candidate, under its own clean re-verification pass.
+#: the Step-8 candidate, under its own clean re-verification pass. It addresses the POSITIONS only; the
+#: normals share the same sparse stage and would need the same treatment.
 DOCUMENTED_LIMITATIONS = (
-    "nvdiff's CPU transform is bitwise batch-size invariant for widths >= 4 and within one float32 ulp "
-    "at widths 1-3 on x86-64 (CLOSURE-1); cuda, the certified device, is bitwise invariant at every "
-    "width. No frame this cell produces is affected: device='cpu' raises. See findings.md section M7 "
-    "and examples/results/step7/rocket-landing/closure1/."
+    "nvdiff's CPU transform is batch-size invariant to within one float32 ulp at every width, and "
+    "bitwise at every width on arm64; on x86-64 the clip positions move by one ulp at widths 1-6 and "
+    "the normals at widths 4 and 8 (CLOSURE-1). Cuda, the certified device, is bitwise invariant at "
+    "every width. No frame this cell produces is affected: device='cpu' raises. See findings.md "
+    "section M7 and examples/results/step7/rocket-landing/closure1/."
 )
 
 
