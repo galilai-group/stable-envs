@@ -44,12 +44,23 @@ eval "$(PYTHONPATH=$PYTHONPATH "$VENV/bin/python" \
   scratch/step7/ogb-manipulation/gl_probe.py --require egl 2>&1 | tee /dev/stderr | tail -1)"
 [ "$MUJOCO_GL" = "__NONE__" ] && { echo "FATAL: EGL unusable on $(hostname)"; exit 9; }
 
-# The cells MUST be registered: no SE7_OGB_UNMEASURED here. If _MEASURED is empty this job stops,
-# rather than quietly measuring a placeholder build and producing numbers that mean nothing.
+# THIS IS THE MEASURING PASS, so it runs WITH the placeholder flag -- and the first version of this
+# script had that exactly backwards. It asserted the cells were already registered, which they cannot
+# be until this job has produced the numbers that register them: the module refuses to register
+# without measurements, and measuring needs the module. `SE7_OGB_UNMEASURED=1` is the documented
+# escape for precisely this process and nothing else.
+#
+# What is guarded instead is the thing that actually matters: that the placeholder never leaves this
+# job. The declaration under the flag carries sentinel -1 values and a `measured_at` that says so, so
+# a build that shipped it could not be mistaken for measured; and the artifacts this job writes are
+# `paste_me.json` and `remeasure.json`, never a modified `ogb_manip.py`.
+export SE7_OGB_UNMEASURED=1
 "$VENV/bin/python" -c "
 import stable_envs as se
-assert 'OGBCube' in se.REGISTRY and 'OGBScene' in se.REGISTRY, 'cells not registered: fill _MEASURED'
-print('registered OK')" || exit 3
+c = se.REGISTRY['OGBCube']
+assert c.visual_fidelity['mean_abs'] == -1.0, 'expected the placeholder in the measuring pass'
+assert 'UNMEASURED' in c.visual_fidelity['measured_at']
+print('measuring pass: placeholder in force, cells constructible')" || exit 3
 
 mkdir -p "$OUT/m3/fidelity" "$OUT/states"
 "$VENV/bin/python" scratch/step7/ogb-manipulation/probe_remeasure_chain.py \
