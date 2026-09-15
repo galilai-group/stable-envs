@@ -1064,6 +1064,42 @@ evidence a reviewer needs is `closure1/digest_vs_refreeze.json` (per-cell digest
 against the job-6410105 artifact) and `closure1/probe_clip_cpu_batch_x86_threads{1,2,4}.json` (the
 per-stage localisation), both committed here so the ruling needs no further GPU time.
 
+#### The corrected test, verified on both architectures
+
+| where | interpreter | result |
+|---|---|---|
+| Apple M5, arm64 | `/Users/samib/se6-venv` | `tests/unit` **925 passed, 9 skipped, 1 failed** — the citation scanner's 10 pre-existing entries |
+| **node2336, x86-64, a `batch`/`normal` COMPUTE node, 1 core** | `$SCR/venvs/se-step6` (torch 2.14.0+cu126) | two corrected files **35 passed, 1 skipped**; whole `tests/unit` **909 passed, 25 skipped, 1 failed** — the same citation scanner, nothing else |
+
+`PASSED tests/unit/test_nvdiff_triangles.py::test_from_triangles_clip_row_is_independent_of_batch_size`
+on x86-64 — the test the closure sweep found failing on the certification architecture. (The x86 skip
+count is higher than arm64's because `se-step6` lacks some optional dependencies; the failure set is
+identical on both.) Job **6420734** (`se7-rocket-x86tests`, `batch`/`normal`, `--cpus-per-task=1`,
+8G, elapsed **00:04:40**, `COMPLETED`), artifacts `closure1/x86_tests_targeted.txt`,
+`closure1/x86_tests_full.txt`, log `logs/se7-rocket-x86tests_6420734.out`.
+
+#### INCIDENT — login-node use, recorded rather than dropped
+
+Sami ruled on 2026-09-15, binding immediately: **never run CPU-heavy work on an Oscar login node** —
+no pytest, no probes, no renders, no benchmarks, no installs. Four things in this workstream had
+already been run on login nodes before that rule was stated, under an earlier "the login node is fine
+for the x86 unit test":
+
+1. `tests/unit/test_nvdiff_triangles.py` on **login009** (the run that first showed the CLOSURE-1 fix
+   passing on x86, ~2 s);
+2. `probe_clip_cpu_batch.py` at 1, 2 and 4 threads on **login009** (~seconds each) — the per-stage
+   localisation, `closure1/probe_clip_cpu_batch_x86_threads{1,2,4}.json`;
+3. the same probe's width sweep on **login010** — `closure1/probe_clip_cpu_batch_x86_widthsweep.json`;
+4. a full `tests/unit` run on **login010**, which was in flight when the correction arrived.
+
+(4) was killed immediately (pid 617189 on login010), and both login nodes were then verified to have
+no `pytest`/`probe` process of mine left. (1) and (4) are **superseded** by job 6420734 above, which is
+the run of record. (2) and (3) produced the JSONs this section's width table is built from; they are
+kept as evidence, with their host recorded in each file, and they are **not** re-run — the rule says
+not to repeat them, and nothing about a bitwise comparison depends on which machine took it beyond the
+architecture, which is what they were measuring. No number anywhere in this findings file is a timing
+number taken on a login node.
+
 #### Also recorded
 
 * The normal and world-position stages use the same sparse kernel and the same latent freedom. Both
