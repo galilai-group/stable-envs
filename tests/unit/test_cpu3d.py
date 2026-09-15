@@ -73,15 +73,35 @@ def test_unknown_device_raises_rather_than_falling_back(se, device):
     assert "no 3-D backend" in msg or device in msg
 
 
-def test_swimmer_is_refused_on_cpu_by_name_and_geom_type(se):
-    """DMCSwimmerSwimmer6's bodies are mjGEOM_ELLIPSOID, which no CPU intersector covers. It used to
-    render on the GPU behind a device='cpu' request; now it raises, naming the env and the geom."""
+def test_swimmer_is_refused_on_cpu_by_the_allow_list(se):
+    """DMCSwimmerSwimmer6 used to be refused on device='cpu' because its bodies are mjGEOM_ELLIPSOID
+    and no CPU intersector covered them. Step 7 added the intersector (for the quadruped torso), so
+    the geom-type refusal is gone -- and swimmer, which is not an SWM id and has no CPU certification,
+    is now refused by an explicit allow-list (``CPU_UNCERTIFIED``) naming the env and the reason,
+    rather than drawn uncertified. Step 8 decides whether it is certified and the entry removed."""
     if "DMCSwimmerSwimmer6" not in se.REGISTRY:
         pytest.skip("swimmer not registered")
     with pytest.raises(ValueError) as e:
         se.REGISTRY["DMCSwimmerSwimmer6"](batch=1, device="cpu")
     msg = str(e.value)
-    assert "DMCSwimmerSwimmer6" in msg and "ELLIPSOID" in msg and "no CPU 3-D backend" in msg
+    assert "DMCSwimmerSwimmer6" in msg and "not certified" in msg and "CPU" in msg
+
+
+def test_trackcom_material_knobs_are_geom_wearers_only(se):
+    """Neither trackcom backend draws a site, so a material worn only by sites is not a knob here.
+    ``DMControlTrackCom._used_materials`` restricts the base census to geoms: on the four certified
+    cells (sites hidden) the list is IDENTICAL to the base class's -- their declared variation space
+    does not move -- and on quadruped it drops ``eye``, worn by the two pupil sites alone."""
+    from stable_envs.envs import dmcontrol as D
+    for name in CELLS:
+        cls = se.REGISTRY[name]
+        assert cls._used_materials() == D._DMCModel._used_materials.__func__(cls), name
+    if "DMCQuadrupedWalk" in se.REGISTRY:
+        cls = se.REGISTRY["DMCQuadrupedWalk"]
+        base = D._DMCModel._used_materials.__func__(cls)
+        ours = cls._used_materials()
+        assert "eye" in base and "eye" not in ours and ours == [m for m in base if m != "eye"]
+        assert cls.CAMERA == 2 and cls.default_size == 224                # the registered SWM default
 
 
 def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):

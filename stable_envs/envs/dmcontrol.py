@@ -2239,6 +2239,12 @@ class DMControlTrackCom(_DMCModel):
         if self.device.type == "cuda":
             self._context(self.size)                 # build and capture up front, not mid-render
         elif self.device.type == "cpu":
+            reason = CPU_UNCERTIFIED.get(type(self).__name__)
+            if reason:
+                raise ValueError(
+                    f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) is not certified on the CPU "
+                    f"backend and is refused on device='cpu' by CPU_UNCERTIFIED ({reason}); "
+                    f"device='cuda' draws it through MJWarp")
             self._cpu_scene(self.size)
         else:
             raise ValueError(
@@ -2472,6 +2478,15 @@ SPECULAR_NOTE = ("This domain renders with enable_specular=False, which is measu
 #: the switch cannot drift apart.
 TRACKCOM_RENDER_FLAGS: dict[str, dict] = {
     "DMCSwimmerSwimmer6": {"enable_specular": False},
+}
+
+#: Cells refused on ``device="cpu"`` BY NAME, with the reason. Until Step 7 swimmer was refused by
+#: geom type -- its bodies are ``mjGEOM_ELLIPSOID`` and ``cpu3d`` had no intersector -- and the
+#: intersector now exists (``raycast3d._ellipsoid``, added for the quadruped torso), so without this
+#: list swimmer would be DRAWN on CPU with no certification behind the frames. It is not an SWM id;
+#: Step 8 decides whether to certify it and delete the entry. The GPU path is unaffected.
+CPU_UNCERTIFIED: dict[str, str] = {
+    "DMCSwimmerSwimmer6": "no CPU certification (Step 7 allow-list; not an SWM id; Step 8 decides)",
 }
 
 _AT = ("84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a "

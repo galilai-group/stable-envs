@@ -59,8 +59,10 @@ import torch
 from . import raycast3d as R3
 
 #: mjtGeom codes this backend draws as movers (the ones ``raycast3d`` intersects) and the plane.
-PLANE, SPHERE, CAPSULE, CYLINDER, BOX = 0, 2, 3, 5, 6
-MOVER_KINDS = (SPHERE, CAPSULE, CYLINDER, BOX)
+#: ELLIPSOID joined in Step 7 (``raycast3d._ellipsoid``, for DM Control's quadruped torso); nothing
+#: else here is kind-specific -- the window and the shadow footprint read ``bound_radius``.
+PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
+MOVER_KINDS = (SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)
 GEOM_NAMES = {0: "mjGEOM_PLANE", 1: "mjGEOM_HFIELD", 2: "mjGEOM_SPHERE", 3: "mjGEOM_CAPSULE",
               4: "mjGEOM_ELLIPSOID", 5: "mjGEOM_CYLINDER", 6: "mjGEOM_BOX", 7: "mjGEOM_MESH",
               8: "mjGEOM_SDF"}
