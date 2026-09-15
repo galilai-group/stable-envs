@@ -13,7 +13,7 @@ workstreams:
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 84ecb03 (W1 complete; merged)
+  head_sha: 72878fc (performance_record_cpu + s_cpu_note on the declaration; GPU tier job 6395847 queued)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -419,8 +419,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'formal re-review on 13ca91b: APPROVE-WITH-CHANGES (RC-1/RC-2 verified fixed; stable_envs clean; D1 provenance [addressed in aa54c2c], D2 duplicate replay row + false sentence, minors); fix commit
-    requested; job 6395707 results stand except the replay row; reviewer verifies next tip; then M4'
+  status: D1/D2 + minors landed (cf355a3); formal verdict pending; GPU job 6395707 pending on the synced cf355a3 tree; M4 after
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -448,7 +447,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: aa54c2c (fixes + gate list + RC-1 evidence)
+  head_sha: cf355a3 (D1/D2 + minors)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
