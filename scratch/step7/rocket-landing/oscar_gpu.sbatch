@@ -4,7 +4,7 @@
 #SBATCH --qos=norm-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=geforce3090
-#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116
+#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=03:00:00
@@ -25,6 +25,7 @@ export NUMBA_CACHE_DIR=$SCR/.cache/numba TORCH_EXTENSIONS_DIR=$SCR/.cache/torch_
 export MUJOCO_GL=egl MPLBACKEND=Agg PYTHONUNBUFFERED=1 SDL_VIDEODRIVER=dummy
 export OMP_NUM_THREADS=4
 module load cuda/12.9.0 2>/dev/null || true
+export TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9"
 PY=$SCR/venvs/se7-rocket/bin/python
 WS=$SCR/se7/rocket-landing
 BASE=$SCR/se7/baseline
@@ -35,9 +36,14 @@ which nvcc; nvcc --version | tail -1
 set -x
 cd "$WS"
 
-# 1a. nvdiff import + plugin build, then the CPU-side unit tests on this node
+# 0. context probes at job start (coordinator: gpu2104 produced EGL context errors for W4): nvdiffrast's
+#    CUDA context is what this cell needs; EGL is what the locomotion cells' MuJoCo reference needs.
 PYTHONPATH=$WS $PY -c "import nvdiffrast.torch as dr, torch; dr.RasterizeCudaContext(device='cuda'); print('nvdiffrast ok', torch.cuda.get_device_name(0))" \
   2>&1 | tail -3 | tee "$OUT/nvdiff_identity/plugin_build.txt"
+grep -q "nvdiffrast ok" "$OUT/nvdiff_identity/plugin_build.txt" || { echo "NVDIFFRAST CONTEXT FAILED on $(hostname -s)"; exit 2; }
+EGL_OK=1
+$PY -c "import mujoco; c = mujoco.GLContext(64, 64); c.make_current(); print('egl ok')" 2>&1 | tail -2 | tee "$OUT/nvdiff_identity/egl_probe.txt" \
+  | grep -q "egl ok" || { echo "EGL CONTEXT FAILED on $(hostname -s): the locomotion reference test is skipped"; EGL_OK=0; }
 PYTHONPATH=$WS $PY -m pytest tests/unit/test_nvdiff_triangles.py tests/unit/test_nvdiff_texgen.py tests/unit/test_rocket_landing.py \
   -q -p no:cacheprovider 2>&1 | tail -5 | tee "$OUT/tier/unit_tests_gpu_node.txt"
 
@@ -51,8 +57,10 @@ PYTHONPATH=$WS $PY "$WS/scratch/step7/rocket-landing/nvdiff_identity.py" --phase
 rm -f "$OUT"/nvdiff_identity/baseline_*.npz "$OUT"/nvdiff_identity/branch_*.npz     # digests + compare.json stay
 
 # 1c. the locomotion visual cells' own declared-fidelity test on the branch (asserts their thresholds)
+if [ "$EGL_OK" = 1 ]; then
 PYTHONPATH=$WS $PY -m pytest tests/gpu/test_conformance.py -q -p no:cacheprovider \
   -k "visual_tier and Mujoco" 2>&1 | tail -8 | tee "$OUT/nvdiff_identity/locomotion_visual_tier_tests.txt"
+fi
 
 # 2. PFRocketLanding: corpus replay, mandatory checks, throughput, visual fidelity vs PyFlyt
 PYTHONPATH=$WS $PY "$WS/scratch/step7/rocket-landing/measure_tier.py" --draws 4 --n 64 2>&1 | tail -40

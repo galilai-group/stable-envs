@@ -28,9 +28,15 @@ uv pip install --python "$VENV/bin/python" \
    "torch==2.14.0+cu126" \
    "mujoco==3.12.0" "gymnasium[mujoco]" numpy scipy Pillow imageio pytest ninja \
    PyFlyt pybullet cvxpy stable-worldmodel opencv-python-headless trimesh || exit 1
-# nvdiffrast is not on PyPI; the locomotion visual tier was measured with 0.4.0
-uv pip install --python "$VENV/bin/python" "git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0" \
-  || uv pip install --python "$VENV/bin/python" "git+https://github.com/NVlabs/nvdiffrast.git" || exit 1
+# nvdiffrast is not on PyPI; the locomotion visual tier was measured with 0.4.0. Its setup.py compiles
+# the CUDA extension AT INSTALL TIME against the installed torch: nvcc from the cuda module (a CPU node
+# compiles fine), --no-build-isolation so torch is visible to the build, and the target architectures
+# pinned because no GPU is present to ask (3090 = sm_86; a40/a6000 8.6, a5000 8.6, l40s 8.9, a100 8.0).
+module load cuda/12.9.0 || { echo "no cuda module"; exit 1; }
+export TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9" CUDA_HOME=$(dirname "$(dirname "$(which nvcc)")")
+nvcc --version | tail -1
+uv pip install --python "$VENV/bin/python" --no-build-isolation "git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0" \
+  || uv pip install --python "$VENV/bin/python" --no-build-isolation "git+https://github.com/NVlabs/nvdiffrast.git" || exit 1
 cd "$SCR/se7/rocket-landing"
 PYTHONPATH=$SCR/se7/rocket-landing MUJOCO_GL=egl "$VENV/bin/python" - <<'PY'
 import importlib.metadata as md, torch
@@ -39,11 +45,11 @@ for k in ("torch", "mujoco", "gymnasium", "PyFlyt", "pybullet", "cvxpy", "stable
         print(f"{k:20s} {md.version(k)}")
     except Exception as e:
         print(f"{k:20s} MISSING {e}")
-import nvdiffrast  # the python package; the CUDA plugin compiles on the GPU job
+import nvdiffrast, nvdiffrast.torch as dr  # the extension was compiled at install time
 import stable_envs as se, stable_envs.envs as E
 print("rocket_landing import error:", E.import_errors().get("rocket_landing", "none"))
 from stable_envs.envs import rocket_landing as RL
-print("missing_backend on a CPU node (expected: nvdiffrast RasterizeCudaContext needs CUDA at import? no -> None):", RL.missing_backend())
+print("missing_backend:", RL.missing_backend())
 v, n, f, vg, uv = RL.build_scene_arrays(); print("scene", len(v), "verts", len(f), "tris")
 import gymnasium, stable_worldmodel  # noqa
 print("swm registered:", "swm/PFRocketLanding-v0" in gymnasium.registry)
