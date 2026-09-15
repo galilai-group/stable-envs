@@ -25,11 +25,20 @@ if [ -d "$VENV" ]; then echo "exists: $VENV"; else
   uv venv --python 3.12 "$VENV"
 fi
 uv pip install --python "$VENV/bin/python" \
-  "jax[cpu]==0.11.1" "craftax==1.6.1" "torch==2.14.0" "numpy==2.5.3" \
-  gymnasium pytest imageio
+  "jax[cpu]==0.11.1" "craftax==1.6.1" "numpy==2.5.3" gymnasium pytest imageio
+# torch from the cu126 wheel index, NOT from PyPI. PyPI's torch 2.14.0 is the +cu130 build, and
+# Oscar's 3090 nodes run a CUDA 12.9 driver (12090): the default wheel imports fine on a CPU node
+# and dies with "the NVIDIA driver on your system is too old" the moment it touches the card, which
+# is how job 6394648 failed in 14 seconds after successfully printing the GPU's name. cu126 is the
+# build every Step-6 venv already carries on this cluster, so this matches rather than invents.
+uv pip install --python "$VENV/bin/python" --index-url https://download.pytorch.org/whl/cu126 \
+  "torch==2.14.0"
 "$VENV/bin/python" - <<'PY'
 import jax, craftax, torch, numpy
 print("jax", jax.__version__, "partitionable", bool(jax.config.jax_threefry_partitionable))
 print("craftax", craftax.__version__ if hasattr(craftax, "__version__") else "?",
-      "torch", torch.__version__, "numpy", numpy.__version__)
+      "torch", torch.__version__, "cuda", torch.version.cuda, "numpy", numpy.__version__)
+assert torch.version.cuda and torch.version.cuda.startswith("12.6"), (
+    f"torch is built for CUDA {torch.version.cuda}; Oscar's 3090 driver is 12.9 and will refuse "
+    f"anything newer. Install the cu126 wheel.")
 PY
