@@ -23,8 +23,11 @@ better than it is.** Spread alone cannot see that, since contention that is stea
      like contention (and was diagnosed as such) until this gate compared it with the known answer.
      A leg that re-measures a known tree has a known answer, and checking it is how a wrong baseline
      is caught rather than reported.
-  3. **load** -- loadavg per allocated cpu under 1.5. Catches the cause directly, and is the one a
-     reader can check against the log without re-deriving anything.
+  3. **load** -- loadavg per NODE core under 1.5. Per node core because ``/proc/loadavg`` is a
+     whole-machine number; dividing it by the allocation's cpu count overstates it by one to two
+     orders of magnitude, which is how job 6395527 came to be quarantined on a node that was fine.
+     It is the gate a reader can check against the log without re-deriving anything, and it is the
+     weakest of the three: gate 2 is the one that knows what the answer should be.
 
 A number that fails any of them is reported as QUARANTINED, not as a tier.
 """
@@ -43,9 +46,22 @@ SPREAD_MAX = 1.25
 #: node that cannot reproduce it to within this factor is not measuring the renderer.
 BASELINE_KNOWN_FPS = 115166.0
 BASELINE_FLOOR_FRAC = 0.25
-#: Load average per allocated CPU above which the node is oversubscribed. A batch allocation of 4
-#: cpus on a node at loadavg 15 is not four cores.
-LOAD_PER_CPU_MAX = 1.5
+#: Load average per **node** core above which the node is oversubscribed. Per NODE core, not per
+#: allocated cpu: ``/proc/loadavg`` is a whole-machine number and an Oscar batch node has 48-192
+#: cores, so dividing it by ``--cpus-per-task`` overstates the load by one to two orders of
+#: magnitude. Job 6395527 was quarantined by exactly that mistake -- loadavg 166 on a 192-core node
+#: is 0.86 per core, and the baseline leg reproduced its known throughput to 1.44x with a 1.004
+#: spread, which is what a healthy node looks like.
+LOAD_PER_CORE_MAX = 1.5
+
+
+def _node_cores() -> int:
+    """The NODE's online core count. ``os.cpu_count()`` is right here and ``sched_getaffinity`` is
+    not: the latter reports the cgroup allocation, which is the number that must NOT be used."""
+    try:
+        return int(os.sysconf("SC_NPROCESSORS_ONLN"))
+    except (ValueError, OSError):
+        return int(os.cpu_count() or 1)
 
 
 def load(pat):
@@ -72,10 +88,15 @@ def cell(rec):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", required=True)
+    ap.add_argument("--nproc", type=int, default=0,
+                    help="node core count; only needed when re-judging a finished job off-node")
+    ap.add_argument("--loadavg", type=float, default=0.0,
+                    help="1-minute loadavg from the job log; only for re-judging off-node")
     a = ap.parse_args()
     recs = {k: load(f"bench_step3_cpu_{k}_{a.host}.json") for k in ("baseA", "branch", "baseB")}
     out = {"host": a.host, "spread_max": SPREAD_MAX,
-           "loadavg_at_verdict": list(os.getloadavg())}
+           "loadavg_at_verdict": ([a.loadavg] * 3 if a.loadavg else list(os.getloadavg())),
+           "loadavg_source": "job log" if a.loadavg else "this process"}
     cells = {k: (cell(v) if v else None) for k, v in recs.items()}
     out["cells"] = {k: (None if c is None else {"batch": c[0], "fps": c[1]})
                     for k, c in cells.items()}
@@ -87,12 +108,13 @@ def main():
         spread = max(a_, b_) / min(a_, b_)
         base_mean = (a_ + b_) / 2
         load1 = out["loadavg_at_verdict"][0]
-        cpus = int(os.environ.get("SLURM_CPUS_PER_TASK") or os.cpu_count() or 1)
-        load_per_cpu = load1 / max(cpus, 1)
+        cores = a.nproc or _node_cores()
+        load_per_core = load1 / max(cores, 1)
         out.update(baseline_spread=round(spread, 4), baseline_mean_fps=round(base_mean),
                    baseline_known_fps=BASELINE_KNOWN_FPS,
                    baseline_frac_of_known=round(base_mean / BASELINE_KNOWN_FPS, 4),
-                   cpus_allocated=cpus, load_per_cpu=round(load_per_cpu, 2),
+                   node_cores=cores, load_per_core=round(load_per_core, 2),
+                   cpus_allocated=int(os.environ.get("SLURM_CPUS_PER_TASK") or 0) or None,
                    ratio_branch_over_baseline=round(cells["branch"][1] / base_mean, 4))
         fail = []
         if spread > SPREAD_MAX:
@@ -103,17 +125,17 @@ def main():
                         f"{BASELINE_KNOWN_FPS:,.0f} f/s on this cluster and got {base_mean:,.0f} "
                         f"({base_mean / BASELINE_KNOWN_FPS:.3f}x): the node is not measuring the "
                         f"renderer, and a ratio taken under that contention is biased towards 1")
-        if load_per_cpu > LOAD_PER_CPU_MAX:
-            fail.append(f"loadavg {load1:.2f} over {cpus} allocated cpus is {load_per_cpu:.2f} per "
-                        f"cpu (> {LOAD_PER_CPU_MAX}): the allocation is oversubscribed")
+        if load_per_core > LOAD_PER_CORE_MAX:
+            fail.append(f"loadavg {load1:.2f} over {cores} node cores is {load_per_core:.2f} per "
+                        f"core (> {LOAD_PER_CORE_MAX}): the node is oversubscribed")
         out["verdict"] = "QUARANTINED" if fail else "USABLE"
         out["why"] = ("; ".join(fail) if fail else
                       f"baseline legs agree to {spread:.3f}x, the baseline reproduces its known "
                       f"{BASELINE_KNOWN_FPS:,.0f} f/s to {base_mean / BASELINE_KNOWN_FPS:.2f}x, and "
-                      f"loadavg is {load_per_cpu:.2f} per allocated cpu")
+                      f"loadavg is {load_per_core:.2f} per node core")
         out["gates"] = {"spread": spread <= SPREAD_MAX,
                         "baseline_floor": base_mean >= BASELINE_KNOWN_FPS * BASELINE_FLOOR_FRAC,
-                        "load": load_per_cpu <= LOAD_PER_CPU_MAX}
+                        "load": load_per_core <= LOAD_PER_CORE_MAX}
     p = os.path.join(OUT, f"paired_verdict_{a.host}.json")
     with open(p, "w") as f:
         json.dump(out, f, indent=1)

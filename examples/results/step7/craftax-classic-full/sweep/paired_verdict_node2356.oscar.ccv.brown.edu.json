@@ -1,0 +1,39 @@
+{
+ "host": "node2356.oscar.ccv.brown.edu",
+ "spread_max": 1.25,
+ "loadavg_at_verdict": [
+  166.05,
+  166.05,
+  166.05
+ ],
+ "loadavg_source": "job log",
+ "cells": {
+  "baseA": {
+   "batch": 1024,
+   "fps": 165922.14429445128
+  },
+  "branch": {
+   "batch": 64,
+   "fps": 1150.6231937196392
+  },
+  "baseB": {
+   "batch": 1024,
+   "fps": 165180.62678977588
+  }
+ },
+ "baseline_spread": 1.0045,
+ "baseline_mean_fps": 165551,
+ "baseline_known_fps": 115166.0,
+ "baseline_frac_of_known": 1.4375,
+ "node_cores": 192,
+ "load_per_core": 0.86,
+ "cpus_allocated": null,
+ "ratio_branch_over_baseline": 0.007,
+ "verdict": "USABLE",
+ "why": "baseline legs agree to 1.004x, the baseline reproduces its known 115,166 f/s to 1.44x, and loadavg is 0.86 per node core",
+ "gates": {
+  "spread": true,
+  "baseline_floor": true,
+  "load": true
+ }
+}
