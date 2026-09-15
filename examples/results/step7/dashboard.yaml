@@ -331,7 +331,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: M1-M3 committed locally (477c36c); Oscar venv 6395008 + GPU job 6395009 (fidelity, tier, nvdiff-user identity) in flight; reviewer after GPU numbers
+  status: phase 1 PATCH_CANDIDATE at 6e50f34; independent review running on the code; GPU job 6395009 (afterok venv 6395008) supplies fidelity, tier, six-cell nvdiff identity; M4 commit after
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -359,7 +359,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 477c36c (M1 4bb93a4, M2 83db3cc, M3 309c371, scripts 477c36c)
+  head_sha: 6e50f34 (phase 1 M1-M3 + scripts + citation fixes)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -368,13 +368,23 @@ workstreams:
     - tests/unit/test_rocket_landing.py (14)
     - examples/results/step7/rocket-landing/{findings.md, reference/, phase0/}
     - scratch/step7/rocket-landing/*
-    tests_local: nvdiff files 29/29; rocket 13 passed 1 skipped (pybullet_data); tests/unit 805 passed 36 skipped, 2 pre-existing baseline failures (render_mjwarp --help, dead scratch citations)
+    tests_local: tests/unit 820 passed 37 skipped 2 pre-existing baseline failures
     cpu_feasibility_ruling1: 'naive single-thread torch rasteriser, 486 tris at 480 px: 1.92 f/s (521 ms) = 0.056x official 34.25 f/s (bar >= 171) and 0.0016 cores (bar >= 1,191): both bars missed by 2-3
       orders; CPU coverage declared missing, device=''cpu'' raises honestly'
     local_preview_vs_frozen_corpus: 'third-rasteriser pipeline preview: 95.15% bit-exact, mean 5.9/255, within-8 95.6%, SSIM 0.86; residual is silhouette/aliasing (sub-pixel far-ground checker)'
     cluster: 'venv 6395008 (nvdiffrast built with cuda/12.9.0, no-build-isolation, arch 8.0;8.6;8.9); GPU 6395009 afterok: nvdiff unit tests, byte-identity of the six locomotion nvdiff cells baseline-vs-branch
       on one card, measure_tier.py (4x64 visual fidelity vs PyFlyt, under-variation, corpus replay, mandatory checks, throughput 1/16/64/256), conformance for PFRocketLanding; visual_fidelity declaration
       UNMEASURED until then'
+    classification: PATCH_CANDIDATE
+    m1: 200 states from 24 stepped rollouts, lagged frames; cached link-0 pose = (pos - v dt, exp(-w dt) q) to 1.8e-15 m / 5.6e-16; arbitrary-state reference recipe (previous-substep teleport + one gravity-off
+      substep, velocity fixed-point) 199/200 byte-identical, 1 off by 1 px
+    m2: four generic nvdiff extensions off by default; shading tests pinned to measured TinyRenderer pixels incl. 162/158 on faces turned from the light (clamped law predicts 153; recorded)
+    m3: PFRocketLanding 480 px, state obs[:13], style 5 RGB + flame bit by path, sky_color not offered, cpu raises; scene 382 verts / 486 tris; silhouette IoU 0.995 vs TinyRenderer; camera vs computeViewMatrix
+      4.4e-4 over 200 attitudes; visual_fidelity UNMEASURED with reference_versions PyFlyt 0.29.0 / pybullet 3.2.7
+    reviewer: independent reviewer (opus family) spawned 2026-09-15 on 6e50f34, read-only
+  rulings:
+  - no AI trailers (project rule wins over harness reminder)
+  - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -426,6 +436,8 @@ incident_log:
   item: 'NODE-2: gpu2104 EGL context errors in the official MuJoCo renderer (torch/cuda fine); added to the exclude list for EGL work (gpu2108,gpu2113,gpu2110,gpu2116,gpu2104); W3/W5/W6 informed'
 - date: '2026-09-15'
   item: W6 M1-M3 landed locally (477c36c); CPU feasibility number reported and stopped; Oscar GPU job pending
+- date: '2026-09-15'
+  item: W6 phase 1 PATCH_CANDIDATE (6e50f34); reviewer spawned; CPU triangle backend deferred
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -442,3 +454,7 @@ escalations:
   question: certify per band (daylight vs lit) and declare both, or a single mixed-corpus number that hides a ~100x split whose cause is the reference's per-pixel float post-process
   recommendation: per band, both declared
   resolved: 2026-09-15 by Sami (see decisions)
+deferred_work:
+- item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
+  evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
+  status: deferred to Step 8 by coordinator ruling 2026-09-15; not a Step-7 blocker (cell declares CPU missing, honest raise)
