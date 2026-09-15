@@ -277,7 +277,40 @@ Checked precondition by precondition against what `stable_envs/envs/fetch.py` do
 | MJWarp never reads alpha | 4 marker geoms hidden, declared as a 1.2–1.5 % `parity_note` | **1 geom (Cube)**: `target_object_0` at alpha 0.2, owning **0.61 %** of pixels; **3 geoms (Scene)**: + two window-glass meshes at 0.1, **0.15 %** total | ⚠️ same shape, **smaller**, but the Cube marker IS the goal |
 | MJWarp truncates where GL rounds | `gl_rounding` moved interior 0.791 → 0.9988 | same correction applies unchanged | ✅ reuse |
 | shadows | Fetch's one light is `castshadow=false` | **`global` is `castshadow=1`** and the mover shadow is **4.4 % / 8.6 %** of the frame | ⚠️ needed, but MJWarp has `use_shadows` and `cpu3d` M1 already transcribed the law |
-| `BATCH_SCALES` | **7.6–11.7x, FAIL** at 480 px; **26–99x, PASS** at ≤240 px | renders at **224 px / 200 px** — inside the passing regime | **the Fetch blocker probably does not transfer; queued** |
+| `BATCH_SCALES` | **7.6–11.7x, FAIL** at 480 px; **26–99x, PASS** at ≤240 px | **2.89x MEASURED** on a 3090 at 224 px (job 6395461) | ❌ **FAIL, and worse than Fetch** — see below |
+
+**`BATCH_SCALES`, measured, and why the resolution argument was wrong.** `OGBCube` through the
+existing `MJ.BatchRenderer` on an RTX 3090, registered 224 px, registered `front_pixels` camera,
+CUDA graph captured, median of 7:
+
+| B | ms/render | f/s | peak VRAM |
+|---:|---:|---:|---:|
+| 1 | 0.455 | **2,198** | 0 MiB |
+| 16 | 2.83 | 5,657 | 2 MiB |
+| 64 | 10.29 | 6,217 | 9 MiB |
+| 256 | 40.48 | 6,324 | 36 MiB |
+| 1024 | 161.21 | **6,352** | 148 MiB |
+
+**`BATCH_SCALES` = 6,352 / 2,198 = 2.89x** against a required 20x. The reasoning this file carried
+before the job landed — that Fetch's failure was a 480 px effect and these smaller frames sit in the
+regime where the same scene scored 26–99x — is **refuted by the measurement**. The mechanism is the
+opposite of the one assumed: `BATCH_SCALES` is large only when `fps(1)` is *bad*, and here it is
+already **2,198 f/s** because 224 px of a 6.1x-denser BVH is still cheap per frame. Throughput is
+within 2 % of its ceiling by **B = 64** and within 0.5 % by B = 256, so there is nothing left for
+batching to amortise. VRAM is not the constraint (148 MiB at B=1024), which also means no larger
+batch rescues the ratio.
+
+**Raw fidelity is far from parity and is the real phase-1 question.** With only `gl_rounding`
+applied — no plate bake, no per-env correction, the whole scene through the megakernel — against
+MuJoCo's own EGL frames at 16 matched states: **`interior_exact` 0.0092**, `all_exact` 0.034,
+`all_within8` 0.546, mean |Δ| **10.4/255**, `interior_frac` 0.414. Fetch's uncorrected number was
+0.791 interior and its corrected one 0.9988, so this is two orders of magnitude further away and is
+not explained by any of the four known Fetch corrections (`texture_gaps` is empty, there is no
+material/rgba conflict on `OGBCube`, there are no visible sites, and the one translucent geom owns
+0.62 % of pixels). The likely candidates — the `castshadow` directional light, the spot light's
+cutoff/exponent, and the headlight that owns 98.7 % of pixels — are exactly the terms `cpu3d`'s M1
+had to transcribe for the DM Control trackcom cells, and none of them is in the Fetch scene. **Phase
+1 must start here, not at performance.**
 
 **Quantified geometry.** Median projected triangle edge at the registered resolution through the
 registered camera: **0.713 px (Cube)**, **0.723 px (Scene)**; 61.8 % / 61.7 % of triangles are under
