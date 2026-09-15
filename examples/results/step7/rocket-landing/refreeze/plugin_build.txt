@@ -1,0 +1,1 @@
+nvdiffrast ok NVIDIA GeForce RTX 3090 devices 1

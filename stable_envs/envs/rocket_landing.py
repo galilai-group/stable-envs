@@ -547,7 +547,7 @@ class PFRocketLanding(StableEnv):
     scene from the same state: the same 13 primitives, the same rocket-mounted camera one substep behind
     the body, the same one-light TinyRenderer law, the same nearest-sampled checker ground. The
     residual is silhouettes, checker edges and the far ground where tiles are sub-pixel, and the
-    triangulation of the cylinders' caps. See ``visual_fidelity`` (provisional until the 3090 run) and
+    triangulation of the cylinders' caps. See ``visual_fidelity`` (measured, job 6410105) and
     the module docstring for what was measured.
 
     Suitable for generating training frames live. NOT a substitute for a stored dataset when a policy
@@ -565,19 +565,42 @@ class PFRocketLanding(StableEnv):
     fidelity_tier = "visual"
     parity_interior_min = None
     parity_note = ""
-    #: PROVISIONAL and UNMEASURED: the Phase-0 estimate (``findings.md``), carried so the declaration is
-    #: complete and the suite has something to assert on the certification card. The measured values and
-    #: their thresholds are written by ``scratch/step7/rocket-landing/measure_tier.py`` on a 3090 and copied
-    #: here by hand; until then ``measured_at`` says so and nothing here is a claim.
+    #: MEASURED on an RTX 3090, worst of four independent 64-state draws, and copied here BY HAND from
+    #: ``examples/results/step7/rocket-landing/tier/job6410105/gpu2106.json``: a threshold a script
+    #: writes into the file it then tests is not a threshold.
+    #:
+    #: The three headline numbers are the worst draw's. The three thresholds are the DMC family's
+    #: margin convention applied to that worst draw -- ceiling ~1.3x, floors ~0.93-0.95x, rounded to
+    #: round numbers -- and not values chosen to clear it; ``scratch/step7/rocket-landing/fill_declaration.py``
+    #: computes them from the JSON and prints exactly 10.0 / 0.91 / 0.80
+    #: (``tier/job6410105/declaration_block.json``). The same numbers came out of two jobs on two
+    #: different 3090s (6408817/gpu2109 and 6410105/gpu2106) to every digit printed here.
+    #:
+    #: ``reference_unreachable_share`` is the honest part of the measurement: ``reference_render``
+    #: cannot produce the LAGGED official picture for a state in the contact band (see
+    #: ``_reference_frame_flagged`` and ``REFERENCE_UNREACHABLE_SHARE``), so those rows are flagged and
+    #: excluded, and the share they were measured at is declared beside the numbers rather than left
+    #: for a reader to discover. It is 1 state in 960 of this env's own ``sample_states`` distribution,
+    #: and none of the four certification draws drew one.
     visual_fidelity = {
-        "mean_abs": None, "within8_frac": None, "ssim": None,
-        "mean_abs_max": None, "within8_min": None, "ssim_min": None,
-        "measured_at": ("UNMEASURED: no number here is a measurement. The keys are present so the declaration "
-                        "is complete and the values are None so nothing can read them as one. To be measured at "
-                        "480 px, supersample 1, against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of "
-                        "swm/PFRocketLanding-v0, as the worst of four 64-state draws on an RTX 3090 "
-                        "(scratch/step7/rocket-landing/oscar_gpu.sbatch, measure_tier.py) and copied here by hand"),
+        "mean_abs": 7.71, "within8_frac": 0.961, "ssim": 0.854,
+        "exact_frac": 0.959, "interior_exact_frac": 0.967,
+        "draw_spread": {"mean_abs": [7.482, 7.709], "within8_frac": [0.961, 0.962],
+                        "ssim": [0.854, 0.868]},
+        "under_variation": {"mean_abs": 7.646, "within8_frac": 0.958, "ssim": 0.896,
+                            "exact_frac": 0.903},
+        "reference_unreachable_share": REFERENCE_UNREACHABLE_SHARE,
+        "reference_unreachable_rows_in_draws": 0,
+        "mean_abs_max": 10.0, "within8_min": 0.91, "ssim_min": 0.80,
+        "measured_at": ("480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
+                        "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
+                        "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 "
+                        "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
+                        "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
+                        "(scratch/step7/rocket-landing/measure_tier.py, "
+                        "examples/results/step7/rocket-landing/tier/job6410105/)"),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
+        "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
     }
     visual_note = ("A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
                    "Residual: silhouette pixels (different edge rules and float paths), checker-tile edges "

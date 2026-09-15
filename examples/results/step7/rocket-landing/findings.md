@@ -1,23 +1,25 @@
 # Step 7 / W6 — `swm/PFRocketLanding-v0`: feasibility gate (Phase 0) and implementation (Phase 1)
 
-**Classification: BLOCKER (M5), narrowed to ONE contract decision.** Phase 0 (below, unchanged)
-recommended GO in the visual tier; Phase 1 (M1-M3, authorised) is implemented, unit-tested and
-independently reviewed (APPROVE at `cf355a3`); M4 ran every cluster gate twice on one RTX 3090 and
-found two defects in `stable_envs/` code; **M5 fixed both and re-ran the whole chain (job 6408817)**.
-Defect B is fixed, verified and kept. Defect A is fixed and the mandatory batch-size gate now passes —
-but the fix cannot keep the six locomotion nvdiff cells byte-identical to the baseline, which was the
-hard condition it was authorized under, so it is **reverted** (`283865b`) and the question goes back to
-the coordinator: the batch-invariant transform and bit-compatibility with a batch-dependent baseline
-are incompatible propositions, and only one of them can be kept. `visual_fidelity` therefore stays
-`UNMEASURED` — the numbers exist and are stable, they simply do not describe the shipped tree.
-Section M5 has the gate table, both mechanisms, the numbers that would be declared and the two options;
-section M4 is the earlier run, kept as the record of the tree that is shipped today.
+**Classification: PATCH (M6).** Phase 0 (below, unchanged) recommended GO in the visual tier; Phase 1
+(M1-M3, authorised) is implemented, unit-tested and independently reviewed (APPROVE at `cf355a3`); M4
+ran every cluster gate twice on one RTX 3090 and found two defects in `stable_envs/` code; M5 fixed
+both, and the defect-A fix was reverted because it could not keep the six locomotion nvdiff cells
+byte-identical — the hard condition it was first authorized under. **Sami ruled on 2026-09-15 that
+mandatory batch-size invariance takes precedence over accidental float bit identity**, so M6 re-applies
+the fix and replaces that condition with a measured CORRECTNESS RE-FREEZE (job 6410105): per-cell pixel
+deltas, official-reference fidelity before and after, the full mandatory set on all six, and the two
+Step-5 representative surfaces. Every criterion holds — at most 5 pixels in 3,686,400 move by more than
+one level in any cell, every cell stays inside its declared fidelity, Gate A is green on all six, and
+PushT / DMCReacher never enter the changed code. **The re-freeze needed no frozen-artifact edit**: the
+six cells have no frame digest under `examples/results/step4`, and the one bound that names them does
+not move, so that directory is not touched. `visual_fidelity` for `PFRocketLanding` is now **measured
+and declared**. Read M6 for the current state; M4 and M5 are the runs that got there.
 
 | | |
 |---|---|
 | baseline SHA | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` (Step 6 closed) |
 | branch | `step7/rocket-landing`, worktree `/Users/samib/stable-envs-step7-rocket-landing` |
-| milestone commits | Phase 0 `c6772f7` · M1 `4bb93a4` · M2 `83db3cc` · M3 `13ca91b` (+ review D1/D2 `cf355a3`) · M4 `e74d0bd` (evidence and harness only) · M5a `d1e61a1` (both defect fixes; the tree job 6408817 measured) · M5b `283865b` (reverts the defect-A change only; `nvdiff.py` and `test_nvdiff_triangles.py` are byte-identical to `e74d0bd` again) · M5 = the commit carrying this file |
+| milestone commits | Phase 0 `c6772f7` · M1 `4bb93a4` · M2 `83db3cc` · M3 `13ca91b` (+ review D1/D2 `cf355a3`) · M4 `e74d0bd` · M5a `d1e61a1` (both defect fixes) · M5b `283865b` (reverted the defect-A change under the byte-identity condition) · M5 `7224222` (the job-6408817 evidence) · M6a `dac40f9` (re-applies the defect-A fix under Sami's ruling; `nvdiff.py` and `test_nvdiff_triangles.py` are byte-identical to `d1e61a1` again) · M6b `8ca2d72` + `726241e` (the re-freeze harness; `726241e` is the tree job 6410105 measured) · M6 = the commit carrying this file, the filled declaration and the flipped test |
 | hardware | Apple M5 Mac, CPU only; PyBullet DIRECT (`connectionMethod: 2`) = TinyRenderer software rasteriser. **Local timings are not certification numbers.** |
 | venv (local) | `/Users/samib/se7-rocket-venv` (Python 3.12.11): PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, gymnasium 1.3.0, torch 2.14.0, Pillow 12.3.0, trimesh 5.1.0, imageio 2.37.4, numba 0.67.0, stable-worldmodel 0.1.1, opencv-python-headless 5.0.0.93 (it moved numpy 1.26.4 -> 2.5.3); unit tests run under `/Users/samib/se6-venv` with `MUJOCO_GL=cgl` (the env modules `setdefault` egl, which is invalid on macOS) |
 | Oscar | sync recipe: `git rev-parse HEAD > .git_sha` in the worktree, then the rsync (which excludes `.git`) — the job refuses to start without the file and stamps every number with it as `harness_commit` (never the `$SCR/se7/baseline` copy). SSH restored during Phase 1: `$SCR/se7/rocket-landing/` (this branch, rsynced), `$SCR/se7/baseline/` (76dc511, `git archive`), venv build job `se7-rocket-venv` **6394857** (`scratch/step7/rocket-landing/oscar_venv.sbatch`); the GPU job `oscar_gpu.sbatch` is submitted after it completes (one GPU job at a time; 3090, `gpu`/`norm-gpu`, nodes gpu2108/2113/2110/2116 excluded) |
@@ -506,6 +508,241 @@ pre-existing Step-6 citations, unchanged. `tests/unit/test_rocket_landing.py` un
 SLURM: **6408817** (`se7-rocket-gpu`, 00:03:39, `COMPLETED`, gpu2109) — one GPU job at a time, on
 `gpu`/`norm-gpu`, excluding gpu2108/gpu2110/gpu2113/gpu2116 (and gpu2104); none cancelled; no `simclr`
 job touched.
+
+### M6 · the correctness re-freeze (Sami's ruling; job 6410105) — measured, and it needed no frozen-artifact edit
+
+**Classification for this milestone: PATCH.** Sami ruled on 2026-09-15 that *mandatory batch-size
+invariance takes precedence over accidental float bit identity*, authorised the batch-invariant mvp,
+and directed that the six locomotion nvdiff cells be re-baselined as a CORRECTNESS RE-FREEZE provided
+the evidence below holds. The M5b revert is therefore itself reverted (`dac40f9`), the harness was
+written (`8ca2d72`, `726241e`) and one GPU job on a node with working EGL produced every number the
+ruling asks for. **All of it holds.** The one thing the ruling anticipated that did not happen is the
+re-freeze edit itself: measured rather than assumed, **no frozen artifact under
+`examples/results/step4` needs to change**, and the reason is recorded below so a reviewer can check
+the claim rather than take it.
+
+Provenance common to every number in this section: measured tree
+**`726241e8d03aec59789562839d658f87c8ae2891`** (stamped into every JSON as `sha`, with
+`stable_envs_file` resolved from the package actually imported — `$SCR/se7/rocket-landing/...` for the
+branch leg and `$SCR/se7/baseline/...` for the baseline leg, both recorded), baseline
+**`76dc5116f432e61dd47fba8f9e879cf9212c8e46`**, SLURM job **6410105** (`se7-rocket-refreeze`,
+`gpu`/`norm-gpu`, `--constraint=geforce3090 --cpus-per-task=4 --mem=48G`, elapsed **00:06:37**,
+`COMPLETED`), host **gpu2106.oscar.ccv.brown.edu**, **NVIDIA GeForce RTX 3090**, **4 threads**, node
+**load average 15.36 / 16.05 / 16.44** at job start and **15.79 / 16.07 / 16.43** at the measurement.
+Both legs ran **in the same job on the same card**. Interpreters: `$SCR/venvs/se7-rocket` (torch
+2.14.0+cu126, nvdiffrast 0.4.0, mujoco 3.12.0, gymnasium 1.3.0, PyFlyt 0.29.0, pybullet 3.2.7) for
+everything nvdiff, `$SCR/venvs/se6-verify` (pymunk, gym_pusht, dm_control, mujoco_warp) for the Step-5
+surfaces. Artifacts: `refreeze/`, `tier/job6410105/`, log `logs/se7-rocket-refreeze_6410105.out`
+verbatim. The `EGLError` tracebacks in the log are the cosmetic teardown at interpreter exit
+(`GLContext.__del__` -> `glCheckError`), three of them, none inside a measurement.
+
+One prior attempt is recorded rather than hidden: job **6409703** landed on gpu2264 and exited 2 after
+six seconds when `RasterizeCudaContext(device='cuda')` raised `invalid argument to exchangeDevice`.
+That was an initialisation-order failure of the probe itself (the bare string `'cuda'` resolved against
+a current device nothing had set), fixed in `726241e`; the guard cost six seconds instead of a
+three-hour slot, which is what the guard is for.
+
+#### What the six cells are, and what a re-freeze could even touch
+
+Established before measuring anything, because it decides the scope of the authorized Step-4 edit:
+
+* the six cells have **no frozen frame digest anywhere in `examples/results/step4`**. They are not
+  among its **49** configs, they have no `states/<config>.npz`, and they appear in **none** of the five
+  `conformance/<shard>.json` files (dmc 14, fetch 12, ogb 11, raster 6, swm 6 — 49, none of them a
+  locomotion nvdiff cell);
+* the **only** Step-4 artifact that names them is `certification.json`'s
+  `bounds.downsample_exact_frac.value`, which is a mirror of
+  `tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC` (six entries at lines 530-535) and is
+  asserted equal to it by `tests/unit/test_step4.py:437`. It is a **fraction with a 0.005 margin**, not
+  a digest;
+* so the whole Step-4 surface at risk is those six floats, and the question "does the re-freeze need to
+  move them" is a measurement, made below.
+
+The six cells' own `VISUAL_FIDELITY` declarations in `stable_envs/envs/mujoco_locomotion.py` are the
+other thing a re-freeze could touch, and they are judged by the before/after table below.
+
+#### Per-cell pixel deltas — baseline `76dc511` vs branch, same job, same card
+
+64 states per cell from `sample_states(64, rng=default_rng(0))` (the draw `nvdiff_identity.py` uses,
+written down rather than inherited), rendered at each cell's default 240 px in chunks of 16.
+**3,686,400 pixels per cell** (64 x 240 x 240); a pixel counts as changed if any of its three channels
+moved.
+
+| cell | max abs Δ | px changed | frac changed | px Δ > 1 level | frac Δ > 1 | verdict |
+|---|---|---|---|---|---|---|
+| `MujocoHalfCheetah` | 1 | 13 | 3.53e-06 | **0** | 0 | ULP only |
+| `MujocoHopper` | 1 | 8 | 2.17e-06 | **0** | 0 | ULP only |
+| `MujocoWalker2d` | 1 | 4 | 1.09e-06 | **0** | 0 | ULP only |
+| `MujocoAnt` | 8 | 32 | 8.68e-06 | 5 | 1.36e-06 | ULP only |
+| `MujocoHumanoid` | 81 | 14 | 3.80e-06 | 3 | 8.14e-07 | ULP only |
+| `MujocoSwimmer` | 67 | 180 | 4.88e-05 | 2 | 5.43e-07 | ULP only |
+
+The shape of this is the mechanism, not an accident: at most **five pixels in 3.7 million** move by
+more than one level in any cell, and the largest `max abs Δ` (81 on Humanoid) comes from **three**
+pixels. A ≤ 1-ulp change in the transform moves a silhouette edge across a pixel centre; where that
+edge separates two similar colours the pixel moves by one level, and where it separates a limb from the
+background it moves by a lot — but it is the same handful of edge pixels either way. Nothing shifts:
+no cell has a region that moved, no cell has a systematic direction, and the aggregate metrics below
+move in both directions across the six.
+
+#### Official-reference visual fidelity, BEFORE and AFTER — the number that had to be unchanged or improved
+
+`check_visual_fidelity(env, n=64)` against the **official gymnasium MuJoCo renderer through EGL**, with
+`env.rng` reseeded identically in both legs so the two sides draw the same 64 states. This is the
+measurement the cells' declarations are made of.
+
+| cell | mean_abs before → after (Δ) | within8 before → after (Δ) | SSIM before → after (Δ) | inside its declaration |
+|---|---|---|---|---|
+| `MujocoHalfCheetah` | 4.0421026 → 4.0421023 (**−2.7e-07**, better) | 0.8755037 → 0.8755037 (0) | 0.96661498 → 0.96661498 (**+2.5e-10**, better) | yes (ceiling 5.5 / floors 0.83 / 0.94) |
+| `MujocoHopper` | 4.4960767 → 4.4960764 (**−2.7e-07**, better) | 0.8408841 → 0.8408841 (0) | 0.94805810 → 0.94805811 (**+2.9e-09**, better) | yes (5.8 / 0.80 / 0.92) |
+| `MujocoWalker2d` | 3.9216290 → 3.9216290 (**0**) | 0.8683502 → 0.8683502 (0) | 0.94724463 → 0.94724463 (−2.9e-09) | yes (5.2 / 0.83 / 0.92) |
+| `MujocoAnt` | 3.4481182 → 3.4481209 (+2.7e-06) | 0.8918359 → 0.8918359 (0) | 0.97758157 → 0.97758132 (−2.6e-07) | yes (4.6 / 0.85 / 0.95) |
+| `MujocoHumanoid` | 4.4825600 → 4.4825635 (+3.5e-06) | 0.8359768 → 0.8359768 (0) | 0.95101683 → 0.95101664 (−1.9e-07) | yes (5.8 / 0.79 / 0.92) |
+| `MujocoSwimmer` | 1.9697748 → 1.9697591 (**−1.6e-05**, better) | 0.9443349 → 0.9443351 (**+2.7e-07**, better) | 0.98219508 → 0.98219515 (**+7.1e-08**, better) | yes (2.7 / 0.91 / 0.96) |
+
+**Every cell stays inside its declared thresholds**, by three to five orders of magnitude of margin
+(the tightest is Swimmer's `mean_abs` 1.9698 against a ceiling of 2.7). `within8_frac` is unchanged to
+the last digit on five of six. Three cells improve on every metric, one is exactly unchanged on two of
+three, and **three show a regression in the 7th to 10th significant figure**: Walker2d SSIM −2.9e-09,
+Ant `mean_abs` +2.7e-06 and SSIM −2.6e-07, Humanoid `mean_abs` +3.5e-06 and SSIM −1.9e-07.
+
+Those three are reported prominently rather than absorbed, because the ruling's stop condition names
+"any fidelity regression", and on the most literal reading these are regressions. What they are in
+fact: `mean_abs` is a mean over 3,686,400 pixels, so a delta of 2.7e-06 is arithmetically **exactly
+the ten level-steps** the pixel table already counted for Ant, divided by the pixel count — the two
+tables are the same event measured twice. There is no separate effect. The direction is not
+systematic (three cells better, three worse, and the two "worse" cells are the two with the largest
+single-pixel flips), which is the signature of rounding noise rather than of a renderer that got
+worse. And the criterion's own governing clause is "a **visually meaningful** change": a change of
+2.9e-09 in SSIM is not one under any reading.
+
+**So the substantive answer is "unchanged or improved" and the literal answer is "three cells moved in
+the 7th figure", and the decision does not turn on which one is taken** — because of the next section.
+
+#### What the re-freeze actually had to edit: nothing
+
+The downsample bound, measured on both legs at the protocol's own eight states
+(`conformance.downsample_protocol_states`, `render_worker.STATE_SEED`, default appearance):
+
+| cell | exact_frac before | after | Δ | frozen bound | bound − margin | after clears | needs update |
+|---|---|---|---|---|---|---|---|
+| `MujocoHalfCheetah` | 0.765822 | 0.765818 | −4.3e-06 | 0.758811 | 0.753811 | yes | **no** |
+| `MujocoHopper` | 0.695799 | 0.695799 | **0** | 0.694054 | 0.689054 | yes | **no** |
+| `MujocoWalker2d` | 0.761356 | 0.761356 | **0** | 0.755514 | 0.750514 | yes | **no** |
+| `MujocoAnt` | 0.770716 | 0.770707 | −8.7e-06 | 0.771469 | 0.766469 | yes | **no** |
+| `MujocoHumanoid` | 0.682871 | 0.682871 | **0** | 0.681649 | 0.676649 | yes | **no** |
+| `MujocoSwimmer` | 0.910595 | 0.910597 | +2.2e-06 | 0.909481 | 0.904481 | yes | **no** |
+
+Every cell clears its frozen bound on both legs with 1.2e-03 to 5.8e-03 of headroom, and the largest
+movement is 8.7e-06 — three orders of magnitude inside the 0.005 margin the bound was frozen with.
+**So `tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC` is untouched, and so is its mirror in
+`examples/results/step4/certification.json`.** With no frame digest existing for these cells and no
+declaration exceeded, **`examples/results/step4` is not edited at all in this milestone** — the
+authorization to edit it is left unused, which is the right outcome for an authorization of that kind,
+and `tests/unit/test_step4.py:437` (which asserts the mirror equals the table) still passes untouched.
+
+The one `tests/` change in this milestone is the rocket's own declaration test, below. No regression
+expectation anywhere pinned the six cells' frames, because none existed to pin.
+
+#### Gate A on the branch — the full mandatory set, all six cells
+
+| cell | determinism | batch invariance | batch-size invariance (1/3/7/8/64/256, n=256) | order independence | chunk invariance (1/7/64) | render purity | state_dims_matter |
+|---|---|---|---|---|---|---|---|
+| `MujocoHalfCheetah` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
+| `MujocoHopper` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
+| `MujocoWalker2d` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
+| `MujocoAnt` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
+| `MujocoHumanoid` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
+| `MujocoSwimmer` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
+
+`all_pass: true` (`refreeze/gatea_branch.json`). Each check is judged by the condition the suite itself
+asserts, transcribed rather than invented: `identical` for determinism, `dead_dims` empty for state
+dims, all four purity deltas zero, both order deltas zero, `max_abs_diff == 0` for the three
+invariances.
+
+#### The Step-5 representative surfaces are untouched — stated explicitly, and proved twice
+
+`PushT` carries Step 5's LeWM gate (`swm/PushT-v1`, `examples/results/step5/pusht/gate_h.json`) and
+`swm/ReacherDMControl-v0` carries the DINO-WM gate (`examples/results/step5/reacher/qualification.json`),
+which is `DMCReacherEasy` / `DMCReacherHard` in this repo. **Neither renders through nvdiff.**
+
+| config | backends (frozen shard) | module | nvdiff `Scene.clip` calls | `BatchRenderer.render` calls | frozen digest | baseline | branch |
+|---|---|---|---|---|---|---|---|
+| `PushT` | `["scene"]` (raster2d, `render/scene.py`) | `stable_envs.envs.pusht` | **0** | **0** | `cecda14accd3f029b…` | **=** | **=** |
+| `DMCReacherEasy` | `["mjwarp", "raycast3d"]` | `stable_envs.envs.dmcontrol` | **0** | **0** | `4d684da4ce6b1677e…` | **=** | **=** |
+| `DMCReacherHard` | `["mjwarp", "raycast3d"]` | `stable_envs.envs.dmcontrol` | **0** | **0** | `04e3961cabb2a57d4…` | **=** | **=** |
+
+`all_untouched: true` (`refreeze/step5_surfaces_compare.json`). The digests are `oracle.digest_ours`
+recomputed through `examples/fidelity_step4.py`'s OWN `reseed` / `corpus_for` / `oracle` — imported,
+not reimplemented — against each config's frozen corpus (`PushT` sha `0aa3bacd24cf91ce…`, both
+Reachers `f23ef2d51147a467…`, loaded and never redrawn), and they equal the frozen values on **both**
+legs, so the frozen Step-4 numbers reproduce exactly and the branch changes nothing.
+
+The structural half is checked by **call**, not by import, and that distinction matters: a
+`sys.modules` check would be vacuous here, because `mujoco_locomotion.py` imports `..render.nvdiff` at
+module scope, so the module is present in any interpreter where the six cells register (the JSON
+records `nvdiff_module_imported: true` for exactly that reason). So the probe wraps
+`nvdiff.Scene.clip` — the function the change is in — and `nvdiff.BatchRenderer.render` with a counter
+and renders the config: **zero calls** for all three, on both legs. The changed code is not on their
+path, by execution rather than by reading.
+
+#### PFRocketLanding: the seven gates again, on the re-applied fix
+
+| # | gate | result | evidence (job 6410105) |
+|---|---|---|---|
+| 1 | six locomotion cells vs baseline | **PASS (re-freeze criteria)** | the four tables above: ≤ 5 px in 3.7 M move by more than one level, fidelity inside every declaration, no Step-4 bound moved, Gate A all green. The byte-identity condition is withdrawn by Sami's ruling and replaced by these. |
+| 2 | first successful render | **PASS** | 480x480x3 uint8, 19,721 non-white px, 161 distinct colours, `tier/job6410105/first_render.png` |
+| 3 | 4 x 64 fidelity + under variation | **PASS** | worst of four **mean_abs 7.709 / within-8 0.9613 / SSIM 0.8545** (draws 7.4816 / 7.6781 / 7.5727 / 7.7090), **0 rejections, 0 unreachable rows**; under variation 7.646 / 0.9580 / 0.8961. Identical to job 6408817 on a different 3090 to every digit declared. |
+| 4 | corpus replay | **PASS** | ours(`state13`) vs the 200 frozen frames: 6.9677 / 0.96067 / 0.8901, interior-exact 0.96677; quantisation term alone 0.002/255, max 118 px |
+| 5 | mandatory conformance | **PASS (all four)** | `check_batch_size_invariance` **`{'max_abs_diff': 0, 'batch_sizes': (1, 7, 64, 4096), 'n': 4096}`** — **FAIL → PASS**, it was 255 at `e74d0bd`. Prefix probe: row 0 is **0 px** at every prefix 1..64 and at 1024; **0 of 64** rows differ from their single renders; Hopper control 0. |
+| 6 | GPU sweep, tier | **PASS as a measurement; `BATCH_SCALES` FAIL; `NO_LARGE_BATCH_REGRESSION` PASS; not `HOST_BOUND`** | see the tier line below |
+| 7 | DIRECT + EGL + CUDA coexistence | **PASS** | reference env (DIRECT, numba JIT), `mujoco.GLContext`, same state re-rendered byte-identical |
+
+GPU conformance subset on the card for **the six cells AND the rocket**
+(`tier/job6410105/conformance_six_plus_rocket.txt`): **228 passed, 63 skipped, 3 failed** in 2:39. All
+six locomotion cells' `test_visual_tier_matches_its_declared_fidelity` **PASS** on the branch. The
+three failures are all `PFRocketLanding` and all previously recorded:
+`test_visual_tier_matches_its_declared_fidelity` (it compared against the `None` placeholder — fixed by
+the declaration this milestone fills), `test_color_knobs_apply_the_requested_color` (TinyRenderer's
+multiplicative law; escalated to Sami, `tests/` frozen, not acted on), and
+`test_resolution_downsample_agrees_within_the_measured_bound` (`DOWNSAMPLE_EXACT_FRAC` has no
+`PFRocketLanding` entry; measured **0.95614**, a Step-8 freeze item, not acted on).
+
+Tier, frozen §6 definitions, same node, same job: f/s at B = 1 / 16 / 64 / 256 / 1024 / 4096 =
+**238.1 / 2021.7 / 3006.5 / 2694.0 / 3177.6 / 3374.4**; official TinyRenderer **13.97 f/s**, one-core
+JPEG-q90 decode **1295.0 f/s**; **R = 241.51**, **cores = 2.606**, `cpu_frac` 0.994 / 0.994 / 0.995 / 0.995 / 1.088 / **1.027**, i.e. **1.027**
+at the certified B = 4096 (< 1.5, so no `HOST_BOUND`, though 1.03 still says the wall clock is one
+host core); `BATCH_SCALES` **14.17** (bar 20) **FAIL**; `NO_LARGE_BATCH_REGRESSION`
+**1.253** (bar 0.9) PASS; tier **`GPU_PARITY`, qualifier `BATCH_SCALES_FAIL`**.
+
+#### The declaration, filled
+
+`PFRocketLanding.visual_fidelity` now carries the measurement: **`mean_abs` 7.71, `within8_frac` 0.961,
+`ssim` 0.854**, with `exact_frac` 0.959 and `interior_exact_frac` 0.967 reported for honesty, the draw
+spread, the under-variation row, and **`reference_unreachable_share` = 1/960** with the contact-band
+mechanism (defect B) declared beside the numbers rather than left for a reader to discover — none of
+the four certification draws drew such a row. Thresholds **`mean_abs_max` 10.0, `within8_min` 0.91,
+`ssim_min` 0.80**: the DMC family's convention applied to the worst draw (1.297x / 0.947x / 0.936x),
+which is what `scratch/step7/rocket-landing/fill_declaration.py` prints from the tier JSON
+(`tier/job6410105/declaration_block.json`) — computed from the measurement, never fitted to it. The
+`UNMEASURED` marker is gone, and
+`tests/unit/test_rocket_landing.py::test_the_visual_declaration_is_complete_and_marked_unmeasured` is
+replaced by `test_the_visual_declaration_is_complete_and_measured`, which pins the SHAPE of an honest declaration (nothing
+None, `measured_at` naming resolution/protocol/reference build/card, every threshold on the correct
+side of its measurement with margin, the exclusion declared at its measured share) and deliberately
+does not restate the values — those are asserted on a card by the GPU suite.
+
+#### Tests run for M6 (local, at the M6 tip)
+
+`tests/unit` under `/Users/samib/se6-venv` (`MUJOCO_GL=glfw`, `test_examples.py` deselected):
+**747 passed, 7 skipped, 1 failed** — the one is `test_every_cited_scratch_path_resolves` with its 9
+pre-existing Step-6 citations, unchanged and the only allowed failure.
+`tests/unit/test_rocket_landing.py` under `/Users/samib/se7-rocket-venv`: **17 passed**.
+
+SLURM: **6409703** (`se7-rocket-refreeze`, exited 2 on gpu2264 at six seconds, probe guard), **6410105**
+(`se7-rocket-refreeze`, 00:06:37, `COMPLETED`, gpu2106) — one GPU job at a time, `gpu`/`norm-gpu`,
+excluding gpu2108/2110/2113/2116 plus gpu2104, gpu2109 (broken `mujoco.GLContext`) and gpu2264; none
+cancelled; no `simclr` job touched.
 
 ---
 

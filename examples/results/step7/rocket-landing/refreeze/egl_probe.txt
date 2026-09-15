@@ -1,0 +1,7 @@
+egl ok
+Exception ignored in: <function GLContext.__del__ at 0x7fea91c1f240>
+Traceback (most recent call last):
+  File "$SCR/venvs/se7-rocket/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/venvs/se7-rocket/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "$SCR/venvs/se7-rocket/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

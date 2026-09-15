@@ -184,14 +184,49 @@ def test_lagged_pose_renormalises_a_float32_quaternion():
     assert np.abs(np.linalg.norm(q_prev, axis=1) - 1).max() < 1e-12
 
 
-def test_the_visual_declaration_is_complete_and_marked_unmeasured():
-    """RC-4: every required key is present, every number is None until the 3090 run, and the declaration
-    passes the registry's own check without a GPU."""
-    from stable_envs.core.env import REQUIRED_VISUAL_FIDELITY, check_fidelity_declaration, check_decoder_declaration
+def test_the_visual_declaration_is_complete_and_measured():
+    """M6: every required key is a MEASURED number, the thresholds leave the measurement real margin,
+    and the declaration passes the registry's own check without a GPU.
+
+    This replaces ``..._and_marked_unmeasured``, which pinned every value at ``None`` so that a
+    consumer reading ``describe()`` could not mistake a Phase-0 estimate for a measurement (review
+    item RC-4). The measurement arrived with job 6410105 and the placeholder is gone, so the test's
+    job changes with it: it pins the SHAPE of an honest declaration rather than the values. Nothing is
+    None; ``measured_at`` no longer says UNMEASURED and still names the resolution, the protocol, the
+    reference build and the card; each threshold sits on the correct side of its measurement WITH
+    margin rather than on top of it, because a ceiling equal to the measurement is a test that fails
+    on the next driver; and the reference bridge's contact-band exclusion is declared with the share
+    it was measured at rather than left implicit.
+
+    The values themselves are deliberately NOT asserted here. A CPU test that re-stated the numbers
+    would be the declaration checking a copy of itself. What asserts them is
+    ``tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity``, on a card,
+    against the official PyFlyt renderer.
+    """
+    from stable_envs.core.env import (REQUIRED_VISUAL_FIDELITY, check_fidelity_declaration,
+                                      check_decoder_declaration)
     vf = RL.PFRocketLanding.visual_fidelity
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
-    assert all(vf[k] is None for k in REQUIRED_VISUAL_FIDELITY if k != "measured_at")
-    assert vf["measured_at"].startswith("UNMEASURED") and "PyFlyt 0.29.0" in vf["measured_at"]
+    assert all(vf[k] is not None for k in REQUIRED_VISUAL_FIDELITY)
+    assert not vf["measured_at"].startswith("UNMEASURED")
+    for token in ("480 px", "supersample 1", "worst of 4", "PyFlyt 0.29.0", "pybullet 3.2.7",
+                  "RTX 3090", "6410105"):
+        assert token in vf["measured_at"], f"measured_at does not say {token!r}"
+    assert vf["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
+    assert set(vf["measured_with"]) == {"nvdiffrast", "torch"}
+    # the thresholds bound the measurement, and do so with margin
+    assert vf["mean_abs"] < vf["mean_abs_max"]
+    assert vf["within8_frac"] > vf["within8_min"]
+    assert vf["ssim"] > vf["ssim_min"]
+    assert vf["mean_abs_max"] >= 1.2 * vf["mean_abs"], "a ceiling sitting on the measurement is fragile"
+    assert vf["within8_min"] <= 0.97 * vf["within8_frac"]
+    assert vf["ssim_min"] <= 0.97 * vf["ssim"]
+    # the worst draw is the declared one, and the spread contains it
+    lo, hi = vf["draw_spread"]["mean_abs"]
+    assert lo <= hi and abs(vf["mean_abs"] - hi) < 0.01
+    # defect B's exclusion is declared, at the share it was measured at
+    assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0
+    assert vf["reference_unreachable_rows_in_draws"] == 0
     check_fidelity_declaration(RL.PFRocketLanding)
     check_decoder_declaration(RL.PFRocketLanding)
 
