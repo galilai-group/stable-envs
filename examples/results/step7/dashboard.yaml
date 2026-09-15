@@ -372,13 +372,13 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: MERGED into step7/integration at 0a029bd (branch HEAD fa4ac53 after review follow-up d); cluster items pending Oscar
+  status: commit (e) ad842a8 under bounded re-check; one load-gated paired-sweep retry authorized (f); merge (e) after re-check
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
   worktree: /Users/samib/stable-envs-step7-dmc-quadruped
   agent_model: fable
-  head_sha: fa4ac53 (phase 1 + review follow-up; merged 0a029bd)
+  head_sha: 'ad842a8 (commit e: cluster certification)'
   phase0: "FINDING: SWM default = walk model + Move(0.5), camera 2 (y, trackcom, fovy 45), 224 px, SWM appearance (self recoloured, foot density); state = qpos (0 px under re-render/qvel x100/history);\
     \ primitives: 1 textured plane, 12 capsules, 4 spheres, 2 cylinders, 1 ELLIPSOID (torso, visible in every state); HFIELD declared but deleted from the walk model (no capability needed); MJWarp supports\
     \ ellipsoid (ray_ellipsoid) \u2014 no GPU gap; cpu3d refuses kind 4; raycast3d lacks _ellipsoid. Prototype (cpu3d + patched ellipsoid) vs official 3.11 at 224 px: mean 3.55/255, within-8 0.901, SSIM\
@@ -466,6 +466,16 @@ workstreams:
     - r5_kind_cost ELLIPSOID row
     - measure_cell.per_surface scipy-free fallback
     gpu_declare_resubmit_6394987: PENDING/RUNNING (gpu2104 excluded)
+  commit_e:
+    identity: cuda 21/21 raycast3d + 4/4 trackcom byte-identical (split by venv); CPU 25/25 incl. 11 maze cells
+    mujoco_warp: release 3.11.0 confirmed (ELLIPSOID/HFIELD dispatch, ray_ellipsoid, no sites)
+    declaration: '3 MJWarp draws x 64 states, 224 px, camera 2, SWM appearance vs mujoco 3.11.0 + dm_control 1.0.44: mean 3.52 (worst 3.527), within-8 0.897 (0.8964), SSIM 0.955 (0.9536), all-exact 0.171;
+      thresholds 4.6/0.85/0.90; measured_with mujoco_warp 3.11.0; draw_spread recorded; 3.12 arm 3.56/0.895/0.953; 84 px supplementary 5.39/0.814/0.875'
+    gate_a: 'both devices, both arms on the new corpus: all mandatory checks pass; visual under 3.11 cuda 3.509/0.900/0.956, cpu 3.375/0.904/0.959; downsample 0.812 (8-state protocol)'
+    cross_backend: CPU vs MJWarp mean 0.0069/255, 99.40% exact, 99.994% within one level; ellipsoid 99.74% exact
+    tier: 'NOT reached: paired sweep load-aborted twice (34.5, 32.4 > 12 at start); local M5 numbers not certified; retry authorized with an in-job load wait; else CPU_UNMEASURED/GPU_UNMEASURED at the freeze'
+    bounded_kinds: 'ELLIPSOID left OUT of _BOUNDED_KINDS: kind-cost ratio 0.69-1.43 on a load-34 node (undecided); aggregator reads a Step-7 aggregate when a quiet run lands'
+    tests: cert host 719 passed 22 skipped 1 pre-existing; local affected files 160 passed
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -693,6 +703,8 @@ incident_log:
   item: 'W3 re-review: shared exclusion rule needs two hardenings (demonstrated false positives); fix requested'
 - date: '2026-09-15'
   item: W2 phase 0 PATCH_CANDIDATE (three layers bit-exact); phase 1 authorized; whole-cell resolution not_applicable flagged; denominator finding added to the S_cpu escalation
+- date: '2026-09-15'
+  item: 'W4 commit (e) delivered: MJWarp declaration, 25/25 identity both devices; tier unmeasured (load); re-check + retry authorized'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
