@@ -83,6 +83,16 @@ def gate_a(cls, device):
     out["check_style_is_state"] = C.check_style_is_state(env)
     out["check_default_style_is_official"] = C.check_default_style_is_official(env)
     out["check_variations_do_something"] = C.check_variations_do_something(env)
+    out["check_per_env_variation"] = C.check_per_env_variation(env)
+    out["check_task_object_visibility"] = C.check_task_object_visibility(env, st)
+    # check_reference_renderer_is_stable builds the env with device="cuda" hard-coded, so it is a
+    # CUDA-host check by construction. Recorded as not-applicable rather than as an error on a CPU
+    # host; the shared check is not this workstream's to change.
+    if torch.cuda.is_available():
+        out["check_reference_renderer_is_stable"] = C.check_reference_renderer_is_stable(cls, 10)
+    else:
+        out["check_reference_renderer_is_stable"] = {
+            "skipped": "conformance.check_reference_renderer_is_stable hard-codes device='cuda'"}
     out["check_colors_apply_exactly"] = C.check_colors_apply_exactly(env)
     out["check_resolution_consistency"] = C.check_resolution_consistency(
         env, C.downsample_protocol_states(env))

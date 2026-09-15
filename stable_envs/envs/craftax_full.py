@@ -1047,18 +1047,22 @@ class CraftaxFull(StableEnv):
         if plain:
             return img
 
-        world = img[:, :wh].to(torch.float32)
-        if not identity_chain:
+        def lit(world):
             lmp = lm.repeat_interleave(t, 1).repeat_interleave(t, 2).unsqueeze(-1)
-            world = light_night_and_sleep(world, lmp, daylight, sleeping,
-                                          prng.key_from_halves(halves))
+            return light_night_and_sleep(world, lmp, daylight, sleeping,
+                                         prng.key_from_halves(halves))
+
         if unit_gain:
-            # the strip is never lit, so at unit gain it stays exactly as gathered and only the world
-            # rows make the float round trip
-            img[:, :wh] = world.round_().clamp_(0, 255).to(torch.uint8)
+            # ``plain`` already returned, so the chain is NOT the identity here. The strip is never
+            # lit, so at unit gain it stays exactly as gathered and only the 9 of 13 world rows make
+            # the float round trip.
+            img[:, :wh] = lit(img[:, :wh].to(torch.float32)).round_().clamp_(0, 255).to(torch.uint8)
             return img
+        # a non-default channel_gain multiplies before the rounding, so the WHOLE frame -- strip
+        # included -- has to be float. This is off the certified appearance by construction.
         px = img.to(torch.float32)
-        px[:, :wh] = world
+        if not identity_chain:
+            px[:, :wh] = lit(px[:, :wh])
         px = px * gain.to(px.dtype).view(n, 1, 1, 3)
         return px.round_().clamp_(0, 255).to(torch.uint8)
 
