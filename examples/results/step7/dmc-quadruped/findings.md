@@ -523,3 +523,22 @@ probe printed right after `EGL_OK` on gpu2107 too, and 6394721 had already writt
 `visual_calib_311`, `gateA_cuda_*` and `localize_*` outputs before 6394987 started. Both nodes
 rendered the official reference; the outputs kept are 6394987's (they overwrote 6394721's, same
 states, same card class). No NODE-2 entry; W3's identical observation on gpu2104 agrees.
+
+## P6.1 INTEG-1 (after W3's merge, integration `1d9dccb`): the loader hook replaces the copies
+
+W3 changed `_DMCModel._bundle` (`geom_type`/`geom_size` now in `_pristine` for its shape leaf) and
+`_SWMQuadrupedModel._bundle`, a copy, drifted — exactly what the drift test in (d) existed to
+catch, and the answer is to stop copying. `step7/integration` merged into this branch (clean), then:
+`_DMCModel._load_env(cls, seed)` is now THE ONE PLACE a cell's model comes from — `suite.load` by
+default, called by `_bundle`, `sample_states` and `reference_env` (whose `size` now defaults to
+`cls.default_size`); `_SWMQuadrupedModel` overrides `_load_env` (`_swm_quadruped_env`) and
+`default_size = 224` and nothing else, and `tests/unit/test_cpu3d.py::
+test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size` asserts exactly that
+(the three methods are the base class's objects; every base loader goes through the hook). The base
+edit is three lines plus the hook; W3's `DMControlSuite` region is untouched.
+
+Verified on the merged branch: `tests/unit` **812 passed, 7 skipped, 1 failed** (the same
+pre-existing citation test; its set is the baseline's 9); **CPU byte-identity 8/8 vs the integration
+tree `1d9dccb`** — `DMCCheetahRun, DMCHopperHop, DMCWalkerWalk, DMCHumanoidStand, DMCQuadrupedWalk,
+DMCManipulatorBringBall, DMCReacherHard, DMCCartpoleSwingup`, sampled states seed 0, 0 px differing
+(`phase1/replay_hook/cpu_hook_vs_integration_identity.json`): the hook moved no pixel and no state.

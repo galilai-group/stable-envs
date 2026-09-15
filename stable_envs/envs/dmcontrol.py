@@ -981,6 +981,19 @@ class _DMCModel(StableEnv):
     # ---- model / reference plumbing --------------------------------------
 
     @classmethod
+    def _load_env(cls, seed: int):
+        """The dm_control env this cell is built from: ``suite.load`` by default.
+
+        THE ONE PLACE A CELL'S MODEL COMES FROM. ``_bundle`` (the canonical model), ``sample_states``
+        (the visited distribution) and ``reference_env`` (the official frames) all load through
+        it, so a cell whose model is not ``suite.load``'s -- ``DMCQuadrupedWalk`` draws the env
+        ``stable_worldmodel`` registers, built through ``dm_control.mjcf`` with SWM's default
+        appearance -- overrides this and nothing else (integration finding INTEG-1: a copied
+        ``_bundle`` drifted the moment the base one changed).
+        """
+        return _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": seed})
+
+    @classmethod
     def _bundle(cls, size: int):
         """``(dm_control env, MjModel, MjData, pristine, Renderer, slots)``, one per (domain, size).
 
@@ -1002,7 +1015,7 @@ class _DMCModel(StableEnv):
         if hit is not None:
             return hit
         import mujoco
-        env = _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})
+        env = cls._load_env(0)
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
         m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(size))
@@ -1292,7 +1305,7 @@ class _DMCModel(StableEnv):
         """
         rng = rng or self.rng
         seed = int(rng.integers(0, 2 ** 31 - 1))
-        env = _suite().load(self.DOMAIN, self.TASK, task_kwargs={"random": seed})
+        env = self._load_env(seed)
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
         spec = env.action_spec()
@@ -1311,16 +1324,16 @@ class _DMCModel(StableEnv):
     # ---- reference bridge -------------------------------------------------
 
     @classmethod
-    def reference_env(cls, size: int = 84):
-        """A FRESH official env, carrying the size it must render at.
+    def reference_env(cls, size: int | None = None):
+        """A FRESH official env, carrying the size it must render at (``default_size`` if none).
 
         Never closed. ``test_state_is_sufficient`` drives one through two histories, and a
         dm_control ``Physics`` holds the EGL context its renderer created — releasing it corrupts
         rendering in every other live context in the process.
         """
-        env = _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})
+        env = cls._load_env(0)
         env.reset()
-        env._se_size = int(size)
+        env._se_size = int(size or cls.default_size)
         return env
 
     @classmethod
@@ -2888,70 +2901,16 @@ def _swm_quadruped_env(seed: int):
 
 
 class _SWMQuadrupedModel:
-    """Mixin: the three places ``_DMCModel`` loads its env, pointed at ``_swm_quadruped_env``.
-
-    ``_bundle``, ``sample_states`` and ``reference_env`` are the base class's, with ``suite.load``
-    replaced; they are overridden here rather than through a loader hook on ``_DMCModel`` so that
-    this workstream's edits stay inside the TrackCom region while another edits the suite region
-    (the hook is the obvious cleanup once both land). ``default_size`` is SWM's ``render()`` default.
-    """
+    """Mixin for the one trackcom cell whose model is not ``suite.load``'s: SWM's env through the
+    ``_DMCModel._load_env`` hook, and SWM's ``render()`` default size. Nothing else is overridden
+    (asserted by ``tests/unit/test_cpu3d.py``), so ``_bundle``/``sample_states``/``reference_env``
+    stay the base class's and cannot drift from it."""
 
     default_size = 224
 
     @classmethod
-    def _bundle(cls, size: int):
-        key = (cls.DOMAIN, cls.TASK, int(size))
-        hit = _ENV_CACHE.get(key)
-        if hit is not None:
-            return hit
-        import mujoco
-        env = _swm_quadruped_env(0)
-        p = env.physics
-        m = p.model.ptr if hasattr(p.model, "ptr") else p.model
-        m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(size))
-        m.vis.global_.offheight = max(int(m.vis.global_.offheight), int(size))
-        slots = _episode_slots(env, m)
-        d = mujoco.MjData(m)
-        pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
-                        geom_rgba=np.array(m.geom_rgba, copy=True),
-                        site_rgba=np.array(m.site_rgba, copy=True),
-                        geom_group=np.array(m.geom_group, copy=True),
-                        site_group=np.array(m.site_group, copy=True),
-                        light_diffuse=np.array(m.light_diffuse, copy=True),
-                        light_specular=np.array(m.light_specular, copy=True),
-                        mat_reflectance=np.array(m.mat_reflectance, copy=True),
-                        cam_fovy=np.array(m.cam_fovy, copy=True))
-        for arr in {a for a, _ in slots}:
-            pristine[arr] = np.array(getattr(m, arr), copy=True)
-        r = mujoco.Renderer(m, height=int(size), width=int(size))
-        _ENV_CACHE[key] = (env, m, d, pristine, r, slots)
-        return _ENV_CACHE[key]
-
-    def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        rng = rng or self.rng
-        seed = int(rng.integers(0, 2 ** 31 - 1))
-        env = _swm_quadruped_env(seed)
-        p = env.physics
-        m = p.model.ptr if hasattr(p.model, "ptr") else p.model
-        spec = env.action_spec()
-        r2 = np.random.default_rng(seed)
-        slots = self._slots()
-        out = np.empty((int(batch), self.state_dim), np.float64)
-        for i in range(int(batch)):
-            env.reset()
-            for _ in range(int(r2.integers(0, 40))):
-                env.step(r2.uniform(spec.minimum, spec.maximum))
-            out[i, :self.nq] = np.asarray(p.data.qpos, np.float64)
-            for j, (arr, k) in enumerate(slots):
-                out[i, self.nq + j] = np.asarray(getattr(m, arr)).reshape(-1)[k]
-        return out.astype(np.float32)
-
-    @classmethod
-    def reference_env(cls, size: int = 224):
-        env = _swm_quadruped_env(0)
-        env.reset()
-        env._se_size = int(size)
-        return env
+    def _load_env(cls, seed: int):
+        return _swm_quadruped_env(seed)
 
 
 #: Extra bases per trackcom cell, for the one whose model is not ``suite.load``'s.

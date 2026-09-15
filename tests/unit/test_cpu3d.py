@@ -104,36 +104,24 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
         assert cls.CAMERA == 2 and cls.default_size == 224                # the registered SWM default
 
 
-def test_the_swm_quadruped_loader_overrides_are_the_base_methods_with_the_load_line_swapped(se):
-    """``_SWMQuadrupedModel`` re-states ``_bundle``/``sample_states``/``reference_env`` rather than
-    hooking ``_DMCModel`` (Step-7 region confinement). This pins the duplication: each override's
-    source, docstring dropped and the one ``suite.load`` line replaced by ``_swm_quadruped_env``,
-    must equal the base method's, so a later change to the base cannot drift past the copy."""
-    import ast
+def test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se):
+    """``_DMCModel._load_env`` is the one place a cell's model comes from, and ``_SWMQuadrupedModel``
+    overrides it and ``default_size`` and NOTHING else -- so ``_bundle``/``sample_states``/
+    ``reference_env`` are the base class's and cannot drift from it (INTEG-1: a copied ``_bundle``
+    drifted the moment W3 changed the base one). Every loader in the base goes through the hook."""
     import inspect
-    import textwrap
     from stable_envs.envs import dmcontrol as D
-
-    def body(fn):
-        tree = ast.parse(textwrap.dedent(inspect.getsource(fn))).body[0]
-        tree.decorator_list = []
-        if (tree.body and isinstance(tree.body[0], ast.Expr)
-                and isinstance(getattr(tree.body[0], "value", None), ast.Constant)):
-            tree.body = tree.body[1:]                                   # the docstring
-        return ast.unparse(tree)
-    swaps = {
-        "_bundle": ('_suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})', "_swm_quadruped_env(0)"),
-        "sample_states": ('_suite().load(self.DOMAIN, self.TASK, task_kwargs={"random": seed})',
-                          "_swm_quadruped_env(seed)"),
-        "reference_env": ('_suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})', "_swm_quadruped_env(0)"),
-    }
-    for name, (old, new) in swaps.items():
-        base = body(getattr(D._DMCModel, name))
-        ours = body(getattr(D._SWMQuadrupedModel, name))
-        expect = base.replace(ast.unparse(ast.parse(old).body[0]), ast.unparse(ast.parse(new).body[0]))
-        if name == "reference_env":
-            expect = expect.replace("size: int=84", "size: int=224")
-        assert ours == expect, f"{name}: the SWM override has drifted from _DMCModel.{name}"
+    own = {k for k in vars(D._SWMQuadrupedModel) if not k.startswith("__")}
+    assert own == {"default_size", "_load_env"}, own
+    cls = se.REGISTRY["DMCQuadrupedWalk"]
+    assert cls._bundle.__func__ is D._DMCModel._bundle.__func__
+    assert cls.reference_env.__func__ is D._DMCModel.reference_env.__func__
+    assert cls.sample_states is D._DMCModel.sample_states
+    for name in ("_bundle", "sample_states", "reference_env"):
+        src = inspect.getsource(getattr(D._DMCModel, name))
+        assert "_load_env(" in src and "_suite().load(" not in src, name
+    assert cls._load_env.__func__ is not D._DMCModel._load_env.__func__
+    assert cls.default_size == 224 and D._DMCModel.default_size == 84
 
 
 def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
