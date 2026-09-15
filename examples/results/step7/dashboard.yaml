@@ -505,12 +505,46 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: phase 0 (census, purity, official throughput bars, Fetch-pattern/raycast3d/nvdiff feasibility; local se7-ogb-venv; started 2026-09-15 after W4 merged; cluster items pending Oscar)
+  status: phase 1 authorized 2026-09-15 (M1 fidelity attribution -> M2 texture_gaps fix -> M3 OGBCube cell -> M4 tiers -> M5 OGBScene pending Sami's button-texture ruling)
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
+  head_sha: e3bebde (phase 0)
+  phase0:
+    classification: FINDING
+    registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
+      vector, not the renderer input; no goal image
+    census: 193,113 / 196,633 visible triangles (6.1x Fetch); median projected edge 0.70/0.72 px, 62% sub-pixel; 28 UR5e/Robotiq meshes bit-identical across the two envs; only 4/28 are convex hulls -> raycast3d
+      out; castshadow directional + spot + headlight (98.7% of pixels); 4x MSAA; reflectance effectively 0 px
+    purity: frame = f(qpos, qvel, mocap_pos, mocap_quat) [+2 button bits for Scene]; 384/464 B state vs 150,528/120,000 B frame
+    bars_certification_host_node2351:
+      official_cube_fps: 6.31
+      official_scene_fps: 5.17
+      decode_cube_fps: 2774
+      decode_scene_fps: 2106
+      s_cpu5_target: 31.6/25.8
+      cores_cpu1_target: 2,774/2,106
+    gpu_feasibility: 'OGBCube builds through MJWarp; 3090 224 px: B=1 2,232 f/s, B=1024 6,566 -> BATCH_SCALES 2.93x FAIL (saturates by B=64; property of a cheap frame + dense BVH); raw fidelity interior_exact
+      0.0092-0.0101 (none of the four Fetch corrections applies; suspects: castshadow light, spot cutoff/exponent, headlight); OGBScene CRASHES MJWarp: bisected to one CUBE texture (button metal)'
+    cpu_feasibility: 'CPU3D-OGB-1: cores_cpu short 56-72x at full rate, 9.9-12.9x even at the 24 ns/tri vertex-setup floor -> CPU_FAST demonstrated blocker; S_cpu ~6-7 vs llvmpipe official -> CPU_FASTER
+      reachable with a shared span rasteriser (deferred)'
+    shared_defect: mjwarp.py::texture_gaps classifies by geom type and never reads tex_type -> false all-clear for cube maps on meshes (illegal memory access). Assigned to W5 as a minimal fix + registry-wide
+      no-change proof + review
+    lessons:
+    - 'laptop CPU verdict wrong: macOS GLFW/Metal GL is 25-30x faster than llvmpipe; certification-host bars only'
+    - PyPI stable-worldmodel==0.0.6 differs from the source checkout under the same version; cluster measures the rsynced checkout
+    - 'two own defects recorded: stale versions.txt after an edit deleted the provenance block; a probe compared a struct with itself after compile_model_and_data rebinding'
+  phase1_rulings:
+  - certify at registered defaults 224/200; visualize_info=True with alpha marker as parity_note (usage-side False recorded as diagnostic)
+  - button bits = 2 state dims; swm reset KeyError reported upstream
+  - registered default variation set first; appearance leaves as per-env tables after parity, declared in/out
+  - device='cpu' raises honestly; CPU_FASTER span rasteriser deferred to Step 8
+  - interior claim with interior_frac declared + MSAA whole-frame ceiling explained
+  - phase 1 M1 = term-by-term attribution of the 0.0092 interior before any cell
+  - "BATCH_SCALES fail -> tier capped at GPU_PARITY per \xA76.7, declared with raw fps"
+  - OGBScene button cube-map = fidelity decision for Sami (numbers for (a) patch mujoco_warp, (b) bake to mean colour residual, (c) Cube-only)
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -734,6 +768,8 @@ incident_log:
   item: W1 CLOSED and merged (b12af5c); GPU tier paired; reference trap proven on GPU; escalation updated
 - date: '2026-09-15'
   item: W3 rule hardenings landed (d1f65d4); final verification requested
+- date: '2026-09-15'
+  item: W5 phase 0 FINDING; phase 1 authorized (attribution first); texture_gaps shared fix assigned; OGBScene button texture escalated
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -766,10 +802,20 @@ escalations:
   also: 'W2 CraftaxPixels: check_resolution_consistency not applicable in ALL bands on the official''s own evidence (broader scope than Classic''s band ruling); authorized by precedent, Sami may override.'
   recommendation_update: Record CraftaxClassic's tiers from the NO_REFERENCE row (CPU_REGRESSION / GPU_FAST) for Step 7; Step 8 gives the harness a speed-reference hook distinct from the parity reference
     (jitted official as a user runs it).
+- date: '2026-09-15'
+  from: W5 / coordinator
+  topic: OGBScene button cube-map texture (MJWarp cannot sample it; crashes)
+  question: (a) patch mujoco_warp's cube sampling, (b) bake the button texture to its mean colour via bake_primitive_textures as a declared approximation on two small geoms (RoboCasa precedent), or (c)
+    ship OGBCube only and record OGBScene as blocked
+  status: open; W5 measuring the residual of (b) and the cost of (a) so the decision is on numbers
+  coordinator_note: (b) is a declared texture bake through the existing shared recipe, not a per-env renderer; still a fidelity call
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
   status: deferred to Step 8 by coordinator ruling 2026-09-15; not a Step-7 blocker (cell declares CPU missing, honest raise)
+- item: Shared span-rasteriser CPU mover pass for mesh-heavy MuJoCo scenes (OGB manipulation, Fetch) at CPU_FASTER
+  evidence: 'W5: S_cpu ~6-7 vs llvmpipe official; cores_cpu short 56-72x (9.9-12.9x at the vertex-setup floor)'
+  status: deferred to Step 8 by coordinator ruling 2026-09-15
 step8_carryovers:
 - item: certifier must honour per-cell resolution_consistency_applicability (CraftaxClassic night band) or judge on the light >= 0.5 subset
   source: W1 review re-check 2026-09-15
