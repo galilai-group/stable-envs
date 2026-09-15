@@ -596,14 +596,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'phase 1: M1 done (gap = spot-light cutoff semantics, upstream), M2 shared texture_gaps fix done with registry-wide proof, M3 gate: exponent=0 gives 0.35 interior, residue = spot distance + headlight;
-    one more attribution pass authorized; shared spot correction in prepare_model; then cells; Q11 (b) as generic bake extension with declared residual'
+  status: attribution complete -> tier visual; three shared mjwarp changes committed with registry-wide proofs (independent review running, fable family); OGBCube cell authorized at visual, then OGBScene
+    with the bake, then tiers
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: e24fb34e (M1 attribution, M2 texture_gaps fix, M3 gate)
+  head_sha: 4264f202 (attribution pass M1b; shared spot correction ba8b600; bake helper fd5fbb4; proofs)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -654,6 +654,22 @@ workstreams:
     m3_gate: 'exponent=0 on the MJWarp model: interior 0.0091 -> 0.3507 (38x), mean |diff| 8.90 -> 2.79; below M1''s no-spot row (0.4568) -> residue = spot distance term + headlight; no cell written yet'
     q11_numbers: 'bake T_btn to mean grey: 0.139% of pixels (55.5 px/frame), max 37/255, mean 0.023/255, interior_exact 1.0; (b) is not a bake_primitive_textures call (it refuses this material twice) ->
       shared helper extension; (a) ~3 lines in a third-party wp.func, zero pixels; (c) 39/40 reversible'
+    m1b_attribution:
+      job: 6397621 RTX 3090, noise floor 0
+      after_spot_fix: 0.3473
+      directional_light_removed: 0.7016
+      spot_distance_attenuation: +0.113 (mjwarp attenuation = 1)
+      headlight: mover-pixel term (mover 0.757 -> 0.896; interior +0.001)
+      ambient: not a term (zeroing worsens)
+      composited_all_exact: '0.923-0.951 on every row (fetch-pattern: plate baked, 10-19% of pixels MJWarp)'
+      mover_all_exact: 0.30-0.47 vs Fetch's 0.9988 -> tier VISUAL
+      caveat: mover columns not comparable across rows (CubeEnv.reset resamples variations unseeded); restore rows identical
+    shared_spot_correction: 'ba8b600: prepare_model writes light_exponent = 0 for an out-of-range spot, nothing else; spot_semantics=False opts out; 16 unit cases incl. 90/90.0001 boundary; registry 40
+      built, zero light_exponent arrays changed (8 families carry legal spots); same-card identity DMCReacherEasy/DMCCartpoleSwingup/FetchReach 0; POINT counter-finding asserted by test; gap: DMCPointMassEasy
+      and MujocoPusher have no frozen Step-4 states (replay with sampled states requested)'
+    bake_helper: 'fd5fbb4: bake_unsamplable_textures + unsamplable_texture_materials (generic; per-geom record; separate from bake_primitive_textures); 9 unit cases; registry sweep touches none of 40; OGBScene
+      bakes exactly btn_metal; OGBCube no-op'
+  shared_reviewer: independent reviewer (fable family) spawned 2026-09-15 on 4264f202 for the three shared changes
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -911,6 +927,8 @@ incident_log:
   item: W2 phase 1 implemented locally (parity 1.0 at 10/16 px); reviewer spawned; cluster jobs queued
 - date: '2026-09-15'
   item: W2 x86-64 parity confirmed with identical digests; CPU tier via paired job; GPU job running
+- date: '2026-09-15'
+  item: W5 attribution done (visual tier); shared spot correction + bake helper landed; shared-change reviewer spawned; cells authorized
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
