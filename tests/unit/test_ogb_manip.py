@@ -301,3 +301,43 @@ def test_split_returns_an_identity_quaternion_rather_than_reading_one():
     assert mq.shape == (b.nmocap, 4)
     assert np.array_equal(mq, ogb.IDENTITY_QUAT(b.nmocap))
     assert np.allclose(mq[:, 0], 1.0) and np.allclose(mq[:, 1:], 0.0)
+
+
+def test_the_bake_and_the_button_rule_touch_disjoint_material_rows():
+    """The conflict `_ctx_button_tables` asserts, checked on CPU against the right baseline.
+
+    The bake replaces `btn_metal`; the button rule writes the two button geoms and the drawer and
+    window handle materials. They must be disjoint, or applying one as a delta over the other undoes
+    it. Job 6406972 died on this assertion firing SPURIOUSLY: it compared the context copy against a
+    snapshot taken under whatever bits the env's last reset happened to choose, so on a Scene
+    starting at (1,0) the handle rows looked like the bake's work. The baseline is the all-zero
+    table, and this test pins both halves -- that the rows really are disjoint, and that the handle
+    rows belong to the buttons rather than to the bake.
+    """
+    import copy
+    from stable_envs.render import mjwarp as MW
+    b = ogb._bundle("Scene")
+    zero = (0, 0)
+    ref_g0, ref_m0 = b.button_tables[zero]
+
+    u = b.unwrapped
+    saved = list(getattr(u, "_cur_button_states", []))
+    try:
+        u._cur_button_states = list(zero)
+        u._apply_button_states()
+        m = copy.deepcopy(b.model)
+    finally:
+        u._cur_button_states = list(saved) if saved else [0, 0]
+        u._apply_button_states()
+    MW.prepare_model(m, ogb.VISIBLE_GROUPS)
+    baked = MW.bake_unsamplable_textures(m, ogb.VISIBLE_GROUPS)
+    assert baked["n_materials"] == 1, "the Scene has exactly one unsamplable material"
+
+    bake_rows = set(np.nonzero(np.any(np.asarray(m.mat_rgba) != ref_m0, axis=1))[0].tolist())
+    button_rows = set()
+    for bits, (_, rm) in b.button_tables.items():
+        button_rows |= set(np.nonzero(np.any(rm - ref_m0, axis=1))[0].tolist())
+    assert bake_rows, "the bake must change a material row"
+    assert button_rows, "the button rule must change material rows"
+    assert not (bake_rows & button_rows), (
+        f"bake rows {sorted(bake_rows)} and button rows {sorted(button_rows)} overlap")

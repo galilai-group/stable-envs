@@ -117,7 +117,9 @@ def main():
     paste = {}
     print("provenance:", json.dumps(rec["provenance"]), flush=True)
 
+    failures = {}
     for cname in a.cells:
+      try:
         cls = se.REGISTRY[cname]
         cell = {"size": int(cls.default_size), "draws": []}
         env = se.make(cname, batch=a.n, device="cuda")
@@ -172,6 +174,9 @@ def main():
 
         # ---- 3. Gate A, through the REPO'S checks ----------------------------------------
         g = {}
+        gate_states = env.sample_states(env.B, np.random.default_rng(99))
+        # `check_batch_size_invariance` takes the states explicitly; the others draw their own.
+        needs_states = {"check_batch_size_invariance"}
         for fn in ("check_determinism", "check_batch_invariance", "check_batch_size_invariance",
                    "check_state_dims_matter", "check_order_invariance"):
             f = getattr(C, fn, None)
@@ -179,7 +184,7 @@ def main():
                 g[fn] = {"status": "absent in this build"}
                 continue
             try:
-                g[fn] = f(env)
+                g[fn] = f(env, gate_states) if fn in needs_states else f(env)
             except Exception as e:
                 g[fn] = {"status": "error", "error": f"{type(e).__name__}: {e}"[:300]}
             print(f"{cname} {fn}: {json.dumps(g[fn])[:220]}", flush=True)
@@ -313,6 +318,18 @@ def main():
               f"cores {t['cores']:.2f} BS {t['batch_scales']:.2f}x cpu_raises {t['cpu_raises']}",
               flush=True)
         rec["cells"][cname] = cell
+        # WRITTEN AFTER EVERY CELL. Job 6406972 measured OGBCube cleanly and then died on OGBScene,
+        # and because the artifacts were written only at the end, a complete and correct set of
+        # OGBCube numbers was thrown away with the failure.
+        (out / "remeasure.json").write_text(json.dumps(rec, indent=1, sort_keys=True))
+        (out / "paste_me.json").write_text(json.dumps(paste, indent=1, sort_keys=True))
+      except Exception as e:
+        import traceback
+        failures[cname] = f"{type(e).__name__}: {e}"[:400]
+        rec["failures"] = failures
+        (out / "remeasure.json").write_text(json.dumps(rec, indent=1, sort_keys=True))
+        print(f"{cname} FAILED: {failures[cname]}", flush=True)
+        traceback.print_exc()
 
     (out / "remeasure.json").write_text(json.dumps(rec, indent=1, sort_keys=True))
     (out / "paste_me.json").write_text(json.dumps(paste, indent=1, sort_keys=True))

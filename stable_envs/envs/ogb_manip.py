@@ -371,12 +371,12 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
         with wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
-    c.button_tables = _ctx_button_tables(b, m, res)
+    c.button_tables = _ctx_button_tables(b, m, res, device="cuda")
     _CTX_CACHE[key] = c
     return c
 
 
-def _ctx_button_tables(b: "_Bundle", m, res: int) -> dict | None:
+def _ctx_button_tables(b: "_Bundle", m, res: int, device: str = "cuda") -> dict | None:
     """``{bit code: (geom_rgba, mat_rgba)}`` on the CONTEXT's model, as device tensors.
 
     The tables in ``_bundle`` were captured from swm's own ``_apply_button_states`` on the REFERENCE
@@ -403,18 +403,27 @@ def _ctx_button_tables(b: "_Bundle", m, res: int) -> dict | None:
     assert np.array_equal(base_g[touched], ref_g0[touched]), (
         "the context model was copied at button bits other than all-zero, so every delta below "
         "would be applied to the wrong base; see _context's forced-zero block")
+    # WHAT THE BAKE CHANGED, measured against the right baseline. `base_m` is the context copy:
+    # all-zero bits PLUS the bake. `ref_m0` is all-zero bits WITHOUT it. Their difference is
+    # therefore exactly the bake, and nothing else.
+    #
+    # The first version compared `base_m` against `b.pristine["mat_rgba"]`, which was snapshotted at
+    # bundle time under whatever bits the env's last reset had chosen. On a Scene that started at
+    # (1,0) or (1,1) that difference included the two HANDLE materials -- which the button rule owns
+    # and the bake never touches -- so the assertion fired on a conflict that did not exist and
+    # killed job 6406972 after OGBCube had already measured cleanly.
+    baked_rows = np.nonzero(np.any(base_m != ref_m0, axis=1))[0]
     out = {}
     for bits, (rg, rm) in b.button_tables.items():
         dg, dm = rg - ref_g0, rm - ref_m0
-        # Disjointness, asserted: whatever the bake changed must not also be what the bits change.
-        baked_rows = np.nonzero(np.any(base_m != b.pristine["mat_rgba"], axis=1))[0]
         if len(baked_rows):
             assert not np.any(dm[baked_rows]), (
-                "the texture bake and the button colour rule touch the same material rows; applying "
-                "one as a delta over the other would undo it")
+                f"the texture bake and the button colour rule both write material rows "
+                f"{sorted(set(baked_rows) & set(np.nonzero(np.any(dm, axis=1))[0]))}; applying one "
+                f"as a delta over the other would undo it")
         code = sum(bit << k for k, bit in enumerate(bits))
-        out[code] = (torch.as_tensor(base_g + dg, dtype=torch.float32, device="cuda"),
-                     torch.as_tensor(base_m + dm, dtype=torch.float32, device="cuda"))
+        out[code] = (torch.as_tensor(base_g + dg, dtype=torch.float32, device=device),
+                     torch.as_tensor(base_m + dm, dtype=torch.float32, device=device))
     return out
 
 
