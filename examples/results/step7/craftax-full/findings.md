@@ -958,13 +958,8 @@ per-pixel float chain does not scale as far.
    already moved `CraftaxClassic`'s own Step-3 denominator from a recorded 1,046 f/s to a measured
    4.62 f/s on the Mac and 0.31 f/s on `node2352`.
 2. **`examples/swm_compat/run_swm_workflow.py`** has no Craftax arm — it drives TwoRoom and PushT and
-   is CUDA shaped. The Gate F statement for this cell is the `swap_renderer` one instead: drive the
-   official env, read the render window out of the `EnvState` it produces, render that window here,
-   and compare against the observation the wrapper hands the workflow. Measured against craftax's own
-   env — which is what the wrapper wraps — in `gate_f/gate_f_swm_nowrapper.json`, by
-   `scratch/step7/craftax-full/gate_f_swm.py`; the run against the
-   **real** wrapper needs `stable_worldmodel` installed into `$SCR/venvs/se7-craftax` and is Oscar job
-   `6398628`, reported in its own commit.
+   is CUDA shaped. The Gate F statement for this cell is the `swap_renderer` one instead, and it is
+   **measured against the real wrapper** in §21.
 
 ### 18.1 Step-8 carry-overs (shared files; reported, not edited)
 
@@ -1039,3 +1034,105 @@ CPU tier a lower bound; §18.1 records the two Step-8 carry-overs.
 One thing turned up while fixing another: the tile scan in that same test sliced `moved[r0:r0+t, …]`
 on an array whose first axis is the batch, so it was reading the wrong region entirely. It was caught
 because the corrected assertion failed, which is the test doing its job.
+
+---
+
+## 21. Gate F against the real `CraftaxPixelsWrapper`
+
+`examples/swm_compat/run_swm_workflow.py` drives TwoRoom and PushT and is CUDA shaped — it has no
+Craftax arm — and this cell has no batched simulator, so its Gate F path is `swap_renderer`. The
+statement worth making is therefore end-to-end rather than a method-signature one:
+
+> step the **official** `swm/CraftaxPixels-v1`, read the render window out of the `EnvState` it
+> produces, render that window with `CraftaxFull`, and compare against the observation the wrapper
+> itself hands the workflow.
+
+`stable_worldmodel` was installed into `$SCR/venvs/se7-craftax` from the **checkout**
+(`176d54532b3c0a251a4f509b74f2fdacc143a63d`, rsynced to `$SCR/se7/stable-worldmodel`) rather than from
+PyPI, because W5 found 0.0.6 on PyPI differs from it. Oscar job **6399614**, `node2350`, script
+`scratch/step7/craftax-full/07_gate_f_swm.sbatch`, probe `scratch/step7/craftax-full/gate_f_swm.py`,
+artifacts under `gate_f/`.
+
+### 21.1 The install moved no pin, and the digests survived it
+
+That venv is what **every** parity number on this branch was measured in, and it is shared with W1, so
+the install is constrained rather than plain: the pins are frozen into a constraints file first, the
+install runs under it, and the job **exits 1 if any of them moved**.
+
+| | before | after |
+|---|---|---|
+| `craftax` | 1.6.1 | 1.6.1 |
+| `gymnasium` | 1.3.0 | 1.3.0 |
+| `jax` / `jaxlib` | 0.11.1 | 0.11.1 |
+| `numpy` | 2.5.3 | 2.5.3 |
+| `torch` | 2.14.0+cu126 | 2.14.0+cu126 |
+| `torchvision` | (absent) | 0.29.0**+cu126** — new, not moved |
+
+`gate_f/pins_before.txt`, `gate_f/pins_after.txt`. And the parity certify re-run **inside the modified
+venv** reproduces the frozen corpus exactly — `exact_frac` 1.0, max abs 0, digests
+`b3dcba4dea708d15…` (10 px) and `43414708ce31a3d7…` (16 px) — on three different nodes across the
+attempts (`certify/certify_cpu_swmvenv_node2302|2349|2350….json`). Installing `stable_worldmodel` did
+not disturb what the branch was certified against.
+
+### 21.2 The contract the wrapper actually offers
+
+| | measured |
+|---|---|
+| construction | `gymnasium.make('swm/CraftaxPixels-v1')` |
+| `observation_space` | `Box(0.0, 1.0, (130, 110, 3), float32)` — **matches the registration and our `render()`** |
+| `action_space` | `Discrete(43)` |
+| `reset` info keys | `['env_name']` |
+| `step` info keys | **69** — 67 `Achievements/*` plus `discount` and `env_name` |
+| render window | 544 slots, **2,176 B** against a 42,900 B frame (**19.7x**), **0 tiles dropped** over the rollout |
+
+### 21.3 The pixel comparison — and the one honest disagreement
+
+121 frames from a 120-step random-policy rollout of the official env
+(`gate_f/gate_f_swm.json`):
+
+| compared against | `exact_frac` | max abs | frames identical |
+|---|---|---|---|
+| the **un-jitted** reference, on the same extracted windows | **1.0** | **0** | 8 / 8 |
+| **the wrapper's own observation** (`round(obs * 255)`) | 0.99977 | **1** | **118 / 121** |
+| — fully lit, awake band (1 frame) | **1.0** | **0** | 1 / 1 |
+| — lit band (120 frames) | 0.99977 | 1 | 117 / 120 |
+
+**The residual is the jit gap, and it is a property of the reference rather than a defect.**
+`CraftaxWrapper` wraps `env.step` in `jax.jit`, so what a live workflow consumes is the **jitted**
+frame — and under jit XLA fuses craftax's arithmetic differently from the un-jitted renderer this
+cell is certified against, by ~1.5e-05 in float32, which straddles a uint8 rounding boundary wherever
+the picture is compressed towards one value (§4.2). The signature fits that and nothing else: every
+disagreeing frame is in a **lit** band, the one fully-lit awake frame in the rollout is
+byte-identical, the error never exceeds **1**, and the same windows through the un-jitted reference
+are byte-identical.
+
+Two consequences, stated plainly rather than buried:
+
+* **a workflow consuming the wrapper's observation and one consuming our `render()` will differ on
+  about 0.02% of the pixels of a lit frame, by one level.** This renderer cannot drive that to zero
+  without certifying against the jitted reference instead, which §4.2 explains is the wrong object —
+  it disagrees with itself.
+* it is now measured on 121 real frames rather than inferred. Before this run it had only been
+  checked against craftax's own env (`gate_f/gate_f_swm_nowrapper.json`), which is what the wrapper
+  wraps. The real wrapper gives the same answer.
+
+### 21.4 Five job ids, four of them failures
+
+Recorded because three of the four were mine and a reader should not have to guess:
+
+| job | outcome |
+|---|---|
+| `6398628` | FAILED in 1 s — `$VENV/bin/pip freeze` under `set -o pipefail`; the venv was built by `uv venv` (W1's `01_build_venv.sbatch`) and **has no pip at all**. Rewritten for `uv` |
+| `6398700` | FAILED — `--no-build-isolation` cannot build `stable_worldmodel`, whose backend is `uv_build` and is not in the venv. Build isolation turned on: it fetches the backend into a throwaway environment and leaves the target venv's runtime packages alone |
+| `6398740` | COMPLETED, wrapper **not** exercised — `RuntimeError: operator torchvision::nms does not exist`. PyPI's `torchvision==0.29.0` is built against `torch 2.14.0+cu130`; this venv carries **+cu126**. The constraint correctly held torch still and left torchvision mismatched against it. Fixed the way W1 fixed torch: from the cu126 index with `--reinstall-package`, because `+cu130` and `+cu126` both satisfy `==0.29.0` and uv would otherwise audit the wrong wheel as a match |
+| `6398918` | COMPLETED, wrapper **not** exercised — `ModuleNotFoundError: stable_worldmodel.data`. **My error**: the rsync used `--exclude data`, which rsync matches against *any* path component, so it dropped the `stable_worldmodel/data/` **package** along with the top-level `data/` directory it was meant to skip. Re-synced with anchored excludes |
+| **`6399614`** | **COMPLETED, wrapper exercised.** The last blocker was `cv2`: `stable_worldmodel/wrapper/visual.py` imports it and it lives in the `[env]` extra, so the package cannot be *imported* on a base install. The extra was **not** installed wholesale — it pulls `gymnasium[all]` and this venv's `gymnasium==1.3.0` is a pin — only the modules the import chain reaches (`opencv-python pygame pymunk shapely`), under the same constraints file |
+
+None of the five is a renderer or a wrapper defect; all five are packaging, and the Gate F substance
+was identical in every run that produced numbers.
+
+**One operational lesson, since it cost a restore.** `rsync`-ing results *back* from Oscar over a
+directory that has been edited locally overwrites the local edits: pulling
+`examples/results/step7/craftax-full/` clobbered this file with the copy that had been pushed before
+the review follow-up, losing 190 lines. Recovered from git. Pull into a staging directory, or pull
+only the specific new artifacts.

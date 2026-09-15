@@ -175,9 +175,17 @@ def main():
             "version": metadata.version("stable_worldmodel"),
             "file": stable_worldmodel.__file__,
         }
-        env = gymnasium.make("swm/CraftaxPixels-v1")
+        try:
+            env = gymnasium.make("swm/CraftaxPixels-v1")
+            rec["source"] = "gymnasium.make('swm/CraftaxPixels-v1')"
+        except Exception as e:                                         # noqa: BLE001
+            # the id needs stable_worldmodel.envs to have registered, which drags in the whole
+            # package. The class itself is what Gate F is about, so fall back to constructing it.
+            from stable_worldmodel.envs.craftax.craftax import CraftaxPixelsWrapper
+            env = CraftaxPixelsWrapper()
+            rec["source"] = (f"CraftaxPixelsWrapper() constructed directly -- gymnasium.make on the "
+                             f"registered id raised {type(e).__name__}: {str(e)[:120]}")
         u = env.unwrapped
-        rec["source"] = "gymnasium.make('swm/CraftaxPixels-v1')"
         rec["observation_space"] = str(env.observation_space)
         rec["action_space"] = str(env.action_space)
         rec["num_actions"] = int(u.craftax_env.num_actions)
