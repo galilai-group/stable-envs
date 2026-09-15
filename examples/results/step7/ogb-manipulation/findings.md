@@ -8,7 +8,7 @@ Two sub-verdicts, both measured:
   cleanly (a model camera instead of a recovered free camera; zero texture gaps). The one Step-6
   `fetch-gpu` blocker — `BATCH_SCALES` 7.6–11.7x against a required 20x — was recorded as a
   **480 px** failure that the same scene PASSES at ≤240 px (26–99x). These two envs render at
-  **224 px and 200 px**, inside that passing regime. The measurement is queued (job 6395140).
+  **224 px and 200 px**, inside that passing regime. The measurement is queued (job 6395176).
 * **CPU: `BLOCKER`, and roughly an order of magnitude harder than the Fetch blocker.** The binding
   CPU bar leaves **0.75 ns per triangle** for 193,113 triangles. The Step-6 `CPU3D-FETCH-1` span
   rasteriser's *setup-only* floor — transform, bbox, area, cull, no fill, no shade — is 24 ns per
@@ -360,8 +360,8 @@ prepared, per the coordinator's mid-task update. Scripts are versioned under
 
 | job | script | partition | what it settles |
 |---|---|---|---|
-| **6395139** | `00_build_venv_and_bars.sbatch` | `batch` / `normal`, 4 cpu, 48G, 3 h | builds `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); then proves both envs render under **EGL** headless and retakes the census, the bars, the purity probes and the interior/MSAA probe at 1 thread on a certification node |
-| **6395140** | `01_mjwarp_trial.sbatch` | `gpu` / `norm-gpu`, 1x geforce3090, `--exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`, 2 h, `afterok:6395139` | puts the registered `MjModel` through the **existing** `MJ.BatchRenderer` at the registered resolution and `front_pixels` camera: does it build at 193k triangles, VRAM, first fidelity numbers against MuJoCo's own EGL frames with `gl_rounding`, and **`BATCH_SCALES` = fps(1024)/fps(1)** |
+| **6395175** | `00_build_venv_and_bars.sbatch` | `batch` / `normal`, 4 cpu, 48G, 3 h | builds `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); then proves both envs render under **EGL** headless and retakes the census, the bars, the purity probes and the interior/MSAA probe at 1 thread on a certification node |
+| **6395176** | `01_mjwarp_trial.sbatch` | `gpu` / `norm-gpu`, 1x geforce3090, `--exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`, 2 h, `afterok:6395175` | puts the registered `MjModel` through the **existing** `MJ.BatchRenderer` at the registered resolution and `front_pixels` camera: does it build at 193k triangles, VRAM, first fidelity numbers against MuJoCo's own EGL frames with `gl_rounding`, and **`BATCH_SCALES` = fps(1024)/fps(1)** |
 
 Two earlier attempts failed and are recorded rather than hidden, because both failure modes are
 traps a later phase would hit again:
@@ -385,15 +385,30 @@ traps a later phase would hit again:
   PyPI build is uninstalled so it cannot shadow it, and the job prints the same three file digests
   the local run recorded (`cube_env.py` `143e5e81f424ff7a`, `scene_env.py` `d0eebdce0131f86e`,
   `envs/__init__.py` `118a262677a647c6`) so the two are compared rather than assumed equal.
-  `6395006` was cancelled with it and resubmitted as `6395140`.
+  `6395006` was cancelled with it.
+* **6395139** — `MUJOCO_GL=egl` on a `batch` node: see the backend note below. Not a renderer
+  result, and the probe that now catches it is the reason it is recorded here rather than sitting
+  in an artifact as a "these envs do not render headless" conclusion.
 
-**EGL is probed before any measurement** (`egl_probe.py`, run first in both scripts). W4 found
-`gpu2104` with healthy torch/CUDA and broken EGL context creation, and a node fault of that shape
-reaches the artifacts looking like a *renderer* finding. The probe creates a 64 px context, renders
-a lit box, prints `GL_RENDERER`/`GL_VERSION`, and exits 9 both on a failed context **and** on a
-context that returns a constant frame. `gpu2104` is also excluded by name. `sbatch` snapshots the script at submit
-time, so every script change costs a cancel-and-resubmit; the live pair is **6395139** (CPU) and
-**6395140** (GPU, `afterok`).
+**The GL backend is probed before any measurement** (`gl_probe.py`, run first in both scripts),
+because two different things wear the same traceback and must not be confused:
+
+* **A node fault.** W4 found `gpu2104` with healthy torch/CUDA and broken EGL context creation, and
+  a fault of that shape reaches the artifacts looking like a *renderer* finding. On the GPU job the
+  probe therefore runs `--require egl`: EGL or exit 9, never a software fallback that would silently
+  change the reference. `gpu2104` is excluded by name as well.
+* **The wrong backend for the partition.** Job **6395139** died on `node2326` with
+  `Cannot initialize a EGL device display ... PLATFORM_DEVICE`. That is not a fault — a `batch` node
+  has no GPU, so EGL's device path cannot initialise, and Mesa surfaceless EGL or `osmesa`
+  (llvmpipe) is what renders there, exactly as the Step-6 CPU scripts probe for. The CPU job now
+  tries `egl`, `osmesa`, `glfw` in order and records which one won in `oscar/gl_backend.txt` — which
+  also names the reference the `S_cpu` number is computed against.
+
+The probe renders a real lit scene in a **child process** (a failed GL init leaves the OpenGL
+bindings in a state the next attempt inherits, so probing three backends in one interpreter makes
+the second answer depend on the first) and rejects a context that creates but returns a **constant
+frame**. `sbatch` snapshots the script at submit time, so every script change costs a
+cancel-and-resubmit; the live pair is **6395175** (CPU) and **6395176** (GPU, `afterok`).
 
 One GPU job in flight. No `simclr` job was touched.
 

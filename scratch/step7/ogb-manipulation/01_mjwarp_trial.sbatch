@@ -38,12 +38,12 @@ export PYTHONPATH=$WS:$SCR/se7/swm-src
 set -x
 cd "$WS"
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
-# EGL first, and fail fast. W4 found gpu2104 with healthy torch/cuda and broken EGL
-# context creation; a node fault must not reach the artifacts looking like a renderer
-# result. Exits 9 on a dead context OR on a context that renders a constant frame.
-export MUJOCO_GL=egl
-"$VENV/bin/python" scratch/step7/ogb-manipulation/egl_probe.py || {
-  echo "FATAL: EGL unusable on $(hostname)"; exit 9; }
+# EGL and nothing else. This runs on a GPU node, where EGL is the correct backend; if it fails
+# here it is a NODE FAULT (W4 found exactly that on gpu2104, torch/CUDA healthy, EGL broken) and
+# must not be papered over with a software fallback that would silently change the reference.
+eval "$(PYTHONPATH=$PYTHONPATH "$VENV/bin/python" \
+  scratch/step7/ogb-manipulation/gl_probe.py --require egl 2>&1 | tee /dev/stderr | tail -1)"
+[ "$MUJOCO_GL" = "__NONE__" ] && { echo "FATAL: EGL unusable on $(hostname) -- node fault"; exit 9; }
 
 "$VENV/bin/python" scratch/step7/ogb-manipulation/probe_mjwarp_trial.py --out "$OUT" \
   --batches 1 16 64 256 1024 || echo "MJWARP rc=$?"

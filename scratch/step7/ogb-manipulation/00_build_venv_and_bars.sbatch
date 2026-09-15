@@ -74,15 +74,17 @@ PYTHONPATH=$WS:$SWM_SRC "$VENV/bin/python" \
   -c 'import numpy, mujoco, mujoco_warp, ogbench, torchvision, stable_worldmodel' || {
   echo "FATAL: venv incomplete"; exit 3; }
 
-# EGL first, and fail fast. W4 found gpu2104 with healthy torch/cuda and broken EGL
-# context creation; a node fault must not reach the artifacts looking like a renderer
-# result. Exits 9 on a dead context OR on a context that renders a constant frame.
-export MUJOCO_GL=egl
-"$VENV/bin/python" scratch/step7/ogb-manipulation/egl_probe.py || {
-  echo "FATAL: EGL unusable on $(hostname)"; exit 9; }
+# Pick a GL backend that actually works on THIS node, and refuse to measure without one.
+# A `batch` node has no GPU, so EGL's PLATFORM_DEVICE path cannot initialise -- job 6395139 proved
+# that on node2326 -- and Mesa surfaceless EGL or osmesa (llvmpipe) is what renders there, exactly
+# as the Step-6 CPU scripts probe for. A backend that creates a context but paints a constant frame
+# is treated as a fault, not a pass.
+eval "$(PYTHONPATH=$WS:$SWM_SRC "$VENV/bin/python" \
+  scratch/step7/ogb-manipulation/gl_probe.py egl osmesa glfw 2>&1 | tee /dev/stderr | tail -1)"
+[ "$MUJOCO_GL" = "__NONE__" ] && { echo "FATAL: no GL backend on $(hostname)"; exit 9; }
+echo "MUJOCO_GL=$MUJOCO_GL on $(hostname)" | tee "$OUT/gl_backend.txt"
 
-# ---- 2. does EGL render these two at all? -----------------------------------
-export MUJOCO_GL=egl
+# ---- 2. does this node render the two envs headless at all? -----------------
 export PYTHONPATH=$WS:$SWM_SRC
 cd "$WS"
 "$VENV/bin/python" scratch/step7/ogb-manipulation/census_ogb.py --out "$OUT/census" \
