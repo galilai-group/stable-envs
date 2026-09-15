@@ -1,0 +1,43 @@
+{
+ "env": "CraftaxClassic",
+ "device": "cpu",
+ "evaluator": "scratch/step3/certify.py:classify (frozen Step-2 ladder, not restated here)",
+ "jitted_official_fps": 610.5685046872495,
+ "unjitted_official_fps": 2.1763115066399537,
+ "baseline_label": "CPU_EXCEPTIONAL",
+ "baseline_fps": 165922.14429445128,
+ "labels": {
+  "as_measured": {
+   "tier": "CPU_FASTER",
+   "qualifiers": [
+    "BELOW_G4"
+   ],
+   "ratio": 528.7033543723284,
+   "cores": 0.26345686961538406,
+   "fps": 1150.6231937196392,
+   "best_batch": 64
+  },
+  "vs_jitted": {
+   "tier": "CPU_PARITY",
+   "qualifiers": [
+    "BELOW_G4"
+   ],
+   "ratio": 1.8845112135435498,
+   "cores": 0.26345686961538406,
+   "fps": 1150.6231937196392,
+   "best_batch": 64
+  },
+  "no_reference": {
+   "tier": "CPU_REGRESSION",
+   "qualifiers": [
+    "NO_REFERENCE",
+    "BELOW_G4"
+   ],
+   "ratio": null,
+   "cores": 0.26345686961538406,
+   "fps": 1150.6231937196392,
+   "best_batch": 64
+  }
+ },
+ "note": "as_measured is what the harness produces and it is NOT a defensible performance claim: the ratio is against a renderer nobody runs. Which of vs_jitted and no_reference is correct is Sami's ruling; both are recorded so it can be made on numbers."
+}

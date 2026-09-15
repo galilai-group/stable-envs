@@ -3,10 +3,9 @@
  "spread_max": 1.25,
  "loadavg_at_verdict": [
   166.05,
-  166.05,
-  166.05
+  165.47,
+  165.19
  ],
- "loadavg_source": "job log",
  "cells": {
   "baseA": {
    "batch": 1024,
@@ -25,15 +24,14 @@
  "baseline_mean_fps": 165551,
  "baseline_known_fps": 115166.0,
  "baseline_frac_of_known": 1.4375,
- "node_cores": 192,
- "load_per_core": 0.86,
- "cpus_allocated": null,
+ "cpus_allocated": 4,
+ "load_per_cpu": 41.51,
  "ratio_branch_over_baseline": 0.007,
- "verdict": "USABLE",
- "why": "baseline legs agree to 1.004x, the baseline reproduces its known 115,166 f/s to 1.44x, and loadavg is 0.86 per node core",
+ "verdict": "QUARANTINED",
+ "why": "loadavg 166.05 over 4 allocated cpus is 41.51 per cpu (> 1.5): the allocation is oversubscribed",
  "gates": {
   "spread": true,
   "baseline_floor": true,
-  "load": true
+  "load": false
  }
 }
