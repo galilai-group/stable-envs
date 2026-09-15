@@ -264,6 +264,26 @@ skipped, 361 errors — the error count differs only because that interpreter ca
 tests). So none of the OGB findings is an artefact of the Step-6 `stable_worldmodel` checkout that
 `se6-verify` chains.
 
+### `tests/gpu`, per Step-7 cell
+
+The file-level diff says what broke. This says, for each cell the step added, what fails and where it
+could be built at all — a `-` would mean "this interpreter could not construct it", never "it passed".
+Built by `scratch/step7/closure/per_cell_gpu_suite.py` over every interpreter that ran the suite.
+
+| cell | distinct failing tests | which | expected in advance? |
+|---|---|---|---|
+| `DMCManipulatorBringBall` | **0** | — | clean |
+| `CraftaxClassic` | 1 | `test_resolution_downsample_agrees_within_the_measured_bound` | **yes** — 81.638% against a bound of 100.000%, the night band Sami declared not applicable; the Step-8 certifier is to honour `resolution_consistency_applicability` |
+| `CraftaxFull` | 1 | the same test | **yes** — "has no measured downsample bound recorded", a Step-8 freeze item |
+| `DMCQuadrupedWalk` | 1 | the same test | **yes** — as CraftaxFull |
+| `PFRocketLanding` | 2 | `test_color_knobs_apply_the_requested_color`, `test_resolution_downsample_agrees_within_the_measured_bound` | **yes, both** — the open escalation on TinyRenderer's multiplicative law, and `DOWNSAMPLE_EXACT_FRAC['PFRocketLanding'] = 0.95614` not yet in the frozen table |
+| `OGBCube` | **8** | `test_state_roundtrip`, `test_visual_tier_matches_its_declared_fidelity`, `test_a_shared_style_broadcasts_to_any_batch`, `test_rendering_a_sub_batch_refuses_environment_0_s_style`, `test_render_is_pure_and_set_state_is_idempotent`, `test_dataset_paths_regenerate_identical_frames`, `test_the_reference_renderer_on_this_machine_is_deterministic`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-…]` | **no** — CLOSURE-3/4/5 |
+| `OGBScene` | **6** | the same minus the visual-tier and sub-batch-style rows | **no** — CLOSURE-3/5 |
+
+**Five of the seven cells fail nothing that was not named in advance, and `DMCManipulatorBringBall`
+fails nothing at all.** The two OGB cells account for every unexpected failure in the sweep, and all
+of them reproduce in both interpreters that can construct those cells.
+
 ### `tests/unit` — the certification host and the Mac, each against its own baseline
 
 Every run is paired with the SAME suite in the SAME interpreter on the SAME machine against the

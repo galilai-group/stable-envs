@@ -368,6 +368,21 @@ def main() -> None:
 
     P("### The GPU suite and the unit suites")
     P("")
+    per = _read_json(CLOSURE / "gpu_tests" / "per_cell.json")
+    if per:
+        consumed.add(CLOSURE / "gpu_tests" / "per_cell.json")
+        P("Per cell first, because that is the question the coverage table above raises. A cell that "
+          "SKIPS everywhere is not a passing cell, so the count below is over every interpreter that "
+          "could construct it.")
+        P("")
+        P("| cell | interpreters that built it | distinct failing tests | which |")
+        P("|---|---|---|---|")
+        for cell, runs in sorted(per.items()):
+            built = sum(1 for v in runs.values() if v.get("constructed_here"))
+            fails = sorted({f for v in runs.values() for f in v.get("failures", [])})
+            P(f"| `{cell}` | {built} | **{len(fails)}** "
+              f"| {', '.join('`%s`' % f.split('[')[0] for f in fails) or '—'} |")
+        P("")
     gp = sorted((CLOSURE / "gpu_tests").glob("*.results.txt")) if (CLOSURE / "gpu_tests").is_dir() else []
     ut = sorted((CLOSURE / "unit_tests").glob("*.results.txt")) if (CLOSURE / "unit_tests").is_dir() else []
     diff = _read_json(CLOSURE / "gpu_tests" / "gpu_suite_diff.json")
