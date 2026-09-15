@@ -215,3 +215,73 @@ se6-venv/python ast_diff.py base76/.../mjwarp.py <branch>/.../mjwarp.py
 git log --format='%an|%ae' / '%B' 76dc5116..4264f202 | grep -ciE 'co-authored|generated with|claude|anthropic'
 git diff --name-only 76dc5116..4264f202 | grep -E '^examples/results/step[456]/' | wc -l   # 0
 ```
+
+---
+
+# Re-verification at tip `9923594` (coordinator request)
+
+Commits since `4264f202`: `e12c58f`, `a088fb5`, `527cc9f`, `9923594` — 4 commits, all sami-bg, 0 trailers,
+`examples/results/step4|5|6` untouched (0 files). Non-artifact files touched: `stable_envs/render/mjwarp.py`,
+`stable_envs/envs/ogb_manip.py` (the new cells, out of scope), the two test files. Worktree clean at HEAD.
+
+## Verdict: APPROVE — conditional on job 6398530 (RoboCasa/MetaWorld/HumanoidBench model-side sweeps + Fetch control)
+
+### R1 spot rule — verified, closed
+Diff: `GL_SPOT_CUTOFF_OFF = 180.0`; `neutralise_illegal_spots` now saves `light_cutoff`, writes
+`light_exponent = 0` AND `light_cutoff = 180` for `not (0 <= cutoff <= 90)`; `restore_model` restores both
+arrays when present. Docstring replaced by the measured mechanism (cone test, -5 -> 5-degree cone, straight-up
+probe, 0.3506 vs 0.3507). My constructions at 9923594 (`prepare_model` on the 3-light model):
+
+| cutoff | neutralised | after (cutoff, exp) | MJWarp cone rejects | legal spot untouched | type unchanged | restore both arrays exact |
+|---|---|---|---|---|---|---|
+| -5 | [0] | (180, 0) | angle > 180 (never) | yes | yes | yes |
+| 100 / 91 / 179 / 180 / 90.0001 | [0] | (180, 0) | never | yes | yes | yes |
+| 0 / 45 / 90 / 89.9999 | [] | unchanged | own cone | yes | yes | yes |
+
+`restore` keys: `geom_group, site_group, light_exponent, light_cutoff`. `spot_semantics=False` leaves (100, 10).
+Tests now assert the cutoff write on all four bad values, the -5 case against `np.cos` (== -1 after), the
+90/90.0001 discontinuity, restore of both arrays, and opt-out keeps the cutoff. The conflicting
+`test_the_cutoff_itself_is_left_readable` was replaced by `test_prepare_model_restores_the_cutoff_too`.
+
+### R2 version-binding — verified, closed
+`texture_gaps` condition 3 and `bake_unsamplable_textures` now say "mujoco_warp <= 3.12.0; guarded upstream from
+3.13.0 (58d8c77 / #1608, 2026-08-26); on such a pin a crash"; the "~3-line patch" sentence now reads "already
+fixed upstream; a venv bump, TO BE MEASURED". POINT==off is stated as "MuJoCo's CLASSIC GL renderer at 3.12.0 ...
+a property of that renderer at that version".
+
+### R3 bake record — verified, closed
+Multi-role reproduction (2-D albedo role 1 + cube role 4): record now carries `removed_textures =
+[{tex 0, role 1, 2d, unsamplable False}, {tex 1, role 4, cube, unsamplable True}]`, `n_removed = 2`; the
+single-role cube case records `[{tex 0, role 1, cube, unsamplable True}]`. Restore exact. Two new tests cover it.
+
+### R4 provenance — closed for the identity proofs, residual on stamps
+Committed: `m2/spot/slurm_6397885.log.gz` (gpu2106, RTX 3090), `slurm_6398026.log.gz` (gpu2109, RTX 3090),
+`slurm_6398465.log.gz` (gpu2107, RTX 3090). Each log shows both legs in one job with `PYTHONPATH=.../se7/baseline`
+then `.../se7/ogb-manipulation`, equal per-config pixel sums, and the `BYTE-IDENTITY` rows. Job 6398465 (after the
+cutoff change): DMCReacherEasy, DMCReacherHard, DMCCartpoleSwingup, DMCCartpoleBalance, DMCAcrobotSwingup,
+DMCPendulumSwingup (Step-4 states), DMCPointMassEasy, MujocoPusher (sampled seed 0) — all 8 spot-carrying
+registered families `identical: True, max_abs 0`; FetchReach leg failed on a missing `_states.npy` (job-script
+omission, re-run in 6398530 — pending). `m1_mujoco_spot_cutoff.json` `exponent_sweep` now reads 0 px on every row
+with `verdict_exponent_tables_agree: True`. The eight CUDA `.npy` frames I byte-checked earlier were dropped in
+`9923594` (size); my verification of them stands on the pre-drop commit. Residual (non-blocking): the spot and bake
+sweep JSONs carry a `provenance` dict (host, python/mujoco/mujoco-warp/torch/warp versions, slurm_job, git_sha),
+but the Oscar copies have `git_sha = ""` (rsync tree has no `.git`); the texture_gaps sweep JSONs and the two
+identity JSONs carry no stamp; the three logs record node and card but no SHA (the tree is identified by
+PYTHONPATH only). Recommend stamping `git_sha` from a file written at rsync time.
+
+### R5 conditional families — pending 6398530
+Cross-venv sweep (job 6398427, node2321, CPU): se-step5 15/88 reachable, se-step6 40/76, se7-ogb 40/88 — all
+correct/identical, bake touches none, control fires only where `stable_worldmodel` exists (se7-ogb). The
+`families_present.json` import errors show robocasa/metaworld/humanoidbench refuse to import on those
+interpreters (missing metaworld / no compiled RoboCasa cache, mujoco 3.3.1 pin / mujoco_warp-only families). They
+remain unverified until 6398530 reports; the sweep denominators are now stated honestly (`registry_ids_total`,
+`n_with_reachable_mjmodel`, `n_no_mjmodel`, `n_skipped_not_constructible`, coverage note on Fetch).
+
+### Regression / identity at 9923594
+`tests/unit` (ignore `test_examples.py`): 763 passed, 1 failed, 6 skipped — the same pre-existing
+`test_every_cited_scratch_path_resolves` as at baseline (713/1/6); +50 vs baseline = the new cases. Two-tree
+registry sweep: 15 local families identical to 76dc5116 on every recorded field, `neutralised == []`, bake 0,
+restore exact; dm_control locomotion/trackcom/manipulator/quadruped models identical, no neutralisation, no
+bake. AST map vs baseline: ADDED `GL_SPOT_CUTOFF_MAX`, `GL_SPOT_CUTOFF_OFF`, `TEXTURE_SAMPLER_OK`, three
+functions, `field` import; CHANGED `Prepared`/`summary`, `prepare_model`, `restore_model`, `texture_gaps`. No
+OGB/env name on any non-comment, non-docstring line of `mjwarp.py`.

@@ -635,8 +635,8 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: shared fixes landed (cutoff=180 sentinel; 8/8 spot families byte-identical after); re-verification requested; cells written at visual, unregistered pending measured numbers; GPU job 6398530 queued
-    (RoboCasa/MetaWorld/HumanoidBench sweeps, Fetch control, cell measurement); then corpora, Gate F, tiers
+  status: shared changes APPROVE (conditional on 6398530); GPU job 6398530 running (sweeps for the CUDA-only families, Fetch control, cell measurement); then registration, corpora, Gate F, tiers, cell review,
+    merge
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
@@ -738,6 +738,15 @@ workstreams:
       - POINT==off as classic-GL 3.12.0; exponent_sweep fixed at cause
       reverify_job_6398465: all 8 spot-carrying families byte-identical max_abs 0 after the cutoff change
       pending: RoboCasa/MetaWorld/HumanoidBench import-refuse without CUDA on CPU nodes -> GPU job 6398530; Fetch control re-run there (job-script omission in 6398465)
+    reverify_9923594:
+      verdict: APPROVE conditional on job 6398530 (RoboCasa/MetaWorld/HumanoidBench sweeps + Fetch control)
+      closed:
+      - 'spot rule: exponent 0 + cutoff 180 for not (0 <= cutoff <= 90); both arrays restored; -5/100/91/179/180/90.0001 neutralised; 0/45/90/89.9999 untouched'
+      - version-binding + POINT==off as classic-GL 3.12.0
+      - bake record multi-role
+      - provenance logs for 6397885/6398026/6398465 (all 3090); 8/8 spot families identical
+      residual_nonblocking: Oscar sweep JSONs git_sha '' (rsync tree has no .git); texture_gaps sweeps/identity JSONs unstamped
+      regression: tests/unit 763/1/6 same pre-existing failure; 15 local families + locomotion/trackcom/quadruped/manipulator models identical to 76dc5116; no OGB name in mjwarp.py
   cells:
     commit: 527cc9f
     state: OGBCube/OGBScene at visual tier, unregistered until _MEASURED is filled from job 6398530
@@ -1019,6 +1028,8 @@ incident_log:
   item: W2 review APPROVE-WITH-CHANGES (six non-pixel fixes); follow-up requested
 - date: '2026-09-15'
   item: W5 shared fixes landed (cutoff sentinel; 8/8 identical); cells written unregistered; GPU job 6398530 queued
+- date: '2026-09-15'
+  item: W5 shared changes re-verified APPROVE conditional on job 6398530
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
