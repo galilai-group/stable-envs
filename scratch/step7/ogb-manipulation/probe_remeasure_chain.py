@@ -58,6 +58,21 @@ def provenance() -> dict:
         out["gpu"] = torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
     except Exception:
         out["gpu"] = None
+    # `stable-worldmodel` comes back None from importlib.metadata because it is a PYTHONPATH
+    # CHECKOUT here, not an installed distribution -- and it is the registration under test, so a
+    # null version is the one provenance field that must not stay null. The file digests are the
+    # version.
+    try:
+        import hashlib
+        import stable_worldmodel as swm
+        root = Path(swm.__file__).parent
+        out["stable_worldmodel_path"] = str(root)
+        out["stable_worldmodel_sha256"] = {
+            f: hashlib.sha256((root / f).read_bytes()).hexdigest()[:16]
+            for f in ("envs/ogbench/cube_env.py", "envs/ogbench/scene_env.py", "envs/__init__.py")
+            if (root / f).exists()}
+    except Exception as e:
+        out["stable_worldmodel_sha256"] = f"unavailable: {type(e).__name__}"
     return out
 
 

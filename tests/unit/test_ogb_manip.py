@@ -258,3 +258,46 @@ def test_the_frozen_corpus_is_a_subset_of_the_pool_committed_beside_it(cname):
     assert np.array_equal(pool[idx], states), "the selection does not index this pool"
     assert states.shape[1] == meta["state_dim"]
     assert list(meta["state_names"]) and len(meta["state_names"]) == states.shape[1]
+
+
+# --------------------------------------------------------------------------- the upload slicing
+
+@pytest.mark.parametrize("cell,nq,nbuttons", [("Cube", 21, 0), ("Scene", 25, 2)])
+def test_the_render_upload_slices_match_the_state_layout(cell, nq, nbuttons):
+    """The arithmetic `render()` uses to cut a state vector up, checked without CUDA.
+
+    Job 6405900 died on exactly this and nothing here could have caught it: `render()` still sliced
+    `mocap_quat` out of the state after B5 dropped it, so the slice was empty and the reshape raised
+    `shape '[64, 1, 4]' is invalid for input of size 0`. The GPU path cannot run on CPU, but its
+    INDEX arithmetic is pure and is asserted here against the same `state_names` the cell publishes.
+    """
+    b = ogb._bundle(cell)
+    dim = len(b.state_names)
+    assert dim == nq + 3 + nbuttons
+    chunk = np.arange(2 * dim, dtype=np.float32).reshape(2, dim)
+
+    mp = chunk[:, b.nq: b.nq + 3 * b.nmocap]
+    assert mp.shape == (2, 3 * b.nmocap), "mocap_pos slice must be non-empty and the right width"
+    assert mp.reshape(2, b.nmocap, 3).shape == (2, b.nmocap, 3)
+
+    if nbuttons:
+        bits = chunk[:, -nbuttons:]
+        assert bits.shape == (2, nbuttons)
+        assert b.nq + 3 * b.nmocap + nbuttons == dim, "bits must be the tail of the vector"
+    else:
+        assert b.nq + 3 * b.nmocap == dim, "with no bits the vector ends after mocap_pos"
+
+    # and there is NO quaternion left to slice
+    assert not any(n.startswith("mocap_quat[") for n in b.state_names)
+    assert chunk[:, b.nq + 3 * b.nmocap: b.nq + 7 * b.nmocap].shape[1] == nbuttons or nbuttons == 0
+
+
+def test_split_returns_an_identity_quaternion_rather_than_reading_one():
+    b = ogb._bundle("Cube")
+    f = _fake("Cube")
+    st = np.arange(len(b.state_names), dtype=np.float64)
+    qpos, mp, mq, bits = ogb.OGBManipBase._split(f, st)
+    assert qpos.shape == (b.nq,) and mp.shape == (b.nmocap, 3)
+    assert mq.shape == (b.nmocap, 4)
+    assert np.array_equal(mq, ogb.IDENTITY_QUAT(b.nmocap))
+    assert np.allclose(mq[:, 0], 1.0) and np.allclose(mq[:, 1:], 0.0)

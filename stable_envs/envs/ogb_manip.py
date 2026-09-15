@@ -664,10 +664,14 @@ class OGBManipBase(StableEnv):
             wp = c.wp
             wp.to_torch(c.wd.qpos)[:n] = chunk[:, :nq]
             if nmoc:
+                # mocap_pos IS state; mocap_quat is NOT -- it is the identity everywhere in the
+                # registered distribution (see `_bundle`), so it is written as a constant rather
+                # than sliced out of a state vector that no longer carries it. Slicing it anyway is
+                # how job 6405900 died: `chunk[:, nq+3*nmoc : nq+7*nmoc]` is empty once the dim is
+                # dropped, and the reshape raised `shape '[64, 1, 4]' is invalid for input of size 0`.
                 mp = chunk[:, nq: nq + 3 * nmoc].reshape(n, nmoc, 3)
-                mq = chunk[:, nq + 3 * nmoc: nq + 7 * nmoc].reshape(n, nmoc, 4)
                 wp.to_torch(c.wd.mocap_pos)[:n] = mp
-                wp.to_torch(c.wd.mocap_quat)[:n] = mq
+                wp.to_torch(c.wd.mocap_quat)[:n] = self._identity_quat(nmoc, n)
             if b.nbuttons:
                 self._upload_button_colours(c, chunk, n)
             # torch wrote the per-world arrays on its stream; warp replays the graph on its own.
@@ -695,6 +699,17 @@ class OGBManipBase(StableEnv):
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, plate1)
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _identity_quat(self, nmoc: int, n: int) -> torch.Tensor:
+        """``(n, nmoc, 4)`` of ``(1,0,0,0)`` on device, built once per (nmoc, batch)."""
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        key = ("idq", int(nmoc), int(n))
+        hit = cache.get(key)
+        if hit is None:
+            q = torch.zeros((int(n), int(nmoc), 4), dtype=torch.float32, device=self.device)
+            q[..., 0] = 1.0
+            hit = cache[key] = q
+        return hit
 
     def _mover_lut(self) -> torch.Tensor:
         """``(ngeom+1,)`` bool: is this segmentation id a MOVER? Indexed, not searched.
