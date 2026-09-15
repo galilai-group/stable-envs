@@ -674,13 +674,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: cell review REJECT (six reproduced defects in ogb_manip.py; shared helpers unaffected); full fix + re-measurement requested; re-review after
+  status: 'all six review defects fixed locally (mover LUT compositing; deterministic task/bits; reproducible sampler; pool==states; mocap_quat dropped; 20 tests); _MEASURED empty and cells unregistered
+    by design; RE-MEASUREMENT BLOCKED: Oscar SSH denied (keyboard-interactive) - confirmed by coordinator'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: 1550ebdb (all milestones complete)
+  head_sha: f8210aac (B1-B6 fixed; cells unregistered pending re-measurement)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -880,6 +881,19 @@ workstreams:
     - '_context deep copy: swm model sha unchanged; _bake_plate restores'
     - qvel drop sound
     - Gate F arm D reasoning; bake residual note; cpu raise; GPU_PARITY cap; both official numbers labelled
+    fix_f8210aac:
+      b1: mover LUT as fetch.py; floor plane and skybox are geoms so seg>=0 let MJWarp's floor win; false composite sentence deleted
+      b2: context copied with bits forced to (0,0) and restored
+      b3: 'three upstream swm defects worked around: CubeEnv/SceneEnv.reset never pass seed to super().reset; action_space property builds a fresh OS-seeded Box on every access (sampled twice per reset);
+        reset_variation_space(seed=None)'
+      b4: pool + selection in one draw; pool[indices]==states asserted
+      b5: mocap_quat dropped (one unique row over 520 states)
+      b6: 20 tests (skip cleanly while unmeasured)
+      extra_bugs_found_by_tests:
+      - _Bundle cached model/data but dirty resets rebind them -> plate baked from a discarded model
+      - cached Renderer held the old model
+      tests: 859 passed, 21 skipped, 2 pre-existing failures
+      blocked: re-measurement chain + slurm log commits need Oscar
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1167,6 +1181,9 @@ incident_log:
   item: 'W5 complete (1550ebdb): corpora, Gate F, tiers GPU_PARITY capped; cell reviewer spawned'
 - date: '2026-09-15'
   item: 'W5 cell review REJECT: mover-LUT compositing missing, unseeded task pick, non-reproducible sampler, pool mismatch, mocap_quat dead, no cell tests; full fix + re-measure requested'
+- date: '2026-09-15'
+  item: 'OSCAR SSH DENIED AGAIN (keyboard-interactive; VPN/campus auth) - confirmed. Blocks: W5 re-measurement, W4 commit (f) artifact pull, W6 gate results pull. Jobs already submitted keep running on
+    the cluster.'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
