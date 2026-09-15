@@ -181,12 +181,52 @@ workstreams:
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
-  status: phase 0 (census of the full renderer, purity, bars, reuse map of W1's prng/night/strip; started 2026-09-15 from integration ada4075)
+  status: phase 1 authorized 2026-09-15 (M1 sampler/Gate-A -> M2 cell -> M3 parity corpus -> M4 Gate A/F -> M5 tiers); no shared files; craftax_full.py new
   capability: full-atlas _Composite generalisation + layers
   wave: 2
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
+  head_sha: a510ee9 (phase 0)
+  phase0:
+    classification: PATCH_CANDIDATE (all three layers already bit-exact)
+    registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
+      strip/night; SWM jits step
+    bit_exact_vs_unjitted_49_states:
+      world_window_5int_stencil_composite: 49/49 max abs 0
+      lighting_chain_light_map_night_sleep: 49/49 max abs 0 (consumes prng.py unchanged)
+      strip_4_rows: 49/49 max abs 0
+    census: 12 stages; overlay alphas binary {0,1} at 10/16/64 px (Classic's are {0,128/255,1}) -> composite is a select; full _Composite product would be 732,600 entries (220 MB @10px) vs layered tables
+      46.9 kB; 143 PNGs, 47 keys
+    bytes_per_state: 544 float32 = 2,176 B vs frame 42,900 B @10px (19.7x); craftax EnvState is 273,276 B (6.37x larger than the frame); 21 omitted EnvState fields move 0 px
+    bars_local_one_core:
+      official_unjitted_10px: 2.98
+      official_jitted_10px: 1516
+      decode_10px: 11270
+      official_jitted_16px: 935
+      decode_16px: 6464
+      binding_bar: cores_cpu >= 1
+    reuse:
+      unchanged:
+      - render/prng.py (uniform*95+32)
+      - key encoding
+      - 'un-jitted reference ruling (jit gap persists: 48/49 uint8-identical)'
+      - certification_state_distribution convention
+      - applicability pattern
+      - resample-finished-tile rule
+      not_reusable:
+      - night_and_sleep (no luminance enhance; light_map multiplies before everything; daylight forced 1.0 off level 0; sleep towards black)
+      - night_vignette (normalised radial, not Gaussian)
+      - _Composite/_strip_cells/STRIP_LAYOUT
+    traps:
+    - 'XLA lowers float32 divide-by-scalar as reciprocal multiply (2,265/9,900 elements differ by 1 ULP): use *(1/max)'
+    - ItemType.NONE slot 0 is never drawn; its texture is opaque debug.png
+    resolution_oracle_official_S10_2S20: 'fails frozen 0.995 in EVERY band: world 0.4817 day / 0.0991 night, strip 0.94, max abs 191 (per-size PNG resampling + resolution-native noise) -> not_applicable
+      all bands by precedent (flagged to Sami)'
+    gate_a_risk: state_rng live only on level 0 & night; light_level only level 0; light_map slots only underground; ~25 strip fields and 99 projectile slots never move under a random policy -> stratified
+      sample_states over (level, band, sleeping, light_map) with strip values sampled directly (counts cap 99)
+    coordinator_finding: 'W1''s un-jitted reference_env moved Classic''s Step-3 denominator: reference_render 4.62 f/s vs 2,073 jitted vs 1,046 recorded in Step 3; a Step-3 re-run on integration would multiply
+      Classic''s S_cpu ~450x (added to the S_cpu escalation)'
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -651,6 +691,8 @@ incident_log:
   item: W6 formal APPROVE on cf355a3; merge gated on cluster job 6395707
 - date: '2026-09-15'
   item: 'W3 re-review: shared exclusion rule needs two hardenings (demonstrated false positives); fix requested'
+- date: '2026-09-15'
+  item: W2 phase 0 PATCH_CANDIDATE (three layers bit-exact); phase 1 authorized; whole-cell resolution not_applicable flagged; denominator finding added to the S_cpu escalation
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -670,13 +712,16 @@ escalations:
 - date: '2026-09-15'
   from: W1 / coordinator
   topic: CraftaxClassic registered-default CPU tier and the speed-ratio reference
-  facts: Mixed-corpus CPU tier on the NO_REFERENCE ladder = CPU_REGRESSION (cores_cpu 0.263; daylight alone 24.2). The frozen ladder prefers S_cpu when a reference exists; the parity reference is the un-jitted
-    craftax renderer (2.18 f/s), so S_cpu would read 528x and certify CPU_EXCEPTIONAL on a renderer nobody runs; against the jitted official S_cpu ~1.9x (still < 5).
+  facts: 'Mixed-corpus CPU tier on the NO_REFERENCE ladder = CPU_REGRESSION (cores_cpu 0.263; daylight alone 24.2). The frozen ladder prefers S_cpu when a reference exists; the parity reference is the un-jitted
+    craftax renderer (2.18 f/s), so S_cpu would read 528x and certify CPU_EXCEPTIONAL on a renderer nobody runs; against the jitted official S_cpu ~1.9x (still < 5). W2 adds: CraftaxPixels un-jitted 2.98
+    vs jitted 1,516 f/s (509x); W1''s un-jitted reference_env already moved Classic''s Step-3 denominator (1,046 -> 4.62 f/s), so any Step-3 re-run on integration inflates Classic''s S_cpu ~450x. Coordinator
+    note: the harness may need a separate ''speed reference'' hook from the parity reference (Step 8).'
   question: '(1) Accept CPU_REGRESSION as the honest registered-default CPU tier for CraftaxClassic in Step 7 (coverage change, not a renderer regression; daylight diagnostic recorded)? (2) For S_cpu, which
     reference may a speed ratio use: the parity reference as written (un-jitted) or the official as a user runs it (jitted)? Coordinator recommendation: (1) yes; (2) speed ratios use the official as a user
     runs it, parity uses the reference as written; until Step 8 encodes that in the harness, CraftaxClassic''s CPU tier is taken on the NO_REFERENCE ladder with S_cpu suppressed and both numbers recorded.
     This touches the Step-2 taxonomy, so it is Sami''s call (Step 8 candidate).'
   status: open
+  also: 'W2 CraftaxPixels: check_resolution_consistency not applicable in ALL bands on the official''s own evidence (broader scope than Classic''s band ruling); authorized by precedent, Sami may override.'
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
