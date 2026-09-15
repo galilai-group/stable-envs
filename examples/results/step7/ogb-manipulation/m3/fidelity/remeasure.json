@@ -1,0 +1,525 @@
+{
+ "cells": {
+  "OGBCube": {
+   "corpus": {
+    "env": "OGBCube",
+    "kept": 64,
+    "n_extreme": 32,
+    "n_indices": 64,
+    "n_spread": 31,
+    "n_typical": 1,
+    "pool": 256,
+    "provenance": {
+     "dm-control": "1.0.45",
+     "git_sha": "",
+     "gpu": "NVIDIA GeForce RTX 3090",
+     "host": "gpu2109.oscar.ccv.brown.edu",
+     "mujoco": "3.12.0",
+     "mujoco-warp": "3.12.0",
+     "mujoco_gl": "egl",
+     "numpy": "2.5.2",
+     "ogb_manip_md5": "f168b2d301967653a798cb86a9c9e1a1",
+     "ogbench": "1.2.1",
+     "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+     "python": "3.12.8",
+     "slurm_job": "6407605",
+     "stable-worldmodel": null,
+     "stable_worldmodel_path": "/oscar/scratch/sboughan/se7/swm-src/stable_worldmodel",
+     "stable_worldmodel_sha256": {
+      "envs/__init__.py": "118a262677a647c6",
+      "envs/ogbench/cube_env.py": "143e5e81f424ff7a",
+      "envs/ogbench/scene_env.py": "d0eebdce0131f86e"
+     },
+     "torch": "2.14.0+cu126",
+     "utc": "2026-09-15T14:18:07Z",
+     "warp-lang": "1.17.0"
+    },
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "35dd61dd149d0bcaf5ed8519793cd07587c127dabd5eb2fdfeda2bd1a2d55e49",
+    "state_dim": 24,
+    "state_names": [
+     "qpos[0]",
+     "qpos[1]",
+     "qpos[2]",
+     "qpos[3]",
+     "qpos[4]",
+     "qpos[5]",
+     "qpos[6]",
+     "qpos[7]",
+     "qpos[8]",
+     "qpos[9]",
+     "qpos[10]",
+     "qpos[11]",
+     "qpos[12]",
+     "qpos[13]",
+     "qpos[14]",
+     "qpos[15]",
+     "qpos[16]",
+     "qpos[17]",
+     "qpos[18]",
+     "qpos[19]",
+     "qpos[20]",
+     "mocap_pos[0]",
+     "mocap_pos[1]",
+     "mocap_pos[2]"
+    ]
+   },
+   "dead_dims": null,
+   "draw_spread": {
+    "mean_abs": [
+     2.4089672062672727,
+     2.441657864317602
+    ],
+    "ssim": [
+     0.9149173125220016,
+     0.923417105553239
+    ],
+    "within8_frac": [
+     0.9154768963249362,
+     0.9168557926100127
+    ]
+   },
+   "draws": [
+    {
+     "all_exact_frac": 0.8708159777582908,
+     "draw": 0,
+     "interior_exact_frac": 0.9580073885059223,
+     "interior_frac": 0.4125013824931127,
+     "max_abs": 205,
+     "mean_abs": 2.4107276760801977,
+     "ssim": 0.9219089298102885,
+     "within8_frac": 0.9154768963249362
+    },
+    {
+     "all_exact_frac": 0.8739219198421556,
+     "draw": 1,
+     "interior_exact_frac": 0.9582987787775646,
+     "interior_frac": 0.414487145327676,
+     "max_abs": 199,
+     "mean_abs": 2.4089672062672727,
+     "ssim": 0.923417105553239,
+     "within8_frac": 0.9168557926100127
+    },
+    {
+     "all_exact_frac": 0.8703420210857781,
+     "draw": 2,
+     "interior_exact_frac": 0.9580374745915544,
+     "interior_frac": 0.4111723038870679,
+     "max_abs": 217,
+     "mean_abs": 2.441657864317602,
+     "ssim": 0.9149173125220016,
+     "within8_frac": 0.9154781419403699
+    }
+   ],
+   "gate_a_repo_checks": {
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "batch_sizes": [
+      1,
+      7,
+      64
+     ],
+     "max_abs_diff": 0,
+     "n": 64,
+     "worst_case": ""
+    },
+    "check_determinism": {
+     "identical": true
+    },
+    "check_order_invariance": {
+     "status": "absent in this build"
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "gate_f_arm_d": {
+    "all_exact_frac": 0.8665929262329932,
+    "certified_artifact": "render(): the observation is a vector, so there is no pixel observation to swap and render() is what is certified.",
+    "interior_exact_frac": 0.9568926182598678,
+    "mean_abs": 2.4768866368161846,
+    "n_states": 24,
+    "observation_is_pixels": false,
+    "observation_shape": [
+     28
+    ],
+    "reset_info_keys": [
+     "control",
+     "env_name",
+     "prev_qpos",
+     "prev_qvel",
+     "privileged/block_0_pos",
+     "privileged/block_0_quat",
+     "privileged/block_0_yaw",
+     "proprio/effector_pos",
+     "proprio/effector_yaw",
+     "proprio/gripper_contact",
+     "proprio/gripper_opening",
+     "proprio/gripper_vel",
+     "proprio/joint_pos",
+     "proprio/joint_vel",
+     "qpos",
+     "qvel",
+     "success",
+     "target",
+     "time"
+    ],
+    "shape_and_dtype_match": true,
+    "ssim": 0.9405702437731474,
+    "swm_id": "swm/OGBCube-v0",
+    "within8_frac": 0.9147857873618197
+   },
+   "size": 224,
+   "thresholds": {
+    "mean_abs_max": 3.2,
+    "ssim_min": 0.9,
+    "within8_min": 0.9
+   },
+   "tiers": {
+    "R_ours_over_official": 3.20084770768594,
+    "batch_scales": 5.361633537993473,
+    "batch_scales_pass": false,
+    "cores": 1.8751507132903513,
+    "cpu_error": "OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. See examples/r",
+    "cpu_raises": true,
+    "declared_gpu_tier": "GPU_PARITY (capped: BATCH_SCALES 5.36x < 20x required)",
+    "decode_fps_per_core_same_node": 3322.5890244030743,
+    "fps_1": 1162.0255533935192,
+    "fps_best": 6230.3551790801175,
+    "jpeg_q90_bytes": 5950,
+    "official_fps_same_node": 1946.470356624485,
+    "rows": [
+     {
+      "batch": 1,
+      "fps": 1162.0255533935192,
+      "ms": 0.8605662733316422,
+      "peak_vram_mib": 33
+     },
+     {
+      "batch": 16,
+      "fps": 4903.389696295772,
+      "ms": 3.263048827648163,
+      "peak_vram_mib": 33
+     },
+     {
+      "batch": 64,
+      "fps": 5866.0913382643475,
+      "ms": 10.910160839557648,
+      "peak_vram_mib": 34
+     },
+     {
+      "batch": 256,
+      "fps": 6206.546044464118,
+      "ms": 41.246773675084114,
+      "peak_vram_mib": 136
+     },
+     {
+      "batch": 1024,
+      "fps": 6220.257373345528,
+      "ms": 164.6234132349491,
+      "peak_vram_mib": 297
+     },
+     {
+      "batch": 4096,
+      "fps": 6230.3551790801175,
+      "ms": 657.4264038354158,
+      "peak_vram_mib": 737
+     }
+    ]
+   },
+   "worst_of_draws": {
+    "mean_abs": 2.441657864317602,
+    "ssim": 0.9149173125220016,
+    "within8_frac": 0.9154768963249362
+   }
+  },
+  "OGBScene": {
+   "corpus": {
+    "env": "OGBScene",
+    "kept": 64,
+    "n_extreme": 32,
+    "n_indices": 64,
+    "n_spread": 31,
+    "n_typical": 1,
+    "pool": 256,
+    "provenance": {
+     "dm-control": "1.0.45",
+     "git_sha": "",
+     "gpu": "NVIDIA GeForce RTX 3090",
+     "host": "gpu2109.oscar.ccv.brown.edu",
+     "mujoco": "3.12.0",
+     "mujoco-warp": "3.12.0",
+     "mujoco_gl": "egl",
+     "numpy": "2.5.2",
+     "ogb_manip_md5": "f168b2d301967653a798cb86a9c9e1a1",
+     "ogbench": "1.2.1",
+     "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+     "python": "3.12.8",
+     "slurm_job": "6407605",
+     "stable-worldmodel": null,
+     "stable_worldmodel_path": "/oscar/scratch/sboughan/se7/swm-src/stable_worldmodel",
+     "stable_worldmodel_sha256": {
+      "envs/__init__.py": "118a262677a647c6",
+      "envs/ogbench/cube_env.py": "143e5e81f424ff7a",
+      "envs/ogbench/scene_env.py": "d0eebdce0131f86e"
+     },
+     "torch": "2.14.0+cu126",
+     "utc": "2026-09-15T14:18:07Z",
+     "warp-lang": "1.17.0"
+    },
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "5d14aa863431f4df05692ea2802db4d5d16fafc944d40e270266ba4742e07b30",
+    "state_dim": 30,
+    "state_names": [
+     "qpos[0]",
+     "qpos[1]",
+     "qpos[2]",
+     "qpos[3]",
+     "qpos[4]",
+     "qpos[5]",
+     "qpos[6]",
+     "qpos[7]",
+     "qpos[8]",
+     "qpos[9]",
+     "qpos[10]",
+     "qpos[11]",
+     "qpos[12]",
+     "qpos[13]",
+     "qpos[14]",
+     "qpos[15]",
+     "qpos[16]",
+     "qpos[17]",
+     "qpos[18]",
+     "qpos[19]",
+     "qpos[20]",
+     "qpos[21]",
+     "qpos[22]",
+     "qpos[23]",
+     "qpos[24]",
+     "mocap_pos[0]",
+     "mocap_pos[1]",
+     "mocap_pos[2]",
+     "button_state_0",
+     "button_state_1"
+    ]
+   },
+   "dead_dims": null,
+   "draw_spread": {
+    "mean_abs": [
+     5.3274227864583334,
+     5.381315494791667
+    ],
+    "ssim": [
+     0.892819475027774,
+     0.8970319975834514
+    ],
+    "within8_frac": [
+     0.856750390625,
+     0.85735546875
+    ]
+   },
+   "draws": [
+    {
+     "all_exact_frac": 0.7751671875,
+     "draw": 0,
+     "interior_exact_frac": 0.9236541259317206,
+     "interior_frac": 0.27689996780384335,
+     "max_abs": 255,
+     "mean_abs": 5.3274227864583334,
+     "ssim": 0.8970319975834514,
+     "within8_frac": 0.857279296875
+    },
+    {
+     "all_exact_frac": 0.7788375,
+     "draw": 1,
+     "interior_exact_frac": 0.9236780012317938,
+     "interior_frac": 0.28059502916593015,
+     "max_abs": 255,
+     "mean_abs": 5.381315494791667,
+     "ssim": 0.8949173860518488,
+     "within8_frac": 0.85735546875
+    },
+    {
+     "all_exact_frac": 0.77189140625,
+     "draw": 2,
+     "interior_exact_frac": 0.9178052736430344,
+     "interior_frac": 0.277079098381354,
+     "max_abs": 255,
+     "mean_abs": 5.345941276041667,
+     "ssim": 0.892819475027774,
+     "within8_frac": 0.856750390625
+    }
+   ],
+   "gate_a_repo_checks": {
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "batch_sizes": [
+      1,
+      7,
+      64
+     ],
+     "max_abs_diff": 0,
+     "n": 64,
+     "worst_case": ""
+    },
+    "check_determinism": {
+     "identical": true
+    },
+    "check_order_invariance": {
+     "status": "absent in this build"
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "gate_f_arm_d": {
+    "all_exact_frac": 0.781975,
+    "certified_artifact": "render(): the observation is a vector, so there is no pixel observation to swap and render() is what is certified.",
+    "interior_exact_frac": 0.9366283170404301,
+    "mean_abs": 4.810027777777778,
+    "n_states": 24,
+    "observation_is_pixels": false,
+    "observation_shape": [
+     40
+    ],
+    "reset_info_keys": [
+     "button_states",
+     "control",
+     "env_name",
+     "prev_button_states",
+     "prev_qpos",
+     "prev_qvel",
+     "privileged/block_0_pos",
+     "privileged/block_0_quat",
+     "privileged/block_0_yaw",
+     "privileged/button_0_pos",
+     "privileged/button_0_state",
+     "privileged/button_0_vel",
+     "privileged/button_1_pos",
+     "privileged/button_1_state",
+     "privileged/button_1_vel",
+     "privileged/drawer_handle_pos",
+     "privileged/drawer_handle_yaw",
+     "privileged/drawer_pos",
+     "privileged/drawer_vel",
+     "privileged/window_handle_pos",
+     "privileged/window_handle_yaw",
+     "privileged/window_pos",
+     "privileged/window_vel",
+     "proprio/effector_pos",
+     "proprio/effector_yaw",
+     "proprio/gripper_contact",
+     "proprio/gripper_opening",
+     "proprio/gripper_vel",
+     "proprio/joint_pos",
+     "proprio/joint_vel",
+     "qpos",
+     "qvel",
+     "success",
+     "target",
+     "time"
+    ],
+    "shape_and_dtype_match": true,
+    "ssim": 0.9126169269038609,
+    "swm_id": "swm/OGBScene-v0",
+    "within8_frac": 0.8655479166666666
+   },
+   "size": 200,
+   "thresholds": {
+    "mean_abs_max": 7.0,
+    "ssim_min": 0.85,
+    "within8_min": 0.85
+   },
+   "tiers": {
+    "R_ours_over_official": 3.6239443462475953,
+    "batch_scales": 6.49824816623827,
+    "batch_scales_pass": false,
+    "cores": 2.051787425606615,
+    "cpu_error": "OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. See examples/",
+    "cpu_raises": true,
+    "declared_gpu_tier": "GPU_PARITY (capped: BATCH_SCALES 6.50x < 20x required)",
+    "decode_fps_per_core_same_node": 2637.760844700446,
+    "fps_1": 832.8590097609105,
+    "fps_best": 5412.124532913857,
+    "jpeg_q90_bytes": 10236,
+    "official_fps_same_node": 1493.4347815020474,
+    "rows": [
+     {
+      "batch": 1,
+      "fps": 832.8590097609105,
+      "ms": 1.2006834149360657,
+      "peak_vram_mib": 737
+     },
+     {
+      "batch": 16,
+      "fps": 3779.332215510691,
+      "ms": 4.2335521429777145,
+      "peak_vram_mib": 737
+     },
+     {
+      "batch": 64,
+      "fps": 4868.668007874946,
+      "ms": 13.14527913928032,
+      "peak_vram_mib": 737
+     },
+     {
+      "batch": 256,
+      "fps": 5394.89670727446,
+      "ms": 47.452252358198166,
+      "peak_vram_mib": 737
+     },
+     {
+      "batch": 1024,
+      "fps": 5396.151766235779,
+      "ms": 189.76486288011074,
+      "peak_vram_mib": 737
+     },
+     {
+      "batch": 4096,
+      "fps": 5412.124532913857,
+      "ms": 756.8192444741726,
+      "peak_vram_mib": 737
+     }
+    ]
+   },
+   "worst_of_draws": {
+    "mean_abs": 5.381315494791667,
+    "ssim": 0.892819475027774,
+    "within8_frac": 0.856750390625
+   }
+  }
+ },
+ "draws": 3,
+ "n": 64,
+ "provenance": {
+  "dm-control": "1.0.45",
+  "git_sha": "",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "mujoco": "3.12.0",
+  "mujoco-warp": "3.12.0",
+  "mujoco_gl": "egl",
+  "numpy": "2.5.2",
+  "ogb_manip_md5": "f168b2d301967653a798cb86a9c9e1a1",
+  "ogbench": "1.2.1",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "python": "3.12.8",
+  "slurm_job": "6407605",
+  "stable-worldmodel": null,
+  "stable_worldmodel_path": "/oscar/scratch/sboughan/se7/swm-src/stable_worldmodel",
+  "stable_worldmodel_sha256": {
+   "envs/__init__.py": "118a262677a647c6",
+   "envs/ogbench/cube_env.py": "143e5e81f424ff7a",
+   "envs/ogbench/scene_env.py": "d0eebdce0131f86e"
+  },
+  "torch": "2.14.0+cu126",
+  "utc": "2026-09-15T14:18:07Z",
+  "warp-lang": "1.17.0"
+ }
+}

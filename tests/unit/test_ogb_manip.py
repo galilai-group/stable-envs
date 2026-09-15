@@ -229,7 +229,12 @@ def test_the_declaration_is_complete_and_visual(cname):
     assert vf["within8_min"] < vf["within8_frac"]
     assert vf["ssim_min"] < vf["ssim"]
     assert "VISUAL TIER" in (cls.__doc__ or "").upper()
-    assert "qvel" not in (cls.__doc__ or ""), "the state does not include qvel"
+    # The docstring may (and should) EXPLAIN that qvel is excluded; what it must not do is list it
+    # as part of the state. Asserting the bare word is absent would forbid the explanation.
+    doc = cls.__doc__ or ""
+    assert "qvel)" not in doc and "qvel," not in doc.split("deliberately NOT")[0], \
+        "the docstring must not present qvel as part of the state"
+    assert "(qpos, mocap_pos" in doc, "the docstring must state the real layout"
 
 
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])

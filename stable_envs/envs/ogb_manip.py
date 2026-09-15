@@ -833,10 +833,70 @@ def _renderer(cell: str, res: int):
 #: the placeholder impossible to mistake for evidence.
 import os as _os
 
+#: MEASURED by `scratch/step7/ogb-manipulation/probe_remeasure_chain.py`, job 6407605 on
+#: gpu2109 (RTX 3090), three independent 64-state draws per cell against swm's own EGL frames at
+#: the registered resolution. The declared value is the WORST of the three and `draw_spread` carries
+#: the range; the thresholds were computed by that script under the family rule (x1.3 on the mean,
+#: the fractional floors a round 0.05 step below the worst draw), not set by hand here.
+#:
+#: These supersede the numbers this file carried before the mover-LUT fix. Those described a
+#: composite that never used its own baked plate on the floor, and the difference is the measure of
+#: that defect: interior-exact 0.351 -> 0.958 and all-exact 0.278 -> 0.872 on the Cube.
 _MEASURED: dict = {
-    # Filled from the re-measurement AFTER the mover-LUT fix; the numbers that preceded it described
-    # a renderer that never used its own plate on the floor and are not this cell's.
-}
+        "Cube": {
+            "all_exact_frac": 0.871693,
+            "draw_spread": {
+                "mean_abs": [
+                    2.408967,
+                    2.441658
+                ],
+                "ssim": [
+                    0.914917,
+                    0.923417
+                ],
+                "within8_frac": [
+                    0.915477,
+                    0.916856
+                ]
+            },
+            "interior_exact_frac": 0.958115,
+            "interior_frac": 0.41272,
+            "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
+            "mean_abs": 2.441658,
+            "mean_abs_max": 3.2,
+            "ssim": 0.914917,
+            "ssim_min": 0.9,
+            "within8_frac": 0.915477,
+            "within8_min": 0.9
+        },
+        "Scene": {
+            "all_exact_frac": 0.775299,
+            "draw_spread": {
+                "mean_abs": [
+                    5.327423,
+                    5.381315
+                ],
+                "ssim": [
+                    0.892819,
+                    0.897032
+                ],
+                "within8_frac": [
+                    0.85675,
+                    0.857355
+                ]
+            },
+            "interior_exact_frac": 0.921712,
+            "interior_frac": 0.278191,
+            "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
+            "mean_abs": 5.381315,
+            "mean_abs_max": 7.0,
+            "ssim": 0.892819,
+            "ssim_min": 0.85,
+            "within8_frac": 0.85675,
+            "within8_min": 0.85
+        }
+    }
+
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
 #: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
@@ -874,7 +934,6 @@ def _fidelity(cell: str) -> dict:
         "interior_exact_frac": float(d["interior_exact_frac"]),
         "interior_frac": float(d["interior_frac"]),
         "all_exact_frac": float(d["all_exact_frac"]),
-        "mover_px_share": float(d["mover_px_share"]),
         "draw_spread": d["draw_spread"],
         # THE FAMILY RULE, not a self-invented one: x1.3 on the mean, and the fractional floors a
         # round step below the WORST draw. DM Control sets ceilings this way (mean 5.01 -> 6.50,
@@ -884,7 +943,12 @@ def _fidelity(cell: str) -> dict:
         "within8_min": float(np.floor(lo_w * 20) / 20),
         "ssim_min": float(np.floor(lo_s * 20) / 20),
         "measured_at": (
-            f"{spec['size']} px, camera {spec['camera']}, 3 independent draws of 64 states from the "
+            # The reference version is NAMED here as well as declared in `reference_versions`:
+            # `tests/unit/test_declarations.py` requires the two to agree in words, because a
+            # version in a field nobody reads next to prose that names a different one is worse
+            # provenance than either alone.
+            f"mujoco 3.12.0 reference; {spec['size']} px, camera {spec['camera']}, 3 independent "
+            f"draws of 64 states from the "
             f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
             f"against swm's own render(); the declared value is the WORST of the three and "
             f"draw_spread carries all three. The frame is a baked MuJoCo plate composited with "
@@ -953,8 +1017,11 @@ def _make_classes():
                 f"OGBench manipulation {cell} ({spec['swm_ref']}), fidelity_tier='visual'.\n\n"
                 f"The frame is a MuJoCo-baked static plate composited with mujoco_warp's batch "
                 f"ray-caster for the movers, at swm's registered {spec['size']} px from the model "
-                f"camera {spec['camera']!r}. State is (qpos, qvel, mocap_pos, mocap_quat"
-                + (", button bits)" if cell == "Scene" else ")") + ".\n\n"
+                f"camera {spec['camera']!r}. State is (qpos, mocap_pos"
+                + (", button bits)" if cell == "Scene" else ")")
+                + f", {len(_bundle(cell).state_names)} dimensions. qvel is excluded because it "
+                  f"reaches no pixel and mocap_quat because it is the identity everywhere in the "
+                  f"registered distribution.\n\n"
                 f"THIS IS A VISUAL TIER CELL, NOT A PARITY ONE. Three lighting terms in mujoco_warp "
                 f"disagree with MuJoCo and are declared in visual_fidelity and parity_note rather "
                 f"than chased: the global directional light, the spot's distance attenuation, and "

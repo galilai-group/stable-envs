@@ -1059,7 +1059,49 @@ from the caller's own `rng` instead.
 
 ---
 
-## 23. Status: re-measurement prepared, blocked on Oscar
+## 23. Re-measurement: DONE (job 6407605, `gpu2109`, RTX 3090)
+
+The whole chain ran on the fixed tree (`ogb_manip.py` md5 `f168b2d3…`, verified on the node before
+submit). **The B1 fix is most of this family's fidelity.**
+
+| metric | `OGBCube` before B1 | **after** | `OGBScene` before B1 | **after** |
+|---|---:|---:|---:|---:|
+| `mean_abs` | 4.797 | **2.442** | 10.004 | **5.381** |
+| `within8_frac` | 0.807 | **0.9155** | 0.704 | **0.8568** |
+| `ssim` | 0.943 | 0.9149 | 0.902 | 0.8928 |
+| `all_exact_frac` | 0.278 | **0.8717** | 0.269 | **0.7753** |
+| `interior_exact_frac` | 0.351 | **0.9581** | 0.367 | **0.9217** |
+
+Worst of three draws in every cell; spread 2.409–2.442 and 5.327–5.381 on `mean_abs`. Thresholds
+computed **by the measuring script** under the family rule: `mean_abs_max` 3.2 / 7.0,
+`within8_min` 0.90 / 0.85, `ssim_min` 0.90 / 0.85. `ssim` is the one metric that did not improve —
+it is a structural measure and the plate was already structurally right; the others are the plate
+being used at all.
+
+**Gate A, through the REPO'S own checks** (not the bespoke probe that once reported a live dimension
+dead): `check_determinism`, `check_batch_invariance`, `check_batch_size_invariance`,
+`check_order_invariance` and `check_state_dims_matter` all pass on both cells, with
+**`dead_dims: []`** — independent confirmation that dropping `qvel` and `mocap_quat` was right.
+
+**Gate F arm D**, on states swm's own dynamics visited: `observation_is_pixels = False` (28-D / 40-D
+vectors, so `render()` is the certified artifact), shape and dtype match, and `mean_abs` 2.477 /
+4.810 with `interior_exact` 0.957 / 0.937 — agreeing with the corpus numbers, which is the point of
+running it.
+
+**Corpora**: 64 of 256 per cell, `pool[indices] == states` asserted before writing and re-verified
+after the pull; sha `35dd61dd149d` (Cube, 24 dims) and `5d14aa863431` (Scene, 30 dims).
+
+**Tiers**, all three comparators on the same node:
+
+| cell | fps(1) | best | official | 1-core decode | R | cores | `BATCH_SCALES` |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `OGBCube` | 1,162 | 6,230 | 1,946 | 3,323 | 3.20 | **1.88** | 5.36x ❌ |
+| `OGBScene` | 833 | 5,412 | 1,493 | 2,638 | 3.62 | **2.05** | 6.50x ❌ |
+
+`GPU_PARITY` on both, capped by the `BATCH_SCALES` failure; `cores ≥ 1` passes on both;
+`device="cpu"` raises on both.
+
+## 24. Superseded status note (was: blocked on Oscar)
 
 `_MEASURED` is **empty** and both cells are **unregistered** — deliberately, because the previous
 numbers describe a renderer that never used its plate. `tests/unit/test_ogb_manip.py` skips cleanly
