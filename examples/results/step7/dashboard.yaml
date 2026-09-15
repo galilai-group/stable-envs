@@ -902,7 +902,8 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: reviewer APPROVE at cf355a3; M4 operational edits staged locally; job 6395707 pending on the cluster; BLOCKED on Oscar SSH for the seven gate artifacts
+  status: job 6395707 COMPLETED (3.5 min; gate coverage to be read from the full log); original agent stopped -> new bounded M4 agent (fable) spawned under Sami's directive to finish PFRocketLanding through
+    its gates; code frozen at cf355a3; merge after M4 + reviewer final check
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1022,6 +1023,7 @@ workstreams:
   merge_gate: 'per Sami 2026-09-15: reviewer APPROVE on the fixed tree AND all seven cluster gates pass; job 6395516 results accepted only if no further code change is required'
   rc1_evidence: 'reference/rc1_evidence.json: measure_tier draw-0 seed (64 float32 states, |q| off <= 3e-8) 0 rejections; first 100 corpus states from float64 obs 100/100 exact; float32 state13 0 rejections,
     2/100 exact, up to 79 px mean 11.5 (state-rounding term, reported alongside, never folded in)'
+  agent_note: original W6 agent stopped 2026-09-15 (not resumable); M4 handed to a new agent with the staged operational edits in the worktree
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1193,6 +1195,8 @@ incident_log:
   item: W4 (f) and W6 M4 prepared locally; all three remaining workstreams hold on Oscar SSH
 - date: '2026-09-15'
   item: Oscar SSH restored; W4 (f) merged and CLOSED (GPU_EXCEPTIONAL / CPU_UNMEASURED); W6 and W5 resumed
+- date: '2026-09-15'
+  item: W6 agent stopped; new M4 agent spawned on the completed job 6395707
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
