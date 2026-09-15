@@ -46,6 +46,7 @@ and it is itself a reason a parity tier for this env should be declared on uint8
 | resolution-consistency risk | `resolution_consistency_risk.json` |
 | local CPU cost | `local_cost.json` |
 | venv pins | `reference_venv_pins.json` |
+| daylight post-process identity | `daylight_identity.json` |
 
 Probes: `scratch/step7/craftax-classic-full/{harvest,probe_prng,probe_components,probe_purity_state,probe_player_sleep,probe_world_sleep,probe_resolution,probe_cost}.py`,
 plus `threefry_torch.py` and `instrumented_renderer.py`.
@@ -399,9 +400,14 @@ daylight.** It is a 64-state corpus of 127-dim rows; the new components are addi
 
 1. the 127 existing slots keep their meaning and position — append, never reorder;
 2. a 149-dim row whose 12 counts and 4 intrinsics are 0, `light_level = 1`, `is_sleeping = 0`
-   reproduces today's frame in rows `[0:H_world]` **exactly** (`daylight = 1` makes the whole chain
-   the identity — already verified numerically to 0 over 20 states in Step 4, and re-verified here on
-   32 real daylight states);
+   reproduces today's frame in rows `[0:H_world]` **exactly**. Measured, not argued
+   (`phase0/daylight_identity.json`): on 24 real states forced to `light_level = 1.0,
+   is_sleeping = False`, both the reference's own post-process and the torch chain are the **bit
+   identity** on the world pixels, 24/24 at both tile sizes — because `1.0*world + 0.0*x` is `world`
+   in float32 and `intensity = max(2*(0.5-1.0), 0)` is 0. **The caveat that matters for corpus
+   design: this holds at daylight exactly 1.0, not at `daylight >= 0.5`.** The dusk band
+   `0.5 <= daylight < 1` still runs enhance/tint/blend with weight `(1 - daylight)` and is not the
+   identity, though it needs no PRNG;
 3. the frame **shape changes** (112x144 -> 144x144 at 16 px) because the strip is now drawn, so
    `digest_ours`, `frames_shape`, `mean_pixel` and `distinct_colors` in the frozen record **cannot**
    match. The replay must therefore run as *world-rows-only* against the frozen digests, plus a new
