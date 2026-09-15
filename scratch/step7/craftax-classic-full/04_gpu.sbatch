@@ -15,7 +15,10 @@ set -euo pipefail
 # SLURM copies the script to its spool dir, so $0 is NOT in the worktree: source the
 # header from the workspace by absolute path.
 source /oscar/scratch/sboughan/se7/craftax-classic-full/scratch/step7/craftax-classic-full/env_header.sh
-unset JAX_PLATFORMS
+# JAX_PLATFORMS stays "cpu": the reference is a correctness oracle, not a speed measurement, and
+# it is called UN-JITTED, so putting it on the GPU buys nothing and would have jax and torch
+# contending for the same device while the torch timings are being taken. Only torch uses the
+# card here, which is the point of the job.
 VENV=$SCR/venvs/se7-craftax
 echo "== host $(hostname) =="; nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
 md5sum stable_envs/envs/craftax.py stable_envs/render/prng.py
