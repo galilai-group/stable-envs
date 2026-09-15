@@ -608,3 +608,248 @@ start of phase 1. No jobs were submitted in phase 0 and nothing was cancelled.
 
 Job names all start `se7-craftax-full-`. One GPU job in flight at a time; never cancel a job this
 workstream did not submit, and never a `simclr_cifar10` job.
+
+---
+---
+
+# Part II — the implementation
+
+Phase 1 was authorised with five rulings (structure, resolution applicability, the performance
+denominator, milestone order, Oscar caps) and landed in the order the coordinator set. Sections 1-10
+above are the phase-0 diagnosis, kept as measured; what follows is what was built and what it
+measures.
+
+| commit | milestone |
+|---|---|
+| `6f92a3b` | **M1 + M2** — `stable_envs/envs/craftax_full.py`, the baked tables, the 544-slot window, the stratified sampler, 24 unit tests |
+| `99f2b48` | **M3** — the frozen Step-7 corpus and parity on it |
+| `231dac2` | **M4 + M5 (local)** — Gate F shape, the uint8-composite reduction, the tier per band |
+
+**Classification: `PATCH`.** `swm/CraftaxPixels-v1` goes from **gap** to **full** on the renderer's
+side. Gate A is clean, parity is byte-identical at both certified sizes, and the two open items are
+the rulings already escalated (§8.1, §8.2/§8.3), not code.
+
+## 11. What was built
+
+Per the coordinator's ruling: a **new** `stable_envs/envs/craftax_full.py`;
+`stable_envs/envs/craftax.py` **untouched**; nothing new under `stable_envs/render/`;
+`render/prng.py` consumed unchanged. `git diff --name-only 76dc5116..HEAD -- stable_envs` is
+`envs/_craftax_full_tex.py` and `envs/craftax_full.py`, both new.
+
+### 11.1 The cell
+
+`stable_envs/envs/_craftax_full_tex.py` (41 kB) holds craftax 1.6.1's textures at 10 px and 16 px as
+**uint8, losslessly**: `load_texture` reads each PNG as int, forces `alpha // 255` so every alpha is
+exactly 0 or 1, and resizes with `Image.NEAREST`; over all 47 texture keys at both sizes the only
+non-integral entry is the vignette, which is a function of the frame size rather than an asset.
+
+Four tables, all small enough to stay resident at any size craftax draws at:
+
+| table | entries | what |
+|---|---|---|
+| `bg` | **596** | 185 `block x item` composites, one black tile, **410 strip icon cells** |
+| `ov` | **660** | `mob x projectile` pairs — projectile over mob, the reference's order |
+| `pl` | 6 | the four facings, `player-sleep`, and "no player" |
+| `dg` | 200 | `ones x tens` digit pairs; entry 0 is (empty, empty), the no-op a digit-less cell takes |
+
+and the frame is **one gather plus three selects**: gather `bg` for all 143 tiles at once — a strip
+cell's *icon is its background*, so the strip costs a gather like a world tile does — then the player
+on the centre tile (1/99 of the frame), then `ov` on the world rows and `dg` on the strip rows.
+
+### 11.2 The reductions, including the one that was refused
+
+| reduction | status |
+|---|---|
+| **the composite never leaves uint8** | **done.** Every table entry is integral and a stencil composite of integers is an integer, so a float table would hold the same numbers. The gathers and selects move one byte a channel instead of four, the strip's 4 of 13 rows never become float at unit gain, and only the world rows make the float round trip. Measured: mixed corpus at 10 px, B=256, **3,475 -> 4,636 f/s** |
+| **draw the noise field only where it can contribute** | **done, and by construction.** `night_intensity` is exactly 0 for `daylight >= 0.5`, so only those rows are gathered, drawn and scattered back. Eight of the nine levels are in that band unconditionally |
+| **one host read, not four** | **done.** "is the appearance default" and "can this batch skip the float chain" come off one stacked tensor, so a CUDA render syncs once |
+| **a one-channel stencil mask** | **tried, measured, refused.** It moves a third of the bytes and lets `torch.where` broadcast, and is **1.7x slower** on a fully lit frame (18,928 -> 10,852 f/s at 10 px, B=256). The number is in the code beside the three-channel mask so it is not tried again |
+| **collapse the lighting chain algebraically** | **refused, as in Classic.** It is the same expression in real arithmetic and a different rounding at every step in float32, and the claim here is bit equality rather than closeness |
+
+### 11.3 The two traps, and how each is pinned
+
+* **The vignette is a reciprocal multiply.** craftax normalises `ntx / ntx.max()` under jax and XLA
+  lowers a float32 divide by a scalar as `x * (1/s)`; against a true divide that is one ULP out on
+  **2,265 of 9,900** elements at 10 px, and one ULP there is one ULP in the night mask. The chain
+  went 35/49 -> **49/49** bit-exact when the line changed.
+  `test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide` asserts the sha256 of the whole
+  texture against a value frozen from craftax, six exact probe values, **and** that the naive divide
+  is still wrong — because a test whose wrong branch stopped being wrong has stopped testing
+  anything.
+* **`ItemType.NONE` is never drawn and `debug.png` is opaque.** Its alpha is zeroed at bake time, so
+  the gather needs no special case. `test_item_slot_zero_is_never_drawn` asserts it at both sizes.
+
+### 11.4 The resampling rule, which is what makes the cell stricter than the reference
+
+`_source_size` prefers a baked size that **divides** the requested one over a nearer one that does
+not: a 20 px render comes from the **10 px** art, not from the nearer 16 px art, and is therefore an
+exact 2x replication of the 10 px frame. Measured: with the nearest rule
+`check_resolution_consistency` reported `exact_frac` **0.323**; with the divisor rule it reports
+**0.7946**, and `test_a_render_at_twice_the_size_resamples_from_the_size_that_divides_it` asserts
+`big[:, ::2, ::2] == small` exactly on a fully lit batch. The residual is the night noise, which is
+drawn at the frame's own resolution and which no port can make consistent without changing pixels.
+
+## 12. Parity — byte-identical at both certified sizes
+
+`examples/results/step7/craftax-full/certify/certify_cpu_mac_corpus.json`, the **frozen Step-7
+corpus**, craftax 1.6.1 / jax 0.11.1 (`jax_threefry_partitionable` True), **un-jitted**:
+
+| tile px | frame | `exact_frac` | max abs | world rows | strip rows | fast (21) | lit (21) | night (22) |
+|---|---|---|---|---|---|---|---|---|
+| **10** (registered) | 64x130x110x3 | **1.0** | **0** | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| **16** | 64x208x176x3 | **1.0** | **0** | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+
+`digest_ours == digest_official` at both sizes (`b3dcba4dea708d15`, `43414708ce31a3d7`): the frames
+are **byte-identical**, not equal within a bound. A second, independently drawn 64-state pool
+(`certify_cpu_mac.json`, seed 20260915) gives the same 1.0 / 0.
+
+The claim is declared as a **uint8** claim with the jit-gap note, as W1 declared Classic's:
+`parity_all_exact_min = 1.0`, `reference_versions = {craftax 1.6.1, jax 0.11.1}`, and a `parity_note`
+that names `jax_threefry_partitionable`, `do_night_noise`, the un-jitted choice and the 1.53e-05
+measurement.
+
+## 13. The frozen corpus
+
+`examples/results/step7/craftax-full/corpus/` — 64 states from a 512 pool, selected the way Step 4
+selects (typical + per-dimension extremes + farthest-point spread) in Step-4's schema, with the pool
+written beside the selection so a later run can show which 64 of which 512 were kept. Proposed for
+the Step-8 freeze; no frozen Step-4/5/6 artifact is touched.
+
+| | |
+|---|---|
+| levels | **all 9** |
+| level 0 | night 22 · dusk 10 · day 10 |
+| underground | lit 11 · dark 11 |
+| uint8 fast path | 14 · PRNG drawn 22 · sleeping 17 |
+| entities | 255 mob tiles across all three classes · 218 projectile tiles in **all four** orientations |
+
+**Spread is not coverage**, and the corpus says so rather than hiding it: level 4 did not survive the
+farthest-point selection on this seed, so a repair pass swaps a missing level in against the most
+over-represented one and records the swap in `corpus.json`. Widening the pool until the draw happened
+to work would have been the same corpus with the reason removed.
+
+## 14. Gate A — every check, and the two that needed design
+
+At the env's default batch, on the Mac (the x86-64 re-take is §16):
+
+`check_state_roundtrip` 0.0 · **`check_state_dims_matter` `dead_dims: []`** · `check_batch_invariance`
+0 · `check_batch_size_invariance` 0 over `[1, 7, 64]` · `check_order_independence` 0 / 0 ·
+`check_determinism` identical · `check_render_is_pure` 0 on all four probes ·
+`check_chunked_render_matches` 0 over `[1, 7, 64, 4096]` · `check_input_form_invariance` no
+disagreements · `check_set_state_copies` 0 / not rebound · `check_style_is_state` 0 ·
+`check_default_style_is_official` 0 · **`check_variations_do_something` `[]` at batch 1, 2, 4 and
+16** · `check_colors_apply_exactly` `[]` (this env exposes no RGB colour leaf; its recolouring knob is
+`channel_gain`) · `check_backend_agreement` skipped (no `Scene2D`; this is a tile path).
+
+### 14.1 `check_state_dims_matter` — `dead_dims: []` at batch 1 through 16
+
+**Measured: no dead dimension at batch 1, 2, 3, 4, 8 or 16, over twelve seeds each.** That took four
+devices in the sampler, and each one is documented in the code with the measurement that forced it,
+because each looks arbitrary and none is:
+
+1. **Row 0 is always the richest band** — level 0, night, dimmed, awake. It is the only band in which
+   the four PRNG halves (`player_level == 0` **and** `light_level < 0.5`), `light_level`
+   (`player_level == 0`) and the 99 `light_map` slots (a tile that is not fully lit) are *all*
+   observable at once, and a `batch=1` instance gets exactly one row.
+2. **Band 0 dims to 0.6 and no further, and its night stops at 0.3.** The frame is uint8: at
+   `light_map` 0.11 a block swap worth four levels lands inside one uint8 step and the dimension
+   reads as dead. The deep values live in band 4, where other rows can see them.
+3. **Band 0 carries no `DARKNESS` block.** `DARKNESS` renders as an all-zero tile and zero times any
+   light is still zero, so a `DARKNESS` tile has a dead `light_r*c*` dimension.
+4. **Band 0 carries a ladder on every tile.** The item alphabet is NONE, TORCH and three ladders, and
+   the check's fallback nudge on a NONE slot is `+1` — which lands on TORCH, a small icon that
+   disappears entirely under the opaque part of a mob or projectile sprite. Measured: with a plain
+   draw a `batch=1` instance reported one or two `item_r*c*` dimensions dead on **half of twelve
+   seeds**, every one of them a tile under an overlay. Exactly one mob sprite of the twenty is fully
+   opaque (ranged type 5) and band 0 keeps it out, which
+   `test_exactly_one_mob_sprite_is_fully_opaque_and_the_sampler_knows` pins.
+
+The strip's 41 numbers are **drawn directly rather than harvested**, which is sound for the reason
+§3.4 measures — each cell is a function of its own value alone and the simulator caps every count at
+99 — and necessary for the reason §5 measures: a 4,000-step random-policy rollout leaves 25 of the 41
+at zero for every step and never leaves level 0.
+
+### 14.2 `check_resolution_consistency` — declared `not_applicable` in all bands
+
+Per the coordinator's ruling, W1's applicability pattern with the official renderer's own evidence.
+The declaration on the class carries the numbers, the two mechanisms, the evidence path, the
+reference versions, and — as instructed — **the note that this scope is broader than Classic's**:
+there only `light_level < 0.5` is inapplicable and the frozen bound is kept above it; here the
+reference is resolution-inconsistent **in every band**, including full daylight, because
+`load_texture` re-resamples every PNG at every size with `Image.NEAREST`. The frozen Step-2 threshold
+is **not edited**. This renderer measures `exact_frac` **0.7946**, which is *better* than the
+official's 0.4895 because it resamples the finished tile; exact parity at 10 px and 16 px is
+unaffected and still required, and is met.
+
+`test_the_declared_resolution_applicability_matches_measurement`-style staleness cover is provided by
+`test_the_resolution_applicability_declares_its_scope_and_its_evidence`, which fails if the scope
+line, the evidence path or the "still required" clause goes away.
+
+## 15. Gate F
+
+`StableEnvGym("CraftaxFull")` reset gives a **544**-dim observation, `render()` returns
+**(130, 110, 3)** — exactly the `obs_shape` `stable_worldmodel/envs/craftax/craftax.py` hard-codes
+for `swm/CraftaxPixels-v1` — and (208, 176, 3) at 16 px. `info` carries the shard's usual six keys.
+`step()` raises by design: this cell ships a renderer and no batched simulator, so its Gate F path is
+`swap_renderer`, which keeps the official env's dynamics and replaces only its pixels, exactly as for
+`CraftaxClassic`. Artifact: `gate_f/gate_f_local.json`. The run through
+`examples/swm_compat/run_swm_workflow.py` needs `stable_worldmodel`, which is in no local venv, and
+is owed on Oscar.
+
+## 16. Performance — one tier, five band diagnostics, and a denominator that is not yet a ruling
+
+Apple arm64, one core, one torch thread. **Not certification numbers**; the Oscar batch-node leg is
+§17. `sweep/bench_cpu_mac.json`.
+
+| band | 10 px, B=256 | 16 px, B=256 | what it costs |
+|---|---|---|---|
+| level 0, full daylight | **18,970 f/s** | 9,604 | uint8 gather, no float buffer, no PRNG |
+| underground, fully lit | 18,869 | 9,598 | the same path — the daylight override makes 8 of 9 levels noise-free |
+| underground, dark | 6,946 | 2,983 | per-tile `light_map` multiply |
+| level 0, dusk | 6,894 | 3,023 | the float chain, no PRNG |
+| **level 0, night** | **2,808** | 1,129 | the float chain **+ the threefry field** |
+| sleeping | 4,682 | 1,940 | |
+| **mixed corpus — THE TIER** | **4,636 f/s** | **1,946 f/s** | |
+
+* **fastest/slowest ratio 6.75x**, and the **flagged slower band is `player_level == 0` with
+  `light_level < 0.5`**: the reference performs a per-pixel float post-process there — light map,
+  noise field, tint, daylight blend — against a single uint8 gather when the frame is fully lit and
+  awake. No engineering makes a per-pixel float chain as cheap as a memcpy.
+* The ratio is **five times gentler than Classic's 32.7x**, for a structural reason: full Craftax's
+  night chain has no luminance "enhance" step, and eight of its nine levels never draw the noise
+  field at all.
+
+### 16.1 The bars, and the denominator question
+
+One core of JPEG-q90 decode of this env's own 10 px frame: **9,795 f/s** (9,992-byte blob against a
+42,900-byte frame).
+
+| | value | reading |
+|---|---|---|
+| `cores_cpu` at 10 px | **0.47** | **BELOW_G4** — where Step 3 also put `CraftaxClassic` (0.44-0.49) |
+| `S_cpu` vs the **jitted** official | **3.00** (10 px), 2.05 (16 px) | `CPU_FASTER` band |
+| `S_cpu` vs the **un-jitted** official | 3,456 (10 px), 1,092 (16 px) | not a number worth quoting |
+
+**Neither `S_cpu` certifies anything until Sami rules**, and this report does not choose. The parity
+claim requires the un-jitted reference (§4.2) and the Step-3 denominator is read through the **same**
+`cls.reference_render` hook, and the two differ by **1,151x** at 10 px and 533x at 16 px. Measured
+here: the un-jitted bridge is 1.34 f/s at 10 px against 1,544 f/s for the jitted renderer. The tier
+is taken on the **NO_REFERENCE ladder** as instructed, and both denominators are recorded beside it.
+
+This workstream's §8.3 finding — that W1's (correct) un-jitted `reference_env` has already moved
+`CraftaxClassic`'s own Step-3 denominator from a recorded 1,046 f/s to a measured 4.62 — is added to
+that escalation and is **not** fixed here.
+
+## 17. Oscar
+
+Reachable. `$SCR/venvs/se7-craftax` verified (jax 0.11.1 with `jax_threefry_partitionable = True`,
+craftax 1.6.1, torch 2.14.0+cu126). The worktree is rsynced to `$SCR/se7/craftax-full/`. Caps
+respected: one GPU job in flight, `--cpus-per-task=4`, `--mem<=48G`, `--time<=03:00:00`,
+`--exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`. Nothing was cancelled and no `simclr` job was
+touched.
+
+| job | script | what it owes |
+|---|---|---|
+| **6397508** | `02_certify_cpu.sbatch` | Gate A + parity on the frozen corpus on **x86-64** at one thread, plus the unit suite — float32 arithmetic over a bit-level integer PRNG, so arm64/x86 agreement is measured (identical frame digests), not assumed |
+| **6397509** | `03_tier_cpu.sbatch` | the tier and the five bands on an **`--exclusive`** batch node with `/proc/loadavg` on both sides, plus both official denominators |
+| **6397510** | `03_gpu.sbatch` | the CUDA leg of Gate A and parity, and the GPU tier per band, in one allocation on one card |
