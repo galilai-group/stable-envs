@@ -225,7 +225,7 @@ workstreams:
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
-  head_sha: 61350f4 (Gate F; W2 CLOSED; merged)
+  head_sha: 707e797 (tier-final; merged)
   phase0:
     classification: PATCH_CANDIDATE (all three layers already bit-exact)
     registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
@@ -381,6 +381,14 @@ workstreams:
     cpu: '6397916 used --cpus-per-task=4 (one-core held for torch, not for jax): inadmissible; re-take 6409963 with --cpus-per-task=1 (cgroup) logging affinity/backend/loadavg'
     cpu_label_from_current_numbers_via_repo_classifier: CPU_FASTER [BELOW_G4] (S_cpu 3.81 vs jitted 350.94 f/s same node; cores 0.356) - stands only if 6409963 reproduces it; tier_anchors block is not the
       live rungs
+  tier_final:
+    cpu: 'CPU_FASTER [BELOW_G4]: S_cpu 2.395, cores 0.342; 1,469.1 f/s @ B=64 vs official jitted 613.4 (decode 4,294) - job 6409963 node2339 --cpus-per-task=1 (cgroup logged); paired USABLE'
+    gpu: 'GPU_FASTER (class R): R 100.96, cores 21.82; 94,343.9 f/s @ B=4096 vs official jitted 934.5 on the same 3090 in the same job (W1''s CUDA venv for the official, ours for ours; backend asserted
+      ''gpu'') - job 6410052 gpu2109'
+    notes:
+    - S_cpu fell 3.81 -> 2.40 (node and condition both changed; only the second is admissible)
+    - 'measuring the GPU reference demoted from GPU_FAST (cores-only) to GPU_FASTER (R 101 < 500): the point of measuring'
+    tests: 933 passed, 2 pre-existing failures; citations 11
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -1378,6 +1386,8 @@ incident_log:
   item: 'Craftax reference re-takes: CPU under cgroup one-core; GPU needs a CUDA-jax venv (building); W2''s GPU job cancelled before an inadmissible artifact'
 - date: '2026-09-15'
   item: 'W1 tier-final merged: CPU_FASTER / GPU_FASTER under admissible references'
+- date: '2026-09-15'
+  item: 'W2 tier-final merged: CPU_FASTER / GPU_FASTER under admissible references; classifier census blocker recorded for Step 8'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1468,6 +1478,9 @@ step8_carryovers:
   source: W5 shared review item 5
 - item: DOWNSAMPLE_EXACT_FRAC['PFRocketLanding'] = 0.95614 measured at the test protocol; add at the Step-8 freeze (tests/ frozen in Step 7)
   source: W6 M4
+- item: 'Step-3 classify() returns ''unknown'' for CraftaxFull: the frozen census under scratch/census predates the cell AND NO_BACKEND_MODULE_CLASS keys on module name ''craftax'' -> R which ''craftax_full''
+    does not match. Step 8 must regenerate the census and widen the map (also DMCQuadrupedWalk/DMCManipulatorBringBall/OGB/Rocket entries)'
+  source: W2 tier-final
 blocked_on_oscar_ssh:
   since: 2026-09-15 ~08:00 UTC
   items:
