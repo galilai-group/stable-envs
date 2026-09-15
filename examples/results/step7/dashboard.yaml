@@ -86,7 +86,7 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: phase 1 PATCH delivered (HEAD a635d3a); independent review running; cluster items pending Oscar
+  status: phase 1 reviewed APPROVE-WITH-CHANGES (C1-C4 required); cluster jobs running on Oscar; merge after follow-up + cluster results
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
@@ -143,6 +143,31 @@ workstreams:
     - Discrete(3) shape leaf vs SWM's two alternatives
     semantic_followup: none (no existing pixels move; new cell is parity)
     reviewer: independent reviewer (opus family) spawned 2026-09-15, read-only
+    review:
+      verdict: APPROVE-WITH-CHANGES
+      report: examples/results/step7/dmc-manipulator/review_phase1.md
+      verified:
+      - orientation per-row for every consumer; no bake-time mover orientation capture
+      - _hideable body->geom resolution and raise
+      - pristine sphere .02; SWM .015 box/sphere with Discrete(2, init 1); init=2 derived; shape leaf in scene-cache key
+      - 16 cells 0 differing across four digests incl. size 84
+      - tests/unit same single pre-existing failure, byte-identical failure set
+      - Step-4 dmc replay 14/0 both trees
+      - parity interior 1.0 on independent seeds; Gate A 14/14 at 224 and 84; presence_margin 0.8708/0.7442; dead-dims exactly the three named
+      - hygiene + policy clean
+      required_changes:
+      - C1 _movers files a body episode slot into the site id set (inert by accident)
+      - C2 four places over-credit check_default_style_is_official
+      - C3 candidate corpus is the 256 pool, not the 64 selection in Step-4 meta format
+      - C4 'exact' overclaim for light.diffuse_scale 7/6 (float32 rounding); floor.color is a range gap not a default gap
+      recommended:
+      - multi-geom body test + raise branch
+      - top-level group name clobber guard
+      - stale geom_rbound/aabb docstring
+      recorded_for_step8:
+      - 'light_pos allowed while _dir refused: probable latent family defect (Swimmer6 carries two)'
+      - do not promote 0.9829 to a floor
+      - shape-leaf fidelity vs SWM recompiled MJCF is O1
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -285,6 +310,8 @@ incident_log:
   item: integration tests/unit green at 0a029bd; W5 ogb-manipulation phase 0 spawned (opus)
 - date: '2026-09-15'
   item: W1 phase 1 (53fcb15) delivered, byte-identical parity; reviewer spawned; Oscar SSH restored (reported by W1, being confirmed)
+- date: '2026-09-15'
+  item: W3 review APPROVE-WITH-CHANGES; follow-up requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
