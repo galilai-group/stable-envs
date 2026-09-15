@@ -2,7 +2,7 @@
   "jax_version": "0.11.1",
   "jax_threefry_partitionable_default": true,
   "jax_default_prng_impl": "threefry2x32",
-  "torch_version": "2.14.0",
+  "torch_version": "2.14.0+cu130",
   "per_shape": [
     {
       "tag": "classic_7px",
@@ -99,44 +99,5 @@
     "bit_exact": true,
     "max_abs_diff": 0.0
   },
-  "note": "bit_exact_original is the pre-jax-0.4.36 code path; where it is 0 and bit_exact_partitionable is the full count, the night noise field is a function of the jax CONFIG as well as of the state.",
-  "int32_variant_vs_jax": [
-    {
-      "shape": [
-        49,
-        63
-      ],
-      "n_keys": 128,
-      "bit_exact": true,
-      "max_abs": 0.0
-    },
-    {
-      "shape": [
-        112,
-        144
-      ],
-      "n_keys": 128,
-      "bit_exact": true,
-      "max_abs": 0.0
-    },
-    {
-      "shape": [
-        63,
-        77
-      ],
-      "n_keys": 128,
-      "bit_exact": true,
-      "max_abs": 0.0
-    },
-    {
-      "shape": [
-        3,
-        5
-      ],
-      "n_keys": 128,
-      "bit_exact": true,
-      "max_abs": 0.0
-    }
-  ],
-  "int32_variant_note": "uniform_batch_i32: two-complement int32 arithmetic, bit-identical to the int64 path and 2.3x faster on one Apple arm64 core at B=256, (112,144)."
+  "note": "bit_exact_original is the pre-jax-0.4.36 code path; where it is 0 and bit_exact_partitionable is the full count, the night noise field is a function of the jax CONFIG as well as of the state."
 }

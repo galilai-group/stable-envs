@@ -492,9 +492,37 @@ function and pays 0.25 s a frame instead of 0.008 s, and the declared claim is a
 this renderer does not assert bit equality of the reference's float, because the reference does not
 have one float value to be equal to.
 
-### 8.3 Gate A on CPU — every mandatory check
+### 8.2b The same frames on two architectures — Oscar, job `6394533`
 
-`check_state_roundtrip` 0.0 · `check_state_dims_matter` **`dead_dims: []`** ·
+Oscar's SSH returned mid-session, so this is no longer owed. `$SCR/venvs/se7-craftax` was built
+(job `6394425`, 2m32s) — python 3.12, **jax 0.11.1 with `jax_threefry_partitionable = True`**,
+craftax 1.6.1, torch 2.14.0+cu130 — and is the **first jax-bearing interpreter on Oscar**, which is
+what made this env's parity `blocked_environment` from Step 6 onward.
+
+Job `6394533` on `node2416` (x86-64, `batch`/`normal`, one torch thread, 2m57s, `md5sum` of
+`craftax.py` and `prng.py` printed into the log and matching the offered tree):
+
+| | 7 px | 16 px |
+|---|---|---|
+| `exact_frac` / `max_abs` | **1.0 / 0** | **1.0 / 0** |
+| night (23) / dusk (25) / day (16) | 1.0 / 1.0 / 1.0 | 1.0 / 1.0 / 1.0 |
+| world rows / strip rows | 1.0 / 1.0 | 1.0 / 1.0 |
+| frame digest | `288630d8d823c0b9` | `820c52a906ae839a` |
+
+**Those digests are the same as the Mac's**, so arm64 and x86-64 produce byte-identical frames —
+which is the check that matters most for the PRNG, since it is bit-level integer arithmetic and
+nothing about torch guarantees it across architectures. The dedicated sweep confirms it directly:
+`prng_exactness` re-run on x86-64 gives **64/64 bit-exact on all seven shapes** (both Classic tile
+sizes, both full-Craftax shapes, an odd element count, a 1x1, and all 64 real rollout keys), with
+the pre-0.4.36 path at **0/64** as on the Mac. The craftax unit tests on that node: **70 passed,
+1 skipped**.
+
+Artifact: `certify/certify_cpu_node2416.oscar.ccv.brown.edu.json`.
+
+### 8.3 Gate A — every mandatory check, on both hosts
+
+Identical on the Mac and on `node2416`: `check_state_roundtrip` 0.0 ·
+`check_state_dims_matter` **`dead_dims: []`** ·
 `check_batch_invariance` 0 · `check_batch_size_invariance` 0 over `[1, 7, 64]` ·
 `check_order_independence` 0 / 0 · `check_determinism` identical ·
 `check_render_is_pure` 0 on all four probes · `check_chunked_render_matches` 0 over `[1, 7, 64, 4096]` ·
