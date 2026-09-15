@@ -570,6 +570,10 @@ workstreams:
     - r5_kind_cost ELLIPSOID row
     - measure_cell.per_surface scipy-free fallback
     gpu_declare_resubmit_6394987: PENDING/RUNNING (gpu2104 excluded)
+    quiet_retry_1: '6396526 gpu2109 reached a quiet window (load 8.95) after 75 min; legs A/C fine; leg B (branch incl. DMCQuadrupedWalk) FileNotFoundError: certify_shard_cpu3d.py hard-coded the Step-4
+      states path, which does not exist for a post-freeze cell (hidden by tail + EGL noise). 6396525 cancelled before measuring.'
+    quiet_retry_2: 'fix: _states_file resolves Step-4 then examples/results/step7/*/phase1/corpus/states (states_source recorded); resubmitted 6398084 (cpu, 6 h wait) and 6398085 (gpu, 2 h wait); PENDING
+      at 06:06; commit (f) when both land'
   commit_e:
     identity: cuda 21/21 raycast3d + 4/4 trackcom byte-identical (split by venv); CPU 25/25 incl. 11 maze cells
     mujoco_warp: release 3.11.0 confirmed (ELLIPSOID/HFIELD dispatch, ray_ellipsoid, no sites)
@@ -929,6 +933,8 @@ incident_log:
   item: W2 x86-64 parity confirmed with identical digests; CPU tier via paired job; GPU job running
 - date: '2026-09-15'
   item: W5 attribution done (visual tier); shared spot correction + bake helper landed; shared-change reviewer spawned; cells authorized
+- date: '2026-09-15'
+  item: 'W4 tier retry: leg B failed on the hard-coded Step-4 states path for a post-freeze cell; script fixed additively; jobs resubmitted'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
