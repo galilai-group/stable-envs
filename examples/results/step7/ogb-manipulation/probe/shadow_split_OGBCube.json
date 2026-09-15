@@ -1,0 +1,81 @@
+{
+ "env_id": "swm/OGBCube-v0",
+ "h": 224,
+ "light_castshadow": [
+  1,
+  0
+ ],
+ "mean": {
+  "mover_silhouette_share": 0.10165550595238095,
+  "shadow_changed_max_abs": 133.66666666666666,
+  "shadow_changed_share_all": 0.9234926392431971,
+  "shadow_changed_share_off_mover": 0.8828025350765305,
+  "shadow_changed_share_off_mover_gt32": 0.03187446853741497,
+  "shadow_changed_share_off_mover_gt8": 0.874332350127551,
+  "shadow_mean_abs_off_mover": 20.869874339675125
+ },
+ "rows": [
+  {
+   "mover_silhouette_share": 0.11407844387755102,
+   "shadow_changed_max_abs": 128,
+   "shadow_changed_share_all": 0.9286312181122449,
+   "shadow_changed_share_off_mover": 0.8730668048469388,
+   "shadow_changed_share_off_mover_gt32": 0.03268494897959184,
+   "shadow_changed_share_off_mover_gt8": 0.8637595663265306,
+   "shadow_mean_abs_off_mover": 20.999212633852245,
+   "state": 0
+  },
+  {
+   "mover_silhouette_share": 0.10947464923469388,
+   "shadow_changed_max_abs": 128,
+   "shadow_changed_share_all": 0.9129464285714286,
+   "shadow_changed_share_off_mover": 0.8768734056122449,
+   "shadow_changed_share_off_mover_gt32": 0.03198740433673469,
+   "shadow_changed_share_off_mover_gt8": 0.8682836415816326,
+   "shadow_mean_abs_off_mover": 20.876888302038807,
+   "state": 1
+  },
+  {
+   "mover_silhouette_share": 0.10520966198979592,
+   "shadow_changed_max_abs": 132,
+   "shadow_changed_share_all": 0.931281887755102,
+   "shadow_changed_share_off_mover": 0.8813974808673469,
+   "shadow_changed_share_off_mover_gt32": 0.03278459821428571,
+   "shadow_changed_share_off_mover_gt8": 0.8721301020408163,
+   "shadow_mean_abs_off_mover": 20.95961868276277,
+   "state": 2
+  },
+  {
+   "mover_silhouette_share": 0.08876753826530612,
+   "shadow_changed_max_abs": 128,
+   "shadow_changed_share_all": 0.9200414540816326,
+   "shadow_changed_share_off_mover": 0.8940130739795918,
+   "shadow_changed_share_off_mover_gt32": 0.03126992984693878,
+   "shadow_changed_share_off_mover_gt8": 0.8877152423469388,
+   "shadow_mean_abs_off_mover": 20.872052841083068,
+   "state": 3
+  },
+  {
+   "mover_silhouette_share": 0.1096938775510204,
+   "shadow_changed_max_abs": 154,
+   "shadow_changed_share_all": 0.9225326849489796,
+   "shadow_changed_share_off_mover": 0.8722496811224489,
+   "shadow_changed_share_off_mover_gt32": 0.03115035076530612,
+   "shadow_changed_share_off_mover_gt8": 0.8612284757653061,
+   "shadow_mean_abs_off_mover": 20.67362106017192,
+   "state": 4
+  },
+  {
+   "mover_silhouette_share": 0.08270886479591837,
+   "shadow_changed_max_abs": 132,
+   "shadow_changed_share_all": 0.9255221619897959,
+   "shadow_changed_share_off_mover": 0.8992147640306123,
+   "shadow_changed_share_off_mover_gt32": 0.031369579081632654,
+   "shadow_changed_share_off_mover_gt8": 0.8928770727040817,
+   "shadow_mean_abs_off_mover": 20.83785251814192,
+   "state": 5
+  }
+ ],
+ "states": 6,
+ "w": 224
+}

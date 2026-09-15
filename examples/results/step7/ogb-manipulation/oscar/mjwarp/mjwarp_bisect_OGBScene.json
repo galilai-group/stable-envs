@@ -1,0 +1,101 @@
+{
+ "env": "swm/OGBScene-v0",
+ "rows": [
+  {
+   "cfg": {
+    "batch": 2,
+    "capture": true,
+    "shadows": true,
+    "skybox": true,
+    "textures": true
+   },
+   "error": "Warp CUDA error 700: an illegal memory access was encountered (in function wp_free_device_async, /builds/omniverse/warp/warp/native/warp.cu:912)",
+   "name": "baseline",
+   "ok": false,
+   "rc": 1
+  },
+  {
+   "cfg": {
+    "batch": 2,
+    "capture": false,
+    "shadows": true,
+    "skybox": true,
+    "textures": true
+   },
+   "error": "Warp CUDA error 700: an illegal memory access was encountered (in function wp_free_device_async, /builds/omniverse/warp/warp/native/warp.cu:912)",
+   "name": "no_capture",
+   "ok": false,
+   "rc": 1
+  },
+  {
+   "cfg": {
+    "batch": 2,
+    "capture": true,
+    "shadows": true,
+    "skybox": true,
+    "textures": false
+   },
+   "mean": 201.36380833333334,
+   "name": "no_textures",
+   "nonconstant": true,
+   "ok": true,
+   "rc": 0,
+   "shape": [
+    2,
+    200,
+    200,
+    3
+   ],
+   "std": 87.96913029673115
+  },
+  {
+   "cfg": {
+    "batch": 2,
+    "capture": true,
+    "shadows": true,
+    "skybox": false,
+    "textures": true
+   },
+   "error": "Warp CUDA error 700: an illegal memory access was encountered (in function wp_free_device_async, /builds/omniverse/warp/warp/native/warp.cu:912)",
+   "name": "no_skybox",
+   "ok": false,
+   "rc": 1
+  },
+  {
+   "cfg": {
+    "batch": 2,
+    "capture": true,
+    "shadows": false,
+    "skybox": true,
+    "textures": true
+   },
+   "error": "Warp CUDA error 700: an illegal memory access was encountered (in function wp_free_device_async, /builds/omniverse/warp/warp/native/warp.cu:912)",
+   "name": "no_shadows",
+   "ok": false,
+   "rc": 1
+  },
+  {
+   "cfg": {
+    "batch": 2,
+    "capture": true,
+    "drop_cube_textures": true,
+    "shadows": true,
+    "skybox": true,
+    "textures": true
+   },
+   "detached_cube_textures": 1,
+   "mean": 70.15881666666667,
+   "name": "drop_cube_textures",
+   "nonconstant": true,
+   "ok": true,
+   "rc": 0,
+   "shape": [
+    2,
+    200,
+    200,
+    3
+   ],
+   "std": 60.938019554842676
+  }
+ ]
+}

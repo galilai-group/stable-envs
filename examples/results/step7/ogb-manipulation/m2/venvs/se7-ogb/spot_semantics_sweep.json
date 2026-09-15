@@ -1,0 +1,981 @@
+{
+ "built": 40,
+ "correct": 40,
+ "coverage_note": "Families that need a package this interpreter lacks, or that expose no MjModel (the 2-D families), are counted here rather than dropped. Fetch in particular is cuda-and-mujoco-3.11 only and is covered by its CUDA byte-identity replays, not by this sweep.",
+ "families_touched": [],
+ "incorrect": 0,
+ "incorrect_rows": [],
+ "n_no_mjmodel": 28,
+ "n_skipped_not_constructible": 20,
+ "n_with_reachable_mjmodel": 40,
+ "provenance": {
+  "dm-control": "1.0.45",
+  "git_sha": "",
+  "gpu": null,
+  "host": "node2321.oscar.ccv.brown.edu",
+  "mujoco": "3.12.0",
+  "mujoco-warp": "3.12.0",
+  "mujoco_gl": "egl",
+  "numpy": "2.5.2",
+  "ogbench": "1.2.1",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "python": "3.12.8",
+  "slurm_job": "6398427",
+  "torch": "2.14.0+cu126",
+  "warp-lang": "1.17.0"
+ },
+ "registry_ids_total": 88,
+ "rows": [
+  {
+   "env": "Acrobot",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeGiantNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeGiantStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeLargeExplore",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeLargeNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeLargeStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeMediumExplore",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeMediumNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeMediumStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeTeleportExplore",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeTeleportNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "AntmazeTeleportStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "BabyAIGoToLocal",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "CartPole",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "CraftaxClassic",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "Crafter",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCAcrobotSwingup",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCBallInCupCatch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCCartpoleBalance",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCCartpoleSwingup",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "DMCCheetahRun",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCFingerSpin",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCFingerTurnEasy",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCFingerTurnHard",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "DMCHopperHop",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "DMCHumanoidStand",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCPendulumSwingup",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCPointMassEasy",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCReacherEasy",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "DMCReacherHard",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "DMCSwimmerSwimmer6",
+   "reason": "ValueError",
+   "status": "skip"
+  },
+  {
+   "env": "DMCWalkerWalk",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "FetchPickAndPlace",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchPickAndPlaceDense",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchPickAndPlaceDict",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchPush",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchPushDense",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchPushDict",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchReach",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchReachDense",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchReachDict",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchSlide",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchSlideDense",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "FetchSlideDict",
+   "reason": "AssertionError",
+   "status": "skip"
+  },
+  {
+   "env": "Highway",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "HumanoidmazeGiantNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "HumanoidmazeGiantStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "HumanoidmazeLargeNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "HumanoidmazeLargeStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "HumanoidmazeMediumNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "HumanoidmazeMediumStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "Intersection",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "Merge",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "MiniGridDoorKey",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "MiniGridEmpty",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "MiniGridFourRooms",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "MiniGridKeyCorridor",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "MiniGridLavaCrossing",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "MiniGridPOVFetch",
+   "reason": "ModuleNotFoundError",
+   "status": "skip"
+  },
+  {
+   "env": "MiniHack",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "MountainCar",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "MountainCarContinuous",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "MujocoInvertedDoublePendulum",
+   "expected_neutralised": [],
+   "lights": [],
+   "n_spot": 0,
+   "nlight": 0,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "MujocoInvertedPendulum",
+   "expected_neutralised": [],
+   "lights": [],
+   "n_spot": 0,
+   "nlight": 0,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "MujocoPusher",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 45.0,
+     "exponent": 10.0,
+     "i": 0,
+     "spot": true
+    }
+   ],
+   "n_spot": 1,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "MujocoReacher",
+   "expected_neutralised": [],
+   "lights": [],
+   "n_spot": 0,
+   "nlight": 0,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "Parking",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "Pendulum",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "Piecewise",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "PiecewiseZones",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "PointMazeLarge",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "PointMazeMedium",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "PointMazeOpen",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "PointMazeUMaze",
+   "status": "no-mjmodel"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeGiantNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeGiantStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeLargeNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeLargeStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeMediumNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeMediumStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeTeleportNavigate",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "actually_changed": [],
+   "correct": true,
+   "env": "PointmazeTeleportStitch",
+   "expected_neutralised": [],
+   "lights": [
+    {
+     "cutoff": 100.0,
+     "exponent": 1.0,
+     "i": 0,
+     "spot": false
+    }
+   ],
+   "n_spot": 0,
+   "nlight": 1,
+   "reported": [],
+   "restored_exactly": true,
+   "status": "ok"
+  },
+  {
+   "env": "PushT",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "Racetrack",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "Roundabout",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "SimplePointMaze",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "TwoRoom",
+   "status": "no-mjmodel"
+  },
+  {
+   "env": "TwoRoomTarget",
+   "status": "no-mjmodel"
+  }
+ ]
+}

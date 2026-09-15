@@ -1,0 +1,54 @@
+{
+ "Cube": {
+  "all_exact_frac": 0.871693,
+  "draw_spread": {
+   "mean_abs": [
+    2.408967,
+    2.441658
+   ],
+   "ssim": [
+    0.914917,
+    0.923417
+   ],
+   "within8_frac": [
+    0.915477,
+    0.916856
+   ]
+  },
+  "interior_exact_frac": 0.958115,
+  "interior_frac": 0.41272,
+  "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
+  "mean_abs": 2.441658,
+  "mean_abs_max": 3.2,
+  "ssim": 0.914917,
+  "ssim_min": 0.9,
+  "within8_frac": 0.915477,
+  "within8_min": 0.9
+ },
+ "Scene": {
+  "all_exact_frac": 0.775299,
+  "draw_spread": {
+   "mean_abs": [
+    5.327423,
+    5.381315
+   ],
+   "ssim": [
+    0.892819,
+    0.897032
+   ],
+   "within8_frac": [
+    0.85675,
+    0.857355
+   ]
+  },
+  "interior_exact_frac": 0.921712,
+  "interior_frac": 0.278191,
+  "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
+  "mean_abs": 5.381315,
+  "mean_abs_max": 7.0,
+  "ssim": 0.892819,
+  "ssim_min": 0.85,
+  "within8_frac": 0.85675,
+  "within8_min": 0.85
+ }
+}

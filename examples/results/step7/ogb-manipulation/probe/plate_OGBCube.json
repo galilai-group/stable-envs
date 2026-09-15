@@ -1,0 +1,89 @@
+{
+ "env_id": "swm/OGBCube-v0",
+ "free_px_share_if_plate_static": 0.8541002338435374,
+ "h": 224,
+ "lights_casting_shadow": 1,
+ "mover_px_share_mean": 0.14589976615646258,
+ "n_mover_geoms": 57,
+ "n_static_geoms": 7,
+ "n_translucent_rendered_geoms": 1,
+ "n_visible_mover_geoms": 34,
+ "n_visible_sites": 0,
+ "plate_frac_pixels_moving": 0.0,
+ "plate_max_abs_diff": 0,
+ "plate_n_distinct": 1,
+ "plate_static": true,
+ "shadow_px_share_on_plate": 0.9654416454081632,
+ "sites": [
+  {
+   "group": 4,
+   "id": 0,
+   "name": "object_bounds",
+   "rgba": [
+    0.6000000238418579,
+    0.30000001192092896,
+    0.30000001192092896,
+    0.20000000298023224
+   ],
+   "type": 6
+  },
+  {
+   "group": 4,
+   "id": 1,
+   "name": "arm_bounds",
+   "rgba": [
+    0.30000001192092896,
+    0.6000000238418579,
+    0.30000001192092896,
+    0.20000000298023224
+   ],
+   "type": 6
+  },
+  {
+   "group": 4,
+   "id": 2,
+   "name": "ur5e/attachment_site",
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    0.30000001192092896
+   ],
+   "type": 2
+  },
+  {
+   "group": 5,
+   "id": 3,
+   "name": "ur5e/robotiq/pinch",
+   "rgba": [
+    0.8999999761581421,
+    0.8999999761581421,
+    0.8999999761581421,
+    1.0
+   ],
+   "type": 2
+  },
+  {
+   "group": 5,
+   "id": 4,
+   "name": "com_0",
+   "rgba": [
+    0.5,
+    0.5,
+    0.5,
+    1.0
+   ],
+   "type": 2
+  }
+ ],
+ "static_px_share_mean": 0.8541002338435374,
+ "translucent_rendered_geoms": [
+  {
+   "geom": "target_object_0",
+   "geom_alpha": 0.20000000298023224,
+   "mat_alpha": null
+  }
+ ],
+ "visible_mover_tri": 188275,
+ "w": 224
+}

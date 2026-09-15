@@ -1,0 +1,117 @@
+{
+ "cells": {
+  "OGBCube": {
+   "R_ours_over_official": 2.9946708355786233,
+   "batch_scales": 5.022536232425815,
+   "batch_scales_pass": false,
+   "cores": 1.7141669587649386,
+   "cpu_error": "OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of 0.70 px, and the certification CPU bar leaves 0.75 ns/triangle against a 24 ns/triangle vertex-setup floor -- 12.9x short before any fill. See examples/results/step7/ogb-manipulation/findings.md. Use device='cuda'.",
+   "cpu_raises": true,
+   "cpu_tier": "NO CPU BACKEND (CPU3D-OGB-1)",
+   "declared_gpu_tier": "GPU_PARITY (capped: BATCH_SCALES 5.02x < 20x required)",
+   "decode_fps_per_core_same_node": 3515.091248153288,
+   "fps_1": 1199.6833861998768,
+   "fps_best": 6025.453274628174,
+   "jpeg_q90_bytes": 5739,
+   "official_fps_same_node": 2012.058621949998,
+   "rows": [
+    {
+     "batch": 1,
+     "fps": 1199.6833861998768,
+     "ms": 0.8335532620549202,
+     "peak_vram_mib": 1
+    },
+    {
+     "batch": 16,
+     "fps": 4872.756879347012,
+     "ms": 3.2835621386766434,
+     "peak_vram_mib": 8
+    },
+    {
+     "batch": 64,
+     "fps": 5726.3911424920625,
+     "ms": 11.176323518157005,
+     "peak_vram_mib": 31
+    },
+    {
+     "batch": 256,
+     "fps": 5977.291359271151,
+     "ms": 42.82876383513212,
+     "peak_vram_mib": 123
+    },
+    {
+     "batch": 1024,
+     "fps": 5978.617784047095,
+     "ms": 171.27704713493586,
+     "peak_vram_mib": 271
+    },
+    {
+     "batch": 4096,
+     "fps": 6025.453274628174,
+     "ms": 679.7828832641244,
+     "peak_vram_mib": 711
+    }
+   ],
+   "size": 224
+  },
+  "OGBScene": {
+   "R_ours_over_official": 3.603157831203804,
+   "batch_scales": 6.29654039486519,
+   "batch_scales_pass": false,
+   "cores": 1.7198835663161862,
+   "cpu_error": "OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of 0.70 px, and the certification CPU bar leaves 0.75 ns/triangle against a 24 ns/triangle vertex-setup floor -- 12.9x short before any fill. See examples/results/step7/ogb-manipulation/findings.md. Use device='cuda'.",
+   "cpu_raises": true,
+   "cpu_tier": "NO CPU BACKEND (CPU3D-OGB-1)",
+   "declared_gpu_tier": "GPU_PARITY (capped: BATCH_SCALES 6.30x < 20x required)",
+   "decode_fps_per_core_same_node": 3196.9859564480703,
+   "fps_1": 873.2483655187277,
+   "fps_best": 5498.443608238671,
+   "jpeg_q90_bytes": 10938,
+   "official_fps_same_node": 1526.0068711454858,
+   "rows": [
+    {
+     "batch": 1,
+     "fps": 873.2483655187277,
+     "ms": 1.1451495811343193,
+     "peak_vram_mib": 711
+    },
+    {
+     "batch": 16,
+     "fps": 3758.6444413426034,
+     "ms": 4.256853833794594,
+     "peak_vram_mib": 711
+    },
+    {
+     "batch": 64,
+     "fps": 4958.59174460345,
+     "ms": 12.906890362501144,
+     "peak_vram_mib": 711
+    },
+    {
+     "batch": 256,
+     "fps": 5432.4971406740315,
+     "ms": 47.123816795647144,
+     "peak_vram_mib": 711
+    },
+    {
+     "batch": 1024,
+     "fps": 5498.443608238671,
+     "ms": 186.2345188856125,
+     "peak_vram_mib": 711
+    },
+    {
+     "batch": 4096,
+     "fps": 5480.101761079114,
+     "ms": 747.4313760176301,
+     "peak_vram_mib": 711
+    }
+   ],
+   "size": 200
+  }
+ },
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "host": "gpu2264.oscar.ccv.brown.edu",
+ "mujoco_gl": "egl",
+ "note": "our fps, the official renderer and the decode bar all measured on THIS node",
+ "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34"
+}

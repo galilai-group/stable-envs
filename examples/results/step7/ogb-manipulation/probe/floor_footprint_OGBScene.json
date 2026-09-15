@@ -1,0 +1,39 @@
+{
+ "env_id": "swm/OGBScene-v0",
+ "floor_geom": "floor",
+ "floor_ray_hit_share": 1.0,
+ "floor_z": 0.0,
+ "fovy": 45.0,
+ "geom_size": [
+  1.0,
+  1.0,
+  0.01
+ ],
+ "h": 200,
+ "n_plane_geoms": 1,
+ "plane_bounded": [
+  1.0,
+  1.0
+ ],
+ "tex_h": 512,
+ "tex_w": 512,
+ "texel_per_pixel": {
+  "floor_share_of_frame": 1.0,
+  "frac_minified_gt1": 0.05535213757228353,
+  "frac_minified_gt2": 0.0,
+  "frac_minified_gt4": 0.0,
+  "max": 1.6327185396727941,
+  "mean": 0.4037163047654851,
+  "median": 0.34353239284163806,
+  "n_floor_pixels": 39601,
+  "p90": 0.8374240624201548,
+  "p99": 1.3352872816590207
+ },
+ "texrepeat": [
+  1.0,
+  1.0
+ ],
+ "texture": "grid",
+ "texuniform": 1,
+ "w": 200
+}

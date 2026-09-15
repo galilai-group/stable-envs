@@ -85,7 +85,7 @@ from __future__ import annotations
 
 import contextlib
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -99,6 +99,21 @@ DEFAULT_GROUPS = (0, 1, 2)
 HIDDEN_GROUP = 5
 #: mjtGeom codes whose UVs MJWarp can derive. Everything else samples texel (0,0) when textured.
 TEXTURED_OK = (0, 7)                                    # PLANE, MESH
+#: mjtTexture codes MJWarp's ``sample_texture`` can address. It builds ``wp.Texture2D`` and samples
+#: with 2-D coordinates, so a CUBE (1) or SKYBOX (2) map worn by a geom is not a texture it draws
+#: badly -- it is a texture it indexes out of bounds. Measured on ``swm/OGBScene-v0``, whose
+#: ``btn_metal`` material wears one 512x512 cube map on two button MESH geoms: the render dies with
+#: ``Warp CUDA error 700: an illegal memory access`` inside the warm-up frame, and detaching that
+#: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
+#: (``examples/results/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
+TEXTURE_SAMPLER_OK = (0,)                               # mjTEXTURE_2D
+#: OpenGL's ``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180``; anything else is
+#: ``GL_INVALID_VALUE`` and the parameter is left at its default 180, i.e. NOT a spotlight. MuJoCo's
+#: renderer follows that, and ``mujoco_warp`` does not -- see ``neutralise_illegal_spots``.
+GL_SPOT_CUTOFF_MAX = 90.0
+#: The sentinel OpenGL leaves an illegal ``GL_SPOT_CUTOFF`` at, i.e. "not a spotlight".
+#: ``cos(180 deg) = -1``, so ``mujoco_warp``'s ``cos_theta < cos(cutoff)`` cone test can never fire.
+GL_SPOT_CUTOFF_OFF = 180.0
 
 
 def effective_alpha(m, kind: str = "geom") -> np.ndarray:
@@ -127,13 +142,93 @@ class Prepared:
     hidden_sites: list[int]
     groups: tuple[int, ...]
     restore: dict
+    #: Lights whose out-of-range spot cutoff was neutralised; see ``neutralise_illegal_spots``.
+    neutralised_spots: list[int] = field(default_factory=list)
 
     def summary(self) -> str:
-        return (f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
-                f"sites moved out of groups {self.groups}")
+        out = (f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
+               f"sites moved out of groups {self.groups}")
+        if self.neutralised_spots:
+            out += (f"; {len(self.neutralised_spots)} spot light(s) with an out-of-range cutoff "
+                    f"given MuJoCo's semantics (no angular attenuation)")
+        return out
 
 
-def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0) -> Prepared:
+def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
+    """Make MJWarp treat an out-of-range spot cutoff the way MuJoCo does. IN PLACE.
+
+    ``mujoco_warp``'s shader attenuates a spot light as::
+
+        cos_theta  = dot(-L, lightdir)
+        if cos_theta < cos(cutoff_rad): return          # hard cone
+        attenuation *= pow(max(cos_theta, 0), exponent)
+
+    MuJoCo does neither when the cutoff is out of range, because OpenGL's ``GL_SPOT_CUTOFF`` accepts
+    ``[0, 90]`` or the sentinel ``180`` and rejects everything else with ``GL_INVALID_VALUE``,
+    leaving the default **180 = not a spotlight**. Measured on ``swm/OGBCube-v0``, whose one spot is
+    ``cutoff = 100°, exponent = 10`` (``examples/results/step7/ogb-manipulation/m1/``):
+
+    ========================================  ============  ==================
+    MuJoCo-side change                         frame mean    vs shipped
+    ========================================  ============  ==================
+    shipped (SPOT, cutoff 100, exponent 10)        57.339    --
+    **exponent 10 -> 0**, cutoff still 100         57.339    **0 pixels, max 0**
+    cutoff -> 90                                   49.943    94.60 %, max 68
+    light disabled                                 47.851    94.68 %, max 73
+    ========================================  ============  ==================
+
+    At an illegal cutoff the angular term is **bit-inert** in MuJoCo and the frame sits at its
+    brightest: MuJoCo is lighting the scene with that light unattenuated by angle. MJWarp meanwhile
+    applies ``cos^10`` and extinguishes it off-axis, which is why it comes out uniformly 3-8 levels
+    darker. Neutralising the angular term on the MJWarp model moves ``swm/OGBCube-v0`` from
+    **0.0091 to 0.3507** interior-exact and mean |diff| from 8.90 to 2.79, and moves the signed
+    interior difference from a systematic -3..-8 to centred on zero with +/-1 tails.
+
+    **DO NOT "FIX" THIS BY RE-TYPING THE LIGHT TO POINT.** It is the obvious reading of "GL disables
+    the spot" and it is measurably wrong on the REFERENCE side: in MuJoCo's CLASSIC GL renderer at
+    mujoco 3.12.0 -- the pin everything here is measured on -- a POINT light in this scene renders
+    **identically to the light being switched off**, 9.8 levels of mean darker than shipped. That is
+    a property of that renderer at that version, stated as such rather than as a law.
+    The two renderers are asymmetric here, which is why the correction touches only what MJWarp
+    reads. (On the MJWarp side POINT, ``exponent = 0`` and ``cutoff = 180`` all land within 0.001 of
+    each other, so the minimal form is the one used here.)
+
+    **BOTH halves of the attenuation are cleared**, and the first version of this function got that
+    wrong. ``light_exponent = 0`` makes ``pow(cos_theta, 0) == 1``, but ``mujoco_warp`` also runs a
+    hard cone test -- ``if cos_theta < cos(cutoff_rad): return`` -- and leaving ``light_cutoff``
+    alone leaves that test in place. For ``cutoff = 100`` the cone still discards everything beyond
+    100 degrees, which MuJoCo does not; and for a NEGATIVE illegal cutoff it is far worse, because
+    ``cos(-5 deg) = 0.996`` is a **5 degree cone** that extinguishes almost the whole scene. MuJoCo
+    discards the cutoff entirely -- a cutoff-100 spot aimed straight up renders as 180 does, and so
+    does -5 -- so ``light_cutoff`` is set to the sentinel **180**, where ``cos(180) = -1`` and
+    ``cos_theta < -1`` is never true. Upstream reads ``light_cutoff`` only in that cone test, so
+    writing it changes nothing else. Measured on ``swm/OGBCube-v0``, whose cutoff is 100 and where
+    the cone is therefore nearly inert either way: ``exponent = 0`` alone scored 0.3506 and
+    ``exponent = 0`` + ``cutoff = 180`` scored 0.3507 -- indistinguishable on THIS scene, which is
+    exactly why the rule has to be right in general rather than right here.
+
+    A spot with a LEGAL cutoff is left untouched: MuJoCo honours those, so MJWarp agreeing with the
+    model is agreeing with MuJoCo.
+    """
+    hit, restore = [], {"light_exponent": np.array(m.light_exponent, copy=True),
+                        "light_cutoff": np.array(m.light_cutoff, copy=True)}
+    for i in range(int(m.nlight)):
+        if hasattr(m, "light_type"):
+            is_spot = int(m.light_type[i]) == 0
+        else:                                        # older mujoco: directional flag only
+            is_spot = not int(m.light_directional[i])
+        if not is_spot:
+            continue
+        cutoff = float(m.light_cutoff[i])
+        if not (0.0 <= cutoff <= GL_SPOT_CUTOFF_MAX):
+            m.light_exponent[i] = 0.0
+            m.light_cutoff[i] = GL_SPOT_CUTOFF_OFF
+            hit.append(i)
+    return hit, restore
+
+
+def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0,
+                  spot_semantics: bool = True) -> Prepared:
     """Move zero-alpha geometry out of the visible groups, IN PLACE. Returns what to restore.
 
     MJWarp draws every geom in an enabled group at full opacity because its shader never reads the
@@ -152,32 +247,82 @@ def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0) -> Prepared:
         m.geom_group[gh] = HIDDEN_GROUP
     if sh:
         m.site_group[sh] = HIDDEN_GROUP
-    return Prepared(gh, sh, tuple(groups), restore)
+    spots = []
+    if spot_semantics:
+        spots, spot_restore = neutralise_illegal_spots(m)
+        restore.update(spot_restore)
+    return Prepared(gh, sh, tuple(groups), restore, spots)
 
 
 def restore_model(m, p: Prepared) -> None:
     m.geom_group[:] = p.restore["geom_group"]
     m.site_group[:] = p.restore["site_group"]
+    if "light_exponent" in p.restore:
+        m.light_exponent[:] = p.restore["light_exponent"]
+    if "light_cutoff" in p.restore:
+        m.light_cutoff[:] = p.restore["light_cutoff"]
 
 
 def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
-    """``[(geom id, name, mjtGeom), ...]`` for TEXTURED geoms whose UVs MJWarp cannot derive.
+    """``[(geom id, name, mjtGeom), ...]`` for TEXTURED geoms MJWarp's sampler cannot address.
 
-    Empty is the answer a caller wants: it means the scene's textures live on planes and meshes, which
-    is the only case MJWarp's ``sample_texture`` handles. A non-empty list is not a warning to be
-    logged and forgotten — those surfaces will render as one texel.
+    Empty is the answer a caller wants. A non-empty list is not a warning to be logged and forgotten:
+    depending on which of the two conditions below fired, those surfaces either render as one texel
+    or do not render at all.
+
+    **Two conditions, and the second was missing until Step 7.**
+
+    1. *The geom's UVs.* ``sample_texture`` derives UVs for ``PLANE`` and ``MESH`` only, so a textured
+       ``BOX``/``CYLINDER``/``SPHERE``/``CAPSULE`` samples texel (0,0) and comes out one flat colour.
+       That is a FIDELITY gap: the frame is wrong and the renderer survives.
+    2. *The texture's kind.* MJWarp builds ``wp.Texture2D`` and samples with 2-D coordinates, so a
+       ``CUBE`` or ``SKYBOX`` map worn by a geom is not a 2-D texture and is not sampled as one.
+    3. *The mesh's UVs exist at all.* In ``mujoco_warp <= 3.12.0`` ``sample_texture``'s MESH branch
+       reads ``mesh_texcoord[mesh_texcoord_offsets[mesh_id] + mesh_facetexcoord[face_adr][i]]``
+       **unconditionally** (upstream guards it from 3.13.0, commit 58d8c77 / PR #1608, 2026-08-26;
+       the pin this was measured on, 3.12.0, predates it). A mesh whose material is textured but which carries NO texture
+       coordinates (``mesh_texcoordadr == -1``, ``mesh_texcoordnum == 0``) indexes that array from a
+       negative offset. On such a pin that is a CRASH, not a fidelity gap — ``Warp CUDA error 700: an illegal
+       memory access``, raised from inside the warm-up frame with no mention of textures anywhere in
+       the traceback.
+
+    Conditions 2 and 3 are checked regardless of geom type, which is the whole point of adding them:
+    the case that found them is a textured **MESH**, the geom type condition 1 declares safe.
+    ``swm/OGBScene-v0`` returned an EMPTY gap list from this function and then killed the renderer.
+    An empty result here must mean "safe", so a check that classifies by geom type alone is a false
+    all-clear.
+
+    **Condition 3 is the one that actually predicts the crash**, and condition 2 catches the same
+    case for a related reason: a cube-mapped mesh normally carries no UVs at all, because MuJoCo
+    generates cube texgen from position and normal and never needs them. Measured on
+    ``swm/OGBScene-v0``: its two button geoms wear mesh ``stopbuttonrim`` with a CUBE texture and
+    ``texcoordadr = -1, texcoordnum = 0``. Both conditions are kept because they are independent —
+    a 2-D texture on a UV-less mesh crashes with no cube map in sight, and a cube map on a mesh that
+    does have UVs is sampled as if its six stacked faces were one 2-D image.
+
+    Every texture role a material carries is examined, not just the highest id, because a material can
+    wear a 2-D albedo and a cube environment map at once and only the second is fatal.
     """
     import mujoco
     out = []
     for g in range(m.ngeom):
-        if int(m.geom_group[g]) not in groups or int(m.geom_type[g]) in TEXTURED_OK:
+        if int(m.geom_group[g]) not in groups:
             continue
         mid = int(m.geom_matid[g])
         if mid < 0:
             continue
         t = m.mat_texid[mid]
-        t = int(np.max(t)) if np.ndim(t) else int(t)
-        if t >= 0:
+        tex_ids = [int(x) for x in np.atleast_1d(t) if int(x) >= 0]
+        if not tex_ids:
+            continue
+        bad_uv = int(m.geom_type[g]) not in TEXTURED_OK
+        bad_kind = any(int(m.tex_type[t_]) not in TEXTURE_SAMPLER_OK for t_ in tex_ids)
+        bad_texcoord = False
+        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
+            mi = int(m.geom_dataid[g])
+            if mi >= 0:
+                bad_texcoord = int(m.mesh_texcoordnum[mi]) == 0
+        if bad_uv or bad_kind or bad_texcoord:
             out.append((g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}",
                         int(m.geom_type[g])))
     return out
@@ -190,6 +335,138 @@ def texture_mean_rgb(m, tex: int) -> np.ndarray:
     adr = int(m.tex_adr[tex])
     a = np.asarray(m.tex_data[adr:adr + w * h * nc], np.float64).reshape(h, w, nc)
     return (a[..., :3].mean((0, 1)) if nc >= 3 else np.repeat(a.mean((0, 1)), 3)) / 255.0
+
+
+def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[int]]:
+    """``{material id: [geom ids]}`` for materials MJWarp cannot sample AT ALL on their wearers.
+
+    This is the *crash* half of ``texture_gaps``, grouped by material so a bake can act on it. A geom
+    qualifies when its material carries a texture and either
+
+    * the texture is not 2-D (``wp.Texture2D`` cannot address a cube or skybox map), or
+    * the geom is a MESH with no texture coordinates (``sample_texture`` indexes ``mesh_texcoord``
+      unconditionally, so a UV-less mesh reads off the allocation).
+
+    Distinct from the UV half of ``texture_gaps``: a textured BOX renders one flat texel, which is
+    wrong but survives. These kill the renderer. ``swm/OGBScene-v0`` is the worked example — one
+    512x512 cube map on two UV-less button meshes.
+    """
+    import mujoco
+    out: dict[int, list[int]] = {}
+    for g in range(m.ngeom):
+        if int(m.geom_group[g]) not in groups:
+            continue
+        mid = int(m.geom_matid[g])
+        if mid < 0:
+            continue
+        tex_ids = [int(x) for x in np.atleast_1d(m.mat_texid[mid]) if int(x) >= 0]
+        if not tex_ids:
+            continue
+        bad_kind = any(int(m.tex_type[t]) not in TEXTURE_SAMPLER_OK for t in tex_ids)
+        bad_uv = False
+        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
+            mi = int(m.geom_dataid[g])
+            bad_uv = mi >= 0 and int(m.mesh_texcoordnum[mi]) == 0
+        if bad_kind or bad_uv:
+            out.setdefault(mid, []).append(g)
+    return out
+
+
+def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
+    """Replace a texture MJWarp cannot sample with its MEAN colour, IN PLACE. A DECLARED residual.
+
+    THIS CHANGES THE PICTURE AND MUST BE DECLARED WHEREVER IT IS USED. It exists because the
+    alternative is not a worse picture but no picture: the materials it targets are the ones that
+    make ``mujoco_warp`` die with ``Warp CUDA error 700: an illegal memory access`` (see
+    ``unsamplable_texture_materials``), so the choice is a flat mean colour or a scene that does not
+    render.
+
+    Deliberately generic, and separate from ``bake_primitive_textures``. That function answers "the
+    UVs are wrong here, is a flat colour closer?" -- a fidelity trade it measurably LOSES on
+    RoboCasa. This one answers "this texture cannot be read at all", where a mean colour is the only
+    thing on offer. Mixing them would let a per-scene crash workaround silently change scenes that
+    render perfectly well.
+
+    **Measured cost on the case that motivated it**, ``swm/OGBScene-v0``'s ``btn_metal`` cube map on
+    two button meshes, MuJoCo against MuJoCo over 8 states at 200 px
+    (``examples/results/step7/ogb-manipulation/m5/q11_button_bake.json``):
+
+    ====================================  =========
+    quantity                                  value
+    ====================================  =========
+    the two button geoms                   36 px/frame = 0.090 % of frame
+    pixels changed by the bake             55.5 px/frame = **0.139 %**
+    max abs / mean abs on those geoms      37/255 · 21.6/255
+    mean abs over the whole frame          0.023/255
+    **interior_exact vs official**         **1.00000**
+    ====================================  =========
+
+    Every changed pixel fails the 3x3-flat test, so the residual is invisible to the interior metric.
+    For scale, the alpha ``parity_note`` already accepted for Fetch is 1.2-1.5 % of pixels.
+
+    The zero-pixel alternative is **already fixed upstream**: ``mujoco_warp`` guards the MESH branch
+    from 3.13.0 (commit 58d8c77 / PR #1608, 2026-08-26), so on a newer pin this helper is not needed
+    for that case at all. It is therefore a venv bump rather than a patch — cheaper than this helper,
+    and TO BE MEASURED before it is believed, since 3.13.0 moves more than one thing. Documented in
+    ``examples/results/step7/ogb-manipulation/m5/q11_for_sami.md``; this helper is the one that lands
+    without a third-party patch.
+
+    Returns the per-GEOM record a declaration needs — which geoms, which texture, what mean colour,
+    and EVERY texture removed with it — rather than only a count, because a caller has to be able to
+    state the residual, not just apply it.
+    """
+    import mujoco
+    rgb_role = int(getattr(mujoco.mjtTextureRole, "mjTEXROLE_RGB", 1))
+    restore = {"mat_texid": np.array(m.mat_texid, copy=True),
+               "mat_rgba": np.array(m.mat_rgba, copy=True)}
+    targets = unsamplable_texture_materials(m, groups)
+    baked = []
+    for mid, geoms in sorted(targets.items()):
+        t = m.mat_texid[mid]
+        ids = [int(x) for x in np.atleast_1d(t) if int(x) >= 0]
+        tex = int(t[rgb_role]) if np.ndim(t) and int(t[rgb_role]) >= 0 else (ids[0] if ids else -1)
+        if tex < 0:
+            continue
+        mean = texture_mean_rgb(m, tex)
+        # EVERY texture this material carries is removed, so every one is recorded. A material can
+        # wear a 2-D albedo in the RGB role and a CUBE environment map in another; clearing all roles
+        # while naming only the RGB one produced a record that said ``tex_type = 0`` for a removal
+        # whose whole reason was a cube map, which is a declaration that describes the wrong object.
+        removed = []
+        if np.ndim(t):
+            for role in range(int(np.asarray(t).shape[0])):
+                tid = int(t[role])
+                if tid >= 0:
+                    removed.append({"texture": tid, "role": role,
+                                    "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
+                                    "tex_type": int(m.tex_type[tid]),
+                                    "unsamplable": bool(int(m.tex_type[tid])
+                                                        not in TEXTURE_SAMPLER_OK)})
+        elif int(t) >= 0:
+            tid = int(t)
+            removed.append({"texture": tid, "role": None,
+                            "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
+                            "tex_type": int(m.tex_type[tid]),
+                            "unsamplable": bool(int(m.tex_type[tid]) not in TEXTURE_SAMPLER_OK)})
+        m.mat_rgba[mid, :3] = mean
+        if np.ndim(t):
+            m.mat_texid[mid, :] = -1
+        else:
+            m.mat_texid[mid] = -1
+        baked.append({
+            "material": mid,
+            "material_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, mid),
+            # the texture the mean colour came from, and then EVERY texture removed with it
+            "texture": tex,
+            "texture_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tex),
+            "tex_type": int(m.tex_type[tex]),
+            "removed_textures": removed,
+            "n_removed": len(removed),
+            "mean_rgb": [round(float(x), 6) for x in mean],
+            "geoms": geoms,
+            "geom_names": [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) for g in geoms]})
+    return {"baked": baked, "n_materials": len(baked),
+            "n_geoms": sum(len(b["geoms"]) for b in baked), "restore": restore}
 
 
 def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:

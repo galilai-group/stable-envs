@@ -1,0 +1,40 @@
+{
+ "env_id": "swm/OGBCube-v0",
+ "frame_bytes": 150528,
+ "frame_over_state": 392.0,
+ "h": 224,
+ "interior_frac_mean": 0.41860886002131553,
+ "interior_frac_per_state": [
+  0.42305294697259144,
+  0.41340063142230893,
+  0.42309316495405097,
+  0.4183474431418287,
+  0.4042309316495405,
+  0.4198958354280199,
+  0.42144422771421103,
+  0.4254056988879728
+ ],
+ "msaa": {
+  "frac_pixels_differing_1x_vs_4x": 0.055584343112244895,
+  "interior_exact_frac_1x_vs_4x": 0.9999518211601465,
+  "interior_frac": 0.41738221158680044,
+  "max_abs_diff": 171,
+  "mean_abs_diff": 0.5394411670918368,
+  "offsamples": 4
+ },
+ "offsamples_msaa": 4,
+ "render_state_bytes_f64": 384,
+ "render_state_floats": 48,
+ "translucent_as_opaque_mean_abs": 0.2294656143707483,
+ "translucent_as_opaque_px_share": 0.0061782525510204085,
+ "translucent_geom_ids": [
+  {
+   "alpha": 0.20000000298023224,
+   "id": 63,
+   "name": "target_object_0"
+  }
+ ],
+ "translucent_mean_abs": 0.16863972151360543,
+ "translucent_px_share": 0.0061782525510204085,
+ "w": 224
+}

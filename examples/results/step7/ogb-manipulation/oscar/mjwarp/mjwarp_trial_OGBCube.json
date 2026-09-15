@@ -1,0 +1,71 @@
+{
+ "batch_rows": [
+  {
+   "batch": 1,
+   "fps": 2231.699043090046,
+   "ms": 0.4480890929698944,
+   "peak_vram_mib": 0
+  },
+  {
+   "batch": 16,
+   "fps": 5749.271357634843,
+   "ms": 2.78296135365963,
+   "peak_vram_mib": 2
+  },
+  {
+   "batch": 64,
+   "fps": 6369.251918251252,
+   "ms": 10.04827581346035,
+   "peak_vram_mib": 9
+  },
+  {
+   "batch": 256,
+   "fps": 6530.511007444478,
+   "ms": 39.20060768723488,
+   "peak_vram_mib": 36
+  },
+  {
+   "batch": 1024,
+   "fps": 6565.964690806946,
+   "ms": 155.95575794577599,
+   "peak_vram_mib": 148
+  },
+  {
+   "batch": 4096,
+   "fps": 6531.385594213445,
+   "ms": 627.1257363259792,
+   "peak_vram_mib": 588
+  }
+ ],
+ "batch_scales_max_over_1": 2.9266426467477373,
+ "batch_scales_note": "fps(4096)/fps(1); Step 2 asks for 20x at the registered resolution. Fetch measured 7.6-11.7x at 480 px and 26-99x at <=240 px.",
+ "built": true,
+ "camera_id": 1,
+ "env_id": "swm/OGBCube-v0",
+ "fidelity": {
+  "all_exact_frac": 0.034853565449617346,
+  "all_within8_frac": 0.5472785794005102,
+  "interior_exact_frac": 0.010080944320119191,
+  "interior_frac": 0.4150332301071809,
+  "interior_mean_abs": 8.878105061064057,
+  "mean_abs": 10.452838508450256
+ },
+ "gpu": "NVIDIA GeForce RTX 3090",
+ "host": "gpu2104.oscar.ccv.brown.edu",
+ "mujoco": "3.12.0",
+ "mujoco_gl": "egl",
+ "mujoco_warp": "3.12.0",
+ "nq": 21,
+ "partial_alpha_visible_geoms": [
+  [
+   "target_object_0",
+   0.20000000298023224
+  ]
+ ],
+ "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+ "res": 224,
+ "texture_gaps": [],
+ "torch": "2.14.0+cu126",
+ "vram_mib_after_build": 2,
+ "warp_lang": "1.17.0"
+}
