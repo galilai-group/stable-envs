@@ -1,0 +1,52 @@
+{
+ "host": "node2352.oscar.ccv.brown.edu",
+ "spread_max": 1.25,
+ "baseline_env": "CraftaxClassic",
+ "branch_env": "CraftaxFull",
+ "protocol": "the baseline legs qualify the NODE; they do not form a ratio, because CraftaxFull is a new cell and does not exist on the baseline tree",
+ "loadavg_at_verdict": [
+  38.86,
+  37.56,
+  31.4
+ ],
+ "loadavg_source": "this process",
+ "cells": {
+  "baseA": {
+   "batch": 256,
+   "fps": 97275.19341377377,
+   "official_fps": 309.55903197546917,
+   "decode_fps": 4280.638122247468
+  },
+  "baseB": {
+   "batch": 1024,
+   "fps": 99257.37202984821,
+   "official_fps": 343.9813292186891,
+   "decode_fps": 4357.993297977495
+  },
+  "branch": {
+   "batch": 64,
+   "fps": 1336.9232759725587,
+   "official_fps": 0.714867413403086,
+   "decode_fps": 3751.301298019529
+  }
+ },
+ "baseline_spread": 1.0204,
+ "baseline_mean_fps": 98266,
+ "baseline_known_fps": 115166.0,
+ "baseline_frac_of_known": 0.8533,
+ "node_cores": 48,
+ "load_per_core": 0.81,
+ "cpus_allocated": 4,
+ "tier_fps": 1337,
+ "tier_batch": 64,
+ "S_cpu_vs_unjitted_reference": 1870.17,
+ "S_cpu_note": "bench_step3's official denominator goes through cls.reference_render, which this cell (like CraftaxClassic since W1) returns UN-JITTED because the parity claim requires it. Against the jitted renderer the same ratio is ~500x smaller. NEITHER certifies anything until Sami rules; both are recorded.",
+ "cores_cpu": 0.356,
+ "verdict": "USABLE",
+ "why": "baseline legs agree to 1.020x, the baseline reproduces its known 115,166 f/s to 0.85x, and loadavg is 0.81 per node core",
+ "gates": {
+  "spread": true,
+  "baseline_floor": true,
+  "load": true
+ }
+}

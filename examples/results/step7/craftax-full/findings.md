@@ -848,8 +848,138 @@ respected: one GPU job in flight, `--cpus-per-task=4`, `--mem<=48G`, `--time<=03
 `--exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`. Nothing was cancelled and no `simclr` job was
 touched.
 
-| job | script | what it owes |
+| job | node | result |
 |---|---|---|
-| **6397508** | `02_certify_cpu.sbatch` | Gate A + parity on the frozen corpus on **x86-64** at one thread, plus the unit suite — float32 arithmetic over a bit-level integer PRNG, so arm64/x86 agreement is measured (identical frame digests), not assumed |
-| **6397509** | `03_tier_cpu.sbatch` | the tier and the five bands on an **`--exclusive`** batch node with `/proc/loadavg` on both sides, plus both official denominators |
-| **6397510** | `03_gpu.sbatch` | the CUDA leg of Gate A and parity, and the GPU tier per band, in one allocation on one card |
+| **6397697** `02_certify_cpu.sbatch` | `node2352`, x86-64, 8m01s | Gate A + parity on the frozen corpus, one thread |
+| **6397916** `06_tier_cpu_paired.sbatch` | `node2352`, 5m46s | the CPU tier by the paired protocol, verdict **USABLE** |
+| **6397699** `03_gpu.sbatch` | `gpu2106`, RTX 3090, 7m36s | CUDA Gate A + parity + the GPU tier per band |
+| ~~6397698~~ `03_tier_cpu.sbatch` | — | cancelled by this workstream: `--exclusive` on `batch`/`normal` was scheduled for **05:46**, ~4 h out. The `normal` QOS's `cpu=64` cap blocks whole-node allocations here, exactly as it did for W1's `6395167` and in Step 6. Replaced by the paired protocol |
+
+Caps respected throughout: one GPU job in flight, `--cpus-per-task=4`, `--mem<=48G`,
+`--time<=03:00:00`, `--exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104`. Nothing was cancelled but
+this workstream's own `6397698`, and no `simclr` job was touched.
+
+### 17.1 The same frames on three backends
+
+| | 10 px digest | 16 px digest | `exact_frac` | max abs |
+|---|---|---|---|---|
+| Apple arm64, CPU | `b3dcba4dea708d15` | `43414708ce31a3d7` | 1.0 | 0 |
+| **x86-64, CPU** (`node2352`) | **`b3dcba4dea708d15`** | **`43414708ce31a3d7`** | **1.0** | **0** |
+| **CUDA, RTX 3090** (`gpu2106`) | **`b3dcba4dea708d15`** | **`43414708ce31a3d7`** | **1.0** | **0** |
+
+**The same digests on all three.** That is the check that matters most for this cell: the composite
+is float32 arithmetic over a bit-level integer PRNG, and nothing about torch guarantees either across
+architectures or between CPU and CUDA. It is measured, not assumed.
+
+Gate A is identical on all three hosts — `dead_dims: []` at batch 1, 2, 3, 4, 8 and 16 over twelve
+seeds each; no inert variation at batch 1, 2, 4 or 16; `check_per_env_variation`
+`collapsed_variations: []`; `check_resolution_consistency` 0.7945367 to the seventh digit. On the GPU
+node **`check_reference_renderer_is_stable` reports `max_abs_diff: 0`** — the node's own reference
+renderer is deterministic, so nothing here is being blamed on the wrong thing. The 24 unit tests pass
+on `node2352`.
+
+### 17.2 The CPU tier — paired, gated, USABLE
+
+`--exclusive` could not start, so the tier was taken by the paired rule instead. **One adaptation,
+and it changes what the pair means:** `CraftaxFull` is a **new cell** and does not exist on
+`$SCR/se7/baseline`, so there is no before and **no ratio to report**. The baseline legs measure
+`CraftaxClassic` on the baseline tree purely to **qualify the node** against an answer that is
+already known; the branch leg's absolute number is then reported or quarantined. W1's three gates,
+their constants and their reasoning are reused rather than re-derived
+(`scratch/step7/craftax-classic-full/paired_verdict.py`, commit `84ecb03`).
+
+`$SCR/se7/baseline` was verified to **be** 76dc511 *before* submitting rather than after: its
+`stable_envs/envs/craftax.py` md5s to `ec41decf3fb8ad2b5fb7e0054884ef26`, byte-identical to
+`git show 76dc5116`. That is precisely the `$SCR/se6/baseline` trap W1's floor gate exists to catch.
+
+| gate | measured | verdict |
+|---|---|---|
+| baseline spread (legs either side of the branch) | 97,275 and 99,257 f/s → **1.020x** (≤ 1.25) | pass |
+| baseline floor vs the known 115,166 f/s | **0.853x** (≥ 0.25) | pass |
+| load per **node** core | 38.86 over 48 cores → **0.81** (≤ 1.5) | pass |
+| | | **USABLE** |
+
+**The tier: `CraftaxFull` at 1,337 f/s**, at `bench_step3`'s own certified batch of 64, 10 px, one
+torch thread, `node2352`.
+
+| | value | reading |
+|---|---|---|
+| `cores_cpu` (1,337 / 3,751 f/s of decode on that core) | **0.356** | **BELOW_G4** — where Step 3 also put `CraftaxClassic` (0.44-0.49) |
+| `S_cpu` vs the **jitted** official renderer (350.9 f/s at 10 px) | **3.81** | `CPU_FASTER` band |
+| `S_cpu` vs the **un-jitted** official (0.307 f/s) | 1,870 | not a number worth quoting |
+
+**Neither `S_cpu` certifies anything until Sami rules**, and this report does not choose: on that
+node the un-jitted bridge is 0.307 f/s against 350.9 f/s for the jitted renderer — a **1,144x**
+difference read through the same `cls.reference_render` hook the parity claim requires. The tier is
+taken on the NO_REFERENCE ladder as instructed and both denominators are recorded.
+
+Per-band on the same node at B=256, 10 px (`sweep/bench_cpu_node2352….json`), which is the
+diagnostic rather than the tier:
+
+| band | f/s |
+|---|---|
+| level 0, full daylight | **8,652** |
+| underground, fully lit | 8,655 |
+| underground, dark | 1,661 |
+| level 0, dusk | 1,660 |
+| **level 0, night** | **418** ← the flagged slower band |
+| sleeping | 1,113 |
+
+### 17.3 The GPU tier
+
+RTX 3090, `gpu2106`, `sweep/bench_cuda_gpu2106….json`:
+
+| band | 10 px, B=4096 | 10 px, B=256 | 16 px, B=4096 |
+|---|---|---|---|
+| level 0, full daylight | **928,434 f/s** | 113,328 | 184,220 |
+| underground, fully lit | 926,549 | 113,138 | 184,193 |
+| underground, dark | 216,763 | 90,183 | 68,486 |
+| level 0, dusk | 217,047 | 90,048 | 68,662 |
+| **level 0, night** | **44,607** | 36,787 | 16,634 |
+| sleeping | 94,183 | 53,923 | 33,501 |
+| **mixed corpus — THE TIER** | **94,187 f/s** | 54,132 | 33,559 |
+
+Fastest/slowest **20.8x** at B=4096, and against one core of decode on that node (4,882 f/s) the
+mixed tier is **19.3 cores**. The ratio is wider on the GPU than on the CPU (6.75x on the Mac,
+20.7x on `node2352`) for the expected reason: the uint8 gather scales with the card and the
+per-pixel float chain does not scale as far.
+
+## 18. What is owed, and what is not this workstream's
+
+1. **The two escalations stand, unchanged and unfixed here.** The resolution-consistency scope is
+   declared per the coordinator's ruling and flagged onward to Sami; the
+   `reference_render`-as-denominator question carries §8.3 with it — W1's (correct) un-jitted hook has
+   already moved `CraftaxClassic`'s own Step-3 denominator from a recorded 1,046 f/s to a measured
+   4.62 f/s on the Mac and 0.31 f/s on `node2352`.
+2. **`examples/swm_compat/run_swm_workflow.py`** needs `stable_worldmodel`, which is in no local venv
+   and not in `$SCR/venvs/se7-craftax`. The shape contract is checked (§15) and the workflow run is
+   owed.
+3. **`conformance.check_reference_renderer_is_stable` hard-codes `device="cuda"`**, so it is a
+   CUDA-host check by construction and is recorded as not-applicable on a CPU host. Reported rather
+   than changed: it is a shared file.
+4. **A wording nit left deliberately unfixed under review.** The module docstring says "4 gathers and
+   3 selects for the whole frame"; the precise count is one background gather plus three stencil
+   layers, each a colour lookup, a mask lookup and a select — seven `index_select`s in all, four of
+   which touch only part of the frame (§11.1 has it right). `stable_envs/` was frozen for the
+   independent reviewer from `35127de` onward, so this is listed for the review-follow-up commit
+   rather than edited underneath them. The same applies to putting §11.5's projectile-budget limit
+   into the class docstring, which is currently carried by a test and by this document.
+
+## 19. Report per AGENT_COMMON
+
+* **classification:** `PATCH`. `swm/CraftaxPixels-v1` goes from **gap** to **full**.
+* **affected configs:** `CraftaxFull` only — a new cell. No existing config's pixels move;
+  `git diff --name-only 76dc5116..HEAD -- stable_envs` is `envs/craftax_full.py` and
+  `envs/_craftax_full_tex.py`, both new. `examples/results/step4|5|6`: **0 files changed**.
+* **tests:** `tests/unit/test_craftax_full.py` **25 passed** (24 at the time of the Oscar run);
+  `tests/unit` **772 passed, 39 skipped**, one pre-existing failure
+  (`test_every_cited_scratch_path_resolves`, none of whose unresolved citations are this branch's).
+* **Step-4 replay:** not applicable — this is a new cell with no frozen Step-4 corpus. The new
+  Step-7 corpus is proposed for the Step-8 freeze.
+* **tiers:** CPU `cores_cpu` 0.356 (BELOW_G4), `S_cpu` 3.81 against the jitted official, paired
+  verdict USABLE; GPU mixed 94,187 f/s, 19.3 cores of decode. Reported, not certified, pending the
+  denominator ruling.
+* **pixels changed:** no existing pixel. The cell is new and is byte-identical to the reference.
+* **semantic follow-up:** a **paired Gate H**, not a tripwire. This is new coverage rather than pixel
+  drift: a world model gains a whole environment, and a tripwire is the wrong instrument for that.
+* **SLURM job IDs:** 6397697, 6397916, 6397699 (and 6397698, cancelled by this workstream).
