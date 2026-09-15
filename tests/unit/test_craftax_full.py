@@ -277,8 +277,12 @@ def test_the_declared_certification_distribution_matches_the_sampler():
     light = CF._tent_np(st[:, j + 3])
     day = np.where(lvl == 0, light, 1.0)
     lit = (CF._tent_np(st[:, 4 * CF.N_TILE:5 * CF.N_TILE]) == 1.0).all(1)
+    # a row stays on the uint8 gather only if it is fully lit AND awake: the lighting bands give 2/6
+    # and the independent i % 4 sleeping stratification takes a quarter of them away, so the answer
+    # is exactly 0.25 at a batch of 64. The tolerance is ONE ROW, not 0.1 -- a 0.1 slack is what let
+    # a declared 2/6 (an error of 0.083) survive until independent review caught it.
     fast = ((day == 1.0) & lit & (st[:, j + 1] <= 0.5)).mean()
-    assert abs(fast - d["uint8_fast_path_share"]) < 0.1, fast
+    assert abs(fast - d["uint8_fast_path_share"]) <= 1 / 64, (fast, d["uint8_fast_path_share"])
     assert abs((st[:, j + 1] > 0.5).mean() - d["sleeping_share"]) < 1e-6
     # the band shares are exact only when the batch is a multiple of six; 64 is not, so the tolerance
     # is the one row the remainder can move
@@ -379,8 +383,43 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(3))
     n_proj = (np.round(st[:, 3 * CF.N_TILE:4 * CF.N_TILE]) != 0).sum(1)
     assert n_proj.max() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ, n_proj.max()
-    # and the renderer itself does draw a ninth one -- it is the BRIDGE that cannot carry it
-    over = st[:1].copy()
-    over[0, 3 * CF.N_TILE:3 * CF.N_TILE + 8] = 1 + np.arange(8) % 4
-    assert not np.array_equal(e.render(over[:1]).numpy(),
-                              e.render(st[:1] * 0 + over[:1] * 0).numpy())
+    # and the renderer itself DOES draw the seventh and eighth -- it is the BRIDGE that cannot carry
+    # them. Compared against the same row holding only the first six, so the difference is exactly
+    # the two projectiles the reference would drop, not an all-zero straw man.
+    six = st[:1].copy()
+    six[0, 3 * CF.N_TILE:3 * CF.N_TILE + 99] = 0
+    six[0, 3 * CF.N_TILE:3 * CF.N_TILE + 6] = 1 + np.arange(6) % 4
+    eight = six.copy()
+    eight[0, 3 * CF.N_TILE + 6:3 * CF.N_TILE + 8] = 1 + np.arange(6, 8) % 4
+    a, b = e.render(six).numpy(), e.render(eight).numpy()
+    assert not np.array_equal(a, b), "the renderer drops a projectile the state asked for"
+    t = e.size
+    moved = (a[0] != b[0]).any(-1)          # [0]: the batch axis, or the tile scan below slices it
+    for p in range(CF.N_TILE):
+        r0, c0 = (p // CF.OBS_W) * t, (p % CF.OBS_W) * t
+        if moved[r0:r0 + t, c0:c0 + t].any():
+            assert p in (6, 7), f"tile {p} moved, but only the 7th and 8th projectile were added"
+
+
+def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
+    """The fifth sampler guard forces at least one arrow onto band-0 rows, because the reference
+    draws ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]`` and a row with no arrows
+    makes ``inv_ench_bow`` unobservable.
+
+    It is a CLAMP, not a redraw, so it consumes no draw from ``rng`` and the pool is bit-identical.
+    Asserted against the sha256 the frozen corpus recorded BEFORE the guard existed, which is the
+    only way to show the guard changed no committed digest.
+    """
+    import hashlib
+    import json as _json
+    rec = _json.loads((Path(__file__).resolve().parents[2] / "examples" / "results" / "step7"
+                       / "craftax-full" / "corpus" / "corpus.json").read_text())
+    e = CraftaxFull(batch=rec["kept"], device="cpu")
+    pool = CraftaxFull.sample_states(e, rec["pool"], np.random.default_rng(rec["seed"]))
+    assert hashlib.sha256(np.ascontiguousarray(pool).tobytes()).hexdigest() == rec["pool_sha256"]
+    kept = pool[rec["indices"]]
+    assert hashlib.sha256(np.ascontiguousarray(kept).tobytes()).hexdigest() == rec["sha256"]
+    # and the guard is genuinely inert on this pool rather than accidentally so
+    band0 = np.arange(rec["pool"]) % 6 == 0
+    j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES
+    assert pool[band0, j + CF._SLOT["arrows"]].min() >= 1

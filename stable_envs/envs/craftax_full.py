@@ -17,7 +17,9 @@ exists instead of a generalisation of :mod:`stable_envs.envs.craftax`:
   tiles because its alphas are ``{0, 128/255, 1}`` and a blend has no cheaper exact form. Here the
   product is ``block x item x player x mob x projectile`` = **732,600** tiles, 563 MB at 16 px. What
   is baked instead is ``block x item`` (185) and ``mob x projectile`` (660), and the player and the
-  strip digits ride as two more thin stencil layers — 4 gathers and 3 selects for the whole frame.
+  strip digits ride as two more thin stencil layers: **one background gather and three stencil
+  layers**, which is seven ``index_select``s (a colour and a mask per layer) and three selects, four
+  of them touching only part of the frame.
 * **The lighting chain is not Classic's.** It has no luminance "enhance" step, it multiplies the
   per-tile ``light_map`` into the picture *before* anything else, it forces
   ``daylight = 1.0`` off level 0, and it sleeps towards black rather than towards a desaturated blue.
@@ -41,7 +43,9 @@ multiply**. Against a true float32 divide that disagrees on 2,265 of the 9,900 v
 one ULP each, and one ULP in the vignette is one ULP in the night mask, which is enough to move a
 uint8 pixel: the chain went from 35/49 bit-exact to **49/49** when the divide became
 ``v * (1 / v.max())``. :func:`night_vignette` writes it that way and
-``tests/unit/test_craftax_full_night.py`` pins it.
+``tests/unit/test_craftax_full.py::test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide``
+pins it -- against a sha256 frozen from craftax, six exact probe values, and the fact that the naive
+divide is still wrong.
 
 **A second trap, silent rather than subtle.** ``ItemType.NONE`` is slot 0 of the item table and the
 reference's scan starts at 1, so it is *never drawn* — and its texture is ``debug.png``, which is
@@ -50,17 +54,34 @@ empty square. ``_craftax_full_tex`` zeroes slot 0's alpha at bake time, so the g
 special case.
 
 **"The official frame" is not one object.** Under ``jax.jit`` XLA fuses the reference's arithmetic
-differently and it disagrees with its own un-jitted self by up to 1.53e-05 in float32; on a 49-state
-pool 48 frames stayed uint8-identical and one differed on 0.0023% of pixels by 1. The claim
+differently and it disagrees with its own un-jitted self by up to 1.53e-05 in float32 **on the
+49-state phase-0 pool** -- independent review measured 3.05e-05 over 402 states, so the figure is a
+property of the pool rather than a bound. On that phase-0 pool 48 of 49 frames stayed
+uint8-identical and one differed on 0.0023% of pixels by 1. The claim
 certified here is therefore a **uint8** claim against the **un-jitted** renderer, exactly as for
 Classic, and :meth:`CraftaxFull.reference_env` returns the un-jitted function.
 
 What this carries and what it does not:
 
-  * **one mob and one projectile per tile.** craftax's ``mob_map`` keeps the three mob classes off
-    each other's tiles; a projectile may in principle share a tile with a mob, and that is not
-    representable here. Measured over 800 frames of a 4,000-step rollout: the most entities ever on
-    one tile was **1**.
+  * **one mob slot and one projectile slot per tile, and a six-projectile bridge budget.** A mob and
+    a projectile on the same tile ARE representable -- the baked overlay table is the ``mob x
+    projectile`` product and draws the pair, which an earlier version of this docstring wrongly said
+    it could not. What is not representable is a **second entity of the same kind** on one tile: two
+    mobs, or two projectiles. The window keeps the last one drawn, the reference composites
+    both, and **the disagreement is confined to that tile** -- its size depends on which pair
+    collides, so no single number describes it. Measured on an ``EnvState`` built with the pair
+    on one tile: two melee mobs **156** at both sizes, two mob projectiles **237** at 10 px and
+    **253** at 16 px; independent review measured 113-187 on its own pairs. craftax's
+    ``mob_map`` keeps the three mob classes off each other's tiles, so the mob case does not
+    arise in play; two projectiles on one tile can. Measured over 800 frames of a 4,000-step
+    random-policy rollout, the most entities ever on one tile was **1**.
+
+    Separately, the **reference bridge** carries at most
+    ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = 6 projectiles, because ``EnvState``'s projectile masks are
+    ``(9, 3)`` and ``(9, 3)`` and a seventh cannot exist in a state at all. A window holding seven
+    renders here and cannot be scored against the reference, which drops the extra. See
+    :class:`CraftaxFull` and
+    ``tests/unit/test_craftax_full.py::test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable``.
   * ``player_xp`` above 9 is **clamped, not wrapped** — the reference gathers
     ``number_textures[player_xp]`` from a 10-entry table and jax clamps an out-of-range gather, so an
     xp of 12 draws a "9". The state slot carries the digit that is drawn.
@@ -738,7 +759,18 @@ def _strip_index(device):
 
 @register
 class CraftaxFull(StableEnv):
-    """Full Craftax: nine levels, an item/mob/projectile stencil over a block window, and a 4-row strip."""
+    """Full Craftax: nine levels, an item/mob/projectile stencil over a block window, and a 4-row strip.
+
+    **The render window is wider than the reference bridge in one place, and it is stated here rather
+    than discovered.** The window has room for a projectile on each of its 99 tiles; an ``EnvState``
+    has room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = **6**, because its two projectile masks are
+    ``(9, 3)`` each and a seventh cannot exist in a state at all. A window carrying seven renders
+    here and **cannot be scored against the reference**, which places six and drops the rest.
+    :meth:`sample_states` never produces such a row and
+    ``tests/unit/test_craftax_full.py::test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable``
+    asserts both halves. The boundary pool keeps one such row deliberately, scored apart
+    (``examples/results/step7/craftax-full/certify/boundary_pool.json``).
+    """
 
     name = "craftax-full"
     #: 99 blocks, 99 items, 99 mob slots, 99 projectile slots, 99 light-map values, then the player
@@ -824,12 +856,22 @@ class CraftaxFull(StableEnv):
                            "day cycle and light-map alphabet",
         "level0_day_share": 1 / 6, "level0_dusk_share": 1 / 6, "level0_night_share": 2 / 6,
         "underground_lit_share": 1 / 6, "underground_dark_share": 1 / 6,
-        "uint8_fast_path_share": 2 / 6,
+        #: **0.25, not the 2/6 the lighting bands alone suggest.** The two fully-lit bands are 2/6 of
+        #: the draw, but ``is_sleeping`` is stratified independently on ``i % 4`` and a sleeping row
+        #: takes the float chain whatever its lighting is. Over the twelve-row period of the two
+        #: stratifications, rows 2, 8 and 9 are the only ones that stay on the uint8 gather: 3/12.
+        #: The frozen corpus measures 14 of 64, which is the same number after selection. An earlier
+        #: value of 2/6 survived because the test that checks this declaration allowed 0.1 of slack
+        #: and the error was 0.083.
+        "uint8_fast_path_share": 0.25,
         "sleeping_share": 0.25,
-        "note": "the two fully-lit awake bands are the only ones that stay on the uint8 gather; the "
-                "two level-0 night bands are the only ones that draw the threefry field. The shares "
-                "are exact when the batch is a multiple of six and otherwise move by the remainder: "
-                "at the certification batch of 64 the night share measures 0.328 against 1/3",
+        "note": "a row stays on the uint8 gather only if it is fully lit AND awake AND at unit gain, "
+                "so the fast-path share is NOT the 2/6 the lighting bands alone give: the sleeping "
+                "stratification (i % 4 == 3) takes a quarter of them away and the answer is 0.25. "
+                "The two level-0 night bands are the only ones that draw the threefry field. The "
+                "LIGHTING shares are exact when the batch is a multiple of six and otherwise move by "
+                "the remainder: at the certification batch of 64 the night share measures 0.328 "
+                "against 1/3, while the fast-path share is exactly 0.25 at that batch",
     }
 
     def make_variation_space(self) -> Dict:
@@ -1000,8 +1042,9 @@ class CraftaxFull(StableEnv):
         Every table entry is an integer -- craftax's textures are integral in 0..255 and a stencil
         composite of integers is an integer -- so the uint8 composite and the float one are the same
         numbers, and converting afterwards is exact rather than a rounding. That is worth about 3x on
-        a lit frame, because the four gathers and three selects move one byte a channel instead of
-        four, and the 4 of 13 rows the strip occupies never become float at all at unit gain.
+        a lit frame, because the background gather and the three stencil layers -- seven
+        ``index_select``s and three selects in all -- move one byte a channel instead of four, and the
+        4 of 13 rows the strip occupies never become float at all at unit gain.
         """
         blk, itm, mob, prj, lm, facing, sleeping, level, light, daylight, halves, cnt = dec
         n, dev = blk.shape[0], blk.device
@@ -1083,8 +1126,12 @@ class CraftaxFull(StableEnv):
         the 99 ``light_map`` slots        the tile is not fully lit
         ===============================  ==========================================================
 
-        so **row 0 is always the richest band** -- level 0, night, with dark tiles in the window and
-        the player awake -- and a ``batch=1`` instance still has every dimension live. The five other
+        plus a fourth: ``ench_bow`` reaches no pixel on a row holding no arrows, because the reference
+        draws ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]``.
+
+        So **row 0 is always the richest band** -- level 0, night, dark tiles in the window, the
+        player awake and at least one arrow in the inventory -- and a ``batch=1`` instance still has
+        every dimension live. The five other
         bands follow on ``i % 6`` and cover the two uint8 fast paths, dusk, and underground darkness.
 
         **The strip is drawn directly rather than harvested**, and that is sound rather than
@@ -1168,6 +1215,19 @@ class CraftaxFull(StableEnv):
         for c, name in enumerate(STRIP_SLOTS):
             st[:, j + 4 + N_KEY_HALVES + c] = rng.integers(0, STRIP_MOD[c], size=b)
         st[:, j + 4 + N_KEY_HALVES + _SLOT["health"]] = rng.integers(1, N_COUNT, size=b)
+        # **Fifth guard, and the last one independent review found.** The reference draws the arrow
+        # enchantment as ``arrow_enchantment_textures[bow_enchantment * (arrows > 0)]``, so on a row
+        # holding no arrows the ``ench_bow`` slot reaches no pixel at all -- and a ``batch=1``
+        # instance is one row. Measured before this line existed: ``inv_ench_bow`` read dead on 3 of
+        # 200 seeds (100, 202, 248). Band 0 therefore always carries at least one arrow.
+        #
+        # It is a CLAMP and not a redraw, deliberately: a redraw would consume a further draw from
+        # ``rng`` and shift every subsequent value, which would change the frozen corpus. No band-0
+        # row in the frozen pool holds zero arrows, so this line moves nothing there --
+        # ``test_the_arrow_guard_leaves_the_frozen_corpus_untouched`` asserts that against the
+        # recorded sha256 rather than asserting it in prose.
+        arrows_at = j + 4 + N_KEY_HALVES + _SLOT["arrows"]
+        st[band == 0, arrows_at] = np.maximum(st[band == 0, arrows_at], 1.0)
 
         # mobs and projectiles: the simulator's budgets, never on the centre tile
         cr, cc = OBS_H // 2, OBS_W // 2

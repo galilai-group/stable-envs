@@ -885,8 +885,10 @@ and it changes what the pair means:** `CraftaxFull` is a **new cell** and does n
 `$SCR/se7/baseline`, so there is no before and **no ratio to report**. The baseline legs measure
 `CraftaxClassic` on the baseline tree purely to **qualify the node** against an answer that is
 already known; the branch leg's absolute number is then reported or quarantined. W1's three gates,
-their constants and their reasoning are reused rather than re-derived
-(`scratch/step7/craftax-classic-full/paired_verdict.py`, commit `84ecb03`).
+their constants and their reasoning are reused rather than re-derived; this workstream's copy is
+`scratch/step7/craftax-full/paired_verdict.py`, and the gates come from W1's, which lives on W1's
+branch at commit `84ecb03` and not on this one — citing it from here is what broke
+`test_every_cited_scratch_path_resolves`.
 
 `$SCR/se7/baseline` was verified to **be** 76dc511 *before* submitting rather than after: its
 `stable_envs/envs/craftax.py` md5s to `ec41decf3fb8ad2b5fb7e0054884ef26`, byte-identical to
@@ -900,7 +902,11 @@ their constants and their reasoning are reused rather than re-derived
 | | | **USABLE** |
 
 **The tier: `CraftaxFull` at 1,337 f/s**, at `bench_step3`'s own certified batch of 64, 10 px, one
-torch thread, `node2352`.
+torch thread, `node2352` — and it is a **lower bound**, not a clean number. The three gates say the
+node was usable, not that it was quiet: loadavg was 38.9 over 48 cores, and contention is visible in
+the band sweep taken in the same job, where 16 px at B=256 (265 f/s) came out *below* B=16 (589 f/s),
+which is not a shape a renderer produces. The 10 px tier is quoted because it is the registered size
+and its own sweep is monotonic; a quieter node would give the same number or a better one.
 
 | | value | reading |
 |---|---|---|
@@ -951,19 +957,27 @@ per-pixel float chain does not scale as far.
    `reference_render`-as-denominator question carries §8.3 with it — W1's (correct) un-jitted hook has
    already moved `CraftaxClassic`'s own Step-3 denominator from a recorded 1,046 f/s to a measured
    4.62 f/s on the Mac and 0.31 f/s on `node2352`.
-2. **`examples/swm_compat/run_swm_workflow.py`** needs `stable_worldmodel`, which is in no local venv
-   and not in `$SCR/venvs/se7-craftax`. The shape contract is checked (§15) and the workflow run is
-   owed.
-3. **`conformance.check_reference_renderer_is_stable` hard-codes `device="cuda"`**, so it is a
-   CUDA-host check by construction and is recorded as not-applicable on a CPU host. Reported rather
-   than changed: it is a shared file.
-4. **A wording nit left deliberately unfixed under review.** The module docstring says "4 gathers and
-   3 selects for the whole frame"; the precise count is one background gather plus three stencil
-   layers, each a colour lookup, a mask lookup and a select — seven `index_select`s in all, four of
-   which touch only part of the frame (§11.1 has it right). `stable_envs/` was frozen for the
-   independent reviewer from `35127de` onward, so this is listed for the review-follow-up commit
-   rather than edited underneath them. The same applies to putting §11.5's projectile-budget limit
-   into the class docstring, which is currently carried by a test and by this document.
+2. **`examples/swm_compat/run_swm_workflow.py`** has no Craftax arm — it drives TwoRoom and PushT and
+   is CUDA shaped. The Gate F statement for this cell is the `swap_renderer` one, measured in §20;
+   installing `stable_worldmodel` into `$SCR/venvs/se7-craftax` and running it there is a separate
+   commit.
+
+### 18.1 Step-8 carry-overs (shared files; reported, not edited)
+
+* **`conformance.check_reference_renderer_is_stable` hard-codes `device="cuda"`.** It builds
+  `cls(batch=1, size=size, device="cuda")` whatever the caller is doing, so on a CPU host it raises
+  `Torch not compiled with CUDA enabled` rather than running. It is a CUDA-host check by
+  construction; this workstream records it `not_applicable` on CPU and runs it on the GPU node, where
+  it returns `max_abs_diff: 0`. Making it device-aware is a one-line change to a shared testing
+  module and belongs to whoever owns that file in Step 8.
+* **Neither Step-7 corpus carries the `meta` key `examples/fidelity_step4.py:corpus_for` reads.**
+  `corpus_for` loads a frozen corpus as `z["states"]` **and** `json.loads(str(z["meta"]))`; both
+  `examples/results/step7/craftax-classic-full/corpus/` and
+  `examples/results/step7/craftax-full/corpus/` write `states=` only, with the provenance in a
+  sibling `corpus.json`. Adopting either into the Step-4 pipeline as-is would `KeyError`. **Both** are
+  affected, so the fix belongs to the Step-8 freeze rather than to one workstream changing its own
+  file and leaving the two inconsistent.
+* **The paired CPU tier is a lower bound**, not a clean number — see §17.2.
 
 ## 19. Report per AGENT_COMMON
 
@@ -983,3 +997,41 @@ per-pixel float chain does not scale as far.
 * **semantic follow-up:** a **paired Gate H**, not a tripwire. This is new coverage rather than pixel
   drift: a world model gains a whole environment, and a tripwire is the wrong instrument for that.
 * **SLURM job IDs:** 6397697, 6397916, 6397699 (and 6397698, cancelled by this workstream).
+
+---
+
+## 20. Independent review of `59ab465` — the six required changes
+
+**APPROVE-WITH-CHANGES.** The reviewer reproduced parity 1.0 / 0 at 10 px and 16 px on their own
+2,009-state rollout with their own `EnvState` → window extractor, on 90 level-shifted states across
+all nine levels and on 49 hand-built edge states; purity and window sufficiency; a sampler power
+test; Gate A and F including the **real** SWM wrapper; regression against the Classic frozen rows and
+W1's corpus. All six changes landed in one follow-up commit and **none moves a pixel, a corpus or a
+digest** — the frozen corpus still renders to `b3dcba4dea708d15` (10 px) and `43414708ce31a3d7`
+(16 px), the same digests the Mac, `node2352` and `gpu2106` recorded.
+
+| # | finding | what changed |
+|---|---|---|
+| 1 | the module docstring claimed **a mob and a projectile cannot share a tile** — false: the baked overlay table *is* the `mob x projectile` product and draws the pair | the real limits are stated instead: a **second entity of the same kind** on one tile (two mobs, or two projectiles), and the six-projectile bridge budget, now also in the class docstring. Re-measured here on an `EnvState` built with the pair on one tile rather than quoting review's figure: the disagreement is **confined to that tile**, and its magnitude depends on which pair collides — two melee mobs 156 at both sizes, two mob projectiles 237 at 10 px and 253 at 16 px, against review's 113–187 on its own pairs. The docstring therefore names the mechanism and gives both ranges rather than one spuriously precise number |
+| 2 | "4 gathers and 3 selects" undercounted the mask lookups | one background gather plus three stencil layers = **seven `index_select`s and three selects**, in both docstrings |
+| 3 | a citation to `tests/unit/test_craftax_full_night.py`, **which does not exist** | the pin is `test_craftax_full.py::test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide` |
+| 4 | `certification_state_distribution["uint8_fast_path_share"]` declared **2/6; it is 0.25** | fixed, with the mechanism written down: the lighting bands give 2/6, but `is_sleeping` is stratified independently on `i % 4` and a sleeping row takes the float chain, so three of every twelve rows stay on the gather. **The test tolerance that hid it — `< 0.1` against an error of 0.083 — is now one row (`<= 1/64`).** The corpus's own 14 of 64 agreed with 0.25 all along and was read as agreeing with 2/6 |
+| 5 | findings cited **W1's branch** for `paired_verdict.py` — the one `tests/unit` regression this branch caused (broken citations 11 → 12) | cites this workstream's copy, and names W1's as the source of the gates |
+| 6 | `check_state_dims_matter` at batch 1 reported **`inv_ench_bow` dead on 3 of 200 seeds** (100, 202, 248): the reference draws `arrow_enchantment_textures[bow_enchantment * (arrows > 0)]`, so a lone row with no arrows makes the slot unobservable | a **fifth sampler guard** — band 0 always carries at least one arrow — documented like the other four. Re-measured: **0 dead dimensions over 200 seeds at batch 1** |
+
+**The fifth guard is a clamp and not a redraw, and that is the whole of why it is corpus-neutral.** A
+redraw would consume another value from `rng` and shift every subsequent draw, changing the frozen
+pool and every digest with it. `test_the_arrow_guard_leaves_the_frozen_corpus_untouched` regenerates
+the 512-state pool from the recorded seed and asserts its sha256, and the selection's, against the
+values `corpus.json` recorded **before the guard existed** — so corpus-neutrality is measured rather
+than argued.
+
+Nits also taken: the declared 1.53e-05 jit gap is now stated as a property of the 49-state phase-0
+pool (review measured 3.05e-05 over 402 states); the last assertion of
+`test_a_window_carrying_more_projectiles…` compared against an all-zero state and was vacuous — it now
+compares six projectiles against eight and checks that **only tiles 6 and 7 move**; §17.2 labels the
+CPU tier a lower bound; §18.1 records the two Step-8 carry-overs.
+
+One thing turned up while fixing another: the tile scan in that same test sliced `moved[r0:r0+t, …]`
+on an array whose first axis is the batch, so it was reading the wrong region entirely. It was caught
+because the corrected assertion failed, which is the test doing its job.

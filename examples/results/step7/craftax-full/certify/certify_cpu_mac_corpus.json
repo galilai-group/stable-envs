@@ -26,7 +26,7 @@
       "strip_exact_frac": 1.0,
       "digest_ours": "b3dcba4dea708d158d0135d0c4ed9f0975352c503db806eecb3af44ccaa2453e",
       "digest_official": "b3dcba4dea708d158d0135d0c4ed9f0975352c503db806eecb3af44ccaa2453e",
-      "reference_seconds_per_frame": 0.3536681933601358,
+      "reference_seconds_per_frame": 0.24734083593648393,
       "per_band": {
         "fast_uint8": {
           "n": 21,
@@ -61,7 +61,7 @@
       "strip_exact_frac": 1.0,
       "digest_ours": "43414708ce31a3d7ed294541e2639581aaa1cdf9265de2c30088cfcba5807e7e",
       "digest_official": "43414708ce31a3d7ed294541e2639581aaa1cdf9265de2c30088cfcba5807e7e",
-      "reference_seconds_per_frame": 0.3517615657656279,
+      "reference_seconds_per_frame": 0.2626628437501495,
       "per_band": {
         "fast_uint8": {
           "n": 21,
