@@ -1,0 +1,59 @@
+{
+ "bar_S_cpu_ge_5_abs_fps": 799.6041421851892,
+ "bar_cores_cpu_ge_1_abs_fps": 6893.336096252698,
+ "binding_bar_abs_fps": 6893.336096252698,
+ "binding_bar_ns_per_pixel": 2.8911758632528626,
+ "decode_fps_per_core": 6893.336096252698,
+ "decode_fps_per_core_blocks": [
+  7113.288894657097,
+  5956.167496036755,
+  5487.871796375875,
+  6109.430036571749,
+  6893.336096252698,
+  7459.246234215585,
+  7460.134908404739
+ ],
+ "determinism": {
+  "frac_pixels_ever_differing": 0.0,
+  "max_abs_diff": 0,
+  "n_distinct_frames": 1,
+  "n_renders": 32
+ },
+ "env_id": "swm/OGBCube-v0",
+ "h": 224,
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "jpeg_q90_bytes": 6115,
+ "mujoco": "3.12.0",
+ "mujoco_gl": "glfw",
+ "num_hidden_button_bits": 0,
+ "official_fps_render_only": 159.92082843703784,
+ "official_fps_render_only_blocks": [
+  149.2693823425419,
+  154.03730821588866,
+  159.92082843703784,
+  158.15206698027512,
+  168.0993397888471,
+  175.93941946170915,
+  163.67993986413433
+ ],
+ "official_fps_render_only_max": 175.93941946170915,
+ "offsamples_msaa": 4,
+ "platform": "macOS-26.6.2-arm64-arm-64bit",
+ "projected_tri": {
+  "camera": "front_pixels",
+  "fovy": 45.0,
+  "frac_edge_lt_1px": 0.6178869366640257,
+  "frame_px": 50176,
+  "max_edge_px": 74.00273465891533,
+  "mean_area_px2": 0.23422602384521377,
+  "mean_edge_px": 1.2002500578026174,
+  "median_area_px2": 0.01882406312643554,
+  "median_edge_px": 0.7130879573728635,
+  "overdraw_if_all_front_facing": 0.9014686332673144,
+  "p90_edge_px": 2.278561539655529,
+  "sum_area_px2": 45232.090142820765,
+  "visible_tri": 193113
+ },
+ "shadowsize": 4096,
+ "w": 224
+}
