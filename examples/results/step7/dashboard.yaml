@@ -206,7 +206,7 @@ workstreams:
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
-  head_sha: 35127de (M1-M5 local)
+  head_sha: 38e3a7f (artifacts; code identical to 35127de)
   phase0:
     classification: PATCH_CANDIDATE (all three layers already bit-exact)
     registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
@@ -277,6 +277,12 @@ workstreams:
       note: NO_REFERENCE ladder; neither S_cpu certifies pending Sami
     tests: test_craftax_full 25 passed; tests/unit 772 passed 39 skipped one pre-existing failure
     reviewer: independent reviewer (fable family) spawned 2026-09-15 on 35127de
+  cluster:
+    x86_gate_a_parity_6397697: 'COMPLETED node2352: parity 1.0 / 0 at 10 and 16 px, digests identical to the Mac (b3dcba4dea708d15 / 43414708ce31a3d7); dead_dims [] at batch 1..16 x 12 seeds; resolution
+      consistency 0.7945; 24 tests passed'
+    cpu_tier: --exclusive 6397698 scheduled 4 h out (QOS cpu=64) -> cancelled; paired job 6397916 RUNNING (CraftaxClassic on $SCR/se7/baseline = 76dc511, md5-verified, as the node-qualifying floor; branch
+      absolute number is the tier or quarantined)
+    gpu_6397699: 'RUNNING gpu2106: CUDA Gate A + parity + GPU tier per band'
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -903,6 +909,8 @@ incident_log:
     under the overnight rule'
 - date: '2026-09-15'
   item: W2 phase 1 implemented locally (parity 1.0 at 10/16 px); reviewer spawned; cluster jobs queued
+- date: '2026-09-15'
+  item: W2 x86-64 parity confirmed with identical digests; CPU tier via paired job; GPU job running
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
