@@ -24,11 +24,13 @@ evidence the ruling asks for, baseline (76dc511) vs branch, IN ONE JOB ON ONE CA
       the full mandatory set on the BRANCH for each cell: determinism, batch invariance, batch-size
       invariance, order independence, chunk invariance, render purity, state_dims_matter.
 
-  --phase compare
+  --phase compare  (and --phase rejudge, which re-labels a committed comparison without a GPU)
       per cell: max_abs_pixel_delta, fraction of pixels changed, fraction changed by MORE THAN ONE
       level, the two digests, fidelity before/after with the delta and the cell's declared thresholds,
-      and the downsample fraction before/after against its frozen bound and margin. Emits a verdict
-      per cell and a single ``refreeze_ok``.
+      and the downsample fraction before/after against its frozen bound and margin. Each cell is then
+      LABELLED -- IDENTICAL / ULP_LEVEL / SUB_NOISE_SHIFT / MEANINGFUL_CHANGE -- under the written-down
+      rule in ``_judge``, and ``refreeze_ok`` is the conjunction of the ruling's nine conditions, each
+      answered from a committed file rather than from this script's opinion.
 
 Usage (one GPU node, se7-rocket venv; the sbatch does this):
     PYTHONPATH=$BASE python refreeze_locomotion.py --phase render --tag baseline --out DIR
@@ -201,41 +203,302 @@ def _gatea_ok(checks: dict) -> bool:
     return bool(ok)
 
 
-def phase_compare(out: str) -> None:
-    """The per-cell delta table and the re-freeze verdict."""
+#: SSIM's sliding window, from ``conformance.ssim``'s default. One changed pixel can only be inside
+#: this many windows, which is what bounds how far one flipped pixel can move the SSIM average.
+SSIM_WIN = 7
+
+#: A cell is allowed to be called sub-noise only if the pixels that moved by MORE than one level are
+#: under this fraction of the frame. Stated here rather than discovered per run; the observed maximum
+#: over the six cells in job 6410105 is 1.36e-06, so this is a bound with an order of magnitude in hand
+#: and it is the number a later run has to beat rather than a number fitted to this one.
+GT1_FRAC_MAX = 1e-5
+
+#: An aggregate move is IMMATERIAL when it is under this fraction of the cell's own
+#: declaration-vs-measurement headroom -- the distance between what the cell measures and the
+#: threshold it promises. 1 % is the tolerance: a change that eats one hundredth of the margin a
+#: declaration was frozen with cannot alter any judgement that declaration supports.
+HEADROOM_FRAC = 0.01
+
+
+def _budget(metric: str, px_changed: int, max_abs: int, total_px: int) -> float:
+    """The most the aggregate ``metric`` could move GIVEN the pixels that were counted as changed.
+
+    This is the tolerance the reviewer asked to be tied to the measurement rather than to an
+    arbitrary epsilon, and it is an arithmetic bound rather than an estimate: if a metric moved by
+    less than this, the move is fully accounted for by the pixel flips already in the table and is
+    not a second effect that needs its own explanation.
+
+    * ``mean_abs`` averages ``|ours - official|`` over every CHANNEL of every pixel. Only
+      ``px_changed`` pixels moved, each channel of each by at most ``max_abs``, so the average moves
+      by at most ``3 * px_changed * max_abs / (3 * total_px)``.
+    * ``within8_frac`` is the fraction of pixels within 8/255. A pixel that did not move cannot
+      cross the boundary, so at most ``px_changed`` of them can, and the fraction moves by at most
+      ``px_changed / total_px``.
+    * ``ssim`` is an average over sliding windows. One changed pixel lies in at most ``SSIM_WIN**2``
+      of them and each window's value is in [-1, 1], so the average moves by at most
+      ``2 * SSIM_WIN**2 * px_changed / total_px``. Loose by construction -- it is a sufficient bound,
+      not a tight one -- and it still discriminates: a real change is orders of magnitude above it.
+    """
+    if total_px <= 0:
+        return 0.0
+    if metric == "mean_abs":
+        return max_abs * px_changed / total_px
+    if metric == "within8_frac":
+        return px_changed / total_px
+    if metric == "ssim":
+        return 2.0 * (SSIM_WIN ** 2) * px_changed / total_px
+    raise ValueError(metric)
+
+
+def _headroom(metric: str, value: float, decl: dict) -> float | None:
+    """How far this cell's measurement sits from the threshold it declares, for this metric."""
+    key = {"mean_abs": "mean_abs_max", "within8_frac": "within8_min", "ssim": "ssim_min"}[metric]
+    if decl.get(key) is None or value is None:
+        return None
+    return abs(float(decl[key]) - float(value))
+
+
+def _judge(cell: dict) -> dict:
+    """Turn a cell's measured deltas into a LABELLED verdict, under a written-down rule.
+
+    The rule this replaces was a zero-tolerance sign test on three floats, which is not a test of
+    anything a renderer does: it called a -2.9e-09 move of SSIM a regression and put Walker2d (4
+    changed pixels, none by more than one level) in the same bucket as a real change, while Swimmer
+    (180 changed pixels) passed because its three deltas happened to fall the other way. A sign test
+    has no tolerance, and a measurement without a tolerance cannot answer "did this change anything".
+
+    The rule now has two conditions per metric, both stated and both derived from the measurement:
+
+      EXPLAINED  ``|delta| <= _budget(...)``  -- the move is arithmetically accounted for by the
+                 pixel flips already counted, so it is not a separate effect;
+      IMMATERIAL ``|delta| <= HEADROOM_FRAC * headroom`` -- the move is under 1 % of the distance
+                 between this cell's measurement and the threshold it declares, so it cannot change
+                 any judgement that declaration supports.
+
+    and three labels:
+
+      IDENTICAL         no pixel moved.
+      ULP_LEVEL         every changed pixel moved by exactly ONE level, and every metric move is
+                        EXPLAINED and IMMATERIAL. This is a renderer whose output is the same picture
+                        with a different last bit.
+      SUB_NOISE_SHIFT   some pixels moved by more than one level, but they are under GT1_FRAC_MAX of
+                        the frame and every metric move is still EXPLAINED and IMMATERIAL. A handful
+                        of silhouette pixels flipped across a high-contrast edge; the picture did not
+                        change.
+      MEANINGFUL_CHANGE anything else -- including any cell that left its declaration, whose
+                        downsample bound no longer clears, or whose fidelity could not be measured.
+
+    ``regressed_sign`` (the old zero-tolerance test) is kept in the output, because the direction of
+    each move is evidence worth reading even when its size is not. It is not what the label is made of.
+    """
+    fid, ds = cell.get("fidelity", {}), cell.get("downsample_exact_frac", {})
+    total, P, M = cell["total_px"], cell["px_changed"], cell["max_abs_pixel_delta"]
+    if "blocked" in fid or "blocked" in ds:
+        cell["verdict"] = "MEANINGFUL_CHANGE"
+        cell["verdict_why"] = "fidelity or downsample could not be measured on one of the legs"
+        return cell
+    decl = fid.get("declared", {})
+    judged, all_explained, all_immaterial = {}, True, True
+    for metric in ("mean_abs", "within8_frac", "ssim"):
+        delta = abs(float(fid[metric]["delta"]))
+        budget = _budget(metric, P, M, total)
+        head = _headroom(metric, fid[metric]["after"], decl)
+        explained = delta <= budget
+        immaterial = head is None or delta <= HEADROOM_FRAC * head
+        judged[metric] = {"abs_delta": delta, "pixel_budget": budget, "explained_by_pixels": explained,
+                          "headroom": head, "headroom_frac_used": None if not head else delta / head,
+                          "immaterial_vs_headroom": immaterial}
+        all_explained &= explained
+        all_immaterial &= immaterial
+    fid["judged"] = judged
+    fid["regressed_beyond_tolerance"] = not (all_explained and all_immaterial)
+    ok_core = (all_explained and all_immaterial and fid["still_inside_declaration"]
+               and not ds.get("bound_needs_update"))
+    if cell["identical"]:
+        cell["verdict"] = "IDENTICAL"
+    elif ok_core and cell["frac_px_changed_gt1"] == 0:
+        cell["verdict"] = "ULP_LEVEL"
+    elif ok_core and cell["frac_px_changed_gt1"] <= GT1_FRAC_MAX:
+        cell["verdict"] = "SUB_NOISE_SHIFT"
+    else:
+        cell["verdict"] = "MEANINGFUL_CHANGE"
+    cell["verdict_why"] = (f"gt1 frac {cell['frac_px_changed_gt1']:.3e} (bar {GT1_FRAC_MAX:.0e}); "
+                           f"every metric explained by the counted pixels: {all_explained}; "
+                           f"every metric under {HEADROOM_FRAC:.0%} of its declaration headroom: "
+                           f"{all_immaterial}; inside declaration: {fid['still_inside_declaration']}; "
+                           f"downsample bound holds: {not ds.get('bound_needs_update')}")
+    return cell
+
+
+ACCEPTABLE = ("IDENTICAL", "ULP_LEVEL", "SUB_NOISE_SHIFT")
+
+
+def _conditions(R: dict, out: str) -> dict:
+    """The nine conditions the ruling attaches to the re-freeze, each answered from a committed file.
+
+    ``refreeze_ok`` used to be one boolean made of the cell verdicts alone, which under-reported: it
+    could not see Gate A, the rocket's gates or the Step-5 surfaces even though those are what the
+    ruling asks for. It is now the conjunction of these nine, each carrying the evidence it was
+    answered from, so a reviewer can check any one of them without rerunning anything.
+    """
+    cells = R["cells"]
+    C: dict = {}
+    C["1_max_abs_pixel_delta_recorded"] = {
+        "pass": all("max_abs_pixel_delta" in c for c in cells.values()),
+        "evidence": {k: c.get("max_abs_pixel_delta") for k, c in cells.items()}}
+    C["2_frac_px_changed_recorded"] = {
+        "pass": all("frac_px_changed" in c for c in cells.values()),
+        "evidence": {k: c.get("frac_px_changed") for k, c in cells.items()}}
+    C["3_frac_px_changed_gt1_under_bar"] = {
+        "pass": all(c.get("frac_px_changed_gt1", 1.0) <= GT1_FRAC_MAX for c in cells.values()),
+        "bar": GT1_FRAC_MAX,
+        "evidence": {k: c.get("frac_px_changed_gt1") for k, c in cells.items()}}
+    C["4_official_fidelity_unchanged_or_improved"] = {
+        "pass": all(not c.get("fidelity", {}).get("regressed_beyond_tolerance", True)
+                    and c.get("fidelity", {}).get("still_inside_declaration") for c in cells.values()),
+        "rule": "explained by the counted pixels AND under 1% of the declaration headroom; "
+                "and the cell still inside every declared threshold",
+        "evidence": {k: {"regressed_sign": c.get("fidelity", {}).get("regressed"),
+                         "regressed_beyond_tolerance": c.get("fidelity", {}).get("regressed_beyond_tolerance"),
+                         "inside_declaration": c.get("fidelity", {}).get("still_inside_declaration")}
+                     for k, c in cells.items()}}
+    C["5_gate_a_mandatory_all_pass"] = _read_flag(out, "gatea_branch.json", "all_pass")
+    job = R["branch_provenance"].get("slurm_job")
+    C["6_rocket_batch_size_invariance_pass"] = _rocket_batch_size(out, job)
+    C["7_rocket_seven_gates"] = _rocket_gates(out, job)
+    C["8_step5_surfaces_untouched"] = _read_flag(out, "step5_surfaces_compare.json", "all_untouched")
+    C["9_both_legs_same_card_same_job"] = {
+        "pass": bool(R["same_gpu"] and R["same_host"]
+                     and R["baseline_provenance"].get("slurm_job") == R["branch_provenance"].get("slurm_job")),
+        "evidence": {"gpu": R["branch_provenance"]["gpu"], "host": R["branch_provenance"]["host"],
+                     "slurm_job": R["branch_provenance"].get("slurm_job"),
+                     "baseline_stable_envs": R["baseline_provenance"]["stable_envs_file"],
+                     "branch_stable_envs": R["branch_provenance"]["stable_envs_file"]}}
+    C["all_cells_acceptable"] = {"pass": all(c.get("verdict") in ACCEPTABLE for c in cells.values()),
+                                 "evidence": {k: c.get("verdict") for k, c in cells.items()}}
+    return C
+
+
+def _read_flag(out: str, fname: str, key: str) -> dict:
+    p = os.path.join(out, fname)
+    if not os.path.exists(p):
+        return {"pass": None, "evidence": f"{fname} not present beside this comparison"}
+    d = json.load(open(p))
+    return {"pass": bool(d.get(key)), "evidence": {fname: {key: d.get(key)}}}
+
+
+def _tier_dirs(out: str, job: str | None) -> list:
+    """Where this job's rocket artifacts are, most specific first.
+
+    In the SLURM job the measurement writes straight into ``tier/``; in the worktree that same
+    directory holds an EARLIER run (the M4 run of record) and this job's copy lives in
+    ``tier/job<id>/``. Answering condition 6 or 7 out of the wrong directory would silently report
+    another job's numbers, so the job-tagged directory is searched first and the file that answered
+    is named in the evidence.
+    """
+    tier = os.path.join(os.path.dirname(out.rstrip("/")), "tier")
+    dirs = []
+    if job:
+        dirs.append(os.path.join(tier, f"job{job}"))
+    dirs += [tier, out]
+    return [d for d in dirs if os.path.isdir(d)]
+
+
+def _rocket_batch_size(out: str, job: str | None = None) -> dict:
+    """PFRocketLanding's mandatory batch-size invariance, from the tier JSON the same job wrote."""
+    for root in _tier_dirs(out, job):
+        for f in sorted(os.listdir(root)):
+            if not f.endswith(".json"):
+                continue
+            try:
+                d = json.load(open(os.path.join(root, f)))
+            except Exception:                                                       # pragma: no cover
+                continue
+            if job and str(d.get("slurm_job")) != str(job):
+                continue
+            r = (d.get("mandatory") or {}).get("check_batch_size_invariance")
+            if isinstance(r, dict) and "max_abs_diff" in r:
+                return {"pass": int(r["max_abs_diff"]) == 0,
+                        "evidence": {os.path.join(os.path.basename(root), f): r}}
+    return {"pass": None, "evidence": f"no tier JSON for job {job} with check_batch_size_invariance"}
+
+
+def _rocket_gates(out: str, job: str | None = None) -> dict:
+    """The rocket's gate lines, from ``tier/gates.txt``; BATCH_SCALES is a declared, recorded FAIL."""
+    p = ""
+    for root in _tier_dirs(out, job):
+        cand = os.path.join(root, "gates.txt")
+        if os.path.exists(cand) and (not job or f"job {job}" in open(cand).read()):
+            p = cand
+            break
+    if not p:
+        return {"pass": None, "evidence": f"no tier/gates.txt for job {job} beside this run"}
+    rows = [ln.split("  ")[0:2] for ln in open(p).read().splitlines() if ln.strip()]
+    got = {r[1].strip(): r[0].strip() for r in rows if len(r) > 1}
+    failing = {k: v for k, v in got.items() if v != "PASS"}
+    return {"pass": set(failing) <= {"BATCH_SCALES"},
+            "rule": "every gate PASS except BATCH_SCALES, which is a declared, recorded FAIL "
+                    "(fps(4096)/fps(1) under the bar of 20) and is carried as the tier's qualifier",
+            "evidence": {"from": os.path.join(os.path.basename(os.path.dirname(p)), "gates.txt"),
+                         "failing": failing, "n_gates": len(got)}}
+
+
+def phase_compare(out: str, rejudge: bool = False) -> None:
+    """The per-cell delta table and the re-freeze verdict.
+
+    ``rejudge=True`` re-derives the labels from the COMMITTED comparison rather than from the frame
+    ``.npz`` files, which the job deletes once the digests and counts are taken (they are 11 MB per
+    cell per leg and the counts are what the judgement uses). The pixel statistics are read back from
+    the previous ``compare_refreeze.json`` unchanged -- nothing is recomputed, only re-labelled -- so
+    the rule can be corrected without a GPU and without pretending the run happened again.
+    """
     base = json.load(open(os.path.join(out, "baseline.json")))
     brch = json.load(open(os.path.join(out, "branch.json")))
+    prev = {}
+    if rejudge:
+        prev = json.load(open(os.path.join(out, "compare_refreeze.json")))["cells"]
     R = {"baseline_provenance": base["provenance"], "branch_provenance": brch["provenance"],
          "same_gpu": base["provenance"]["gpu"] == brch["provenance"]["gpu"],
          "same_host": base["provenance"]["host"] == brch["provenance"]["host"], "cells": {}}
+    if rejudge:
+        R["relabelled_from"] = {
+            "file": "compare_refreeze.json", "why": "reviewer item RD-1: the verdict rule was a "
+            "zero-tolerance sign test; the pixel statistics below are the same measured numbers, "
+            "carried over unchanged, and only the labels and refreeze_ok are re-derived"}
     frozen = _frozen_downsample_bound()
-    all_ok = True
     for name in CELLS:
         b, n = base["cells"].get(name, {}), brch["cells"].get(name, {})
         if "frames" not in b or "frames" not in n:
             R["cells"][name] = {"blocked": {"baseline": b.get("missing"), "branch": n.get("missing")}}
-            all_ok = False
             continue
-        fb = np.load(os.path.join(out, f"baseline_{name}.npz"))["frames"].astype(np.int16)
-        fn = np.load(os.path.join(out, f"branch_{name}.npz"))["frames"].astype(np.int16)
-        d = np.abs(fn - fb).max(-1)                       # per-pixel, over the three channels
-        total = int(d.size)
-        changed = int((d > 0).sum())
-        gt1 = int((d > 1).sum())
-        cell = {"identical": bool(changed == 0), "total_px": total,
-                "max_abs_pixel_delta": int(d.max()),
-                "px_changed": changed, "frac_px_changed": changed / total,
-                "px_changed_gt1": gt1, "frac_px_changed_gt1": gt1 / total,
-                "frames_per_cell": int(fb.shape[0]),
-                "sha256_baseline": b["frames"]["sha256"], "sha256_branch": n["frames"]["sha256"],
-                "states_sha256_match": b["frames"]["states_sha256"] == n["frames"]["states_sha256"]}
+        if rejudge:
+            p = prev[name]
+            cell = {k: p[k] for k in ("identical", "total_px", "max_abs_pixel_delta", "px_changed",
+                                      "frac_px_changed", "px_changed_gt1", "frac_px_changed_gt1",
+                                      "frames_per_cell", "sha256_baseline", "sha256_branch",
+                                      "states_sha256_match")}
+        else:
+            fb = np.load(os.path.join(out, f"baseline_{name}.npz"))["frames"].astype(np.int16)
+            fn = np.load(os.path.join(out, f"branch_{name}.npz"))["frames"].astype(np.int16)
+            d = np.abs(fn - fb).max(-1)                   # per-pixel, over the three channels
+            total = int(d.size)
+            changed = int((d > 0).sum())
+            gt1 = int((d > 1).sum())
+            cell = {"identical": bool(changed == 0), "total_px": total,
+                    "max_abs_pixel_delta": int(d.max()),
+                    "px_changed": changed, "frac_px_changed": changed / total,
+                    "px_changed_gt1": gt1, "frac_px_changed_gt1": gt1 / total,
+                    "frames_per_cell": int(fb.shape[0]),
+                    "sha256_baseline": b["frames"]["sha256"], "sha256_branch": n["frames"]["sha256"],
+                    "states_sha256_match": b["frames"]["states_sha256"] == n["frames"]["states_sha256"]}
 
         vb, vn = b.get("visual_fidelity", {}), n.get("visual_fidelity", {})
         if "mean_abs" in vb and "mean_abs" in vn:
             fid = {k: {"before": vb[k], "after": vn[k], "delta": vn[k] - vb[k]}
                    for k in ("mean_abs", "within8_frac", "ssim", "exact_frac", "interior_exact_frac")
                    if k in vb and k in vn}
-            # "unchanged or improved": mean_abs must not rise, within8/ssim must not fall
+            # the ZERO-TOLERANCE sign test, kept for transparency: it is the direction of each move,
+            # and it is deliberately not what the verdict is made of (see _judge).
             fid["regressed"] = bool(fid["mean_abs"]["delta"] > 0
                                     or fid["within8_frac"]["delta"] < 0
                                     or fid["ssim"]["delta"] < 0)
@@ -263,18 +526,19 @@ def phase_compare(out: str) -> None:
             cell["downsample_exact_frac"] = {"blocked": {"baseline": db.get("blocked"),
                                                          "branch": dn.get("blocked")}}
 
-        fid_bad = bool(cell["fidelity"].get("regressed") or cell["fidelity"].get("blocked"))
-        ds_bad = bool(cell["downsample_exact_frac"].get("bound_needs_update"))
-        cell["verdict"] = ("IDENTICAL" if cell["identical"] else
-                           "ULP_ONLY" if not fid_bad and not ds_bad else "MEANINGFUL_CHANGE")
-        all_ok &= cell["verdict"] in ("IDENTICAL", "ULP_ONLY")
-        R["cells"][name] = cell
+        R["cells"][name] = _judge(cell)
         print("compare", name, cell["verdict"],
               json.dumps({k: cell[k] for k in ("max_abs_pixel_delta", "frac_px_changed",
                                                "frac_px_changed_gt1")}), flush=True)
-    R["refreeze_ok"] = bool(all_ok and R["same_gpu"] and R["same_host"])
+    R["rule"] = {"labels": list(ACCEPTABLE) + ["MEANINGFUL_CHANGE"],
+                 "gt1_frac_max": GT1_FRAC_MAX, "headroom_frac": HEADROOM_FRAC, "ssim_win": SSIM_WIN,
+                 "where": "scratch/step7/rocket-landing/refreeze_locomotion.py:_judge / _budget"}
+    R["conditions"] = _conditions(R, out)
+    R["refreeze_ok"] = bool(all(v["pass"] for v in R["conditions"].values()))
     R["frozen_downsample_bound_source"] = frozen["source"]
     _dump(os.path.join(out, "compare_refreeze.json"), R)
+    for k, v in R["conditions"].items():
+        print(f"  condition {k}: {v['pass']}", flush=True)
     print("REFREEZE_OK", R["refreeze_ok"], flush=True)
 
 
@@ -307,7 +571,7 @@ def _dump(path: str, obj) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--phase", required=True, choices=("render", "gatea", "compare"))
+    ap.add_argument("--phase", required=True, choices=("render", "gatea", "compare", "rejudge"))
     ap.add_argument("--tag", default="branch", choices=("baseline", "branch"))
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
@@ -319,7 +583,7 @@ def main() -> None:
     elif a.phase == "gatea":
         phase_gatea(a.out)
     else:
-        phase_compare(a.out)
+        phase_compare(a.out, rejudge=a.phase == "rejudge")
 
 
 if __name__ == "__main__":

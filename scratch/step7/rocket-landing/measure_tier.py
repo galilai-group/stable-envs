@@ -355,8 +355,10 @@ def fidelity_draw(env, n: int) -> dict:
     cls = type(env)
     ref = C.reference_env(cls, env.size)
     states = env.sample_states(int(n))
-    official = cls.reference_render(ref, states)
-    flags = np.asarray(cls.last_reference_unreachable, bool)
+    # return_flags: the supported path. The class attribute is last-call-wins mutable state and the
+    # cell's own docstring says so; the only caller that still needs it is the shared
+    # check_visual_fidelity_under_variation, which cannot ask for the flags.
+    official, flags = cls.reference_render(ref, states, return_flags=True)
     ours = env.render(states).cpu().numpy()
     r = C.pixel_agreement(ours, official)
     r["ssim"] = C.ssim(ours, official)

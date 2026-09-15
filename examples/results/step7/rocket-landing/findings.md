@@ -568,14 +568,16 @@ written down rather than inherited), rendered at each cell's default 240 px in c
 **3,686,400 pixels per cell** (64 x 240 x 240); a pixel counts as changed if any of its three channels
 moved.
 
-| cell | max abs Δ | px changed | frac changed | px Δ > 1 level | frac Δ > 1 | verdict |
+| cell | max abs Δ | px changed | frac changed | px Δ > 1 level | frac Δ > 1 | label |
 |---|---|---|---|---|---|---|
-| `MujocoHalfCheetah` | 1 | 13 | 3.53e-06 | **0** | 0 | ULP only |
-| `MujocoHopper` | 1 | 8 | 2.17e-06 | **0** | 0 | ULP only |
-| `MujocoWalker2d` | 1 | 4 | 1.09e-06 | **0** | 0 | ULP only |
-| `MujocoAnt` | 8 | 32 | 8.68e-06 | 5 | 1.36e-06 | ULP only |
-| `MujocoHumanoid` | 81 | 14 | 3.80e-06 | 3 | 8.14e-07 | ULP only |
-| `MujocoSwimmer` | 67 | 180 | 4.88e-05 | 2 | 5.43e-07 | ULP only |
+| `MujocoHalfCheetah` | 1 | 13 | 3.53e-06 | **0** | 0 | `ULP_LEVEL` |
+| `MujocoHopper` | 1 | 8 | 2.17e-06 | **0** | 0 | `ULP_LEVEL` |
+| `MujocoWalker2d` | 1 | 4 | 1.09e-06 | **0** | 0 | `ULP_LEVEL` |
+| `MujocoAnt` | 8 | 32 | 8.68e-06 | 5 | 1.36e-06 | `SUB_NOISE_SHIFT` |
+| `MujocoHumanoid` | 81 | 14 | 3.80e-06 | 3 | 8.14e-07 | `SUB_NOISE_SHIFT` |
+| `MujocoSwimmer` | 67 | 180 | 4.88e-05 | 2 | 5.43e-07 | `SUB_NOISE_SHIFT` |
+
+The labels are the reviewer's RD-1 rule, below, not an impression.
 
 The shape of this is the mechanism, not an accident: at most **five pixels in 3.7 million** move by
 more than one level in any cell, and the largest `max abs Δ` (81 on Humanoid) comes from **three**
@@ -606,18 +608,130 @@ the last digit on five of six. Three cells improve on every metric, one is exact
 three, and **three show a regression in the 7th to 10th significant figure**: Walker2d SSIM −2.9e-09,
 Ant `mean_abs` +2.7e-06 and SSIM −2.6e-07, Humanoid `mean_abs` +3.5e-06 and SSIM −1.9e-07.
 
-Those three are reported prominently rather than absorbed, because the ruling's stop condition names
-"any fidelity regression", and on the most literal reading these are regressions. What they are in
-fact: `mean_abs` is a mean over 3,686,400 pixels, so a delta of 2.7e-06 is arithmetically **exactly
-the ten level-steps** the pixel table already counted for Ant, divided by the pixel count — the two
-tables are the same event measured twice. There is no separate effect. The direction is not
-systematic (three cells better, three worse, and the two "worse" cells are the two with the largest
-single-pixel flips), which is the signature of rounding noise rather than of a renderer that got
-worse. And the criterion's own governing clause is "a **visually meaningful** change": a change of
-2.9e-09 in SSIM is not one under any reading.
+Those three are reported prominently rather than absorbed. They are judged, not waved through, by the
+rule in the next section, and both halves of that rule are satisfied with orders of magnitude to
+spare.
 
-**So the substantive answer is "unchanged or improved" and the literal answer is "three cells moved in
-the 7th figure", and the decision does not turn on which one is taken** — because of the next section.
+#### RD-1 · the verdict rule, given a tolerance and re-derived (no GPU)
+
+The reviewer approved the evidence and blocked on the judgement made from it: `compare_refreeze.json`
+reported `refreeze_ok: false` and labelled Walker2d (**4** changed pixels, none by more than one level)
+`MEANINGFUL_CHANGE` while Swimmer (**180** changed pixels, max 67) came out `ULP_ONLY`. That ordering
+is obviously wrong, and it was wrong for a reason worth stating: `regressed` was a **zero-tolerance
+sign test** on three floats. A sign test has no tolerance, so it cannot answer "did this change
+anything" — it answers "which way did the last bit fall", and on six cells with sign-random rounding
+noise it answers it six times at random.
+
+**The rule now has a stated tolerance, tied to the measurement rather than to an epsilon.** Two
+conditions per metric, both in `refreeze_locomotion.py:_judge` / `_budget`:
+
+* **EXPLAINED** — `|Δ| ≤ pixel_budget`, the arithmetic bound on how far the aggregate *could* move
+  given the pixels already counted as changed. `mean_abs` averages `|ours − official|` over every
+  channel, so it can move by at most `max_abs × px_changed / total_px`; `within8_frac` by at most
+  `px_changed / total_px` (an unchanged pixel cannot cross the boundary); `ssim` by at most
+  `2 × 7² × px_changed / total_px` (a changed pixel lies in at most `win²` sliding windows, each
+  valued in [−1, 1]). A metric inside its budget is **not a second effect** — it is the pixel table,
+  re-measured.
+* **IMMATERIAL** — `|Δ| ≤ 1 % of the cell's declaration headroom`, the distance between what the cell
+  measures and the threshold it promises. A move that eats one hundredth of the margin a declaration
+  was frozen with cannot alter any judgement that declaration supports.
+
+and four labels, with the rule written into the file that emits them:
+
+| label | means |
+|---|---|
+| `IDENTICAL` | no pixel moved |
+| `ULP_LEVEL` | every changed pixel moved by exactly ONE level, and every metric move is EXPLAINED and IMMATERIAL |
+| `SUB_NOISE_SHIFT` | some pixels moved by more than one level, but under `GT1_FRAC_MAX` = 1e-05 of the frame, and every metric move is still EXPLAINED and IMMATERIAL |
+| `MEANINGFUL_CHANGE` | anything else — including leaving a declaration, a downsample bound that no longer clears, or fidelity that could not be measured on a leg |
+
+`GT1_FRAC_MAX` = 1e-05 is stated rather than fitted: the worst observed value over the six cells is
+1.36e-06, so the bar has an order of magnitude in hand and is the number a LATER run has to beat.
+The zero-tolerance sign test is kept in the output as `regressed` beside the judged
+`regressed_beyond_tolerance`, because the direction of a move is evidence worth reading even when its
+size is not — it is simply no longer what the label is made of.
+
+How far inside the two conditions the six cells actually sit (`compare_refreeze.json: cells.*.fidelity.judged`):
+
+| cell | worst `|Δ| / pixel_budget` | worst `|Δ| /` headroom (bar 1e-02) | label |
+|---|---|---|---|
+| `MujocoHalfCheetah` | 0.077 (`mean_abs`) | 9.4e-09 | `ULP_LEVEL` |
+| `MujocoHopper` | 0.125 (`mean_abs`) | 1.0e-07 | `ULP_LEVEL` |
+| `MujocoWalker2d` | 2.7e-05 (`ssim`) | 1.1e-07 | `ULP_LEVEL` |
+| `MujocoAnt` | 0.039 (`mean_abs`) | 9.3e-06 | `SUB_NOISE_SHIFT` |
+| `MujocoHumanoid` | 0.011 (`mean_abs`) | 6.2e-06 | `SUB_NOISE_SHIFT` |
+| `MujocoSwimmer` | 0.005 (`mean_abs`) | 2.2e-05 | `SUB_NOISE_SHIFT` |
+
+Every metric on every cell is inside its pixel budget (the tightest is Hopper at 12.5 % of it) and uses
+at most **2.2e-05** of its declaration headroom against a bar of 1e-02 — 450x inside. So the three
+sign-level moves are the pixel flips already tabulated, and nothing else.
+
+**`refreeze_ok` now reflects the ruling's nine conditions**, each answered from a committed file with
+the evidence it was answered from, rather than from the cell verdicts alone (which could not see Gate
+A, the rocket's gates or the Step-5 surfaces even though the ruling asks for them):
+
+| # | condition | result | answered from |
+|---|---|---|---|
+| 1 | `max_abs_pixel_delta` recorded per cell | **PASS** | this section's table |
+| 2 | fraction of pixels changed recorded per cell | **PASS** | this section's table |
+| 3 | fraction changed by > 1 level under 1e-05 | **PASS** (worst 1.36e-06) | this section's table |
+| 4 | official fidelity unchanged or improved | **PASS** (EXPLAINED + IMMATERIAL, and every cell inside its declaration) | the fidelity table |
+| 5 | Gate-A mandatory set, all six cells | **PASS** (`all_pass: true`) | `refreeze/gatea_branch.json` |
+| 6 | rocket `check_batch_size_invariance` FAIL → PASS | **PASS** (`max_abs_diff 0` at (1, 7, 64, 4096), n = 4096) | `tier/job6410105/gpu2106.json` |
+| 7 | the rocket's seven gates | **PASS** (13 gate lines, the only non-PASS is the declared `BATCH_SCALES`) | `tier/job6410105/gates.txt` |
+| 8 | Step-5 surfaces untouched | **PASS** (`all_untouched: true`) | `refreeze/step5_surfaces_compare.json` |
+| 9 | both legs, same card, same job | **PASS** (RTX 3090, gpu2106, job 6410105 on both) | the two `provenance` blocks |
+| — | every cell labelled `IDENTICAL` / `ULP_LEVEL` / `SUB_NOISE_SHIFT` | **PASS** | this section's table |
+
+**`refreeze_ok: true`.** Conditions 6 and 7 resolve the job-tagged directory first and check the job id
+inside the file, because in the worktree `tier/` holds the EARLIER M4 run and answering out of it would
+quietly report another job's numbers; the file that answered is named in each condition's evidence.
+
+`compare_refreeze.json` was regenerated with `--phase rejudge`, which re-labels the committed
+comparison **without a GPU**: the frame `.npz` files are deleted by the job once the digests and counts
+are taken (11 MB per cell per leg, and the counts are what the judgement uses), so the pixel statistics
+are read back from the previous comparison unchanged and only the labels and `refreeze_ok` are
+re-derived. Nothing is recomputed and nothing pretends the run happened again; the file records this in
+`relabelled_from`. `--phase compare` and `--phase rejudge` share `_judge`, so a future GPU run and this
+re-labelling agree by construction.
+
+#### The three review minors
+
+**Baseline-leg provenance.** The baseline leg reported `sha: "unknown"`, because `$SCR/se7/baseline` is
+a `git archive` extraction with no `.git` and no `.git_sha`. The D1 recipe is now applied to it, and
+the claim was verified rather than assumed before stamping: a manifest of sha256-per-file over all
+**59** files of `stable_envs/` in the Oscar copy hashes to **`d4463c13cf58e686d90c8c4e93250161d65ab57b39152e35365889d2807cde00`**,
+identical to the manifest built locally from `git show 76dc5116…:<path>` for the same 59 paths —
+`nvdiff.py`, the file this whole comparison is about, included. `$SCR/se7/baseline/.git_sha` now holds
+`76dc5116f432e61dd47fba8f9e879cf9212c8e46`, so every future baseline leg records it. For job 6410105
+itself the leg is identified by `stable_envs_file` = `$SCR/se7/baseline/stable_envs/__init__.py`, which
+was always recorded and is what actually proves which checkout was imported.
+
+**Per-row flags instead of mutable class state.** `reference_render` gained
+`return_flags=False`; with it the return is `(frames, flags)` and the harness reads the exclusions from
+the call rather than from class state — `measure_tier.fidelity_draw` now does. The default return is
+unchanged (the bare frame stack), because `check_visual_fidelity` consumes it directly and
+`conformance.py` is shared and not this workstream's to edit, and
+`conformance.reference_accepts_style` — which inspects this signature for a `style` parameter — is
+unaffected. `last_reference_unreachable` survives **only** for
+`check_visual_fidelity_under_variation`, which calls `reference_render(ref, states, style=style)` with
+no way to ask for the flags; its hazard (last-call-wins, shared by every instance, unsafe under two
+interleaved harnesses) is now written where someone reaching for it will read it, and
+`test_reference_render_can_return_its_unreachable_flags_without_breaking_the_shared_checks` pins all
+three properties. **Step-8 carryover:** give the shared checks a way to receive per-row exclusions, and
+delete the attribute.
+
+**`ssim_min` 0.80.** Justified by the stated rule rather than tightened. It is **0.9368x** the
+measurement, inside the DMC family's realised **0.9322-0.9533** (Walker 0.9322, Hopper 0.9357, Cheetah
+0.9380, Humanoid 0.9447, Swimmer 0.9533) — and the DMC convention is the one this declaration cites.
+The six nvdiff locomotion cells realise 0.9668-0.9786, but a floor is fragile or generous only relative
+to how reproducible the number under it is: their SSIM varies by **0.0011-0.0024** across draws, while
+this one varies by **0.0139**, an order of magnitude more, because a rocket at 500 m and a rocket at
+2 m are different pictures. In units of its own draw-to-draw spread this floor is the **tightest in the
+repo** — margin/spread **3.86** here, against 4.12-22.8 across the DMC five and 11.1-28.7 across the
+nvdiff six. A 0.97x floor would be 0.829, only **1.84 spreads** below the worst draw, which is the
+fragility the convention exists to avoid. The arithmetic is in the declaration's own comment so a
+reader can check it without recomputing.
 
 #### What the re-freeze actually had to edit: nothing
 
@@ -655,7 +769,8 @@ expectation anywhere pinned the six cells' frames, because none existed to pin.
 | `MujocoHumanoid` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
 | `MujocoSwimmer` | identical | 0 | **0** | 0 / 0 | 0 | 0/0/0/0 | no dead dims |
 
-`all_pass: true` (`refreeze/gatea_branch.json`). Each check is judged by the condition the suite itself
+`all_pass: true` (`refreeze/gatea_branch.json`), and it is condition 5 of the ten in
+`compare_refreeze.json`. Each check is judged by the condition the suite itself
 asserts, transcribed rather than invented: `identical` for determinism, `dead_dims` empty for state
 dims, all four purity deltas zero, both order deltas zero, `max_abs_diff == 0` for the three
 invariances.
@@ -735,9 +850,10 @@ does not restate the values — those are asserted on a card by the GPU suite.
 #### Tests run for M6 (local, at the M6 tip)
 
 `tests/unit` under `/Users/samib/se6-venv` (`MUJOCO_GL=glfw`, `test_examples.py` deselected):
-**747 passed, 7 skipped, 1 failed** — the one is `test_every_cited_scratch_path_resolves` with its 9
+**748 passed, 7 skipped, 1 failed** — the one is `test_every_cited_scratch_path_resolves` with its 9
 pre-existing Step-6 citations, unchanged and the only allowed failure.
-`tests/unit/test_rocket_landing.py` under `/Users/samib/se7-rocket-venv`: **17 passed**.
+`tests/unit/test_rocket_landing.py` under `/Users/samib/se7-rocket-venv`: **18 passed** (the extra one
+is the `return_flags` contract test the review minor added).
 
 SLURM: **6409703** (`se7-rocket-refreeze`, exited 2 on gpu2264 at six seconds, probe guard), **6410105**
 (`se7-rocket-refreeze`, 00:06:37, `COMPLETED`, gpu2106) — one GPU job at a time, `gpu`/`norm-gpu`,

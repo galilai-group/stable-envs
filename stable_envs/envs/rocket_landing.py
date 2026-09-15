@@ -576,6 +576,17 @@ class PFRocketLanding(StableEnv):
     #: (``tier/job6410105/declaration_block.json``). The same numbers came out of two jobs on two
     #: different 3090s (6408817/gpu2109 and 6410105/gpu2106) to every digit printed here.
     #:
+    #: ``ssim_min`` 0.80 is 0.9368x the measurement, and that is the DMC convention rather than a
+    #: looser one: the five DMC entries realise 0.9322-0.9533 (Walker 0.9322, Cheetah 0.9380, Hopper
+    #: 0.9357, Humanoid 0.9447, Swimmer 0.9533), and this sits inside that range. The six nvdiff
+    #: locomotion cells realise 0.9668-0.9786, but a floor is only fragile or generous relative to how
+    #: reproducible the measurement is, and those cells' SSIM varies by 0.0011-0.0024 across draws
+    #: while this one varies by 0.0139 -- an order of magnitude more, because a rocket at 500 m and a
+    #: rocket at 2 m are different pictures. Measured in units of its own draw-to-draw spread, this
+    #: floor is the TIGHTEST in the repo: margin/spread 3.86 here, against 4.12-22.8 across the DMC
+    #: five and 11.1-28.7 across the nvdiff six. A 0.97x floor would be 0.829, i.e. 1.84 spreads below
+    #: the worst draw, which is the fragility the convention exists to avoid.
+    #:
     #: ``reference_unreachable_share`` is the honest part of the measurement: ``reference_render``
     #: cannot produce the LAGGED official picture for a state in the contact band (see
     #: ``_reference_frame_flagged`` and ``REFERENCE_UNREACHABLE_SHARE``), so those rows are flagged and
@@ -736,24 +747,47 @@ class PFRocketLanding(StableEnv):
 
     #: Per-row flags of the LAST ``reference_render`` call: True where the bridge could not produce the
     #: lagged picture (contact band, see ``_reference_frame_flagged``) and returned swm's synced picture
-    #: instead. A harness reads it right after the call to record and exclude those rows; the shared
-    #: ``check_visual_fidelity`` keeps them, which is the conservative direction (the synced picture
-    #: differs from the lagged one by the one-substep lag).
+    #: instead.
+    #:
+    #: **HAZARD, and why it exists anyway.** This is mutable class state, and mutable class state set
+    #: by one call and read by the next is exactly the pattern this repo distrusts: it is last-call-wins,
+    #: it is shared by every instance, and two threads or two interleaved harnesses would read each
+    #: other's flags. Prefer ``reference_render(..., return_flags=True)``, which returns
+    #: ``(frames, flags)`` and has none of those properties -- that is the supported path and it is what
+    #: the measurement harness uses.
+    #:
+    #: The attribute survives because ``check_visual_fidelity_under_variation`` in
+    #: ``stable_envs/testing/conformance.py`` calls ``cls.reference_render(ref, states, style=style)``
+    #: with no way to ask for the flags, and ``conformance.py`` is shared and not this workstream's to
+    #: change. So the variation path reads the attribute immediately after the call and nothing else
+    #: does. Step-8 carryover: give the shared checks a way to receive per-row exclusions, and delete
+    #: this attribute.
     last_reference_unreachable: np.ndarray = np.zeros(0, bool)
 
     @classmethod
-    def reference_render(cls, env, states, style=None) -> np.ndarray:
+    def reference_render(cls, env, states, style=None, return_flags: bool = False):
         """Official frames for ``(state, style)`` rows -- the LAGGED picture swm observes after ``step``.
+
         Rows the bridge cannot reach (the contact band, ``REFERENCE_UNREACHABLE_SHARE`` of the sampled
-        distribution) get the synced picture and are flagged in ``last_reference_unreachable``."""
+        distribution) get swm's SYNCED picture instead and are flagged. With ``return_flags`` the
+        return is ``(frames, flags)``; without it the return is the frame stack alone -- the shape the
+        shared conformance checks expect -- and the flags are also left in
+        ``last_reference_unreachable``, whose hazard is documented above.
+
+        ``return_flags`` is keyword-only in practice and defaulted off, so
+        ``conformance.reference_accepts_style`` (which inspects this signature for a ``style``
+        parameter) and every existing caller are unaffected.
+        """
         st = np.asarray(states, np.float64).reshape(-1, 13)
         if style is None:
             sty = np.tile(_default_style_row(), (len(st), 1))
         else:
             sty = np.asarray(style, np.float64).reshape(len(st), -1)
         out = [_reference_frame_flagged(env, st[i], sty[i]) for i in range(len(st))]
-        cls.last_reference_unreachable = np.array([u for _, u in out], bool)
-        return np.stack([fr for fr, _ in out])
+        frames = np.stack([fr for fr, _ in out])
+        flags = np.array([u for _, u in out], bool)
+        cls.last_reference_unreachable = flags
+        return (frames, flags) if return_flags else frames
 
 
 def _default_style_row() -> np.ndarray:

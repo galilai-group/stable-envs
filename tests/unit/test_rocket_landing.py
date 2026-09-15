@@ -250,3 +250,30 @@ def test_registered_iff_every_backend_dependency_is_present():
     else:
         assert "PFRocketLanding" not in se.REGISTRY
         assert "rocket_landing" not in se.envs.import_errors()          # absent cleanly, not broken
+
+
+def test_reference_render_can_return_its_unreachable_flags_without_breaking_the_shared_checks():
+    """Review item: prefer returning the per-row exclusion flags over reading mutable class state.
+
+    ``reference_render`` gained ``return_flags``. Three things have to stay true for that to be an
+    improvement rather than a second way to be wrong, and none of them needs a GPU or PyBullet:
+
+    * the DEFAULT return is still the bare frame stack, because ``check_visual_fidelity`` and
+      ``check_visual_fidelity_under_variation`` in the shared ``conformance.py`` consume it directly
+      and that file is not this workstream's to change;
+    * ``conformance.reference_accepts_style`` inspects this signature for a ``style`` parameter to
+      decide whether the env can be measured under its own variation -- adding a parameter must not
+      disturb that;
+    * the class attribute is still written, because the variation check has no way to ask for the
+      flags, and its hazard (last-call-wins, shared by every instance) is written down where someone
+      reaching for it will read it.
+    """
+    import inspect
+    from stable_envs.testing.conformance import reference_accepts_style
+    sig = inspect.signature(RL.PFRocketLanding.reference_render)
+    assert "style" in sig.parameters and reference_accepts_style(RL.PFRocketLanding)
+    assert sig.parameters["return_flags"].default is False
+    assert sig.parameters["style"].default is None
+    src = inspect.getsource(RL)
+    assert "HAZARD" in src and "return_flags=True" in src, (
+        "the mutable-class-state hazard must be documented beside the attribute that carries it")
