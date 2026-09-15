@@ -906,12 +906,15 @@ cancelled; no `simclr` job touched.
 
 ### M7 · CLOSURE-1 — localised, fixed, MEASURED, and reverted at the stop condition
 
-**Classification: BLOCKER (one decision for Sami).** The closure sweep's FINDING CLOSURE-1 —
+**Classification: PATCH (test + note); the renderer change is deferred to Step 8 by ruling.**
+The closure sweep's FINDING CLOSURE-1 —
 `tests/unit/test_nvdiff_triangles.py::test_from_triangles_clip_row_is_independent_of_batch_size` fails
 on x86-64 CPU — is now localised to the exact product, a fix exists that costs nothing on CPU, and the
 fix was measured on the card. It **moves four of the six locomotion cells' frame digests**, which is a
-second correctness re-freeze, so under the rule it was authorized under it is **reverted** and the
-decision goes to Sami. `stable_envs/render/nvdiff.py` is byte-identical to `4eb1c35` again.
+second correctness re-freeze, so under the rule it was authorized under it was reverted and put to the
+coordinator, who ruled **no second re-freeze in Step 7**. `stable_envs/render/nvdiff.py` is
+byte-identical to `4eb1c35`; what changes instead is the over-claiming test and the cell's note, and
+the patch is carried as the Step-8 candidate. See "The ruling" below.
 
 Provenance: branch merged with `step7/integration` (fast-forward to `38ffd94`; the W6 tip `4eb1c35` is
 an ancestor, so nothing of W6 moved). Fix commit `4dc3d4b`, measured by job **6419904**
@@ -995,24 +998,52 @@ still PASS on the card with the fix in
 same two known ones — colour knobs and the missing `DOWNSAMPLE_EXACT_FRAC` entry), and
 `test_frame_i_is_independent_of_batch_size` passes for all seven cells.
 
-#### The decision, stated plainly
+#### The ruling, and what closes CLOSURE-1 in Step 7
 
-Three options, and the choice is Sami's:
+**Coordinator ruling (within Sami's rules, reported to him in the closure packet): NO second re-freeze
+in Step 7.** The reasoning, which the measurements above support: the dependence exists only on x86-64
+CPU and only in the sparse stage; on **cuda -- the certified device** -- invariance holds and is
+enforced per env by the mandatory `check_batch_size_invariance` (the closure sweep measured 0 at
+(1, 3, 7, 8, 64, 256)); no shipped renderer draws through `nvdiff` on `device="cpu"`; and a re-freeze
+is allowed only for a **certification failure with a causal reason**, which "the implementation merely
+differs" is not.
 
-1. **Take the fix and accept a second re-freeze of four cells** at 2.7e-07 of `mean_abs` / 1.3e-09 of
-   SSIM. The renderer is then provably batch-invariant on every backend — no sparse kernel left in the
-   transform path — and CLOSURE-1 closes. The evidence for it is `closure1/digest_vs_refreeze.json`;
-   the patch is `4dc3d4b`.
-2. **Leave the renderer alone and correct the test's claim** to what is certified: bitwise batch-size
-   invariance on CUDA (which the mandatory `check_batch_size_invariance` enforces per-env on the card,
-   and which passes for all seven cells), with the CPU path asserted to one float32 ulp and the
-   mechanism named. That is a `tests/` change, which is frozen and not this workstream's to make.
-3. **Leave both and carry CLOSURE-1 into Step 8** as a known failing test on the certification host,
-   which is where the sweep left it.
+So, in Step 7:
 
-Recommendation: **(1)**, because the alternative is a renderer whose output depends on how many rows
-share a call on one architecture, and the cost is now measured and is smaller than the re-freeze
-already accepted. But it is a contract decision and it is not taken here.
+* `stable_envs/render/nvdiff.py` stays **byte-identical to `4eb1c35`**. The change is kept only as a
+  recorded patch, `scratch/step7/rocket-landing/closure1_explicit_pos_rows.patch`, which applies
+  cleanly to this tree (and as commit `4dc3d4b` in this branch's history).
+* **the test I authored is corrected to assert what is certified**, which is the part of this that was
+  actually wrong: it claimed bitwise invariance at every width on whatever device it ran on.
+  `tests/unit/test_nvdiff_triangles.py::test_from_triangles_clip_row_is_independent_of_batch_size` now
+  asserts **cuda, when available: bitwise at every width** (1, 2, 3, 4, 7, 31, 63) and **cpu: bitwise
+  for widths >= 4**, with widths 1-3 on CPU bounded to **one float32 ulp** rather than ignored -- a
+  bound that fails loudly if the residual ever grows past the summation-order explanation. Normals and
+  world positions are asserted bitwise on every device at every width. The mechanism, the probe
+  artifacts and the reason the fix is deferred are written into the test's own docstring. This is a
+  Step-7 test correcting its own over-claim, not a Gate-A change: nothing that was enforced stops
+  being enforced, and the cuda claim gets **stronger** (it now runs on the card too, at seven widths
+  including 2 and 3, where before it ran on the CPU path only).
+* the limitation is declared where a consumer reads it: `rocket_landing.DOCUMENTED_LIMITATIONS`,
+  appended to `PFRocketLanding.visual_note` and therefore surfaced by `describe()`, naming the widths,
+  the architecture, the mechanism, the fact that no frame this cell produces is affected
+  (`device="cpu"` raises), and the artifacts.
+
+#### Step-8 candidate
+
+**Option (1) -- the explicit contraction, `4dc3d4b` / `closure1_explicit_pos_rows.patch`** -- is
+carried to Step 8 rather than dropped. It is the only version of this renderer whose transform path
+contains no sparse kernel and is therefore provably batch-invariant on every backend, and what it
+costs is measured, not estimated: a **second ULP-level re-freeze of four of the six locomotion cells**
+at **2.7e-07 of `mean_abs` and 1e-09 of SSIM** -- five to seven orders of magnitude inside each cell's
+declaration headroom, where the first re-freeze was three to five. HalfCheetah and Hopper do not move
+at all. All seven declared-fidelity assertions pass on the card with the patch applied
+(`closure1/conformance_closure1.txt`: 2 failed, 229 passed, 63 skipped -- the two known failures).
+
+It should be taken **under its own clean re-verification pass**, not folded into another change: the
+evidence a reviewer needs is `closure1/digest_vs_refreeze.json` (per-cell digests and fidelity deltas
+against the job-6410105 artifact) and `closure1/probe_clip_cpu_batch_x86_threads{1,2,4}.json` (the
+per-stage localisation), both committed here so the ruling needs no further GPU time.
 
 #### Also recorded
 

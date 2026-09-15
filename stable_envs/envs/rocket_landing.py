@@ -463,6 +463,34 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
     p.changeVisualShape(pad, -1, rgbaColor=[*mat[12], 1.0], physicsClientId=c)
 
 
+#: DOCUMENTED_LIMITATION (Step 7, CLOSURE-1). The shared ``nvdiff`` transform is bitwise independent of
+#: the batch width on cuda -- the device every nvdiff cell renders on, and the one the mandatory
+#: ``check_batch_size_invariance`` is measured on (0 at 1, 7, 64 and 4096 for this cell) -- and on
+#: arm64 CPU. On x86-64 CPU the CLIP POSITIONS differ from their full-batch values by ONE float32 ulp
+#: at batch widths 1, 2 and 3 only.
+#:
+#: It reaches no frame this cell produces: ``PFRocketLanding`` raises on ``device="cpu"`` by design, so
+#: its CPU transform path exists only so the geometry can be unit-tested without a GPU. The cause is
+#: measured and is not this repo's arithmetic -- ``nvdiff.mvp_rows`` is bit-identical at every width on
+#: every machine measured, and so are the normals and world positions; the residual is
+#: ``torch.sparse.mm``'s freedom to reorder a four-term sum for a narrow batch
+#: (``examples/results/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_threads1.json``, with
+#: ``_threads2`` and ``_threads4``, and ``examples/results/step7/closure/nvdiff_cpu_batch/``).
+#:
+#: The fix is written, measured and NOT applied in Step 7:
+#: ``scratch/step7/rocket-landing/closure1_explicit_pos_rows.patch`` writes the sum out and removes the
+#: kernel's freedom, but on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of
+#: mean_abs and 1e-09 of SSIM (``closure1/digest_vs_refreeze.json``), and a re-freeze requires a
+#: certification failure with a causal reason rather than an implementation that merely differs. It is
+#: the Step-8 candidate, under its own clean re-verification pass.
+DOCUMENTED_LIMITATIONS = (
+    "nvdiff's CPU transform is bitwise batch-size invariant for widths >= 4 and within one float32 ulp "
+    "at widths 1-3 on x86-64 (CLOSURE-1); cuda, the certified device, is bitwise invariant at every "
+    "width. No frame this cell produces is affected: device='cpu' raises. See findings.md section M7 "
+    "and examples/results/step7/rocket-landing/closure1/."
+)
+
+
 #: The contact band the reference bridge cannot cross. The rocket's collision extent reaches 3.40 m
 #: below the base origin (link AABBs, upright, measured in the reference env) and the pad's top face is
 #: at z = 0.152; a state whose links sit within CONTACT_BAND_MARGIN of the pad top / ground puts a
@@ -618,7 +646,8 @@ class PFRocketLanding(StableEnv):
                    "(sub-pixel UV rounding under nearest sampling) and the far ground where tiles are "
                    "sub-pixel, scipy's rather than Bullet's triangulation of the hull cylinders' planar caps "
                    "(Gouraud interpolation across a cap differs by the diagonal chosen), and the 61-px flame. "
-                   "NOT a substitute for a stored dataset when a policy will be evaluated on official pixels.")
+                   "NOT a substitute for a stored dataset when a policy will be evaluated on official pixels. "
+                   + DOCUMENTED_LIMITATIONS)
 
     def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
                  device: str = "cuda", backend: str = "auto", seed: int = 0):

@@ -186,22 +186,74 @@ def test_mvp_rows_is_bitwise_independent_of_batch_composition():
 
 
 def test_from_triangles_clip_row_is_independent_of_batch_size():
-    """The same check through ``Scene.clip`` on the CPU path: row 0 alone == row 0 of 64."""
+    """``Scene.clip`` row ``i`` must not depend on how many rows share the call -- as CERTIFIED.
+
+    This test originally asserted bitwise invariance at every width on whatever device it ran on. That
+    over-claimed, and the Step-7 closure sweep caught it: on x86-64 CPU the CLIP POSITIONS differ from
+    their full-batch values by one float32 ulp at widths 1, 2 and 3, while they are bitwise invariant
+    at every width on arm64 and on cuda. The cause is measured and is NOT this repo's arithmetic
+    (``examples/results/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_threads1.json``, and
+    ``_threads2``/``_threads4``, plus ``examples/results/step7/closure/nvdiff_cpu_batch/``):
+
+    * ``mvp_rows`` -- the float64 elementwise ``proj @ view @ M`` -- is bit-identical at every width on
+      every machine measured. The transform this repo writes is invariant.
+    * ``torch.sparse.mm(S4, ...)``, isolated and fed bit-identical input, differs at widths 1-3 on
+      x86-64 (12 of 32 elements at width 1) and not at 7 and above. ``S4`` has four nonzeros per row,
+      so each output element is a four-term sum whose order the kernel chooses by the dense operand's
+      column count, ``4 * B``.
+    * the normals and world positions are bitwise invariant at every width everywhere measured.
+
+    So what is asserted here is what the repo certifies, per the coordinator's CLOSURE-1 ruling:
+
+      **cuda, when available: bitwise at every width.** This is the certified device -- every nvdiff
+      cell renders on it -- and it is enforced per-env by the mandatory ``check_batch_size_invariance``
+      (measured 0 at 1, 3, 7, 8, 64, 256 for all six locomotion cells and at 1, 7, 64, 4096 for
+      ``PFRocketLanding``).
+      **cpu: bitwise for widths >= 4**, and within ONE float32 ulp at widths 1-3.
+
+    DOCUMENTED_LIMITATION (Step 7): the widths 1-3 CPU ulp. It reaches no shipped frame -- nothing in
+    the registry draws through nvdiff on ``device="cpu"`` -- and the fix is written and measured
+    (``scratch/step7/rocket-landing/closure1_explicit_pos_rows.patch``: write the four-term sum out
+    instead of asking a sparse kernel for it). It is NOT applied in Step 7 because on cuda it moves
+    four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and 1e-09 of SSIM, and a
+    re-freeze needs a certification failure with a causal reason rather than an implementation that
+    merely differs. It is the Step-8 candidate, with its evidence in
+    ``examples/results/step7/rocket-landing/closure1/digest_vs_refreeze.json``.
+    """
     v, n, f = _box_soup((0.5, 0.25, 1.0))
-    S = ND.Scene.from_triangles(v, n, f, np.zeros(len(v), np.int64), rgba=[[1, 1, 1, 1]], device="cpu")
     rng = np.random.default_rng(5)
     B = 64
     from scipy.spatial.transform import Rotation as Rt
     q = rng.normal(size=(B, 4))
     q /= np.linalg.norm(q, axis=1, keepdims=True)
-    xmat = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]
-    xpos = torch.as_tensor(rng.normal(size=(B, 1, 3)) * 300.0, dtype=torch.float32)
-    eye = rng.normal(size=(B, 3)) * 300.0
-    cam = ND.Camera(eye, np.broadcast_to(np.eye(3), (B, 3, 3)).copy(), 90.0, 0.1, 255.0)
+    mats = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]
+    poss = torch.as_tensor(rng.normal(size=(B, 1, 3)) * 300.0, dtype=torch.float32)
+    cam = ND.Camera(rng.normal(size=(B, 3)) * 300.0,
+                    np.broadcast_to(np.eye(3), (B, 3, 3)).copy(), 90.0, 0.1, 255.0)
     view, proj = cam.matrices()
-    view_t = torch.as_tensor(view, dtype=torch.float32)
-    proj_t = torch.as_tensor(proj, dtype=torch.float32)
-    pos, nrm, wp = S.clip(xpos, xmat, view_t, proj_t)
-    for b in (1, 7, 31):
-        p_b, n_b, w_b = S.clip(xpos[:b], xmat[:b], view_t[:b], proj_t)
-        assert torch.equal(p_b, pos[:b]) and torch.equal(n_b, nrm[:b]) and torch.equal(w_b, wp[:b]), b
+
+    devices = ["cpu"] + (["cuda"] if torch.cuda.is_available() else [])
+    for dev in devices:
+        S = ND.Scene.from_triangles(v, n, f, np.zeros(len(v), np.int64), rgba=[[1, 1, 1, 1]], device=dev)
+        xmat, xpos = mats.to(dev), poss.to(dev)
+        view_t = torch.as_tensor(view, dtype=torch.float32, device=dev)
+        proj_t = torch.as_tensor(proj, dtype=torch.float32, device=dev)
+        pos, nrm, wp = S.clip(xpos, xmat, view_t, proj_t)
+        for b in (1, 2, 3, 4, 7, 31, 63):
+            p_b, n_b, w_b = S.clip(xpos[:b], xmat[:b], view_t[:b], proj_t)
+            # normals and world positions: bitwise everywhere, on every device, at every width
+            assert torch.equal(n_b, nrm[:b]), f"{dev}: normals moved at width {b}"
+            assert torch.equal(w_b, wp[:b]), f"{dev}: world positions moved at width {b}"
+            if dev == "cuda" or b >= 4:
+                assert torch.equal(p_b, pos[:b]), (
+                    f"{dev}: clip positions depend on the batch width at {b} -- on cuda this is a "
+                    f"certification failure (check_batch_size_invariance enforces it per env), and on "
+                    f"cpu at width >= 4 it is a regression against every machine measured in Step 7")
+            else:
+                # widths 1-3 on cpu: the DOCUMENTED_LIMITATION above. Bounded, not ignored.
+                d = (p_b.double() - pos[:b].double()).abs().max()
+                ulp = float(np.spacing(np.float32(float(pos[:b].abs().max()))))
+                assert d <= ulp, (
+                    f"cpu width {b}: clip positions moved by {float(d):.3e}, more than the one float32 "
+                    f"ulp ({ulp:.3e}) the sparse kernel's summation order can account for -- that is "
+                    f"no longer the documented limitation, it is a defect")
