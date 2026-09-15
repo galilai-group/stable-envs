@@ -665,14 +665,15 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: shared changes APPROVE (conditional on 6398530); GPU job 6398530 running (sweeps for the CUDA-only families, Fetch control, cell measurement); then registration, corpora, Gate F, tiers, cell review,
-    merge
+  status: 'job 6398530: sweeps 40/40 + 15/15 identical on GPU and batch nodes; Fetch control byte-identical; RoboCasa/MetaWorld/HumanoidBench structurally unsweepable (kitchen cache + mujoco 3.3.1 pin;
+    metaworld absent/pinned; HumanoidBench unregistered by design) -> ruling: documented coverage limit with two bounding checks (frozen Step-4 membership replay; static cutoff grep); Scene button bits
+    were not applied in render() (fixed via swm''s _apply_button_states as a per-world delta); re-measurement 6398733 queued; then registration, corpora, Gate F, tiers'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: 9923594 (shared fixes a088fb5; cells 527cc9f unregistered until measured)
+  head_sha: ab3c6b6c (job 6398530 results; button-bit fix; re-measurement 6398733 queued)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -777,6 +778,8 @@ workstreams:
       - provenance logs for 6397885/6398026/6398465 (all 3090); 8/8 spot families identical
       residual_nonblocking: Oscar sweep JSONs git_sha '' (rsync tree has no .git); texture_gaps sweeps/identity JSONs unstamped
       regression: tests/unit 763/1/6 same pre-existing failure; 15 local families + locomotion/trackcom/quadruped/manipulator models identical to 76dc5116; no OGB name in mjwarp.py
+    item5_ruling: 'documented coverage limit; bounding checks requested: (1) if any of the 49 frozen Step-4 configs is RoboCasa/MetaWorld/HumanoidBench, replay its frozen digest in Step 6''s venv for that
+      shard; (2) static grep of those families'' light cutoffs where assets are reachable; remainder = Step-8 carry-over'
   cells:
     commit: 527cc9f
     state: OGBCube/OGBScene at visual tier, unregistered until _MEASURED is filled from job 6398530
@@ -789,6 +792,11 @@ workstreams:
     - corpora in Step-4 schema
     - Gate F vs swm
     - M4 tiers
+    fixes_from_6398530:
+    - 'Scene button bits reached no pixel: geom_rgba/mat_rgba now per-world, tables captured by calling swm''s _apply_button_states and applied as a delta over the texture bake (disjointness + must-differ
+      assertions)'
+    - mocap_quat[0] inert was the probe (normalisation); Gate A now rotates quaternions and flips bits
+    ogbcube_3draws_3090: 'worst: mean_abs 4.788, within8 0.808, ssim 0.944, interior_exact 0.351; Gate A determinism/batch/order/sufficiency pass'
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1064,6 +1072,8 @@ incident_log:
   item: W2 follow-up landed (ab42355); re-check requested; Gate-F job queued with the jitted-wrapper observation
 - date: '2026-09-15'
   item: W2 MERGED (d024c1a); coverage 37/40 merged
+- date: '2026-09-15'
+  item: 'W5: sweeps clean where families build; three families structurally unsweepable -> bounded coverage limit; Scene button-bit bug fixed; re-measurement queued'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1124,3 +1134,6 @@ step8_carryovers:
 - item: 'Both Craftax cells: add one declaration sentence that the SWM wrapper jits step so a live workflow observes the jitted frame; the certified claim is against the un-jitted renderer, differing by
     at most 1 uint8 step on a small fraction of pixels'
   source: W2 review re-check
+- item: Run the mjwarp prepare_model/texture_gaps registry sweeps on RoboCasa, MetaWorld and HumanoidBench once a venv with their pins (mujoco 3.3.x kitchen cache / metaworld) exists; the spot rule fires
+    only on cutoff outside [0, 90]
+  source: W5 shared review item 5
