@@ -1,0 +1,123 @@
+{
+  "render_window": {
+    "per_tile_fields": [
+      {
+        "name": "block id (post NECROMANCER/NECROMANCER_VULNERABLE substitution)",
+        "slots": 99,
+        "range": "0..36"
+      },
+      {
+        "name": "item id (post LADDER_DOWN/LADDER_DOWN_BLOCKED substitution)",
+        "slots": 99,
+        "range": "0..4"
+      },
+      {
+        "name": "mob slot (none | 8 melee | 3 passive | 8 ranged)",
+        "slots": 99,
+        "range": "0..19"
+      },
+      {
+        "name": "projectile slot (none | 8 types x 4 orientations)",
+        "slots": 99,
+        "range": "0..32"
+      },
+      {
+        "name": "light_map (per tile, float in [0,1])",
+        "slots": 99,
+        "range": "float32"
+      }
+    ],
+    "per_frame_world_fields": [
+      {
+        "name": "player slot (4 facings | sleeping | none)",
+        "slots": 1,
+        "range": "0..5"
+      },
+      {
+        "name": "player_level",
+        "slots": 1,
+        "range": "0..8"
+      },
+      {
+        "name": "light_level",
+        "slots": 1,
+        "range": "float32"
+      },
+      {
+        "name": "is_sleeping",
+        "slots": 1,
+        "range": "0/1"
+      },
+      {
+        "name": "state_rng, as four 16-bit halves",
+        "slots": 4,
+        "range": "0..65535 each"
+      }
+    ],
+    "strip_fields": [
+      {
+        "name": "player_health/food/drink/energy/mana",
+        "slots": 5
+      },
+      {
+        "name": "player_xp/dexterity/strength/intelligence",
+        "slots": 4
+      },
+      {
+        "name": "inventory wood/stone/coal/iron/diamond/sapphire/ruby/sapling/torches/books/arrows",
+        "slots": 11
+      },
+      {
+        "name": "inventory.potions[6]",
+        "slots": 6
+      },
+      {
+        "name": "inventory pickaxe/sword/bow",
+        "slots": 3
+      },
+      {
+        "name": "inventory.armour[4]",
+        "slots": 4
+      },
+      {
+        "name": "sword_enchantment/bow_enchantment",
+        "slots": 2
+      },
+      {
+        "name": "armour_enchantments[4]",
+        "slots": 4
+      },
+      {
+        "name": "learned_spells[2]",
+        "slots": 2
+      }
+    ],
+    "n_tiles": 99,
+    "slots_world": 503,
+    "slots_strip": 41,
+    "slots_total": 544,
+    "bytes_float32": 2176,
+    "frame_bytes_at_10px": 42900,
+    "frame_bytes_at_16px": 109824,
+    "compression_at_10px": 19.715073529411764,
+    "compression_at_16px": 50.470588235294116,
+    "classic_for_comparison": {
+      "slots": 149,
+      "bytes": 596
+    },
+    "full_EnvState_bytes": 273276,
+    "EnvState_over_frame_at_10px": 6.37006993006993
+  },
+  "reference_hook_denominator": {
+    "what": "examples/bench_gpu_vs_cpu.py:cpu_throughput forms the Step-3 'official f/s' by calling cls.reference_render, the SAME hook the parity claim uses.",
+    "full_craftax_unjitted_fps_at_10px": 2.7542657832553648,
+    "full_craftax_jitted_fps_at_10px": 1492.6719219741533,
+    "ratio": 541.9491216312143,
+    "classic_reference_render_fps_at_16px_on_this_mac": 4.6159765914430135,
+    "classic_jitted_renderer_fps_at_16px_on_this_mac": 2073.428735533102,
+    "step3_recorded_classic_official_fps": 1046,
+    "baseline_76dc511_reference_env": "returned jax.jit(make_craftax_pixel_renderer(size))",
+    "branch_reference_env": "returns the un-jitted renderer (W1, correctly, for parity)",
+    "consequence": "re-running Step 3 against the branch divides the CraftaxClassic official denominator by the jit speedup and multiplies S_cpu by the same factor. This is a certification-integrity question for the coordinator, not a renderer defect, and it is inherited by this workstream."
+  }
+}

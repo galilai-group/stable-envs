@@ -1,0 +1,514 @@
+{
+  "tile_px": 10,
+  "n_states": 49,
+  "instrumented_equals_reference": "49/49",
+  "full_chain_torch": {
+    "bitexact": "49/49",
+    "uint8_exact": "49/49",
+    "max_abs_over_pool": 0.0,
+    "per_state": [
+      {
+        "level": 0,
+        "light": 0.7969252467155457,
+        "daylight": 0.7969252467155457,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9910125732421875,
+        "daylight": 0.9910125732421875,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9910125136375427,
+        "daylight": 0.9910125136375427,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.7969250082969666,
+        "daylight": 0.7969250082969666,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.35048070549964905,
+        "daylight": 0.35048070549964905,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.8141105771064758,
+        "daylight": 0.8141105771064758,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9934207201004028,
+        "daylight": 0.9934207201004028,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.988092839717865,
+        "daylight": 0.988092839717865,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.7789947390556335,
+        "daylight": 0.7789947390556335,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.32707229256629944,
+        "daylight": 0.32707229256629944,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.010484576225280762,
+        "daylight": 0.010484576225280762,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.15776105225086212,
+        "daylight": 0.15776105225086212,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.978284478187561,
+        "daylight": 0.978284478187561,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9975003004074097,
+        "daylight": 0.9975003004074097,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.8536736369132996,
+        "daylight": 0.8536736369132996,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.43422532081604004,
+        "daylight": 0.43422532081604004,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.04666764289140701,
+        "daylight": 0.04666764289140701,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.0841214656829834,
+        "daylight": 0.0841214656829834,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.5066708326339722,
+        "daylight": 0.5066708326339722,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.894477367401123,
+        "daylight": 0.894477367401123,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9996071457862854,
+        "daylight": 0.9996071457862854,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9278628826141357,
+        "daylight": 0.9278628826141357,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9999988675117493,
+        "daylight": 0.9999988675117493,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9373592138290405,
+        "daylight": 0.9373592138290405,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.6011538505554199,
+        "daylight": 0.6011538505554199,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.14865271747112274,
+        "daylight": 0.14865271747112274,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.013255152851343155,
+        "daylight": 0.013255152851343155,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9675506949424744,
+        "daylight": 0.9675506949424744,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9991665482521057,
+        "daylight": 0.9991665482521057,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.8816986680030823,
+        "daylight": 0.8816986680030823,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.48257118463516235,
+        "daylight": 0.48257118463516235,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.0705237165093422,
+        "daylight": 0.0705237165093422,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.8609864711761475,
+        "daylight": 0.8609864711761475,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9980311989784241,
+        "daylight": 0.9980311989784241,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.9758544564247131,
+        "daylight": 0.9758544564247131,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.7210164070129395,
+        "daylight": 0.7210164070129395,
+        "sleeping": true,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.2592070698738098,
+        "daylight": 0.2592070698738098,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.0006577007006853819,
+        "daylight": 0.0006577007006853819,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.21657170355319977,
+        "daylight": 0.21657170355319977,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.6792181730270386,
+        "daylight": 0.6792181730270386,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 0,
+        "light": 0.7969252467155457,
+        "daylight": 0.7969252467155457,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 1,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 2,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 3,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 4,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 5,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 6,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 7,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      },
+      {
+        "level": 8,
+        "light": 0.7969252467155457,
+        "daylight": 1.0,
+        "sleeping": false,
+        "bitexact": true,
+        "max_abs": 0.0,
+        "uint8_exact": true
+      }
+    ]
+  },
+  "w1_night_and_sleep_against_full": {
+    "with_light_map_arg": {
+      "bitexact": "4/49",
+      "uint8_exact": "7/49",
+      "max_abs_over_pool": 230.0
+    },
+    "light_map_premultiplied": {
+      "bitexact": "8/49",
+      "uint8_exact": "11/49",
+      "max_abs_over_pool": 120.83051300048828
+    }
+  },
+  "light_level_pixels_moved_by_level": {
+    "0": 29700,
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0
+  },
+  "daylight_override": "daylight = select(player_level == 0, light_level, 1.0): the night chain is exactly the identity on levels 1..8, whatever light_level holds",
+  "light_map_alphabet": {
+    "n_distinct_over_4_worlds": 23,
+    "per_world": [
+      18,
+      18,
+      18,
+      23
+    ],
+    "min": 0.0,
+    "max": 1.0,
+    "first_24": [
+      0.0,
+      0.10557276010513306,
+      0.15147191286087036,
+      0.17537885904312134,
+      0.19999998807907104,
+      0.20000000298023224,
+      0.2788897156715393,
+      0.3055727481842041,
+      0.3675444722175598,
+      0.3999999761581421,
+      0.4000000059604645,
+      0.4343145489692688,
+      0.47888970375061035,
+      0.5527863502502441,
+      0.6000000238418579,
+      0.6343145370483398,
+      0.699999988079071,
+      0.717157244682312,
+      0.7527863383293152,
+      0.800000011920929,
+      0.8999999761581421,
+      0.9788897037506104,
+      1.0
+    ],
+    "is_small_enough_to_bake": true
+  }
+}

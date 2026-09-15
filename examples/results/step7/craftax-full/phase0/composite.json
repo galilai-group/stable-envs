@@ -1,0 +1,23 @@
+{
+  "tile_px": 10,
+  "n_states": 49,
+  "per_tile_composite_bitexact": "49/49",
+  "max_abs_over_pool": 0.0,
+  "states_with_two_entities_on_one_tile": 0,
+  "total_shared_tiles": 0,
+  "per_tile_id_alphabet": {
+    "block": 37,
+    "item": 5,
+    "player_slot": 6,
+    "mob_slot": 20,
+    "proj_slot": 33
+  },
+  "tables_uint8_bytes_at_10px": {
+    "block": 11100,
+    "item_rgba": 2000,
+    "player_rgba": 2000,
+    "mob_rgb+alpha": 12000,
+    "proj_rgb+alpha": 19800
+  },
+  "tables_total_uint8_bytes_at_10px": 46900
+}
