@@ -1,22 +1,148 @@
-# Step 7 / W6 — `swm/PFRocketLanding-v0` feasibility gate (Phase 0)
+# Step 7 / W6 — `swm/PFRocketLanding-v0`: feasibility gate (Phase 0) and implementation (Phase 1)
 
-**Classification: FINDING (gate result) + PATCH_CANDIDATE (the four small `nvdiff` extensions a GO
-would need, not written). No `stable_envs/` file was modified.**
-
-**Recommendation: GO, in the VISUAL tier, through the existing nvdiffrast raster backend.** All four
-gates pass on real frames, and two of the three premises of the Step-1 NO-GO are false on measurement:
-the scene is not a mesh scene and the decoder is not rebuilt per episode.
+**Classification: PATCH_CANDIDATE.** Phase 0 (below, unchanged) recommended GO in the visual tier;
+Phase 1 (M1-M3, authorised) is implemented and unit-tested locally, with the visual-fidelity
+measurement, the nvdiff byte-identity replay and the throughput pending one GPU job on Oscar.
 
 | | |
 |---|---|
 | baseline SHA | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` (Step 6 closed) |
 | branch | `step7/rocket-landing`, worktree `/Users/samib/stable-envs-step7-rocket-landing` |
+| milestone commits | Phase 0 `c6772f7` · M1 `4bb93a4` · M2 `83db3cc` · M3 = the commit carrying this file |
 | hardware | Apple M5 Mac, CPU only; PyBullet DIRECT (`connectionMethod: 2`) = TinyRenderer software rasteriser. **Local timings are not certification numbers.** |
-| venv | `/Users/samib/se7-rocket-venv` (Python 3.12.11): PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, gymnasium 1.3.0, torch 2.14.0, Pillow 12.3.0, trimesh 5.1.0, imageio 2.37.4, numba 0.67.0, stable-worldmodel 0.1.1 (resolved from PyPI), opencv-python-headless 5.0.0.93 (needed by swm's import chain; it moved numpy 1.26.4 -> 2.5.3) |
-| affected configs | none existing; one new cell proposed (`PFRocketLanding`, 480 px) |
-| artifacts | `examples/results/step7/rocket-landing/phase0/` — `phase0.json` (main probe), `phase0_b.json` (mechanisms), `phase0_light_sweep.json`, `phase0_link_lag.json`, `frames_descent.npz` (48 poses, 1.2 MB), `frames_rollout.npz` (32), `frames_g1_pairs.npz`, 19 PNG previews |
-| probes | `scratch/step7/rocket-landing/phase0_probe.py`, `phase0_probe_b.py` (+ two inline sweeps recorded in the JSONs), logs beside them |
-| Oscar | not used (SSH denied at auth this session); cluster items listed at the end |
+| venv (local) | `/Users/samib/se7-rocket-venv` (Python 3.12.11): PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, gymnasium 1.3.0, torch 2.14.0, Pillow 12.3.0, trimesh 5.1.0, imageio 2.37.4, numba 0.67.0, stable-worldmodel 0.1.1, opencv-python-headless 5.0.0.93 (it moved numpy 1.26.4 -> 2.5.3); unit tests run under `/Users/samib/se6-venv` with `MUJOCO_GL=cgl` (the env modules `setdefault` egl, which is invalid on macOS) |
+| Oscar | SSH restored during Phase 1: `$SCR/se7/rocket-landing/` (this branch, rsynced), `$SCR/se7/baseline/` (76dc511, `git archive`), venv build job `se7-rocket-venv` **6394857** (`scratch/step7/rocket-landing/oscar_venv.sbatch`); the GPU job `oscar_gpu.sbatch` is submitted after it completes (one GPU job at a time; 3090, `gpu`/`norm-gpu`, nodes gpu2108/2113/2110/2116 excluded) |
+| affected configs | none existing; one new cell `PFRocketLanding` (480 px, swm's registered default: 480 x 480 x 3 = 691,200 B per observation, confirmed from `RocketLandingEnv.__init__(render_resolution=(480, 480))` and the frame the probe recorded) |
+| files touched (Phase 1) | `stable_envs/render/nvdiff.py` (M2), `stable_envs/envs/rocket_landing.py` (M3, new), `tests/unit/test_nvdiff_triangles.py` (new), `tests/unit/test_rocket_landing.py` (new), `examples/results/step7/rocket-landing/{reference,phase0,findings.md}`, `scratch/step7/rocket-landing/*` |
+
+## Phase 1 — what was built, what was measured, what is pending
+
+### M1 · reference corpus (`4bb93a4`) — `examples/results/step7/rocket-landing/reference/`
+
+200 states from 24 STEPPED rollouts under a random policy (ignition sticky Bernoulli(0.5), throttle
+U(0.3, 1), fins/gimbal U(-0.3, 0.3)); 6 uniform step indices per episode plus one trigger per height
+threshold (200/100/50/25/12/6/3 m). Frames are the frames those steps produced — the lagged picture
+swm observes (ruling 3). `states.npz` (97 kB): `state13 = obs[:13]` (ang_vel body, quat xyzw, lin_vel
+body, lin_pos), `obs30` float64, `style` (5 RGB + flame bit, corpus column order), `pose`, `world_vel`,
+`cached_link0`, per-frame sha256; `frames.npz` (1.35 MB compressed); `meta.json`.
+
+Validated per state (`meta.json: validation`): cached link-0 pose == `(pos - v dt, exp(-w dt) q)` from
+the obs to **1.8e-15 m / 5.6e-16**; obs quaternion == PyBullet's to 6.7e-16; obs body-frame
+velocities rotate to the world ones to 6.4e-14; the colour law to 3e-8. Heights: 109 states above
+300 m, 91 spread over 0-300 m; ground visible in 45 %; attitudes tumbling (tilt to 174 deg,
+|w| to 4.9 rad/s) with a near-upright minority; lateral drift to 190 m.
+
+**Reference at an arbitrary state** (`reference_trick_validation.json`, `validate_reference_trick.py`):
+a teleport syncs the links, so the lagged picture is produced by teleporting the base to the PREVIOUS
+substep pose, setting velocities, and running one raw `stepSimulation` with gravity off — iterating
+the SET velocity until the POST-step velocity equals the recorded one, because Bullet's substep is
+semi-implicit (`pos' = pos_prev + v1 dt`, `q' = exp(w1 dt) q_prev`, both exact) but a spinning
+composite multibody changes its own velocity by up to 0.03 m/s per substep (gyroscopic and offset-mass
+terms; `resetBasePositionAndOrientation` must precede `resetBaseVelocity`, it zeroes the velocity).
+**199/200 corpus frames byte-identical, the last off by 1 px; base landing error 7e-13 m.** This is
+`PFRocketLanding.reference_render`.
+
+### M2 · nvdiff extensions (`83db3cc`) — generic, defaults unchanged
+
+`stable_envs/render/nvdiff.py`: `Scene.from_triangles` (a scene from a triangle soup + appearance
+table, the same members and the same downstream path as the `MjModel` constructor, which now shares
+`_assemble`); `prepare_texture_array` (split out of `prepare_texture`); `render(..., mat_rgb=)` per-row
+`(B, G, 3)` material colour through `gather_material`; `TinyShading` + `shade_tiny` (world-fixed
+directional light, `ambient + diffuse*max(0,n.l) + specular*max(0,r_z)^e` MULTIPLIED into the material
+colour, reflection from the UNCLAMPED `n.l`); `BatchRenderer(..., scene=, shading=, tiny=, tex_filter=,
+sample_offset=)` with `shading="mujoco"`, `tex_filter="linear"`, `sample_offset=(0,0)` as defaults —
+the existing `_shade`, mipmapped texture and `S.mat_rgb[gid]` paths run as before (`offset_clip` at
+`(0,0)` returns the input object; `gather_material` on a 2-D table is the same indexing).
+
+`tests/unit/test_nvdiff_triangles.py` (14 tests, CPU): the soup constructor's members and its sparse
+transform against a dense one; per-row vs shared gather; the shading law pinned to MEASURED TinyRenderer
+pixels — 239 (default law, horizontal white), 220 / 190 (diffuse-only / specular-only, tilt 0), 197 / 112
+(tilt 10 deg), **162 / 158 on faces turned AWAY from the light** (`tiny_law4_backface.json`; the clamped
+law says 153 — measured after the first version of this test assumed it); `offset_clip`; `QUANT` trunc;
+the texture preparation. Local suite: `tests/unit` **805 passed, 36 skipped, 3 failed** — the three are
+(a) my back-face expectation, since fixed (29/29 on the two nvdiff files), (b)
+`test_examples[...render_mjwarp.py]` and (c) `test_every_cited_scratch_path_resolves` (12 Step-6
+citations of `scratch/sboughan/...`), **both of which fail identically on the untouched baseline**.
+
+### M3 · the cell — `stable_envs/envs/rocket_landing.py`, `PFRocketLanding`
+
+`state_dim = 13` (`obs[:13]`), style = the variation space `{rocket.body/fin/leg/booster_color,
+pad.color (RGBBox), flame.ignited (Discrete 2)}` whose flat layout is ALPHABETICAL (`gymnasium.spaces.Dict`
+sorts keys) and is addressed by path everywhere (`style_layout`, `corpus_style_to_env`); defaults =
+the official appearance of a reset without a variation request (URDF yellow/grey/black, a WHITE pad,
+flame unignited). `sky_color` is not offered (dead upstream). `default_size = 480`, supersample 1.
+`device="cpu"` raises `NotImplementedError` naming the missing CPU textured-triangle rasteriser
+(ruling 1); registered only when nvdiffrast imports, `missing_backend()` says why otherwise.
+
+The scene: 13 geoms in draw order (ground quad with `plane100.obj`'s UVs and the checker flipped for
+nvdiffrast's row convention; body / fuel tank / booster / 4 fins / 3 legs / flame from the URDF joint
+origins; the pad) = **382 vertices, 486 triangles**. Cylinders are `tiny_cylinder`: Bullet's
+`btShapeHull` — the support points of the 2 x 32 ring in the 42 fixed unit-sphere directions
+(`btShapeHull.cpp`, verbatim table), pushed out by the shape's 1 mm margin, normals = normalised
+positions (`TinyRendererVisualShapeConverter.cpp` 211-290, 655-705); **42 vertices / 80 triangles per
+cylinder, silhouette IoU 0.995 against TinyRenderer's top-down render** (`env_math_validation.json`; the
+residual is the margin and scipy's cap fan vs HullLibrary's). Boxes are `nvdiff._box`. Renderer:
+`BatchRenderer(scene=..., shading="tiny", tex_filter="nearest", mipmap=False, quant="trunc",
+sample_offset=(0.5, 0.5))`, background white, camera per row (`camera_pose`: PyFlyt's recipe — link-0
+lagged pose, offset `R·(-1,0,3)`, Euler pitch +30 deg, tracking target, gluLookAt; verified against
+PyBullet's own `computeViewMatrix` on 200 random attitudes to 4.4e-4 = its float32 arithmetic, and
+Euler/quaternion conventions to 1e-15), links at `t - dt` and the body at `t` (`geom_poses`, verified
+against `getLinkState` on the loaded URDF to 1.9e-6). `sample_states` is a documented mixture covering
+the corpus ranges (half high-altitude "rocket on white", half log-uniform descent; 30 % near-upright).
+
+Declarations: `fidelity_tier = "visual"`, `parity_interior_min = None`, `visual_fidelity` **PROVISIONAL
+AND MARKED UNMEASURED** in `measured_at` (Phase-0 estimate mean_abs 3.0 / within-8 0.95 / SSIM 0.95,
+thresholds 6.0 / 0.85 / 0.90) with `reference_versions = {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}`,
+`visual_note` naming the residual; the measured numbers and thresholds are copied by hand from
+`measure_tier.py`'s output after the 3090 run. `tests/unit/test_rocket_landing.py` (14 tests, CPU):
+the state contract against the corpus (lag from the float64 obs to 1e-9, from the float32 state to
+1e-3 m), the layout/converter, the colour law, the hull, the scene arrays, the poses, the camera, the
+Euler round trip, `sample_states`, the default style, registration-iff-nvdiffrast; **13 passed, 1
+skipped** (the checker texture needs `pybullet_data`, absent from the se6 venv).
+
+**Local end-to-end preview of the residual** (`scratch/step7/rocket-landing/cpu_raster_probe.py`, a
+third rasterizer driving the SAME `geom_poses`/`camera_pose`/`material_table`/`tiny_cylinder`, against
+the frozen corpus frames, 32 states): **95.15 % of pixels bit-exact, mean 5.87/255, median frame
+4.99, within-8 95.6 %, SSIM 0.863, worst frame 11.8**; 90 % of the differing pixels differ by more
+than 8 — silhouettes and the sub-pixel far-ground checker under nearest sampling, i.e. the class of
+residual Phase 0 predicted, not a shading error. A preview by construction, not the tier's number.
+
+### CPU feasibility (ruling 1) — ONE bounded measurement, reported and stopped
+
+`cpu_raster_probe.py`: a vectorised torch CPU rasteriser of the 486-triangle scene at 480 px, one
+thread, near/far clipping, extent-sorted bounding-box chunks, `scatter_reduce(amin)` depth,
+perspective-correct attributes, TinyRenderer's law, nearest texture. **1.92 f/s (521 ms/frame) on
+one M5 core = 0.056 x the 34.25 f/s official (bar: S_cpu >= 5, i.e. >= 171 f/s) and 0.0016 of one
+core of JPEG decode (bar: >= 1191 f/s).** Both bars missed by two to three orders of magnitude for
+this naive attempt; a real CPU triangle backend (tile binning, compiled kernels) is a different
+program and a coordinator/Sami decision. The cell declares CPU coverage MISSING.
+
+### Pending on Oscar (one GPU job, `oscar_gpu.sbatch`)
+
+1. M2 on the card: the nvdiff unit tests on the node; nvdiff byte-identity of its existing users —
+   the six locomotion visual cells (Fetch renders through mujoco_warp and the frozen Step-4 corpus
+   holds no nvdiff-backed config, so the replay is 64 `sample_states` per cell rendered under
+   `PYTHONPATH=$SCR/se7/baseline` and `=$SCR/se7/rocket-landing` in the same job, digests compared
+   (`nvdiff_identity.py`); identity cannot be shown locally (nvdiffrast is CUDA-only); plus their own
+   `test_visual_tier_matches_its_declared_fidelity`.
+2. M3: `measure_tier.py` — `check_visual_fidelity` over 4 x 64 states against PyFlyt+TinyRenderer at
+   480 px, `check_visual_fidelity_under_variation`, the frozen-corpus replay, the mandatory checks;
+   then the conformance suite restricted to `PFRocketLanding`.
+3. M4: throughput at batches 1/16/64/256 (same job, same card), against the official 34.25 f/s and
+   the 1,190.9 f/s one-core decode measured on the Mac (re-measure both on the node for a
+   same-machine ratio).
+
+Gate A checks runnable locally: everything in `tests/unit/test_rocket_landing.py`; pending cluster:
+render-side checks (batch invariance, batch-size invariance, determinism, state dims, resolution
+consistency, visual fidelity).
+
+---
+
+# Phase 0 — the feasibility gate (as delivered, unchanged)
+
+**Recommendation: GO, in the VISUAL tier, through the existing nvdiffrast raster backend.** All four
+gates pass on real frames, and two of the three premises of the Step-1 NO-GO are false on measurement:
+the scene is not a mesh scene and the decoder is not rebuilt per episode.
 
 ## What the env actually is (census, not the Step-1 reading)
 
