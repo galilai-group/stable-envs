@@ -248,14 +248,13 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: 'hardenings landed (d1f65d4): missing frozen key refused by name; sphere-ness derived from geom_type in conformance; citation set = baseline; final verification requested; paired replay 6395850
-    running; merge on APPROVE'
+  status: all work committed (f4f0727); reviewer verdict on the hardened rule pending; merge on APPROVE
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: d1f65d4 (rule hardenings D1/D2/D3)
+  head_sha: f4f0727 (paired 3.11 replay recorded); all cluster jobs done
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -374,7 +373,8 @@ workstreams:
       now in sbatch
     cert311_rerun_6395126: 'COMPLETED node1946 on 8b39e94: 41 draws interior 1.0 both sizes, byte-identical to the pre-review arm (C1-C4 moved no pixel at the pin); corpus at the pin (64,15) exact Step-4
       schema sha256 48db2b1a identical to the local selection (job 6395804 redid it after the sbatch still passed --n 256: recorded near-miss)'
-    paired_replay_6395850: RUNNING (baseline vs head at the pin, one machine)
+    paired_replay_6395850: 'COMPLETED node2306: baseline 76dc511 vs head in one job at the 3.11 pin: 14 configs 0 differing, digests populated both sides -> no-regression holds on both interpreters and
+      both machines'
     digest_note: '3.11 CPU replay digests differ from examples/results/step4/conformance/dmc.json on 10/14 cells: not a regression signal (that shard''s provenance is device cuda on gpu2105); the valid
       control is baseline-vs-head on one machine (14/0 locally + paired arm)'
   exclusion_mechanism:
