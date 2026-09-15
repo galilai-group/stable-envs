@@ -13,7 +13,7 @@ workstreams:
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 7a1a138 (follow-up 978372b, oracle b399fbb, tier 7a1a138)
+  head_sha: 5fd5ccb (merged again; CPU tier commit pending job 6395321)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -154,6 +154,12 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; review APPROVE-WITH-CHANGES -> re-check APPROVE; integration tests running
     auto_merged: tests/unit/test_declarations.py (W4 + W1 hunks)
     integration_tests: 'tests/unit on 9ca318f: se6-venv 795 passed 7 skipped (test_examples + pre-existing scratch-path test deselected); se7-craftax-venv craftax/prng/declarations subset 135 passed 5 skipped'
+  followon_5fd5ccb:
+    parity_at_2S: world rows exact (1.0, max 0) vs a craftax renderer constructed at 32 px in every band incl. night; strip differs 17.96-18.59% (craftax re-layout); 32 px is not a parity size because craftax
+      ships no textures there
+    step8_gap: "findings \xA712b.1: certify.py's mixed 8-state draw records DOWNSAMPLE FAIL (ours 0.8164, official 0.7440) in a band declared not applicable; certifier gap, threshold untouched"
+    cpu_tier: '--exclusive blocked by normal QOS cpu=64 (scheduled 05:00) -> cancelled; job 6395321 paired: Step-6 tree, branch, Step-6 tree again on one node with loadavg; paired_verdict.py quarantines
+      if baseline legs differ > 1.25x'
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -543,6 +549,8 @@ incident_log:
     gpu2104 exclusion optional'
 - date: '2026-09-15'
   item: 'W6 review: RC-1 blocking (would void GPU job 6395009); fix + resubmit requested'
+- date: '2026-09-15'
+  item: W1 follow-on 5fd5ccb merged; CPU tier via paired job 6395321
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
