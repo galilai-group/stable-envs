@@ -992,6 +992,10 @@ workstreams:
     sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
       ValueError, not the zero-size crash -> the gate suite (job 6420033, se7-ogb, full tracebacks) is the arbiter'
     closure4_ceiling: re-measuring over 8 draws; ceiling = worst-of-8 x1.3 by rule
+    gate_a_driver_defect: W5's probe_remeasure_chain.py ran five checks (determinism, batch, batch-size, state_dims_matter, order) and reported them as 'Gate A' - check_state_roundtrip was never in the
+      tuple, which is exactly the mandatory check the closure sweep failed. Fixed (added first). Every earlier 'Gate A green' for the OGB cells was on the incomplete set; the gate for the fix is the full
+      tests/gpu suite, which runs check_state_roundtrip.
+    login_node_audit: pre-compaction md5sum over the rsynced swm source tree on a login node (borderline; moved into the job as a startup assert); otherwise all compute in sbatch
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1474,6 +1478,8 @@ incident_log:
 - date: '2026-09-15'
   item: 'Sami rule: no CPU-heavy work on Oscar login nodes (added to AGENT_COMMON addendum). Audit: W6 ran a CPU probe + tests/unit file on login009 (redirected to a batch job); closure agent ran sub-second
     log-extraction scripts and interpreter probes on the login node (no measurement produced; all numbers from SLURM jobs; regeneration declined as unnecessary); W5 none reported.'
+- date: '2026-09-15'
+  item: W5 found its own Gate-A driver omitted check_state_roundtrip (why CLOSURE-3 escaped); fixed; gate = full tests/gpu suite
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
