@@ -13,7 +13,7 @@ workstreams:
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 6fe1bbf (phase 0)
+  head_sha: 'd33288c (phase 1 in progress: prng.py landed)'
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -38,7 +38,7 @@ workstreams:
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: 995e3b2 (phase 0)
+  head_sha: a635d3a (phase 1; in review)
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -98,7 +98,7 @@ workstreams:
   branch: step7/dmc-quadruped
   worktree: /Users/samib/stable-envs-step7-dmc-quadruped
   agent_model: fable
-  head_sha: 494b747 (phase 0)
+  head_sha: fa4ac53 (phase 1 + review follow-up; merged 0a029bd)
   phase0: "FINDING: SWM default = walk model + Move(0.5), camera 2 (y, trackcom, fovy 45), 224 px, SWM appearance (self recoloured, foot density); state = qpos (0 px under re-render/qvel x100/history);\
     \ primitives: 1 textured plane, 12 capsules, 4 spheres, 2 cylinders, 1 ELLIPSOID (torso, visible in every state); HFIELD declared but deleted from the walk model (no capability needed); MJWarp supports\
     \ ellipsoid (ray_ellipsoid) \u2014 no GPU gap; cpu3d refuses kind 4; raycast3d lacks _ellipsoid. Prototype (cpu3d + patched ellipsoid) vs official 3.11 at 224 px: mean 3.55/255, within-8 0.901, SSIM\
@@ -174,13 +174,17 @@ workstreams:
     integration_sha: 0a029bd
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; independent review APPROVE-WITH-CHANGES satisfied; integration tests/unit run recorded separately
+    integration_tests: 'tests/unit on 0a029bd: 735 passed, 6 skipped (test_examples and the pre-existing test_every_cited_scratch_path_resolves deselected)'
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: queued
+  status: phase 0 (census, purity, official throughput bars, Fetch-pattern/raycast3d/nvdiff feasibility; local se7-ogb-venv; started 2026-09-15 after W4 merged; cluster items pending Oscar)
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
+  branch: step7/ogb-manipulation
+  worktree: /Users/samib/stable-envs-step7-ogb-manipulation
+  agent_model: opus
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -212,6 +216,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
+  head_sha: c6772f7 (feasibility gate; phase 1 in progress)
 decisions: []
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
@@ -222,6 +227,8 @@ incident_log:
   item: W3 phase 1 (a635d3a) delivered; hygiene clean; reviewer spawned
 - date: '2026-09-15'
   item: W4 merged (0a029bd); W5 slot freed
+- date: '2026-09-15'
+  item: integration tests/unit green at 0a029bd; W5 ogb-manipulation phase 0 spawned (opus)
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
