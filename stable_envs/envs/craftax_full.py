@@ -874,6 +874,77 @@ class CraftaxFull(StableEnv):
                 "against 1/3, while the fast-path share is exactly 0.25 at that batch",
     }
 
+    #: **The measured performance record, at the labels Sami's reference ruling produces.** The rule
+    #: applied literally: if the official renderer can be timed on the certification host under the
+    #: required conditions -- one core for CPU, same card and same job for GPU, **jitted as craftax
+    #: executes it**, warm, compile excluded -- then it IS the reference and the ratio is computed
+    #: from it; ``NO_REFERENCE`` is what you retain when it cannot be timed there, never a number
+    #: carried over from another machine. Parity is unaffected and stays against the **un-jitted**
+    #: function as a uint8 claim (:attr:`parity_note`): the speed ratio and the parity claim use
+    #: different references on purpose, because the jitted renderer disagrees with itself in uint8
+    #: and the un-jitted one is not what anybody runs.
+    #:
+    #: Both rungs come from the repo's own classifier (``scratch/step3/certify.py:classify``) walked
+    #: over the frozen ladder in ``scratch/certification.json``, not from reading the thresholds by
+    #: hand.
+    performance_record_cpu = {
+        "tier": "CPU_FASTER", "qualifiers": ["BELOW_G4"],
+        "mixed_default_fps": 1469.1, "mixed_default_batch": 64,
+        "official_jitted_fps": 613.4, "s_cpu": 2.395,
+        "decode_bar_fps": 4294.0, "cores_cpu": 0.342,
+        "host": "node2339.oscar.ccv.brown.edu", "job": "6409963",
+        #: The one-core condition, enforced by the cgroup and logged rather than asserted.
+        #: ``taskset -c 0`` does not work inside a SLURM cpuset, so the allocation itself is one core.
+        "condition": ("--cpus-per-task=1; Cpus_allowed_list 1; nproc 1; sched_getaffinity [1]; "
+                      "torch threads 1; jax default_backend cpu"),
+        "paired_verdict": ("USABLE -- baseline legs 101,598 and 105,684 f/s (spread 1.040), the "
+                           "baseline reproduces its known 115,166 f/s to 0.90x, load 0.92 per node "
+                           "core"),
+        "superseded": ("an earlier take on node2352 under --cpus-per-task=4 read S_cpu 3.810. It is "
+                       "NOT the number: torch.set_num_threads(1) binds torch and says nothing about "
+                       "jax, whose CPU backend has its own pool, so the reference could use four "
+                       "cores while ours used one. The two takes also differ by node, so the drop "
+                       "from 3.810 to 2.395 is not cleanly attributable to the core budget -- what "
+                       "is attributable is that only the second was taken under the condition the "
+                       "ladder is defined at"),
+    }
+    #: R is a real ratio here rather than ``NO_REFERENCE``, because the official renderer **could** be
+    #: timed on the same card in the same job -- and measuring it **demoted** this cell. On the
+    #: cores-only ``NO_REFERENCE`` ladder 21.8 cores of decode reads ``GPU_FAST``; against the
+    #: reference the class-R ladder wants ``R >= 500`` for that rung and R is 101, which is
+    #: ``GPU_FASTER``. Retaining ``NO_REFERENCE`` would have been the more flattering label and was
+    #: available by simply not measuring, which is the reason to measure.
+    performance_record_gpu = {
+        "tier": "GPU_FASTER", "backend_class": "R",
+        "mixed_fps": 94343.9, "mixed_batch": 4096, "size": 10,
+        "official_jitted_fps": 934.5, "R": 100.96,
+        "decode_bar_fps": 4323.3, "cores": 21.82,
+        "card": "NVIDIA GeForce RTX 3090", "host": "gpu2109.oscar.ccv.brown.edu", "job": "6410052",
+        "condition": ("same card, same job; the official timed from $SCR/venvs/se7-craftax-gpu with "
+                      "jax.default_backend() == 'gpu' and devices ['cuda:0'] ASSERTED before timing, "
+                      "jitted, warm, 6.72 s of compile excluded; ours timed from "
+                      "$SCR/venvs/se7-craftax on the same allocation"),
+        "batch_scales": ("425x (fps(4096)/fps(1)) against the 20x bar, measured on the sibling "
+                         "gpu2106 run of the same code, job 6397699; the R run drew B=256 and 4096 "
+                         "only, so its own record carries no B=1 cell"),
+        "why_not_no_reference": ("$SCR/venvs/se7-craftax is a jax[cpu] build, so jax.default_backend() "
+                                 "is 'cpu' inside a GPU job whatever JAX_PLATFORMS says; job 6409535 "
+                                 "would have timed the 'same-card reference' on the CPU and was "
+                                 "cancelled before it ran. W1's jax[cuda12] venv was reused rather "
+                                 "than a second one built, and it carries no torch, so the two "
+                                 "interpreters share one allocation"),
+    }
+    #: What the two references are, and why they are allowed to differ.
+    reference_labels = {
+        "parity": "the UN-JITTED renderer -- a uint8 claim; see parity_note",
+        "speed": "the JITTED renderer, as craftax executes it, timed on the certification host",
+        "official_unjitted_fps_cpu": 0.43, "official_jitted_fps_cpu": 613.4,
+        "ratio_between_the_two_references": 1426,
+        "note": ("S_cpu against the un-jitted function would read 1,808 and certify nothing real. "
+                 "The ruling is applied literally: the speed ratio uses the renderer as a user runs "
+                 "it, and NO_REFERENCE is retained only where it cannot be timed on the host."),
+    }
+
     def make_variation_space(self) -> Dict:
         """Knobs that are the identity at their defaults and genuinely move pixels off them.
 

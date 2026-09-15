@@ -1136,3 +1136,100 @@ directory that has been edited locally overwrites the local edits: pulling
 `examples/results/step7/craftax-full/` clobbered this file with the copy that had been pushed before
 the review follow-up, losing 190 lines. Recovered from git. Pull into a staging directory, or pull
 only the specific new artifacts.
+
+---
+
+## 22. The reference label, ruled — and both tiers re-taken under it
+
+Sami's ruling, applied literally: **if the official renderer can be timed on the certification host
+under the required conditions — one core for CPU, same card and same job for GPU, jitted as craftax
+executes it, warm, compile excluded — then it IS the reference and the ratio is computed from it.**
+`NO_REFERENCE` is what is retained when it *cannot* be timed there, never a number carried from
+another machine. **Parity is unaffected**: it stays against the un-jitted function as a uint8 claim
+(§4.2, `parity_note`). The two references differ by **1,426x** on the CPU host, which is why they
+have to be named separately (`CraftaxFull.reference_labels`).
+
+Both labels below come from **the repo's own classifier** (`scratch/step3/certify.py:classify`)
+walked over the frozen ladder in `scratch/certification.json` — not from reading thresholds by hand.
+
+### 22.1 Both of my first numbers were inadmissible, for different reasons
+
+| | what was wrong |
+|---|---|
+| **CPU**, job `6397916` (`node2352`, `--cpus-per-task=4`) | `torch.set_num_threads(1)` binds torch and says **nothing about jax**, whose CPU backend has its own pool. The reference could use four cores while ours used one — not the one-core condition `S_cpu` is defined at. `taskset -c 0` cannot fix it inside a SLURM cpuset |
+| **GPU**, job `6409535` | `$SCR/venvs/se7-craftax` is a **`jax[cpu]` build**: `jax.default_backend()` is `'cpu'` inside a GPU job whatever `JAX_PLATFORMS` says. It would have timed the "same-card reference" on the CPU. **Cancelled before it ran** |
+
+Verified directly rather than inferred: that venv reports `default_backend cpu`, `devices [CpuDevice(id=0)]`.
+
+### 22.2 CPU — `CPU_FASTER` + `BELOW_G4`
+
+Job **`6409963`**, `node2339`, `--cpus-per-task=1` so the **cgroup** enforces one core on both sides,
+with the condition logged instead of asserted:
+
+```
+Cpus_allowed_list: 1    nproc=1    SLURM_CPUS_PER_TASK=1
+sched_getaffinity [1]   torch threads 1   jax default_backend cpu, devices ['cpu:0']
+```
+
+Paired verdict **USABLE** — baseline legs 101,598 / 105,684 f/s (spread **1.040**), baseline
+reproduces its known 115,166 f/s to **0.90x**, load **0.92** per node core.
+
+```
+TIER        CPU_FASTER          qualifiers ['BELOW_G4']
+S_cpu 2.395   cores_cpu 0.342
+se_fps 1,469.1 @ B=64    official jitted 613.4 f/s    decode 4,294.0 f/s
+```
+
+| take | cpus | tier f/s | official f/s | `S_cpu` | cores | baseline/known |
+|---|---|---|---|---|---|---|
+| `node2352` — **inadmissible** | 4 | 1,337 | 350.9 | 3.810 | 0.356 | 0.85 |
+| **`node2339` — admissible** | **1** | **1,469** | **613.4** | **2.395** | **0.342** | 0.90 |
+
+**`S_cpu` fell from 3.81 to 2.40**, much closer to the `CPU_PARITY` boundary at 2.0. Stated honestly:
+the two takes differ by **node** as well as by condition — `node2339` was the quieter machine and ran
+*both* sides faster — so the drop is **not cleanly attributable to the core budget**. What is
+attributable is that only the second was taken under the condition the ladder is defined at.
+
+It is **`CPU_FASTER`, not `CPU_PARITY`**: that rung is `1 <= S_cpu < 2`. A second table in
+`certification.json` lists `CPU_FASTER {cores_cpu_gte: 1}`, which would have capped us at
+`cores 0.342` — but it sits under `tier_anchors`, which records how the anchors were *derived*, not
+the rung conditions. The live rungs give `CPU_FASTER` + `BELOW_G4`, the same way
+`CraftaxClassicPixels` scored `CPU_FASTER`/`BELOW_G4` at `S 5.01, cores 0.49`.
+
+### 22.3 GPU — `GPU_FASTER`, and measuring it cost us the better label
+
+Job **`6410052`**, `gpu2109`, RTX 3090. **Two interpreters in one allocation**, because no single venv
+can do it and neither may be modified: W1's `$SCR/venvs/se7-craftax-gpu` (`jax[cuda12]` 0.11.1 +
+craftax, **no torch**) times the official renderer; `$SCR/venvs/se7-craftax` times ours; same card,
+same job. `scratch/step7/craftax-full/gpu_official.py` **asserts `jax.default_backend() == 'gpu'` and
+exits non-zero otherwise**, so the failure mode that killed `6409535` is now a gate rather than a
+hope. Recorded: `jax_default_backend: "gpu"`, `jax_devices: ["cuda:0"]`, 6.72 s of compile excluded,
+300 timed reps after 20 warmups.
+
+```
+TIER        GPU_FASTER          backend class R
+R 100.96    cores 21.82
+ours 94,343.9 f/s @ B=4096, 10 px    official jitted 934.5 f/s    decode 4,323.3 f/s
+```
+
+**This is a demotion, and it is the point.** On the cores-only `NO_REFERENCE` ladder 21.8 cores reads
+**`GPU_FAST`**; against the reference the class-R ladder wants `R >= 500` for that rung and `R` is
+**101**, which is `GPU_FASTER`. The flattering label was available by simply not measuring, which is
+the reason to measure. `BATCH_SCALES` passes at **425x** against the 20x bar (`fps(4096)/fps(1)`,
+measured on the sibling `gpu2106` run of the same code, job `6397699`; the `R` run drew B=256 and 4096
+only, so its own record carries no B=1 cell).
+
+### 22.4 `BLOCKER` for Step 8 — the new cell has no backend class
+
+`classify` returns **`unknown`** for `CraftaxFull` and therefore cannot select a GPU ladder at all,
+for two independent reasons:
+
+* `scratch/census/census_*.json` is a frozen Step-2 artifact that predates this cell, so it carries no
+  entry for it;
+* the fallback `certify.py:NO_BACKEND_MODULE_CLASS` maps the **module name** `craftax -> R`, and this
+  cell's module is `craftax_full`, which would not match even after a census regeneration.
+
+Both are **shared files** and are reported rather than edited. The label above was obtained by
+supplying the class this renderer demonstrably is — R, the same tile-atlas gather `CraftaxClassic` is
+— and the honest statement is that **Step 8 must regenerate the census and widen that module map, or
+the cell cannot be classified by the harness at all.**

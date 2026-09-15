@@ -103,6 +103,29 @@ def main():
            "platform": platform.platform(), "machine": platform.machine(),
            "torch": torch.__version__, "threads": torch.get_num_threads(),
            "note": "one torch thread; a local laptop number is NOT a certification number"}
+    # **The conditions the reference timing is admissible under, recorded rather than assumed.**
+    # Two ways a timing can silently be of the wrong thing:
+    #   * jax's backend. $SCR/venvs/se7-craftax is built with jax[cpu], so jax.default_backend() is
+    #     'cpu' INSIDE A GPU JOB whatever JAX_PLATFORMS says -- an "official on the same card"
+    #     number taken from it is a CPU number wearing a GPU label, and is inadmissible for R.
+    #   * the core budget. torch.set_num_threads(1) binds torch and says nothing about jax, whose
+    #     CPU backend has its own pool; under --cpus-per-task=4 the official renderer may use four
+    #     cores while ours uses one, which is not the one-core condition S_cpu is defined under.
+    #     taskset fails inside a SLURM cpuset, so the cgroup must do it: --cpus-per-task=1.
+    try:
+        import jax as _jax
+        rep["jax_default_backend"] = _jax.default_backend()
+        rep["jax_devices"] = [str(d) for d in _jax.devices()]
+        rep["jax_version"] = _jax.__version__
+    except Exception as e:                                             # noqa: BLE001
+        rep["jax_default_backend"] = f"unavailable: {type(e).__name__}"
+    try:
+        rep["allowed_cpus"] = sorted(os.sched_getaffinity(0))
+        rep["n_allowed_cpus"] = len(rep["allowed_cpus"])
+    except (AttributeError, OSError):
+        rep["allowed_cpus"] = "os.sched_getaffinity unavailable on this platform"
+    rep["slurm_cpus_per_task"] = os.environ.get("SLURM_CPUS_PER_TASK")
+    rep["omp_num_threads"] = os.environ.get("OMP_NUM_THREADS")
     if a.device == "cuda" and torch.cuda.is_available():
         rep["gpu"] = torch.cuda.get_device_name(0)
 
