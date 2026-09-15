@@ -18,8 +18,8 @@ the next phase. No heightfield capability is needed for the SWM id. No blocker o
   (`raycast3d.py`, `cpu3d.py`) and therefore the four certified trackcom cells and the 21 raycast
   cells: their pixels cannot move (a new `kind == 4` branch is dead code for every existing scene)
   and the replay obligation is stated in §7.
-- Scripts: `scratch/step7/dmc-quadruped/{gen_states_ref.py, swm_model_roundtrip.py, compare_refs.py,
-  proto_cpu3d.py}`; artifacts: `examples/results/step7/dmc-quadruped/phase0/` (§9).
+- Scripts: `scratch/step7/dmc-quadruped/gen_states_ref.py`, `scratch/step7/dmc-quadruped/swm_model_roundtrip.py`,
+  `scratch/step7/dmc-quadruped/compare_refs.py`, `scratch/step7/dmc-quadruped/proto_cpu3d.py`; artifacts: `examples/results/step7/dmc-quadruped/phase0/` (§9).
 
 ## 1. What the SWM id is, exactly
 
@@ -42,7 +42,7 @@ measured at.
 
 ## 2. State sufficiency (Step-1 method, official renderer, local)
 
-`scratch/dmcontrol/probe_load.state_sufficiency` on `quadruped-walk`, 84 px, 6 visited states, **all
+`state_sufficiency` in `scratch/dmcontrol/probe_load.py` on `quadruped-walk`, 84 px, 6 visited states, **all
 four cameras** (`phase0/state_sufficiency_walk_84px.json`):
 
 | camera | render twice | qvel x100 | different history | live qpos dims |
@@ -288,3 +288,108 @@ venv and are left untracked, as Step 6 left its 4.6 MB stacks), `proto/` (`proto
    (out of Step-7 scope by the rules)?
 5. Ownership: the ellipsoid patch touches `raycast3d.py` (raycast owner) and one tuple in `cpu3d.py`;
    this workstream can carry both if assigned.
+
+---
+
+# Phase 1 — `PATCH` (authorized): the ellipsoid capability, the cpu3d admission, and the cell
+
+**Classification: `PATCH`** — three commits on `step7/dmc-quadruped` over the Phase-0 findings commit
+`494b747`: (a) `e120029` raycast3d ELLIPSOID + tests, (b) `68b411c` cpu3d admission + swimmer
+allow-list, (c) the commit carrying this section: `DMCQuadrupedWalk` registered at the SWM default
+with a PROVISIONAL visual declaration, plus scripts, artifacts and the prepared sbatch files.
+Nothing under `examples/results/step4|5|6/` touched. Oscar still denied: every GPU/certification-host
+item is prepared (§P4) and pending.
+
+## P1. What changed (coordinator answers applied)
+
+| file | change |
+|---|---|
+| `stable_envs/render/raycast3d.py` | `ELLIPSOID = 4`; `_ellipsoid` (torch, §4.1 closed form: frame change by `_mtv`, scale to the unit sphere, sphere quadratic with a leading coefficient, nearer positive root, `disc > 0`/`t > 0`, normal = gradient `p/size^2` by `_mv`; a zero semi-axis is a MISS, never a division); the `kind == 4` branch of `_tri_isect`, line for line, with `div_rn`/`sqrt_rn`; `intersect`, `_kind_tensor`; bound helpers `max(size)` in `Primitives.bound_radius` and `_bound_radius`; `_BOUNDED_KINDS` UNCHANGED (measurement pending, `certify_cpu.sbatch` step 5) |
+| `stable_envs/render/cpu3d.py` | `MOVER_KINDS += (ELLIPSOID,)` — the one-tuple change; nothing else is kind-specific |
+| `stable_envs/envs/dmcontrol.py` (TrackCom region + registration block only; W3's `DMControlSuite` region untouched — hunks at `TRACKCOM_DOMAINS`, `DMControlTrackCom`, and the module tail after `TRACKCOM_RENDER_FLAGS`) | `CPU_UNCERTIFIED` allow-list (swimmer refused by NAME on `device="cpu"`, answer 3); `_swm_quadruped_env` (SWM's model: `make_model(floor_size=10)`, the mjcf round trip with SWM's default `init_value`s — `self` rgba .6 .3 .3, `foot_back_left` density 1000 — `Move(desired_speed=0.5)`, `action_scale`); `_SWMQuadrupedModel` mixin overriding `_bundle`/`sample_states`/`reference_env` and `default_size = 224` (answers 1, 2; a loader hook on `_DMCModel` is the cleanup once W3 lands); `DMControlTrackCom._used_materials` restricted to GEOM wearers (see P3); `TRACKCOM_DOMAINS["DMCQuadrupedWalk"] = ("quadruped", "walk", 2)`; `_QUADRUPED_AT`/`_QUADRUPED_AT_MEASURED_WITH`; the `VISUAL_FIDELITY` entry; `QUADRUPED_NOTE` (the reflection residual, answer 4); `TRACKCOM_BASES` in `_make_classes` |
+| tests | `tests/unit/test_raycast3d_ellipsoid.py` (new: axis-aligned/rotated/inside/miss closed forms, float64 fuzz with a DERIVED tolerance — 16 ulp × the `eps·(|o−pos|/size_min)²` cancellation term, measured 0.2–2.1× eps/2 — normals checked at the returned point, sphere equivalence, degenerate sizes, dispatch/bounds); `test_raycast3d_primitive_bounds.py` (kind 4 in the sampler + 5 pinned cases incl. degenerate, tangent at 100 m, admission edge); `tests/gpu/test_fast_paths.py` (unknown-code test moved to code 8 = SDF; new `test_the_ellipsoid_twins_are_bit_identical_on_both_casts`, cuda); `tests/unit/test_cpu3d.py` (swimmer allow-list; trackcom material census); `tests/unit/test_declarations.py` (the two new `_QUADRUPED_AT*` names in the AST want-set) |
+| scripts | `scratch/step7/dmc-quadruped/measure_cell.py` (ours / official / compare), `gateA_local.py`, `cross_backend.py`, `gpu_declare.sbatch`, `certify_cpu.sbatch` |
+
+## P2. Verification, local (Apple M5, `se6-venv`, `MUJOCO_GL=glfw`, 1 torch thread)
+
+**Identity of everything that renders through the two shared files** (`phase1/replay/`,
+`scratch/step6/raycast3d/replay_step4.py --dump-dir` on each tree, `--compare-dumps`; baseline =
+`git archive 76dc511` of `stable_envs/`): **14 of 14 comparable configs byte-identical**
+(`all_identical: true`, 0 of 451,584 px differing per config) — the 10 raycast3d parity cells
+(`DMCAcrobotSwingup, DMCBallInCupCatch, DMCCartpoleBalance, DMCCartpoleSwingup, DMCFingerSpin,
+DMCFingerTurnEasy, DMCFingerTurnHard, DMCPendulumSwingup, DMCReacherEasy, DMCReacherHard`) and the
+4 trackcom cpu3d cells (`DMCCheetahRun, DMCHopperHop, DMCWalkerWalk, DMCHumanoidStand`). The 11
+OGBench maze cells (Antmaze/Humanoidmaze/Pointmaze ×) **could not run locally** — `ogbench` is not in
+the local venv (`ModuleNotFoundError`, both legs) — so their CPU identity is `certify_cpu.sbatch`
+step 1 and the cuda identity of all 25 is `gpu_declare.sbatch` step 2. (The replay's "fail=14" is
+the frozen Step-4 CUDA digests not matching CPU frames, expected and irrelevant to the identity.)
+
+**Unit suite**: `tests/unit`: **734 passed, 6 skipped** with `test_examples.py` deselected (runs every
+example script; not run here) and `test_repo_contracts.py::test_every_cited_scratch_path_resolves`
+deselected — it fails on the baseline too (`scratch/carracing/logs/`, `scratch/robocasa/out/corpus`,
+`scratch/sboughan/...` from Step-6 texts); two malformed citations it flagged in the Phase-0
+findings.md were mine and are fixed in this commit. The new raycast3d tests: 146 passed.
+
+**The registered cell vs official** (`phase1/cell/`, `measure_cell.py`: 64 states from the cell's own
+`sample_states` seed 100; official = `physics.render` of the SAME SWM-built model — model digest
+asserted equal across the two interpreters — under the declared 3.11 pair and 3.12):
+
+| registered default: **224 px, camera 2, SWM appearance**, CPU | mean /255 | all-exact | within 8 | SSIM | max |
+|---|---:|---:|---:|---:|---:|
+| **vs official mujoco 3.11.0 + dm_control 1.0.44** | **3.417** | 0.153 | **0.902** | **0.957** | 237 |
+| vs official 3.12.0 + 1.0.45 | 3.451 | 0.153 | 0.900 | 0.955 | 237 |
+| supplementary, 84 px, vs 3.11 (one draw, not the certified row) | 6.877 | 0.102 | 0.813 | 0.837 | 255 |
+
+Per residual at 224 px vs 3.11 (segmentation of the official frame; `resid` = share of Σ|diff|):
+
+| surface | share of frame | mean /255 | within 8 | share of residual |
+|---|---:|---:|---:|---:|
+| floor near the body (reflection + shadow) | 34.9 % | 5.54 | 0.815 | **56.6 %** |
+| floor far (checker edges, one-tap sampling) | 45.3 % | 2.20 | 0.957 | 29.1 % |
+| sky (speckled gradient, one tap) | 15.1 % | 1.47 | 0.955 | 6.5 % |
+| body, 18 primitives | 4.6 % | 5.37 | 0.844 | 7.3 % |
+| **ellipsoid torso** (the new intersector) | 1.2 % | **3.51** | 0.914 | 1.2 % |
+| sites (pupils; drawn by neither backend) | 0.01 % | 148 | 0 | 0.5 % |
+
+Local throughput (NOT certification; render only): 224 px 27 / 23 / 25 fps at B = 1/16/64;
+84 px 73 / 161 / 164 fps.
+
+**Gate A, local** (`phase1/gateA/cpu_local_mj3120.json`, `gateA_local.py` = `fidelity_step4.measure`
+with the config dict the frozen universe does not yet carry; the local arm is mujoco 3.12, so the
+reference-judged checks are recorded, not judged): **every mandatory check at its passing
+observation** — determinism identical; batch, batch-size (1/7/64), chunked (1/7/64/4096), order,
+duplicate, style-is-state, default-style, input-form: max |diff| 0; render pure; set_state copies
+and round-trips (0.0); `state_dims_matter`: no dead dim of 23; `per_env_variation`: no collapse;
+`variations_do_something`: **no inert variation** (P3); `fidelity_declaration` agrees.
+Family-specific: `colors_apply_exactly` pass; `check_visual_fidelity` (3.12 arm) 3.447 / 0.900 /
+0.955 — inside the declared ceilings even on the undeclared arm; `check_resolution_consistency`
+**0.8119** exact on its own 8-state protocol (seed 20260809) — this is the number the cell's
+`DOWNSAMPLE_EXACT_FRAC` entry must record (no bound exists yet; Step-8 freeze), with a margin sized
+from the state-set spread per texture-fidelity §6. The candidate frozen corpus is
+`phase1/corpus/states/DMCQuadrupedWalk.npz` (64 of a 256 pool, `corpus_for`'s selection, sha256
+`2bf9cd38…`). 222 s.
+
+## P3. Two things found while landing it
+
+1. **A material knob no backend could honour.** `_DMCModel._used_materials` counts site wearers, and
+   quadruped's `eye` material is worn only by the two pupil SITES, which MJWarp and cpu3d never
+   draw: the base census declared `material.eye` and `check_variations_do_something` would have
+   failed on it. `DMControlTrackCom._used_materials` now counts geom wearers only; on the four
+   certified cells and swimmer the list is unchanged (asserted in `test_cpu3d.py`), on quadruped
+   it is `grid, self, effector`.
+2. **The 84 px picture is worse than Phase 0's** (6.88 vs 5.27 mean): different states (SWM's foot
+   density changes the visited distribution) and SWM's darker `self`; reported as supplementary only.
+
+## P4. Pending on Oscar (scripts prepared, never run)
+
+`scratch/step7/dmc-quadruped/gpu_declare.sbatch` (3090, `norm-gpu`): the release `mujoco_warp` source
+check; cuda identity branch-vs-baseline on all 25 configs; the ellipsoid twin test + fast paths;
+**the declaration draws** (`visual_calib.py`, 3 × 64, 224 px, under `se-vis311` — replaces the
+PROVISIONAL CPU-measured entry and its `_QUADRUPED_AT` string); Gate A on cuda on the new corpus,
+both arms; `localize.py` stacks (the cross-backend oracle). `certify_cpu.sbatch` (`batch`/`normal`):
+CPU identity on the certification family incl. the 11 maze cells; Gate A on CPU under the declared
+pair; cross-backend CPU vs MJWarp per surface (`cross_backend.py`); the paired sweep (the tier);
+`r5_kind_cost` for the ELLIPSOID `_BOUNDED_KINDS` entry; the unit suite. Prerequisites for the
+coordinator: `$SCR/se7/dmc-quadruped` (rsync of this worktree with `GIT_COMMIT`) and
+`$SCR/se7/baseline` (a pristine 76dc511 checkout). The universe entry for the Step-8 freeze
+(`scratch/swm_matrix.json` / census) is not made here.

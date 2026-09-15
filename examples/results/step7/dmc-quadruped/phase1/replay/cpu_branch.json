@@ -1,0 +1,531 @@
+{
+  "host": "Mac.lan",
+  "device": "cpu",
+  "slurm_job": null,
+  "code_root": "/Users/samib/stable-envs-step7-dmc-quadruped",
+  "configs": {
+    "AntmazeGiantNavigate": {
+      "config": "AntmazeGiantNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "AntmazeLargeExplore": {
+      "config": "AntmazeLargeExplore",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "AntmazeMediumExplore": {
+      "config": "AntmazeMediumExplore",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "AntmazeTeleportExplore": {
+      "config": "AntmazeTeleportExplore",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "HumanoidmazeGiantNavigate": {
+      "config": "HumanoidmazeGiantNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "HumanoidmazeLargeNavigate": {
+      "config": "HumanoidmazeLargeNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "HumanoidmazeMediumNavigate": {
+      "config": "HumanoidmazeMediumNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "PointmazeGiantNavigate": {
+      "config": "PointmazeGiantNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "PointmazeLargeNavigate": {
+      "config": "PointmazeLargeNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "PointmazeMediumNavigate": {
+      "config": "PointmazeMediumNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "PointmazeTeleportNavigate": {
+      "config": "PointmazeTeleportNavigate",
+      "error": "ModuleNotFoundError(\"No module named 'ogbench'\")",
+      "tb": "replay_step4.py\", line 231, in main\n    r = replay_one(cfg, args.device, sh_or[1] if sh_or else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/scratch/step6/raycast3d/replay_step4.py\", line 90, in replay_one\n    env = se.make(cfg, batch=n, device=device)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 937, in make\n    return REGISTRY[name](**kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 296, in __init__\n    sc = self._scene()\n         ^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 400, in _scene\n    sc = self._bake(size, variation)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 415, in _bake\n    env, u, pr = _scene_env(self.LOCO, self.MAZE, size)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 198, in _scene_env\n    env = _build_reference(loco, maze, size)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/ogbench.py\", line 178, in _build_reference\n    import ogbench  # noqa: F401\n    ^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ogbench'\n"
+    },
+    "DMCAcrobotSwingup": {
+      "config": "DMCAcrobotSwingup",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCAcrobotSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "bf2fae8709909c875f10be8451b60731a677ca22642fc631de273d8ca76969ad",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 77.36262651762094,
+      "digest_ours_default_style": "bf2fae8709909c875f10be8451b60731a677ca22642fc631de273d8ca76969ad",
+      "frozen": {
+        "digest_ours": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+        "digest_ours_default_style": "5e37103625bda621ad9e9f4e9c6dd3de11ce0b51c6b38e10a08a1d0143677948",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCAcrobotSwingup.npy"
+    },
+    "DMCBallInCupCatch": {
+      "config": "DMCBallInCupCatch",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCBallInCupCatch.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "090c6f9dd9370ef3b3ab949e234e8b5172c25979f12477cd73519d664f9eab42",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 48.91423891605253,
+      "digest_ours_default_style": "090c6f9dd9370ef3b3ab949e234e8b5172c25979f12477cd73519d664f9eab42",
+      "frozen": {
+        "digest_ours": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+        "digest_ours_default_style": "6976e9f1d114a69bec0791843d78d604ce5f4a009affaa809d2a72aae5e76cf8",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCBallInCupCatch.npy"
+    },
+    "DMCCartpoleBalance": {
+      "config": "DMCCartpoleBalance",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleBalance.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "0d430a16d3d1984ba5aeccda820f678ddaa3410dccbb86ad81d28107a1e8c4c2",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.02258199286659,
+      "digest_ours_default_style": "0d430a16d3d1984ba5aeccda820f678ddaa3410dccbb86ad81d28107a1e8c4c2",
+      "frozen": {
+        "digest_ours": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+        "digest_ours_default_style": "8c12c06d2cc1a2d1da488654074ff38034c767df3f2e3926756bb57c9f8bea1f",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCartpoleBalance.npy"
+    },
+    "DMCCartpoleSwingup": {
+      "config": "DMCCartpoleSwingup",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "e7e89693b9203bb3409fb362a4b8ced46aad144aa96ca645c27bba92d7c6d2b1",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.27629706396448,
+      "digest_ours_default_style": "e7e89693b9203bb3409fb362a4b8ced46aad144aa96ca645c27bba92d7c6d2b1",
+      "frozen": {
+        "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "digest_ours_default_style": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCartpoleSwingup.npy"
+    },
+    "DMCFingerSpin": {
+      "config": "DMCFingerSpin",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerSpin.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "e664fbf4b6c881c3f84c5b5d07f79c51e1d6ee518923926bb4d5da4017e224ab",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 53.6649290792706,
+      "digest_ours_default_style": "e664fbf4b6c881c3f84c5b5d07f79c51e1d6ee518923926bb4d5da4017e224ab",
+      "frozen": {
+        "digest_ours": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+        "digest_ours_default_style": "36054a174c4f3c76e8d34d44a173059f66a1f6e3c41c97a00b280a7e66f3b967",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCFingerSpin.npy"
+    },
+    "DMCFingerTurnEasy": {
+      "config": "DMCFingerTurnEasy",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerTurnEasy.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "d7d7430b4c8247daa27bbf032fc00eeb1a8c8f3e2158e090d4c7eedd80b13555",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 54.426985160383595,
+      "digest_ours_default_style": "d7d7430b4c8247daa27bbf032fc00eeb1a8c8f3e2158e090d4c7eedd80b13555",
+      "frozen": {
+        "digest_ours": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+        "digest_ours_default_style": "11bd4f99e11162c1ce3c0d9771822e2a7523699586dd67ac28b9b51d000a7bb1",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCFingerTurnEasy.npy"
+    },
+    "DMCFingerTurnHard": {
+      "config": "DMCFingerTurnHard",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCFingerTurnHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "6da7c1b850c996a0b03c82554d19e73b6fdcbb8960b5d2abfad602155decbb47",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 53.818402925406275,
+      "digest_ours_default_style": "6da7c1b850c996a0b03c82554d19e73b6fdcbb8960b5d2abfad602155decbb47",
+      "frozen": {
+        "digest_ours": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+        "digest_ours_default_style": "5dbb921ffed008b5c382b59cc14e3694f8dabc41911937bc5b0c33b8259d3d6e",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCFingerTurnHard.npy"
+    },
+    "DMCPendulumSwingup": {
+      "config": "DMCPendulumSwingup",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCPendulumSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "f0aefba25f0237e34cd95d5a0f40af7ebc6e54ab015daed1e922cb79e95badd4",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 75.07153707837301,
+      "digest_ours_default_style": "f0aefba25f0237e34cd95d5a0f40af7ebc6e54ab015daed1e922cb79e95badd4",
+      "frozen": {
+        "digest_ours": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+        "digest_ours_default_style": "691524180e13de48fdc91dbc1fa3de60d1d13ea5ffc46794d361c3704bf45e1a",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCPendulumSwingup.npy"
+    },
+    "DMCReacherEasy": {
+      "config": "DMCReacherEasy",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherEasy.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "3076e71ebcd8a0b178f6c907747bd1240f91071cea5ec624305009b75d1bf202",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 80.17875817861866,
+      "digest_ours_default_style": "3076e71ebcd8a0b178f6c907747bd1240f91071cea5ec624305009b75d1bf202",
+      "frozen": {
+        "digest_ours": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+        "digest_ours_default_style": "4d684da4ce6b1677eab1411a5c44a47c725208c74b10e98ce62451de63146a38",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCReacherEasy.npy"
+    },
+    "DMCReacherHard": {
+      "config": "DMCReacherHard",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "10c851871acff9c448bd67fe25af8593c6f92b6de3078f4001484cb7f9ee7dcc",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.0993325715703,
+      "digest_ours_default_style": "10c851871acff9c448bd67fe25af8593c6f92b6de3078f4001484cb7f9ee7dcc",
+      "frozen": {
+        "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "digest_ours_default_style": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCReacherHard.npy"
+    },
+    "DMCCheetahRun": {
+      "config": "DMCCheetahRun",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCheetahRun.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "f42baac6795257a32a1b0f7c5eafe03f12c6c8593e1d657f61421063c9a771cb",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.08056529903628,
+      "digest_ours_default_style": "f42baac6795257a32a1b0f7c5eafe03f12c6c8593e1d657f61421063c9a771cb",
+      "frozen": {
+        "digest_ours": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+        "digest_ours_default_style": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCheetahRun.npy"
+    },
+    "DMCHopperHop": {
+      "config": "DMCHopperHop",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCHopperHop.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "fc33f1da9e33fa4e1453d2e191623e764c59359a9d1295f2bdf6786f63809be8",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.146253336404,
+      "digest_ours_default_style": "fc33f1da9e33fa4e1453d2e191623e764c59359a9d1295f2bdf6786f63809be8",
+      "frozen": {
+        "digest_ours": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+        "digest_ours_default_style": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCHopperHop.npy"
+    },
+    "DMCWalkerWalk": {
+      "config": "DMCWalkerWalk",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCWalkerWalk.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "291f1ebcb22288c88758058f45561dd53881c53a788dd45b1b217782cb47bd64",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 70.95262823011149,
+      "digest_ours_default_style": "291f1ebcb22288c88758058f45561dd53881c53a788dd45b1b217782cb47bd64",
+      "frozen": {
+        "digest_ours": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+        "digest_ours_default_style": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCWalkerWalk.npy"
+    },
+    "DMCHumanoidStand": {
+      "config": "DMCHumanoidStand",
+      "device": "cpu",
+      "stable_envs_from": "/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCHumanoidStand.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "883fb1df2041f486067a7def65f51b16517ae4ef0a0a8ca1f764b87ab9c99b01",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 62.6154226013322,
+      "digest_ours_default_style": "883fb1df2041f486067a7def65f51b16517ae4ef0a0a8ca1f764b87ab9c99b01",
+      "frozen": {
+        "digest_ours": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+        "digest_ours_default_style": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCHumanoidStand.npy"
+    }
+  },
+  "summary": {
+    "pass": 0,
+    "fail": 14,
+    "error": 11,
+    "total": 25
+  }
+}
