@@ -330,11 +330,48 @@ def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4)
     Substituting the value from ANOTHER sampled state is the robust form, because it lands somewhere the
     env genuinely reaches: it respects integer alphabets, bounded ranges and wrap-around without knowing
     anything about them. Several donors are tried since one may coincide with the original value.
+
+    THE ONE ESCAPE, AND WHY IT IS NOT A RELAXATION
+    ----------------------------------------------
+
+    A dimension can be *mathematically incapable* of changing the image while still being a real part of
+    the state, and then "dead" is the wrong word for it. The worked case is ``DMCManipulatorBringBall``:
+    ``ball_y`` and the two ``target_ball`` quaternion slots do exactly one thing, which is to ORIENT AN
+    UNTEXTURED SPHERE. A sphere is a surface of revolution about every axis through its centre, so an
+    analytic per-pixel intersector's output is invariant under rotating it -- not approximately, exactly.
+    (MuJoCo's own renderer is not: it draws a tessellated mesh shaded per vertex, so rotating it moves
+    the Gouraud interpolation by 734-896 px at <= 55/255. That is the same class of disagreement this
+    family already declares as "a one-level rim on curved silhouettes".)
+
+    So a dimension may be EXCLUDED, and the shape of the escape is the whole point:
+
+      * the ENV DECLARES candidates, by name, in ``render_invariant_dims``. A declaration alone excludes
+        nothing.
+      * THE CHECK VALIDATES each one against the compiled model, through ``render_scene_signature``:
+        perturbing the dimension must change ONLY ``geom_xmat`` of geoms the env marks SPHERE, with
+        ``geom_xpos``, ``geom_size``, ``geom_type``, every non-sphere ``geom_xmat``, and every material,
+        light and camera array bit-unchanged. Anything else and the exclusion is REFUSED and the
+        dimension is reported dead exactly as before.
+      * an excluded dimension is REPORTED, in ``excluded_dims`` with its reason. It never becomes a
+        silent pass, and ``dead_dims`` keeps its old meaning so no existing caller changes behaviour.
+
+    That is why this is a render-contract exception rather than a weaker check. The escape cannot be
+    taken by a dimension the renderer merely failed to draw: such a dimension moves a position, a size,
+    a colour, or a non-sphere orientation, and every one of those is compared. An env that declares a
+    candidate it cannot justify gets a REFUSAL, which is louder than the silence it replaces. And an env
+    that offers no hooks is unaffected -- both are optional and absent everywhere but the one cell that
+    needs them.
+
+    Measured guard against the obvious objection, that this hides a renderer that ignores rotation
+    generally: the same three dimensions are NOT excluded when the target is a BOX
+    (``target_ball.shape = 0``), because the box's ``geom_type`` is not SPHERE, the validation refuses,
+    and the check finds them live. ``tests/unit/test_dmcontrol_episode_quat.py`` asserts both directions.
     """
     st = env.sample_states(env.B)
     base = env.render(st).cpu().numpy()
     pool = [env.sample_states(env.B) for _ in range(max(1, donors))]
-    dead = []
+    candidates = set(_render_invariant_candidates(env))
+    dead, excluded, refused = [], {}, {}
     for d in range(env.state_dim):
         alive = False
         for donor in pool:
@@ -352,9 +389,156 @@ def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4)
                 if not np.array_equal(env.render(pert).cpu().numpy(), base):
                     alive = True
                     break
-        if not alive:
-            dead.append(env.state_names[d] if env.state_names else str(d))
-    return {"dead_dims": dead}
+        if alive:
+            continue
+        name = env.state_names[d] if env.state_names else str(d)
+        if name not in candidates:
+            dead.append(name)
+            continue
+        ok, why = _validate_render_invariant(env, st, d)
+        if ok:
+            excluded[name] = why
+        else:
+            refused[name] = why
+            dead.append(name)
+    out = {"dead_dims": dead}
+    if excluded:
+        out["excluded_dims"] = excluded
+    if refused:
+        out["refused_exclusions"] = refused
+    return out
+
+
+def _render_invariant_candidates(env) -> tuple:
+    """Dimension names the env OFFERS for exclusion. Optional; absent on every env but one."""
+    f = getattr(env, "render_invariant_dims", None)
+    if f is None:
+        return ()
+    return tuple(f() if callable(f) else f)
+
+
+#: Arrays a render-invariance claim must leave bit-unchanged. Everything a renderer can read off the
+#: scene except the one thing the claim is about (``geom_xmat`` on spheres), so the escape is bounded by
+#: an enumeration rather than by a promise.
+_RENDER_INVARIANT_FROZEN = ("geom_xpos", "geom_size", "geom_type", "geom_rgba", "geom_matid",
+                            "geom_names", "mat_rgba", "mat_reflectance", "mat_specular",
+                            "mat_shininess", "mat_texid", "light_pos", "light_dir", "light_diffuse",
+                            "light_specular", "light_ambient", "light_castshadow", "cam_pos",
+                            "cam_quat", "cam_fovy")
+
+#: Frozen fields an env may legitimately omit, with the reason it may. EMPTY, deliberately: this tuple
+#: exists so that a future omission has to be argued here, in the rule, rather than being granted by a
+#: ``continue``. The enumeration in ``_RENDER_INVARIANT_FROZEN`` is the whole bound on the exclusion,
+#: so a field the env does not emit is a field the rule is not checking -- and review demonstrated the
+#: false positive that produces: ``thumbtip`` rotates only the two fingertip SPHERES and TRANSLATES
+#: them, so with ``geom_xpos`` absent the rule grants an exclusion for a dimension that moves 60 px at
+#: max 206/255. A missing key is now a REFUSAL that names the key.
+_RENDER_INVARIANT_OPTIONAL: dict[str, str] = {}
+
+#: ``mjtGeom.mjGEOM_SPHERE``. The rule derives sphere-ness from ``geom_type`` ITSELF rather than
+#: trusting a flag the env under test supplies, because the flag is an assertion by the party being
+#: judged: review showed that ``geom_is_sphere = all True`` grants a BOX target. It matters beyond a
+#: hostile case -- ``mjGEOM_ELLIPSOID`` (4) is the sphere-LIKE kind that is emphatically NOT
+#: rotation-invariant, and it is now in the registry through the quadruped cell.
+_MJGEOM_SPHERE = 2
+
+
+def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
+    """``(ok, reason)``: may dimension ``d`` be excluded as render-invariant sphere orientation?
+
+    Asks the ENV for a signature of the render-side scene at two states that differ only in ``d``, and
+    decides HERE. The env supplies model facts; this function owns the rule, so there is exactly one
+    definition of what the exclusion means and it lives with the check that grants it.
+
+    TWO THINGS THE RULE TAKES FROM ITSELF RATHER THAN FROM THE ENV, both because review produced a
+    working false positive for each:
+
+      * a frozen field that is MISSING is a refusal, not a skip. The enumeration is the whole bound on
+        the exclusion, so an unreported field is an unchecked one -- with ``geom_xpos`` absent, the
+        rule granted ``thumbtip``, which rotates only the two fingertip SPHERES but also TRANSLATES
+        them and moves 60 px at max 206/255.
+      * sphere-ness is DERIVED from ``geom_type``, never read from a ``geom_is_sphere`` the env
+        supplies, because that flag is an assertion by the party being judged -- set to all-True it
+        granted a BOX target. ``mjGEOM_ELLIPSOID`` is the sphere-like kind that is emphatically not
+        rotation-invariant and is now in the registry.
+
+    WHAT THE SIGNATURE DOES NOT YET COVER, recorded so the next cell does not assume it does. The
+    enumeration describes geoms, materials, lights and the camera. It does NOT describe (1) SPATIAL
+    TENDON geometry, which MuJoCo synthesises per frame from wrap points rather than from any model
+    array -- a domain whose excluded dimension could move a tendon needs it added first; nor (2) a
+    non-FIXED camera POSE, since ``cam_pos``/``cam_quat``/``cam_fovy`` are model arrays and a
+    ``trackcom`` camera's actual pose lives in ``data.cam_xpos``. Both are out of reach of every
+    dimension any current cell declares, and both must be added before one that is not.
+    """
+    sig = getattr(env, "render_scene_signature", None)
+    if sig is None:
+        return False, ("the env declares render_invariant_dims but provides no "
+                       "render_scene_signature, so the claim cannot be validated")
+    row = np.asarray(states[:1]).copy()
+    kw = {} if variation is None else {"variation": variation}
+    a = sig(row, **kw)
+    moved = row.copy()
+    # A rotation big enough to be unambiguous, applied to the ONE dimension under test. The state may
+    # hold a quaternion component, so the nudge is deliberately small and the check is on the SCENE,
+    # not on the state's own algebra.
+    moved[0, d] = moved[0, d] + 0.2
+    b = sig(moved, **kw)
+    if set(a) != set(b):
+        return False, "render_scene_signature returned different keys for the two states"
+    # EVERY frozen field must be PRESENT, not merely unchanged. A field the env does not emit is a
+    # field this rule is not checking, and the enumeration is the entire bound on the exclusion.
+    missing = [k for k in _RENDER_INVARIANT_FROZEN
+               if k not in a and k not in _RENDER_INVARIANT_OPTIONAL]
+    if missing:
+        return False, (f"render_scene_signature does not emit {missing}, and the frozen enumeration "
+                       f"is the whole bound on this exclusion -- a field that is not reported is a "
+                       f"field that is not checked. Emit it, or add it to "
+                       f"_RENDER_INVARIANT_OPTIONAL with the reason it cannot change a pixel")
+    if "geom_type" not in a:
+        return False, "render_scene_signature must emit geom_type; sphere-ness is derived from it"
+    # DERIVED HERE, never taken from the env. ``geom_is_sphere`` would otherwise be an assertion by
+    # the party being judged, and a wrong one grants an exclusion for a BOX. If the env still emits
+    # the flag it must AGREE, so a disagreement is a loud refusal rather than a silently ignored field.
+    kind = np.asarray(a["geom_type"]).reshape(-1)
+    sphere = kind == _MJGEOM_SPHERE
+    claimed = a.get("geom_is_sphere")
+    if claimed is not None:
+        claimed = np.asarray(claimed, bool).reshape(-1)
+        if claimed.shape != sphere.shape or not np.array_equal(claimed, sphere):
+            return False, ("render_scene_signature's geom_is_sphere disagrees with the geom_type it "
+                           "reports; sphere-ness is derived from geom_type here and a disagreement "
+                           "means one of the two is wrong")
+    if sphere.size == 0 or not sphere.any():
+        return False, "the model has no sphere geoms, so no dimension can be sphere-orientation-only"
+    for k in _RENDER_INVARIANT_FROZEN:
+        if k not in a:
+            continue                                  # only reachable via _RENDER_INVARIANT_OPTIONAL
+        if not np.array_equal(np.asarray(a[k]), np.asarray(b[k])):
+            return False, (f"perturbing this dimension changed {k}, which a claim of "
+                           f"sphere-orientation-only invariance forbids")
+    xa, xb = np.asarray(a["geom_xmat"]), np.asarray(b["geom_xmat"])
+    if xa.shape != xb.shape:
+        return False, "geom_xmat changed shape between the two states"
+    changed = ~np.all(np.isclose(xa, xb, rtol=0, atol=0), axis=tuple(range(1, xa.ndim)))
+    if not changed.any():
+        return False, ("perturbing this dimension changed nothing in the scene at all, so it is dead "
+                       "in the MODEL and not merely invisible to the renderer")
+    bad = np.flatnonzero(changed & ~sphere)
+    if bad.size:
+        names = a.get("geom_names") or []
+        which = [names[i] if i < len(names) else int(i) for i in bad]
+        return False, (f"perturbing this dimension rotated NON-sphere geoms {which}, whose orientation "
+                       f"a correct renderer must draw")
+    names = a.get("geom_names") or []
+    which = [names[i] if i < len(names) else int(i) for i in np.flatnonzero(changed)]
+    return True, (f"render-invariant: sphere orientation. Perturbing it rotates only the sphere "
+                  f"geom(s) {which} and changes nothing else in the render-side scene (geom_xpos, "
+                  f"geom_size, geom_type, every non-sphere geom_xmat, and every material, light and "
+                  f"camera array are bit-identical). An analytic per-pixel sphere is exactly invariant "
+                  f"under rotation about its centre, so no renderer of this design can make this "
+                  f"dimension visible. MuJoCo's tessellated, per-vertex-shaded sphere is not invariant "
+                  f"and does move a few hundred pixels at <= 55/255; that difference is declared in the "
+                  f"env's state_dims_note.")
 
 
 def check_batch_invariance(env, n: int = 8) -> dict:

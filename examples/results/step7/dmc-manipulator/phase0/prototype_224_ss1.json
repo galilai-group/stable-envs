@@ -1,0 +1,206 @@
+{
+ "size": 224,
+ "n": 64,
+ "draws": 3,
+ "supersample": 1,
+ "device": "cpu",
+ "mujoco": "3.12.0",
+ "dm_control": "1.0.45",
+ "reference_pair_note": "measured on mujoco 3.12.0 + dm_control 1.0.45 (local se6-venv); the declared DMC reference pair is mujoco 3.11.0 + dm_control 1.0.44 on Oscar's se-vis311/se-tex311",
+ "state_dim": 15,
+ "state_names": [
+  "arm_root",
+  "arm_shoulder",
+  "arm_elbow",
+  "arm_wrist",
+  "thumb",
+  "thumbtip",
+  "finger",
+  "fingertip",
+  "ball_x",
+  "ball_z",
+  "ball_y",
+  "target_ball_pos_x",
+  "target_ball_pos_z",
+  "target_ball_quat_qw",
+  "target_ball_quat_qy"
+ ],
+ "nq": 11,
+ "episode_slots": [
+  "body_pos[33]",
+  "body_pos[35]",
+  "body_quat[44]",
+  "body_quat[46]"
+ ],
+ "variation_space": [
+  "camera.fovy_scale",
+  "light.diffuse_scale",
+  "material.background",
+  "material.decoration",
+  "material.effector",
+  "material.grid",
+  "material.self",
+  "material.target"
+ ],
+ "movers": {
+  "geoms": [
+   "upper_arm",
+   "middle_arm",
+   "lower_arm",
+   "hand",
+   "palm1",
+   "palm2",
+   "thumb1",
+   "thumb2",
+   "thumbtip1",
+   "thumbtip2",
+   "finger1",
+   "finger2",
+   "fingertip1",
+   "fingertip2",
+   "ball",
+   "target_ball"
+  ],
+  "sites": []
+ },
+ "statics": {
+  "geoms": [
+   "floor",
+   "wall1",
+   "wall2",
+   "background",
+   "arm_root"
+  ],
+  "sites": []
+ },
+ "shadow_light_index_in_scene": 1,
+ "light_kinds": [
+  1,
+  1
+ ],
+ "light_castshadow": [
+  0,
+  1
+ ],
+ "reflectance_used": 0.20000000298023224,
+ "tendon": null,
+ "plate_shadow_differs": true,
+ "plate_norefl_differs": false,
+ "reflective_static_planes": [
+  {
+   "name": "floor",
+   "reflectance": 0.20000000298023224
+  },
+  {
+   "name": "wall1",
+   "reflectance": 0.20000000298023224
+  },
+  {
+   "name": "wall2",
+   "reflectance": 0.20000000298023224
+  }
+ ],
+ "per_draw": [
+  {
+   "mean_abs": 0.26710229990433676,
+   "exact_frac": 0.9830596301020408,
+   "within8_frac": 0.993444637376435,
+   "max_abs": 208,
+   "interior_frac": 0.435422175692252,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1385799,
+   "interior_bad_px": 0,
+   "ssim": 0.993662849087804,
+   "bad_px": 54400,
+   "bad_inside_mover_region_frac": 0.9993014705882353,
+   "plate_region_px": 3151840,
+   "plate_region_exact_frac": 0.9999879435504341,
+   "mover_region_px": 59424,
+   "mover_region_exact_frac": 0.08518443726440496
+  },
+  {
+   "mean_abs": 0.2616206577845982,
+   "exact_frac": 0.983041880082111,
+   "within8_frac": 0.993391075912787,
+   "max_abs": 222,
+   "interior_frac": 0.4347372131955197,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1383619,
+   "interior_bad_px": 0,
+   "ssim": 0.9940775154181372,
+   "bad_px": 54457,
+   "bad_inside_mover_region_frac": 0.9995041959711332,
+   "plate_region_px": 3151617,
+   "plate_region_exact_frac": 0.999991432969171,
+   "mover_region_px": 59647,
+   "mover_region_exact_frac": 0.08746458329840562
+  },
+  {
+   "mean_abs": 0.2602803755779656,
+   "exact_frac": 0.9828864895567602,
+   "within8_frac": 0.9933988610092475,
+   "max_abs": 205,
+   "interior_frac": 0.4352795275392628,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1385345,
+   "interior_bad_px": 0,
+   "ssim": 0.9941858920824548,
+   "bad_px": 54956,
+   "bad_inside_mover_region_frac": 0.9995632869932309,
+   "plate_region_px": 3150998,
+   "plate_region_exact_frac": 0.9999923833655242,
+   "mover_region_px": 60266,
+   "mover_region_exact_frac": 0.08850761623469286
+  }
+ ],
+ "summary": {
+  "exact_frac": {
+   "min": 0.9828864895567602,
+   "median": 0.983041880082111,
+   "max": 0.9830596301020408
+  },
+  "interior_exact_frac": {
+   "min": 1.0,
+   "median": 1.0,
+   "max": 1.0
+  },
+  "interior_frac": {
+   "min": 0.4347372131955197,
+   "median": 0.4352795275392628,
+   "max": 0.435422175692252
+  },
+  "mean_abs": {
+   "min": 0.2602803755779656,
+   "median": 0.2616206577845982,
+   "max": 0.26710229990433676
+  },
+  "max_abs": {
+   "min": 205.0,
+   "median": 208.0,
+   "max": 222.0
+  },
+  "ssim": {
+   "min": 0.993662849087804,
+   "median": 0.9940775154181372,
+   "max": 0.9941858920824548
+  },
+  "plate_region_exact_frac": {
+   "min": 0.9999879435504341,
+   "median": 0.999991432969171,
+   "max": 0.9999923833655242
+  },
+  "mover_region_exact_frac": {
+   "min": 0.08518443726440496,
+   "median": 0.08746458329840562,
+   "max": 0.08850761623469286
+  },
+  "bad_inside_mover_region_frac": {
+   "min": 0.9993014705882353,
+   "median": 0.9995041959711332,
+   "max": 0.9995632869932309
+  }
+ }
+}

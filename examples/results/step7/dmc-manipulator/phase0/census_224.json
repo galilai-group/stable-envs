@@ -1,0 +1,983 @@
+{
+ "domain": "manipulator",
+ "task": "bring_ball",
+ "camera": 0,
+ "size": 224,
+ "mujoco": "3.12.0",
+ "dm_control": "1.0.45",
+ "census": {
+  "nq": 11,
+  "nv": 11,
+  "ngeom": 21,
+  "nsite": 9,
+  "nmesh": 0,
+  "nhfield": 0,
+  "ntex": 3,
+  "nlight": 1,
+  "ncam": 2,
+  "ntendon": 2,
+  "nbody": 12,
+  "shadowsize": 2048,
+  "shadowclip": 0.5,
+  "offsamples": 4,
+  "headlight_active": 1,
+  "geoms": [
+   {
+    "id": 0,
+    "name": "floor",
+    "type": "PLANE",
+    "body": "world",
+    "bodyid": 0,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "grid",
+    "reflectance": 0.20000000298023224,
+    "texid": 1,
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 1,
+    "name": "wall1",
+    "type": "PLANE",
+    "body": "world",
+    "bodyid": 0,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "grid",
+    "reflectance": 0.20000000298023224,
+    "texid": 1,
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 2,
+    "name": "wall2",
+    "type": "PLANE",
+    "body": "world",
+    "bodyid": 0,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "grid",
+    "reflectance": 0.20000000298023224,
+    "texid": 1,
+    "size": [
+     0.4,
+     0.2,
+     10.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 3,
+    "name": "background",
+    "type": "PLANE",
+    "body": "world",
+    "bodyid": 0,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "background",
+    "reflectance": 0.0,
+    "texid": 2,
+    "size": [
+     1.0,
+     0.5,
+     10.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 4,
+    "name": "arm_root",
+    "type": "CYLINDER",
+    "body": "world",
+    "bodyid": 0,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "decoration",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.024,
+     0.022,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 5,
+    "name": "upper_arm",
+    "type": "CAPSULE",
+    "body": "upper_arm",
+    "bodyid": 1,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.02,
+     0.09,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 6,
+    "name": "middle_arm",
+    "type": "CAPSULE",
+    "body": "middle_arm",
+    "bodyid": 2,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.017,
+     0.075,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 7,
+    "name": "lower_arm",
+    "type": "CAPSULE",
+    "body": "lower_arm",
+    "bodyid": 3,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.014,
+     0.06,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 8,
+    "name": "hand",
+    "type": "CAPSULE",
+    "body": "hand",
+    "bodyid": 4,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.011,
+     0.015,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 9,
+    "name": "palm1",
+    "type": "CAPSULE",
+    "body": "hand",
+    "bodyid": 4,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 10,
+    "name": "palm2",
+    "type": "CAPSULE",
+    "body": "hand",
+    "bodyid": 4,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.008,
+     0.016770509831248424,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 11,
+    "name": "thumb1",
+    "type": "CAPSULE",
+    "body": "thumb",
+    "bodyid": 6,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 12,
+    "name": "thumb2",
+    "type": "CAPSULE",
+    "body": "thumb",
+    "bodyid": 6,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 13,
+    "name": "thumbtip1",
+    "type": "SPHERE",
+    "body": "thumbtip",
+    "bodyid": 7,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "effector",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 14,
+    "name": "thumbtip2",
+    "type": "SPHERE",
+    "body": "thumbtip",
+    "bodyid": 7,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "effector",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 15,
+    "name": "finger1",
+    "type": "CAPSULE",
+    "body": "finger",
+    "bodyid": 8,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.007,
+     0.011180339887498949,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 16,
+    "name": "finger2",
+    "type": "CAPSULE",
+    "body": "finger",
+    "bodyid": 8,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.007,
+     0.01,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 17,
+    "name": "fingertip1",
+    "type": "SPHERE",
+    "body": "fingertip",
+    "bodyid": 9,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "effector",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 18,
+    "name": "fingertip2",
+    "type": "SPHERE",
+    "body": "fingertip",
+    "bodyid": 9,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "effector",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.008,
+     0.0,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 19,
+    "name": "ball",
+    "type": "SPHERE",
+    "body": "ball",
+    "bodyid": 10,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "self",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.022,
+     0.0,
+     0.0
+    ],
+    "drawn": true
+   },
+   {
+    "id": 20,
+    "name": "target_ball",
+    "type": "SPHERE",
+    "body": "target_ball",
+    "bodyid": 11,
+    "group": 0,
+    "alpha": 1.0,
+    "material": "target",
+    "reflectance": 0.0,
+    "texid": -1,
+    "size": [
+     0.02,
+     0.0,
+     0.0
+    ],
+    "drawn": true
+   }
+  ],
+  "sites": [
+   {
+    "id": 0,
+    "name": "grasp",
+    "group": 3,
+    "alpha": 0.30000001192092896,
+    "bodyid": 4,
+    "drawn": false
+   },
+   {
+    "id": 1,
+    "name": "palm_touch",
+    "group": 4,
+    "alpha": 0.30000001192092896,
+    "bodyid": 4,
+    "drawn": false
+   },
+   {
+    "id": 2,
+    "name": "pinch",
+    "group": 3,
+    "alpha": 0.30000001192092896,
+    "bodyid": 5,
+    "drawn": false
+   },
+   {
+    "id": 3,
+    "name": "thumb_touch",
+    "group": 4,
+    "alpha": 0.30000001192092896,
+    "bodyid": 6,
+    "drawn": false
+   },
+   {
+    "id": 4,
+    "name": "thumbtip_touch",
+    "group": 4,
+    "alpha": 0.30000001192092896,
+    "bodyid": 7,
+    "drawn": false
+   },
+   {
+    "id": 5,
+    "name": "finger_touch",
+    "group": 4,
+    "alpha": 0.30000001192092896,
+    "bodyid": 8,
+    "drawn": false
+   },
+   {
+    "id": 6,
+    "name": "fingertip_touch",
+    "group": 4,
+    "alpha": 0.30000001192092896,
+    "bodyid": 9,
+    "drawn": false
+   },
+   {
+    "id": 7,
+    "name": "ball",
+    "group": 3,
+    "alpha": 0.30000001192092896,
+    "bodyid": 10,
+    "drawn": false
+   },
+   {
+    "id": 8,
+    "name": "target_ball",
+    "group": 3,
+    "alpha": 0.30000001192092896,
+    "bodyid": 11,
+    "drawn": false
+   }
+  ],
+  "materials": [
+   {
+    "id": 0,
+    "name": "grid",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.20000000298023224,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": 1
+   },
+   {
+    "id": 1,
+    "name": "self",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 2,
+    "name": "self_default",
+    "rgba": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 3,
+    "name": "self_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 4,
+    "name": "effector",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 5,
+    "name": "effector_default",
+    "rgba": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 6,
+    "name": "effector_highlight",
+    "rgba": [
+     0.0,
+     0.5,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 7,
+    "name": "decoration",
+    "rgba": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 8,
+    "name": "eye",
+    "rgba": [
+     0.0,
+     0.20000000298023224,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 9,
+    "name": "target",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 10,
+    "name": "target_default",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 11,
+    "name": "target_highlight",
+    "rgba": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896,
+     0.4000000059604645
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 12,
+    "name": "site",
+    "rgba": [
+     0.5,
+     0.5,
+     0.5,
+     0.30000001192092896
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": -1
+   },
+   {
+    "id": 13,
+    "name": "background",
+    "rgba": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "reflectance": 0.0,
+    "specular": 0.5,
+    "shininess": 0.5,
+    "texid": 2
+   }
+  ],
+  "lights": [
+   {
+    "id": 0,
+    "name": "light",
+    "directional": null,
+    "type": 1,
+    "mode": 0,
+    "castshadow": 1,
+    "pos": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "dir": [
+     0.0,
+     0.0,
+     -1.0
+    ],
+    "diffuse": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "specular": [
+     0.30000001192092896,
+     0.30000001192092896,
+     0.30000001192092896
+    ],
+    "ambient": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "cutoff": 45.0,
+    "exponent": 10.0
+   }
+  ],
+  "cameras": [
+   {
+    "id": 0,
+    "name": "fixed",
+    "mode": 0,
+    "fovy": 4.0,
+    "pos": [
+     0.0,
+     -16.0,
+     0.4
+    ]
+   },
+   {
+    "id": 1,
+    "name": "hand",
+    "mode": 1,
+    "fovy": 45.0,
+    "pos": [
+     0.0,
+     -0.3,
+     0.0
+    ]
+   }
+  ],
+  "drawn_geoms": [
+   "floor",
+   "wall1",
+   "wall2",
+   "background",
+   "arm_root",
+   "upper_arm",
+   "middle_arm",
+   "lower_arm",
+   "hand",
+   "palm1",
+   "palm2",
+   "thumb1",
+   "thumb2",
+   "thumbtip1",
+   "thumbtip2",
+   "finger1",
+   "finger2",
+   "fingertip1",
+   "fingertip2",
+   "ball",
+   "target_ball"
+  ],
+  "drawn_sites": [],
+  "reflective_planes": [
+   "floor",
+   "wall1",
+   "wall2"
+  ]
+ },
+ "state_sufficiency": {
+  "rerender": {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  },
+  "qvel_x100": {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  },
+  "different_history": {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  }
+ },
+ "qpos_entries_moving_pixels": [
+  {
+   "j": 0,
+   "n_bad": 1424
+  },
+  {
+   "j": 1,
+   "n_bad": 870
+  },
+  {
+   "j": 2,
+   "n_bad": 472
+  },
+  {
+   "j": 3,
+   "n_bad": 204
+  },
+  {
+   "j": 4,
+   "n_bad": 58
+  },
+  {
+   "j": 5,
+   "n_bad": 16
+  },
+  {
+   "j": 6,
+   "n_bad": 53
+  },
+  {
+   "j": 7,
+   "n_bad": 15
+  },
+  {
+   "j": 8,
+   "n_bad": 200
+  },
+  {
+   "j": 9,
+   "n_bad": 142
+  },
+  {
+   "j": 10,
+   "n_bad": 62
+  }
+ ],
+ "dead_qpos_dims": [],
+ "episode_slots": [
+  {
+   "array": "body_pos",
+   "index": 33,
+   "span": 0.6607047227062811,
+   "label": "target_ball_pos_x"
+  },
+  {
+   "array": "body_pos",
+   "index": 35,
+   "span": 0.24817541604845583,
+   "label": "target_ball_pos_z"
+  },
+  {
+   "array": "body_quat",
+   "index": 44,
+   "span": 0.6185610871612255,
+   "label": "target_ball_quat_qw"
+  },
+  {
+   "array": "body_quat",
+   "index": 46,
+   "span": 1.3851598159293776,
+   "label": "target_ball_quat_qy"
+  }
+ ],
+ "episode_slot_guard_trips": [
+  "body_quat"
+ ],
+ "visualize_reward": {
+  "task_attr": false,
+  "control_env_flag": false,
+  "highlight_materials": [
+   "self_highlight",
+   "effector_highlight",
+   "target_highlight"
+  ],
+  "self_rgba": [
+   0.699999988079071,
+   0.5,
+   0.30000001192092896,
+   1.0
+  ],
+  "self_default_rgba": [
+   0.699999988079071,
+   0.5,
+   0.30000001192092896,
+   1.0
+  ],
+  "note": "dm_control.suite.base.Task.after_step only recolours when physics.model.mat_rgba is touched by _set_reward_colors, which Task guards on the 'visualize_reward' flag set by suite.load(..., visualize_reward=True)"
+ },
+ "mover_geoms": [
+  "upper_arm",
+  "middle_arm",
+  "lower_arm",
+  "hand",
+  "palm1",
+  "palm2",
+  "thumb1",
+  "thumb2",
+  "thumbtip1",
+  "thumbtip2",
+  "finger1",
+  "finger2",
+  "fingertip1",
+  "fingertip2",
+  "ball",
+  "target_ball"
+ ],
+ "mover_sites": [],
+ "static_geoms": [
+  "floor",
+  "wall1",
+  "wall2",
+  "background",
+  "arm_root"
+ ],
+ "plate_within_episode": [
+  {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  },
+  {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  },
+  {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  }
+ ],
+ "plate_vs_full": [
+  {
+   "max": 204,
+   "n_bad": 972,
+   "frac_bad": 0.019371811224489797,
+   "mean_abs": 1.3161139455782314
+  },
+  {
+   "max": 204,
+   "n_bad": 949,
+   "frac_bad": 0.01891342474489796,
+   "mean_abs": 1.258961787840136
+  },
+  {
+   "max": 198,
+   "n_bad": 855,
+   "frac_bad": 0.017040019132653062,
+   "mean_abs": 1.115872130102041
+  },
+  {
+   "max": 202,
+   "n_bad": 853,
+   "frac_bad": 0.01700015943877551,
+   "mean_abs": 1.1195458652210883
+  }
+ ],
+ "plate_across_episodes": [
+  {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  },
+  {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  },
+  {
+   "max": 0,
+   "n_bad": 0,
+   "frac_bad": 0.0,
+   "mean_abs": 0.0
+  }
+ ],
+ "renderer_vs_physics_render": {
+  "max": 0,
+  "n_bad": 0,
+  "frac_bad": 0.0,
+  "mean_abs": 0.0
+ }
+}

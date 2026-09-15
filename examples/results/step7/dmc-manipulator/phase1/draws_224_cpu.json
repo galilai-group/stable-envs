@@ -1,0 +1,208 @@
+{
+ "cell": "DMCManipulatorBringBall",
+ "size": 224,
+ "n": 64,
+ "draws": 12,
+ "device": "cpu",
+ "supersample": 1,
+ "mujoco": "3.12.0",
+ "dm_control": "1.0.45",
+ "per_draw": [
+  {
+   "mean_abs": 0.26710229990433676,
+   "exact_frac": 0.9830596301020408,
+   "within8_frac": 0.993444637376435,
+   "max_abs": 208,
+   "interior_frac": 0.435422175692252,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1385799,
+   "interior_bad_px": 0,
+   "ssim": 0.993662849087804,
+   "draw": 0
+  },
+  {
+   "mean_abs": 0.2616206577845982,
+   "exact_frac": 0.983041880082111,
+   "within8_frac": 0.993391075912787,
+   "max_abs": 222,
+   "interior_frac": 0.4347372131955197,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1383619,
+   "interior_bad_px": 0,
+   "ssim": 0.9940775154181372,
+   "draw": 1
+  },
+  {
+   "mean_abs": 0.2602803755779656,
+   "exact_frac": 0.9828864895567602,
+   "within8_frac": 0.9933988610092475,
+   "max_abs": 205,
+   "interior_frac": 0.4352795275392628,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1385345,
+   "interior_bad_px": 0,
+   "ssim": 0.9941858920824548,
+   "draw": 2
+  },
+  {
+   "mean_abs": 0.26432862573740434,
+   "exact_frac": 0.9829571782326212,
+   "within8_frac": 0.9933574442960778,
+   "max_abs": 205,
+   "interior_frac": 0.4350121408031531,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1384494,
+   "interior_bad_px": 0,
+   "ssim": 0.9938943830821506,
+   "draw": 3
+  },
+  {
+   "mean_abs": 0.25946854571906885,
+   "exact_frac": 0.9830515336017219,
+   "within8_frac": 0.9934231505102041,
+   "max_abs": 205,
+   "interior_frac": 0.43523930955780327,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1385217,
+   "interior_bad_px": 0,
+   "ssim": 0.9940511261990443,
+   "draw": 4
+  },
+  {
+   "mean_abs": 0.2647029331752232,
+   "exact_frac": 0.9828646912866709,
+   "within8_frac": 0.9933403170838648,
+   "max_abs": 207,
+   "interior_frac": 0.4348940004826158,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1384118,
+   "interior_bad_px": 0,
+   "ssim": 0.9937699033936661,
+   "draw": 5
+  },
+  {
+   "mean_abs": 0.26135035923549105,
+   "exact_frac": 0.9828852439413265,
+   "within8_frac": 0.9933222556600765,
+   "max_abs": 205,
+   "interior_frac": 0.4348066520541334,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1383840,
+   "interior_bad_px": 0,
+   "ssim": 0.9940717125788027,
+   "draw": 6
+  },
+  {
+   "mean_abs": 0.25986651985012754,
+   "exact_frac": 0.9829640291175064,
+   "within8_frac": 0.9933976153938138,
+   "max_abs": 204,
+   "interior_frac": 0.4348971425124173,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1384128,
+   "interior_bad_px": 0,
+   "ssim": 0.9939684238852413,
+   "draw": 7
+  },
+  {
+   "mean_abs": 0.2629886549346301,
+   "exact_frac": 0.982858774613361,
+   "within8_frac": 0.9933658522002551,
+   "max_abs": 205,
+   "interior_frac": 0.43501119819421263,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1384491,
+   "interior_bad_px": 0,
+   "ssim": 0.9939386136565498,
+   "draw": 8
+  },
+  {
+   "mean_abs": 0.26136966627471303,
+   "exact_frac": 0.9829291518853636,
+   "within8_frac": 0.9933779969507334,
+   "max_abs": 205,
+   "interior_frac": 0.43459330823060993,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1383161,
+   "interior_bad_px": 0,
+   "ssim": 0.9938720633889395,
+   "draw": 9
+  },
+  {
+   "mean_abs": 0.2623484086017219,
+   "exact_frac": 0.9828799500757334,
+   "within8_frac": 0.9933801767777424,
+   "max_abs": 204,
+   "interior_frac": 0.4347680050875746,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1383717,
+   "interior_bad_px": 0,
+   "ssim": 0.9938597409157286,
+   "draw": 10
+  },
+  {
+   "mean_abs": 0.2604522705078125,
+   "exact_frac": 0.983072397660236,
+   "within8_frac": 0.9934486856265944,
+   "max_abs": 204,
+   "interior_frac": 0.4351221118462064,
+   "interior_exact_frac": 1.0,
+   "interior_mean_abs": 0.0,
+   "interior_px": 1384844,
+   "interior_bad_px": 0,
+   "ssim": 0.9939568344622975,
+   "draw": 11
+  }
+ ],
+ "summary": {
+  "exact_frac": {
+   "worst": 0.982858774613361,
+   "median": 0.9829431650589924,
+   "best": 0.983072397660236
+  },
+  "interior_exact_frac": {
+   "worst": 1.0,
+   "median": 1.0,
+   "best": 1.0
+  },
+  "interior_frac": {
+   "worst": 0.43459330823060993,
+   "median": 0.43495417035331496,
+   "best": 0.435422175692252
+  },
+  "ssim": {
+   "worst": 0.993662849087804,
+   "median": 0.9939477240594237,
+   "best": 0.9941858920824548
+  },
+  "mean_abs": {
+   "worst": 0.26710229990433676,
+   "median": 0.2614951620296556,
+   "best": 0.25946854571906885
+  },
+  "max_abs": {
+   "worst": 222.0,
+   "median": 205.0,
+   "best": 204.0
+  }
+ },
+ "interior_px_total": 16612773,
+ "interior_bad_px_total": 0,
+ "declaration": {
+  "parity_interior_min": 1.0,
+  "all_exact_worst": 0.982858774613361,
+  "clears_shared_0_90": true,
+  "note": "parity_all_exact_min is declared ONLY if the worst draw does not clear the suite's shared 0.90 bar; see ALL_EXACT_FLOOR / PARITY_NOTE"
+ }
+}

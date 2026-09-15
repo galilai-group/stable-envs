@@ -1,0 +1,40 @@
+{
+ "size": 224,
+ "n": 16,
+ "mover_region_px": 15132,
+ "mover_region_interior_px": 0,
+ "mover_region_interior_frac": 0.0,
+ "note_segments": "mover_region = pixels where the official frame differs from MuJoCo's own movers-hidden plate; it therefore contains the movers, their shadows and their reflections",
+ "ss1": {
+  "exact_frac": 0.9827980508609694,
+  "mean_abs": 0.27242979711415816,
+  "max_abs": 201,
+  "interior_exact_frac": 1.0,
+  "interior_frac": 0.4353596492992017,
+  "interior_bad_px": 0,
+  "mover_region_exact": 0.08762886597938144,
+  "mover_region_within8": 0.647369812318266,
+  "mover_region_mean_abs": 14.429355009251916,
+  "mover_interior_exact": null,
+  "mover_interior_px": 0,
+  "plate_region_exact": 0.9999949218214411,
+  "bad_px": 13810,
+  "mover_region_edge_frac": 1.0
+ },
+ "ss2": {
+  "exact_frac": 0.9808486627072704,
+  "mean_abs": 0.24869833187181123,
+  "max_abs": 198,
+  "interior_exact_frac": 1.0,
+  "interior_frac": 0.4353596492992017,
+  "interior_bad_px": 0,
+  "mover_region_exact": 0.06238435104414486,
+  "mover_region_within8": 0.6625033042558816,
+  "mover_region_mean_abs": 11.374504361617763,
+  "mover_interior_exact": null,
+  "mover_interior_px": 0,
+  "plate_region_exact": 0.9984930505126421,
+  "bad_px": 15375,
+  "mover_region_edge_frac": 1.0
+ }
+}
