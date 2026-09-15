@@ -252,6 +252,26 @@ sit near 1.0) and a direct consequence of 62 % sub-pixel triangles, but not dege
 `interior_exact_frac` here is a real claim about two fifths / one quarter of the picture, and the
 declaration should say so.
 
+**The minification risk is measured, and it is small.** MJWarp builds textures at
+`num_mip_levels=1`; `nvdiff.py` records that this one fact carries 99.45-100.00 % of the interior
+error on the Gymnasium locomotion floors. These scenes have exactly one 2-D texture — `grid`
+512x512 on the floor — so the same failure mode was the open risk. Priced analytically
+(`probe_floor_footprint.py`: cast the registered camera's rays at the plane, convert the hits to
+texel coordinates under the PLANE texgen law with `texuniform=1`, finite-difference between
+neighbouring pixels):
+
+| | floor share of rays | texel/pixel median | p90 | p99 | max | > 2 texels/px |
+|---|---:|---:|---:|---:|---:|---:|
+| `OGBCube` | 97.8 % | 0.44 | 1.47 | 2.82 | **3.72** | 4.7 % |
+| `OGBScene` | 100 % | 0.34 | 0.84 | 1.34 | **1.63** | 0 % |
+
+The floor is a **bounded 2 m x 2 m plane** (`geom_size (1, 1, 0.01)`), the camera is 0.6-0.8 m above
+it looking down, and the horizon is not in frame — so the far-field that ruins the locomotion floor
+does not exist here. Most of the floor is **magnified** (median under half a texel per pixel) and the
+worst pixel sees under 4 texels. Point sampling and a mipmap can differ over at most a few percent
+of floor pixels, and the fallback if even that matters is free: the floor is part of the bit-static
+plate, which is baked through MuJoCo itself.
+
 **Appearance terms, measured so none is assumed.** Headlight **98.7 % / 100 %** of pixels, max
 163/255 — the dominant light. Specular **25.5 % / 33.3 %**, max 47/43. Reflectance **0 pixels
 (Cube)** and **1 pixel at 1/255 (Scene)** despite 10 materials declaring 0.7–1.0 — MuJoCo does not
@@ -375,11 +395,12 @@ One GPU job in flight. No `simclr` job was touched.
 5. **`CPU3D-OGB-1`: confirm "no CPU backend".** The recommendation is to raise `ValueError` on
    `device="cpu"` rather than build one, per the Sami policy addendum's honest-device-selection
    rule. That leaves these two ids GPU-only. Acceptable?
-6. **The mipmap risk is unmeasured.** MJWarp builds textures at `num_mip_levels=1`; the 512x512
-   `grid` floor is seen at grazing incidence and is 72–85 % of the frame. This is the single largest
-   open fidelity risk and job 6394785 is the first look at it. If it reproduces the locomotion-floor
-   failure mode, the fallback is not nvdiff (too expensive here, §6) but baking the floor's far
-   field into the plate, which is already static.
+6. **The mipmap risk is now priced and is NOT the blocker it was for locomotion** (§5): the floor is
+   a bounded 2 m x 2 m plane with no horizon in frame, worst-case 3.72 texels per pixel and 4.7 % of
+   floor pixels above 2. The largest *open* fidelity risk is instead the whole-frame ceiling imposed
+   by 4x MSAA (≈ 0.95 Cube / 0.87 Scene) against a 1-sample ray caster, which is an edge-pixel
+   effect the interior metric does not see. Is an `interior`-only parity claim, with the whole-frame
+   number declared and explained, acceptable for these two ids?
 7. **OGBScene's official renderer is not bit-stable on macOS** (2 distinct frames in 32, 4 pixels at
    1/255). If that reproduces under EGL on Linux, the frozen reference corpus needs a stated
    tolerance rather than a digest.
