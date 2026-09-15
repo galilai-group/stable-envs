@@ -610,3 +610,146 @@ and link frames against PyBullet, the colour law against the swm source, the hul
 default-appearance check, hygiene) was re-checked for scope and is untouched by `13ca91b`. The
 "what only the cluster can verify" list is unchanged, minus item 3's blocker: `check_visual_fidelity`
 can now run.
+
+---
+
+# Appendix 2 — formal verdict at HEAD `cf355a3` (2026-09-15)
+
+One commit on `aa54c2c`. Six-point verification as agreed.
+
+## VERDICT: **APPROVE** — with one operational defect (one line) that must be fixed before job 6395516's artifacts are accepted as provenanced
+
+D1 and D2 are fixed in substance, the minors are fixed, and the full unit suite on the branch is
+clean against a pristine baseline. The single remaining item does not touch `stable_envs/`, the
+tests, the corpora, or any number the job computes — it makes the provenance stamp read `unknown` on
+Oscar, which is the one machine it exists for.
+
+### The remaining defect — `sha` resolves to `"unknown"` on the cluster
+
+`measure_tier.py` reads `$ROOT/.git_sha`, falling back to `git -C $ROOT rev-parse HEAD`:
+
+```python
+sha_file = os.path.join(ROOT, ".git_sha")
+sha = (open(sha_file).read().strip() if os.path.exists(sha_file)
+       else os.popen(f"git -C {ROOT} rev-parse HEAD 2>/dev/null").read().strip() or "unknown")
+```
+
+**Nothing in the branch writes `.git_sha`** (`grep -rn git_sha` finds only the two *readers*:
+`measure_tier.py:55` and `oscar_gpu.sbatch:34`), and AGENT_COMMON's rsync recipe copies the worktree
+**`--exclude .git`**. So on `$SCR/se7/rocket-landing` there is no `.git_sha` and no `.git`, the
+`rev-parse` fails with its stderr suppressed, and the fallback fires. Demonstrated by reproducing the
+Oscar copy locally:
+
+```
+rsync -a --exclude .git ... -> $SCR/oscarsim       (no .git, no .git_sha)
+measure_tier.py's expression evaluated against it:  sha = 'unknown'
+```
+
+Every `gate()` line, `gates.txt`, and `R["provenance"]["sha"]`/`["baseline_commit"]` would then read
+`unknown`, and `oscar_gpu.sbatch:34`'s banner prints `SHA ` (empty) because `cat … 2>/dev/null` hides
+the miss. `stable_envs_file` still resolves and is the stronger of the two fields, so the artifact is
+not unattributable — but the field the coordinator asked for is not populated where it matters.
+
+**Fix (one line, either place):** write the SHA at rsync time —
+`git -C /Users/samib/stable-envs-step7-rocket-landing rev-parse HEAD > .git_sha` before the rsync (and
+record that step in `findings.md`'s Oscar row) — or have `oscar_gpu.sbatch` fail loudly rather than
+silently: `SHA=$(cat $WS/.git_sha) || { echo "no .git_sha in $WS"; exit 2; }`. Since 6395516 is
+already queued, record its SHA by hand beside its output if it lands before the fix.
+
+*Cosmetic, same block:* `baseline_commit` is set to the same value as `sha`, i.e. this branch's HEAD.
+`profile_note.py` uses that name for "the commit of the checkout measured", so it is consistent — but
+in a Step-7 report where `$SCR/se7/baseline` (76dc511) is a real, different thing, the name invites a
+misreading. Consider `measured_commit`, or record 76dc511 explicitly beside it.
+
+### 1 · Scope — PASS
+
+`git diff --stat aa54c2c..cf355a3`: `findings.md`, `reference_trick_validation.json`, a new
+`corpus_replay_state_quantisation_<host>.json` + `corpus_replay_state32.py`, `measure_tier.py`,
+`validate_reference_trick.py`, `stable_envs/envs/rocket_landing.py`, `tests/unit/test_rocket_landing.py`.
+The `stable_envs/` change is **exactly the lazy probe** (`_optional_import_errors` only) — I read the
+whole diff, it is 15 lines and touches nothing else. **`stable_envs/render/nvdiff.py` is still
+byte-identical to `92d9b28`** (`git diff --quiet 92d9b28..cf355a3` → clean), so the `Scene`
+bit-identity result for all six locomotion models carries forward unmodified.
+
+### 2 · D1 provenance fields — PRESENT (see the defect above for where they resolve)
+
+`R["provenance"] = {sha, baseline_commit, stable_envs_file (realpath of the imported package), host,
+slurm_job, threads, load_average, gpu}`, spread onto every `R["gates"][name]` entry and stamped on
+every `GATE` line written to stdout and to `gates.txt`. `stable_envs_file` is the field
+`profile_note.py` calls "the only proof of which checkout was measured", and it is correct.
+
+### 3 · D2 — FIXED, and fixed the stronger way
+
+The duplicate replay is gone. There is now **one** row, `corpus_replay.ours_state13_vs_frozen`,
+carrying `"contains": "renderer residual + float32 state quantisation (see state_quantisation_term)"`,
+with a gate line that repeats "(reported; contains both terms)"; and a **separate**
+`corpus_replay.reference_state13_vs_frozen` = `reference_render(state13)` vs the frozen frames, which
+is the quantisation term on its own. `check_visual_fidelity` is named in the comment as the
+renderer-only number. The false sentence is gone and the replacement comment states my finding
+correctly and for the right reason:
+
+> "render() casts states to float32, so obs30[:, :13] and state13 feed bit-identical tensors and there
+> is exactly one measurement here."
+
+The author's local re-take of the quantisation term (200/200, 0 rejections, 9 exact, max 79 px, mean
+11.4 differing px) is consistent with my own sample at `13ca91b` (50 states: 0 rejections, 1 exact,
+max 79 px) — same tail, same worst case, and the mean is the number my 50-state sample could not give.
+`findings.md` carries the corrected wording.
+
+### 4 · Findings totals — PASS, they are now reproducible
+
+My full-suite run on `cf355a3`: **2 failed, 855 passed, 7 skipped** — identical to `13ca91b` and to
+the pristine baseline's two failures (`823 passed / 2 failed / 6 skipped`). `findings.md` now records
+"reviewer's interpreter — baseline 76dc511 full suite **823 passed / 2 failed**, branch **855 passed /
+2 failed / 7 skipped**, the same two failures; branch with `test_examples` deselected **745 passed /
+7 skipped**", and separately labels the author's own Mac configuration (713/1/37) with the reason the
+skip count differs. Both sets are attributed and the interpreter is named. That is the right fix.
+*Nit:* an earlier sentence in the same paragraph still says the citation test covers "12 Step-6
+citations"; the test prints **9**.
+
+### 5 · Lazy probe and registration gating — PASS
+
+```
+import stable_envs                      -> 0.92 s
+sys.modules leak of scipy/scipy.spatial/PIL/PIL.Image/pybullet_data:  NONE
+missing_backend()  -> "nvdiffrast: ModuleNotFoundError: No module named 'nvdiffrast'; pybullet_data: not installed"
+registered         -> False
+gate expression    -> "if missing_backend() is None:  register(PFRocketLanding)"
+```
+
+`importlib.util.find_spec` replaces the import probe for scipy / pybullet_data / PIL; nvdiffrast keeps
+its real import probe (it must, since the failure mode there is a plugin build, not a missing file).
+Registration gating is unchanged and all four dependencies are still named on demand. *Nit:* the probe
+now checks the top-level packages (`scipy`, `PIL`) rather than the submodules actually used
+(`scipy.spatial`, `PIL.Image`); the docstring says so deliberately and a present-but-broken scipy is
+pathological, so this is acceptable.
+
+### 6 · `reference_trick_validation.json` regeneration — PASS, and better than asked
+
+`validate_reference_trick.py` no longer validates its own private copy of the recipe: it now calls
+`RL._reference_frame` and `RL.lagged_pose` directly, so **the artifact validates the shipped code
+path**, and it records `"recipe": "stable_envs.envs.rocket_landing._reference_frame (renormalised,
+float32-aware)"`. The regenerated numbers improve as expected from the renormalisation:
+`pos_err_max` 7.1e-13 → **3.55e-15**, `q_err_max` 2.69e-11 → **1.11e-16** (now the sign-free
+`1−|q·q'|`). Result stays **199/200 exact, max 1 px** at index 124.
+
+*Observation, not a defect:* my own 50-state sample at `13ca91b` found index 124 **exact**, where the
+full 200-state sequential run finds it at 1 px. The two runs differ only in what PyBullet call
+preceded it (I rendered 120→124, the validator 123→124), so at least one frame's last pixel depends on
+the preceding call's state. It is 1 px on 1 of 200, the committed artifact is the conservative one,
+and the fidelity numbers come from `check_visual_fidelity` rather than from this file — but it is
+worth one line in the note that the reference bridge is not bit-deterministic across call order for
+one frame, since every fidelity number is computed through it.
+
+### Minors from Appendix 1 — all fixed
+
+Test renamed away from `…_iff_nvdiffrast_imports`; `max(cert)` guarded; the import side effect
+eliminated; the stale validator regenerated; findings totals reproducible.
+
+### Unchanged and still valid
+
+Every positive finding in the main report and Appendix 1 — the bit-identical `Scene`/texture hashes
+across both checkouts, the TinyRenderer shading law including the measured 162/158 back-face case, the
+lag law on fresh rollouts, the camera and link frames against PyBullet, the colour law against the swm
+source, the hull silhouette IoU 0.9949, the default-appearance check to 1.19e-08, and the hygiene
+checks. The "what only the cluster can verify" list stands, with item 3 unblocked.

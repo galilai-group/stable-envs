@@ -424,7 +424,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: D1/D2 + minors landed (cf355a3); formal verdict pending; GPU job 6395707 pending on the synced cf355a3 tree; M4 after
+  status: 'reviewer APPROVE on cf355a3 (one operational nit: .git_sha must be written before rsync; M4 fixes the recipe); awaiting GPU job 6395707 cluster gates; merge when all seven pass'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -526,6 +526,18 @@ workstreams:
         - test name
         - max(cert) on --batches 1
         - reference_trick_validation.json predates renormalisation
+      formal_verdict:
+        head: cf355a3
+        verdict: APPROVE
+        remaining_operational: .git_sha not written by the branch (rsync excludes .git) -> sha 'unknown' unless hand-written; make the sbatch fail loudly; annotate baseline_commit
+        verified:
+        - stable_envs change = 15-line lazy probe; nvdiff.py byte-identical to 92d9b28
+        - D1 provenance fields present incl. stable_envs_file
+        - D2 one honest replay row + reference_state13_vs_frozen; false sentence gone
+        - full suite 2/855/7 vs baseline 2/823/6, same failures
+        - lazy probe leaves no scipy/PIL in sys.modules; gating unchanged
+        - 'validator regenerated on the shipped path: pos 3.55e-15, q 1.11e-16, 199/200 exact'
+        observation: reference bridge not bit-deterministic across PyBullet call order for 1/200 frames (index 124)
   rulings:
   - no AI trailers (project rule wins over harness reminder)
   - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
@@ -620,6 +632,8 @@ incident_log:
   item: 'W1 complete: CPU tier merged; CPU_REGRESSION on the mixed default; S_cpu reference trap escalated'
 - date: '2026-09-15'
   item: W3 cluster results (4396163) and validated exclusion (0013050) landed; formal re-review requested
+- date: '2026-09-15'
+  item: W6 formal APPROVE on cf355a3; merge gated on cluster job 6395707
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
