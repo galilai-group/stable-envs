@@ -55,14 +55,34 @@ def main():
         env = se.make(cname, batch=a.n, device="cuda")
 
         # ---- corpus, in the Step-4 schema -------------------------------------------------
-        pool = np.asarray(env.sample_states(a.pool, rng=np.random.default_rng(F.STATE_SEED)),
-                          np.float32)
-        np.savez_compressed(states_dir.parent / f"pool_{cname}.npz", pool=pool)
-        states, meta = F.corpus_for(env, cname, states_dir, a.n, a.pool)
+        # The pool and the selection are produced in ONE draw and written together. The first
+        # version called `corpus_for` (which draws its own pool internally) and ALSO drew a pool of
+        # its own to save beside it; with `sample_states` not yet reproducible those were two
+        # different pools, and `meta["indices"]` indexed a pool nobody kept -- 0 of 64 kept rows were
+        # findable in the committed file. `select` is still the repo's, so the selection rule is
+        # unchanged; only the bookkeeping is.
+        import stable_envs.testing.conformance as C
+        pool = np.ascontiguousarray(
+            env.sample_states(a.pool, rng=np.random.default_rng(F.STATE_SEED)), np.float32)
+        states, how = F.select(pool, a.n)
+        states = np.ascontiguousarray(states, np.float32)
+        idx = np.asarray(how["indices"], int)
+        assert np.array_equal(pool[idx], states), (
+            "the frozen selection is not a subset of the pool written beside it")
+        meta = {"seed": F.STATE_SEED,
+                "selection": "typical + per-dim extremes + farthest-point spread",
+                "state_dim": int(states.shape[1]), "state_names": list(env.state_names or []),
+                "env": cname, "sha256": C.frames_digest(states), **how}
+        states_dir.mkdir(parents=True, exist_ok=True)
+        np.savez(states_dir / f"{cname}.npz", states=states,
+                 meta=np.array(json.dumps(meta, sort_keys=True)))
+        np.savez_compressed(states_dir / f"{cname}_pool.npz", pool=pool,
+                            meta=np.array(json.dumps(meta, sort_keys=True)))
         cell["corpus"] = {k: v for k, v in meta.items() if k != "indices"}
-        cell["corpus"]["n_indices"] = len(meta.get("indices", []))
+        cell["corpus"]["n_indices"] = len(idx)
+        cell["corpus"]["pool_selection_consistent"] = True
         cell["corpus"]["pool_saved_to"] = str(
-            (states_dir.parent / f"pool_{cname}.npz").relative_to(ROOT))
+            (states_dir / f"{cname}_pool.npz").relative_to(ROOT))
         print(f"{cname} corpus: kept {meta['kept']} of pool {meta['pool']}, "
               f"state_dim {meta['state_dim']}, sha {meta['sha256'][:12]}", flush=True)
 

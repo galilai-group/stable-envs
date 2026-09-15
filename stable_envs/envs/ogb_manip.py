@@ -48,17 +48,22 @@ parity.
 STATE
 -----
 
-``(qpos, mocap_pos, mocap_quat)`` — and for the Scene, two extra dimensions for the button bits.
+``(qpos, mocap_pos)`` — and for the Scene, two extra dimensions for the button bits.
 Measured in phase 0: the frame is a bit-exact function of exactly that, verified by imposing a state
 from one episode onto a DIFFERENT episode (different seed, recompiled model) and getting an identical
 frame. The mocap pose is what positions the translucent goal marker, and it is NOT in swm's info
 dict, so a caller has to read it off ``data``.
 
-``qvel`` is deliberately NOT in the state, though swm's own ``reset(options={'state'})`` contract is
-``concat(qpos, qvel)``. It reaches no pixel — the mover pass runs ``kinematics``, which reads ``qpos``
-and the mocap pose — and Gate A measured exactly that: carrying it, 20 of 48 dimensions moved no
-pixel under a 0.05 perturbation, which ``check_state_dims_matter`` would correctly fail. ``fetch.py``
-made the same call when it dropped mocap from its own state.
+Two things are deliberately NOT in the state, for two different reasons. **``qvel``** reaches no
+pixel — the mover pass runs ``kinematics``, which reads ``qpos`` and the mocap pose — and Gate A
+measured exactly that: carrying it, 20 of 48 dimensions moved no pixel. swm's own
+``reset(options={'state'})`` contract is still ``concat(qpos, qvel)``; the RENDER state is the part
+that reaches a pixel. **``mocap_quat``** is CONSTANT under the registered distribution: over 520
+states spanning both cells, all five task ids and 12 steps per episode it has exactly one unique
+row, the identity, because ``initialize_episode`` writes ``lie.SO3.identity().wxyz`` and nothing in
+task mode rotates the goal marker. A dimension that never varies cannot be shown to matter and the
+repo's ``check_state_dims_matter`` reports it dead, so it is supplied as a constant instead.
+``fetch.py`` made the same call when it dropped mocap from its own state.
 
 The Scene's two button bits are not in ``qpos`` either. They are required keyword arguments of
 ``SceneEnv.set_state`` — so swm's own API exposes them — and they drive ``geom_rgba`` of the two
@@ -79,15 +84,62 @@ from ..render import mjwarp as MW
 
 #: Groups ``mujoco.Renderer`` draws at the env's own ``MjvOption`` (``geomgroup = [1,1,1,0,0,0]``).
 VISIBLE_GROUPS = (0, 1, 2)
+
+
+def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
+    """``(nmocap, 4)`` of ``(1,0,0,0)``. The only mocap orientation this family's distribution has."""
+    q = np.zeros((int(nmocap), 4), np.float64)
+    q[:, 0] = 1.0
+    return q
 #: MJWarp worlds per launch. Same constant and the same reason as Fetch: a context is per (res,
 #: nworld) and an unbounded batch would build one per batch size.
 MJW_CHUNK = 256
+#: The leaves swm resamples on every reset by default (`CubeEnv.DEFAULT_VARIATIONS`). They are drawn
+#: explicitly from the caller's `rng` so a state draw is reproducible; see `_variation_values`.
+DEFAULT_VARIATION_PATHS = {
+    "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
+    "Scene": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
+}
 _CTX_CACHE: dict = {}
 _CTX_CACHE_MAX = 4
 _PLATE_CACHE: dict = {}
 _PLATE_CACHE_MAX = 8
 _BUNDLE_CACHE: dict = {}
 _REF_CACHE: dict = {}
+
+
+import contextlib as _contextlib
+
+
+@_contextlib.contextmanager
+def _seeded_action_space(u, seed: int):
+    """Give the env a STABLE, seeded action space for the duration of the block.
+
+    THE DEFECT THIS WORKS AROUND IS UPSTREAM AND IS WHY `sample_states` was not reproducible.
+    `ManipSpaceEnv.action_space` is a PROPERTY that constructs a brand-new `gym.spaces.Box` on every
+    access, each with its own OS-seeded RNG -- verified: two consecutive accesses return different
+    objects. `initialize_episode` then calls `self.step(self.action_space.sample())` twice to settle
+    the scene, so every `reset()` consumes two actions from a generator nothing can seed, and
+    `reset(seed=...)` cannot make a reset reproducible. Seeding `env.action_space` or
+    `env.unwrapped.action_space` from outside seeds a throwaway.
+
+    Because the property is a data descriptor on a base class, an instance attribute cannot shadow
+    it; the override has to be on the class that defines it, and is undone in `finally`. Scoped to
+    this block only, so nothing outside state sampling sees a changed env.
+    """
+    import gymnasium as gym
+    owner = next((k for k in type(u).__mro__ if "action_space" in k.__dict__), None)
+    if owner is None:
+        yield
+        return
+    original = owner.__dict__["action_space"]
+    box = u.action_space
+    box.seed(int(seed))
+    try:
+        setattr(owner, "action_space", box)
+        yield
+    finally:
+        setattr(owner, "action_space", original)
 
 
 def _reference_env(cell: str, size: int | None = None):
@@ -112,10 +164,30 @@ def _reference_env(cell: str, size: int | None = None):
 
 
 class _Bundle:
-    """The model, the mover set and the state layout, resolved once per cell."""
+    """The mover set and the state layout, resolved once per cell; the MjModel, always fresh.
 
-    __slots__ = ("model", "data", "cam", "movers", "nq", "nv", "nmocap", "nbuttons",
+    `model` and `data` are PROPERTIES, not stored handles, and that is not style. Every dirty
+    `reset()` runs `compile_model_and_data`, which REBINDS `_model` and `_data` to new objects
+    (phase 0 measured `model_object_reused: False` on every reset). A bundle that cached them went
+    stale the first time anything reset the env -- and `sample_states` resets it 64 times -- so the
+    plate would be baked from, and the button colours written into, a model the env had already
+    discarded. Caught by a test that passed alone and failed after any test that resets.
+
+    The derived facts below are cached because they are properties of the MJCF, not of a particular
+    compilation: the same scene recompiles to the same geom ids, the same movers and the same state
+    layout. Only the array handles move.
+    """
+
+    __slots__ = ("cam", "movers", "nq", "nv", "nmocap", "nbuttons",
                  "state_names", "pristine", "size", "unwrapped", "button_tables")
+
+    @property
+    def model(self):
+        return self.unwrapped.model
+
+    @property
+    def data(self):
+        return self.unwrapped.data
 
 
 def _movers(m) -> list[int]:
@@ -145,13 +217,22 @@ def _bundle(cell: str) -> _Bundle:
     u = env.unwrapped
     m, d = u.model, u.data
     b = _Bundle()
-    b.model, b.data, b.unwrapped = m, d, u
+    b.unwrapped = u
     b.size = int(u._render_height)
     b.cam = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, spec["camera"])
     assert b.cam >= 0, f"{cell}: no camera {spec['camera']!r}"
     b.movers = _movers(m)
     b.nq, b.nv, b.nmocap = int(m.nq), int(m.nv), int(m.nmocap)
     b.nbuttons = int(getattr(u, "_num_buttons", 0) or 0)
+    # mocap_quat is NOT in the state either, and for a different reason from qvel: it is CONSTANT
+    # under the registered distribution. Measured over 520 states spanning both cells, all five task
+    # ids and 12 steps per episode, `data.mocap_quat` has exactly ONE unique row -- the identity
+    # (1,0,0,0) -- because `initialize_episode` writes `lie.SO3.identity().wxyz` and nothing in task
+    # mode ever rotates the goal marker. A dimension that never varies in the distribution the cell
+    # is certified on is not a state dimension: it cannot be perturbed to show it matters, and the
+    # repo's own `check_state_dims_matter` reports it dead. The renderer still needs a value, so
+    # `_split` and `reference_render` supply the identity explicitly.
+    #
     # qvel is NOT in the state. It reaches no pixel -- MJWarp's mover pass runs `kinematics`, which
     # reads qpos and the mocap pose and nothing else -- and Gate A measured exactly that: with qvel
     # carried, 20 of 48 dimensions moved no pixel under a 0.05 perturbation. `check_state_dims_matter`
@@ -160,7 +241,6 @@ def _bundle(cell: str) -> _Bundle:
     # is why the split helper still understands qvel; the RENDER state is the part that reaches a pixel.
     names = ([f"qpos[{i}]" for i in range(b.nq)]
              + [f"mocap_pos[{i}]" for i in range(3 * b.nmocap)]
-             + [f"mocap_quat[{i}]" for i in range(4 * b.nmocap)]
              + [f"button_state_{i}" for i in range(b.nbuttons)])
     b.state_names = tuple(names)
     b.pristine = {"geom_group": np.array(m.geom_group, copy=True),
@@ -240,7 +320,21 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     # cell would "agree" by corrupting the thing it is measured against. On this scene that happens
     # to be invisible -- MuJoCo renders cutoff 100 and 180 identically, which is the whole finding --
     # but agreeing by luck is not agreeing.
+    # THE COPY IS TAKEN AT KNOWN BUTTON BITS. `_ctx_button_tables` applies each combination as a
+    # delta against the all-zero-bits table, which is only correct if the copy itself is at all-zero
+    # bits -- and the reference env is at whatever bits its last reset chose. Those vary: measured
+    # over 40 resets, OGBScene starts at (0,0), (1,0) and (1,1), so roughly 40 % of processes would
+    # have built every table wrong, silently, because the disjointness assertion cannot see a
+    # wrong BASE. The reference is forced to all-zero, copied, and restored.
+    zero_bits = [0] * b.nbuttons
+    saved_bits = list(getattr(b.unwrapped, "_cur_button_states", []))
+    if b.nbuttons:
+        b.unwrapped._cur_button_states = list(zero_bits)
+        b.unwrapped._apply_button_states()
     m = copy.deepcopy(b.model)
+    if b.nbuttons:
+        b.unwrapped._cur_button_states = list(saved_bits)
+        b.unwrapped._apply_button_states()
     prepared = MW.prepare_model(m, VISIBLE_GROUPS)
     # Textures MJWarp cannot sample at all. On OGBScene this is `btn_metal`, a 512x512 CUBE map on
     # two UV-less button meshes, and without it mujoco_warp <= 3.12.0 dies with an illegal memory
@@ -298,10 +392,17 @@ def _ctx_button_tables(b: "_Bundle", m, res: int) -> dict | None:
     """
     if not b.nbuttons or b.button_tables is None:
         return None
+    # `m` was deep-copied from the reference while it was forced to all-zero bits (see `_context`),
+    # so the all-zero table is the right delta base. Asserted below rather than assumed.
     base_g = np.array(m.geom_rgba, copy=True)
     base_m = np.array(m.mat_rgba, copy=True)
     zero = tuple([0] * b.nbuttons)
     ref_g0, ref_m0 = b.button_tables[zero]
+    touched = sorted({int(i) for bits, (rg, rm) in b.button_tables.items()
+                      for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]})
+    assert np.array_equal(base_g[touched], ref_g0[touched]), (
+        "the context model was copied at button bits other than all-zero, so every delta below "
+        "would be applied to the wrong base; see _context's forced-zero block")
     out = {}
     for bits, (rg, rm) in b.button_tables.items():
         dg, dm = rg - ref_g0, rm - ref_m0
@@ -390,9 +491,33 @@ class OGBManipBase(StableEnv):
         i = 0
         qpos = s[i:i + b.nq]; i += b.nq
         mp = s[i:i + 3 * b.nmocap].reshape(b.nmocap, 3); i += 3 * b.nmocap
-        mq = s[i:i + 4 * b.nmocap].reshape(b.nmocap, 4); i += 4 * b.nmocap
         bits = s[i:i + b.nbuttons]
-        return qpos, mp, mq, bits
+        return qpos, mp, IDENTITY_QUAT(b.nmocap), bits
+
+    def _variation_values(self, rng: np.random.Generator) -> dict:
+        """Explicit values for the registered default variation leaves, drawn from ``rng``.
+
+        `reset_variation_space` is called by swm with `seed=None`, so the leaves it resamples come
+        from OS entropy and no reset is reproducible. It does honour an explicit
+        `options['variation_values']`, which is the one handle that makes the draw ours. Uniform over
+        each leaf's own bounds, which is what `Box.sample` would have done, so the distribution is
+        unchanged and only its generator moves.
+        """
+        vs = getattr(self._b.unwrapped, "variation_space", None)
+        if vs is None:
+            return {}
+        out = {}
+        for path in DEFAULT_VARIATION_PATHS.get(self.CELL, ()):
+            node = vs
+            try:
+                for part in path.split("."):
+                    node = node[part]
+            except Exception:
+                continue
+            lo = np.asarray(node.low, np.float64)
+            hi = np.asarray(node.high, np.float64)
+            out[path] = rng.uniform(lo, hi).reshape(np.asarray(node.value).shape)
+        return out
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """States a dataset would actually hold: reset, then 0-25 random actions.
@@ -404,18 +529,38 @@ class OGBManipBase(StableEnv):
         import mujoco
         rng = np.random.default_rng(0) if rng is None else rng
         b = self._b
-        env, u = _reference_env(self.CELL), None
+        env = _reference_env(self.CELL)
         u = env.unwrapped
         out = []
-        for k in range(int(batch)):
-            env.reset(seed=int(rng.integers(0, 1 << 30)))
-            env.action_space.seed(int(rng.integers(0, 1 << 30)))
-            m, d = u.model, u.data
-            for _ in range(int(rng.integers(0, 26))):
-                env.step(env.action_space.sample())
-            bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[:b.nbuttons]]
-            out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(),
-                                       d.mocap_quat.ravel().copy(), np.asarray(bits, np.float64)]))
+        # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. swm's
+        # `CubeEnv.reset` calls `reset_variation_space(..., seed=None, ...)` and the task is picked
+        # with the module-level `np.random`, so two calls with the same `rng` drew DIFFERENT states
+        # and `test_seeded_sampling_reproduces_in_a_fresh_process` could not hold. Seeding the global
+        # generator is the only handle swm exposes; its prior state is saved and restored so this
+        # function does not become a side effect on the caller's own draws.
+        gstate = np.random.get_state()
+        try:
+            for k in range(int(batch)):
+                sd = int(rng.integers(0, 1 << 30))
+                np.random.seed(int(rng.integers(0, 1 << 31)))
+                # THE SEED `reset` DROPS. `CubeEnv.reset(self, seed=None, ...)` and
+                # `SceneEnv.reset` accept `seed` and then call `super().reset(options=options, ...)`
+                # WITHOUT it (cube_env.py:822, scene_env.py:325), so `gym.Env.reset` never reseeds
+                # `self.np_random` and `reset(seed=...)` has no effect at all. Everything random in
+                # `initialize_episode` -- the arm's initial yaw, the cube jitter, the block
+                # permutation -- runs off that generator. Setting it directly is the only way to make
+                # a draw reproducible, and with it the whole reset is bit-reproducible (verified).
+                u.np_random = np.random.default_rng(sd)
+                with _seeded_action_space(u, sd):
+                    env.reset(seed=sd, options={"variation_values": self._variation_values(rng)})
+                    m, d = u.model, u.data
+                    for _ in range(int(rng.integers(0, 26))):
+                        env.step(u.action_space.sample())
+                bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[:b.nbuttons]]
+                out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(),
+                                           np.asarray(bits, np.float64)]))
+        finally:
+            np.random.set_state(gstate)
         return np.stack(out).astype(np.float64)
 
     # ---- variation ------------------------------------------------------------------------
@@ -506,6 +651,7 @@ class OGBManipBase(StableEnv):
         buf = out.view(B, size, size, 3)
         plate = self._plate(res)
         plate1 = plate if ss == 1 else self._plate(size)
+        lut = self._mover_lut()
         b = self._b
         nq, nmoc = b.nq, b.nmocap
 
@@ -531,7 +677,14 @@ class OGBManipBase(StableEnv):
             wp.capture_launch(c.graph)
             wp.synchronize()
             rgb, seg = c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
-            mv = seg >= 0
+            # THE MOVER LUT, not `seg >= 0`. The floor plane and the skybox are geoms too, so
+            # `seg >= 0` is true wherever MJWarp hit ANYTHING and the composite then takes MJWarp's
+            # floor over the baked plate -- which is the plate never being used except on sky. The
+            # first version of this cell did exactly that, and its "0.92-0.95 composite exactness"
+            # was measured by a probe that masked with the mover set while the renderer did not.
+            # `index_select` on the int32 segmentation rather than `lut[seg.long() + 1]`: the latter
+            # materialises a 64-bit copy of the whole frame stack to index with.
+            mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
             comp = torch.where(mv.unsqueeze(-1), rgb, plate)
             if ss == 1:
                 buf[lo:hi] = comp
@@ -542,6 +695,22 @@ class OGBManipBase(StableEnv):
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, plate1)
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _mover_lut(self) -> torch.Tensor:
+        """``(ngeom+1,)`` bool: is this segmentation id a MOVER? Indexed, not searched.
+
+        `torch.isin(seg, movers)` touches the frame once per mover; a table lookup touches it once.
+        The +1 offset makes segmentation id -1 (nothing hit) index row 0, which is False, so sky
+        falls through to the plate like every other non-mover pixel.
+        """
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        hit = cache.get("mover_lut")
+        if hit is None:
+            n = int(self._b.model.ngeom)
+            lut = torch.zeros(n + 1, dtype=torch.bool, device=self.device)
+            lut[torch.as_tensor(np.asarray(self._b.movers, np.int64) + 1, device=self.device)] = True
+            hit = cache["mover_lut"] = lut
+        return hit
 
     def _upload_button_colours(self, c, chunk, n: int) -> None:
         """Write each world's button colours from its own state bits.
@@ -585,7 +754,7 @@ class OGBManipBase(StableEnv):
             qpos = s[i:i + b.nq]; i += b.nq
             qvel = np.zeros(b.nv)
             mp = s[i:i + 3 * b.nmocap].reshape(b.nmocap, 3); i += 3 * b.nmocap
-            mq = s[i:i + 4 * b.nmocap].reshape(b.nmocap, 4); i += 4 * b.nmocap
+            mq = IDENTITY_QUAT(b.nmocap)
             bits = s[i:i + b.nbuttons]
             if b.nbuttons:
                 u.set_state(qpos, qvel,
@@ -604,18 +773,28 @@ _RENDERERS: dict = {}
 
 
 def _renderer(cell: str, res: int):
-    """One ``mujoco.Renderer`` per (cell, resolution), kept forever.
+    """One ``mujoco.Renderer`` per (cell, resolution, MODEL IDENTITY).
+
+    Keyed on ``id(model)`` as well, for the same reason ``_Bundle.model`` is a property: a dirty
+    reset rebinds the env's ``_model``, and a ``Renderer`` holds the model it was built with. Keyed
+    on ``(cell, res)`` alone it would go on rendering a model the env had discarded -- the plate
+    would silently be baked from dead geometry after the first reset.
 
     Never closed, for the reason ``envs/ogbench.py`` records at length: releasing an EGL context
-    corrupts rendering in every other live renderer in the process.
+    corrupts rendering in every other live renderer in the process. The cache is bounded instead,
+    because a long sampling run rebinds the model many times and one renderer per rebind would
+    exhaust contexts.
     """
-    key = (cell, int(res))
+    import mujoco
+    b = _bundle(cell)
+    m = b.model
+    key = (cell, int(res), id(m))
     hit = _RENDERERS.get(key)
     if hit is not None:
         return hit
-    import mujoco
-    b = _bundle(cell)
-    out = _RENDERERS[key] = mujoco.Renderer(b.model, height=int(res), width=int(res))
+    for k in [k for k in _RENDERERS if k[0] == cell and k[1] == int(res)]:
+        _RENDERERS.pop(k, None)          # the model moved; that renderer can never be right again
+    out = _RENDERERS[key] = mujoco.Renderer(m, height=int(res), width=int(res))
     return out
 
 
@@ -631,14 +810,17 @@ def _renderer(cell: str, res: int):
 import os as _os
 
 _MEASURED: dict = {
-    # cell: (mean_abs, within8_frac, ssim) -- the WORST of three independent 64-state draws,
-    # job 6398733 on gpu2101 (RTX 3090), mujoco 3.12.0 / mujoco_warp 3.12.0 / warp 1.17.0, against
-    # swm's own EGL frames at the registered resolution. Per-draw spread was 4.751-4.797 (Cube) and
-    # 9.942-10.004 (Scene) on mean_abs, so the declared value is not a lucky draw.
-    "Cube": (4.797169, 0.807268, 0.942822),
-    "Scene": (10.004062, 0.704476, 0.902295),
+    # Filled from the re-measurement AFTER the mover-LUT fix; the numbers that preceded it described
+    # a renderer that never used its own plate on the floor and are not this cell's.
 }
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
+
+#: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
+#: certifier must compare. swm and ogbench are deliberately absent -- neither number was measured
+#: against a named version of either, and a version nobody measured under is not provenance.
+_REFERENCE_VERSIONS = {"mujoco": "3.12.0"}
+#: OUR side: the batch raytracer that drew the movers.
+_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
 
 def _fidelity(cell: str) -> dict:
@@ -653,22 +835,42 @@ def _fidelity(cell: str) -> dict:
                 "mean_abs_max": -1.0, "within8_min": -1.0, "ssim_min": -1.0,
                 "measured_at": "UNMEASURED PLACEHOLDER - SE7_OGB_UNMEASURED=1 is set, so these are "
                                "NOT measurements and this build must not ship or be certified."}
-    mean_abs, within8, ss = _MEASURED[cell]
+    d = _MEASURED[cell]
     spec = SPEC[cell]
+    lo_w, hi_w = d["draw_spread"]["within8_frac"]
+    lo_s, hi_s = d["draw_spread"]["ssim"]
     return {
-        "mean_abs": float(mean_abs),
-        "within8_frac": float(within8),
-        "ssim": float(ss),
-        # Ceilings/floors with margin, rounded, NOT tracking the measurements.
-        "mean_abs_max": float(np.ceil(mean_abs * 1.5 * 10) / 10),
-        "within8_min": float(np.floor(within8 * 20) / 20 - 0.05),
-        "ssim_min": float(np.floor(ss * 20) / 20 - 0.05),
+        "mean_abs": float(d["mean_abs"]),
+        "within8_frac": float(d["within8_frac"]),
+        "ssim": float(d["ssim"]),
+        # Reported for honesty, threshold nowhere -- the DM Control convention. The interior mask on
+        # this scene keeps 0.41 (Cube) / 0.28 (Scene) of pixels, so unlike DM Control's speckled
+        # skybox it is defined here, but it is still a statement about the plate rather than about
+        # the mover pass.
+        "interior_exact_frac": float(d["interior_exact_frac"]),
+        "interior_frac": float(d["interior_frac"]),
+        "all_exact_frac": float(d["all_exact_frac"]),
+        "mover_px_share": float(d["mover_px_share"]),
+        "draw_spread": d["draw_spread"],
+        # THE FAMILY RULE, not a self-invented one: x1.3 on the mean, and the fractional floors a
+        # round step below the WORST draw. DM Control sets ceilings this way (mean 5.01 -> 6.50,
+        # 8.07 -> 10.5) precisely so a threshold is a contract rather than a tripwire on the next
+        # state draw, and the spread over three draws is what it is set clear of.
+        "mean_abs_max": round(float(d["mean_abs"]) * 1.3, 1),
+        "within8_min": float(np.floor(lo_w * 20) / 20),
+        "ssim_min": float(np.floor(lo_s * 20) / 20),
         "measured_at": (
             f"{spec['size']} px, camera {spec['camera']}, 3 independent draws of 64 states from the "
             f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
-            f"against swm's own render(); the declared value is the WORST of the three. The frame is "
-            f"a baked MuJoCo plate composited with MJWarp movers by MJWarp's segmentation buffer, "
-            f"with gl_rounding and the shared out-of-range-spot correction applied."),
+            f"against swm's own render(); the declared value is the WORST of the three and "
+            f"draw_spread carries all three. The frame is a baked MuJoCo plate composited with "
+            f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
+            f"out-of-range-spot correction applied. {d['job']}"),
+        # The REFERENCE side, which the certifier compares: mujoco is what swm's render() draws with.
+        "reference_versions": _REFERENCE_VERSIONS,
+        # OUR side, recorded and never compared: a bump of our own renderer that moves these numbers
+        # is a regression to be seen, not a reason to block the check.
+        "measured_with": _MEASURED_WITH,
     }
 
 
