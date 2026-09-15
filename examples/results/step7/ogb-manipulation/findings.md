@@ -10,9 +10,12 @@ Two sub-verdicts, both measured:
   file carried before the GPU leg** — that Fetch's 7.6–11.7x failure was a 480 px effect these
   224/200 px scenes would escape. It is the reverse: at 224 px the per-frame device cost is small
   enough that `fps(1)` is *already* 2,232 f/s and throughput is within 3 % of its ceiling by **B=64**,
-  so there is nothing left to amortise. `OGBScene` **crashes the megakernel** —
-  `Warp CUDA error 700: an illegal memory access` — reproducibly, in a fresh process, with the error
-  surfacing at `wp_cuda_context_synchronize` during the warm-up frame and before the graph capture.
+  so there is nothing left to amortise. `OGBScene` **crashes the megakernel** with
+  `Warp CUDA error 700: an illegal memory access`, and the cause is bisected to **one CUBE texture**
+  (`T_btn`, 512x512, on two button meshes): detaching that single texture and nothing else makes the
+  scene render. `stable_envs/render/mjwarp.py::texture_gaps` gives this model a **false all-clear**
+  because it classifies by geom type and never reads `tex_type` — a shared-file finding, reported
+  not fixed.
   And `OGBCube`'s raw fidelity, with only `gl_rounding` and no plate bake or per-env correction, is
   **0.0101 interior-exact, mean |Δ| 10.5/255** against Fetch's corrected 0.9988. The smallest
   capability is still MJWarp, but it does not work out of the box on either env.
@@ -302,19 +305,38 @@ already 2,232 f/s because 224 px of a 6.1x-denser BVH is still a cheap frame. Th
 3 % of its ceiling by **B=64** and flat from B=256 to B=4096, so no larger batch rescues the ratio,
 and VRAM is not the constraint (588 MiB at B=4096).
 
-**`OGBScene` does not build through MJWarp at all.** `Warp CUDA error 700: an illegal memory access`
-from `wp_cuda_graph_begin_capture`, reproduced in **two jobs**, the second with one env per process.
-That second run is the one that makes it a finding: the error surfaces first at
+**`OGBScene` does not build through MJWarp, and the cause is one CUBE texture.** The crash is
+`Warp CUDA error 700: an illegal memory access` from `wp_cuda_graph_begin_capture`, reproduced in
+two jobs, the second with one env per process — and in that run the error surfaces first at
 `wp_cuda_context_synchronize` **during the warm-up frame, before the capture**, so it is a fault in
-`kinematics`/`camlight`/`refit_bvh`/`render` on this model and not contamination from `OGBCube`'s
-teardown (which is what job 6395461's `OGBScene` row was, and why that row is void). The standing
-hypothesis, and the one difference between the two models that `texture_gaps` cannot see, is the
-**CUBE texture**: `OGBCube` carries one 2-D texture on a PLANE plus a skybox; `OGBScene` adds
-`T_btn`, a 512x512 **cube map** worn by two MESH geoms. `MJ.texture_gaps` returns empty for it
-because MESH is in its UV-derivable set, but a cube map is a different sampler from a 2-D one, so an
-empty `texture_gaps` is **not** evidence that the texture is safe. Job **6396447** bisects it
-(`textures`/`skybox`/`shadows`/`capture` off one at a time, plus detaching only the cube textures,
-each configuration in its own subprocess).
+`kinematics`/`camlight`/`refit_bvh`/`render` on this model, not contamination from `OGBCube`'s
+teardown (which is what job 6395461's `OGBScene` row was, and why that row is void).
+
+Bisected rather than guessed at (job **6396447**, each configuration in its own subprocess because
+an illegal access poisons the context for everything after it):
+
+| configuration | builds and renders? |
+|---|---|
+| baseline | ❌ CUDA 700 |
+| `capture=False` (no CUDA graph) | ❌ CUDA 700 — not a graph-capture bug |
+| `skybox=False` | ❌ CUDA 700 |
+| `shadows=False` | ❌ CUDA 700 |
+| `textures=False` | ✅ renders, frame std 88.0 |
+| **detach only the CUBE textures, keep 2-D + skybox** | ✅ **renders, frame std 60.9, 1 texture detached** |
+
+**One texture.** `OGBScene`'s `btn_metal` material wears `T_btn`, a 512x512 **cube map**
+(`mjTEXTURE_CUBE`), on two button MESH geoms; `OGBCube` has no cube map and builds. Detaching that
+single texture — leaving every 2-D texture and the skybox in place — makes the scene render. So
+`mujoco_warp`'s texture path reads a cube map through the 2-D sampler and walks off the allocation.
+
+**This also exposes a false all-clear in this repo's own helper, which is a shared-file concern and
+is reported rather than fixed.** `stable_envs/render/mjwarp.py::texture_gaps` returns **empty** for
+`OGBScene`, because its rule is "which geom TYPES can MJWarp derive UVs for" and `MESH` is in that
+set. It never looks at the texture's `tex_type`. A cube map on a mesh therefore passes the gap check
+and then crashes the renderer. The narrowest fix is one clause in `texture_gaps` — report
+`mjTEXTURE_CUBE` on any geom as a gap — but `mjwarp.py` is shared and the coordinator assigns
+ownership; W5 has not touched it. Until then, an empty `texture_gaps` should not be read as "this
+scene's textures are safe for MJWarp".
 
 **Raw fidelity is far from parity and is the real phase-1 question.** With only `gl_rounding`
 applied — no plate bake, no per-env correction, the whole scene through the megakernel — against
@@ -474,7 +496,8 @@ prepared, per the coordinator's mid-task update. Scripts are versioned under
 |---|---|---|---|
 | **6395175** | `00_build_venv_and_bars.sbatch` | `batch`/`normal`, node2351 | **COMPLETED.** Built `$SCR/venvs/se7-ogb` (the only interpreter with ogbench **and** mujoco_warp **and** stable_worldmodel — `se-step5` lacks ogbench, `se-step6` lacks the other two, and AGENT_COMMON.md forbids installing into either); proved both envs render headless; reproduced the census exactly; took the certification bars, the purity probes and the interior/MSAA probe at 1 thread. §4. |
 | **6395461** | `01_mjwarp_trial.sbatch` | `gpu`/`norm-gpu`, gpu2101, RTX 3090 | **COMPLETED.** `OGBCube` builds through the existing `MJ.BatchRenderer` at 193 k triangles; `BATCH_SCALES` 2.89x; raw fidelity 0.0092 interior. §5. The `OGBScene` row is **void** — CUDA context poisoned by `OGBCube`'s teardown in the same interpreter (an error-700 storm from `wp_free_device_async`, then `wp_cuda_graph_begin_capture` failed). |
-| **6395736** | `01_mjwarp_trial.sbatch` (one env per process) | `gpu`/`norm-gpu` | **the one item still outstanding**: does `OGBScene` build through MJWarp, and its `BATCH_SCALES` (now swept to B=4096). Everything else in this file is measured. |
+| **6395736** | `01_mjwarp_trial.sbatch`, one env per process | `gpu`/`norm-gpu`, RTX 3090 | **COMPLETED.** `OGBCube` reproduces job 6395461 within 3 % on every row and extends the sweep to B=4096 (`BATCH_SCALES` 2.93x, 588 MiB). `OGBScene` fails again in a clean process, with the error before the graph capture — so it is that model's own fault. §5. |
+| **6396447** | `02_mjwarp_bisect.sbatch` | `gpu`/`norm-gpu`, RTX 3090 | **COMPLETED.** Localises the `OGBScene` fault to a single CUBE texture: `capture`/`skybox`/`shadows` off all still crash, `textures=False` renders, and detaching only the cube map renders. §5. |
 
 Two earlier attempts failed and are recorded rather than hidden, because both failure modes are
 traps a later phase would hit again:
@@ -576,3 +599,14 @@ One GPU job in flight. No `simclr` job was touched.
    and a dense BVH, not of a fixable bottleneck. Confirm that `GPU_*`+`BATCH_SCALES_FAIL` is
    acceptable for coverage, so phase 1 spends its budget on fidelity rather than on a ratio that
    Step 6 already escalated once and closed.
+10. **Who owns the `texture_gaps` fix?** `stable_envs/render/mjwarp.py::texture_gaps` classifies by
+    geom type and never reads `tex_type`, so a cube map on a mesh passes the check and then crashes
+    the megakernel with an illegal memory access (job 6396447). The narrowest fix is one clause, but
+    `mjwarp.py` is shared with the Fetch, DM Control and Meta-World families and AGENT_COMMON.md says
+    the coordinator assigns ownership of shared files — so W5 has recorded it and changed nothing.
+    Any workstream reading an empty `texture_gaps` today is reading a false all-clear.
+11. **Is `OGBScene` in scope at all if MJWarp cannot draw its buttons?** The cube map is the button
+    metal. Options: (a) upstream/patch `mujoco_warp`'s cube sampling; (b) bake `T_btn` to its mean
+    colour via the existing `bake_primitive_textures` recipe, which is a declared approximation on
+    two small geoms; (c) drop `OGBScene` from Step 7 and ship `OGBCube` alone. (b) is cheap and in
+    keeping with the RoboCasa precedent, but it is a fidelity decision, not an engineering one.
