@@ -765,3 +765,190 @@ cd tip   && ... $PY .../w3_corpus.py                            # corpus_for + s
 
 Artifacts: `w3_attack.txt`, `w3_both.txt`, `w3_order_{clean,dirty}.json`, `ident_tip.json`,
 `replay_branch2.json`, `w3_unit_branch2.txt`, `paths_branch2.txt`.
+
+---
+---
+
+# FINAL VERIFICATION — tip `d1f65d4c6107f9013f2b467fb8e3ec5c9c139b6d` (2026-09-15)
+
+**Verdict: APPROVE.**
+
+Both false positives I built against `0013050` are now refused, with the stated reasons, and both are
+regression tests in the repo. The broken-citation set is identical to the baseline's by the contract
+test's own machinery. The conformance diff is limited to the rule. No defects remain.
+
+Worktree read-only; `git status` clean, HEAD unmoved. `/Users/samib/se6-venv`, mujoco 3.12.0 /
+dm_control 1.0.45, `MUJOCO_GL=glfw`, CPU. **The 3.11.0/1.0.44 and CUDA arms remain cluster-only and
+were not re-run here.** Hygiene re-checked over `76dc5116..d1f65d4`: 0 trailers, author `sami-bg`,
+nothing under `examples/results/step4|5|6`, nothing in `render/` or `raycast3d.py`.
+
+## D1 — closed
+
+`_RENDER_INVARIANT_OPTIONAL` exists and is `{}`; `FROZEN fields NOT emitted by the env` is now `[]`
+(`mat_texid` is emitted). Re-running my construction (`w3_attack2.py`, the real env's signature
+wrapped):
+
+```
+honest signature, thumbtip      -> REFUSED: "...changed geom_xpos, which a claim of sphere-orientation-only invariance forbids"
+geom_xpos POPPED, thumbtip      -> REFUSED: "render_scene_signature does not emit ['geom_xpos'], and the frozen
+                                             enumeration is the whole bound on this exclusion..."   [names the key: True]
+```
+
+And every other frozen key behaves the same way — I popped five at random and each produced a refusal
+naming itself: `geom_type`, `mat_texid`, `light_castshadow`, `cam_fovy`, `geom_names`.
+
+## D2 — closed
+
+`_MJGEOM_SPHERE = 2`, which I confirmed equals `mujoco.mjtGeom.mjGEOM_SPHERE`. Sphere-ness is derived
+from `geom_type`; an emitted `geom_is_sphere` must agree.
+
+```
+honest signature, quat_qw under BOX     -> REFUSED: "...rotated NON-sphere geoms ['target_ball']..."
+geom_is_sphere = all True, BOX          -> REFUSED: "render_scene_signature's geom_is_sphere disagrees with the
+                                                     geom_type it reports..."   [disagreement branch: True]
+geom_is_sphere POPPED, quat_qw / SPHERE -> GRANTED   (derivation works with no flag at all)
+geom_is_sphere POPPED, quat_qw / BOX    -> REFUSED   (and still refuses correctly)
+```
+
+The `mjGEOM_ELLIPSOID` note is on the constant, which is the right place for it — that is the kind the
+next author is most likely to get wrong, and W4 has now put it in the registry.
+
+**One thing I could not break, and it is not a defect.** I also forged `geom_type` itself to all-SPHERE
+in *both* states, which is internally consistent and therefore granted a BOX target. That is the
+irreducible trust floor: every field is env-supplied, so a fabricated primary model fact defeats any
+rule that reads the signature rather than the model. The guarantee the rule now makes — *given a
+truthful signature, nothing that moves anything but sphere orientation can be excluded* — holds, and
+D2 was precisely about the rule no longer accepting a **second, redundant** assertion that contradicts
+the primary one. Recording it so nobody re-derives it as a finding later.
+
+## D3 — closed, and my earlier count corrected
+
+I measured this the authoritative way this time, importing the contract test's own `CITATIONS` and
+`_expand` in each tree rather than scraping the assertion text:
+
+```
+BASELINE 76dc511 : citations 304   broken 9
+TIP      d1f65d4 : citations 306   broken 9
+SETS IDENTICAL   : True      only-on-tip: []      only-on-baseline: []
+  scratch/carracing/logs/            scratch/robocasa/out/corpus
+  scratch/sboughan/                  scratch/sboughan/se6/baseline/stable_envs/__init__.py
+  scratch/sboughan/se6/gfxdraw       scratch/sboughan/se6/tilemap/stable_envs/__init__.py
+  scratch/sboughan/venvs/se-step6/bin/python
+  scratch/sboughan/venvs/se6-gfxdraw-box2d/bin/python
+  scratch/step6/gfxdraw/cost_floor.{py,cpp
+```
+
+The tip adds two citations and neither is broken; no `se7` entry remains. **Correction to my
+re-review:** my 32/34 figures came from a regex over the assertion text and conflated broken citations
+with the *sites* that cite them. The real delta at `0013050` was one new broken citation
+(`scratch/sboughan/se7/dmc-manipulator/stable_envs/__init__.py`, matched out of the absolute Oscar path
+on line 6 of the CUDA profile note), not two. The finding was real; the count was mine to correct.
+
+## N1 / N2 / N3
+
+N1 (spatial tendon geometry) and N2 (non-fixed camera pose) are now written into
+`_validate_render_invariant`'s docstring, stated as out of reach of every dimension any current cell
+declares and as things that must be added before one that is not. That is the right disposition. N3
+(validation perturbs `+0.2` on row 0 while deadness is proved by donor substitution over the batch) is
+left alone as benign — I agree.
+
+## Scope of the shared change
+
+I checked this mechanically rather than by eye: mapping every changed line range in
+`stable_envs/testing/conformance.py` against the file's top-level AST spans over `76dc5116..HEAD`
+gives exactly
+
+```
+check_state_dims_matter, _render_invariant_candidates, _validate_render_invariant,
+and the module-level constant block between them (_RENDER_INVARIANT_FROZEN /
+_RENDER_INVARIANT_OPTIONAL / _MJGEOM_SPHERE, all new)
+```
+
+No other check, no threshold, no existing constant. **The conformance diff is limited to the rule.**
+
+## Re-verification
+
+- **Frozen Step-4 `dmc` shard**, `76dc511` vs `d1f65d4`, both run by me: **14 configs, 0 differing.** After dropping only
+  wall-clock `seconds` and absolute-path `traceback` strings, the two JSON documents compare equal on
+  every config; no config has a differing `digest_ours` or `digest_official`. And the shared rule is
+  provably inert for undeclared envs: their `check_state_dims_matter` payload is still exactly
+  `{"dead_dims": []}` with no new keys (checked on `DMCReacherHard`, `DMCBallInCupCatch`,
+  `DMCCheetahRun`).
+
+- **The frozen enumeration was not weakened to make "nothing missing" true.** I checked the obvious
+  cheat: `_RENDER_INVARIANT_FROZEN` is byte-identical between `0013050` and `d1f65d4` and still holds
+  all 20 fields including `mat_texid`. The gap was closed by the ENV emitting the field, which is the
+  correct direction.
+- **17 cells byte-identical across four digests.** 16 pre-existing vs `76dc511`: **0 differing** on
+  `size`/`state_dim`/`state_names`/`leaves`/`_slots`/`_hideable`/every `init_value`/`states_sha`/
+  default digest/two moved-style digests/an 84-px digest. And **all 17 cells are identical between
+  `0013050` and `d1f65d4`** — the hardening moved no pixel.
+- **`tests/unit`** (deselecting `test_examples.py`): **1 failed, 729 passed, 6 skipped** vs baseline
+  **1 failed, 713 passed** — +16 tests, same single pre-existing failure, whose broken set is the
+  identical 9 above. (The author's "839 passed, 2 failures" is the same run with `test_examples.py`
+  included.)
+- **Both directions, my own seed 8181, on the final tip** — unchanged from `0013050`:
+
+```
+224 SPHERE  ball_y/qw/qy  0 px            all GRANTED
+224 BOX     ball_y 0 px GRANTED | qw 221 px max 151 REFUSED | qy 221 px max 151 REFUSED
+ 84 SPHERE  ball_y/qw/qy  0 px            all GRANTED
+ 84 BOX     ball_y 0 px GRANTED | qw  27 px max 145 REFUSED | qy  27 px max 145 REFUSED
+negatives   arm_root / ball_x / target_ball_pos_x  -> all REFUSED ("changed geom_xpos")
+declared    {'dead_dims': [], 'excluded_dims': {ball_y, target_ball_quat_qw, target_ball_quat_qy}}
+emptied     {'dead_dims': ['ball_y','target_ball_quat_qw','target_ball_quat_qy']}   # no excluded_dims
+```
+
+(Author reports 201 px / 28 px under the box on their draw; mine is 221 / 27 on a different seed —
+same magnitude, same verdict, same refusal branch.)
+
+- **The two false positives are now regression tests**, built by wrapping the real env's signature —
+  `test_a_missing_frozen_field_is_refused_and_named_not_skipped`,
+  `test_a_lying_sphere_flag_cannot_grant_an_exclusion`,
+  `test_the_rule_derives_sphereness_even_when_the_env_omits_the_flag` — and the first carries a guard
+  (`assert not np.array_equal(base, moved), "thumbtip draws nothing; this test has lost its subject"`)
+  so it cannot quietly stop testing anything.
+
+## FINAL VERDICT: APPROVE
+
+No remaining defects. Every claim in the request was re-run and reproduced. The two demonstrated false
+positives are closed at the rule and pinned by tests; the citation regression is closed and verified
+against a reconstructed baseline worktree; the shared change is confined to `check_state_dims_matter`
+and its two helpers; and nothing outside the new cell has moved a pixel across the whole of
+`76dc5116..d1f65d4`.
+
+Standing caveats, unchanged and already declared by the author: the 3.11.0/1.0.44 declaration arm, the
+CUDA identity/tier arm and O1 are cluster-measured and I verified only their internal consistency; the
+signature does not yet describe tendon geometry or a non-fixed camera pose (N1/N2), which the next cell
+to declare a candidate must add first.
+
+### Final-verification commands
+
+```bash
+git worktree add --detach .../scratchpad/w3base3 76dc5116
+cd tip && MUJOCO_GL=glfw PYTHONPATH=tip $PY .../w3_attack2.py     # D1/D2 re-run against the hardened rule
+for T in w3base3 tip; do ... $PY .../w3_cites.py $T; done          # CITATIONS/_expand, both trees
+cd <tree> && ... $PY examples/fidelity_step4.py --shard dmc --device cpu --out replay_{base,tip3}.json
+cd tip && ... $PY .../w3_ident.py --out ident_tip3.json            # 17 cells x 4 digests
+cd tip && ... $PY .../w3_both.py                                   # both directions, both sizes
+cd tip && MUJOCO_GL=glfw $PY -m pytest tests/unit -q -p no:randomly --deselect tests/unit/test_examples.py
+```
+
+Artifacts: `w3_attack2.txt`, `cites_w3base3.json`, `cites_stable-envs-step7-dmc-manipulator.json`,
+`replay_tip3.json`, `ident_tip3.json`, `w3_both3.txt`, `w3_unit_tip3.txt`.
+
+## One housekeeping observation (not a defect, not mine)
+
+The worktree carries **two untracked files** I did not create and did not touch:
+
+```
+?? examples/results/step7/dmc-manipulator/replay/dmc_cpu_oscar311_BASE.json
+?? examples/results/step7/dmc-manipulator/replay/dmc_cpu_oscar311_HEAD.json
+```
+
+They are the output of the committed `scratch/step7/dmc-manipulator/oscar_paired_replay311.sbatch`,
+rsynced back from the cluster and left uncommitted while `replay/dmc_cpu_oscar311.json` *is* committed.
+They are also useful evidence — reading them confirms a cluster claim I could not otherwise check:
+**14 configs each, 0 differing `digest_ours` between BASE and HEAD at the 3.11.0/1.0.44 pin.**
+The coordinator should decide whether to commit them as the paired-replay evidence or drop them; left
+as-is they will dirty the integration merge. Working tree otherwise clean, HEAD unmoved at `d1f65d4`.
