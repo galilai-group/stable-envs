@@ -13,7 +13,7 @@ workstreams:
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 53fcb15 (phase 1)
+  head_sha: 8e4506c (phase 1 + Oscar certification artifacts)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -77,6 +77,14 @@ workstreams:
     - 'Q3 tier: certify per band and declare both (daylight vs lit differ ~100x; cause is in the reference)'
     - 'Q2 night bound: option 2 split by band - assert >=0.995 on light>=0.5, not_applicable below with the mechanism'
     reviewer: independent reviewer (fable family) spawned 2026-09-15, read-only
+    cluster_results:
+      venv_job_6394425: 'COMPLETED: $SCR/venvs/se7-craftax (python 3.12, jax 0.11.1 partitionable=True, craftax 1.6.1, torch 2.14.0+cu130) - first jax venv on Oscar'
+      certify_cpu_job_6394533: 'COMPLETED node2416, 1 thread: parity exact_frac 1.0 / max_abs 0 at 7 px and 16 px, all bands and strip; frame digests 288630d8d823c0b9 (7 px) / 820c52a906ae839a (16 px) byte-identical
+        to the Mac''s; threefry sweep 64/64 bit-exact on seven shapes (pre-0.4.36 path 0/64 on both hosts); Gate A all mandatory checks pass with dead_dims []; craftax unit tests 70 passed 1 skipped; md5
+        of craftax.py/prng.py match the branch'
+      sweep_cpu_job_6394647: RUNNING node2410 (per-band CPU tier + $SCR/se6/baseline leg, same node)
+      gpu_job_6394648: PENDING (cuda Gate A, GPU tier, Step-4 world-row digests on a 3090)
+      artifact: examples/results/step7/craftax-classic-full/certify_cpu_node2416.oscar.ccv.brown.edu.json
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -312,6 +320,8 @@ incident_log:
   item: W1 phase 1 (53fcb15) delivered, byte-identical parity; reviewer spawned; Oscar SSH restored (reported by W1, being confirmed)
 - date: '2026-09-15'
   item: W3 review APPROVE-WITH-CHANGES; follow-up requested
+- date: '2026-09-15'
+  item: 'W1 Oscar certification: parity and Gate A reproduced on x86-64 with byte-identical digests (8e4506c)'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
