@@ -798,7 +798,56 @@ The `NO_REFERENCE` row is the one this workstream recommends, for the reason the
 `cores` compares the renderer against decoding its own frame, which needs no reference at all and
 therefore cannot be gamed by one. It gives **`CPU_REGRESSION`** and **`GPU_FAST`**.
 
-### 9.7 (superseded) GPU tier queued
+### 9.7 tier-final — the ruled labels
+
+**Sami's rule, applied literally:** use the official renderer as the reference **if it can be timed
+on the certification host under the required conditions** — one core for CPU, the same card for GPU,
+the same job — otherwise retain `NO_REFERENCE`; never infer a reference throughput from another
+machine. **Parity is unchanged and remains against the un-jitted function as a uint8 claim.**
+
+**Three candidate reference timings were rejected before one qualified, and the rejections are the
+substance of applying the rule rather than asserting it:**
+
+| candidate | condition that failed |
+|---|---|
+| 610.6 f/s, `node2356`, CPU | ours ran on one core and **jax did not** — XLA's CPU backend runs its own thread pool and ignores `OMP_NUM_THREADS` |
+| 386.7 f/s, `gpu2107`, GPU | `env_header.sh` exports `JAX_PLATFORMS=cpu`, which both tier jobs sourced, so **the reference never touched the card** it was compared on |
+| 258.9 f/s, `gpu2104`, GPU | `JAX_PLATFORMS` unset, but the venv carries **`jax[cpu]`** — no CUDA jaxlib exists in it, so jax reported backend `cpu` anyway |
+
+A fourth attempt failed outright: `taskset -c 0` returned *"Invalid argument"* because SLURM's cpuset
+need not contain cpu 0. **`--cpus-per-task=1` is the right instrument** — the cgroup binds jax whether
+or not jax cooperates.
+
+**What qualified**, each timing the jitted official **and** our renderer in one process on one host,
+warm, compile excluded:
+
+| device | job | host | condition met |
+|---|---|---|---|
+| CPU | `6409933` | `node2335` | cgroup affinity **`[8]`** — one core for both sides |
+| GPU | `6409934` | `gpu2109` | jax backend **`gpu`**, `CudaDevice(id=0)` — **the same card as torch**, from a separate `se7-craftax-gpu` venv so the parity venv is untouched |
+
+**The labels** (Step 3's own evaluator, `sweep/tier_final_{cpu,cuda}.json`):
+
+| device | official (jitted) | ratio | `cores` | **tier** |
+|---|---|---|---|---|
+| **CPU** | **213.44 f/s** | `S_cpu` 2.80 paired / 5.39 sweep | 0.263 | **`CPU_FASTER`** (`BELOW_G4`) |
+| **GPU** | **151.68 f/s** | `R` 316.0 paired / 304.5 sweep | 15.40 | **`GPU_FASTER`** (`BATCH_SCALES`) |
+
+Two ratios are defensible and they are not the same number — the sweep-based one divides our
+certified throughput (4 allocated cpus, torch pinned to one thread) by a one-core reference, while
+the paired one has both sides under identical conditions in one process. **The label is the same
+under both on both devices**, which is the fact worth recording; the artifact carries the cross-check.
+
+Two things worth noting in the numbers themselves. The official on the **GPU is slower than on the
+CPU** (151.7 vs 213.4 f/s) — craftax renders one frame at a time and a single frame on a 3090 is
+launch-latency-bound, so the card does not help it. And the un-jitted reference times **1.2 f/s** on
+both, which is why §9.6's `GPU_EXCEPTIONAL` was never a defensible label: it divided by that.
+
+**The `NO_REFERENCE` alternative is retained in the record** (`CPU_REGRESSION` / `GPU_FAST`) because
+`cores` needs no reference at all, but it is no longer what this cell is labelled by: the reference
+**could** be fairly timed, so the rule says to use it.
+
+
 
 `bench_step3 --device cuda`, paired the same way: the Step-6-closed tree either side of the branch
 in **one allocation on one 3090** (`--constraint=geforce3090`), so the baseline re-measures a known
