@@ -463,8 +463,40 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
     p.changeVisualShape(pad, -1, rgbaColor=[*mat[12], 1.0], physicsClientId=c)
 
 
+#: The contact band the reference bridge cannot cross. The rocket's collision extent reaches 3.40 m
+#: below the base origin (link AABBs, upright, measured in the reference env) and the pad's top face is
+#: at z = 0.152; a state whose links sit within CONTACT_BAND_MARGIN of the pad top / ground puts a
+#: ground contact into the recipe's one substep, which Bullet resolves with a split-impulse position
+#: correction the velocity fixed point cannot absorb. Measured share of such states in the cell's own
+#: ``sample_states`` distribution: REFERENCE_UNREACHABLE_SHARE (1 of 960 over 15 seeds x 64 states,
+#: ``examples/results/step7/rocket-landing/tier/reference_rejections_local.json``; the rejected state:
+#: height 2.07 m, tilt 3.4 deg). The sampled distribution is NOT narrowed for it.
+PAD_TOP_Z = float(PAD_POS[2] + PAD_LEN / 2.0)
+CONTACT_BAND_MARGIN = 0.05
+REFERENCE_UNREACHABLE_SHARE = 1.0 / 960.0
+
+
+def _lowest_link_z(p, c, rid) -> float:
+    """The lowest z of the rocket's link collision AABBs at its CURRENT pose in the client."""
+    n = p.getNumJoints(rid, physicsClientId=c)
+    return min(p.getAABB(rid, link, physicsClientId=c)[0][2] for link in range(-1, n))
+
+
 def _reference_frame(env, state: np.ndarray, style_row: np.ndarray) -> np.ndarray:
-    """One official frame at an arbitrary state: the previous-substep teleport with a velocity fixed point."""
+    """One official frame at an arbitrary state: the previous-substep teleport with a velocity fixed point.
+    Raises when the recipe does not reach the requested pose (the strict form the validators use)."""
+    frame, unreachable = _reference_frame_flagged(env, state, style_row, contact_fallback=False)
+    return frame
+
+
+def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, contact_fallback: bool = True):
+    """``(frame, unreachable)``. The LAGGED official picture (links and camera one substep behind the
+    base) via the previous-substep teleport and the velocity fixed point. When the recipe does not reach
+    the requested pose AND the pose is in the contact band (``PAD_TOP_Z`` + ``CONTACT_BAND_MARGIN``, any
+    link AABB), the lagged picture is unreachable by this bridge: with ``contact_fallback`` the frame
+    returned is swm's SYNCED picture of the requested pose (teleport, no substep -- the convention swm's
+    own goal image is rendered under) and ``unreachable`` is True, so a caller can record and exclude the
+    row; without it, or when the failure is outside the band (a genuine bridge failure), it raises."""
     import pybullet as p
     u = env.unwrapped
     c, rid, pad = u.env._client, u.env.drones[0].Id, u.landing_pad_id
@@ -487,10 +519,16 @@ def _reference_frame(env, state: np.ndarray, style_row: np.ndarray) -> np.ndarra
     pos_err = float(np.abs(got_pos - pos).max())
     rot_err = float(1.0 - abs(np.dot(got_q / np.linalg.norm(got_q), q)))
     if pos_err > 1e-6 or rot_err > 1e-9:
+        # the requested pose itself: is it in the contact band?
+        p.resetBasePositionAndOrientation(rid, list(pos), list(q), physicsClientId=c)
+        p.resetBaseVelocity(rid, list(v), list(w), physicsClientId=c)
+        in_band = _lowest_link_z(p, c, rid) <= PAD_TOP_Z + CONTACT_BAND_MARGIN
+        if contact_fallback and in_band:
+            return np.asarray(u.render(), np.uint8)[..., :3].copy(), True
         raise AssertionError(f"PFRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
-                             f"1-|q.q'| {rot_err:.3e}); every fidelity number computed from it would compare two "
-                             f"different scenes")
-    return np.asarray(u.render(), np.uint8)[..., :3].copy()
+                             f"1-|q.q'| {rot_err:.3e}; {'in' if in_band else 'outside'} the contact band); every "
+                             f"fidelity number computed from it would compare two different scenes")
+    return np.asarray(u.render(), np.uint8)[..., :3].copy(), False
 
 
 # --------------------------------------------------------------------------- the env
@@ -673,15 +711,26 @@ class PFRocketLanding(StableEnv):
         """The swm env at ``size`` (its own ``render_resolution``), reset once and never closed."""
         return _reference_make(int(size))
 
+    #: Per-row flags of the LAST ``reference_render`` call: True where the bridge could not produce the
+    #: lagged picture (contact band, see ``_reference_frame_flagged``) and returned swm's synced picture
+    #: instead. A harness reads it right after the call to record and exclude those rows; the shared
+    #: ``check_visual_fidelity`` keeps them, which is the conservative direction (the synced picture
+    #: differs from the lagged one by the one-substep lag).
+    last_reference_unreachable: np.ndarray = np.zeros(0, bool)
+
     @classmethod
     def reference_render(cls, env, states, style=None) -> np.ndarray:
-        """Official frames for ``(state, style)`` rows -- the LAGGED picture swm observes after ``step``."""
+        """Official frames for ``(state, style)`` rows -- the LAGGED picture swm observes after ``step``.
+        Rows the bridge cannot reach (the contact band, ``REFERENCE_UNREACHABLE_SHARE`` of the sampled
+        distribution) get the synced picture and are flagged in ``last_reference_unreachable``."""
         st = np.asarray(states, np.float64).reshape(-1, 13)
         if style is None:
             sty = np.tile(_default_style_row(), (len(st), 1))
         else:
             sty = np.asarray(style, np.float64).reshape(len(st), -1)
-        return np.stack([_reference_frame(env, st[i], sty[i]) for i in range(len(st))])
+        out = [_reference_frame_flagged(env, st[i], sty[i]) for i in range(len(st))]
+        cls.last_reference_unreachable = np.array([u for _, u in out], bool)
+        return np.stack([fr for fr, _ in out])
 
 
 def _default_style_row() -> np.ndarray:

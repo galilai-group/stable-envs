@@ -72,6 +72,10 @@ fi
 # 2. PFRocketLanding: corpus replay, mandatory checks, throughput, visual fidelity vs PyFlyt
 PYTHONPATH=$WS $PY "$WS/scratch/step7/rocket-landing/measure_tier.py" --draws 4 --n 64 2>&1 | tee "$OUT/tier/measure_tier_stdout.txt" | tail -40
 
+# 2b. row-0 prefix batches 1..64 and a 1024-batch vs the single render, plus the MujocoHopper control
+#     (M5 ruling, condition 2 on the batch-invariant mvp)
+PYTHONPATH=$WS $PY "$WS/scratch/step7/rocket-landing/probe_batch_size.py" 2>&1 | grep -v "UserWarning\|sparse_coo_tensor\|to_sparse_csr"
+
 # 3. the conformance suite restricted to this cell (Gate A on the card; reference needs PyFlyt)
 # full output kept (job 6395707 kept only tail -25 and hid the mechanism of its 4 failures); -rA lists every outcome
 PYTHONPATH=$WS $PY -m pytest tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py -q -rA -p no:cacheprovider \

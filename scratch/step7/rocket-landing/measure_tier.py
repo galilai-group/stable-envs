@@ -169,8 +169,9 @@ def main():
         if fn is None:
             continue
         try:
-            if name == "check_batch_size_invariance":       # signature (env, states, ...): windows of 1/7/64
-                R["mandatory"][name] = fn(env, env.sample_states(64, rng=np.random.default_rng(11)))
+            if name == "check_batch_size_invariance":       # signature (env, states, ...); windows 1/7/64/4096 (M5 ruling)
+                R["mandatory"][name] = fn(env, env.sample_states(4096, rng=np.random.default_rng(11)), sizes=(1, 7, 64, 4096))
+                torch.cuda.empty_cache()
             else:
                 R["mandatory"][name] = fn(env)
         except Exception as e:                                                      # pragma: no cover
@@ -309,7 +310,7 @@ def main():
         for k in range(a.draws):
             env.rng = np.random.default_rng(1000 + k)
             try:
-                r = C.check_visual_fidelity(env, n=a.n)
+                r = fidelity_draw(env, a.n)
                 r["draw"] = k
                 vf.append(r)
                 print("visual_fidelity draw", k, json.dumps(r), flush=True)
@@ -318,16 +319,23 @@ def main():
                 print("visual_fidelity draw", k, "FAILED", failures[-1]["error"], flush=True)
             checkpoint()
         if vf:
-            worst = {"mean_abs": max(r["mean_abs"] for r in vf), "within8_frac": min(r["within8_frac"] for r in vf),
-                     "ssim": min(r["ssim"] for r in vf)}
+            # worst of the draws over the REACHABLE rows (what is declared) and over all rows (what the
+            # shared check_visual_fidelity computes, flagged rows carrying the synced picture)
+            worst = {"mean_abs": max(r["reachable_only"]["mean_abs"] for r in vf),
+                     "within8_frac": min(r["reachable_only"]["within8_frac"] for r in vf),
+                     "ssim": min(r["reachable_only"]["ssim"] for r in vf),
+                     "unreachable_rows_total": int(sum(r["unreachable_rows"] for r in vf)),
+                     "all_rows": {"mean_abs": max(r["mean_abs"] for r in vf), "within8_frac": min(r["within8_frac"] for r in vf),
+                                  "ssim": min(r["ssim"] for r in vf)}}
             R["visual_fidelity"]["worst"] = worst
-            R["visual_fidelity"]["spread"] = {k_: [min(r[k_] for r in vf), max(r[k_] for r in vf)]
+            R["visual_fidelity"]["spread"] = {k_: [min(r["reachable_only"][k_] for r in vf), max(r["reachable_only"][k_] for r in vf)]
                                               for k_ in ("mean_abs", "within8_frac", "ssim")}
         gate("visual_fidelity_4x64", len(vf) == a.draws and not failures,
              f"draws {len(vf)}/{a.draws} rejections {len(failures)} worst {R['visual_fidelity'].get('worst')} "
              f"spread {R['visual_fidelity'].get('spread')}")
         try:
             R["variation_fidelity"] = C.check_visual_fidelity_under_variation(env, n=a.n, seed=7)
+            R["variation_fidelity"]["unreachable_rows"] = int(np.asarray(RL.PFRocketLanding.last_reference_unreachable, bool).sum())
         except Exception as e:                                                      # pragma: no cover
             R["variation_fidelity"] = f"ERROR {type(e).__name__}: {e}"
         print("under variation:", R["variation_fidelity"], flush=True)
@@ -337,6 +345,32 @@ def main():
     R["seconds"] = round(time.time() - t0, 1)
     checkpoint()
     print("wrote", out)
+
+
+def fidelity_draw(env, n: int) -> dict:
+    """``stable_envs.testing.conformance.check_visual_fidelity`` line for line (same rng consumption, same
+    reference, same metrics), plus the cell's per-row ``last_reference_unreachable`` flag: the numbers over
+    ALL rows are exactly what the shared check computes (flagged rows carry swm's synced picture), the
+    numbers over the REACHABLE rows are what the declaration carries, with the flagged share recorded."""
+    cls = type(env)
+    ref = C.reference_env(cls, env.size)
+    states = env.sample_states(int(n))
+    official = cls.reference_render(ref, states)
+    flags = np.asarray(cls.last_reference_unreachable, bool)
+    ours = env.render(states).cpu().numpy()
+    r = C.pixel_agreement(ours, official)
+    r["ssim"] = C.ssim(ours, official)
+    r["n_states"] = int(n)
+    r["unreachable_rows"] = int(flags.sum())
+    keep = ~flags
+    if flags.any() and keep.any():
+        rr = C.pixel_agreement(ours[keep], official[keep])
+        rr["ssim"] = C.ssim(ours[keep], official[keep])
+        rr["n_states"] = int(keep.sum())
+        r["reachable_only"] = rr
+    else:
+        r["reachable_only"] = {k: r[k] for k in ("mean_abs", "exact_frac", "within8_frac", "interior_exact_frac", "ssim", "n_states")}
+    return r
 
 
 def state_quantisation_term(ref, S, F, sty_env) -> dict:
