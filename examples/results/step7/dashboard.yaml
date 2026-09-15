@@ -402,7 +402,8 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: formal re-review on aa54c2c pending; GPU job 6395707 queued (6395516 cancelled); results accepted only on APPROVE without further code change; M4 after
+  status: 'formal re-review on 13ca91b: APPROVE-WITH-CHANGES (RC-1/RC-2 verified fixed; stable_envs clean; D1 provenance [addressed in aa54c2c], D2 duplicate replay row + false sentence, minors); fix commit
+    requested; job 6395707 results stand except the replay row; reviewer verifies next tip; then M4'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -491,6 +492,19 @@ workstreams:
         - RC-4 None values under UNMEASURED + registration test
         - RC-5 missing_backend lists nvdiffrast, scipy, pybullet_data, Pillow
         - camera tolerance 3e-3 stated
+      rereview_13ca91b:
+        verdict: APPROVE-WITH-CHANGES
+        rc1: 'fixed: 64/64 at measure_tier seed, batch OK, float32 == float64-renormalised frames 64/64; corpus 50/50 from float64; float32 0 rejections, 1/50 exact max 79 px (quantisation term); tolerance
+          = 0.027 px rotation, 1e-4 px position'
+        rc2: 'fixed: full suite baseline 2/823/6 vs branch 2/855/7, same two failures'
+        rc3: fixed except D1 (SHA/checkout provenance; appears in aa54c2c) and D2 (float64_obs and float32_state13 replays are bit-identical inputs; sentence false)
+        rc4_rc5: fixed
+        minors:
+        - missing_backend imports scipy/PIL at import time (0.87 s)
+        - 'findings totals wrong (third time): measured 745/7 deselected, 855/2/7 full'
+        - test name
+        - max(cert) on --batches 1
+        - reference_trick_validation.json predates renormalisation
   rulings:
   - no AI trailers (project rule wins over harness reminder)
   - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
@@ -579,6 +593,8 @@ incident_log:
     baseline copy is $SCR/se7/baseline = 76dc511'
 - date: '2026-09-15'
   item: Sami W6 ruling recorded and forwarded (reviewer formal re-review on 13ca91b; cluster gate list to W6)
+- date: '2026-09-15'
+  item: 'W6 formal re-review: hard blockers cleared; D2 + minors forwarded; job 6395707 kept'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter

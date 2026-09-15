@@ -421,3 +421,192 @@ geometry, law, texture sampling), declared at the visual tier rather than claime
    checker with `wrap`, the cap-triangulation residual, and the 61 px flame.
 7. **That the reference env and the nvdiffrast context coexist** in one process (PyBullet DIRECT +
    EGL + a CUDA raster context) for the ~57 s numba JIT plus 4×64 reference renders.
+
+---
+
+# Appendix — formal re-review at HEAD `13ca91b` (2026-09-15)
+
+Single commit `13ca91b` on top of `92d9b28`. Diff scope confirmed: `examples/results/.../findings.md`,
+`scratch/step7/rocket-landing/measure_tier.py`, `stable_envs/envs/rocket_landing.py`,
+`tests/unit/test_rocket_landing.py`. **`stable_envs/render/nvdiff.py` is byte-identical to `92d9b28`**
+(`git diff --quiet 92d9b28..13ca91b -- stable_envs/render/nvdiff.py` → clean), so the bit-identity
+result I established for the six locomotion `Scene`s still stands unmodified. GPU job 6395516 is
+queued on this tree.
+
+## VERDICT: **APPROVE-WITH-CHANGES (2 remaining defects, both RC-3-class)**
+
+**RC-1 and RC-2 — the two hard blockers — are demonstrably fixed.** RC-4 and RC-5 are fixed. RC-3 is
+fixed except for two items, both confined to `scratch/.../measure_tier.py` plus one sentence of
+`findings.md`. Nothing in `stable_envs/` is defective any more, so the library change is approvable;
+per Sami's ruling that RC-3 lands "before any performance interpretation", the two residuals must
+land before the numbers from 6395516 are read. **Job 6395516 need not be cancelled** — the tier
+arithmetic is correct and the numbers it produces will be valid; D1 only costs provenance (record the
+SHA out of band) and D2 only produces a duplicate row.
+
+### RC-1 — FIXED (re-ran my own probe, not the author's)
+
+`se7-rocket-venv`, the exact seed `measure_tier.py` uses for draw 0:
+
+```
+env.rng = np.random.default_rng(1000); st = env.sample_states(64)
+  dtype float32, max ‖q‖−1 = 2.9646e-08          (the input is still off-unit — the fix is downstream)
+  per-state:  64 ok, 0 AssertionError / 64        (was 28 ok / 36 raised at 92d9b28)
+  batch call: OK, (64, 480, 480, 3)               (was: raised)
+```
+
+and the frames are not merely produced, they are **the right frames**:
+
+```
+float32 states vs the same states renormalised in float64:  64/64 byte-identical, max diff 0 px
+```
+
+Corpus, shipped `reference_render`, 50 states (every 4th, incl. index 124 — the previous 1-px outlier):
+
+| states | assertion failures | byte-identical | max differing px |
+|---|---|---|---|
+| `obs30[:, :13]` float64 | 0 / 50 | **50 / 50** | 0 |
+| `state13` float32 | **0 / 50** (was 56/100) | 1 / 50 | 79 |
+
+So physically converged states are no longer rejected, and the float32 path now reproduces the
+float64 picture exactly for sampled states. The remaining float32-vs-frozen-frame gap is the
+state-quantisation term against frames recorded from float64 physics — inherent, correctly reported
+alongside, and the subject of D2 below.
+
+The tolerance is sound: `1 − |q·q'| ≤ 1e-9` is θ ≤ 8.9e-5 rad = **0.027 px** at 480 px / 90° fov, and
+`pos ≤ 1e-6 m` is ~1e-4 px at the 3 m camera offset. Both are far inside a pixel, so the check still
+does the job it was written for. `lagged_pose`'s float64 renormalisation is applied before
+`quat_to_mat`/`quat_mul`, so the render side and the reference side now describe the same rotation.
+
+**Checkpointing verified by reading the code:** `out` is computed before any work, `checkpoint()`
+dumps `R` after *each* of corpus-replay (per label), mandatory checks, throughput/batch-checks, tier,
+every fidelity draw, and variation fidelity; each `check_visual_fidelity` draw is wrapped in
+`try/except` and a failure is recorded in `R["visual_fidelity"]["failures"]` rather than raised;
+`worst`/`spread` are computed only `if vf`. A late failure can no longer erase the run.
+
+### RC-2 — FIXED (full suite, both sides, no deselection)
+
+```
+pristine worktree at 76dc5116, /Users/samib/se6-venv, MUJOCO_GL=glfw, -p no:randomly
+  baseline:  2 failed, 823 passed, 6 skipped
+  branch  :  2 failed, 855 passed, 7 skipped
+  the two failures are IDENTICAL on both sides:
+    test_examples.py::…[robocasa_visual/render_mjwarp.py]
+    test_repo_contracts.py::test_every_cited_scratch_path_resolves
+```
+
+**No new failures.** +32 passing tests, +1 skip (`pybullet_data` absent in `se6-venv`). With
+`test_examples.py` deselected: baseline 1 failed / 713 passed / 6 skipped, branch 1 failed / 745
+passed / 7 skipped, and the citation failure now lists exactly the baseline's **9** paths with **no
+`step7` entry**; `test_no_cited_probe_is_excluded_by_gitignore` passes.
+
+*Minor, third occurrence of the same class of error:* `findings.md` now records "branch after the
+review commit: **713 passed / 1 failed / 37 skipped**". The branch adds 32 tests, so its pass count
+cannot equal the baseline's 713; I measure 745 passed / 7 skipped. The load-bearing claim (one
+pre-existing failure, no step7 citation) is correct and verified — the totals beside it are not.
+Please quote numbers from a run that can be reproduced with the interpreter named in the same table.
+
+### RC-3 — mostly fixed; **two defects remain**
+
+Fixed and verified by reading the diff:
+
+| item | status |
+|---|---|
+| B = 1 excluded from certified-batch selection | **fixed** — `cert = [b for b in a.batches if b != 1]`, `best_b = max(cert, …)` |
+| tier capped at `GPU_PARITY` when `BATCH_SCALES` fails (§6.7) | **fixed and correct** — capped only when `R ≥ 1`, so `GPU_REGRESSION` is preserved below 1; `BATCH_SCALES_FAIL` / `LARGE_BATCH_REGRESSION` / `BELOW_G4` / `HOST_BOUND` are emitted as a `qualifiers` list |
+| `cpu_frac` measured, `HOST_BOUND` at ≥ 1.5 | **fixed** — `time.process_time()/wall` over the timed loop (process-wide CPU across threads, the right definition), per batch, `cpu_frac_at_best` carried into `R["tier"]` |
+| one-core JPEG comparator pinned | **fixed** — `torch.set_num_threads(1)` around the decode loop, restored after, and `decode_cpu_frac` recorded so the "one core" claim is *evidenced* rather than asserted |
+| threads / load average / SLURM job id | **fixed** — in `R` and echoed into `R["tier"]` |
+| no local-M5 numbers in the tier calculation | **fixed** — the `throughput_vs {official_fps_local_M5, one_core_jpeg_decode_fps_local_M5}` block is gone (`grep 34.25\|1190.9\|local_M5` → none); both comparators are same-node, same-job |
+| `R` / `cores` / class-S ladder / `BATCH_SCALES` / `NO_LARGE_BATCH_REGRESSION` | unchanged and still at the frozen §6.3/§6.6/§6.7 definitions |
+
+**D1 (remaining, RC-3) — no commit SHA and no resolved-checkout provenance.**
+`measure_tier.py` records host, gpu, python, slurm_job, threads, load_average and package versions,
+but **not the git commit and not the `stable_envs` module actually imported**
+(`grep -n "git\|commit\|sha\|profile_note" measure_tier.py` → nothing but an unrelated comment). This
+is precisely the field `scratch/step6/profile_note.py` exists to carry — it has `git_commit()` and
+`stable_envs_file()`, with the comment *"each leg records which checkout it loaded; the git commit of
+the harness does not answer that"* — and it is precisely the failure AGENT_COMMON warns about on
+Oscar, where a stale `$SCR/stable-envs` on `main` sits next to `$SCR/se7/rocket-landing`. The
+author's own `nvdiff_identity.py` gets this right (it records `pythonpath` and `stable_envs_file`);
+`measure_tier.py` does not. **Fix:** import or copy `git_commit()` / `stable_envs_file()` from
+`scratch/step6/profile_note.py` into `R` (and, since the run is already queued, record 6395516's
+SHA by hand alongside its output).
+
+**D2 (remaining, RC-3) — the "two corpus replays" are one measurement, and the claim beside them is
+wrong.** `measure_tier.py` now renders the corpus twice, labelled `float64_obs` ("the renderer's
+residual alone") and `float32_state13` ("what a consumer gets"), and `findings.md` repeats the
+claim. They are the same render. Verified:
+
+```
+obs30[:, :13].astype(np.float32) is BIT-IDENTICAL to state13   (np.array_equal on the uint32 views: True,
+                                                                max |diff| 0.0)
+rocket_landing.py:634  s = torch.as_tensor(states, device=…, dtype=torch.float32)   # every input is cast
+measure_tier.py        torch.as_tensor(st[lo:lo+16], dtype=torch.float32, …)        # both labels, explicitly
+```
+
+so both loops feed the renderer identical float32 tensors and will print identical numbers. The
+inline note — *"the float32 rounding … is a STATE change of its own"* / *"the two differ only through
+`lagged_pose`'s float64 renormalisation of a float32 quaternion"* — is false: the renormalisation
+happens **after** the float32 cast, in both cases. The renderer's residual cannot be isolated on the
+*our* side at all, because `render()` is float32 by contract.
+
+**Fix (pick one):**
+(a) drop the duplicate and label the single replay honestly as containing **both** terms, pointing at
+`check_visual_fidelity` — which puts both sides at the same float32 sampled states — as the
+renderer-only number; **or**
+(b) keep two rows but make the second one the *reference* side: `reference_render(state13)` against
+the frozen frames, which is the state-quantisation term and which I measured locally as
+**1/50 byte-exact, max 79 differing px, 0 assertion failures**. Then
+`frozen ↔ reference_render(state13)` is the quantisation term and
+`reference_render(state13) ↔ env.render(state13)` is the renderer term, and they add up.
+
+### RC-4 — FIXED
+
+`visual_fidelity` is `{mean_abs: None, within8_frac: None, ssim: None, mean_abs_max: None,
+within8_min: None, ssim_min: None, measured_at: "UNMEASURED: no number here is a measurement…",
+reference_versions: {PyFlyt 0.29.0, pybullet 3.2.7}}`. Run directly on this machine:
+`check_fidelity_declaration` and `check_decoder_declaration` both pass with the `None` values (the
+validator checks presence), and the new `test_the_visual_declaration_is_complete_and_marked_unmeasured`
+pins it. I grepped every consumer of the numeric keys in the repo: only
+`examples/robocasa_visual/calibrate_tier.py` (robocasa-specific) and a synthetic class in
+`test_rendernet_identity.py` read them, so `None` cannot propagate into an arithmetic comparison for
+this cell. A consumer printing `describe()` now sees `None` next to the UNMEASURED sentence and
+cannot mistake a placeholder for a measurement.
+
+### RC-5 — FIXED
+
+`missing_backend()` now reports all four, verified on this machine:
+
+```
+"nvdiffrast: ModuleNotFoundError: No module named 'nvdiffrast'; pybullet_data: ModuleNotFoundError: …"
+```
+
+`__init__` raises `ImportError` with that list, `register(PFRocketLanding)` is gated on it, and the
+checker's provenance is tied to the `pybullet 3.2.7` declaration in the docstring. Camera tolerance is
+now `3e-3` with a written float32 rationale that matches the 1.009e-3 I measured against PyFlyt's live
+`view_mat`.
+
+### Minor (not required, worth one line each)
+
+* **Import side effect.** `missing_backend()` runs at module import, so `import stable_envs` now
+  imports `scipy.spatial` and `PIL.Image` on every machine (verified: both in `sys.modules`; total
+  `import stable_envs` 0.87 s here). `nvdiff.py`'s stated convention is the opposite ("imports neither
+  mujoco nor nvdiffrast at module scope"). Consider gating `register` on nvdiffrast alone and probing
+  the rest lazily in `_nvd()`, with `missing_backend()` still reporting all four on demand.
+* **Stale artifact.** `reference_trick_validation.json` (199/200, one 1-px frame, index 124) predates
+  the renormalisation; index 124 is now byte-exact in my sample, so the recipe is probably 200/200.
+  Re-run `validate_reference_trick.py` or mark the JSON as pre-RC-1. The findings sentence
+  understates the result rather than overstating it, so this is bookkeeping, not a correctness issue.
+* `test_registered_iff_nvdiffrast_imports` now branches on `missing_backend()`, not on nvdiffrast —
+  rename it.
+* `cert = [b for b in a.batches if b != 1]` raises `ValueError` on `max(())` if someone passes
+  `--batches 1`; guard it.
+
+### Unchanged from the main report
+
+Everything under "What I verified, and how" (the bit-identical `Scene` hashes across both checkouts,
+the TinyRenderer law including the 162/158 back-face case, the lag law on fresh rollouts, the camera
+and link frames against PyBullet, the colour law against the swm source, the hull silhouette IoU, the
+default-appearance check, hygiene) was re-checked for scope and is untouched by `13ca91b`. The
+"what only the cluster can verify" list is unchanged, minus item 3's blocker: `check_visual_fidelity`
+can now run.
