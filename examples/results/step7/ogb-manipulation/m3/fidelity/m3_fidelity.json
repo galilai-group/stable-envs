@@ -1,4 +1,5 @@
 {
+ "SUPERSEDED": "Job 6398733. Measured through a composite that used `seg >= 0`, so the baked plate was applied only to sky and MJWarp's floor won everywhere (review item B1). These are raw corrected-MJWarp numbers, not this cell's. Superseded by remeasure.json (job 6407605). Kept as the before half of that fix.",
  "cells": {
   "OGBCube": {
    "draws": [

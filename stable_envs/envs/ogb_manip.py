@@ -34,16 +34,17 @@ Those are why the tier is ``visual``. They are declared in ``visual_fidelity`` r
 the coordinator bounded the attribution to one further pass and this class was written at the tier
 the evidence supported.
 
-THE NUMBER THAT ACTUALLY SHIPS IS NOT 0.35
--------------------------------------------
+WHERE THE FIDELITY ACTUALLY COMES FROM
+--------------------------------------
 
-The interior mask on this scene is **99.2 % floor**, and the floor is the plate — baked through
-MuJoCo and exact BY CONSTRUCTION, asserted per class rather than assumed (``_check_plate_is_constant``
-below; phase 0 measured it bit-static over 6 states with every mover hidden). Only the **10-19 %** of
-pixels that are movers are MJWarp's to draw. Measured whole-frame exactness of the COMPOSITE is
-**0.92-0.95**, and that is what a caller gets. The 0.35 is a statement about a floor this class never
-asks MJWarp to draw, and quoting it as the cell's fidelity would be as wrong as quoting the 0.95 as
-parity.
+The interior mask on this scene keeps 0.41 (Cube) / 0.28 (Scene) of pixels, and most of what it
+keeps is the floor -- which is the plate, baked through MuJoCo itself and composited in wherever
+MJWarp did not hit a MOVER. Getting that composite right is the single largest fidelity term in this
+family, larger than every lighting correction put together: an earlier version masked with
+``seg >= 0``, which is true wherever MJWarp hit ANYTHING, so the plate was used only on sky and the
+cell scored 0.351 interior-exact. With the mover LUT it scores **0.958** (Cube) and **0.922**
+(Scene), and whole-frame exactness is **0.872** and **0.775**. All four are measured, on three
+independent 64-state draws, and are the numbers in ``visual_fidelity``.
 
 STATE
 -----
@@ -432,10 +433,15 @@ def _ctx_button_tables(b: "_Bundle", m, res: int, device: str = "cuda") -> dict 
 SPEC = {
     # `visible_tri` is the phase-0 census figure for geoms in the rendered groups, used only in the
     # device="cpu" refusal so the message quotes THIS cell's size rather than its sibling's.
+    # `state_dim` is a CONSTANT here, not `len(_bundle(cell).state_names)`. Calling `_bundle` from
+    # `_make_classes` meant `import stable_envs` built both swm environments: 4.4 s of import time,
+    # and without `stable_worldmodel` installed the module raised and BOTH ids vanished from the
+    # registry (76 instead of 78). A docstring is not worth either. `tests/unit/test_ogb_manip.py`
+    # asserts these agree with what `_bundle` computes, wherever swm IS importable.
     "Cube": {"swm_id": "swm/OGBCube-v0", "camera": "front_pixels", "size": 224,
-             "swm_ref": "swm/OGBCube-v0", "visible_tri": 193113},
+             "swm_ref": "swm/OGBCube-v0", "visible_tri": 193113, "state_dim": 24},
     "Scene": {"swm_id": "swm/OGBScene-v0", "camera": "front_pixels", "size": 200,
-              "swm_ref": "swm/OGBScene-v0", "visible_tri": 196633},
+              "swm_ref": "swm/OGBScene-v0", "visible_tri": 196633, "state_dim": 30},
 }
 
 
@@ -606,9 +612,11 @@ class OGBManipBase(StableEnv):
         return out
 
     def _bake_plate(self, res: int, states=None) -> torch.Tensor:
-        """MuJoCo's own raster of the static scene: the floor plane and the skybox. Exact by
-        construction, which is the whole reason the composite is worth 0.92-0.95 while MJWarp alone
-        is worth 0.35.
+        """MuJoCo's own raster of the static scene: the floor plane and the skybox.
+
+        Exact because MuJoCo drew it -- and only reaching the frame where the mover LUT says MJWarp
+        did not hit a mover. Measured worth, three 64-state draws: interior-exact 0.958 (Cube) and
+        0.922 (Scene), whole-frame 0.872 and 0.775.
 
         Every mutation is undone from a pristine snapshot rather than by inverse edit, so baking
         twice gives the same model.
@@ -844,7 +852,7 @@ import os as _os
 #: that defect: interior-exact 0.351 -> 0.958 and all-exact 0.278 -> 0.872 on the Cube.
 _MEASURED: dict = {
         "Cube": {
-            "all_exact_frac": 0.871693,
+            "all_exact_frac": 0.870342,
             "draw_spread": {
                 "mean_abs": [
                     2.408967,
@@ -859,8 +867,8 @@ _MEASURED: dict = {
                     0.916856
                 ]
             },
-            "interior_exact_frac": 0.958115,
-            "interior_frac": 0.41272,
+            "interior_exact_frac": 0.958007,
+            "interior_frac": 0.411172,
             "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
             "mean_abs": 2.441658,
             "mean_abs_max": 3.2,
@@ -870,7 +878,7 @@ _MEASURED: dict = {
             "within8_min": 0.9
         },
         "Scene": {
-            "all_exact_frac": 0.775299,
+            "all_exact_frac": 0.771891,
             "draw_spread": {
                 "mean_abs": [
                     5.327423,
@@ -885,8 +893,8 @@ _MEASURED: dict = {
                     0.857355
                 ]
             },
-            "interior_exact_frac": 0.921712,
-            "interior_frac": 0.278191,
+            "interior_exact_frac": 0.917805,
+            "interior_frac": 0.2769,
             "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
             "mean_abs": 5.381315,
             "mean_abs_max": 7.0,
@@ -902,7 +910,7 @@ _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 #: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
 #: certifier must compare. swm and ogbench are deliberately absent -- neither number was measured
 #: against a named version of either, and a version nobody measured under is not provenance.
-_REFERENCE_VERSIONS = {"mujoco": "3.12.0"}
+_REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
 #: OUR side: the batch raytracer that drew the movers.
 _MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
@@ -931,6 +939,9 @@ def _fidelity(cell: str) -> dict:
         # this scene keeps 0.41 (Cube) / 0.28 (Scene) of pixels, so unlike DM Control's speckled
         # skybox it is defined here, but it is still a statement about the plate rather than about
         # the mover pass.
+        # WORST of the three draws, like the three headline metrics -- not the mean. The first
+        # version declared means beside a `measured_at` that said "the WORST of the three", which is
+        # a small number and a wrong sentence (Cube interior 0.958115 mean vs 0.958007 worst).
         "interior_exact_frac": float(d["interior_exact_frac"]),
         "interior_frac": float(d["interior_frac"]),
         "all_exact_frac": float(d["all_exact_frac"]),
@@ -939,19 +950,27 @@ def _fidelity(cell: str) -> dict:
         # round step below the WORST draw. DM Control sets ceilings this way (mean 5.01 -> 6.50,
         # 8.07 -> 10.5) precisely so a threshold is a contract rather than a tripwire on the next
         # state draw, and the spread over three draws is what it is set clear of.
+        # x1.3 on the mean; the fractional floors the largest 0.05-grid value at least 0.04 BELOW
+        # the worst draw. The bare `floor(x*20)/20` this used before gave margins of 0.007-0.016
+        # whenever the worst draw sat just above a grid line -- a threshold that close to a measured
+        # value is the tripwire the family rule exists to avoid, and DM Control's own floors sit
+        # 0.04-0.06 under. Stated as a rule rather than nudged by feel.
         "mean_abs_max": round(float(d["mean_abs"]) * 1.3, 1),
-        "within8_min": float(np.floor(lo_w * 20) / 20),
-        "ssim_min": float(np.floor(lo_s * 20) / 20),
+        "within8_min": float(np.floor((lo_w - 0.04) * 20) / 20),
+        "ssim_min": float(np.floor((lo_s - 0.04) * 20) / 20),
         "measured_at": (
             # The reference version is NAMED here as well as declared in `reference_versions`:
             # `tests/unit/test_declarations.py` requires the two to agree in words, because a
             # version in a field nobody reads next to prose that names a different one is worse
             # provenance than either alone.
-            f"mujoco 3.12.0 reference; {spec['size']} px, camera {spec['camera']}, 3 independent "
+            f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, camera "
+            f"{spec['camera']}, 3 independent "
             f"draws of 64 states from the "
             f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
             f"against swm's own render(); the declared value is the WORST of the three and "
-            f"draw_spread carries all three. The frame is a baked MuJoCo plate composited with "
+            f"draw_spread carries all three, for mean_abs/within8_frac/ssim AND for "
+            f"interior_exact_frac, all_exact_frac and interior_frac. The frame is a baked MuJoCo "
+            f"plate composited with "
             f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
             f"out-of-range-spot correction applied. {d['job']}"),
         # The REFERENCE side, which the certifier compares: mujoco is what swm's render() draws with.
@@ -978,9 +997,12 @@ _RESIDUAL_NOTE = (
     "renders at alpha 0.2 and mujoco_warp's shader reads only color[0..2], so it has no alpha path "
     "and would paint the marker opaque. Measured share of the frame: 0.61% (Cube) / 0.15% (Scene), "
     "against the 1.2-1.5% Fetch already declares for the same mechanism. "
-    "WHAT THESE NUMBERS ARE NOT: the 0.35 interior figure quoted above is 99.2% a statement about "
-    "the FLOOR, which this class bakes through MuJoCo and never asks MJWarp to draw. Whole-frame "
-    "exactness of the composite that actually ships is 0.92-0.95.")
+    "WHERE THE RESIDUAL IS NOT: the floor. It is the baked plate, composited in wherever the mover "
+    "LUT says MJWarp did not hit a mover, and the measured result is interior-exact 0.958 (Cube) / "
+    "0.922 (Scene) and whole-frame 0.872 / 0.775 over three independent 64-state draws. An earlier "
+    "version of this cell masked with `seg >= 0` -- true wherever MJWarp hit ANYTHING, floor "
+    "included -- so the plate reached only the sky and the same scene scored 0.351 interior-exact. "
+    "That composite bug was worth more than every lighting term above combined.")
 
 
 #: The Scene carries one residual the Cube does not, and it is declared per geom because that is what
@@ -1019,11 +1041,11 @@ def _make_classes():
                 f"ray-caster for the movers, at swm's registered {spec['size']} px from the model "
                 f"camera {spec['camera']!r}. State is (qpos, mocap_pos"
                 + (", button bits)" if cell == "Scene" else ")")
-                + f", {len(_bundle(cell).state_names)} dimensions. qvel is excluded because it "
+                + f", {spec['state_dim']} dimensions. qvel is excluded because it "
                   f"reaches no pixel and mocap_quat because it is the identity everywhere in the "
                   f"registered distribution.\n\n"
                 f"THIS IS A VISUAL TIER CELL, NOT A PARITY ONE. Three lighting terms in mujoco_warp "
-                f"disagree with MuJoCo and are declared in visual_fidelity and parity_note rather "
+                f"disagree with MuJoCo and are declared in visual_fidelity and visual_note rather "
                 f"than chased: the global directional light, the spot's distance attenuation, and "
                 f"the headlight on mover pixels. A fourth, the out-of-range spot cutoff, WAS fixed "
                 f"and now lives in the shared render/mjwarp.py path. The translucent goal marker is "

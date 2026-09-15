@@ -1080,8 +1080,14 @@ being used at all.
 
 **Gate A, through the REPO'S own checks** (not the bespoke probe that once reported a live dimension
 dead): `check_determinism`, `check_batch_invariance`, `check_batch_size_invariance`,
-`check_order_invariance` and `check_state_dims_matter` all pass on both cells, with
-**`dead_dims: []`** — independent confirmation that dropping `qvel` and `mocap_quat` was right.
+and `check_state_dims_matter` all pass on both cells, with **`dead_dims: []`** — independent
+confirmation that dropping `qvel` and `mocap_quat` was right.
+
+**`check_order_invariance` does not exist in this build** — the chain asked for it and recorded
+`{"status": "absent in this build"}`, which is reported rather than quietly dropped. Order
+invariance is therefore **not asserted by repo machinery** for these cells. It was measured by the
+bespoke Gate A probe in the earlier round (a permutation of the batch permutes the frames, exactly),
+but that is a weaker provenance than a repo check and is recorded as such.
 
 **Gate F arm D**, on states swm's own dynamics visited: `observation_is_pixels = False` (28-D / 40-D
 vectors, so `render()` is the certified artifact), shape and dtype match, and `mean_abs` 2.477 /

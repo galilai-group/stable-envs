@@ -346,3 +346,15 @@ def test_the_bake_and_the_button_rule_touch_disjoint_material_rows():
     assert button_rows, "the button rule must change material rows"
     assert not (bake_rows & button_rows), (
         f"bake rows {sorted(bake_rows)} and button rows {sorted(button_rows)} overlap")
+
+
+@pytest.mark.parametrize("cell", ["Cube", "Scene"])
+def test_the_SPEC_state_dim_constant_matches_what_bundle_computes(cell):
+    """`SPEC[cell]['state_dim']` is a constant so that `_make_classes` never calls `_bundle`.
+
+    It was `len(_bundle(cell).state_names)`, which built both swm environments at IMPORT: 4.4 s, and
+    without `stable_worldmodel` the module raised and both ids dropped out of the registry (76
+    instead of 78). The constant has to be kept honest by something, and this is it -- it runs only
+    where swm IS importable, which is exactly where the truth is available.
+    """
+    assert ogb.SPEC[cell]["state_dim"] == len(ogb._bundle(cell).state_names)
