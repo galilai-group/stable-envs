@@ -1471,6 +1471,9 @@ incident_log:
     closure held'
 - date: '2026-09-15'
   item: CLOSURE-1 localised to the sparse stage; second re-freeze declined in Step 7; test scoped to the certified property; Step-8 candidate recorded
+- date: '2026-09-15'
+  item: 'Sami rule: no CPU-heavy work on Oscar login nodes (added to AGENT_COMMON addendum). Audit: W6 ran a CPU probe + tests/unit file on login009 (redirected to a batch job); closure agent ran sub-second
+    log-extraction scripts and interpreter probes on the login node (no measurement produced; all numbers from SLURM jobs; regeneration declined as unnecessary); W5 none reported.'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
