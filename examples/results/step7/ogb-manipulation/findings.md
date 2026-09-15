@@ -762,3 +762,70 @@ today would declare `visual`, not `parity`.
 | **M3** OGBCube cell | **design gate done** (§14); cell **not written** — parity not reachable until the spot-distance and headlight terms are closed |
 | **M4** tiers | not started; `BATCH_SCALES` 2.93x and the CPU bars are already measured (§4, §5) |
 | **M5** OGBScene | blocked on Sami's Q11 ruling; numbers prepared (§12) |
+
+## 16. M1b — the authorised residual pass; the evidence says `visual`
+
+Full report `m1b/residual.md`, data `m1b/m1b_residual.json`. Job **6397621**, `gpu2106`, RTX 3090,
+8 states, host render-noise floor **0** on every row. The spot correction is applied under every row
+but the first.
+
+| term (on top of the spot fix) | interior | static | mover | **composited all-exact** |
+|---|---:|---:|---:|---:|
+| *no correction* | 0.0099 | 0.0029 | 0.5072 | 0.9236 |
+| **spot fix only** | **0.3473** | 0.3430 | 0.7568 | **0.9341** |
+| + headlight off | 0.3480 | 0.3218 | 0.8955 | 0.9506 |
+| + spot light off | 0.4606 | 0.4599 | 0.3481 | 0.9347 |
+| **+ `global` directional light off** | **0.7016** | 0.7005 | 0.6702 | 0.9397 |
+| + ambient = 0 | 0.2971 | 0.2937 | 0.3372 | 0.9313 |
+
+Ordered residual: the **`global` DIRECTIONAL light** is now the largest term (+0.355); the spot
+carries a further **distance-attenuation** residue (+0.113 — MJWarp takes `attenuation = 1`); the
+**headlight is a mover-pixel term** (interior +0.001, mover 0.757 → 0.896); **ambient is not a term**
+at all (zeroing it makes agreement worse).
+
+**`composited_all_exact_frac` is 0.923–0.951 on every row** — that is what a `fetch.py`-pattern cell
+produces, since the plate is baked through MuJoCo and exact by construction and only the 10–19 % of
+mover pixels are MJWarp's. But those mover pixels are 0.30–0.47 all-exact even corrected, against
+Fetch's declared **0.9988 interior**. **The evidence supports `visual`, not `parity`.** Per the
+coordinator's bound this was the one further pass; parity is not chased beyond it.
+
+*Caveat carried with the numbers:* the mover columns are **not comparable across rows** — each row
+re-resets and `CubeEnv.reset` resamples its variations unseeded, so the mover pixel count swings
+584–6881. The two `restore` rows (same configuration, measured twice) come back identical, so the
+probe is reproducible for a fixed configuration. Interior/static/composited are stable.
+
+## 17. Two shared corrections landed, each with the full no-change proof
+
+**`neutralise_illegal_spots` in `prepare_model`** — MuJoCo's out-of-range-spot semantics, beside
+`gl_rounding`. Writes `light_exponent = 0` for a spot whose cutoff is outside `[0, 90]` and nothing
+else; the cutoff stays readable and the light **type is never rewritten** (re-typing to POINT is the
+obvious reading and is measurably wrong on the reference side). `spot_semantics=False` opts out.
+Proof: **16 unit cases** including the 90/90.0001 boundary; a registry sweep where **40 families
+build, 40 correct, and zero `light_exponent` arrays change** — non-vacuous, because **8 families do
+carry a spot light** (7 DM Control + `MujocoPusher`), all with legal cutoffs; and byte-identity on
+the same card (job **6397885**): `DMCReacherEasy` **0**, `DMCCartpoleSwingup` **0**, `FetchReach`
+**0**. (`DMCPointMassEasy` and `MujocoPusher` have no frozen Step-4 state file, so they could not be
+replayed; the two DM Control cells that were replayed both carry spot lights, so the test is not
+vacuous.)
+
+**`bake_unsamplable_textures`** — Q11 option (b), generic. `unsamplable_texture_materials` groups the
+*crash* half of `texture_gaps` by material (non-2-D texture, or a mesh with no texcoords); the bake
+replaces it with the texture's mean colour and returns a **per-geom record** so a caller can state
+the residual. Kept separate from `bake_primitive_textures` on purpose: that one trades fidelity where
+the picture survives and measurably loses on RoboCasa; this one applies where there is no picture at
+all. Proof: **9 unit cases**, and a registry sweep showing it would touch **none** of the 40 families
+and restores exactly. On `OGBScene` it bakes exactly `btn_metal` on the two button geoms and takes
+`texture_gaps` to empty; on `OGBCube` it is a no-op.
+
+## 18. Milestone state (updated)
+
+| milestone | state |
+|---|---|
+| **M1** attribution | **done** (§10) |
+| **M1b** residual pass | **done** (§16) — evidence supports `visual` |
+| **M2** `texture_gaps` | **done** (§11) — 40/40 sweep + 4 byte-identical replays |
+| **shared spot correction** | **done** (§17) — 16 unit + 40/40 sweep + 3 byte-identical replays |
+| **bake helper** | **done** (§17) — 9 unit + registry no-change |
+| **M3** OGBCube cell | **not written** — next; tier is `visual` by §16 |
+| **M4** tiers | not started (`BATCH_SCALES` 2.93x and CPU bars already measured) |
+| **M5** OGBScene cell | helper ready; cell not written; Q11 escalation open for Sami |

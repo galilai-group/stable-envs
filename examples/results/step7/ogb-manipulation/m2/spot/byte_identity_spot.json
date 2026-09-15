@@ -1,0 +1,45 @@
+[
+ {
+  "config": "DMCReacherEasy",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "DMCCartpoleSwingup",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "DMCPointMassEasy",
+  "identical": null,
+  "missing": true
+ },
+ {
+  "config": "MujocoPusher",
+  "identical": null,
+  "missing": true
+ },
+ {
+  "config": "FetchReach",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   480,
+   480,
+   3
+  ]
+ }
+]
