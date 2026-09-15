@@ -1,0 +1,233 @@
+# Step 7 / W6 — `swm/PFRocketLanding-v0` feasibility gate (Phase 0)
+
+**Classification: FINDING (gate result) + PATCH_CANDIDATE (the four small `nvdiff` extensions a GO
+would need, not written). No `stable_envs/` file was modified.**
+
+**Recommendation: GO, in the VISUAL tier, through the existing nvdiffrast raster backend.** All four
+gates pass on real frames, and two of the three premises of the Step-1 NO-GO are false on measurement:
+the scene is not a mesh scene and the decoder is not rebuilt per episode.
+
+| | |
+|---|---|
+| baseline SHA | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` (Step 6 closed) |
+| branch | `step7/rocket-landing`, worktree `/Users/samib/stable-envs-step7-rocket-landing` |
+| hardware | Apple M5 Mac, CPU only; PyBullet DIRECT (`connectionMethod: 2`) = TinyRenderer software rasteriser. **Local timings are not certification numbers.** |
+| venv | `/Users/samib/se7-rocket-venv` (Python 3.12.11): PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, gymnasium 1.3.0, torch 2.14.0, Pillow 12.3.0, trimesh 5.1.0, imageio 2.37.4, numba 0.67.0, stable-worldmodel 0.1.1 (resolved from PyPI), opencv-python-headless 5.0.0.93 (needed by swm's import chain; it moved numpy 1.26.4 -> 2.5.3) |
+| affected configs | none existing; one new cell proposed (`PFRocketLanding`, 480 px) |
+| artifacts | `examples/results/step7/rocket-landing/phase0/` — `phase0.json` (main probe), `phase0_b.json` (mechanisms), `phase0_light_sweep.json`, `phase0_link_lag.json`, `frames_descent.npz` (48 poses, 1.2 MB), `frames_rollout.npz` (32), `frames_g1_pairs.npz`, 19 PNG previews |
+| probes | `scratch/step7/rocket-landing/phase0_probe.py`, `phase0_probe_b.py` (+ two inline sweeps recorded in the JSONs), logs beside them |
+| Oscar | not used (SSH denied at auth this session); cluster items listed at the end |
+
+## What the env actually is (census, not the Step-1 reading)
+
+* **Not a mesh scene.** The rocket URDF has **no mesh assets**: 11 visual primitives — 2 cylinders
+  (body l 4.77 r 0.185, booster l 0.5 r 0.25), 4 fin boxes, 3 leg boxes, 1 "flame" cylinder
+  (l 2 r 0.15, rgba `(1, 0.8, 0, 0.1)`), plus a white cylinder l 1 r 0.1 that PyBullet synthesises
+  from the fuel-tank *collision* shape (it has no `<visual>`; it is visible through the open tube, see
+  below). The pad is one cylinder (l 0.1 r 2) fixed at `(0, 0, 0.1)`. The only mesh in the scene is
+  pybullet_data's ground: **2 triangles**, 200 m square, one 512x512 RGBA checker texture tiled 100x
+  (2 m tiles). TinyRenderer tessellates cylinders with `numSteps = 32` and boxes as fixed cubes; the
+  whole scene is roughly **4 x 128 + 7 x 12 + 2 ≈ 600 triangles**, one texture.
+* **The decoder is not rebuilt per episode.** `_modify_rocket_urdf` exists but is **never called**
+  by `reset`; rocket colours are applied by `p.changeVisualShape` after the reset. Only the pad goes
+  through a temp URDF, and that rewrite adds a `<material>` (the base pad has none) with the colour
+  quantised to 3 decimals. Six resets (seeds 0,1,2,3,4,0; `variation=["all"]`, none, one leaf):
+  **geometry, mass, local pose, mesh file and texture id identical on all 14 visual shapes; only
+  `rgba` changes** (`phase0.json: G3.resets`).
+* **`environment.sky_color` is a dead leaf**: sampled per reset, read nowhere; the background is
+  TinyRenderer's clear colour `(255,255,255)` on every reset regardless of the sampled value.
+  Without any variation the pad is white `(1,1,1,1)`; any variation touching `rocket.*` or `pad.*`
+  writes the pad colour (`init 200/255 = 0.784`).
+* **Camera** (`PyFlyt Camera`, link 0 = fuel tank, fixed at the base origin): eye = `link_pos +
+  R·(-1, 0, 3)`, orientation = link euler with pitch +30° (not gimballed), **tracking** the link
+  centre, up = `R·z`; `computeProjectionMatrixFOV(fov 90, aspect 1, near 0.1, far 255)`. The view
+  matrix is recomputed from `getLinkState` on every access. **The rocket covers 10.0 % of the frame at
+  every altitude** (23,000 px), because the camera rides with it.
+* **Far plane 255 m, start height 350–475 m**: the ground is beyond the far plane for the first
+  ~200 m of every descent, so the frame is *rocket on white* for roughly half the episode; the ground
+  enters at ~255 m and fills the frame below ~48 m; the pad grows from 11 px (258 m) to 50,453 px
+  (1.5 m) (`phase0.json: coverage.per_height`).
+* **The tube is open**: TinyRenderer's cylinder has side walls only, so looking down the body you see
+  its interior back faces (drawn with the outward vertex normals) and the fuel-tank cylinder inside
+  (`preview_g1_pose_A.png`, `preview_descent_h2.png`).
+* **cvxpy** is imported only by `expert_policy.py`, which `stable_worldmodel.envs.rocket_landing.
+  __init__` imports unconditionally; the env itself does not use it. Reference construction needs
+  cvxpy installed; the renderer does not.
+* **PyFlyt's numba JIT costs 57.2 s per process** on the first physics steps (`@nb.njit` without
+  `cache=True` plus a `jitclass`; 0.016 s with `NUMBA_DISABLE_JIT=1`). This is physics setup, not
+  render setup, and a state -> frame decoder pays none of it. `gym.make` 1.5 s, later resets 0.07 s.
+
+## The gates
+
+### G1 · purity — PASS, with two named, reconstructible hidden bits
+
+Measured on 480x480 frames (`phase0.json: G1`, `phase0_b.json`, `phase0_link_lag.json`):
+
+| test | differing px |
+|---|---|
+| same state rendered twice | **0** |
+| different history, teleported to the same base pose (teleport vs teleport) | **0** |
+| velocities x100 + offset | **0** |
+| fresh env instance, same seed, same pose | **0** |
+| default reset recoloured by hand (`changeVisualShape`, exact rgba) to another episode's 5 colours, same pose — at 420 m and at 6 m with ground+pad in view | **0 / 0** |
+| same pose after an ignition history | **61** (the flame, bbox 8x10 px) |
+| **frame taken right after `env.step` vs the same reported base pose after a teleport** | **18,160** |
+
+Two mechanisms, both measured to the bit:
+
+1. **One-substep link lag.** After `stepSimulation`, `getBasePositionAndOrientation` is
+   post-integration but the links' cached world transforms — what TinyRenderer draws for the 10 links
+   *and where the camera link sits* — are one 1/240 s substep behind: 0.129–0.139 m at 30–33 m/s
+   (`a_teleport.link_cached_pos_change_after_teleport_max_abs`). The official frame is therefore the
+   body cylinder at pose *t* seen from a camera at pose *t−dt* with fins/legs/booster/flame at
+   *t−dt* (`preview_b_diff_mask.png`). **The lagged pose is exactly `(pos − v·dt, exp(−ω·dt)·q)`**
+   with world-frame velocities: position error **0.0**, quaternion error **1.1e-16** over 40 random
+   steps (`phase0_link_lag.json`). So the official picture is an exact function of
+   (pos, quat, lin_vel, ang_vel) — 13 floats — all of which the env's own 30-float observation
+   carries (velocities in the body frame; convertible with the quaternion). This is RoboCasa §17.3's
+   stale-kinematics trap in PyBullet form, and unlike RoboCasa it is *reproducible* rather than
+   something to forward away.
+2. **Flame colour is a 1-bit episode flag.** `RocketBaseEnv.step` sets link 9 to `(1, 0.3, 0.3,
+   0.8)` on every ignition *transition* (off->on and on->off) and never restores it; after the first
+   ignition the flame stays that colour for the episode. Worth 61 px (0.013 % of the frame) at the
+   probe pose. Stored as one style bit, it is pure.
+
+### G2 · compactness — PASS, by 4 orders of magnitude
+
+| | bytes | ratio to the 691,200 B frame |
+|---|---|---|
+| synced picture: pose 7 f32 | 28 | 1 / 24,686 |
+| official (lagged) picture: pose + world velocities, 13 f32 | 52 | 1 / 13,292 |
+| per-episode: 5 colours x 3 uint8 + flame bit | 16 | amortised, negligible |
+| the env's own observation, 30 f64 | 240 | 1 / 2,880 |
+
+### G3 · shared decoder — PASS
+
+Geometry is a constant of the family (six resets, 14/14 shapes identical); the per-reset change is
+five RGB triples applied at runtime. Everything else a decoder needs is constant and measured:
+
+* **Shading law** (bullet3 `TinyRenderer.cpp` `Shader::fragment`, and confirmed empirically):
+  `out_i = int( 255·c_i · (A + shadow·(D·max(0, n·l) + S·max(0, r_z)^spec)) · L_i )`, clamped at 255,
+  **truncated not rounded**, per-vertex normals barycentrically interpolated, no gamma, and the
+  specular multiplies the material colour (unlike MuJoCo's additive white). Defaults **A = 0.6,
+  D = 0.35, S = 0.05, L = (1,1,1), shadow off, light direction the normalised world-fixed
+  `(−50, 30, 100)`** (the z-up branch of `TinyRendererVisualShapeConverter::render`; the
+  `(−5, 200, −40)` member initialiser is *not* what a default render uses). Each of these passed
+  explicitly reproduces the default frame with **0 px**; `(−50, 100, 30)` (y-up branch) differs on
+  221,008 px, `shadow=1` on 143,406 px at 6 m and 0 px at 420 m (`phase0_light_sweep.json`).
+  Ambient-only body pixels equal `int(255·c)` exactly; the darkest default body pixel equals
+  `int(0.6·255·c)`; the brightest is 0.991·`int(255·c)` (`phase0_b.json: b_light`).
+* **Trap recorded:** a `lightDirection` passed to `getCameraImage` **persists in the client** for
+  all later default renders (`default_after_explicit_vs_explicit_diff_px = 0`). The first probe's
+  lighting ablations after its first explicit call were contaminated by this and are superseded by
+  the sweep file; the note is in `phase0.json: notes`.
+* Texture: nearest-texel sampling of one 512² checker, tiled; no mipmap (TinyRenderer has none).
+* Camera and projection as above; background `(255,255,255)`; cylinder 32 steps, no caps, both faces
+  drawn; box 12 triangles; ground 2 triangles.
+
+### G4 · economics — PASS on the loop, and the official renderer is slower than reading
+
+One M5 core, 480x480, `phase0.json: G4`:
+
+| | f/s | vs one core of JPEG-q90 decode of the env's own frames (1,190.9 f/s, 62.3 kB/frame) |
+|---|---|---|
+| official (TinyRenderer, one process) | **34.25** | **0.029 cores** — 35x slower than reading |
+| official at the drone's 128² capture | 1,310.9 | — |
+
+Render share of an env step: the agent step is **0.62 ms** without a camera and **3.41 ms** with the
+128² capture PyFlyt performs inside every step when `render_mode` is set (**81.8 % of the step**); a
+480² frame per step would be **97.9 %** of the step. This is the Griddly shape — the official renderer
+is the bottleneck of data generation and is slower than the dataset it would replace — so any GPU
+decoder that draws the picture wins G4 by construction; the nvdiff backend at 224 px on locomotion
+runs 4.4–10.9 k f/s on an H200 (`when_does_this_pay_off.md` table) against 1,191 f/s of decode here,
+and this scene is ~600 triangles against locomotion's 8.5 k–579 k vertices.
+
+### G5 · fixed cast — PASS trivially (12 rocket shapes + pad + ground, no variable entity count).
+
+## The smallest renderer, and the tier it can declare
+
+**URDF primitives through `stable_envs/render/nvdiff.py`**, which already provides the batched
+clip-space rasterisation, per-geom appearance gather, `Lights`/`Camera` dataclasses with a batched
+camera pose, a texture path, and `QUANT(mode="trunc")`. What it lacks is exactly four small things,
+each a PATCH_CANDIDATE against `nvdiff.py` (not written in Phase 0):
+
+1. **A MuJoCo-free scene constructor** — `Scene` is built from an `MjModel`; this scene needs a
+   `from_triangles(vert, norm, uv, face, geom_of_face, ...)` entry that fills the same members
+   (`vert/norm/uv/vgeom/face/fgeom/mat_rgb/...`). The tessellation must be TinyRenderer's: 32-step
+   **open** cylinders drawn double-sided with outward normals, 12-triangle boxes, the 2-triangle quad.
+2. **Per-row material colour** — `render()` gathers `base = S.mat_rgb[gid]`; a `(B, G, 3)` colour
+   tensor makes that `mat_rgb[b, gid]`. This is the one capability the visual-tier locomotion cells
+   deliberately do not offer (their docstring says why: colour is baked in `Scene`), and here it is the
+   whole variation space, so it has to be a tensor, not a per-value `Scene`.
+3. **A `shading="tiny"` law** beside the MuJoCo one in `_shade`: `c·(A + D·ndl + S·spec)` with the
+   specular multiplying the material colour and using the infinite-viewer reflection `r_z`, truncation
+   quantisation, directional light only. Tiny: the composition differs, the inputs do not.
+4. **Nearest, non-mipmapped texture sampling** for the checker (`filter_mode="nearest"`; the pyramid
+   is what this backend exists for elsewhere and must be *off* here).
+
+Plus the env cell itself (`stable_envs/envs/rocket_landing.py`, Fetch/locomotion pattern): 13 state
+dims (pos, quat, world velocities) or 7 if the synced picture is declared, a style tensor of 5 RGB
+triples + the flame bit, `variation_space` = the four rocket colours + pad colour (**not**
+`sky_color`, which is dead upstream; `start_*` are dynamics and belong to `sample_states`, not
+appearance), `sample_states` from the env's own descent distribution (heights 1.5–475 m, ±2 m lateral,
+±0.2 rad tilt, ignition on/off), and `reference_render` driving PyFlyt+TinyRenderer at the exact
+lagged pose. Links cannot be placed at *t−dt* from Python (a teleport syncs them), so the reference
+corpus must be produced by *stepping* — recorded rollouts carrying velocities — not by teleporting.
+
+**Tier: visual.** Parity is implausible: a different rasteriser with its own edge rule, pixel-centre
+convention and float path against a software renderer that truncates — silhouette and checker-edge
+pixels will differ, and the interior of a Gouraud-shaded tube will land within ±1/255 rather than
+exactly. Visual-tier bounds are very likely strong, because ~90 % of every frame is either flat white
+(the first half of the descent) or a crisp 2 m checker, and the mover is 10 % of the frame at all
+times; the residual will concentrate on (a) silhouettes, (b) checker edges shifted by up to half a
+pixel, (c) the far ground where tiles are sub-pixel and nearest sampling aliases differently under
+any UV rounding difference, (d) the 61-px flame, whose alpha handling in TinyRenderer (0.1 vs 0 vs
+0.8 all differ) is not yet fitted. My estimate before measurement: mean_abs 1–4/255, within-8 > 0.95,
+SSIM > 0.95 — to be measured, not declared, in phase 1 (64 states x 4 draws, as the locomotion cells).
+
+**CPU backend (policy addendum):** the scene is ~600 triangles at 480²; no CPU-native backend in this
+repo draws an arbitrary textured triangle soup (cpu3d/raycast3d are MuJoCo-primitive raycasters).
+Phase 1 must either measure a small CPU triangle rasteriser or have `device="cpu"` raise; it must not
+silently use CUDA. This is the one open design question for the coordinator.
+
+**Milestones (if GO):**
+M1 reference corpus (local venv suffices — TinyRenderer is CPU; no EGL): 256 states from rollouts
+with velocities, colours and the flame bit, official frames, frozen under `examples/results/step7/`.
+M2 the four `nvdiff.py` extensions above, each with a unit test, reviewed independently.
+M3 the env cell + `reference_render`; Gate A; `check_visual_fidelity` at 480 px on Oscar (3090, per
+AGENT_COMMON); declare `visual_fidelity` from the worst of four draws.
+M4 throughput (Step-6 machinery) at batch 1/16/64/256 on the same card; CPU decision; tiers reported
+honestly (PERFORMANCE_MEASURED, no CPU_FAST/GPU_FAST requirement).
+
+## Findings the coordinator should relay to Sami (and possibly upstream)
+
+* FINDING (upstream, stable_worldmodel): `environment.sky_color` is in the variation space and has no
+  effect; `_modify_rocket_urdf` is dead code; `rocket.booster_color` is applied only via
+  `changeVisualShape` (fine) — the Step-1 "per-reset URDF rewrite" describes the pad only.
+* FINDING (upstream, PyFlyt): the ignition flame is recoloured on every transition and never reset —
+  a rendering state leak that makes the frame history-dependent by 61 px.
+* FINDING (upstream, PyFlyt/PyBullet): the rendered frame after `step` draws links and the camera one
+  physics substep behind the base; the swm goal image (rendered after a teleport) is the synced
+  picture, so the goal and the observations are drawn under two different conventions.
+* FINDING (this repo): Step-1's NO-GO rested on "mesh assets" (false), "per-reset URDF rewrite of the
+  rocket" (dead code; pad only, colour only), and "no PyBullet backend" (not needed: the scene is 600
+  triangles under a five-constant shading law). An unmeasured gate was a gap, not a verdict — the
+  document's own rule.
+
+## Tests, replay, tiers, pixels
+
+* Tests run: none in `stable_envs/` (no code changed). Probes ran end to end (`phase0_probe.log`,
+  `phase0_probe_b.log`).
+* Step-4 replay: not applicable (no existing config touched). Tiers before/after: n/a. Pixels
+  changed: none.
+* Semantic follow-up: none in Phase 0; a DINO tripwire is the right check once frames exist (the tier
+  docs already warn that a visually close render can sit far in embedding space).
+* SLURM job IDs: none (Oscar SSH denied at auth).
+
+## Pending cluster items
+
+1. `visual_fidelity` measurement and throughput on a 3090 (`--partition=gpu --qos=norm-gpu`) once M2/M3
+   exist; nvdiffrast is needed (locomotion's `_Nvd` path documents the import probe).
+2. A PyFlyt+cvxpy venv on Oscar under `$SCR/venvs/se7-rocket` (numba JIT: 57 s per process, budget it
+   in reference jobs; `NUMBA_CACHE_DIR` under `$SCR`).
+3. Nothing here needs EGL: TinyRenderer is the official path and is CPU-only.
