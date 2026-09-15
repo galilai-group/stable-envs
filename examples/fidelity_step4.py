@@ -517,8 +517,12 @@ def provenance(device: str) -> dict:
         p["driver"] = _run(["bash", "-c",
                             "nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1"])
     import importlib.metadata as md
+    # ``jax`` is here because CraftaxClassic declares it as a REFERENCE version: craftax's renderer
+    # draws its night noise with jax's threefry PRNG, and jax_threefry_partitionable selects between
+    # two counter layouts that agree on 0 of 448 draws. Without recording it, that declaration could
+    # never be confirmed and the parity check would block on "version not recorded" forever.
     for m in ("mujoco", "mujoco_warp", "dm_control", "ogbench", "gym_pusht", "gymnasium",
-              "gymnasium_robotics", "craftax", "stable_worldmodel", "warp"):
+              "gymnasium_robotics", "craftax", "jax", "stable_worldmodel", "warp"):
         # The distribution's version first: ``dm_control`` has no ``__version__`` and was recorded as
         # "present", which the certifier cannot compare with a declared reference version.
         try:

@@ -3,9 +3,9 @@
 Reference: ``Craftax-Classic-Pixels-v1`` (JAX). The observation is drawn by
 ``craftax.craftax_classic.renderer.make_craftax_pixel_renderer(7)``: a 7x9 window of the world map
 expanded to 7 px per tile, the player sprite composited over the centre tile, then zombies, cows,
-skeletons and arrows composited one tile each, then a day/night post-process, then a 2-row inventory
-strip. The world layer — everything before the post-process — is a gather from a fixed 17-entry block
-atlas plus at most a dozen sprite blits, which is why it belongs in this repo.
+skeletons and arrows composited one tile each, then a day/night post-process and a sleeping
+desaturation, then a 2-row inventory strip concatenated below. All of it is a gather from fixed
+tables plus at most a dozen sprite blits, which is why it belongs in this repo.
 
 **The state that ships with Craftax is a loss, and the docstring says so rather than omitting it.**
 Measured (``scratch/pixel_native/probe_craftax.py``): the full ``EnvState`` is 273,276 bytes against a
@@ -15,52 +15,70 @@ Measured (``scratch/pixel_native/probe_craftax.py``): the full ``EnvState`` is 2
 for full Craftax — while the frame shows a 9x11 window of one of them. There is no version of "store
 the state" that wins if the state is the simulator's state.
 
-What wins is the **render window**: the tiles actually on screen plus the sprites drawn over them. That
-is what this env carries — 127 float32 numbers, **508 bytes**, against a 48,384-byte frame at the
-default 16 px tile size (**95x**) or a 9,261-byte frame at the 7 px agent size (**18x**).
+What wins is the **render window**: the tiles actually on screen, the sprites drawn over them, and the
+sixteen small integers the inventory strip reads. That is what this env carries — 144 float32 numbers,
+**576 bytes**, against a 62,208-byte frame at the default 16 px tile size (**108x**) or an
+11,907-byte frame at the 7 px agent size (**21x**).
 
-Parity against the official renderer, measured on 64 sampled states at both tile sizes:
-**100% of all pixels exact, mean |diff| 0.000, max |diff| 0.** Throughput on one H200: **707,019
-frames/s at batch 16384** (34 GB/s of frame output). That figure is a **floor**: it was taken before
-Step 6 baked the composite into :class:`_Composite`, which left the pixels byte-identical and made
-the CPU path 62x faster (`examples/results/step6/tilemap/findings.md`). It is left as measured
-rather than rescaled, because the H200 is not available to re-measure on.
+Parity against the official renderer, measured on 64 sampled states at both tile sizes, over the
+**whole observation** — world window and inventory strip, sleeping rows included:
+**100% of all pixels exact, mean |diff| 0.000, max |diff| 0.**
 
-The env is a *partial-observation* renderer, and precisely:
+**"The official frame" is not one object, and the parity number says which one.** Under ``jax.jit``
+XLA fuses the renderer's arithmetic differently and it disagrees with its own un-jitted self by up to
+1.5e-05 in float32. For a daylight frame that is invisible in uint8. For a sleeping one it is not:
+the desaturation halves the dynamic range, and a 1.5e-05 difference then straddles a rounding
+boundary. Against this renderer, the jitted reference is 99.7854% of pixels exact at 7 px and
+99.7225% at 16 px with max |diff| 1, **every differing pixel on a sleeping row**, while the un-jitted
+reference is 100.0000% with max |diff| 0. :meth:`CraftaxClassic.reference_env` therefore returns the
+un-jitted function — the renderer as written — and pays 0.25 s a frame for it. The claim certified is
+a **uint8** claim; this renderer does not assert bit equality of the reference's float, because the
+reference does not have one value to be equal to.
 
-  * it **can** reconstruct the world layer of the observation — terrain, the player's facing, and the
-    mobs and arrows on screen — exactly;
-  * it **cannot** reconstruct the 2-row inventory strip (rows 49-63 of the 63x63 agent observation).
-    That strip is a function of twelve inventory counts and four intrinsics, not of the map window, and
-    it is not rendered here. ``reference_render`` crops the official frame to the world layer so the
-    comparison is like for like rather than quietly favourable — the 100% figure above is 100% of the
-    world layer, not of the observation;
-  * it **cannot** reconstruct night frames or a sleeping player. ``light_level < 0.5`` mixes in a noise
-    field drawn from ``jax.random.uniform(state.state_rng, ...)``, so reproducing it bit-exactly means
-    reimplementing JAX's threefry2x32 counter PRNG; and ``is_sleeping`` desaturates the entire frame,
-    which couples the sleeping sprite to a global post-process. Both are excluded, and the exclusion is
-    load-bearing: with ``light_level = 1.0`` and ``is_sleeping = False`` the whole post-process chain is
-    the identity on the map pixels (``daylight * map + (1 - daylight) * night`` with ``daylight = 1``),
-    verified numerically to 0 over 20 states, which is what makes exact parity possible at all;
+What this env covers, and what it still does not:
+
+  * the **world layer** — terrain, the player's facing, the sleeping sprite, and the mobs and arrows
+    on screen — exactly;
+  * the **2-row inventory strip** (rows 49-62 of the 63x63 agent observation, 112-143 of the 144x144
+    image observation). It is a function of twelve inventory counts and four intrinsics and of nothing
+    else, drawn from a 160-entry ``(cell, count)`` table folded into the same atlas as the world tiles,
+    so the whole observation is still one gather. The reference concatenates it **after** the lighting
+    chain, so it is the same picture at midnight and at noon — measured, not assumed;
+  * the **sleeping player**: both halves of it. ``is_sleeping`` selects a fifth player sprite
+    (``player_texture_index = select(is_sleeping, 4, player_direction - 1)``) *and* desaturates the
+    world rows. Missing either half gives a plausible frame and a wrong one;
+  * it does **not yet** reconstruct night frames. ``light_level < 0.5`` mixes in a noise field drawn
+    from ``jax.random.uniform(state.state_rng, ...)``; ``stable_envs/render/prng.py`` reproduces that
+    draw bit for bit, and wiring it in is the next commit. Until then ``reference_render`` forces
+    ``light_level = 1.0``, where the whole lighting chain is exactly the identity on the world pixels
+    (``daylight * map + (1 - daylight) * night`` with ``daylight = 1``), verified bit-exact on 24 real
+    states at both tile sizes;
   * it carries **one mob per tile**. Craftax's own ``mob_map`` keeps zombies, cows and skeletons off
     each other's tiles, but an arrow may share a tile with a mob, and the reference then composites
     both. That state is not representable here and the sampler does not generate it.
 
-Two measured facts that shaped the implementation:
+Three measured facts that shaped the implementation:
 
   * **The alphas are not binary.** They take exactly {0, 128/255, 1}, so the composite is a real blend
     and the frame is fractional-valued float32. This repo's frames are uint8, so ``render`` rounds
     (half-to-even, matching numpy) and ``reference_render`` rounds the official float the same way. The
     frame is a rounding of the reference, not a lossless view of it, and that is stated rather than
     hidden behind an all-pixel percentage.
-  * **The player tables are zero away from the centre tile**, asserted during extraction, so compositing
-    the player over the whole frame (what the reference does) and into one tile (what this does) are the
-    same arithmetic — ``x*(1-0) + 0*0 == x`` exactly in float32.
+  * **The player tables are zero away from the centre tile** — all five of them, the sleeping sprite
+    included — asserted during extraction, so compositing the player over the whole frame (what the
+    reference does) and into one tile (what this does) are the same arithmetic: ``x*(1-0) + 0*0 == x``
+    exactly in float32.
+  * **The strip's counts cannot come from a random rollout.** Over 4,000 steps, ten of the twelve
+    inventory cells never leave zero, because a random policy never crafts. A pool built from one
+    presents ten dead state dimensions, which is indistinguishable from a wrong state contract — the
+    failure ``docs/research/pixel_native.md`` records for Procgen miner and heist. ``sample_states``
+    samples the counts over 0..9 directly instead, which is sound because the strip is a function of
+    the counts alone and the simulator caps every count at 9.
 
-Out-of-range class ids **wrap** rather than clamp. Real states are always in range, so the rule never
-fires in practice; it exists because a clamping decoder makes a cell that already holds the last class
-insensitive to the conformance suite's +25 probe, which would be reported as a dead state dimension
-when it is an artifact of the probe.
+Out-of-range class ids and counts **wrap** rather than clamp. Real states are always in range, so the
+rule never fires in practice; it exists because a clamping decoder makes a cell that already holds the
+last class insensitive to the conformance suite's +25 probe, which would be reported as a dead state
+dimension when it is an artifact of the probe.
 """
 from __future__ import annotations
 
@@ -76,9 +94,31 @@ from ..spaces import Box, Dict, Discrete
 TILE_PX_AGENT = 7
 TILE_PX_IMG = 16
 OBS_H, OBS_W = 7, 9
+#: rows of inventory strip below the world window, ``INVENTORY_OBS_HEIGHT`` in craftax's constants
+STRIP_H = 2
 N_BLOCK = 17
 N_MOB = 8            #: none, zombie, cow, skeleton, arrow x 4 orientations
-N_PLAYER = 4         #: facing left, right, up, down
+#: facing left, right, up, down, **asleep**. The fifth is not decoration: the reference selects
+#: ``player_texture_index = select(is_sleeping, 4, player_direction - 1)``, so a sleeping player is a
+#: different sprite and not only a post-process, and ``player-sleep.png`` is asserted zero away from
+#: the centre tile exactly like the four facing sprites (``scratch/step7/.../gen_step7_consts.py``).
+N_PLAYER = 5
+PLAYER_ASLEEP = 4
+#: facing values a state row carries: left, right, up, down. Slot 4 is NOT reachable from a facing
+#: value -- it is reached by ``is_sleeping`` -- so ``player_facing`` wraps mod four, not mod N_PLAYER.
+N_FACING = 4
+#: inventory-strip cells: 4 intrinsics then 12 inventory counts, each holding a count in 0..9 that
+#: the simulator caps at 9 (``craftax.craftax_classic.game_logic``: 1633 inventory, 1293 energy,
+#: 1319 health). Cell ``i`` is drawn at ``STRIP_LAYOUT[i]``; the two cells the reference never writes
+#: stay black.
+STRIP_NAMES = ("health", "food", "drink", "energy",
+               "sapling", "wood", "stone", "coal", "iron",
+               "diamond", "wood_pickaxe", "stone_pickaxe", "iron_pickaxe",
+               "wood_sword", "stone_sword", "iron_sword")
+STRIP_LAYOUT = ((0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8),
+                (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6))
+N_STRIP = len(STRIP_NAMES)
+N_COUNT = 10         #: 0..9, the whole digit alphabet; ``number_textures[0]`` is the empty texture
 
 #: block id -> name, straight from craftax.craftax_classic.constants.BlockType
 BLOCK_NAMES = ("invalid", "out_of_bounds", "grass", "water", "stone", "tree", "wood", "path", "coal", "iron", "diamond", "crafting_table", "furnace", "sand", "lava", "plant", "ripe_plant")
@@ -101,16 +141,17 @@ _BLOCK_TEX_7_B64 = (
     "01o9"
 )
 
-_PLAYER_TEX_7_SHAPE = (4, 7, 7, 3)
+_PLAYER_TEX_7_SHAPE = (5, 7, 7, 3)
 _PLAYER_TEX_7_B64 = (
     "eNpjYCAGxDszMKgD8QMnBqoBSsysd4ZgEHjgyMAgD2QbOONmb3CE2PPDCbc5yOx/QHV+QHYEHnOQ1RDjTjcgrQnEokAsBMRngPr7gPgclHYB4iKoeXbO"
-    "xIUDspnIANlMUgEtzBzMaQlXXONiI8cpLoArneBKS7jSIS4/EpOWiHHnUE9LpPqRGHOIiQtqpSVc5RIlaYmYconUtDRaLg3+cmm4piVq5U1caQnZHMJp"
-    "CQAdLbtp"
+    "xIUDspnIANlMUgEtzBzMaQlXXONiI8cpLoArneBKS7jSIS4/EpOWiHHnUE9LpPqRGHOIiQtqpSVc5RIlaYmYconUtDRaLg3+cmm4piVq5U1caQnZHFqk"
+    "JWq5H1daQjeTx5m8tESMOchqiElLILVBSGZiY4/ccgkANRruVg=="
 )
 
-_PLAYER_ALPHA_7_SHAPE = (4, 7, 7, 3)
+_PLAYER_ALPHA_7_SHAPE = (5, 7, 7, 3)
 _PLAYER_ALPHA_7_B64 = (
-    "eNpjYCAGNNgjMLUAJWYi6yUVU8scYtxPvpmNDQxwTHoYkmoOMXqxi1Ni/vBKS7ROV6NpiXZpiZK4HsxpabRcGi2XhlNaosQc8s1ExgDVRBDC"
+    "eNpjYCAGNNgjMLUAJWYi6yUVU8scYtxPvpmNDQxwTHoYkmoOMXqxi1Ni/vBKS7ROV6NpiXZpiZK4HsxpabRcGi2XhlNaosQc8s2khfmUlS3E2DVaxw32"
+    "cgkAKtZf8Q=="
 )
 
 _MOB_TEX_7_SHAPE = (8, 7, 7, 3)
@@ -167,21 +208,22 @@ _BLOCK_TEX_16_B64 = (
     "vPs34iQ//I62Ln6vr7Z5/698xXnr/r/u/3dv//9/VAog1A=="
 )
 
-_PLAYER_TEX_16_SHAPE = (4, 16, 16, 3)
+_PLAYER_TEX_16_SHAPE = (5, 16, 16, 3)
 _PLAYER_TEX_16_B64 = (
-    "eNrtmkFqAlEMht8BppuC4KLQpbgQegELzhOXXbvrHYrLgjfwIF31AKUnkJ7BY3RVjDhCOpCaR5KZTMmDxwsy4JdhNJ8/pqS13uqUNrDHNa/2tl5ySmvY"
-    "j7CfYU9gH+rf9RzOG9gfwW+6vDFv83mf1gzOz4blB86n5r7j+rBI6R7Oh1ZNXf++OPf6rdjja8N8l2l+ilNS417w6xJmzv237kXCrMXPeWZKn6sTV3WF"
-    "2TN/aS+Y/xbqPdS7urz+as6lIj+nF8y/gnoKe5R5zPh6ip+aI5J51O7lUlM8VF3Kbz07ODyS661X8PfLX+rGnl06/D/4/6v/U/Ndy//xTMezXrKo97Xw"
-    "ZIofu7HkPlNOrtUXxS/ppdR1Jf7M4S/txTM/dkjO80/xa/k/l7/K8u9zymck/v8Xf5Xl84j6Dtfyf+r3Rfh/8If/d99LOxO7fB49+z83x6vy8Jg99SJl"
-    "7rsXPCstaq3Vpf9r5f99+b8k//fgzxb589D5u/R/C/4u/d86/7f2/8j/gz/8P/L/yP8j/x9i/m/x/5/w//D/8P/wf2/+b5GZ4PzH2v81M6uhZ3F9Z6H4"
-    "eS7Nbz37Pyc/13HpI6XA2tY="
+    "eNrtmkFKA0EQRfsA40YQXAguxYXgBRQyLS5dZOXOO4hLITfwIK48gOQE4hlyDFdihUygHKykmqrqqZZqaKaQIb4aZqZffjolrfHap/QE87jn1d7GY07p"
+    "HuY1zAeYZzBX/e/6Co4HMN+D33R4Y17kzVyPCzguB5ZvON4N1x3Xq1lKp3C8HNXU+W+zTa9fij0+D8wnmeanOCU17gX/XcLMuf7WvUiYtfg590zpfbXm"
+    "6vYwe+Yv7QXzH0L9AfVLX15/DscbRX5OL5j/FupzmEeZx4zPp/ipdUSyHo172dYUD1WX8luvHRweyfnWI/in5S91Y88uHf4f/P/V/6n1Xcv/8ZqO13rJ"
+    "oP6vhSdT/NiNJdeZcnKtvih+SS+lrivxZw5/aS+e+bFDcu5/il/L/7n8XZa/zymfkfj/Lv4uy9cj6h2u5f/U94vw/+AP/6/fyzgT2z6Pnv2fm+N1uT1m"
+    "T71ImafuBa+VFrXWqOn/Wvn/VP4vyf89+LNF/tw6f03/t+Cv6f/W+b+1/0f+H/zh/5H/R/4f+X+L+b/F/p/w//D/8P/wf2/+b5GZ4PzH2v81M6vWs7ip"
+    "s1B8P5fmt579n5Oft+L/uBeL2tqfrfLqufKzQ/FTv41S9a5+55We/VL/t2bGn6nl/9bM+PO1PLmUWbL/X8v/rZ7fxZ7nhbPXhcM/vrYW9V/7zLX4a/5e"
+    "Rt17FH+L/t/i/n/8Do/9/5GfB7+X/P8HLA/27A=="
 )
 
-_PLAYER_ALPHA_16_SHAPE = (4, 16, 16, 3)
+_PLAYER_ALPHA_16_SHAPE = (5, 16, 16, 3)
 _PLAYER_ALPHA_16_B64 = (
-    "eNrtmkEOgCAMBPmZX8OfezaRA9CFLQ5J77NNtFNCKVGnXn3lduD3z5KltzOVkTkqiwNzbxY3tjP571o+yyNLFP+eLG8e+HVzqo+txanmbzOM93Zl/9X8"
-    "6hnd+3/TsOHP8OP/7ALsAmNZZlzdea+BP9ZXc/DH+X8Wfvwf/8f/8ec/uOhJ/gy/j0tn31kU+4v6+z2T39s/c/Ovvf/Pwo//4//4P/4PP/f/+D/+j//j"
-    "z/i/4/uftff/+zn1+4uWOTu/21yeYXsAOmmoGg=="
+    "eNrtm0EOwyAMBPlZv5b8vOdK5UDiJbvOIHEfIyUer2CMqnV81rbbgt+/lpSzvbMTmatqcWBercWNrSf/eYy/26OWKv5navnlgV/Xp9bYZpxq/jnD9bPd"
+    "ef5qfnWPXv2/adjwZ/jxf2YBZoFrtdxxdee5Bv5aX83gr/P/FH78H//H//HnN7hoJ3+G38el02cWxfyi/n578nv7Zzb/3vw/hR//x//xf/wffvJ//B//"
+    "x//xZ/zf8f7P3vz/eU79/KJlTud368uZ/s8dCfi1uUovL4W5x7sA7s/048f/yf/J/8n/8/L/L26IQ84="
 )
 
 _MOB_TEX_16_SHAPE = (8, 16, 16, 3)
@@ -202,6 +244,71 @@ _MOB_ALPHA_16_B64 = (
     "/zzPmH/b4cm5Xd+/dd6WQ3R/QD3yVObcoTapnp+R/SuydC/n+a5L+zvev5aJZozqnHlnq8lIsWNWzFW1/5OZVraA7JfhNot/9Lyz9JxHXguo7nmumjPv"
     "jKui7/1kLz0re9fWVu0sMZr/nSzUxz+et7Pen/lzW53JK3rp9T3SrHWr6Hj10nPrJnUW7tQIM9Zc/Pmvev/z58+fv/c//5WeBQDYuQafZd1qt98sySEA"
     "gJXyxoz1o/7D+PcSf/78+fP3/eLv/gcA9P0G7fZfjB3mHwDwjw9M5Wyl"
+)
+
+_STRIP_ICON_7_SHAPE = (16, 5, 5, 3)
+_STRIP_ICON_7_B64 = (
+    "eNrlljtoVUEQhlcMoiImCIY0iRhjLLTRBHzjPbsKFoIRrTSIiKJFCCmCiFFMGSzESqwkRQghiIWFBEsri5QWIiLBIqUECwkW4j/sXPb36t7s5tzAJfnh"
+    "Y+fsmZmdfZyHMaxHzphBhfUA1xeUWn+riN2ljIEO5Z7EKJfAc+uRnEvWI/4Prec+7H7ruS5x1rMf9njhYQ2j/0PhuQm7rfAcg71Q8aRI/E1FyVQ3Yr+h"
+    "xpfgEOwfaF+Dw7B/o31n47E/cW8WDIEW+L/VdeiBvYh2sib2Fq53gGeY4wzaK2AB9hu0d/Ue67ELXCZG4deheWI64gKcp4wOIL4P3F5Fni16pq4lxh6E"
+    "31FwB0xgrp+tn/sk5jwN+6Srvy9tuH9Vz6Dsy3mJxfl4Cru3TuwT3J8Hp/U8yvVeOb9njBmw/kyshWT/Zc6Dq8g/gDp/Ie5G4e3tyDOCtgK+Wt+Xojn4"
+    "bUXsTGGaWi9Q3x737/n/hOtTzqwLteo7ZNz+bUs7B87WsTda7BdimXhPbHaB6rdrSceq0kLM2wD7bCJ2E/KcVflOsM9HG+B6OCfXxnPZ5gI7iU5iF8E+"
+    "XNs0wfm5v9OtTMUGWOwTG+uiC7AP54zVExuX88dqiM1l2f4fjj2uezVV0y/fsxMrrFU7eKXf+JScsXrYP2Xv2muo1sB9sbVi/9hacZ5GnSvRmP6rcGys"
+    "P2XvYrGxcTmPSP6Rz7nGnauY9jn//Z21jft2pIjfpSn15ObP9U8Rv1fLiN+3ZdYqVk8zrNWQC5SRc4EyaxWrpxnWqlFjpfjH/nnK/B82w1rlPlMp/uyT"
+    "m5/nnjvWWiv3mUrxZ5/c/LxWuWPl6Q/QCcgq"
+)
+
+_STRIP_DIGIT_7_SHAPE = (10, 4, 4, 3)
+_STRIP_DIGIT_7_B64 = (
+    "eNpjYBhOoN4ZOyZVL7XU43IPLr2kqifV79Qyc6DcTy3/0iKd0NoN9IwvSvLdYEhvtI47armfFn6hRZlGrfxOT/Np4R7ql7cAHtqxVQ=="
+)
+
+_STRIP_DIGIT_ALPHA_7_SHAPE = (10, 4, 4, 3)
+_STRIP_DIGIT_ALPHA_7_B64 = (
+    "eNpjYBhOoMEeOyZVL7XU43IPLr2kqifV79Qyc6DcTy3/0iKd0NoN9IwvSvLdYEhvtI47armfFn6hRZlGrfxOT/Np4R7ql7cA+ZCulw=="
+)
+
+_STRIP_ICON_16_SHAPE = (16, 12, 12, 3)
+_STRIP_ICON_16_B64 = (
+    "eNrtXGuIXdUVnlYb4ys+GtNok5r4aKuNj/qo0Zp6zz5WIyRtrNHa1tqpTdtRRxk11WhiHUoJQUoJpRQppQSRIEGKFClBRIYQJIgUKVKKlCBSSihFgj8k"
+    "SJGuj/Vd5nOSNbOPZ869d+JZ8HEXN/vs/e211llrr3PPZGhokOXn5dDQdwno64kthjXEY4avE5Fstn+7gdhk+CrxoOFCIpfPTQT0DvG4YSWBta4gHjFc"
+    "SjxquJwA5xUExiwnxgynE7cZXk0OFax1KwEOlxHQzycw5nMEbLWUwLpLCPBcTOD7E4iHYQvifsO/kuNm03+XHNeZvjE5MP+NxOMyP/STCOjHEKpvmaIf"
+    "Sg7Y6o3k2Gj6RHLcY/qzybHa9NuTA/v/YnI8JvbEHv+dHJj/5eSA/kxyQH8qOaBvTw7MszU5HpC1RuDz5EBcnpcc8PG+wnEm5iwcKphzT3KA2++TA/qW"
+    "5IB+R3Jg/PXJgbi9IjnuNf3U5LgTvkqOtab/o3AgDsYLR448Ivv6GfyWHBtlzgdkX/eZvq1wfNv04cKBe6xTOHAPLCscdeR+se09si58cWnhuAs2KRy4"
+    "P4cKB+7JtzqOJuR7wgHxsKPjWC/61fBFx9FLWQU7dBwrRW9lernEbPW+xf5fDF82/QP73M08A/2l1My6yJtv2tw7kuflN5hvkcf/yVxxjulv2+cfDV8w"
+    "/T/Mhxczf/55FrmdyNz7ZPI8vof6AtP32uc2w0LT/8qcuZT8kUtRUw/a53PC7YWa3DDf04YNhvcMuwyjhv8Z/kT92NL9hlx6iumvkOd5rAWw7ZdMf5fX"
+    "1JHXaQ/k5Ddpgw7rJXy1Prl/djCfI3aeN4wZPmsc/m6fvzV83vQDrEc5grq7OHkexvorEJ+F7wfrHCw8XkdYFyZoD1yzz/AL1qzXyH9l8njv2rCqbGCt"
+    "2F743Muw58J9tcbweuExCnu8VbgNhlHrC4/XEV7/Is8Uy2r65ZZyEsOcG3VwK88IO8Ruz9esTU+Uk4i+Vz6XCUZZw2G3rk+3F7O39xwOTYty0HUjnr2U"
+    "QeNTVdB74Bw8ariI/cdP+8j5KvZDdxvOZn9zVx/5dG3yk9Lr1LmGH/SYD86i69hLLaeffmSYx94L58fn2KPc1BC3b7JfHCs/HDPoM3GeGDb8lzX+O4Zf"
+    "sfdCT7ee551VNbmt5b0FDjgPp9LP8lgf560f84xzHPt91AtwAu8V5AA+Bwqv+6vYi6DOXpLJ7XYb933DQ+ir+PwAfQzOA1fx3jmNfvohzxE4Z+C6bazx"
+    "t7DfwlkGvQ5qyc7kzxPQ8+C8tiKTD65fO4UDYvVk9u6I1f0233zaBDXib4Zvsd+dYM83Tg5fY9/zFPtR9B5beX7Mka+U3tujrzoLa9AOsMGp5PASe/Rb"
+    "2S/uJYchnpdXs+fD+fRKcvg1zzgd0zfxzJgj8MPFzCGfMnyGHHDe/ATjCXuFjb7Bnhgc8CxoN+ME+5mwdX/DMyk44IxyFvuhDbRvHXmSZynE5LU8g8OW"
+    "qOU4313A3hTjlnNd1H74efw6yw88GzYt64zDL9lbwCYb6dd+ySaey8dS/zj8gf0J4mii8LjaXfSew5V8HrQ6ee28vsc2QW9X8v4eYY+EXgL5dhGfAfVS"
+    "djGf7eSZHbV7Cc/Hny7rn5Nz5FXm+H3sXXAfr2EvsYB5F/fUJxHDhdeChaxL6MGW0G5LmPMWsu86iXv5KHnmcj6XVL+AA/q3Yeo4S6yjfjy5QT9B9IMc"
+    "j5q1n+ObFuwdNkF/Bx7H0YZ4doZa1ulxjI0xrkbZP6MOPFv0LxeNo/ctPS/2KxdNjbfFPA+20ooK8s615eE6ct/ZPcrP0bqRXnUvVUXXQh6Zx7Oe6hG3"
+    "2dpLHYk4R2N6yaeq/QeBT9MyCHyiuB00Wx2tgvMLzi27+AxpN38v1u9P4W8f41PGVP0+WkvHt3xaPi2flk/Lp+WTw+d9waEA7wjw+34XywT70yTOKCdx"
+    "pqD7TtlU7BXo/DrmNYFyw166UA7vCtDHd4HnLl3ousrzdMGxGdA5FcpH+ePZVRc6/oBAOX+QJqGcde8RN7VhxEfX0jkjGyp/HaPcopjR+XXvOuc76cjA"
+    "86ouFgTQ2NA4nB9AbbJHoJyjvSh/tfMx8l6lclY++9ORoRzUVsoh2qNC+SgHjfPIp7pHnVP3G9lH19U5I54a81EMR/Gpayk3HaO2Uj7HCzRu1Rc6Xu0W"
+    "3e8R5pWTiO676D7C70Nd6JzvCZbKO8Y6j/pdc1qUixRqB80/EQcdH8WG+kK56XjlENlH59G9H0rVEF2r39eZf2cAvA/QRfed3+mg10bz53BW0e9zOETX"
+    "5uw9x85VOajk2CGyYTRGkcMhx+9NxFI0Rr/Pibc6PHV+RWTbOjFfZ84cf+X4Nwediqi6VlUf6fgPvcPWcGzn8MzJXTn3cp35m0DVfS0KUKd+VZ1ToeOv"
+    "5nkW70hHejQP3rG7hnx0PM5/+I1z/pR5on0t4rt6I1PG6/eqR3EbzaN8VM+xs47X+XNydY6d69SvFzMQcYvsXPVeiGIvJzZm67yRwycnPnPux6r+mo7n"
+    "TDEf+b3O/R5ham6Z6b7Ta9XXVX0UxUl0rcZ2zjxVc2nkI9WVQ47fI85V61fOPd5E/Zor/VdV/rPVf0V4ojwyorWi8ZDN1KuezaJ5VJ/uzLx5hmur5sOc"
+    "OSN7Tndt4t+q97L/qhpjs3VGjWwb+Xq26lfVWGrCX7nz5/BJ8v8bdPU6/dd0cT7Tftv+a3br19EkOb85qt5yc1E+Ebd+8Yns1vS7TDlrRb81N22Hqntp"
+    "2g5V91KHQ1U7NBEPveQQxVsrR5/ob9/6O2P023HL7fDcEnEbhPql3AahfqlPm7BVnZxZh08T9auq79r61davj5voe0elYDRAy+3wPBlxG4T6pdwGoX6p"
+    "T5uwVZ2cWYdPE/Wrqu/a+tXWr1bm1n3RLz4Rh6af1zVtk5xntjl2aMIXOWsNmi8GrXY0bZ+qdmiaT1u/Won+nkWfBfWLQ7/45PwNy1y0Sc4z2xw7NOGL"
+    "nLX65QvN2/2KyZza0bR9qtavpvn00v6tDKbocxV9pqHPgvrFoV98ynJmzEWb5DyzzbFDE77IWatfvtC83a+YzKkdTdunav1qmk8v7T835P//CJX6"
+)
+
+_STRIP_DIGIT_16_SHAPE = (10, 9, 9, 3)
+_STRIP_DIGIT_16_B64 = (
+    "eNrtmd0NACEIg93tBrvVb4SLMcjXUhJfrfJbYK1IJDJH3mfvVN+vgnXyhmDdxzrxjd03KGLRdEjIXWT/JMcyze4TYrlLh12cpBpLJS+pcx6nWkmIkS6s"
+    "m3qj+du0k97Bm28Q5gwq9nKNBZW+UmUmRtMnof+q+EtXPqzmMOqxlrrsXVMyx85fVLiia02ZsHfr8o1wAO+9QPKG7j6R4JNkvf3LByWZZKI="
+)
+
+_STRIP_DIGIT_ALPHA_16_SHAPE = (10, 9, 9, 3)
+_STRIP_DIGIT_ALPHA_16_B64 = (
+    "eNrtmd0NACEIg93sVrvRb4SLMcjXUhJfrfJbYK1IJDJH3mfvVN+vgnXyhmDdxzrxjd03KGLRdEjIXWT/JMcyze4TYrlLh12cpBpLJS+pcx6nWkmIkS6s"
+    "m3qj+du0k97Bm28Q5gwq9nKNBZW+UmUmRtMnof+q+EtXPqzmMOqxlrrsXVMyx85fVLiia02ZsHfr8o1wAO+9QPKG7j6R4JNkvf3LB/IrVzQ="
 )
 
 #: mob ids, matching the reference's draw order; 4-7 are the arrow's (flip, transpose) orientations
@@ -231,6 +338,37 @@ _TABLES = {
                   (_MOB_ALPHA_16_B64, _MOB_ALPHA_16_SHAPE)),
 }
 
+#: Strip ingredients, kept SEPARATE from ``_TABLES`` because they are not tile-sized: an icon is
+#: ``int(0.8*t)`` on a side and a digit ``int(0.6*t)``, and neither ratio scales by an exact factor
+#: of two (12 and 9 at 16 px; 25 and 19, not 24 and 18, at 32 px). Resampling these ingredients the
+#: way ``_Assets`` resamples the tile-sized tables would therefore give a strip at 2S that is not a
+#: 2x replication of the strip at S, and ``check_resolution_consistency`` would report a renderer
+#: change where there is only a resampling rule. :class:`_StripComposite` instead builds the finished
+#: CELL at a reference size and resamples the cell, which is exact 2x replication.
+_STRIP_TABLES = {
+    TILE_PX_AGENT: ((_STRIP_ICON_7_B64, _STRIP_ICON_7_SHAPE),
+                    (_STRIP_DIGIT_7_B64, _STRIP_DIGIT_7_SHAPE),
+                    (_STRIP_DIGIT_ALPHA_7_B64, _STRIP_DIGIT_ALPHA_7_SHAPE)),
+    TILE_PX_IMG: ((_STRIP_ICON_16_B64, _STRIP_ICON_16_SHAPE),
+                  (_STRIP_DIGIT_16_B64, _STRIP_DIGIT_16_SHAPE),
+                  (_STRIP_DIGIT_ALPHA_16_B64, _STRIP_DIGIT_ALPHA_16_SHAPE)),
+}
+
+
+def strip_geometry(t: int) -> tuple[int, int, int, int]:
+    """``(icon_lo, icon_hi, digit_lo, digit_hi)`` within one ``t x t`` strip cell.
+
+    The reference's own expressions: the icon occupies
+    ``[(t - int(0.8t))//2 - 1 : t - (t - int(0.8t) - that)]`` and the digit
+    ``[t - int(0.6t) - 1 : t - 1]``, both in each axis. Every write stays inside the cell and no two
+    cells overlap, which is what makes the strip a per-cell table rather than a sequence of blits —
+    asserted at generation time and again in ``tests/unit/test_craftax_strip.py``.
+    """
+    lo = (t - int(0.8 * t)) // 2 - 1
+    hi = t - (t - int(0.8 * t) - lo)
+    n = int(0.6 * t)
+    return lo, hi, t - n - 1, t - 1
+
 
 def _unpack(b64: str, shape) -> np.ndarray:
     return np.frombuffer(zlib.decompress(base64.b64decode(b64)), dtype=np.float32).reshape(shape)
@@ -258,14 +396,78 @@ class _Assets:
 
 #: Player slot meaning "no player is drawn on this tile". ``player_visible = 0`` and every non-centre
 #: tile both resolve to it, and it is exactly the identity: the reference computes
-#: ``tile*(1 - 0) + player_tex*0``, which is ``tile + 0`` in float32, and so does slot 4.
+#: ``tile*(1 - 0) + player_tex*0``, which is ``tile + 0`` in float32, and so does this slot. It is
+#: slot 5 since the sleeping sprite took slot 4.
 NO_PLAYER = N_PLAYER
-#: (player slot, block, mob) composites in the atlas: 5 * 17 * 8.
-N_COMPOSITE = (N_PLAYER + 1) * N_BLOCK * N_MOB
 
-#: Largest tile edge the baked atlas is used at. The atlas holds ``N_COMPOSITE`` tiles, so it costs
-#: ``680 * t*t*3`` bytes as uint8 and four times that as float32 — 522 KiB / 2.0 MiB at the default
-#: 16 px, but 134 MiB / 534 MiB at ``size=256``. Above this edge the atlas stops being a small table
+
+class _StripAssets:
+    """Inventory-strip ingredients at a reference size. Never resampled; see :data:`_STRIP_TABLES`."""
+
+    _cache: dict = {}
+
+    @classmethod
+    def get(cls, device: torch.device, src: int):
+        key = (str(device), int(src))
+        if key not in cls._cache:
+            cls._cache[key] = tuple(torch.as_tensor(_unpack(b64, shape).copy(), device=device)
+                                    for b64, shape in _STRIP_TABLES[src])
+        return cls._cache[key]
+
+
+def _strip_cells(device: torch.device, t: int) -> torch.Tensor:
+    """``(N_STRIP * N_COUNT, t, t, 3)`` float32 — every ``(cell, count)`` picture the strip can show.
+
+    The strip is a function of sixteen small integers and of nothing else — twelve inventory counts
+    and four intrinsics, each capped at 9 by the simulator — and the reference draws each cell with
+    two writes that stay inside that cell's own tile, so no two cells interact. The whole strip is
+    therefore a 16 x 10 table of finished tiles: 160 entries, 23,520 bytes as uint8 at 7 px and
+    122,880 at 16 px, and drawing it is a gather.
+
+    **The strip is not lit.** ``render_craftax_pixels`` concatenates it *after* the day/night chain
+    and after the sleeping desaturation, so it is the same picture at midnight and at noon. Measured
+    over 64 real states at both tile sizes: bit-identical under every ``light_level`` and
+    ``is_sleeping``, and 0 channels move when ``state_rng`` changes
+    (``examples/results/step7/craftax-classic-full/phase0/components.json``). The Crafter port found
+    the same thing by failing first (``docs/research/crafter.md``); here it was measured first.
+
+    Built at a reference tile size and then resampled *as a finished cell*, never as ingredients: an
+    icon edge is ``int(0.8*t)`` and a digit edge ``int(0.6*t)``, and neither scales by an exact
+    factor of two (12 and 9 at 16 px; 25 and 19 — not 24 and 18 — at 32 px). Re-laying the cell out
+    at 2S would give a strip that is not a 2x replication of the strip at S, and
+    ``check_resolution_consistency`` would report a renderer change where there is only a resampling
+    rule. Resampling the finished cell is exact 2x replication.
+    """
+    src = t if t in _STRIP_TABLES else min(REFERENCE_TILE_PX, key=lambda z: abs(z - t))
+    icons, digits, dalpha = _StripAssets.get(device, src)
+    lo, hi, dlo, dhi = strip_geometry(src)
+    cell = torch.zeros(N_STRIP, N_COUNT, src, src, 3, dtype=torch.float32, device=device)
+    # count 0 leaves the icon out: the reference selects ``smaller_empty_texture`` on ``> 0``, and
+    # digit 0 is the empty texture with zero alpha, so a zero cell is entirely black. That is also
+    # what the two cells the reference never writes look like, which is why a blank needs no entry
+    # of its own — it is cell 0 holding count 0.
+    cell[:, 1:, lo:hi, lo:hi, :] = icons.view(N_STRIP, 1, hi - lo, hi - lo, 3)
+    patch = cell[:, :, dlo:dhi, dlo:dhi, :].clone()
+    cell[:, :, dlo:dhi, dlo:dhi, :] = (
+        patch * (1 - dalpha.view(1, N_COUNT, dhi - dlo, dhi - dlo, 3))
+        + digits.view(1, N_COUNT, dhi - dlo, dhi - dlo, 3))
+    if t != src:
+        ix = ((torch.arange(t, device=device, dtype=torch.float32) + 0.5)
+              * src / t).long().clamp_(0, src - 1)
+        cell = cell[:, :, ix][:, :, :, ix]
+    return cell.reshape(N_STRIP * N_COUNT, t, t, 3)
+#: (player slot, block, mob) composites in the atlas: 6 * 17 * 8 = 816. Six player slots because the
+#: sleeping sprite is one of them and :data:`NO_PLAYER` is the sixth.
+N_COMPOSITE = (N_PLAYER + 1) * N_BLOCK * N_MOB
+#: The strip cells live in the same table, after the world tiles, so one gather draws the whole
+#: observation. Tile id ``STRIP_BASE + cell * N_COUNT + count`` is strip cell ``cell`` showing
+#: ``count``; ``STRIP_BASE + 0`` is black, which is what the two unwritten cells show.
+STRIP_BASE = N_COMPOSITE
+N_TILE = N_COMPOSITE + N_STRIP * N_COUNT
+
+#: Largest tile edge the baked atlas is used at. The atlas holds ``N_TILE`` tiles, so it costs
+#: ``976 * t*t*3`` bytes as uint8 and four times that as float32 — 750 KiB / 2.9 MiB at the default
+#: 16 px, but 192 MiB / 767 MiB at ``size=256``. Above this edge the atlas stops being a small table
 #: that stays resident and becomes the largest allocation in the process, so ``render`` falls back to
 #: :meth:`CraftaxClassic._render_blend`, which is the pre-bake implementation and is asserted
 #: pixel-identical to the atlas path by ``tests/unit/test_craftax_atlas.py``.
@@ -318,16 +520,21 @@ class _Composite:
         whole output scanline of one tile with a single index and write it where it finally belongs.
         """
         block, ptex, palpha, mtex, malpha = _Assets.get(device, t)
-        # player over block -> (5, 17, t, t, 3); slot 4 is the block untouched
+        # player over block -> (6, 17, t, t, 3); slot NO_PLAYER is the block untouched
         with_player = block.unsqueeze(0).repeat(N_PLAYER + 1, 1, 1, 1, 1)
         ap = palpha.view(N_PLAYER, 1, t, t, 3)
         with_player[:N_PLAYER] = (with_player[:N_PLAYER] * (1 - ap)
                                   + ptex.view(N_PLAYER, 1, t, t, 3) * ap)
-        # mob over that -> (5, 17, 8, t, t, 3)
+        # mob over that -> (6, 17, 8, t, t, 3)
         am = malpha.view(1, 1, N_MOB, t, t, 3)
         comp = (with_player.unsqueeze(2) * (1 - am)
                 + mtex.view(1, 1, N_MOB, t, t, 3) * am)
-        return comp.reshape(N_COMPOSITE * t, t * 3).contiguous()
+        # ... and the 160 strip cells after them, in the SAME table, so one gather draws the whole
+        # observation. A strip cell is a tile like any other; it just happens to be indexed by
+        # (cell, count) rather than by (player, block, mob).
+        return torch.cat([comp.reshape(N_COMPOSITE * t, t * 3),
+                          _strip_cells(device, t).reshape(N_STRIP * N_COUNT * t, t * 3)]
+                         ).contiguous()
 
     @classmethod
     def get(cls, device: torch.device, t: int, want_float: bool):
@@ -351,20 +558,46 @@ class _Composite:
 
 @register
 class CraftaxClassic(StableEnv):
-    """Craftax Classic's world layer: a 7x9 block window, the player, and one mob per tile."""
+    """Craftax Classic: a 7x9 block window, the player, one mob per tile, and the inventory strip."""
 
     name = "craftax-classic"
-    state_dim = OBS_H * OBS_W * 2 + 1
+    #: 63 blocks, 63 mobs, the player's facing, then the sixteen strip counts and the sleeping flag.
+    #: **Appended, never reordered**: the first 127 slots keep the meaning and position they had when
+    #: Step 4 froze this env's corpus, which is what makes the world rows of that corpus replayable.
+    state_dim = OBS_H * OBS_W * 2 + 1 + N_STRIP + 1
     state_names = (tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
                    + tuple(f"mob_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
-                   + ("player_facing",))
-    #: tile edge in pixels; the frame is (7*size, 9*size, 3). Craftax ships textures at 7 px (the size
-    #: the agent observation is drawn at) and 16 px, and both are exact against the official renderer.
-    #: The default is 16 because at 7 px Craftax's dithered art leaves no flat 3x3 neighbourhood in the
-    #: whole frame, the conformance suite's interior mask is then empty, and its interior statistic
-    #: comes back NaN — which no floor can satisfy, however exact the renderer is.
+                   + ("player_facing",)
+                   + tuple(f"inv_{n}" for n in STRIP_NAMES)
+                   + ("is_sleeping",))
+    #: tile edge in pixels; the frame is ((7+2)*size, 9*size, 3). Craftax ships textures at 7 px (the
+    #: size the agent observation is drawn at) and 16 px, and both are exact against the official
+    #: renderer. The default is 16 because at 7 px Craftax's dithered art leaves no flat 3x3
+    #: neighbourhood in the world layer, the conformance suite's interior mask is then nearly empty,
+    #: and its interior statistic comes back NaN — which no floor can satisfy, however exact the
+    #: renderer is.
     default_size = TILE_PX_IMG
     reference_id = "Craftax-Classic-Pixels-v1"
+    #: REFERENCE-side versions the parity numbers were measured against. ``craftax`` pins the atlas
+    #: and the strip layout. ``jax`` is here for a reason that is not obvious and is load-bearing:
+    #: see :meth:`reference_env`, which refuses to build a reference whose PRNG path differs.
+    reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
+    #: What the parity bound is, and what it is not. The declared versions above are corroborated
+    #: here rather than left as bare numbers.
+    parity_note = (
+        "Measured on 64 sampled states at 7 px and 16 px, over the WHOLE observation -- the 7x9 world "
+        "window and the 2-row inventory strip, sleeping rows included -- against craftax 1.6.1 under "
+        "jax 0.11.1 with jax_threefry_partitionable at its default True: 100% of all pixels exact, "
+        "max abs diff 0. The claim is a UINT8 claim and deliberately not a float one, because the "
+        "reference does not have one float value to be equal to: under jax.jit XLA fuses its "
+        "arithmetic differently and it disagrees with its own un-jitted self by up to 1.5e-05, which "
+        "is invisible in uint8 by day and visible under is_sleeping, whose desaturation halves the "
+        "dynamic range. Against the JITTED reference this renderer is 99.7854% (7 px) and 99.7225% "
+        "(16 px) of pixels exact with max abs diff 1, every differing pixel on a sleeping row; "
+        "reference_env therefore returns the un-jitted function, which is the renderer as written. "
+        "jax is a declared reference version because jax_threefry_partitionable selects between two "
+        "threefry counter layouts that agree on 0 of 448 draws, and the night noise field is drawn "
+        "from one of them.")
 
     def make_variation_space(self) -> Dict:
         """Knobs that are the identity at their defaults and genuinely move pixels off them.
@@ -388,27 +621,101 @@ class CraftaxClassic(StableEnv):
         n, H, W, t, _, _ = x.shape
         return x.permute(0, 1, 3, 2, 4, 5).reshape(n, H * t, W * t, 3)
 
+    @staticmethod
+    def _strip_grid(device):
+        """``(cell_of, blank)`` — which strip cell sits at each ``(strip row, column)``.
+
+        Two of the eighteen positions are never written by the reference and stay black; they map to
+        cell 0 holding count 0, which IS black, so a blank needs no table entry of its own.
+        """
+        cell_of = torch.zeros(STRIP_H, OBS_W, dtype=torch.long, device=device)
+        blank = torch.ones(STRIP_H, OBS_W, dtype=torch.bool, device=device)
+        for i, (r, c) in enumerate(STRIP_LAYOUT):
+            cell_of[r, c] = i
+            blank[r, c] = False
+        return cell_of, blank
+
+    def _decode(self, s, n):
+        """The state row -> the small integers the tables are indexed by.
+
+        Every decode is a **wrap**, never a clamp, and deliberately: ``check_state_dims_matter``
+        probes a dimension by adding 25 to it, and a clamping decoder leaves a cell that already
+        holds the last class insensitive to the probe — which is reported as a dead state dimension
+        when it is an artifact of the probe. Real states are always in range, so the rule never
+        fires in practice.
+        """
+        nb = OBS_H * OBS_W
+        blk = s[:, :nb].round().remainder(N_BLOCK).long().view(n, OBS_H, OBS_W)
+        mob = s[:, nb:2 * nb].round().remainder(N_MOB).long().view(n, OBS_H, OBS_W)
+        # facing wraps mod FOUR, not mod N_PLAYER: slot 4 is the sleeping sprite and is reached by
+        # the is_sleeping flag, not by a facing value
+        facing = s[:, 2 * nb].round().remainder(N_FACING).long()
+        cnt = s[:, 2 * nb + 1:2 * nb + 1 + N_STRIP].round().remainder(N_COUNT).long()
+        sleeping = s[:, 2 * nb + 1 + N_STRIP] > 0.5
+        return blk, mob, facing, cnt, sleeping
+
+    def _tile_ids(self, blk, mob, facing, cnt, sleeping, sty) -> torch.Tensor:
+        """``(n, OBS_H + STRIP_H, OBS_W)`` int32 — one table row per output tile, world and strip.
+
+        Everything that could have been a branch is folded in here instead, so one batch may hold
+        any mixture of appearances and of sleeping and awake players:
+
+        * ``mobs_visible = 0`` becomes mob id 0, whose alpha table is exactly zero (asserted, not
+          assumed, by ``tests/unit/test_craftax_atlas.py``);
+        * ``player_visible = 0`` and every non-centre tile become player slot :data:`NO_PLAYER`;
+        * ``is_sleeping`` becomes player slot :data:`PLAYER_ASLEEP` on the centre tile.
+        """
+        n, dev = blk.shape[0], blk.device
+        vis_m = (sty["mobs_visible"] > 0.5).view(n, 1, 1)
+        vis_p = (sty["player_visible"] > 0.5).view(n)
+        m = torch.where(vis_m, mob, torch.zeros_like(mob))
+        slot = torch.full((n, OBS_H, OBS_W), NO_PLAYER, dtype=torch.long, device=dev)
+        cr, cc = OBS_H // 2, OBS_W // 2
+        here = torch.where(sleeping, torch.full_like(facing, PLAYER_ASLEEP), facing)
+        slot[:, cr, cc] = torch.where(vis_p, here, torch.full_like(here, NO_PLAYER))
+        world = (slot * N_BLOCK + blk) * N_MOB + m                       # (n, OBS_H, OBS_W)
+
+        cell_of, blank = self._strip_grid(dev)
+        c = cnt[:, cell_of.reshape(-1)].view(n, STRIP_H, OBS_W)
+        c = torch.where(blank.unsqueeze(0), torch.zeros_like(c), c)
+        strip = STRIP_BASE + cell_of.unsqueeze(0) * N_COUNT + c          # (n, STRIP_H, OBS_W)
+        return torch.cat([world, strip], dim=1).to(torch.int32)
+
+    @staticmethod
+    def _post(px: torch.Tensor, sleeping: torch.Tensor) -> torch.Tensor:
+        """The reference's post-process on the WORLD rows. ``px`` is ``(n, OBS_H*t, OBS_W*t, 3)``.
+
+        Today that is only the sleeping desaturation --
+        ``0.299 R + 0.587 G + 0.114 B`` halved, plus ``0.5 * [0, 0, 16]``. The strip is not passed
+        in, because the reference concatenates it after this runs and it is therefore never lit and
+        never desaturated.
+        """
+        lum = 0.299 * px[..., 0] + 0.587 * px[..., 1] + 0.114 * px[..., 2]
+        sleep = (0.5 * lum).unsqueeze(-1) + torch.tensor([0.0, 0.0, 8.0], device=px.device)
+        return torch.where(sleeping.view(-1, 1, 1, 1), sleep, px)
+
     @torch.no_grad()
     def render(self, states=None, size: int | None = None, supersample: int | None = None,
                variation: dict | None = None, style=None, out=None) -> torch.Tensor:
-        """``(...,127)`` -> ``(...,7*size,9*size,3)`` uint8, in the reference's compositing order.
+        """``(...,144)`` -> ``(...,(7+2)*size, 9*size, 3)`` uint8, in the reference's own order.
 
-        There is no ``scene()``: the frame is a gather from a texture atlas with two alpha blends over
-        it, not a rasterisation of vector primitives — and since Step 6 the two blends are baked into
-        the atlas (:class:`_Composite`) instead of being redone per frame, so at the default
-        appearance the whole render is one ``index_select`` straight into the uint8 output.
+        There is no ``scene()``: the frame is a gather from a texture atlas with two alpha blends
+        over it, not a rasterisation of vector primitives — and since Step 6 the blends are baked
+        into the atlas (:class:`_Composite`) instead of being redone per frame. Step 7 put the
+        inventory strip's 160 composited cells into the *same* table, so the whole observation —
+        world window and strip — is still **one** ``index_select``: a strip cell is a tile like any
+        other, indexed by ``(cell, count)`` instead of by ``(player, block, mob)``.
 
-        Three things fold into the gather index rather than into a branch, so a batch may hold any
-        mixture of them:
+        Two things cannot fold into the gather, and both are guarded so that the common case keeps
+        the uint8 fast path:
 
-        * ``mobs_visible = 0`` becomes mob id 0, whose alpha table is exactly zero (asserted at build
-          time by ``tests/unit/test_craftax_atlas.py``), which is what scaling the alpha to zero did;
-        * ``player_visible = 0`` becomes player slot :data:`NO_PLAYER`;
-        * every non-centre tile is player slot :data:`NO_PLAYER` too.
-
-        ``channel_gain`` cannot fold in — it multiplies before the rounding — so a batch carrying any
-        gain other than exactly 1 gathers the pre-rounding float composite instead and then applies
-        the gain, which is still one gather and three elementwise passes rather than a dozen.
+        * ``channel_gain`` multiplies *before* the rounding, so a gain other than exactly 1 gathers
+          the pre-rounding float table instead;
+        * a sleeping player desaturates the world rows after compositing, so a batch containing one
+          gathers float too. Which path is taken changes only the speed: the uint8 table is
+          *defined* as ``round -> clamp -> uint8`` of the float one, so a non-sleeping row at unit
+          gain comes out identical either way, and ``tests/unit/test_craftax_atlas.py`` asserts it
+          on a batch that mixes sleeping and awake rows.
         """
         s = self._state if states is None else torch.as_tensor(states, device=self.device,
                                                                dtype=torch.float32)
@@ -422,31 +729,22 @@ class CraftaxClassic(StableEnv):
                 f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate.")
         sty = self.resolve_style(style, variation, batch=n)
 
-        nb = OBS_H * OBS_W
-        blk = s[:, :nb].round().remainder(N_BLOCK).long().view(n, OBS_H, OBS_W)
-        mob = s[:, nb:nb + nb].round().remainder(N_MOB).long().view(n, OBS_H, OBS_W)
-        pid = s[:, nb + nb].round().remainder(N_PLAYER).long()
-
+        blk, mob, facing, cnt, sleeping = self._decode(s, n)
+        H = (OBS_H + STRIP_H) * t
         if t > ATLAS_MAX_TILE_PX:
-            img = self._render_blend(blk, mob, pid, t, sty)
+            img = self._render_blend(blk, mob, facing, cnt, sleeping, t, sty)
         else:
-            img = self._render_atlas(blk, mob, pid, t, sty, out)
+            img = self._render_atlas(blk, mob, facing, cnt, sleeping, t, sty, out)
         if out is not None and img.data_ptr() != out.data_ptr():
-            out.view(n, OBS_H * t, OBS_W * t, 3).copy_(img)
-            img = out.view(n, OBS_H * t, OBS_W * t, 3)
+            out.view(n, H, OBS_W * t, 3).copy_(img)
+            img = out.view(n, H, OBS_W * t, 3)
         return img.view(*lead, *img.shape[1:]) if lead else img
 
-    def _render_atlas(self, blk, mob, pid, t, sty, out) -> torch.Tensor:
-        """The gather. One ``index_select`` per frame at the default gain, and no float buffer."""
-        n = blk.shape[0]
-        dev = blk.device
-        vis_m = (sty["mobs_visible"] > 0.5).view(n, 1, 1)
-        vis_p = (sty["player_visible"] > 0.5).view(n)
-        m = torch.where(vis_m, mob, torch.zeros_like(mob))
-        slot = torch.full((n, OBS_H, OBS_W), NO_PLAYER, dtype=torch.long, device=dev)
-        cr, cc = OBS_H // 2, OBS_W // 2
-        slot[:, cr, cc] = torch.where(vis_p, pid, torch.full_like(pid, NO_PLAYER))
-        tile = ((slot * N_BLOCK + blk) * N_MOB + m).to(torch.int32)      # (n, H, W)
+    def _render_atlas(self, blk, mob, facing, cnt, sleeping, t, sty, out) -> torch.Tensor:
+        """The gather. One ``index_select`` per frame at the default appearance, and no float buffer."""
+        n, dev = blk.shape[0], blk.device
+        H = (OBS_H + STRIP_H) * t
+        tile = self._tile_ids(blk, mob, facing, cnt, sleeping, sty)
 
         # One index entry per (frame, tile row, output scanline within the tile, tile column), which
         # IS the output's own row order — so the gather writes the final raster directly instead of
@@ -456,25 +754,28 @@ class CraftaxClassic(StableEnv):
         rows = rows.reshape(-1)
 
         gain = sty["channel_gain"]
-        if bool(torch.all(gain == 1.0)):
+        plain = bool(torch.all(gain == 1.0)) and not bool(sleeping.any())
+        if plain:
             atlas = _Composite.get(dev, t, want_float=False)[1]
-            img = (out.view(n, OBS_H * t, OBS_W * t, 3) if out is not None
-                   else torch.empty(n, OBS_H * t, OBS_W * t, 3, dtype=torch.uint8, device=dev))
+            img = (out.view(n, H, OBS_W * t, 3) if out is not None
+                   else torch.empty(n, H, OBS_W * t, 3, dtype=torch.uint8, device=dev))
             torch.index_select(atlas, 0, rows, out=img.view(-1, t * 3))
             return img
         f32 = _Composite.get(dev, t, want_float=True)[0]
-        px = torch.index_select(f32, 0, rows).view(n, OBS_H * t, OBS_W * t, 3)
+        px = torch.index_select(f32, 0, rows).view(n, H, OBS_W * t, 3)
+        w = OBS_H * t
+        px[:, :w] = self._post(px[:, :w], sleeping)
         px = px * gain.to(px.dtype).view(n, 1, 1, 3)
         return px.round_().clamp_(0, 255).to(torch.uint8)
 
-    def _render_blend(self, blk, mob, pid, t, sty) -> torch.Tensor:
+    def _render_blend(self, blk, mob, facing, cnt, sleeping, t, sty) -> torch.Tensor:
         """Composite per frame, the way this renderer did before Step 6.
 
-        Kept because the baked atlas costs ``680 * t*t*3`` bytes and stops being a table worth keeping
-        somewhere above :data:`ATLAS_MAX_TILE_PX` (see there). It is the readable definition of what
-        the atlas bakes, and ``tests/unit/test_craftax_atlas.py`` asserts the two agree on every
-        pixel — including the two visibility flags mixed within one batch, out-of-range class ids and
-        a random gain.
+        Kept because the baked atlas costs ``976 * t*t*3`` bytes and stops being a table worth
+        keeping somewhere above :data:`ATLAS_MAX_TILE_PX` (see there). It is the readable definition
+        of what the atlas bakes, and ``tests/unit/test_craftax_atlas.py`` asserts the two agree on
+        every pixel — including sleeping and awake rows and both visibility flags mixed within one
+        batch, out-of-range class ids and a random gain.
         """
         n = blk.shape[0]
         block, ptex, palpha, mtex, malpha = _Assets.get(blk.device, t)
@@ -485,12 +786,23 @@ class CraftaxClassic(StableEnv):
         # float32, not merely close to it.
         cr, cc = OBS_H // 2, OBS_W // 2
         sl = px[:, cr * t:(cr + 1) * t, cc * t:(cc + 1) * t, :]
+        pid = torch.where(sleeping, torch.full_like(facing, PLAYER_ASLEEP), facing)
         a = palpha[pid] * (sty["player_visible"] > 0.5).to(px.dtype).view(n, 1, 1, 1)
         px[:, cr * t:(cr + 1) * t, cc * t:(cc + 1) * t, :] = sl * (1 - a) + ptex[pid] * a
 
         a = (self._tiles_to_frame(malpha[mob])
              * (sty["mobs_visible"] > 0.5).to(px.dtype).view(n, 1, 1, 1))
         px = px * (1 - a) + self._tiles_to_frame(mtex[mob]) * a
+
+        px = self._post(px, sleeping)
+
+        # the strip, drawn after the post-process exactly as the reference concatenates it after
+        cells = _strip_cells(blk.device, t)
+        cell_of, blank = self._strip_grid(blk.device)
+        c = cnt[:, cell_of.reshape(-1)].view(n, STRIP_H, OBS_W)
+        c = torch.where(blank.unsqueeze(0), torch.zeros_like(c), c)
+        strip = self._tiles_to_frame(cells[cell_of.unsqueeze(0) * N_COUNT + c])
+        px = torch.cat([px, strip], dim=1)
 
         px = px * sty["channel_gain"].to(px.dtype).view(n, 1, 1, 3)
 
@@ -547,7 +859,22 @@ class CraftaxClassic(StableEnv):
                     mid = kind if kind is not None else MOB_ARROW[int(rng.integers(4))]
                     st[b, nb + cells[int(where[j])]] = mid
                     j += 1
-        st[:, nb * 2] = rng.integers(0, N_PLAYER, size=batch).astype(np.float32)
+        st[:, nb * 2] = rng.integers(0, N_FACING, size=batch).astype(np.float32)
+
+        # The strip counts are sampled DIRECTLY over 0..9 rather than taken from a rollout. That is
+        # not a shortcut: measured over a 4,000-step random-policy rollout, ten of the twelve
+        # inventory cells never leave zero (wood reaches 2, sapling 1, the rest nothing) because a
+        # random policy never crafts, so a pool built from one would present ten dead state
+        # dimensions -- exactly the failure ``docs/research/pixel_native.md`` records for Procgen
+        # miner and heist, and it looks identical to a wrong state contract. Sampling the counts is
+        # sound here because the strip is a function of the counts alone (each cell's two writes stay
+        # inside its own tile, asserted at generation time) and because the simulator caps every
+        # count at 9, so every sampled row is a row a real ``EnvState`` can hold.
+        st[:, nb * 2 + 1:nb * 2 + 1 + N_STRIP] = rng.integers(
+            0, N_COUNT, size=(batch, N_STRIP)).astype(np.float32)
+        # a quarter asleep: enough for the sleeping sprite and the desaturation to be exercised in
+        # every batch, few enough that the awake path is still the common one
+        st[:, nb * 2 + 1 + N_STRIP] = (rng.random(batch) < 0.25).astype(np.float32)
         return st
 
     # reference bridge
@@ -563,6 +890,24 @@ class CraftaxClassic(StableEnv):
         Only the two sizes craftax ships textures for are accepted. Anything else has no official frame
         to be compared against, and inventing one by resampling the reference would be comparing this
         renderer against a second implementation of itself.
+
+        **The renderer is deliberately NOT jitted, and that is a correctness decision rather than a
+        performance one.** "The official frame" is not one object: under ``jax.jit`` XLA fuses the
+        arithmetic differently and the reference disagrees with its own un-jitted self by up to
+        1.5e-05 in float32. That is invisible in uint8 for a daylight frame, and it is *not* invisible
+        for a sleeping one, because the desaturation halves the dynamic range and a 1.5e-05 difference
+        then straddles a rounding boundary. Measured over 64 states at both tile sizes, against this
+        renderer: **un-jitted 100.0000% of all pixels exact, max abs diff 0; jitted 99.7854% at 7 px
+        and 99.7225% at 16 px, max abs diff 1, every differing pixel on a sleeping row.** The
+        un-jitted function is the renderer as written, so it is the one certified against; jit is an
+        optimisation that changes the picture. It costs about 0.25 s a frame instead of 0.008 s, which
+        is the right trade for a check that runs on tens of states and is the whole basis of a parity
+        claim.
+
+        ``jax_threefry_partitionable`` is asserted rather than assumed. jax has two threefry code
+        paths and they give different bits for the same key (0/448 agreement between them, measured);
+        the flag's default flipped to ``True`` in jax 0.4.36. With it off, the reference's night noise
+        is a different picture and a parity number against it would be meaningless rather than wrong.
         """
         if int(size) not in REFERENCE_TILE_PX:
             raise ValueError(
@@ -572,23 +917,44 @@ class CraftaxClassic(StableEnv):
         import jax
         from craftax.craftax_classic.renderer import make_craftax_pixel_renderer
         from craftax.craftax_env import make_craftax_env_from_name
+        if not bool(jax.config.jax_threefry_partitionable):
+            raise RuntimeError(
+                "CraftaxClassic.reference_env: jax_threefry_partitionable is off, so this jax draws "
+                "the night noise field with the pre-0.4.36 threefry counter layout. That is a "
+                "different field for the same state_rng (0 of 448 draws agree between the two "
+                "paths), so a parity number taken against it would not be a parity number. Run with "
+                "the flag at its default (True), or declare the other path and re-measure.")
         env = make_craftax_env_from_name("Craftax-Classic-Pixels-v1", auto_reset=False)
         _obs, template = env.reset(jax.random.PRNGKey(0), env.default_params)
-        return (jax.jit(make_craftax_pixel_renderer(int(size))), template, int(size))
+        return (make_craftax_pixel_renderer(int(size)), template, int(size))
 
     @staticmethod
     def reference_render(env, states) -> np.ndarray:
-        """Official frames for the given render states, cropped to the world layer.
+        """Official frames for the given render states — the WHOLE observation, no crop.
 
         The render state is written back into a full ``EnvState``: the block window goes into the middle
         of the map with the player standing at its centre, each occupied mob tile becomes one mob of the
-        right class at the matching absolute position, and arrow orientations are recovered by choosing
-        an ``arrow_direction`` whose ``(flip, transpose)`` classification is the one encoded. Daylight
-        and not-sleeping are forced, which makes the post-process the identity on the map pixels.
+        right class at the matching absolute position, arrow orientations are recovered by choosing an
+        ``arrow_direction`` whose ``(flip, transpose)`` classification is the one encoded, and the
+        sixteen strip counts go into ``player_health``/``food``/``drink``/``energy`` and ``inventory``.
+
+        Until Step 7 this cropped the official frame to the world layer, because the strip was not
+        drawn and comparing against the whole frame would have been comparing against a picture this
+        renderer never claimed. The strip is drawn now, so the crop is gone and the parity number is
+        over all ``(OBS_H + STRIP_H) * tile_px`` rows.
+
+        ``light_level`` is still forced to 1.0: night is the next commit. ``is_sleeping`` is not
+        forced any more — it selects the fifth player sprite and desaturates the world rows, and both
+        are implemented.
         """
         import jax
         import jax.numpy as jnp
         render, tmpl, tile_px = env
+
+        def _i(field, v):
+            """``v`` in the dtype the template's field already has, so the pytree stays well typed."""
+            return jnp.asarray(v, jnp.asarray(field).dtype)
+
         s = np.asarray(states, dtype=np.float32).reshape(-1, CraftaxClassic.state_dim)
         nb = OBS_H * OBS_W
         H, W = np.asarray(tmpl.map).shape
@@ -614,7 +980,9 @@ class CraftaxClassic(StableEnv):
         for row in s:
             blk = np.round(row[:nb]).astype(np.int32).reshape(OBS_H, OBS_W) % N_BLOCK
             mob = np.round(row[nb:2 * nb]).astype(np.int32).reshape(OBS_H, OBS_W) % N_MOB
-            pid = int(np.round(row[2 * nb])) % N_PLAYER
+            pid = int(np.round(row[2 * nb])) % N_FACING
+            cnt = np.round(row[2 * nb + 1:2 * nb + 1 + N_STRIP]).astype(np.int32) % N_COUNT
+            sleeping = bool(row[2 * nb + 1 + N_STRIP] > 0.5)
 
             m = np.asarray(tmpl.map).copy()
             m[r0:r0 + OBS_H, c0:c0 + OBS_W] = blk
@@ -644,13 +1012,19 @@ class CraftaxClassic(StableEnv):
                 map=jnp.asarray(m, jnp.asarray(tmpl.map).dtype),
                 player_position=jnp.asarray([py, px_], jnp.int32),
                 player_direction=jnp.asarray(pid + 1, jnp.asarray(tmpl.player_direction).dtype),
-                is_sleeping=jnp.bool_(False),
+                is_sleeping=jnp.bool_(sleeping),
                 light_level=jnp.float32(1.0),
+                player_health=_i(tmpl.player_health, cnt[0]),
+                player_food=_i(tmpl.player_food, cnt[1]),
+                player_drink=_i(tmpl.player_drink, cnt[2]),
+                player_energy=_i(tmpl.player_energy, cnt[3]),
+                inventory=tmpl.inventory.replace(**{
+                    n: _i(getattr(tmpl.inventory, n), cnt[4 + i])
+                    for i, n in enumerate(STRIP_NAMES[4:])}),
                 zombies=mob(tmpl.zombies, zp, zm),
                 cows=mob(tmpl.cows, cp, cm),
                 skeletons=mob(tmpl.skeletons, sp, sm),
                 arrows=mob(tmpl.arrows, ap, am),
                 arrow_directions=jnp.asarray(ad, jnp.asarray(tmpl.arrow_directions).dtype))
-            frame = np.asarray(jax.device_get(render(st)))[: OBS_H * tile_px]
-            out.append(np.round(frame).clip(0, 255).astype(np.uint8))
+            out.append(np.round(np.asarray(jax.device_get(render(st)))).clip(0, 255).astype(np.uint8))
         return np.stack(out)
