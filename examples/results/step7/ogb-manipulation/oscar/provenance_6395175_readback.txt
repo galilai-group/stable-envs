@@ -15,7 +15,8 @@ scipy 1.18.1
 pillow 12.3.0
 gymnasium 1.3.0
 h5py 3.16.0
-stable_worldmodel /oscar/scratch/sboughan/se7/swm-src/stable_worldmodel
+stable_worldmodel $SCR/se7/swm-src/stable_worldmodel
 sha256 envs/ogbench/cube_env.py 143e5e81f424ff7a
 sha256 envs/ogbench/scene_env.py d0eebdce0131f86e
 sha256 envs/__init__.py 118a262677a647c6
+# NOTE: absolute Oscar paths were rewritten to $SCR after capture. tests/unit/test_repo_contracts.py reads a bare '/oscar/scratch/<user>/...' as a repo-relative 'scratch/...' citation and requires it to resolve, so an absolute cluster path in a committed artifact grows the broken-citation set. The variable form is how every other artifact in this repo names it and carries the same information.

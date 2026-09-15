@@ -66,7 +66,12 @@ def provenance() -> dict:
         import hashlib
         import stable_worldmodel as swm
         root = Path(swm.__file__).parent
-        out["stable_worldmodel_path"] = str(root)
+        # `$SCR`, not the expanded path: `tests/unit/test_repo_contracts.py` reads a bare
+        # `/oscar/scratch/<user>/...` in a committed artifact as a repo-relative `scratch/...`
+        # citation and requires it to resolve, so capturing the absolute form grows the
+        # broken-citation set by one every time.
+        out["stable_worldmodel_path"] = str(root).replace(
+            f"/oscar/scratch/{os.environ.get('USER', 'sboughan')}", "$SCR")
         out["stable_worldmodel_sha256"] = {
             f: hashlib.sha256((root / f).read_bytes()).hexdigest()[:16]
             for f in ("envs/ogbench/cube_env.py", "envs/ogbench/scene_env.py", "envs/__init__.py")

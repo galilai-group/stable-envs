@@ -576,7 +576,12 @@ class OGBManipBase(StableEnv):
                                            np.asarray(bits, np.float64)]))
         finally:
             np.random.set_state(gstate)
-        return np.stack(out).astype(np.float64)
+        # FLOAT32, and this is a correctness requirement rather than a memory one.
+        # `StableEnv.set_state` stores the batch as float32, so `check_state_roundtrip` compares a
+        # float32 read-back against whatever this returns; returning float64 made
+        # `set_state(get_state())` differ by the narrowing error -- 1.17e-07, against a bound the
+        # suite spells as exactly 0.0. The state is carried in the dtype it round-trips in.
+        return np.stack(out).astype(np.float32)
 
     # ---- variation ------------------------------------------------------------------------
 

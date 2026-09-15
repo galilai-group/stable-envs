@@ -24,7 +24,7 @@
      "python": "3.12.8",
      "slurm_job": "6407605",
      "stable-worldmodel": null,
-     "stable_worldmodel_path": "/oscar/scratch/sboughan/se7/swm-src/stable_worldmodel",
+     "stable_worldmodel_path": "$SCR/se7/swm-src/stable_worldmodel",
      "stable_worldmodel_sha256": {
       "envs/__init__.py": "118a262677a647c6",
       "envs/ogbench/cube_env.py": "143e5e81f424ff7a",
@@ -260,7 +260,7 @@
      "python": "3.12.8",
      "slurm_job": "6407605",
      "stable-worldmodel": null,
-     "stable_worldmodel_path": "/oscar/scratch/sboughan/se7/swm-src/stable_worldmodel",
+     "stable_worldmodel_path": "$SCR/se7/swm-src/stable_worldmodel",
      "stable_worldmodel_sha256": {
       "envs/__init__.py": "118a262677a647c6",
       "envs/ogbench/cube_env.py": "143e5e81f424ff7a",
@@ -497,6 +497,7 @@
  },
  "draws": 3,
  "n": 64,
+ "path_note": "absolute Oscar paths rewritten to $SCR after capture; see oscar/provenance_6395175_readback.txt for why",
  "provenance": {
   "dm-control": "1.0.45",
   "git_sha": "",
@@ -512,7 +513,7 @@
   "python": "3.12.8",
   "slurm_job": "6407605",
   "stable-worldmodel": null,
-  "stable_worldmodel_path": "/oscar/scratch/sboughan/se7/swm-src/stable_worldmodel",
+  "stable_worldmodel_path": "$SCR/se7/swm-src/stable_worldmodel",
   "stable_worldmodel_sha256": {
    "envs/__init__.py": "118a262677a647c6",
    "envs/ogbench/cube_env.py": "143e5e81f424ff7a",

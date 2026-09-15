@@ -358,3 +358,17 @@ def test_the_SPEC_state_dim_constant_matches_what_bundle_computes(cell):
     where swm IS importable, which is exactly where the truth is available.
     """
     assert ogb.SPEC[cell]["state_dim"] == len(ogb._bundle(cell).state_names)
+
+
+@pytest.mark.parametrize("cell", ["Cube", "Scene"])
+def test_sample_states_returns_the_dtype_the_state_round_trips_in(cell):
+    """`check_state_roundtrip` spells its bound as exactly 0.0, so a narrowing cast is a failure.
+
+    `StableEnv.set_state` stores float32. Returning float64 here made `set_state(get_state())` differ
+    by the narrowing error -- 1.17e-07 on the Cube, 1.12e-07 on the Scene -- against a bound of
+    exactly zero. Asserted on the dtype rather than on a round trip, because the round trip needs a
+    constructed env and this does not.
+    """
+    st = ogb.OGBManipBase.sample_states(_fake(cell), 2, np.random.default_rng(0))
+    assert st.dtype == np.float32, f"got {st.dtype}; the env stores float32"
+    assert np.array_equal(st.astype(np.float32), st), "a float32 round trip must be the identity"
