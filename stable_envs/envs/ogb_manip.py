@@ -48,12 +48,17 @@ parity.
 STATE
 -----
 
-``(qpos, qvel, mocap_pos, mocap_quat)`` — and for the Scene, two extra dimensions for the button
-bits. Measured in phase 0: the frame is a bit-exact function of exactly that, verified by imposing a
-state from one episode onto a DIFFERENT episode (different seed, recompiled model) and getting an
-identical frame. ``qvel`` reaches no pixel and is carried because swm's own ``reset(options={'state'})``
-contract is ``concat(qpos, qvel)``; the mocap pose is what positions the translucent goal marker and
-is NOT in swm's info dict, so a caller has to read it off ``data``.
+``(qpos, mocap_pos, mocap_quat)`` — and for the Scene, two extra dimensions for the button bits.
+Measured in phase 0: the frame is a bit-exact function of exactly that, verified by imposing a state
+from one episode onto a DIFFERENT episode (different seed, recompiled model) and getting an identical
+frame. The mocap pose is what positions the translucent goal marker, and it is NOT in swm's info
+dict, so a caller has to read it off ``data``.
+
+``qvel`` is deliberately NOT in the state, though swm's own ``reset(options={'state'})`` contract is
+``concat(qpos, qvel)``. It reaches no pixel — the mover pass runs ``kinematics``, which reads ``qpos``
+and the mocap pose — and Gate A measured exactly that: carrying it, 20 of 48 dimensions moved no
+pixel under a 0.05 perturbation, which ``check_state_dims_matter`` would correctly fail. ``fetch.py``
+made the same call when it dropped mocap from its own state.
 
 The Scene's two button bits are not in ``qpos`` either. They are required keyword arguments of
 ``SceneEnv.set_state`` — so swm's own API exposes them — and they drive ``geom_rgba`` of the two
@@ -62,6 +67,8 @@ buttons and ``mat_rgba`` of the drawer/window handles, worth 1.0-2.2 % of pixels
 defect.)
 """
 from __future__ import annotations
+
+import copy
 
 import numpy as np
 import torch
@@ -145,7 +152,13 @@ def _bundle(cell: str) -> _Bundle:
     b.movers = _movers(m)
     b.nq, b.nv, b.nmocap = int(m.nq), int(m.nv), int(m.nmocap)
     b.nbuttons = int(getattr(u, "_num_buttons", 0) or 0)
-    names = ([f"qpos[{i}]" for i in range(b.nq)] + [f"qvel[{i}]" for i in range(b.nv)]
+    # qvel is NOT in the state. It reaches no pixel -- MJWarp's mover pass runs `kinematics`, which
+    # reads qpos and the mocap pose and nothing else -- and Gate A measured exactly that: with qvel
+    # carried, 20 of 48 dimensions moved no pixel under a 0.05 perturbation. `check_state_dims_matter`
+    # would correctly fail that, and fetch.py made the same call for the same reason when it dropped
+    # mocap from ITS state. swm's own `reset(options={'state'})` contract is concat(qpos, qvel), which
+    # is why the split helper still understands qvel; the RENDER state is the part that reaches a pixel.
+    names = ([f"qpos[{i}]" for i in range(b.nq)]
              + [f"mocap_pos[{i}]" for i in range(3 * b.nmocap)]
              + [f"mocap_quat[{i}]" for i in range(4 * b.nmocap)]
              + [f"button_state_{i}" for i in range(b.nbuttons)])
@@ -160,7 +173,8 @@ def _bundle(cell: str) -> _Bundle:
 class _Ctx:
     """An MJWarp render context plus the device views a render writes through."""
 
-    __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw", "prepared")
+    __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw",
+                 "prepared", "baked")
 
 
 def _frame(c: _Ctx) -> None:
@@ -183,16 +197,25 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     if len(_CTX_CACHE) >= _CTX_CACHE_MAX:
         _CTX_CACHE.clear()
     b = _bundle(cell)
-    m = b.model
-    # prepare_model does two things here, and the second is this family's largest fidelity term:
-    # it parks zero-alpha geometry out of the visible groups, and it gives MJWarp MuJoCo's
-    # out-of-range-spot semantics. Left prepared for the life of the context, as the shared helper
-    # documents -- MJWarp reads the geometry once, at create_render_context.
+    # A DEEP COPY, and this is not tidiness. `_bundle.model` is the swm env's OWN MjModel -- the
+    # object `reference_render` and `_bake_plate` render the reference through. `prepare_model`
+    # mutates in place and is deliberately left applied for the life of the context (MJWarp reads
+    # geometry once, at `create_render_context`), so applying it to the shared model would move the
+    # REFERENCE as well as ours: the spot correction would rewrite the reference's own light and the
+    # cell would "agree" by corrupting the thing it is measured against. On this scene that happens
+    # to be invisible -- MuJoCo renders cutoff 100 and 180 identically, which is the whole finding --
+    # but agreeing by luck is not agreeing.
+    m = copy.deepcopy(b.model)
     prepared = MW.prepare_model(m, VISIBLE_GROUPS)
+    # Textures MJWarp cannot sample at all. On OGBScene this is `btn_metal`, a 512x512 CUBE map on
+    # two UV-less button meshes, and without it mujoco_warp <= 3.12.0 dies with an illegal memory
+    # access before the first frame. A DECLARED residual: 0.139 % of pixels, interior_exact 1.0.
+    baked = MW.bake_unsamplable_textures(m, VISIBLE_GROUPS)
     d0 = mujoco.MjData(m)
     mujoco.mj_forward(m, d0)
     c = _Ctx()
-    c.wp, c.mjw, c.nworld, c.res, c.prepared = wp, mjw, int(nworld), int(res), prepared
+    c.wp, c.mjw, c.nworld, c.res, c.prepared, c.baked = (
+        wp, mjw, int(nworld), int(res), prepared, baked)
     c.wm = mjw.put_model(m)
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     # THE CAPTURE IS INSIDE THE PATCH, for the reason fetch.py records: mujoco_warp defines its
@@ -284,15 +307,14 @@ class OGBManipBase(StableEnv):
     # ---- state ----------------------------------------------------------------------------
 
     def _split(self, s: np.ndarray):
-        """``(state_dim,)`` -> qpos, qvel, mocap_pos, mocap_quat, button bits."""
+        """``(state_dim,)`` -> qpos, mocap_pos, mocap_quat, button bits. No qvel: see ``_bundle``."""
         b = self._b
         i = 0
         qpos = s[i:i + b.nq]; i += b.nq
-        qvel = s[i:i + b.nv]; i += b.nv
         mp = s[i:i + 3 * b.nmocap].reshape(b.nmocap, 3); i += 3 * b.nmocap
         mq = s[i:i + 4 * b.nmocap].reshape(b.nmocap, 4); i += 4 * b.nmocap
         bits = s[i:i + b.nbuttons]
-        return qpos, qvel, mp, mq, bits
+        return qpos, mp, mq, bits
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """States a dataset would actually hold: reset, then 0-25 random actions.
@@ -314,7 +336,7 @@ class OGBManipBase(StableEnv):
             for _ in range(int(rng.integers(0, 26))):
                 env.step(env.action_space.sample())
             bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[:b.nbuttons]]
-            out.append(np.concatenate([d.qpos.copy(), d.qvel.copy(), d.mocap_pos.ravel().copy(),
+            out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(),
                                        d.mocap_quat.ravel().copy(), np.asarray(bits, np.float64)]))
         return np.stack(out).astype(np.float64)
 
@@ -366,13 +388,11 @@ class OGBManipBase(StableEnv):
         keep = np.array(m.geom_group, copy=True)
         m.geom_group[b.movers] = MW.HIDDEN_GROUP
         if states is not None:
-            qpos, qvel, mp, mq, _ = self._split(np.asarray(states, np.float64))
+            qpos, mp, mq, _ = self._split(np.asarray(states, np.float64))
             d.qpos[:] = qpos
-            d.qvel[:] = qvel
             d.mocap_pos[:] = mp
             d.mocap_quat[:] = mq
-        else:
-            d.qvel[:] = 0.0
+        d.qvel[:] = 0.0
         mujoco.mj_forward(m, d)
         r = _renderer(self.CELL, int(res))
         r.update_scene(d, camera=b.cam, scene_option=u._scene_option)
@@ -409,7 +429,7 @@ class OGBManipBase(StableEnv):
         plate = self._plate(res)
         plate1 = plate if ss == 1 else self._plate(size)
         b = self._b
-        nq, nv, nmoc = b.nq, b.nv, b.nmocap
+        nq, nmoc = b.nq, b.nmocap
 
         for lo in range(0, B, MJW_CHUNK):
             hi = min(lo + MJW_CHUNK, B)
@@ -420,8 +440,8 @@ class OGBManipBase(StableEnv):
             wp = c.wp
             wp.to_torch(c.wd.qpos)[:n] = chunk[:, :nq]
             if nmoc:
-                mp = chunk[:, nq + nv: nq + nv + 3 * nmoc].reshape(n, nmoc, 3)
-                mq = chunk[:, nq + nv + 3 * nmoc: nq + nv + 7 * nmoc].reshape(n, nmoc, 4)
+                mp = chunk[:, nq: nq + 3 * nmoc].reshape(n, nmoc, 3)
+                mq = chunk[:, nq + 3 * nmoc: nq + 7 * nmoc].reshape(n, nmoc, 4)
                 wp.to_torch(c.wd.mocap_pos)[:n] = mp
                 wp.to_torch(c.wd.mocap_quat)[:n] = mq
             # torch wrote the per-world arrays on its stream; warp replays the graph on its own.
@@ -464,7 +484,7 @@ class OGBManipBase(StableEnv):
         for s in np.asarray(states, np.float64).reshape(-1, len(b.state_names)):
             i = 0
             qpos = s[i:i + b.nq]; i += b.nq
-            qvel = s[i:i + b.nv]; i += b.nv
+            qvel = np.zeros(b.nv)
             mp = s[i:i + 3 * b.nmocap].reshape(b.nmocap, 3); i += 3 * b.nmocap
             mq = s[i:i + 4 * b.nmocap].reshape(b.nmocap, 4); i += 4 * b.nmocap
             bits = s[i:i + b.nbuttons]
@@ -569,6 +589,24 @@ _RESIDUAL_NOTE = (
     "exactness of the composite that actually ships is 0.92-0.95.")
 
 
+#: The Scene carries one residual the Cube does not, and it is declared per geom because that is what
+#: the bake helper's record is for.
+_SCENE_BAKE_NOTE = (
+    " SCENE ONLY, A FOURTH DECLARED RESIDUAL: the material `btn_metal` wears a 512x512 CUBE map on "
+    "two UV-less button meshes (`stopbuttonrim`, geoms //unnamed_geom_8 and //unnamed_geom_20), and "
+    "mujoco_warp <= 3.12.0 indexes `mesh_texcoord` unconditionally in its MESH branch, so it dies "
+    "with an illegal memory access before the first frame rather than drawing the scene badly. The "
+    "texture is baked to its mean colour (0.523, 0.516, 0.512) through the shared "
+    "`bake_unsamplable_textures`. MEASURED cost, MuJoCo against MuJoCo over 8 states at 200 px so no "
+    "MJWarp term is mixed in: the two button geoms are 36 px/frame (0.090% of the frame), the bake "
+    "changes 55.5 px/frame (0.139%), max 37/255, mean 0.023/255 over the frame, and interior_exact "
+    "against the official frame is 1.00000 -- every changed pixel fails the 3x3-flat test, so the "
+    "residual is invisible to the interior metric. For scale, the alpha note Fetch already declares "
+    "is 1.2-1.5% of pixels. THE ZERO-PIXEL ALTERNATIVE EXISTS AND IS NOT TAKEN HERE: upstream "
+    "mujoco_warp guards that branch from 3.13.0 (58d8c77, PR #1608), so a venv bump removes the need "
+    "for this bake entirely -- to be measured, not assumed, since 3.13.0 moves more than one thing.")
+
+
 def _make_classes():
     made = {}
     for cell, spec in SPEC.items():
@@ -579,7 +617,7 @@ def _make_classes():
             reference_id=spec["swm_ref"],
             default_size=spec["size"],
             visual_fidelity=_fidelity(cell),
-            visual_note=_RESIDUAL_NOTE,
+            visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),
             parity_interior_min=None,
             __doc__=(
                 f"OGBench manipulation {cell} ({spec['swm_ref']}), fidelity_tier='visual'.\n\n"
