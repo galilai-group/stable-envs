@@ -414,7 +414,8 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: 'INTEG-1 fixed (31bd3e9: _DMCModel._load_env hook; mixin overrides only the hook + size; 8/8 identity vs integration); final verification requested; merge on APPROVE; tier jobs running'
+  status: 'CERTIFICATION MERGED at e0a416c (branch 31bd3e9; final review APPROVE; identity 9/9 vs integration; tests 812 passed + inherited citation failure). Remaining: quiet-window tiers (f) or UNMEASURED
+    with load evidence'
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
@@ -497,6 +498,18 @@ workstreams:
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; independent review APPROVE-WITH-CHANGES satisfied; integration tests/unit run recorded separately
     integration_tests: 'tests/unit on 0a029bd: 735 passed, 6 skipped (test_examples and the pre-existing test_every_cited_scratch_path_resolves deselected)'
+    certification_sha: e0a416c
+    final_review:
+      verdict: APPROVE
+      head: 31bd3e9
+      verified:
+      - 'A: min(worst)<=1.0; aggregate at the read path; green UNBOUNDED'
+      - 'B: citation set == baseline 9 on the W4 tree; tip adds nothing over integration'
+      - hook confined to _DMCModel + mixin; W3 regions untouched
+      - byte identity 9/9 0 px and states_equal vs 1d9dccb
+      - tests 812/7/1 inherited
+      - hygiene clean incl. merged commits
+      handback: the integration tree's 9 extra broken citations come from committed review_*.md docs quoting scrubbed paths -> exempt examples/results/**/review_*.md from the scanner on integration
   cluster_jobs:
     gpu_declare_6394721: 'COMPLETED gpu2104: cuda identity 21/21 raycast3d + 4/4 trackcom byte-identical; ellipsoid twin 2 passed; fast paths 120 passed; declaration draws / Gate A cuda / localize DID complete
       (artifacts at 03:37) - the ''EGL error'' was GLContext.__del__ teardown noise hidden by tail -8; resubmit 6394987 on gpu2107 reproduced them (kept)'
@@ -820,6 +833,8 @@ incident_log:
   item: W4 (e2) 656f9db landed (A/B fixed, recommended items done); INTEG-1 hook fix still pending
 - date: '2026-09-15'
   item: INTEG-1 fixed by W4 (31bd3e9); final verification of e2+e3 requested
+- date: '2026-09-15'
+  item: W4 certification merged (e0a416c); integration tests 812 passed + citation scanner picking up review docs (to fix on integration)
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
