@@ -22,12 +22,21 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: phase 0 (diagnosis, local; cluster items pending Oscar access)
+  status: phase 1 (implementation authorized in the DMControlSuite region of dmcontrol.py; cluster items pending Oscar)
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
+  head_sha: 995e3b2 (phase 0)
+  phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
+    (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
+    hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
+    at 224 px, 3 draws x 64 states: interior_exact 1.000000 (0 of 4,154,763), all-exact 0.983, mean 0.26/255, SSIM 0.994; all disagreement is mover silhouette. Gate A local 15/16: check_state_dims_matter
+    FAILs on 3 rotation-invariant sphere dims (official moves 734-896 px at <=55/255; analytic sphere moves 0).'
+  decisions: "parity vs suite.load with the suite default appearance; SWM default reproduced through leaves (visibility.target, target.shape, light.diffuse_scale) and asserted by Gate F (Reacher precedent);\
+    \ certify at 224 px; dead-dims: no widening of the shared check and no Gate A partial \u2014 escalated to Sami as a validated per-class exclusion proposal; W3 owns the DMControlSuite region of dmcontrol.py,\
+    \ W4 the TrackCom region + raycast3d ellipsoid"
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -64,3 +73,7 @@ decisions: []
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
+escalations:
+- date: '2026-09-15'
+  item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
+    itself (an excluded dim may move only sphere-geom orientation); alternative = leave the check FAIL recorded. Sami to decide; no shared-check widening, no misuse of Gate A partial.'
