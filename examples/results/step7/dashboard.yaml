@@ -308,15 +308,16 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; independent review APPROVE-WITH-CHANGES satisfied; integration tests/unit run recorded separately
     integration_tests: 'tests/unit on 0a029bd: 735 passed, 6 skipped (test_examples and the pre-existing test_every_cited_scratch_path_resolves deselected)'
   cluster_jobs:
-    gpu_declare_6394721: PENDING norm-gpu 3090 (cuda identity 21 raycast3d cells under se-step6 + 4 trackcom under se-step5; ellipsoid twin tests; 3-draw x 64 visual_calib at 224 px under se-vis311 = the
-      declaration; Gate A cuda both arms; localize stacks)
-    certify_cpu_6394722: PENDING afterany:6394721 (CPU identity 25 configs incl. mazes; Gate A CPU under se-vis311/se-step6; cross-backend; paired sweep; r5_kind_cost x3 with ELLIPSOID; unit suite)
+    gpu_declare_6394721: 'COMPLETED gpu2104: cuda identity 21/21 raycast3d + 4/4 trackcom byte-identical; ellipsoid twin 2 passed; fast paths 120 passed; mujoco_warp source check written. Declaration draws
+      / Gate A cuda / localize FAILED: EGL context error in the official renderer on gpu2104 (both venvs) -> resubmitted as 6394987 with gpu2104 excluded + EGL probe'
+    certify_cpu_6394722: RUNNING node1913
     copies: $SCR/se7/dmc-quadruped = fa4ac53 (MERGED_COMMIT 0a029bd); $SCR/se7/baseline = git archive 76dc511
     script_fixes_for_commit_e:
     - Gate A via gateA_local.py on the cluster (frozen Step-4 universe lacks the cell)
     - identity replay split by venv (se-step5 lacks ogbench, se-step6 lacks mujoco_warp)
     - r5_kind_cost ELLIPSOID row
     - measure_cell.per_surface scipy-free fallback
+    gpu_declare_resubmit_6394987: PENDING/RUNNING (gpu2104 excluded)
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -406,6 +407,8 @@ incident_log:
   item: 'Sami rulings received: sphere-rotation exclusion approved (W3), night oracle experiment (W1), single mixed perf tier with band diagnostics (W1); forwarded'
 - date: '2026-09-15'
   item: W3 follow-up 8b39e94; O1 benign (accepted); 3.11 declaration interior 1.0 over 41 draws; re-run queued for clean provenance
+- date: '2026-09-15'
+  item: 'NODE-2: gpu2104 EGL context errors in the official MuJoCo renderer (torch/cuda fine); added to the exclude list for EGL work (gpu2108,gpu2113,gpu2110,gpu2116,gpu2104); W3/W5/W6 informed'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
