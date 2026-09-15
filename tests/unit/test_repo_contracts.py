@@ -67,13 +67,21 @@ def _norm(cited: str) -> str:
 SELF = Path(__file__).resolve()
 
 
+def _is_reviewer_report(f: Path) -> bool:
+    """Independent-review reports under ``examples/results/<step>/<ws>/review_*.md`` are third-party
+    records: a reviewer quotes the exact paths it asked an author to scrub, so scanning them re-creates
+    the very citations the author removed. They are evidence, not navigation, and are exempt."""
+    return f.name.startswith("review_") and f.suffix == ".md" and "results" in f.parts
+
+
 def _files():
     for d in SEARCH_ROOTS:
         p = ROOT / d
         if p.is_dir():
             for f in p.rglob("*"):
                 if (f.is_file() and f.suffix in SEARCH_SUFFIXES
-                        and "__pycache__" not in f.parts and f.resolve() != SELF):
+                        and "__pycache__" not in f.parts and f.resolve() != SELF
+                        and not _is_reviewer_report(f)):
                     yield f
     for name in SEARCH_FILES:
         if (ROOT / name).is_file():

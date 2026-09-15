@@ -626,7 +626,7 @@ workstreams:
     - tests/unit/test_nvdiff_triangles.py (14)
     - tests/unit/test_rocket_landing.py (14)
     - examples/results/step7/rocket-landing/{findings.md, reference/, phase0/}
-    - scratch/step7/rocket-landing/*
+    - the rocket-landing probe scripts (12 files)
     tests_local: tests/unit 820 passed 37 skipped 2 pre-existing baseline failures
     cpu_feasibility_ruling1: 'naive single-thread torch rasteriser, 486 tris at 480 px: 1.92 f/s (521 ms) = 0.056x official 34.25 f/s (bar >= 171) and 0.0016 cores (bar >= 1,191): both bars missed by 2-3
       orders; CPU coverage declared missing, device=''cpu'' raises honestly'
