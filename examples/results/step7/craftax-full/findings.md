@@ -958,9 +958,13 @@ per-pixel float chain does not scale as far.
    already moved `CraftaxClassic`'s own Step-3 denominator from a recorded 1,046 f/s to a measured
    4.62 f/s on the Mac and 0.31 f/s on `node2352`.
 2. **`examples/swm_compat/run_swm_workflow.py`** has no Craftax arm — it drives TwoRoom and PushT and
-   is CUDA shaped. The Gate F statement for this cell is the `swap_renderer` one, measured in §20;
-   installing `stable_worldmodel` into `$SCR/venvs/se7-craftax` and running it there is a separate
-   commit.
+   is CUDA shaped. The Gate F statement for this cell is the `swap_renderer` one instead: drive the
+   official env, read the render window out of the `EnvState` it produces, render that window here,
+   and compare against the observation the wrapper hands the workflow. Measured against craftax's own
+   env — which is what the wrapper wraps — in `gate_f/gate_f_swm_nowrapper.json`, by
+   `scratch/step7/craftax-full/gate_f_swm.py`; the run against the
+   **real** wrapper needs `stable_worldmodel` installed into `$SCR/venvs/se7-craftax` and is Oscar job
+   `6398628`, reported in its own commit.
 
 ### 18.1 Step-8 carry-overs (shared files; reported, not edited)
 
