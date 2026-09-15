@@ -1160,6 +1160,40 @@ decisions:
     (keep architecture; merge only on APPROVE + cluster gates); OGBCube/OGBScene as far as evidence permits. Escalate and stop only for: frozen-contract change; new broad Gate-A exception; material shared-architecture
     change; fidelity weakening to pass; scope change; classifying an SWM env as fundamentally unsupported. Blocked workstream -> record the falsifiable blocker, reuse the slot. No Step 8 until Step 7 is
     complete or a demonstrated blocker needs Sami.'
+- date: '2026-09-15'
+  by: Sami
+  topic: PFRocketLanding batch-invariant transform / locomotion re-baseline
+  decision: 'Mandatory batch-size invariance takes precedence over accidental float bit identity. Authorize the batch-invariant transform and re-baseline the six locomotion nvdiff cells PROVIDED the final
+    reviewer verifies: changes are ULP-level not semantic; max_abs_pixel_delta, fraction changed, fraction changed by >1 level reported; official-reference fidelity before vs after unchanged or improved;
+    all Gate-A checks other than the replaced digest PASS; no Step-5 representative surface materially changes; batch-size invariance FAIL -> PASS; determinism/order/chunk invariance PASS. Any visually
+    meaningful change or fidelity regression -> stop and escalate. Treat as a correctness re-freeze: update the six frozen digests with provenance; paste the Rocket declaration; flip the regression expectation;
+    rerun the reviewer; merge only on APPROVE.'
+- date: '2026-09-15'
+  by: Sami
+  topic: CraftaxClassic rulings
+  decision: 'Night: check_resolution_consistency not applicable for the night band on the official-oracle result; exact parity at each supported resolution required. Performance: one registered/default
+    tier + daylight/night diagnostics. Reference label: apply the Step-2 rule literally - if the official Craftax renderer is installable/executable and can be timed on the same certification host under
+    the required conditions, use it as the reference and compute the normal S_cpu/GPU ratios; otherwise retain NO_REFERENCE; never infer a reference throughput from another machine.'
+- date: '2026-09-15'
+  by: Sami
+  topic: Manipulator dead dims
+  decision: Accept the three validated exclusions, narrowly scoped to rotation-invariant spherical geometry, with the regression tests preserved; no broader state_dims_matter relaxation.
+- date: '2026-09-15'
+  by: Sami
+  topic: OGBScene button bake
+  decision: Keep the reviewed declared bake; do not override for closer pixel agreement; reopen only on evidence that it removes task-relevant state, violates variation semantics, or causes downstream/contract
+    failure. Current visual-tier declaration valid if those hold.
+- date: '2026-09-15'
+  by: Sami
+  topic: Quadruped CPU measurement
+  decision: Do not hold Step 7 open for load-quarantined CPU measurements; record CPU_UNMEASURED with provenance; Step 8 fills it under a clean benchmarking pass.
+- date: '2026-09-15'
+  by: Sami
+  topic: Close Step 7
+  decision: 'After Rocket merges: regenerate the coverage matrix (40/40 required; 2 symbolic intentionally renderer-free); run the final Step-7 correctness/replay integration sweep; record all tiers/blockers
+    without new optimisation; record the exact integration HEAD; confirm nothing pushed; deliver the closure packet. Then prepare the Step-8 execution plan (VariationMaps; swm API completeness; final full-universe
+    certification; deferred provenance/re-freeze items; production-pipeline performance story; semantic follow-up only where warranted; support matrix for all 42 ids). No broad refactor; no Step-8 implementation
+    before Step 7 is reported closed.'
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
@@ -1310,6 +1344,8 @@ incident_log:
   item: 'W6: batch-invariant fix conflicts with six frozen locomotion digests -> escalated as a contract decision; defect B closed; evidence at 7224222'
 - date: '2026-09-15'
   item: W5 MERGED and CLOSED (24d1054); coverage 39/40 merged; only PFRocketLanding open (contract decision)
+- date: '2026-09-15'
+  item: Sami's closure rulings recorded; Rocket re-freeze authorized under verification conditions; Craftax reference rule; Step-7 close sequence
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1338,7 +1374,7 @@ escalations:
     reference may a speed ratio use: the parity reference as written (un-jitted) or the official as a user runs it (jitted)? Coordinator recommendation: (1) yes; (2) speed ratios use the official as a user
     runs it, parity uses the reference as written; until Step 8 encodes that in the harness, CraftaxClassic''s CPU tier is taken on the NO_REFERENCE ladder with S_cpu suppressed and both numbers recorded.
     This touches the Step-2 taxonomy, so it is Sami''s call (Step 8 candidate).'
-  status: open
+  status: 'RESOLVED by Sami 2026-09-15: apply Step-2 literally; official renderer timed on the same host under the required conditions -> use it; else NO_REFERENCE; never infer from another machine'
   also: 'W2 CraftaxPixels: check_resolution_consistency not applicable in ALL bands on the official''s own evidence (broader scope than Classic''s band ruling); authorized by precedent, Sami may override.'
   recommendation_update: Record CraftaxClassic's tiers from the NO_REFERENCE row (CPU_REGRESSION / GPU_FAST) for Step 7; Step 8 gives the harness a speed-reference hook distinct from the parity reference
     (jitted official as a user runs it).
@@ -1347,7 +1383,7 @@ escalations:
   topic: OGBScene button cube-map texture (MJWarp cannot sample it; crashes)
   question: (a) patch mujoco_warp's cube sampling, (b) bake the button texture to its mean colour via bake_primitive_textures as a declared approximation on two small geoms (RoboCasa precedent), or (c)
     ship OGBCube only and record OGBScene as blocked
-  status: open for Sami's override; coordinator authorized (b) as a generic bake extension with the declared residual (0.139% px, interior 1.0), (a) documented as the zero-pixel alternative
+  status: 'RESOLVED by Sami 2026-09-15: keep the reviewed declared bake'
   coordinator_note: '(b) is a declared texture bake through the existing shared recipe, not a per-env renderer; still a fidelity call Under the overnight directive: W5 proceeds with (b) ONLY if the measured
     residual on the two button geoms is small enough to be a declared residual within the cell''s visual ceilings (no threshold change, no per-env renderer); otherwise OGBScene is recorded as blocked on
     (a) and Sami decides. Sami may override either way.'
@@ -1358,7 +1394,7 @@ escalations:
   facts: out = int(255*c*(0.6+0.35*max(0,n.l)+0.05*spec)); the exact RGB c appears only where the specular term is 1, so the check fails for our render AND for the official frames. Same premise (flat shading)
     would fail any lit cell with RGB leaves.
   question: declare not applicable for lit RGB leaves with the law cited, or extend the shared check to accept the law-transformed colour (an extension of a Gate-A check = Sami's call)
-  status: open; recorded as FAIL with mechanism meanwhile
+  status: open (Sami did not rule; recorded as FAIL with mechanism on the Rocket cell; Step-8 item)
 - date: '2026-09-15'
   from: W6 / coordinator
   topic: PFRocketLanding batch-size invariance vs bit-compatibility of six frozen locomotion nvdiff cells
@@ -1373,7 +1409,7 @@ escalations:
     switch a future scene could straddle; coordinator does not recommend without Sami's view
   coordinator_recommendation: '(a): the frozen locomotion frames encode a kernel-selection artefact, not a renderer property; batch-size invariance is the mandatory contract. Re-freeze under Step 8 with
     the diff quantified per cell.'
-  status: open; W6 holds at 7224222 (reverted tree, evidence committed)
+  status: 'RESOLVED by Sami 2026-09-15: option (a) with reviewer-verified conditions (correctness re-freeze)'
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
