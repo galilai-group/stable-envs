@@ -679,15 +679,13 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'job 6406972: OGBCube measured cleanly after the B1 plate fix (mean_abs 2.41, within8 0.9155, all_exact 0.871, interior_exact 0.958; repo check dead_dims []; R 3.07 cores 1.80 BATCH_SCALES 5.35x),
-    then died on a spurious assertion in _ctx_button_tables (pristine snapshot taken under the env''s last bits); fixed with a CPU test; chain now records per cell and files errored checks as failures;
-    resubmitted 6407605 (md5 f168b2d3)'
+  status: re-measurement complete (job 6407605 gpu2109); both cells registered at visual with repo-check Gate A clean; cell re-review requested; merge on APPROVE
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: 3183722e (spurious bake/button assertion fixed; chain writes per cell)
+  head_sha: 7820af1c (re-measured, registered)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -845,6 +843,27 @@ workstreams:
       dead_dims: '[] (repo check)'
       tiers: best 6,207 f/s; official 2,021; decode 3,453; R 3.07; cores 1.80; BATCH_SCALES 5.35x -> GPU_PARITY cap
       note: not pasted until the Scene is measured in the same run
+    remeasured_6407605:
+      OGBCube:
+        mean_abs: 2.442
+        within8: 0.9155
+        all_exact: 0.8717
+        interior_exact: 0.9581
+        ssim: 0.9149
+        spread_mean_abs: 2.409-2.442
+      OGBScene:
+        mean_abs: 5.381
+        within8: 0.8568
+        all_exact: 0.7753
+        interior_exact: 0.9217
+        ssim: 0.8928
+        spread_mean_abs: 5.327-5.381
+      thresholds_x1.3: mean_abs_max 3.2/7.0; within8_min 0.90/0.85; ssim_min 0.90/0.85
+      gate_a_repo_checks: determinism, batch, batch-size, order, state_dims_matter (dead_dims []) pass on both
+      gate_f_arm_d: 2.477/4.810, interior 0.957/0.937 (agrees with corpus)
+      corpora: 64/256, pool[indices]==states verified before write and after pull
+      tiers: R 3.20/3.62; cores 1.88/2.05; BATCH_SCALES 5.36x/6.50x -> GPU_PARITY capped; cpu raises
+      tests: 859 passed + 2 pre-existing; cell tests 26
   corpora: '64/256 via fidelity_step4.corpus_for: OGBCube dim 28 sha 55222c0339b5, OGBScene dim 34 sha 4d64960ca7e2; pools beside'
   gate_f: 'arm D: obs is a 28/40-D vector (ob_type=''states''); render() is the certified artifact; swm''s own dynamics 24 steps: Cube 4.6345/0.8139/0.9494, Scene 9.8025/0.7025/0.8982 (agree with corpus
     numbers)'
@@ -1238,6 +1257,8 @@ incident_log:
   item: 'W6 M4 BLOCKER: batch-size dependence in shared nvdiff mvp numerics + reference bridge contact rejection; minimal fixes authorized with identity conditions; colour-knob check escalated'
 - date: '2026-09-15'
   item: 'W5: plate fix lifts OGBCube to interior 0.958 (from 0.351); chain resubmitted 6407605 after a spurious assertion'
+- date: '2026-09-15'
+  item: W5 re-measured with the plate in use (Cube interior 0.958, Scene 0.922); registered; re-review requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
