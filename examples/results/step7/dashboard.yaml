@@ -701,6 +701,14 @@ decisions:
     never mix local-M5 and same-node numbers). RC-4/RC-5 now. Then rerun the independent reviewer. Only then run/accept the cluster gates: six locomotion nvdiff cells byte identity on the same GPU; first
     successful PFRocketLanding render; full fidelity + under-variation; corpus replay; mandatory conformance incl. velocity/state dims; GPU sweep + qualifiers; DIRECT+EGL+CUDA coexistence. No merge until
     reviewer APPROVE and cluster gates pass.'
+- date: '2026-09-15'
+  by: Sami
+  topic: Overnight autonomy for Step 7
+  decision: 'Coordinator authorized to: implement reviewer fixes that do not change frozen contracts/scope; rerun independent review; submit/retry Oscar jobs; merge on reviewer APPROVE + mandatory gates;
+    start queued workstreams as slots free; resolve additive merge conflicts; update the dashboard continuously. Priorities: CraftaxClassic merge; CraftaxPixels; Manipulator; Quadruped; PFRocketLanding
+    (keep architecture; merge only on APPROVE + cluster gates); OGBCube/OGBScene as far as evidence permits. Escalate and stop only for: frozen-contract change; new broad Gate-A exception; material shared-architecture
+    change; fidelity weakening to pass; scope change; classifying an SWM env as fundamentally unsupported. Blocked workstream -> record the falsifiable blocker, reuse the slot. No Step 8 until Step 7 is
+    complete or a demonstrated blocker needs Sami.'
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
@@ -770,6 +778,8 @@ incident_log:
   item: W3 rule hardenings landed (d1f65d4); final verification requested
 - date: '2026-09-15'
   item: W5 phase 0 FINDING; phase 1 authorized (attribution first); texture_gaps shared fix assigned; OGBScene button texture escalated
+- date: '2026-09-15'
+  item: Sami overnight directive recorded; closure table issued
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -808,7 +818,9 @@ escalations:
   question: (a) patch mujoco_warp's cube sampling, (b) bake the button texture to its mean colour via bake_primitive_textures as a declared approximation on two small geoms (RoboCasa precedent), or (c)
     ship OGBCube only and record OGBScene as blocked
   status: open; W5 measuring the residual of (b) and the cost of (a) so the decision is on numbers
-  coordinator_note: (b) is a declared texture bake through the existing shared recipe, not a per-env renderer; still a fidelity call
+  coordinator_note: '(b) is a declared texture bake through the existing shared recipe, not a per-env renderer; still a fidelity call Under the overnight directive: W5 proceeds with (b) ONLY if the measured
+    residual on the two button geoms is small enough to be a declared residual within the cell''s visual ceilings (no threshold change, no per-env renderer); otherwise OGBScene is recorded as blocked on
+    (a) and Sami decides. Sami may override either way.'
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
