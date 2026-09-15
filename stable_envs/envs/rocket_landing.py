@@ -503,7 +503,7 @@ class PFRocketLanding(StableEnv):
         "measured_at": ("UNMEASURED — provisional Phase-0 estimate, not a measurement: 480 px, supersample 1, "
                         "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0; "
                         "to be replaced by the worst of four 64-state draws on an RTX 3090 "
-                        "(scratch/step7/rocket-landing/oscar_fidelity.sbatch)"),
+                        "(scratch/step7/rocket-landing/oscar_gpu.sbatch)"),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
     }
     visual_note = ("A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "

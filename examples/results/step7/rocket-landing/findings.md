@@ -13,7 +13,7 @@ measurement, the nvdiff byte-identity replay and the throughput pending one GPU 
 | venv (local) | `/Users/samib/se7-rocket-venv` (Python 3.12.11): PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, gymnasium 1.3.0, torch 2.14.0, Pillow 12.3.0, trimesh 5.1.0, imageio 2.37.4, numba 0.67.0, stable-worldmodel 0.1.1, opencv-python-headless 5.0.0.93 (it moved numpy 1.26.4 -> 2.5.3); unit tests run under `/Users/samib/se6-venv` with `MUJOCO_GL=cgl` (the env modules `setdefault` egl, which is invalid on macOS) |
 | Oscar | SSH restored during Phase 1: `$SCR/se7/rocket-landing/` (this branch, rsynced), `$SCR/se7/baseline/` (76dc511, `git archive`), venv build job `se7-rocket-venv` **6394857** (`scratch/step7/rocket-landing/oscar_venv.sbatch`); the GPU job `oscar_gpu.sbatch` is submitted after it completes (one GPU job at a time; 3090, `gpu`/`norm-gpu`, nodes gpu2108/2113/2110/2116 excluded) |
 | affected configs | none existing; one new cell `PFRocketLanding` (480 px, swm's registered default: 480 x 480 x 3 = 691,200 B per observation, confirmed from `RocketLandingEnv.__init__(render_resolution=(480, 480))` and the frame the probe recorded) |
-| files touched (Phase 1) | `stable_envs/render/nvdiff.py` (M2), `stable_envs/envs/rocket_landing.py` (M3, new), `tests/unit/test_nvdiff_triangles.py` (new), `tests/unit/test_rocket_landing.py` (new), `examples/results/step7/rocket-landing/{reference,phase0,findings.md}`, `scratch/step7/rocket-landing/*` |
+| files touched (Phase 1) | `stable_envs/render/nvdiff.py` (M2), `stable_envs/envs/rocket_landing.py` (M3, new), `tests/unit/test_nvdiff_triangles.py` (new), `tests/unit/test_rocket_landing.py` (new), `examples/results/step7/rocket-landing/{reference,phase0,findings.md}`, `scratch/step7/rocket-landing/` (`phase0_probe.py`, `phase0_probe_b.py`, `tiny_law_probe.py`, `tiny_law_probe2.py`, `build_reference_corpus.py`, `validate_reference_trick.py`, `validate_env_math.py`, `cpu_raster_probe.py`, `measure_tier.py`, `nvdiff_identity.py`, `oscar_venv.sbatch`, `oscar_gpu.sbatch`; the `.log` files beside them are run output and are gitignored) |
 
 ## Phase 1 — what was built, what was measured, what is pending
 
@@ -62,7 +62,11 @@ law says 153 — measured after the first version of this test assumed it); `off
 the texture preparation. Local suite: `tests/unit` **805 passed, 36 skipped, 3 failed** — the three are
 (a) my back-face expectation, since fixed (29/29 on the two nvdiff files), (b)
 `test_examples[...render_mjwarp.py]` and (c) `test_every_cited_scratch_path_resolves` (12 Step-6
-citations of `scratch/sboughan/...`), **both of which fail identically on the untouched baseline**.
+citations of Oscar scratch paths under the `sboughan` home), **both of which fail identically on the untouched baseline** (`/Users/samib/stable-envs` at 76dc511,
+same interpreter, same two tests). After M3 the suite is **820 passed, 37 skipped, 2 failed** — the same
+two pre-existing failures and nothing of mine; the two citation defects this test DID catch in my own
+files (a `scratch/step7/rocket-landing/*` glob that matched gitignored `.log` output, and a
+`scratch/.../oscar_fidelity.sbatch` that was never written) are fixed.
 
 ### M3 · the cell — `stable_envs/envs/rocket_landing.py`, `PFRocketLanding`
 
