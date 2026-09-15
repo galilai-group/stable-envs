@@ -115,7 +115,7 @@ class _Bundle:
     """The model, the mover set and the state layout, resolved once per cell."""
 
     __slots__ = ("model", "data", "cam", "movers", "nq", "nv", "nmocap", "nbuttons",
-                 "state_names", "pristine", "size", "unwrapped")
+                 "state_names", "pristine", "size", "unwrapped", "button_tables")
 
 
 def _movers(m) -> list[int]:
@@ -166,15 +166,50 @@ def _bundle(cell: str) -> _Bundle:
     b.pristine = {"geom_group": np.array(m.geom_group, copy=True),
                   "geom_rgba": np.array(m.geom_rgba, copy=True),
                   "mat_rgba": np.array(m.mat_rgba, copy=True)}
+    b.button_tables = _button_tables(u, m, b.nbuttons)
     _BUNDLE_CACHE[cell] = b
     return b
+
+
+def _button_tables(u, m, nbuttons: int) -> dict | None:
+    """``{bit tuple: (geom_rgba, mat_rgba)}`` for every button combination, taken from SWM'S OWN CODE.
+
+    The Scene's two button bits are state, and they reach the frame only through colours:
+    ``SceneEnv._apply_button_states`` writes ``geom_rgba`` of the two buttons and ``mat_rgba`` of the
+    drawer and window handles. They are model fields, so MJWarp reads them when the render context is
+    built -- which is why the first version of this cell carried the bits in the state and drew the
+    same picture whatever they were. Gate A caught it: both bits moved zero pixels.
+
+    The tables are captured by CALLING ``_apply_button_states`` rather than by reimplementing its
+    rule here. Reimplementing would be a second copy of a colour law that already exists, free to
+    drift from it silently; calling it means the only thing this file asserts is "these are the
+    colours swm produces for these bits", which is checkable by construction.
+    """
+    if not nbuttons:
+        return None
+    saved = list(getattr(u, "_cur_button_states", [0] * nbuttons))
+    out = {}
+    for code in range(1 << nbuttons):
+        bits = tuple((code >> k) & 1 for k in range(nbuttons))
+        u._cur_button_states = list(bits)
+        u._apply_button_states()
+        out[bits] = (np.array(m.geom_rgba, copy=True), np.array(m.mat_rgba, copy=True))
+    u._cur_button_states = saved
+    u._apply_button_states()
+    # The tables must actually DIFFER, or the bits are not colours and this design is wrong.
+    first = out[tuple([0] * nbuttons)]
+    assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1])
+               for v in out.values()), (
+        "button states produce identical colour tables: either swm's rule changed or this cell is "
+        "capturing the wrong arrays, and carrying the bits in the state would be a lie either way")
+    return out
 
 
 class _Ctx:
     """An MJWarp render context plus the device views a render writes through."""
 
     __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw",
-                 "prepared", "baked")
+                 "prepared", "baked", "button_tables")
 
 
 def _frame(c: _Ctx) -> None:
@@ -216,7 +251,10 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     c = _Ctx()
     c.wp, c.mjw, c.nworld, c.res, c.prepared, c.baked = (
         wp, mjw, int(nworld), int(res), prepared, baked)
-    c.wm = mjw.put_model(m)
+    # geom_rgba and mat_rgba are PER WORLD, so the Scene's button bits can differ across the batch.
+    # Without this they are one shared array and every world in a launch would wear the same button
+    # colours whatever its state said.
+    c.wm = mjw.put_model(m, batch_sizes={"geom_rgba": int(nworld), "mat_rgba": int(nworld)})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     # THE CAPTURE IS INSIDE THE PATCH, for the reason fetch.py records: mujoco_warp defines its
     # megakernel inside `render` from whatever `pack_rgba_to_uint32` is bound at that moment, so a
@@ -239,8 +277,44 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
         with wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
+    c.button_tables = _ctx_button_tables(b, m, res)
     _CTX_CACHE[key] = c
     return c
+
+
+def _ctx_button_tables(b: "_Bundle", m, res: int) -> dict | None:
+    """``{bit code: (geom_rgba, mat_rgba)}`` on the CONTEXT's model, as device tensors.
+
+    The tables in ``_bundle`` were captured from swm's own ``_apply_button_states`` on the REFERENCE
+    model. The context renders through a deep copy that has had ``prepare_model`` and
+    ``bake_unsamplable_textures`` applied, so its ``mat_rgba`` already differs from the reference's by
+    the baked button texture. Copying the reference tables in wholesale would silently undo the bake
+    and put the crash back.
+
+    So each table is applied as a DELTA against the reference's own all-zero-bits table, on top of
+    the context model's current arrays. The two edits are disjoint by construction -- the bake
+    touches ``btn_metal``, the button rule touches the two button geoms and the two handle materials
+    -- and the assertion below states that rather than assuming it.
+    """
+    if not b.nbuttons or b.button_tables is None:
+        return None
+    base_g = np.array(m.geom_rgba, copy=True)
+    base_m = np.array(m.mat_rgba, copy=True)
+    zero = tuple([0] * b.nbuttons)
+    ref_g0, ref_m0 = b.button_tables[zero]
+    out = {}
+    for bits, (rg, rm) in b.button_tables.items():
+        dg, dm = rg - ref_g0, rm - ref_m0
+        # Disjointness, asserted: whatever the bake changed must not also be what the bits change.
+        baked_rows = np.nonzero(np.any(base_m != b.pristine["mat_rgba"], axis=1))[0]
+        if len(baked_rows):
+            assert not np.any(dm[baked_rows]), (
+                "the texture bake and the button colour rule touch the same material rows; applying "
+                "one as a delta over the other would undo it")
+        code = sum(bit << k for k, bit in enumerate(bits))
+        out[code] = (torch.as_tensor(base_g + dg, dtype=torch.float32, device="cuda"),
+                     torch.as_tensor(base_m + dm, dtype=torch.float32, device="cuda"))
+    return out
 
 
 #: Per-cell facts. ``swm_id`` is the registration under test; ``camera`` is what swm's own ``render``
@@ -444,6 +518,8 @@ class OGBManipBase(StableEnv):
                 mq = chunk[:, nq + 3 * nmoc: nq + 7 * nmoc].reshape(n, nmoc, 4)
                 wp.to_torch(c.wd.mocap_pos)[:n] = mp
                 wp.to_torch(c.wd.mocap_quat)[:n] = mq
+            if b.nbuttons:
+                self._upload_button_colours(c, chunk, n)
             # torch wrote the per-world arrays on its stream; warp replays the graph on its own.
             # The two syncs bracket the launch so a frame can never be rendered from half-written
             # state -- microseconds against the difference between deterministic and nearly so.
@@ -462,6 +538,25 @@ class OGBManipBase(StableEnv):
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, plate1)
         return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _upload_button_colours(self, c, chunk, n: int) -> None:
+        """Write each world's button colours from its own state bits.
+
+        The tables come from ``swm``'s own ``_apply_button_states`` (see ``_button_tables``) and are
+        re-baked here through the context's copy, because that copy has had
+        ``bake_unsamplable_textures`` applied to it and its ``mat_rgba`` therefore differs from the
+        reference's by the baked button texture.
+        """
+        b = self._b
+        bits = chunk[:, -b.nbuttons:].round().clamp(0, 1).to(torch.int64).cpu().numpy()
+        codes = (bits * (1 << np.arange(b.nbuttons))).sum(1)
+        geom = c.wp.to_torch(c.wm.geom_rgba)
+        mat = c.wp.to_torch(c.wm.mat_rgba)
+        for code in np.unique(codes):
+            sel = torch.as_tensor(np.nonzero(codes == code)[0], device=self.device)
+            g, mt = c.button_tables[int(code)]
+            geom.index_copy_(0, sel, g.unsqueeze(0).expand(len(sel), *g.shape))
+            mat.index_copy_(0, sel, mt.unsqueeze(0).expand(len(sel), *mt.shape))
 
     # ---- the reference --------------------------------------------------------------------
 

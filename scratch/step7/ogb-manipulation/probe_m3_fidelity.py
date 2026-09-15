@@ -97,14 +97,39 @@ def main():
         f3 = env2.render(st).cpu().numpy()
         g["state_sufficiency_identical"] = bool(np.array_equal(f3, f1))
         g["state_sufficiency_max_abs"] = int(np.abs(f3.astype(np.int16) - f1.astype(np.int16)).max())
-        # every state dimension must matter, or it should not be in the state
+        # Every state dimension must matter, or it should not be in the state.
+        #
+        # The perturbation is PER DIMENSION KIND, and the first version of this probe was wrong
+        # about one of them. Adding 0.05 to `mocap_quat[0]` -- the w component of a quaternion that
+        # is (1,0,0,0) -- gives (1.05,0,0,0), which normalises back to exactly (1,0,0,0): the same
+        # rotation, so zero pixels move and the dimension reads as inert when it is not. A quaternion
+        # is perturbed as a ROTATION (a small rotation about the axis that component belongs to) and
+        # a discrete bit is FLIPPED rather than nudged, since 0 + 0.05 rounds back to 0.
+        names = list(env.state_names)
         moved = []
         for j in range(env.state_dim):
             s2 = st.copy()
-            s2[:, j] += 0.05
+            nm = names[j]
+            if nm.startswith("mocap_quat["):
+                k = int(nm.split("[")[1].rstrip("]")) % 4
+                ang = 0.3
+                q = s2[:, j - k: j - k + 4].copy()
+                axis = np.zeros(3); axis[(k - 1) % 3] = 1.0
+                dq = np.array([np.cos(ang / 2), *(np.sin(ang / 2) * axis)])
+                w0, v0 = q[:, :1], q[:, 1:]
+                w1, v1 = dq[0], dq[1:]
+                s2[:, j - k] = w0[:, 0] * w1 - v0 @ v1
+                s2[:, j - k + 1: j - k + 4] = w0 * v1 + w1 * v0 + np.cross(v0, np.broadcast_to(v1, v0.shape))
+            elif nm.startswith("button_state_"):
+                s2[:, j] = 1.0 - s2[:, j]
+            else:
+                s2[:, j] += 0.05
             fj = env.render(s2).cpu().numpy()
             moved.append(int(np.abs(fj.astype(np.int16) - f1.astype(np.int16)).max()))
         g["per_dim_max_abs"] = moved
+        g["perturbation"] = ("+0.05 for a scalar; a 0.3 rad ROTATION for a quaternion component "
+                             "(adding to w and renormalising is a no-op); a BIT FLIP for a discrete "
+                             "state bit (0 + 0.05 rounds back to 0)")
         g["dims_that_move_no_pixel"] = [int(j) for j, v in enumerate(moved) if v == 0]
         g["dim_names_that_move_no_pixel"] = [env.state_names[j] for j in g["dims_that_move_no_pixel"]]
         cell["gate_a"] = g
