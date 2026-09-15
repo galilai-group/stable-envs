@@ -40,8 +40,7 @@ import sys, numpy as np, stable_envs as se
 tag, out, names = sys.argv[1], sys.argv[2], sys.argv[3:]
 for name in names:
     try:
-        st = np.load(f"/oscar/scratch/sboughan/se7/ogb-manipulation/examples/results/step4/states/{name}.npz")
-        s = st[list(st.keys())[0]][:8]
+        s = np.load(f"{out}/{name}_states.npy")
         env = se.make(name, batch=len(s), device="cuda")
         env.set_state(s)
         f = env.render()
@@ -52,7 +51,29 @@ for name in names:
         print(f"LEG {tag} {name} FAILED {type(e).__name__}: {e}"[:300], flush=True)
 PY
 }
-SPOTCFG="DMCReacherEasy DMCCartpoleSwingup DMCPointMassEasy MujocoPusher"
+# ALL EIGHT families that carry a spot light, not a sample: the cutoff=180 half of the rule is new,
+# and the claim it has to support is that a LEGAL cutoff is untouched. Every one of these has a legal
+# cutoff, so every one must be byte-identical; a subset would leave the claim partly untested.
+SPOTCFG="DMCReacherEasy DMCReacherHard DMCCartpoleSwingup DMCCartpoleBalance DMCAcrobotSwingup DMCPendulumSwingup DMCPointMassEasy MujocoPusher"
+# Some of these have no frozen Step-4 state file; states are sampled once from the pristine baseline
+# and reused on both legs so the two legs always see the same scene.
+PYTHONPATH=$BASE "$VENV/bin/python" - "$OUT" $SPOTCFG <<'PY'
+import os, sys, numpy as np, stable_envs as se
+out, names = sys.argv[1], sys.argv[2:]
+for name in names:
+    f = f"/oscar/scratch/sboughan/se7/ogb-manipulation/examples/results/step4/states/{name}.npz"
+    try:
+        if os.path.exists(f):
+            st = np.load(f); s = st[list(st.keys())[0]][:8]; src = "step4"
+        else:
+            env = se.make(name, batch=8, device="cpu")
+            s = np.asarray(env.sample_states(8, np.random.default_rng(0))); src = "sampled(seed 0)"
+        np.save(f"{out}/{name}_states.npy", s)
+        print(f"STATES {name} {s.shape} from {src}", flush=True)
+    except Exception as e:
+        print(f"STATES {name} FAILED {type(e).__name__}: {e}"[:250], flush=True)
+PY
+
 run_leg "$VENV"  "$BASE" before $SPOTCFG
 run_leg "$VENV"  "$WS"   after  $SPOTCFG
 run_leg "$FVENV" "$BASE" before FetchReach

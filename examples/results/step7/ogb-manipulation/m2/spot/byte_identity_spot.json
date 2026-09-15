@@ -11,6 +11,17 @@
   ]
  },
  {
+  "config": "DMCReacherHard",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
   "config": "DMCCartpoleSwingup",
   "identical": true,
   "max_abs_diff": 0,
@@ -22,24 +33,63 @@
   ]
  },
  {
-  "config": "DMCPointMassEasy",
-  "identical": null,
-  "missing": true
- },
- {
-  "config": "MujocoPusher",
-  "identical": null,
-  "missing": true
- },
- {
-  "config": "FetchReach",
+  "config": "DMCCartpoleBalance",
   "identical": true,
   "max_abs_diff": 0,
   "shape": [
    8,
-   480,
-   480,
+   84,
+   84,
    3
   ]
+ },
+ {
+  "config": "DMCAcrobotSwingup",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "DMCPendulumSwingup",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "DMCPointMassEasy",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "MujocoPusher",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   240,
+   240,
+   3
+  ]
+ },
+ {
+  "config": "FetchReach",
+  "identical": null,
+  "missing": true
  }
 ]
