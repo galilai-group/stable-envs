@@ -7,13 +7,13 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: phase 1 PATCH delivered (HEAD 53fcb15); independent review running; Oscar venv job 6394425 + certify_cpu queued by the author
+  status: phase 1 reviewed APPROVE-WITH-CHANGES (4 required, no pixel change); follow-up requested; sweep 6394647 + GPU job in flight; merge after follow-up
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 8e4506c (phase 1 + Oscar certification artifacts)
+  head_sha: a1ebf57 (phase 1 + Oscar artifacts + sbatch plumbing)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -85,6 +85,29 @@ workstreams:
       sweep_cpu_job_6394647: RUNNING node2410 (per-band CPU tier + $SCR/se6/baseline leg, same node)
       gpu_job_6394648: PENDING (cuda Gate A, GPU tier, Step-4 world-row digests on a 3090)
       artifact: examples/results/step7/craftax-classic-full/certify_cpu_node2416.oscar.ccv.brown.edu.json
+    review:
+      verdict: APPROVE-WITH-CHANGES
+      report: examples/results/step7/craftax-classic-full/review_phase1.md
+      verified:
+      - 'golden file regenerated from jax 0.11.1: byte-identical; tests import no jax'
+      - 'fresh 36 keys x 9 shapes probe: random_bits 324/324, uniform 324/324, *95+32 324/324; offset chunking exact'
+      - 'parity on reviewer''s boundary pool: 7 and 16 px exact_frac 1.0 max_abs 0; author''s digests reproduced locally = Mac = Oscar x86-64'
+      - intensity skip exact by construction; in-place chain idempotent, no aliasing; daylight fast path bit-identical
+      - 'Step-4 replay on CPU: world rows digest to frozen 1aeabbe8; no shared render file touched'
+      - tests/unit branch 754/7/1 vs baseline 700/6/1, same pre-existing failure
+      - 'shared-file edits minimal: jax recorded like other packages; parity_note used only when measured_at empty; visual env cannot bypass'
+      - stratification cannot hide a truly dead dim; dead_dims [] at B=1,2,4,5 x 6 seeds
+      - 'Gate F: obs (149,), render (144,144,3); size 7 -> (63,63,3) = SWM CraftaxClassicPixelsWrapper obs incl. strip/night/sleep'
+      - hygiene + policy clean; arm64 vs x86 settled
+      required_changes:
+      - prng.uniform(minval,maxval) not bit-exact vs jax's fused range call (parity unaffected; W2 consumer) - drop or document + test
+      - daylight path slowed by per-call overhead (_strip_grid rebuilt per render, per-call constants; 175k -> 122k f/s at B=256/16 px, ~0.42 ms of it legitimate row growth) - cache per device, hoist, report
+        honestly
+      - '''every jit-differing pixel on a sleeping row'' over-generalised (awake light 0.49999997 row differs too) - reword to mechanism'
+      - findings claim Step-4 digests need the CUDA leg; they compare on CPU - update
+      non_blocking:
+      - certify.py Gate A check_per_env_variation skipped under default batch - Step 8 uses corpus batch
+      - SWM render() truncates x255, repo rounds half-to-even (pre-existing)
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -332,6 +355,8 @@ incident_log:
   item: W3 review APPROVE-WITH-CHANGES; follow-up requested
 - date: '2026-09-15'
   item: 'W1 Oscar certification: parity and Gate A reproduced on x86-64 with byte-identical digests (8e4506c)'
+- date: '2026-09-15'
+  item: W1 review APPROVE-WITH-CHANGES; follow-up requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
