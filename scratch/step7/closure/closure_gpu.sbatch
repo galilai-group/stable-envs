@@ -146,10 +146,17 @@ if has 4; then
     EXTRA=""; [ "$KEY" = "ogbmanip" ] && EXTRA=":$SWMSRC"
     echo "======================================== tests/gpu in $KEY"
     $PY -c "import torch,sys;print(' py',sys.version.split()[0],'torch',torch.__version__,torch.cuda.get_device_name(0))"
+    # pytest-timeout is installed in se6-verify and se-step6 and NOT in se7-rocket/se7-craftax/
+    # se7-ogb. Passing --timeout unconditionally makes pytest exit 4 with a usage error and write
+    # NOTHING, which reads as "the suite produced no failures" in a results file that is empty
+    # because the suite never ran. So the flag is added only where the plugin exists, and which
+    # interpreters got it is printed.
+    TO=(); $PY -c "import pytest_timeout" 2>/dev/null && TO=(--timeout=1500)
+    echo "pytest-timeout in $KEY: ${TO[*]:-absent (per-test timeout not enforced here)}"
     for F in $FILES; do
       B=$(basename "$F" .py)
       echo "#### $F [$KEY]"
-      PYTHONPATH=$TREE$EXTRA timeout 7200 $PY -m pytest "$F" -v -p no:randomly --timeout=1500 \
+      PYTHONPATH=$TREE$EXTRA timeout 7200 $PY -m pytest "$F" -v -p no:randomly "${TO[@]}" \
           2>&1 | keep "$OUT/gpu_tests/${B}.${KEY}${TAG}.results.txt"
       echo "FILE $F [$KEY] exit=${PIPESTATUS[0]}"
     done

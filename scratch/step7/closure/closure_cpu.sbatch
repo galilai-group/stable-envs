@@ -61,6 +61,20 @@ fi
 # question is "does the class refuse instead of silently falling back to CUDA". The refusal has to
 # be asked on a machine where the CUDA backend is available and is nevertheless not used.
 
+if has D; then
+  stage D "characterise the CPU batch-size dependence tests/unit reports on this host"
+  # tests/unit/test_nvdiff_triangles.py::test_from_triangles_clip_row_is_independent_of_batch_size
+  # PASSES on an Apple M5 and FAILS here. The probe separates mvp_rows (W6's batch-invariant
+  # float64 product) from Scene.clip's float32 mvp @ vertices, and repeats at three thread counts
+  # because a CPU BLAS can pick its kernel by thread count as well as by batch width.
+  for T in 1 2 4; do
+    echo "#### torch threads $T"
+    OMP_NUM_THREADS=$T MKL_NUM_THREADS=$T PYTHONPATH=$TREE $(venv_for step6)/bin/python \
+        scratch/step7/closure/probe_nvdiff_cpu_batch.py \
+        --out "$OUT/nvdiff_cpu_batch/threads${T}.json" 2>&1 | grep -vE "^ *(self\.|\(self)" | tail -12
+  done
+fi
+
 if has C; then
   stage C "tests/unit on the certification host"
   for KEY in step6 craftax rocket; do
@@ -69,7 +83,12 @@ if has C; then
     $PY -c "import pytest" 2>/dev/null || { echo "SKIP venv $KEY (no pytest)"; continue; }
     EXTRA=""; [ "$KEY" = "ogbmanip" ] && EXTRA=":$SWMSRC"
     echo "======================================== tests/unit in $KEY"
-    PYTHONPATH=$TREE$EXTRA timeout 7200 $PY -m pytest tests/unit -q -p no:randomly --timeout=900 \
+    # See the note in closure_gpu.sbatch: pytest-timeout is absent from se7-craftax and se7-rocket,
+    # and an unconditional --timeout makes pytest exit 4 with a usage error and write an EMPTY
+    # results file, which is indistinguishable from a clean run unless someone reads the exit code.
+    TO=(); $PY -c "import pytest_timeout" 2>/dev/null && TO=(--timeout=900)
+    echo "pytest-timeout in $KEY: ${TO[*]:-absent (per-test timeout not enforced here)}"
+    PYTHONPATH=$TREE$EXTRA timeout 7200 $PY -m pytest tests/unit -q -p no:randomly "${TO[@]}" \
         2>&1 | keep "$OUT/unit_tests/unit.${KEY}${TAG}.results.txt"
     echo "tests/unit [$KEY] exit=${PIPESTATUS[0]}"
   done
