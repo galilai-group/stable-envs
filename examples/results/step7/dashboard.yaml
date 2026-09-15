@@ -1450,6 +1450,9 @@ incident_log:
   item: 'W6 MERGED and CLOSED (fd2b8ef): 40/40 pixel-producing ids covered; closure sweep next'
 - date: '2026-09-15'
   item: Sami approved the Step-8 plan and authorised the Step-7 milestone branch/tag push after closure
+- date: '2026-09-15'
+  item: 'CLOSURE SWEEP: frozen universe clean; OGBCube/OGBScene fail tests/gpu in se7-ogb (never run pre-merge) -> fixes assigned to W5 with the gpu suite as the gate; nvdiff CPU ulp test failure -> W6;
+    closure held'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1560,3 +1563,19 @@ blocked_on_oscar_ssh:
 coverage:
   pixel_producing: 40/40 merged on step7/integration (33 pre-Step-7 + CraftaxClassic partial->full + CraftaxPixels, Manipulator, Quadruped, OGBCube, OGBScene, PFRocketLanding)
   symbolic: 2/2 intentionally renderer-free (to be confirmed by the closure sweep)
+closure_sweep:
+  branch: step7/closure @ 01b5597 (verified integration 275970c)
+  classification: PASS-WITH-KNOWN-DELTAS on everything Step 7 froze; FAIL on two merged cells (OGBCube/OGBScene) - closure NOT yet declarable
+  replay_49: '48/49 replayable under the frozen interpreters: 43 identical, 5 known-delta (Step 6''s set), 0 new-delta; HumanoidmazeMediumNavigate Gate A FAIL -> PASS; CraftaxClassic is the coverage change
+    (149 slots, (144,144,3)): world-row digest 1aeabbe8 reproduces from the zero-extended corpus on both architectures'
+  nvdiff_six: 6/6 bit-identical to the re-freeze; Gate A incl. batch-size invariance PASS
+  gate_a_seven: five PASS 14/14 both devices; OGBCube/OGBScene FAIL check_state_roundtrip (1.17e-7 / 1.12e-7 vs bound 0); OGB/Rocket refuse cpu as promised
+  gpu_suite: 'error sets identical id-for-id to Step 6 (437, 529); 17 new failures: Manipulator 0; CraftaxClassic/CraftaxFull/Quadruped 1 each (downsample-table entries, expected); PFRocketLanding exactly
+    the two expected; OGBCube 8, OGBScene 6 in se7-ogb (never run before merge): state_roundtrip, sub-batch rendering invariant (3 of 8 rows differ from the full batch), a zero-size-array crash, OGBCube
+    mean_abs 3.287 vs its 3.2 ceiling'
+  unit: 'paired with 76dc5116 controls: exactly one new failure, test_from_triangles_clip_row_is_independent_of_batch_size on x86-64 CPU only (nvdiff.Scene.clip differs by one float32 ulp at widths 1 and
+    2 on CPU; no shipped renderer draws through nvdiff on cpu)'
+  coverage: '42 ids; 40/40 pixel covered; 2/2 symbolic renderer-free (wrapper raises NotImplementedError: render is only supported for Pixels variants); Gate A 34 PASS / 5 FAIL / 1 BLOCKED; coverage_matrix.json
+    + docs/research/step7_coverage.md generated'
+  citations: 9 -> 10 from a $SCR path in W5's committed provenance capture
+  duplicate_job: 6417178 (not the closure agent's) was re-running the same sbatch into the same $SCR dir; cancelled by the coordinator; committed artifacts unaffected
