@@ -830,7 +830,15 @@ and restores exactly. On `OGBScene` it bakes exactly `btn_metal` on the two butt
 | **M4** tiers | not started (`BATCH_SCALES` 2.93x and CPU bars already measured) |
 | **M5** OGBScene cell | helper ready; cell not written; Q11 escalation open for Sami |
 
-## 19. M3 — the two cells, written and registered at the `visual` tier
+## 19. M3 — the two cells (SUPERSEDED: these numbers are the pre-B1 renderer's)
+
+> **THE NUMBERS IN THIS SECTION AND IN §20 ARE WITHDRAWN.** They were measured through a composite
+> that never used its own baked plate on the floor (§21, B1), so they describe raw corrected-MJWarp
+> and not the cell that now exists. They are kept, marked, as the before half of that fix — a stale
+> measured value is worse than none, because it reads as current evidence. The re-measurement is
+> blocked on Oscar access.
+
+
 
 `stable_envs/envs/ogb_manip.py`. The `fetch.py` pattern: a plate baked through MuJoCo and asserted
 bit-constant per class, MJWarp movers composited by MJWarp's own segmentation buffer, `gl_rounding`
@@ -889,7 +897,7 @@ the weaker of the two (`ssim` 0.902, `mean_abs` 10.0/255 against the Cube's 0.94
 lever on it is the `global` directional-light term, worth +0.355 interior on the Cube, which would
 be a further attribution pass rather than anything the current bound permits.
 
-## 20. Corpora, Gate F and M4 tiers — job 6399587, `gpu2264` (RTX 3090)
+## 20. Corpora, Gate F and M4 tiers — job 6399587 (SUPERSEDED with §19; see §21)
 
 ### Frozen corpora, Step-4 schema
 
@@ -951,3 +959,125 @@ structural reason: at 224 px throughput is within 5 % of its ceiling by **B=64**
 `CPU3D-OGB-1` and the cell's own visible-triangle count (193,113 / 196,633). Silently serving a CPU
 request from the GPU is what the Step-6 policy addendum forbids, and the test for it is that the
 constructor throws.
+
+---
+
+## 21. Cell review: REJECT, and what it found
+
+The independent review of the cells at `1550ebdb` passed the shared helpers, the declarations, the
+`_apply_button_states` usage, the `_context` deep copy, the `qvel` drop, Gate F's reasoning, the bake
+residual note, the CPU refusal and the `GPU_PARITY` cap — and rejected the cell, correctly, because
+it did not implement the design its declarations described.
+
+### B1 — the plate was never used on the floor
+
+`render()` composited with `mv = seg >= 0`. **The floor plane and the skybox are geoms**, so that
+mask is true wherever MJWarp hit anything at all, and the composite took MJWarp's floor over the
+baked plate everywhere. The plate was used only where nothing was hit — the sky.
+
+The consequence is that every fidelity number this workstream published for the cells was the raw
+corrected-MJWarp number, and the claim that "whole-frame exactness of the composite is 0.92–0.95"
+was measured by the **m1b probe**, which masked with `np.isin(seg, movers)` while the renderer did
+not. The reviewer's check on my own committed frames settles it: over the 75.2 % of pixels static
+across all four official frames, ours matched official on **28.4 %**. A plate that is exact by
+construction cannot produce that; it was never consulted.
+
+Fixed by using the mover LUT, as `fetch.py` does: a `(ngeom+1,)` bool table indexed by `seg + 1`, so
+only mover ids take MJWarp and everything else — floor, sky, static furniture — falls through to the
+plate. The "0.92–0.95" sentence is deleted rather than restated.
+
+### B2–B6, in one line each
+
+* **B2** the context is copied with the button bits **forced to all-zero** and restored: the tables
+  are applied as deltas against the all-zero table, and the env's bits depend on which task `reset`
+  picked — measured starts include (0,0), (1,0) and (1,1), so ~40 % of processes built every table
+  on a wrong base, silently, because a disjointness assertion cannot see a wrong *base*.
+* **B3** `sample_states` is now a pure function of its `rng` (see the upstream report below).
+* **B4** the pool and the selection come from **one** draw and are written together, with
+  `pool[indices] == states` asserted before anything is written.
+* **B5** `mocap_quat` is **dropped**: measured over 520 states spanning both cells, all five task ids
+  and 12 steps per episode, it has exactly one unique row — the identity. A dimension constant under
+  the registered distribution cannot be shown to matter, and the repo's own `check_state_dims_matter`
+  reports it dead. State is `(qpos, mocap_pos[, bits])`: **24** dims (Cube), **30** (Scene).
+* **B6** `tests/unit/test_ogb_manip.py`, 20 cases, covering each of the above.
+
+### Two more bugs the new tests found, both the same shape
+
+A test that **passed alone and failed in file order** exposed them:
+
+1. `_Bundle` cached `model` and `data`, but every dirty `reset()` runs `compile_model_and_data`,
+   which **rebinds** them (phase 0 measured `model_object_reused: False` on every reset). After any
+   reset — and `sample_states` resets 64 times — the cell baked its plate from, and wrote button
+   colours into, a model the env had already discarded. They are properties now.
+2. `_renderer` cached a `mujoco.Renderer` keyed on `(cell, res)`, and a `Renderer` holds the model it
+   was built with, so the same staleness applied to the plate bake. Keyed on model identity now.
+
+Neither would have been caught by any measurement, because a stale model still renders a plausible
+picture.
+
+---
+
+## 22. Upstream report — three defects in `stable_worldmodel`'s OGBench manipulation envs
+
+Found while making `sample_states` reproducible (B3). All three are in swm's forks, all verified by
+measurement, and together they mean **no `reset()` of these envs is reproducible by any seed a caller
+can pass**. Each is worked around in `stable_envs/envs/ogb_manip.py`; none is fixed here.
+
+**1. `reset()` accepts `seed` and discards it.**
+`stable_worldmodel/envs/ogbench/cube_env.py:822` and `scene_env.py:325`:
+
+```python
+def reset(self, seed=None, options=None, *args, **kwargs):
+    ...
+    ob, info = super().reset(options=options, *args, **kwargs)   # `seed` is not passed on
+```
+
+`gymnasium.Env.reset` is what seeds `self.np_random`, so it is never reseeded. Everything random in
+`initialize_episode` runs off that generator — the arm's initial yaw
+(`initialize_arm`: `self.np_random.uniform(-np.pi, np.pi)`), the cube's position jitter, the block
+permutation. **Measured:** two `reset(seed=3)` calls on a fresh env differ by up to 2.98 in `qpos`.
+Setting `env.unwrapped.np_random` directly makes the reset bit-reproducible.
+
+**2. `action_space` is a property that builds a new, OS-seeded `Box` on every access.**
+`ogbench/manipspace/envs/env.py:246`. Two consecutive accesses return different objects
+(verified: `u.action_space is u.action_space` → `False`). `ManipSpaceEnv.initialize_episode` then
+calls `self.step(self.action_space.sample())` **twice** to settle the scene, so every reset consumes
+two actions from a generator that nothing outside can seed — `env.action_space.seed(...)` seeds a
+throwaway. Worked around by binding a seeded `Box` on the defining class for the duration of a draw.
+
+**3. `reset_variation_space` is called with `seed=None`.**
+`cube_env.py` / `scene_env.py` in `reset()`; `stable_worldmodel/spaces.py:38` then does
+`variation_space.seed(None)`, which draws OS entropy, before resampling the default variation leaves.
+**Measured:** `cube.start_position` differs between two identically-seeded resets. swm does honour an
+explicit `options['variation_values']`, which is the one handle a caller has, so the values are drawn
+from the caller's own `rng` instead.
+
+**A fourth, separate defect, reported earlier and unrelated to seeding:**
+`SceneEnv.reset(options={'state': ...})` calls `self.set_state(qpos, qvel)` without the
+`button_state_*` keyword arguments its own `set_state` requires, and raises `KeyError: 0`
+(`scene_env.py:228`). swm's documented reset-from-state path does not work for `OGBScene`.
+
+---
+
+## 23. Status: re-measurement prepared, blocked on Oscar
+
+`_MEASURED` is **empty** and both cells are **unregistered** — deliberately, because the previous
+numbers describe a renderer that never used its plate. `tests/unit/test_ogb_manip.py` skips cleanly
+in that state rather than asserting against a placeholder.
+
+Prepared and committed, not run:
+
+* `scratch/step7/ogb-manipulation/probe_remeasure_chain.py` — the whole chain in one script, because
+  the steps are not independent: 3x64 draws per cell; thresholds computed **by the script** from the
+  measured worst-of-three under the family rule (x1.3 on the mean, floors a round 0.05 step below the
+  worst draw) and written to `paste_me.json` in the exact shape `_MEASURED` wants; Gate A through the
+  **repo's own** `check_state_dims_matter` and friends rather than the bespoke probe that reported a
+  live dimension dead; corpora with `pool[indices] == states` asserted before writing; Gate F arm D;
+  tiers with same-node official and one-core decode. Provenance — host, GPU, SLURM job, git SHA, the
+  `ogb_manip.py` md5 and package versions — on every artifact.
+* `scratch/step7/ogb-manipulation/13_remeasure_chain.sbatch` — refuses to run if `_MEASURED` is empty,
+  refuses to run if the node's `ogb_manip.py` md5 does not match `EXPECT_MD5` from the submitter, and
+  files its own SLURM log beside the artifacts it produced.
+
+Blocked: **Oscar SSH is refusing with `Permission denied (keyboard-interactive)`.** Retrying at most
+every 30 minutes, not in a loop. On access: sync, verify the md5 against HEAD, submit, report.
