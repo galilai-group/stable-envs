@@ -320,10 +320,12 @@ def _ctx_button_tables(b: "_Bundle", m, res: int) -> dict | None:
 #: Per-cell facts. ``swm_id`` is the registration under test; ``camera`` is what swm's own ``render``
 #: defaults to (both subclasses override the ogbench base to use ``front_pixels``).
 SPEC = {
+    # `visible_tri` is the phase-0 census figure for geoms in the rendered groups, used only in the
+    # device="cpu" refusal so the message quotes THIS cell's size rather than its sibling's.
     "Cube": {"swm_id": "swm/OGBCube-v0", "camera": "front_pixels", "size": 224,
-             "swm_ref": "swm/OGBCube-v0"},
+             "swm_ref": "swm/OGBCube-v0", "visible_tri": 193113},
     "Scene": {"swm_id": "swm/OGBScene-v0", "camera": "front_pixels", "size": 200,
-              "swm_ref": "swm/OGBScene-v0"},
+              "swm_ref": "swm/OGBScene-v0", "visible_tri": 196633},
 }
 
 
@@ -344,12 +346,14 @@ class OGBManipBase(StableEnv):
             # triangle. That is 12.9x over `cores_cpu >= 1` before a single pixel is written, and
             # 72x at the full measured 135 ns. Falling back to CUDA behind a device="cpu" request is
             # what this rule exists to forbid.
+            tri = SPEC.get(self.CELL, {}).get("visible_tri")
             raise ValueError(
-                f"{type(self).__name__} has no CPU backend (CPU3D-OGB-1): this scene is 193,113 "
-                f"visible triangles at a median projected edge of 0.70 px, and the certification "
-                f"CPU bar leaves 0.75 ns/triangle against a 24 ns/triangle vertex-setup floor -- "
-                f"12.9x short before any fill. See "
-                f"examples/results/step7/ogb-manipulation/findings.md. Use device='cuda'.")
+                f"{type(self).__name__} has no CPU backend (CPU3D-OGB-1): this scene is "
+                f"{tri:,} visible triangles at a median projected edge of ~0.7 px, and the "
+                f"certification CPU bar leaves under a nanosecond per triangle against a "
+                f"24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is "
+                f"filled. See examples/results/step7/ogb-manipulation/findings.md. "
+                f"Use device='cuda'.")
         b = _bundle(self.CELL)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names

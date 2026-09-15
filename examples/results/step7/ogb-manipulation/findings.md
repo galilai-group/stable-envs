@@ -888,3 +888,66 @@ residual is attributed term by term in §16 and declared in each class's `visual
 the weaker of the two (`ssim` 0.902, `mean_abs` 10.0/255 against the Cube's 0.943 and 4.8); the next
 lever on it is the `global` directional-light term, worth +0.355 interior on the Cube, which would
 be a further attribution pass rather than anything the current bound permits.
+
+## 20. Corpora, Gate F and M4 tiers — job 6399587, `gpu2264` (RTX 3090)
+
+### Frozen corpora, Step-4 schema
+
+| cell | kept / pool | state_dim | sha256 |
+|---|---|---:|---|
+| `OGBCube` | 64 / 256 | 28 | `55222c0339b5…` |
+| `OGBScene` | 64 / 256 | 34 | `4d64960ca7e2…` |
+
+Written by `examples/fidelity_step4.py::corpus_for`, so the selection rule is the one the frozen 49
+were chosen under — typical state, per-dimension extremes widest-dimension-first, farthest-point
+spread — rather than a second notion of "extreme" invented here. The 256-state pool is saved beside
+each selection (`pool_OGB*.npz`), because a selection whose pool is gone cannot be re-derived.
+
+### Gate F — arm D, and why it is the whole gate here
+
+swm registers both cells with `ob_type='states'`, and the measurement confirms it: the observation
+is a **28-D / 40-D vector**, `observation_is_pixels = False`. There is no pixel observation to
+replace, so the artifact stable-envs certifies is `render()` and "only `render()` is swapped" is the
+entire content of the gate for this family. The arm drives swm's **own** env through its **own**
+dynamics for 24 steps, reads the render-relevant state off `data`, and pixel-compares our frames
+against swm's on those same states.
+
+| cell | obs is pixels | shape/dtype match | mean_abs | within8 | ssim |
+|---|---|---|---:|---:|---:|
+| `OGBCube` | False (28-D vector) | ✅ | 4.6345 | 0.8139 | 0.9494 |
+| `OGBScene` | False (40-D vector) | ✅ | 9.8025 | 0.7025 | 0.8982 |
+
+**These agree with the §19 corpus numbers** (4.797 / 0.807 / 0.943 and 10.004 / 0.704 / 0.902),
+which is the point of running the arm at all: a fidelity number measured on our own sampled corpus
+and one measured on states swm's dynamics actually visited land in the same place, so the corpus is
+not flattering itself.
+
+### M4 — tiers, all three numbers from the SAME node
+
+| cell | fps(1) | best fps | official (same node) | 1-core decode | R | cores | `BATCH_SCALES` |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `OGBCube` | 1,200 | **6,025** (B=4096) | 2,012 | 3,515 | **2.99** | **1.71** | **5.02x ❌** |
+| `OGBScene` | 873 | **5,498** (B=1024) | 1,526 | 3,197 | **3.60** | **1.72** | **6.30x ❌** |
+
+**Declared tier: `GPU_PARITY`, capped by the `BATCH_SCALES` failure**, per the frozen §6.7 rule and
+the coordinator's ruling. `cores ≥ 1` passes on both (1.71, 1.72) and `R` is 3.0–3.6; the ratio is
+what caps it, and nothing was spent trying to move it.
+
+**Two numbers that must not be conflated, and the reason this table says "same node".** The official
+renderer here is **2,012 / 1,526 f/s** — a GPU node with hardware EGL. On the `batch` certification
+node it is **6.31 / 5.17 f/s**, because there `MUJOCO_GL=egl` resolves to Mesa llvmpipe in software
+(§4). Both are correct and they answer different questions: the GPU-node figure is the comparator for
+a GPU tier's `R`, the llvmpipe figure is the comparator for the CPU `S_cpu` bar. Reading either in
+the other's place is a 300x error.
+
+**`BATCH_SCALES` is 5.02x / 6.30x here, against the 2.93x phase 0 measured for raw MJWarp (§5).**
+Not a contradiction: phase 0 timed the megakernel alone, where `fps(1)` was already 2,232, while this
+times the shipped cell, whose per-call plate composite and state upload lower `fps(1)` to 1,200. The
+ratio rose because its denominator got worse, which is exactly why a ratio is a poor headline and the
+raw `fps(1)` and best-fps columns are reported beside it. Both fail 20x, and both fail for the same
+structural reason: at 224 px throughput is within 5 % of its ceiling by **B=64**.
+
+**CPU: the refusal is asserted, not assumed.** `device="cpu"` raises on both cells, naming
+`CPU3D-OGB-1` and the cell's own visible-triangle count (193,113 / 196,633). Silently serving a CPU
+request from the GPU is what the Step-6 policy addendum forbids, and the test for it is that the
+constructor throws.
