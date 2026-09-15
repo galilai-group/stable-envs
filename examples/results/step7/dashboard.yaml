@@ -372,8 +372,8 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; independent review APPROVE-WITH-CHANGES satisfied; integration tests/unit run recorded separately
     integration_tests: 'tests/unit on 0a029bd: 735 passed, 6 skipped (test_examples and the pre-existing test_every_cited_scratch_path_resolves deselected)'
   cluster_jobs:
-    gpu_declare_6394721: 'COMPLETED gpu2104: cuda identity 21/21 raycast3d + 4/4 trackcom byte-identical; ellipsoid twin 2 passed; fast paths 120 passed; mujoco_warp source check written. Declaration draws
-      / Gate A cuda / localize FAILED: EGL context error in the official renderer on gpu2104 (both venvs) -> resubmitted as 6394987 with gpu2104 excluded + EGL probe'
+    gpu_declare_6394721: 'COMPLETED gpu2104: cuda identity 21/21 raycast3d + 4/4 trackcom byte-identical; ellipsoid twin 2 passed; fast paths 120 passed; declaration draws / Gate A cuda / localize DID complete
+      (artifacts at 03:37) - the ''EGL error'' was GLContext.__del__ teardown noise hidden by tail -8; resubmit 6394987 on gpu2107 reproduced them (kept)'
     certify_cpu_6394722: RUNNING node1913
     copies: $SCR/se7/dmc-quadruped = fa4ac53 (MERGED_COMMIT 0a029bd); $SCR/se7/baseline = git archive 76dc511
     script_fixes_for_commit_e:
@@ -508,6 +508,9 @@ incident_log:
   item: W1 merged (9ca318f); W2 worktree created from ada4075
 - date: '2026-09-15'
   item: W3 GPU_FAST (R 32.0, cores 3.7, HOST_BOUND); exclusion mechanism built; W2 craftax-full phase 0 spawned
+- date: '2026-09-15'
+  item: 'NODE-2 RETRACTED: gpu2104 EGL ''failure'' was interpreter-exit GLContext.__del__ noise; official renderer worked on gpu2104 (W3 6394689, W4 6394721). Exclude list reverts to gpu2108,gpu2113,gpu2110,gpu2116;
+    gpu2104 exclusion optional'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
