@@ -819,6 +819,31 @@ class CraftaxClassic(StableEnv):
         "s_cpu_vs_unjitted": 528.0, "s_cpu_vs_jitted": 1.9,
         "status": "NEITHER CERTIFIES ANYTHING until the ruling; the CPU tier above is taken on the "
                   "NO_REFERENCE cores_cpu ladder",
+        # Step 3's own evaluator, run on the real records three ways. The GPU pair is the proof that
+        # this is not a quibble: measured on ONE 3090 in ONE job, the Step-6 tree does 1,174,913 f/s
+        # against a jitted reference and labels GPU_FAST, while this branch does 46,187 f/s -- 25x
+        # slower -- against an un-jitted one and labels GPU_EXCEPTIONAL.
+        "labels_cpu": {"as_measured": "CPU_FASTER", "vs_jitted": "CPU_PARITY",
+                       "no_reference": "CPU_REGRESSION"},
+        "labels_gpu": {"as_measured": "GPU_EXCEPTIONAL", "vs_jitted": "GPU_FASTER",
+                       "no_reference": "GPU_FAST"},
+        "must_not_be_recorded_as_the_tier": ["GPU_EXCEPTIONAL (as_measured)",
+                                             "CPU_FASTER (as_measured)"],
+        "recommended": "the NO_REFERENCE row: cores compares the renderer against decoding its own "
+                       "frame, which needs no reference and so cannot be gamed by one",
+        "evidence": "examples/results/step7/craftax-classic-full/sweep/tier_three_ways_*.json",
+    }
+    #: The GPU side of :attr:`performance_record_cpu`. Oscar ``gpu2107``, one RTX 3090, paired
+    #: against a pristine 76dc511 either side of it in the same allocation: baselines 1,174,913 and
+    #: 1,149,220 f/s, spread 1.0224, **0.963x** the 1,206,822 Step 6 certified for that tree.
+    performance_record_gpu = {
+        "mixed_default_fps": 46187.3, "mixed_default_batch": 4096,
+        "decode_bar_fps": 2999.9, "cores": 15.40,
+        "tier_no_reference": "GPU_FAST", "tier_vs_jitted": "GPU_FASTER",
+        "tier_as_measured_DO_NOT_USE": "GPU_EXCEPTIONAL",
+        "daylight_diagnostic_fps": 796702, "night_diagnostic_fps": 24353,
+        "batch_scales": 238.0, "no_large_batch_regression": 1.093,
+        "job": "6395847", "host": "gpu2107", "card": "NVIDIA GeForce RTX 3090",
     }
     resolution_consistency_applicability = {
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",

@@ -522,3 +522,12 @@ def test_the_performance_record_says_what_it_does_not_certify():
     assert "NEITHER CERTIFIES" in n["status"].upper()
     assert n["s_cpu_vs_unjitted"] / n["s_cpu_vs_jitted"] > 100, (
         "the whole point of the note is that the two references disagree by orders of magnitude")
+    # the labels the frozen evaluator produces three ways, and the two that must never be quoted
+    assert n["labels_cpu"]["no_reference"] == "CPU_REGRESSION"
+    assert n["labels_gpu"]["as_measured"] == "GPU_EXCEPTIONAL"
+    assert n["labels_gpu"]["no_reference"] == "GPU_FAST"
+    for bad in n["must_not_be_recorded_as_the_tier"]:
+        assert "as_measured" in bad
+    g = C.performance_record_gpu
+    assert g["tier_as_measured_DO_NOT_USE"] == "GPU_EXCEPTIONAL"
+    assert abs(g["cores"] - g["mixed_default_fps"] / g["decode_bar_fps"]) < 0.02

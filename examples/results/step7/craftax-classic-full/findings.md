@@ -748,7 +748,57 @@ the tier and the diagnostic ever stop being visibly different numbers.
 For orientation only, one Apple arm64 core (**not** a certification number): mixed 1,990 f/s at
 16 px and 9,973 at 7 px; daylight 151,894 and 309,910; night 1,317 and 6,684.
 
-### 9.5 GPU tier — job `6395847`, queued
+### 9.5 GPU tier — job `6395847`, `gpu2107`, paired verdict `USABLE`
+
+`bench_step3 --device cuda`, Step-6-closed tree either side of the branch in one allocation on one
+RTX 3090. Baseline legs **1,174,913** and **1,149,220** f/s — spread **1.0224**, and **0.963x** the
+1,206,822 f/s Step 6 certified for that tree. Load 0.11 per core. All three gates pass.
+
+| | fps (B=4096) | decode bar | `cores` |
+|---|---|---|---|
+| branch, mixed default | **46,187** | 3,000 | **15.40** |
+| Step-6 tree (daylight-only observation) | 1,174,913 | 3,572 | 328.9 |
+
+`BATCH_SCALES` holds (46,187 / 194 = 238x, bar 20x) and there is no large-batch regression
+(4096/1024 = 1.093).
+
+### 9.6 The tier LABEL — and the reference decides it
+
+Labels from **Step 3's own evaluator** (`scratch/step3/certify.py:classify`, the frozen Step-2
+ladder, not restated), via `scratch/step7/craftax-classic-full/tier_three_ways.py`. Artifacts
+`sweep/tier_cpu.json`, `sweep/tier_cuda.json`, `sweep/tier_three_ways_{cpu,cuda}.json`.
+
+| | CPU | GPU |
+|---|---|---|
+| **as measured today** (ratio vs the **un-jitted** reference) | `CPU_FASTER` (`BELOW_G4`), R=528.7 | **`GPU_EXCEPTIONAL`**, R=29,214 |
+| **vs the jitted reference** (the renderer a user runs) | `CPU_PARITY`, R=1.9 | `GPU_FASTER`, R=119.4 |
+| **`NO_REFERENCE` ladder** (cores only) | `CPU_REGRESSION`, cores 0.263 | `GPU_FAST`, cores 15.40 |
+
+**`as measured today` is what the harness produces, and it is not a defensible performance claim.**
+The sharpest way to see it is the GPU pair, measured on one card in one job:
+
+| | throughput | its official reference | R | label |
+|---|---|---|---|---|
+| Step-6 tree | **1,174,913 f/s** | 386.7 f/s (jitted) | 3,038 | `GPU_FAST` |
+| this branch | **46,187 f/s** | 1.6 f/s (un-jitted) | 29,214 | **`GPU_EXCEPTIONAL`** |
+
+**The branch is 25x slower on the same card and labels one rung higher.** Nothing about the renderer
+causes that. It is entirely which reference each leg divided by — and the branch's reference is
+slower only because `reference_env` stopped jitting it, which §8.2 shows parity required.
+
+**Recorded, not resolved.** Which of `vs_jitted` and `no_reference` is correct is Sami's ruling and
+Step 8's to encode; **no shared harness has been edited** to suppress the ratio. What this
+workstream asserts is only the negative: **the `as measured` labels — `GPU_EXCEPTIONAL` and
+`CPU_FASTER` — must not be recorded as this cell's tiers.** The defensible readings are the other
+two rows, and they agree on the shape of the answer: this renderer is **roughly at parity with
+craftax on one CPU core and a good deal faster on a GPU**, on an observation three quarters of which
+is lit.
+
+The `NO_REFERENCE` row is the one this workstream recommends, for the reason the qualifier exists:
+`cores` compares the renderer against decoding its own frame, which needs no reference at all and
+therefore cannot be gamed by one. It gives **`CPU_REGRESSION`** and **`GPU_FAST`**.
+
+### 9.7 (superseded) GPU tier queued
 
 `bench_step3 --device cuda`, paired the same way: the Step-6-closed tree either side of the branch
 in **one allocation on one 3090** (`--constraint=geforce3090`), so the baseline re-measures a known
