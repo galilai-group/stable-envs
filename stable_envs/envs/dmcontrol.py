@@ -981,6 +981,19 @@ class _DMCModel(StableEnv):
     # ---- model / reference plumbing --------------------------------------
 
     @classmethod
+    def _load_env(cls, seed: int):
+        """The dm_control env this cell is built from: ``suite.load`` by default.
+
+        THE ONE PLACE A CELL'S MODEL COMES FROM. ``_bundle`` (the canonical model), ``sample_states``
+        (the visited distribution) and ``reference_env`` (the official frames) all load through
+        it, so a cell whose model is not ``suite.load``'s -- ``DMCQuadrupedWalk`` draws the env
+        ``stable_worldmodel`` registers, built through ``dm_control.mjcf`` with SWM's default
+        appearance -- overrides this and nothing else (integration finding INTEG-1: a copied
+        ``_bundle`` drifted the moment the base one changed).
+        """
+        return _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": seed})
+
+    @classmethod
     def _bundle(cls, size: int):
         """``(dm_control env, MjModel, MjData, pristine, Renderer, slots)``, one per (domain, size).
 
@@ -1002,7 +1015,7 @@ class _DMCModel(StableEnv):
         if hit is not None:
             return hit
         import mujoco
-        env = _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})
+        env = cls._load_env(0)
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
         m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(size))
@@ -1292,7 +1305,7 @@ class _DMCModel(StableEnv):
         """
         rng = rng or self.rng
         seed = int(rng.integers(0, 2 ** 31 - 1))
-        env = _suite().load(self.DOMAIN, self.TASK, task_kwargs={"random": seed})
+        env = self._load_env(seed)
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
         spec = env.action_spec()
@@ -1311,16 +1324,16 @@ class _DMCModel(StableEnv):
     # ---- reference bridge -------------------------------------------------
 
     @classmethod
-    def reference_env(cls, size: int = 84):
-        """A FRESH official env, carrying the size it must render at.
+    def reference_env(cls, size: int | None = None):
+        """A FRESH official env, carrying the size it must render at (``default_size`` if none).
 
         Never closed. ``test_state_is_sufficient`` drives one through two histories, and a
         dm_control ``Physics`` holds the EGL context its renderer created — releasing it corrupts
         rendering in every other live context in the process.
         """
-        env = _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})
+        env = cls._load_env(0)
         env.reset()
-        env._se_size = int(size)
+        env._se_size = int(size or cls.default_size)
         return env
 
     @classmethod
@@ -2888,70 +2901,16 @@ def _swm_quadruped_env(seed: int):
 
 
 class _SWMQuadrupedModel:
-    """Mixin: the three places ``_DMCModel`` loads its env, pointed at ``_swm_quadruped_env``.
-
-    ``_bundle``, ``sample_states`` and ``reference_env`` are the base class's, with ``suite.load``
-    replaced; they are overridden here rather than through a loader hook on ``_DMCModel`` so that
-    this workstream's edits stay inside the TrackCom region while another edits the suite region
-    (the hook is the obvious cleanup once both land). ``default_size`` is SWM's ``render()`` default.
-    """
+    """Mixin for the one trackcom cell whose model is not ``suite.load``'s: SWM's env through the
+    ``_DMCModel._load_env`` hook, and SWM's ``render()`` default size. Nothing else is overridden
+    (asserted by ``tests/unit/test_cpu3d.py``), so ``_bundle``/``sample_states``/``reference_env``
+    stay the base class's and cannot drift from it."""
 
     default_size = 224
 
     @classmethod
-    def _bundle(cls, size: int):
-        key = (cls.DOMAIN, cls.TASK, int(size))
-        hit = _ENV_CACHE.get(key)
-        if hit is not None:
-            return hit
-        import mujoco
-        env = _swm_quadruped_env(0)
-        p = env.physics
-        m = p.model.ptr if hasattr(p.model, "ptr") else p.model
-        m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(size))
-        m.vis.global_.offheight = max(int(m.vis.global_.offheight), int(size))
-        slots = _episode_slots(env, m)
-        d = mujoco.MjData(m)
-        pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
-                        geom_rgba=np.array(m.geom_rgba, copy=True),
-                        site_rgba=np.array(m.site_rgba, copy=True),
-                        geom_group=np.array(m.geom_group, copy=True),
-                        site_group=np.array(m.site_group, copy=True),
-                        light_diffuse=np.array(m.light_diffuse, copy=True),
-                        light_specular=np.array(m.light_specular, copy=True),
-                        mat_reflectance=np.array(m.mat_reflectance, copy=True),
-                        cam_fovy=np.array(m.cam_fovy, copy=True))
-        for arr in {a for a, _ in slots}:
-            pristine[arr] = np.array(getattr(m, arr), copy=True)
-        r = mujoco.Renderer(m, height=int(size), width=int(size))
-        _ENV_CACHE[key] = (env, m, d, pristine, r, slots)
-        return _ENV_CACHE[key]
-
-    def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        rng = rng or self.rng
-        seed = int(rng.integers(0, 2 ** 31 - 1))
-        env = _swm_quadruped_env(seed)
-        p = env.physics
-        m = p.model.ptr if hasattr(p.model, "ptr") else p.model
-        spec = env.action_spec()
-        r2 = np.random.default_rng(seed)
-        slots = self._slots()
-        out = np.empty((int(batch), self.state_dim), np.float64)
-        for i in range(int(batch)):
-            env.reset()
-            for _ in range(int(r2.integers(0, 40))):
-                env.step(r2.uniform(spec.minimum, spec.maximum))
-            out[i, :self.nq] = np.asarray(p.data.qpos, np.float64)
-            for j, (arr, k) in enumerate(slots):
-                out[i, self.nq + j] = np.asarray(getattr(m, arr)).reshape(-1)[k]
-        return out.astype(np.float32)
-
-    @classmethod
-    def reference_env(cls, size: int = 224):
-        env = _swm_quadruped_env(0)
-        env.reset()
-        env._se_size = int(size)
-        return env
+    def _load_env(cls, seed: int):
+        return _swm_quadruped_env(seed)
 
 
 #: Extra bases per trackcom cell, for the one whose model is not ``suite.load``'s.
@@ -2982,18 +2941,18 @@ _AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 _SWIMMER_AT_VERSIONS = {"mujoco": "3.11.0"}
 _SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
 
-#: Quadruped (Step 7): PROVISIONAL, measured through the CPU backend (``stable_envs/render/cpu3d.py``,
-#: torch 2.14.0) on one draw, because Oscar was unreachable when the cell landed; the family's
-#: convention is three MJWarp draws on the GPU, which replaces this entry -- numbers and this string --
-#: when the cluster returns (the CPU backend sits within 0.02/255 of MJWarp on the sibling cells, so the
-#: numbers are expected to hold). The reference is the declared 3.11.0 pair; the registered default
-#: (camera 2, 224 px, SWM's appearance) is what is measured, Step 2 S4.2.
-_QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 1 draw from sample_states (SWM's "
-                 "model and default appearance: material self rgba .6 .3 .3, foot_back_left density "
-                 "1000), CPU backend cpu3d with torch 2.14.0 on an Apple M5, against "
-                 "physics.render under mujoco 3.11.0 + dm_control 1.0.44 with MUJOCO_GL=glfw "
-                 "(scratch/step7/dmc-quadruped/measure_cell.py); PROVISIONAL until the MJWarp draws")
-_QUADRUPED_AT_MEASURED_WITH = {"torch": "2.14.0"}
+#: Quadruped (Step 7): the family's convention -- three independent MJWarp draws through the shipped
+#: env -- at the REGISTERED default (camera 2, 224 px, SWM's appearance; Step 2 S4.2), under the
+#: declared 3.11.0 pair, on a 3090 (job 6394987, gpu2107; the draws of job 6394721 on gpu2104 were
+#: overwritten by it and are not what the numbers rest on). The CPU backend
+#: measured the same picture locally first (3.42 / 0.902 / 0.957 on one draw, Apple M5) and is
+#: certified against this entry, not its own.
+_QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
+                 "(SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left "
+                 "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
+                 "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 "
+                 "(scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)")
+_QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
@@ -3064,10 +3023,12 @@ VISUAL_FIDELITY: dict[str, dict] = {
     # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
     # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).
     "DMCQuadrupedWalk": {
-        "mean_abs": 3.42, "within8_frac": 0.902, "ssim": 0.957,
-        "interior_exact_frac": 0.188, "interior_frac": 0.0295, "all_exact_frac": 0.153,
-        "skybox_share": 0.151, "floor_share": 0.802,
-        "mean_abs_max": 4.7, "within8_min": 0.84, "ssim_min": 0.90, "measured_at": _QUADRUPED_AT,
+        "mean_abs": 3.52, "within8_frac": 0.897, "ssim": 0.955,
+        "interior_exact_frac": 0.206, "interior_frac": 0.0284, "all_exact_frac": 0.171,
+        "skybox_share": 0.148, "floor_share": 0.806,
+        "draw_spread": {"mean_abs": [3.520, 3.527], "within8_frac": [0.8964, 0.8987],
+                        "ssim": [0.9536, 0.9557]},
+        "mean_abs_max": 4.6, "within8_min": 0.85, "ssim_min": 0.90, "measured_at": _QUADRUPED_AT,
         "reference_versions": _AT_VERSIONS, "measured_with": _QUADRUPED_AT_MEASURED_WITH},
 }
 

@@ -1,0 +1,254 @@
+{
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "device": "cpu",
+  "slurm_job": null,
+  "code_root": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb",
+  "configs": {
+    "DMCCheetahRun": {
+      "config": "DMCCheetahRun",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCheetahRun.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "f42baac6795257a32a1b0f7c5eafe03f12c6c8593e1d657f61421063c9a771cb",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.08056529903628,
+      "digest_ours_default_style": "f42baac6795257a32a1b0f7c5eafe03f12c6c8593e1d657f61421063c9a771cb",
+      "frozen": {
+        "digest_ours": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+        "digest_ours_default_style": "1fc511eaec27109d0a146179ce7f00fcd8aa3dc24c44f5798979b69aea28bd38",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCheetahRun.npy"
+    },
+    "DMCHopperHop": {
+      "config": "DMCHopperHop",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCHopperHop.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "fc33f1da9e33fa4e1453d2e191623e764c59359a9d1295f2bdf6786f63809be8",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.146253336404,
+      "digest_ours_default_style": "fc33f1da9e33fa4e1453d2e191623e764c59359a9d1295f2bdf6786f63809be8",
+      "frozen": {
+        "digest_ours": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+        "digest_ours_default_style": "d65978480077ac4591a1196b9bd92d958dc017b7029a422a42ad2e639c6cb491",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCHopperHop.npy"
+    },
+    "DMCWalkerWalk": {
+      "config": "DMCWalkerWalk",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCWalkerWalk.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "291f1ebcb22288c88758058f45561dd53881c53a788dd45b1b217782cb47bd64",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 70.95262823011149,
+      "digest_ours_default_style": "291f1ebcb22288c88758058f45561dd53881c53a788dd45b1b217782cb47bd64",
+      "frozen": {
+        "digest_ours": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+        "digest_ours_default_style": "13b88aad7d8218665a263297b4dc5076224e3d349d75f8d3460c05dc78dd442d",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCWalkerWalk.npy"
+    },
+    "DMCHumanoidStand": {
+      "config": "DMCHumanoidStand",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCHumanoidStand.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "883fb1df2041f486067a7def65f51b16517ae4ef0a0a8ca1f764b87ab9c99b01",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 62.6154226013322,
+      "digest_ours_default_style": "883fb1df2041f486067a7def65f51b16517ae4ef0a0a8ca1f764b87ab9c99b01",
+      "frozen": {
+        "digest_ours": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+        "digest_ours_default_style": "539c71a227697a44b293a69499e5f7eaf7890056a99a6c053385eb134fce59e8",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCHumanoidStand.npy"
+    },
+    "DMCQuadrupedWalk": {
+      "config": "DMCQuadrupedWalk",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(0))  [no frozen corpus]",
+      "size": 224,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "cf21a9b76903856098ad667a43febca6b8301603233996e2e392e24fbc357b0c",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 68.31229696468431,
+      "digest_ours_default_style": "cf21a9b76903856098ad667a43febca6b8301603233996e2e392e24fbc357b0c",
+      "frozen": null,
+      "PASS": null,
+      "dump": "DMCQuadrupedWalk.npy"
+    },
+    "DMCManipulatorBringBall": {
+      "config": "DMCManipulatorBringBall",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "sample_states(64, rng=default_rng(0))  [no frozen corpus]",
+      "size": 224,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "683773634fc4804d3e5e4f58949824beec053f04ac6c57092f9b83434ea6b33a",
+      "frames_shape": [
+        64,
+        224,
+        224,
+        3
+      ],
+      "mean_pixel": 78.30764469484083,
+      "digest_ours_default_style": "683773634fc4804d3e5e4f58949824beec053f04ac6c57092f9b83434ea6b33a",
+      "frozen": null,
+      "PASS": null,
+      "dump": "DMCManipulatorBringBall.npy"
+    },
+    "DMCReacherHard": {
+      "config": "DMCReacherHard",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCReacherHard.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "10c851871acff9c448bd67fe25af8593c6f92b6de3078f4001484cb7f9ee7dcc",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 79.0993325715703,
+      "digest_ours_default_style": "10c851871acff9c448bd67fe25af8593c6f92b6de3078f4001484cb7f9ee7dcc",
+      "frozen": {
+        "digest_ours": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "digest_ours_default_style": "04e3961cabb2a57d4a5fae911401d7b89d05dddd645a24f942faf806d6e953a3",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCReacherHard.npy"
+    },
+    "DMCCartpoleSwingup": {
+      "config": "DMCCartpoleSwingup",
+      "device": "cpu",
+      "stable_envs_from": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/integ-1d9dccb/stable_envs/__init__.py",
+      "states_source": "examples/results/step4/states/DMCCartpoleSwingup.npz",
+      "size": 84,
+      "supersample": 1,
+      "batch": 64,
+      "digest_ours": "e7e89693b9203bb3409fb362a4b8ced46aad144aa96ca645c27bba92d7c6d2b1",
+      "frames_shape": [
+        64,
+        84,
+        84,
+        3
+      ],
+      "mean_pixel": 78.27629706396448,
+      "digest_ours_default_style": "e7e89693b9203bb3409fb362a4b8ced46aad144aa96ca645c27bba92d7c6d2b1",
+      "frozen": {
+        "digest_ours": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "digest_ours_default_style": "fdf1ab60694dc410af24289cbdbd2bd8ff7e3152c620bb00f480736d89aa49a0",
+        "size": 84,
+        "supersample": 1,
+        "batch": 64,
+        "device": "cuda"
+      },
+      "match": {
+        "digest_ours": false,
+        "digest_ours_default_style": false,
+        "shape_matches": true
+      },
+      "PASS": false,
+      "dump": "DMCCartpoleSwingup.npy"
+    }
+  },
+  "summary": {
+    "pass": 0,
+    "fail": 6,
+    "error": 0,
+    "total": 8
+  }
+}

@@ -17,7 +17,7 @@ import statistics
 import sys
 from pathlib import Path
 
-KINDS = ("PLANE", "SPHERE", "BOX", "CYLINDER", "CAPSULE")
+KINDS = ("PLANE", "SPHERE", "BOX", "CYLINDER", "CAPSULE", "ELLIPSOID")   # ELLIPSOID: Step 7
 
 
 def main(argv) -> int:
@@ -38,7 +38,7 @@ def main(argv) -> int:
           f"{'> 1 in every run?':>18s}")
     table = {}
     for k in KINDS:
-        if "ratio_min" not in runs[0]["predicate_detail"][k]:
+        if k not in runs[0]["predicate_detail"] or "ratio_min" not in runs[0]["predicate_detail"][k]:
             table[k] = False
             print(f"{k:9s} {'no finite bounding sphere':>34s} {'-':>7s} {'-':>7s} {'-':>8s} "
                   f"{'n/a (unbounded)':>18s}")

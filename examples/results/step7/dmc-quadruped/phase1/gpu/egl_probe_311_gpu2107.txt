@@ -1,0 +1,16 @@
++ $SCR/venvs/se-vis311/bin/python -
+EGL_OK device=None
+EGL_RESULT none
+Exception ignored in: <function Renderer.__del__ at 0x7fa3c03f4180>
+Traceback (most recent call last):
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7fa3c0627b00>
+Traceback (most recent call last):
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "$SCR/venvs/se-vis311/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

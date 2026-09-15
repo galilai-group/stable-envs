@@ -413,3 +413,132 @@ of phase 0, and `ours`/`official-3.11` at 224 px of phase 1 — what the committ
 Tests after (d): `tests/unit` 735 passed, 6 skipped (same two deselections); raycast3d suites inside
 it. No render-path file changed in (d) (dmcontrol loader, note, comment, tests only), so the 14/14
 identity of P2 stands as measured.
+
+## P6. Cluster results (Oscar, tree `fa4ac53` at `$SCR/se7/dmc-quadruped`, merged as `0a029bd` on `step7/integration`; baseline `$SCR/se7/baseline` = `git archive 76dc511`)
+
+Jobs: **6394721** `se7-dmc-quadruped-gpu` (gpu2104, RTX 3090, driver 575.57.08, 5:56), **6394987**
+`se7-dmc-quadruped-gpu2` (gpu2107, same card class, 3:47 — steps 4-6 re-run; see the EGL note),
+**6394722** `se7-dmc-quadruped-cpu` (node1913, `batch`, 58:53), **6395512** `se7-dmc-quadruped-sweep`
+(node2330, 0:09, load-aborted). Artifacts under `phase1/gpu/` and `phase1/cpu_oscar/`. Untracked on purpose (regenerable by
+the sbatch set): `gpu/localize_311/frames/DMCQuadrupedWalk.npz` and `gpu/localize_312/frames/
+DMCQuadrupedWalk.npz` (8 MB each, ours + official + segmentation stacks), `gpu/localize_312/sheets/`
+(the 3.12 duplicate of the committed 3.11 sheets), and every `*.log` (gitignored). Everything else
+from the four jobs is committed.
+
+**Identity of every configuration that renders through the two shared files, branch vs 76dc511:**
+- cuda, one card each: **21/21 raycast3d configs byte-identical** (`cuda_identity_raycast21.json`,
+  `se-step6`, the venv with ogbench+triton) and **4/4 trackcom cells byte-identical**
+  (`cuda_identity_trackcom4.json`, `se-step5`, the venv with mujoco_warp);
+- cpu, certification family (Xeon, `se-step6`): **25/25 byte-identical** incl. the 11 maze cells the
+  local run could not reach (`cpu_identity25_node1913.json`).
+Ellipsoid twin test on cuda: `test_the_ellipsoid_twins_are_bit_identical_on_both_casts` **passed**;
+the raycast3d fast-path suite on cuda: 120 passed, 22 skipped (`fast_paths_*.txt`). The release
+`mujoco-warp 3.11.0` (`se-vis311`) dispatches `GeomType.ELLIPSOID` (render.py:283) and `HFIELD`
+(:263) and defines `ray_ellipsoid` (ray.py:303) / `ray_hfield` (:452); no `site_` reference in
+render.py (`mujoco_warp_source_se-vis311.txt`) — §4 confirmed on the release.
+
+**The declaration (replaces the provisional entry in this commit)** — `visual_calib.py`, 3 independent
+draws × 64 states, 224 px, camera 2, SWM's default appearance, through `se.make(..., device="cuda")`
+(MJWarp), against `physics.render` under the declared **mujoco 3.11.0 + dm_control 1.0.44**
+(`visual_calib_311/visual_DMCQuadrupedWalk.json`):
+
+| arm | mean /255 (worst) | within 8 (worst) | SSIM (worst) | all-exact | interior exact |
+|---|---:|---:|---:|---:|---:|
+| **3.11 (declared)** | **3.523 (3.527)** | **0.8973 (0.8964)** | **0.955 (0.9536)** | 0.171 | 0.204-0.208 |
+| 3.12 (record) | 3.562 (3.566) | 0.895 (0.8939) | 0.9533 (0.9518) | 0.171 | 0.205-0.206 |
+| 3.11, 84 px (supplementary) | 5.387 (5.391) | 0.8139 (0.8132) | 0.8753 (0.8734) | 0.095 | 0.05-0.09 |
+
+Declared: `mean_abs 3.52, within8_frac 0.897, ssim 0.955`, thresholds by the family's margin
+convention `mean_abs_max 4.6, within8_min 0.85, ssim_min 0.90`, `draw_spread` recorded,
+`reference_versions {mujoco: 3.11.0}`, `measured_with {mujoco_warp: 3.11.0}`, `_QUADRUPED_AT`
+naming the card, driver and versions. The local CPU one-draw number (3.42 / 0.902 / 0.957) sat
+0.1/255 below it, as the sibling cells' CPU-vs-MJWarp spread predicted. Per surface at the
+declaration (`localize_311/localize.json`, MJWarp vs official 3.11): floor share 0.806, mean 3.75,
+86 % of the residual; bodies 0.046, mean 6.30, 8 %; skybox 0.148, mean 1.35, 6 %.
+
+**Gate A on the new corpus** (`gateA_local.py` = `fidelity_step4.measure`; 64 of 256 states,
+`corpus/states/DMCQuadrupedWalk.npz`): **every mandatory check at its passing observation on BOTH
+devices under BOTH arms** — determinism identical; batch / batch-size / chunked / order / duplicate /
+style-is-state / default-style / input-form max |diff| 0; render pure; set_state copies, round trip
+0.0; 23/23 live dims; no per-env collapse; no inert variation; declaration agrees — plus
+`colors_apply_exactly` pass. `check_visual_fidelity` under the declared 3.11 pair: **cuda 3.509 /
+0.900 / 0.956, cpu 3.375 / 0.9035 / 0.9586** (both inside 4.6 / 0.85 / 0.90); the 3.12 arm 3.549 /
+0.897 / 0.954 (cuda), 3.417 / 0.901 / 0.956 (cpu) — recorded, to be `blocked_environment` by the
+certifier's version rule. `check_resolution_consistency` **0.812** (cuda) / **0.8119** (cpu) on the
+8-state protocol, the number the cell's `DOWNSAMPLE_EXACT_FRAC` entry records at the Step-8 freeze.
+Oracle digests: cuda `7c298c925f6439e1` (3.11 arm) / `3f668f6dd8a46bca` (3.12 arm) — MJWarp's
+batched render is not run-to-run bit-reproducible on this family (texture-fidelity §5), so these
+are soft oracles; cpu `da826751c4933013` under both arms (the CPU backend is bit-reproducible within
+a CPU family).
+
+**Cross-backend, CPU vs MJWarp, same states, same tree** (`cross_backend_31{1,2}_node1913.json`):
+mean **0.0069/255**, **99.40 % exact**, **99.994 % within one level**, 99.998 % within two, 48-50 px of
+3.2 M beyond two levels (max 125: silhouette hit/miss flips between two analytic intersectors, as
+on the siblings), per surface: sky 0.023, floor 0.003, body 0.029, **ellipsoid 0.004-0.005 (99.74 %
+exact)**. CPU-vs-official and cuda-vs-official agree to three decimals (3.531 / 0.8969 / 0.9567 on
+the 3.11 stack). Same picture, different backend — the Step-6 policy, measured.
+
+**Tier — `PERFORMANCE_MEASURED` NOT reached on the certification host:** the paired sweep
+(`certify_shard_cpu3d.py --max-load 12`) **aborted at start twice** — node1913 at load 34.5 (in
+6394722) and node2330 at load 32.4 (6395512) — the shared-batch-partition situation Step 6 recorded
+(three attempts, best node 1.65x reference spread); no tier is derived from an aborted shard
+(`certifiable: false`, `not_certifiable_because` in both files). Reported, not certified: local
+Apple M5, 1 thread, render only — 224 px 27 / 23 / 25 fps at B = 1/16/64, 84 px 73 / 161 / 164 fps.
+Coordinator's call whether to re-attempt on a quiet window or accept `CPU_UNMEASURED` for the
+Step-8 freeze; the GPU sweep was not part of this job set.
+
+**`_BOUNDED_KINDS` — ELLIPSOID stays UNBOUNDED, and the measurement is recorded as undecided.**
+`r5_kind_cost.py` (now pricing the kind) ran three times on node1913 at load ~34
+(`kind_cost_ellipsoid_node1913_run{1,2,3}.json`, aggregate `kind_cost_ellipsoid_node1913_agg.json`):
+ELLIPSOID's worst ratio per run 0.89 / 0.69 / 0.90 and best 1.43 / 1.21 / 1.37 — it straddles 1, so
+by the rule (> 1 at every width in every run) it is not bounded; and the same runs put **BOX at
+0.95** in run 2 against the frozen table's 1.11-1.13, i.e. the node was too loaded to reproduce the
+committed predicate. `_BOUNDED_KINDS` is untouched, and the aggregate IS committed under the
+canonical name the bounds test reads (`cpu_oscar/kind_cost_ellipsoid.json`, load evidence in-band):
+the test's complement clause was wrong in (e) (`max(best) < 1`, unsatisfiable for a kind that
+straddles 1 whichever way the predicate went — re-check of ad842a8) and is now the true complement of
+"bounded iff worst > 1 in every run", i.e. `min(worst) <= 1` — under which this straddling
+measurement is an honest, green, UNBOUNDED verdict. The quiet-window job (6396525) re-takes the
+three runs with loadavg recorded in-band; if a clean measurement says otherwise the file is replaced
+in (f). Correctness is unaffected either way — unbounded means always tested.
+
+**Unit suite on the certification host** (`unit_tests_node1913.txt`, `se-step6`): 719 passed, 22
+skipped, 1 failed = `test_every_cited_scratch_path_resolves`. At ad842a8 that test's broken set had
+grown from the baseline's 9 (Step-6 citations) to 21: twelve absolute `/oscar/scratch/...` paths
+inside four committed stdout captures of this workstream (`egl_probe_*`, `mujoco_warp_source_*`) —
+scrubbed to `$SCR/...` in (e2), which returns the set to the baseline's 9.
+
+**Provenance of the committed artifacts (e2).** The Gate-A shards under `gpu/` and `cpu_oscar/`
+were measured at tree `fa4ac53`, i.e. BEFORE the shipped declaration: their
+`check_fidelity_declaration` evidence shows the provisional entry (3.42 / 0.902 / 0.957), and their
+`check_visual_fidelity` observations are judged here against the shipped thresholds (4.6 / 0.85 /
+0.90), which they clear; the sbatch set re-run at the merged SHA re-stamps them. `visual_calib_*`
+and the three identity JSONs now carry host / job / commit / card stamps; `interior_exact_frac` in
+the declaration is the MEAN over draws (0.206), as the siblings declare it.
+
+**EGL note (not a node fault).** 6394721's log showed `OpenGL.raw.EGL._errors.EGLError` after every
+official-renderer call and I resubmitted steps 4-6 as 6394987 with gpu2104 excluded. The lines were
+`Exception ignored in GLContext.__del__` — the EGL `free` at interpreter exit — which 6394987's
+probe printed right after `EGL_OK` on gpu2107 too, and 6394721 had already written its
+`visual_calib_311`, `gateA_cuda_*` and `localize_*` outputs before 6394987 started. Both nodes
+rendered the official reference; the outputs kept are 6394987's (they overwrote 6394721's, same
+states, same card class). No NODE-2 entry; W3's identical observation on gpu2104 agrees.
+
+## P6.1 INTEG-1 (after W3's merge, integration `1d9dccb`): the loader hook replaces the copies
+
+W3 changed `_DMCModel._bundle` (`geom_type`/`geom_size` now in `_pristine` for its shape leaf) and
+`_SWMQuadrupedModel._bundle`, a copy, drifted — exactly what the drift test in (d) existed to
+catch, and the answer is to stop copying. `step7/integration` merged into this branch (clean), then:
+`_DMCModel._load_env(cls, seed)` is now THE ONE PLACE a cell's model comes from — `suite.load` by
+default, called by `_bundle`, `sample_states` and `reference_env` (whose `size` now defaults to
+`cls.default_size`); `_SWMQuadrupedModel` overrides `_load_env` (`_swm_quadruped_env`) and
+`default_size = 224` and nothing else, and `tests/unit/test_cpu3d.py::
+test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size` asserts exactly that
+(the three methods are the base class's objects; every base loader goes through the hook). The base
+edit is three lines plus the hook; W3's `DMControlSuite` region is untouched.
+
+Verified on the merged branch: `tests/unit` **812 passed, 7 skipped, 1 failed** (the same
+pre-existing citation test; its set is the baseline's 9); **CPU byte-identity 8/8 vs the integration
+tree `1d9dccb`** — `DMCCheetahRun, DMCHopperHop, DMCWalkerWalk, DMCHumanoidStand, DMCQuadrupedWalk,
+DMCManipulatorBringBall, DMCReacherHard, DMCCartpoleSwingup`, sampled states seed 0, 0 px differing
+(`phase1/replay_hook/cpu_hook_vs_integration_identity.json`): the hook moved no pixel and no state.

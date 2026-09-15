@@ -1,0 +1,66 @@
+{
+ "env": "DMCQuadrupedWalk",
+ "n": 64,
+ "draws": 3,
+ "size": 84,
+ "mean_abs": 5.387,
+ "mean_abs_worst": 5.391,
+ "within8_frac": 0.8139,
+ "within8_worst": 0.8132,
+ "ssim": 0.8753,
+ "ssim_worst": 0.8734,
+ "exact_frac": 0.0954,
+ "interior_frac": 0.00011,
+ "interior_exact": [
+  0.05,
+  0.08928571428571429,
+  0.061224489795918366
+ ],
+ "rows": [
+  {
+   "mean_abs": 5.391322544642857,
+   "exact_frac": 0.09386293579931973,
+   "within8_frac": 0.8131820436507936,
+   "max_abs": 196,
+   "interior_frac": 9.072434315575555e-05,
+   "interior_exact_frac": 0.05,
+   "interior_mean_abs": 15.5,
+   "interior_px": 40,
+   "interior_bad_px": 38,
+   "ssim": 0.8758958623776911
+  },
+  {
+   "mean_abs": 5.379475357851474,
+   "exact_frac": 0.09647153132086168,
+   "within8_frac": 0.8136515022675737,
+   "max_abs": 248,
+   "interior_frac": 0.00012701408041805777,
+   "interior_exact_frac": 0.08928571428571429,
+   "interior_mean_abs": 14.553571428571429,
+   "interior_px": 56,
+   "interior_bad_px": 51,
+   "ssim": 0.8765997144775167
+  },
+  {
+   "mean_abs": 5.390786653202948,
+   "exact_frac": 0.09600428713151928,
+   "within8_frac": 0.814811862244898,
+   "max_abs": 229,
+   "interior_frac": 0.00011113732036580056,
+   "interior_exact_frac": 0.061224489795918366,
+   "interior_mean_abs": 14.83673469387755,
+   "interior_px": 49,
+   "interior_bad_px": 46,
+   "ssim": 0.8733936451123471
+  }
+ ],
+ "provenance": {
+  "git_commit": "fa4ac534d5446613dac448e6ba4badedc5c8ef1a",
+  "merged_commit": "0a029bd",
+  "card": "NVIDIA GeForce RTX 3090, driver 575.57.08",
+  "host": "gpu2107",
+  "slurm_job": 6394987,
+  "venv": "se-vis311"
+ },
+ "interior_exact_mean": 0.0668
+}

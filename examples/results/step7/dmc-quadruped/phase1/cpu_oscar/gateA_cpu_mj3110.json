@@ -1,0 +1,592 @@
+{
+ "configs": {
+  "DMCQuadrupedWalk": {
+   "backends": [
+    "mjwarp",
+    "cpu3d",
+    "raycast3d"
+   ],
+   "config_id": "DMCQuadrupedWalk",
+   "corpus": {
+    "env": "DMCQuadrupedWalk",
+    "indices": [
+     227,
+     218,
+     141,
+     63,
+     183,
+     81,
+     145,
+     171,
+     64,
+     13,
+     233,
+     226,
+     253,
+     220,
+     174,
+     248,
+     24,
+     17,
+     144,
+     9,
+     161,
+     205,
+     5,
+     185,
+     54,
+     108,
+     15,
+     95,
+     101,
+     228,
+     211,
+     40,
+     167,
+     39,
+     217,
+     192,
+     136,
+     135,
+     210,
+     213,
+     249,
+     28,
+     67,
+     73,
+     52,
+     204,
+     16,
+     169,
+     111,
+     92,
+     224,
+     83,
+     90,
+     58,
+     202,
+     239,
+     180,
+     126,
+     85,
+     123,
+     23,
+     184,
+     160,
+     187
+    ],
+    "kept": 64,
+    "loaded_from": "examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz",
+    "n_extreme": 32,
+    "n_spread": 31,
+    "n_typical": 1,
+    "pool": 256,
+    "seed": 20260909,
+    "selection": "typical + per-dim extremes + farthest-point spread",
+    "sha256": "2bf9cd38fe07bfdd25d96c640f8317b35204bb469d5d1c95f7f53c2af089aaab",
+    "state_dim": 23,
+    "state_names": [
+     "root_x",
+     "root_y",
+     "root_z",
+     "root_qw",
+     "root_qx",
+     "root_qy",
+     "root_qz",
+     "yaw_front_left",
+     "pitch_front_left",
+     "knee_front_left",
+     "ankle_front_left",
+     "yaw_front_right",
+     "pitch_front_right",
+     "knee_front_right",
+     "ankle_front_right",
+     "yaw_back_right",
+     "pitch_back_right",
+     "knee_back_right",
+     "ankle_back_right",
+     "yaw_back_left",
+     "pitch_back_left",
+     "knee_back_left",
+     "ankle_back_left"
+    ]
+   },
+   "declared_tier": "visual",
+   "env": "DMCQuadrupedWalk",
+   "family_specific": {
+    "check_backend_agreement": {
+     "seconds": 1.33,
+     "status": "not_applicable",
+     "why": "env renders without a Scene2D (tilemap path)"
+    },
+    "check_colors_apply_exactly": {
+     "evidence": {
+      "colors_not_applied": []
+     },
+     "seconds": 1.27,
+     "status": "measured"
+    },
+    "check_resolution_consistency": {
+     "evidence": {
+      "exact_frac": 0.8118796835140306,
+      "factor": 2,
+      "frozen_corpus": {
+       "exact_frac": 0.812402530592315,
+       "factor": 2,
+       "max_abs": 142,
+       "mean_abs": 0.6600100977891157,
+       "n_states": 64,
+       "size": 224,
+       "states_sha256": "2bf9cd38fe07bfdd25d96c640f8317b35204bb469d5d1c95f7f53c2af089aaab"
+      },
+      "max_abs": 121,
+      "mean_abs": 0.6329121492346939,
+      "protocol": {
+       "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)",
+       "draw": "render_worker.sample_inputs(env, n)",
+       "n": 8,
+       "n_states": 8,
+       "state_seed": 20260809,
+       "states_sha256": "52d82312bb61e95788c03d7413611671116dd97ad535c03954f301fb21f35f80",
+       "style": "default appearance"
+      },
+      "size": 224
+     },
+     "status": "measured"
+    },
+    "check_task_object_visibility": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "the env declares no visibility.* leaf"
+    },
+    "check_variations_do_something": {
+     "evidence": {
+      "inert_variations": []
+     },
+     "seconds": 34.57,
+     "status": "measured"
+    },
+    "check_visual_fidelity": {
+     "evidence": {
+      "exact_frac": 0.15284261898118623,
+      "interior_bad_px": 75553,
+      "interior_exact_frac": 0.20348113943534274,
+      "interior_frac": 0.02980340947937823,
+      "interior_mean_abs": 3.600259345942185,
+      "interior_px": 94854,
+      "max_abs": 245,
+      "mean_abs": 3.3751678466796875,
+      "n_states": 64,
+      "ssim": 0.9585687759362402,
+      "within8_frac": 0.9034501679089605
+     },
+     "seconds": 12.88,
+     "status": "measured"
+    },
+    "check_visual_fidelity_under_variation": {
+     "seconds": 0.0,
+     "status": "not_applicable",
+     "why": "DMCQuadrupedWalk.reference_render does not take a style, so the official renderer cannot be driven at this env's declared appearance and the two sides would be pictures of different scenes"
+    },
+    "render_parity_with_official_renderer": {
+     "status": "not_applicable",
+     "why": "declares the VISUAL tier; asserted against its own numbers instead"
+    }
+   },
+   "mandatory": {
+    "check_batch_invariance": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 9.44,
+     "status": "measured"
+    },
+    "check_batch_size_invariance": {
+     "evidence": {
+      "batch_sizes": [
+       1,
+       7,
+       64
+      ],
+      "max_abs_diff": 0,
+      "n": 64,
+      "worst_case": ""
+     },
+     "seconds": 33.35,
+     "status": "measured"
+    },
+    "check_chunked_render_matches": {
+     "evidence": {
+      "chunks": [
+       1,
+       7,
+       64,
+       4096
+      ],
+      "max_abs_diff": 0,
+      "worst_case": ""
+     },
+     "seconds": 24.76,
+     "status": "measured"
+    },
+    "check_default_style_is_official": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 13.66,
+     "status": "measured"
+    },
+    "check_determinism": {
+     "evidence": {
+      "identical": true
+     },
+     "seconds": 14.24,
+     "status": "measured"
+    },
+    "check_fidelity_declaration": {
+     "evidence": {
+      "agrees": true,
+      "describe_reports_tier": "visual",
+      "parity_all_exact_min": null,
+      "parity_interior_min": null,
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "render_decoder": "renderer",
+      "tier": "visual",
+      "variation_fidelity": null,
+      "visual_fidelity": {
+       "all_exact_frac": 0.153,
+       "floor_share": 0.802,
+       "interior_exact_frac": 0.188,
+       "interior_frac": 0.0295,
+       "mean_abs": 3.42,
+       "mean_abs_max": 4.7,
+       "measured_at": "224 px, camera 2 ('y', trackcom), 64 states x 1 draw from sample_states (SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left density 1000), CPU backend cpu3d with torch 2.14.0 on an Apple M5, against physics.render under mujoco 3.11.0 + dm_control 1.0.44 with MUJOCO_GL=glfw (scratch/step7/dmc-quadruped/measure_cell.py); PROVISIONAL until the MJWarp draws",
+       "measured_with": {
+        "torch": "2.14.0"
+       },
+       "reference_versions": {
+        "mujoco": "3.11.0"
+       },
+       "skybox_share": 0.151,
+       "ssim": 0.957,
+       "ssim_min": 0.9,
+       "within8_frac": 0.902,
+       "within8_min": 0.84
+      }
+     },
+     "seconds": 0.0,
+     "status": "measured"
+    },
+    "check_input_form_invariance": {
+     "evidence": {
+      "disagreements": {},
+      "forms": [
+       "numpy_f32",
+       "numpy_f64",
+       "numpy_strided",
+       "list",
+       "torch_cpu_f32",
+       "torch_cpu_f64",
+       "torch_cuda_f32",
+       "torch_cuda_f64",
+       "torch_cuda_strided",
+       "torch_cuda_transposed"
+      ]
+     },
+     "seconds": 68.49,
+     "status": "measured"
+    },
+    "check_order_independence": {
+     "evidence": {
+      "duplicate_max_abs_diff": 0,
+      "permutation_max_abs_diff": 0
+     },
+     "seconds": 13.5,
+     "status": "measured"
+    },
+    "check_per_env_variation": {
+     "evidence": {
+      "collapsed_variations": []
+     },
+     "seconds": 30.96,
+     "status": "measured"
+    },
+    "check_render_is_pure": {
+     "evidence": {
+      "frame_changed_by_double_set": 0,
+      "state_changed_by_double_set": 0.0,
+      "state_changed_by_render": 0.0,
+      "style_changed_by_render": 0.0
+     },
+     "seconds": 18.43,
+     "status": "measured"
+    },
+    "check_set_state_copies": {
+     "evidence": {
+      "aliased_caller_buffer": 0.0,
+      "state_tensor_rebound": false
+     },
+     "seconds": 1.34,
+     "status": "measured"
+    },
+    "check_state_dims_matter": {
+     "evidence": {
+      "dead_dims": []
+     },
+     "seconds": 162.0,
+     "status": "measured"
+    },
+    "check_state_roundtrip": {
+     "evidence": {
+      "max_abs_err": 0.0
+     },
+     "seconds": 1.43,
+     "status": "measured"
+    },
+    "check_style_is_state": {
+     "evidence": {
+      "max_abs_diff": 0
+     },
+     "seconds": 13.74,
+     "status": "measured"
+    }
+   },
+   "oracle": {
+    "batch": 64,
+    "device": "cpu",
+    "digest_official": "37b79041e18b0e85e968e2f6fb71fa945a33543063477f1d1debaf5a05adff8d",
+    "digest_ours": "da826751c493301393677cb86609fe5c5be386cf35ab11575d226682685a069f",
+    "digest_ours_corpus_style": "a0be0227cff8676a49ae88ce48fa861ffea85c17b7c64d934b60f85168fa5f3c",
+    "digest_ours_default_style": "da826751c493301393677cb86609fe5c5be386cf35ab11575d226682685a069f",
+    "distinct_colors": 4148,
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "mean_pixel": 68.22791814479699,
+    "n_states": 64,
+    "reference_id": "dm_control/quadruped-walk",
+    "reference_stable": {
+     "seconds": 0.11,
+     "status": "error",
+     "traceback": "idelity_step4.py\", line 165, in run\n    r = fn(*a, **kw)\n        ^^^^^^^^^^^^\n  File \"$SCR/se7/dmc-quadruped/stable_envs/testing/conformance.py\", line 135, in check_reference_renderer_is_stable\n    env = cls(batch=1, size=size, device=\"cuda\")\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"$SCR/se7/dmc-quadruped/stable_envs/envs/dmcontrol.py\", line 2236, in __init__\n    super().__init__(*a, **kw)\n  File \"$SCR/se7/dmc-quadruped/stable_envs/envs/dmcontrol.py\", line 902, in __init__\n    super().__init__(batch=batch, size=size,\n  File \"$SCR/se7/dmc-quadruped/stable_envs/core/env.py\", line 517, in __init__\n    self._state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"$SCR/venvs/se-vis311/lib/python3.12/site-packages/torch/cuda/__init__.py\", line 591, in _lazy_init\n    torch._C._cuda_init()\nRuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx\n",
+     "why": "RuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx"
+    },
+    "size": 224,
+    "state_dim": 23,
+    "style_digest": "7f1c046171c49aa1dadfcaf179949672812bb09d2bed1e94eec3a9db8ffe972d",
+    "style_dim": 10,
+    "supersample": 1
+   },
+   "physics": {
+    "status": "not_applicable",
+    "why": "no batched simulator declared checkable against a reference (step_reference_checkable is unset), so this env's physics is reference_only"
+   },
+   "registered_default_coverage": "full",
+   "role": "registered_default",
+   "seconds": 528.0,
+   "sibling_digest_matches": {},
+   "siblings": [],
+   "signature": {
+    "describe": {
+     "fidelity_tier": "visual",
+     "name": "dmc-quadruped-walk",
+     "parity_interior_min": null,
+     "reference_id": "dm_control/quadruped-walk",
+     "size": 224,
+     "state_dim": 23,
+     "state_names": [
+      "root_x",
+      "root_y",
+      "root_z",
+      "root_qw",
+      "root_qx",
+      "root_qy",
+      "root_qz",
+      "yaw_front_left",
+      "pitch_front_left",
+      "knee_front_left",
+      "ankle_front_left",
+      "yaw_front_right",
+      "pitch_front_right",
+      "knee_front_right",
+      "ankle_front_right",
+      "yaw_back_right",
+      "pitch_back_right",
+      "knee_back_right",
+      "ankle_back_right",
+      "yaw_back_left",
+      "pitch_back_left",
+      "knee_back_left",
+      "ankle_back_left"
+     ],
+     "style_dim": 10,
+     "style_names": [
+      "light.diffuse_scale",
+      "material.effector",
+      "material.grid",
+      "material.self"
+     ],
+     "variations": [
+      "light.diffuse_scale",
+      "material.effector",
+      "material.grid",
+      "material.self"
+     ]
+    },
+    "describe_digest": "6e50154f60c28b1c",
+    "dm_control": {
+     "domain": "quadruped",
+     "model_digest": "af0e0335edf6",
+     "task": "walk"
+    }
+   },
+   "status": "measured",
+   "swm_ids": [
+    "swm/QuadrupedDMControl-v0"
+   ]
+  }
+ },
+ "provenance": {
+  "check_seed": 4041,
+  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "device": "cpu",
+  "git_commit": "fa4ac534d5446613dac448e6ba4badedc5c8ef1a",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "host": "node1913.oscar.ccv.brown.edu",
+  "import_errors": {
+   "carracing": "ImportError: CarRacing-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+   "griddly": "ImportError: griddly is not importable (ModuleNotFoundError: No module named 'griddly'). The atlas is composed of tiles griddly's own Vulkan renderer draws, so there is no degraded mode. `pip install griddly==1.6.7` \u2014 the only release, from 2023-03-15; upstream's last commit is 2024-04-07 and there is no successor.",
+   "humanoidbench": "ImportError: the HumanoidBench family is measured and complete on fidelity (17 cells, VISUAL tier, mean 2.6-8.4/255, SSIM 0.845-0.931, 437x the official renderer at batch 64) but is NOT registered by default: mujoco_warp's batched render is not bit-reproducible inside a long conformance session, so 2-3 of ~660 tests fail every run on test_determinism and test_frame_i_is_independent_of_batch_size, by 1-2/255, on a different cell each time. Set STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway. See docs/research/humanoidbench.md",
+   "jumanji": "ImportError: the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so it cannot render without the reference package: missing jumanji, jax, matplotlib. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-jumanji, built with a CLEAN `python -m venv` \u2014 a --system-site-packages venv breaks jax's CUDA plugin discovery. See docs/research/jumanji.md",
+   "lunarlander": "ImportError: LunarLander-v3 cannot be reset and rendered: DependencyNotInstalled: Box2D is not installed, you can install it by run `pip install swig` followed by `pip install \"gymnasium[box2d]\"`. This env needs BOTH `box2d-py` (for the simulator that produces its states) and `pygame` (for the reference renderer parity is measured against); `pip install swig` then `pip install \"gymnasium[box2d]\"`.",
+   "metaworld": "ImportError: the Meta-World family ray-casts the Sawyer's meshes with mujoco_warp's batch raytracer, which this interpreter cannot run: missing metaworld; mujoco is 3.11.0 and mujoco_warp requires >= 3.11 (metaworld itself pins mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-fetch; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml",
+   "overcooked": "ImportError: jaxmarl is not importable (ModuleNotFoundError: No module named 'jaxmarl'). The atlas IS jaxmarl's own `_render_tile` output \u2014 nothing here re-derives it \u2014 so there is no degraded mode. `pip install jaxmarl` (measured against jaxmarl 0.1.0 / jax 0.4.38) INTO A CLEAN VENV: a `python -m venv --system-site-packages` venv breaks jax's CUDA plugin discovery.",
+   "pgx": "ImportError: the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter cannot provide them: ModuleNotFoundError: No module named 'pgx'. The envs were measured in /mnt/vast/home/randall.balestriero/venvs/se-pgx, built with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin discovery. See docs/research/pgx.md",
+   "procgen": "ImportError: procgen is not installed; `pip install procgen` provides both the assets this renderer packs and the reference env parity is measured against",
+   "robocasa": "ImportError: no compiled RoboCasa kitchen is cached under /users/sboughan/.cache/stable-envs/robocasa. robocasa pins mujoco == 3.3.1 and mujoco_warp needs >= 3.11, so the kitchen has to be built by a different interpreter and cached:\n\n    conda run -n robocasa python examples/robocasa_visual/dump_trajectory.py --kitchen L52S03 --steps 200 --res 256 --out /users/sboughan/.cache/stable-envs/robocasa\n\nIt needs robocasa's 24 GB asset library. Set STABLE_ENVS_ROBOCASA_CACHE to point somewhere else. See docs/research/robocasa.md",
+   "sokoban": "ImportError: gym-sokoban is not installed. The seven 16x16 tile images ARE this env -- the frame is a gather from them and nothing here re-derives them -- so there is no degraded mode to fall back to. `pip install gym-sokoban`."
+  },
+  "mujoco_gl": "egl",
+  "n_states": 64,
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "pool": 256,
+  "python": "3.12.9",
+  "reference_packages": {
+   "craftax": null,
+   "dm_control": "1.0.44",
+   "gym_pusht": null,
+   "gymnasium": "1.3.0",
+   "gymnasium_robotics": null,
+   "mujoco": "3.11.0",
+   "mujoco_warp": "3.11.0",
+   "ogbench": null,
+   "stable_worldmodel": null,
+   "warp": "1.17.0"
+  },
+  "registry_here": [
+   "Acrobot",
+   "AntmazeGiantNavigate",
+   "AntmazeGiantStitch",
+   "AntmazeLargeExplore",
+   "AntmazeLargeNavigate",
+   "AntmazeLargeStitch",
+   "AntmazeMediumExplore",
+   "AntmazeMediumNavigate",
+   "AntmazeMediumStitch",
+   "AntmazeTeleportExplore",
+   "AntmazeTeleportNavigate",
+   "AntmazeTeleportStitch",
+   "BabyAIGoToLocal",
+   "CartPole",
+   "CraftaxClassic",
+   "Crafter",
+   "DMCAcrobotSwingup",
+   "DMCBallInCupCatch",
+   "DMCCartpoleBalance",
+   "DMCCartpoleSwingup",
+   "DMCCheetahRun",
+   "DMCFingerSpin",
+   "DMCFingerTurnEasy",
+   "DMCFingerTurnHard",
+   "DMCHopperHop",
+   "DMCHumanoidStand",
+   "DMCPendulumSwingup",
+   "DMCPointMassEasy",
+   "DMCQuadrupedWalk",
+   "DMCReacherEasy",
+   "DMCReacherHard",
+   "DMCSwimmerSwimmer6",
+   "DMCWalkerWalk",
+   "FetchPickAndPlace",
+   "FetchPickAndPlaceDense",
+   "FetchPickAndPlaceDict",
+   "FetchPush",
+   "FetchPushDense",
+   "FetchPushDict",
+   "FetchReach",
+   "FetchReachDense",
+   "FetchReachDict",
+   "FetchSlide",
+   "FetchSlideDense",
+   "FetchSlideDict",
+   "Highway",
+   "HumanoidmazeGiantNavigate",
+   "HumanoidmazeGiantStitch",
+   "HumanoidmazeLargeNavigate",
+   "HumanoidmazeLargeStitch",
+   "HumanoidmazeMediumNavigate",
+   "HumanoidmazeMediumStitch",
+   "Intersection",
+   "Merge",
+   "MiniGridDoorKey",
+   "MiniGridEmpty",
+   "MiniGridFourRooms",
+   "MiniGridKeyCorridor",
+   "MiniGridLavaCrossing",
+   "MiniGridPOVFetch",
+   "MiniHack",
+   "MountainCar",
+   "MountainCarContinuous",
+   "MujocoInvertedDoublePendulum",
+   "MujocoInvertedPendulum",
+   "MujocoPusher",
+   "MujocoReacher",
+   "Parking",
+   "Pendulum",
+   "Piecewise",
+   "PiecewiseZones",
+   "PointMazeLarge",
+   "PointMazeMedium",
+   "PointMazeOpen",
+   "PointMazeUMaze",
+   "PointmazeGiantNavigate",
+   "PointmazeGiantStitch",
+   "PointmazeLargeNavigate",
+   "PointmazeLargeStitch",
+   "PointmazeMediumNavigate",
+   "PointmazeMediumStitch",
+   "PointmazeTeleportNavigate",
+   "PointmazeTeleportStitch",
+   "PushT",
+   "Racetrack",
+   "Roundabout",
+   "SimplePointMaze",
+   "TwoRoom",
+   "TwoRoomTarget"
+  ],
+  "slurm_job_id": "6394722",
+  "slurm_nodelist": "node1913",
+  "state_seed": 20260909,
+  "timestamp": "2026-09-14T23:47:00-0400",
+  "torch": "2.14.0+cu126"
+ },
+ "schema_version": 1,
+ "shard": "dmc-quadruped",
+ "step": 7
+}
