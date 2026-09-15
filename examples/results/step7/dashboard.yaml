@@ -190,13 +190,13 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: GPU_FAST measured; exclusion mechanism implemented+tested (uncommitted, lands after cluster commit); cert311 re-run 6395126 running; then re-review and merge
+  status: cluster results + exclusion mechanism committed; formal re-review (incl. shared conformance.py change) requested; paired replay 6395850 running; merge after APPROVE
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: 8b39e94 (phase 1 + review follow-up C1-C4, R2-R4)
+  head_sha: 0013050 (cluster results 4396163; validated exclusion 0013050)
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -298,8 +298,13 @@ workstreams:
       \ \xA76.7"
     egl_discrimination: official renderer worked on gpu2104 under se-step6 in 6394689; EGL probe on gpu2107 OK for se-step6/se-vis311/se-step5 -> W4's gpu2104 failure is narrower than node-or-venv; probe
       now in sbatch
+    cert311_rerun_6395126: 'COMPLETED node1946 on 8b39e94: 41 draws interior 1.0 both sizes, byte-identical to the pre-review arm (C1-C4 moved no pixel at the pin); corpus at the pin (64,15) exact Step-4
+      schema sha256 48db2b1a identical to the local selection (job 6395804 redid it after the sbatch still passed --n 256: recorded near-miss)'
+    paired_replay_6395850: RUNNING (baseline vs head at the pin, one machine)
+    digest_note: '3.11 CPU replay digests differ from examples/results/step4/conformance/dmc.json on 10/14 cells: not a regression signal (that shard''s provenance is device cuda on gpu2105); the valid
+      control is baseline-vs-head on one machine (14/0 locally + paired arm)'
   exclusion_mechanism:
-    state: implemented, 13 tests pass, uncommitted
+    state: 'committed 0013050; Gate A: every mandatory check passes, state_dims_matter passes with three reported exclusions'
     design: env declares RENDER_INVARIANT_DIMS + render_scene_signature; conformance._validate_render_invariant owns the rule; excluded_dims reported with reasons; dead_dims []
     evidence:
       default_sphere_224_84: 0 px / 0 px for the three dims
@@ -613,6 +618,8 @@ incident_log:
   item: 'W6 formal re-review: hard blockers cleared; D2 + minors forwarded; job 6395707 kept'
 - date: '2026-09-15'
   item: 'W1 complete: CPU tier merged; CPU_REGRESSION on the mixed default; S_cpu reference trap escalated'
+- date: '2026-09-15'
+  item: W3 cluster results (4396163) and validated exclusion (0013050) landed; formal re-review requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
