@@ -595,3 +595,93 @@ failures, and the broken-citation set is byte-identical to the baseline's. Froze
 14 configs, 0 differing**. **17 DM Control cells byte-identical across four digests.** The exclusion
 still behaves in both directions: the three dims excluded under the sphere, the two quaternion dims
 refused and live (201 px / 28 px) under the box.
+
+---
+
+## 13. CPU tier — `CPU_REGRESSION`, measured and not defended
+
+Job `6396735`, node2315, `se-vis311` (mujoco 3.11.0 / dm_control 1.0.44), `--partition=batch
+--qos=normal --cpus-per-task=4`, **one thread** (`OMP/MKL/OPENBLAS/NUMEXPR_NUM_THREADS=1`,
+`torch.set_num_threads(1)`), cell at its **registered default 224 px**. Harness
+`scratch/step7/dmc-manipulator/cpu_tier.py`; gates `paired_verdict_cpu.py`, which is W1's
+`paired_verdict.py` reused rather than re-derived.
+
+### The paired structure, and what the ratio is NOT
+
+`DMCManipulatorBringBall` does not exist in the baseline tree — it is what this branch adds — so
+**there is no before/after ratio for it and none is reported**. The two baseline legs re-measure a
+FLOOR CELL that exists in both trees and whose Step-6 CPU throughput is on record, and their only job
+is to establish that the node was measuring a renderer at all. `DMCReacherHard` is that cell: same
+family, same backend (plate + `raycast3d`), same 84 px / 1-thread configuration Step 6 certified.
+
+| leg | tree | env | size | certified batch | f/s |
+|---|---|---|---|---|---|
+| baseA | `$SCR/se7/baseline` (76dc511) | `DMCReacherHard` | 84 | 16 | **121.14** |
+| branch | `$SCR/se7/dmc-manipulator` | `DMCManipulatorBringBall` | **224** | **1** | **15.50** |
+| baseB | `$SCR/se7/baseline` (76dc511) | `DMCReacherHard` | 84 | 16 | **130.23** |
+
+**All three gates pass — verdict `USABLE`:**
+
+| gate | value | bar |
+|---|---|---|
+| baseline spread | **1.075x** | <= 1.25x |
+| baseline floor vs the Step-6 known answer | **125.68 f/s = 1.13x of 111.0** | >= 0.25x |
+| load per NODE core | **0.85** (loadavg 40.62 over 48 cores) | <= 1.5 |
+
+The floor constant is Step-6's shipped configuration for that cell —
+`examples/results/step6/raycast3d/profile_after_r5/bounds_on/`, 111.0 f/s on node1831 and 130.4 on the
+quieter node2333 — and the **lower** is used, so the gate is conservative about what a healthy node
+owes. The baseline tree is `$SCR/se7/baseline`, the pristine 76dc511 archive, never `$SCR/se6/baseline`
+(the pre-Step-6 tree; W1 lost a job to exactly that substitution, and its gate 2 is what caught it).
+
+### The tier
+
+Official renderer and one-core JPEG-q90 decode were taken **in the same process on the same node**, so
+neither ratio is a cross-machine number:
+
+| quantity | value |
+|---|---|
+| ours, 1 thread, 224 px, best batch | **15.50 f/s** (batch 1) |
+| official `dm_control` renderer, same node | **22.23 f/s** |
+| one-core JPEG-q90 decode of its own frames | **2,172.28 f/s/core** (12.3 kB/frame) |
+| **`S_cpu`** | **0.697** |
+| **`cores_cpu`** | **0.0071** |
+
+At the frozen definitions (§6.2/§6.3): `CPU_FAST` needs `S_cpu >= 5 and cores_cpu >= 1`,
+`CPU_FASTER` `S_cpu >= 2`, `CPU_PARITY` `S_cpu >= 1`. **`S_cpu = 0.70 < 1`, so the tier is
+`CPU_REGRESSION`.** The `NO_REFERENCE` row is reported too, since it is the axis an env without an
+official renderer would be judged on: `cores_cpu = 0.0071` is **below `CPU_FASTER`** there as well.
+Neither is rescued by a different batch — see below.
+
+**This is reported, not defended.** Step 7's own rule is that a new cell is not required to be
+CPU_FAST to ship and that its tiers must be measured and reported honestly (Step 2 §12.1
+`PERFORMANCE_MEASURED`). The cell is `GPU_FAST` (§10: R 32.04, cores 3.72) and `CPU_REGRESSION`, and
+both belong in its record.
+
+### Why, mechanically — and it is the family's known shape, worse at 7.1x the pixels
+
+Throughput **falls** with batch: 15.50 / 13.76 / 8.23 / 4.93 f/s at B = 1 / 16 / 64 / 256. A renderer
+that batched would rise. Two things compose:
+
+* `_fk` is a **Python loop over the batch** running `mj_kinematics` per environment — the structure
+  `_fk`'s own docstring documents, and which the GPU arm also shows as 48% of device time in
+  host->device traffic;
+* three of the ray passes are **full-frame**, and at 224 px that is 50,176 rays against 84 px's 7,056
+  — **7.1x the pixels** — while a batch multiplies the per-chunk `(B, H*W, 3)` temporaries on a
+  4-cpu, 32 GB allocation at one thread.
+
+So the certified batch is **1**, which is the honest reading of a path whose per-frame cost is
+dominated by serial host work. The same cell on a 3090 reaches 8,396 f/s at batch 4096 because that is
+where the ray passes stop being the bottleneck and the CPU loop is amortised.
+
+**Not a regression against anything.** `CPU_REGRESSION` is a tier name, not a claim that this branch
+made something slower: no CPU number for this cell existed before, and the 15 pre-existing DM Control
+cells are byte-identical and untouched (§3, §10, §12). The comparison the tier name refers to is
+against the OFFICIAL renderer at the same size on the same node, where MuJoCo's C rasteriser renders
+one 224 px frame faster than this Python/torch path does.
+
+**What would move it, recorded rather than attempted:** giving `_fk` a batch axis (the change that
+took `DMCBallInCupCatch` from 3,272 to 9,816 f/s on the GPU side by batching `_chain_capsules`), and
+bounding the shadow and reflection passes to the movers' footprints — the item `_fk`'s docstring
+already names as "still the next thing worth doing here". Both are Step-6-class optimisation work on
+a shared path, not Step-7 coverage work, and neither is in this workstream's scope.

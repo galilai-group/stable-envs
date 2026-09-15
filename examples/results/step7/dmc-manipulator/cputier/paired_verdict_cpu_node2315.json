@@ -1,0 +1,96 @@
+{
+ "host": "node2315",
+ "spread_max": 1.25,
+ "floor_cell": "DMCReacherHard",
+ "floor_known_fps": 111.0,
+ "floor_frac": 0.25,
+ "load_per_core_max": 1.5,
+ "note": "the branch cell does not exist in the baseline tree, so NO before/after ratio is reported for it; the baseline legs measure the floor cell and their only job is to establish that this node was measuring a renderer",
+ "legs": {
+  "baseA": {
+   "env": "DMCReacherHard",
+   "size": 84,
+   "certified_batch": 16,
+   "fps": 121.13688625966412,
+   "official_fps": 33.41193635617896,
+   "decode_fps_per_core": 6867.643993973025,
+   "S_cpu": 3.6255571951387946,
+   "cores_cpu": 0.017638783601184427,
+   "loadavg_before": [
+    40.56,
+    40.15,
+    39.76
+   ],
+   "loadavg_after": [
+    39.42,
+    39.91,
+    39.69
+   ],
+   "error": null
+  },
+  "branch": {
+   "env": "DMCManipulatorBringBall",
+   "size": 224,
+   "certified_batch": 1,
+   "fps": 15.50420542230124,
+   "official_fps": 22.232116158064787,
+   "decode_fps_per_core": 2172.2834938894484,
+   "S_cpu": 0.6973787520751608,
+   "cores_cpu": 0.007137284551447353,
+   "loadavg_before": [
+    39.87,
+    40.0,
+    39.72
+   ],
+   "loadavg_after": [
+    40.62,
+    40.51,
+    40.08
+   ],
+   "error": null
+  },
+  "baseB": {
+   "env": "DMCReacherHard",
+   "size": 84,
+   "certified_batch": 16,
+   "fps": 130.23261605341924,
+   "official_fps": 34.42647395004627,
+   "decode_fps_per_core": 7415.771671995762,
+   "S_cpu": 3.782920558242189,
+   "cores_cpu": 0.017561573065311288,
+   "loadavg_before": [
+    40.41,
+    40.47,
+    40.07
+   ],
+   "loadavg_after": [
+    40.39,
+    40.46,
+    40.08
+   ],
+   "error": null
+  }
+ },
+ "baseline_spread": 1.0751,
+ "baseline_mean_fps": 125.68,
+ "baseline_frac_of_known": 1.1323,
+ "node_cores": 48,
+ "loadavg_worst": 40.62,
+ "load_per_core": 0.846,
+ "branch_env": "DMCManipulatorBringBall",
+ "branch_fps": 15.5,
+ "branch_certified_batch": 1,
+ "branch_size": 224,
+ "S_cpu": 0.6974,
+ "cores_cpu": 0.0071,
+ "gates": {
+  "spread": true,
+  "baseline_floor": true,
+  "load": true
+ },
+ "verdict": "USABLE",
+ "why": "baseline legs agree to 1.075x, the floor cell reproduces its known 111 f/s to 1.13x, and loadavg is 0.85 per node core",
+ "tier": "CPU_REGRESSION",
+ "tier_basis": "S_cpu = 0.70 (ours 15.5 f/s / official 22.2 f/s), cores_cpu = 0.01 (ours / 2,172.3 f/s/core of JPEG-q90 decode), both at 1 thread on node2315",
+ "tier_if_no_reference": "below CPU_FASTER"
+}

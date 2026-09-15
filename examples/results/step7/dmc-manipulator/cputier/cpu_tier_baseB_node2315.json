@@ -1,0 +1,63 @@
+{
+ "leg": "baseB",
+ "env": "DMCReacherHard",
+ "host": "node2315.oscar.ccv.brown.edu",
+ "node_cores": 48,
+ "cpus_allocated": 4,
+ "slurm_job": "6396735",
+ "torch_threads": 1,
+ "omp": "1",
+ "loadavg_before": [
+  40.41,
+  40.47,
+  40.07
+ ],
+ "tree": "/oscar/scratch/sboughan/se7/baseline/stable_envs/__init__.py",
+ "mujoco": "3.11.0",
+ "dm_control": "1.0.44",
+ "size": 84,
+ "cells": [
+  {
+   "batch": 1,
+   "fps": 44.59591881624439,
+   "render_ms": 22.423576563596725
+  },
+  {
+   "batch": 16,
+   "fps": 130.23261605341924,
+   "render_ms": 122.85708822309971
+  },
+  {
+   "batch": 64,
+   "fps": 94.87713803882917,
+   "render_ms": 674.5566036552191
+  },
+  {
+   "batch": 256,
+   "fps": 84.70573945130421,
+   "render_ms": 3022.227320820093
+  }
+ ],
+ "certified_batch": 16,
+ "fps": 130.23261605341924,
+ "official": {
+  "fps": 34.42647395004627,
+  "frames": 32
+ },
+ "decode": {
+  "h": 84,
+  "w": 84,
+  "jpeg_quality": 90,
+  "jpeg_bytes": 2047,
+  "raw_bytes": 21168,
+  "n": 5668,
+  "decode_fps_per_core": 7415.771671995762
+ },
+ "S_cpu": 3.782920558242189,
+ "cores_cpu": 0.017561573065311288,
+ "loadavg_after": [
+  40.39,
+  40.46,
+  40.08
+ ]
+}
