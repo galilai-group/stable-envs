@@ -1276,6 +1276,12 @@ decisions:
     without new optimisation; record the exact integration HEAD; confirm nothing pushed; deliver the closure packet. Then prepare the Step-8 execution plan (VariationMaps; swm API completeness; final full-universe
     certification; deferred provenance/re-freeze items; production-pipeline performance story; semantic follow-up only where warranted; support matrix for all 42 ids). No broad refactor; no Step-8 implementation
     before Step 7 is reported closed.'
+- date: '2026-09-15'
+  by: Sami
+  topic: Step-8 plan approved; Step-7 milestone
+  decision: 'Step-8 plan approved with scope clarifications (recorded in STEP_08_AGENT_BRIEFS/00_COORDINATOR_PLAN.md). Before Step-8 implementation: finish the Step-7 closure; confirm tree/authorship/history
+    clean; create branch milestone/step7-full-renderer-coverage and a tag at the accepted Step-7 closure SHA; PUSH both (first authorised push); then create sami/pre-step8-baseline and the Step-8 integration
+    branch from that SHA.'
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
@@ -1442,6 +1448,8 @@ incident_log:
   item: 'W6 final review: nine conditions PASS; RD-1 comparator fix + one conformance run before merge'
 - date: '2026-09-15'
   item: 'W6 MERGED and CLOSED (fd2b8ef): 40/40 pixel-producing ids covered; closure sweep next'
+- date: '2026-09-15'
+  item: Sami approved the Step-8 plan and authorised the Step-7 milestone branch/tag push after closure
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
