@@ -1,0 +1,22 @@
+{
+ "what": "the frozen Step-7 corpus rendered by both renderers",
+ "reference": "craftax 1.6.1 / jax 0.11.1, un-jitted",
+ "per_tile_px": {
+  "7": {
+   "exact_frac": 1.0,
+   "max_abs": 0,
+   "mean_abs": 0.0,
+   "digest_ours": "79aebe383560d3d2528a4bb8221ba38db2bb2e95966433347ad3445861e15e22",
+   "digest_official": "79aebe383560d3d2528a4bb8221ba38db2bb2e95966433347ad3445861e15e22",
+   "byte_identical": true
+  },
+  "16": {
+   "exact_frac": 1.0,
+   "max_abs": 0,
+   "mean_abs": 0.0,
+   "digest_ours": "d06c468ce0eea2c84ab256f003d693dbbc284c4eab414ff0c7257fa9797c1b0c",
+   "digest_official": "d06c468ce0eea2c84ab256f003d693dbbc284c4eab414ff0c7257fa9797c1b0c",
+   "byte_identical": true
+  }
+ }
+}
