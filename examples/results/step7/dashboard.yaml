@@ -248,13 +248,14 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: 're-review APPROVE-WITH-CHANGES on 0013050: two hardenings of the shared exclusion rule (missing-key skip; env-supplied sphere flag) + citation regression; fix requested; then verify + merge'
+  status: 'hardenings landed (d1f65d4): missing frozen key refused by name; sphere-ness derived from geom_type in conformance; citation set = baseline; final verification requested; paired replay 6395850
+    running; merge on APPROVE'
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: 0013050 (cluster results 4396163; validated exclusion 0013050)
+  head_sha: d1f65d4 (rule hardenings D1/D2/D3)
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -387,6 +388,12 @@ workstreams:
     - signature compared never-drawn group-3 sites -> now the _visible census only
     - geom_type read off a cached scene was order-dependent -> apply appearance from pristine snapshot and clear _SCENE_CACHE
     regression: frozen Step-4 dmc shard 14 configs 0 differing pre/post; 17 cells byte-identical on four digests; tests/unit 836 passed
+    hardening_d1f65d4:
+    - missing frozen key -> refusal naming the key; env emits mat_texid; _RENDER_INVARIANT_OPTIONAL empty by design
+    - sphere-ness derived in conformance (geom_type == mjGEOM_SPHERE); emitted flag must agree else refuse; ELLIPSOID noted
+    - three regression tests wrapping the real signature (thumbtip/geom_xpos; lying flag + box; flag omitted)
+    - N1 tendons / N2 non-fixed camera pose documented as signature gaps
+    - 're-verified: tests/unit 839 passed; dmc shard 14/0; 17 cells four digests identical; both directions hold'
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -725,6 +732,8 @@ incident_log:
   item: 'W4 commit (e) delivered: MJWarp declaration, 25/25 identity both devices; tier unmeasured (load); re-check + retry authorized'
 - date: '2026-09-15'
   item: W1 CLOSED and merged (b12af5c); GPU tier paired; reference trap proven on GPU; escalation updated
+- date: '2026-09-15'
+  item: W3 rule hardenings landed (d1f65d4); final verification requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
