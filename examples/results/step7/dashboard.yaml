@@ -902,8 +902,9 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: job 6395707 COMPLETED (3.5 min; gate coverage to be read from the full log); original agent stopped -> new bounded M4 agent (fable) spawned under Sami's directive to finish PFRocketLanding through
-    its gates; code frozen at cf355a3; merge after M4 + reviewer final check
+  status: 'M4 = BLOCKER: defect A batch-size dependence (mandatory Gate A FAIL) from the batched mvp product in shared nvdiff.Scene.clip (ulps -> edge flips, 10 px, 52/64 rows); defect B reference bridge
+    rejects ground-contact states (~1/960). Minimal generic fix authorized for A under a six-cell byte-identity condition; per-state unreachable flag + declared exclusion for B; then re-run the chain, declare,
+    re-review, merge'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -931,7 +932,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: cf355a3 (D1/D2 + minors)
+  head_sha: e74d0bd (M4 evidence; declaration left UNMEASURED)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -1024,6 +1025,29 @@ workstreams:
   rc1_evidence: 'reference/rc1_evidence.json: measure_tier draw-0 seed (64 float32 states, |q| off <= 3e-8) 0 rejections; first 100 corpus states from float64 obs 100/100 exact; float32 state13 0 rejections,
     2/100 exact, up to 79 px mean 11.5 (state-rounding term, reported alongside, never folded in)'
   agent_note: original W6 agent stopped 2026-09-15 (not resumable); M4 handed to a new agent with the staged operational edits in the worktree
+  m4:
+    jobs:
+      '6395707': all gates except batch-size invariance (harness TypeError)
+      '6406061': run of record; every GPU number identical to 6395707
+      6407151/6407256: diagnostics on gpu2109/gpu2264, identical
+    gates:
+      1_six_cell_nvdiff_identity: PASS (all sha256 equal)
+      2_first_render: PASS
+      3_fidelity_4x64: 'measured: worst mean_abs 7.709 / within8 0.9613 / SSIM 0.8545 (spread 7.48-7.71 / 0.9613-0.9622 / 0.8545-0.8684); under-variation 7.65/0.958/0.896; suite''s declared-fidelity test
+        aborts on defect B'
+      4_corpus_replay: 'PASS: ours(state13) 6.968 / 0.9607 / 0.890 / interior-exact 0.967; reference(state13) 200/200 mean 0.0017/255'
+      5_conformance: FAIL check_batch_size_invariance (max 255, row 0 in a batch of 1); six velocity dims live; determinism identical
+      6_sweep: 249.7/2069.8/3038.1/2738.8/3218.7/3407.5 f/s; BATCH_SCALES 13.65 FAIL (bar 20); NO_LARGE_BATCH_REGRESSION 1.244 PASS; cpu_frac 1.054 (not HOST_BOUND); official TinyRenderer 13.72 f/s; decode
+        1,075.6; R 248.4, cores 3.17 -> GPU_PARITY [BATCH_SCALES_FAIL]
+      7_coexistence: PASS
+    defect_a: row 0 identical for prefix batches 1-24 and for 31-64, the two families differ by 10 px max 255 on silhouettes; inputs bit-identical; the dense (proj @ view)[:, None] @ M in nvdiff.py:825
+      changes kernel between 13*24 and 13*31 products -> 46 mvp entries differ <= 1.5e-5 (ulps at 400 m coordinates, TF32 off) -> 1282 clip elements -> edge flips; locomotion cells hide it (~1 m coordinates,
+      smooth shading)
+    defect_b: '1/960 census states rejected (height 2.07 m near-upright, legs in contact: gravity-off substep cannot reach the pose); sample_states floor 1.9 m -> ~1 draw in 15 aborts check_visual_fidelity'
+    would_declare: 7.71 / 0.961 / 0.854 with ceilings 10.0 / 0.91 / 0.80 (DMC convention); measured_with nvdiffrast 0.4.0 / torch 2.14.0+cu126
+    conformance_pytest: '29 passed / 9 skipped / 4 failed: batch-size (A), declared fidelity (B), colour knobs (TinyRenderer multiplicative law: exact RGB appears only at specular=1; official frames too),
+      downsample bound missing (measured 0.95614)'
+    tests_local: tests/unit 745/7/1 (citations 9); test_rocket_landing 17 passed
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1201,6 +1225,8 @@ incident_log:
   item: W5 re-measurement chain submitted (6405900); logs committed
 - date: '2026-09-15'
   item: W5 chain job failed on a stale mocap_quat slice; fixed with index tests; resubmitted 6406972
+- date: '2026-09-15'
+  item: 'W6 M4 BLOCKER: batch-size dependence in shared nvdiff mvp numerics + reference bridge contact rejection; minimal fixes authorized with identity conditions; colour-knob check escalated'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1243,6 +1269,13 @@ escalations:
     residual on the two button geoms is small enough to be a declared residual within the cell''s visual ceilings (no threshold change, no per-env renderer); otherwise OGBScene is recorded as blocked on
     (a) and Sami decides. Sami may override either way.'
   update_2026-09-15: 'reviewer: the crash is already fixed upstream (mujoco_warp 58d8c77, in 3.13.0); option (a) is a venv bump to be measured, not a source patch'
+- date: '2026-09-15'
+  from: W6 / coordinator
+  topic: check_colors_apply_exactly on lit cells with RGB style leaves (PFRocketLanding under TinyRenderer's multiplicative law)
+  facts: out = int(255*c*(0.6+0.35*max(0,n.l)+0.05*spec)); the exact RGB c appears only where the specular term is 1, so the check fails for our render AND for the official frames. Same premise (flat shading)
+    would fail any lit cell with RGB leaves.
+  question: declare not applicable for lit RGB leaves with the law cited, or extend the shared check to accept the law-transformed colour (an extension of a Gate-A check = Sami's call)
+  status: open; recorded as FAIL with mechanism meanwhile
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
@@ -1267,6 +1300,8 @@ step8_carryovers:
 - item: Run the mjwarp prepare_model/texture_gaps registry sweeps on RoboCasa, MetaWorld and HumanoidBench once a venv with their pins (mujoco 3.3.x kitchen cache / metaworld) exists; the spot rule fires
     only on cutoff outside [0, 90]
   source: W5 shared review item 5
+- item: DOWNSAMPLE_EXACT_FRAC['PFRocketLanding'] = 0.95614 measured at the test protocol; add at the Step-8 freeze (tests/ frozen in Step 7)
+  source: W6 M4
 blocked_on_oscar_ssh:
   since: 2026-09-15 ~08:00 UTC
   items:
