@@ -473,7 +473,7 @@
      "tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]",
      "tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[OGBCube]"
     ],
-    "file": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/pull/gpu_tests/test_conformance.verify.results.txt",
+    "file": "examples/results/step7/closure/gpu_tests/test_conformance.verify.results.txt",
     "totals": {
      "error": 437,
      "failed": 10,
@@ -1537,7 +1537,7 @@
      "tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportNavigate]",
      "tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportStitch]"
     ],
-    "file": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/pull/gpu_tests/test_reproducibility.verify.results.txt",
+    "file": "examples/results/step7/closure/gpu_tests/test_reproducibility.verify.results.txt",
     "totals": {
      "error": 529,
      "failed": 22,
@@ -2124,7 +2124,7 @@
      "tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]",
      "tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]"
     ],
-    "file": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/pull/gpu_tests/test_fast_paths.verify.results.txt",
+    "file": "examples/results/step7/closure/gpu_tests/test_fast_paths.verify.results.txt",
     "totals": {
      "failed": 2,
      "passed": 247,

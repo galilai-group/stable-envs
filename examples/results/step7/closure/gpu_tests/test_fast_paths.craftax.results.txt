@@ -323,4 +323,4 @@ FAILED tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_
 FAILED tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoInvertedPendulum-native]
 FAILED tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoPusher-native]
 FAILED tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoReacher-native]
-================== 28 failed, 24 passed, 245 skipped in 7.07s ==================
+================== 28 failed, 24 passed, 245 skipped in 7.06s ==================

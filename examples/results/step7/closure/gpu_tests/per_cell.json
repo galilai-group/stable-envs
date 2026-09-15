@@ -3,12 +3,12 @@
   "test_conformance/craftax": {
    "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": true,
@@ -49,10 +49,8 @@
   },
   "test_reproducibility/ogbmanip": {
    "constructed_here": true,
-   "failures": [
-    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]"
-   ],
-   "suite_passed": 1363
+   "failures": [],
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": true,
@@ -73,12 +71,12 @@
   "test_conformance/craftax": {
    "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": true,
@@ -119,10 +117,8 @@
   },
   "test_reproducibility/ogbmanip": {
    "constructed_here": true,
-   "failures": [
-    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]"
-   ],
-   "suite_passed": 1363
+   "failures": [],
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": true,
@@ -143,12 +139,12 @@
   "test_conformance/craftax": {
    "constructed_here": false,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": false,
@@ -186,9 +182,9 @@
    "suite_passed": 404
   },
   "test_reproducibility/ogbmanip": {
-   "constructed_here": true,
+   "constructed_here": false,
    "failures": [],
-   "suite_passed": 1363
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": false,
@@ -205,12 +201,12 @@
   "test_conformance/craftax": {
    "constructed_here": false,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": false,
@@ -248,11 +244,9 @@
    "suite_passed": 404
   },
   "test_reproducibility/ogbmanip": {
-   "constructed_here": true,
-   "failures": [
-    "test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]"
-   ],
-   "suite_passed": 1363
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": false,
@@ -269,14 +263,17 @@
  },
  "OGBCube": {
   "test_conformance/craftax": {
-   "constructed_here": false,
+   "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": true,
-   "failures": [],
-   "suite_passed": null
+   "failures": [
+    "test_state_roundtrip[OGBCube]",
+    "test_visual_tier_matches_its_declared_fidelity[OGBCube]"
+   ],
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": true,
@@ -321,14 +318,9 @@
    "suite_passed": 404
   },
   "test_reproducibility/ogbmanip": {
-   "constructed_here": true,
-   "failures": [
-    "test_a_shared_style_broadcasts_to_any_batch[OGBCube]",
-    "test_dataset_paths_regenerate_identical_frames[OGBCube]",
-    "test_render_is_pure_and_set_state_is_idempotent[OGBCube]",
-    "test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]"
-   ],
-   "suite_passed": 1363
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": true,
@@ -349,14 +341,16 @@
  },
  "OGBScene": {
   "test_conformance/craftax": {
-   "constructed_here": false,
+   "constructed_here": true,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": true,
-   "failures": [],
-   "suite_passed": null
+   "failures": [
+    "test_state_roundtrip[OGBScene]"
+   ],
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": true,
@@ -400,14 +394,9 @@
    "suite_passed": 404
   },
   "test_reproducibility/ogbmanip": {
-   "constructed_here": true,
-   "failures": [
-    "test_a_shared_style_broadcasts_to_any_batch[OGBScene]",
-    "test_dataset_paths_regenerate_identical_frames[OGBScene]",
-    "test_render_is_pure_and_set_state_is_idempotent[OGBScene]",
-    "test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]"
-   ],
-   "suite_passed": 1363
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": true,
@@ -429,12 +418,12 @@
   "test_conformance/craftax": {
    "constructed_here": false,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 275
   },
   "test_conformance/ogbmanip": {
    "constructed_here": false,
    "failures": [],
-   "suite_passed": null
+   "suite_passed": 948
   },
   "test_conformance/rocket": {
    "constructed_here": true,
@@ -476,7 +465,7 @@
   "test_reproducibility/ogbmanip": {
    "constructed_here": false,
    "failures": [],
-   "suite_passed": 1363
+   "suite_passed": null
   },
   "test_reproducibility/rocket": {
    "constructed_here": true,

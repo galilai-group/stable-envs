@@ -1456,4 +1456,4 @@ ERROR tests/gpu/test_reproducibility.py::test_huggingface_round_trip_regenerates
 ERROR tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[PointmazeTeleportStitch]
 ERROR tests/gpu/test_reproducibility.py::test_cuda_graph_step_matches_eager[PointmazeTeleportStitch]
 ERROR tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportStitch]
-= 3 failed, 404 passed, 82 skipped, 9 warnings, 966 errors in 162.67s (0:02:42) =
+= 3 failed, 404 passed, 82 skipped, 9 warnings, 966 errors in 148.18s (0:02:28) =
