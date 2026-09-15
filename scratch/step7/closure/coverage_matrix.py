@@ -235,8 +235,16 @@ def _gate_a_from_closure(closure: Path) -> dict:
         doc = json.loads(p.read_text())
         dev = doc.get("device", "?")
         for cell, v in (doc.get("verdicts") or {}).items():
+            verdict, why = v.get("verdict"), str(v.get("why") or "")
+            # A cell that declares no CPU backend returns a BLOCKED row on `cpu` carrying the raise
+            # it performed. That is not the same thing as a check that could not be reached, and
+            # collapsing the two would read as "we could not measure it" where the answer is "it
+            # refused, which is what it must do". The relabel is driven by the RECORDED MESSAGE, so
+            # it cannot promote a cell that failed for some other reason.
+            if dev == "cpu" and verdict == "BLOCKED" and "has no CPU backend" in why:
+                verdict = "REFUSED_BY_DESIGN"
             out.setdefault(cell, {})[dev] = {
-                "verdict": v.get("verdict"),
+                "verdict": verdict,
                 "failing_checks": v.get("mandatory_failing") or [],
                 "not_measured": v.get("mandatory_not_measured") or {},
                 "family_specific": v.get("family_specific_status") or {},
@@ -245,18 +253,31 @@ def _gate_a_from_closure(closure: Path) -> dict:
     return out
 
 
-def _gate_a_frozen(closure: Path) -> tuple[dict, str]:
-    """Gate A for the Step-4 universe: the closure replay's certification if it landed, else frozen."""
+def _gate_a_frozen(closure: Path) -> tuple[dict, dict, str]:
+    """Gate A for the Step-4 universe, per config, with the artifact each verdict came from.
+
+    The closure replay's own certification wins where it has a row -- it is this HEAD's verdict on
+    this HEAD's frames -- and the frozen Step-4 certification fills in only where the closure run
+    produced no row at all. Which of the two answered is recorded per configuration rather than
+    stated once for the table, because a reader has to be able to tell a re-measured PASS from a
+    carried-forward one.
+    """
+    frozen_p = ROOT / "examples" / "results" / "step4" / "certification.json"
+    verdicts, source = {}, {}
+    if frozen_p.is_file():
+        for c, v in json.loads(frozen_p.read_text())["configs"].items():
+            verdicts[c] = v.get("gate_a")
+            source[c] = str(frozen_p.relative_to(ROOT)) + " (frozen Step-4, carried forward: the "
+            source[c] += "closure replay produced no row for this configuration)"
+    n_closure = 0
     for cand in sorted(closure.glob("replay/certify*/certification.json")):
-        doc = json.loads(cand.read_text())
-        return ({c: v.get("gate_a") for c, v in doc["configs"].items()},
-                str(cand.relative_to(ROOT)))
-    p = ROOT / "examples" / "results" / "step4" / "certification.json"
-    if p.is_file():
-        doc = json.loads(p.read_text())
-        return ({c: v.get("gate_a") for c, v in doc["configs"].items()},
-                str(p.relative_to(ROOT)) + " (frozen Step-4; the closure replay had not landed)")
-    return ({}, "none")
+        for c, v in json.loads(cand.read_text())["configs"].items():
+            verdicts[c] = v.get("gate_a")
+            source[c] = str(cand.relative_to(ROOT)) + " (this sweep)"
+            n_closure += 1
+        break
+    return (verdicts, source, f"{n_closure} configuration(s) re-judged by this sweep; the rest "
+                              f"carried forward from the frozen Step-4 certification")
 
 
 def _live_declarations() -> dict:
@@ -334,7 +355,7 @@ def main() -> None:
         merged_from.append(f"{extra.name} (+{len(added)} cells)")
     s6 = _step6_tiers()
     ga7 = _gate_a_from_closure(a.closure)
-    ga4, ga4_src = _gate_a_frozen(a.closure)
+    ga4, ga4_src_per_config, ga4_src = _gate_a_frozen(a.closure)
     sha = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
                          capture_output=True, text=True).stdout.strip() or None
 
@@ -409,14 +430,19 @@ def main() -> None:
         if primary in ga7:
             g["per_device"] = ga7[primary]
             verdicts = {dev: v["verdict"] for dev, v in ga7[primary].items()}
-            fails = sorted({c for v in ga7[primary].values() for c in v["failing_checks"]})
+            # Gate A is reported from the CUDA arm where one exists, because that is the device every
+            # one of these cells supports; the cpu arm is kept beside it in per_device rather than
+            # averaged in. A refusal on cpu is device coverage, not a Gate-A verdict.
+            fails = sorted({c for dev, v in ga7[primary].items() for c in v["failing_checks"]
+                            if v["verdict"] != "REFUSED_BY_DESIGN"})
             cuda = verdicts.get("cuda")
             g["result"] = cuda or next(iter(verdicts.values()), None)
+            g["devices"] = verdicts
             g["failing_checks"] = fails
             g["source"] = "; ".join(sorted({v["source"] for v in ga7[primary].values()}))
         elif primary in ga4:
             g["result"] = ga4[primary]
-            g["source"] = ga4_src
+            g["source"] = ga4_src_per_config.get(primary, ga4_src)
         if s7 and s7.get("gate_a_note"):
             g["note"] = s7["gate_a_note"]
         row["gate_a"] = g

@@ -8,7 +8,7 @@
 |---|---|
 | parent baseline | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` |
 | integration branch | `step7/integration` |
-| integration HEAD reported on | `275970cc2d9e0d92eebf5297ee175b08944b7d04` |
+| integration HEAD reported on | `f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41` |
 | coverage target | 40/40 pixel-producing SWM ids at full (33 done + CraftaxClassic partial->full + 6 gaps) |
 | closure branch | `step7/closure` (this page and everything under `examples/results/step7/closure/`) |
 
@@ -19,10 +19,9 @@
 | registered `swm/` ids | **42** | rows in `coverage_matrix.json`, built from the live swm registry probe |
 | pixel-producing ids covered | **40/40** | a row is covered when the matrix resolves it to at least one stable-envs cell |
 | symbolic ids confirmed renderer-free | **2/2** | the upstream wrapper itself raises rather than returning a frame — quoted per id below |
-| Gate A `PASS` | **30** | `gate_a.result` over the 40 pixel-producing rows |
-| Gate A `PARTIAL` | **1** | `gate_a.result` over the 40 pixel-producing rows |
-| Gate A `FAIL` | **3** | `gate_a.result` over the 40 pixel-producing rows |
-| not yet measured in this sweep | **6** | `gate_a.result` over the 40 pixel-producing rows |
+| Gate A `PASS` | **34** | `gate_a.result` over the 40 pixel-producing rows |
+| Gate A `FAIL` | **5** | `gate_a.result` over the 40 pixel-producing rows |
+| Gate A `BLOCKED` | **1** | `gate_a.result` over the 40 pixel-producing rows |
 | CPU tier at or above `CPU_FAST` | **1/40** | the frozen spec's `ladder.environment_done_min_tiers`; tiers are copied, never re-measured here |
 | GPU tier at or above `GPU_FAST` | **17/40** | as above |
 
@@ -40,8 +39,8 @@ Coverage and performance are different questions and this page keeps them apart:
 | `CartPoleControl-v1` | `CartPole` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FASTER` | 10 swm leaves | yes (pre-Step-7) |
 | `CartpoleDMControl-v0` | `DMCCartpoleBalance`, `DMCCartpoleSwingup` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FAST` | 9 swm leaves | yes (pre-Step-7) |
 | `CheetahDMControl-v0` | `DMCCheetahRun` | `visual` 5.01/0.882/0.661 vs 6.5/0.84/0.62 | `FAIL` | `CPU_FASTER` | `GPU_EXCEPTIONAL` | 10 swm leaves | yes (pre-Step-7) |
-| `CraftaxClassicPixels-v1` | `CraftaxClassic` | `parity` interior 1.0 | `PARTIAL` | `CPU_FASTER` [BELOW_G4] | `GPU_FASTER` [BATCH_SCALES] | 0 swm leaves | yes `9ca318f` |
-| `CraftaxPixels-v1` | `CraftaxFull` | `parity` interior 1.0 | not measured here | `CPU_FASTER` | `GPU_FASTER` | 0 swm leaves | yes `d024c1a` |
+| `CraftaxClassicPixels-v1` | `CraftaxClassic` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` [BELOW_G4] | `GPU_FASTER` [BATCH_SCALES] | 0 swm leaves | yes `9ca318f` |
+| `CraftaxPixels-v1` | `CraftaxFull` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_FASTER` | 0 swm leaves | yes `d024c1a` |
 | `FetchPickAndPlace-v3` | `FetchPickAndPlace` | `parity` interior 0.99 | `PASS` | `CPU_UNMEASURED` | `GPU_PARITY` | 11 swm leaves | yes (pre-Step-7) |
 | `FetchPickAndPlaceDense-v3` | `FetchPickAndPlaceDense` | `parity` interior 0.99 | `PASS` | `CPU_UNMEASURED` | `GPU_PARITY` | 11 swm leaves | yes (pre-Step-7) |
 | `FetchPickAndPlaceDict-v3` | `FetchPickAndPlaceDict` | `parity` interior 0.99 | `PASS` | `CPU_UNMEASURED` | `GPU_PARITY` | 11 swm leaves | yes (pre-Step-7) |
@@ -56,20 +55,20 @@ Coverage and performance are different questions and this page keeps them apart:
 | `FetchSlideDict-v3` | `FetchSlideDict` | `parity` interior 0.99 | `PASS` | `CPU_UNMEASURED` | `GPU_PARITY` | 11 swm leaves | yes (pre-Step-7) |
 | `FingerDMControl-v0` | `DMCFingerTurnHard` | `parity` interior 1.0 | `PASS` | `CPU_REGRESSION` | `GPU_FAST` | 11 swm leaves | yes (pre-Step-7) |
 | `HopperDMControl-v0` | `DMCHopperHop` | `visual` 4.35/0.905/0.684 vs 5.7/0.86/0.64 | `FAIL` | `CPU_FASTER` | `GPU_EXCEPTIONAL` | 10 swm leaves | yes (pre-Step-7) |
-| `HumanoidDMControl-v0` | `DMCHumanoidStand` | `visual` 6.26/0.735/0.868 vs 8.2/0.69/0.82 | `PASS` | `CPU_FASTER` | `GPU_FAST` | 10 swm leaves | yes (pre-Step-7) |
-| `ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | `parity` interior 1.0 | not measured here | `CPU_REGRESSION` | `GPU_FAST` [HOST_BOUND] | 9 swm leaves; in: `visibility.target_ball`, `target_ball.shape`, `light.diffuse_scale`; **out: `floor.color`** | yes `1d9dccb` |
+| `HumanoidDMControl-v0` | `DMCHumanoidStand` | `visual` 6.26/0.735/0.868 vs 8.2/0.69/0.82 | `BLOCKED` | `CPU_FASTER` | `GPU_FAST` | 10 swm leaves | yes (pre-Step-7) |
+| `ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | `parity` interior 1.0 | `PASS` | `CPU_REGRESSION` | `GPU_FAST` [HOST_BOUND] | 9 swm leaves; in: `visibility.target_ball`, `target_ball.shape`, `light.diffuse_scale`; **out: `floor.color`** | yes `1d9dccb` |
 | `MountainCarContinuousControl-v0` | `MountainCarContinuous` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FASTER` | 4 swm leaves | yes (pre-Step-7) |
 | `MountainCarControl-v0` | `MountainCar` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FASTER` | 5 swm leaves | yes (pre-Step-7) |
-| `OGBCube-v0` | `OGBCube` | `visual` 2.441658/0.915477/0.914917 vs 3.2/0.85/0.85 | not measured here | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 11 swm leaves | yes `24d1054` |
+| `OGBCube-v0` | `OGBCube` | `visual` 2.441658/0.915477/0.914917 vs 3.2/0.85/0.85 | `FAIL` — `check_state_roundtrip` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 11 swm leaves | yes `24d1054` |
 | `OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | `parity` interior 1.0 | `PASS` | `CPU_FAST` | `GPU_EXCEPTIONAL` | 5 swm leaves | yes (pre-Step-7) |
-| `OGBScene-v0` | `OGBScene` | `visual` 5.381315/0.85675/0.892819 vs 7.0/0.8/0.85 | not measured here | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 12 swm leaves | yes `24d1054` |
-| `PFRocketLanding-v0` | `PFRocketLanding` | — | not measured here | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 9 swm leaves; in: `5 RGB material colours`, `flame ignition bit`; **out: `environment.sky_color`** | yes `fd2b8ef` |
+| `OGBScene-v0` | `OGBScene` | `visual` 5.381315/0.85675/0.892819 vs 7.0/0.8/0.85 | `FAIL` — `check_state_roundtrip` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 12 swm leaves | yes `24d1054` |
+| `PFRocketLanding-v0` | `PFRocketLanding` | — | `PASS` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 9 swm leaves; in: `5 RGB material colours`, `flame ignition bit`; **out: `environment.sky_color`** | yes `fd2b8ef` |
 | `PendulumControl-v1` | `Pendulum` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FAST` | 9 swm leaves | yes (pre-Step-7) |
 | `PendulumDMControl-v0` | `DMCPendulumSwingup` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_FAST` | 9 swm leaves | yes (pre-Step-7) |
 | `Piecewise-v0` | `Piecewise`, `PiecewiseZones` | `parity` interior 0.999995 | `PASS` | `CPU_FASTER` | `GPU_FASTER` | 21 swm leaves; VariationMap **yes** | yes (pre-Step-7) |
 | `PushT-Discrete-v1` | `PushT` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_EXCEPTIONAL` | 17 swm leaves; VariationMap **yes** | yes (pre-Step-7) |
 | `PushT-v1` | `PushT` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_EXCEPTIONAL` | 17 swm leaves; VariationMap **yes** | yes (pre-Step-7) |
-| `QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | `visual` 3.52/0.897/0.955 vs 4.6/0.85/0.9 | not measured here | `CPU_UNMEASURED` [LOAD_QUARANTINED] | `GPU_EXCEPTIONAL` [CENSUS_ENTRY_MISSING] | 10 swm leaves | yes `0a029bd` |
+| `QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | `visual` 3.52/0.897/0.955 vs 4.6/0.85/0.9 | `PASS` | `CPU_UNMEASURED` [LOAD_QUARANTINED] | `GPU_EXCEPTIONAL` [CENSUS_ENTRY_MISSING] | 10 swm leaves | yes `0a029bd` |
 | `ReacherDMControl-v0` | `DMCReacherHard` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_FAST` | 9 swm leaves | yes (pre-Step-7) |
 | `SimplePointMaze-v0` | `SimplePointMaze` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_FAST` | 12 swm leaves | yes (pre-Step-7) |
 | `TwoRoom-v1` | `TwoRoom`, `TwoRoomTarget` | `parity` interior 0.999995 | `PASS` | `CPU_FASTER` | `GPU_FASTER` | 18 swm leaves; VariationMap **yes** | yes (pre-Step-7) |
@@ -175,21 +174,81 @@ A cell is listed when its tier is below the frozen bar (`CPU_FAST` / `GPU_FAST`)
 
 ## The closure sweep
 
-### The frozen Step-4 replay
+### The 49 frozen Step-4 render-distinct configurations, replayed on cuda
 
-**Not present in this tree.** `examples/results/step7/closure/replay/compare49*.json` has not landed, so no claim is made here.
+| verdict | configs |
+|---|---|
+| expected-known | 9 |
+| gate A improved | 1 |
+| identical | 33 |
+| NOT REPLAYED | 6 (CraftaxClassic, Piecewise, PiecewiseZones, SimplePointMaze, TwoRoom, TwoRoomTarget) |
+
+**33 of 43 replayed rows are bit-identical to the frozen oracle.** 9 carry a delta that was named in advance with its mechanism; 0 are unexplained.
+
+| config | what moved | mechanism |
+|---|---|---|
+| `AntmazeTeleportExplore` | `digest_ours`, `digest_ours_default_style` | documented bake nondeterminism; digest does not reproduce at BASELINE |
+| `DMCCheetahRun` | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` | MJWarp trackcom: visual checks BLOCKED under the 3.12 reference; digest does not reproduce at BASELINE either (texture-fidelity verdict B + MJWARP-1) |
+| `DMCFingerTurnEasy` | `style_digest`, `style_dim` | declaration only (style_dim 17->18, visibility leaf; reacher-correctness) |
+| `DMCFingerTurnHard` | `style_digest`, `style_dim` | declaration only (style_dim 17->18, visibility leaf; reacher-correctness) |
+| `DMCHopperHop` | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` | MJWarp trackcom: as DMCCheetahRun |
+| `DMCHumanoidStand` | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` | MJWarp trackcom: as DMCCheetahRun |
+| `DMCReacherEasy` | `style_digest`, `style_dim` | declaration only (style_dim 17->18, visibility leaf; reacher-correctness) |
+| `DMCReacherHard` | `style_digest`, `style_dim` | declaration only (style_dim 17->18, visibility leaf; reacher-correctness) |
+| `DMCWalkerWalk` | `digest_ours`, `digest_ours_default_style`, `digest_ours_corpus_style` | MJWarp trackcom: as DMCCheetahRun |
 
 ### The six Mujoco locomotion nvdiff cells, against the Step-7 re-freeze
 
-**Not present in this tree.** No claim is made here.
+These six are **not** among the 49 frozen configurations — they have no `examples/results/step4/states/<Config>.npz` and appear in no `conformance/<shard>.json` — so the artifact they are held to is the Step-7 correctness re-freeze, `examples/results/step7/rocket-landing/refreeze/branch.json`.
+
+**6 of 6 re-render bit-identical to the re-freeze.**
+
+| cell | verdict | frozen frames sha256 | fresh |
+|---|---|---|---|
+| `MujocoAnt` | identical | `b66388957cbff323` | `b66388957cbff323` |
+| `MujocoHalfCheetah` | identical | `17cf24506ae10a70` | `17cf24506ae10a70` |
+| `MujocoHopper` | identical | `f6f2aef63d97a4ab` | `f6f2aef63d97a4ab` |
+| `MujocoHumanoid` | identical | `30948a9b3d1a2307` | `30948a9b3d1a2307` |
+| `MujocoSwimmer` | identical | `389858758e2b5a03` | `389858758e2b5a03` |
+| `MujocoWalker2d` | identical | `d95e510e20776cb1` | `d95e510e20776cb1` |
 
 ### Gate A on the seven cells Step 7 added
 
-**Not present in this tree.** No claim is made here.
+Measured on the committed Step-7 corpora at each cell's registered default size, through `examples/fidelity_step4.measure`. Device coverage is recorded as it is: three cells raise on `cpu` **by design** rather than silently using CUDA, and that refusal was asked on a machine where the CUDA backend was available.
+
+| cell | device | verdict | mandatory | failing | corpus |
+|---|---|---|---|---|---|
+| `CraftaxClassic` | cpu | **PASS** | 14 | — | `examples/results/step7/craftax-classic-full/corpus/states.npz` |
+| `CraftaxFull` | cpu | **PASS** | 14 | — | `examples/results/step7/craftax-full/corpus/states.npz` |
+| `OGBCube` | cpu | **BLOCKED** | 0 | — | `` |
+| `OGBScene` | cpu | **BLOCKED** | 0 | — | `` |
+| `PFRocketLanding` | cpu | **BLOCKED** | 0 | — | `` |
+| `DMCManipulatorBringBall` | cpu | **PASS** | 14 | — | `examples/results/step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz` |
+| `DMCQuadrupedWalk` | cpu | **PASS** | 14 | — | `examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz` |
+| `CraftaxClassic` | cuda | **PASS** | 14 | — | `examples/results/step7/craftax-classic-full/corpus/states.npz` |
+| `CraftaxFull` | cuda | **PASS** | 14 | — | `examples/results/step7/craftax-full/corpus/states.npz` |
+| `OGBCube` | cuda | **FAIL** | 14 | `check_state_roundtrip` | `examples/results/step7/ogb-manipulation/states/OGBCube.npz` |
+| `OGBScene` | cuda | **FAIL** | 14 | `check_state_roundtrip` | `examples/results/step7/ogb-manipulation/states/OGBScene.npz` |
+| `PFRocketLanding` | cuda | **PASS** | 14 | — | `examples/results/step7/rocket-landing/reference/states.npz` |
+| `DMCManipulatorBringBall` | cuda | **PASS** | 14 | — | `examples/results/step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz` |
+| `DMCQuadrupedWalk` | cuda | **PASS** | 14 | — | `examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz` |
 
 ### The GPU suite and the unit suites
 
-**Not present in this tree.** No claim is made here.
+| suite | interpreter | passed | failed | skipped | failing test ids |
+|---|---|---|---|---|---|
+| `unit` | `craftax` | 776 | 2 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `craftax` | 919 | 3 | 17 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `rocket` | 780 | 11 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `rocket` | 974 | 12 | 12 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se6-venv` | 822 | 2 | 7 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se6-venv` | 1035 | 2 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-craftax-venv` | 773 | 2 | 13 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-craftax-venv` | 918 | 2 | 19 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-rocket-venv` | 767 | 11 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-rocket-venv` | 913 | 11 | 15 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `step6` | 807 | 2 | 22 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `step6` | 1018 | 3 | 25 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
 
 ## Step-8 carry-overs
 
@@ -228,7 +287,19 @@ An escalation is open when its `status`/`resolved` field does not record a rulin
 
 Every JSON and results file under `examples/results/step7/closure/` that this generator does not yet understand, named rather than dropped. This list is the next run's to-do list.
 
-None: every committed closure artifact is read by this page.
+- `examples/results/step7/closure/nvdiff_cpu_batch/apple-m5.json`
+- `examples/results/step7/closure/nvdiff_cpu_batch/threads1.json`
+- `examples/results/step7/closure/nvdiff_cpu_batch/threads2.json`
+- `examples/results/step7/closure/nvdiff_cpu_batch/threads4.json`
+- `examples/results/step7/closure/refreeze/branch.json`
+- `examples/results/step7/closure/refreeze/gatea_branch.json`
+- `examples/results/step7/closure/replay/certify/certification.json`
+- `examples/results/step7/closure/replay/craftaxclassic_world_rows_apple-m5.json`
+- `examples/results/step7/closure/replay/dmc.json`
+- `examples/results/step7/closure/replay/dmcvis.json`
+- `examples/results/step7/closure/replay/fetch.json`
+- `examples/results/step7/closure/replay/ogb.json`
+- `examples/results/step7/closure/replay/raster.json`
 
 ---
 

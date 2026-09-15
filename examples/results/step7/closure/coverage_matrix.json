@@ -9,10 +9,9 @@
    "CPU_UNMEASURED": 13
   },
   "gate_a": {
-   "FAIL": 3,
-   "None": 6,
-   "PARTIAL": 1,
-   "PASS": 30
+   "BLOCKED": 1,
+   "FAIL": 5,
+   "PASS": 34
   },
   "gpu_tier": {
    "GPU_EXCEPTIONAL": 7,
@@ -24,7 +23,7 @@
   "pixel_producing": 40,
   "symbolic": 2
  },
- "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+ "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
  "rows": [
   {
    "closed_in_step7": false,
@@ -46,7 +45,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -59,7 +58,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -121,7 +120,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -134,7 +133,7 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -198,7 +197,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -211,7 +210,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -277,7 +276,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -290,7 +289,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -351,7 +350,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -364,7 +363,7 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -460,7 +459,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "FAIL",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -473,7 +472,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -550,11 +549,50 @@
     "visual_fidelity": null
    },
    "gate_a": {
+    "devices": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
     "failing_checks": [],
     "note": "all mandatory checks pass; check_resolution_consistency declared not_applicable below light_level 0.5 on the OFFICIAL renderer's own evidence (official 0.1634 == ours 0.1634); the Step-8 certifier must honour resolution_consistency_applicability or judge on the light >= 0.5 subset",
-    "per_device": {},
-    "result": "PARTIAL",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "not_applicable",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "measured"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_craftax.json",
+      "verdict": "PASS",
+      "why": ""
+     },
+     "cuda": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "not_applicable",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "measured"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cuda_craftax.json",
+      "verdict": "PASS",
+      "why": ""
+     }
+    },
+    "result": "PASS",
+    "source": "examples/results/step7/closure/gate_a/cpu_craftax.json; examples/results/step7/closure/gate_a/cuda_craftax.json"
    },
    "gpu_tier": {
     "detail": {
@@ -586,7 +624,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "9ca318f",
     "tier_merge_sha": "b1f61b1",
     "yes": true
@@ -623,7 +661,7 @@
     "rung": null
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": false
@@ -671,11 +709,50 @@
     "visual_fidelity": null
    },
    "gate_a": {
+    "devices": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
     "failing_checks": [],
     "note": "18 checks clean; check_resolution_consistency declared not_applicable in ALL bands on the official's own evidence (official fails the frozen 0.995 in every band: world 0.4817 day / 0.0991 night)",
-    "per_device": {},
-    "result": null,
-    "source": "none"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "not_applicable",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "measured"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_craftax.json",
+      "verdict": "PASS",
+      "why": ""
+     },
+     "cuda": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "not_applicable",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "measured"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cuda_craftax.json",
+      "verdict": "PASS",
+      "why": ""
+     }
+    },
+    "result": "PASS",
+    "source": "examples/results/step7/closure/gate_a/cpu_craftax.json; examples/results/step7/closure/gate_a/cuda_craftax.json"
    },
    "gpu_tier": {
     "detail": {
@@ -703,7 +780,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "d024c1a",
     "tier_merge_sha": "00c7c8d",
     "yes": true
@@ -740,7 +817,7 @@
     "rung": null
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": false
@@ -776,7 +853,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -789,7 +866,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -851,7 +928,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -864,7 +941,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -926,7 +1003,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -939,7 +1016,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1001,7 +1078,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1014,7 +1091,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1076,7 +1153,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1089,7 +1166,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1151,7 +1228,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1164,7 +1241,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1226,7 +1303,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1239,7 +1316,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1298,7 +1375,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1311,7 +1388,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1370,7 +1447,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1383,7 +1460,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1442,7 +1519,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1455,7 +1532,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1517,7 +1594,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1530,7 +1607,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1592,7 +1669,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1605,7 +1682,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1667,7 +1744,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1680,7 +1757,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1777,7 +1854,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "FAIL",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1790,7 +1867,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1885,8 +1962,8 @@
    "gate_a": {
     "failing_checks": [],
     "per_device": {},
-    "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "result": "BLOCKED",
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -1899,7 +1976,7 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1961,11 +2038,50 @@
     "visual_fidelity": null
    },
    "gate_a": {
+    "devices": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
     "failing_checks": [],
     "note": "every mandatory check passes; check_state_dims_matter passes with three REPORTED exclusions (ball_y, target_ball_quat_qw, target_ball_quat_qy), approved by Sami as a narrow per-class render-contract exception validated by the check itself against the frozen geom_type",
-    "per_device": {},
-    "result": null,
-    "source": "none"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "measured",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "not_applicable",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "measured"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_vis311.json",
+      "verdict": "PASS",
+      "why": ""
+     },
+     "cuda": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "measured",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "not_applicable",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "measured"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cuda_vis311.json",
+      "verdict": "PASS",
+      "why": ""
+     }
+    },
+    "result": "PASS",
+    "source": "examples/results/step7/closure/gate_a/cpu_vis311.json; examples/results/step7/closure/gate_a/cuda_vis311.json"
    },
    "gpu_tier": {
     "detail": {
@@ -1982,7 +2098,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "1d9dccb",
     "tier_merge_sha": null,
     "yes": true
@@ -2050,7 +2166,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2063,7 +2179,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2118,7 +2234,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2131,7 +2247,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2220,11 +2336,49 @@
     }
    },
    "gate_a": {
-    "failing_checks": [],
+    "devices": {
+     "cpu": "REFUSED_BY_DESIGN",
+     "cuda": "FAIL"
+    },
+    "failing_checks": [
+     "check_state_roundtrip"
+    ],
     "note": "determinism, batch invariance, batch-size invariance, order independence, state_dims_matter (dead_dims []) all pass",
-    "per_device": {},
-    "result": null,
-    "source": "none"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {},
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_ogbmanip.json",
+      "verdict": "REFUSED_BY_DESIGN",
+      "why": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se"
+     },
+     "cuda": {
+      "failing_checks": [
+       "check_state_roundtrip"
+      ],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "not_applicable",
+       "check_resolution_consistency": "not_applicable",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "not_applicable",
+       "check_visual_fidelity": "measured",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "not_applicable"
+      },
+      "not_measured": {
+       "check_default_style_is_official": "not_applicable",
+       "check_render_is_pure": "error",
+       "check_style_is_state": "not_applicable"
+      },
+      "source": "examples/results/step7/closure/gate_a/cuda_ogbmanip.json",
+      "verdict": "FAIL",
+      "why": ""
+     }
+    },
+    "result": "FAIL",
+    "source": "examples/results/step7/closure/gate_a/cpu_ogbmanip.json; examples/results/step7/closure/gate_a/cuda_ogbmanip.json"
    },
    "gpu_tier": {
     "detail": {
@@ -2241,7 +2395,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "24d1054",
     "tier_merge_sha": null,
     "yes": true
@@ -2303,7 +2457,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2316,7 +2470,7 @@
     "rung": "documented_manual"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2406,11 +2560,49 @@
     }
    },
    "gate_a": {
-    "failing_checks": [],
+    "devices": {
+     "cpu": "REFUSED_BY_DESIGN",
+     "cuda": "FAIL"
+    },
+    "failing_checks": [
+     "check_state_roundtrip"
+    ],
     "note": "as OGBCube. Ships with a DECLARED residual: the btn_metal cube-map cannot be sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean colour on two small geoms - 0.139% of pixels, max 37/255. Sami ruled: keep the reviewed declared bake",
-    "per_device": {},
-    "result": null,
-    "source": "none"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {},
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_ogbmanip.json",
+      "verdict": "REFUSED_BY_DESIGN",
+      "why": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S"
+     },
+     "cuda": {
+      "failing_checks": [
+       "check_state_roundtrip"
+      ],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "not_applicable",
+       "check_resolution_consistency": "not_applicable",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "not_applicable",
+       "check_visual_fidelity": "measured",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "not_applicable"
+      },
+      "not_measured": {
+       "check_default_style_is_official": "not_applicable",
+       "check_render_is_pure": "error",
+       "check_style_is_state": "not_applicable"
+      },
+      "source": "examples/results/step7/closure/gate_a/cuda_ogbmanip.json",
+      "verdict": "FAIL",
+      "why": ""
+     }
+    },
+    "result": "FAIL",
+    "source": "examples/results/step7/closure/gate_a/cpu_ogbmanip.json; examples/results/step7/closure/gate_a/cuda_ogbmanip.json"
    },
    "gpu_tier": {
     "detail": {
@@ -2427,7 +2619,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "24d1054",
     "tier_merge_sha": null,
     "yes": true
@@ -2491,11 +2683,41 @@
     "visual_fidelity": null
    },
    "gate_a": {
+    "devices": {
+     "cpu": "REFUSED_BY_DESIGN",
+     "cuda": "PASS"
+    },
     "failing_checks": [],
     "note": "all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp. Two conformance tests fail with a stated mechanism: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC has no table entry for this cell (measured 0.95614, to be added at the Step-8 freeze since tests/ is frozen in Step 7)",
-    "per_device": {},
-    "result": null,
-    "source": "none"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {},
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_rocket.json",
+      "verdict": "REFUSED_BY_DESIGN",
+      "why": "NotImplementedError: PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility."
+     },
+     "cuda": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "measured",
+       "check_visual_fidelity_under_variation": "measured",
+       "render_parity_with_official_renderer": "not_applicable"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cuda_rocket.json",
+      "verdict": "PASS",
+      "why": ""
+     }
+    },
+    "result": "PASS",
+    "source": "examples/results/step7/closure/gate_a/cpu_rocket.json; examples/results/step7/closure/gate_a/cuda_rocket.json"
    },
    "gpu_tier": {
     "detail": {
@@ -2512,7 +2734,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "fd2b8ef",
     "tier_merge_sha": null,
     "yes": true
@@ -2575,7 +2797,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2588,7 +2810,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2648,7 +2870,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2661,7 +2883,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2723,7 +2945,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step4/certification.json (frozen Step-4, carried forward: the closure replay produced no row for this configuration)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2736,7 +2958,7 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2813,7 +3035,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2826,7 +3048,7 @@
     "rung": "same_scene_as"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2896,7 +3118,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2909,7 +3131,7 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3013,11 +3235,50 @@
     }
    },
    "gate_a": {
+    "devices": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
     "failing_checks": [],
     "note": "all mandatory checks pass on both devices and both reference arms on the new corpus; ELLIPSOID stays out of _BOUNDED_KINDS (kind-cost ratio 0.69-1.43 measured only on a load-34 node: undecided, not admitted silently)",
-    "per_device": {},
-    "result": null,
-    "source": "none"
+    "per_device": {
+     "cpu": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "measured",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "not_applicable"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cpu_vis311.json",
+      "verdict": "PASS",
+      "why": ""
+     },
+     "cuda": {
+      "failing_checks": [],
+      "family_specific": {
+       "check_backend_agreement": "not_applicable",
+       "check_colors_apply_exactly": "measured",
+       "check_resolution_consistency": "measured",
+       "check_task_object_visibility": "not_applicable",
+       "check_variations_do_something": "measured",
+       "check_visual_fidelity": "measured",
+       "check_visual_fidelity_under_variation": "not_applicable",
+       "render_parity_with_official_renderer": "not_applicable"
+      },
+      "not_measured": {},
+      "source": "examples/results/step7/closure/gate_a/cuda_vis311.json",
+      "verdict": "PASS",
+      "why": ""
+     }
+    },
+    "result": "PASS",
+    "source": "examples/results/step7/closure/gate_a/cpu_vis311.json; examples/results/step7/closure/gate_a/cuda_vis311.json"
    },
    "gpu_tier": {
     "detail": {
@@ -3034,7 +3295,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": "0a029bd",
     "tier_merge_sha": "e0a416c",
     "yes": true
@@ -3097,7 +3358,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -3110,7 +3371,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3172,7 +3433,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step4/certification.json (frozen Step-4, carried forward: the closure replay produced no row for this configuration)"
    },
    "gpu_tier": {
     "detail": {},
@@ -3185,7 +3446,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3246,7 +3507,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step4/certification.json (frozen Step-4, carried forward: the closure replay produced no row for this configuration)"
    },
    "gpu_tier": {
     "detail": {},
@@ -3259,7 +3520,7 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3366,7 +3627,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "FAIL",
-    "source": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -3379,7 +3640,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "275970cc2d9e0d92eebf5297ee175b08944b7d04",
+    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3427,7 +3688,7 @@
  "schema_version": 1,
  "sources": {
   "declarations": "the stable-envs classes at the integration HEAD, unioned over live import in this interpreter; rocket.json (+0 cells); craftax.json (+0 cells)",
-  "gate_a_step4_universe": "examples/results/step4/certification.json (frozen Step-4; the closure replay had not landed)",
+  "gate_a_step4_universe": "43 configuration(s) re-judged by this sweep; the rest carried forward from the frozen Step-4 certification",
   "gate_a_step7_cells": "examples/results/step7/closure/gate_a/*.json",
   "swm_registry": "scratch/swm_matrix.json (live swm registry probe)",
   "tiers": "performance_record_* where declared, else the generated Step-6 tier table, else the Step-7 dashboard workstream row; nothing re-measured here"

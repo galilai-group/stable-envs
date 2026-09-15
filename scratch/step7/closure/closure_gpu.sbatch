@@ -32,7 +32,7 @@ set -uo pipefail
 export SCR=/oscar/scratch/$USER
 TREE=${TREE:-$SCR/se7/closure}
 source "$TREE/scratch/step7/closure/_env.sh" || exit 1
-STAGES=${STAGES:-"1 2 3 5 4"}
+STAGES=${STAGES:-"1 2 3 5 7 4"}
 TAG=${TAG:-}
 OUT=$OUTROOT
 STATES=$SCR/se7/closure_states
@@ -153,6 +153,14 @@ if has 5; then
       --out "$OUT/gate_a/cpu_rocket${TAG}.json" 2>&1 | tail -12
 fi
 
+# ------------------------------- 7. attribute the OGB state-roundtrip failure the sweep found
+if has 7; then
+  stage 7 "OGBCube/OGBScene: per-dimension attribution of the check_state_roundtrip failure"
+  PYTHONPATH=$TREE:$SWMSRC $(venv_for ogbmanip)/bin/python \
+      scratch/step7/closure/probe_ogb_state_roundtrip.py --device cuda \
+      --out "$OUT/gate_a/ogb_state_roundtrip.json" 2>&1 | tail -20
+fi
+
 # ------------------------------------------------------------------------------ 4. the GPU suite
 if has 4; then
   stage 4 "tests/gpu across the interpreters that reach different parts of the registry"
@@ -162,7 +170,7 @@ if has 4; then
   # nvdiffrast and no PyFlyt, so the Craftax and Rocket cells SKIP there and are covered by the
   # three interpreters after it. Running the same three files in each is what makes "nothing else
   # failing" a claim about the whole registry rather than about one venv's reachable subset.
-  for KEY in verify rocket craftax ogbmanip; do
+  for KEY in ${VENVS:-verify rocket craftax ogbmanip}; do
     PY=$(venv_for $KEY)/bin/python
     [ -x "$PY" ] || { echo "SKIP venv $KEY (no interpreter)"; continue; }
     $PY -c "import pytest" 2>/dev/null || { echo "SKIP venv $KEY (no pytest)"; continue; }
