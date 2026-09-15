@@ -56,9 +56,22 @@ if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import numpy, mujoco,
   # stable_worldmodel: the registration under test. Its heavy extras are not needed to render.
   "$VENV/bin/pip" install loguru tabulate einops tqdm typer rich pyarrow \
       "lancedb>=0.30.0" "pylance>=4.0.0" opencv-python-headless pygame pymunk shapely || exit 3
-  "$VENV/bin/pip" install --no-deps stable-worldmodel==0.0.6 || exit 3
+  # stable_worldmodel comes from the SOURCE CHECKOUT, not PyPI. Job 6394991 proved they are
+  # different code: PyPI 0.0.6's `data/dataset.py` imports h5py, the checkout's `data/__init__.py`
+  # imports its own `formats.lance` and never touches h5py. The registration under test must be the
+  # one the local census measured, so the checkout is rsynced to $SCR/se7/swm-src and put on
+  # PYTHONPATH; h5py is installed anyway as cheap insurance against the other import path.
+  "$VENV/bin/pip" install h5py || exit 3
 fi
-"$VENV/bin/python" -c 'import numpy, mujoco, mujoco_warp, ogbench, torchvision, stable_worldmodel' || {
+# Unconditional, because the venv may already exist from an earlier attempt that pip-installed the
+# PyPI build: remove it so nothing can shadow the checkout, and add h5py for the other import path.
+"$VENV/bin/pip" uninstall -y stable-worldmodel >/dev/null 2>&1 || true
+"$VENV/bin/pip" install h5py || exit 3
+
+SWM_SRC=$SCR/se7/swm-src
+[ -d "$SWM_SRC/stable_worldmodel" ] || { echo "FATAL: no swm source at $SWM_SRC"; exit 3; }
+PYTHONPATH=$WS:$SWM_SRC "$VENV/bin/python" \
+  -c 'import numpy, mujoco, mujoco_warp, ogbench, torchvision, stable_worldmodel' || {
   echo "FATAL: venv incomplete"; exit 3; }
 
 # EGL first, and fail fast. W4 found gpu2104 with healthy torch/cuda and broken EGL
@@ -70,7 +83,7 @@ export MUJOCO_GL=egl
 
 # ---- 2. does EGL render these two at all? -----------------------------------
 export MUJOCO_GL=egl
-export PYTHONPATH=$WS
+export PYTHONPATH=$WS:$SWM_SRC
 cd "$WS"
 "$VENV/bin/python" scratch/step7/ogb-manipulation/census_ogb.py --out "$OUT/census" \
   || echo "CENSUS rc=$?"

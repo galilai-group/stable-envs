@@ -34,7 +34,7 @@ WS=$SCR/se7/ogb-manipulation
 VENV=$SCR/venvs/se7-ogb
 OUT=$WS/examples/results/step7/ogb-manipulation/oscar/mjwarp
 mkdir -p "$OUT"
-export PYTHONPATH=$WS
+export PYTHONPATH=$WS:$SCR/se7/swm-src
 set -x
 cd "$WS"
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
