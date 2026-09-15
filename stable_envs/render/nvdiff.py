@@ -801,6 +801,12 @@ class Scene:
         cols = (self.vgeom[:, None] * 4 + torch.arange(4, device=dev)[None]).reshape(-1)
         self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
                                           (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+        # The same four numbers per vertex that ``S4`` holds, as a dense ``(V, 4)`` and the base column
+        # of each vertex's geom. ``clip`` contracts with these explicitly rather than through ``S4``
+        # (see ``clip``); ``S4`` is kept because it IS this gather written as a matrix and the scene's
+        # members are hashed across checkouts by the identity replay.
+        self.vert4 = v4
+        self.vbase4 = self.vgeom * 4
         rows3 = torch.arange(self.V, device=dev).repeat_interleave(3)
         cols3 = (self.vgeom[:, None] * 3 + torch.arange(3, device=dev)[None]).reshape(-1)
         self.S3 = torch.sparse_coo_tensor(torch.stack([rows3, cols3]), self.norm.reshape(-1),
@@ -848,6 +854,42 @@ class Scene:
 
     # -- transforms --------------------------------------------------------
 
+    def _pos_rows(self, mvp):
+        """``(V, 4B)`` clip-space vertices: four gathers and three adds, in a WRITTEN order.
+
+        What this replaces and why. ``pos`` was ``torch.sparse.mm(self.S4, mvp_as_(4G, 4B))``. ``S4``
+        has exactly four nonzeros per row -- vertex ``v``'s homogeneous local position in geom
+        ``g(v)``'s four columns -- so every output element is a sum of four products, and the ORDER of
+        that sum is the sparse kernel's to choose. It chooses by the dense operand's column count,
+        which is ``4 * B``. Measured on x86-64 (``examples/results/step7/closure/nvdiff_cpu_batch/``,
+        job 6413606, node1939, identical at 1/2/4 threads): at widths 1 and 2 the positions differ from
+        their full-batch values by one float32 ulp -- 36 of 96 elements at width 1 -- while the
+        normals, the world positions and ``mvp_rows`` are bit-identical at every width. Bit-identical
+        at every width on arm64, so it is a property of the kernel, not of the arithmetic.
+
+        This is the same defect ``mvp_rows`` fixed one product earlier, and it gets the same fix: write
+        the sum out, so there is no reduction whose shape a backend can dispatch on. Unlike
+        ``mvp_rows`` this one does NOT accumulate in float64. The float64 accumulation is the correctly
+        rounded value and therefore a DIFFERENT number from the one the sparse kernel produces (12 of
+        2048 elements on the probe's box soup), and a different number on cuda would move the six
+        locomotion cells again -- a second correctness re-freeze. Accumulated in the input dtype in
+        ascending column order, this reproduces the shipped ``spmm`` value bit for bit
+        (``scratch/step7/rocket-landing/probe_clip_cpu_batch.py``), so the fix removes the kernel's
+        freedom without changing the arithmetic.
+
+        ``mul_``/``add_`` keep one gathered block live at a time, so the peak is twice the output
+        rather than the ``(B, V, 4, 4)`` gather the sparse form exists to avoid. Deliberately not
+        ``addcmul_``, which may contract into an FMA and would put the rounding back under the
+        backend's control.
+        """
+        import torch
+        B = mvp.shape[0]
+        D = mvp.permute(1, 3, 0, 2).reshape(4 * self.G, 4 * B)
+        acc = D.index_select(0, self.vbase4).mul_(self.vert4[:, 0:1])
+        for k in (1, 2, 3):
+            acc.add_(D.index_select(0, self.vbase4 + k).mul_(self.vert4[:, k:k + 1]))
+        return acc
+
     def clip(self, xpos, xmat, view, proj):
         """``(B, V, 4)`` clip-space vertices, ``(B, V, 3)`` world normals and world positions."""
         import torch
@@ -857,7 +899,7 @@ class Scene:
         M[:, :, :3, 3] = xpos
         M[:, :, 3, 3] = 1.0
         mvp = mvp_rows(proj, view, M)                                 # batch-invariant, see mvp_rows
-        pos = torch.sparse.mm(self.S4, mvp.permute(1, 3, 0, 2).reshape(4 * G, 4 * B))
+        pos = self._pos_rows(mvp)                                     # batch-invariant, see _pos_rows
         pos = pos.reshape(self.V, B, 4).permute(1, 0, 2).contiguous()
         nrm = torch.sparse.mm(self.S3, xmat.permute(1, 3, 0, 2).reshape(3 * G, 3 * B))
         nrm = nrm.reshape(self.V, B, 3).permute(1, 0, 2).contiguous()
