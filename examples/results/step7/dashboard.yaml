@@ -535,14 +535,14 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: 'certification merged; tier commit (f) prepared locally (GPU job 6398085 COMPLETED: class-S GPU_EXCEPTIONAL R 129.9 cores 13.6, legs A/C spread 1.045; CPU job 6398084 waiting on load); BLOCKED
-    on Oscar SSH for the CPU artifacts'
+  status: 'CLOSED: code + certification + tiers merged. GPU_EXCEPTIONAL under class S (pending the Step-8 census entry); CPU_UNMEASURED (four batch nodes never below the load-12 guard over the day; evidence
+    committed); ELLIPSOID stays unbounded (loaded-node kind-cost undecided)'
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
   worktree: /Users/samib/stable-envs-step7-dmc-quadruped
   agent_model: fable
-  head_sha: 31bd3e9 (e2 + integration merge + INTEG-1 load hook)
+  head_sha: 'bb4410d (f: tiers; W4 CLOSED; merged)'
   phase0: "FINDING: SWM default = walk model + Move(0.5), camera 2 (y, trackcom, fovy 45), 224 px, SWM appearance (self recoloured, foot density); state = qpos (0 px under re-render/qvel x100/history);\
     \ primitives: 1 textured plane, 12 capsules, 4 spheres, 2 cylinders, 1 ELLIPSOID (torso, visible in every state); HFIELD declared but deleted from the walk model (no capability needed); MJWarp supports\
     \ ellipsoid (ray_ellipsoid) \u2014 no GPU gap; cpu3d refuses kind 4; raycast3d lacks _ellipsoid. Prototype (cpu3d + patched ellipsoid) vs official 3.11 at 224 px: mean 3.55/255, within-8 0.901, SSIM\
@@ -670,6 +670,11 @@ workstreams:
       - "B citation set 9 -> 21 from four committed Oscar stdout captures; scrub; fix \xA7P6 claim"
   gpu_tier_interim: 'quiet-window GPU job 6398085: class-S ladder GPU_EXCEPTIONAL (R 129.9 >= 40, cores 13.6 >= 10, BATCH_SCALES pass); evaluator prints ''unknown'' only because the census entry is a Step-8
     freeze item; CPU job 6398084 running on node2301; commit (f) after'
+  tiers:
+    gpu_6398085_gpu2109: 'legs A/B/C certifiable (load 8.8/9.2/11.5); four trackcom cells GPU_EXCEPTIONAL on every leg (S 230-281, cores 10.4-14.7); A vs C spread <= 1.045; DMCQuadrupedWalk cuda 224 px:
+      606 fps at B=1 -> 44,374 at B=4096; same-node official 341.5 fps; one-core decode 3,260 fps -> S 129.9, cores 13.6 -> GPU_EXCEPTIONAL (evaluator label ''unknown'' only for the missing census entry)'
+    cpu_6398084_node2301: 'QUARANTINED-LOAD: 73 polls over 6 h, load1 34.1-43.6, never below 12; nothing measured -> CPU_UNMEASURED; local M5 numbers reported, not certified'
+    kind_cost: re-take did not run (queued behind the wait); ELLIPSOID unbounded, undecided
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -1186,6 +1191,8 @@ incident_log:
     the cluster.'
 - date: '2026-09-15'
   item: W4 (f) and W6 M4 prepared locally; all three remaining workstreams hold on Oscar SSH
+- date: '2026-09-15'
+  item: Oscar SSH restored; W4 (f) merged and CLOSED (GPU_EXCEPTIONAL / CPU_UNMEASURED); W6 and W5 resumed
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1259,3 +1266,4 @@ blocked_on_oscar_ssh:
   - 'W6 M4: pull tier/ + nvdiff_identity/ + log for job 6395707, declaration, gate report'
   - 'W5: sync fixed tree (md5 check), submit the re-measurement chain, pull, register, corpora, Gate A/F, tiers, slurm logs'
   agents: each holds with a single 30-minute SSH probe; no polling loops
+  resolved: '2026-09-15: VPN restored by Sami; W4 (f) merged; W6/W5 resumed'
