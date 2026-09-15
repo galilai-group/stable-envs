@@ -262,3 +262,96 @@ PYTHONPATH=… se7-ogb-venv/python (mocap_quat nudges)  # w+25/-25/+1/+0.5/+0.05
 - Which task/bits the reference env sat on in jobs 6398733/6399587 (B2) — not recorded anywhere.
 - The official `check_state_dims_matter` verdict on the real render path (B5 is a MuJoCo-side proof plus the
   author's own +0.05 observation).
+
+---
+
+# Re-review at tip `7820af1c` (coordinator request)
+
+Commits since `1550ebdb`: 7, all `sami-bg`, 0 AI trailers; `examples/results/step4|5|6` untouched;
+`stable_envs/render/` and the three mjwarp test files byte-identical to the approved shared tip `9923594`.
+Non-artifact files touched: `stable_envs/envs/ogb_manip.py`, `tests/unit/test_ogb_manip.py` (new),
+`scratch/step7/ogb-manipulation/{13_remeasure_chain.sbatch, probe_remeasure_chain.py, probe_corpus_gatef.py}`.
+Same local environment as above (se7-ogb venv + swm source checkout, `MUJOCO_GL=glfw`, no CUDA).
+
+## Verdict: APPROVE-WITH-CHANGES (three declaration/import defects; none needs a re-measurement)
+
+### B1-B6 re-run on the new tree — all closed
+
+| defect | construction at 7820af1c | result |
+|---|---|---|
+| B1 composite | `m3/fidelity/OGB*_frames.npz` (job 6407605): pixels static across the 4 official frames, `ours == official` on them | Cube **0.9772** (was 0.284), bottom-quarter rows exact **1.000** (was 0.023); Scene **0.9754** (was 0.269), bottom quarter 0.972; interior_exact 0.957 / 0.921 recomputed from the frames. `render()` uses `lut.index_select(0, seg+1)` over `_movers` exactly as fetch.py; `test_the_lut_rule_selects_movers_and_lets_everything_else_fall_through` pins the arithmetic. |
+| B2 button base | reference env forced to `task_id` 1..5 (start bits [1,1], [0,0], [1,0], [0,0], [0,0]); `_context`'s forced-zero block emulated; `_ctx_button_tables(..., device="cpu")` vs swm's tables | all four codes equal swm's table on **every** task start; env bits restored after the copy; negative control (copy taken without forcing zero at [1,1] / [1,0]) now raises `AssertionError: the context model was copied at button bits other than all-zero`. |
+| B3 reproducibility | `sample_states(6, default_rng(20260909))` in three separate interpreters + twice in one | `frames_digest` identical across all runs (Cube `88e86061…`, Scene `e5964831…`); different rng differs; global `np.random` state restored; `ManipSpaceEnv.action_space` property restored (fresh Box per access again after the block). |
+| B4 pool | `states/OGB{Cube,Scene}.npz` + `_pool.npz` | `pool[meta.indices] == states` **True** both; sha256 recompute matches (`35dd61dd149d…`, `5d14aa863431…`); 64/256; meta = Step-4 key set + `provenance` (superset; `corpus_for` loads it). Selection by `fidelity_step4.select` (same function), written by the chain script rather than `corpus_for` itself. |
+| B5 mocap_quat | corpus per-dim std; remeasure.json `gate_a_repo_checks` | state 24 / 30 dims, **no constant dims** in either corpus; repo `check_state_dims_matter` → `dead_dims: []`, `check_determinism` identical, `check_batch_invariance` 0, `check_batch_size_invariance` [1,7,64] 0. (`check_order_invariance` is "absent in this build" — the module has no such check; order invariance is therefore not asserted by the repo machinery, only by the retired custom probe at the old tip.) |
+| B6 tests | `tests/unit/test_ogb_manip.py` | **26 passed** (se7+swm); full `tests/unit` with swm present **885 passed / 2 failed / 20 skipped**, without swm 873 / 2 / 7; the two failures are the pre-existing ones. |
+| distribution | goal positions old vs new corpus/pool | unchanged: 5 (Cube) / 4 (Scene) unique `mocap_pos`, identical xy ranges — passing `variation_values` did not move the registered-default distribution (task-mode goals still come from `task_infos`). |
+| staleness fixes | reset the swm env, then `_Bundle.model`, `_renderer` | `_Bundle.model is u.model` after the rebind; `_renderer` returns a new Renderer bound to the current model; the popped Renderer is not auto-closed (`mujoco.Renderer` has no `__del__`). |
+| declarations vs JSON | `_MEASURED` vs `remeasure.json` | `mean_abs`/`within8_frac`/`ssim` equal the worst-of-three to 1e-6 on both cells; `draw_spread` equals the JSON min/max; thresholds equal the JSON `thresholds` and the rule: `round(1.3×mean, 1)` → 3.2 / 7.0, `floor(20×worst)/20` → 0.90/0.90, 0.85/0.85. `reference_versions {"mujoco": "3.12.0"}`, `measured_with {"mujoco_warp": "3.12.0"}`, named in `measured_at`. |
+| hygiene | | 0 `.log`/`.log.gz` twins; `oscar/` duplicates of m1/m1b/m3 removed; dir 3.4 M; logs 6398193/6398530/6398733/6399587/6407605 committed under `m3/fidelity/`; provenance carries host, GPU, job, versions, `ogb_manip_md5 f168b2d3…`, swm file digests (`git_sha` still ""). §19/§20 marked SUPERSEDED. |
+
+### Required changes (declaration / import only — no pixel, corpus or tier changes)
+
+C1. **The false composite sentence was NOT deleted.** §21 says "the '0.92–0.95' sentence is deleted rather
+    than restated", but it survives in three places at 7820af1c: the module docstring (lines 36-46:
+    "exact BY CONSTRUCTION … Only the **10-19 %** … whole-frame exactness of the COMPOSITE is **0.92-0.95**,
+    and that is what a caller gets. The 0.35 …"), `_bake_plate`'s docstring (line 610: "worth 0.92-0.95 while
+    MJWarp alone is worth 0.35"), and — the one that ships — `_RESIDUAL_NOTE` (line 983: "Whole-frame
+    exactness of the composite that actually ships is 0.92-0.95"), which is the registered `visual_note`.
+    The measured composite is all-exact 0.872 / 0.775 and interior-exact 0.958 / 0.922. Replace all three
+    with the measured figures (or delete), and drop the "0.35 interior" framing, which no longer describes
+    this renderer.
+C2. **`register()` now builds both swm envs at import.** `_make_classes` evaluates
+    `len(_bundle(cell).state_names)` inside the class `__doc__` f-string, so `import stable_envs` calls
+    `gymnasium.make(swm/OGB*)` + `reset(seed=0)` for both cells (3.2 s, `_REF_CACHE` populated at import) and
+    — in any interpreter without `stable_worldmodel` — the module now fails to import
+    (`ModuleNotFoundError: stable_worldmodel`) so the two ids vanish from the registry (se6-venv: 76, not
+    78; at 1550ebdb they registered lazily everywhere). Registration must stay side-effect free: write the
+    dimension from `SPEC` (nq 21/25 → 24/30, or `nq + 3 + nbuttons` as constants) and keep `_bundle` out of
+    import time.
+C3. **`measured_at` says "the declared value is the WORST of the three", but `interior_exact_frac`,
+    `all_exact_frac` and `interior_frac` are the MEAN of the three draws** (Cube interior_exact declared
+    0.958115 = mean; worst draw 0.958007; Scene 0.921712 = mean, worst 0.917805; likewise all_exact and
+    interior_frac). Either declare the worst, or say in `measured_at`/a comment that the three
+    non-thresholded fields are means. Small, but it is exactly the kind of sentence the declaration test
+    exists to keep true.
+
+### Recommended (non-blocking)
+
+- Fractional floors: `floor(20×worst)/20` leaves margins of 0.0155 / 0.0149 (Cube within8 / ssim) and
+  **0.0068** (Scene within8) below the worst draw, against DM Control's 0.04-0.06. The spreads are small
+  (0.0006-0.0085), so these are not tripwires on the evidence, but they are tighter than the precedent the
+  rule cites; a floor one further 0.05 step down on the two 0.90s and the Scene 0.85 would match it.
+- `reference_versions` omits `ogbench` although provenance records `ogbench 1.2.1` and the MJCF is
+  ogbench's; the stated reason ("nobody measured under a named version") is contradicted by the provenance
+  dict. Add `"ogbench": "1.2.1"` and name it in `measured_at`.
+- Class `__doc__` still says residuals are "declared in visual_fidelity and parity_note" — they are in
+  `visual_note`.
+- `remeasure.json`/corpus `provenance.git_sha` is "" (rsync tree); the md5 of `ogb_manip.py` is the tree
+  identifier — fine, but say so in the README.
+- The old `m3/fidelity/m3_fidelity.json` (pre-B1 numbers) sits beside `remeasure.json` with no marker in the
+  file or README; rename or annotate it.
+
+### Cluster-only (unchanged list, now with the author's evidence for each)
+
+MJWarp `seg` semantics on the floor (now indirectly proven by the 97.7 % static-pixel agreement), per-world
+`geom_rgba`/`mat_rgba` reaching the megakernel (Gate A bit flips; repo `dead_dims []` includes the two bits),
+graph capture inside `gl_rounding`, all fidelity/Gate F/tier numbers (job 6407605, gpu2109, md5-verified
+tree), and `tests/gpu/test_reproducibility.py` itself (the cross-process digest equality above is the same
+check run by hand).
+
+### Commands (re-review)
+
+```
+git log --oneline 1550ebdb..HEAD; git log --format='%B' 1550ebdb..HEAD | grep -ciE 'co-authored|generated with'   # 7 commits, 0
+git diff --stat 9923594..HEAD -- stable_envs/render tests/unit/test_mjwarp_*.py                                   # empty
+MUJOCO_GL=glfw se6-venv/python -m pytest tests/unit -q                                                             # 873/2/7
+PYTHONPATH=swm MUJOCO_GL=glfw se7-ogb-venv/python -m pytest tests/unit -q                                          # 885/2/20 (cell tests inside)
+PYTHONPATH=swm MUJOCO_GL=glfw se7-ogb-venv/python -m pytest tests/unit/test_ogb_manip.py -q                        # 26 passed
+se6-venv/python  (frames + corpus script)      # static-px agreement 0.9772/0.9754; pool[idx]==states; sha match; no constant dims
+PYTHONPATH=swm … rereview.py main              # tasks 1-5 tables, negative control, in-process reproducibility, rebind tracking
+PYTHONPATH=swm … rereview.py digest  (x2)      # cross-process digests equal
+PYTHONPATH=swm … (declared-vs-json script)     # worst-of-three equality, x1.3 rule, MEAN fields
+MUJOCO_GL=glfw se6-venv/python -c 'import stable_envs…'   # 76 ids, ogb_manip ModuleNotFoundError (C2)
+grep -n '0.92-0.95\|10-19\|parity_note' stable_envs/envs/ogb_manip.py                                              # C1, wording
+```

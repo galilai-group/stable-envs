@@ -679,7 +679,8 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: re-measurement complete (job 6407605 gpu2109); both cells registered at visual with repo-check Gate A clean; cell re-review requested; merge on APPROVE
+  status: 'cell re-review APPROVE-WITH-CHANGES (B1-B6 closed; three declaration items: stale composite text, import-time _bundle in class doc drops the ids without swm, mean-vs-worst labelling); fix requested;
+    final check then merge'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
@@ -927,6 +928,25 @@ workstreams:
       - cached Renderer held the old model
       tests: 859 passed, 21 skipped, 2 pre-existing failures
       blocked: re-measurement chain + slurm log commits need Oscar
+    rereview_7820af1c:
+      verdict: APPROVE-WITH-CHANGES
+      closed:
+      - B1 static-pixel agreement 0.9772/0.9754 (was 0.284/0.269)
+      - B2 tables equal swm's on tasks 1-5; negative control raises
+      - B3 identical digests in three interpreters
+      - B4 pool[indices]==states; sha match
+      - B5 24/30 dims no constants; repo dead_dims []
+      - B6 26 tests; tests/unit 885/2/20 with swm, 873/2/7 without
+      required:
+      - C1 stale 0.92-0.95/by-construction text in module doc, _bake_plate doc, _RESIDUAL_NOTE
+      - C2 class __doc__ evaluates _bundle at import (3.2 s; ids drop from the registry without swm)
+      - C3 interior/all_exact/interior_frac are means while measured_at claims worst
+      recommended:
+      - ogbench 1.2.1 in reference_versions
+      - parity_note wording
+      - m3_fidelity.json superseded
+      - check_order_invariance absent in this build
+      - floors 0.007-0.016 below worst vs DMC 0.04-0.06
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1259,6 +1279,8 @@ incident_log:
   item: 'W5: plate fix lifts OGBCube to interior 0.958 (from 0.351); chain resubmitted 6407605 after a spurious assertion'
 - date: '2026-09-15'
   item: W5 re-measured with the plate in use (Cube interior 0.958, Scene 0.922); registered; re-review requested
+- date: '2026-09-15'
+  item: 'W5 cell re-review: defects closed; three declaration fixes requested'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
