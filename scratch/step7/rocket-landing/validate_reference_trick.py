@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 
 import numpy as np
 from scipy.spatial.transform import Rotation as Rt
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.insert(0, ROOT)
 REF = os.path.join(ROOT, "examples", "results", "step7", "rocket-landing", "reference")
 DT = 1.0 / 240.0
 IGNITION_RGBA = [1.0, 0.3, 0.3, 0.8]
@@ -84,14 +86,20 @@ def main():
     env.reset(seed=0, options={"variation": ["all"]})
     rows = []
     idx = list(range(len(st)))
+    # the MODULE's recipe (float64 renormalisation, float32-aware pose check), not this file's older copy
+    from stable_envs.envs import rocket_landing as RL
+    sty_env = RL.corpus_style_to_env(S["style"])
     for i in idx:
-        frame, pe, qe = lagged_render(u, st[i], sty[i])
+        frame = RL._reference_frame(env, st[i], sty_env[i])
+        pos_, q_, *_ = (a_[0] for a_ in RL.lagged_pose(st[i][None]))
+        gp, gq = (np.array(a_) for a_ in p.getBasePositionAndOrientation(u.env.drones[0].Id, physicsClientId=u.env._client))
+        pe, qe = float(np.abs(gp - pos_).max()), float(1.0 - abs(np.dot(gq / np.linalg.norm(gq), q_)))
         d = int(np.any(frame != F[i], axis=-1).sum())
         rows.append({"i": i, "h": float(st[i][12]), "diff_px": d, "pos_err": pe, "q_err": qe})
     diffs = np.array([r["diff_px"] for r in rows])
     out = {"n": len(rows), "exact": int((diffs == 0).sum()), "max_diff_px": int(diffs.max()),
            "mean_diff_px": float(diffs.mean()), "pos_err_max": max(r["pos_err"] for r in rows),
-           "q_err_max": max(r["q_err"] for r in rows),
+           "q_err_max": max(r["q_err"] for r in rows), "recipe": "stable_envs.envs.rocket_landing._reference_frame (renormalised, float32-aware)",
            "nonzero": [r for r in rows if r["diff_px"]][:20], "s": round(time.time() - t0, 1)}
     print(json.dumps(out, indent=1))
     with open(os.path.join(REF, "reference_trick_validation.json"), "w") as fh:

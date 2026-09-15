@@ -53,8 +53,11 @@ def main():
          "versions": {k: _v(k) for k in ("torch", "nvdiffrast", "PyFlyt", "pybullet", "stable-worldmodel", "numpy", "scipy")}}
 
     sha_file = os.path.join(ROOT, ".git_sha")
-    R["provenance"] = {"sha": (open(sha_file).read().strip() if os.path.exists(sha_file)
-                               else os.popen(f"git -C {ROOT} rev-parse HEAD 2>/dev/null").read().strip() or None),
+    sha = (open(sha_file).read().strip() if os.path.exists(sha_file)
+           else os.popen(f"git -C {ROOT} rev-parse HEAD 2>/dev/null").read().strip() or "unknown")
+    # profile_note.py's two provenance fields: the commit of the tree this script lives in, and the
+    # stable_envs package ACTUALLY imported, resolved -- the only proof of which checkout was measured.
+    R["provenance"] = {"sha": sha, "baseline_commit": sha, "stable_envs_file": os.path.realpath(se.__file__),
                        "host": platform.node(), "slurm_job": os.environ.get("SLURM_JOB_ID"),
                        "threads": torch.get_num_threads(),
                        "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
@@ -123,39 +126,39 @@ def main():
     S = np.load(os.path.join(REF, "states.npz"))
     F = np.load(os.path.join(REF, "frames.npz"))["frames"]
     sty = RL.corpus_style_to_env(S["style"]).astype(np.float32)
-    # Two replays. The frames were recorded from float64 physics; the env holds float32 states, and the
-    # float32 rounding of a 400 m position (~3e-5 m) and of a quaternion (~3e-8) is a STATE change of
-    # its own (the reference's 199/200 byte-identity was shown from float64 obs30). Rendering from the
-    # float64 obs isolates the renderer's residual; rendering from state13 is what a consumer gets.
+    # ONE replay of our renderer -- render() casts states to float32, so obs30[:, :13] and state13 feed
+    # bit-identical tensors and there is exactly one measurement here. It contains TWO terms: the
+    # renderer's residual and the float32 quantisation of the state (the frozen frames were recorded from
+    # float64 physics). The second term is measured on its own below as reference_render(state13) vs the
+    # frozen frames (the same PyBullet renderer on the rounded state), and check_visual_fidelity, where
+    # both sides see the same float32 state, is the renderer-only number.
     R["corpus_replay"] = {}
-    for label, st in (("float64_obs", S["obs30"][:, :13].astype(np.float64)), ("float32_state13", S["state13"])):
-        ours = []
-        for lo in range(0, len(st), 16):
-            ours.append(env.render(torch.as_tensor(st[lo:lo + 16], dtype=torch.float32, device="cuda"),
-                                   style=sty[lo:lo + 16]).cpu().numpy())
-        ours = np.concatenate(ours)
-        rep = C.pixel_agreement(ours, F)
-        rep["ssim"] = float(C.ssim(ours, F))
-        d = np.abs(ours.astype(np.int16) - F.astype(np.int16))
-        per = d.mean(axis=(1, 2, 3))
-        rep["worst_frame_mean_abs"] = float(per.max())
-        rep["worst_frame_index"] = int(per.argmax())
-        rep["by_height"] = {}
-        h = S["height"]
-        for lo, hi in ((0, 12), (12, 50), (50, 260), (260, 500)):
-            m = (h >= lo) & (h < hi)
-            if m.any():
-                rep["by_height"][f"{lo}-{hi}m"] = {"n": int(m.sum()), "mean_abs": float(d[m].mean()),
-                                                  "within8": float((d[m].max(-1) <= 8).mean())}
-        R["corpus_replay"][label] = rep
-        if label == "float64_obs":
-            np.savez_compressed(os.path.join(OUTDIR, "corpus_replay_ours.npz"), frames=ours[:16], idx=np.arange(16))
-        print("corpus replay", label, json.dumps({k: v for k, v in rep.items() if k != "by_height"}), flush=True)
-        gate(f"corpus_replay_{label}", True, f"mean_abs {rep.get('mean_abs')} within8 {rep.get('within8_frac')} "
-             f"ssim {rep['ssim']:.4f} interior_exact {rep.get('interior_exact_frac')} (reported, no bar until declared)")
-        checkpoint()
-    # NOTE: the env casts states to float32 on entry, so the float64 replay differs from the float32 one
-    # only through lagged_pose's float64 renormalisation of a float32 quaternion -- both are reported.
+    st = S["state13"]
+    ours = []
+    for lo in range(0, len(st), 16):
+        ours.append(env.render(torch.as_tensor(st[lo:lo + 16], dtype=torch.float32, device="cuda"),
+                               style=sty[lo:lo + 16]).cpu().numpy())
+    ours = np.concatenate(ours)
+    rep = C.pixel_agreement(ours, F)
+    rep["ssim"] = float(C.ssim(ours, F))
+    d = np.abs(ours.astype(np.int16) - F.astype(np.int16))
+    per = d.mean(axis=(1, 2, 3))
+    rep["worst_frame_mean_abs"] = float(per.max())
+    rep["worst_frame_index"] = int(per.argmax())
+    rep["by_height"] = {}
+    h = S["height"]
+    for lo, hi in ((0, 12), (12, 50), (50, 260), (260, 500)):
+        m = (h >= lo) & (h < hi)
+        if m.any():
+            rep["by_height"][f"{lo}-{hi}m"] = {"n": int(m.sum()), "mean_abs": float(d[m].mean()),
+                                              "within8": float((d[m].max(-1) <= 8).mean())}
+    rep["contains"] = "renderer residual + float32 state quantisation (see state_quantisation_term)"
+    R["corpus_replay"]["ours_state13_vs_frozen"] = rep
+    np.savez_compressed(os.path.join(OUTDIR, "corpus_replay_ours.npz"), frames=ours[:16], idx=np.arange(16))
+    print("corpus replay ours(state13) vs frozen", json.dumps({k: v for k, v in rep.items() if k != "by_height"}), flush=True)
+    gate("corpus_replay_ours_state13_vs_frozen", True, f"mean_abs {rep.get('mean_abs')} within8 {rep.get('within8_frac')} "
+         f"ssim {rep['ssim']:.4f} interior_exact {rep.get('interior_exact_frac')} (reported; contains both terms)")
+    checkpoint()
 
     # ---- mandatory checks
     R["mandatory"] = {}
@@ -217,6 +220,17 @@ def main():
          f"fps(4096)/fps(256) = {R['batch_checks']['fps_4096_over_fps_256']} (bar 0.9)")
     checkpoint()
 
+    # ---- the state-quantisation term alone: PyBullet's own renderer at the float32 state vs the frozen
+    # frames it recorded from the float64 state. CPU-only; also runnable locally (corpus_replay_state32.py).
+    if not a.skip_reference:
+        ref = RL.PFRocketLanding.reference_env(480)
+        sq = state_quantisation_term(ref, S, F, RL.corpus_style_to_env(S["style"]))
+        R["corpus_replay"]["reference_state13_vs_frozen"] = sq
+        gate("corpus_replay_state_quantisation_term", True,
+             f"reference_render(state13) vs frozen: exact {sq['exact']}/{sq['n']} mean_abs {sq['mean_abs']:.3f} "
+             f"max diff px {sq['diff_px_max']} (the term the ours-vs-frozen row contains besides the renderer's)")
+        checkpoint()
+
     # ---- the two comparators ON THIS NODE, same job (certification §6.3): the official renderer's
     # frames/s (TinyRenderer through the swm env, warm; the numba JIT was paid at the reference reset)
     # and one core of JPEG-q90 decode of the env's OWN frames, from memory (the Phase-0 protocol).
@@ -249,6 +263,11 @@ def main():
         torch.set_num_threads(nt)
         # best CERTIFIED batch: never B = 1 (section 6.2)
         cert = [b_ for b_ in a.batches if b_ != 1]
+        if not cert:
+            R["tier"] = {"error": "no certifiable batch: --batches holds only B = 1 (section 6.2 never certifies on it)"}
+            gate("tier_frozen_definitions_same_node", False, R["tier"]["error"])
+            checkpoint()
+            return
         best_b = max(cert, key=lambda b_: thr.get(str(b_), 0.0))
         best = thr[str(best_b)]
         cf = cpu_frac.get(str(best_b))
@@ -313,6 +332,26 @@ def main():
     R["seconds"] = round(time.time() - t0, 1)
     checkpoint()
     print("wrote", out)
+
+
+def state_quantisation_term(ref, S, F, sty_env) -> dict:
+    """``reference_render(state13)`` vs the frozen frames: what float32 rounding of the state costs, alone."""
+    st = S["state13"].astype(np.float64)
+    diffs, exact, rej = [], 0, 0
+    for i in range(len(st)):
+        try:
+            fr = RL._reference_frame(ref, st[i], sty_env[i])
+        except AssertionError:
+            rej += 1
+            continue
+        d = np.abs(fr.astype(np.int16) - F[i].astype(np.int16))
+        px = int((d.max(-1) > 0).sum())
+        diffs.append((px, float(d.mean())))
+        exact += px == 0
+    return {"n": len(st), "rendered": len(diffs), "rejections": rej, "exact": exact,
+            "diff_px_max": max(p for p, _ in diffs) if diffs else None,
+            "diff_px_mean": float(np.mean([p for p, _ in diffs])) if diffs else None,
+            "mean_abs": float(np.mean([m for _, m in diffs])) if diffs else None}
 
 
 def _v(k):

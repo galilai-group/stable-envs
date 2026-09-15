@@ -402,13 +402,20 @@ def checker_texture() -> np.ndarray:
 
 
 def _optional_import_errors() -> dict:
-    """The optional dependencies a RENDER needs beyond nvdiffrast, each probed by importing it."""
+    """The optional dependencies a RENDER needs beyond nvdiffrast, probed by ``find_spec`` -- CHEAP, because
+    this runs at import on every machine (the import-time probe cost 0.87 s in review), and the
+    registration gate is the same either way: a package that is present is one this module can use."""
+    import importlib.util
     out = {}
-    for mod in ("scipy.spatial", "pybullet_data", "PIL.Image"):
+    for mod in ("scipy", "pybullet_data", "PIL"):
         try:
-            __import__(mod)
+            found = importlib.util.find_spec(mod) is not None
         except Exception as e:                                                # pragma: no cover
-            out[mod] = f"{type(e).__name__}: {e}"
+            found, why = False, f"{type(e).__name__}: {e}"
+        else:
+            why = "not installed"
+        if not found:
+            out[mod] = why
     return out
 
 

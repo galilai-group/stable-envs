@@ -200,14 +200,13 @@ def test_missing_backend_names_every_optional_dependency():
     msg = RL.missing_backend()
     if RL.NVDIFF_IMPORT_ERROR is not None:
         assert msg is not None and msg.startswith("nvdiffrast:")
-    for mod in ("scipy.spatial", "pybullet_data", "PIL.Image"):
-        try:
-            __import__(mod)
-        except Exception:
+    import importlib.util
+    for mod in ("scipy", "pybullet_data", "PIL"):
+        if importlib.util.find_spec(mod) is None:
             assert msg is not None and mod in msg
 
 
-def test_registered_iff_nvdiffrast_imports():
+def test_registered_iff_every_backend_dependency_is_present():
     import stable_envs as se
     if RL.missing_backend() is None:
         assert "PFRocketLanding" in se.REGISTRY

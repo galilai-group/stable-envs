@@ -39,14 +39,24 @@ the SET velocity until the POST-step velocity equals the recorded one, because B
 semi-implicit (`pos' = pos_prev + v1 dt`, `q' = exp(w1 dt) q_prev`, both exact) but a spinning
 composite multibody changes its own velocity by up to 0.03 m/s per substep (gyroscopic and offset-mass
 terms; `resetBasePositionAndOrientation` must precede `resetBaseVelocity`, it zeroes the velocity).
-**199/200 corpus frames byte-identical, the last off by 1 px; base landing error 7e-13 m — FROM THE
-FLOAT64 OBSERVATIONS.** The env holds float32 states: the float32 rounding of a 400 m position
+**199/200 corpus frames byte-identical, the last off by 1 px, base landing error 3.6e-15 m and
+rotation error 1.1e-16 — regenerated under the renormalised recipe now in the module
+(`reference_trick_validation.json`, `validate_reference_trick.py` calling `_reference_frame`) — FROM
+THE FLOAT64 OBSERVATIONS.** The quantisation term measured on its own
+(`tier/corpus_replay_state_quantisation_cis1b1zs2j3.json`, tree `aa54c2c` plus this commit's edits,
+which do not touch `_reference_frame`): PyBullet at the float32 `state13` vs the frozen frames over all
+200 states — 0 rejections, 9 exact, max 79 px, mean 11.4 differing px per frame, mean |diff| 0.0016/255. The env holds float32 states: the float32 rounding of a 400 m position
 (~3e-5 m) and of a quaternion (|q| = 1 ± 3e-8) is a state change of its own, and the reviewer measured
 what it costs (56/100 assertion failures and 3/100 exact frames under the first, float64-only tolerance).
 `lagged_pose` now renormalises the quaternion in float64 and the reference's pose check compares
-rotations sign-free with a float32-aware tolerance; the corpus replay in `measure_tier.py` is reported
-from BOTH the float64 obs (the renderer's residual alone) and the float32 `state13` (what a consumer
-gets). This is `PFRocketLanding.reference_render`.
+rotations sign-free with a float32-aware tolerance. The corpus replay is therefore TWO measurements
+with two renderers, not two labels on one: (i) our render of the float32 `state13` vs the frozen
+frames, which contains the renderer's residual PLUS the float32 state quantisation (``render`` casts
+its input to float32, so `obs30[:, :13]` and `state13` feed bit-identical tensors and cannot be
+told apart there); (ii) PyBullet's own `reference_render(state13)` vs the same frozen frames, the
+quantisation term alone (`scratch/step7/rocket-landing/corpus_replay_state32.py`,
+`tier/corpus_replay_state_quantisation_<host>.json`); `check_visual_fidelity`, where both sides see
+the same float32 state, is the renderer-only number. This is `PFRocketLanding.reference_render`.
 
 ### M2 · nvdiff extensions (`83db3cc`) — generic, defaults unchanged
 
@@ -69,13 +79,15 @@ the texture preparation. Local suite: `tests/unit` **805 passed, 36 skipped, 3 f
 (a) my back-face expectation, since fixed (29/29 on the two nvdiff files), (b)
 `test_examples[...render_mjwarp.py]` and (c) `test_every_cited_scratch_path_resolves` (12 Step-6
 citations of Oscar scratch paths under the `sboughan` home), **both of which fail identically on the untouched baseline** (`/Users/samib/stable-envs` at 76dc511,
-same interpreter). Measured with `tests/unit/test_examples.py` deselected (its one failure is a
-pre-existing `render_mjwarp.py --help` error): **baseline 713 passed / 1 failed** (the pre-existing
-dead-citation test); **branch after the review commit: 713 passed / 1 failed / 37 skipped**, the same single
-pre-existing failure (`test_every_cited_scratch_path_resolves`, on Step-6 citations of Oscar paths) and no `step7`
-path in its list — the branch returns to the baseline's failure set, after the review found that my own findings text had
-re-introduced two dead citations (a glob over this workstream's scratch directory that also matched
-gitignored run logs, and a job-script name that was never written).
+same interpreter). Measured totals, interpreter named because the skip count is a property of it (a package that is
+absent skips, one that is present runs): reviewer's interpreter — baseline 76dc511 full suite
+**823 passed / 2 failed**, branch **855 passed / 2 failed / 7 skipped**, the same two failures;
+branch with `test_examples` deselected **745 passed / 7 skipped**. My `se6-venv` on the Mac
+(`MUJOCO_GL=cgl`, many optional packages absent): branch with `test_examples` deselected **713
+passed / 1 failed / 37 skipped**, the one failure the pre-existing dead-citation test with no
+`step7` path in its list. The review found that my own findings text had twice re-introduced dead
+citations (a glob over this workstream's scratch directory that also matched gitignored run
+logs, and a job-script name that was never written) — fixed.
 
 ### M3 · the cell — `stable_envs/envs/rocket_landing.py`, `PFRocketLanding`
 

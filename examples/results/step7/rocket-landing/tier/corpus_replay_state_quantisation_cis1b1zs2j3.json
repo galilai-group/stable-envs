@@ -1,0 +1,33 @@
+{
+ "measurement": "reference_render(state13 float32) vs frozen frames (recorded from float64 physics)",
+ "result": {
+  "n": 200,
+  "rendered": 200,
+  "rejections": 0,
+  "exact": 9,
+  "diff_px_max": 79,
+  "diff_px_mean": 11.435,
+  "mean_abs": 0.0015832754629629628
+ },
+ "provenance": {
+  "sha": "aa54c2cc55233811f32a7e632f11ef16dfad993e",
+  "baseline_commit": "aa54c2cc55233811f32a7e632f11ef16dfad993e",
+  "stable_envs_file": "/Users/samib/stable-envs-step7-rocket-landing/stable_envs/__init__.py",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "slurm_job": null,
+  "threads": 1,
+  "load_average": [
+   3.666015625,
+   3.8779296875,
+   4.12109375
+  ],
+  "renderer": "PyBullet DIRECT / TinyRenderer via PyFlyt (CPU)",
+  "versions": {
+   "PyFlyt": "0.29.0",
+   "pybullet": "3.2.7",
+   "stable-worldmodel": "0.1.1",
+   "numpy": "2.5.3"
+  }
+ },
+ "seconds": 12.2
+}
