@@ -14,7 +14,7 @@ workstreams:
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: b12af5c (W1 COMPLETE, merged)
+  head_sha: f21f60c (tier-final; merged)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -204,6 +204,18 @@ workstreams:
     expected_movement: S_cpu likely up (one-core reference slower), R likely down (reference on the card faster); cores unchanged 0.263 / 15.40
     round2: '6409541 FAILED (taskset invalid under SLURM cpuset) -> 6409933 with --cpus-per-task=1; 6409542 COMPLETED but jax backend was cpu (jax[cpu] venv) -> reference timed on CPU at 258.9 f/s (0.67x
       the earlier 386.7 on another host: why cross-machine inference is forbidden); 6409934 builds $SCR/venvs/se7-craftax-gpu (jax[cuda12]==0.11.1) and verifies default_backend()==''gpu'' before timing'
+  tier_final:
+    cpu: 'CPU_FASTER (BELOW_G4): S_cpu 2.80 paired / 5.39 sweep; cores 0.263; official jitted 213.44 f/s on node2335 with cgroup affinity [8] (job 6409933)'
+    gpu: 'GPU_FASTER (BATCH_SCALES): R 316.0 paired / 304.5 sweep; cores 15.40; official jitted 151.68 f/s on gpu2109 with jax backend gpu from a separate se7-craftax-gpu venv (job 6409934)'
+    rejected_timings:
+    - '610.6 f/s CPU: jax not one-core'
+    - '386.7 f/s GPU: JAX_PLATFORMS=cpu'
+    - '258.9 f/s GPU: jax[cpu] venv'
+    notes:
+    - official is slower on the GPU than on the CPU (single-frame launch latency)
+    - 'un-jitted reference times 1.2 f/s on both: why GPU_EXCEPTIONAL was never defensible'
+    - NO_REFERENCE row retained as the reference-free reading, no longer the label
+    tests: 839 passed 37 skipped
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -1364,6 +1376,8 @@ incident_log:
   item: 'W1: prior jitted timings inadmissible under the ruling''s conditions; re-take jobs submitted'
 - date: '2026-09-15'
   item: 'Craftax reference re-takes: CPU under cgroup one-core; GPU needs a CUDA-jax venv (building); W2''s GPU job cancelled before an inadmissible artifact'
+- date: '2026-09-15'
+  item: 'W1 tier-final merged: CPU_FASTER / GPU_FASTER under admissible references'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
