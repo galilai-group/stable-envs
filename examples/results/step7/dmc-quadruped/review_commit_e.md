@@ -337,3 +337,181 @@ MUJOCO_GL=glfw OMP_NUM_THREADS=1 se6-venv/bin/python <scratch>/digest.py <tree> 
 se6-venv/bin/python <inline> : recompute declaration fields from visual_calib_311 rows
 se6-venv/bin/python <inline> : simulate the bounds test with kind_cost_ellipsoid_*_agg.json at the read path
 ```
+
+---
+
+# Final verification before merge — tip `31bd3e9`
+
+Re-check of `ad842a8` + `656f9db` (e2) + merge `b5c56ea` of `step7/integration` `5adc501` +
+`31bd3e9` (INTEG-1 loader hook). Same environment; worktree read-only and unmodified (only the three
+pre-existing untracked `localize_*` dirs remain — the two `sweep_quiet_*.sbatch` are now committed).
+Comparison trees made with `git archive | tar -x`.
+
+## VERDICT: APPROVE
+
+Both defects are fixed at the level I asked for, the INTEG-1 hook is minimal and provably
+pixel-neutral, and hygiene is clean over the whole range. One item to hand back to **integration,
+not W4** (see the note under item 2).
+
+### (1) DEFECT A — FIXED
+
+`tests/unit/test_raycast3d_primitive_bounds.py` now reads:
+
+```python
+assert min(worst) <= 1.0, (
+    f"{kind} is unbounded but its worst ratio is > 1 in every run ({min(worst):.2f})")
+```
+
+— the honest complement of `bounded iff worst > 1 in every run`, with a comment naming the straddle
+that made the old `max(best) < 1.0` unsatisfiable. The aggregate is now committed **at the read
+path**, `phase1/cpu_oscar/kind_cost_ellipsoid.json`, so the branch is live rather than inert. I
+replayed the merge logic against the committed files:
+
+```
+read path exists: True
+ELLIPSOID predicate: False -> measured set: ['BOX', 'CAPSULE', 'CYLINDER']   == _BOUNDED_KINDS ✓
+  SPHERE    bounded=False min(worst)=0.272 clause_ok=True
+  BOX       bounded=True  min(worst)=1.109 clause_ok=True      (Step-6 frozen row, not the loaded 0.949)
+  CYLINDER  bounded=True  min(worst)=1.229 clause_ok=True
+  CAPSULE   bounded=True  min(worst)=1.468 clause_ok=True
+  ELLIPSOID bounded=False min(worst)=0.695 clause_ok=True      -> green UNBOUNDED verdict
+```
+`pytest …::test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose` passes. Only the
+ELLIPSOID rows are merged from the Step-7 file, so the contaminated BOX row cannot displace the
+frozen table. Admission is still two-sided: `predicate true` would require `min(worst) > 1.0` **and**
+a matching `_BOUNDED_KINDS` edit. `ELLIPSOID` remains absent from `_BOUNDED_KINDS`.
+
+**Recommendation A2 also taken**: `kind_cost_ellipsoid.json` now carries an in-band `load_note`
+(node1913 job 6394722, the paired sweep's load 34.5, BOX's run-2 collapse to 0.95 against the frozen
+1.11–1.13) plus a `provenance` block (git commit, merged commit, host, job).
+
+### (2) DEFECT B — FIXED at W4's tip; the tip's 18 are inherited from integration
+
+Computed with the test's own `CITATIONS`/`_expand` on extracted trees:
+
+| commit | broken cited scratch paths |
+|---|---|
+| `76dc5116` (baseline) | 9 |
+| `656f9db` (W4's e2 tip, pre-merge) | **9 — set is byte-identical to the baseline's** |
+| `5adc501` (step7/integration) | 19 |
+| `b5c56ea` / `31bd3e9` (tip) | 18 |
+
+```
+diff <(sort cits_656f9db) <(sort cits_76dc5116)      -> IDENTICAL
+comm -23 <(sort cits_31bd3e9) <(sort cits_5adc501)   -> (empty)   # the tip adds nothing over integration
+comm -13 <(sort cits_31bd3e9) <(sort cits_5adc501)   -> scratch/step7/dmc-quadruped/sweep_quiet_{cpu,gpu}.sbatch
+```
+So W4 introduces **zero** dangling citations, and the merge actually *repairs* one integration entry
+(the dashboard cited W4's then-uncommitted `sweep_quiet_*.sbatch`, which e2 commits). The author's
+"citation set = baseline 9" is exactly true of the W4 tree.
+
+**Hand-back to integration (not a W4 defect).** The 9 tip-only entries all come from documents that
+live on `step7/integration`:
+```
+scratch/sboughan/venvs/ , .../se-step5/** , .../se-vis311/**   <- examples/results/step7/dmc-quadruped/review_commit_e.md
+scratch/sboughan/se7/dmc-manipulator/stable_envs/__init__.py   <- dmc-manipulator review_phase1.md + profile/*.md
+scratch/step7/rocket-landing/* , /measure_tier.py , /nvdiff_identity.py ,
+scratch/.../measure_tier.py , scratch/.../oscar_fidelity.sbatch <- rocket-landing review_phase1.md
+```
+The first three are my own review report quoting the very paths it asked W4 to scrub — the scanner
+reads prose in `examples/**/*.md` as citations. Suggest an integration-level fix (exempt
+`examples/results/**/review_*.md`, or quote such paths in a non-matching form) and re-baselining the
+expected count; W4 should not be asked to carry it.
+
+### (3) INTEG-1 hook — minimal, confined, complete
+
+`git diff -U0 b5c56ea..31bd3e9 -- stable_envs/envs/dmcontrol.py` hunk headers:
+`@@ -982,0 +983,13`, `-1005`, `-1295`, `-1314,2`, `-1321`, `-1323`, `-2891,7`, `-2902,53`.
+Region map at `b5c56ea`: `_DMCModel` **924–1364**, `DMControlSuite` **1365–2396**,
+`DMControlTrackCom` **2491–2836**, `_SWMQuadrupedModel` **2890–**. So every hunk is either in
+`_DMCModel` or in the mixin: **W3's `DMControlSuite` region and `DMControlTrackCom` are untouched.**
+
+The base edit is exactly hook + call lines: a new `_load_env(cls, seed)` classmethod (one statement
+plus docstring) and three call sites — `_bundle`, `sample_states`, `reference_env` — each a
+one-line `_suite().load(...)` → `cls._load_env(...)` swap, plus `reference_env`'s signature
+`size: int = 84` → `size: int | None = None` with `int(size or cls.default_size)`. Nothing else in
+the base changed. The mixin drops 53 lines of copied `_bundle`/`sample_states`/`reference_env` and
+keeps `default_size = 224` + a two-line `_load_env`.
+
+`grep -n "_suite().load(" stable_envs/envs/dmcontrol.py` → **one hit, line 994, inside `_load_env`
+itself**. No base loader calls it directly.
+
+The replacement test is stronger than the one it retires: it asserts
+`vars(_SWMQuadrupedModel) == {default_size, _load_env}`, that `cls._bundle/​reference_env/​sample_states`
+**are** `_DMCModel`'s function objects, that each base loader's source contains `_load_env(` and no
+`_suite().load(`, that the hook *is* overridden, and the two sizes. Passes.
+
+Benign behaviour note: `_DMCModel.default_size == 84`, so bare `reference_env()` is unchanged for
+every suite/trackcom cell; for the two 224-px cells (`DMCManipulatorBringBall`, `DMCQuadrupedWalk`)
+it now returns 224 instead of 84, which is the correct size and matches the old mixin override.
+The only bare DMC caller anywhere is `scratch/step_bench.py`; every shipped caller
+(`conformance.py`, the gpu/unit tests, `examples/*`) passes `size` explicitly.
+
+### (4) Byte identity vs integration `1d9dccb` — 9/9, 0 px
+
+CPU, `batch=4`, states from `sample_states(4, rng=default_rng(0))` in each tree, at each cell's
+registered default size; raw `uint8` buffers compared elementwise.
+
+```
+DMCCheetahRun             px_differing=0 max_abs=0 states_equal=True
+DMCHopperHop              px_differing=0 max_abs=0 states_equal=True
+DMCWalkerWalk             px_differing=0 max_abs=0 states_equal=True
+DMCHumanoidStand          px_differing=0 max_abs=0 states_equal=True
+DMCQuadrupedWalk  (224)   px_differing=0 max_abs=0 states_equal=True
+DMCManipulatorBringBall (224) px_differing=0 max_abs=0 states_equal=True
+DMCReacherEasy            px_differing=0 max_abs=0 states_equal=True
+DMCCartpoleSwingup        px_differing=0 max_abs=0 states_equal=True
+DMCFingerSpin             px_differing=0 max_abs=0 states_equal=True
+```
+The four trackcom cells, quadruped, W3's manipulator, plus three `DMControlSuite` cells that exercise
+the rewritten base loaders. **`states_equal` is also true everywhere**, so `sample_states` through the
+hook reproduces the copies bit-for-bit — the hook is neutral on the state distribution as well as on
+the pixels.
+
+### (5) `tests/unit` on the branch
+
+```
+MUJOCO_GL=glfw OMP_NUM_THREADS=1 pytest tests/unit -q -p no:randomly --deselect tests/unit/test_examples.py
+-> 1 failed, 812 passed, 7 skipped, 111 deselected
+```
+Exactly the author's numbers, and the single failure is `test_every_cited_scratch_path_resolves` —
+inherited from integration, zero W4 contribution (item 2). No other failure.
+
+### (6) Hygiene over `76dc5116..31bd3e9`
+
+```
+git log --format=%B 76dc5116..31bd3e9 | grep -ciE "co-authored-by|generated with"  -> 0
+git log --format='%an <%ae>' 76dc5116..31bd3e9 | sort -u -> sami-bg <samibghanem@gmail.com>
+git diff --stat 76dc5116..31bd3e9 -- examples/results/step4 examples/results/step5 \
+                                     examples/results/step6                        -> (empty)
+```
+0 trailers, single author (including every commit that arrived through the integration merge), frozen
+Step-4/5/6 result trees untouched.
+
+### Earlier nits — status
+
+| nit | status |
+|---|---|
+| `interior_exact_frac` 0.205 (median) | fixed → **0.206** (rounded mean) |
+| `_QUADRUPED_AT` crediting gpu2104 | fixed → job 6394987 / gpu2107, with the overwrite explained |
+| artifacts missing host/job/commit stamps | fixed — `visual_calib_*`, the three identity JSONs, gateA, localize, kind-cost all carry provenance blocks now |
+| kind-cost contamination only in findings.md | fixed — in-band `load_note` |
+| §P6 untracked inventory incomplete | `sweep_quiet_*.sbatch` committed; the `localize_*/frames/` + `localize_312/sheets/` remain untracked as documented |
+| Gate A artifacts predate the shipped declaration | still true by construction; all four measured VF observations clear 4.6 / 0.85 / 0.90, verified earlier |
+
+## Commands run (final pass, abridged)
+
+```
+git diff ad842a8..656f9db --stat ; -- tests/unit/test_raycast3d_primitive_bounds.py stable_envs/envs/dmcontrol.py
+git diff b5c56ea..31bd3e9 -- stable_envs/envs/dmcontrol.py tests/unit/test_cpu3d.py
+git diff -U0 b5c56ea..31bd3e9 -- stable_envs/envs/dmcontrol.py | grep '^@@'
+git show b5c56ea:stable_envs/envs/dmcontrol.py | grep -n '^class '      # region map
+grep -n "_suite().load(" stable_envs/envs/dmcontrol.py
+for c in 656f9db 5adc501 b5c56ea 76dc5116; do git archive $c | tar -x -C <scratch>/t_$c; \
+   pytest tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves ; done
+git archive 1d9dccb | tar -x -C <scratch>/t_1d9dccb
+MUJOCO_GL=glfw OMP_NUM_THREADS=1 pytest tests/unit -q -p no:randomly --deselect tests/unit/test_examples.py
+MUJOCO_GL=glfw pytest …::test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose \
+                     …::test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size
+MUJOCO_GL=glfw OMP_NUM_THREADS=1 python <scratch>/ident2.py <tree> <out> <9 configs>   # both trees
+```
