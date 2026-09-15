@@ -904,6 +904,126 @@ SLURM: **6409703** (`se7-rocket-refreeze`, exited 2 on gpu2264 at six seconds, p
 excluding gpu2108/2110/2113/2116 plus gpu2104, gpu2109 (broken `mujoco.GLContext`) and gpu2264; none
 cancelled; no `simclr` job touched.
 
+### M7 · CLOSURE-1 — localised, fixed, MEASURED, and reverted at the stop condition
+
+**Classification: BLOCKER (one decision for Sami).** The closure sweep's FINDING CLOSURE-1 —
+`tests/unit/test_nvdiff_triangles.py::test_from_triangles_clip_row_is_independent_of_batch_size` fails
+on x86-64 CPU — is now localised to the exact product, a fix exists that costs nothing on CPU, and the
+fix was measured on the card. It **moves four of the six locomotion cells' frame digests**, which is a
+second correctness re-freeze, so under the rule it was authorized under it is **reverted** and the
+decision goes to Sami. `stable_envs/render/nvdiff.py` is byte-identical to `4eb1c35` again.
+
+Provenance: branch merged with `step7/integration` (fast-forward to `38ffd94`; the W6 tip `4eb1c35` is
+an ancestor, so nothing of W6 moved). Fix commit `4dc3d4b`, measured by job **6419904**
+(`se7-rocket-closure1`, gpu2106, NVIDIA GeForce RTX 3090, 4 threads, node load 5.56 / 5.80 / 6.96,
+elapsed **00:03:15**, `COMPLETED`), against the re-freeze artifact of job 6410105 (tree `726241e`,
+the same card model). x86-64 CPU evidence from **login009** at 1, 2 and 4 threads
+(`$SCR/venvs/se-step6`, torch 2.14.0+cu126) and from gpu2106's own CPU. Artifacts under
+`closure1/`, log `logs/se7-rocket-closure1_6419904.out` verbatim.
+
+#### The instruction's premise was false, and the measurement says so
+
+The fix I was handed was "implement `mvp_rows` with explicit per-element products and sums in float64
+(no matmul at all)". `mvp_rows` has contained no matmul since `d1e61a1` — it is already four unrolled
+elementwise products summed in a fixed order, in float64, cast once. The sweep's own numbers agree:
+`mvp_rows` is **bit-identical at every width on both architectures**, and so are `clip`'s normals and
+world positions; only the positions move. Applying the instruction literally would have changed
+nothing and left the test failing, so it was localised first
+(`scratch/step7/rocket-landing/probe_clip_cpu_batch.py`, which measures each stage separately against
+the full-batch prefix).
+
+**x86-64, login009, `OMP_NUM_THREADS=1` (identical at 2 and 4):**
+
+| width | `mvp_rows` | `torch.sparse.mm(S4, ·)` ISOLATED, on bit-identical input | the explicit contraction | `Scene.clip` positions |
+|---|---|---|---|---|
+| 1 | identical | **12 of 32 differ**, 3.05e-05 | identical | identical (with the fix) |
+| 2 | identical | **20 of 64 differ**, 3.05e-05 | identical | identical (with the fix) |
+| 3 | identical | **26 of 96 differ**, 3.05e-05 | identical | identical (with the fix) |
+| 7, 8, 31, 32, 63 | identical | identical | identical | identical |
+
+So the defect is `torch.sparse.mm`, not the mvp, and it reaches **width 3** as well — the sweep
+sampled 1, 2, 7, 8, 31, 32, 63 and could not have seen that. `S4` has exactly four nonzeros per row
+(vertex `v`'s homogeneous local position in geom `g(v)`'s four columns), so every output element is a
+sum of four products whose order is the kernel's to choose, and it chooses by the dense operand's
+column count, `4·B`. It is the same class of defect `mvp_rows` fixed, one product later.
+
+#### The fix, and why it is the float32 one
+
+`Scene._pos_rows` writes that four-term sum out in ascending column order — four `index_select`s and
+three adds, `mul_`/`add_` so one gathered block is live at a time (peak twice the output, not the
+`(B, V, 4, 4)` gather the sparse form exists to avoid), and deliberately **not** `addcmul_`, which may
+contract into an FMA and would put the rounding back under the backend's control.
+
+Accumulated in **float64** it differs from the shipped kernel in 12 of 2048 elements — it is the
+correctly rounded value and the kernel's is not. Accumulated in the **input dtype** it reproduces
+`torch.sparse.mm` bit for bit: 0 of 2048 on arm64, 0 of 2048 on x86-64, at every thread count. That is
+why the float32 form was chosen over the float64 one the instruction asked for: it removes the
+kernel's freedom without changing the arithmetic.
+
+On x86-64 it does exactly what it was meant to: **`tests/unit/test_nvdiff_triangles.py` → 18 passed**
+on login009 (x86-64, torch 2.14.0+cu126), the file whose batch-size test the sweep recorded as
+failing there.
+
+#### Why it is reverted anyway
+
+On **CUDA** the same form does **not** reproduce the kernel. Job 6419904, six cells, 64 states each at
+240 px, against the re-freeze artifact's own per-cell sha256:
+
+| cell | digest vs re-freeze | mean_abs Δ | within-8 Δ | SSIM Δ |
+|---|---|---|---|---|
+| `MujocoHalfCheetah` | **identical** | 0 | 0 | 0 |
+| `MujocoHopper` | **identical** | 0 | 0 | 0 |
+| `MujocoWalker2d` | **differs** | 0 | 0 | +1.21e-10 |
+| `MujocoAnt` | **differs** | +2.71e-07 | 0 | −3.83e-10 |
+| `MujocoHumanoid` | **differs** | 0 | 0 | −1.34e-09 |
+| `MujocoSwimmer` | **differs** | 0 | 0 | +5.90e-11 |
+
+(the state draws are bit-identical on both sides — `states_match: true` for all six.) cuSPARSE
+evidently accumulates the four products differently from the CPU kernels, almost certainly with an
+FMA, so writing the sum out changes the value there even though it does not on either CPU.
+
+Four cells moving is **a second correctness re-freeze**, and the rule this work was authorized under
+says to stop and report rather than re-baseline. So `stable_envs/render/nvdiff.py` is restored to
+`4eb1c35` and CLOSURE-1 stays open, in the state the sweep already recorded it in.
+
+For the ruling, the size of what a second re-freeze would cost is measured rather than guessed, and it
+is smaller than the first one: the largest aggregate move is **2.7e-07** of `mean_abs` and **1.3e-09**
+of SSIM, against declaration headrooms of 1.15-1.46 and 0.021-0.031 — five to seven orders of
+magnitude inside, where the first re-freeze was three to five. All seven declared-fidelity assertions
+still PASS on the card with the fix in
+(`closure1/conformance_closure1.txt`: **2 failed, 229 passed, 63 skipped**, the two failures being the
+same two known ones — colour knobs and the missing `DOWNSAMPLE_EXACT_FRAC` entry), and
+`test_frame_i_is_independent_of_batch_size` passes for all seven cells.
+
+#### The decision, stated plainly
+
+Three options, and the choice is Sami's:
+
+1. **Take the fix and accept a second re-freeze of four cells** at 2.7e-07 of `mean_abs` / 1.3e-09 of
+   SSIM. The renderer is then provably batch-invariant on every backend — no sparse kernel left in the
+   transform path — and CLOSURE-1 closes. The evidence for it is `closure1/digest_vs_refreeze.json`;
+   the patch is `4dc3d4b`.
+2. **Leave the renderer alone and correct the test's claim** to what is certified: bitwise batch-size
+   invariance on CUDA (which the mandatory `check_batch_size_invariance` enforces per-env on the card,
+   and which passes for all seven cells), with the CPU path asserted to one float32 ulp and the
+   mechanism named. That is a `tests/` change, which is frozen and not this workstream's to make.
+3. **Leave both and carry CLOSURE-1 into Step 8** as a known failing test on the certification host,
+   which is where the sweep left it.
+
+Recommendation: **(1)**, because the alternative is a renderer whose output depends on how many rows
+share a call on one architecture, and the cost is now measured and is smaller than the re-freeze
+already accepted. But it is a contract decision and it is not taken here.
+
+#### Also recorded
+
+* The normal and world-position stages use the same sparse kernel and the same latent freedom. Both
+  are measured bit-identical at every width on both architectures, so they are **measured invariant,
+  not provably invariant** — and the explicit rewrite of the normals does not reproduce the kernel's
+  value on arm64 (544 of 1536 elements, one ulp near 1.0) though it does on both x86 CPUs, so touching
+  them would trade a fix for a change. Left alone, recorded as what they are.
+* `tests/unit` on arm64 at this tip: **925 passed, 9 skipped, 1 failed** — the citation scanner, now
+  listing **10** entries (CLOSURE-2's growth from 9, none of them a `step7/rocket-landing` citation).
+
 ---
 
 # Phase 0 — the feasibility gate (as delivered, unchanged)

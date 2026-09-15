@@ -1,0 +1,228 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6419904
+##  Job Name : se7-rocket-closure1
+##  Nodelist : gpu2106
+##      CPUs : 
+##  Mem/Node : 49152 MB
+## Directory : /oscar/scratch/sboughan/se7/rocket-landing
+##   Job Started : Tue Sep 15 05:48:27 PM EDT 2026
+###############################################################################
+NODE gpu2106 JOB 6419904 GPU NVIDIA GeForce RTX 3090 SHA 4dc3d4bcebef18a8b1b14b3a7b18fe438ef79069 LOAD 5.56 5.80 6.96
+EGL_OK on gpu2106
++ tail -20
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ OMP_NUM_THREADS=1
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python /oscar/scratch/sboughan/se7/rocket-landing/scratch/step7/rocket-landing/probe_clip_cpu_batch.py --out /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/probe_clip_cpu_batch_gpunode.json
+/oscar/scratch/sboughan/se7/rocket-landing/stable_envs/render/nvdiff.py:802: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
+/oscar/scratch/sboughan/se7/rocket-landing/stable_envs/render/nvdiff.py:803: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+1 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+2 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+3 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+7 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+8 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+31 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+32 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+63 {"mvp_rows": true, "spmm_stage_on_identical_input": true, "explicit64_stage_on_identical_input": true, "explicit32_stage_on_identical_input": true, "clip_pos": true, "clip_nrm": true, "clip_worldpos": true}
+  explicit64_vs_spmm_full_batch      identical=False n_differing=12/2048 max 1.526e-05
+  explicit32_vs_spmm_full_batch      identical=True n_differing=0/2048 max 0.000e+00
+  inplace32_vs_spmm_full_batch       identical=True n_differing=0/2048 max 0.000e+00
+  inplace32_vs_outofplace32          identical=True n_differing=0/2048 max 0.000e+00
+  nrm_explicit_vs_spmm               identical=True n_differing=0/1536 max 0.000e+00
+  wp_explicit_vs_spmm                identical=True n_differing=0/1536 max 0.000e+00
+wrote /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/probe_clip_cpu_batch_gpunode.json
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python /oscar/scratch/sboughan/se7/rocket-landing/scratch/step7/rocket-landing/refreeze_locomotion.py --phase render --tag branch --out /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1
++ grep -v 'UserWarning\|sparse_coo_tensor\|to_sparse_csr\|  self.S4\|  (self.V'
+branch MujocoHalfCheetah {"sha256": "17cf24506ae10a70", "vf": 4.042102322048611, "ds": 0.7658181423611111}
+branch MujocoHopper {"sha256": "f6f2aef63d97a4ab", "vf": 4.496076388888889, "ds": 0.6957986111111111}
+branch MujocoWalker2d {"sha256": "1b592fdf6e3f5109", "vf": 3.9216289605034724, "ds": 0.7613563368055556}
+branch MujocoAnt {"sha256": "9f07c0a34a7a27ff", "vf": 3.4481212022569445, "ds": 0.7707096354166667}
+branch MujocoHumanoid {"sha256": "0f28b4ff98ee91ca", "vf": 4.4825634765625, "ds": 0.68287109375}
+branch MujocoSwimmer {"sha256": "cf1ecc4f88a084e9", "vf": 1.9697591145833333, "ds": 0.9105967881944445}
+wrote /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch.json
++ rm -f /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch_MujocoAnt.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch_MujocoHalfCheetah.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch_MujocoHopper.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch_MujocoHumanoid.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch_MujocoSwimmer.npz /oscar/scratch/sboughan/se7/rocket-landing/examples/results/step7/rocket-landing/closure1/branch_MujocoWalker2d.npz
++ set +x
+  MujocoHalfCheetah    identical=True 17cf24506ae10a70
+  MujocoHopper         identical=True f6f2aef63d97a4ab
+  MujocoWalker2d       identical=False 1b592fdf6e3f5109
+  MujocoAnt            identical=False 9f07c0a34a7a27ff
+  MujocoHumanoid       identical=False 0f28b4ff98ee91ca
+  MujocoSwimmer        identical=False cf1ecc4f88a084e9
+CLOSURE1_ALL_IDENTICAL False
++ PYTHONPATH=/oscar/scratch/sboughan/se7/rocket-landing
++ /oscar/scratch/sboughan/venvs/se7-rocket/bin/python -m pytest tests/gpu/test_conformance.py tests/gpu/test_reproducibility.py -q -rA -p no:cacheprovider -k 'PFRocketLanding or MujocoHalfCheetah or MujocoHopper or MujocoWalker2d or MujocoAnt or MujocoHumanoid or MujocoSwimmer'
++ set +x
+===== batch-size + declared fidelity =====
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[PFRocketLanding]
+===== failures =====
+FAILED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]
+===== pytest line =====
+FAILED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]
+2 failed, 229 passed, 63 skipped, 2656 deselected, 3 warnings in 160.73s (0:02:40)
+===== digests =====
+{
+ "refreeze_job": "6410105",
+ "refreeze_sha": "726241e8d03aec59789562839d658f87c8ae2891",
+ "new_job": "6419904",
+ "new_sha": "4dc3d4bcebef18a8b1b14b3a7b18fe438ef79069",
+ "refreeze_gpu": "NVIDIA GeForce RTX 3090",
+ "new_gpu": "NVIDIA GeForce RTX 3090",
+ "cells": {
+  "MujocoHalfCheetah": {
+   "identical": true,
+   "sha256_refreeze": "17cf24506ae10a70d49ab61e8621c215aae3bdc5d9edab4f72b04aa03d73769b",
+   "sha256_new": "17cf24506ae10a70d49ab61e8621c215aae3bdc5d9edab4f72b04aa03d73769b",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 4.042102322048611,
+     "new": 4.042102322048611,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8755037434895834,
+     "new": 0.8755037434895834,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9666149775667918,
+     "new": 0.9666149775667918,
+     "delta": 0.0
+    }
+   }
+  },
+  "MujocoHopper": {
+   "identical": true,
+   "sha256_refreeze": "f6f2aef63d97a4ab1ed0dc44d581e1a51cf664678fc0e2393361728baae850d4",
+   "sha256_new": "f6f2aef63d97a4ab1ed0dc44d581e1a51cf664678fc0e2393361728baae850d4",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 4.496076388888889,
+     "new": 4.496076388888889,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8408840603298611,
+     "new": 0.8408840603298611,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9480581061036963,
+     "new": 0.9480581061036963,
+     "delta": 0.0
+    }
+   }
+  },
+  "MujocoWalker2d": {
+   "identical": false,
+   "sha256_refreeze": "d95e510e20776cb1c8bd98173ac64ac606f13b1c1225f6ce23dab437b6b46ce0",
+   "sha256_new": "1b592fdf6e3f51099c44efe6cc3e44d4c2e7b0e9ce3198a09ccdbc7d5f84ed84",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 3.9216289605034724,
+     "new": 3.9216289605034724,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8683501519097222,
+     "new": 0.8683501519097222,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9472446274770048,
+     "new": 0.9472446275981085,
+     "delta": 1.211036826376244e-10
+    }
+   }
+  },
+  "MujocoAnt": {
+   "identical": false,
+   "sha256_refreeze": "b66388957cbff3231d0c587e1815d51cd459247cb5002823639cec5f848f26c1",
+   "sha256_new": "9f07c0a34a7a27ff552cf4c232922b7e1536710bfbc2214090ac0ae6cc56a26f",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 3.4481209309895835,
+     "new": 3.4481212022569445,
+     "delta": 2.712673610183458e-07
+    },
+    "within8_frac": {
+     "refreeze": 0.8918359375,
+     "new": 0.8918359375,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9775813195465721,
+     "new": 0.9775813191638391,
+     "delta": -3.8273306746106073e-10
+    }
+   }
+  },
+  "MujocoHumanoid": {
+   "identical": false,
+   "sha256_refreeze": "30948a9b3d1a23074dfe646e38e4cf682d364e048c12a3e1fe45ff8ae65a8bf1",
+   "sha256_new": "0f28b4ff98ee91ca0a62907123dd17af5ddc450c7eae93fea98149236cf3eaec",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 4.4825634765625,
+     "new": 4.4825634765625,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8359768337673611,
+     "new": 0.8359768337673611,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9510166411383317,
+     "new": 0.9510166397979822,
+     "delta": -1.3403494980579467e-09
+    }
+   }
+  },
+  "MujocoSwimmer": {
+   "identical": false,
+   "sha256_refreeze": "389858758e2b5a030253555f437fc53b52702402300ff606891c5c026f172eef",
+   "sha256_new": "cf1ecc4f88a084e902a1fd9d3ffc254c4676e1ddf857fe2c6a7b789b943c5757",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 1.9697591145833333,
+     "new": 1.9697591145833333,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.9443351236979166,
+     "new": 0.9443351236979166,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.982195151915572,
+     "new": 0.9821951519745826,
+     "delta": 5.901057420487632e-11
+    }
+   }
+  }
+ },
+ "all_identical": false
+}S7CLOSURE1 done on gpu2106 at 4dc3d4bcebef18a8b1b14b3a7b18fe438ef79069
