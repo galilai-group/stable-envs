@@ -153,6 +153,7 @@ workstreams:
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; review APPROVE-WITH-CHANGES -> re-check APPROVE; integration tests running
     auto_merged: tests/unit/test_declarations.py (W4 + W1 hunks)
+    integration_tests: 'tests/unit on 9ca318f: se6-venv 795 passed 7 skipped (test_examples + pre-existing scratch-path test deselected); se7-craftax-venv craftax/prng/declarations subset 135 passed 5 skipped'
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
