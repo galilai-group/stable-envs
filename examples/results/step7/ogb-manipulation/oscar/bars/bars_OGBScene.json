@@ -1,0 +1,66 @@
+{
+ "bar_S_cpu_ge_5_abs_fps": 25.832879803712075,
+ "bar_cores_cpu_ge_1_abs_fps": 2105.9919560791827,
+ "binding_bar_abs_fps": 2105.9919560791827,
+ "binding_bar_ns_per_pixel": 11.870890545348328,
+ "button_bit_pixel_share": {
+  "00": 0.0,
+  "01": 0.0118,
+  "10": 0.0103,
+  "11": 0.0221
+ },
+ "button_bits_change_frame": true,
+ "decode_fps_per_core": 2105.9919560791827,
+ "decode_fps_per_core_blocks": [
+  1969.3147051769922,
+  2085.177542155183,
+  2054.1402817499074,
+  2105.9919560791827,
+  2213.0171038515673,
+  2673.1311515471143,
+  2561.5389291197916
+ ],
+ "determinism": {
+  "frac_pixels_ever_differing": 0.0,
+  "max_abs_diff": 0,
+  "n_distinct_frames": 1,
+  "n_renders": 32
+ },
+ "env_id": "swm/OGBScene-v0",
+ "h": 200,
+ "host": "node2351.oscar.ccv.brown.edu",
+ "jpeg_q90_bytes": 10122,
+ "mujoco": "3.12.0",
+ "mujoco_gl": "egl",
+ "num_hidden_button_bits": 2,
+ "official_fps_render_only": 5.166575960742415,
+ "official_fps_render_only_blocks": [
+  5.173845191610184,
+  5.166575960742415,
+  5.221700449481581,
+  5.215409479735017,
+  5.161564823700999,
+  5.110992648508679,
+  4.9063811473272345
+ ],
+ "official_fps_render_only_max": 5.221700449481581,
+ "offsamples_msaa": 4,
+ "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+ "projected_tri": {
+  "camera": "front_pixels",
+  "fovy": 45.0,
+  "frac_edge_lt_1px": 0.6171395442270626,
+  "frame_px": 40000,
+  "max_edge_px": 101.84033523475449,
+  "mean_area_px2": 0.6178116823847286,
+  "mean_edge_px": 1.358300969862059,
+  "median_area_px2": 0.018469994933362176,
+  "median_edge_px": 0.7228373653456259,
+  "overdraw_if_all_front_facing": 3.0370541135589084,
+  "p90_edge_px": 2.449902811271386,
+  "sum_area_px2": 121482.16454235633,
+  "visible_tri": 196633
+ },
+ "shadowsize": 4096,
+ "w": 200
+}

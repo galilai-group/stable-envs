@@ -4,7 +4,7 @@
 #SBATCH --qos=norm-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=geforce3090
-#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104
+#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=02:00:00

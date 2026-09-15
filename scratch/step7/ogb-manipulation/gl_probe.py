@@ -2,8 +2,12 @@
 
 Two different failures wear the same traceback and must not be confused:
 
-* **A node fault.** W4 found `gpu2104` with healthy torch/CUDA and broken EGL context creation.
+* **A node fault.** A context that will not create, or that creates and paints one flat colour.
   A measurement taken there reads as a RENDERER finding when it is a broken node.
+  NOT a fault: an `EGLError` raised from `mujoco.egl.GLContext.__del__` at interpreter exit. That
+  is teardown noise after a successful render -- the reported `gpu2104` failure was exactly this --
+  which is why the verdict below is the child's EXIT CODE plus a non-constant frame, never the
+  presence of a traceback in its output.
 * **The wrong backend for the partition.** A `batch` node has no GPU, so EGL's
   `PLATFORM_DEVICE` path cannot initialise at all -- `Cannot initialize a EGL device display`.
   That is not a fault; Mesa's surfaceless EGL or `osmesa` (llvmpipe) is what renders there, which

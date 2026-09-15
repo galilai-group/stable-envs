@@ -74,6 +74,31 @@ PYTHONPATH=$WS:$SWM_SRC "$VENV/bin/python" \
   -c 'import numpy, mujoco, mujoco_warp, ogbench, torchvision, stable_worldmodel' || {
   echo "FATAL: venv incomplete"; exit 3; }
 
+# ---- 1b. provenance -----------------------------------------------------------
+# This block was accidentally deleted by an edit to section 1 and job 6395175 therefore shipped a
+# STALE versions.txt from an earlier, failed job -- python 3.9, everything ABSENT -- next to numbers
+# taken under python 3.12 with everything present. It is restored here and writes a job-tagged file
+# so a stale one can never again sit beside a fresh result.
+export SWM_SRC
+PYTHONPATH=$WS:$SWM_SRC "$VENV/bin/python" - <<'PY' | tee "$OUT/provenance_${SLURM_JOB_ID}.txt"
+import hashlib, importlib.metadata as md, os, pathlib, socket, sys
+print("job", os.environ.get("SLURM_JOB_ID"), "host", socket.gethostname())
+print("python", sys.version.split()[0])
+for p in ("torch","torchvision","mujoco","mujoco-warp","warp-lang","ogbench","dm-control",
+          "numpy","scipy","pillow","gymnasium","h5py"):
+    try: print(p, md.version(p))
+    except Exception: print(p, "ABSENT")
+# stable_worldmodel comes from the rsynced SOURCE CHECKOUT, not PyPI (they are different code under
+# the same version string). Print the digests so they can be compared with the local census's
+# cube_env 143e5e81f424ff7a / scene_env d0eebdce0131f86e / envs__init__ 118a262677a647c6.
+import stable_worldmodel as swm
+root = pathlib.Path(swm.__file__).parent
+print("stable_worldmodel", root)
+for f in ("envs/ogbench/cube_env.py", "envs/ogbench/scene_env.py", "envs/__init__.py"):
+    q = root / f
+    print("sha256", f, hashlib.sha256(q.read_bytes()).hexdigest()[:16] if q.exists() else "MISSING")
+PY
+
 # Pick a GL backend that actually works on THIS node, and refuse to measure without one.
 # A `batch` node has no GPU, so EGL's PLATFORM_DEVICE path cannot initialise -- job 6395139 proved
 # that on node2326 -- and Mesa surfaceless EGL or osmesa (llvmpipe) is what renders there, exactly
@@ -102,6 +127,7 @@ cd "$WS"
 
 # COMPLETED is not proof: name the files that must exist, and FAIL if they do not, so the
 # dependent GPU job is not chained onto an empty result.
+[ -s "$OUT/provenance_${SLURM_JOB_ID}.txt" ] || { echo "MISSING provenance"; exit 4; }
 for f in "$OUT/census/census_OGBCube.json" "$OUT/census/census_OGBScene.json" \
          "$OUT/bars/bars_OGBCube.json" "$OUT/bars/bars_OGBScene.json"; do
   [ -s "$f" ] || { echo "MISSING $f"; exit 4; }

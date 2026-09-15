@@ -1,0 +1,21 @@
+# read back on the LOGIN NODE after job 6395175 COMPLETED, because the job's own provenance
+# block had been deleted by an edit and its versions.txt was stale. The venv and the swm
+# checkout are unchanged since the job ran; the node identity is in oscar/gl_backend.txt
+# (node2351) and in each bars/purity JSON.
+python 3.12.8
+torch 2.14.0+cu126
+torchvision 0.29.0+cu126
+mujoco 3.12.0
+mujoco-warp 3.12.0
+warp-lang 1.17.0
+ogbench 1.2.1
+dm-control 1.0.45
+numpy 2.5.2
+scipy 1.18.1
+pillow 12.3.0
+gymnasium 1.3.0
+h5py 3.16.0
+stable_worldmodel /oscar/scratch/sboughan/se7/swm-src/stable_worldmodel
+sha256 envs/ogbench/cube_env.py 143e5e81f424ff7a
+sha256 envs/ogbench/scene_env.py d0eebdce0131f86e
+sha256 envs/__init__.py 118a262677a647c6

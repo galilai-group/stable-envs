@@ -9,13 +9,17 @@ Two sub-verdicts, both measured:
   `fetch-gpu` blocker — `BATCH_SCALES` 7.6–11.7x against a required 20x — was recorded as a
   **480 px** failure that the same scene PASSES at ≤240 px (26–99x). These two envs render at
   **224 px and 200 px**, inside that passing regime. The measurement is queued (job 6395176).
-* **CPU: `BLOCKER`, and roughly an order of magnitude harder than the Fetch blocker.** The binding
-  CPU bar leaves **0.75 ns per triangle** for 193,113 triangles. The Step-6 `CPU3D-FETCH-1` span
-  rasteriser's *setup-only* floor — transform, bbox, area, cull, no fill, no shade — is 24 ns per
-  triangle, i.e. **32–35x over the binding bar** and **3.7x over the weaker `S_cpu ≥ 5` conjunct on
-  its own**. At the full measured 135 ns/triangle it is 180–198x over, and its `S_cpu` against this
-  env's own official renderer is **0.24** — four times SLOWER than the reference, so not
-  `CPU_FAST`, not `CPU_FASTER`, not `CPU_PARITY`. Recorded as **`CPU3D-OGB-1`**.
+* **CPU: `BLOCKER` for `CPU_FAST` on the `cores_cpu` conjunct; `CPU_FASTER` is feasible.**
+  Measured on the certification host (`node2351`, `batch`/`normal`, one thread, Mesa llvmpipe
+  through EGL): the official renderer runs at **6.31 / 5.17 f/s** and one-core JPEG-q90 decode at
+  **2,774 / 2,106 f/s**. The Step-6 `CPU3D-FETCH-1` span rasteriser's measured 135 ns/triangle puts
+  193,113 triangles at **38.4 f/s**, which is `S_cpu` **6.07 / 7.29 — comfortably over the ≥ 5
+  conjunct** but `cores_cpu` **0.014 / 0.018, short by 72x / 56x**. Even the architecture-independent
+  *setup-only* floor (24 ns/triangle: transform, bbox, area, cull; no fill, no shade) is **12.9x /
+  9.9x** short of `cores_cpu ≥ 1`. So the verdict is the same shape as Fetch's — do not fund a
+  `CPU_FAST` backend — but the conjunct that fails is different, and a `CPU_FASTER` backend at
+  ~6-7x the official renderer IS reachable if `device="cpu"` is wanted for its own sake. Recorded as
+  **`CPU3D-OGB-1`**.
 
 Baseline `76dc5116f432e61dd47fba8f9e879cf9212c8e46`; branch `step7/ogb-manipulation`.
 Hardware/venvs: Apple M5 (`arm64`, macOS 26.6.2), new local venv `/Users/samib/se7-ogb-venv`
@@ -191,27 +195,63 @@ state — the G4 economics are comfortable, as they were for the mazes.
 
 ## 4. The official renderer and the two frozen bars
 
-`probe_determinism_bars.py`, median of 7 blocks of 100 renders, warm, `OMP_NUM_THREADS=1`,
-`MKL_NUM_THREADS=1`, one torch thread, at the **registered** resolution and camera. Decode is the
-Step-6 `profile_note` protocol: JPEG-q90 the env's own frame, then one-core `PIL` decode, median of
-7 blocks of 300.
+Both hosts, same probe (`probe_determinism_bars.py`), median of 7 blocks of 100 warm renders,
+`OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, one torch thread, at the **registered** resolution and
+camera. Decode is the Step-6 `profile_note` protocol: JPEG-q90 the env's own frame, one-core `PIL`
+decode, median of 7 blocks of 300.
+
+**Certification numbers — Oscar `node2351`, `batch`/`normal`, `MUJOCO_GL=egl` resolving to Mesa
+llvmpipe (job 6395175):**
 
 | env | res | official `render()` | JPEG q90 | 1-core decode | **`S_cpu ≥ 5` bar** | **`cores_cpu ≥ 1` bar** | binding |
 |---|---|---:|---:|---:|---:|---:|---|
-| `OGBCube` | 224 | **159.9 f/s** (max 175.9) | 6,115 B | **6,893 f/s** | **800 f/s** | **6,893 f/s** | decode |
-| `OGBScene` | 200 | **157.6 f/s** (max 162.0) | 10,150 B | **7,452 f/s** | **788 f/s** | decode |
+| `OGBCube` | 224 | **6.31 f/s** | 6,125 B | **2,774 f/s** | **31.6 f/s** | **2,774 f/s** | decode |
+| `OGBScene` | 200 | **5.17 f/s** | 10,180 B | **2,106 f/s** | **25.8 f/s** | **2,106 f/s** | decode |
 
-Both bars are absolute fps targets for a stable-envs renderer of these scenes on this host. The
-binding conjunct is `cores_cpu`, as it was for every Step-6 CPU cell: **145 µs/frame (Cube)** and
-**134 µs/frame (Scene)**, i.e. **2.89 and 3.35 ns per output pixel**.
+The binding conjunct is `cores_cpu`, as it was for every Step-6 CPU cell: **361 µs/frame (Cube)** and
+**475 µs/frame (Scene)**, i.e. 7.19 and 11.87 ns per output pixel.
 
-Two caveats the coordinator should hold: (a) these are M5 laptop numbers under GLFW/Metal, not
-certification numbers — the Oscar `batch`/`normal` EGL leg is queued as job **6394784**; (b) this
-official renderer is unusually *fast* relative to Step-6's CPU references (160 f/s here against
-llvmpipe's 39.6–53.3 f/s for Fetch at 480 px), because the frame is small. That makes `S_cpu ≥ 5`
-harder here than the frame size suggests.
+**Local M5 numbers, for contrast — and the contrast is the point:**
 
----
+| env | official `render()` | 1-core decode | `S_cpu ≥ 5` bar | `cores_cpu ≥ 1` bar |
+|---|---:|---:|---:|---:|
+| `OGBCube` | 159.9 f/s | 6,893 f/s | 800 f/s | 6,893 f/s |
+| `OGBScene` | 157.6 f/s | 7,452 f/s | 788 f/s | 7,452 f/s |
+
+**The M5's official renderer is 25-30x faster than the certification host's, and a phase-0 CPU
+verdict computed from it would have been wrong in both directions.** macOS GLFW gets a
+Metal-accelerated GL; the `batch` node gets Mesa llvmpipe in software, and llvmpipe is what
+`S_cpu` is defined against. Against the laptop, a 38 f/s rasteriser looks like `S_cpu = 0.24` and
+fails every tier; against the certification host it is `S_cpu = 6.1` and clears `CPU_FASTER`
+outright. The decode bar moved far less (6,893 -> 2,774), because decode is a real CPU workload on
+both. This is precisely the "local CPU timings are NOT certification numbers" rule in
+`AGENT_COMMON.md`, and it changed a verdict, not a decimal.
+
+**The official renderer IS bit-stable on the certification host.** 32 renders of one unchanged
+`MjData`: **1 distinct frame for BOTH envs**, 0 pixels moving. The 2-distinct-frames result for
+`OGBScene` on macOS (4 pixels at 1/255) was a Metal/MSAA artefact and does not reproduce under
+EGL/llvmpipe — so the frozen corpus can be a digest rather than a tolerance. Open question 7 is
+answered.
+
+**Everything else reproduced across the two hosts**, which is the reason to trust the local half:
+the census is identical (`ngeom` 64/137, `nmesh` 28/48, model triangles 185,489/188,485, instanced
+263,243/266,763, `nq` 21/25, `nlight` 2, `ntex` 2/3, obs 28/40); `pure(qpos,qvel) = True` for
+`OGBCube` on both; `plate_static = True` with 0 pixels moving on both; mover share 15.3 % / 31.3 %
+(local 14.6 / 27.9); interior fraction 41.86 % / 27.15 % (local 41.61 / 27.64); MSAA 1x-vs-4x
+`interior_exact` 0.99995 / 0.99974 (local 1.0 / 0.99983); median projected triangle edge 0.698 /
+0.723 px (local 0.713 / 0.723); translucent share 0.62 % for `OGBCube`.
+
+**Provenance.** `oscar/provenance_6395175_readback.txt`: python 3.12.8, torch 2.14.0+cu126,
+torchvision 0.29.0+cu126, mujoco 3.12.0, mujoco-warp 3.12.0, warp-lang 1.17.0, ogbench 1.2.1,
+dm-control 1.0.45, numpy 2.5.2, scipy 1.18.1, pillow 12.3.0, gymnasium 1.3.0. The three
+`stable_worldmodel` file digests match the local checkout **exactly** (`cube_env.py`
+`143e5e81f424ff7a`, `scene_env.py` `d0eebdce0131f86e`, `envs/__init__.py` `118a262677a647c6`), so
+both halves measured the same registration. That file is a **login-node read-back**, not the job's
+own output, and says so in its first line: an edit to section 1 of the sbatch had deleted the
+provenance block, so job 6395175 shipped a *stale* `versions.txt` from the failed 6394700 (python
+3.9, everything ABSENT) beside numbers taken under python 3.12. The stale file is deleted, the block
+is restored, and the script now refuses to exit 0 without a job-tagged provenance file. Found by
+reading the whole log rather than its tail.
 
 ## 5. Fetch-pattern feasibility on GPU
 
@@ -306,25 +346,35 @@ per world**: the `(B, V, 4)` clip-space buffer at **390,445 vertices** costs ~25
 route this family through nvdiff on the census as it stands. (W6's MuJoCo-free `Scene.from_triangles`
 is not needed by this workstream and nothing here was touched.)
 
-**CPU: a demonstrated blocker — `CPU3D-OGB-1`.** Using the Step-6 `CPU3D-FETCH-1` constants,
-measured on the real Fetch mesh set with a scalar C span rasteriser (`-O3 -march=native`,
-backface-culled, edge-function bbox scan, z-test, Gouraud, Blinn-Phong) on an AMD EPYC 9684X:
+**CPU: `CPU3D-OGB-1` — a demonstrated blocker for `CPU_FAST`, on `cores_cpu` alone.** Using the
+Step-6 `CPU3D-FETCH-1` constants (a scalar C span rasteriser, `-O3 -march=native`, backface-culled,
+edge-function bbox scan, z-test, Gouraud, Blinn-Phong, measured on the real Fetch mesh set on an
+AMD EPYC 9684X) against the **certification-host** bars of §4:
 
-| | budget | at 24 ns/tri (setup only) | at 135 ns/tri (full, culled) |
-|---|---:|---|---|
-| `OGBCube` — 193,113 tri, binding bar 145 µs/frame | **0.75 ns/tri** | 4.63 ms = 216 f/s — **32x over** the binding bar, **3.7x over** `S_cpu ≥ 5` alone | 26.07 ms = **38 f/s** — **180x over**, `S_cpu = 0.24` |
-| `OGBScene` — 196,633 tri, binding bar 134 µs/frame | **0.68 ns/tri** | 4.72 ms = 212 f/s — **35x over**, **3.7x over** `S_cpu ≥ 5` | 26.55 ms = **38 f/s** — **198x over**, `S_cpu = 0.24` |
+| | official / decode (node2351) | at 24 ns/tri (setup only) | at 135 ns/tri (full, culled) |
+|---|---|---|---|
+| `OGBCube` — 193,113 tri | 6.31 / 2,774 f/s | 4.63 ms = **216 f/s**: `S_cpu` 34.2 ✅, `cores_cpu` **0.078 — 12.9x short** | 26.07 ms = **38.4 f/s**: `S_cpu` **6.07 ✅**, `cores_cpu` **0.014 — 72x short** |
+| `OGBScene` — 196,633 tri | 5.17 / 2,106 f/s | 4.72 ms = **212 f/s**: `S_cpu` 41.0 ✅, `cores_cpu` **0.101 — 9.9x short** | 26.55 ms = **37.7 f/s**: `S_cpu` **7.29 ✅**, `cores_cpu` **0.018 — 56x short** |
 
-For comparison, Fetch was 3.3–3.8x short at the full rate and **at** the bar at the setup floor.
-These scenes are **~10x harder than Fetch at the setup floor and ~47x harder at the full rate**, and
-unlike Fetch they fail `CPU_PARITY` too: 38 f/s against an official renderer running at 160 f/s is
-`S_cpu = 0.24`, four times *slower* than the reference. The mechanism is not the fill — summed
-triangle area is 0.90 / 3.10 frames, comparable to Fetch — it is **193 thousand sub-pixel triangles
-into a 50 thousand pixel frame**. No rasteriser architecture transforms, culls and bins a triangle
-in 0.75 ns. **Recommendation: do not fund a CPU backend for this family in Step 7.** If
-`device="cpu"` must be honoured, the honest options are (a) raise `ValueError` at construction as
-`cpu3d` already does for `DMCSwimmerSwimmer6`, or (b) route to the official `llvmpipe` renderer,
-which is `S_cpu ≈ 1` by construction and is not a stable-envs backend.
+The `S_cpu ≥ 5` conjunct **passes** — llvmpipe pushing 193 k triangles is itself slow, at 6.3 f/s —
+and `cores_cpu ≥ 1` fails by 56-72x. The floor row is the architecture-independent part: even a
+rasteriser that wasted no bbox test, wrote no pixel and shaded nothing would still pay ~24 ns per
+triangle to transform, bound, area and cull it, and that alone is **9.9-12.9x** over the decode bar.
+No rasteriser architecture — scalar, SIMD-binned, or tiled — closes a 10x gap on pure vertex setup.
+The mechanism is not the fill: summed triangle area is 0.90 / 3.10 frames, comparable to Fetch's.
+It is **193 thousand sub-pixel triangles into a 50 thousand pixel frame**.
+
+For comparison, Fetch was 3.3-3.8x short at the full rate and *at* the bar at the setup floor, so
+these scenes are **~4-6x harder than Fetch on the binding conjunct**. Unlike the laptop-based
+estimate this file carried before the cluster leg landed, they are **not** slower than their own
+reference: `CPU_FASTER` at ~6-7x is comfortably reachable.
+
+**Recommendation: do not fund a `CPU_FAST` backend for this family in Step 7.** If `device="cpu"`
+must be honoured, the two honest options are (a) raise `ValueError` at construction, as `cpu3d`
+already does for `DMCSwimmerSwimmer6`, or (b) build the shared span-rasteriser mover pass and
+declare `CPU_FASTER` with `cores_cpu` reported and failing — which is what the Step-6 policy
+addendum's "measured and reported honestly" clause allows, and what Step 2 §12.1
+`PERFORMANCE_MEASURED` asks for.
 
 ---
 
@@ -336,7 +386,8 @@ and `(qpos, qvel, mocap_pos, mocap_quat[, 2 button bits])` as the state.** No ne
 primitive is required — unlike W4's ellipsoid/heightfield, every capability these scenes use already
 exists in `stable_envs/render/mjwarp.py`.
 
-**Proposed fidelity tier: `parity` on GPU with a declared alpha `parity_note`; no CPU backend.**
+**Proposed fidelity tier: `parity` on GPU with a declared alpha `parity_note`; CPU refused or
+`CPU_FASTER`, never `CPU_FAST`.**
 The alpha note is 0.61 % (Cube) / 0.15 % (Scene) of pixels, strictly smaller than Fetch's accepted
 1.2–1.5 %, and it falls almost entirely on edge pixels of a translucent marker — the same reason
 Fetch's markers reached 0.000002 of interior pixels. The declaration must also state the interior
@@ -434,15 +485,19 @@ One GPU job in flight. No `simclr` job was touched.
    `camera.angle_delta`, `cube.size`, `agent.color` and `lock_color` each make the plate a function
    of the variation vector — tractable as per-env tables (the DMC cells already do this) but it
    changes the bake's cache key and should be decided before implementation.
-5. **`CPU3D-OGB-1`: confirm "no CPU backend".** The recommendation is to raise `ValueError` on
-   `device="cpu"` rather than build one, per the Sami policy addendum's honest-device-selection
-   rule. That leaves these two ids GPU-only. Acceptable?
+5. **`CPU3D-OGB-1`: `ValueError` on `device="cpu"`, or a `CPU_FASTER` backend?** `CPU_FAST` is out
+   (`cores_cpu` short by 56-72x, and by 9.9-12.9x even at the vertex-setup floor), but the cluster
+   leg overturned this file's first, laptop-based reading: `S_cpu ≈ 6-7` against the certification
+   host's llvmpipe, so a shared span-rasteriser mover pass would honestly certify `CPU_FASTER`.
+   Refuse `device="cpu"` and keep these two ids GPU-only, or build the CPU path at `CPU_FASTER` with
+   `cores_cpu` reported and failing?
 6. **The mipmap risk is now priced and is NOT the blocker it was for locomotion** (§5): the floor is
    a bounded 2 m x 2 m plane with no horizon in frame, worst-case 3.72 texels per pixel and 4.7 % of
    floor pixels above 2. The largest *open* fidelity risk is instead the whole-frame ceiling imposed
    by 4x MSAA (≈ 0.95 Cube / 0.87 Scene) against a 1-sample ray caster, which is an edge-pixel
    effect the interior metric does not see. Is an `interior`-only parity claim, with the whole-frame
    number declared and explained, acceptable for these two ids?
-7. **OGBScene's official renderer is not bit-stable on macOS** (2 distinct frames in 32, 4 pixels at
-   1/255). If that reproduces under EGL on Linux, the frozen reference corpus needs a stated
-   tolerance rather than a digest.
+7. **Answered, no action needed.** `OGBScene`'s official renderer is not bit-stable on macOS
+   (2 distinct frames in 32, 4 pixels at 1/255) but **is** bit-stable on the certification host
+   (1 distinct frame in 32, both envs, job 6395175). The macOS result was a Metal/MSAA artefact; the
+   frozen corpus can be a digest.
