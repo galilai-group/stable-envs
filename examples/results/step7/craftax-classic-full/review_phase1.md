@@ -171,3 +171,88 @@ exact bitcast/subtract and, in `uniform`, mul-then-add (no FMA since they are se
 ### Files
 Probe scripts and logs are in the scratchpad: `prng_probe.py`, `parity_probe.py` (+`.log`), `jit_probe.py`,
 `replay_step4.py`, `probes_cpu.py`, `perf_probe.py`, `unit_new.log`, `unit_base.log`, `golden_regen/`.
+
+---
+
+# Re-check before merge — HEAD `7a1a1387f73b3e0e95dbe7c0cb8515807c0deb2a`
+
+Commits 978372b / b399fbb / 7a1a138 on top of a1ebf57. Worktree clean; trailer grep 0; author sami-bg;
+`examples/results/step4|5|6` and `stable_envs/testing` untouched (0 files in `git diff --name-only 76dc5116..HEAD`).
+
+## Verdict: APPROVE
+
+**(1) The four required changes are satisfied.**
+- `prng.uniform` signature is now `(keys, shape, offset=0)`; range args gone (positional/keyword calls raise
+  `TypeError`), `test_uniform_takes_no_range_arguments` pins the signature, docstring records the FMA mechanism and
+  the 508/4096 measurement; `test_the_scaled_night_field_matches` pins `uniform()*95+32` against jax-generated
+  digests. Re-ran my fresh probe on the new API: `random_bits` vs `jax.random.bits` **324/324**, `uniform` 324/324,
+  `*95+32` 324/324, offset chunking exact. The `[0,1)` output is bit-identical to before (the removed
+  `*1.0+0.0`/clamp were no-ops).
+- `_strip_grid` cached per device (`_GRID_CACHE`, returns `blank` pre-unsqueezed), colour constants cached
+  (`_CONST_CACHE`/`_post_constants`), `_decode` does one `round()` over the tail block and returns key halves,
+  `key_from_halves` runs only in `_post` (lit path). Semantics unchanged: parity re-run identical (below).
+  `test_the_strip_grid_cache_is_not_written_through` guards the cache. **Quiet timing, min of 3 interleaved
+  rounds, baseline (76dc5116 worktree) -> tip, one thread, daylight/awake/unit gain:**
+
+  | B | t | baseline ms | tip ms | baseline x 144/112 | residual |
+  |---|---|---|---|---|---|
+  | 1 | 16 | 0.061 | 0.101 (was 0.166) | 0.078 | +0.023 |
+  | 16 | 16 | 0.150 | 0.215 (was 0.309) | 0.193 | +0.022 |
+  | 256 | 7 | 0.671 | 0.888 (was 1.231) | 0.863 | +0.025 |
+  | 256 | 16 | 1.428 | 1.815 (was 2.092) | 1.836 | -0.021 |
+
+  The per-frame cost is now the row growth; the residual is a flat ~0.02 ms per call (the 22 extra decoded slots and
+  the strip tile-id math), which agrees with the author's 1.4396 -> 1.8706 / +0.0197 ms. At or near baseline
+  apart from row growth: yes.
+- parity_note, module docstring and `reference_env` docstring now say "on this pool", name the awake
+  `light_level = 0.49999997` counter-example and state the mechanism as "any lit row can straddle".
+- findings §8.4 now records the CPU comparison against the frozen record (`1aeabbe8…`, mean 93.8446, 277 colours,
+  identical) and §11 lists the CUDA leg as confirmation only; the "(4 commits)" header is gone.
+
+**(2) API change breaks nothing else.** `grep -rn "prng\." stable_envs tests examples scratch/step7` — the only
+callers are `stable_envs/envs/craftax.py:537` (`prng.uniform(keys, (h, w)) * 95 + 32`) and `:928`
+(`prng.key_from_halves`), plus `tests/unit/test_craftax_prng.py`; all other `uniform(` hits are numpy `rng.uniform`.
+`tests/unit` on the tip (`--ignore test_examples.py --ignore test_nvdiff_texgen.py`): **760 passed, 7 skipped,
+1 failed** — the same pre-existing `test_every_cited_scratch_path_resolves` (baseline 700/6/1).
+
+**(3) Parity still byte-identical.** Same 52-state pool as phase 1 (fresh seed + boundary rows), un-jitted
+craftax 1.6.1: **7 px exact_frac 1.000000 max_abs 0; 16 px 1.000000 / 0**; author's seed digests
+`288630d8d823c0b9` / `820c52a906ae839a` reproduced; committed corpus 1.0 / 0; jitted-reference rows unchanged
+(9 rows incl. the awake boundary row).
+
+**(4) The oracle experiment is a faithful instance of the check.** `oracle_resolution.py` uses S = `env.size` = 16,
+2S = 32, `cf._box_downsample(big, 2)` (the check's own function, unchanged in the untouched testing module), and the
+check's statistic `(d.max(-1) == 0).mean()`; the states are the frozen Step-7 corpus split by band plus the check's
+own `downsample_protocol_states(env)` draw; the official side is craftax's renderer **un-jitted** with each state's
+own `state_rng` written back by `reference_render` (same rounding as parity), and the 32 px textures come from
+craftax's `load_all_textures_given_size(32)` substituted into the `load_all_textures()[size]` lookup the renderer
+performs — every 2S pixel is craftax's. I reproduced it independently (`mini_oracle.py`): corpus night official world
+**0.1634 / ours 0.1634**, official strip 0.6815 / ours 1.0000; corpus daylight 1.0000 / 1.0000, strip 0.6933 / 1.0000;
+protocol draw official frame 0.7440, world 0.7639 (= ours 0.7639), strip 0.6743; and on my own fresh pool night
+0.1043 / 0.1043, day 1.0 / 1.0, strip 0.67-0.69 / 1.0. The committed JSON's numbers match the author's table
+exactly. The applicability declaration (`resolution_consistency_applicability`) names the mechanism, the evidence
+path, and `craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True`; it is a class attribute only,
+`stable_envs/testing` is untouched, the frozen threshold is untouched, and
+`test_the_declared_resolution_applicability_matches_measurement` fails if our side ever meets the bound below 0.5
+(staleness) or misses it at/above 0.5. Honest.
+
+**(5) The strip observation is characterised correctly.** The official strip scores 0.68-0.69 in *every* band,
+daylight included (band-independent, so it is geometry, not lighting): craftax re-lays the strip out per size with
+icon `int(0.8t)` / digit `int(0.6t)` (12/9 at 16 px, 25/19 at 32 px), so its 32 px strip is not a 2x replication of
+its 16 px strip; ours resamples the finished cell, so it is (1.0000), and `test_the_strip_is_resolution_consistent_in_every_band`
+asserts it. Two facts from my run refine the wording rather than contradict it: (a) at daylight the official 32 px
+*world* rows are exactly the 2x replication of its 16 px ones, and our 32 px world rows are **100% parity with
+craftax's constructed 32 px world rows even at night** (same threefry field at (7*32, 9*32)); (b) our 32 px strip
+differs from craftax's constructed 32 px strip on ~18% of strip pixels (0.81-0.82 exact), by design. So "a size
+which has no official frame to be parity against" is better read as "no *shipped* textures" — craftax can build a
+32 px frame and this renderer matches its world layer exactly there while deliberately not matching its strip
+re-layout. A wording nit, not a defect.
+
+### Note for the coordinator (not a defect of this branch)
+The certifier still evaluates `check_resolution_consistency` on the protocol draw, which is a mixed 8-state pool
+(ours 0.8164, official 0.7440), and `stable_envs/testing` was deliberately left alone; until the Step-8 certifier
+reads `resolution_consistency_applicability` (or judges the check on the `light >= 0.5` subset), the frozen 0.995
+bound will be recorded as failed on this config for a reason the oracle shows is the reference's.
+
+Re-check artifacts in the scratchpad: `prng_probe2.py`, `parity_probe2.log`, `mini_oracle.py`/`.log`,
+`unit_new2.log`, timing output in the session log.
