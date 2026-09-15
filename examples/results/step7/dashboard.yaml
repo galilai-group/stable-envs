@@ -401,8 +401,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'reviewed APPROVE-WITH-CHANGES: RC-1 (float32 quaternion assertion aborts check_visual_fidelity -> GPU job would write nothing) and RC-2 (findings re-cites break two unit tests) BLOCKING; fix
-    + resubmit requested; RC-3..5 before certification'
+  status: review fixes landed (13ca91b); bounded re-check requested; GPU job 6395516 queued on the fixed tree (6395009 cancelled before start); M4 after numbers
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -430,7 +429,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 6e50f34 (phase 1 M1-M3 + scripts + citation fixes)
+  head_sha: 13ca91b (RC-1..RC-5 landed)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -482,6 +481,15 @@ workstreams:
       - state_dims_matter on the six velocity dims (1/240 s lag only)
       - sub-pixel claims
       - DIRECT+EGL+CUDA coexistence across numba JIT
+      followup:
+        commit: 13ca91b
+        done:
+        - RC-1 float64 renormalised q, sign-free pose check 1-|q.q'|<=1e-9, pos<=1e-6; failed draws recorded; per-stage JSON checkpoints; replay from float64 obs and float32 state13
+        - RC-2 dead citations removed; tests/unit 713/1/37 = baseline failure set
+        - RC-3 best batch excludes B=1; GPU_PARITY cap on BATCH_SCALES fail; cpu_frac/HOST_BOUND; threads/loadavg/jobid; decode one thread; same-node comparators only
+        - RC-4 None values under UNMEASURED + registration test
+        - RC-5 missing_backend lists nvdiffrast, scipy, pybullet_data, Pillow
+        - camera tolerance 3e-3 stated
   rulings:
   - no AI trailers (project rule wins over harness reminder)
   - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
@@ -551,6 +559,8 @@ incident_log:
   item: 'W6 review: RC-1 blocking (would void GPU job 6395009); fix + resubmit requested'
 - date: '2026-09-15'
   item: W1 follow-on 5fd5ccb merged; CPU tier via paired job 6395321
+- date: '2026-09-15'
+  item: W6 fixes landed (13ca91b); GPU job 6395516 resubmitted; re-check requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
