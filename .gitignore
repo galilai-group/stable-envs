@@ -351,3 +351,9 @@ examples/paper/main.pdf
 *.bbl
 *.blg
 GIT_COMMIT
+
+# The commit of the tree an Oscar job measured, written by the sync step (scratch/step7/*/oscar_*.sbatch
+# read it and refuse to run without it) and carried across an rsync that excludes .git. It must stay
+# UNTRACKED: its content is the hash of the commit that would contain it, so a tracked copy is always
+# one commit stale and is exactly the wrong thing to trust.
+.git_sha

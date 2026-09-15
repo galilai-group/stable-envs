@@ -847,6 +847,50 @@ None, `measured_at` naming resolution/protocol/reference build/card, every thres
 side of its measurement with margin, the exclusion declared at its measured share) and deliberately
 does not restate the values — those are asserted on a card by the GPU suite.
 
+#### The declaration observed at the final tip (job 6411148)
+
+Job 6410105 measured the re-freeze on tree `726241e`; the tip then gained the filled declaration, the
+flipped unit test and the RD-1 changes, and in 6410105
+`test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]` had failed only because it compared
+7.709 against the placeholder's `None`. "It will pass now" is an inference, so one short job made it a
+measurement: **6411148** (`se7-rocket-conf`, `gpu`/`norm-gpu`, **gpu2101**, RTX 3090, 4 threads, node
+load 11.49 / 11.89 / 12.50, elapsed **00:03:16**, `COMPLETED`), tree
+**`75bc5f680eb269eab68ff7c96905395ec8dec58c`** stamped in the banner, EGL probed and OK before anything
+was measured.
+
+```
+2 failed, 229 passed, 63 skipped, 2530 deselected, 3 warnings in 172.84s (0:02:52)
+```
+
+`test_visual_tier_matches_its_declared_fidelity` **PASSED for all seven cells** — `MujocoAnt`,
+`MujocoHalfCheetah`, `MujocoHopper`, `MujocoHumanoid`, `MujocoSwimmer`, `MujocoWalker2d` and
+`PFRocketLanding`. So the six locomotion cells still meet the numbers they declare with the
+batch-invariant transform in place, observed rather than argued, and the rocket's filled declaration
+holds against the official PyFlyt renderer on a card.
+
+The two remaining failures are the two expected ones, both recorded and neither this workstream's to
+fix: `test_color_knobs_apply_the_requested_color[PFRocketLanding]` (TinyRenderer's multiplicative
+shading law puts the requested colour in no pixel of the OFFICIAL frame either; escalated to Sami,
+`tests/` frozen) and `test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]`
+(`DOWNSAMPLE_EXACT_FRAC` has no `PFRocketLanding` entry; measured **0.95614**, a Step-8 freeze item).
+Full `-rA` output in `tier/job6411148/conformance_final_tip.txt`, log
+`logs/se7-rocket-conf_6411148.out` verbatim.
+
+Count against job 6410105: **3 failed / 228 passed** there, **2 failed / 229 passed** here — the one
+that moved is the rocket's declared-fidelity assertion, which is exactly what filling the declaration
+was supposed to change and nothing else moved with it.
+
+#### A tracked file that should not have been (recorded, because the trap is worth naming)
+
+`.git_sha` is the file that carries the measured commit across an rsync which excludes `.git`. It has
+to be untracked: a tracked one can never be correct at its own commit, because its content is the hash
+of the commit that contains it. The RD-1 commit staged it with a `git add -A` and it went in holding
+`7b2e45c`, one commit stale, while the copy on Oscar held the right value and every job stamped the
+right value. It is removed from tracking here and `.gitignore` says so, so the mistake cannot recur.
+No measurement is affected: every job's banner and every JSON's `sha` field came from the Oscar copy,
+written by the sync step immediately before the rsync, and job 6411148's banner reads
+`75bc5f68…` — the tree it actually measured.
+
 #### Tests run for M6 (local, at the M6 tip)
 
 `tests/unit` under `/Users/samib/se6-venv` (`MUJOCO_GL=glfw`, `test_examples.py` deselected):
