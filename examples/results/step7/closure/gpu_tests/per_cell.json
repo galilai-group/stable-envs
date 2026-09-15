@@ -1,0 +1,483 @@
+{
+ "CraftaxClassic": {
+  "test_conformance/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]"
+   ],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]"
+   ],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]"
+   ],
+   "suite_passed": 1358
+  }
+ },
+ "CraftaxFull": {
+  "test_conformance/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]"
+   ],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]"
+   ],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]"
+   ],
+   "suite_passed": 1358
+  }
+ },
+ "DMCManipulatorBringBall": {
+  "test_conformance/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 1358
+  }
+ },
+ "DMCQuadrupedWalk": {
+  "test_conformance/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]"
+   ],
+   "suite_passed": 1358
+  }
+ },
+ "OGBCube": {
+  "test_conformance/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": true,
+   "failures": [
+    "test_state_roundtrip[OGBCube]",
+    "test_visual_tier_matches_its_declared_fidelity[OGBCube]"
+   ],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_state_roundtrip[OGBCube]",
+    "test_visual_tier_matches_its_declared_fidelity[OGBCube]"
+   ],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": true,
+   "failures": [
+    "test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]"
+   ],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]"
+   ],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_a_shared_style_broadcasts_to_any_batch[OGBCube]",
+    "test_dataset_paths_regenerate_identical_frames[OGBCube]",
+    "test_render_is_pure_and_set_state_is_idempotent[OGBCube]",
+    "test_rendering_a_sub_batch_refuses_environment_0_s_style[OGBCube]",
+    "test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]"
+   ],
+   "suite_passed": 1358
+  }
+ },
+ "OGBScene": {
+  "test_conformance/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": true,
+   "failures": [
+    "test_state_roundtrip[OGBScene]"
+   ],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_state_roundtrip[OGBScene]"
+   ],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": true,
+   "failures": [
+    "test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]"
+   ],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]"
+   ],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": true,
+   "failures": [
+    "test_a_shared_style_broadcasts_to_any_batch[OGBScene]",
+    "test_dataset_paths_regenerate_identical_frames[OGBScene]",
+    "test_render_is_pure_and_set_state_is_idempotent[OGBScene]",
+    "test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]"
+   ],
+   "suite_passed": 1358
+  }
+ },
+ "PFRocketLanding": {
+  "test_conformance/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 275
+  },
+  "test_conformance/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 948
+  },
+  "test_conformance/rocket": {
+   "constructed_here": true,
+   "failures": [
+    "test_color_knobs_apply_the_requested_color[PFRocketLanding]"
+   ],
+   "suite_passed": 374
+  },
+  "test_conformance/verify": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 902
+  },
+  "test_fast_paths/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 24
+  },
+  "test_fast_paths/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 259
+  },
+  "test_fast_paths/rocket": {
+   "constructed_here": true,
+   "failures": [],
+   "suite_passed": 56
+  },
+  "test_fast_paths/verify": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 247
+  },
+  "test_reproducibility/craftax": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 404
+  },
+  "test_reproducibility/ogbmanip": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": null
+  },
+  "test_reproducibility/rocket": {
+   "constructed_here": true,
+   "failures": [
+    "test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]"
+   ],
+   "suite_passed": 554
+  },
+  "test_reproducibility/verify": {
+   "constructed_here": false,
+   "failures": [],
+   "suite_passed": 1358
+  }
+ }
+}

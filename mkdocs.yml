@@ -159,6 +159,12 @@ nav:
       # been done -- and where the dashboard and a committed artifact disagree -- as plainly as what
       # has. Re-run it after every merge; it needs no edit to pick one up.
       - 'Step 6: optimisation (in progress)': research/step6_optimization.md
+      # GENERATED (scratch/step7/report.py) from examples/results/step7/, the coordinator dashboard
+      # and examples/results/step7/closure/coverage_matrix.json. The closure answer to "which
+      # stable_worldmodel environment can we render, at what fidelity tier, with which Gate-A
+      # verdict, on which device" -- one row per registered swm id, with the merge commit that
+      # landed each cell. Re-run it after every merge; it needs no edit to pick one up.
+      - 'Step 7: renderer coverage closure': research/step7_coverage.md
       - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
       # readers ask far more often than "why is this one here" -- and until now all three of them were
