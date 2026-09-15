@@ -76,6 +76,7 @@
      187
     ],
     "kept": 64,
+    "loaded_from": "examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz",
     "n_extreme": 32,
     "n_spread": 31,
     "n_typical": 1,
@@ -108,8 +109,7 @@
      "pitch_back_left",
      "knee_back_left",
      "ankle_back_left"
-    ],
-    "written_to": "examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz"
+    ]
    },
    "declared_tier": "visual",
    "env": "DMCQuadrupedWalk",
@@ -163,7 +163,7 @@
      "evidence": {
       "inert_variations": []
      },
-     "seconds": 13.41,
+     "seconds": 12.96,
      "status": "measured"
     },
     "check_visual_fidelity": {
@@ -180,7 +180,7 @@
       "ssim": 0.954998479126862,
       "within8_frac": 0.9003040547273597
      },
-     "seconds": 6.43,
+     "seconds": 3.68,
      "status": "measured"
     },
     "check_visual_fidelity_under_variation": {
@@ -198,7 +198,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 3.43,
+     "seconds": 3.31,
      "status": "measured"
     },
     "check_batch_size_invariance": {
@@ -212,7 +212,7 @@
       "n": 64,
       "worst_case": ""
      },
-     "seconds": 13.32,
+     "seconds": 14.52,
      "status": "measured"
     },
     "check_chunked_render_matches": {
@@ -226,21 +226,21 @@
       "max_abs_diff": 0,
       "worst_case": ""
      },
-     "seconds": 9.39,
+     "seconds": 9.18,
      "status": "measured"
     },
     "check_default_style_is_official": {
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 7.42,
+     "seconds": 5.53,
      "status": "measured"
     },
     "check_determinism": {
      "evidence": {
       "identical": true
      },
-     "seconds": 6.18,
+     "seconds": 6.27,
      "status": "measured"
     },
     "check_fidelity_declaration": {
@@ -295,7 +295,7 @@
        "torch_cuda_transposed"
       ]
      },
-     "seconds": 27.13,
+     "seconds": 26.31,
      "status": "measured"
     },
     "check_order_independence": {
@@ -303,14 +303,14 @@
       "duplicate_max_abs_diff": 0,
       "permutation_max_abs_diff": 0
      },
-     "seconds": 5.02,
+     "seconds": 4.88,
      "status": "measured"
     },
     "check_per_env_variation": {
      "evidence": {
       "collapsed_variations": []
      },
-     "seconds": 21.84,
+     "seconds": 11.94,
      "status": "measured"
     },
     "check_render_is_pure": {
@@ -320,7 +320,7 @@
       "state_changed_by_render": 0.0,
       "style_changed_by_render": 0.0
      },
-     "seconds": 7.38,
+     "seconds": 7.2,
      "status": "measured"
     },
     "check_set_state_copies": {
@@ -328,14 +328,14 @@
       "aliased_caller_buffer": 0.0,
       "state_tensor_rebound": false
      },
-     "seconds": 0.62,
+     "seconds": 0.54,
      "status": "measured"
     },
     "check_state_dims_matter": {
      "evidence": {
       "dead_dims": []
      },
-     "seconds": 64.63,
+     "seconds": 65.54,
      "status": "measured"
     },
     "check_state_roundtrip": {
@@ -349,7 +349,7 @@
      "evidence": {
       "max_abs_diff": 0
      },
-     "seconds": 5.99,
+     "seconds": 5.55,
      "status": "measured"
     }
    },
@@ -371,7 +371,7 @@
     "n_states": 64,
     "reference_id": "dm_control/quadruped-walk",
     "reference_stable": {
-     "seconds": 0.0,
+     "seconds": 0.01,
      "status": "error",
      "traceback": "nt call last):\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/examples/fidelity_step4.py\", line 165, in run\n    r = fn(*a, **kw)\n        ^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/testing/conformance.py\", line 135, in check_reference_renderer_is_stable\n    env = cls(batch=1, size=size, device=\"cuda\")\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/dmcontrol.py\", line 2236, in __init__\n    super().__init__(*a, **kw)\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/envs/dmcontrol.py\", line 902, in __init__\n    super().__init__(batch=batch, size=size,\n  File \"/Users/samib/stable-envs-step7-dmc-quadruped/stable_envs/core/env.py\", line 517, in __init__\n    self._state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/samib/se6-venv/lib/python3.12/site-packages/torch/cuda/__init__.py\", line 584, in _lazy_init\n    raise AssertionError(\"Torch not compiled with CUDA enabled\")\nAssertionError: Torch not compiled with CUDA enabled\n",
      "why": "AssertionError: Torch not compiled with CUDA enabled"
@@ -388,7 +388,7 @@
    },
    "registered_default_coverage": "full",
    "role": "registered_default",
-   "seconds": 222.1,
+   "seconds": 206.2,
    "sibling_digest_matches": {},
    "siblings": [],
    "signature": {
@@ -455,7 +455,7 @@
   "check_seed": 4041,
   "cpu": "Apple M5 Pro",
   "device": "cpu",
-  "git_commit": "68b411cd3c6e5173e5b11849044d217251b832cc",
+  "git_commit": "9188c2c5c40ad73f4ea41a05ca014ba0ab77d2a0",
   "git_commit_source": "git",
   "git_dirty": true,
   "host": "cis1b1zs2j3.ad.brown.edu",
@@ -572,7 +572,7 @@
   "slurm_job_id": null,
   "slurm_nodelist": null,
   "state_seed": 20260909,
-  "timestamp": "2026-09-14T22:37:10-0400",
+  "timestamp": "2026-09-14T23:02:27-0400",
   "torch": "2.14.0"
  },
  "schema_version": 1,

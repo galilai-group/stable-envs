@@ -75,9 +75,9 @@ def swm_quadruped_env_standalone(seed: int):
     model.find("geom", "torso").density = 1000.0
     model.find("geom", "foot_back_left").density = 1000.0
     model.find("light", "light").diffuse = 0.7 * np.ones(3, np.float32)
-    td = tempfile.mkdtemp(prefix="se_swm_quadruped_ref_")
-    mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
-    physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))
+    with tempfile.TemporaryDirectory(prefix="se_swm_quadruped_ref_") as td:
+        mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
+        physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))
     task = quadruped.Move(desired_speed=speed, random=seed)
     env = control.Environment(physics, task, time_limit=20, control_timestep=0.02)
     return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)

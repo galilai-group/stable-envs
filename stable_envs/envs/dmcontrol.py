@@ -2307,8 +2307,10 @@ class DMControlTrackCom(_DMCModel):
         except ValueError as e:
             # A cell the CPU backend cannot draw refuses HERE, at construction, naming itself. It
             # used to render on the GPU behind the caller's back; the policy is an honest raise.
-            # swimmer is the case: its bodies are mjGEOM_ELLIPSOID, which no analytic CPU
-            # intersector in raycast3d covers, and the GPU path remains device='cuda' only.
+            # Since Step 7 no shipped trackcom cell reaches this branch by geom type (raycast3d
+            # covers the ellipsoid too); swimmer is refused earlier, by name, through
+            # CPU_UNCERTIFIED (no CPU certification). This stays for the next unsupported kind,
+            # light type or camera mode Scene.__init__ refuses.
             raise ValueError(
                 f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) has no CPU 3-D backend: {e}. "
                 f"device='cuda' draws it through MJWarp; device='cpu' is refused rather than "
@@ -2555,9 +2557,13 @@ def _swm_quadruped_env(seed: int):
     model.find("geom", "torso").density = 1000.0
     model.find("geom", "foot_back_left").density = 1000.0
     model.find("light", "light").diffuse = 0.7 * np.ones(3, np.float32)
-    td = tempfile.mkdtemp(prefix="se_swm_quadruped_")
-    mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
-    physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))
+    # The export exists only to be compiled: ``Physics.from_xml_path`` reads the XML and its assets
+    # into the MjModel at once, so the directory is scoped to the call and removed on exit (SWM keeps
+    # its ``TemporaryDirectory`` on the wrapper for its lifetime; a ``mkdtemp`` here leaked one
+    # directory per ``sample_states``/``reference_env`` call -- review of 9188c2c).
+    with tempfile.TemporaryDirectory(prefix="se_swm_quadruped_") as td:
+        mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
+        physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))
     task = quadruped.Move(desired_speed=speed, random=seed)
     env = control.Environment(physics, task, time_limit=20, control_timestep=0.02)
     return action_scale.Wrapper(env, minimum=-1.0, maximum=1.0)
@@ -2771,7 +2777,10 @@ QUADRUPED_NOTE = (
     "against a 2048 shadow map). Measured off the segmentation buffer at the registered default "
     "(camera 2, 224 px): the floor within the body's box and its mirror is 35 % of the frame and "
     "carries 57 % of the residual; the far checker 29 %, the skybox 6.5 %, the body 7 %, the "
-    "ellipsoid torso 1.2 %. The cell draws SWM's default appearance (material self .6 .3 .3); the "
+    "ellipsoid torso 1.2 %. (4) physics.render draws three SITES that neither backend draws -- the "
+    "two pupil spheres (material eye) and the red torso site -- up to ~50 of the 50,176 px of a 224 "
+    "px frame (0.01-0.1 %), max 186/255, 0.5 % of the residual; the eye material is therefore not "
+    "an appearance knob here. The cell draws SWM's default appearance (material self .6 .3 .3); the "
     "suite's own (.7 .5 .3) is the material.self knob.")
 
 

@@ -393,3 +393,23 @@ pair; cross-backend CPU vs MJWarp per surface (`cross_backend.py`); the paired s
 coordinator: `$SCR/se7/dmc-quadruped` (rsync of this worktree with `GIT_COMMIT`) and
 `$SCR/se7/baseline` (a pristine 76dc511 checkout). The universe entry for the Step-8 freeze
 (`scratch/swm_matrix.json` / census) is not made here.
+
+## P5. Review follow-up (commit (d), APPROVE-WITH-CHANGES on 9188c2c)
+
+Required, all done in this one commit: (1) `_swm_quadruped_env` scopes its export directory to the
+call (`TemporaryDirectory`, removed once `Physics.from_xml_path` has compiled it) — measured 0 new
+directories over 3 `sample_states` + 1 `reference_env` (57 stale ones from the old code deleted);
+(2) `QUADRUPED_NOTE` now declares residual (4): the two pupil sites and the red torso site that
+`physics.render` draws and neither backend does (~50 of 50,176 px, max 186/255, 0.5 % of the
+residual); (3) the stale swimmer comment in `_cpu_scene`'s handler now states the allow-list.
+Recommended: `test_the_swm_quadruped_loader_overrides_are_the_base_methods_with_the_load_line_swapped`
+pins the three overrides to `_DMCModel`'s source (docstring dropped, one load line swapped, 84->224
+for `reference_env`) so the copy cannot drift; the Gate-A artifact regenerated on the (d) tree —
+identical verdicts, 18 checks measured, visual 3.447 / 0.900 / 0.955, downsample 0.8119 — with
+`git_commit 9188c2c, dirty true` recorded, which is what an artifact committed alongside the code
+can say (the cluster re-run stamps the merged SHA through `STABLE_ENVS_GIT_COMMIT`); the 11
+untracked regenerable `.npz` stacks deleted (kept: `states.npz`, the 84 px camera-2 official stacks
+of phase 0, and `ours`/`official-3.11` at 224 px of phase 1 — what the committed numbers rest on).
+Tests after (d): `tests/unit` 735 passed, 6 skipped (same two deselections); raycast3d suites inside
+it. No render-path file changed in (d) (dmcontrol loader, note, comment, tests only), so the 14/14
+identity of P2 stands as measured.

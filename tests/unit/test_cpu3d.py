@@ -104,6 +104,38 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
         assert cls.CAMERA == 2 and cls.default_size == 224                # the registered SWM default
 
 
+def test_the_swm_quadruped_loader_overrides_are_the_base_methods_with_the_load_line_swapped(se):
+    """``_SWMQuadrupedModel`` re-states ``_bundle``/``sample_states``/``reference_env`` rather than
+    hooking ``_DMCModel`` (Step-7 region confinement). This pins the duplication: each override's
+    source, docstring dropped and the one ``suite.load`` line replaced by ``_swm_quadruped_env``,
+    must equal the base method's, so a later change to the base cannot drift past the copy."""
+    import ast
+    import inspect
+    import textwrap
+    from stable_envs.envs import dmcontrol as D
+
+    def body(fn):
+        tree = ast.parse(textwrap.dedent(inspect.getsource(fn))).body[0]
+        tree.decorator_list = []
+        if (tree.body and isinstance(tree.body[0], ast.Expr)
+                and isinstance(getattr(tree.body[0], "value", None), ast.Constant)):
+            tree.body = tree.body[1:]                                   # the docstring
+        return ast.unparse(tree)
+    swaps = {
+        "_bundle": ('_suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})', "_swm_quadruped_env(0)"),
+        "sample_states": ('_suite().load(self.DOMAIN, self.TASK, task_kwargs={"random": seed})',
+                          "_swm_quadruped_env(seed)"),
+        "reference_env": ('_suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": 0})', "_swm_quadruped_env(0)"),
+    }
+    for name, (old, new) in swaps.items():
+        base = body(getattr(D._DMCModel, name))
+        ours = body(getattr(D._SWMQuadrupedModel, name))
+        expect = base.replace(ast.unparse(ast.parse(old).body[0]), ast.unparse(ast.parse(new).body[0]))
+        if name == "reference_env":
+            expect = expect.replace("size: int=84", "size: int=224")
+        assert ours == expect, f"{name}: the SWM override has drifted from _DMCModel.{name}"
+
+
 def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
     env = se.make("DMCCheetahRun", batch=2, device="cpu")
     env.render(_states("DMCCheetahRun", 2))
