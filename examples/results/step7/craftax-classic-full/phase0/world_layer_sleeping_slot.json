@@ -1,0 +1,16 @@
+{
+  "bps7": {
+    "n_states_used": 64,
+    "skipped_mob_on_player_tile": 0,
+    "centre_tile_awake_bitexact": "64/64",
+    "centre_tile_sleeping_bitexact": "64/64",
+    "is_sleeping_world_change_confined_to_centre_tile": "64/64"
+  },
+  "bps16": {
+    "n_states_used": 64,
+    "skipped_mob_on_player_tile": 0,
+    "centre_tile_awake_bitexact": "64/64",
+    "centre_tile_sleeping_bitexact": "64/64",
+    "is_sleeping_world_change_confined_to_centre_tile": "64/64"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "torch": "2.14.0",
+  "jax": "0.11.1",
+  "n_states": 64,
+  "bps7": {
+    "block_pixel_size": 7,
+    "frame_shape": [
+      63,
+      63,
+      3
+    ],
+    "world_rows": [
+      0,
+      49
+    ],
+    "strip_rows": [
+      49,
+      63
+    ],
+    "strip_geometry": {
+      "icon_lo": 0,
+      "icon_hi": 5,
+      "number_lo": 2,
+      "number_hi": 6,
+      "number_size": 4,
+      "small": 5
+    },
+    "strip_atlas_entries": 160,
+    "strip_atlas_bytes_uint8": 23520,
+    "cells_are_disjoint": true,
+    "instrumented_vs_official_bitexact": "64/64",
+    "strip_bitexact": "64/64",
+    "strip_uint8_exact": "64/64",
+    "strip_matches_official_frame_rows_uint8": "64/64",
+    "strip_invariant_to_light_and_sleep": true,
+    "counts_observed": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "night_bitexact": "64/64",
+    "night_uint8_exact": "64/64",
+    "night_max_abs_float_diff": 0.0,
+    "n_states_light_below_half": 32,
+    "sleep_bitexact": "64/64",
+    "sleep_uint8_exact": "64/64",
+    "sleep_max_abs_float_diff": 0.0,
+    "n_states_sleeping": 19
+  },
+  "bps16": {
+    "block_pixel_size": 16,
+    "frame_shape": [
+      144,
+      144,
+      3
+    ],
+    "world_rows": [
+      0,
+      112
+    ],
+    "strip_rows": [
+      112,
+      144
+    ],
+    "strip_geometry": {
+      "icon_lo": 1,
+      "icon_hi": 13,
+      "number_lo": 6,
+      "number_hi": 15,
+      "number_size": 9,
+      "small": 12
+    },
+    "strip_atlas_entries": 160,
+    "strip_atlas_bytes_uint8": 122880,
+    "cells_are_disjoint": true,
+    "instrumented_vs_official_bitexact": "64/64",
+    "strip_bitexact": "64/64",
+    "strip_uint8_exact": "64/64",
+    "strip_matches_official_frame_rows_uint8": "64/64",
+    "strip_invariant_to_light_and_sleep": true,
+    "counts_observed": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "night_bitexact": "64/64",
+    "night_uint8_exact": "64/64",
+    "night_max_abs_float_diff": 0.0,
+    "n_states_light_below_half": 32,
+    "sleep_bitexact": "64/64",
+    "sleep_uint8_exact": "64/64",
+    "sleep_max_abs_float_diff": 0.0,
+    "n_states_sleeping": 19
+  }
+}
