@@ -99,6 +99,14 @@ DEFAULT_GROUPS = (0, 1, 2)
 HIDDEN_GROUP = 5
 #: mjtGeom codes whose UVs MJWarp can derive. Everything else samples texel (0,0) when textured.
 TEXTURED_OK = (0, 7)                                    # PLANE, MESH
+#: mjtTexture codes MJWarp's ``sample_texture`` can address. It builds ``wp.Texture2D`` and samples
+#: with 2-D coordinates, so a CUBE (1) or SKYBOX (2) map worn by a geom is not a texture it draws
+#: badly -- it is a texture it indexes out of bounds. Measured on ``swm/OGBScene-v0``, whose
+#: ``btn_metal`` material wears one 512x512 cube map on two button MESH geoms: the render dies with
+#: ``Warp CUDA error 700: an illegal memory access`` inside the warm-up frame, and detaching that
+#: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
+#: (``examples/results/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
+TEXTURE_SAMPLER_OK = (0,)                               # mjTEXTURE_2D
 
 
 def effective_alpha(m, kind: str = "geom") -> np.ndarray:
@@ -161,23 +169,46 @@ def restore_model(m, p: Prepared) -> None:
 
 
 def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
-    """``[(geom id, name, mjtGeom), ...]`` for TEXTURED geoms whose UVs MJWarp cannot derive.
+    """``[(geom id, name, mjtGeom), ...]`` for TEXTURED geoms MJWarp's sampler cannot address.
 
-    Empty is the answer a caller wants: it means the scene's textures live on planes and meshes, which
-    is the only case MJWarp's ``sample_texture`` handles. A non-empty list is not a warning to be
-    logged and forgotten — those surfaces will render as one texel.
+    Empty is the answer a caller wants. A non-empty list is not a warning to be logged and forgotten:
+    depending on which of the two conditions below fired, those surfaces either render as one texel
+    or do not render at all.
+
+    **Two conditions, and the second was missing until Step 7.**
+
+    1. *The geom's UVs.* ``sample_texture`` derives UVs for ``PLANE`` and ``MESH`` only, so a textured
+       ``BOX``/``CYLINDER``/``SPHERE``/``CAPSULE`` samples texel (0,0) and comes out one flat colour.
+       That is a FIDELITY gap: the frame is wrong and the renderer survives.
+    2. *The texture's kind.* MJWarp builds ``wp.Texture2D`` and samples with 2-D coordinates, so a
+       ``CUBE`` or ``SKYBOX`` map worn by a geom is indexed out of bounds. That is a CRASH, not a
+       fidelity gap — ``Warp CUDA error 700: an illegal memory access``, raised from inside the
+       warm-up frame with no mention of textures anywhere in the traceback.
+
+    Condition 2 is checked regardless of geom type, which is the whole point of adding it: the case
+    that found it is a cube map on a **MESH**, a geom type condition 1 declares safe. ``swm/OGBScene``
+    returned an EMPTY gap list from this function and then killed the renderer; detaching its one
+    cube map, and nothing else, made it render. An empty result from this function must mean "safe",
+    so a check that classifies by geom type alone and never reads ``tex_type`` is a false all-clear.
+
+    Every texture role a material carries is examined, not just the highest id, because a material can
+    wear a 2-D albedo and a cube environment map at once and only the second is fatal.
     """
     import mujoco
     out = []
     for g in range(m.ngeom):
-        if int(m.geom_group[g]) not in groups or int(m.geom_type[g]) in TEXTURED_OK:
+        if int(m.geom_group[g]) not in groups:
             continue
         mid = int(m.geom_matid[g])
         if mid < 0:
             continue
         t = m.mat_texid[mid]
-        t = int(np.max(t)) if np.ndim(t) else int(t)
-        if t >= 0:
+        tex_ids = [int(x) for x in np.atleast_1d(t) if int(x) >= 0]
+        if not tex_ids:
+            continue
+        bad_uv = int(m.geom_type[g]) not in TEXTURED_OK
+        bad_kind = any(int(m.tex_type[t_]) not in TEXTURE_SAMPLER_OK for t_ in tex_ids)
+        if bad_uv or bad_kind:
             out.append((g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}",
                         int(m.geom_type[g])))
     return out
