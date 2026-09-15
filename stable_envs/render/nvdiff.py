@@ -188,6 +188,40 @@ def gather_material(mat, gid):
     return mat[b, gid]
 
 
+def _mm4(a, b):
+    """``a @ b`` for trailing ``(4, 4)`` matrices as four UNROLLED elementwise products summed in a fixed
+    order. No matmul and no reduction kernel: each output element is computed by the same four
+    multiplies and three adds whatever the leading (batch) shape, so the result cannot depend on how
+    many other rows share the launch."""
+    return (a[..., :, 0:1] * b[..., 0:1, :] + a[..., :, 1:2] * b[..., 1:2, :]
+            + a[..., :, 2:3] * b[..., 2:3, :] + a[..., :, 3:4] * b[..., 3:4, :])
+
+
+def mvp_rows(proj, view, M):
+    """``(B, G, 4, 4)`` model-view-projection per row: ``proj @ view @ M``, BATCH-INVARIANT.
+
+    ``proj (4,4)``, ``view (B,4,4)`` or ``(4,4)``, ``M (B,G,4,4)``. Computed in float64 with ``_mm4`` and
+    cast once to ``M.dtype``, so the value is the correctly rounded product and is bitwise the same for
+    a row whether it is rendered alone or in a batch of 4096.
+
+    Why not ``(proj @ view)[:, None] @ M``: that is one cuBLAS batched GEMM over ``B*G`` 4x4 products,
+    and cuBLAS picks its kernel -- hence its FMA and summation order -- by the batch count. Measured on
+    an RTX 3090 (torch 2.14.0+cu126, TF32 off, ``PFRocketLanding``, 13 geoms): identical results for
+    B <= 24 and a different rounding for B >= 31, 46 of a row's 208 entries off by up to 1.5e-5 at
+    100-500 m coordinates, which moved 1282 clip-space vertex coordinates and flipped ~10 silhouette,
+    internal-edge and truncation pixels per frame between a state rendered alone and the same state in
+    a batch (``examples/results/step7/rocket-landing/tier/probe_batch/``, jobs 6407151/6407256). The
+    sparse per-geom stage and the rasterizer were exact on identical input; the GEMM alone reproduced
+    the split. Elementwise products have no such kernel choice.
+    """
+    import torch
+    p = proj.to(torch.float64)
+    v = view.to(torch.float64)
+    vp = _mm4(p, v)                                                   # (B,4,4) or (4,4)
+    vp = vp[:, None] if vp.ndim == 3 else vp[None, None]
+    return _mm4(vp, M.to(torch.float64)).to(M.dtype)
+
+
 def offset_clip(pos, R: int, offset) -> "torch.Tensor":
     """Shift clip-space vertices ``(B, V, 4)`` by ``offset`` PIXELS at resolution ``R`` (x right, y UP).
 
@@ -822,7 +856,7 @@ class Scene:
         M[:, :, :3, :3] = xmat
         M[:, :, :3, 3] = xpos
         M[:, :, 3, 3] = 1.0
-        mvp = (proj @ view)[:, None] @ M if view.ndim == 3 else (proj @ view)[None, None] @ M
+        mvp = mvp_rows(proj, view, M)                                 # batch-invariant, see mvp_rows
         pos = torch.sparse.mm(self.S4, mvp.permute(1, 3, 0, 2).reshape(4 * G, 4 * B))
         pos = pos.reshape(self.V, B, 4).permute(1, 0, 2).contiguous()
         nrm = torch.sparse.mm(self.S3, xmat.permute(1, 3, 0, 2).reshape(3 * G, 3 * B))
