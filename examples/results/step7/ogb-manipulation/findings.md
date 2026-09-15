@@ -425,13 +425,19 @@ and `(qpos, qvel, mocap_pos, mocap_quat[, 2 button bits])` as the state.** No ne
 primitive is required — unlike W4's ellipsoid/heightfield, every capability these scenes use already
 exists in `stable_envs/render/mjwarp.py`.
 
-**Proposed fidelity tier: `parity` on GPU with a declared alpha `parity_note`; CPU refused or
-`CPU_FASTER`, never `CPU_FAST`.**
-The alpha note is 0.61 % (Cube) / 0.15 % (Scene) of pixels, strictly smaller than Fetch's accepted
-1.2–1.5 %, and it falls almost entirely on edge pixels of a translucent marker — the same reason
-Fetch's markers reached 0.000002 of interior pixels. The declaration must also state the interior
-fraction (0.416 / 0.276), because an `interior_exact_frac` here covers much less of the frame than
-in the 2-D families.
+**Proposed fidelity tier: NOT YET PROPOSABLE — phase 1 must first explain a 0.0092 interior.**
+Before the GPU leg landed this file proposed `parity` on GPU with an alpha `parity_note`. The
+measurement does not support that yet: raw MJWarp is **0.0092 interior-exact** against the official
+EGL frames, two orders of magnitude from Fetch's corrected 0.9988, and none of the four known Fetch
+corrections applies here (§5). The alpha note is still small and still right (0.62 % / 0.15 %, below
+Fetch's accepted 1.2–1.5 %), and the interior fraction (0.414 / 0.272) must be declared alongside
+any interior claim — but the tier itself is a phase-1 output, not a phase-0 proposal.
+
+**Performance tiers, measured and reported honestly (Step 2 §12.1 `PERFORMANCE_MEASURED`).** On GPU:
+`GPU_FAST`-class throughput (6,352 f/s at B=1024 on a 3090) with **`BATCH_SCALES` = 2.89x, FAIL** —
+the same qualifier Step 6 closed `fetch-gpu` with, and Step 7's own rule says a new cell is not
+required to pass it to ship. On CPU: `CPU_FAST` blocked on `cores_cpu` by 56–72x, `CPU_FASTER`
+reachable at `S_cpu` ≈ 6–7 (§6). Neither number blocks coverage; both must be declared.
 
 **Shared vs per-env.** Shared: the MJWarp backend and all four Fetch corrections; the UR5e +
 Robotiq asset set (28 meshes, 185,489 triangles, bit-identical between the two envs); the plate bake;
@@ -540,3 +546,16 @@ One GPU job in flight. No `simclr` job was touched.
    (2 distinct frames in 32, 4 pixels at 1/255) but **is** bit-stable on the certification host
    (1 distinct frame in 32, both envs, job 6395175). The macOS result was a Metal/MSAA artefact; the
    frozen corpus can be a digest.
+8. **The 0.0092 interior is the gating unknown, and it is a phase-1 question.** Raw MJWarp on
+   `OGBCube` is `interior_exact` 0.0092, mean |Δ| 10.4/255 against the official EGL frames, and none
+   of the four Fetch corrections applies. The terms the Fetch scene does not have and these do — a
+   `castshadow` directional light, a spot light with cutoff 100 / exponent 10, and a headlight that
+   owns 98.7 % of pixels — are exactly the ones `cpu3d`'s M1 had to transcribe from the megakernel
+   for the DM Control trackcom cells. Is W5 authorised to spend phase 1 attributing that gap term by
+   term (the M1 recipe, on the GPU side) before any cell is written?
+9. **`BATCH_SCALES` = 2.89x: ship with the qualifier, as Fetch did?** Step 7's rules say a new cell
+   need not be `GPU_FAST` to ship provided the tiers are measured and declared. These cells saturate
+   by B=64 at 6,352 f/s on a 3090 with 148 MiB at B=1024, so the ratio is a property of a cheap frame
+   and a dense BVH, not of a fixable bottleneck. Confirm that `GPU_*`+`BATCH_SCALES_FAIL` is
+   acceptable for coverage, so phase 1 spends its budget on fidelity rather than on a ratio that
+   Step 6 already escalated once and closed.
