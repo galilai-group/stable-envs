@@ -20,7 +20,7 @@ import pytest
 torch = pytest.importorskip("torch")
 R3 = pytest.importorskip("stable_envs.render.raycast3d")
 
-KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
+KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)
 
 
 def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0,
@@ -161,6 +161,15 @@ CASES = [
     dict(rng=21, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=-1),
     dict(rng=22, B=2, K=5, N=512, far=100.0, dd_at_tol=+1,
          kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
+    # ELLIPSOID (Step 7): unbounded by the table, so it takes the verbatim body beside bounded
+    # kinds; pinned alone, mixed, degenerate, tangent-at-distance and at the admission edge.
+    dict(rng=23, B=2, K=4, N=333, kinds=(R3.ELLIPSOID,) * 4),
+    dict(rng=24, B=2, K=6, N=333, kinds=(R3.ELLIPSOID, R3.CAPSULE) * 3),
+    dict(rng=25, B=3, K=6, N=333, kinds=(R3.ELLIPSOID, R3.SPHERE) * 3, degenerate=True),
+    dict(rng=26, B=2, K=6, N=512, far=100.0, tangent=True,
+         kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)),
+    dict(rng=27, B=2, K=6, N=512, far=100.0, dd_at_tol=-1,
+         kinds=(R3.ELLIPSOID, R3.CAPSULE, R3.ELLIPSOID, R3.BOX, R3.ELLIPSOID, R3.CYLINDER)),
 ]
 
 
@@ -172,7 +181,8 @@ def _case_id(c):
     if c.get("far"):
         tag.append(f"far{int(c['far'])}")
     if c.get("kinds"):
-        names = {R3.PLANE: "pl", R3.SPHERE: "sp", R3.CAPSULE: "ca", R3.CYLINDER: "cy", R3.BOX: "bx"}
+        names = {R3.PLANE: "pl", R3.SPHERE: "sp", R3.CAPSULE: "ca", R3.CYLINDER: "cy", R3.BOX: "bx",
+                 R3.ELLIPSOID: "el"}
         tag.append("".join(names[k] for k in c["kinds"]))
     return "-".join(tag)
 

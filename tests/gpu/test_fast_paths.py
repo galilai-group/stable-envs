@@ -585,7 +585,46 @@ def test_an_unknown_geom_code_is_refused_by_both_cast_backends():
     R = torch.eye(3, device=dev).view(1, 1, 3, 3)
     for backend in ("torch", "triton"):
         with pytest.raises(ValueError, match="no intersector"):
-            R3.cast_nearest([4], sz, pos, R, o, d, backend=backend)      # 4 = mjGEOM_ELLIPSOID
+            R3.cast_nearest([8], sz, pos, R, o, d, backend=backend)      # 8 = mjGEOM_SDF
+
+
+def test_the_ellipsoid_twins_are_bit_identical_on_both_casts():
+    """``_ellipsoid`` (torch) and the ``kind == 4`` branch of ``_tri_isect`` are two spellings of one
+    function, admissible together only because they agree to the bit -- the argument the module makes
+    for every other kind. Step 7 added the kind for DM Control's quadruped torso; this is the
+    synthetic-scene check (rotated, anisotropic, some degenerate, some with the origin inside), and
+    the env-level one is the ``raycast3d-fused-vs-torch`` case above once a cell carries an ellipsoid
+    through ``composite``."""
+    if not R3.HAVE_TRITON:
+        pytest.skip("raycast3d has no Triton build in this interpreter, so there is one path only")
+    dev = "cuda"
+    g = torch.Generator().manual_seed(7)
+    B, K, N = 3, 6, 4096
+    kinds = [R3.ELLIPSOID, R3.SPHERE, R3.ELLIPSOID, R3.CAPSULE, R3.ELLIPSOID, R3.BOX]
+    sizes = (torch.rand(B, K, 3, generator=g) * 0.4 + 0.02)
+    sizes[1, 0] = 0.0                                                   # a degenerate one
+    pos = (torch.rand(B, K, 3, generator=g) - 0.5) * 1.5
+    q = torch.randn(B, K, 4, generator=g)
+    q = q / q.norm(dim=-1, keepdim=True)
+    w, x, y, z = q.unbind(-1)
+    R = torch.stack([1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y),
+                     2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x),
+                     2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
+                    -1).view(B, K, 3, 3)
+    o = ((torch.rand(B, N, 3, generator=g) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4]))
+    o[2] = pos[2, 0].view(1, 3) + (torch.rand(N, 3, generator=g) - 0.5) * 0.01   # inside one
+    d = torch.nn.functional.normalize((torch.rand(B, N, 3, generator=g) - 0.5)
+                                      + torch.tensor([0.0, 1.0, 0.0]), dim=-1)
+    args = [t.contiguous().to(dev) for t in (sizes, pos, R, o, d)]
+    ft, fn, fi = R3.cast_nearest(kinds, *args, backend="triton")
+    st, sn, si = R3.cast_nearest(kinds, *args, backend="torch")
+    assert torch.equal(ft, st) and torch.equal(fi, si), "ellipsoid: fused and torch casts disagree"
+    hit = st < R3.INF
+    assert torch.equal(fn[hit], sn[hit]), "ellipsoid: fused and torch normals disagree on hits"
+    lim = torch.full((B, N), 3.0, device=dev)
+    fb = R3.any_blocking(kinds, *args, lim, backend="triton")
+    sb = R3.any_blocking(kinds, *args, lim, backend="torch")
+    assert torch.equal(fb, sb), "ellipsoid: fused and torch any_blocking disagree"
 
 
 def test_a_flat_polygon_is_not_culled():
