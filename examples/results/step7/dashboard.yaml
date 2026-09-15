@@ -950,9 +950,8 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'M4 = BLOCKER: defect A batch-size dependence (mandatory Gate A FAIL) from the batched mvp product in shared nvdiff.Scene.clip (ulps -> edge flips, 10 px, 52/64 rows); defect B reference bridge
-    rejects ground-contact states (~1/960). Minimal generic fix authorized for A under a six-cell byte-identity condition; per-state unreachable flag + declared exclusion for B; then re-run the chain, declare,
-    re-review, merge'
+  status: 'BLOCKED ON A CONTRACT DECISION (Sami): the batch-invariant mvp fix passes check_batch_size_invariance (max_abs 0) but moves 4-180 px on the six frozen locomotion nvdiff cells (ulp re-baseline);
+    reverted per the hard condition. Defect B closed. All other gates pass; fidelity measured (7.709/0.9613/0.8545, ceilings 10.0/0.91/0.80) but not declared on the reverted tree.'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -980,7 +979,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: e74d0bd (M4 evidence; declaration left UNMEASURED)
+  head_sha: 7224222 (d1e61a1 both fixes measured; 283865b reverts defect-A change; 7224222 M5 evidence)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -1096,6 +1095,25 @@ workstreams:
     conformance_pytest: '29 passed / 9 skipped / 4 failed: batch-size (A), declared fidelity (B), colour knobs (TinyRenderer multiplicative law: exact RGB appears only at specular=1; official frames too),
       downsample bound missing (measured 0.95614)'
     tests_local: tests/unit 745/7/1 (citations 9); test_rocket_landing 17 passed
+  m5:
+    job: 6408817 gpu2109 RTX 3090, load 31-33, 3:39, tree d1e61a1
+    six_cell_identity: 'FAIL at d1e61a1: HalfCheetah 13 px/max 1, Hopper 8/1, Walker2d 4/1, Ant 32/8, Humanoid 14/81, Swimmer 180/67 (of 3,686,400 px each) -> the baseline frames ARE cuBLAS''s batch-dependent
+      rounding; a batch-invariant product is one fixed rounding, so ''batch-invariant'' and ''bit-identical to a batch-dependent baseline'' are incompatible'
+    batch_size_invariance_at_d1e61a1: max_abs 0 at windows (1,7,64,4096) over 4,096 states; prefix probe 0 px at every prefix; Hopper control 0
+    defect_b: 'closed: _reference_frame_flagged detects the contact band (link AABB within 5 cm of PAD_TOP_Z 0.152 m), returns the synced picture and flags the row; REFERENCE_UNREACHABLE_SHARE 1/960 declared;
+      conformance.py untouched; sample_states not narrowed'
+    gates:
+      '1': FAIL (ulp re-baseline)
+      '2': PASS
+      '3': PASS 0 rejections
+      '4': PASS 6.968/0.9607/0.8901
+      '5': PASS all four incl. batch-size (at d1e61a1)
+      '6': measured; BATCH_SCALES 14.56 FAIL; NO_LARGE_BATCH_REGRESSION 1.247 PASS; R 232.81; cores 2.576; cpu_frac 1.054
+      '7': PASS
+    fidelity_measured_not_declared: worst of four 7.709/0.9613/0.8545 (spread 7.482-7.709 / 0.9613-0.9622 / 0.8545-0.8684); under variation 7.646/0.958/0.896; ceilings by convention 10.0/0.91/0.80 (fill_declaration.py
+      emits them); left UNMEASURED because the shipped tree (reverted) has no single number
+    tier_line: GPU_PARITY [BATCH_SCALES_FAIL]
+    tests: tests/unit 745/7/1 (9 citations); test_rocket_landing 17; on the card at d1e61a1 48 passed
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1283,6 +1301,8 @@ incident_log:
   item: 'W5 cell re-review: defects closed; three declaration fixes requested'
 - date: '2026-09-15'
   item: W5 C1-C3 landed (f62625e9); final check requested
+- date: '2026-09-15'
+  item: 'W6: batch-invariant fix conflicts with six frozen locomotion digests -> escalated as a contract decision; defect B closed; evidence at 7224222'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1332,6 +1352,21 @@ escalations:
     would fail any lit cell with RGB leaves.
   question: declare not applicable for lit RGB leaves with the law cited, or extend the shared check to accept the law-transformed colour (an extension of a Gate-A check = Sami's call)
   status: open; recorded as FAIL with mechanism meanwhile
+- date: '2026-09-15'
+  from: W6 / coordinator
+  topic: PFRocketLanding batch-size invariance vs bit-compatibility of six frozen locomotion nvdiff cells
+  facts: The rocket's frame depends on batch size because nvdiff.Scene.clip's batched (proj@view)@M product picks different cuBLAS kernels at different batch widths (<=1.5e-5 ulps at 400 m coordinates ->
+    edge flips, 10 px). The minimal generic fix (batch-invariant product) makes check_batch_size_invariance pass (max_abs 0) but changes 4-180 px (max 81/255 on Humanoid) on each of the six frozen Step-4
+    locomotion nvdiff cells, because their frozen frames are the batch-dependent rounding. No fix of this shape can be both batch-invariant and bit-identical to those frames. Patch recoverable at d1e61a1.
+  options:
+  - (a) accept an ulp-level re-baseline of the six locomotion cells (<= 4.9e-5 of pixels; re-freeze their Step-4 digests in Step 8 and re-verify their declared fidelity on a node with working EGL) -> PFRocketLanding
+    passes all mandatory gates and can be declared/merged
+  - (b) keep bit-compatibility -> PFRocketLanding fails a mandatory Gate-A check and cannot be certified (coverage blocked, cell can still ship as blocked/partial with the mechanism)
+  - (c) a generic precision guard keyed on scene extent (float64 transform only when |coordinates| exceed a threshold) - keeps small-coordinate scenes bit-identical and fixes the rocket, but is a data-dependent
+    switch a future scene could straddle; coordinator does not recommend without Sami's view
+  coordinator_recommendation: '(a): the frozen locomotion frames encode a kernel-selection artefact, not a renderer property; batch-size invariance is the mandatory contract. Re-freeze under Step 8 with
+    the diff quantified per cell.'
+  status: open; W6 holds at 7224222 (reverted tree, evidence committed)
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
