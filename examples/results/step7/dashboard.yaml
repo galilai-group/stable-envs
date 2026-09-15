@@ -248,13 +248,13 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: MERGED into step7/integration at 1d9dccb (branch f4f0727; final review APPROVE); CPU tier not reported (GPU_FAST only) - CPU sweep is a follow-up item
+  status: 'CLOSED: merged (1d9dccb + follow-on); parity interior 1.0 at the 3.11 pin; Gate A all mandatory pass with 3 reported exclusions; GPU_FAST; CPU_REGRESSION'
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: f4f0727 (merged 1d9dccb)
+  head_sha: 3ef730c (CPU tier recorded; merged)
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -411,6 +411,17 @@ workstreams:
     auto_merged: stable_envs/envs/dmcontrol.py (W3 suite region + W4 trackcom region)
     integration_tests: 'tests/unit on 1d9dccb: 811 passed, 7 skipped, 1 FAILED = W4''s loader-drift guard test_cpu3d.py::test_the_swm_quadruped_loader_overrides... (W3 changed _DMCModel._bundle; W4''s _SWMQuadrupedModel
       copy drifted). Not a pixel regression; fix assigned to W4 (e2): replace the copy with a load hook in _DMCModel'
+  cpu_tier:
+    job: 6396735 node2315 se-vis311 one thread; gates USABLE (spread 1.075x; floor 1.13x of known DMCReacherHard 111.0; load 0.85/core)
+    ours_224px_best_batch: '15.50 f/s at B=1 (falls with batch: 13.76/8.23/4.93 at 16/64/256)'
+    official: 22.23 f/s
+    decode_one_core: 2,172.28 f/s
+    S_cpu: 0.697
+    cores_cpu: 0.0071
+    tier: CPU_REGRESSION (NO_REFERENCE row also below CPU_FASTER)
+    mechanism: _fk Python loop per env + three full-frame ray passes at 50,176 rays (7.1x the 84 px cells); the same cell is GPU_FAST at B=4096 where the loop amortises
+    note: 'tier name, not a slowdown: no CPU number existed before; 15 pre-existing cells byte-identical'
+    what_would_move_it: batch axis for _fk (the BallInCup change) and bounding shadow/reflection passes to mover footprints - Step-6-class shared optimisation, out of Step-7 scope (deferred)
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -835,6 +846,8 @@ incident_log:
   item: INTEG-1 fixed by W4 (31bd3e9); final verification of e2+e3 requested
 - date: '2026-09-15'
   item: W4 certification merged (e0a416c); integration tests 812 passed + citation scanner picking up review docs (to fix on integration)
+- date: '2026-09-15'
+  item: 'W3 CLOSED: CPU tier CPU_REGRESSION recorded and merged'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -883,6 +896,9 @@ deferred_work:
 - item: Shared span-rasteriser CPU mover pass for mesh-heavy MuJoCo scenes (OGB manipulation, Fetch) at CPU_FASTER
   evidence: 'W5: S_cpu ~6-7 vs llvmpipe official; cores_cpu short 56-72x (9.9-12.9x at the vertex-setup floor)'
   status: deferred to Step 8 by coordinator ruling 2026-09-15
+- item: 'DMC suite CPU path: batch axis for _fk and mover-footprint bounding of shadow/reflection passes (would move DMCManipulatorBringBall off CPU_REGRESSION)'
+  evidence: 'W3 CPU tier: 15.5 f/s vs official 22.2 at 224 px; throughput falls with batch'
+  status: deferred to Step 8 (shared-path optimisation)
 step8_carryovers:
 - item: certifier must honour per-cell resolution_consistency_applicability (CraftaxClassic night band) or judge on the light >= 0.5 subset
   source: W1 review re-check 2026-09-15
