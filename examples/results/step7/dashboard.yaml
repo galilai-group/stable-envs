@@ -92,7 +92,7 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: phase 1 reviewed APPROVE-WITH-CHANGES (3 required); fix-up commit (d) requested; merge after; cluster items pending Oscar
+  status: MERGED into step7/integration at 0a029bd (branch HEAD fa4ac53 after review follow-up d); cluster items pending Oscar
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
@@ -159,6 +159,21 @@ workstreams:
       - regenerate Gate A artifact at HEAD (recorded 68b411c dirty)
       - commit-or-delete untracked corpus npz
       - Oscar items must not lapse
+    review_followup:
+      commit: fa4ac53
+      required_done:
+      - TemporaryDirectory scoped to the call (0 leaked dirs; 57 stale dirs removed)
+      - sites residual (pupils + red torso site, ~50 px, max 186/255) declared in QUADRUPED_NOTE
+      - _cpu_scene comment corrected
+      recommended_done:
+      - loader-drift test pinning _SWMQuadrupedModel to _DMCModel source
+      - Gate A artifact regenerated on the (d) tree (identical verdicts)
+      - regenerable npz deleted
+      tests: tests/unit 735 passed 6 skipped
+  merge:
+    integration_sha: 0a029bd
+    date: '2026-09-15'
+    gate: hygiene 0 trailers; step4/5/6 untouched; independent review APPROVE-WITH-CHANGES satisfied; integration tests/unit run recorded separately
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -205,6 +220,8 @@ incident_log:
   item: W4 phase 1 (9188c2c) and W6 feasibility gate (c6772f7) delivered; W4 reviewer spawned; W6 phase 1 authorized; Oscar SSH still denied so all cluster items remain queued
 - date: '2026-09-15'
   item: W3 phase 1 (a635d3a) delivered; hygiene clean; reviewer spawned
+- date: '2026-09-15'
+  item: W4 merged (0a029bd); W5 slot freed
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
