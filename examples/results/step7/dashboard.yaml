@@ -7,13 +7,13 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: MERGED into step7/integration at 9ca318f (branch 7a1a138; re-review APPROVE); CPU tier job 6395167 pending -> separate commit; W2 starts from the merged tree
+  status: COMPLETE and merged (CPU tier 84ecb03); GPU tier harness job authorized as the last item; CPU tier + S_cpu reference question escalated to Sami
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 07e5ff8 (paired_verdict gates; tier commit pending job 6395527)
+  head_sha: 84ecb03 (W1 complete; merged)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -154,6 +154,7 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; review APPROVE-WITH-CHANGES -> re-check APPROVE; integration tests running
     auto_merged: tests/unit/test_declarations.py (W4 + W1 hunks)
     integration_tests: 'tests/unit on 9ca318f: se6-venv 795 passed 7 skipped (test_examples + pre-existing scratch-path test deselected); se7-craftax-venv craftax/prng/declarations subset 135 passed 5 skipped'
+    tier_merge_sha: see git log (merge of 84ecb03)
   followon_5fd5ccb:
     parity_at_2S: world rows exact (1.0, max 0) vs a craftax renderer constructed at 32 px in every band incl. night; strip differs 17.96-18.59% (craftax re-layout); 32 px is not a parity size because craftax
       ships no textures there
@@ -161,6 +162,22 @@ workstreams:
     cpu_tier: 'job 6395321 QUARANTINED: its baseline leg pointed at $SCR/se6/baseline (the PRE-Step-6 tree, 1,371 f/s, state_dim 127, no _Composite), not 76dc511; spread rule alone passed it (1.178x). Fix:
       $SCR/se7/baseline = pristine 76dc511 (verified on node); paired_verdict.py gained a baseline-floor gate (known tree must re-measure within 4x of its certified number) and a load gate. Re-run job 6395527
       queued.'
+  cpu_tier:
+    job: 6395527 node2356, 1 thread, paired verdict USABLE (baseline legs 165,922 / 165,181 f/s, spread 1.0045x, 1.44x the Step-6 certified 115,166; load 0.86/core over 192 cores)
+    mixed_tier_input: '1,150.6 f/s at 16 px certified batch B=64 (B=256: 1,111)'
+    daylight_diag: 68,833 f/s (B=256/16 px)
+    night_diag: 656 f/s (B=256/16 px)
+    ratio: 104.9x; slower band light_level < 0.5 (threefry 37% of night time)
+    7px_b256: 5,958 f/s
+    decode_bar: 4,367 f/s one-core JPEG-q90 for the 144x144 frame (was 5,489 for 112x144)
+    no_reference_ladder: mixed cores_cpu 0.263 -> CPU_REGRESSION; daylight-only cores_cpu 24.2 -> would be CPU_EXCEPTIONAL. Tier change CPU_EXCEPTIONAL -> CPU_REGRESSION is the coverage change (night now
+      represented), not a slower renderer
+    s_cpu_trap: 'bench_step3 now sees an official renderer (jax on Oscar): official_cpu 2.18 f/s because reference_env returns the UN-JITTED renderer parity requires -> S_cpu would read 528x and certify
+      CPU_EXCEPTIONAL against a renderer nobody runs. Against the jitted official S_cpu ~1.9x. Recommendation: take this env''s CPU tier on the NO_REFERENCE ladder and suppress S_cpu until the harness can
+      be told which reference a speed ratio may use (general rule for any cell whose parity reference is expensive to make deterministic)'
+    measurement_bugs_fixed:
+    - wrong baseline tree ($SCR/se6/baseline = pre-Step-6) caught by the baseline-floor gate
+    - load gate divided by --cpus-per-task instead of node cores; fixed to per-node-core
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -595,6 +612,8 @@ incident_log:
   item: Sami W6 ruling recorded and forwarded (reviewer formal re-review on 13ca91b; cluster gate list to W6)
 - date: '2026-09-15'
   item: 'W6 formal re-review: hard blockers cleared; D2 + minors forwarded; job 6395707 kept'
+- date: '2026-09-15'
+  item: 'W1 complete: CPU tier merged; CPU_REGRESSION on the mixed default; S_cpu reference trap escalated'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -611,6 +630,16 @@ escalations:
   question: certify per band (daylight vs lit) and declare both, or a single mixed-corpus number that hides a ~100x split whose cause is the reference's per-pixel float post-process
   recommendation: per band, both declared
   resolved: 2026-09-15 by Sami (see decisions)
+- date: '2026-09-15'
+  from: W1 / coordinator
+  topic: CraftaxClassic registered-default CPU tier and the speed-ratio reference
+  facts: Mixed-corpus CPU tier on the NO_REFERENCE ladder = CPU_REGRESSION (cores_cpu 0.263; daylight alone 24.2). The frozen ladder prefers S_cpu when a reference exists; the parity reference is the un-jitted
+    craftax renderer (2.18 f/s), so S_cpu would read 528x and certify CPU_EXCEPTIONAL on a renderer nobody runs; against the jitted official S_cpu ~1.9x (still < 5).
+  question: '(1) Accept CPU_REGRESSION as the honest registered-default CPU tier for CraftaxClassic in Step 7 (coverage change, not a renderer regression; daylight diagnostic recorded)? (2) For S_cpu, which
+    reference may a speed ratio use: the parity reference as written (un-jitted) or the official as a user runs it (jitted)? Coordinator recommendation: (1) yes; (2) speed ratios use the official as a user
+    runs it, parity uses the reference as written; until Step 8 encodes that in the harness, CraftaxClassic''s CPU tier is taken on the NO_REFERENCE ladder with S_cpu suppressed and both numbers recorded.
+    This touches the Step-2 taxonomy, so it is Sami''s call (Step 8 candidate).'
+  status: open
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
