@@ -50,7 +50,7 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: 'phase 1 (implementation authorized: shared ellipsoid intersector in raycast3d + cpu3d admission + DMControlTrackCom registration; cluster items pending Oscar)'
+  status: phase 1 PATCH delivered (HEAD 9188c2c); independent review running; cluster items pending Oscar
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
@@ -63,6 +63,36 @@ workstreams:
     \ 0.952 (84 px: 5.27/0.826/0.881) inside the family band; residual: floor near body 46% (reflection + shadow), far floor 30%, sky 10%, body 11%, ellipsoid 1.7%. Tier: visual under the 3.11 pair."
   decisions: certify at the registered SWM default (camera 2, 224 px, SWM appearance); Swimmer6 allow-listed not certified; reflection named as a residual; W4 owns the raycast3d ellipsoid; W3 must not edit
     raycast3d.py
+  phase1:
+    classification: PATCH
+    head: 9188c2c
+    commits:
+      a_raycast3d_ellipsoid: e120029
+      b_cpu3d_mover_kinds_plus_swimmer_allowlist: 68b411c
+      c_dmcontrol_quadruped_registration: 9188c2c
+    results_local_apple_m5:
+      cpu_identity_vs_76dc511: 14/14 comparable configs byte-identical (10 raycast3d DMC + 4 cpu3d trackcom); 11 OGBench maze cells not runnable locally (ogbench missing) -> cluster
+      gate_a_312_arm: 14/14 mandatory checks pass; visual 3.45/0.900/0.955 within declared ceilings 4.7/0.84/0.90; resolution_consistency 0.8119 (8-state protocol)
+      vs_official_mj3110_dmc10044_224px_64states:
+        mean_abs: 3.42
+        within8: 0.902
+        ssim: 0.957
+        residual_share:
+          floor_near_body_reflection_shadow: 0.57
+          far_floor: 0.29
+          body: 0.07
+          sky: 0.065
+          ellipsoid: 0.012
+      tests: tests/unit 734 passed 6 skipped (test_examples deselected; test_every_cited_scratch_path_resolves is a pre-existing baseline failure); raycast3d suites 146 passed
+      fps_not_certification:
+        224px_b64: 25
+        84px_b64: 164
+    pending_cluster:
+    - 'scratch/step7/dmc-quadruped/gpu_declare.sbatch: mujoco_warp source check, cuda identity on 25 configs, twin test, 3-draw MJWarp declaration replacing the provisional VISUAL_FIDELITY entry, Gate A
+      cuda both arms'
+    - 'scratch/step7/dmc-quadruped/certify_cpu.sbatch: CPU identity incl. mazes, Gate A CPU under se-vis311, cross-backend, paired sweep for the tier, r5_kind_cost for the ELLIPSOID bound'
+    reviewer: independent reviewer (opus family) spawned 2026-09-15, read-only
+    notes: Provisional VISUAL_FIDELITY entry is CPU-measured until the MJWarp declaration lands. Untracked official 3.11 corpora npz remain in the worktree phase0/corpus (not committed).
 - workstream: ogb-manipulation
   targets:
   - swm/OGBCube-v0
@@ -73,16 +103,40 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: phase 0 (feasibility gate, local; started 2026-09-15 as the fourth active workstream)
+  status: phase 1 authorized 2026-09-15 (M1 corpus -> M2 nvdiff extensions -> M3 cell; M4 as cluster scripts); feasibility gate GO at c6772f7
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
   branch: step7/rocket-landing
   worktree: /Users/samib/stable-envs-step7-rocket-landing
+  phase0:
+    classification: FINDING + PATCH_CANDIDATE -> GO, visual tier
+    head: c6772f7
+    step1_premises_vs_measurement: URDF mesh assets FALSE (11 primitives + pad cylinder + 2-tri ground with tiled 512^2 checker, ~600 tris); per-reset URDF rewrite is dead code for the rocket (colours via
+      changeVisualShape); environment.sky_color is a dead leaf
+    G1_purity: 'PASS: frame = f(pose, 5 colours); two reconstructible bits: links+camera drawn one 1/240 s substep behind the base after step (exact: pos - v*dt, exp(-w*dt)*q), flame recolour on ignition
+      transition never reset (61 px style bit)'
+    G2_state_size: 28-52 B/step vs 691,200 B/frame (480x480x3)
+    G3_shading: TinyRenderer law out=int(255*c*(0.6+0.35*max(0,n.l)+0.05*spec)), truncated, no gamma/shadows, light normalised (-50,30,100); explicit defaults reproduce 0 px; lightDirection persists in
+      the client (probe trap recorded)
+    G4_official_speed: 34.25 f/s one core at 480^2 vs 1190.9 f/s one-core JPEG-q90 decode = 0.029 cores
+    hardware: Apple M5 CPU; /Users/samib/se7-rocket-venv (PyFlyt 0.29.0, pybullet 3.2.7, cvxpy 1.7.5, swm 0.1.1; numba JIT 57 s/process)
+    upstream_findings:
+    - 'swm: dead sky_color leaf; dead _modify_rocket_urdf; goal image rendered synced while observations are lagged'
+    - 'PyFlyt/PyBullet: flame recolour never reset; one-substep link/camera lag'
+  phase1_rulings:
+  - 'device=''cpu'' raises honestly (no CUDA fallback); CPU coverage declared missing; one bounded CPU-rasteriser feasibility measurement after M3 (bars: >=171 f/s for S_cpu>=5, >=1191 f/s for cores_cpu>=1);
+    build decision reserved'
+  - certify at the registered SWM default observation (480 px to be confirmed from the swm registration)
+  - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
+  - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
+  - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
 decisions: []
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
+- date: '2026-09-15'
+  item: W4 phase 1 (9188c2c) and W6 feasibility gate (c6772f7) delivered; W4 reviewer spawned; W6 phase 1 authorized; Oscar SSH still denied so all cluster items remain queued
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
