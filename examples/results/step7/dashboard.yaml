@@ -199,13 +199,13 @@ workstreams:
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
-  status: review follow-up landed (six items; 0 dead dims over 200 seeds at batch 1; broken citations back to 11); re-check requested; Gate-F swm job 6398628 queued; merge after re-check
+  status: MERGED into step7/integration at d024c1a (review APPROVE on de31e89); Gate-F swm evidence (job 6398628) to land as a follow-on commit
   capability: full-atlas _Composite generalisation + layers
   wave: 2
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
-  head_sha: ab42355 (review follow-up; digests unchanged)
+  head_sha: de31e89 (merged d024c1a)
   phase0:
     classification: PATCH_CANDIDATE (all three layers already bit-exact)
     registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
@@ -312,6 +312,16 @@ workstreams:
         - 'fifth sampler guard: 0 dead dims / 200 seeds at batch 1'
         - 'nits: jit gap scoped to the pool; vacuous assertion fixed (exposed a wrong batch-axis slice); CPU tier = lower bound; Step-8 carry-overs'
         tests: branch 2/931/7 vs ada4075 2/905/7 same failures
+      recheck:
+        verdict: APPROVE
+        head: de31e89
+        verified:
+        - six items by reading and re-running; dead dims clean on seeds 100/202/248/0..11/300..339 at batch 1
+        - pool and selection sha256 regenerate; corpus unchanged
+        - digests unchanged 10/16 px
+        - tests 931/7/2 same two pre-existing failures
+        - 'Gate-F jitted-frame: no extra wording required beyond Classic''s parity_note; suggested one Step-8 sentence for both Craftax cells'
+        note: certify.py band() is not documented on the tip (scratch-only; non-blocking)
   cluster:
     x86_gate_a_parity_6397697: 'COMPLETED node2352: parity 1.0 / 0 at 10 and 16 px, digests identical to the Mac (b3dcba4dea708d15 / 43414708ce31a3d7); dead_dims [] at batch 1..16 x 12 seeds; resolution
       consistency 0.7945; 24 tests passed'
@@ -330,6 +340,12 @@ workstreams:
     job: '6398628 queued: swm checkout 176d545 installed -e under a pinned constraints file into se7-craftax; fails loudly on a pin move; Gate F + parity re-certify'
     local_probe_finding: 'SWM wrapper jits env.step -> a live workflow sees the JITTED frame: 0.99963 exact, max abs 1, 39/41 identical vs our un-jitted-certified frames (the ~1.5e-5 fusion gap at uint8
       boundaries; same as Classic; not a renderer defect)'
+  merge:
+    integration_sha: d024c1a
+    date: '2026-09-15'
+    gate: 'hygiene 0 trailers; step4/5/6 untouched; reviewer APPROVE; parity 1.0/0 on three backends; Gate A clean; integration tests: craftax subset 104 passed; tests/unit 838 passed + the pre-existing
+      citation failure'
+    auto_merged: docs/research/swm_coverage.md
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
@@ -1046,6 +1062,8 @@ incident_log:
   item: W5 shared changes re-verified APPROVE conditional on job 6398530
 - date: '2026-09-15'
   item: W2 follow-up landed (ab42355); re-check requested; Gate-F job queued with the jitted-wrapper observation
+- date: '2026-09-15'
+  item: W2 MERGED (d024c1a); coverage 37/40 merged
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1103,3 +1121,6 @@ step8_carryovers:
   source: W1 review re-check 2026-09-15
 - item: Step-7 corpora (craftax-classic-full, craftax-full) lack the `meta` key fidelity_step4.corpus_for reads unconditionally; add at the Step-8 freeze
   source: W2 review
+- item: 'Both Craftax cells: add one declaration sentence that the SWM wrapper jits step so a live workflow observes the jitted frame; the certified claim is against the un-jitted renderer, differing by
+    at most 1 uint8 step on a small fraction of pixels'
+  source: W2 review re-check
