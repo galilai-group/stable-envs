@@ -1,0 +1,34 @@
+[
+ {
+  "config": "FetchReach",
+  "identical": null,
+  "missing": true
+ },
+ {
+  "config": "FetchPickAndPlace",
+  "identical": null,
+  "missing": true
+ },
+ {
+  "config": "DMCReacherEasy",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   84,
+   84,
+   3
+  ]
+ },
+ {
+  "config": "PointmazeMediumNavigate",
+  "identical": true,
+  "max_abs_diff": 0,
+  "shape": [
+   8,
+   224,
+   224,
+   3
+  ]
+ }
+]

@@ -68,16 +68,33 @@ while a *valid* 90° changes 95 % of pixels and darkens the frame by 7.4 levels 
 is exactly where the GL spec puts it. Probe: `scratch/step7/ogb-manipulation/probe_m1_spot_cutoff.py`,
 data `m1_mujoco_spot_cutoff.json`; it needs no GPU because it is a statement about MuJoCo alone.
 
-Turning the spot off entirely in MuJoCo changes only **2.6 %** of pixels (max 40), so MuJoCo's
-un-attenuated spot is a modest, localised contribution — and MJWarp's `cos^10` removes even that
-while also disagreeing about where it lands.
+**What "discarded" does and does not mean — measured, because the obvious reading is wrong.**
+A follow-up sweep (`m1_mujoco_light_forms.json`, same probe file) pins the behaviour down:
 
-So the two renderers disagree because **`mujoco_warp` honours an out-of-range spot cutoff that
-MuJoCo's GL path silently discards**, and applies an exponent MuJoCo therefore never reaches. It is
-not a per-env problem and not a Fetch-style model fix-up: Fetch's scene has no spot light, which is
-why none of its four corrections predicts this.
+| MuJoCo-side change | frame mean | vs shipped |
+|---|---:|---|
+| *shipped: SPOT, cutoff 100, exponent 10* | **58.26** | — |
+| **exponent 10 → 0**, cutoff still 100 | **58.26** | **bit-identical, max 0** |
+| cutoff 100 → 90 | 50.66 | 94.6 % differ, max 63 |
+| cutoff 100 → 45 | 50.64 | 94.6 % differ, max 63 |
+| light disabled | 48.55 | 94.6 % differ, max 66 |
+| re-typed to POINT | 48.55 | **identical to disabled** |
 
-## What this changes
+Two things follow, and the second killed a plausible cell design before it was written:
+
+1. **At an out-of-range cutoff the angular term is gone entirely.** The exponent has *no effect at
+   all* — changing 10 to 0 is bit-identical — and the frame is at its brightest. So MuJoCo is
+   lighting the scene with this light unattenuated by angle, which is exactly "not a spotlight",
+   while `mujoco_warp` applies both the cone and `cos^10`. That is the disagreement.
+2. **Re-typing the light to POINT does NOT express that.** In MuJoCo a POINT light here renders
+   identically to the light being *switched off* — 9.7 levels of mean darker than shipped. So the
+   tempting correction "make MJWarp see a POINT light, since that is what GL is doing" is measurably
+   false on the reference side, and a cell built on it would have been wrong. The correction that
+   matches the measurement is instead to neutralise the angular term MJWarp applies — `exponent = 0`
+   (its `pow(cos_theta, exp)` becomes 1) with a cutoff wide enough that its cone rejects nothing —
+   which is what the M3 design gate tests on the GPU.
+
+## What this changes## What this changes
 
 * **The gap is one term, and it is upstream.** 0.0082 → 0.4568 from a single light. The remaining
   0.543 is led by the headlight (independently worth +0.0372), and the combination has not yet been

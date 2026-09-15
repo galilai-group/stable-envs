@@ -6,38 +6,38 @@
   {
    "cutoff": 100.0,
    "frac_differing_from_100": 0.0,
-   "frame_mean": 57.24112457482993,
+   "frame_mean": 58.578291082057824,
    "max_abs": 0
   },
   {
    "cutoff": 180.0,
    "frac_differing_from_100": 0.0,
-   "frame_mean": 57.24112457482993,
+   "frame_mean": 58.578291082057824,
    "max_abs": 0
   },
   {
    "cutoff": 90.0,
-   "frac_differing_from_100": 0.9521285076530612,
-   "frame_mean": 49.830436862244895,
-   "max_abs": 77
+   "frac_differing_from_100": 0.9494579081632653,
+   "frame_mean": 50.84784890518708,
+   "max_abs": 66
   },
   {
    "cutoff": 89.0,
-   "frac_differing_from_100": 0.9521285076530612,
-   "frame_mean": 49.830436862244895,
-   "max_abs": 77
+   "frac_differing_from_100": 0.9494579081632653,
+   "frame_mean": 50.84784890518708,
+   "max_abs": 66
   },
   {
    "cutoff": 45.0,
-   "frac_differing_from_100": 0.9521285076530612,
-   "frame_mean": 49.81102519132653,
-   "max_abs": 77
+   "frac_differing_from_100": 0.9497369260204082,
+   "frame_mean": 50.8272015837585,
+   "max_abs": 66
   },
   {
    "cutoff": 10.0,
-   "frac_differing_from_100": 0.9525470344387755,
-   "frame_mean": 47.963893760629254,
-   "max_abs": 88
+   "frac_differing_from_100": 0.9499162946428571,
+   "frame_mean": 48.934198288690474,
+   "max_abs": 77
   }
  ],
  "diffuse": [
@@ -66,18 +66,18 @@
   },
   {
    "exponent": 0.0,
-   "frac_differing_from_10": 0.024035395408163265,
-   "max_abs": 4
+   "frac_differing_from_10": 0.02122528698979592,
+   "max_abs": 10
   },
   {
    "exponent": 1.0,
-   "frac_differing_from_10": 0.023098692602040817,
-   "max_abs": 3
+   "frac_differing_from_10": 0.020348373724489797,
+   "max_abs": 8
   },
   {
    "exponent": 50.0,
-   "frac_differing_from_10": 0.02467315051020408,
-   "max_abs": 13
+   "frac_differing_from_10": 0.02198262117346939,
+   "max_abs": 26
   }
  ],
  "pos": [
@@ -91,8 +91,8 @@
   1
  ],
  "spot_off": {
-  "frac_differing": 0.02618781887755102,
-  "max_abs": 40
+  "frac_differing": 0.023377710459183673,
+  "max_abs": 65
  },
  "verdict_100_equals_180": true,
  "verdict_89_is_honoured": true

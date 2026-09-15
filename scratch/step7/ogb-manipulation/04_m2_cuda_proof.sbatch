@@ -24,27 +24,36 @@ export TORCH_HOME=$SCR/.torch HF_HOME=$SCR/.cache/huggingface WARP_CACHE_PATH=$S
 export MPLBACKEND=Agg PYTHONUNBUFFERED=1
 WS=$SCR/se7/ogb-manipulation
 BASE=$SCR/se7/baseline
-VENV=$SCR/venvs/se-step5
+# se7-ogb, not se-step5: se-step5 has no ogbench, so the 25 OGBench maze cells -- the largest
+# MJWarp-backed family in the registry -- did not build there and the sweep covered only 15 envs
+# (job 6396748). gymnasium_robotics is added here because Fetch needs it and it is absent from every
+# shared venv this workstream may write to; se7-ogb is this workstream's own, so installing into it
+# breaks no other agent's pins.
+VENV=$SCR/venvs/se7-ogb
 OUT=$WS/examples/results/step7/ogb-manipulation/m2/cuda
 mkdir -p "$OUT"
 set -x
 cd "$WS"
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
 [ -d "$BASE/stable_envs" ] || { echo "FATAL: no pristine baseline at $BASE"; exit 3; }
+"$VENV/bin/python" -c 'import gymnasium_robotics' 2>/dev/null || \
+  "$VENV/bin/pip" install gymnasium-robotics || exit 3
+"$VENV/bin/python" -c 'import gymnasium_robotics, ogbench, mujoco_warp' || {
+  echo "FATAL: venv missing a family this proof must cover"; exit 3; }
 
 export MUJOCO_GL=egl
 # 1. the sweep, where the cuda-only families construct
-PYTHONPATH=$WS "$VENV/bin/python" scratch/step7/ogb-manipulation/sweep_texture_gaps.py \
+PYTHONPATH=$WS:$SCR/se7/swm-src "$VENV/bin/python" scratch/step7/ogb-manipulation/sweep_texture_gaps.py \
   --out "$OUT" || echo "SWEEP rc=$?"
 
 # 2. byte-identity: same states, same card, branch vs pristine 76dc511.
 for TREE in "$BASE" "$WS"; do
   TAG=$([ "$TREE" = "$BASE" ] && echo before || echo after)
-  PYTHONPATH=$TREE "$VENV/bin/python" - "$TAG" <<'PY'
+  PYTHONPATH=$TREE:$SCR/se7/swm-src "$VENV/bin/python" - "$TAG" <<'PY'
 import sys, numpy as np, stable_envs as se
 tag = sys.argv[1]
 out = "/oscar/scratch/sboughan/se7/ogb-manipulation/examples/results/step7/ogb-manipulation/m2/cuda"
-for name in ("FetchReach", "FetchPickAndPlace", "DMCReacherEasy"):
+for name in ("FetchReach", "FetchPickAndPlace", "DMCReacherEasy", "PointmazeMediumNavigate"):
     try:
         st = np.load(f"/oscar/scratch/sboughan/se7/ogb-manipulation/examples/results/step4/states/{name}.npz")
         s = st[list(st.keys())[0]][:8]
@@ -62,7 +71,7 @@ done
 import numpy as np, pathlib, json
 out = pathlib.Path("/oscar/scratch/sboughan/se7/ogb-manipulation/examples/results/step7/ogb-manipulation/m2/cuda")
 rows = []
-for name in ("FetchReach", "FetchPickAndPlace", "DMCReacherEasy"):
+for name in ("FetchReach", "FetchPickAndPlace", "DMCReacherEasy", "PointmazeMediumNavigate"):
     a, b = out / f"{name}_before.npy", out / f"{name}_after.npy"
     if a.exists() and b.exists():
         x, y = np.load(a), np.load(b)

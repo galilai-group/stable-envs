@@ -6,16 +6,29 @@ spot cutoff of 100 deg -- cone plus `pow(cos_theta, 10)` -- while MuJoCo's GL pa
 because `GL_SPOT_CUTOFF` accepts [0,90] or the sentinel 180 and leaves anything else at 180 = "not a
 spotlight" (measured: cutoff 100 renders bit-identically to 180, max abs 0).
 
-That points at a correction of exactly the shape `stable_envs/envs/fetch.py` already applies four
-times -- surgery on the MjModel before `put_model`, not renderer code:
+What that means was then pinned down on the MuJoCo side alone, and the obvious reading is WRONG:
 
-    a spot light whose cutoff is outside OpenGL's legal range is re-typed as a POINT light,
-    because that is what MuJoCo's own renderer does with it.
+    shipped (SPOT, cutoff 100, exponent 10)   frame mean 58.26
+    exponent 10 -> 0, cutoff still 100        frame mean 58.26   BIT-IDENTICAL, max 0
+    cutoff -> 90                              frame mean 50.85   94.9 % differ
+    light disabled                            frame mean 48.55
+    re-typed to POINT                         frame mean 48.55   IDENTICAL TO DISABLED
 
-In `mujoco_warp`'s shader the spot cone and exponent live behind `if lighttype == 0`, so a POINT
-light (type 2) takes `L = normalize(lightpos - hitpoint)` with `attenuation = 1/(1,0,0).(1,d,d^2) = 1`
-and no angular term -- which is what GL does at cutoff 180. This measures whether that is true in
-pixels, and what is left afterwards.
+So at an out-of-range cutoff MuJoCo drops the angular term entirely -- the exponent has no effect at
+all -- and lights the scene with the light unattenuated. And re-typing to POINT does NOT express
+that: in MuJoCo a POINT light here renders identically to the light being switched OFF. The tempting
+correction "make MJWarp see a POINT light, since that is what GL is doing" is measurably false on the
+reference side, and a cell built on it would have been wrong.
+
+The correction that matches the measurement is to neutralise the angular term MJWarp applies, on the
+MJWarp side only, as surgery on the MjModel before `put_model` -- the same shape as the four
+corrections `stable_envs/envs/fetch.py` already performs, not renderer code:
+
+    for a spot light whose cutoff is outside OpenGL's legal [0, 90],
+    set exponent = 0  (MJWarp's pow(cos_theta, exp) becomes 1)
+    and cutoff  = 180 (MJWarp's cone rejects nothing)
+
+POINT re-typing is kept in the sweep as the contrast that proves the point.
 
 `no_spot` from M1 is the WRONG comparison to stop at: it disabled the light on both sides, which
 agrees by removing the term. This keeps the light lit on both sides and asks whether the two
@@ -100,32 +113,37 @@ def main():
               f"signed {r['signed_interior_top'][:3]}", flush=True)
         return fr, offs
 
-    def retype_spot(mm):
-        """MuJoCo discards an out-of-range spot cutoff; make MJWarp do the same by re-typing."""
-        undo = {"light_type": mm.light_type.copy()}
+    def neutralise_angular(mm):
+        """The correction under test: kill MJWarp's cone and exponent for an illegal-cutoff spot."""
+        undo = {"light_exponent": mm.light_exponent.copy(), "light_cutoff": mm.light_cutoff.copy()}
         n = 0
         for i in range(mm.nlight):
             if int(mm.light_type[i]) == 0 and not (0.0 <= float(mm.light_cutoff[i]) <= GL_SPOT_MAX):
-                mm.light_type[i] = 2           # mjLIGHT_POINT
-                n += 1
-        rec.setdefault("retyped_lights", n)
-        return undo
-
-    def retype_and_widen(mm):
-        undo = retype_spot(mm)
-        undo["light_cutoff"] = mm.light_cutoff.copy()
-        for i in range(mm.nlight):
-            if not (0.0 <= float(mm.light_cutoff[i]) <= GL_SPOT_MAX):
+                mm.light_exponent[i] = 0.0
                 mm.light_cutoff[i] = 180.0
+                n += 1
+        rec["neutralised_lights"] = n
         return undo
 
-    def retype_and_kill_headlight(mm):
-        undo = retype_spot(mm)
+    def exponent_only(mm):
+        undo = {"light_exponent": mm.light_exponent.copy()}
+        for i in range(mm.nlight):
+            if int(mm.light_type[i]) == 0 and not (0.0 <= float(mm.light_cutoff[i]) <= GL_SPOT_MAX):
+                mm.light_exponent[i] = 0.0
+        return undo
+
+    def retype_point(mm):
+        """The contrast: measurably wrong on the reference side, kept so the report can say so."""
+        undo = {"light_type": mm.light_type.copy()}
+        for i in range(mm.nlight):
+            if int(mm.light_type[i]) == 0 and not (0.0 <= float(mm.light_cutoff[i]) <= GL_SPOT_MAX):
+                mm.light_type[i] = 2
         return undo
 
     run("baseline")
-    fr, offs = run("spot retyped to POINT", retype_spot)
-    run("spot retyped + cutoff=180", retype_and_widen)
+    fr, offs = run("exponent=0 + cutoff=180 (candidate)", neutralise_angular)
+    run("exponent=0 only", exponent_only)
+    run("retyped POINT (contrast)", retype_point)
 
     np.savez_compressed(out / "m3_corrections_frames.npz", mjwarp=fr[:2], official=offs[:2])
     (out / "m3_corrections.json").write_text(json.dumps(rec, indent=1, sort_keys=True))
