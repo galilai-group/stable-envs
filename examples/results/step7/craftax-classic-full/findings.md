@@ -725,8 +725,39 @@ a real number and a modest one. **Recommendation: this env's CPU tier should be 
 until the harness can be told which reference a speed ratio is entitled to use.** Left alone, this
 would certify `CPU_EXCEPTIONAL` on a 528x speedup against a renderer nobody runs.
 
+### 9.4 The record, in one place
+
+| quantity | value | what it is |
+|---|---|---|
+| **mixed default, `cores_cpu`** | **0.263** | **the registered-default CPU tier: `CPU_REGRESSION`** |
+| mixed default, f/s | 1,150.6 (B=64, 16 px) | the tier's throughput |
+| decode bar | 4,367 f/s | measured per run by `bench_step3` for the 144x144 frame |
+| daylight diagnostic, `cores_cpu` | 24.2 | **not a tier** — would be `CPU_EXCEPTIONAL` |
+| night diagnostic | 656 f/s (B=256, 16 px) | **not a tier** — the flagged slower band |
+| daylight / night | **104.9x** | the split the headline must not hide |
+| `S_cpu` vs **un-jitted** official | **528x** | 1,150.6 / 2.18 |
+| `S_cpu` vs **jitted** official | **~1.9x** | 1,150.6 / 610.6 |
+
+**Neither `S_cpu` number certifies anything until Sami rules on which reference a speed ratio may
+use.** The CPU tier above is taken on the `NO_REFERENCE` `cores_cpu` ladder. **No shared harness has
+been edited to suppress `S_cpu`** — that is Sami's ruling and Step 8's to encode; both numbers are
+recorded so the ruling can be made on them. The same record is carried on the class as
+`CraftaxClassic.performance_record_cpu` and `CraftaxClassic.s_cpu_note`, with a test that fails if
+the tier and the diagnostic ever stop being visibly different numbers.
+
 For orientation only, one Apple arm64 core (**not** a certification number): mixed 1,990 f/s at
 16 px and 9,973 at 7 px; daylight 151,894 and 309,910; night 1,317 and 6,684.
+
+### 9.5 GPU tier — job `6395847`, queued
+
+`bench_step3 --device cuda`, paired the same way: the Step-6-closed tree either side of the branch
+in **one allocation on one 3090** (`--constraint=geforce3090`), so the baseline re-measures a known
+answer — Step 6 certified it at 1,206,822 f/s at B=4096, and 1,229,787 on a second card. The verdict
+script now takes `--device`, with that figure as the CUDA baseline floor.
+
+Queued behind W5's and W6's GPU jobs under the `norm-gpu` cap. The band sweep already taken on
+`gpu2113` (job `6394893`) gives **mixed 45,203 f/s, daylight 796,702, night 24,353 at B=4096**; what
+is still owed is the **harness's own tier label**, which is why this job exists.
 
 ## 10. `check_resolution_consistency` — the frozen bound, and the two options
 

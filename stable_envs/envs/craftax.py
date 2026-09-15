@@ -783,6 +783,43 @@ class CraftaxClassic(StableEnv):
         "sleeping_share": "0.33-0.39", "measured_over": "seeds 0-5, n=64",
         "band_assignment": "stratified by row index (i % 4); values from craftax's own day cycle",
     }
+    #: The measured performance record for the registered default, kept beside the declaration it
+    #: belongs to rather than only in a findings file. **None of these numbers certifies anything
+    #: until Sami rules on which reference a speed ratio may use** -- see ``s_cpu_note``.
+    #:
+    #: Oscar ``node2356``, ``examples/bench_step3.py --device cpu --threads 1``, paired against a
+    #: pristine 76dc511 measured either side of it in the same job (spread 1.0045, baseline at 1.44x
+    #: its Step-6 certified value, node load 0.86 per core). Artifacts under
+    #: ``examples/results/step7/craftax-classic-full/sweep/``.
+    performance_record_cpu = {
+        "mixed_default_fps": 1150.6, "mixed_default_batch": 64,
+        "decode_bar_fps": 4367.4, "cores_cpu": 0.263, "tier": "CPU_REGRESSION",
+        "daylight_diagnostic_cores_cpu": 24.2, "daylight_diagnostic_fps": 105742,
+        "night_diagnostic_fps": 656, "daylight_over_night": 104.9,
+        "why_lower_than_step6": ("the Step-6 tier was measured on an observation that could not "
+                                 "represent night; this one is the full observation, about three "
+                                 "quarters of which is lit. The daylight path itself is unchanged."),
+        "job": "6395527", "host": "node2356.oscar.ccv.brown.edu",
+    }
+    #: **The speed ratio and the parity claim cannot use the same reference, and this env is where
+    #: that first bites.** :meth:`reference_env` returns the renderer UN-JITTED, because the jitted
+    #: one disagrees with itself in uint8 and cannot be what a parity claim is made against. But
+    #: ``bench_step3`` then measures ``official_cpu`` at **2.18 f/s** against 610.6 f/s for the
+    #: jitted one, so ``S_cpu`` -- the ratio the Step-3 ladder prefers wherever a reference exists --
+    #: would read **528x** where the honest figure against the renderer a user actually runs is about
+    #: **1.9x**. A tier taken on 528x would certify ``CPU_EXCEPTIONAL`` on a speedup over a renderer
+    #: nobody runs, on an env whose ``NO_REFERENCE`` ladder says ``CPU_REGRESSION``.
+    #:
+    #: The general rule this asks for -- parity against the reference **as written**, speed against
+    #: the reference **as a user runs it** -- is Sami's to rule on and Step 8's to encode. Nothing in
+    #: the shared harness is edited here to suppress ``S_cpu``; both numbers are recorded so the
+    #: ruling can be made on them.
+    s_cpu_note = {
+        "official_fps_unjitted": 2.18, "official_fps_jitted": 610.6,
+        "s_cpu_vs_unjitted": 528.0, "s_cpu_vs_jitted": 1.9,
+        "status": "NEITHER CERTIFIES ANYTHING until the ruling; the CPU tier above is taken on the "
+                  "NO_REFERENCE cores_cpu ladder",
+    }
     resolution_consistency_applicability = {
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
         "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there "

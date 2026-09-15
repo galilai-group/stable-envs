@@ -502,3 +502,23 @@ def test_the_declared_certification_distribution_is_the_one_the_sampler_produces
         assert 0.31 <= float((sleep > 0.5).mean()) <= 0.46, seed
         # and the lit share -- the one that decides how the tier reads -- is always about 3/4
         assert 0.70 <= float((light < 1.0).mean()) <= 0.80, seed
+
+
+def test_the_performance_record_says_what_it_does_not_certify():
+    """A recorded number that does not say what it is worth invites being quoted as a tier.
+
+    The env carries two ratios against the official renderer that differ by 280x, because parity and
+    speed cannot use the same reference here. Both are recorded; neither certifies anything until
+    that is ruled on, and the record has to say so in the record rather than only in a findings file.
+    """
+    from stable_envs.envs.craftax import CraftaxClassic as C
+    p, n = C.performance_record_cpu, C.s_cpu_note
+    assert p["tier"] == "CPU_REGRESSION"
+    assert abs(p["cores_cpu"] - p["mixed_default_fps"] / p["decode_bar_fps"]) < 0.005
+    assert p["daylight_diagnostic_cores_cpu"] > 10 > p["cores_cpu"], (
+        "the diagnostic and the tier must stay visibly different numbers")
+    assert abs(p["daylight_over_night"]
+               - p["daylight_diagnostic_fps"] / p["night_diagnostic_fps"]) < 60
+    assert "NEITHER CERTIFIES" in n["status"].upper()
+    assert n["s_cpu_vs_unjitted"] / n["s_cpu_vs_jitted"] > 100, (
+        "the whole point of the note is that the two references disagree by orders of magnitude")

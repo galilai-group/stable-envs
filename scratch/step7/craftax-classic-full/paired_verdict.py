@@ -45,6 +45,9 @@ SPREAD_MAX = 1.25
 #: quieter node2333). The BASELINE leg re-measures that same tree, so it is a known answer, and a
 #: node that cannot reproduce it to within this factor is not measuring the renderer.
 BASELINE_KNOWN_FPS = 115166.0
+#: The same known answer on the GPU side: Step 6 certified the post-patch tree at 1,206,822 f/s at
+#: B=4096 on a 3090, and re-took it at 1,229,787 on a second card.
+BASELINE_KNOWN_FPS_CUDA = 1206822.0
 BASELINE_FLOOR_FRAC = 0.25
 #: Load average per **node** core above which the node is oversubscribed. Per NODE core, not per
 #: allocated cpu: ``/proc/loadavg`` is a whole-machine number and an Oscar batch node has 48-192
@@ -88,13 +91,17 @@ def cell(rec):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", required=True)
+    ap.add_argument("--device", default="cpu", choices=("cpu", "cuda"))
+    ap.add_argument("--known-fps", type=float, default=0.0,
+                    help="override the baseline's known throughput; defaults per device")
     ap.add_argument("--nproc", type=int, default=0,
                     help="node core count; only needed when re-judging a finished job off-node")
     ap.add_argument("--loadavg", type=float, default=0.0,
                     help="1-minute loadavg from the job log; only for re-judging off-node")
     a = ap.parse_args()
-    recs = {k: load(f"bench_step3_cpu_{k}_{a.host}.json") for k in ("baseA", "branch", "baseB")}
-    out = {"host": a.host, "spread_max": SPREAD_MAX,
+    known = a.known_fps or (BASELINE_KNOWN_FPS_CUDA if a.device == "cuda" else BASELINE_KNOWN_FPS)
+    recs = {k: load(f"bench_step3_{a.device}_{k}_{a.host}.json") for k in ("baseA", "branch", "baseB")}
+    out = {"host": a.host, "device": a.device, "spread_max": SPREAD_MAX,
            "loadavg_at_verdict": ([a.loadavg] * 3 if a.loadavg else list(os.getloadavg())),
            "loadavg_source": "job log" if a.loadavg else "this process"}
     cells = {k: (cell(v) if v else None) for k, v in recs.items()}
@@ -111,8 +118,8 @@ def main():
         cores = a.nproc or _node_cores()
         load_per_core = load1 / max(cores, 1)
         out.update(baseline_spread=round(spread, 4), baseline_mean_fps=round(base_mean),
-                   baseline_known_fps=BASELINE_KNOWN_FPS,
-                   baseline_frac_of_known=round(base_mean / BASELINE_KNOWN_FPS, 4),
+                   baseline_known_fps=known,
+                   baseline_frac_of_known=round(base_mean / known, 4),
                    node_cores=cores, load_per_core=round(load_per_core, 2),
                    cpus_allocated=int(os.environ.get("SLURM_CPUS_PER_TASK") or 0) or None,
                    ratio_branch_over_baseline=round(cells["branch"][1] / base_mean, 4))
@@ -120,10 +127,10 @@ def main():
         if spread > SPREAD_MAX:
             fail.append(f"the two baseline legs differ by {spread:.2f}x (> {SPREAD_MAX}): the node "
                         f"moved under the measurement")
-        if base_mean < BASELINE_KNOWN_FPS * BASELINE_FLOOR_FRAC:
+        if base_mean < known * BASELINE_FLOOR_FRAC:
             fail.append(f"the baseline leg re-measures a tree Step 6 certified at "
-                        f"{BASELINE_KNOWN_FPS:,.0f} f/s on this cluster and got {base_mean:,.0f} "
-                        f"({base_mean / BASELINE_KNOWN_FPS:.3f}x): the node is not measuring the "
+                        f"{known:,.0f} f/s on this cluster and got {base_mean:,.0f} "
+                        f"({base_mean / known:.3f}x): the node is not measuring the "
                         f"renderer, and a ratio taken under that contention is biased towards 1")
         if load_per_core > LOAD_PER_CORE_MAX:
             fail.append(f"loadavg {load1:.2f} over {cores} node cores is {load_per_core:.2f} per "
@@ -131,12 +138,12 @@ def main():
         out["verdict"] = "QUARANTINED" if fail else "USABLE"
         out["why"] = ("; ".join(fail) if fail else
                       f"baseline legs agree to {spread:.3f}x, the baseline reproduces its known "
-                      f"{BASELINE_KNOWN_FPS:,.0f} f/s to {base_mean / BASELINE_KNOWN_FPS:.2f}x, and "
+                      f"{known:,.0f} f/s to {base_mean / known:.2f}x, and "
                       f"loadavg is {load_per_core:.2f} per node core")
         out["gates"] = {"spread": spread <= SPREAD_MAX,
-                        "baseline_floor": base_mean >= BASELINE_KNOWN_FPS * BASELINE_FLOOR_FRAC,
+                        "baseline_floor": base_mean >= known * BASELINE_FLOOR_FRAC,
                         "load": load_per_core <= LOAD_PER_CORE_MAX}
-    p = os.path.join(OUT, f"paired_verdict_{a.host}.json")
+    p = os.path.join(OUT, f"paired_verdict_{a.device}_{a.host}.json")
     with open(p, "w") as f:
         json.dump(out, f, indent=1)
     print(json.dumps(out, indent=1))
