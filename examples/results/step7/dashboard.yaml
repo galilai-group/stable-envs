@@ -199,13 +199,13 @@ workstreams:
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
-  status: MERGED into step7/integration at d024c1a (review APPROVE on de31e89); Gate-F swm evidence (job 6398628) to land as a follow-on commit
+  status: 'CLOSED: merged (d024c1a + Gate-F follow-on); parity 1.0/0 on three backends; Gate A clean; Gate F vs the real swm wrapper; tiers reported (CPU lower bound; GPU 94,187 f/s mixed)'
   capability: full-atlas _Composite generalisation + layers
   wave: 2
   branch: step7/craftax-full
   worktree: /Users/samib/stable-envs-step7-craftax-full
   agent_model: opus
-  head_sha: de31e89 (merged d024c1a)
+  head_sha: 61350f4 (Gate F; W2 CLOSED; merged)
   phase0:
     classification: PATCH_CANDIDATE (all three layers already bit-exact)
     registration: swm/CraftaxPixels-v1 -> craftax Craftax-Pixels-v1, obs (130,110,3) float32 = render_craftax_pixels/255 at BLOCK_PIXEL_SIZE_AGENT=10; OBS_DIM (9,11) tiles + 4 strip rows; whole frame incl.
@@ -337,9 +337,18 @@ workstreams:
   - 'run_swm_workflow Gate F evidence: stable_worldmodel being installed into se7-craftax from the checkout'
   tests: tests/unit 773 passed 39 skipped one pre-existing failure
   gate_f:
-    job: '6398628 queued: swm checkout 176d545 installed -e under a pinned constraints file into se7-craftax; fails loudly on a pin move; Gate F + parity re-certify'
+    job: 6399614 node2350 COMPLETED
     local_probe_finding: 'SWM wrapper jits env.step -> a live workflow sees the JITTED frame: 0.99963 exact, max abs 1, 39/41 identical vs our un-jitted-certified frames (the ~1.5e-5 fusion gap at uint8
       boundaries; same as Classic; not a renderer defect)'
+    contract: observation_space Box(0,1,(130,110,3),float32); action Discrete(43); step info 69 keys; window 544 slots 2,176 B vs 42,900 B frame (19.7x), 0 tiles dropped
+    pixels_121_frames: vs un-jitted reference 1.0/0 (8/8); vs the wrapper's own (jitted) observation 0.99977, max abs 1, 118/121 identical; fully-lit awake frame identical
+    install: from checkout 176d545; all pins unchanged; torchvision 0.29.0+cu126 new; parity re-certify inside the modified venv reproduces the digests
+    packaging_lessons:
+    - uv venv has no pip
+    - --no-build-isolation cannot build a uv_build backend
+    - PyPI torchvision is +cu130; use the cu126 index
+    - rsync --exclude data matches any path component (dropped the stable_worldmodel/data package)
+    - 'rsync-ing results back over a locally edited directory clobbers edits: pull into staging'
   merge:
     integration_sha: d024c1a
     date: '2026-09-15'
@@ -1103,6 +1112,8 @@ incident_log:
   item: 'W5 item 5 bounded: no frozen config from the three families; RoboCasa kitchen has no spot light; MetaWorld/HumanoidBench unanswerable (Step 8)'
 - date: '2026-09-15'
   item: W5 cells measured and registered (Cube 4.80/0.807/0.943; Scene 10.00/0.705/0.902; 0 inert dims); final corpora/Gate F/tiers job queued
+- date: '2026-09-15'
+  item: 'W2 CLOSED: Gate F vs the real wrapper merged'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
