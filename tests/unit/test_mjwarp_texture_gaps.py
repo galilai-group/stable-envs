@@ -30,7 +30,15 @@ mujoco = pytest.importorskip("mujoco")
 from stable_envs.render.mjwarp import TEXTURE_SAMPLER_OK, TEXTURED_OK, texture_gaps
 
 
-def _model(tex_type: str, geom: str, *, textured: bool = True, group: int = 1) -> "mujoco.MjModel":
+#: A tetrahedron with per-vertex UVs. Meshes default to CARRYING texcoords, because a mesh without
+#: them is itself a gap (condition 3) and a fixture that omitted them would make every mesh case in
+#: this file test that one condition by accident instead of the condition it names.
+_MESH_UV = 'vertex="0 0 0  1 0 0  0 1 0  0 0 1" texcoord="0 0  1 0  0 1  1 1"'
+_MESH_NO_UV = 'vertex="0 0 0  1 0 0  0 1 0  0 0 1"'
+
+
+def _model(tex_type: str, geom: str, *, textured: bool = True, group: int = 1,
+           texcoord: bool = True) -> "mujoco.MjModel":
     """One geom of type ``geom``, optionally wearing a material with a ``tex_type`` texture."""
     if textured:
         if tex_type == "skybox":
@@ -47,8 +55,8 @@ def _model(tex_type: str, geom: str, *, textured: bool = True, group: int = 1) -
     size = {"plane": "1 1 .1", "mesh": "", "box": ".1 .1 .1", "sphere": ".1",
             "cylinder": ".1 .1", "capsule": ".1 .1"}[geom]
     if geom == "mesh":
-        asset = asset.replace("</asset>",
-                              '<mesh name="mm" vertex="0 0 0  1 0 0  0 1 0  0 0 1"/></asset>')
+        verts = _MESH_UV if texcoord else _MESH_NO_UV
+        asset = asset.replace("</asset>", f'<mesh name="mm" {verts}/></asset>')
         g = f'<geom type="mesh" mesh="mm" group="{group}" {matattr}/>'
     else:
         g = f'<geom type="{geom}" size="{size}" group="{group}" {matattr}/>'
@@ -139,7 +147,7 @@ def test_every_texture_role_is_examined_not_only_the_largest_id():
         '<mujoco><asset>'
         '<texture name="a" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
         '<texture name="c" type="cube" builtin="checker" rgb1="0 0 1" rgb2="1 1 0" width="8" height="48"/>'
-        '<mesh name="mm" vertex="0 0 0  1 0 0  0 1 0  0 0 1"/>'
+        f'<mesh name="mm" {_MESH_UV}/>'
         '<material name="m" texture="a"/></asset>'
         '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>')
     cube = [i for i in range(m2.ntex) if int(m2.tex_type[i]) == 1][0]
@@ -151,3 +159,44 @@ def test_every_texture_role_is_examined_not_only_the_largest_id():
     assert texture_gaps(m2) == []
     m2.mat_texid[0, role] = cube                     # a cube in ANY role is fatal
     assert len(texture_gaps(m2)) == 1
+
+
+def test_a_textured_mesh_with_no_texcoords_is_a_gap():
+    """Condition 3 — the one that actually predicts the crash.
+
+    ``sample_texture``'s MESH branch reads
+    ``mesh_texcoord[mesh_texcoord_offsets[mesh_id] + mesh_facetexcoord[face_adr][i]]`` with no guard,
+    so a mesh whose material is textured but which carries no texture coordinates indexes that array
+    from a negative offset. Measured on ``swm/OGBScene-v0``: its two button geoms wear mesh
+    ``stopbuttonrim`` with ``texcoordadr = -1, texcoordnum = 0``.
+
+    This asserts the condition with a **2-D** texture, so it is independent of the cube-map rule: a
+    plain checker on a UV-less mesh must be flagged too.
+    """
+    m = _model("2d", "mesh", texcoord=False)
+    assert int(m.mesh_texcoordnum[0]) == 0, "this fixture deliberately carries no UVs"
+    assert len(texture_gaps(m)) == 1, "a textured mesh with no texcoords must be reported"
+
+
+def test_a_textured_mesh_WITH_texcoords_is_not_a_gap():
+    """The other side of condition 3: real UVs, 2-D texture, UV-able geom -> nothing to report.
+
+    Without this the new clause could be satisfied by flagging every mesh, which would make the
+    helper useless rather than wrong.
+    """
+    m = mujoco.MjModel.from_xml_string(
+        '<mujoco><asset>'
+        '<texture name="t" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
+        '<material name="m" texture="t"/>'
+        '<mesh name="mm" vertex="0 0 0  1 0 0  0 1 0  0 0 1" texcoord="0 0  1 0  0 1  1 1"/>'
+        '</asset>'
+        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>')
+    assert int(m.mesh_texcoordnum[0]) > 0, "this mesh does carry UVs"
+    assert texture_gaps(m) == []
+
+
+def test_an_untextured_mesh_without_texcoords_is_not_a_gap():
+    """No texture, no sampling, no crash — the condition must not fire on geometry alone."""
+    m = _model("2d", "mesh", textured=False, texcoord=False)
+    assert int(m.mesh_texcoordnum[0]) == 0
+    assert texture_gaps(m) == []

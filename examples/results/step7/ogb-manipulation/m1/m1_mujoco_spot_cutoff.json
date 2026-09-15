@@ -1,0 +1,99 @@
+{
+ "cutoff": [
+  100.0
+ ],
+ "cutoff_sweep": [
+  {
+   "cutoff": 100.0,
+   "frac_differing_from_100": 0.0,
+   "frame_mean": 57.24112457482993,
+   "max_abs": 0
+  },
+  {
+   "cutoff": 180.0,
+   "frac_differing_from_100": 0.0,
+   "frame_mean": 57.24112457482993,
+   "max_abs": 0
+  },
+  {
+   "cutoff": 90.0,
+   "frac_differing_from_100": 0.9521285076530612,
+   "frame_mean": 49.830436862244895,
+   "max_abs": 77
+  },
+  {
+   "cutoff": 89.0,
+   "frac_differing_from_100": 0.9521285076530612,
+   "frame_mean": 49.830436862244895,
+   "max_abs": 77
+  },
+  {
+   "cutoff": 45.0,
+   "frac_differing_from_100": 0.9521285076530612,
+   "frame_mean": 49.81102519132653,
+   "max_abs": 77
+  },
+  {
+   "cutoff": 10.0,
+   "frac_differing_from_100": 0.9525470344387755,
+   "frame_mean": 47.963893760629254,
+   "max_abs": 88
+  }
+ ],
+ "diffuse": [
+  [
+   0.30000001192092896,
+   0.30000001192092896,
+   0.30000001192092896
+  ]
+ ],
+ "dir": [
+  [
+   0.0,
+   0.0,
+   -1.0
+  ]
+ ],
+ "env": "swm/OGBCube-v0",
+ "exponent": [
+  10.0
+ ],
+ "exponent_sweep": [
+  {
+   "exponent": 10.0,
+   "frac_differing_from_10": 0.0,
+   "max_abs": 0
+  },
+  {
+   "exponent": 0.0,
+   "frac_differing_from_10": 0.024035395408163265,
+   "max_abs": 4
+  },
+  {
+   "exponent": 1.0,
+   "frac_differing_from_10": 0.023098692602040817,
+   "max_abs": 3
+  },
+  {
+   "exponent": 50.0,
+   "frac_differing_from_10": 0.02467315051020408,
+   "max_abs": 13
+  }
+ ],
+ "pos": [
+  [
+   0.25,
+   0.0,
+   0.5
+  ]
+ ],
+ "spot_ids": [
+  1
+ ],
+ "spot_off": {
+  "frac_differing": 0.02618781887755102,
+  "max_abs": 40
+ },
+ "verdict_100_equals_180": true,
+ "verdict_89_is_honoured": true
+}

@@ -181,15 +181,28 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
        ``BOX``/``CYLINDER``/``SPHERE``/``CAPSULE`` samples texel (0,0) and comes out one flat colour.
        That is a FIDELITY gap: the frame is wrong and the renderer survives.
     2. *The texture's kind.* MJWarp builds ``wp.Texture2D`` and samples with 2-D coordinates, so a
-       ``CUBE`` or ``SKYBOX`` map worn by a geom is indexed out of bounds. That is a CRASH, not a
-       fidelity gap — ``Warp CUDA error 700: an illegal memory access``, raised from inside the
-       warm-up frame with no mention of textures anywhere in the traceback.
+       ``CUBE`` or ``SKYBOX`` map worn by a geom is not a 2-D texture and is not sampled as one.
+    3. *The mesh's UVs exist at all.* ``sample_texture``'s MESH branch reads
+       ``mesh_texcoord[mesh_texcoord_offsets[mesh_id] + mesh_facetexcoord[face_adr][i]]``
+       **unconditionally**. A mesh whose material is textured but which carries NO texture
+       coordinates (``mesh_texcoordadr == -1``, ``mesh_texcoordnum == 0``) indexes that array from a
+       negative offset. That is a CRASH, not a fidelity gap — ``Warp CUDA error 700: an illegal
+       memory access``, raised from inside the warm-up frame with no mention of textures anywhere in
+       the traceback.
 
-    Condition 2 is checked regardless of geom type, which is the whole point of adding it: the case
-    that found it is a cube map on a **MESH**, a geom type condition 1 declares safe. ``swm/OGBScene``
-    returned an EMPTY gap list from this function and then killed the renderer; detaching its one
-    cube map, and nothing else, made it render. An empty result from this function must mean "safe",
-    so a check that classifies by geom type alone and never reads ``tex_type`` is a false all-clear.
+    Conditions 2 and 3 are checked regardless of geom type, which is the whole point of adding them:
+    the case that found them is a textured **MESH**, the geom type condition 1 declares safe.
+    ``swm/OGBScene-v0`` returned an EMPTY gap list from this function and then killed the renderer.
+    An empty result here must mean "safe", so a check that classifies by geom type alone is a false
+    all-clear.
+
+    **Condition 3 is the one that actually predicts the crash**, and condition 2 catches the same
+    case for a related reason: a cube-mapped mesh normally carries no UVs at all, because MuJoCo
+    generates cube texgen from position and normal and never needs them. Measured on
+    ``swm/OGBScene-v0``: its two button geoms wear mesh ``stopbuttonrim`` with a CUBE texture and
+    ``texcoordadr = -1, texcoordnum = 0``. Both conditions are kept because they are independent —
+    a 2-D texture on a UV-less mesh crashes with no cube map in sight, and a cube map on a mesh that
+    does have UVs is sampled as if its six stacked faces were one 2-D image.
 
     Every texture role a material carries is examined, not just the highest id, because a material can
     wear a 2-D albedo and a cube environment map at once and only the second is fatal.
@@ -208,7 +221,12 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
             continue
         bad_uv = int(m.geom_type[g]) not in TEXTURED_OK
         bad_kind = any(int(m.tex_type[t_]) not in TEXTURE_SAMPLER_OK for t_ in tex_ids)
-        if bad_uv or bad_kind:
+        bad_texcoord = False
+        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
+            mi = int(m.geom_dataid[g])
+            if mi >= 0:
+                bad_texcoord = int(m.mesh_texcoordnum[mi]) == 0
+        if bad_uv or bad_kind or bad_texcoord:
             out.append((g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}",
                         int(m.geom_type[g])))
     return out
