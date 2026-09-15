@@ -355,3 +355,30 @@ PYTHONPATH=swm … (declared-vs-json script)     # worst-of-three equality, x1.3
 MUJOCO_GL=glfw se6-venv/python -c 'import stable_envs…'   # 76 ids, ogb_manip ModuleNotFoundError (C2)
 grep -n '0.92-0.95\|10-19\|parity_note' stable_envs/envs/ogb_manip.py                                              # C1, wording
 ```
+
+---
+
+# Final check at tip `f62625e9` (coordinator request)
+
+One commit on `7820af1c` (`sami-bg`, 0 trailers). Files: `stable_envs/envs/ogb_manip.py`,
+`tests/unit/test_ogb_manip.py`, `scratch/step7/ogb-manipulation/check_import_without_swm.py` (new),
+`findings.md`, `m3/fidelity/m3_fidelity.json` (+1 line: a `SUPERSEDED` key naming job 6398733 and the
+`seg >= 0` defect). `git diff --stat 7820af1c..HEAD -- examples/results`: only those two text edits — no
+frames, corpus, pool, tier or fidelity JSON changed. `examples/results/step4|5|6` untouched;
+`stable_envs/render/` and the mjwarp tests still byte-identical to `9923594`.
+
+## Verdict: APPROVE
+
+| item | check | result |
+|---|---|---|
+| C1 | `grep '0.92-0.95\|10-19\|BY CONSTRUCTION\|0.35'` | one surviving `0.92-0.95` at line 704, a comment naming the defect; module docstring (line 45), `_MEASURED` comment (852) and `_RESIDUAL_NOTE` (1004) now quote 0.351 → 0.958 / 0.922 interior and 0.872 / 0.775 whole-frame; registered `visual_note` contains no `0.92-0.95` and does contain 0.958/0.922. |
+| C2 | `_make_classes` call graph; import in both venvs | `_bundle(` is called only from `_context`, `__init__`, `reference_render`, `_renderer`; `SPEC` carries `state_dim` 24/30. se6-venv (no swm): `import stable_envs` 1.09 s, registry **78**, both cells registered, `import_errors()` has no `ogb_manip` entry, `_REF_CACHE == {}` and `_BUNDLE_CACHE == {}` after import; se7+swm: 0.93 s, `_REF_CACHE []`. `check_import_without_swm.py` prints `OK: registry 78, both cells registered, no stable_worldmodel needed`. |
+| C3 | declaration vs `remeasure.json` | `mean_abs`/`within8_frac`/`ssim` equal worst-of-three (1e-6) and `draw_spread` equals JSON min/max; `interior_exact_frac` 0.958007 / 0.917805, `all_exact_frac` 0.870342 / 0.771891, `interior_frac` 0.411172 / 0.276900 — all now the WORST draw; `measured_at` names the three fields and says "WORST of the three". |
+| floors | stated rule `floor(20·(worst − 0.04))/20` | Cube within8 0.85 (margin 0.0655), ssim 0.85 (0.0649); Scene within8 0.80 (0.0567), ssim 0.85 (0.0428); `mean_abs_max` 3.2 / 7.0 = `round(1.3·mean, 1)`. Rule reproduces every declared floor. |
+| versions | `reference_versions` / `measured_at` | `{"mujoco": "3.12.0", "ogbench": "1.2.1"}`, both named in `measured_at`; `measured_with {"mujoco_warp": "3.12.0"}`. |
+| wording | class `__doc__` | no `parity_note`; dims 24/30 stated from `SPEC`. |
+| tests | `tests/unit` | without swm **873 passed / 2 failed / 7 skipped**; with swm **887 / 2 / 20**; cell tests **28 passed**; the two failures are the pre-existing `test_examples[robocasa_visual/render_mjwarp.py]` and `test_every_cited_scratch_path_resolves` on this Mac (the author's 859/21/2 is the Oscar count). |
+
+Nit, non-blocking: the comment above `_REFERENCE_VERSIONS` (lines 910-912) still says "swm and ogbench
+are deliberately absent" while the dict now includes ogbench — update the sentence when the file is next
+touched. Nothing else outstanding; the cluster-only list from the re-review is unchanged.
