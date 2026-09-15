@@ -999,9 +999,9 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'CLOSED: merged at fd2b8ef. Visual tier 7.71/0.961/0.854 (ceilings 10.0/0.91/0.80); batch-size invariance 255 -> 0 via the batch-invariant mvp (six locomotion cells ULP_LEVEL/SUB_NOISE_SHIFT,
-    refreeze_ok true, no frozen Step-4 artifact touched); Gate A mandatory PASS; GPU_PARITY [BATCH_SCALES_FAIL] R 241.5 cores 2.61; CPU missing by design (raises; 1.92 f/s feasibility); conformance at the
-    tip 229 passed / 2 known failures (colour knobs law; downsample table entry)'
+  status: 'CLOSED (final): merged; nvdiff.py byte-identical to 4eb1c35; CLOSURE-1 = DOCUMENTED_LIMITATION (x86 CPU sparse stage: positions one ulp at widths 1-6, normals at widths 4 and 8; cuda bitwise
+    at all 11 widths tested); test corrected to the certified property; patch closure1_explicit_pos_rows.patch recorded as the Step-8 candidate (positions only; normals share the stage); x86 tests as a
+    CPU job (6420734: 909 passed / 25 skipped / 1 pre-existing)'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1029,7 +1029,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 4eb1c35 (merged fd2b8ef)
+  head_sha: 0b4a14b (closure follow-on; merged)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -1480,6 +1480,8 @@ incident_log:
     log-extraction scripts and interpreter probes on the login node (no measurement produced; all numbers from SLURM jobs; regeneration declined as unnecessary); W5 none reported.'
 - date: '2026-09-15'
   item: W5 found its own Gate-A driver omitted check_state_roundtrip (why CLOSURE-3 escaped); fixed; gate = full tests/gpu suite
+- date: '2026-09-15'
+  item: W6 closure follow-on merged; W6 CLOSED
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
