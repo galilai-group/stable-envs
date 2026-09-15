@@ -674,7 +674,7 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: COMPLETE pending cell review (fable family reviewer spawned); shared changes APPROVE (conditional bounded); merge on cell APPROVE
+  status: cell review REJECT (six reproduced defects in ogb_manip.py; shared helpers unaffected); full fix + re-measurement requested; re-review after
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
@@ -857,6 +857,29 @@ workstreams:
     - 'official is 2,012/1,526 f/s on hardware EGL (GPU R comparator) vs 6.31/5.17 on llvmpipe (CPU S_cpu comparator): a 300x misread if swapped'
     - 'BATCH_SCALES 5-6x here vs 2.93x in phase 0: the shipped cell''s plate composite + upload lowers fps(1) (2,232 -> 1,200); ratio improved because the denominator worsened; fps(1) and best reported
       beside it'
+  cell_review:
+    verdict: REJECT
+    report: examples/results/step7/ogb-manipulation/review_cells.md
+    blocking:
+    - 'B1 plate not used on the floor: render composites with seg >= 0 instead of the Fetch mover LUT; static pixels match official only 28.4%; shipped interior numbers are raw MJWarp; ''0.92-0.95 composite''
+      claim false'
+    - 'B2 OGBScene button colours wrong in ~40% of processes: unseeded global task pick in _reference_env; tables snapshot assumes bits (0,0)'
+    - B3 sample_states not reproducible (unseeded variation space + task)
+    - B4 committed pools are not the corpora's pools (states != pool[indices])
+    - B5 Gate A '0 inert dims' was the author's probe; repo check gives dead_dims ['mocap_quat[0]'] (identity in every registered state)
+    - B6 no tests for the cell
+    also_required:
+    - visual_fidelity missing reference_versions/measured_with/interior_frac/draw_spread
+    - thresholds by a self-invented rule (x1.5) instead of the family rule (x1.3)
+    - class doc says qvel in state
+    - fidelity slurm log not committed
+    - duplicate logs and parallel probe/oscar copies
+    verified_ok:
+    - declared numbers == JSONs; hygiene; registry +2 only; tests same pre-existing failures
+    - _apply_button_states called; four combos differ on the right geoms
+    - '_context deep copy: swm model sha unchanged; _bake_plate restores'
+    - qvel drop sound
+    - Gate F arm D reasoning; bake residual note; cpu raise; GPU_PARITY cap; both official numbers labelled
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1142,6 +1165,8 @@ incident_log:
   item: 'W2 CLOSED: Gate F vs the real wrapper merged'
 - date: '2026-09-15'
   item: 'W5 complete (1550ebdb): corpora, Gate F, tiers GPU_PARITY capped; cell reviewer spawned'
+- date: '2026-09-15'
+  item: 'W5 cell review REJECT: mover-LUT compositing missing, unseeded task pick, non-reproducible sampler, pool mismatch, mocap_quat dead, no cell tests; full fix + re-measure requested'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
