@@ -535,8 +535,8 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: 'CERTIFICATION MERGED at e0a416c (branch 31bd3e9; final review APPROVE; identity 9/9 vs integration; tests 812 passed + inherited citation failure). Remaining: quiet-window tiers (f) or UNMEASURED
-    with load evidence'
+  status: 'certification merged; tier commit (f) prepared locally (GPU job 6398085 COMPLETED: class-S GPU_EXCEPTIONAL R 129.9 cores 13.6, legs A/C spread 1.045; CPU job 6398084 waiting on load); BLOCKED
+    on Oscar SSH for the CPU artifacts'
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
@@ -897,7 +897,7 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'reviewer APPROVE on cf355a3 (one operational nit: .git_sha must be written before rsync; M4 fixes the recipe); awaiting GPU job 6395707 cluster gates; merge when all seven pass'
+  status: reviewer APPROVE at cf355a3; M4 operational edits staged locally; job 6395707 pending on the cluster; BLOCKED on Oscar SSH for the seven gate artifacts
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1184,6 +1184,8 @@ incident_log:
 - date: '2026-09-15'
   item: 'OSCAR SSH DENIED AGAIN (keyboard-interactive; VPN/campus auth) - confirmed. Blocks: W5 re-measurement, W4 commit (f) artifact pull, W6 gate results pull. Jobs already submitted keep running on
     the cluster.'
+- date: '2026-09-15'
+  item: W4 (f) and W6 M4 prepared locally; all three remaining workstreams hold on Oscar SSH
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1250,3 +1252,10 @@ step8_carryovers:
 - item: Run the mjwarp prepare_model/texture_gaps registry sweeps on RoboCasa, MetaWorld and HumanoidBench once a venv with their pins (mujoco 3.3.x kitchen cache / metaworld) exists; the spot rule fires
     only on cutoff outside [0, 90]
   source: W5 shared review item 5
+blocked_on_oscar_ssh:
+  since: 2026-09-15 ~08:00 UTC
+  items:
+  - 'W4 (f): pull tier_cpu/ artifacts, assemble, commit'
+  - 'W6 M4: pull tier/ + nvdiff_identity/ + log for job 6395707, declaration, gate report'
+  - 'W5: sync fixed tree (md5 check), submit the re-measurement chain, pull, register, corpora, Gate A/F, tiers, slurm logs'
+  agents: each holds with a single 30-minute SSH probe; no polling loops
