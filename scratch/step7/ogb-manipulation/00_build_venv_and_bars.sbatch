@@ -46,16 +46,27 @@ if [ ! -x "$VENV/bin/python" ] || ! "$VENV/bin/python" -c 'import numpy, mujoco,
   rm -rf "$VENV"
   "$PY312" -m venv "$VENV" || { echo "FATAL: venv"; exit 3; }
   "$VENV/bin/pip" install --upgrade pip || exit 3
-  "$VENV/bin/pip" install torch==2.14.0 --index-url https://download.pytorch.org/whl/cu126 || exit 3
+  # torch AND torchvision from the same cu126 index, in one resolve. Installing torchvision later
+  # from PyPI picks the default-variant wheel against a cu126 torch and `import torchvision` then
+  # dies with `operator torchvision::nms does not exist`, which is what killed job 6394784.
+  "$VENV/bin/pip" install torch==2.14.0 torchvision==0.29.0 \
+      --index-url https://download.pytorch.org/whl/cu126 || exit 3
   "$VENV/bin/pip" install "mujoco==3.12.0" "mujoco-warp==3.12.0" "warp-lang==1.17.0" \
       ogbench "dm_control==1.0.45" pytest scipy pillow || exit 3
   # stable_worldmodel: the registration under test. Its heavy extras are not needed to render.
   "$VENV/bin/pip" install loguru tabulate einops tqdm typer rich pyarrow \
-      "lancedb>=0.30.0" "pylance>=4.0.0" opencv-python-headless pygame pymunk shapely torchvision || exit 3
-  "$VENV/bin/pip" install stable-worldmodel==0.0.6 || exit 3
+      "lancedb>=0.30.0" "pylance>=4.0.0" opencv-python-headless pygame pymunk shapely || exit 3
+  "$VENV/bin/pip" install --no-deps stable-worldmodel==0.0.6 || exit 3
 fi
-"$VENV/bin/python" -c 'import numpy, mujoco, mujoco_warp, ogbench, stable_worldmodel' || {
+"$VENV/bin/python" -c 'import numpy, mujoco, mujoco_warp, ogbench, torchvision, stable_worldmodel' || {
   echo "FATAL: venv incomplete"; exit 3; }
+
+# EGL first, and fail fast. W4 found gpu2104 with healthy torch/cuda and broken EGL
+# context creation; a node fault must not reach the artifacts looking like a renderer
+# result. Exits 9 on a dead context OR on a context that renders a constant frame.
+export MUJOCO_GL=egl
+"$VENV/bin/python" scratch/step7/ogb-manipulation/egl_probe.py || {
+  echo "FATAL: EGL unusable on $(hostname)"; exit 9; }
 
 # ---- 2. does EGL render these two at all? -----------------------------------
 export MUJOCO_GL=egl

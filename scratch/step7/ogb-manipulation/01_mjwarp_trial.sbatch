@@ -4,7 +4,7 @@
 #SBATCH --qos=norm-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=geforce3090
-#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116
+#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2104
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=02:00:00
@@ -38,6 +38,13 @@ export PYTHONPATH=$WS
 set -x
 cd "$WS"
 nvidia-smi --query-gpu=name,memory.total --format=csv || true
+# EGL first, and fail fast. W4 found gpu2104 with healthy torch/cuda and broken EGL
+# context creation; a node fault must not reach the artifacts looking like a renderer
+# result. Exits 9 on a dead context OR on a context that renders a constant frame.
+export MUJOCO_GL=egl
+"$VENV/bin/python" scratch/step7/ogb-manipulation/egl_probe.py || {
+  echo "FATAL: EGL unusable on $(hostname)"; exit 9; }
+
 "$VENV/bin/python" scratch/step7/ogb-manipulation/probe_mjwarp_trial.py --out "$OUT" \
   --batches 1 16 64 256 1024 || echo "MJWARP rc=$?"
 ls -l "$OUT" | tail -10
