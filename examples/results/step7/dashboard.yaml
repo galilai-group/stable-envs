@@ -199,7 +199,8 @@ workstreams:
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
-  status: PATCH complete pending independent review; parity digests identical on arm64 CPU, x86 CPU and RTX 3090; tiers reported; Gate F swm evidence being produced on Oscar
+  status: 'reviewed APPROVE-WITH-CHANGES (six non-pixel fixes: docstring limits, gather count, dead test citation, uint8_fast_path_share 2/6 -> 1/4, W1 path citation, fifth sampler guard for inv_ench_bow
+    at batch 1); follow-up requested; Gate-F swm evidence in progress; merge after re-check'
   capability: full-atlas _Composite generalisation + layers
   wave: 2
   branch: step7/craftax-full
@@ -276,6 +277,31 @@ workstreams:
       note: NO_REFERENCE ladder; neither S_cpu certifies pending Sami
     tests: test_craftax_full 25 passed; tests/unit 772 passed 39 skipped one pre-existing failure
     reviewer: independent reviewer (fable family) spawned 2026-09-15 on 35127de
+    review:
+      verdict: APPROVE-WITH-CHANGES
+      report: examples/results/step7/craftax-full/review_phase1.md
+      verified:
+      - parity 1.0/0 at 10/16 px on reviewer's own 2,009-state rollout (own extractor), 90 level-shifted states over all 9 levels, 49 edge states; only the 3 deliberately unrepresentable differ
+      - jitted vs un-jitted max 3.05e-5 float, 10/402 rows differ by 1 uint8
+      - 'purity: 33-35 omitted-field perturbations 0 px; official(bridge(extract(s))) == official(s) on 99 states'
+      - sampler power test at batch 1/2/4
+      - Gate A all clean via fidelity_step4 with reseed; resolution 0.7945/0.841; declaration carries evidence
+      - 'Gate F vs real SWM wrapper: obs = whole frame/255 incl. strip/night; ours == round(obs*255) 5/6 (6th a half-integer round trip) and == un-jitted 6/6'
+      - craftax.py/prng.py identical; vignette bitwise; 27/27 tables regenerate; alphas binary
+      - Step-4 Classic rows and W1 corpus identical both trees; tests 930/7/2 vs 905/7/2
+      - hygiene clean
+      required:
+      - docstring false limit -> real limits (two mobs/tile, two projectiles/tile, 6-projectile budget)
+      - gather/select count
+      - dead test citation
+      - uint8_fast_path_share 2/6 -> 1/4 + tolerance
+      - W1 path citation (11->12 broken)
+      - fifth sampler guard arrows>=1 on band-0 rows (inv_ench_bow dead in 3/200 seeds at batch 1); corpus-neutral
+      nits:
+      - jit gap 1.53e-5 is pool-specific
+      - vacuous last assertion in the >6 projectile test
+      - Step-7 corpora lack the meta key corpus_for reads (Step 8, W1 too)
+      - 'paired CPU tier at loadavg 38.9/48 with contention: lower bound'
   cluster:
     x86_gate_a_parity_6397697: 'COMPLETED node2352: parity 1.0 / 0 at 10 and 16 px, digests identical to the Mac (b3dcba4dea708d15 / 43414708ce31a3d7); dead_dims [] at batch 1..16 x 12 seeds; resolution
       consistency 0.7945; 24 tests passed'
@@ -966,6 +992,8 @@ incident_log:
   item: 'W2 PATCH complete: three-backend identical digests; tiers reported; awaiting review'
 - date: '2026-09-15'
   item: 'W5 shared-change review: spot rule needs cutoff=180 completion; upstream fix exists in mujoco_warp 3.13.0'
+- date: '2026-09-15'
+  item: W2 review APPROVE-WITH-CHANGES (six non-pixel fixes); follow-up requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1021,3 +1049,5 @@ deferred_work:
 step8_carryovers:
 - item: certifier must honour per-cell resolution_consistency_applicability (CraftaxClassic night band) or judge on the light >= 0.5 subset
   source: W1 review re-check 2026-09-15
+- item: Step-7 corpora (craftax-classic-full, craftax-full) lack the `meta` key fidelity_step4.corpus_for reads unconditionally; add at the Step-8 freeze
+  source: W2 review
