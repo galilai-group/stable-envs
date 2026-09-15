@@ -4,7 +4,7 @@
 #SBATCH --qos=norm-gpu
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=geforce3090
-#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2109,gpu2104
+#SBATCH --exclude=gpu2108,gpu2113,gpu2110,gpu2116,gpu2109,gpu2104,gpu2264
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=03:00:00
@@ -54,10 +54,20 @@ echo "NODE $NODE JOB $SLURM_JOB_ID GPU $(nvidia-smi --query-gpu=name --format=cs
 which nvcc; nvcc --version | tail -1
 
 # ---------------------------------------------------------------- 0. context probes
-PYTHONPATH=$WS $PY -c "import nvdiffrast.torch as dr, torch; dr.RasterizeCudaContext(device='cuda'); print('nvdiffrast ok', torch.cuda.get_device_name(0))" \
-  2>&1 | tail -3 | tee "$RF/plugin_build.txt"
+# torch.cuda.set_device(0) BEFORE the context: nvdiffrast's RasterizeCudaContext resolves the bare
+# string 'cuda' through torch.cuda._exchange_device, which needs a current device. Job 6409703 died
+# here on gpu2264 with "invalid argument to exchangeDevice" -- an initialisation-order failure of the
+# probe, not necessarily of the node, and the probe has to test the node. Full output kept: that job's
+# `tail -3` hid everything above the last traceback line.
+PYTHONPATH=$WS $PY -c "
+import torch, nvdiffrast.torch as dr
+torch.cuda.init(); torch.cuda.set_device(0)
+torch.zeros(1, device='cuda:0')
+dr.RasterizeCudaContext(device=torch.device('cuda:0'))
+print('nvdiffrast ok', torch.cuda.get_device_name(0), 'devices', torch.cuda.device_count())
+" 2>&1 | tail -20 | tee "$RF/plugin_build.txt"
 grep -q "nvdiffrast ok" "$RF/plugin_build.txt" || { echo "NVDIFFRAST CONTEXT FAILED on $NODE"; exit 2; }
-$PY -c "import mujoco; c = mujoco.GLContext(64, 64); c.make_current(); print('egl ok')" 2>&1 | tail -3 | tee "$RF/egl_probe.txt"
+$PY -c "import mujoco; c = mujoco.GLContext(64, 64); c.make_current(); print('egl ok')" 2>&1 | tail -20 | tee "$RF/egl_probe.txt"
 grep -q "egl ok" "$RF/egl_probe.txt" || {
   echo "EGL CONTEXT FAILED on $NODE -- the six cells' official reference cannot be rendered here, so"
   echo "the 'fidelity unchanged or improved' half of the re-freeze evidence would be missing."
