@@ -414,13 +414,13 @@ workstreams:
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
-  status: (e2) landed; INTEG-1 load-hook fix (e3) pending (message queued to the agent); then reviewer verification of e2+e3 and merge; quiet-window tier jobs 6396525 (node1932) / 6396526 (gpu2109) running
+  status: 'INTEG-1 fixed (31bd3e9: _DMCModel._load_env hook; mixin overrides only the hook + size; 8/8 identity vs integration); final verification requested; merge on APPROVE; tier jobs running'
   capability: DMControlTrackCom cell + shared ellipsoid intersector + heightfield surface (raycast3d/cpu3d/mjwarp)
   wave: 1
   branch: step7/dmc-quadruped
   worktree: /Users/samib/stable-envs-step7-dmc-quadruped
   agent_model: fable
-  head_sha: '656f9db (e2: bounds-test complement fixed; citations back to 9; artifact stamps)'
+  head_sha: 31bd3e9 (e2 + integration merge + INTEG-1 load hook)
   phase0: "FINDING: SWM default = walk model + Move(0.5), camera 2 (y, trackcom, fovy 45), 224 px, SWM appearance (self recoloured, foot density); state = qpos (0 px under re-render/qvel x100/history);\
     \ primitives: 1 textured plane, 12 capsules, 4 spheres, 2 cylinders, 1 ELLIPSOID (torso, visible in every state); HFIELD declared but deleted from the walk model (no capability needed); MJWarp supports\
     \ ellipsoid (ray_ellipsoid) \u2014 no GPU gap; cpu3d refuses kind 4; raycast3d lacks _ellipsoid. Prototype (cpu3d + patched ellipsoid) vs official 3.11 at 224 px: mean 3.55/255, within-8 0.901, SSIM\
@@ -818,6 +818,8 @@ incident_log:
     at 1d9dccb with the known failure until (e2) merges'
 - date: '2026-09-15'
   item: W4 (e2) 656f9db landed (A/B fixed, recommended items done); INTEG-1 hook fix still pending
+- date: '2026-09-15'
+  item: INTEG-1 fixed by W4 (31bd3e9); final verification of e2+e3 requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
