@@ -8,7 +8,7 @@
 |---|---|
 | parent baseline | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` |
 | integration branch | `step7/integration` |
-| integration HEAD reported on | `f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41` |
+| integration HEAD reported on | `0b80dbba71555f641e87f3ad97c3baa1b9c04e61` |
 | coverage target | 40/40 pixel-producing SWM ids at full (33 done + CraftaxClassic partial->full + 6 gaps) |
 | closure branch | `step7/closure` (this page and everything under `examples/results/step7/closure/`) |
 
@@ -179,11 +179,10 @@ A cell is listed when its tier is below the frozen bar (`CPU_FAST` / `GPU_FAST`)
 | verdict | configs |
 |---|---|
 | expected-known | 9 |
-| gate A improved | 1 |
-| identical | 33 |
-| NOT REPLAYED | 6 (CraftaxClassic, Piecewise, PiecewiseZones, SimplePointMaze, TwoRoom, TwoRoomTarget) |
+| identical | 39 |
+| NOT REPLAYED | 1 (CraftaxClassic) |
 
-**33 of 43 replayed rows are bit-identical to the frozen oracle.** 9 carry a delta that was named in advance with its mechanism; 0 are unexplained.
+**39 of 48 replayed rows are bit-identical to the frozen oracle.** 9 carry a delta that was named in advance with its mechanism; 0 are unexplained.
 
 | config | what moved | mechanism |
 |---|---|---|
@@ -235,20 +234,61 @@ Measured on the committed Step-7 corpora at each cell's registered default size,
 
 ### The GPU suite and the unit suites
 
-| suite | interpreter | passed | failed | skipped | failing test ids |
+`tests/gpu` is judged against **Step 6's run of the same files in the same chained interpreter** (`examples/results/step6/verify/gpu/`), because "nothing else failing" is a claim about a difference. The error counts are part of the comparison: several hundred of those lines are the environments that interpreter cannot construct at all, and a change there would mean the interpreter moved rather than the code.
+
+| file | Step 6 | this sweep | error set | new failures | failures fixed |
 |---|---|---|---|---|---|
-| `unit` | `craftax` | 776 | 2 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `craftax` | 919 | 3 | 17 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `rocket` | 780 | 11 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `rocket` | 974 | 12 | 12 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se6-venv` | 822 | 2 | 7 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se6-venv` | 1035 | 2 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-craftax-venv` | 773 | 2 | 13 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-craftax-venv` | 918 | 2 | 19 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-rocket-venv` | 767 | 11 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-rocket-venv` | 913 | 11 | 15 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `step6` | 807 | 2 | 22 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `step6` | 1018 | 3 | 25 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
+| `test_conformance` | 437 error, 7 failed, 845 passed, 387 skipped | 437 error, 10 failed, 902 passed, 422 skipped | **unchanged** | **3** | 0 |
+| `test_reproducibility` | 529 error, 17 failed, 1275 passed, 218 skipped | 529 error, 22 failed, 1358 passed, 247 skipped | **unchanged** | **12** | 7 |
+| `test_fast_paths` | 168 passed, 180 skipped | 2 failed, 247 passed, 198 skipped | **unchanged** | **2** | 0 |
+
+New in `test_conformance`:
+
+- `test_state_roundtrip[OGBCube]`
+- `test_state_roundtrip[OGBScene]`
+- `test_visual_tier_matches_its_declared_fidelity[OGBCube]`
+
+New in `test_reproducibility`:
+
+- `test_a_shared_style_broadcasts_to_any_batch[OGBCube]`
+- `test_a_shared_style_broadcasts_to_any_batch[OGBScene]`
+- `test_dataset_paths_regenerate_identical_frames[OGBCube]`
+- `test_dataset_paths_regenerate_identical_frames[OGBScene]`
+- `test_render_is_pure_and_set_state_is_idempotent[OGBCube]`
+- `test_render_is_pure_and_set_state_is_idempotent[OGBScene]`
+- `test_rendering_a_sub_batch_refuses_environment_0_s_style[OGBCube]`
+- `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`
+- `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]`
+- `test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]`
+- `test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]`
+- `test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]`
+
+New in `test_fast_paths`:
+
+- `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]`
+- `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]`
+
+Every run below, and for `tests/unit` its paired run against the pristine `76dc5116` baseline tree on the same machine in the same interpreter.
+
+| suite | interpreter | tree | passed | failed | skipped | failing test ids |
+|---|---|---|---|---|---|---|
+| `test_conformance` | `ogbmanip` | integration HEAD | 948 | 10 | 452 | `test_state_is_sufficient[PointmazeGiantNavigate]`, `test_state_is_sufficient[PointmazeGiantStitch]`, `test_state_is_sufficient[PointmazeTeleportNavigate]`, `test_state_is_sufficient[PointmazeTeleportStitch]`, `test_state_roundtrip[OGBCube]`, `test_state_roundtrip[OGBScene]`, `test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]`, `test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]`, `test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]`, `test_visual_tier_matches_its_declared_fidelity[OGBCube]` |
+| `test_conformance` | `rocket` | integration HEAD | — | 0 | — | — |
+| `test_conformance` | `verify` | integration HEAD | 902 | 10 | 422 | `test_state_is_sufficient[PointmazeGiantNavigate]`, `test_state_is_sufficient[PointmazeGiantStitch]`, `test_state_is_sufficient[PointmazeTeleportNavigate]`, `test_state_is_sufficient[PointmazeTeleportStitch]`, `test_state_roundtrip[OGBCube]`, `test_state_roundtrip[OGBScene]`, `test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]`, `test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]`, `test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]`, `test_visual_tier_matches_its_declared_fidelity[OGBCube]` |
+| `test_fast_paths` | `verify` | integration HEAD | 247 | 2 | 198 | `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]` |
+| `test_reproducibility` | `verify` | integration HEAD | 1358 | 22 | 247 | `test_a_shared_style_broadcasts_to_any_batch[OGBCube]`, `test_a_shared_style_broadcasts_to_any_batch[OGBScene]`, `test_dataset_paths_regenerate_identical_frames[OGBCube]`, `test_dataset_paths_regenerate_identical_frames[OGBScene]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportExplore]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportNavigate]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportStitch]`, `test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeNavigate]`, `test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeStitch]`, `test_render_is_pure_and_set_state_is_idempotent[OGBCube]`, `test_render_is_pure_and_set_state_is_idempotent[OGBScene]`, `test_rendering_a_sub_batch_refuses_environment_0_s_style[OGBCube]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCCheetahRun]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCHopperHop]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCWalkerWalk]`, `test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]`, `test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]`, `test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportNavigate]`, `test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportStitch]` |
+| `unit` | `craftax` | baseline `76dc5116` | 776 | 2 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `craftax` | integration HEAD | 919 | 3 | 17 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `rocket` | baseline `76dc5116` | 780 | 11 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `rocket` | integration HEAD | 974 | 12 | 12 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se6-venv` | baseline `76dc5116` | 822 | 2 | 7 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se6-venv` | integration HEAD | 1035 | 2 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-craftax-venv` | baseline `76dc5116` | 773 | 2 | 13 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-craftax-venv` | integration HEAD | 918 | 2 | 19 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-rocket-venv` | baseline `76dc5116` | 767 | 11 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `se7-rocket-venv` | integration HEAD | 913 | 11 | 15 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `step6` | baseline `76dc5116` | 807 | 2 | 22 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
+| `unit` | `step6` | integration HEAD | 1018 | 3 | 25 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
 
 ## Step-8 carry-overs
 
@@ -287,6 +327,9 @@ An escalation is open when its `status`/`resolved` field does not record a rulin
 
 Every JSON and results file under `examples/results/step7/closure/` that this generator does not yet understand, named rather than dropped. This list is the next run's to-do list.
 
+- `examples/results/step7/closure/gpu_tests/test_conformance.verify.failure_messages.json`
+- `examples/results/step7/closure/gpu_tests/test_fast_paths.verify.failure_messages.json`
+- `examples/results/step7/closure/gpu_tests/test_reproducibility.verify.failure_messages.json`
 - `examples/results/step7/closure/nvdiff_cpu_batch/apple-m5.json`
 - `examples/results/step7/closure/nvdiff_cpu_batch/threads1.json`
 - `examples/results/step7/closure/nvdiff_cpu_batch/threads2.json`
@@ -294,12 +337,15 @@ Every JSON and results file under `examples/results/step7/closure/` that this ge
 - `examples/results/step7/closure/refreeze/branch.json`
 - `examples/results/step7/closure/refreeze/gatea_branch.json`
 - `examples/results/step7/closure/replay/certify/certification.json`
+- `examples/results/step7/closure/replay/compare49_frozen_interpreters_only.json`
+- `examples/results/step7/closure/replay/craftaxclassic_world_rows.json`
 - `examples/results/step7/closure/replay/craftaxclassic_world_rows_apple-m5.json`
 - `examples/results/step7/closure/replay/dmc.json`
 - `examples/results/step7/closure/replay/dmcvis.json`
 - `examples/results/step7/closure/replay/fetch.json`
 - `examples/results/step7/closure/replay/ogb.json`
 - `examples/results/step7/closure/replay/raster.json`
+- `examples/results/step7/closure/replay/swm.json`
 
 ---
 

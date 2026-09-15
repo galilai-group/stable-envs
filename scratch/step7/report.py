@@ -370,15 +370,48 @@ def main() -> None:
     P("")
     gp = sorted((CLOSURE / "gpu_tests").glob("*.results.txt")) if (CLOSURE / "gpu_tests").is_dir() else []
     ut = sorted((CLOSURE / "unit_tests").glob("*.results.txt")) if (CLOSURE / "unit_tests").is_dir() else []
-    if gp or ut:
-        P("| suite | interpreter | passed | failed | skipped | failing test ids |")
+    diff = _read_json(CLOSURE / "gpu_tests" / "gpu_suite_diff.json")
+    if diff:
+        consumed.add(CLOSURE / "gpu_tests" / "gpu_suite_diff.json")
+        P("`tests/gpu` is judged against **Step 6's run of the same files in the same chained "
+          "interpreter** (`examples/results/step6/verify/gpu/`), because \"nothing else failing\" is a "
+          "claim about a difference. The error counts are part of the comparison: several hundred of "
+          "those lines are the environments that interpreter cannot construct at all, and a change "
+          "there would mean the interpreter moved rather than the code.")
+        P("")
+        P("| file | Step 6 | this sweep | error set | new failures | failures fixed |")
         P("|---|---|---|---|---|---|")
+        for r in diff["rows"]:
+            n, ref = r["now"], r.get("step6_reference")
+            if not n.get("exists") or not ref:
+                continue
+            fmt = lambda t: ", ".join(f"{v} {k}" for k, v in sorted(t.items()))
+            P(f"| `{r['file'].split('.')[0]}` | {fmt(ref['totals'])} | {fmt(n['totals'])} "
+              f"| {'**unchanged**' if r.get('error_set_unchanged') else '**CHANGED**'} "
+              f"| **{len(r.get('new_failures', []))}** | {len(r.get('fixed_failures', []))} |")
+        P("")
+        for r in diff["rows"]:
+            if r.get("new_failures"):
+                P(f"New in `{r['file'].split('.')[0]}`:")
+                P("")
+                for t in r["new_failures"]:
+                    P(f"- `{t.split('::')[-1]}`")
+                P("")
+
+    if gp or ut:
+        P("Every run below, and for `tests/unit` its paired run against the pristine `76dc5116` "
+          "baseline tree on the same machine in the same interpreter.")
+        P("")
+        P("| suite | interpreter | tree | passed | failed | skipped | failing test ids |")
+        P("|---|---|---|---|---|---|---|")
         for p in gp + ut:
             c = _pytest_counts(p)
             consumed.add(p)
             base, _, rest = p.name.partition(".")
-            venv = rest.split(".")[0]
-            P(f"| `{base}` | `{venv}` | {c.get('passed', '—')} | {c.get('failed', 0)} "
+            parts = rest.split(".")
+            venv = parts[0]
+            tree = "baseline `76dc5116`" if "baseline-76dc511" in p.name else "integration HEAD"
+            P(f"| `{base}` | `{venv}` | {tree} | {c.get('passed', '—')} | {c.get('failed', 0)} "
               f"| {c.get('skipped', '—')} "
               f"| {', '.join('`%s`' % f.split('::')[-1] for f in c['failed_ids']) or '—'} |")
         P("")

@@ -23,7 +23,7 @@
   "pixel_producing": 40,
   "symbolic": 2
  },
- "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+ "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
  "rows": [
   {
    "closed_in_step7": false,
@@ -58,7 +58,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -133,7 +133,7 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -210,7 +210,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -289,7 +289,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -363,7 +363,7 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -472,7 +472,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -624,7 +624,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "9ca318f",
     "tier_merge_sha": "b1f61b1",
     "yes": true
@@ -661,7 +661,7 @@
     "rung": null
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": false
@@ -780,7 +780,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "d024c1a",
     "tier_merge_sha": "00c7c8d",
     "yes": true
@@ -817,7 +817,7 @@
     "rung": null
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": false
@@ -866,7 +866,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -941,7 +941,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1016,7 +1016,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1091,7 +1091,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1166,7 +1166,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1241,7 +1241,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1316,7 +1316,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1388,7 +1388,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1460,7 +1460,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1532,7 +1532,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1607,7 +1607,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1682,7 +1682,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1757,7 +1757,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1867,7 +1867,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -1976,7 +1976,7 @@
     "rung": "same_dmc_appearance"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2098,7 +2098,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "1d9dccb",
     "tier_merge_sha": null,
     "yes": true
@@ -2179,7 +2179,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2247,7 +2247,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2395,7 +2395,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "24d1054",
     "tier_merge_sha": null,
     "yes": true
@@ -2470,7 +2470,7 @@
     "rung": "documented_manual"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2619,7 +2619,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "24d1054",
     "tier_merge_sha": null,
     "yes": true
@@ -2734,7 +2734,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "fd2b8ef",
     "tier_merge_sha": null,
     "yes": true
@@ -2810,7 +2810,7 @@
     "rung": "reference_env_class"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2883,7 +2883,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -2945,7 +2945,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4, carried forward: the closure replay produced no row for this configuration)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -2958,7 +2958,7 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3048,7 +3048,7 @@
     "rung": "same_scene_as"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3131,7 +3131,7 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3295,7 +3295,7 @@
     "rung": "step7_workstream"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": "0a029bd",
     "tier_merge_sha": "e0a416c",
     "yes": true
@@ -3371,7 +3371,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3433,7 +3433,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4, carried forward: the closure replay produced no row for this configuration)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -3446,7 +3446,7 @@
     "rung": "declared_docstring"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3507,7 +3507,7 @@
     "failing_checks": [],
     "per_device": {},
     "result": "PASS",
-    "source": "examples/results/step4/certification.json (frozen Step-4, carried forward: the closure replay produced no row for this configuration)"
+    "source": "examples/results/step7/closure/replay/certify/certification.json (this sweep)"
    },
    "gpu_tier": {
     "detail": {},
@@ -3520,7 +3520,7 @@
     "rung": "variation_map"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3640,7 +3640,7 @@
     "rung": "reference_id"
    },
    "merged": {
-    "integration_head": "f1b9e0cbd7386cf0f6bfb81209a9eb12790c9d41",
+    "integration_head": "0b80dbba71555f641e87f3ad97c3baa1b9c04e61",
     "sha": null,
     "tier_merge_sha": null,
     "yes": true
@@ -3688,7 +3688,7 @@
  "schema_version": 1,
  "sources": {
   "declarations": "the stable-envs classes at the integration HEAD, unioned over live import in this interpreter; rocket.json (+0 cells); craftax.json (+0 cells)",
-  "gate_a_step4_universe": "43 configuration(s) re-judged by this sweep; the rest carried forward from the frozen Step-4 certification",
+  "gate_a_step4_universe": "48 configuration(s) re-judged by this sweep; the rest carried forward from the frozen Step-4 certification",
   "gate_a_step7_cells": "examples/results/step7/closure/gate_a/*.json",
   "swm_registry": "scratch/swm_matrix.json (live swm registry probe)",
   "tiers": "performance_record_* where declared, else the generated Step-6 tier table, else the Step-7 dashboard workstream row; nothing re-measured here"
