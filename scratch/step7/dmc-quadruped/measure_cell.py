@@ -157,8 +157,21 @@ def mode_official(a):
               open(os.path.join(a.out, f"official_provenance_{tag}.json"), "w"), indent=1)
 
 
+def _dilate(mask, iters):
+    """Binary dilation with a 3x3 cross, ``iters`` times: scipy where present, numpy otherwise."""
+    try:
+        from scipy import ndimage
+        return ndimage.binary_dilation(mask, iterations=iters)
+    except ImportError:
+        m = mask.copy()
+        for _ in range(iters):
+            n = m.copy()
+            n[1:, :] |= m[:-1, :]; n[:-1, :] |= m[1:, :]; n[:, 1:] |= m[:, :-1]; n[:, :-1] |= m[:, 1:]
+            m = n
+        return m
+
+
 def per_surface(ours, official, segs, size):
-    from scipy import ndimage
     d = np.abs(ours.astype(np.int16) - official.astype(np.int16)).max(-1)
     objid, objtype = segs[..., 0], segs[..., 1]
     geom = objtype == 5
@@ -167,7 +180,7 @@ def per_surface(ours, official, segs, size):
     dil = 16 if size >= 224 else 6
     near = np.zeros_like(floor)
     for i in range(len(ours)):
-        mk = ndimage.binary_dilation(body[i], iterations=dil)
+        mk = _dilate(body[i], dil)
         ys, xs = np.nonzero(body[i])
         if ys.size:
             h = ys.max() - ys.min()

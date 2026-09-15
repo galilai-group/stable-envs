@@ -1,0 +1,6 @@
+------------------------------ stable-envs safety ------------------------------
+resources: 7 EGL contexts created, 0 released, 7 live (peak 7); renderers 7 created / 0 closed
+node: node1913 slurm=alloc reason=none reference-renderer={}
+=========================== short test summary info ============================
+FAILED tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves
+1 failed, 719 passed, 22 skipped, 111 deselected, 14 warnings in 40.49s

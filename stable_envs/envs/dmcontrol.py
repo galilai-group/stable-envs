@@ -2664,18 +2664,17 @@ _AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 _SWIMMER_AT_VERSIONS = {"mujoco": "3.11.0"}
 _SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
 
-#: Quadruped (Step 7): PROVISIONAL, measured through the CPU backend (``stable_envs/render/cpu3d.py``,
-#: torch 2.14.0) on one draw, because Oscar was unreachable when the cell landed; the family's
-#: convention is three MJWarp draws on the GPU, which replaces this entry -- numbers and this string --
-#: when the cluster returns (the CPU backend sits within 0.02/255 of MJWarp on the sibling cells, so the
-#: numbers are expected to hold). The reference is the declared 3.11.0 pair; the registered default
-#: (camera 2, 224 px, SWM's appearance) is what is measured, Step 2 S4.2.
-_QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 1 draw from sample_states (SWM's "
-                 "model and default appearance: material self rgba .6 .3 .3, foot_back_left density "
-                 "1000), CPU backend cpu3d with torch 2.14.0 on an Apple M5, against "
-                 "physics.render under mujoco 3.11.0 + dm_control 1.0.44 with MUJOCO_GL=glfw "
-                 "(scratch/step7/dmc-quadruped/measure_cell.py); PROVISIONAL until the MJWarp draws")
-_QUADRUPED_AT_MEASURED_WITH = {"torch": "2.14.0"}
+#: Quadruped (Step 7): the family's convention -- three independent MJWarp draws through the shipped
+#: env -- at the REGISTERED default (camera 2, 224 px, SWM's appearance; Step 2 S4.2), under the
+#: declared 3.11.0 pair, on a 3090 (jobs 6394721 / 6394987, gpu2104 / gpu2107). The CPU backend
+#: measured the same picture locally first (3.42 / 0.902 / 0.957 on one draw, Apple M5) and is
+#: certified against this entry, not its own.
+_QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
+                 "(SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left "
+                 "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
+                 "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 "
+                 "(scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)")
+_QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
@@ -2746,10 +2745,12 @@ VISUAL_FIDELITY: dict[str, dict] = {
     # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
     # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).
     "DMCQuadrupedWalk": {
-        "mean_abs": 3.42, "within8_frac": 0.902, "ssim": 0.957,
-        "interior_exact_frac": 0.188, "interior_frac": 0.0295, "all_exact_frac": 0.153,
-        "skybox_share": 0.151, "floor_share": 0.802,
-        "mean_abs_max": 4.7, "within8_min": 0.84, "ssim_min": 0.90, "measured_at": _QUADRUPED_AT,
+        "mean_abs": 3.52, "within8_frac": 0.897, "ssim": 0.955,
+        "interior_exact_frac": 0.205, "interior_frac": 0.0284, "all_exact_frac": 0.171,
+        "skybox_share": 0.148, "floor_share": 0.806,
+        "draw_spread": {"mean_abs": [3.520, 3.527], "within8_frac": [0.8964, 0.8987],
+                        "ssim": [0.9536, 0.9557]},
+        "mean_abs_max": 4.6, "within8_min": 0.85, "ssim_min": 0.90, "measured_at": _QUADRUPED_AT,
         "reference_versions": _AT_VERSIONS, "measured_with": _QUADRUPED_AT_MEASURED_WITH},
 }
 

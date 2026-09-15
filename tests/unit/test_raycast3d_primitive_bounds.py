@@ -248,8 +248,19 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
         pytest.skip(f"no committed measurement at {f}")
     m = json.loads(f.read_text())
     names = {"PLANE": R3.PLANE, "SPHERE": R3.SPHERE, "CAPSULE": R3.CAPSULE,
-             "CYLINDER": R3.CYLINDER, "BOX": R3.BOX}
+             "CYLINDER": R3.CYLINDER, "BOX": R3.BOX, "ELLIPSOID": R3.ELLIPSOID}
     measured = {names[n] for n, on in m["predicate"].items() if on}
+    # ELLIPSOID (Step 7) is priced in its own committed aggregate, by the same rule, because the
+    # Step-6 file is frozen; absent that file the kind is unbounded and must not be in the table.
+    f7 = (Path(R3.__file__).resolve().parents[2]
+          / "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid.json")
+    if f7.is_file():
+        m7 = json.loads(f7.read_text())
+        if m7["predicate"].get("ELLIPSOID"):
+            measured.add(R3.ELLIPSOID)
+        m["ratio_worst_per_run"]["ELLIPSOID"] = m7["ratio_worst_per_run"]["ELLIPSOID"]
+        m["ratio_best_per_run"]["ELLIPSOID"] = m7["ratio_best_per_run"]["ELLIPSOID"]
+        m["predicate"]["ELLIPSOID"] = bool(m7["predicate"].get("ELLIPSOID"))
     assert set(R3._BOUNDED_KINDS) == measured, (
         f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
         f"({f.name}) chose {sorted(measured)}")

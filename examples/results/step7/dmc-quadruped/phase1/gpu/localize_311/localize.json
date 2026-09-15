@@ -1,0 +1,674 @@
+{
+ "configs": {
+  "DMCQuadrupedWalk": {
+   "check": {
+    "by_region": {
+     "bodies": {
+      "exact_frac": 0.10489106420583937,
+      "max_abs": 245,
+      "mean_abs": 6.29929642092383,
+      "p50": 2.0,
+      "p90": 17.0,
+      "px": 147105,
+      "residual_share": 0.08223722365482974,
+      "share": 0.04580906459263393,
+      "within8_frac": 0.8446347846776112
+     },
+     "floor": {
+      "exact_frac": 0.061658549922514086,
+      "max_abs": 116,
+      "mean_abs": 3.746587665664029,
+      "p50": 2.0,
+      "p90": 9.0,
+      "px": 2589503,
+      "residual_share": 0.8609962860671653,
+      "share": 0.8063812255859375,
+      "within8_frac": 0.8932486272462322
+     },
+     "skybox": {
+      "exact_frac": 0.7519213914919436,
+      "max_abs": 128,
+      "mean_abs": 1.3476096372952202,
+      "p50": 0.0,
+      "p90": 3.0,
+      "px": 474656,
+      "residual_share": 0.05676649027800494,
+      "share": 0.14780970982142858,
+      "within8_frac": 0.9549357850738219
+     }
+    },
+    "digest_official": "8c64d464c0dcc6aed4502bf7a21522d6ca7e01607e5ecf180d38064b5f3cc7bd",
+    "digest_ours": "2a23e29d099886e5fcc8ea3d81e62261ac7bc3a8fdff6515457b3b19a355ce63",
+    "exact_frac": 0.165666541274713,
+    "interior_bad_px": 68318,
+    "interior_exact_frac": 0.21112676381607814,
+    "interior_frac": 0.02721060648716041,
+    "interior_mean_abs": 3.7547054340546406,
+    "interior_px": 86602,
+    "max_abs": 245,
+    "mean_abs": 3.5089326196787307,
+    "region_share": {
+     "bodies": 0.04580906459263393,
+     "floor": 0.8063812255859375,
+     "skybox": 0.14780970982142858
+    },
+    "sheet": "/oscar/scratch/sboughan/se7/dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/sheets/DMCQuadrupedWalk_check.png",
+    "ssim": 0.955687698861485,
+    "ssim_by_region": {
+     "bodies": 0.9738176561677222,
+     "floor": 0.9562716335731878,
+     "skybox": 0.9468832003250871
+    },
+    "within8_frac": 0.9001396334901148
+   },
+   "check_draw_sha256": "2618a07117d0ba5d8149ce93eae39841c029b7ca038bfb175ef5f05339b4c0b9",
+   "config": "DMCQuadrupedWalk",
+   "corpus_sha256": "2bf9cd38fe07bfdd25d96c640f8317b35204bb469d5d1c95f7f53c2af089aaab",
+   "floor_geom_ids": [
+    0
+   ],
+   "frozen": {
+    "by_region": {
+     "bodies": {
+      "exact_frac": 0.10703111686718245,
+      "max_abs": 255,
+      "mean_abs": 6.5764629699055925,
+      "p50": 2.0,
+      "p90": 18.0,
+      "px": 146705,
+      "residual_share": 0.08509622673910783,
+      "share": 0.04568450304926658,
+      "within8_frac": 0.8331004396578167
+     },
+     "floor": {
+      "exact_frac": 0.0637722567946491,
+      "max_abs": 111,
+      "mean_abs": 3.770784745159677,
+      "p50": 2.0,
+      "p90": 9.0,
+      "px": 2577359,
+      "residual_share": 0.8571950720746871,
+      "share": 0.8025995371293049,
+      "within8_frac": 0.8891947144344269
+     },
+     "skybox": {
+      "exact_frac": 0.7495340722495895,
+      "max_abs": 129,
+      "mean_abs": 1.3429536124794745,
+      "p50": 0.0,
+      "p90": 3.0,
+      "px": 487200,
+      "residual_share": 0.05770870118620506,
+      "share": 0.15171595982142858,
+      "within8_frac": 0.9567528735632184
+     }
+    },
+    "digest_official": "66f82bdc4655f03878a45204b26f3f8694a8f6f1b2cc2a2b0d63f3bc1e8421cc",
+    "digest_ours": "7c298c925f6439e1da97fb7c72bff382ca303449b6f61ba741b4c9c761a2c7b4",
+    "exact_frac": 0.1697895283601722,
+    "interior_bad_px": 71850,
+    "interior_exact_frac": 0.21021390727020908,
+    "interior_frac": 0.028584301916386817,
+    "interior_mean_abs": 4.18486600567195,
+    "interior_px": 90974,
+    "max_abs": 255,
+    "mean_abs": 3.5306200299944197,
+    "region_share": {
+     "bodies": 0.04568450304926658,
+     "floor": 0.8025995371293049,
+     "skybox": 0.15171595982142858
+    },
+    "sheet": "/oscar/scratch/sboughan/se7/dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/sheets/DMCQuadrupedWalk_frozen.png",
+    "ssim": 0.9567293161703239,
+    "ssim_by_region": {
+     "bodies": 0.9719673433203725,
+     "floor": 0.957599599079342,
+     "skybox": 0.947536938787007
+    },
+    "within8_frac": 0.8968817263233418
+   },
+   "reference_id": "dm_control/quadruped-walk",
+   "resolution": {
+    "by_region": {
+     "bodies": {
+      "exact_frac": 0.3702804948706588,
+      "inexact_share": 0.1533452513150447,
+      "mean_abs": 2.1656930574963362,
+      "px": 146705,
+      "share": 0.04568450304926658
+     },
+     "floor": {
+      "exact_frac": 0.8420103679774529,
+      "inexact_share": 0.6758989527779022,
+      "mean_abs": 0.5447325472832203,
+      "px": 2577359,
+      "share": 0.8025995371293049
+     },
+     "skybox": {
+      "exact_frac": 0.7888505747126436,
+      "inexact_share": 0.17075579590705303,
+      "mean_abs": 0.8149596332785988,
+      "px": 487200,
+      "share": 0.15171595982142858
+     }
+    },
+    "digest_2S_down": "6526888cbc51cb532666008b2c1a23c95ac69e03e833c9e3f3a9404d0e676948",
+    "digest_S": "7c298c925f6439e1da97fb7c72bff382ca303449b6f61ba741b4c9c761a2c7b4",
+    "exact_frac": 0.8123944340919962,
+    "factor": 2,
+    "max_abs": 142,
+    "mean_abs": 0.6597830843763287,
+    "size": 224
+   },
+   "seconds": 26.7,
+   "size": 224,
+   "textures": {
+    "geom_matid": [
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     5,
+     2,
+     2,
+     2,
+     5,
+     2,
+     2,
+     2,
+     5,
+     2,
+     2,
+     2,
+     5
+    ],
+    "materials": [
+     {
+      "id": 0,
+      "name": "ball",
+      "reflectance": 0.0,
+      "rgba": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       0,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 1,
+      "name": "grid",
+      "reflectance": 0.20000000298023224,
+      "rgba": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       2,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 1
+     },
+     {
+      "id": 2,
+      "name": "self",
+      "reflectance": 0.0,
+      "rgba": [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 3,
+      "name": "self_default",
+      "reflectance": 0.0,
+      "rgba": [
+       0.699999988079071,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 4,
+      "name": "self_highlight",
+      "reflectance": 0.0,
+      "rgba": [
+       0.0,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 5,
+      "name": "effector",
+      "reflectance": 0.0,
+      "rgba": [
+       0.699999988079071,
+       0.4000000059604645,
+       0.20000000298023224,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 6,
+      "name": "effector_default",
+      "reflectance": 0.0,
+      "rgba": [
+       0.699999988079071,
+       0.4000000059604645,
+       0.20000000298023224,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 7,
+      "name": "effector_highlight",
+      "reflectance": 0.0,
+      "rgba": [
+       0.0,
+       0.5,
+       0.30000001192092896,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 8,
+      "name": "decoration",
+      "reflectance": 0.0,
+      "rgba": [
+       0.30000001192092896,
+       0.5,
+       0.699999988079071,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 9,
+      "name": "eye",
+      "reflectance": 0.0,
+      "rgba": [
+       0.0,
+       0.20000000298023224,
+       1.0,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 10,
+      "name": "target",
+      "reflectance": 0.0,
+      "rgba": [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 11,
+      "name": "target_default",
+      "reflectance": 0.0,
+      "rgba": [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       1.0
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 12,
+      "name": "target_highlight",
+      "reflectance": 0.0,
+      "rgba": [
+       0.6000000238418579,
+       0.30000001192092896,
+       0.30000001192092896,
+       0.4000000059604645
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     },
+     {
+      "id": 13,
+      "name": "site",
+      "reflectance": 0.0,
+      "rgba": [
+       0.5,
+       0.5,
+       0.5,
+       0.30000001192092896
+      ],
+      "shininess": 0.5,
+      "specular": 0.5,
+      "texid": [
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1,
+       -1
+      ],
+      "texrepeat": [
+       1.0,
+       1.0
+      ],
+      "texuniform": 0
+     }
+    ],
+    "nmat": 14,
+    "ntex": 3,
+    "offsamples": 4,
+    "shadowsize": 2048,
+    "textures": [
+     {
+      "distinct": 3,
+      "h": 906,
+      "id": 0,
+      "mean": 128.6898,
+      "name": "ball",
+      "nch": 3,
+      "sha256": "017ecf2e50fa8845644b58af5eededdead1dd0378e04f682597706ba69cd722f",
+      "type": 1,
+      "w": 151
+     },
+     {
+      "distinct": 307,
+      "h": 4800,
+      "id": 1,
+      "mean": 77.7869,
+      "name": "skybox",
+      "nch": 3,
+      "sha256": "f6a21dd7d85c1e5de753ce6786788aa78cf166a8fb7a7a71a1c58afbb0d5ad37",
+      "type": 2,
+      "w": 800
+     },
+     {
+      "distinct": 2,
+      "h": 300,
+      "id": 2,
+      "mean": 63.6705,
+      "name": "grid",
+      "nch": 3,
+      "sha256": "d6efb0698f2ef40f5867b2572bb3eb26d0de276ef2ad31e113df77f9d0b2d695",
+      "type": 0,
+      "w": 300
+     }
+    ]
+   }
+  }
+ },
+ "provenance": {
+  "driver": "575.57.08",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "mujoco_gl": "egl",
+  "packages": {
+   "dm_control": "1.0.44",
+   "mujoco": "3.11.0",
+   "mujoco-warp": "3.11.0",
+   "mujoco_warp": "3.11.0",
+   "numpy": "2.5.3",
+   "scipy": "1.18.1",
+   "warp-lang": "1.17.0"
+  },
+  "python": "3.12.9",
+  "slurm_job_id": "6394987",
+  "slurm_nodelist": "gpu2107",
+  "timestamp": "2026-09-14T23:42:45-0400",
+  "torch": "2.14.0+cu126",
+  "venv": "/oscar/scratch/sboughan/venvs/se-vis311"
+ },
+ "what_this_is": "Step 6A per-surface localisation of the trackcom residual, one arm"
+}

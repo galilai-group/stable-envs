@@ -1,0 +1,43 @@
+{
+ "schema_version": 1,
+ "step": 6,
+ "shard": "cpu-3d-paired-after",
+ "arm": "after",
+ "envs": [],
+ "certifiable": false,
+ "not_certifiable_because": "the node's 1-minute load average was 32.4 at the start of this job, over the 12.0 bound, so the official renderer and the decode bar would have been timed against co-tenants. Nothing was measured; aborting before the measurement is cheaper than discovering it in the reference spread afterwards.",
+ "load_average_at_start": [
+  32.4,
+  33.11,
+  33.41
+ ],
+ "provenance": {
+  "timestamp": "2026-09-15T00:35:04-0400",
+  "git_commit": "fa4ac534d5446613dac448e6ba4badedc5c8ef1a",
+  "git_commit_source": "env:STABLE_ENVS_GIT_COMMIT",
+  "git_dirty": null,
+  "stable_envs_file": "/oscar/scratch/sboughan/se7/dmc-quadruped/stable_envs/__init__.py",
+  "tree_root": "/oscar/scratch/sboughan/se7/dmc-quadruped",
+  "host": "node2330.oscar.ccv.brown.edu",
+  "arch": "x86_64",
+  "os": "Linux 5.14.0-570.62.1.0.1.el9_6.x86_64",
+  "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+  "cpu_count_logical": 48,
+  "cpu_count_physical": 48,
+  "python": "3.12.9",
+  "torch": "2.14.0+cu126",
+  "device": "cpu",
+  "torch_threads": 1,
+  "loadavg_start": 32.4,
+  "slurm_job_id": "6395512",
+  "slurm_nodelist": "node2330",
+  "mujoco_gl": "egl",
+  "certification_spec_version": 1,
+  "load_average": [
+   32.4,
+   33.11,
+   33.41
+  ],
+  "tree_commit": "unknown"
+ }
+}

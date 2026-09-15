@@ -1,0 +1,82 @@
+{
+ "tool": "r6_kind_cost_agg",
+ "supersedes": "the per-run `predicate` fields, which use the superseded 1 + 3*worst_rsd margin",
+ "rule": "bounded(kind) iff ns_intersect/ns_bound > 1 at every measured (B, N) in EVERY independent run: cost_bound < cost_intersect is the condition that holds for any scene, since the fraction of rays kept is >= 0",
+ "shape": "nearest",
+ "runs": [
+  "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid_node1913_run1.json",
+  "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid_node1913_run2.json",
+  "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid_node1913_run3.json"
+ ],
+ "host": "node1913.oscar.ccv.brown.edu",
+ "slurm_job": "6394722",
+ "threads": 1,
+ "cpu": "x86_64",
+ "predicate": {
+  "PLANE": false,
+  "SPHERE": false,
+  "BOX": false,
+  "CYLINDER": true,
+  "CAPSULE": true,
+  "ELLIPSOID": false
+ },
+ "ratio_worst_per_run": {
+  "SPHERE": [
+   0.2735049896335796,
+   0.2311920570853939,
+   0.275914557693204
+  ],
+  "BOX": [
+   1.1903562986587999,
+   0.9493980135825768,
+   1.1875408122390074
+  ],
+  "CYLINDER": [
+   1.2193138322407078,
+   1.1605961777765532,
+   1.2265587424743798
+  ],
+  "CAPSULE": [
+   1.4393734008630248,
+   1.3120889755210556,
+   1.5027344381374912
+  ],
+  "ELLIPSOID": [
+   0.885198835183092,
+   0.6945123267165336,
+   0.8988177269772422
+  ]
+ },
+ "ratio_best_per_run": {
+  "SPHERE": [
+   0.3873583387444369,
+   0.43860248678154906,
+   0.4074500730959209
+  ],
+  "BOX": [
+   1.6341831301477578,
+   1.565158574256636,
+   1.7462064372926394
+  ],
+  "CYLINDER": [
+   1.678059063826377,
+   1.7037520224357081,
+   1.8899905156546826
+  ],
+  "CAPSULE": [
+   2.0222179058034113,
+   2.014367953291007,
+   2.212808007149632
+  ],
+  "ELLIPSOID": [
+   1.4269042921769863,
+   1.2132156376082792,
+   1.3714065388183894
+  ]
+ },
+ "separation": {
+  "dearest_unbounded_at_its_best": 0.43860248678154906,
+  "cheapest_bounded_at_its_worst": 1.1605961777765532,
+  "gap_x": 2.6461231131929295
+ }
+}

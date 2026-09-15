@@ -100,6 +100,8 @@ def main() -> int:
 
     KINDS = [("PLANE", R3.PLANE), ("SPHERE", R3.SPHERE), ("CAPSULE", R3.CAPSULE),
              ("CYLINDER", R3.CYLINDER), ("BOX", R3.BOX)]
+    if hasattr(R3, "ELLIPSOID"):                     # Step 7: priced for its _BOUNDED_KINDS entry
+        KINDS.append(("ELLIPSOID", R3.ELLIPSOID))
 
     for B in a.batch:
         for N in a.rays:
