@@ -248,13 +248,13 @@ workstreams:
 - workstream: dmc-manipulator
   targets:
   - swm/ManipulatorDMControl-v0
-  status: all work committed (f4f0727); reviewer verdict on the hardened rule pending; merge on APPROVE
+  status: MERGED into step7/integration at 1d9dccb (branch f4f0727; final review APPROVE); CPU tier not reported (GPU_FAST only) - CPU sweep is a follow-up item
   capability: 'DMControlSuite cell: plate + mover pass under a directional castshadow light; per-episode target body_pos via _episode_slots'
   wave: 1
   branch: step7/dmc-manipulator
   worktree: /Users/samib/stable-envs-step7-dmc-manipulator
   agent_model: opus
-  head_sha: f4f0727 (paired 3.11 replay recorded); all cluster jobs done
+  head_sha: f4f0727 (merged 1d9dccb)
   phase0: 'PATCH_CANDIDATE: SWM default = Bring(use_peg=False) = manipulator-bring_ball, camera 0, 224 px, built via an mjcf round-trip with render_target=0 (target alpha 0), target sphere .015, light .7
     (signature diff pending Oscar). State = qpos 11 + 4 per-episode floats (target_ball body_pos x,z + body_quat qw,qy); 0 px under re-render/qvel x100/history; plate 0/255 within and across episodes. Only
     hard gap: _episode_slots refuses *_quat slots (guard over-broad; orientation is per-row via _fk/xmat). Directional castshadow light, fovy 4, textured planes already covered by DMControlSuite. Prototype
@@ -356,6 +356,16 @@ workstreams:
         - dmc shard 14/0; 17 cells byte-identical on four digests; tests/unit 1/726 vs 1/713
         - corpus (64,15) Step-4 schema, sha matches, corpus_for 64 rows
         - 'O1 checked: episode_draw census identical; asset-table rotation only; differences = the three leaves'
+      final:
+        verdict: APPROVE
+        head: d1f65d4 (+ artifact commit f4f0727)
+        verified:
+        - 'D1: missing frozen key refused by name (six keys tried); _RENDER_INVARIANT_FROZEN unchanged (20 fields); mat_texid emitted'
+        - 'D2: lying sphere flag refused (disagrees with geom_type); derivation works with the flag absent; irreducible trust floor = a forged geom_type (recorded, not a defect)'
+        - 'D3: broken citation set 9 == baseline 9, identical; reviewer''s earlier 32/34 was a regex over sites'
+        - dmc shard 14/0; 17 cells four digests identical incl. across the hardening; tests/unit 1/729 vs 1/713
+        - 'both directions on seed 8181: 221 px max 151 / 27 px refused under the box; ball_y granted'
+        - conformance diff confined to check_state_dims_matter, _render_invariant_candidates, _validate_render_invariant, constants
   cluster:
     copies: '$SCR/se7/dmc-manipulator (8b39e94 after re-sync); $SCR/se7/baseline = git archive 76dc511 (note: $SCR/se6/baseline is the Step-6 baseline 89fa5ca8)'
     O1_6394687: 'COMPLETED (se-step5, mujoco 3.12 caveat): SWM mjcf round-trip vs suite.load differs only by a benign material/texture table rotation (same sets, names, bytes; geom/site order identical;
@@ -394,6 +404,11 @@ workstreams:
     - three regression tests wrapping the real signature (thumbtip/geom_xpos; lying flag + box; flag omitted)
     - N1 tendons / N2 non-fixed camera pose documented as signature gaps
     - 're-verified: tests/unit 839 passed; dmc shard 14/0; 17 cells four digests identical; both directions hold'
+  merge:
+    integration_sha: 1d9dccb
+    date: '2026-09-15'
+    gate: hygiene 0 trailers; step4/5/6 untouched; reviewer APPROVE; Gate A all mandatory pass with 3 reported exclusions; parity interior 1.0 at the 3.11 pin; paired replay 14/0; integration tests running
+    auto_merged: stable_envs/envs/dmcontrol.py (W3 suite region + W4 trackcom region)
 - workstream: dmc-quadruped
   targets:
   - swm/QuadrupedDMControl-v0
@@ -795,6 +810,8 @@ incident_log:
   item: Sami overnight directive recorded; closure table issued
 - date: '2026-09-15'
   item: W4 (e) re-check APPROVE-WITH-CHANGES; fix (e2) requested
+- date: '2026-09-15'
+  item: W3 MERGED (1d9dccb); coverage 36/40 pending integration tests
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
