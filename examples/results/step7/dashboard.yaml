@@ -7,13 +7,13 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: phase 1 reviewed APPROVE-WITH-CHANGES (4 required, no pixel change); follow-up requested; sweep 6394647 + GPU job in flight; merge after follow-up
+  status: follow-up + oracle + tier landed (7a1a138); bounded re-review requested; CPU tier job 6395167 pending; merge after re-review
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: a1ebf57 (phase 1 + Oscar artifacts + sbatch plumbing)
+  head_sha: 7a1a138 (follow-up 978372b, oracle b399fbb, tier 7a1a138)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -108,6 +108,35 @@ workstreams:
       non_blocking:
       - certify.py Gate A check_per_env_variation skipped under default batch - Step 8 uses corpus batch
       - SWM render() truncates x255, repo rounds half-to-even (pre-existing)
+      followup:
+        commit: 978372b
+        done:
+        - prng.uniform range args removed; scaled-field test vs jax; no-range-args test
+        - _strip_grid + colour constants cached per device; _decode single round; key only on lit rows; daylight B=256/16 px 1.4396 -> 1.8706 ms of which 1.8509 is row growth (residual +0.0197 ms)
+        - 'parity_note/docstrings: ''on this pool'' + mechanism'
+        - 'findings: frozen Step-4 digest 1aeabbe8bc6a9a2e reproduces on CPU (frames_digest hashes shape+dtype first)'
+        tests: tests/unit 838 passed 37 skipped; parity byte-identical re-verified after every edit
+  decision_A_oracle:
+    commit: b399fbb
+    protocol: check_resolution_consistency's exact protocol on un-jitted craftax (per-state state_rng, load_all_textures_given_size(32)), split by region and band
+    world_rows:
+      daylight: official 1.0 / ours 1.0
+      dusk: official 1.0 / ours 1.0
+      night: official 0.1634 / ours 0.1634
+      check_8_state_draw: official 0.7639 / ours 0.7639
+    strip_rows:
+      official: 0.68-0.69 in every band (craftax's int(0.8*t) re-layout at 32 px)
+      ours: 1.0 (resamples the finished cell)
+    outcome: NOT APPLICABLE below light_level 0.5 on the reference's evidence (official is itself inconsistent by exactly our amount); bound asserted where the official is consistent (we meet it at 1.000);
+      declared as resolution_consistency_applicability with evidence path + reference versions + staleness test; frozen threshold untouched; parity at both supported sizes unaffected
+    note: the shared check is unchanged; the certifier consumes the applicability declaration at the Step-8 freeze
+  decision_B_tier:
+    commit: 7a1a138
+    distribution: 'examples/bench_step3.py draws probe.sample_states(64) -> the stratified sampler IS the certification distribution; declared certification_state_distribution (seeds 0-39: daylight 0.25,
+      dusk 0.33-0.44, night 0.31-0.43, lit 0.70-0.80, sleeping 0.31-0.46)'
+    gpu: 'RTX 3090 gpu2113, job 6394893, B=4096/16 px: mixed 45,203 f/s (tier input); daylight 796,702; night 24,353; ratio 32.7x; slower band = light_level < 0.5 (flagged)'
+    cpu: 'NOT reported: job 6394647 contended (daylight 6,219 f/s vs Step-6 certified 115k-154k on this cluster); re-queued as 6395167 --exclusive with /proc/loadavg before/after, Step-3 harness headline
+      + Step-6 tree daylight comparison in the same job'
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -438,6 +467,8 @@ incident_log:
   item: W6 M1-M3 landed locally (477c36c); CPU feasibility number reported and stopped; Oscar GPU job pending
 - date: '2026-09-15'
   item: W6 phase 1 PATCH_CANDIDATE (6e50f34); reviewer spawned; CPU triangle backend deferred
+- date: '2026-09-15'
+  item: W1 follow-up/oracle/tier landed (7a1a138); night check not applicable below light 0.5 on official evidence; GPU mixed 45,203 f/s; CPU tier pending exclusive re-run
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
