@@ -54,47 +54,55 @@ laptop through MuJoCo alone — no MJWarp involved, so this half needs no GPU
 
 | spot cutoff | pixels differing from cutoff = 100° | max abs | frame mean |
 |---:|---:|---:|---:|
-| 100° (the model's own) | — | — | 57.241 |
-| **180°** | **0.00 %** | **0** | 57.241 |
-| 90° | 95.21 % | 77 | 49.830 |
-| 89° | 95.21 % | 77 | 49.830 |
-| 45° | 95.21 % | 77 | 49.811 |
-| 10° | 95.25 % | 88 | 47.964 |
+| 100° (the model's own) | — | — | 58.381 |
+| **180°** | **0.014 %** | **1** | **58.381** |
+| 90° | 94.49 % | 63 | 50.767 |
+| 89° | 94.49 % | 63 | 50.767 |
+| 45° | 94.49 % | 63 | 50.748 |
+| 10° | 94.51 % | 69 | 48.927 |
 
 OpenGL's `GL_SPOT_CUTOFF` accepts `[0, 90]` or the sentinel `180`; anything else is
 `GL_INVALID_VALUE` and the parameter is left at its default **180 = not a spotlight**. The table is
-that rule, sharply: at 100° MuJoCo renders **bit-identically to 180°** — max abs difference **0** —
-while a *valid* 90° changes 95 % of pixels and darkens the frame by 7.4 levels of mean. The boundary
-is exactly where the GL spec puts it. Probe: `scratch/step7/ogb-manipulation/probe_m1_spot_cutoff.py`,
-data `m1_mujoco_spot_cutoff.json`; it needs no GPU because it is a statement about MuJoCo alone.
+that rule, and its boundary is exactly where the spec puts it: 100° renders identically to 180° (one
+pixel, one level — this host's render noise), while a *valid* 90° changes 94.5 % of pixels and
+darkens the frame by 7.6 levels of mean. Probe:
+`scratch/step7/ogb-manipulation/probe_m1_spot_cutoff.py`, data `m1_mujoco_spot_cutoff.json`; it needs
+no GPU because it is a statement about MuJoCo alone.
 
 **What "discarded" does and does not mean — measured, because the obvious reading is wrong.**
-A follow-up sweep (`m1_mujoco_light_forms.json`, same probe file) pins the behaviour down:
+Same probe, in a fresh env with a measured render-noise floor of 0 (`light_forms`):
 
-| MuJoCo-side change | frame mean | vs shipped |
-|---|---:|---|
-| *shipped: SPOT, cutoff 100, exponent 10* | **58.26** | — |
-| **exponent 10 → 0**, cutoff still 100 | **58.26** | **bit-identical, max 0** |
-| cutoff 100 → 90 | 50.66 | 94.6 % differ, max 63 |
-| cutoff 100 → 45 | 50.64 | 94.6 % differ, max 63 |
-| light disabled | 48.55 | 94.6 % differ, max 66 |
-| re-typed to POINT | 48.55 | **identical to disabled** |
+| MuJoCo-side change | frame mean | pixels differing | max abs |
+|---|---:|---:|---:|
+| *shipped: SPOT, cutoff 100, exponent 10* | 57.339 | — | — |
+| **exponent 10 → 0**, cutoff still 100 | **57.339** | **0.000 %** | **0** |
+| cutoff → 90 | 49.943 | 94.60 % | 68 |
+| cutoff → 45 | 49.922 | 94.60 % | 68 |
+| light disabled | 47.851 | 94.68 % | 73 |
+| **re-typed to POINT** | **47.851** | 94.68 % | 73 |
 
 Two things follow, and the second killed a plausible cell design before it was written:
 
-1. **At an out-of-range cutoff the angular term is gone entirely.** The exponent has *no effect at
-   all* — changing 10 to 0 is bit-identical — and the frame is at its brightest. So MuJoCo is
-   lighting the scene with this light unattenuated by angle, which is exactly "not a spotlight",
-   while `mujoco_warp` applies both the cone and `cos^10`. That is the disagreement.
-2. **Re-typing the light to POINT does NOT express that.** In MuJoCo a POINT light here renders
-   identically to the light being *switched off* — 9.7 levels of mean darker than shipped. So the
+1. **At an out-of-range cutoff the angular term is gone entirely.** The exponent is *bit-inert* —
+   10 → 0 changes nothing at all — and the frame is at its brightest. MuJoCo is lighting the scene
+   with this light unattenuated by angle, which is exactly "not a spotlight", while `mujoco_warp`
+   applies both the cone and `cos^10`. That is the disagreement.
+2. **Re-typing the light to POINT does not express that.** In MuJoCo a POINT light here renders
+   **identically to the light being switched off** — 9.5 levels of mean darker than shipped. So the
    tempting correction "make MJWarp see a POINT light, since that is what GL is doing" is measurably
    false on the reference side, and a cell built on it would have been wrong. The correction that
-   matches the measurement is instead to neutralise the angular term MJWarp applies — `exponent = 0`
-   (its `pow(cos_theta, exp)` becomes 1) with a cutoff wide enough that its cone rejects nothing —
-   which is what the M3 design gate tests on the GPU.
+   matches the measurement is instead to neutralise the angular term MJWarp applies —
+   **`exponent = 0`** (its `pow(cos_theta, exp)` becomes 1) with a cutoff wide enough that its cone
+   rejects nothing — which is what the M3 design gate tests on the GPU.
 
-## What this changes## What this changes
+*Provenance note.* The two tables use different env instances, and `CubeEnv.reset` resamples its
+default variations from an RNG the gym seed does not control (phase 0, G1d), so their absolute frame
+means are not comparable and each is asserted against its own baseline instead. Two earlier versions
+of the second table inherited a mutated model and read every row against a reference nine levels of
+mean away; the probe now builds a fresh env for it and carries
+`verdict_shipped_row_matches_its_baseline` so that failure cannot recur silently.
+
+## What this changes## What this changes## What this changes
 
 * **The gap is one term, and it is upstream.** 0.0082 → 0.4568 from a single light. The remaining
   0.543 is led by the headlight (independently worth +0.0372), and the combination has not yet been

@@ -5,39 +5,39 @@
  "cutoff_sweep": [
   {
    "cutoff": 100.0,
-   "frac_differing_from_100": 0.0,
-   "frame_mean": 58.578291082057824,
-   "max_abs": 0
+   "frac_differing_from_100": 0.00013950892857142856,
+   "frame_mean": 58.38100552721088,
+   "max_abs": 1
   },
   {
    "cutoff": 180.0,
-   "frac_differing_from_100": 0.0,
-   "frame_mean": 58.578291082057824,
-   "max_abs": 0
+   "frac_differing_from_100": 0.00013950892857142856,
+   "frame_mean": 58.38100552721088,
+   "max_abs": 1
   },
   {
    "cutoff": 90.0,
-   "frac_differing_from_100": 0.9494579081632653,
-   "frame_mean": 50.84784890518708,
-   "max_abs": 66
+   "frac_differing_from_100": 0.9449338329081632,
+   "frame_mean": 50.766767644557824,
+   "max_abs": 63
   },
   {
    "cutoff": 89.0,
-   "frac_differing_from_100": 0.9494579081632653,
-   "frame_mean": 50.84784890518708,
-   "max_abs": 66
+   "frac_differing_from_100": 0.9449338329081632,
+   "frame_mean": 50.766767644557824,
+   "max_abs": 63
   },
   {
    "cutoff": 45.0,
-   "frac_differing_from_100": 0.9497369260204082,
-   "frame_mean": 50.8272015837585,
-   "max_abs": 66
+   "frac_differing_from_100": 0.9449338329081632,
+   "frame_mean": 50.748033588435376,
+   "max_abs": 63
   },
   {
    "cutoff": 10.0,
-   "frac_differing_from_100": 0.9499162946428571,
-   "frame_mean": 48.934198288690474,
-   "max_abs": 77
+   "frac_differing_from_100": 0.9451132015306123,
+   "frame_mean": 48.9267046662415,
+   "max_abs": 69
   }
  ],
  "diffuse": [
@@ -66,20 +66,60 @@
   },
   {
    "exponent": 0.0,
-   "frac_differing_from_10": 0.02122528698979592,
-   "max_abs": 10
+   "frac_differing_from_10": 0.02401546556122449,
+   "max_abs": 4
   },
   {
    "exponent": 1.0,
-   "frac_differing_from_10": 0.020348373724489797,
-   "max_abs": 8
+   "frac_differing_from_10": 0.02307876275510204,
+   "max_abs": 3
   },
   {
    "exponent": 50.0,
-   "frac_differing_from_10": 0.02198262117346939,
-   "max_abs": 26
+   "frac_differing_from_10": 0.024693080357142856,
+   "max_abs": 13
   }
  ],
+ "light_forms": [
+  {
+   "form": "shipped (SPOT cutoff=100 exponent=10)",
+   "frac_differing_from_shipped": 0.0,
+   "frame_mean": 57.33886054421769,
+   "max_abs": 0
+  },
+  {
+   "form": "exponent 10 -> 0, cutoff still 100",
+   "frac_differing_from_shipped": 0.0,
+   "frame_mean": 57.33886054421769,
+   "max_abs": 0
+  },
+  {
+   "form": "cutoff -> 90",
+   "frac_differing_from_shipped": 0.9460299744897959,
+   "frame_mean": 49.943140146683675,
+   "max_abs": 68
+  },
+  {
+   "form": "cutoff -> 45",
+   "frac_differing_from_shipped": 0.9460299744897959,
+   "frame_mean": 49.92231345663265,
+   "max_abs": 68
+  },
+  {
+   "form": "light disabled",
+   "frac_differing_from_shipped": 0.9468072385204082,
+   "frame_mean": 47.850612510629254,
+   "max_abs": 73
+  },
+  {
+   "form": "re-typed to POINT",
+   "frac_differing_from_shipped": 0.9468072385204082,
+   "frame_mean": 47.850612510629254,
+   "max_abs": 73
+  }
+ ],
+ "light_forms_baseline_mean": 57.33886054421769,
+ "note_cross_table_means_differ": "light_forms and cutoff_sweep use different env instances; CubeEnv.reset resamples its default variations unseeded, so their absolute frame means are not comparable. Each table is internally consistent against its own baseline.",
  "pos": [
   [
    0.25,
@@ -87,13 +127,20 @@
    0.5
   ]
  ],
+ "render_noise_floor": {
+  "frac_differing": 0.0,
+  "max_abs": 0
+ },
  "spot_ids": [
   1
  ],
  "spot_off": {
-  "frac_differing": 0.023377710459183673,
-  "max_abs": 65
+  "frac_differing": 0.02849968112244898,
+  "max_abs": 40
  },
  "verdict_100_equals_180": true,
- "verdict_89_is_honoured": true
+ "verdict_89_is_honoured": true,
+ "verdict_exponent_is_inert_at_illegal_cutoff": true,
+ "verdict_point_equals_disabled": true,
+ "verdict_shipped_row_matches_its_baseline": true
 }
