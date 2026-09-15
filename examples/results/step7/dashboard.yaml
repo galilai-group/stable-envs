@@ -494,6 +494,7 @@ workstreams:
   rulings:
   - no AI trailers (project rule wins over harness reminder)
   - shared CPU triangle backend NOT pursued in Step 7 (naive 1.92 f/s vs bars 171 / 1,191 f/s) -> Step-8 deferred opportunity; CPU coverage declared missing
+  merge_gate: 'per Sami 2026-09-15: reviewer APPROVE on the fixed tree AND all seven cluster gates pass; job 6395516 results accepted only if no further code change is required'
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -518,6 +519,15 @@ decisions:
   topic: Step 7 continuation
   decision: Continue W1/W3 fix-ups and merge after review gates; continue W2/W5/W6; shared renderer work prefers generic capabilities (nvdiff triangle scenes, per-row material/colour, shared primitives)
     over env-specific hacks.
+- date: '2026-09-15'
+  by: Sami
+  topic: W6 PFRocketLanding review handling
+  decision: 'Keep the current architecture and shared nvdiff extensions (review supports them; no redesign). RC-1 and RC-2 are hard blockers (float64 quaternion normalisation + float32-aware equivalence
+    check; re-run the exact measure_tier 64-state seed and the 100-state corpus check; reference_render must not reject converged states; fidelity job checkpoints). RC-3 before interpreting any performance
+    certification (exclude B=1; BATCH_SCALES cap per frozen contract; measure cpu_frac/HOST_BOUND; reuse Step-6 provenance machinery; pin the one-core JPEG comparator; record threads/load/host/job/SHA;
+    never mix local-M5 and same-node numbers). RC-4/RC-5 now. Then rerun the independent reviewer. Only then run/accept the cluster gates: six locomotion nvdiff cells byte identity on the same GPU; first
+    successful PFRocketLanding render; full fidelity + under-variation; corpus replay; mandatory conformance incl. velocity/state dims; GPU sweep + qualifiers; DIRECT+EGL+CUDA coexistence. No merge until
+    reviewer APPROVE and cluster gates pass.'
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
@@ -565,6 +575,8 @@ incident_log:
 - date: '2026-09-15'
   item: 'W1 CPU tier run quarantined (wrong baseline tree, caught by the new baseline-floor gate); re-run 6395527. Note for all Step-7 workstreams: $SCR/se6/baseline is 89fa5ca8 (pre-Step-6); the Step-7
     baseline copy is $SCR/se7/baseline = 76dc511'
+- date: '2026-09-15'
+  item: Sami W6 ruling recorded and forwarded (reviewer formal re-review on 13ca91b; cluster gate list to W6)
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
