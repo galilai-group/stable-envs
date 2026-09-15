@@ -371,7 +371,7 @@ _TERRAIN_P = (0.34, 0.10, 0.20, 0.14, 0.03, 0.07, 0.02, 0.02, 0.01, 0.01, 0.01, 
 
 #: the two tile sizes craftax itself declares and ships textures for. Both are exact; anything else is
 #: nearest-resampled from the nearer of the two and is not compared against a reference, because there
-#: is no official frame at that size to compare against.
+#: are no textures shipped at that size, hence no published frame to certify against.
 REFERENCE_TILE_PX = (TILE_PX_AGENT, TILE_PX_IMG)
 _TABLES = {
     TILE_PX_AGENT: ((_BLOCK_TEX_7_B64, _BLOCK_TEX_7_SHAPE), (_PLAYER_TEX_7_B64, _PLAYER_TEX_7_SHAPE),
@@ -748,10 +748,17 @@ class CraftaxClassic(StableEnv):
     #:   icon is ``int(0.8*t)`` and its digit ``int(0.6*t)`` and neither scales by two (12 and 9 at
     #:   16 px; 25 and 19 at 32 px). This renderer measures **1.0000**, because it resamples the
     #:   finished cell rather than re-laying it out -- see :func:`_strip_cells`. That makes it
-    #:   *stricter* than the reference at 2S, at a size which has no official frame to be parity
-    #:   against (:meth:`reference_env` refuses any size craftax does not ship), and it is what keeps
-    #:   the frozen daylight bound meetable. Matching craftax's 32 px re-layout instead would break
-    #:   that bound and buy no parity.
+    #:   *stricter* than the reference at 2S, at a size craftax **ships no textures for**
+    #:   (:meth:`reference_env` refuses any such size, so 32 px is not a declared parity size), and
+    #:   it is what keeps the frozen daylight bound meetable. Matching craftax's 32 px re-layout
+    #:   instead would break that bound and buy no parity.
+    #:
+    #: "No shipped textures at 2S" is the accurate reason, and not "no official frame": craftax's own
+    #: ``load_all_textures_given_size(32)`` builds a perfectly good 32 px renderer, and against it
+    #: this renderer's **world rows are 100% exact in every band, night included** (max abs diff 0 --
+    #: ``oracle/parity_at_2S.json``). The whole 2S divergence is the strip, at about 18% of its
+    #: pixels, by design. So the 32 px frames do not disagree about the world; there is simply no
+    #: shipped art to certify against.
     #:
     #: Parity at the two supported sizes is unaffected and still exact: the same experiment records
     #: ``exact_frac`` 1.0 against the official at S in every band.
@@ -1161,9 +1168,13 @@ class CraftaxClassic(StableEnv):
         is a pure function of ``EnvState`` and needs no instance. The template comes from a real
         ``reset`` so every field the renderer does not read still holds a valid value.
 
-        Only the two sizes craftax ships textures for are accepted. Anything else has no official frame
-        to be compared against, and inventing one by resampling the reference would be comparing this
-        renderer against a second implementation of itself.
+        Only the two sizes craftax **ships textures for** are accepted. That is the accurate reason
+        and it is narrower than "no official frame": craftax's ``load_all_textures_given_size`` will
+        build a renderer at any size, and this one's world rows are exact against a constructed 32 px
+        reference in every band (``oracle/parity_at_2S.json``). What is missing at an unshipped size
+        is *shipped art to certify against* — the frame such a reference draws is a choice craftax
+        never published, so agreeing with it would certify against a second implementation rather
+        than against the environment.
 
         **The renderer is deliberately NOT jitted, and that is a correctness decision rather than a
         performance one.** "The official frame" is not one object: under ``jax.jit`` XLA fuses the
@@ -1190,8 +1201,8 @@ class CraftaxClassic(StableEnv):
         if int(size) not in REFERENCE_TILE_PX:
             raise ValueError(
                 f"craftax draws at {REFERENCE_TILE_PX[0]} px (the agent observation) or "
-                f"{REFERENCE_TILE_PX[1]} px per tile; there is no official frame to compare a "
-                f"{size} px render against")
+                f"{REFERENCE_TILE_PX[1]} px per tile; craftax ships no textures at {size} px, so "
+                f"there is no published frame to certify a {size} px render against")
         import jax
         from craftax.craftax_classic.renderer import make_craftax_pixel_renderer
         from craftax.craftax_env import make_craftax_env_from_name
