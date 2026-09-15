@@ -2,50 +2,56 @@
  "batch_rows": [
   {
    "batch": 1,
-   "fps": 2197.9035555646533,
-   "ms": 0.4549790173768997,
+   "fps": 2231.699043090046,
+   "ms": 0.4480890929698944,
    "peak_vram_mib": 0
   },
   {
    "batch": 16,
-   "fps": 5657.488551237215,
-   "ms": 2.828110009431839,
+   "fps": 5749.271357634843,
+   "ms": 2.78296135365963,
    "peak_vram_mib": 2
   },
   {
    "batch": 64,
-   "fps": 6216.776516762085,
-   "ms": 10.294724255800247,
+   "fps": 6369.251918251252,
+   "ms": 10.04827581346035,
    "peak_vram_mib": 9
   },
   {
    "batch": 256,
-   "fps": 6324.115478565346,
-   "ms": 40.47996923327446,
+   "fps": 6530.511007444478,
+   "ms": 39.20060768723488,
    "peak_vram_mib": 36
   },
   {
    "batch": 1024,
-   "fps": 6352.010595330481,
-   "ms": 161.20879910886288,
+   "fps": 6565.964690806946,
+   "ms": 155.95575794577599,
    "peak_vram_mib": 148
+  },
+  {
+   "batch": 4096,
+   "fps": 6531.385594213445,
+   "ms": 627.1257363259792,
+   "peak_vram_mib": 588
   }
  ],
- "batch_scales_max_over_1": 2.890031539031118,
- "batch_scales_note": "fps(1024)/fps(1); Step 2 asks for 20x at the registered resolution. Fetch measured 7.6-11.7x at 480 px and 26-99x at <=240 px.",
+ "batch_scales_max_over_1": 2.9266426467477373,
+ "batch_scales_note": "fps(4096)/fps(1); Step 2 asks for 20x at the registered resolution. Fetch measured 7.6-11.7x at 480 px and 26-99x at <=240 px.",
  "built": true,
  "camera_id": 1,
  "env_id": "swm/OGBCube-v0",
  "fidelity": {
-  "all_exact_frac": 0.03423200334821429,
-  "all_within8_frac": 0.5463431222098214,
-  "interior_exact_frac": 0.009222113651398642,
-  "interior_frac": 0.4141622594461984,
-  "interior_mean_abs": 8.880704267237979,
-  "mean_abs": 10.384459203603317
+  "all_exact_frac": 0.034853565449617346,
+  "all_within8_frac": 0.5472785794005102,
+  "interior_exact_frac": 0.010080944320119191,
+  "interior_frac": 0.4150332301071809,
+  "interior_mean_abs": 8.878105061064057,
+  "mean_abs": 10.452838508450256
  },
  "gpu": "NVIDIA GeForce RTX 3090",
- "host": "gpu2101.oscar.ccv.brown.edu",
+ "host": "gpu2104.oscar.ccv.brown.edu",
  "mujoco": "3.12.0",
  "mujoco_gl": "egl",
  "mujoco_warp": "3.12.0",

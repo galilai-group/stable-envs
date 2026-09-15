@@ -5,7 +5,7 @@
  "camera_id": 1,
  "env_id": "swm/OGBScene-v0",
  "gpu": "NVIDIA GeForce RTX 3090",
- "host": "gpu2101.oscar.ccv.brown.edu",
+ "host": "gpu2104.oscar.ccv.brown.edu",
  "mujoco": "3.12.0",
  "mujoco_gl": "egl",
  "mujoco_warp": "3.12.0",

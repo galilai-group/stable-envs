@@ -3,18 +3,20 @@
 **Classification: `FINDING`.** Diagnosis only; no renderer written, no shared file touched.
 Two sub-verdicts, both measured:
 
-* **GPU: the scene goes through the existing MJWarp backend unmodified, and `BATCH_SCALES` FAILS
-  — worse than Fetch, not better.** Measured on an RTX 3090 (job 6395461): `OGBCube` builds at
-  193,113 triangles and renders at **2,198 f/s at B=1 rising to 6,352 f/s at B=1024**, so
-  **`BATCH_SCALES` = 2.89x** against a required 20x. **This refutes the hypothesis this file carried
-  before the GPU leg landed** — that Fetch's 7.6–11.7x failure was a 480 px effect these 224/200 px
-  scenes would escape. It is not: at 224 px the per-frame device cost is small enough that `fps(1)`
-  is *already* 2,198 f/s and throughput saturates by B=64, so there is nothing left for batching to
-  amortise. VRAM is not the limit either (148 MiB at B=1024). Raw fidelity out of the box, with only
-  `gl_rounding` applied and no plate bake or per-env correction, is **0.0092 interior-exact,
-  mean |Δ| 10.4/255** — a long way from Fetch's 0.9988, and the first thing phase 1 would have to
-  explain. `OGBScene`'s row from that job is **void** (CUDA context poisoned by `OGBCube`'s
-  teardown); re-running one env per process as job 6395736.
+* **GPU: `OGBCube` goes through the existing MJWarp backend unmodified but fails `BATCH_SCALES`;
+  `OGBScene` does not build at all.** Measured on an RTX 3090 (jobs 6395461, 6395736, one env per
+  process). `OGBCube` builds at 193,113 triangles and runs **2,232 f/s at B=1 → 6,531 f/s at
+  B=4096**, so **`BATCH_SCALES` = 2.93x** against a required 20x. **This refutes the hypothesis this
+  file carried before the GPU leg** — that Fetch's 7.6–11.7x failure was a 480 px effect these
+  224/200 px scenes would escape. It is the reverse: at 224 px the per-frame device cost is small
+  enough that `fps(1)` is *already* 2,232 f/s and throughput is within 3 % of its ceiling by **B=64**,
+  so there is nothing left to amortise. `OGBScene` **crashes the megakernel** —
+  `Warp CUDA error 700: an illegal memory access` — reproducibly, in a fresh process, with the error
+  surfacing at `wp_cuda_context_synchronize` during the warm-up frame and before the graph capture.
+  And `OGBCube`'s raw fidelity, with only `gl_rounding` and no plate bake or per-env correction, is
+  **0.0101 interior-exact, mean |Δ| 10.5/255** against Fetch's corrected 0.9988. The smallest
+  capability is still MJWarp, but it does not work out of the box on either env.
+
 * **CPU: `BLOCKER` for `CPU_FAST` on the `cores_cpu` conjunct; `CPU_FASTER` is feasible.**
   Measured on the certification host (`node2351`, `batch`/`normal`, one thread, Mesa llvmpipe
   through EGL): the official renderer runs at **6.31 / 5.17 f/s** and one-core JPEG-q90 decode at
@@ -277,40 +279,54 @@ Checked precondition by precondition against what `stable_envs/envs/fetch.py` do
 | MJWarp never reads alpha | 4 marker geoms hidden, declared as a 1.2–1.5 % `parity_note` | **1 geom (Cube)**: `target_object_0` at alpha 0.2, owning **0.61 %** of pixels; **3 geoms (Scene)**: + two window-glass meshes at 0.1, **0.15 %** total | ⚠️ same shape, **smaller**, but the Cube marker IS the goal |
 | MJWarp truncates where GL rounds | `gl_rounding` moved interior 0.791 → 0.9988 | same correction applies unchanged | ✅ reuse |
 | shadows | Fetch's one light is `castshadow=false` | **`global` is `castshadow=1`** and the mover shadow is **4.4 % / 8.6 %** of the frame | ⚠️ needed, but MJWarp has `use_shadows` and `cpu3d` M1 already transcribed the law |
-| `BATCH_SCALES` | **7.6–11.7x, FAIL** at 480 px; **26–99x, PASS** at ≤240 px | **2.89x MEASURED** on a 3090 at 224 px (job 6395461) | ❌ **FAIL, and worse than Fetch** — see below |
+| `BATCH_SCALES` | **7.6–11.7x, FAIL** at 480 px; **26–99x, PASS** at ≤240 px | **2.93x MEASURED** on a 3090, B=1→4096 (job 6395736) | ❌ **FAIL, and worse than Fetch** — see below |
 
 **`BATCH_SCALES`, measured, and why the resolution argument was wrong.** `OGBCube` through the
 existing `MJ.BatchRenderer` on an RTX 3090, registered 224 px, registered `front_pixels` camera,
-CUDA graph captured, median of 7:
+CUDA graph captured, median of 7 (job 6395736; job 6395461 agrees within 3 % on every row):
 
 | B | ms/render | f/s | peak VRAM |
 |---:|---:|---:|---:|
-| 1 | 0.455 | **2,198** | 0 MiB |
-| 16 | 2.83 | 5,657 | 2 MiB |
-| 64 | 10.29 | 6,217 | 9 MiB |
-| 256 | 40.48 | 6,324 | 36 MiB |
-| 1024 | 161.21 | **6,352** | 148 MiB |
+| 1 | 0.45 | **2,232** | 0 MiB |
+| 16 | 2.78 | 5,749 | 2 MiB |
+| 64 | 10.05 | 6,369 | 9 MiB |
+| 256 | 39.20 | 6,531 | 36 MiB |
+| 1024 | 155.96 | **6,566** | 148 MiB |
+| 4096 | 627.13 | 6,531 | 588 MiB |
 
-**`BATCH_SCALES` = 6,352 / 2,198 = 2.89x** against a required 20x. The reasoning this file carried
+**`BATCH_SCALES` = 6,531 / 2,232 = 2.93x** against a required 20x. The reasoning this file carried
 before the job landed — that Fetch's failure was a 480 px effect and these smaller frames sit in the
-regime where the same scene scored 26–99x — is **refuted by the measurement**. The mechanism is the
-opposite of the one assumed: `BATCH_SCALES` is large only when `fps(1)` is *bad*, and here it is
-already **2,198 f/s** because 224 px of a 6.1x-denser BVH is still cheap per frame. Throughput is
-within 2 % of its ceiling by **B = 64** and within 0.5 % by B = 256, so there is nothing left for
-batching to amortise. VRAM is not the constraint (148 MiB at B=1024), which also means no larger
-batch rescues the ratio.
+regime where the same scene scored 26–99x — is **refuted by the measurement**, and the mechanism is
+the opposite of the one assumed: `BATCH_SCALES` is large only when `fps(1)` is *bad*, and here it is
+already 2,232 f/s because 224 px of a 6.1x-denser BVH is still a cheap frame. Throughput is within
+3 % of its ceiling by **B=64** and flat from B=256 to B=4096, so no larger batch rescues the ratio,
+and VRAM is not the constraint (588 MiB at B=4096).
+
+**`OGBScene` does not build through MJWarp at all.** `Warp CUDA error 700: an illegal memory access`
+from `wp_cuda_graph_begin_capture`, reproduced in **two jobs**, the second with one env per process.
+That second run is the one that makes it a finding: the error surfaces first at
+`wp_cuda_context_synchronize` **during the warm-up frame, before the capture**, so it is a fault in
+`kinematics`/`camlight`/`refit_bvh`/`render` on this model and not contamination from `OGBCube`'s
+teardown (which is what job 6395461's `OGBScene` row was, and why that row is void). The standing
+hypothesis, and the one difference between the two models that `texture_gaps` cannot see, is the
+**CUBE texture**: `OGBCube` carries one 2-D texture on a PLANE plus a skybox; `OGBScene` adds
+`T_btn`, a 512x512 **cube map** worn by two MESH geoms. `MJ.texture_gaps` returns empty for it
+because MESH is in its UV-derivable set, but a cube map is a different sampler from a 2-D one, so an
+empty `texture_gaps` is **not** evidence that the texture is safe. Job **6396447** bisects it
+(`textures`/`skybox`/`shadows`/`capture` off one at a time, plus detaching only the cube textures,
+each configuration in its own subprocess).
 
 **Raw fidelity is far from parity and is the real phase-1 question.** With only `gl_rounding`
 applied — no plate bake, no per-env correction, the whole scene through the megakernel — against
-MuJoCo's own EGL frames at 16 matched states: **`interior_exact` 0.0092**, `all_exact` 0.034,
-`all_within8` 0.546, mean |Δ| **10.4/255**, `interior_frac` 0.414. Fetch's uncorrected number was
+MuJoCo's own EGL frames at 16 matched states: **`interior_exact` 0.0101**, `all_exact` 0.035,
+`all_within8` 0.547, mean |Δ| **10.5/255**, `interior_frac` 0.415. Fetch's uncorrected number was
 0.791 interior and its corrected one 0.9988, so this is two orders of magnitude further away and is
 not explained by any of the four known Fetch corrections (`texture_gaps` is empty, there is no
 material/rgba conflict on `OGBCube`, there are no visible sites, and the one translucent geom owns
 0.62 % of pixels). The likely candidates — the `castshadow` directional light, the spot light's
-cutoff/exponent, and the headlight that owns 98.7 % of pixels — are exactly the terms `cpu3d`'s M1
-had to transcribe for the DM Control trackcom cells, and none of them is in the Fetch scene. **Phase
-1 must start here, not at performance.**
+cutoff 100 / exponent 10, and the headlight that owns 98.7 % of pixels — are exactly the terms
+`cpu3d`'s M1 had to transcribe for the DM Control trackcom cells, and none of them is in the Fetch
+scene. **Phase 1 must start here, not at performance.**
 
 **Quantified geometry.** Median projected triangle edge at the registered resolution through the
 registered camera: **0.713 px (Cube)**, **0.723 px (Scene)**; 61.8 % / 61.7 % of triangles are under
