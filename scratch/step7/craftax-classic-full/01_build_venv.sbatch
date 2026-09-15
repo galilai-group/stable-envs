@@ -17,7 +17,9 @@
 # against them: CraftaxClassic.reference_versions is {"craftax": "1.6.1", "jax": "0.11.1"} and a
 # mismatch is judged blocked_environment rather than pass or fail.
 set -euo pipefail
-source "$(dirname "$0")/env_header.sh"
+# SLURM copies the script to its spool dir, so $0 is NOT in the worktree: source the
+# header from the workspace by absolute path.
+source /oscar/scratch/sboughan/se7/craftax-classic-full/scratch/step7/craftax-classic-full/env_header.sh
 VENV=$SCR/venvs/se7-craftax
 if [ -d "$VENV" ]; then echo "exists: $VENV"; else
   uv venv --python 3.12 "$VENV"

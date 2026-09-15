@@ -12,7 +12,9 @@
 # One GPU job per agent at a time (norm-gpu allows 2 across all agents); never cancel another
 # agent's job, and never a simclr_cifar10 job.
 set -euo pipefail
-source "$(dirname "$0")/env_header.sh"
+# SLURM copies the script to its spool dir, so $0 is NOT in the worktree: source the
+# header from the workspace by absolute path.
+source /oscar/scratch/sboughan/se7/craftax-classic-full/scratch/step7/craftax-classic-full/env_header.sh
 unset JAX_PLATFORMS
 VENV=$SCR/venvs/se7-craftax
 echo "== host $(hostname) =="; nvidia-smi --query-gpu=name,driver_version --format=csv,noheader

@@ -10,7 +10,9 @@
 # measurement is defined. The parity leg needs the jax venv from 01; everything else would run
 # anywhere, and is run here so one artifact carries both.
 set -euo pipefail
-source "$(dirname "$0")/env_header.sh"
+# SLURM copies the script to its spool dir, so $0 is NOT in the worktree: source the
+# header from the workspace by absolute path.
+source /oscar/scratch/sboughan/se7/craftax-classic-full/scratch/step7/craftax-classic-full/env_header.sh
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 VENV=$SCR/venvs/se7-craftax
 echo "== host $(hostname) =="
