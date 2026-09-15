@@ -39,8 +39,14 @@ the SET velocity until the POST-step velocity equals the recorded one, because B
 semi-implicit (`pos' = pos_prev + v1 dt`, `q' = exp(w1 dt) q_prev`, both exact) but a spinning
 composite multibody changes its own velocity by up to 0.03 m/s per substep (gyroscopic and offset-mass
 terms; `resetBasePositionAndOrientation` must precede `resetBaseVelocity`, it zeroes the velocity).
-**199/200 corpus frames byte-identical, the last off by 1 px; base landing error 7e-13 m.** This is
-`PFRocketLanding.reference_render`.
+**199/200 corpus frames byte-identical, the last off by 1 px; base landing error 7e-13 m — FROM THE
+FLOAT64 OBSERVATIONS.** The env holds float32 states: the float32 rounding of a 400 m position
+(~3e-5 m) and of a quaternion (|q| = 1 ± 3e-8) is a state change of its own, and the reviewer measured
+what it costs (56/100 assertion failures and 3/100 exact frames under the first, float64-only tolerance).
+`lagged_pose` now renormalises the quaternion in float64 and the reference's pose check compares
+rotations sign-free with a float32-aware tolerance; the corpus replay in `measure_tier.py` is reported
+from BOTH the float64 obs (the renderer's residual alone) and the float32 `state13` (what a consumer
+gets). This is `PFRocketLanding.reference_render`.
 
 ### M2 · nvdiff extensions (`83db3cc`) — generic, defaults unchanged
 
@@ -63,10 +69,13 @@ the texture preparation. Local suite: `tests/unit` **805 passed, 36 skipped, 3 f
 (a) my back-face expectation, since fixed (29/29 on the two nvdiff files), (b)
 `test_examples[...render_mjwarp.py]` and (c) `test_every_cited_scratch_path_resolves` (12 Step-6
 citations of Oscar scratch paths under the `sboughan` home), **both of which fail identically on the untouched baseline** (`/Users/samib/stable-envs` at 76dc511,
-same interpreter, same two tests). After M3 the suite is **820 passed, 37 skipped, 2 failed** — the same
-two pre-existing failures and nothing of mine; the two citation defects this test DID catch in my own
-files (a `scratch/step7/rocket-landing/*` glob that matched gitignored `.log` output, and a
-`scratch/.../oscar_fidelity.sbatch` that was never written) are fixed.
+same interpreter). Measured with `tests/unit/test_examples.py` deselected (its one failure is a
+pre-existing `render_mjwarp.py --help` error): **baseline 713 passed / 1 failed** (the pre-existing
+dead-citation test); **branch after the review commit: 713 passed / 1 failed / 37 skipped**, the same single
+pre-existing failure (`test_every_cited_scratch_path_resolves`, on Step-6 citations of Oscar paths) and no `step7`
+path in its list — the branch returns to the baseline's failure set, after the review found that my own findings text had
+re-introduced two dead citations (a glob over this workstream's scratch directory that also matched
+gitignored run logs, and a job-script name that was never written).
 
 ### M3 · the cell — `stable_envs/envs/rocket_landing.py`, `PFRocketLanding`
 
@@ -139,6 +148,24 @@ program and a coordinator/Sami decision. The cell declares CPU coverage MISSING.
 Gate A checks runnable locally: everything in `tests/unit/test_rocket_landing.py`; pending cluster:
 render-side checks (batch invariance, batch-size invariance, determinism, state dims, resolution
 consistency, visual fidelity).
+
+### Review (independent, on `92d9b28`): APPROVE-WITH-CHANGES, landed as one commit
+
+RC-1 (blocking): float32 quaternions failed the reference's float64 pose assertion (36/64 of draw 0)
+and the fidelity loop aborted before writing anything — fixed as above; the loop now records a failed
+draw instead of aborting and checkpoints the JSON after every stage. RC-2 (blocking): my findings
+text re-cited two dead scratch paths and claimed parity with the baseline's failures — corrected here
+with measured numbers. RC-3: `measure_tier.py` never certifies on B = 1, caps the tier at `GPU_PARITY`
+when `BATCH_SCALES` fails, measures `cpu_frac` (process CPU / wall of the timed loop; `HOST_BOUND` at
+≥ 1.5) with threads, load average and the SLURM job id, pins threads for the one-core decode, and
+reports only same-node comparators. RC-4: the placeholder `visual_fidelity` numbers are `None` under
+an `UNMEASURED` marker (the validator checks presence), with a local test that the declaration
+registers. RC-5: `missing_backend()` names nvdiffrast, scipy, pybullet_data and Pillow; the checker's
+provenance rests on the pybullet 3.2.7 declaration. Minor: the camera test's tolerance is stated as
+float32 (`computeViewMatrix` is float32 at 400 m; 1.009e-3 measured against the live `view_mat`).
+Verified independently by the reviewer, no action: nvdiff defaults unchanged (Scene inputs hashed
+bit-identical for all six locomotion models on both checkouts), the shading law, the lag law, the
+colour law, the geometry and camera numbers.
 
 ---
 

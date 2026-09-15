@@ -200,7 +200,10 @@ def lagged_pose(state: np.ndarray):
     ``pos - v dt`` and ``exp(-w dt) q`` with world velocities, measured exact to 1e-15 / 1e-16.
     """
     s = np.asarray(state, np.float64).reshape(-1, 13)
+    # RENORMALISE in float64 first. A float32 state carries |q| = 1 +- 3e-8, Bullet renormalises what it is
+    # handed, and the two must describe the same rotation to the last bit before either side draws it.
     q = s[:, 3:7]
+    q = q / np.linalg.norm(q, axis=-1, keepdims=True)
     R = quat_to_mat(q)
     w = np.einsum("bij,bj->bi", R, s[:, 0:3])
     v = np.einsum("bij,bj->bi", R, s[:, 7:10])
@@ -398,9 +401,29 @@ def checker_texture() -> np.ndarray:
     return np.ascontiguousarray(a[::-1])
 
 
+def _optional_import_errors() -> dict:
+    """The optional dependencies a RENDER needs beyond nvdiffrast, each probed by importing it."""
+    out = {}
+    for mod in ("scipy.spatial", "pybullet_data", "PIL.Image"):
+        try:
+            __import__(mod)
+        except Exception as e:                                                # pragma: no cover
+            out[mod] = f"{type(e).__name__}: {e}"
+    return out
+
+
 def missing_backend() -> str | None:
-    """Why ``PFRocketLanding`` is absent on this machine, or ``None``. Same reporter as the locomotion tier."""
-    return NVDIFF_IMPORT_ERROR
+    """Why ``PFRocketLanding`` is absent or cannot render on this machine, or ``None``.
+
+    nvdiffrast (the rasterizer), scipy (the hull tessellation), pybullet_data (the checker texture --
+    its provenance rests on the pybullet 3.2.7 declaration, the package that ships ``checker_blue.png``)
+    and Pillow (reading it). Same reporter as the locomotion tier's ``missing_visual_backend``.
+    """
+    parts = []
+    if NVDIFF_IMPORT_ERROR is not None:
+        parts.append(f"nvdiffrast: {NVDIFF_IMPORT_ERROR}")
+    parts += [f"{k}: {v}" for k, v in _optional_import_errors().items()]
+    return "; ".join(parts) if parts else None
 
 
 # --------------------------------------------------------------------------- the reference bridge
@@ -452,10 +475,14 @@ def _reference_frame(env, state: np.ndarray, style_row: np.ndarray) -> np.ndarra
         v_set, w_set = v_set + (v - v1), w_set + (w - w1)
     p.setGravity(0, 0, -9.81, physicsClientId=c)
     got_pos, got_q = (np.array(a) for a in p.getBasePositionAndOrientation(rid, physicsClientId=c))
-    err = max(float(np.abs(got_pos - pos).max()), float(min(np.abs(got_q - q).max(), np.abs(got_q + q).max())))
-    if err > 1e-8:
-        raise AssertionError(f"PFRocketLanding: the reference did not reach the requested pose (max {err:.3e}); "
-                             f"every fidelity number computed from it would compare two different scenes")
+    # ``q`` is unit (lagged_pose renormalised it); Bullet's is too. Compare ROTATIONS, sign-free:
+    # 1 - |q . q_got| is 0 for the same rotation and ~theta^2/8 for a small angle theta.
+    pos_err = float(np.abs(got_pos - pos).max())
+    rot_err = float(1.0 - abs(np.dot(got_q / np.linalg.norm(got_q), q)))
+    if pos_err > 1e-6 or rot_err > 1e-9:
+        raise AssertionError(f"PFRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
+                             f"1-|q.q'| {rot_err:.3e}); every fidelity number computed from it would compare two "
+                             f"different scenes")
     return np.asarray(u.render(), np.uint8)[..., :3].copy()
 
 
@@ -498,12 +525,13 @@ class PFRocketLanding(StableEnv):
     #: their thresholds are written by ``scratch/step7/rocket-landing/measure_tier.py`` on a 3090 and copied
     #: here by hand; until then ``measured_at`` says so and nothing here is a claim.
     visual_fidelity = {
-        "mean_abs": 3.0, "within8_frac": 0.95, "ssim": 0.95,
-        "mean_abs_max": 6.0, "within8_min": 0.85, "ssim_min": 0.90,
-        "measured_at": ("UNMEASURED — provisional Phase-0 estimate, not a measurement: 480 px, supersample 1, "
-                        "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0; "
-                        "to be replaced by the worst of four 64-state draws on an RTX 3090 "
-                        "(scratch/step7/rocket-landing/oscar_gpu.sbatch)"),
+        "mean_abs": None, "within8_frac": None, "ssim": None,
+        "mean_abs_max": None, "within8_min": None, "ssim_min": None,
+        "measured_at": ("UNMEASURED: no number here is a measurement. The keys are present so the declaration "
+                        "is complete and the values are None so nothing can read them as one. To be measured at "
+                        "480 px, supersample 1, against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of "
+                        "swm/PFRocketLanding-v0, as the worst of four 64-state draws on an RTX 3090 "
+                        "(scratch/step7/rocket-landing/oscar_gpu.sbatch, measure_tier.py) and copied here by hand"),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
     }
     visual_note = ("A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
@@ -515,9 +543,8 @@ class PFRocketLanding(StableEnv):
 
     def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
                  device: str = "cuda", backend: str = "auto", seed: int = 0):
-        if NVDIFF_IMPORT_ERROR is not None:                                    # pragma: no cover
-            raise ImportError(f"PFRocketLanding renders through nvdiffrast, which this interpreter cannot "
-                              f"import: {NVDIFF_IMPORT_ERROR}")
+        if missing_backend() is not None:                                      # pragma: no cover
+            raise ImportError(f"PFRocketLanding cannot render in this interpreter: {missing_backend()}")
         if str(device).startswith("cpu"):
             raise NotImplementedError(
                 "PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
@@ -655,5 +682,5 @@ def _default_style_row() -> np.ndarray:
     return np.asarray(_make_variation_space().pack(), np.float64)
 
 
-if NVDIFF_IMPORT_ERROR is None:
+if missing_backend() is None:
     register(PFRocketLanding)
