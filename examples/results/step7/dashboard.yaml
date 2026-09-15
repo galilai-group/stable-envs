@@ -679,14 +679,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'all six review defects fixed locally (mover LUT compositing; deterministic task/bits; reproducible sampler; pool==states; mocap_quat dropped; 20 tests); _MEASURED empty and cells unregistered
-    by design; RE-MEASUREMENT BLOCKED: Oscar SSH denied (keyboard-interactive) - confirmed by coordinator'
+  status: re-measurement chain job 6405900 PENDING on the fixed tree (md5 caa3f117 verified on the node; job self-checks it; runs under SE7_OGB_UNMEASURED=1 and writes paste_me.json); four slurm logs committed;
+    cells unregistered until the numbers exist; then paste-in, re-review, merge
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: f8210aac (B1-B6 fixed; cells unregistered pending re-measurement)
+  head_sha: c34308f2 (chain prepared; logs committed)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -1197,6 +1197,8 @@ incident_log:
   item: Oscar SSH restored; W4 (f) merged and CLOSED (GPU_EXCEPTIONAL / CPU_UNMEASURED); W6 and W5 resumed
 - date: '2026-09-15'
   item: W6 agent stopped; new M4 agent spawned on the completed job 6395707
+- date: '2026-09-15'
+  item: W5 re-measurement chain submitted (6405900); logs committed
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
