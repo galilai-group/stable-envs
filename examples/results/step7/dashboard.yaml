@@ -7,13 +7,14 @@ workstreams:
 - workstream: craftax-classic-full
   targets:
   - swm/CraftaxClassicPixels-v1 (partial->full)
-  status: COMPLETE and merged (CPU tier 84ecb03); GPU tier harness job authorized as the last item; CPU tier + S_cpu reference question escalated to Sami
+  status: 'CLOSED: coverage partial -> full, byte-identical at 7/16 px on arm64 and x86-64 in all bands; Gate A clean both devices; resolution applicability by oracle; CPU and GPU tiers measured, paired,
+    gated; tier label awaits Sami''s reference ruling'
   capability: inventory-strip atlas gather; threefry2x32 PRNG; daylight/sleep post-process
   wave: 1
   branch: step7/craftax-classic-full
   worktree: /Users/samib/stable-envs-step7-craftax-classic-full
   agent_model: opus
-  head_sha: 72878fc (performance_record_cpu + s_cpu_note on the declaration; GPU tier job 6395847 queued)
+  head_sha: b12af5c (W1 COMPLETE, merged)
   phase0: 'FINDING: all three exclusions reproducible bit-exactly in float32 on 64 real states at both tile sizes. Strip = pure gather over a 160-entry (cell,count) table from 16 ints in 0..9, never lit
     (concatenated after lighting). Night: intensity = max(2*(0.5-daylight),0) so the PRNG matters only for light < 0.5 (41.7% of the cycle); jax.random.uniform (jax 0.11.1, threefry_partitionable=True)
     reproduced by a torch threefry2x32 on 448/448 draws (int32 variant 2.3x faster, bit-identical); full chain 64/64 exact. Sleeping = desaturation + a fifth player sprite (confined to the centre tile).
@@ -178,6 +179,23 @@ workstreams:
     measurement_bugs_fixed:
     - wrong baseline tree ($SCR/se6/baseline = pre-Step-6) caught by the baseline-floor gate
     - load gate divided by --cpus-per-task instead of node cores; fixed to per-node-core
+  gpu_tier:
+    job: 6395847 gpu2107 RTX 3090, paired USABLE (baselines 1,174,913 / 1,149,220 f/s, spread 1.0224, 0.963x Step-6 certified 1,206,822; load 0.11/core)
+    mixed_default: 46,187 f/s at B=4096; decode bar 3,000; cores 15.40; BATCH_SCALES 238x; NO_LARGE_BATCH_REGRESSION 1.093
+    three_way_labels:
+      as_measured_vs_unjitted_ref:
+        cpu: CPU_FASTER (BELOW_G4) R 529
+        gpu: GPU_EXCEPTIONAL R 29,214
+      vs_jitted_ref:
+        cpu: CPU_PARITY R 1.9
+        gpu: GPU_FASTER R 119
+      no_reference:
+        cpu: CPU_REGRESSION cores 0.263
+        gpu: GPU_FAST cores 15.40
+    trap_proof: 'same card, same job: Step-6 tree 1,174,913 f/s / jitted ref 386.7 -> R 3,038 GPU_FAST; branch 46,187 f/s / un-jitted ref 1.6 -> R 29,214 GPU_EXCEPTIONAL. 25x slower labels one rung higher
+      purely from the reference. Live on both devices today (jax present -> harness finds a reference).'
+    asserted: 'GPU_EXCEPTIONAL and CPU_FASTER must not be recorded as this cell''s tiers (performance_record_cpu/gpu + s_cpu_note on the class with must_not_be_recorded_as_the_tier; test guards). Recommendation:
+      NO_REFERENCE row (CPU_REGRESSION / GPU_FAST) because cores cannot be gamed by a reference.'
 - workstream: craftax-full
   targets:
   - swm/CraftaxPixels-v1
@@ -705,6 +723,8 @@ incident_log:
   item: W2 phase 0 PATCH_CANDIDATE (three layers bit-exact); phase 1 authorized; whole-cell resolution not_applicable flagged; denominator finding added to the S_cpu escalation
 - date: '2026-09-15'
   item: 'W4 commit (e) delivered: MJWarp declaration, 25/25 identity both devices; tier unmeasured (load); re-check + retry authorized'
+- date: '2026-09-15'
+  item: W1 CLOSED and merged (b12af5c); GPU tier paired; reference trap proven on GPU; escalation updated
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -727,13 +747,16 @@ escalations:
   facts: 'Mixed-corpus CPU tier on the NO_REFERENCE ladder = CPU_REGRESSION (cores_cpu 0.263; daylight alone 24.2). The frozen ladder prefers S_cpu when a reference exists; the parity reference is the un-jitted
     craftax renderer (2.18 f/s), so S_cpu would read 528x and certify CPU_EXCEPTIONAL on a renderer nobody runs; against the jitted official S_cpu ~1.9x (still < 5). W2 adds: CraftaxPixels un-jitted 2.98
     vs jitted 1,516 f/s (509x); W1''s un-jitted reference_env already moved Classic''s Step-3 denominator (1,046 -> 4.62 f/s), so any Step-3 re-run on integration inflates Classic''s S_cpu ~450x. Coordinator
-    note: the harness may need a separate ''speed reference'' hook from the parity reference (Step 8).'
+    note: the harness may need a separate ''speed reference'' hook from the parity reference (Step 8). W1 GPU proof: on one 3090 in one job the Step-6 tree (1,174,913 f/s, jitted ref 386.7) labels GPU_FAST
+    while the branch (46,187 f/s, un-jitted ref 1.6) labels GPU_EXCEPTIONAL; a 25x slower renderer labels one rung higher from the reference alone. The trap is live on both devices today.'
   question: '(1) Accept CPU_REGRESSION as the honest registered-default CPU tier for CraftaxClassic in Step 7 (coverage change, not a renderer regression; daylight diagnostic recorded)? (2) For S_cpu, which
     reference may a speed ratio use: the parity reference as written (un-jitted) or the official as a user runs it (jitted)? Coordinator recommendation: (1) yes; (2) speed ratios use the official as a user
     runs it, parity uses the reference as written; until Step 8 encodes that in the harness, CraftaxClassic''s CPU tier is taken on the NO_REFERENCE ladder with S_cpu suppressed and both numbers recorded.
     This touches the Step-2 taxonomy, so it is Sami''s call (Step 8 candidate).'
   status: open
   also: 'W2 CraftaxPixels: check_resolution_consistency not applicable in ALL bands on the official''s own evidence (broader scope than Classic''s band ruling); authorized by precedent, Sami may override.'
+  recommendation_update: Record CraftaxClassic's tiers from the NO_REFERENCE row (CPU_REGRESSION / GPU_FAST) for Step 7; Step 8 gives the harness a speed-reference hook distinct from the parity reference
+    (jitted official as a user runs it).
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s
