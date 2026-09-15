@@ -1,0 +1,149 @@
+{
+ "refreeze_job": "6410105",
+ "refreeze_sha": "726241e8d03aec59789562839d658f87c8ae2891",
+ "new_job": "6419904",
+ "new_sha": "4dc3d4bcebef18a8b1b14b3a7b18fe438ef79069",
+ "refreeze_gpu": "NVIDIA GeForce RTX 3090",
+ "new_gpu": "NVIDIA GeForce RTX 3090",
+ "cells": {
+  "MujocoHalfCheetah": {
+   "identical": true,
+   "sha256_refreeze": "17cf24506ae10a70d49ab61e8621c215aae3bdc5d9edab4f72b04aa03d73769b",
+   "sha256_new": "17cf24506ae10a70d49ab61e8621c215aae3bdc5d9edab4f72b04aa03d73769b",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 4.042102322048611,
+     "new": 4.042102322048611,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8755037434895834,
+     "new": 0.8755037434895834,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9666149775667918,
+     "new": 0.9666149775667918,
+     "delta": 0.0
+    }
+   }
+  },
+  "MujocoHopper": {
+   "identical": true,
+   "sha256_refreeze": "f6f2aef63d97a4ab1ed0dc44d581e1a51cf664678fc0e2393361728baae850d4",
+   "sha256_new": "f6f2aef63d97a4ab1ed0dc44d581e1a51cf664678fc0e2393361728baae850d4",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 4.496076388888889,
+     "new": 4.496076388888889,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8408840603298611,
+     "new": 0.8408840603298611,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9480581061036963,
+     "new": 0.9480581061036963,
+     "delta": 0.0
+    }
+   }
+  },
+  "MujocoWalker2d": {
+   "identical": false,
+   "sha256_refreeze": "d95e510e20776cb1c8bd98173ac64ac606f13b1c1225f6ce23dab437b6b46ce0",
+   "sha256_new": "1b592fdf6e3f51099c44efe6cc3e44d4c2e7b0e9ce3198a09ccdbc7d5f84ed84",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 3.9216289605034724,
+     "new": 3.9216289605034724,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8683501519097222,
+     "new": 0.8683501519097222,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9472446274770048,
+     "new": 0.9472446275981085,
+     "delta": 1.211036826376244e-10
+    }
+   }
+  },
+  "MujocoAnt": {
+   "identical": false,
+   "sha256_refreeze": "b66388957cbff3231d0c587e1815d51cd459247cb5002823639cec5f848f26c1",
+   "sha256_new": "9f07c0a34a7a27ff552cf4c232922b7e1536710bfbc2214090ac0ae6cc56a26f",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 3.4481209309895835,
+     "new": 3.4481212022569445,
+     "delta": 2.712673610183458e-07
+    },
+    "within8_frac": {
+     "refreeze": 0.8918359375,
+     "new": 0.8918359375,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9775813195465721,
+     "new": 0.9775813191638391,
+     "delta": -3.8273306746106073e-10
+    }
+   }
+  },
+  "MujocoHumanoid": {
+   "identical": false,
+   "sha256_refreeze": "30948a9b3d1a23074dfe646e38e4cf682d364e048c12a3e1fe45ff8ae65a8bf1",
+   "sha256_new": "0f28b4ff98ee91ca0a62907123dd17af5ddc450c7eae93fea98149236cf3eaec",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 4.4825634765625,
+     "new": 4.4825634765625,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.8359768337673611,
+     "new": 0.8359768337673611,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.9510166411383317,
+     "new": 0.9510166397979822,
+     "delta": -1.3403494980579467e-09
+    }
+   }
+  },
+  "MujocoSwimmer": {
+   "identical": false,
+   "sha256_refreeze": "389858758e2b5a030253555f437fc53b52702402300ff606891c5c026f172eef",
+   "sha256_new": "cf1ecc4f88a084e902a1fd9d3ffc254c4676e1ddf857fe2c6a7b789b943c5757",
+   "states_match": true,
+   "fidelity": {
+    "mean_abs": {
+     "refreeze": 1.9697591145833333,
+     "new": 1.9697591145833333,
+     "delta": 0.0
+    },
+    "within8_frac": {
+     "refreeze": 0.9443351236979166,
+     "new": 0.9443351236979166,
+     "delta": 0.0
+    },
+    "ssim": {
+     "refreeze": 0.982195151915572,
+     "new": 0.9821951519745826,
+     "delta": 5.901057420487632e-11
+    }
+   }
+  }
+ },
+ "all_identical": false
+}

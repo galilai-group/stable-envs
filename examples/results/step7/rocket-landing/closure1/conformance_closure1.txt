@@ -1,0 +1,423 @@
+.........s.s.s.sss..........s.s.s.sss..........s.s.s.sss..........s.s.s. [ 24%]
+sss..........s.s.s.sss..........s.s.s.sss........F.s.s.s.sss...s........ [ 48%]
+........s.s...s................s.s...s................s.s...s........... [ 73%]
+.....s.s...s................s.s...s................s.s...s..F........... [ 97%]
+..s.s.                                                                   [100%]
+=================================== FAILURES ===================================
+_________ test_color_knobs_apply_the_requested_color[PFRocketLanding] __________
+
+env = <stable_envs.envs.rocket_landing.PFRocketLanding object at 0x7f4339a855b0>
+
+    def test_color_knobs_apply_the_requested_color(env):
+        r = C.check_colors_apply_exactly(env)
+>       assert not r["colors_not_applied"], (
+            f"colour knobs that did not put the requested colour in the frame: {r['colors_not_applied']} — "
+            f"a knob wired to the wrong primitive, scaled, or channel-swapped still passes the weaker "
+            f"'does it change anything' check")
+E       AssertionError: colour knobs that did not put the requested colour in the frame: ['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'] — a knob wired to the wrong primitive, scaled, or channel-swapped still passes the weaker 'does it change anything' check
+E       assert not ['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', ...]
+
+tests/gpu/test_conformance.py:255: AssertionError
+_ test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding] _
+
+env = <stable_envs.envs.rocket_landing.PFRocketLanding object at 0x7f4273583590>
+inputs = (array([[ 1.32429600e+00,  4.06833380e-01,  7.80462325e-01,
+         1.64787516e-01,  1.32296875e-01,  5.70273459e-01,...7625  ,
+         91.08717  , 161.73526  , 147.28235  ,   2.8052623, 132.49982  ,
+        227.65758  ]], dtype=float32))
+
+    def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
+        """Rendering at 2S then box-downsampling, against rendering at S — to a measured, per-env bound.
+    
+        Deliberately not an equality. Two rasterizations at different sampling rates disagree at every
+        edge, and the tile-atlas families disagree for a second reason: their atlas is resampled from the
+        source art at the requested tile size, so 2S is a different picture rather than a supersampled
+        one. Asserting equality would either fail on correct renderers or force a tolerance so loose it
+        could not detect a shape moving.
+    
+        What is asserted is the recorded floor on exact-pixel agreement. A geometry regression — an
+        off-by-half-pixel in the sampling grid, a scale that is applied in output pixels instead of world
+        units — moves a shape, and that collapses ``exact_frac``. Anti-aliasing does not touch it.
+    
+        The default appearance is used rather than a sampled style, so the number is a property of the
+        geometry and is reproducible from the recorded seed alone.
+        """
+        name = type(env).__name__
+        if hasattr(type(env), "PLATE_PATHS") and name not in PLATE_REPRESENTATIVES:
+            pytest.skip(f"{name}: covered by {sorted(PLATE_REPRESENTATIVES)} — see PLATE_REPRESENTATIVES")
+        states, _ = inputs
+        try:
+            _skip_if_size_is_not_resolution(env)
+            r = C.check_resolution_consistency(env, states)
+        except ValueError as e:                       # an env that renders at one size only says so
+            pytest.skip(f"{name} cannot render at another size: {e}")
+        if "skipped" in r:
+            pytest.skip(f"{name}: {r['skipped']}")
+        print(f"\n{name} 2S->S: exact {100*r['exact_frac']:.3f}%  mean {r['mean_abs']:.4f}/255  "
+              f"max {r['max_abs']}/255")
+        measured = DOWNSAMPLE_EXACT_FRAC.get(name)
+>       assert measured is not None, (
+            f"{name} has no measured downsample bound recorded. Run "
+            f"stable_envs.testing.conformance.check_resolution_consistency on it and add the number to "
+            f"DOWNSAMPLE_EXACT_FRAC with its provenance — a guessed bound is worse than no test, because "
+            f"it either fails on a correct renderer or passes on a broken one")
+E       AssertionError: PFRocketLanding has no measured downsample bound recorded. Run stable_envs.testing.conformance.check_resolution_consistency on it and add the number to DOWNSAMPLE_EXACT_FRAC with its provenance — a guessed bound is worse than no test, because it either fails on a correct renderer or passes on a broken one
+E       assert None is not None
+
+tests/gpu/test_reproducibility.py:677: AssertionError
+----------------------------- Captured stdout call -----------------------------
+
+PFRocketLanding 2S->S: exact 95.614%  mean 0.9923/255  max 255/255
+=============================== warnings summary ===============================
+tests/gpu/test_conformance.py::test_describe_is_complete[MujocoAnt]
+  $SCR/se7/rocket-landing/stable_envs/render/nvdiff.py:802: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+    self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
+
+tests/gpu/test_conformance.py::test_describe_is_complete[MujocoAnt]
+  $SCR/se7/rocket-landing/stable_envs/render/nvdiff.py:803: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+    (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+
+tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]
+  $SCR/venvs/se7-rocket/lib/python3.12/site-packages/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+__________ test_visual_tier_matches_its_declared_fidelity[MujocoAnt] ___________
+----------------------------- Captured stdout call -----------------------------
+
+MujocoAnt vs gymnasium/Ant-v5 [VISUAL TIER]: {'mean_abs': 3.3697081163194444, 'exact_frac': 0.6353757052951389, 'within8_frac': 0.894296875, 'max_abs': 239, 'interior_frac': 0.13625680572819104, 'interior_exact_frac': 0.6639604914478439, 'interior_mean_abs': 0.516204930538826, 'interior_px': 498120, 'interior_bad_px': 167388, 'ssim': 0.9763674485883473, 'n_states': 64}
+  declared: {'mean_abs': 3.43, 'within8_frac': 0.8935, 'ssim': 0.9771, 'interior_mean_abs': 0.603, 'interior_exact_frac': 0.642, 'draw_spread': {'mean_abs': [3.329, 3.43], 'ssim': [0.9771, 0.979]}, 'mean_abs_max': 4.6, 'within8_min': 0.85, 'ssim_min': 0.95, 'measured_at': "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 (driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); the values below are the WORST of the four draws"}
+______ test_visual_tier_matches_its_declared_fidelity[MujocoHalfCheetah] _______
+----------------------------- Captured stdout call -----------------------------
+
+MujocoHalfCheetah vs gymnasium/HalfCheetah-v5 [VISUAL TIER]: {'mean_abs': 3.963323567708333, 'exact_frac': 0.6414586046006945, 'within8_frac': 0.8778586154513889, 'max_abs': 216, 'interior_frac': 0.16333720304266383, 'interior_exact_frac': 0.6011180350985315, 'interior_mean_abs': 0.6378845757713286, 'interior_px': 597119, 'interior_bad_px': 238180, 'ssim': 0.967172810024259, 'n_states': 64}
+  declared: {'mean_abs': 4.089, 'within8_frac': 0.8734, 'ssim': 0.9666, 'interior_mean_abs': 0.638, 'interior_exact_frac': 0.594, 'draw_spread': {'mean_abs': [3.955, 4.089], 'ssim': [0.9666, 0.9677]}, 'mean_abs_max': 5.5, 'within8_min': 0.83, 'ssim_min': 0.94, 'measured_at': "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 (driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); the values below are the WORST of the four draws"}
+_________ test_visual_tier_matches_its_declared_fidelity[MujocoHopper] _________
+----------------------------- Captured stdout call -----------------------------
+
+MujocoHopper vs gymnasium/Hopper-v5 [VISUAL TIER]: {'mean_abs': 4.526331380208333, 'exact_frac': 0.6057033962673611, 'within8_frac': 0.8397916666666667, 'max_abs': 200, 'interior_frac': 0.2528741071584881, 'interior_exact_frac': 0.8595608382561175, 'interior_mean_abs': 0.482413734540691, 'interior_px': 924443, 'interior_bad_px': 129828, 'ssim': 0.9477657808650066, 'n_states': 64}
+  declared: {'mean_abs': 4.346, 'within8_frac': 0.8462, 'ssim': 0.9483, 'interior_mean_abs': 0.491, 'interior_exact_frac': 0.853, 'draw_spread': {'mean_abs': [4.322, 4.346], 'ssim': [0.9483, 0.9499]}, 'mean_abs_max': 5.8, 'within8_min': 0.8, 'ssim_min': 0.92, 'measured_at': "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 (driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); the values below are the WORST of the four draws"}
+________ test_visual_tier_matches_its_declared_fidelity[MujocoHumanoid] ________
+----------------------------- Captured stdout call -----------------------------
+
+MujocoHumanoid vs gymnasium/Humanoid-v5 [VISUAL TIER]: {'mean_abs': 4.501984320746528, 'exact_frac': 0.6067328559027778, 'within8_frac': 0.8345675998263888, 'max_abs': 225, 'interior_frac': 0.23456675303303515, 'interior_exact_frac': 0.8826249306135395, 'interior_mean_abs': 0.5954652741173343, 'interior_px': 857516, 'interior_bad_px': 100651, 'ssim': 0.9509593811255185, 'n_states': 64}
+  declared: {'mean_abs': 4.387, 'within8_frac': 0.839, 'ssim': 0.9516, 'interior_mean_abs': 0.623, 'interior_exact_frac': 0.88, 'draw_spread': {'mean_abs': [4.37, 4.387], 'ssim': [0.9516, 0.9527]}, 'mean_abs_max': 5.8, 'within8_min': 0.79, 'ssim_min': 0.92, 'measured_at': "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 (driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); the values below are the WORST of the four draws"}
+________ test_visual_tier_matches_its_declared_fidelity[MujocoSwimmer] _________
+----------------------------- Captured stdout call -----------------------------
+
+MujocoSwimmer vs gymnasium/Swimmer-v5 [VISUAL TIER]: {'mean_abs': 1.9982419162326388, 'exact_frac': 0.45852159288194444, 'within8_frac': 0.9451793077256945, 'max_abs': 209, 'interior_frac': 0.7361574005181982, 'interior_exact_frac': 0.5407681992031073, 'interior_mean_abs': 0.4592318007968927, 'interior_px': 2691203, 'interior_bad_px': 1235886, 'ssim': 0.9820596305711011, 'n_states': 64}
+  declared: {'mean_abs': 1.972, 'within8_frac': 0.9454, 'ssim': 0.981, 'interior_mean_abs': 0.458, 'interior_exact_frac': 0.542, 'draw_spread': {'mean_abs': [1.931, 1.972], 'ssim': [0.981, 0.9826]}, 'mean_abs_max': 2.7, 'within8_min': 0.91, 'ssim_min': 0.96, 'measured_at': "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 (driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); the values below are the WORST of the four draws"}
+________ test_visual_tier_matches_its_declared_fidelity[MujocoWalker2d] ________
+----------------------------- Captured stdout call -----------------------------
+
+MujocoWalker2d vs gymnasium/Walker2d-v5 [VISUAL TIER]: {'mean_abs': 3.9489154730902776, 'exact_frac': 0.6260986328125, 'within8_frac': 0.8673830837673611, 'max_abs': 204, 'interior_frac': 0.3128851473188495, 'interior_exact_frac': 0.7995467850061373, 'interior_mean_abs': 0.3648529324338974, 'interior_px': 1143828, 'interior_bad_px': 229284, 'ssim': 0.9459098948436142, 'n_states': 64}
+  declared: {'mean_abs': 3.861, 'within8_frac': 0.8704, 'ssim': 0.9467, 'interior_mean_abs': 0.37, 'interior_exact_frac': 0.799, 'draw_spread': {'mean_abs': [3.814, 3.861], 'ssim': [0.9467, 0.9491]}, 'mean_abs_max': 5.2, 'within8_min': 0.83, 'ssim_min': 0.92, 'measured_at': "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 (driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); the values below are the WORST of the four draws"}
+_______ test_visual_tier_matches_its_declared_fidelity[PFRocketLanding] ________
+----------------------------- Captured stdout call -----------------------------
+argv[0]=
+[A                             [A
+
+PFRocketLanding vs swm/PFRocketLanding-v0 [VISUAL TIER]: {'mean_abs': 7.370643988715278, 'exact_frac': 0.9573643663194444, 'within8_frac': 0.9606057400173611, 'max_abs': 255, 'interior_frac': 0.8755334977183676, 'interior_exact_frac': 0.9672093480900368, 'interior_mean_abs': 6.072850294752938, 'interior_px': 12856530, 'interior_bad_px': 421574, 'ssim': 0.8578313181746281, 'n_states': 64}
+  declared: {'mean_abs': 7.71, 'within8_frac': 0.961, 'ssim': 0.854, 'exact_frac': 0.959, 'interior_exact_frac': 0.967, 'draw_spread': {'mean_abs': [7.482, 7.709], 'within8_frac': [0.961, 0.962], 'ssim': [0.854, 0.868]}, 'under_variation': {'mean_abs': 7.646, 'within8_frac': 0.958, 'ssim': 0.896, 'exact_frac': 0.903}, 'reference_unreachable_share': 0.0010416666666666667, 'reference_unreachable_rows_in_draws': 0, 'mean_abs_max': 10.0, 'within8_min': 0.91, 'ssim_min': 0.8, 'measured_at': '480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, torch 2.14.0+cu126, nvdiffrast 0.4.0 (scratch/step7/rocket-landing/measure_tier.py, examples/results/step7/rocket-landing/tier/job6410105/)', 'reference_versions': {'PyFlyt': '0.29.0', 'pybullet': '3.2.7'}, 'measured_with': {'nvdiffrast': '0.4.0', 'torch': '2.14.0+cu126'}}
+----------------------------- Captured stderr call -----------------------------
+pybullet build time: Sep 14 2026 23:35:15
+____ test_resolution_downsample_agrees_within_the_measured_bound[MujocoAnt] ____
+----------------------------- Captured stdout call -----------------------------
+
+MujocoAnt 2S->S: exact 77.071%  mean 1.7282/255  max 184/255
+_ test_resolution_downsample_agrees_within_the_measured_bound[MujocoHalfCheetah] _
+----------------------------- Captured stdout call -----------------------------
+
+MujocoHalfCheetah 2S->S: exact 76.582%  mean 1.9364/255  max 195/255
+__ test_resolution_downsample_agrees_within_the_measured_bound[MujocoHopper] ___
+----------------------------- Captured stdout call -----------------------------
+
+MujocoHopper 2S->S: exact 69.580%  mean 2.5255/255  max 180/255
+_ test_resolution_downsample_agrees_within_the_measured_bound[MujocoHumanoid] __
+----------------------------- Captured stdout call -----------------------------
+
+MujocoHumanoid 2S->S: exact 68.287%  mean 2.7527/255  max 184/255
+__ test_resolution_downsample_agrees_within_the_measured_bound[MujocoSwimmer] __
+----------------------------- Captured stdout call -----------------------------
+
+MujocoSwimmer 2S->S: exact 91.060%  mean 0.7293/255  max 138/255
+_ test_resolution_downsample_agrees_within_the_measured_bound[MujocoWalker2d] __
+----------------------------- Captured stdout call -----------------------------
+
+MujocoWalker2d 2S->S: exact 76.136%  mean 1.9319/255  max 182/255
+------------------------------ stable-envs safety ------------------------------
+resources: 6 EGL contexts created, 0 released, 6 live (peak 6); renderers 0 created / 0 closed
+node: gpu2106 slurm=mix reason=none reference-renderer={'skipped': 'no EGL-backed reference env in this selection'}
+=========================== short test summary info ============================
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_determinism[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoAnt]
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_determinism[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoHalfCheetah]
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_determinism[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoHopper]
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_determinism[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoHumanoid]
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_determinism[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoSwimmer]
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_determinism[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[MujocoWalker2d]
+PASSED tests/gpu/test_conformance.py::test_describe_is_complete[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_state_roundtrip[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_every_state_dim_reaches_the_render[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_batch_invariance[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_per_env_variation_is_per_env[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_style_is_state[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_default_style_is_the_official_appearance[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_determinism[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_variations_all_do_something[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_fidelity_tier_is_fully_declared[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]
+PASSED tests/gpu/test_conformance.py::test_state_is_sufficient[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoAnt]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoHalfCheetah]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoHopper]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoHumanoid]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoSwimmer]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[MujocoWalker2d]
+PASSED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_frame_i_is_independent_of_batch_size[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_chunked_render_states_is_chunk_independent[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_every_input_form_gives_the_same_frame[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_leading_dimensions_are_preserved[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_out_buffer_receives_the_same_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_variation_overrides_do_not_drop_the_env_s_per_environment_style[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_set_state_copies_its_input[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_batch_order_does_not_change_the_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_render_size_does_not_leak_into_later_calls[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_numpy_and_torch_serialization_round_trip[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_variation_dict_and_style_tensor_agree[PFRocketLanding]
+PASSED tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PFRocketLanding]
+SKIPPED [7] tests/gpu/test_conformance.py:268: env renders without a Scene2D (tilemap path)
+SKIPPED [7] tests/gpu/test_conformance.py:300: the env declares no visibility.* leaf
+SKIPPED [1] tests/gpu/test_conformance.py:350: MujocoAnt declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: MujocoAnt draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [7] tests/gpu/test_conformance.py:506: a renderer's agreement does not depend on where the camera is pointed; this measurement exists for decoders that were FITTED at one appearance
+SKIPPED [1] tests/gpu/test_conformance.py:551: MujocoAnt: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_conformance.py:350: MujocoHalfCheetah declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: MujocoHalfCheetah draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:551: MujocoHalfCheetah: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_conformance.py:350: MujocoHopper declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: MujocoHopper draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:551: MujocoHopper: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_conformance.py:350: MujocoHumanoid declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: MujocoHumanoid draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:551: MujocoHumanoid: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_conformance.py:350: MujocoSwimmer declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: MujocoSwimmer draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:551: MujocoSwimmer: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_conformance.py:350: MujocoWalker2d declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: MujocoWalker2d draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:551: MujocoWalker2d: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_conformance.py:350: PFRocketLanding declares the VISUAL tier: it is a different render of the same scene and is asserted by test_visual_tier_matches_its_declared_fidelity
+SKIPPED [1] tests/gpu/test_conformance.py:464: PFRocketLanding draws its frames with a renderer; there is nothing to compare a learned decoder against
+SKIPPED [1] tests/gpu/test_conformance.py:551: PFRocketLanding: no batched GPU simulator declared as checkable against a reference (set step_reference_checkable = True on the class to opt in)
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: MujocoAnt: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [7] tests/gpu/test_reproducibility.py:1077: the HuggingFace round-trip needs `datasets`
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: MujocoAnt: no CUDA-graph-captured step
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: MujocoHalfCheetah: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: MujocoHalfCheetah: no CUDA-graph-captured step
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: MujocoHopper: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: MujocoHopper: no CUDA-graph-captured step
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: MujocoHumanoid: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: MujocoHumanoid: no CUDA-graph-captured step
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: MujocoSwimmer: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: MujocoSwimmer: no CUDA-graph-captured step
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: MujocoWalker2d: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: MujocoWalker2d: no CUDA-graph-captured step
+SKIPPED [1] tests/gpu/test_reproducibility.py:316: PFRocketLanding: no batched GPU simulator, so there is no rollout to seed
+SKIPPED [1] tests/gpu/test_reproducibility.py:1134: PFRocketLanding: no CUDA-graph-captured step
+FAILED tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color[PFRocketLanding]
+FAILED tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]
+2 failed, 229 passed, 63 skipped, 2656 deselected, 3 warnings in 160.73s (0:02:40)

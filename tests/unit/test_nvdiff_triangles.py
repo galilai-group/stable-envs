@@ -186,22 +186,84 @@ def test_mvp_rows_is_bitwise_independent_of_batch_composition():
 
 
 def test_from_triangles_clip_row_is_independent_of_batch_size():
-    """The same check through ``Scene.clip`` on the CPU path: row 0 alone == row 0 of 64."""
+    """``Scene.clip`` row ``i`` must not depend on how many rows share the call -- as CERTIFIED.
+
+    This test originally asserted bitwise invariance at every width on whatever device it ran on, and
+    that over-claimed: the Step-7 closure sweep found it failing on x86-64 CPU. Corrected here to
+    assert what the repo certifies, per the CLOSURE-1 ruling (no second re-freeze in Step 7).
+
+    **cuda, when available: bitwise at every width.** This is the certified device -- every nvdiff cell
+    renders on it -- and it is enforced per env by the mandatory ``check_batch_size_invariance``
+    (measured 0 at 1, 3, 7, 8, 64, 256 for the six locomotion cells and at 1, 7, 64, 4096 for
+    ``PFRocketLanding``).
+
+    **cpu: within ONE float32 ulp at every width**, which is the portable claim. Bitwise-ness on CPU is
+    a property of the machine, not of this repo's arithmetic, so it is measured and recorded rather
+    than asserted -- asserting it is exactly the mistake this test is correcting. Measured on x86-64
+    (login010, torch 2.14.0+cu126, 1/2/4 threads;
+    ``examples/results/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_widthsweep.json``):
+
+    ==========  ===================================  ==================================
+    quantity    bitwise on x86-64 CPU                otherwise
+    ==========  ===================================  ==================================
+    positions   widths >= 7                          widths 1-6, one ulp (3.05e-05)
+    normals     every width except 4 and 8           widths 4, 8, one ulp (5.96e-08)
+    world pos   every width                          --
+    ==========  ===================================  ==================================
+
+    Everything is bitwise at every width on arm64 (Apple M5) and on cuda. Two earlier width samples
+    missed part of this and are superseded by the sweep above: the closure sweep's (1, 2, 7, 8, 31, 32,
+    63) and this workstream's first probe's (1, 2, 3, 7, 8, 31, 32, 63) both skip 4-6, so both reported
+    the positions as recovering at width 3 and the normals as never moving.
+
+    The cause is measured and is NOT this repo's arithmetic: ``mvp_rows`` -- the float64 elementwise
+    ``proj @ view @ M`` -- is bit-identical at every width on every machine measured. The residual is
+    ``torch.sparse.mm``, whose four-term row sums (``S4``/``S3`` carry four and three nonzeros per row)
+    are reordered by a kernel chosen from the dense operand's column count.
+
+    DOCUMENTED_LIMITATION (Step 7), also on ``rocket_landing.DOCUMENTED_LIMITATIONS`` and so in
+    ``describe()``: this reaches no shipped frame, because nothing in the registry draws through nvdiff
+    on ``device="cpu"``. A fix for the POSITIONS is written and measured --
+    ``scratch/step7/rocket-landing/closure1_explicit_pos_rows.patch`` -- and is not applied in Step 7
+    because on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and
+    1e-09 of SSIM, and a re-freeze needs a certification failure with a causal reason rather than an
+    implementation that merely differs. It is the Step-8 candidate
+    (``closure1/digest_vs_refreeze.json``). Note that it addresses the positions only; the normals
+    share the same sparse stage and would need the same treatment.
+    """
     v, n, f = _box_soup((0.5, 0.25, 1.0))
-    S = ND.Scene.from_triangles(v, n, f, np.zeros(len(v), np.int64), rgba=[[1, 1, 1, 1]], device="cpu")
     rng = np.random.default_rng(5)
     B = 64
     from scipy.spatial.transform import Rotation as Rt
     q = rng.normal(size=(B, 4))
     q /= np.linalg.norm(q, axis=1, keepdims=True)
-    xmat = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]
-    xpos = torch.as_tensor(rng.normal(size=(B, 1, 3)) * 300.0, dtype=torch.float32)
-    eye = rng.normal(size=(B, 3)) * 300.0
-    cam = ND.Camera(eye, np.broadcast_to(np.eye(3), (B, 3, 3)).copy(), 90.0, 0.1, 255.0)
+    mats = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]
+    poss = torch.as_tensor(rng.normal(size=(B, 1, 3)) * 300.0, dtype=torch.float32)
+    cam = ND.Camera(rng.normal(size=(B, 3)) * 300.0,
+                    np.broadcast_to(np.eye(3), (B, 3, 3)).copy(), 90.0, 0.1, 255.0)
     view, proj = cam.matrices()
-    view_t = torch.as_tensor(view, dtype=torch.float32)
-    proj_t = torch.as_tensor(proj, dtype=torch.float32)
-    pos, nrm, wp = S.clip(xpos, xmat, view_t, proj_t)
-    for b in (1, 7, 31):
-        p_b, n_b, w_b = S.clip(xpos[:b], xmat[:b], view_t[:b], proj_t)
-        assert torch.equal(p_b, pos[:b]) and torch.equal(n_b, nrm[:b]) and torch.equal(w_b, wp[:b]), b
+
+    for dev in ["cpu"] + (["cuda"] if torch.cuda.is_available() else []):
+        S = ND.Scene.from_triangles(v, n, f, np.zeros(len(v), np.int64), rgba=[[1, 1, 1, 1]], device=dev)
+        xmat, xpos = mats.to(dev), poss.to(dev)
+        view_t = torch.as_tensor(view, dtype=torch.float32, device=dev)
+        proj_t = torch.as_tensor(proj, dtype=torch.float32, device=dev)
+        full = S.clip(xpos, xmat, view_t, proj_t)
+        for b in (1, 2, 3, 4, 5, 6, 7, 8, 16, 31, 63):
+            got = S.clip(xpos[:b], xmat[:b], view_t[:b], proj_t)
+            for name, g, fl in zip(("positions", "normals", "world positions"), got, full):
+                ref = fl[:b]
+                if dev == "cuda":
+                    assert torch.equal(g, ref), (
+                        f"cuda: clip {name} depend on the batch width at {b} -- this is a "
+                        f"certification failure; check_batch_size_invariance enforces it per env")
+                else:
+                    # the portable CPU claim: one float32 ulp at the quantity's own scale. An
+                    # assertion, not an exemption -- it fails the moment the residual grows past what
+                    # a reordered four-term sum can account for.
+                    d = float((g.double() - ref.double()).abs().max())
+                    ulp = float(np.spacing(np.float32(float(ref.abs().max()))))
+                    assert d <= ulp, (
+                        f"cpu: clip {name} moved by {d:.3e} at width {b}, more than the one float32 "
+                        f"ulp ({ulp:.3e}) the sparse kernel's summation order can account for -- that "
+                        f"is no longer the documented limitation, it is a defect")
