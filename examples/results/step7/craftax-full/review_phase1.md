@@ -169,3 +169,62 @@ The CUDA path itself (no local GPU; the recorded job 6397699 gives the same dige
 Scratchpad: `w2_common.py`, `w2_parity.py` (+`.json/.log`), `w2_adversarial.py` (+`.json`), `w2_tables.py` (+`.json`),
 `w2_gate_a.py` (+`.json`), `w2_dims200.py` (+`.json`), `w2_gate_f.py` (+`.json`), `w2_regress.py`, `w2_swm.py` (+`.json`),
 `unit_branch2.log`, `unit_base2.log`, `cited_branch.txt`, `cited_base.txt`.
+
+---
+
+# Re-check before merge — HEAD `de31e893ea70488a77717b954fd0b4d8d4321010`
+
+Commits `ab42355` (the six required changes) and `de31e89` (the Gate-F probe script, its sbatch, and a dangling
+section reference in findings) on top of `59ab465`. `git diff --stat ab42355..de31e89 -- stable_envs tests` is empty;
+`git diff 59ab465..HEAD -- stable_envs tests` touches only `envs/craftax_full.py` (docstrings, the declaration, the
+sampler guard) and `tests/unit/test_craftax_full.py`. Trailer grep 0; author sami-bg on all 11 commits; 0 files under
+`examples/results/step4|5|6`, `stable_envs/testing`, `stable_envs/render`; `_pool.pkl` untracked; worktree clean apart
+from it. Read-only; nothing edited, committed, pushed or submitted.
+
+## Verdict: APPROVE
+
+**The six required changes are satisfied, verified by reading the diff and by re-running.**
+1. Module docstring now says a mob and a projectile on one tile ARE representable, names the real limit (a second entity
+   of the same kind on one tile, with the mechanism and both measured ranges: author 156 / 237 / 253, mine 113-187) and
+   the 6-projectile bridge budget; the class docstring carries the budget with the `(9, 3)` mask shapes and points at the
+   boundary pool and the test. Matches what I measured.
+2. Both docstrings: one background gather + three stencil layers = seven `index_select`s, three selects.
+3. The vignette pin is cited as `test_craftax_full.py::test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide`.
+4. `uint8_fast_path_share = 0.25` with the mechanism (rows 2, 8, 9 of the 12-row period) in the comment and note;
+   tolerance `<= 1/64`. Re-measured at `sample_states(64, rng(0))`: **0.25**. Findings item 4 records the fix. One
+   discrepancy with the summary I was given: `scratch/step7/craftax-full/certify.py::band()` is **not** changed or
+   documented on the tip (no diff since `59ab465`, no docstring) and findings §12 still heads the column "fast (21)".
+   Scratch-only, non-blocking; note it so the "lighting classifier" wording is not assumed to exist.
+5. findings.md:889 now cites `scratch/step7/craftax-full/paired_verdict.py`;
+   `test_every_cited_scratch_path_resolves` reports **11** broken (the baseline's 11), so the branch no longer adds one.
+6. `sample_states` clamps `arrows >= 1` on band-0 rows (post hoc, no RNG draw), with the measurement in the comment, and
+   `test_the_arrow_guard_leaves_the_frozen_corpus_untouched` asserts the recorded pool/kept sha256. Re-run
+   `check_state_dims_matter` at batch 1 on seeds **100, 202, 248** (the three hits), 0..11 and 300..339: **no dead dim**.
+   Regenerated the 512 pool from `corpus.json`'s seed: `pool_sha256` and `sha256` **equal the recorded values**, and
+   `pool[indices]` is array-equal to the committed `states.npz` — the corpus is unchanged.
+
+**Digests unchanged.** Committed corpus vs un-jitted craftax 1.6.1 re-taken on the tip: 10 px 1.0 / 0
+`b3dcba4dea708d15…`, 16 px 1.0 / 0 `43414708ce31a3d7…` (ours == official), identical to the Mac, x86-64 and RTX 3090
+records; the only change in `certify_cpu_mac_corpus.json` is `reference_seconds_per_frame`.
+
+**Tests.** `tests/unit` on the tip: **931 passed, 7 skipped, 2 failed** — the same two pre-existing failures as
+`ada4075` (905/7/2): `test_examples…render_mjwarp.py --help` and `test_every_cited_scratch_path_resolves` (11 broken on
+both). The rewritten 6-vs-8 projectile assertion is real (checks only tiles 6 and 7 move, on the batch-indexed frame).
+
+**Nits landed.** "up to 1.53e-05" is now "on the 49-state phase-0 pool" with my 3.05e-05 recorded; the CPU tier is
+labelled a lower bound (§17.2, §18); the Step-8 carry-overs (corpus `meta` block; W1's denominator) are in §18.1.
+
+**Gate-F jitted-frame observation.** `gate_f/gate_f_swm_nowrapper.json` (craftax's own env, which the wrapper wraps;
+the wrapper layer itself is Oscar job 6398628): `round(obs*255)` vs ours 0.99963 exact, max abs 1, 39/41 identical;
+against the un-jitted reference 1.0 / 0 on 8. My own run of the real `CraftaxPixelsWrapper` (loaded by file, §4 above)
+agrees: ours == the un-jitted render on every sampled step and == `round(obs*255)` except where the frame holds
+half-integers (a sleeping row) — and there the jitted and un-jitted frames were bit-identical, so part of any residual
+in this protocol is the `/255 -> *255` round trip rather than fusion. Judgement: **no declaration wording beyond what
+Classic carries is required.** The mechanism is the one `parity_note` already states in full (jitted vs un-jitted,
+uint8 claim, `reference_env` un-jitted), it is shard-wide (every jax-backed SWM id jits `step`), and Classic's
+approved declaration says nothing about the wrapper. If the coordinator wants it explicit, the honest form is one
+sentence in `parity_note` — "the SWM wrapper jits `step`, so a live workflow observes the jitted frame; the certified
+claim is against the un-jitted renderer, and the two differ by at most 1 uint8 step on a small fraction of pixels" —
+and it belongs to both Craftax cells as a Step-8 carry-over, not to this branch alone. Not a defect.
+
+Re-check artifacts: this section's commands are in the session log (dead-dim seeds, pool/kept sha, digests, pytest).
