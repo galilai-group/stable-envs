@@ -406,3 +406,36 @@ def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
     slp = torch.tensor([False, False])
     assert torch.equal(night_and_sleep(world, lit, slp, keys),
                        night_and_sleep(world, lit, slp, keys, light_map=torch.ones(1, 1, 1, 1)))
+
+
+def test_the_strip_grid_cache_is_not_written_through(env, states):
+    """The layout tensors are shared across every render in the process; a write would be silent.
+
+    They are cached for speed — rebuilding them cost 39.7 us a render on the CPU and about 34 tiny
+    kernel launches on CUDA — and a cache that a render can write through corrupts every later frame
+    with nothing downstream to flag it. Same rule ``test_atlas_is_not_written_through_by_a_render``
+    applies to the tile table.
+    """
+    dev = torch.device("cpu")
+    cell_of, blank = env._strip_grid(dev)
+    before = (cell_of.clone(), blank.clone())
+    for t in (7, 16):
+        env.render(states, size=t)
+        env.render(_set(states, light=0.1), size=t)
+        env.render(states, size=t, variation={"channel_gain": [0.5, 1.0, 2.0]})
+    again = env._strip_grid(dev)
+    assert again[0] is cell_of and again[1] is blank, "the grid was rebuilt instead of cached"
+    assert torch.equal(cell_of, before[0]) and torch.equal(blank, before[1])
+
+
+def test_the_key_is_assembled_only_where_it_can_matter(env, states):
+    """``_decode`` hands back the 16-bit HALVES; assembling them is the lit path's job.
+
+    Six ops a render that a daylight frame would never look at. Asserted structurally rather than by
+    timing, so it stays true when someone reorders the decode.
+    """
+    out = env._decode(torch.as_tensor(states), len(states))
+    assert len(out) == 7
+    halves = out[-1]
+    assert halves.shape == (len(states), 4) and halves.dtype == torch.float32
+    assert float(halves.max()) < 65536.0 and float(halves.min()) >= 0.0

@@ -107,23 +107,35 @@ def random_bits(keys: torch.Tensor, n: int, offset: int = 0) -> torch.Tensor:
     return b1 ^ b2
 
 
-def uniform(keys: torch.Tensor, shape, minval: float = 0.0, maxval: float = 1.0,
-            offset: int = 0) -> torch.Tensor:
-    """``jax.random.uniform(key, shape, float32, minval, maxval)`` for a batch of keys.
+def uniform(keys: torch.Tensor, shape, offset: int = 0) -> torch.Tensor:
+    """``jax.random.uniform(key, shape)`` on ``[0, 1)`` for a batch of keys.
 
     ``keys`` ``(B, 2)`` int32 -> ``(B, *shape)`` float32. The construction is JAX's: randomise the
     mantissa of an exponent-1 float and subtract one, which is why the result is exactly
     representable and why matching it is a bit-level claim rather than a statistical one.
+
+    **There are deliberately no ``minval``/``maxval`` arguments, and that is a correctness
+    decision.** ``jax.random.uniform(key, shape, dtype, minval, maxval)`` computes
+    ``floats * (maxval - minval) + minval``, and under ``jax.jit`` XLA contracts that into a **fused
+    multiply-add**, which rounds once where a separate multiply and add round twice. Measured: for
+    the span ``[32, 127)`` at shape ``(32, 127)``, **508 of 4096 values differ** between jax's jitted
+    range call and ``uniform() * 95 + 32``; a power-of-two span happens to agree, which is exactly
+    the kind of coincidence that makes such a bug survive a test. A range argument here could
+    therefore be bit-exact against one jax call and not another, depending on a fusion decision the
+    caller cannot see.
+
+    Both craftax renderers write the scaling themselves and un-jitted
+    (``jax.random.uniform(state.state_rng, shape) * 95 + 32``), so a caller reproduces them by
+    writing the same expression. That is one fewer place for the two to silently diverge.
+    ``tests/unit/test_craftax_prng.py:test_the_scaled_night_field_matches`` pins exactly that
+    expression against jax-generated values.
     """
     n = 1
     for d in shape:
         n *= int(d)
     bits = random_bits(keys, n, offset)
     floats = (((bits >> 9) & _MANTISSA) | _ONE_BITS).view(torch.float32) - 1.0
-    lo = torch.tensor(minval, dtype=torch.float32, device=keys.device)
-    span = torch.tensor(maxval, dtype=torch.float32, device=keys.device) - lo
-    return torch.clamp_min(floats * span + lo, lo).reshape(keys.shape[0],
-                                                           *[int(d) for d in shape])
+    return floats.reshape(keys.shape[0], *[int(d) for d in shape])
 
 
 def key_from_halves(halves: torch.Tensor) -> torch.Tensor:

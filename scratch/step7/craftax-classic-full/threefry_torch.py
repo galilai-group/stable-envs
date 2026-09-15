@@ -1,6 +1,11 @@
 """A torch reimplementation of JAX's threefry2x32 counter PRNG and ``jax.random.uniform``.
 
-Phase-0 prototype. Not yet a stable_envs module.
+**Phase-0 prototype, superseded by ``stable_envs/render/prng.py``. Kept so the phase-0 numbers stay
+reproducible; do not import it.** One difference matters if you do: this file offers ``minval`` /
+``maxval`` arguments and the shipped module deliberately does not, because jax contracts its own
+range scale into a fused multiply-add under ``jax.jit`` and a separate multiply-and-add does not
+match it (508 of 4096 values differ for the span ``[32, 127)``). The craftax renderers write the
+scale themselves and un-jitted, so nothing measured here depended on it.
 
 Two facts decide the shape of this code and both were read out of the installed jax, not assumed:
 

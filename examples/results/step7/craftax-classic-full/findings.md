@@ -10,7 +10,7 @@ declaration rulings that are Sami's.
 | | |
 |---|---|
 | parent baseline SHA | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` (Step 6 closed) |
-| branch | `step7/craftax-classic-full` (4 commits), worktree `/Users/samib/stable-envs-step7-craftax-classic-full` |
+| branch | `step7/craftax-classic-full`, worktree `/Users/samib/stable-envs-step7-craftax-classic-full` |
 | affected config | **`CraftaxClassic` only** — 1 of the 49 frozen Step-4 render-distinct configurations |
 | parity | **100% of all pixels exact, max abs diff 0**, 64 states at 7 px and 16 px, over the whole 144x144 observation and all three lighting bands. `digest_ours == digest_official`: the frames are byte-identical, not merely equal within a bound |
 | reference venv | `/Users/samib/se7-craftax-venv` — python 3.12.11, **jax/jaxlib 0.11.1**, **craftax 1.6.1**, torch 2.14.0, numpy 2.5.3, gymnasium 1.3.0 |
@@ -562,9 +562,23 @@ byte-identity at `light = 1.0`, `sleeping = 0`, counts 0. Asserted three ways:
 * in the harness — `certify.py` records `step4_world_row_replay`: world-row digests at both tile
   sizes, `strip_is_black: true`, mean pixel and distinct colours.
 
-The digests cannot be compared against the frozen Step-4 record until the CUDA leg runs, because the
-frozen digests are over the **whole** old frame and were taken on a 3090. That comparison is job
-`04_gpu.sbatch`, and it is listed as owed in §11.
+**And the comparison against the frozen record is done, on CPU.** An earlier draft of this section
+said it had to wait for the CUDA leg; that was wrong. The frozen `digest_ours` is over a
+`(64, 112, 144, 3)` stack, which is exactly the world rows of the grown frame, so it compares
+directly. Rendering the frozen Step-4 corpus (`examples/results/step4/states/CraftaxClassic.npz`,
+64 x 127) zero-extended to 149 with `light_level = 1.0` and taking rows `[0:112]` at 16 px:
+
+| | replay | frozen Step-4 record |
+|---|---|---|
+| `frames_digest` | `1aeabbe8bc6a9a2ee1fdb8ffc27a737bd659630dc6e3a1b98f6bae002c894a4d` | **identical** |
+| `mean_pixel` | 93.84458414713542 | identical |
+| `distinct_colors` | 277 | identical |
+| strip rows | entirely black | (did not exist) |
+
+Use `stable_envs.testing.conformance.frames_digest`, not a bare `sha256`: it hashes the shape and
+dtype strings before the bytes, so a raw digest of the same pixels does not match and looks like a
+failure. The CUDA leg re-takes this on the oracle's own device, which is confirmation rather than
+the first evidence.
 
 ### 8.5 The new frozen corpus
 
@@ -585,11 +599,35 @@ Apple arm64, one torch thread. **Not certification numbers**; the Oscar sweep is
 | night (`light < 0.5`) | 6,487 | 1,306 |
 | **mixed corpus** (the certified figure) | **9,955** | **1,986** |
 
-**The daylight path is untouched**, as required: it is the Step-6 gather with no float buffer and no
-PRNG, and on this machine it measures the same as before the patch. Any *lit* row costs about 50x
-(7 px) to 100x (16 px) more, and that is **structural**: a night frame carries a per-pixel float
-post-process that the reference performs and that this renderer must reproduce bit for bit, and no
-engineering makes a per-pixel float chain as cheap as a memcpy.
+**The daylight path takes the Step-6 route — and "untouched" was too strong, which independent
+review caught.** It is still one gather from a uint8 table with no float buffer and no PRNG, but the
+frame grew from 7 to 9 tile rows, so it does not cost what it did. Measured against the Step-6 tree
+(`76dc511`) on the same machine at one thread, daylight/awake/unit gain
+(`sweep/daylight_baseline.json` vs `sweep/daylight_branch.json`):
+
+| | baseline ms | branch ms | row-scaled baseline | residual | residual share |
+|---|---|---|---|---|---|
+| B=1, 16 px | 0.0690 | 0.1106 | 0.0887 | +0.0219 | per-call |
+| B=16, 16 px | 0.1606 | 0.2248 | 0.2065 | +0.0183 | per-call |
+| B=256, 16 px | 1.4396 | 1.8706 | 1.8509 | **+0.0197** | **1.1%** |
+| B=1024, 16 px | 5.7163 | 7.2399 | 7.3495 | -0.1096 | none (within noise) |
+
+"Row-scaled baseline" is the Step-6 time times 144/112 — what the same renderer would cost drawing
+the taller frame. **The per-frame cost is the row growth; what is left is a flat ~0.02 ms per call**,
+which matters only at tiny batches.
+
+It was five times that before review. `_strip_grid` rebuilt two tensors with 32 indexed assignments
+on **every** render (39.7 us a call on CPU; ~34 tiny kernel launches and two allocations a frame on
+CUDA), and the two post-process colour constants were allocated per call. All four are now cached
+per device the way `_VIGNETTE_CACHE` already was, `_decode` does one `round()` over the tail block
+instead of one per field, and the PRNG key is assembled from its halves only on a lit row. Review
+measured the before as 0.061 -> 0.166 ms at B=1 and 1.460 -> 2.092 ms at B=256/16 px; it is now
+0.069 -> 0.111 and 1.440 -> 1.871.
+
+Any *lit* row still costs about 50x (7 px) to 100x (16 px) more than a daylight one, and that is
+**structural**: a night frame carries a per-pixel float post-process that the reference performs and
+that this renderer must reproduce bit for bit, and no engineering makes a per-pixel float chain as
+cheap as a memcpy.
 
 Attribution at B=256, 16 px, all-night (`sweep/bands_cpu_mac.json`): full render 194.8 ms, of which
 the threefry field **77.5 ms (40%)** and the rest of the chain ~144 ms including the float gather.
@@ -646,10 +684,9 @@ replication (§6.2).
    the day cycle, keep the full 1.000 bound with no relaxation anywhere. *Against:* it removes
    coverage from 41.7% of the state space, and `not_applicable` is a heavier hammer than a number.
 
-**Recommendation: (2), split by band** — assert `>= 0.995` on the `light >= 0.5` pool, where it is
-met exactly, and record `not_applicable` below it with the mechanism. That keeps a real bound on the
-part of the space where the check is meaningful instead of replacing a real bound everywhere with a
-weak one. Either way it is not this workstream's to edit.
+**Sami's ruling (A): neither option may be chosen from our implementation alone.** The verdict has
+to come from an **oracle experiment against the official renderer** — same states, same protocol,
+same reference as parity — and only then does the applicability follow. That experiment is §14.
 
 ## 11. What is owed, and what is ready for it
 
@@ -665,7 +702,7 @@ retried in a loop. Four sbatch scripts are written, versioned under
 | `01_build_venv.sbatch` | `$SCR/venvs/se7-craftax` — python 3.12, `jax[cpu]==0.11.1`, `craftax==1.6.1`, torch 2.14.0. **No existing Oscar venv has jax**, which is why Step 6 recorded this env's parity as `blocked_environment`; a new venv, never an edit to a shared one |
 | `02_certify_cpu.sbatch` | Gate A + parity on a batch node at one thread, plus the PRNG exactness sweep re-run on **x86-64** — this is bit-level integer arithmetic and arm64/x86 agreement is checked, not assumed |
 | `03_sweep_cpu.sbatch` | the CPU tier per band and on the mixed corpus, with the `$SCR/se6/baseline` leg in the same job on the same node |
-| `04_gpu.sbatch` | the CUDA leg of Gate A, the GPU tier, and the comparison of the world-row digests against the frozen Step-4 record on a 3090 — before and after in **one allocation on one card** |
+| `04_gpu.sbatch` | the CUDA leg of Gate A and the GPU tier, before and after in **one allocation on one card**. It re-takes the frozen Step-4 world-row digest comparison on the oracle's own device; that comparison already passes on CPU (§8.4), so this is confirmation rather than the first evidence |
 
 Job names all start `se7-craftax-classic-full-`. One GPU job at a time; never cancel a job this
 workstream did not submit, and never a `simclr_cifar10` job.
@@ -682,6 +719,8 @@ listed with the Oscar work.
 
 Flagged per AGENT_COMMON rather than left to be discovered:
 
+Independent review confirmed both weaken nothing.
+
 * **`examples/fidelity_step4.py`** records `jax` among `reference_packages`. Without it the declared
   `jax` reference version could never be confirmed and `provenance.reference_version_mismatch` would
   report "version not recorded by the measuring interpreter" — which is judged `blocked_environment`
@@ -692,7 +731,40 @@ Flagged per AGENT_COMMON rather than left to be discovered:
   carrying — so a parity env could not declare a reference version at all. The rule is unchanged: a
   version may not be declared without prose in the class that says the same thing.
 
-## 13. Report per AGENT_COMMON
+## 13. Independent review — four required changes, all landed
+
+Review of `a1ebf57`: **APPROVE-WITH-CHANGES**. The reviewer regenerated the golden file from jax
+(byte-identical), ran a fresh 324-case `random_bits`/`uniform` probe (all exact), reproduced parity
+`1.0 / 0` on their own boundary pool and these digests, replayed the frozen Step-4 corpus on CPU,
+and confirmed the two shared-file edits weaken nothing.
+
+1. **`prng.uniform`'s range arguments were not bit-exact against jax.** jax's jitted
+   `uniform(key, shape, f32, minval, maxval)` contracts the scale into a **fused multiply-add**;
+   508 of 4096 values differ from `uniform() * 95 + 32` for the span `[32, 127)` at `(32, 127)`,
+   while a power-of-two span agrees — exactly the coincidence that lets such a bug survive a test.
+   Parity was never affected (craftax writes the scale itself and un-jitted), but W2 consumes this
+   module. **The arguments are removed**: a caller reproduces a range by writing the expression, and
+   `test_the_scaled_night_field_matches` pins that expression against jax-generated values.
+   `test_uniform_takes_no_range_arguments` keeps them from coming back.
+2. **"Daylight untouched" was false.** Fixed and re-measured; see §9.
+3. **"Every jit-differing pixel is on a sleeping row" over-generalised.** The reviewer found the
+   jitted reference differing on an **awake** row at `light_level = 0.49999997` (45 px, max 1). The
+   wording in `parity_note` and both docstrings now says *on this pool*, and gives the mechanism:
+   a ~1e-5 float32 shift meeting a uint8 rounding boundary, which **any lit row** can straddle
+   because any lighting compresses the range. The un-jitted-reference and uint8-claim decisions are
+   unchanged.
+4. **The frozen Step-4 digests could be compared on CPU all along.** Done; see §8.4.
+
+Recorded, non-blocking:
+
+* `certify.py`'s Gate A shows `check_per_env_variation` **skipped (batch too small)** because it
+  runs at the env's default batch. Step 8 should run it at the corpus batch.
+* SWM's `render()` truncates on the `x255`, where this repo rounds half-to-even. Pre-existing,
+  affects every env in the shard equally, out of scope here.
+* arm64-vs-x86 threefry agreement is **settled**: identical frame digests on both hosts, int32
+  arithmetic throughout, and no FMA anywhere in the hash.
+
+## 14. Report per AGENT_COMMON
 
 * **tests run:** `tests/unit` — **832 passed, 37 skipped**, 2 deselected. The two deselected are the
   pre-existing failures Step 6's `tilemap` findings §6 already routed to the coordinator

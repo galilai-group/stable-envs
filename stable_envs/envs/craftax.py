@@ -29,13 +29,28 @@ Parity against the official renderer, measured on 64 sampled states at both tile
 rows, 29 dusk rows, 17 daylight rows, sleeping rows throughout.
 **100% of all pixels exact in every band, mean |diff| 0.000, max |diff| 0.**
 
+**What Step 7 cost the daylight path, measured rather than asserted.** A daylight, awake, unit-gain
+batch still takes the Step-6 route — one gather from a uint8 table, no float buffer, no PRNG — but
+it does not cost what it did, because the frame grew from 7 to 9 tile rows. One Apple arm64 core,
+one thread, against the Step-6 tree on the same machine: at 16 px and B=256, **1.440 -> 1.871 ms**,
+of which **1.851 ms is the 112 -> 144 row growth** and 0.020 ms (1.1%) is everything else; at
+B=1024 the growth accounts for all of it. What remains is a **flat ~0.02 ms per call**, which
+matters only at tiny batches (B=1: 0.069 -> 0.111 ms). It used to be five times that — independent
+review measured 0.061 -> 0.166 ms at B=1 — because ``_strip_grid`` rebuilt two tensors with 32
+indexed assignments on every render and the two post-process colour constants were allocated per
+call; all four are now cached per device, and the PRNG key is assembled only on a lit row.
+
 **"The official frame" is not one object, and the parity number says which one.** Under ``jax.jit``
 XLA fuses the renderer's arithmetic differently and it disagrees with its own un-jitted self by up to
 1.5e-05 in float32. For a daylight frame that is invisible in uint8. For a sleeping one it is not:
 the desaturation halves the dynamic range, and a 1.5e-05 difference then straddles a rounding
 boundary. Against this renderer, the jitted reference is 99.7854% of pixels exact at 7 px and
-99.7225% at 16 px with max |diff| 1, **every differing pixel on a sleeping row**, while the un-jitted
-reference is 100.0000% with max |diff| 0. :meth:`CraftaxClassic.reference_env` therefore returns the
+99.7225% at 16 px with max |diff| 1 on the sampled pool used here, where every differing pixel
+happened to be on a sleeping row; the un-jitted reference is 100.0000% with max |diff| 0. The
+sleeping rows are not the rule, only the commonest case: independent review found the jitted
+reference differing on an **awake** row too, at ``light_level = 0.49999997``. **Any lit row can
+straddle**, because the mechanism is a ~1e-5 float32 shift meeting a uint8 rounding boundary, and
+lighting -- like the sleep desaturation -- compresses the range towards one. :meth:`CraftaxClassic.reference_env` therefore returns the
 un-jitted function — the renderer as written — and pays 0.25 s a frame for it. The claim certified is
 a **uint8** claim; this renderer does not assert bit equality of the reference's float, because the
 reference does not have one value to be equal to.
@@ -445,6 +460,24 @@ class _StripAssets:
 
 
 _VIGNETTE_CACHE: dict = {}
+#: ``(cell_of, blank)`` and the two post-process colour constants, per device. All four are
+#: state-independent, and building them per call is not free: ``_strip_grid`` alone costs 39.7 us a
+#: render on this CPU (32 indexed assignments into two fresh tensors) and about 34 tiny kernel
+#: launches plus two allocations a frame on CUDA, which at the daylight batch sizes this env is
+#: certified at is most of the per-call overhead rather than a rounding error. Independent review
+#: measured the whole of it: B=1 went 0.061 -> 0.166 ms and B=256 at 16 px 1.460 -> 2.092 ms before
+#: these caches existed.
+_GRID_CACHE: dict = {}
+_CONST_CACHE: dict = {}
+
+
+def _post_constants(device: torch.device):
+    """``(night_tint, sleep_lift)`` on ``device``, built once."""
+    key = str(device)
+    if key not in _CONST_CACHE:
+        _CONST_CACHE[key] = (torch.tensor(NIGHT_TINT, device=device),
+                             torch.tensor([0.0, 0.0, 8.0], device=device))
+    return _CONST_CACHE[key]
 
 
 def night_vignette(device: torch.device, h: int, w: int) -> torch.Tensor:
@@ -513,7 +546,8 @@ def night_and_sleep(world: torch.Tensor, light: torch.Tensor, sleeping: torch.Te
     lum = 0.299 * night[..., 0] + 0.587 * night[..., 1] + 0.114 * night[..., 2]
     night.mul_(0.4).add_(lum.mul_(1 - 0.4).unsqueeze(-1))
     # --- tint
-    night.mul_(0.5).add_(torch.tensor(NIGHT_TINT, device=dev) * 0.5)
+    tint, lift = _post_constants(dev)
+    night.mul_(0.5).add_(tint * 0.5)
     # --- blend
     if light_map is not None:
         night.mul_(light_map)
@@ -523,7 +557,7 @@ def night_and_sleep(world: torch.Tensor, light: torch.Tensor, sleeping: torch.Te
     if not bool(sleeping.any()):
         return px
     lum = 0.299 * px[..., 0] + 0.587 * px[..., 1] + 0.114 * px[..., 2]
-    sleep = lum.mul_(0.5).unsqueeze(-1) + torch.tensor([0.0, 0.0, 8.0], device=dev)
+    sleep = lum.mul_(0.5).unsqueeze(-1) + lift
     return torch.where(sleeping.view(n, 1, 1, 1), sleep, px)
 
 
@@ -713,10 +747,13 @@ class CraftaxClassic(StableEnv):
         "abs diff 0. The claim is a UINT8 claim and deliberately not a float one, because the "
         "reference does not have one float value to be equal to: under jax.jit XLA fuses its "
         "arithmetic differently and it disagrees with its own un-jitted self by up to 1.5e-05, which "
-        "is invisible in uint8 by day and visible under is_sleeping, whose desaturation halves the "
-        "dynamic range. Against the JITTED reference this renderer is 99.7854% (7 px) and 99.7225% "
-        "(16 px) of pixels exact with max abs diff 1, every differing pixel on a sleeping row; "
-        "reference_env therefore returns the un-jitted function, which is the renderer as written. "
+        "is invisible in uint8 by day and visible wherever the picture is compressed towards one value, "
+        "which the sleep desaturation and the night blend both do. Against the JITTED reference this "
+        "renderer is 99.7854% (7 px) and 99.7225% (16 px) of pixels exact with max abs diff 1 ON "
+        "THIS POOL, where every differing pixel was on a sleeping row; independent review found the "
+        "jitted reference differing on an awake row at light_level 0.49999997, so any LIT row can "
+        "straddle and the sleeping rows are only the commonest case. reference_env therefore returns "
+        "the un-jitted function, which is the renderer as written. "
         "jax is a declared reference version because jax_threefry_partitionable selects between two "
         "threefry counter layouts that agree on 0 of 448 draws, and the night noise field is drawn "
         "from one of them.")
@@ -749,13 +786,21 @@ class CraftaxClassic(StableEnv):
 
         Two of the eighteen positions are never written by the reference and stay black; they map to
         cell 0 holding count 0, which IS black, so a blank needs no table entry of its own.
+
+        Cached per device: it is state-independent, and rebuilding it per render cost 39.7 us on the
+        CPU and ~34 kernel launches on CUDA. The returned tensors are never written through, which
+        ``tests/unit/test_craftax_strip.py:test_the_strip_grid_cache_is_not_written_through``
+        asserts, because a write would corrupt every later frame in the process silently.
         """
-        cell_of = torch.zeros(STRIP_H, OBS_W, dtype=torch.long, device=device)
-        blank = torch.ones(STRIP_H, OBS_W, dtype=torch.bool, device=device)
-        for i, (r, c) in enumerate(STRIP_LAYOUT):
-            cell_of[r, c] = i
-            blank[r, c] = False
-        return cell_of, blank
+        key = str(device)
+        if key not in _GRID_CACHE:
+            cell_of = torch.zeros(STRIP_H, OBS_W, dtype=torch.long, device=device)
+            blank = torch.ones(STRIP_H, OBS_W, dtype=torch.bool, device=device)
+            for i, (r, c) in enumerate(STRIP_LAYOUT):
+                cell_of[r, c] = i
+                blank[r, c] = False
+            _GRID_CACHE[key] = (cell_of, blank.unsqueeze(0))
+        return _GRID_CACHE[key]
 
     def _decode(self, s, n):
         """The state row -> the small integers the tables are indexed by.
@@ -772,7 +817,11 @@ class CraftaxClassic(StableEnv):
         # facing wraps mod FOUR, not mod N_PLAYER: slot 4 is the sleeping sprite and is reached by
         # the is_sleeping flag, not by a facing value
         facing = s[:, 2 * nb].round().remainder(N_FACING).long()
-        cnt = s[:, 2 * nb + 1:2 * nb + 1 + N_STRIP].round().remainder(N_COUNT).long()
+        # one round() over the whole tail block rather than one per field: at B=1 the decode is
+        # dominated by op launches, not by arithmetic, and every frame pays it including a daylight
+        # one that will never look at most of what is decoded
+        tail = s[:, 2 * nb + 1:].round()
+        cnt = tail[:, :N_STRIP].remainder(N_COUNT).long()
         j = 2 * nb + 1 + N_STRIP
         sleeping = s[:, j] > 0.5
         # ``light_level`` is the one slot a wrap must be careful with. Clamping is not an option --
@@ -784,8 +833,10 @@ class CraftaxClassic(StableEnv):
         raw = s[:, j + 1]
         tent = 1.0 - (raw.remainder(2.0) - 1.0).abs()
         light = torch.where((raw >= 0.0) & (raw <= 1.0), raw, tent)
-        halves = s[:, j + 2:j + 2 + N_KEY_HALVES].round().remainder(65536.0)
-        return blk, mob, facing, cnt, sleeping, light, prng.key_from_halves(halves)
+        # the key HALVES, not the assembled key: assembling costs six more ops and is needed only on
+        # a lit row, so the caller does it when it takes the float path
+        halves = tail[:, N_STRIP + 2:N_STRIP + 2 + N_KEY_HALVES].remainder(65536.0)
+        return blk, mob, facing, cnt, sleeping, light, halves
 
     def _tile_ids(self, blk, mob, facing, cnt, sleeping, sty) -> torch.Tensor:
         """``(n, OBS_H + STRIP_H, OBS_W)`` int32 — one table row per output tile, world and strip.
@@ -810,19 +861,19 @@ class CraftaxClassic(StableEnv):
 
         cell_of, blank = self._strip_grid(dev)
         c = cnt[:, cell_of.reshape(-1)].view(n, STRIP_H, OBS_W)
-        c = torch.where(blank.unsqueeze(0), torch.zeros_like(c), c)
+        c = torch.where(blank, torch.zeros_like(c), c)
         strip = STRIP_BASE + cell_of.unsqueeze(0) * N_COUNT + c          # (n, STRIP_H, OBS_W)
         return torch.cat([world, strip], dim=1).to(torch.int32)
 
     @staticmethod
-    def _post(px: torch.Tensor, sleeping, light, keys) -> torch.Tensor:
+    def _post(px: torch.Tensor, sleeping, light, halves) -> torch.Tensor:
         """The reference's post-process on the WORLD rows. ``px`` is ``(n, OBS_H*t, OBS_W*t, 3)``.
 
         The strip is not passed in, because the reference concatenates it *after* this runs: it is
         never lit and never desaturated. See :func:`night_and_sleep`, which is module-level and
         shape-parameterised so the full-Craftax renderer can call the same function.
         """
-        return night_and_sleep(px, light, sleeping, keys)
+        return night_and_sleep(px, light, sleeping, prng.key_from_halves(halves))
 
     @torch.no_grad()
     def render(self, states=None, size: int | None = None, supersample: int | None = None,
@@ -859,18 +910,18 @@ class CraftaxClassic(StableEnv):
                 f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate.")
         sty = self.resolve_style(style, variation, batch=n)
 
-        blk, mob, facing, cnt, sleeping, light, keys = self._decode(s, n)
+        blk, mob, facing, cnt, sleeping, light, halves = self._decode(s, n)
         H = (OBS_H + STRIP_H) * t
         if t > ATLAS_MAX_TILE_PX:
-            img = self._render_blend(blk, mob, facing, cnt, sleeping, light, keys, t, sty)
+            img = self._render_blend(blk, mob, facing, cnt, sleeping, light, halves, t, sty)
         else:
-            img = self._render_atlas(blk, mob, facing, cnt, sleeping, light, keys, t, sty, out)
+            img = self._render_atlas(blk, mob, facing, cnt, sleeping, light, halves, t, sty, out)
         if out is not None and img.data_ptr() != out.data_ptr():
             out.view(n, H, OBS_W * t, 3).copy_(img)
             img = out.view(n, H, OBS_W * t, 3)
         return img.view(*lead, *img.shape[1:]) if lead else img
 
-    def _render_atlas(self, blk, mob, facing, cnt, sleeping, light, keys, t, sty, out) -> torch.Tensor:
+    def _render_atlas(self, blk, mob, facing, cnt, sleeping, light, halves, t, sty, out) -> torch.Tensor:
         """The gather. One ``index_select`` per frame at the default appearance, and no float buffer."""
         n, dev = blk.shape[0], blk.device
         H = (OBS_H + STRIP_H) * t
@@ -900,11 +951,11 @@ class CraftaxClassic(StableEnv):
         f32 = _Composite.get(dev, t, want_float=True)[0]
         px = torch.index_select(f32, 0, rows).view(n, H, OBS_W * t, 3)
         w = OBS_H * t
-        px[:, :w] = self._post(px[:, :w], sleeping, light, keys)
+        px[:, :w] = self._post(px[:, :w], sleeping, light, halves)
         px = px * gain.to(px.dtype).view(n, 1, 1, 3)
         return px.round_().clamp_(0, 255).to(torch.uint8)
 
-    def _render_blend(self, blk, mob, facing, cnt, sleeping, light, keys, t, sty) -> torch.Tensor:
+    def _render_blend(self, blk, mob, facing, cnt, sleeping, light, halves, t, sty) -> torch.Tensor:
         """Composite per frame, the way this renderer did before Step 6.
 
         Kept because the baked atlas costs ``976 * t*t*3`` bytes and stops being a table worth
@@ -930,13 +981,13 @@ class CraftaxClassic(StableEnv):
              * (sty["mobs_visible"] > 0.5).to(px.dtype).view(n, 1, 1, 1))
         px = px * (1 - a) + self._tiles_to_frame(mtex[mob]) * a
 
-        px = self._post(px, sleeping, light, keys)
+        px = self._post(px, sleeping, light, halves)
 
         # the strip, drawn after the post-process exactly as the reference concatenates it after
         cells = _strip_cells(blk.device, t)
         cell_of, blank = self._strip_grid(blk.device)
         c = cnt[:, cell_of.reshape(-1)].view(n, STRIP_H, OBS_W)
-        c = torch.where(blank.unsqueeze(0), torch.zeros_like(c), c)
+        c = torch.where(blank, torch.zeros_like(c), c)
         strip = self._tiles_to_frame(cells[cell_of.unsqueeze(0) * N_COUNT + c])
         px = torch.cat([px, strip], dim=1)
 
@@ -1065,13 +1116,17 @@ class CraftaxClassic(StableEnv):
         **The renderer is deliberately NOT jitted, and that is a correctness decision rather than a
         performance one.** "The official frame" is not one object: under ``jax.jit`` XLA fuses the
         arithmetic differently and the reference disagrees with its own un-jitted self by up to
-        1.5e-05 in float32. That is invisible in uint8 for a daylight frame, and it is *not* invisible
-        for a sleeping one, because the desaturation halves the dynamic range and a 1.5e-05 difference
-        then straddles a rounding boundary. Measured over 64 states at both tile sizes, against this
-        renderer: **un-jitted 100.0000% of all pixels exact, max abs diff 0; jitted 99.7854% at 7 px
-        and 99.7225% at 16 px, max abs diff 1, every differing pixel on a sleeping row.** The
-        un-jitted function is the renderer as written, so it is the one certified against; jit is an
-        optimisation that changes the picture. It costs about 0.25 s a frame instead of 0.008 s, which
+        1.5e-05 in float32. That is invisible in uint8 for a full-daylight frame, and it is *not*
+        invisible wherever the picture is compressed towards one value — the sleep desaturation
+        halves the dynamic range and the night blend pulls everything towards the tint — because a
+        1.5e-05 difference then straddles a rounding boundary. Measured over 64 states at both tile
+        sizes, against this renderer: **un-jitted 100.0000% of all pixels exact, max abs diff 0;
+        jitted 99.7854% at 7 px and 99.7225% at 16 px, max abs diff 1.** On that pool every differing
+        pixel was on a sleeping row, but that is the commonest case rather than the rule: independent
+        review found the jitted reference differing on an **awake** row at
+        ``light_level = 0.49999997``. Any **lit** row can straddle. The un-jitted function is the
+        renderer as written, so it is the one certified against; jit is an optimisation that changes
+        the picture. It costs about 0.25 s a frame instead of 0.008 s, which
         is the right trade for a check that runs on tens of states and is the whole basis of a parity
         claim.
 

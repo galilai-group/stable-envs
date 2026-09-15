@@ -179,9 +179,27 @@ def test_uniform_is_in_range_and_is_not_degenerate(golden):
     assert 0.45 < float(u.mean()) < 0.55
     assert u.reshape(8, -1).std(dim=1).min() > 0.25
 
-    # minval/maxval follow jax: scale then clamp at minval
-    v = prng.uniform(keys, (16, 16), minval=32.0, maxval=127.0)
-    assert float(v.min()) >= 32.0 and float(v.max()) < 127.0
+
+def test_uniform_takes_no_range_arguments(golden):
+    """Scaling into a range is the CALLER's expression, on purpose.
+
+    ``jax.random.uniform(key, shape, dtype, minval, maxval)`` computes
+    ``floats*(maxval-minval)+minval``, and under ``jax.jit`` XLA contracts that into a fused
+    multiply-add, which rounds once where a separate multiply and add round twice. Independent
+    review measured **508 of 4096 values differing** for the span ``[32, 127)`` at shape
+    ``(32, 127)`` — while a power-of-two span agrees, which is precisely the coincidence that lets
+    such a bug survive a test. A range argument here would be bit-exact against one jax call and not
+    another, depending on a fusion decision the caller cannot see, so there is none.
+
+    What pins the real expression is ``test_the_scaled_night_field_matches``: both craftax renderers
+    write ``uniform(key, shape) * 95 + 32`` themselves and un-jitted, and that is checked against
+    jax-generated values.
+    """
+    import inspect
+    p = inspect.signature(prng.uniform).parameters
+    assert "minval" not in p and "maxval" not in p, (
+        "prng.uniform grew a range argument; see this test's docstring for why it must not have one")
+    assert [n for n in p] == ["keys", "shape", "offset"]
 
 
 def test_render_module_exports_are_the_minimal_interface():
