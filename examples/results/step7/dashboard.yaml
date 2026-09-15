@@ -989,8 +989,8 @@ workstreams:
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'PATCH: batch-size invariance 255 -> 0; six locomotion cells moved <= 5 px by >1 level each (ULP-level); NO Step-4 frozen digest existed for them (0 files touched); fidelity 3 improve / 3 shift
-    at 1e-6..1e-9; declaration 7.71/0.961/0.854 vs 10.0/0.91/0.80; final reviewer verifying Sami''s nine conditions; merge on APPROVE'
+  status: 'final review APPROVE-WITH-CHANGES: nine conditions PASS (condition 5 judged not a regression); RD-1 comparator labels/tolerance to fix (post-process); one conformance run at the final tip; then
+    merge'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1170,6 +1170,22 @@ workstreams:
     rocket: seven gates PASS except BATCH_SCALES 14.17; declaration 7.71/0.961/0.854 vs 10.0/0.91/0.80 identical on two 3090s; reference_unreachable_share 1/960; tier GPU_PARITY [BATCH_SCALES_FAIL] R 241.5
       cores 2.61 NO_LARGE_BATCH_REGRESSION 1.253
     tests: tests/unit 747/7/1; test_rocket_landing 17; GPU conformance 228/63/3 known
+  final_review_7b2e45c:
+    verdict: APPROVE-WITH-CHANGES
+    nine_conditions: all PASS on the evidence
+    condition_5_judgement: unfavourable moves (Ant +2.7e-6, Humanoid +3.5e-6 mean_abs; Walker2d SSIM -2.9e-9) are 6,679x / 27,098x / 9.5e6x below each cell's declaration-vs-measurement headroom; within8
+      unchanged to the last digit on 5/6; worst cell 2.8 px/frame; the mvp change is strictly closer to exact (float64, rounded once) - not a regression in Sami's sense
+    rd1: compare_refreeze.json refreeze_ok false / MEANINGFUL_CHANGE from a zero-tolerance sign test in refreeze_locomotion.py:239 - labelling bug; fix as post-process
+    open_for_sami:
+    - 'test_color_knobs_apply_the_requested_color structurally unsatisfiable under TinyRenderer''s multiplicative law (max factor 0.993567: 200 can never render above 198) - needs a law-aware form in policy-frozen
+      tests/gpu'
+    - downsample table entry for the new cell (tests/gpu)
+    - test_visual_tier_matches_its_declared_fidelity never observed green at the tip (declaration filled after the measured tree) - one conformance run requested
+    - "BATCH_SCALES fails at 14.17 because fps(1)=238 is unusually high (R 241, 3,374 f/s at B=4096): correct application of \xA76.7 but a definitional edge case"
+    minors:
+    - ssim_min x0.94 vs family realised x0.967-0.979
+    - last_reference_unreachable mutable class state invisible to the shared check
+    - baseline leg sha unknown
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1407,6 +1423,8 @@ incident_log:
   item: 'W2 tier-final merged: CPU_FASTER / GPU_FASTER under admissible references; classifier census blocker recorded for Step 8'
 - date: '2026-09-15'
   item: 'W6 re-freeze evidence delivered (7b2e45c): batch-size invariance passes; no frozen digest existed for the six cells; final review requested'
+- date: '2026-09-15'
+  item: 'W6 final review: nine conditions PASS; RD-1 comparator fix + one conformance run before merge'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1471,6 +1489,12 @@ escalations:
   coordinator_recommendation: '(a): the frozen locomotion frames encode a kernel-selection artefact, not a renderer property; batch-size invariance is the mandatory contract. Re-freeze under Step 8 with
     the diff quantified per cell.'
   status: 'RESOLVED by Sami 2026-09-15: option (a) with reviewer-verified conditions (correctness re-freeze)'
+- date: '2026-09-15'
+  from: W6 reviewer / coordinator
+  topic: BATCH_SCALES definitional edge case (PFRocketLanding)
+  facts: "fps(1)=238 f/s is unusually high for a class-S cell, so fps(4096)/fps(1)=14.17 fails the 20x bar even though the cell batches to 3,374 f/s (R 241). \xA76.7 set the bar to catch ~1x cells."
+  question: 'Step-8 taxonomy item: whether BATCH_SCALES should be conditioned on fps(1) being below some absolute level; no change in Step 7 (frozen)'
+  status: recorded for Step 8
 deferred_work:
 - item: 'Shared CPU triangle rasteriser backend (nvdiff-class scenes: PFRocketLanding, possibly OGB manipulation)'
   evidence: W6 naive torch rasteriser 1.92 f/s at 480 px vs S_cpu bar 171 f/s and cores_cpu bar 1,191 f/s

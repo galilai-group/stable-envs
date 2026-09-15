@@ -753,3 +753,223 @@ across both checkouts, the TinyRenderer shading law including the measured 162/1
 lag law on fresh rollouts, the camera and link frames against PyBullet, the colour law against the swm
 source, the hull silhouette IoU 0.9949, the default-appearance check to 1.19e-08, and the hygiene
 checks. The "what only the cluster can verify" list stands, with item 3 unblocked.
+
+---
+
+# Appendix 3 — final pre-merge review at HEAD `7b2e45c` (2026-09-15)
+
+Eight commits since `cf355a3`. The substantive change is `mvp_rows`/`_mm4` in `nvdiff.Scene.clip`
+(M6a `dac40f9`, after M5a `d1e61a1` → revert `283865b` → re-apply under Sami's ruling) plus the
+reference bridge's contact-band flag and the now-measured declaration.
+
+## VERDICT: **APPROVE-WITH-CHANGES**
+
+All nine of Sami's conditions are met **on the evidence**. One defect must be fixed before the merge
+gate can be read as satisfied, and it is a labelling bug in the author's own comparator, fixable from
+data already committed with no new GPU job. Three GPU-conformance failures on the new cell are open
+certification items that need a coordinator ruling rather than author work.
+
+## Sami's nine conditions
+
+| # | condition | verdict | evidence |
+|---|---|---|---|
+| 1 | changes are ULP-level, not semantic | **PASS** | see below |
+| 2 | `max_abs_pixel_delta` reported | **PASS** | 1 / 1 / 1 / 8 / 81 / 67 |
+| 3 | fraction of pixels changed | **PASS** | 3.5e-6 / 2.2e-6 / 1.1e-6 / 8.7e-6 / 3.8e-6 / 4.9e-5 |
+| 4 | fraction changed by > 1 level | **PASS** | 0 / 0 / 0 / 1.4e-6 / 8.1e-7 / 5.4e-7 (0/0/0/5/3/2 px) |
+| 5 | official-reference fidelity unchanged or improved | **PASS in substance** — see the judgement below; the author's comparator says otherwise on a zero-tolerance sign test | `refreeze/compare_refreeze.json` |
+| 6 | all Gate-A checks other than the replaced digest PASS | **PASS** | `refreeze/gatea_branch.json`, `all_pass: true` |
+| 7 | no Step-5 representative surface materially changes | **PASS** | `refreeze/step5_surfaces_compare.json`, `all_untouched: true` |
+| 8 | batch-size invariance FAIL → PASS | **PASS**, decisively | probe 6407151 vs 6410105 |
+| 9 | determinism / order / chunk invariance PASS | **PASS** | `gatea_branch.json` |
+
+### (1) ULP-level, not semantic — PASS, and it is an accuracy *improvement*
+
+I read the diff. `mvp_rows` computes **the same product with the same association** —
+`(proj @ view) @ M`, exactly as before — but in float64 via four unrolled elementwise products
+(`_mm4`) and rounds **once** to `M.dtype`. So the new value is the correctly-rounded double-precision
+product; the old one was a float32 cuBLAS batched GEMM. The new path is strictly *closer to the exact
+value*, not a different rendering rule: no change to geometry, camera, visibility, materials or
+lighting. Shapes check out for both `view (4,4)` and `view (B,4,4)` (`vp[None,None]` / `vp[:,None]`
+broadcast against `M (B,G,4,4)`). The code is generic — no env reference anywhere in `mvp_rows`,
+`_mm4` or `clip`. Cost is negligible (B·G 4×4 products; ~3.4 MFLOP fp64 at B=4096).
+
+That the change *improves* fidelity on three cells and worsens it by ~1e-6 on three is exactly what
+removing a rounding error of the same order as the residual produces: sign-random.
+
+**Note the trade honestly:** the six locomotion cells were **already** batch-size invariant
+(`MujocoHopper`, probe 6407151: 0 rows differ, max 0, pre-mvp). The mvp change is needed only by
+`PFRocketLanding`, whose 13 geoms at 100–500 m coordinates cross cuBLAS's kernel-selection threshold.
+A per-caller opt-in flag was available and was **not** taken — correctly, because a renderer whose
+semantics depend on which env calls it is the exact fork the Step-6 policy addendum forbids. That is
+why the six must be re-baselined, and it is the right call.
+
+### (5) Is this a "fidelity regression" in Sami's sense? — my judgement: **no**
+
+Three cells move in the "worse" direction on one metric each. Put beside the cells' own measurement
+reproducibility:
+
+| cell | mean_abs Δ | \|declared − this draw\| | ratio | ssim Δ | headroom to `ssim_min` | ratio |
+|---|---|---|---|---|---|---|
+| HalfCheetah | −2.7e-07 | 4.69e-02 | 172,883× | +2.5e-10 | 2.66e-02 | 1.1e+08 |
+| Hopper | −2.7e-07 | 1.50e-01 | 553,243× | +2.9e-09 | 2.81e-02 | 9.7e+06 |
+| **Walker2d** | 0.0 | 6.06e-02 | — | **−2.9e-09** | 2.72e-02 | 9.5e+06 |
+| **Ant** | **+2.7e-06** | 1.81e-02 | 6,679× | **−2.6e-07** | 2.76e-02 | 1.1e+05 |
+| **Humanoid** | **+3.5e-06** | 9.56e-02 | 27,098× | **−1.9e-07** | 3.10e-02 | 1.6e+05 |
+| Swimmer | −1.6e-05 | 2.23e-03 | 141× | +7.1e-08 | 2.22e-02 | 3.1e+05 |
+
+The "regressions" are **2 to 5 orders of magnitude below the gap between each cell's declared fidelity
+value and what the same code measures on this node and draw** — i.e. far below the noise floor the
+declaration itself was set against. Against the declared ceilings the margin is 0.73–1.46 in
+`mean_abs` (5–6 orders above the deltas) and 1e5–1e8× in SSIM. `within8_frac` is **unchanged to the
+last digit on five of six** cells. Attributing a −2.9e-09 SSIM move on Walker2d to the transform
+rather than to the four pixels that flipped is not a claim the data supports.
+
+On "visually meaningful": the worst cell changed **180 px of 3,686,400** (2.8 px per 240×240 frame);
+the largest per-pixel delta (Humanoid, 81) occurs on **14 pixels across 64 frames** — 0.22 px/frame.
+A large *value* on a tiny *count* is the signature of a silhouette/edge pixel swapping which surface
+it samples after a sub-pixel boundary move, which is precisely a rounding change at a geometric
+boundary and not a change in what is drawn. Nothing here is visible.
+
+**So: unchanged-or-improved in the operational sense Sami's ruling is about.** Report it to Sami as:
+three cells move by ~1e-6 in the unfavourable direction on one metric, three move the other way, all
+six stay inside their declared thresholds by 3–5 orders, and the moves are 2–5 orders below the cells'
+own draw-to-draw reproducibility.
+
+## Required change
+
+### RD-1 (blocking the merge gate, not the engineering) — the comparator mislabels three cells and reports `refreeze_ok: false`
+
+`refreeze/compare_refreeze.json` — the artifact the merge gate reads — says:
+
+```
+refreeze_ok: false
+MujocoWalker2d  verdict MEANINGFUL_CHANGE   (max delta 1, 4 px, 0 px >1 level)
+MujocoAnt       verdict MEANINGFUL_CHANGE
+MujocoHumanoid  verdict MEANINGFUL_CHANGE
+MujocoSwimmer   verdict ULP_ONLY            (max delta 67, 180 px, 2 px >1 level)
+```
+
+Swimmer changes 45× more pixels than Walker2d with a 67× larger maximum delta and is labelled
+`ULP_ONLY`; Walker2d changes 4 pixels and is labelled `MEANINGFUL_CHANGE`. The label has nothing to do
+with the pixel evidence. `refreeze_locomotion.py:239–243, 266–269`:
+
+```python
+fid["regressed"] = bool(fid["mean_abs"]["delta"] > 0
+                        or fid["within8_frac"]["delta"] < 0
+                        or fid["ssim"]["delta"] < 0)
+...
+cell["verdict"] = ("IDENTICAL" if identical else
+                   "ULP_ONLY" if not fid_bad and not ds_bad else "MEANINGFUL_CHANGE")
+```
+
+`regressed` is a **zero-tolerance sign test**: any strictly unfavourable delta, at any magnitude, flips
+it, and the verdict is `MEANINGFUL_CHANGE` iff `regressed`. A −2.9e-09 SSIM move therefore prints the
+word "MEANINGFUL". Under Sami's ruling ("any visually meaningful change or fidelity regression → stop
+and escalate") the coordinator cannot merge against an artifact that says the re-freeze did not pass.
+
+**Fix:** give `regressed` a stated tolerance and rename the verdict so the label describes the
+evidence — e.g. regressed only if a metric moves unfavourably by more than a declared epsilon tied to
+the measurement's own reproducibility (a per-metric epsilon at, say, 1e-3 of the declared value leaves
+4+ orders of margin over everything seen here), and emit the magnitudes beside the verdict. **No GPU
+job is needed:** every input to the classifier — the per-cell pixel counts, every fidelity delta, the
+declared values and the downsample bounds — is already inside `compare_refreeze.json`, so the
+regeneration is a pure post-process over the committed file. (The per-cell `*_<cell>.npz` frames are
+*not* committed, but the classifier does not need them.) Update `findings.md` to match.
+
+## Open certification items (coordinator ruling, not author work)
+
+The job's GPU conformance run is **3 failed, 228 passed, 63 skipped** — and **all three failures are
+`[PFRocketLanding]`; zero `Mujoco*` failures**, so the re-baselined six are clean.
+
+1. **`test_color_knobs_apply_the_requested_color[PFRocketLanding]` is structurally unsatisfiable.**
+   The test asserts the requested RGB triple appears verbatim in the frame. Under TinyRenderer's
+   declared law every material colour is multiplied by
+   `0.6 + 0.35·max(0,n·l) + 0.05·max(0,r_z)²`, whose **maximum over all normals is 0.993567** (I
+   maximised it numerically over a 2001×4001 grid). So a requested channel of 200 can never render
+   brighter than **198**, 33 → 32, 17 → 16 — for *any* correct implementation of this reference
+   renderer. All five knobs fail, and all six locomotion cells pass because MuJoCo's additive law
+   reaches and clamps at 1.0. I verified separately (Appendix 1) that the knobs are wired correctly:
+   the cell's colour table matches `getVisualShapeData` to **1.19e-08** on every geom. **The test needs
+   a law-aware form** (compare our knob response against the *official* frame's knob response, or
+   allow the declared shading scale); it lives in policy-frozen `tests/gpu/`, which the author
+   correctly did not touch.
+2. **`test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]`** — the frozen
+   bound table has no entry for a new cell. Needs an entry, i.e. a `tests/gpu/` edit under coordinator
+   ownership.
+3. **`test_visual_tier_matches_its_declared_fidelity[PFRocketLanding]`** failed in job 6410105 because
+   the declaration was still the `None` placeholder at the measured tree `726241e`. The declaration was
+   filled afterwards, in `7b2e45c`. **No GPU run exists at `7b2e45c`, so this test has never been
+   observed green against the filled declaration.** It will pass — the four recorded draws are
+   7.482–7.709 / 0.961–0.962 / 0.854–0.868 against ceilings 10.0 / 0.91 / 0.80 — but that is inference,
+   not evidence, and the merge record should say so.
+
+## Everything else verified
+
+* **Scope / hygiene.** `examples/results/step4|5|6`: **0 files**. `tests/gpu`: **0 files**. Non-step7
+  library files: still only `stable_envs/envs/rocket_landing.py`, `stable_envs/render/nvdiff.py` and
+  the two test files. Trailer grep **0**; sole author `sami-bg <samibghanem@gmail.com>`. `nvdiff.py` is
+  unchanged between the measured tree `726241e` and the tip, so the re-freeze evidence is not stale.
+* **Unit suite.** Branch `7b2e45c`: **2 failed, 857 passed, 7 skipped**; pristine `76dc511`:
+  **2 failed, 823 passed, 6 skipped** — the same two pre-existing failures
+  (`render_mjwarp.py --help`, `test_every_cited_scratch_path_resolves`). No new failures.
+* **(6) Gate A, all six on the branch:** determinism identical; batch invariance 0; **batch-size
+  invariance 0 at (1, 3, 7, 8, 64, 256)**; order independence 0 (permutation and duplicate); chunked
+  render 0 at chunks (1, 7, 64); render purity 0 on all four probes; no dead dims. `all_pass: true`.
+* **(7) Step-5 surfaces:** PushT `[scene]`, DMCReacherEasy/Hard `[mjwarp, raycast3d]` —
+  `digest_ours` equal on baseline, branch **and the frozen Step-5 value**; `digest_official` identical;
+  mean pixel identical to the last digit; and a call counter on `Scene.clip` / `BatchRenderer.render`
+  records **0 calls** on both legs, so nvdiff is not on those paths at all. `all_untouched: true`.
+* **(8) The defect the change exists to fix:** pre-mvp (`cf355a3`, job 6407151, gpu2109),
+  `PFRocketLanding` row 0 rendered alone vs inside a batch of 64 differs by **max 255 on 10 pixels**,
+  and **52 of 64 rows** differ from their single-row render. Post-mvp (`726241e`, job 6410105,
+  gpu2106): **0 rows differ; max 0, 0 px at every prefix (1,2,3,4,7,8,15,16,17,24,31,…)**.
+  `MujocoHopper` was 0 on both legs.
+* **Both legs, one job, one card:** `same_gpu: true`, `same_host: true`, job 6410105 on gpu2106, 64
+  states per cell at 240 px = 3,686,400 px, and `states_sha256_match: true` on all six — the two legs
+  compared the *same* states.
+* **`downsample_exact_frac`:** moves ≤ 8.7e-06 with 1.2e-03–5.8e-03 of headroom;
+  `bound_needs_update: false` on all six; the bound's source is correctly identified as
+  `tests/gpu/test_reproducibility.py`, not a Step-4 artifact. I confirm the six cells have **no frame
+  digest under `examples/results/step4`** — consistent with `examples/results/step4` being untouched.
+* **Rocket declaration = the machine-generated block, exactly.** `visual_fidelity` matches
+  `tier/job6410105/declaration_block.json` field for field; the headline numbers are the **worst of the
+  four draws** (7.709024→7.71, 0.961288→0.961, 0.854496→0.854), and the draws are recorded. Ceilings
+  vs the family's realised ratios: `mean_abs_max` ×1.297 (family 1.322–1.369 — slightly *tighter*),
+  `within8_min` ×0.947 (family 0.942–0.963 — **inside the band**), `ssim_min` ×0.937 (family
+  **0.967–0.979** — *looser* than any existing cell; see minors). `UNMEASURED` is gone; the
+  `measured_at` string names GPU, node, job, tree, torch and nvdiffrast versions.
+* **Tier, at the frozen definitions:** R = 241.51 (3374.4 f/s at B=4096 vs 13.97 f/s official,
+  same node), cores = 2.606, `cpu_frac` 1.027 → no `HOST_BOUND`, `best_certified_batch` 4096 (never 1),
+  and **`BATCH_SCALES` FAILS at 14.17 (bar 20) so the tier is correctly capped at `GPU_PARITY` with
+  qualifier `BATCH_SCALES_FAIL`** — the RC-3 cap I asked for, working as specified.
+* **Contact-band flag does not narrow `sample_states`.** `sample_states` is unchanged in the diff; the
+  docstring states the distribution is not narrowed; the fallback returns swm's *synced* picture and
+  flags it, and the shared `check_visual_fidelity` keeps those rows, which is the **conservative**
+  direction (the synced picture differs from the lagged one by the whole substep lag, so keeping it can
+  only make the measured fidelity worse). Measured share 1/960 over 15 seeds × 64 states; **0 rows in
+  any of the four certification draws** (`failures: []`, `unreachable_rows_total: 0`).
+  `_reference_frame` keeps the strict raising form for the validators.
+
+## Minors (worth a line each, none blocking)
+
+* **`ssim_min` is looser than the family.** `fill_declaration.py` uses ×0.94 for the SSIM floor; the six
+  locomotion cells' realised floors are ×0.967–0.979. 0.80 vs a ×0.97 convention's 0.83 is 0.03 of
+  unjustified slack on a declaration whose measured value is 0.854. Either use the family ratio or say
+  in the comment why this cell needs a wider floor.
+* **`last_reference_unreachable` is mutable class state** overwritten by each `reference_render` call
+  and read out-of-band. It is on the reference side, so `check_render_is_pure` is unaffected, but the
+  substitution is **invisible to the shared `check_visual_fidelity` API** — any future caller of the
+  generic conformance function gets a synced frame silently. `measure_tier.py` does read the flag
+  (`unreachable_rows`, `unreachable_rows_total`); a generic caller would not. Prefer returning the
+  flags alongside the frames.
+* **The baseline leg's `sha` is still `"unknown"`** in both `compare_refreeze.json` and
+  `step5_surfaces_compare.json` (the baseline copy is a `git archive` with no `.git` and no
+  `.git_sha`); the branch leg has a real SHA. The baseline side is attributed only by `pythonpath` /
+  `stable_envs_file` — adequate, but the D1 fix should be applied to the baseline copy too.
+* **Register for Sami:** `BATCH_SCALES` fails at 14.17 not because the renderer does not batch — it
+  reaches 3374 f/s at B=4096 and R = 241 — but because `fps(1) = 238` is unusually *high* (the chunked
+  path is efficient at B=1). §6.7 set that bar to catch "a renderer that is not actually batching
+  (≈1×)". A 14× scaling cell is being capped at `GPU_PARITY` by a bar aimed at 1× cells. That is the
+  frozen contract applied correctly and I am not proposing to change it, but it is a definitional edge
+  case the coordinator should surface rather than let the cell carry a `GPU_PARITY` badge unexplained.
