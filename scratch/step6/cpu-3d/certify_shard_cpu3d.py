@@ -48,6 +48,21 @@ def git_commit(tree: Path) -> str:
         return "unknown"
 
 
+def _states_file(name: str):
+    """The cell's frozen corpus: Step 4's if it has one, else a Step-7 corpus (a cell that landed
+    after the Step-4 freeze -- DMCQuadrupedWalk -- keeps its candidate corpus under
+    examples/results/step7/<ws>/phase1/corpus/states/ until the Step-8 freeze), else a clear error
+    instead of a FileNotFoundError that takes the whole shard down."""
+    p = ROOT / f"examples/results/step4/states/{name}.npz"
+    if p.is_file():
+        return p
+    hits = sorted((ROOT / "examples/results/step7").glob(f"*/phase1/corpus/states/{name}.npz"))
+    if hits:
+        return hits[0]
+    raise FileNotFoundError(f"{name}: no frozen corpus under examples/results/step4/states or "
+                            f"examples/results/step7/*/phase1/corpus/states")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
@@ -141,8 +156,8 @@ def main() -> int:
             continue
         cls = se.REGISTRY[name]
         probe = make_env(name, 1, None, None)
-        pool = np.asarray(np.load(ROOT / f"examples/results/step4/states/{name}.npz")["states"],
-                          np.float32)
+        states_file = _states_file(name)
+        pool = np.asarray(np.load(states_file)["states"], np.float32)
         frame0 = probe.render(pool[:1])
         hw = (int(frame0.shape[1]), int(frame0.shape[2]))
         rec = {"env": name, "projected_to": universe.get(name, [name]), "device": a.device,
@@ -151,7 +166,7 @@ def main() -> int:
                "reference_id": getattr(cls, "reference_id", None),
                "fidelity_tier": getattr(cls, "fidelity_tier", None),
                "state_dim": int(getattr(cls, "state_dim", 0) or 0),
-               "states_source": str(ROOT / f"examples/results/step4/states/{name}.npz")}
+               "states_source": str(states_file)}
         del probe
 
         ref_env = C.reference_env(cls, rec["size"])
