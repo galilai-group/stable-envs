@@ -290,8 +290,12 @@ _SWM_SMALL_TARGET = 0.015
 #: ``stable_worldmodel``'s ``target.shape`` is ``Discrete(2)`` over a 0.015 box and a 0.015 sphere, and
 #: neither is the compiled model's own target (``sphere size=.02``, from ``manipulator.xml``'s ``ghost``
 #: class) — so the leaf carries THREE alternatives and its default is index 2, the model's own. That is
-#: what keeps ``check_default_style_is_official`` a statement about the compiled model while still
-#: making the registered SWM default reachable, which is the Gate-F obligation.
+#: what keeps the DEFAULT STYLE a render of the compiled model, which is the appearance every parity
+#: number here is measured under, while still making the registered SWM default reachable, which is the
+#: Gate-F obligation. Note what that is NOT: ``check_default_style_is_official`` compares
+#: ``render(states)`` against ``render(states, style=default_style())`` and never touches the official
+#: renderer, so it cannot see a default that drifted off the compiled model. The ``len(cur) != 1``
+#: assertion in ``make_variation_space`` is what covers that, and it is why the assertion exists.
 SHAPE_KNOB_SPECS: dict[str, dict] = {
     "DMCManipulatorBringBall": {
         "target_ball": ((R3.BOX, (_SWM_SMALL_TARGET,) * 3),            # swm target.shape = 0
@@ -950,9 +954,13 @@ class _DMCModel(StableEnv):
     #: constant over a bake group and an episode draw is not.
     #:
     #: EXACTLY ONE alternative must match the compiled model, and that index becomes the leaf's
-    #: ``init_value`` — so ``check_default_style_is_official`` is true by construction rather than by a
-    #: transcribed constant, and a model whose target changes shape upstream fails loudly here instead
-    #: of silently redefining what "default" means.
+    #: ``init_value``. What that buys, stated precisely because it is easy to overclaim: the DEFAULT
+    #: STYLE renders the compiled model rather than a transcribed constant, so the appearance the parity
+    #: numbers are measured under is the one ``suite.load`` compiles, and a model whose target changes
+    #: shape upstream fails LOUDLY here instead of silently redefining what "default" means.
+    #: ``check_default_style_is_official`` does NOT establish that: it compares ``render(states)``
+    #: against ``render(states, style=default_style())`` and never touches the official renderer, so a
+    #: default that had drifted off the compiled model would pass it. This assertion is the cover.
     SHAPE_KNOBS: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
 
     def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
@@ -1239,8 +1247,20 @@ class _DMCModel(StableEnv):
                 raise RuntimeError(
                     f"{type(self).__name__}: {len(cur)} of the {len(alts)} declared shapes for "
                     f"{gname!r} match the compiled model (type {int(pr['geom_type'][gid])}, size "
-                    f"{list(pr['geom_size'][gid])}); exactly one must, or the leaf's default is not "
-                    f"the official appearance")
+                    f"{list(pr['geom_size'][gid])}); exactly one must, or this env's DEFAULT STYLE "
+                    f"stops being a render of the compiled model — which is the appearance every "
+                    f"parity number here is measured under, and which "
+                    f"check_default_style_is_official cannot see (it compares the default style "
+                    f"against itself, never against the official renderer)")
+            if gname in space:
+                # The leaf lives at ``<geom name>.shape``, so a geom named after one of the groups
+                # above would REPLACE that group and silently delete every leaf in it. Nothing in the
+                # suite is named ``material``/``light``/``camera``/``visibility``, and a domain that
+                # is must choose a naming rule deliberately rather than lose its colour knobs here.
+                raise RuntimeError(
+                    f"{type(self).__name__}: geom {gname!r} would put its shape leaf at "
+                    f"{gname}.shape and overwrite the existing {gname!r} variation group "
+                    f"({sorted(space[gname])}); rename the group or the leaf")
             space[gname] = Dict({"shape": Discrete(len(alts), init_value=cur[0])})
         return Dict(space)
 
@@ -1461,6 +1481,20 @@ class DMControlSuite(_DMCModel):
         m.light_specular[:] = pr["light_specular"]
         # SHAPE, before visibility so that hiding still wins. Absolute assignment from the pristine
         # arrays restored above, so baking B after A gives the same model as baking B first.
+        #
+        # WHAT THIS LEAVES STALE, recorded rather than discovered later: ``geom_rbound`` and
+        # ``geom_aabb`` are COMPILED from geom_type/geom_size and MuJoCo does not recompute them when
+        # the arrays are written, so after a shape change they describe the compiled shape. That is
+        # harmless for every consumer here and it is worth saying why rather than asserting it.
+        # RENDERING does not read them: ``mjv_updateScene`` builds an ``mjvGeom`` from type, size and
+        # the xpos/xmat this file supplies, and ``_prims`` reads the same two arrays directly, so the
+        # ray-caster's own bound (``R3.screen_span``'s bounding sphere from ``sc.prims.size``) is
+        # rebuilt at every bake. COLLISION does read rbound, through the broadphase -- but the only
+        # geom any ``SHAPE_KNOBS`` entry touches is a ``ghost``-class target with ``contype=0
+        # conaffinity=0``, and nothing in this file ever steps the physics: ``_fk`` runs
+        # ``mj_kinematics`` (or ``mj_forward`` for the tendon domains, which have no shape leaf).
+        # A shape leaf on a COLLIDING geom would need ``mj_setConst``/recompilation, and would be
+        # changing the dynamics as well as the picture, which is not what an appearance knob is.
         for gname, alts in self.SHAPE_KNOBS.items():
             gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
             k = int(round(float(self._var(variation, f"{gname}.shape")[0])))
@@ -1520,11 +1554,28 @@ class DMControlSuite(_DMCModel):
         Treating them as movers rather than re-baking per draw is the difference between one bake per
         appearance and one bake per episode: a batch of 1024 states from 1024 episodes would otherwise
         cost 3072 MuJoCo renders.
+
+        A BODY OR LIGHT SLOT CONTRIBUTES NOTHING HERE, and it is skipped explicitly rather than falling
+        through. The second rule exists only to rescue an element the FIRST rule misclassifies, and the
+        first rule misclassifies exactly one thing: an element hanging off the WORLD body whose pose the
+        episode nevertheless moves (``reacher``'s target geom, ``finger-turn``'s target site). A body
+        slot cannot be in that position -- ``manipulator``'s ``target_ball`` is its own body, so every
+        geom on it already has ``geom_bodyid != 0`` and the first rule takes it -- and a light is not
+        geometry at all. Letting them fall through was the bug this branch shipped and review caught:
+        ``(ep_g if kind == "geom" else ep_s).add(eid)`` filed manipulator's BODY id 11 into the SITE
+        set against ``nsite = 9``, which was inert only because no site happened to carry that id. An
+        id-space confusion that is inert by arithmetic accident is a defect, not a style point: a
+        domain whose drawn body id collided with a real site id would silently promote an unrelated
+        site to a mover and take it out of the plate.
         """
         ep_g, ep_s = set(), set()
         for arr, i in self._slots():
             kind, eid = _slot_element(m, arr, i)
-            (ep_g if kind == "geom" else ep_s).add(eid)
+            if kind == "geom":
+                ep_g.add(eid)
+            elif kind == "site":
+                ep_s.add(eid)
+            # body / light: see the docstring -- different id space, and nothing to rescue
         g = [i for i in self._visible(m, "geom")
              if int(m.geom_bodyid[i]) != 0 or i in ep_g]
         s = [i for i in self._visible(m, "site")

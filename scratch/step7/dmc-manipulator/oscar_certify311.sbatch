@@ -39,7 +39,10 @@ $PY scratch/step7/$WS/probe_draws.py --size 224 --draws 41 --n 64 --out "$OUT/os
 $PY scratch/step7/$WS/probe_draws.py --size 84  --draws 41 --n 64 --out "$OUT/oscar"
 
 # 2. the full Gate-A conformance run for the DMC shard, CPU, on this pin
+# ABSOLUTE --states-dir: scratch/step6's harness records that a relative one killed every env in
+# the job while SLURM still reported COMPLETED.
 $PY examples/fidelity_step4.py --shard dmc --device cpu \
+    --states-dir "$SCR/se7/$WS/examples/results/step4/states" \
     --out "$OUT/replay/dmc_cpu_oscar311.json"
 
 # 3. the new cell's own frozen corpus (states + digests), proposed for the Step-8 freeze

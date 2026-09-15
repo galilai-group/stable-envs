@@ -185,3 +185,93 @@ def test_the_shape_leaf_default_is_the_compiled_model(cell):
         assert not np.array_equal(base, other), (
             f"target_ball.shape = {k} changed no pixel; a declared alternative that cannot be seen "
             f"fails check_variations_do_something and advertises support that is not there")
+
+
+# --------------------------------------------------------------------------- synthetic bodies
+#
+# ``manipulator`` is the only registered cell with a body slot and its ``target_ball`` body carries
+# exactly ONE drawn geom, so the N>1 path and the both-kinds raise below are reachable from no env in
+# the registry. Review asked for them to be covered rather than left to the next domain, and they are
+# covered against a hand-built model instead of a real one: the question is about ``_hideable``'s
+# resolution rule, not about any suite task.
+
+_SYNTH_XML = """
+<mujoco model="synthetic body slot">
+  <asset><material name="mk" rgba=".6 .3 .3 1"/></asset>
+  <worldbody>
+    <light name="l" directional="true" pos="0 0 1" dir="0 0 -1"/>
+    <geom name="floor" type="plane" size="1 1 1"/>
+    <body name="marker" pos="0 0 .3">
+      <geom name="marker_a" type="sphere" size=".02" material="mk"/>
+      <geom name="marker_b" type="box" size=".01 .01 .01" pos=".05 0 0" material="mk"/>
+      <geom name="marker_hidden" type="sphere" size=".02" pos="-.05 0 0" rgba="1 0 0 0"/>
+      <geom name="marker_grouped" type="sphere" size=".02" pos="0 .05 0" group="3" material="mk"/>
+      {extra_site}
+    </body>
+  </worldbody>
+</mujoco>
+"""
+
+
+def _synth_cls(extra_site=""):
+    """A ``DMControlSuite`` subclass over a hand-built model whose episode draws ``body_pos[marker]``.
+
+    Only ``_slots``/``_model``/``_pristine`` are overridden -- ``_hideable`` is the shipped one, which
+    is the whole point.
+    """
+    import mujoco
+    m = mujoco.MjModel.from_xml_string(_SYNTH_XML.format(extra_site=extra_site))
+    bid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "marker")
+    pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
+                    geom_rgba=np.array(m.geom_rgba, copy=True),
+                    site_rgba=np.array(m.site_rgba, copy=True),
+                    geom_group=np.array(m.geom_group, copy=True),
+                    site_group=np.array(m.site_group, copy=True))
+
+    class Synth(D.DMControlSuite):
+        _M, _PR = m, pristine
+
+        @classmethod
+        def _slots(cls):
+            return (("body_pos", 3 * bid), ("body_pos", 3 * bid + 2))
+
+        @classmethod
+        def _model(cls):
+            return cls._M
+
+        @classmethod
+        def _pristine(cls):
+            return cls._PR
+
+    return Synth
+
+
+def test_a_body_slot_with_several_drawn_geoms_resolves_to_all_of_them():
+    """N > 1, and the two filters that must still apply inside the body.
+
+    ``marker`` carries four geoms: two drawn, one at alpha 0 and one in group 3. The leaf must cover
+    the two drawn ones and neither of the others -- a leaf that included a hidden or undrawn geom
+    would advertise a knob that cannot change a pixel, which is what
+    ``check_variations_do_something`` fails on.
+    """
+    import mujoco
+    cls = _synth_cls()
+    hide = cls._hideable()
+    assert len(hide) == 1, hide
+    kind, name, ids = hide[0]
+    assert (kind, name) == ("geom", "marker"), hide
+    got = sorted(mujoco.mj_id2name(cls._M, mujoco.mjtObj.mjOBJ_GEOM, i) for i in ids)
+    assert got == ["marker_a", "marker_b"], (
+        f"the body leaf resolved to {got}; marker_hidden is alpha 0 and marker_grouped is in group 3, "
+        f"and neither is drawn at the default MjvOption")
+
+
+def test_a_body_carrying_both_drawn_geoms_and_drawn_sites_raises():
+    """One leaf cannot name two element kinds, and hiding half a marker silently is worse than failing.
+
+    ``_apply_variation`` zeroes ``<kind>_rgba[eid, 3]`` for one ``kind``, so a body with both would
+    have its geoms hidden and its site left drawn.
+    """
+    cls = _synth_cls(extra_site='<site name="marker_s" type="sphere" size=".02" group="0"/>')
+    with pytest.raises(RuntimeError, match="drawn geoms .* and drawn sites"):
+        cls._hideable()

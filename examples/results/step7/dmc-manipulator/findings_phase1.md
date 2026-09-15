@@ -27,7 +27,12 @@ new unit-test file.
 compiled model's own target (`sphere size=.02` from `manipulator.xml`'s `ghost` class), so the leaf
 carries SWM's `.015` box (0), SWM's `.015` sphere (1) and dm_control's `.02` sphere (2), and
 `make_variation_space` asserts that **exactly one** alternative matches the pristine model and makes
-that index the `init_value`. `check_default_style_is_official` is therefore true by construction.
+that index the `init_value`. What that buys, stated precisely: **the default style renders the
+compiled model** — the appearance every parity number here is measured under — and a model whose
+target changes shape upstream fails loudly instead of silently redefining "default". It is *not*
+`check_default_style_is_official` that establishes this: that check compares `render(states)` against
+`render(states, style=default_style())` and never touches the official renderer, so a default that had
+drifted off the compiled model would pass it. The `len(cur) != 1` assertion is the cover.
 
 ## 2. Certified configuration (coordinator ruling applied)
 
@@ -122,10 +127,17 @@ between the two trees (diffed), so neither is mine. The new
 
 ### Candidate frozen corpus
 
-`examples/results/step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz` — 256 states x 15
-dims from the domain's own visited distribution at seed 20260915, in the Step-4 `states`/`meta` format
-so the Step-8 freeze can adopt it unchanged, plus `digests.json` (our and official digests at 224 and
-84 over the first 64). **Candidate only; not frozen in Step 7.**
+`examples/results/step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz` — the **selected
+64** x 15, produced by importing `fidelity_step4.select` at `fidelity_step4.STATE_SEED = 20260909`
+rather than reimplementing it, in the exact Step-4 `states`/`meta` schema (`env`, `seed`, `selection`,
+`state_dim`, `state_names`, `sha256`, `pool`, `kept`, `n_typical`, `n_extreme`, `n_spread`, `indices`
+— **no Step-4 key missing**, verified against `DMCReacherHard.npz`), plus additive Step-7 provenance
+keys `corpus_for` does not read. `sha256 = 48db2b1adf54a75d816eb068f815257ffa7e1ab238218c4f9e64568873b749d8`;
+`n_typical 1 / n_extreme 25 / n_spread 38`. The 256-row **pool** is kept beside it at
+`corpus/pool/DMCManipulatorBringBall_pool.npz`, out of the path `corpus_for` reads.
+Digests re-emitted on the selected 64: at 224 px `digest_ours 0327b3b4…`, `digest_official 73c43f90…`,
+exact 0.983230, **interior 1.0, 0 bad of 1,386,228**; at 84 px `bb2b48ad…` / `1367ea83…`, exact
+0.978310, **interior 1.0, 0 bad of 33,081**. **Candidate only; not frozen in Step 7.**
 
 ### Throughput (local Mac CPU — NOT a certification number)
 
@@ -217,12 +229,28 @@ Also pending: `tests/gpu/*` (CUDA-only locally unreachable), the paired performa
 |---|---|
 | `agent.color` | covered — `material.self` |
 | `target.color` | covered — `material.target` |
-| `light.intensity` | covered in range — `light.diffuse_scale` in [0.2, 1.8] on base .6 gives [.12, 1.0] after the clip; SWM's 0.7 is exact at scale 7/6 |
+| `light.intensity` | covered in range — `light.diffuse_scale` in [0.2, 1.8] on base .6 gives [.12, 1.0] after the clip; SWM's 0.7 is reached at scale 7/6 **exact to the style pipeline's quantisation, not bit-exact** — see below |
 | `rendering.render_target` | **covered now** — `visibility.target_ball` (change b) |
 | `target.shape` | **covered now** — `target_ball.shape`, both SWM alternatives reachable (change c) |
 | `agent.upper_arm_density`, `agent.hand_density` | n/a — physics (mass); no pixel effect |
 | `agent.upper_arm_length` | **dead in SWM itself** — `modify_mjcf_model` never reads it (`# TODO should modify length of arm`). Not implemented: a knob the reference does not honour. |
-| `floor.color` | **GAP, out of phase-1 scope by ruling.** SWM edits the builtin `grid` **texture**'s `rgb1`/`rgb2`, not a material rgba, and `_bundle` holds **one `mujoco.Renderer` per (domain, size) that is never closed** — releasing an EGL context corrupts every other live one. **Proposed measurement:** regenerate the builtin checker into `m.tex_data`/`m.tex_rgb` in place from `(rgb1, rgb2, width, height, mark, markrgb)` and re-upload, then assert byte-equality against a model compiled from an XML carrying those colours directly, over the 64-state corpus at 224 px. If that is exact, `floor.color` becomes an ordinary plate leaf at zero GL cost; if not, the fallbacks are keying the Renderer on the texture (N live contexts) or declaring the leaf out of scope with this measurement attached. |
+| `floor.color` | **GAP, out of phase-1 scope by ruling — and a RANGE gap, not a default gap.** SWM edits the builtin `grid` **texture**'s `rgb1`/`rgb2`, not a material rgba, and `_bundle` holds **one `mujoco.Renderer` per (domain, size) that is never closed** — releasing an EGL context corrupts every other live one. **Proposed measurement:** regenerate the builtin checker into `m.tex_data`/`m.tex_rgb` in place from `(rgb1, rgb2, width, height, mark, markrgb)` and re-upload, then assert byte-equality against a model compiled from an XML carrying those colours directly, over the 64-state corpus at 224 px. If that is exact, `floor.color` becomes an ordinary plate leaf at zero GL cost; if not, the fallbacks are keying the Renderer on the texture (N live contexts) or declaring the leaf out of scope with this measurement attached. |
+
+**On `light.intensity`'s exactness (C4/R8), with the mechanism rather than the label.** Applied
+directly, the scale is bit-exact: `_apply_variation` with `7/6` writes `light_diffuse = 0.699999988079071`,
+which *is* `float32(0.7)`, delta 0.0. Through `render(variation=...)` it is not, and float32 is not why —
+`render` builds its style-group key with `np.round(key.astype(np.float64), 6)`, so the scale that
+reaches the bake is `1.166667` and the light lands at `0.7000002264976501`, **delta +2.4e-07**. Measured
+over 16 states at 224 px, that difference moves **0 pixels** (max 0). So: *exact to the style
+pipeline's 6-decimal quantisation, and pixel-identical at this scene's precision* — but not the word
+"exact" unqualified.
+
+**On `floor.color` being a range gap (R8).** SWM's `floor.color` `init_value` is
+`[[.1,.2,.3],[.2,.3,.4]]`, which is exactly `common/materials.xml`'s `grid` texture `rgb1`/`rgb2`. So
+the registered SWM **default** floor is already the compiled model's floor and needs no leaf at all —
+the gap is only that non-default values of that leaf are unreachable. That is a materially smaller
+claim than "the SWM default is not reproducible", and the §2 table above is unaffected: the default
+frame is reached through the other three leaves.
 
 ## 8. Report summary
 
@@ -238,3 +266,71 @@ Also pending: `tests/gpu/*` (CUDA-only locally unreachable), the paired performa
   §5 validated-exclusion contract mechanism; `floor.color` measurement scheduling; and confirmation
   that `Discrete(3)` for `target_ball.shape` (SWM's two alternatives plus the compiled model's own) is
   the right shape for the Gate-F mapping.
+
+---
+
+## 9. Review follow-up (independent review of `a635d3a`: APPROVE-WITH-CHANGES)
+
+All four required changes applied, plus the three cheap recommendations. Nothing in the renderer's
+behaviour moves: the 16-cell byte-identity and the Step-4 replay were re-run after these edits and are
+unchanged (§3), and the new cell's own digests are unchanged except where C3 deliberately changed which
+states the corpus holds.
+
+**C1 — `_movers` filed a BODY id into the SITE id set.** `(ep_g if kind == "geom" else ep_s).add(eid)`
+put manipulator's `target_ball` **body id 11** into `ep_s` against `nsite = 9`. Inert by arithmetic
+accident — no site carries id 11 — and manipulator is the first cell with a body slot, so nothing had
+exercised it. Now an explicit three-way branch that ignores body and light, with the reason recorded in
+the docstring: the second mover rule exists only to rescue an element the FIRST rule misclassifies, and
+a body slot cannot be in that position (`target_ball` is its own body, so every geom on it already has
+`geom_bodyid != 0` and rule one takes it). An id-space confusion that is inert by accident is a defect:
+a domain whose drawn body id collided with a real site id would silently promote an unrelated site to a
+mover and pull it out of the plate.
+
+**C2 — four `check_default_style_is_official` overclaims** (dmcontrol.py:293 and :953, the phase-1
+findings, and the `a635d3a` commit body). That check compares `render(states)` against
+`render(states, style=default_style())` and never touches the official renderer, so it cannot see a
+default that drifted off the compiled model. All four now say what the `len(cur) != 1` assertion
+actually protects — *the default style renders the compiled model, which is the appearance parity
+against `suite.load` is measured under* — and name the check's blind spot explicitly so the
+substitution is not made again. The commit body cannot be edited (it is `a635d3a`'s), so the correction
+is recorded here and in the two source comments.
+
+**C3 (R5) — the corpus held the POOL, not the selection.** `corpus_for` never resamples an existing
+file, so at the Step-8 freeze `states/<cell>.npz` would have handed the harness **256** states rather
+than 64, against a corpus that had never been through the selection rule, with no `sha256` or
+`indices` to verify it and a `config_id` key where the schema wants `env`. Rewritten to import
+`fidelity_step4.select` and `STATE_SEED` themselves — reimplementing the selection would be a second
+definition of the corpus, and the two would drift exactly once — and to write the selected 64 in the
+exact Step-4 schema. See §3 for the digests on the selected rows.
+
+**C4 (R8) — two wording corrections**, both now carried with their mechanism rather than a label: the
+`light.intensity` mapping is exact to the style pipeline's 6-decimal quantisation (delta +2.4e-07 on
+the light's diffuse, **0 pixels moved**), not bit-exact through `render`; and `floor.color` is a
+**range** gap, not a default gap, because SWM's `init_value` already equals the compiled `grid`
+texture's `rgb1`/`rgb2`. Both are in §7.
+
+**R2 (recommended, done)** — `tests/unit/test_dmcontrol_episode_quat.py` gains two synthetic-model
+tests, because no registered env can reach either path: `target_ball` carries exactly one drawn geom.
+A hand-built body with four geoms (two drawn, one at alpha 0, one in group 3) must resolve to exactly
+the two drawn ones, and a body carrying both drawn geoms and drawn sites must raise. 8 tests pass.
+
+**R3 (recommended, done)** — a geom named `material`/`light`/`camera`/`visibility` would put its shape
+leaf at `<group>.shape` and **replace** that whole variation group, silently deleting every colour
+knob in it. `make_variation_space` now raises on the collision rather than losing leaves.
+
+**R4 (recommended, done)** — a docstring note where `_apply_variation` writes `geom_type`/`geom_size`:
+`geom_rbound` and `geom_aabb` are compiled from those arrays and are **not** recomputed, so they go
+stale. Harmless here, and the note says why rather than asserting it — rendering never reads them
+(`mjv_updateScene` and `_prims` both read type/size directly, and `screen_span`'s bound is rebuilt each
+bake), the only geom any `SHAPE_KNOBS` entry touches is a `ghost`-class target with
+`contype = conaffinity = 0`, and nothing in this file steps the physics. A shape leaf on a *colliding*
+geom would need `mj_setConst` and would be changing dynamics, which is not what an appearance knob is.
+
+**Recorded, no action taken.** (i) `light_pos` is an allowed episode slot while `light_dir` is refused,
+and `DMCSwimmerSwimmer6` already carries two `light_pos` slots — a probable latent family defect, since
+`_Lights` is captured once per bake and a per-episode light position is no more per-row than a
+direction. Not touched here: it is a live shipped cell's behaviour and belongs to Step 8 with its own
+measurement. (ii) **0.9829 is not promoted to a floor** — the reviewer's independent draw hit 0.982834,
+below my worst 0.982859, which is exactly the margin-of-luck problem `PARITY_NOTE` records; the cell
+declares `parity_interior_min = 1.0` and no all-exact floor. (iii) The shape leaf's fidelity against
+SWM's *recompiled* MJCF is O1's question, not one this branch can answer locally.

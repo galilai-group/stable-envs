@@ -26,10 +26,14 @@ OUT=$SCR/se7/$WS/examples/results/step7/$WS
 set -x
 nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
 
-# BEFORE: the 15 pre-existing cells on the baseline tree, same card, same job
+# BEFORE: the 15 pre-existing cells on the baseline tree, same card, same job.
+# The PROBE is taken from this branch by ABSOLUTE path -- $SCR/se7/baseline is a pristine 76dc511
+# and does not contain scratch/step7/, so the relative path this script first used resolved to
+# nothing and the BEFORE arm would have been skipped by the `|| true` with SLURM still COMPLETED.
+# PYTHONPATH still points at the baseline, which is the thing being measured.
 cd "$SCR/se7/baseline"
-PYTHONPATH=$SCR/se7/baseline $PY scratch/step7/$WS/probe_identity.py \
-    --out "$OUT/gpu/identity_base_cuda.json" --device cuda || true
+PYTHONPATH=$SCR/se7/baseline $PY "$SCR/se7/$WS/scratch/step7/$WS/probe_identity.py" \
+    --out "$OUT/gpu/identity_base_cuda.json" --device cuda
 
 # AFTER: the same 15 plus the new cell, on this branch
 cd "$SCR/se7/$WS"
