@@ -679,14 +679,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'cell re-review APPROVE-WITH-CHANGES (B1-B6 closed; three declaration items: stale composite text, import-time _bundle in class doc drops the ids without swm, mean-vs-worst labelling); fix requested;
-    final check then merge'
+  status: 'C1-C3 landed (stale text removed; import-time _bundle removed, registry 78 without swm; worst-of-three declared; floors widened by the stated 0.04-margin rule: within8 0.85/0.80, ssim 0.85/0.85);
+    final check requested; merge on APPROVE'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: 7820af1c (re-measured, registered)
+  head_sha: f62625e9 (C1-C3 + recommendations)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -1281,6 +1281,8 @@ incident_log:
   item: W5 re-measured with the plate in use (Cube interior 0.958, Scene 0.922); registered; re-review requested
 - date: '2026-09-15'
   item: 'W5 cell re-review: defects closed; three declaration fixes requested'
+- date: '2026-09-15'
+  item: W5 C1-C3 landed (f62625e9); final check requested
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
