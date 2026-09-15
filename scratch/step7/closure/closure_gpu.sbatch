@@ -47,15 +47,37 @@ has () { case " $STAGES " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 # ---------------------------------------------------------------- 1. the 49-configuration replay
 if has 1; then
   stage 1 "frozen Step-4 replay, 49 render-distinct configs, cuda"
-  for S in dmc ogb raster swm fetch; do
+  # SHARDS is overridable so a follow-up job can redo one shard without redoing four.
+  for S in ${SHARDS:-dmc ogb raster swm fetch}; do
     PY=$(venv_for "$S")/bin/python
     echo "#### shard $S via $PY"
     $PY -c "import torch,sys;print('  py',sys.version.split()[0],'torch',torch.__version__,'cuda',torch.cuda.is_available())"
-    PYTHONPATH=$TREE $PY examples/fidelity_step4.py --shard "$S" --device cuda \
-        --states-dir "$TREE/examples/results/step4/states" \
-        --out "$OUT/replay/${S}${TAG}.json" 2>&1 | tail -30
+    if [ "$S" = "swm" ]; then
+      # CraftaxClassic is EXCLUDED from the shard run and asked separately below. Its frozen corpus
+      # is 127 slots wide and the cell now takes 149 (W1's partial -> full coverage change), so
+      # render() raises rather than reshaping the corpus into a different number of states -- which
+      # is the correct behaviour and which, inside a --shard run, aborts the other five configs
+      # before they are measured. Measured once as an expected raise, then the five.
+      PYTHONPATH=$TREE $PY examples/fidelity_step4.py \
+          --configs Piecewise,PiecewiseZones,SimplePointMaze,TwoRoom,TwoRoomTarget --device cuda \
+          --states-dir "$TREE/examples/results/step4/states" \
+          --out "$OUT/replay/${S}${TAG}.json" 2>&1 | tail -30
+    else
+      PYTHONPATH=$TREE $PY examples/fidelity_step4.py --shard "$S" --device cuda \
+          --states-dir "$TREE/examples/results/step4/states" \
+          --out "$OUT/replay/${S}${TAG}.json" 2>&1 | tail -30
+    fi
     echo "SHARD $S rc=${PIPESTATUS[0]} -> $OUT/replay/${S}${TAG}.json"
   done
+
+  stage 1a "CraftaxClassic: the expected raise, and the world-row replay obligation"
+  PY=$(venv_for swm)/bin/python
+  PYTHONPATH=$TREE $PY examples/fidelity_step4.py --configs CraftaxClassic --device cuda \
+      --states-dir "$TREE/examples/results/step4/states" \
+      --out "$OUT/replay/craftaxclassic_expected_raise${TAG}.json" 2>&1 | tail -12
+  echo "CRAFTAXCLASSIC_SHARD_RUN rc=${PIPESTATUS[0]} (a non-zero here is the EXPECTED raise)"
+  PYTHONPATH=$TREE $PY scratch/step7/closure/craftax_world_row_replay.py --device cuda \
+      --out "$OUT/replay/craftaxclassic_world_rows${TAG}.json" 2>&1 | tail -30
   # The four visual-tier DM Control cells carry the 3.11 reference pair their declaration names, so
   # they are replayed a second time in that pair and kept in a shard of their own (compare49 reads
   # `dmcvis`); certify.py reads the reference version off the SHARD, so putting those rows in the
@@ -72,6 +94,7 @@ if has 1; then
   for S in dmc ogb raster swm fetch dmcvis; do
     cp -f "$OUT/replay/${S}${TAG}.json" "$CDIR/conformance/${S}.json" 2>/dev/null
   done
+  ls -la "$CDIR/conformance/"
   PYTHONPATH=$TREE $(venv_for dmc)/bin/python scratch/step4/certify.py \
       --shards "$CDIR" --out "$CDIR" --doc "$SCR/logs/closure_step4_doc${TAG}_${SLURM_JOB_ID}.md" \
       2>&1 | tail -6

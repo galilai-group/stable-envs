@@ -75,6 +75,23 @@ if has D; then
   done
 fi
 
+if has E; then
+  stage E "the SAME tests/unit against the pristine 76dc511 baseline tree, same node, same venvs"
+  # "only the known pre-existing failure" is a claim about a DIFFERENCE, so the baseline has to be
+  # measured on the same architecture in the same interpreters -- the Apple M5 control answers a
+  # different machine's question. $SCR/se7/baseline is the pristine parent (.git_sha 76dc5116).
+  for KEY in step6 craftax rocket; do
+    PY=$(venv_for $KEY)/bin/python
+    [ -x "$PY" ] || { echo "SKIP venv $KEY"; continue; }
+    $PY -c "import pytest" 2>/dev/null || { echo "SKIP venv $KEY (no pytest)"; continue; }
+    TO=(); $PY -c "import pytest_timeout" 2>/dev/null && TO=(--timeout=900)
+    echo "======================================== BASELINE tests/unit in $KEY  (tree $BASE)"
+    ( cd "$BASE" && PYTHONPATH=$BASE timeout 7200 $PY -m pytest tests/unit -q -p no:randomly "${TO[@]}" 2>&1 ) \
+        | keep "$OUT/unit_tests/unit.${KEY}.baseline-76dc511${TAG}.results.txt"
+    echo "BASELINE tests/unit [$KEY] exit=${PIPESTATUS[0]}"
+  done
+fi
+
 if has C; then
   stage C "tests/unit on the certification host"
   for KEY in step6 craftax rocket; do
