@@ -31,9 +31,9 @@ import pytest
 import torch
 
 from stable_envs.core.style import StyleTensor
-from stable_envs.envs.craftax import (ATLAS_MAX_TILE_PX, N_BLOCK, N_COUNT, N_FACING, N_MOB,
-                                      N_PLAYER, N_STRIP, N_TILE, NO_PLAYER, OBS_H, OBS_W, STRIP_H,
-                                      CraftaxClassic, _Assets, _Composite)
+from stable_envs.envs.craftax import (ATLAS_MAX_TILE_PX, N_BLOCK, N_COUNT, N_FACING,
+                                      N_KEY_HALVES, N_MOB, N_PLAYER, N_STRIP, N_TILE, NO_PLAYER,
+                                      OBS_H, OBS_W, STRIP_H, CraftaxClassic, _Assets, _Composite)
 
 #: 7 and 16 are the sizes craftax ships textures for; 32 and 64 exercise the nearest-resample path
 #: and the top of the atlas budget; 65 is the first size that must fall back to the blend path.
@@ -45,9 +45,13 @@ def _env(size: int, batch: int = 8) -> CraftaxClassic:
 
 
 def _with(st: np.ndarray, **kw) -> np.ndarray:
-    """``sample_states`` output with ``is_sleeping`` pinned."""
+    """``sample_states`` output with ``is_sleeping`` and/or ``light_level`` pinned."""
     out = np.array(st, np.float32, copy=True)
-    out[:, OBS_H * OBS_W * 2 + 1 + N_STRIP] = kw["is_sleeping"]
+    j = OBS_H * OBS_W * 2 + 1 + N_STRIP
+    if "is_sleeping" in kw:
+        out[:, j] = kw["is_sleeping"]
+    if "light" in kw:
+        out[:, j + 1] = kw["light"]
     return out
 
 
@@ -71,11 +75,19 @@ def _cases(rng: np.random.Generator, env: CraftaxClassic, n: int):
                             rng.integers(0, N_MOB, OBS_H * OBS_W),
                             rng.integers(0, N_FACING, 1),
                             rng.integers(0, N_COUNT, N_STRIP),
-                            rng.integers(0, 2, 1)]).astype(np.float32)
+                            rng.integers(0, 2, 1),
+                            rng.random(1),                       # light_level anywhere in [0, 1]
+                            rng.integers(0, 65536, N_KEY_HALVES)]).astype(np.float32)
             for _ in range(n)]),
         # every row asleep, and every row awake, so neither path is only ever seen mixed
         "all_asleep": _with(env.sample_states(n, rng), is_sleeping=1.0),
         "all_awake": _with(env.sample_states(n, rng), is_sleeping=0.0),
+        # the three lighting bands, each on its own, and one batch holding all of them
+        "all_night": _with(env.sample_states(n, rng), light=0.1),
+        "all_dusk": _with(env.sample_states(n, rng), light=0.75),
+        "all_daylight": _with(env.sample_states(n, rng), light=1.0, is_sleeping=0.0),
+        "mixed_light": _with(env.sample_states(n, rng),
+                             light=np.where(rng.random(n) < 0.5, 1.0, rng.random(n))),
         # out of range in both directions, and fractional so the round() is exercised too
         "out_of_range": (rng.random((n, dim)).astype(np.float32) * 80.0 - 30.0),
     }
@@ -110,10 +122,10 @@ def test_atlas_path_equals_the_pre_step6_per_frame_composite(size):
     env = _env(size)
     n = 8
     for name, states, vals in _cases(rng, env, n):
-        blk, mob, fac, cnt, slp = _decode(env, states)
+        dec = _decode(env, states)
         sty = StyleTensor(vals, env.resolve_style(None, None, batch=n)._layout_list())
-        fast = env._render_atlas(blk, mob, fac, cnt, slp, size, sty, None)
-        slow = env._render_blend(blk, mob, fac, cnt, slp, size, sty)
+        fast = env._render_atlas(*dec, size, sty, None)
+        slow = env._render_blend(*dec, size, sty)
         assert fast.shape == slow.shape == (n, (OBS_H + STRIP_H) * size, OBS_W * size, 3)
         diff = (fast.int() - slow.int()).abs().max().item()
         assert diff == 0, f"size={size} case={name}: max|diff| = {diff}, atlas != per-frame blend"
@@ -237,7 +249,7 @@ def test_the_table_cache_is_bounded():
             f"the composited-atlas cache grew to {len(_Composite._cache)} entries"
     # and the frames are still right after an eviction
     for size in (7, 16):
-        blk, mob, fac, cnt, slp = _decode(env, states)
+        dec = _decode(env, states)
         sty = env.resolve_style(None, None, batch=1)
-        assert torch.equal(env._render_atlas(blk, mob, fac, cnt, slp, size, sty, None),
-                           env._render_blend(blk, mob, fac, cnt, slp, size, sty))
+        assert torch.equal(env._render_atlas(*dec, size, sty, None),
+                           env._render_blend(*dec, size, sty))

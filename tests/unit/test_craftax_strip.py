@@ -35,12 +35,14 @@ def states(env):
 
 
 def _set(st, **kw):
-    """A copy of ``st`` with named strip counts / is_sleeping overwritten."""
+    """A copy of ``st`` with named strip counts / is_sleeping / light_level overwritten."""
     out = np.array(st, np.float32, copy=True)
     base = OBS_H * OBS_W * 2 + 1
     for k, v in kw.items():
         if k == "is_sleeping":
             out[:, base + N_STRIP] = v
+        elif k == "light":
+            out[:, base + N_STRIP + 1] = v
         else:
             out[:, base + STRIP_NAMES.index(k)] = v
     return out
@@ -230,13 +232,14 @@ def test_player_visible_still_hides_a_sleeping_player(env, states):
 
 def test_the_first_127_slots_kept_their_meaning(env, states):
     """Appended, never reordered — which is what makes the frozen Step-4 world rows replayable."""
-    assert env.state_dim == 144
+    assert env.state_dim == 149
     assert env.state_names[:127] == (
         tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
         + tuple(f"mob_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
         + ("player_facing",))
     assert env.state_names[127:143] == tuple(f"inv_{n}" for n in STRIP_NAMES)
-    assert env.state_names[143] == "is_sleeping"
+    assert env.state_names[143:] == ("is_sleeping", "light_level",
+                                     "rng_half0", "rng_half1", "rng_half2", "rng_half3")
 
 
 def test_a_step4_shaped_row_reproduces_the_old_world_layer(env):
@@ -249,7 +252,8 @@ def test_a_step4_shaped_row_reproduces_the_old_world_layer(env):
     rng = np.random.default_rng(4)
     st = env.sample_states(8, rng)
     old = np.zeros_like(st)
-    old[:, :127] = st[:, :127]                      # counts 0, not sleeping
+    old[:, :127] = st[:, :127]                      # counts 0, not sleeping, light_level 0...
+    old[:, 127 + N_STRIP + 1] = 1.0                 # ...except daylight, which is the Step-4 state
     for t in (7, 16):
         f = env.render(old, size=t).numpy()
         w = OBS_H * t
@@ -270,9 +274,15 @@ def test_the_sampler_covers_every_count_and_both_sleep_states(env):
 
 
 def test_every_new_state_dimension_reaches_a_pixel(env):
-    """``check_state_dims_matter`` in miniature, run here so a failure names the dimension."""
+    """``check_state_dims_matter`` in miniature, run here so a failure names the dimension.
+
+    The pool is forced to contain night rows, because the four PRNG-key slots reach no pixel above
+    ``light_level = 0.5`` — 0 of 32 daylight states move when the key changes, 32 of 32 night ones
+    do. A daylight-only pool reports them as dead dimensions, which is what a wrong state contract
+    also looks like.
+    """
     rng = np.random.default_rng(11)
-    st = env.sample_states(6, rng)
+    st = _set(env.sample_states(6, rng), light=0.15)
     base = OBS_H * OBS_W * 2 + 1
     ref = env.render(st, size=16)
     for j in range(base, env.state_dim):
@@ -280,3 +290,119 @@ def test_every_new_state_dimension_reaches_a_pixel(env):
         probe[:, j] = (probe[:, j] + 25.0)
         assert not torch.equal(ref, env.render(probe, size=16)), (
             f"state dim {j} ({env.state_names[j]}) reaches no pixel under a +25 probe")
+
+
+# ---------------------------------------------------------------- night
+
+
+def test_daylight_is_the_identity_and_keeps_the_uint8_fast_path(env, states):
+    """``light == 1.0`` must be bit-identical to no post-process at all.
+
+    This is what makes the frozen Step-4 world rows replayable and what keeps an existing
+    ``CPU_EXCEPTIONAL`` cell from regressing: at full daylight and awake the batch never leaves the
+    uint8 gather, so night costs those rows nothing. Asserted against the float path, which computes
+    the whole chain, so "the identity" is a measurement rather than a code-reading.
+    """
+    st = _set(states, light=1.0, is_sleeping=0.0)
+    fast = env.render(st, size=16)
+    dec = env._decode(torch.as_tensor(st), len(st))
+    sty = env.resolve_style(None, None, batch=len(st))
+    # force the float path by asking for the blend implementation, which never short-circuits
+    slow = env._render_blend(*dec, 16, sty)
+    assert torch.equal(fast, slow)
+
+
+@pytest.mark.parametrize("light", (1.0, 0.75, 0.5))
+def test_no_noise_is_drawn_at_or_above_half_daylight(env, states, light):
+    """``intensity = max(2*(0.5 - light), 0)`` is exactly 0 there, so the key cannot reach a pixel.
+
+    Two states differing only in the PRNG key must render identically, which is both a correctness
+    statement and the reason the daylight path can skip the threefry evaluation entirely.
+    """
+    a = _set(states, light=light)
+    b = np.array(a, copy=True)
+    assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
+    b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP:] = 12345.0
+    assert torch.equal(env.render(a, size=16), env.render(b, size=16))
+
+
+def test_the_key_reaches_the_world_layer_below_half_daylight(env, states):
+    """And it must, or the four key slots are dead dimensions and the state contract is wrong."""
+    a = _set(states, light=0.1)
+    b = np.array(a, copy=True)
+    assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
+    b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP:] = 4321.0
+    fa, fb = env.render(a, size=16).numpy(), env.render(b, size=16).numpy()
+    w = OBS_H * 16
+    changed = (np.abs(fa.astype(np.int16) - fb.astype(np.int16)).max(-1) > 0)
+    assert changed[:, :w].mean() > 0.3, "the night noise field barely reaches the frame"
+    assert changed[:, w:].sum() == 0, "the PRNG key reached the inventory strip"
+
+
+def test_the_lighting_bands_are_three_different_pictures(env, states):
+    """Dusk is not daylight and not night: the enhance/tint/blend still run with weight 1-daylight.
+
+    A renderer that treated ``light >= 0.5`` as "nothing to do" would pass every noise test and be
+    wrong on 55% of the day cycle.
+    """
+    day = env.render(_set(states, light=1.0), size=16)
+    dusk = env.render(_set(states, light=0.75), size=16)
+    night = env.render(_set(states, light=0.1), size=16)
+    assert not torch.equal(day, dusk) and not torch.equal(dusk, night)
+    w = OBS_H * 16
+    for a, b in ((day, dusk), (dusk, night)):
+        assert torch.equal(a[:, w:], b[:, w:]), "the lighting reached the inventory strip"
+
+
+def test_light_level_decodes_by_a_tent_that_is_the_identity_in_range(env, states):
+    """In-range values pass through bit-exact; out-of-range ones fold back and still move pixels.
+
+    A clamp would leave a daylight state insensitive to the conformance suite's +25 probe, and the
+    obvious wrap ``x - floor(x)`` would send 1.0 to 0.0 and turn every daylight state into midnight.
+    """
+    for v in (0.0, 0.25, 0.5, 0.75, 1.0):
+        _, _, _, _, _, light, _ = env._decode(torch.as_tensor(_set(states, light=v)), len(states))
+        assert torch.equal(light, torch.full_like(light, v)), v
+    # 1.0 + 25 = 26; 26 % 2 == 0; tent(0) == 0 -> full night, so the probe reaches the frame
+    _, _, _, _, _, probed, _ = env._decode(torch.as_tensor(_set(states, light=26.0)), len(states))
+    assert float(probed.max()) == 0.0
+    assert not torch.equal(env.render(_set(states, light=1.0), size=16),
+                           env.render(_set(states, light=26.0), size=16))
+
+
+def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
+    """Batch invariance under the one thing that takes a batch off the fast path.
+
+    ``render`` reads three host-side booleans to decide whether the batch can stay on the uint8
+    gather. If that decision ever changed a row's pixels rather than only the speed, it would show
+    up here and nowhere else.
+    """
+    n = len(states)
+    mixed = np.array(states, np.float32, copy=True)
+    j = OBS_H * OBS_W * 2 + 1 + N_STRIP
+    mixed[:, j] = (np.arange(n) % 4 == 0).astype(np.float32)
+    mixed[:, j + 1] = np.tile([1.0, 0.75, 0.3, 0.0], n // 4 + 1)[:n]
+    together = env.render(mixed, size=16)
+    for i in range(n):
+        assert torch.equal(together[i], env.render(mixed[i:i + 1], size=16)[0]), i
+
+
+def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
+    """W2 consumes ``night_and_sleep`` verbatim at its own window size, so it must not be 7x9-bound."""
+    from stable_envs.envs.craftax import night_and_sleep, night_vignette
+    for (h, w) in ((49, 63), (112, 144), (63, 77), (90, 110)):
+        world = torch.rand(3, h, w, 3) * 255
+        out = night_and_sleep(world, torch.tensor([1.0, 0.75, 0.1]),
+                              torch.tensor([False, True, False]),
+                              torch.tensor([[1, 2], [3, 4], [5, 6]], dtype=torch.int32))
+        assert out.shape == world.shape
+        assert torch.equal(out[0], world[0]), "light=1.0 is not the identity"
+        assert night_vignette(DEV, h, w).shape == (h, w, 1)
+    # the light_map argument full Craftax needs, and Classic does not, is accepted and is the
+    # identity at 1.0
+    world = torch.rand(2, 49, 63, 3) * 255
+    keys = torch.tensor([[7, 8], [9, 10]], dtype=torch.int32)
+    lit = torch.tensor([0.2, 0.2])
+    slp = torch.tensor([False, False])
+    assert torch.equal(night_and_sleep(world, lit, slp, keys),
+                       night_and_sleep(world, lit, slp, keys, light_map=torch.ones(1, 1, 1, 1)))

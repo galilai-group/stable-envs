@@ -15,14 +15,19 @@ Measured (``scratch/pixel_native/probe_craftax.py``): the full ``EnvState`` is 2
 for full Craftax — while the frame shows a 9x11 window of one of them. There is no version of "store
 the state" that wins if the state is the simulator's state.
 
-What wins is the **render window**: the tiles actually on screen, the sprites drawn over them, and the
-sixteen small integers the inventory strip reads. That is what this env carries — 144 float32 numbers,
-**576 bytes**, against a 62,208-byte frame at the default 16 px tile size (**108x**) or an
-11,907-byte frame at the 7 px agent size (**21x**).
+What wins is the **render window**: the tiles actually on screen, the sprites drawn over them, the
+sixteen small integers the inventory strip reads, the light level, the sleeping flag and the PRNG
+key. That is what this env carries — 149 float32 numbers, **596 bytes**, against a 62,208-byte frame
+at the default 16 px tile size (**104x**) or an 11,907-byte frame at the 7 px agent size (**20x**).
+
+The key costs **four** slots rather than two, and that is measured rather than stylistic: only
+2.008% of random uint32 survive a round trip through float32 (2**32 > 2**24), while 100% of 100,000
+do when each is split into two 16-bit halves.
 
 Parity against the official renderer, measured on 64 sampled states at both tile sizes, over the
-**whole observation** — world window and inventory strip, sleeping rows included:
-**100% of all pixels exact, mean |diff| 0.000, max |diff| 0.**
+**whole observation** — world window and inventory strip — and over the whole day cycle: 18 night
+rows, 29 dusk rows, 17 daylight rows, sleeping rows throughout.
+**100% of all pixels exact in every band, mean |diff| 0.000, max |diff| 0.**
 
 **"The official frame" is not one object, and the parity number says which one.** Under ``jax.jit``
 XLA fuses the renderer's arithmetic differently and it disagrees with its own un-jitted self by up to
@@ -47,12 +52,15 @@ What this env covers, and what it still does not:
   * the **sleeping player**: both halves of it. ``is_sleeping`` selects a fifth player sprite
     (``player_texture_index = select(is_sleeping, 4, player_direction - 1)``) *and* desaturates the
     world rows. Missing either half gives a plausible frame and a wrong one;
-  * it does **not yet** reconstruct night frames. ``light_level < 0.5`` mixes in a noise field drawn
-    from ``jax.random.uniform(state.state_rng, ...)``; ``stable_envs/render/prng.py`` reproduces that
-    draw bit for bit, and wiring it in is the next commit. Until then ``reference_render`` forces
-    ``light_level = 1.0``, where the whole lighting chain is exactly the identity on the world pixels
-    (``daylight * map + (1 - daylight) * night`` with ``daylight = 1``), verified bit-exact on 24 real
-    states at both tile sizes;
+  * **night**, including the noise field. ``light_level < 0.5`` mixes in
+    ``jax.random.uniform(state.state_rng, (H, W)) * 95 + 32`` through a vignette, so a night frame is
+    a function of the PRNG key as well as of the map — measured: changing ``state_rng`` moves 72% of
+    the world layer's channels on a night frame and **0** on a daylight one.
+    ``stable_envs/render/prng.py`` reproduces JAX's threefry2x32 counter PRNG bit for bit and is
+    shared with the full-Craftax renderer. Two bands cost nothing: ``light >= 0.5`` makes
+    ``night_static_intensity`` exactly 0, so no PRNG is drawn (58.3% of a 300-step day), and
+    ``light == 1.0`` makes the whole chain the identity on the world pixels, so the batch stays on
+    the uint8 gather with no float buffer at all;
   * it carries **one mob per tile**. Craftax's own ``mob_map`` keeps zombies, cows and skeletons off
     each other's tiles, but an arrow may share a tile with a mob, and the reference then composites
     both. That state is not representable here and the sampler does not generate it.
@@ -68,6 +76,13 @@ Three measured facts that shaped the implementation:
     included — asserted during extraction, so compositing the player over the whole frame (what the
     reference does) and into one tile (what this does) are the same arithmetic: ``x*(1-0) + 0*0 == x``
     exactly in float32.
+  * **Night is where a resolution-consistency bound goes to die, and that is the reference's
+    property rather than this renderer's.** The noise field is drawn at ``(7t, 9t)``, so element
+    ``i`` of the 32 px field is a different threefry counter from element ``i`` of the 16 px field.
+    Rendering at 32 px and box-downsampling to 16 px therefore reproduces the 16 px render exactly at
+    ``light >= 0.5`` (``exact_frac`` 1.000) and not below it (0.282 at 0.45, 0.035 at 0.10, max abs
+    diff 32). No port can design that away without changing pixels. See
+    ``examples/results/step7/craftax-classic-full/findings.md``.
   * **The strip's counts cannot come from a random rollout.** Over 4,000 steps, ten of the twelve
     inventory cells never leave zero, because a random policy never crafts. A pool built from one
     presents ten dead state dimensions, which is indistinguishable from a wrong state contract — the
@@ -89,6 +104,7 @@ import numpy as np
 import torch
 
 from ..core.env import StableEnv, register
+from ..render import prng
 from ..spaces import Box, Dict, Discrete
 
 TILE_PX_AGENT = 7
@@ -101,7 +117,7 @@ N_MOB = 8            #: none, zombie, cow, skeleton, arrow x 4 orientations
 #: facing left, right, up, down, **asleep**. The fifth is not decoration: the reference selects
 #: ``player_texture_index = select(is_sleeping, 4, player_direction - 1)``, so a sleeping player is a
 #: different sprite and not only a post-process, and ``player-sleep.png`` is asserted zero away from
-#: the centre tile exactly like the four facing sprites (``scratch/step7/.../gen_step7_consts.py``).
+#: the centre tile exactly like the four facing sprites (``scratch/step7/craftax-classic-full/gen_step7_consts.py``).
 N_PLAYER = 5
 PLAYER_ASLEEP = 4
 #: facing values a state row carries: left, right, up, down. Slot 4 is NOT reachable from a facing
@@ -119,6 +135,19 @@ STRIP_LAYOUT = ((0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), 
                 (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6))
 N_STRIP = len(STRIP_NAMES)
 N_COUNT = 10         #: 0..9, the whole digit alphabet; ``number_textures[0]`` is the empty texture
+#: A ``state_rng`` key is two uint32, and a uint32 does NOT survive a float32 state row: only 2.008%
+#: of random uint32 round-trip through one (2**32 > 2**24). Split into 16-bit halves, 100% of 100,000
+#: do. So the key costs four slots, not two. See ``stable_envs/render/prng.py``.
+N_KEY_HALVES = 4
+#: ``night_texture`` -- the colour night is tinted towards, ``[[[0, 16, 64]]]`` in craftax's constants.
+NIGHT_TINT = (0.0, 16.0, 64.0)
+#: Below this ``light_level`` the reference mixes in a noise field; at or above it
+#: ``night_static_intensity = max(2*(0.5 - daylight), 0)`` is exactly 0 and the noise cannot
+#: contribute, so no PRNG is drawn at all. Over a 300-step day, 58.3% of steps are at or above it.
+NIGHT_THRESHOLD = 0.5
+#: craftax's day length, used only by ``sample_states`` to give ``light_level`` the distribution the
+#: simulator actually produces rather than a uniform one.
+DAY_LENGTH = 300
 
 #: block id -> name, straight from craftax.craftax_classic.constants.BlockType
 BLOCK_NAMES = ("invalid", "out_of_bounds", "grass", "water", "stone", "tree", "wood", "path", "coal", "iron", "diamond", "crafting_table", "furnace", "sand", "lava", "plant", "ripe_plant")
@@ -415,6 +444,89 @@ class _StripAssets:
         return cls._cache[key]
 
 
+_VIGNETTE_CACHE: dict = {}
+
+
+def night_vignette(device: torch.device, h: int, w: int) -> torch.Tensor:
+    """``(h, w, 1)`` float32 — craftax's ``night_noise_intensity_texture``, rebuilt not approximated.
+
+    ``1 - exp(-0.5 (x^2 + y^2) / 0.5^2)`` on a ``linspace(-1, 1)`` grid, **transposed**: zero at the
+    frame centre and rising to the corners, so night eats the edges of the view first. craftax
+    computes it in numpy float64 and lets jax narrow the result to float32, and so does this — the
+    same two steps in the same order, rather than a float32 ``exp`` that would round differently.
+
+    Parameterised on ``(h, w)`` because full Craftax draws the same texture at its own window size.
+    """
+    key = (str(device), int(h), int(w))
+    if key not in _VIGNETTE_CACHE:
+        xs, ys = np.meshgrid(np.linspace(-1, 1, h), np.linspace(-1, 1, w))
+        v = (1 - np.exp(-0.5 * (xs ** 2 + ys ** 2) / (0.5 ** 2)).T).astype(np.float32)
+        _VIGNETTE_CACHE[key] = torch.as_tensor(v, device=device).unsqueeze(-1)
+    return _VIGNETTE_CACHE[key]
+
+
+def night_and_sleep(world: torch.Tensor, light: torch.Tensor, sleeping: torch.Tensor,
+                    keys: torch.Tensor, light_map: torch.Tensor | None = None) -> torch.Tensor:
+    """Craftax's day/night chain and sleeping desaturation, in the reference's own order.
+
+    ``world`` ``(n, h, w, 3)`` float32 pre-post-process pixels, ``light`` ``(n,)``, ``sleeping``
+    ``(n,)`` bool, ``keys`` ``(n, 2)`` int32 threefry keys. ``light_map`` is the per-pixel multiplier
+    full Craftax applies and Classic does not; it is an argument rather than a second function
+    because that is the only difference between the two renderers' chains.
+
+    Shared with the full-Craftax renderer: nothing here reads ``CraftaxClassic``'s state layout, and
+    the shapes come from ``world``.
+
+    **The arithmetic is the reference's, op for op, and is deliberately not algebraically collapsed.**
+    The chain looks like it should fold into ``a1*world + a2*lum + c`` with two scalars and a per-pixel
+    constant, which would be three passes instead of ten. It does — in real arithmetic. In float32 it
+    is a different rounding at every step, and this renderer's claim is bit equality with the
+    reference, not closeness to it. The reductions taken instead are the ones that change no bits:
+
+    * **the noise field is drawn only for rows that can use it.** ``intensity`` is exactly 0 for
+      ``light >= 0.5``, so ``(1 - 0)*world + 0*noise`` is ``world`` in float32 whatever the noise was;
+      those rows get zeros and no threefry evaluation. 58.3% of a 300-step day is in that band.
+    * **int32 threefry** (``render/prng.py``): bit-identical to an int64-with-masking implementation
+      and 2.3x faster.
+    * **a batch that is entirely at ``light == 1.0`` and awake never gets here at all** — ``render``
+      keeps it on the uint8 gather, because ``1.0*world + 0.0*night`` is exactly ``world``.
+    """
+    n, h, w, _ = world.shape
+    dev = world.device
+    lt = light.view(n, 1, 1, 1)
+
+    # --- night static, drawn only where it can contribute
+    dark = light < NIGHT_THRESHOLD
+    night = world.clone()
+    if bool(dark.any()):
+        idx = dark.nonzero(as_tuple=True)[0]
+        sub = world.index_select(0, idx)
+        noise = (prng.uniform(keys.index_select(0, idx), (h, w)) * 95 + 32).unsqueeze(-1)
+        mask = torch.clamp_min(2.0 * (NIGHT_THRESHOLD - lt.index_select(0, idx)), 0.0) \
+            * night_vignette(dev, h, w)
+        night.index_copy_(0, idx, (1 - mask) * sub + mask * noise)
+
+    # --- enhance: pull towards luminance. In place from here on: the expressions are the
+    # reference's, op for op, but each result overwrites its own buffer instead of allocating a new
+    # image-sized float32 temporary. At B=256 and 16 px one such temporary is 63.7 MB, which is what
+    # made this chain 111x the cost of the gather in the first measurement.
+    lum = 0.299 * night[..., 0] + 0.587 * night[..., 1] + 0.114 * night[..., 2]
+    night.mul_(0.4).add_(lum.mul_(1 - 0.4).unsqueeze(-1))
+    # --- tint
+    night.mul_(0.5).add_(torch.tensor(NIGHT_TINT, device=dev) * 0.5)
+    # --- blend
+    if light_map is not None:
+        night.mul_(light_map)
+    px = night.mul_(1 - lt).add_(world * lt)
+
+    # --- sleep: a luminance at half brightness, lifted towards blue
+    if not bool(sleeping.any()):
+        return px
+    lum = 0.299 * px[..., 0] + 0.587 * px[..., 1] + 0.114 * px[..., 2]
+    sleep = lum.mul_(0.5).unsqueeze(-1) + torch.tensor([0.0, 0.0, 8.0], device=dev)
+    return torch.where(sleeping.view(n, 1, 1, 1), sleep, px)
+
+
 def _strip_cells(device: torch.device, t: int) -> torch.Tensor:
     """``(N_STRIP * N_COUNT, t, t, 3)`` float32 — every ``(cell, count)`` picture the strip can show.
 
@@ -564,12 +676,13 @@ class CraftaxClassic(StableEnv):
     #: 63 blocks, 63 mobs, the player's facing, then the sixteen strip counts and the sleeping flag.
     #: **Appended, never reordered**: the first 127 slots keep the meaning and position they had when
     #: Step 4 froze this env's corpus, which is what makes the world rows of that corpus replayable.
-    state_dim = OBS_H * OBS_W * 2 + 1 + N_STRIP + 1
+    state_dim = OBS_H * OBS_W * 2 + 1 + N_STRIP + 1 + 1 + N_KEY_HALVES
     state_names = (tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
                    + tuple(f"mob_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
                    + ("player_facing",)
                    + tuple(f"inv_{n}" for n in STRIP_NAMES)
-                   + ("is_sleeping",))
+                   + ("is_sleeping", "light_level")
+                   + tuple(f"rng_half{i}" for i in range(N_KEY_HALVES)))
     #: tile edge in pixels; the frame is ((7+2)*size, 9*size, 3). Craftax ships textures at 7 px (the
     #: size the agent observation is drawn at) and 16 px, and both are exact against the official
     #: renderer. The default is 16 because at 7 px Craftax's dithered art leaves no flat 3x3
@@ -584,11 +697,20 @@ class CraftaxClassic(StableEnv):
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
     #: What the parity bound is, and what it is not. The declared versions above are corroborated
     #: here rather than left as bare numbers.
+    #: 100% of all pixels exact over the whole observation, so the strong bound is declared rather
+    #: than left at None. It is guarded by ``reference_versions`` above: a different craftax or jax
+    #: blocks the check instead of failing it, which is the right verdict for a comparison that is no
+    #: longer the comparison the bound was measured on.
+    parity_all_exact_min = 1.0
+    #: What the parity bound is, and what it is not. The declared versions above are corroborated
+    #: here rather than left as bare numbers.
     parity_note = (
         "Measured on 64 sampled states at 7 px and 16 px, over the WHOLE observation -- the 7x9 world "
-        "window and the 2-row inventory strip, sleeping rows included -- against craftax 1.6.1 under "
-        "jax 0.11.1 with jax_threefry_partitionable at its default True: 100% of all pixels exact, "
-        "max abs diff 0. The claim is a UINT8 claim and deliberately not a float one, because the "
+        "window and the 2-row inventory strip -- and over the whole day cycle: 18 night rows "
+        "(light_level < 0.5, noise field drawn), 29 dusk rows (0.5 <= light < 1, lit but noise-free) "
+        "and 17 daylight rows, sleeping rows throughout. Against craftax 1.6.1 under jax 0.11.1 with "
+        "jax_threefry_partitionable at its default True: 100% of all pixels exact in every band, max "
+        "abs diff 0. The claim is a UINT8 claim and deliberately not a float one, because the "
         "reference does not have one float value to be equal to: under jax.jit XLA fuses its "
         "arithmetic differently and it disagrees with its own un-jitted self by up to 1.5e-05, which "
         "is invisible in uint8 by day and visible under is_sleeping, whose desaturation halves the "
@@ -651,8 +773,19 @@ class CraftaxClassic(StableEnv):
         # the is_sleeping flag, not by a facing value
         facing = s[:, 2 * nb].round().remainder(N_FACING).long()
         cnt = s[:, 2 * nb + 1:2 * nb + 1 + N_STRIP].round().remainder(N_COUNT).long()
-        sleeping = s[:, 2 * nb + 1 + N_STRIP] > 0.5
-        return blk, mob, facing, cnt, sleeping
+        j = 2 * nb + 1 + N_STRIP
+        sleeping = s[:, j] > 0.5
+        # ``light_level`` is the one slot a wrap must be careful with. Clamping is not an option --
+        # a clamped daylight state is insensitive to the +25 probe and reports as a dead dimension --
+        # but the obvious wrap ``x - floor(x)`` sends 1.0 to 0.0, turning every daylight state into
+        # midnight. A tent on period 2 fixes that (it is the identity on [0, 1] and folds everything
+        # else back into it), and it is applied ONLY outside [0, 1] so an in-range value passes
+        # through bit-exact instead of through two float32 roundings.
+        raw = s[:, j + 1]
+        tent = 1.0 - (raw.remainder(2.0) - 1.0).abs()
+        light = torch.where((raw >= 0.0) & (raw <= 1.0), raw, tent)
+        halves = s[:, j + 2:j + 2 + N_KEY_HALVES].round().remainder(65536.0)
+        return blk, mob, facing, cnt, sleeping, light, prng.key_from_halves(halves)
 
     def _tile_ids(self, blk, mob, facing, cnt, sleeping, sty) -> torch.Tensor:
         """``(n, OBS_H + STRIP_H, OBS_W)`` int32 — one table row per output tile, world and strip.
@@ -682,17 +815,14 @@ class CraftaxClassic(StableEnv):
         return torch.cat([world, strip], dim=1).to(torch.int32)
 
     @staticmethod
-    def _post(px: torch.Tensor, sleeping: torch.Tensor) -> torch.Tensor:
+    def _post(px: torch.Tensor, sleeping, light, keys) -> torch.Tensor:
         """The reference's post-process on the WORLD rows. ``px`` is ``(n, OBS_H*t, OBS_W*t, 3)``.
 
-        Today that is only the sleeping desaturation --
-        ``0.299 R + 0.587 G + 0.114 B`` halved, plus ``0.5 * [0, 0, 16]``. The strip is not passed
-        in, because the reference concatenates it after this runs and it is therefore never lit and
-        never desaturated.
+        The strip is not passed in, because the reference concatenates it *after* this runs: it is
+        never lit and never desaturated. See :func:`night_and_sleep`, which is module-level and
+        shape-parameterised so the full-Craftax renderer can call the same function.
         """
-        lum = 0.299 * px[..., 0] + 0.587 * px[..., 1] + 0.114 * px[..., 2]
-        sleep = (0.5 * lum).unsqueeze(-1) + torch.tensor([0.0, 0.0, 8.0], device=px.device)
-        return torch.where(sleeping.view(-1, 1, 1, 1), sleep, px)
+        return night_and_sleep(px, light, sleeping, keys)
 
     @torch.no_grad()
     def render(self, states=None, size: int | None = None, supersample: int | None = None,
@@ -729,18 +859,18 @@ class CraftaxClassic(StableEnv):
                 f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate.")
         sty = self.resolve_style(style, variation, batch=n)
 
-        blk, mob, facing, cnt, sleeping = self._decode(s, n)
+        blk, mob, facing, cnt, sleeping, light, keys = self._decode(s, n)
         H = (OBS_H + STRIP_H) * t
         if t > ATLAS_MAX_TILE_PX:
-            img = self._render_blend(blk, mob, facing, cnt, sleeping, t, sty)
+            img = self._render_blend(blk, mob, facing, cnt, sleeping, light, keys, t, sty)
         else:
-            img = self._render_atlas(blk, mob, facing, cnt, sleeping, t, sty, out)
+            img = self._render_atlas(blk, mob, facing, cnt, sleeping, light, keys, t, sty, out)
         if out is not None and img.data_ptr() != out.data_ptr():
             out.view(n, H, OBS_W * t, 3).copy_(img)
             img = out.view(n, H, OBS_W * t, 3)
         return img.view(*lead, *img.shape[1:]) if lead else img
 
-    def _render_atlas(self, blk, mob, facing, cnt, sleeping, t, sty, out) -> torch.Tensor:
+    def _render_atlas(self, blk, mob, facing, cnt, sleeping, light, keys, t, sty, out) -> torch.Tensor:
         """The gather. One ``index_select`` per frame at the default appearance, and no float buffer."""
         n, dev = blk.shape[0], blk.device
         H = (OBS_H + STRIP_H) * t
@@ -753,8 +883,14 @@ class CraftaxClassic(StableEnv):
                 + torch.arange(t, dtype=torch.int32, device=dev).view(1, 1, t, 1))
         rows = rows.reshape(-1)
 
+        # One host read, not three: each of these is a device->host synchronisation on CUDA, and the
+        # question they answer together is a single one -- "can this batch stay on the uint8 gather".
+        # It can when the gain is exactly 1 (it multiplies before the rounding), nothing is asleep
+        # (the desaturation multiplies before the rounding too) and it is full daylight, where
+        # ``1.0*world + 0.0*night`` is exactly ``world`` in float32 and the whole chain is the
+        # identity -- measured bit-exact on 24 real states at both tile sizes.
         gain = sty["channel_gain"]
-        plain = bool(torch.all(gain == 1.0)) and not bool(sleeping.any())
+        plain = bool(torch.all(gain == 1.0) & ~sleeping.any() & torch.all(light == 1.0))
         if plain:
             atlas = _Composite.get(dev, t, want_float=False)[1]
             img = (out.view(n, H, OBS_W * t, 3) if out is not None
@@ -764,11 +900,11 @@ class CraftaxClassic(StableEnv):
         f32 = _Composite.get(dev, t, want_float=True)[0]
         px = torch.index_select(f32, 0, rows).view(n, H, OBS_W * t, 3)
         w = OBS_H * t
-        px[:, :w] = self._post(px[:, :w], sleeping)
+        px[:, :w] = self._post(px[:, :w], sleeping, light, keys)
         px = px * gain.to(px.dtype).view(n, 1, 1, 3)
         return px.round_().clamp_(0, 255).to(torch.uint8)
 
-    def _render_blend(self, blk, mob, facing, cnt, sleeping, t, sty) -> torch.Tensor:
+    def _render_blend(self, blk, mob, facing, cnt, sleeping, light, keys, t, sty) -> torch.Tensor:
         """Composite per frame, the way this renderer did before Step 6.
 
         Kept because the baked atlas costs ``976 * t*t*3`` bytes and stops being a table worth
@@ -794,7 +930,7 @@ class CraftaxClassic(StableEnv):
              * (sty["mobs_visible"] > 0.5).to(px.dtype).view(n, 1, 1, 1))
         px = px * (1 - a) + self._tiles_to_frame(mtex[mob]) * a
 
-        px = self._post(px, sleeping)
+        px = self._post(px, sleeping, light, keys)
 
         # the strip, drawn after the post-process exactly as the reference concatenates it after
         cells = _strip_cells(blk.device, t)
@@ -872,9 +1008,44 @@ class CraftaxClassic(StableEnv):
         # count at 9, so every sampled row is a row a real ``EnvState`` can hold.
         st[:, nb * 2 + 1:nb * 2 + 1 + N_STRIP] = rng.integers(
             0, N_COUNT, size=(batch, N_STRIP)).astype(np.float32)
-        # a quarter asleep: enough for the sleeping sprite and the desaturation to be exercised in
-        # every batch, few enough that the awake path is still the common one
-        st[:, nb * 2 + 1 + N_STRIP] = (rng.random(batch) < 0.25).astype(np.float32)
+        # A quarter asleep, but not by an unconditional draw. ``player_facing`` reaches no pixel
+        # while the player is asleep -- the reference selects sprite slot 4 whatever the facing is,
+        # which is a true statement about the renderer and not a defect -- so a ``batch=1`` pool that
+        # happened to sample a sleeping state reports ``player_facing`` dead. Row 0 is therefore
+        # always awake and row 3 always asleep, which makes both observable in every batch from one
+        # row upward. ``is_sleeping`` itself stays observable either way, because
+        # ``check_state_dims_matter`` falls back to a ``-25`` nudge that crosses the 0.5 threshold
+        # from whichever side the row is on.
+        sleeping = rng.random(batch) < 0.25
+        sleeping[::4] = False
+        if batch > 3:
+            sleeping[3::4] = True
+        st[:, nb * 2 + 1 + N_STRIP] = sleeping.astype(np.float32)
+
+        # ``light_level`` takes the values the simulator actually produces -- craftax computes it as
+        # ``1 - |cos(pi * ((t/300) % 1 + 0.3))|**3`` -- but the BAND is assigned by row index rather
+        # than left to chance, and that is a requirement rather than a preference.
+        # ``check_state_dims_matter`` probes ``env.B`` sampled states, and the four PRNG-key slots
+        # reach no pixel above ``light_level = 0.5``: measured, 32 of 32 night states change when the
+        # key changes and 0 of 32 daylight ones do. With the band left to the draw, a ``batch=1``
+        # instance reports those four dimensions dead about two times in three, and what that
+        # measures is the sampler's luck rather than the renderer. Stratifying makes row 0 a night
+        # row, so every dimension is observable in every batch this returns, down to a batch of one.
+        # It is the same device as the ``OUT_OF_BOUNDS`` band above, which exists so that the
+        # conformance suite's interior statistic is computable at all.
+        j = nb * 2 + 2 + N_STRIP
+        cycle = 1 - np.abs(np.cos(np.pi * ((np.arange(DAY_LENGTH) / DAY_LENGTH) % 1 + 0.3))) ** 3
+        night_vals = cycle[cycle < NIGHT_THRESHOLD]
+        dusk_vals = cycle[(cycle >= NIGHT_THRESHOLD) & (cycle < 1.0)]
+        band = np.arange(batch) % 4
+        light = rng.choice(cycle, size=batch)                     # band 3: the raw distribution
+        light[band == 0] = rng.choice(night_vals, size=int((band == 0).sum()))
+        light[band == 1] = rng.choice(dusk_vals, size=int((band == 1).sum()))
+        light[band == 2] = 1.0
+        st[:, j] = light.astype(np.float32)
+        # the PRNG key, as four 16-bit halves. A bare uint32 would not survive this float32 row.
+        st[:, j + 1:j + 1 + N_KEY_HALVES] = rng.integers(
+            0, 65536, size=(batch, N_KEY_HALVES)).astype(np.float32)
         return st
 
     # reference bridge
@@ -943,9 +1114,9 @@ class CraftaxClassic(StableEnv):
         renderer never claimed. The strip is drawn now, so the crop is gone and the parity number is
         over all ``(OBS_H + STRIP_H) * tile_px`` rows.
 
-        ``light_level`` is still forced to 1.0: night is the next commit. ``is_sleeping`` is not
-        forced any more — it selects the fifth player sprite and desaturates the world rows, and both
-        are implemented.
+        Nothing is forced any more. ``light_level`` and ``state_rng`` are written back from the state
+        row like everything else, so a night frame is compared against the reference's own night
+        frame — noise field included — rather than against a daylight stand-in.
         """
         import jax
         import jax.numpy as jnp
@@ -982,7 +1153,12 @@ class CraftaxClassic(StableEnv):
             mob = np.round(row[nb:2 * nb]).astype(np.int32).reshape(OBS_H, OBS_W) % N_MOB
             pid = int(np.round(row[2 * nb])) % N_FACING
             cnt = np.round(row[2 * nb + 1:2 * nb + 1 + N_STRIP]).astype(np.int32) % N_COUNT
-            sleeping = bool(row[2 * nb + 1 + N_STRIP] > 0.5)
+            j = 2 * nb + 1 + N_STRIP
+            sleeping = bool(row[j] > 0.5)
+            raw = float(row[j + 1])
+            light = raw if 0.0 <= raw <= 1.0 else 1.0 - abs((raw % 2.0) - 1.0)
+            halves = np.round(row[j + 2:j + 2 + N_KEY_HALVES]).astype(np.int64) % 65536
+            key = np.array([(halves[0] << 16) | halves[1], (halves[2] << 16) | halves[3]], np.uint32)
 
             m = np.asarray(tmpl.map).copy()
             m[r0:r0 + OBS_H, c0:c0 + OBS_W] = blk
@@ -1013,7 +1189,8 @@ class CraftaxClassic(StableEnv):
                 player_position=jnp.asarray([py, px_], jnp.int32),
                 player_direction=jnp.asarray(pid + 1, jnp.asarray(tmpl.player_direction).dtype),
                 is_sleeping=jnp.bool_(sleeping),
-                light_level=jnp.float32(1.0),
+                light_level=jnp.float32(light),
+                state_rng=jnp.asarray(key, jnp.uint32),
                 player_health=_i(tmpl.player_health, cnt[0]),
                 player_food=_i(tmpl.player_food, cnt[1]),
                 player_drink=_i(tmpl.player_drink, cnt[2]),

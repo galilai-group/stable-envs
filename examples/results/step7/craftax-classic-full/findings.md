@@ -1,21 +1,29 @@
-# Step 7 — W1 `craftax-classic-full`: phase 0 diagnosis
+# Step 7 — W1 `craftax-classic-full`
 
-**Classification: `FINDING` (phase 0 complete; no `stable_envs/` file was edited).**
-All three declared exclusions are reproducible **bit-exactly in float32**, on real states, at both
-reference tile sizes. What remains is not whether the pixels can be reproduced — they can — but the
-**state contract**, the **frozen `check_resolution_consistency` bound**, and the **cost of the night
-chain on CPU**.
+**Classification: `PATCH`.** All three declared exclusions are implemented and the renderer
+reproduces the official Craftax Classic observation **byte for byte** — the 7x9 world window, the
+2-row inventory strip, the sleeping player and night frames including the threefry noise field.
+Gate A's coverage for `swm/CraftaxClassicPixels-v1` goes from `partial` to **full** on the
+renderer's side; the remaining items are certification measurements that need Oscar, and two
+declaration rulings that are Sami's.
 
 | | |
 |---|---|
 | parent baseline SHA | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` (Step 6 closed) |
-| branch | `step7/craftax-classic-full`, worktree `/Users/samib/stable-envs-step7-craftax-classic-full` |
-| target | `swm/CraftaxClassicPixels-v1`: Gate A `PARTIAL` -> `full` |
+| branch | `step7/craftax-classic-full` (4 commits), worktree `/Users/samib/stable-envs-step7-craftax-classic-full` |
 | affected config | **`CraftaxClassic` only** — 1 of the 49 frozen Step-4 render-distinct configurations |
-| reference venv | `/Users/samib/se7-craftax-venv` — python 3.12.11, **jax/jaxlib 0.11.1 (CPU)**, **craftax 1.6.1**, torch 2.14.0, numpy 2.5.3, flax 0.12.9, ml-dtypes 0.6.0, pillow 12.3.0, imageio 2.37.4, pytest 9.1.1 (`phase0/reference_venv_pins.json`) |
-| host | **Apple arm64 Mac**, macOS 26.6.2. Every number below was taken here. Local CPU timings are **not** certification numbers |
-| Oscar | **BLOCKED** — `ssh -o BatchMode=yes sboughan@sshcampus.ccv.brown.edu` returns `Permission denied (keyboard-interactive)`. One attempt, not retried. Cluster items listed as pending in section 8 |
-| pixels changed | **no** — nothing under `stable_envs/` was touched |
+| parity | **100% of all pixels exact, max abs diff 0**, 64 states at 7 px and 16 px, over the whole 144x144 observation and all three lighting bands. `digest_ours == digest_official`: the frames are byte-identical, not merely equal within a bound |
+| reference venv | `/Users/samib/se7-craftax-venv` — python 3.12.11, **jax/jaxlib 0.11.1**, **craftax 1.6.1**, torch 2.14.0, numpy 2.5.3, gymnasium 1.3.0 |
+| host | **Apple arm64 Mac**. Local CPU timings are **not** certification numbers |
+| Oscar | **BLOCKED** — `Permission denied (keyboard-interactive)`. sbatch scripts written and ready (§11) |
+| pixels changed | **yes, by design** — this is a coverage change. The frame grows 112x144 -> 144x144 at the default size. The **world rows of a Step-4-shaped state are unchanged** and asserted so |
+
+## Contents
+
+Sections 1-5 are the phase-0 diagnosis, kept as measured. Sections 6-12 are the implementation,
+its evidence, and what is still owed.
+
+---
 
 ---
 
@@ -367,130 +375,310 @@ coverage of the *renderer*.
 
 ---
 
-## 6. Smallest implementation plan
 
-Everything lands in **one env file** plus one new shared module and its tests. Nothing in
-`stable_envs/render/tilemap.py` is touched: that module is MiniGrid's atlas and this env has never
-used it; Craftax's table is `_Composite` inside `envs/craftax.py`.
+# Part II — the implementation
 
-### 6.1 Files
+Phase 1 was authorised in the order proposed and landed as three commits, each with its own tests.
 
-| file | change |
+| commit | what |
 |---|---|
-| `stable_envs/render/prng.py` **(new, shared)** | `threefry2x32(k1,k2,x1,x2)`, `random_bits(keys,n)`, `uniform(keys, shape, minval, maxval)` — batched, int32, device-agnostic. ~60 lines, nothing env-specific. **This is the W2-shared piece; see section 7** |
-| `stable_envs/envs/craftax.py` | (a) 5th player texture embedded, `N_PLAYER` 4->5, `NO_PLAYER` 5, `_Composite` 680->816 entries; (b) `_StripComposite`: a 160-entry `(cell, count)` table + the 2x9 layout, embedded at 7 px and 16 px and nearest-resampled elsewhere; (c) `_night_and_sleep`: the 2.1/3.2 chain in the reference's order, applied to the world rows only; (d) `state_dim` 127->149, `state_names`, `sample_states`, `reference_render`; (e) rewrite the docstring — it currently *declares* these exclusions and that declaration is load-bearing for Gate A |
-| `tests/unit/test_craftax_prng.py` **(new)** | the torch threefry against golden vectors frozen from jax (so the test needs no jax), plus int32-vs-int64 agreement, plus batched-vs-single |
-| `tests/unit/test_craftax_atlas.py` | extend the existing differential fuzz to the 6th player slot, the strip table, and a night/day/sleep mixture **within one batch** (the `style-as-state` trap the Step-6 patch was careful about) |
+| `d33288c` | `stable_envs/render/prng.py` — JAX's threefry2x32 counter PRNG in torch, bit for bit, plus 15 tests against golden vectors frozen from jax |
+| `538ca69` | the inventory strip and the sleeping player; `state_dim` 127 -> 144 |
+| *(this)* | night, with the reductions; `state_dim` 144 -> 149 |
 
-### 6.2 Decoding rules the conformance probe forces
+## 6. What was built
 
-`check_state_dims_matter` perturbs each dimension by +25, so every new slot needs a documented total
-decoding rule, as the existing class ids already do (`remainder`, deliberately not `clamp`):
+### 6.1 `stable_envs/render/prng.py` — shared, minimal, W2-consumable
 
-* counts: `round().remainder(10)` — wrap, matching the existing rule and keeping the +25 probe live;
-* `light_level`: a wrap into `[0,1]` (e.g. `x - floor(x)`), **not** a clamp — a clamped daylight state
-  is insensitive to the probe and reports as a dead dimension;
-* `is_sleeping`: `> 0.5`;
-* key halves: `round().remainder(65536)`, recombined as `hi*65536 + lo`.
+Interface, as agreed: *(key halves, counter offset, shape) -> uint32 bits / float32 uniform*.
 
-### 6.3 Replay obligation
+```
+threefry2x32(k1, k2, x1, x2)             the 20-round hash, int32, broadcastable
+random_bits(keys, n, offset=0)           (B, n) int32 uint32 bit patterns
+uniform(keys, shape, minval, maxval, offset=0)   (B, *shape) float32
+key_from_halves(halves) / key_to_halves(keys)    the float32-state-row encoding
+```
 
-**The frozen Step-4 `CraftaxClassic` corpus must remain byte-identical for the world layer under
-daylight.** It is a 64-state corpus of 127-dim rows; the new components are additive, so:
+Implements the **partitionable** path only — the one every supported jax uses, and the reason the
+whole thing is one fused pass: the counter for element `i` is `i` split into `(hi, lo)` uint32
+halves, so element `i` depends on `i` and the key alone.
 
-1. the 127 existing slots keep their meaning and position — append, never reorder;
-2. a 149-dim row whose 12 counts and 4 intrinsics are 0, `light_level = 1`, `is_sleeping = 0`
-   reproduces today's frame in rows `[0:H_world]` **exactly**. Measured, not argued
-   (`phase0/daylight_identity.json`): on 24 real states forced to `light_level = 1.0,
-   is_sleeping = False`, both the reference's own post-process and the torch chain are the **bit
-   identity** on the world pixels, 24/24 at both tile sizes — because `1.0*world + 0.0*x` is `world`
-   in float32 and `intensity = max(2*(0.5-1.0), 0)` is 0. **The caveat that matters for corpus
-   design: this holds at daylight exactly 1.0, not at `daylight >= 0.5`.** The dusk band
-   `0.5 <= daylight < 1` still runs enhance/tint/blend with weight `(1 - daylight)` and is not the
-   identity, though it needs no PRNG;
-3. the frame **shape changes** (112x144 -> 144x144 at 16 px) because the strip is now drawn, so
-   `digest_ours`, `frames_shape`, `mean_pixel` and `distinct_colors` in the frozen record **cannot**
-   match. The replay must therefore run as *world-rows-only* against the frozen digests, plus a new
-   full-observation corpus under `examples/results/step7/`. **That is a coordinator decision about
-   what "the frozen corpus is unchanged" means for a config whose observation grows**, and it is the
-   single biggest process question in this workstream.
+**The rotation mask is the trap.** After a logical shift right by `32 - d` the result keeps `d`
+bits, so the mask is `(1 << d) - 1` and **not** `(1 << (32 - d)) - 1`. The wrong one produces a hash
+that looks like noise and is wrong everywhere; the first version of this prototype had it, and
+nothing but a golden vector would have caught it.
+`test_rotation_mask_is_the_one_that_is_easy_to_get_wrong` asserts it directly.
 
-### 6.4 Order of work
+`tests/data/prng_threefry_golden.json` (64 kB) is frozen from jax 0.11.1 by
+`scratch/step7/craftax-classic-full/gen_prng_golden.py`, so **the test needs no jax** — the repo
+ships none and no Oscar interpreter has one, so a jax-importing test would skip everywhere and
+assert nothing. It records the flag it was frozen under, because a golden vector that does not say
+which of jax's two code paths it came from is worthless.
 
-1. `render/prng.py` + its golden-vector test (no env change; independently reviewable).
-2. 6th player slot + strip table + `state_dim` growth, **with `light_level` pinned to 1 and
-   `is_sleeping` free** — this alone is exact, cheap, and does not touch the resolution bound.
-3. The night chain, with the 2.5 reductions, and re-measured CPU/GPU tiers.
-4. Declarations, corpora, certification.
+### 6.2 The strip: one table, one gather
 
-Steps 1-2 are shippable on their own if 5.1 stalls; step 3 is the one that carries the blocker.
+The strip's 160 `(cell, count)` cells go into the **same** atlas as the world tiles — 816 world
+composites then 160 strip cells, `N_TILE = 976` — so the whole observation is still one
+`index_select` at the default appearance. A strip cell is a tile like any other; it is just indexed
+by `(cell, count)` instead of by `(player, block, mob)`. A count of 0 draws an entirely black cell,
+which is also what the two cells the reference never writes look like, so a blank needs no entry.
 
----
+The finished **cell** is resampled at non-reference sizes, never the ingredients. That is what keeps
+the strip resolution-consistent: craftax's own geometry does not scale by two (`int(0.8*t)` is 12 at
+16 px and **25** at 32 px; `int(0.6*t)` is 9 and **19**), so re-laying the cell out at 2S would give
+a strip that is not a 2x replication of the S one.
+`test_the_strip_atlas_resamples_by_exact_replication` asserts the consequence directly.
 
-## 7. What W2 (`craftax-full`) shares — keep these three, and only these
+### 6.3 The sleeping player: two changes, not one
 
-| capability | where | how W2 reuses it |
+`is_sleeping` selects a **fifth player sprite** *and* desaturates the world rows. The table grows
+680 -> 816 and `player_facing` now wraps **mod four**, because slot 4 must not be reachable from a
+facing value. `player-sleep.png` is zero away from the centre tile like the four facing sprites, so
+the one-tile composite stays the same arithmetic and the gather is untouched.
+
+### 6.4 Night: `night_and_sleep`, shape-parameterised and shared with W2
+
+```python
+night_and_sleep(world, light, sleeping, keys, light_map=None)   # (n, h, w, 3) -> (n, h, w, 3)
+night_vignette(device, h, w)                                    # (h, w, 1)
+```
+
+Module-level, reading nothing of `CraftaxClassic`'s state layout and taking its shapes from `world`.
+`light_map` is the per-pixel multiplier full Craftax applies before the daylight blend and Classic
+does not — one argument, not a second function. `test_the_night_chain_is_shape_parameterised_for_the_full_renderer`
+exercises it at `(63,77)` and `(90,110)`, which are W2's own window shapes.
+
+The vignette is rebuilt the way craftax builds it — numpy **float64** `exp`, then narrowed to
+float32 — rather than with a float32 `exp` that would round differently.
+
+## 7. The three reductions, and the one that was refused
+
+| reduction | status |
+|---|---|
+| **int32 threefry** | done. Bit-identical to an int64-with-masking implementation and to jax; 2.3x faster (190.7 -> 82.8 ms at B=256, `(112,144)`) |
+| **skip the field where `intensity` is exactly 0** | done, and by construction: only the rows with `light < 0.5` are gathered, drawn and scattered back. `intensity = max(2*(0.5 - light), 0)` is exactly 0 above the threshold, so `(1-0)*world + 0*noise` is `world` in float32 whatever the noise was. 58.3% of a 300-step day is in that band |
+| **collapse the chain to `a1*world + a2*lum + c`** | **refused, deliberately.** It is the same expression in real arithmetic and a different rounding at every step in float32, and this renderer's claim is bit equality with the reference rather than closeness to it. What was done instead is the same arithmetic **in place**: each result overwrites its own buffer instead of allocating a fresh image-sized float32 temporary, which at B=256 and 16 px is 63.7 MB each. Measured effect: dusk at 16 px went 1,720 -> 2,770 f/s |
+| **(extra) the daylight short-circuit** | `light == 1.0` and awake and unit gain keeps the batch on the **uint8 gather with no float buffer at all**, decided by a single host read rather than three. `1.0*world + 0.0*night` is exactly `world`, measured bit-exact on 24 real states at both tile sizes |
+
+## 8. Evidence
+
+### 8.1 Parity — byte-identical, per band
+
+`examples/results/step7/craftax-classic-full/certify/certify_cpu_mac.json`, 64 sampled states,
+craftax 1.6.1 / jax 0.11.1 un-jitted:
+
+| tile px | frame | exact_frac | max abs | night (23) | dusk (25) | day (16) | strip rows |
+|---|---|---|---|---|---|---|---|
+| 7 | 64x63x63x3 | **1.0** | **0** | 1.0 | 1.0 | 1.0 | 1.0 |
+| 16 | 64x144x144x3 | **1.0** | **0** | 1.0 | 1.0 | 1.0 | 1.0 |
+
+`digest_ours == digest_official` at both sizes: the frames are **byte-identical**, not equal within
+a bound. 25 of the 64 states are sleeping.
+
+### 8.2 "The official frame" is not one object — and the parity claim says which one
+
+Under `jax.jit`, XLA fuses the reference's arithmetic differently and it disagrees with **its own
+un-jitted self** by up to 1.5e-05 in float32. By day that is invisible in uint8. Under
+`is_sleeping` it is not: the desaturation halves the dynamic range, so the difference straddles a
+rounding boundary.
+
+| reference | 7 px | 16 px |
 |---|---|---|
-| **`stable_envs/render/prng.py`** — batched threefry2x32 + `uniform` | new shared module | **verbatim.** Verified here bit-exact at full Craftax's own shapes too: `(63,77)` and `(90,110)`, 64 keys each, 64/64. Full Craftax draws the same `jax.random.uniform(state.state_rng, map_pixels.shape[:2])`; only the shape differs |
-| **the night + sleep post-process** | `_night_and_sleep(world, light, sleeping, key, vignette, night_tex)` in `envs/craftax.py` | **as a function**, parameterised on `(H, W)`. Full Craftax's chain additionally multiplies a `light_map` before the daylight blend, so W2 needs one extra argument, not a different function. Keep it module-level and free of `CraftaxClassic` state layout |
-| **the strip table shape** — `strip_tile[icon, count]` plus an `(rows, cols)` layout of icon ids with `-1` for blank | `_StripComposite` | full Craftax has a **4-row** strip and a larger icon set; same table, bigger `icon` axis and a different layout array. Parameterise on `(icon_textures, layout)`; do **not** hard-code Classic's 16 cells inside the builder |
+| **un-jitted** (the renderer as written) | **100.0000%**, max 0 | **100.0000%**, max 0 |
+| jitted | 99.7854%, max 1 | 99.7225%, max 1 |
 
-Not shared, and should not be: the block/player/mob composite table (different atlas — 143 PNGs vs
-59 — and more layers), and the state encoding.
+Every differing pixel is on a sleeping row. `reference_env` therefore returns the **un-jitted**
+function and pays 0.25 s a frame instead of 0.008 s, and the declared claim is a **uint8** claim:
+this renderer does not assert bit equality of the reference's float, because the reference does not
+have one float value to be equal to.
 
-**Recommendation for the coordinator:** W2 can start now. Its phase-0 dependency — "does the threefry
-reproduce, and is the strip a gather" — is answered, and answered at W2's own shapes.
+### 8.3 Gate A on CPU — every mandatory check
 
----
+`check_state_roundtrip` 0.0 · `check_state_dims_matter` **`dead_dims: []`** ·
+`check_batch_invariance` 0 · `check_batch_size_invariance` 0 over `[1, 7, 64]` ·
+`check_order_independence` 0 / 0 · `check_determinism` identical ·
+`check_render_is_pure` 0 on all four probes · `check_chunked_render_matches` 0 over `[1, 7, 64, 4096]` ·
+`check_input_form_invariance` no disagreements · `check_set_state_copies` 0 / not rebound ·
+`check_style_is_state` 0 · `check_default_style_is_official` 0 · `check_variations_do_something` `[]`.
 
-## 8. Certification obligations, and what is pending on Oscar
+**`check_colors_apply_exactly` → `colors_not_applied: []`, unchanged.** As asked: this env exposes
+no RGB colour leaf (its recolouring knob is `channel_gain`), so the check has nothing to assert and
+reports nothing not applied, exactly as before the patch. **`channel_gain` now multiplies the strip
+as well as the world**, because it is applied to the whole frame. The reference has no such knob so
+there is no behaviour to copy; applying it to the whole frame is the consistent reading, and it is
+exactly the identity at its default of 1.0.
 
-| obligation | state |
+**A sampler fix was needed to make `check_state_dims_matter` honest**, and it is worth flagging
+because it is the kind of thing that looks like a renderer bug. The check probes `env.B` sampled
+states. The four PRNG-key slots reach no pixel above `light_level = 0.5` (0 of 32 daylight states
+move when the key changes; 32 of 32 night ones do), and `player_facing` reaches no pixel while the
+player is asleep (the reference selects sprite slot 4 whatever the facing is — a true statement
+about the renderer, not a defect). With the bands left to the draw, a `batch=1` instance reported
+the key slots dead about two times in three and `player_facing` dead about one time in four.
+`sample_states` now **stratifies by row index**: the lighting band is assigned `i % 4`, row 0 is
+always awake and row 3 always asleep. Measured after: **no dead dimension at batch 1, 2, 3, 4, 8 or
+16, over 12 seeds each.** This is the same device as the existing `OUT_OF_BOUNDS` edge band, which
+exists so the conformance suite's interior statistic is computable at all.
+
+### 8.4 The Step-4 replay obligation
+
+Per the ruling: the frozen Step-4 record is untouched, and the obligation is world-rows-only
+byte-identity at `light = 1.0`, `sleeping = 0`, counts 0. Asserted three ways:
+
+* in the repo — `test_a_step4_shaped_row_reproduces_the_old_world_layer` renders a 127-slot row
+  zero-extended to 149 with `light_level = 1.0` and asserts the strip is entirely black and the
+  world rows are drawn;
+* in `test_daylight_is_the_identity_and_keeps_the_uint8_fast_path`, which asserts the uint8 gather
+  and the float chain agree **bit for bit** at full daylight, so "the post-process is the identity"
+  is a measurement rather than a code-reading;
+* in the harness — `certify.py` records `step4_world_row_replay`: world-row digests at both tile
+  sizes, `strip_is_black: true`, mean pixel and distinct colours.
+
+The digests cannot be compared against the frozen Step-4 record until the CUDA leg runs, because the
+frozen digests are over the **whole** old frame and were taken on a 3090. That comparison is job
+`04_gpu.sbatch`, and it is listed as owed in §11.
+
+### 8.5 The new frozen corpus
+
+`examples/results/step7/craftax-classic-full/corpus/` — 64 states from a 256 pool, selected the way
+Step 4 selects (typical + per-dimension extremes + farthest-point spread) and then **checked** for
+band and sleep coverage rather than hoped: 23 night, 25 dusk, 16 daylight, 30 sleeping, and **every
+one of the sixteen strip cells reaches all ten counts 0..9**. `corpus/parity.json` records that both
+renderers produce **byte-identical** frames on it at 7 px and 16 px. Proposed for the Step-8 freeze.
+
+## 9. Performance — measured per band, reported honestly
+
+Apple arm64, one torch thread. **Not certification numbers**; the Oscar sweep is `03_sweep_cpu.sbatch`.
+
+| band | 7 px, B=256 | 16 px, B=256 |
+|---|---|---|
+| **daylight** (`light == 1.0`, awake) | **260,262 f/s** | **132,006 f/s** |
+| dusk (`0.5 <= light < 1`) | 14,051 | 2,770 |
+| night (`light < 0.5`) | 6,487 | 1,306 |
+| **mixed corpus** (the certified figure) | **9,955** | **1,986** |
+
+**The daylight path is untouched**, as required: it is the Step-6 gather with no float buffer and no
+PRNG, and on this machine it measures the same as before the patch. Any *lit* row costs about 50x
+(7 px) to 100x (16 px) more, and that is **structural**: a night frame carries a per-pixel float
+post-process that the reference performs and that this renderer must reproduce bit for bit, and no
+engineering makes a per-pixel float chain as cheap as a memcpy.
+
+Attribution at B=256, 16 px, all-night (`sweep/bands_cpu_mac.json`): full render 194.8 ms, of which
+the threefry field **77.5 ms (40%)** and the rest of the chain ~144 ms including the float gather.
+
+**Per the Q3 ruling this goes to Sami with numbers.** The shape of the decision:
+
+* the env is currently `CPU_EXCEPTIONAL` / `GPU_EXCEPTIONAL`, certified at the *default* appearance,
+  which before this patch was daylight-only because night was not representable;
+* at the **agent observation size (7 px)** — the size RL actually trains on — the mixed corpus is
+  ~9,955 f/s against a one-core JPEG-decode bar that measured 4,345-5,534 f/s in Step 6, so the
+  `NO_REFERENCE` ladder still gives at least `CPU_FASTER` and plausibly `CPU_FAST`;
+* at **16 px** the mixed corpus is ~1,986 f/s and would fall below the decode bar;
+* the honest options are (a) certify the mixed corpus and accept a lower tier for a *larger*
+  observation, (b) certify per band and declare both, or (c) keep the default appearance daylight
+  and certify night as a declared sub-tier. **(b) is the recommendation**: one number hides which
+  band it came from, and the bands differ by 100x for a reason that is in the reference.
+
+## 10. `check_resolution_consistency` — the frozen bound, and the two options
+
+The frozen `DOWNSAMPLE_EXACT_FRAC >= 1.0 - 0.005` is **not edited**, per the ruling. Night is
+shipped and the check records what it records. Measured at 16 -> 32 px on 16 states
+(`certify/certify_cpu_mac.json`, `resolution_consistency`):
+
+| pool | `exact_frac` | `mean_abs` | `max_abs` | verdict against the frozen bound |
+|---|---|---|---|---|
+| all daylight (`light = 1.0`) | **1.000** | 0.00 | 0 | **pass** |
+| dusk `light = 0.75` | **1.000** | 0.00 | 0 | **pass** |
+| dusk `light = 0.50` | **1.000** | 0.00 | 0 | **pass** |
+| night `light = 0.45` | 0.591 | 0.30 | 3 | **fail** |
+| night `light = 0.10` | 0.280 | 3.75 | 30 | **fail** |
+| the sampler's mixed pool | 0.760 | 1.53 | 34 | **fail** |
+
+**The mechanism, written down as required.** The noise field is drawn at `(7t, 9t)` — the frame's
+own resolution — so element `i` of the 32 px field is a **different threefry counter** from element
+`i` of the 16 px field. Rendering at 2S and box-downsampling to S therefore averages four
+independent samples against one. This is a property of the **reference**: its night frames are
+resolution-dependent by construction, and no port can design that away without changing pixels. The
+boundary is sharp at `light_level = 0.5` because `intensity` is exactly 0 above it, which is why
+every non-night row passes at 1.000. The strip does **not** contribute — it resamples by exact 2x
+replication (§6.2).
+
+**The two options, with these numbers, for Sami:**
+
+1. **Re-declare `DOWNSAMPLE_EXACT_FRAC` for `CraftaxClassic` with provenance.** A per-config floor
+   of, say, `>= 0.27` at the sampler's band mix, cited to "the reference draws its night noise at
+   the frame's own resolution". *For:* the check keeps measuring something — a renderer regression
+   that moved a tile would still drop the number. *Against:* the floor is a property of the band mix
+   in `sample_states`, so it moves whenever the sampler is retuned, and a bound that tracks the
+   sampler is not really a bound.
+2. **Mark the check `not_applicable` under night, with a cited reason, and keep the 0.995 floor for
+   `light >= 0.5`.** *For:* it is the truthful classification — the quantity the check is defined to
+   measure ("does the disagreement stay where geometry is") is undefined when the two renders draw
+   *different noise*, which is not a geometry question at all; and the daylight/dusk bands, 58.3% of
+   the day cycle, keep the full 1.000 bound with no relaxation anywhere. *Against:* it removes
+   coverage from 41.7% of the state space, and `not_applicable` is a heavier hammer than a number.
+
+**Recommendation: (2), split by band** — assert `>= 0.995` on the `light >= 0.5` pool, where it is
+met exactly, and record `not_applicable` below it with the mechanism. That keeps a real bound on the
+part of the space where the check is meaningful instead of replacing a real bound everywhere with a
+weak one. Either way it is not this workstream's to edit.
+
+## 11. What is owed, and what is ready for it
+
+**Oscar: still BLOCKED** — `ssh -o BatchMode=yes sboughan@sshcampus.ccv.brown.edu` returns
+`Permission denied (keyboard-interactive)`. Checked once more at the end of this session, not
+retried in a loop. Four sbatch scripts are written, versioned under
+`scratch/step7/craftax-classic-full/`, and share `env_header.sh`, which redirects every cache
+(`UV_CACHE_DIR`, `PIP_CACHE_DIR`, `XDG_CACHE_HOME`, `TORCH_HOME`, `HF_HOME`, `WARP_CACHE_PATH`,
+`MPLCONFIGDIR`) under `$SCR` because **HOME is at 100% of its quota**:
+
+| script | what it owes |
 |---|---|
-| **Gate A, mandatory checks** | all 14 must be re-run; `check_state_dims_matter` and `check_resolution_consistency` are the two at risk (section 5) |
-| **parity tier over the WHOLE observation** | the current record's `parity_interior_min = 1.0` was measured on a **crop**. It must be re-declared against the full 144x144 frame. Two warnings from phase 0: (a) the interior statistic is `NaN` on dense pixel art and the `OUT_OF_BOUNDS` band trick in `sample_states` is what rescues it — the strip adds large flat black regions, which should *help*; (b) the reference's own float output is not fusion-stable (section 0), so the declared bound must be on uint8 |
-| **the jax-version declaration** | new, and mandatory: `jax >= 0.4.36` with `jax_threefry_partitionable = True`. Without it the night frames are a different picture (section 2.2) |
-| **Gate F** | SWM render-compat re-run through `stable_envs/compat/worldmodel.py` and `examples/swm_compat/`; the frame **shape changes**, so `AddPixelsWrapper` -> `EverythingToInfoWrapper` -> `EnsureInfoKeysWrapper` -> `ResizeGoalWrapper` must be re-measured, with `facade_missing == []` and `batched_missing == []` |
-| **new frozen corpus** | `examples/results/step7/craftax-classic-full/corpus/` — 64 states from **real rollouts** (day/dusk/night/sleep stratified, as `phase0/state_census.json`) with the inventory counts swept over `0..9` per section 5.2 |
-| **performance, both devices** | Step-6 machinery (`examples/bench_step3.py`, `scratch/step6/profile_note.py`); Step 2 section 12.1 `PERFORMANCE_MEASURED`. Before/after must be in one SLURM job on one card (AGENT_COMMON addendum) |
+| `01_build_venv.sbatch` | `$SCR/venvs/se7-craftax` — python 3.12, `jax[cpu]==0.11.1`, `craftax==1.6.1`, torch 2.14.0. **No existing Oscar venv has jax**, which is why Step 6 recorded this env's parity as `blocked_environment`; a new venv, never an edit to a shared one |
+| `02_certify_cpu.sbatch` | Gate A + parity on a batch node at one thread, plus the PRNG exactness sweep re-run on **x86-64** — this is bit-level integer arithmetic and arm64/x86 agreement is checked, not assumed |
+| `03_sweep_cpu.sbatch` | the CPU tier per band and on the mixed corpus, with the `$SCR/se6/baseline` leg in the same job on the same node |
+| `04_gpu.sbatch` | the CUDA leg of Gate A, the GPU tier, and the comparison of the world-row digests against the frozen Step-4 record on a 3090 — before and after in **one allocation on one card** |
 
-**Oscar: BLOCKED.** `ssh -o BatchMode=yes` -> `Permission denied (keyboard-interactive)`; one attempt,
-not retried. Pending there, in order:
+Job names all start `se7-craftax-classic-full-`. One GPU job at a time; never cancel a job this
+workstream did not submit, and never a `simclr_cifar10` job.
 
-1. a `jax`-bearing interpreter. **No Oscar venv has jax** — Step 6 recorded
-   `render_parity_with_official_renderer` as `blocked_environment` for exactly this reason, and this
-   workstream's entire parity claim needs it. A new `$SCR/venvs/se7-craftax` (python 3.12, `jax[cpu]`,
-   craftax 1.6.1, matching the local pins) with `UV_CACHE_DIR` / `PIP_CACHE_DIR` / `XDG_CACHE_HOME` /
-   `TORCH_HOME` under `$SCR` — **HOME is at 100% quota**;
-2. the PRNG exactness sweep re-run on x86-64 Linux (this is bit-level integer arithmetic; arm64 vs
-   x86 agreement should be checked, not assumed);
-3. Gate A conformance + parity on a 3090; CPU sweep on `batch` / `normal` with threads pinned to 1;
-4. before/after tiers in one job on one card, job names `se7-craftax-classic-full-*`.
+**Gate F.** Re-measured as far as it can be locally: `StableEnvGym('CraftaxClassic')` reset gives a
+**149**-dim observation (was 127), `render()` returns **(144, 144, 3)** (was (112, 144, 3)), and the
+`info` keys are unchanged (`distance_to_target`, `env_name`, `goal`, `goal_state`, `proprio`,
+`state`). `step()` still raises by design — this env ships a renderer and no batched simulator, so
+its Gate F path is `swap_renderer`, which keeps the official env's dynamics. The full evidence run
+through `examples/swm_compat/` needs `stable_worldmodel`, which is in **no** local venv; it is
+listed with the Oscar work.
 
----
+## 12. Two shared files were touched, both additively
 
-## 9. Open questions for the coordinator
+Flagged per AGENT_COMMON rather than left to be discovered:
 
-1. **6.3 — what does "the frozen Step-4 corpus stays byte-identical" mean when the observation
-   grows?** World-rows-only replay against the frozen digests plus a new full corpus is the proposal;
-   it needs a ruling before any code lands.
-2. **5.1 — `DOWNSAMPLE_EXACT_FRAC` for this config.** Re-declare with the measured night number and
-   provenance, or mark the check `not_applicable` under night? Not this workstream's to edit.
-3. **2.5 — is a slower `CraftaxClassic` acceptable?** Step 7's rules say a new cell need not be
-   `CPU_FAST` to ship, but this is not a new cell — it is a cell that is currently `CPU_EXCEPTIONAL`
-   and would regress. Preference: land 6.4 steps 1-2 (no regression), then step 3 with the
-   reductions, and report the tier honestly.
-4. **`render/prng.py` ownership.** W1 needs it first and W2 needs it verbatim. Proposal: W1 writes it
-   minimal, W2 reviews it before merging rather than after.
-5. **The `channel_gain` variation now multiplies the strip too.** The reference has no such knob, so
-   there is no right answer to copy; applying it to the whole frame is the consistent reading.
-   Flagged because it changes what `check_colors_apply_exactly` sees.
+* **`examples/fidelity_step4.py`** records `jax` among `reference_packages`. Without it the declared
+  `jax` reference version could never be confirmed and `provenance.reference_version_mismatch` would
+  report "version not recorded by the measuring interpreter" — which is judged `blocked_environment`
+  — forever. One entry in a tuple; no other env declares `jax`, so no other env's judgement can move.
+* **`tests/unit/test_declarations.py`** reads `parity_note` as the corroborating prose for a
+  **parity** env's `reference_versions`. The check previously required
+  `visual_fidelity["measured_at"]`, which `check_fidelity_declaration` **forbids** a parity env from
+  carrying — so a parity env could not declare a reference version at all. The rule is unchanged: a
+  version may not be declared without prose in the class that says the same thing.
 
----
+## 13. Report per AGENT_COMMON
 
-## 10. Semantic follow-up recommendation
-
-**None yet.** Nothing was changed, so no digest moved. When the patch lands, the right follow-up is a
-**paired Gate H**, not a tripwire: the observation gains a whole information channel (the inventory
-strip) that a world model can read, and night/sleep change the global statistics of every frame in
-the pool. That is a coverage change, not a pixel drift, and a tripwire is the wrong instrument for it.
+* **tests run:** `tests/unit` — **832 passed, 37 skipped**, 2 deselected. The two deselected are the
+  pre-existing failures Step 6's `tilemap` findings §6 already routed to the coordinator
+  (`test_every_cited_scratch_path_resolves`, whose unresolved citations are *not* this workstream's,
+  and `test_examples.py::…[robocasa_visual/render_mjwarp.py]`). `tests/unit/test_nvdiff_texgen.py`
+  cannot import on this Mac (`MUJOCO_GL=egl`) and was excluded. New: 15 PRNG tests, 39 strip/night
+  tests; `test_craftax_atlas.py` extended to the sixth player slot, the strip table and batches that
+  mix sleeping/awake and all three lighting bands.
+* **tiers before/after:** unchanged on the daylight path; see §9 for the band split. Certified
+  numbers are owed on Oscar.
+* **pixels changed:** yes, by design — the observation grows from the world layer to the whole
+  144x144 frame. The **world rows of a Step-4-shaped state are unchanged** (§8.4).
+* **semantic follow-up:** a **paired Gate H**, not a tripwire. The observation gains a whole
+  information channel a world model can read, and night and sleep change the global statistics of
+  every frame in the pool. That is a coverage change rather than pixel drift, and a tripwire is the
+  wrong instrument for it.
+* **SLURM job IDs:** none — Oscar blocked.
