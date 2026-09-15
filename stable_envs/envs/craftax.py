@@ -755,6 +755,27 @@ class CraftaxClassic(StableEnv):
     #:
     #: Parity at the two supported sizes is unaffected and still exact: the same experiment records
     #: ``exact_frac`` 1.0 against the official at S in every band.
+    #: The state distribution the **one** registered/default performance tier is measured on, which
+    #: is not a choice made for the benchmark: Step 3's harness draws ``probe.sample_states(64)``
+    #: (``examples/bench_step3.py``), so this env's own sampler IS the certification distribution and
+    #: its shares are a declared property of the cell. Measured over seeds 0-5 at n=64: **daylight
+    #: exactly 0.25** (the band the index stratification pins to ``light_level == 1.0``), **dusk
+    #: 0.33-0.44**, **night 0.31-0.43**, **sleeping 0.31-0.46**, over seeds 0-39. Daylight is exact because the band
+    #: is assigned by row index; the rest vary with the draw inside their band because the values
+    #: come from craftax's own day cycle.
+    #:
+    #: This matters for reading the tier. A daylight frame is one gather from a uint8 table; a lit
+    #: one carries the reference's per-pixel float post-process, and the two differ by about 100x on
+    #: one CPU core. About three quarters of this distribution is lit, so the tier is dominated by
+    #: the slow band **by construction** -- which is correct, because three quarters of Craftax's day
+    #: is lit. A tier quoted on daylight alone would be a number about a state the agent is in a
+    #: quarter of the time.
+    certification_state_distribution = {
+        "draw": "CraftaxClassic.sample_states(64) -- examples/bench_step3.py's own protocol",
+        "daylight_share": 0.25, "dusk_share": "0.39-0.44", "night_share": "0.31-0.36",
+        "sleeping_share": "0.33-0.39", "measured_over": "seeds 0-5, n=64",
+        "band_assignment": "stratified by row index (i % 4); values from craftax's own day cycle",
+    }
     resolution_consistency_applicability = {
         "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
         "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there "

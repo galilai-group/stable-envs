@@ -632,18 +632,49 @@ cheap as a memcpy.
 Attribution at B=256, 16 px, all-night (`sweep/bands_cpu_mac.json`): full render 194.8 ms, of which
 the threefry field **77.5 ms (40%)** and the rest of the chain ~144 ms including the float gather.
 
-**Per the Q3 ruling this goes to Sami with numbers.** The shape of the decision:
+### 9.1 Decision B — one tier, from the protocol's own distribution
 
-* the env is currently `CPU_EXCEPTIONAL` / `GPU_EXCEPTIONAL`, certified at the *default* appearance,
-  which before this patch was daylight-only because night was not representable;
-* at the **agent observation size (7 px)** — the size RL actually trains on — the mixed corpus is
-  ~9,955 f/s against a one-core JPEG-decode bar that measured 4,345-5,534 f/s in Step 6, so the
-  `NO_REFERENCE` ladder still gives at least `CPU_FASTER` and plausibly `CPU_FAST`;
-* at **16 px** the mixed corpus is ~1,986 f/s and would fall below the decode bar;
-* the honest options are (a) certify the mixed corpus and accept a lower tier for a *larger*
-  observation, (b) certify per band and declare both, or (c) keep the default appearance daylight
-  and certify night as a declared sub-tier. **(b) is the recommendation**: one number hides which
-  band it came from, and the bands differ by 100x for a reason that is in the reference.
+Sami's ruling: **one** registered/default tier for `CraftaxClassic`, from the mixed-corpus
+throughput; no separate daylight/night environment tiers; report all three plus the ratio and flag
+the slower band so the headline cannot hide it.
+
+**The mixed distribution is not a weighting invented for this benchmark.** Step 3's harness draws
+`probe.sample_states(64)` (`examples/bench_step3.py:186`), so `CraftaxClassic.sample_states` **is**
+the certification distribution. Measured over seeds 0-39 at n=64 and now declared on the class as
+`certification_state_distribution`, with a test that fails if the sampler is retuned away from it:
+
+| band | share |
+|---|---|
+| daylight (`light == 1.0`) | **exactly 0.25** — the band the `i % 4` stratification pins |
+| dusk (`0.5 <= light < 1`) | 0.33 – 0.44 |
+| night (`light < 0.5`) | 0.31 – 0.43 |
+| **lit (anything but full daylight)** | **0.70 – 0.80** |
+| sleeping | 0.31 – 0.46 |
+
+So the tier is dominated by the slow band **by construction** — and that is correct, because about
+three quarters of Craftax's day is lit. A tier quoted on daylight alone would describe a state the
+agent is in a quarter of the time.
+
+**Numbers (GPU, RTX 3090 `gpu2113`, job `6394893`, B=4096):**
+
+| | mixed (**the tier**) | daylight (diagnostic) | night (diagnostic) | daylight/night |
+|---|---|---|---|---|
+| 16 px | **45,203 f/s** | 796,702 | 24,353 | **32.7x** |
+
+**Slower band, flagged: `light_level < 0.5`.** Why: a per-pixel float post-process the reference
+performs — noise field, luminance enhance, tint, daylight blend — against a single uint8 gather at
+full daylight.
+
+**The CPU tier is not yet measurable and is not being guessed.** Job `6394647` on `node2410`
+measured the *daylight* path — an unchanged uint8 gather — at **6,219 f/s** where this laptop
+measures 126,845 and where Step 6 certified 115,166–154,086 on this cluster. That is contention, not
+this renderer, and a tier taken on a contended node is not a tier. Job `6395167` re-takes it with
+`--exclusive`, prints `/proc/loadavg` before and after, runs Step 3's own harness for the headline
+and the Step-6 tree in the same job for the daylight comparison. It is queued; the number will be
+reported when it lands, with its load average beside it.
+
+For orientation only, one Apple arm64 core at one thread (**not** a certification number): mixed
+1,990 f/s at 16 px and 9,973 at 7 px; daylight 151,894 and 309,910; night 1,317 and 6,684.
 
 ## 10. `check_resolution_consistency` — the frozen bound, and the two options
 

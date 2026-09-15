@@ -478,3 +478,27 @@ def test_the_strip_is_resolution_consistent_in_every_band(env, states):
         b = env.render(st, size=32).numpy()[:, OBS_H * 32:]
         d = np.abs(_box_downsample(b, 2).astype(np.int16) - a.astype(np.int16))
         assert float((d.max(-1) == 0).mean()) == 1.0, (light, int(d.max()))
+
+
+def test_the_declared_certification_distribution_is_the_one_the_sampler_produces(env):
+    """The tier is measured on ``sample_states(64)``; the declaration says what that contains.
+
+    Step 3's benchmark harness draws ``probe.sample_states(64)``, so the sampler is the certification
+    distribution rather than something chosen for the benchmark. If the sampler is retuned, the
+    declared shares must move with it or the tier is being read against the wrong mix.
+    """
+    from stable_envs.envs.craftax import CraftaxClassic as C
+    d = C.certification_state_distribution
+    assert d["daylight_share"] == 0.25
+    for seed in range(20):
+        e = C(device="cpu", seed=seed)
+        p = e.sample_states(64)
+        light, sleep = p[:, OBS_H * OBS_W * 2 + 2 + N_STRIP], p[:, OBS_H * OBS_W * 2 + 1 + N_STRIP]
+        # daylight is EXACT because its band is pinned by row index; the others vary inside their
+        # band because the values come from craftax's own day cycle, so they get the declared range
+        assert float((light == 1.0).mean()) == 0.25, seed
+        assert 0.33 <= float(((light >= 0.5) & (light < 1.0)).mean()) <= 0.44, seed
+        assert 0.31 <= float((light < 0.5).mean()) <= 0.43, seed
+        assert 0.31 <= float((sleep > 0.5).mean()) <= 0.46, seed
+        # and the lit share -- the one that decides how the tier reads -- is always about 3/4
+        assert 0.70 <= float((light < 1.0).mean()) <= 0.80, seed
