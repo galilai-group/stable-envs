@@ -52,7 +52,7 @@
      "floor": 0.8063812255859375,
      "skybox": 0.14780970982142858
     },
-    "sheet": "/oscar/scratch/sboughan/se7/dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/sheets/DMCQuadrupedWalk_check.png",
+    "sheet": "$SCR/se7/dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/sheets/DMCQuadrupedWalk_check.png",
     "ssim": 0.955687698861485,
     "ssim_by_region": {
      "bodies": 0.9738176561677222,
@@ -118,7 +118,7 @@
      "floor": 0.8025995371293049,
      "skybox": 0.15171595982142858
     },
-    "sheet": "/oscar/scratch/sboughan/se7/dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/sheets/DMCQuadrupedWalk_frozen.png",
+    "sheet": "$SCR/se7/dmc-quadruped/examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/sheets/DMCQuadrupedWalk_frozen.png",
     "ssim": 0.9567293161703239,
     "ssim_by_region": {
      "bodies": 0.9719673433203725,
@@ -668,7 +668,7 @@
   "slurm_nodelist": "gpu2107",
   "timestamp": "2026-09-14T23:42:45-0400",
   "torch": "2.14.0+cu126",
-  "venv": "/oscar/scratch/sboughan/venvs/se-vis311"
+  "venv": "$SCR/venvs/se-vis311"
  },
  "what_this_is": "Step 6A per-surface localisation of the trackcom residual, one arm"
 }

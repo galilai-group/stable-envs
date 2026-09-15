@@ -2666,7 +2666,8 @@ _SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
 
 #: Quadruped (Step 7): the family's convention -- three independent MJWarp draws through the shipped
 #: env -- at the REGISTERED default (camera 2, 224 px, SWM's appearance; Step 2 S4.2), under the
-#: declared 3.11.0 pair, on a 3090 (jobs 6394721 / 6394987, gpu2104 / gpu2107). The CPU backend
+#: declared 3.11.0 pair, on a 3090 (job 6394987, gpu2107; the draws of job 6394721 on gpu2104 were
+#: overwritten by it and are not what the numbers rest on). The CPU backend
 #: measured the same picture locally first (3.42 / 0.902 / 0.957 on one draw, Apple M5) and is
 #: certified against this entry, not its own.
 _QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
@@ -2746,7 +2747,7 @@ VISUAL_FIDELITY: dict[str, dict] = {
     # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).
     "DMCQuadrupedWalk": {
         "mean_abs": 3.52, "within8_frac": 0.897, "ssim": 0.955,
-        "interior_exact_frac": 0.205, "interior_frac": 0.0284, "all_exact_frac": 0.171,
+        "interior_exact_frac": 0.206, "interior_frac": 0.0284, "all_exact_frac": 0.171,
         "skybox_share": 0.148, "floor_share": 0.806,
         "draw_spread": {"mean_abs": [3.520, 3.527], "within8_frac": [0.8964, 0.8987],
                         "ssim": [0.9536, 0.9557]},

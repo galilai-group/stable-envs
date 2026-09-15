@@ -264,17 +264,20 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     assert set(R3._BOUNDED_KINDS) == measured, (
         f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
         f"({f.name}) chose {sorted(measured)}")
-    # And the rule behind it must still hold in the numbers, not merely in the summary field: every
-    # bounded kind above 1.0 in every run, every unbounded one below it.
+    # And the rule behind it must still hold in the numbers, not merely in the summary field. The rule
+    # is "bounded iff the worst ratio is > 1 in EVERY run", so its complement is "some run's worst
+    # ratio is <= 1" -- NOT "the best ratio is < 1", which the first version asserted: a kind whose
+    # ratio straddles 1 (ELLIPSOID on a loaded node: worst 0.69-0.90, best 1.21-1.43) is honestly
+    # unbounded under the rule and was unsatisfiable under the old assertion either way.
     for kind, on in m["predicate"].items():
         if kind not in m["ratio_worst_per_run"]:
             continue
         worst = m["ratio_worst_per_run"][kind]
-        best = m["ratio_best_per_run"][kind]
         if on:
             assert min(worst) > 1.0, f"{kind} is bounded but its worst ratio is {min(worst):.2f}"
         else:
-            assert max(best) < 1.0, f"{kind} is unbounded but its best ratio is {max(best):.2f}"
+            assert min(worst) <= 1.0, (
+                f"{kind} is unbounded but its worst ratio is > 1 in every run ({min(worst):.2f})")
 
 
 def test_an_unbounded_kind_never_reaches_the_gather():

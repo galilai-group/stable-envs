@@ -419,8 +419,11 @@ identity of P2 stands as measured.
 Jobs: **6394721** `se7-dmc-quadruped-gpu` (gpu2104, RTX 3090, driver 575.57.08, 5:56), **6394987**
 `se7-dmc-quadruped-gpu2` (gpu2107, same card class, 3:47 — steps 4-6 re-run; see the EGL note),
 **6394722** `se7-dmc-quadruped-cpu` (node1913, `batch`, 58:53), **6395512** `se7-dmc-quadruped-sweep`
-(node2330, 0:09, load-aborted). Artifacts under `phase1/gpu/` and `phase1/cpu_oscar/` (the two 8 MB
-`localize_*/frames/*.npz` stacks are left untracked; everything else is committed).
+(node2330, 0:09, load-aborted). Artifacts under `phase1/gpu/` and `phase1/cpu_oscar/`. Untracked on purpose (regenerable by
+the sbatch set): `gpu/localize_311/frames/DMCQuadrupedWalk.npz` and `gpu/localize_312/frames/
+DMCQuadrupedWalk.npz` (8 MB each, ours + official + segmentation stacks), `gpu/localize_312/sheets/`
+(the 3.12 duplicate of the committed 3.11 sheets), and every `*.log` (gitignored). Everything else
+from the four jobs is committed.
 
 **Identity of every configuration that renders through the two shared files, branch vs 76dc511:**
 - cuda, one card each: **21/21 raycast3d configs byte-identical** (`cuda_identity_raycast21.json`,
@@ -490,13 +493,28 @@ Step-8 freeze; the GPU sweep was not part of this job set.
 ELLIPSOID's worst ratio per run 0.89 / 0.69 / 0.90 and best 1.43 / 1.21 / 1.37 — it straddles 1, so
 by the rule (> 1 at every width in every run) it is not bounded; and the same runs put **BOX at
 0.95** in run 2 against the frozen table's 1.11-1.13, i.e. the node was too loaded to reproduce the
-committed predicate, which is why the aggregate is committed OFF the path the bounds test reads
-(`kind_cost_ellipsoid.json`) and `_BOUNDED_KINDS` is untouched. The test now knows how to read a
-Step-7 aggregate at that path when a quiet-node measurement lands (`r6_kind_cost_agg.py` gained the
-kind). Correctness is unaffected either way — unbounded means always tested.
+committed predicate. `_BOUNDED_KINDS` is untouched, and the aggregate IS committed under the
+canonical name the bounds test reads (`cpu_oscar/kind_cost_ellipsoid.json`, load evidence in-band):
+the test's complement clause was wrong in (e) (`max(best) < 1`, unsatisfiable for a kind that
+straddles 1 whichever way the predicate went — re-check of ad842a8) and is now the true complement of
+"bounded iff worst > 1 in every run", i.e. `min(worst) <= 1` — under which this straddling
+measurement is an honest, green, UNBOUNDED verdict. The quiet-window job (6396525) re-takes the
+three runs with loadavg recorded in-band; if a clean measurement says otherwise the file is replaced
+in (f). Correctness is unaffected either way — unbounded means always tested.
 
 **Unit suite on the certification host** (`unit_tests_node1913.txt`, `se-step6`): 719 passed, 22
-skipped, 1 failed = the pre-existing `test_every_cited_scratch_path_resolves` (Step-6 citations).
+skipped, 1 failed = `test_every_cited_scratch_path_resolves`. At ad842a8 that test's broken set had
+grown from the baseline's 9 (Step-6 citations) to 21: twelve absolute `/oscar/scratch/...` paths
+inside four committed stdout captures of this workstream (`egl_probe_*`, `mujoco_warp_source_*`) —
+scrubbed to `$SCR/...` in (e2), which returns the set to the baseline's 9.
+
+**Provenance of the committed artifacts (e2).** The Gate-A shards under `gpu/` and `cpu_oscar/`
+were measured at tree `fa4ac53`, i.e. BEFORE the shipped declaration: their
+`check_fidelity_declaration` evidence shows the provisional entry (3.42 / 0.902 / 0.957), and their
+`check_visual_fidelity` observations are judged here against the shipped thresholds (4.6 / 0.85 /
+0.90), which they clear; the sbatch set re-run at the merged SHA re-stamps them. `visual_calib_*`
+and the three identity JSONs now carry host / job / commit / card stamps; `interior_exact_frac` in
+the declaration is the MEAN over draws (0.206), as the siblings declare it.
 
 **EGL note (not a node fault).** 6394721's log showed `OpenGL.raw.EGL._errors.EGLError` after every
 official-renderer call and I resubmitted steps 4-6 as 6394987 with gpu2104 excluded. The lines were

@@ -1,176 +1,184 @@
 {
-  "before_dir": "/oscar/scratch/sboughan/se7/_dumps/quad_gpu/base_ray",
-  "after_dir": "/oscar/scratch/sboughan/se7/_dumps/quad_gpu/branch_ray",
-  "configs": {
-    "AntmazeGiantNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "AntmazeLargeExplore": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "AntmazeMediumExplore": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "AntmazeTeleportExplore": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCAcrobotSwingup": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCBallInCupCatch": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCCartpoleBalance": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCCartpoleSwingup": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCFingerSpin": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCFingerTurnEasy": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCFingerTurnHard": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCPendulumSwingup": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCReacherEasy": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "DMCReacherHard": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 451584,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "HumanoidmazeGiantNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "HumanoidmazeLargeNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "HumanoidmazeMediumNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "PointmazeGiantNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "PointmazeLargeNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "PointmazeMediumNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    },
-    "PointmazeTeleportNavigate": {
-      "identical": true,
-      "max_abs_diff": 0,
-      "px_differing": 0,
-      "px_total": 3211264,
-      "frames_differing": 0,
-      "mean_abs_diff": 0.0
-    }
+ "before_dir": "$SCR/se7/_dumps/quad_gpu/base_ray",
+ "after_dir": "$SCR/se7/_dumps/quad_gpu/branch_ray",
+ "configs": {
+  "AntmazeGiantNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
   },
-  "all_identical": true,
-  "n_compared": 21
+  "AntmazeLargeExplore": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "AntmazeMediumExplore": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "AntmazeTeleportExplore": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCAcrobotSwingup": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCBallInCupCatch": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCCartpoleBalance": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCCartpoleSwingup": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCFingerSpin": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCFingerTurnEasy": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCFingerTurnHard": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCPendulumSwingup": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCReacherEasy": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "DMCReacherHard": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 451584,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "HumanoidmazeGiantNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "HumanoidmazeLargeNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "HumanoidmazeMediumNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "PointmazeGiantNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "PointmazeLargeNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "PointmazeMediumNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  },
+  "PointmazeTeleportNavigate": {
+   "identical": true,
+   "max_abs_diff": 0,
+   "px_differing": 0,
+   "px_total": 3211264,
+   "frames_differing": 0,
+   "mean_abs_diff": 0.0
+  }
+ },
+ "all_identical": true,
+ "n_compared": 21,
+ "provenance": {
+  "git_commit": "fa4ac534d5446613dac448e6ba4badedc5c8ef1a",
+  "merged_commit": "0a029bd",
+  "card": "NVIDIA GeForce RTX 3090, driver 575.57.08",
+  "host": "gpu2104",
+  "slurm_job": 6394721,
+  "baseline_commit": "76dc5116f432e61dd47fba8f9e879cf9212c8e46"
+ }
 }

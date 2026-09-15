@@ -53,5 +53,14 @@
    "interior_bad_px": 46,
    "ssim": 0.8733936451123471
   }
- ]
+ ],
+ "provenance": {
+  "git_commit": "fa4ac534d5446613dac448e6ba4badedc5c8ef1a",
+  "merged_commit": "0a029bd",
+  "card": "NVIDIA GeForce RTX 3090, driver 575.57.08",
+  "host": "gpu2107",
+  "slurm_job": 6394987,
+  "venv": "se-vis311"
+ },
+ "interior_exact_mean": 0.0668
 }

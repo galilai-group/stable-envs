@@ -2,7 +2,7 @@
   "host": "gpu2104.oscar.ccv.brown.edu",
   "device": "cuda",
   "slurm_job": "6394721",
-  "code_root": "/oscar/scratch/sboughan/se7/baseline",
+  "code_root": "$SCR/se7/baseline",
   "configs": {
     "DMCCheetahRun": {
       "config": "DMCCheetahRun",

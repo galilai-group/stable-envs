@@ -2,7 +2,7 @@
   "host": "node1913.oscar.ccv.brown.edu",
   "device": "cpu",
   "slurm_job": "6394722",
-  "code_root": "/oscar/scratch/sboughan/se7/dmc-quadruped",
+  "code_root": "$SCR/se7/dmc-quadruped",
   "configs": {
     "AntmazeGiantNavigate": {
       "config": "AntmazeGiantNavigate",

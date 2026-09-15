@@ -2,7 +2,7 @@
   "host": "node1913.oscar.ccv.brown.edu",
   "device": "cpu",
   "slurm_job": "6394722",
-  "code_root": "/oscar/scratch/sboughan/se7/baseline",
+  "code_root": "$SCR/se7/baseline",
   "configs": {
     "AntmazeGiantNavigate": {
       "config": "AntmazeGiantNavigate",
