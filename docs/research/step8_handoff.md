@@ -14,7 +14,7 @@ SHA256 `b44808ed56e48bb2cfde5000959629eeab95b6437076a6c8cde59b22ace7ab60`).
 It is the authorized cube/floor-color patch; independent review found a custom-to-default
 cube-color cache leak. Completion takes place in an isolated follow-up worktree.
 
-Fresh reviews are in `examples/results/step8/reviews/`: A requires changes (138 tests pass;
+Fresh reviews are in `examples/results/step8/reviews/` (review_*.md): A requires changes (138 tests pass;
 generated JSON/tables match, prose stale), B is BLOCK (committed GPU artifacts stale,
 wrapper discovery and partial skybox semantics unresolved), C's committed maps require
 changes and its unfinished renderer is BLOCK. E's review/family-specific follow-up is active.
