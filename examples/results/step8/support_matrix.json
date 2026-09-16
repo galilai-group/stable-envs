@@ -12,8 +12,8 @@
    "UNSUPPORTED_BY_DESIGN": 3
   },
   "gate_a": {
-   "FAIL": 3,
-   "PASS": 36,
+   "FAIL": 5,
+   "PASS": 34,
    "UNMEASURED": 1,
    "UNSUPPORTED_BY_DESIGN": 2
   },
@@ -32,7 +32,7 @@
    "unknown": 2
   }
  },
- "generated_at_head_sha": "003b8b698a7b93e5c3cd79a39ef74bb3b67cc994",
+ "generated_at_head_sha": "9d286ce78645f31182976f87159d742764346ea4",
  "rows": [
   {
    "backend_class": "R",
@@ -517,15 +517,33 @@
     "CraftaxClassic": "e403a5648d92156e"
    },
    "gate_a": {
-    "failing_checks": [],
-    "note": "all mandatory checks pass; check_resolution_consistency declared not_applicable below light_level 0.5 on the OFFICIAL renderer's own evidence (official 0.1634 == ours 0.1634); the Step-8 certifier must honour resolution_consistency_applicability or judge on the light >= 0.5 subset",
+    "failing_checks": [
+     "check_resolution_consistency"
+    ],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxClassic",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+      "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxClassic",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+      "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
-     "cpu": "PASS",
-     "cuda": "PASS"
+     "cpu": "FAIL",
+     "cuda": "FAIL"
     },
-    "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json; examples/results/step7/closure2/gate_a/cuda_craftax.json",
-    "status": "PASS"
+    "raw": "FAIL",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "FAIL"
    },
    "gpu_tier": {
     "note": "",
@@ -552,7 +570,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "PASS",
+    "status": "UNMEASURED",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {
@@ -682,13 +700,29 @@
    },
    "gate_a": {
     "failing_checks": [],
-    "note": "18 checks clean; check_resolution_consistency declared not_applicable in ALL bands on the official's own evidence (official fails the frozen 0.995 in every band: world 0.4817 day / 0.0991 night)",
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxFull",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+      "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxFull",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+      "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
      "cpu": "PASS",
      "cuda": "PASS"
     },
     "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json; examples/results/step7/closure2/gate_a/cuda_craftax.json",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
     "status": "PASS"
    },
    "gpu_tier": {
@@ -1966,13 +2000,29 @@
    },
    "gate_a": {
     "failing_checks": [],
-    "note": "every mandatory check passes; check_state_dims_matter passes with three REPORTED exclusions (ball_y, target_ball_quat_qw, target_ball_quat_qy), approved by Sami as a narrow per-class render-contract exception validated by the check itself against the frozen geom_type",
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "DMCManipulatorBringBall",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+      "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "DMCManipulatorBringBall",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
+      "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
      "cpu": "PASS",
      "cuda": "PASS"
     },
     "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json; examples/results/step7/closure2/gate_a/cuda_vis311.json",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
     "status": "PASS"
    },
    "gpu_tier": {
@@ -2222,13 +2272,29 @@
    },
    "gate_a": {
     "failing_checks": [],
-    "note": "all mandatory checks pass at the W5 closure follow-on (d4318d2). The Step-7 closure sweep had recorded check_state_roundtrip FAIL at max_abs_err 1.17e-07 against a bound of exactly 0, plus a sub-batch shared-style failure and a zero-size reduction crash, none of which any earlier Step-7 interpreter could see because every committed tests/gpu run skipped OGBench; W5 closed them with float32 round-trip states, the PlateRig (private model copy, offscreen buffer raised per rig, hidden-site-group digest) and a role-split reference cache, and the declaration was re-measured on the gate instrument",
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "OGBCube",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+      "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "OGBCube",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+      "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
      "cuda": "PASS"
     },
     "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json; examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
     "status": "PASS"
    },
    "gpu_tier": {
@@ -2400,13 +2466,29 @@
    },
    "gate_a": {
     "failing_checks": [],
-    "note": "as OGBCube: all mandatory checks pass at d4318d2, and the closure sweep's check_state_roundtrip FAIL (1.12e-07) is closed. Still ships with a DECLARED residual: the btn_metal cube-map cannot be sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean colour on two small geoms - 0.139% of pixels, max 37/255. Sami ruled: keep the reviewed declared bake",
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "OGBScene",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+      "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "OGBScene",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+      "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
      "cuda": "PASS"
     },
     "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json; examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
     "status": "PASS"
    },
    "gpu_tier": {
@@ -2501,15 +2583,36 @@
     "PFRocketLanding": "f4707e54f3007b2e"
    },
    "gate_a": {
-    "failing_checks": [],
-    "note": "all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the contact-band bridge flag and fills the declaration. Two tests/gpu assertions still fail, both with a stated mechanism and neither a Gate-A check: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for this cell (measured 0.95614; the sa",
+    "failing_checks": [
+     "check_colors_apply_exactly"
+    ],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "PFRocketLanding",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_rocket.json",
+      "source_sha256": "016b266071d0f7c80076de6d8f9c5a35265906c7b431459f603e9942c8cb9187"
+     },
+     {
+      "blocked_checks": [
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "cell": "PFRocketLanding",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_rocket.json",
+      "source_sha256": "244f375bde1ec35315d0e8ae9f53770df3c98e013149a097771cde5f596f478c"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
-     "cuda": "PASS"
+     "cuda": "FAIL"
     },
-    "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_rocket.json; examples/results/step7/closure2/gate_a/cuda_rocket.json",
-    "status": "PASS"
+    "raw": "FAIL",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "FAIL"
    },
    "gpu_tier": {
     "note": "R 241.5, cores 2.61, NO_LARGE_BATCH_REGRESSION 1.253; BATCH_SCALES 14.17 against a bar of 20, which fails because fps(1)=238 is unusually high for a class-S cell (3,374 f/s at B=4096) - correct application of Step-2 6.7 and a definitional edge case recorded for Step 8",
@@ -2542,7 +2645,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "PASS",
+    "status": "UNMEASURED",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {
@@ -2990,13 +3093,29 @@
    },
    "gate_a": {
     "failing_checks": [],
-    "note": "all mandatory checks pass on both devices and both reference arms on the new corpus; ELLIPSOID stays out of _BOUNDED_KINDS (kind-cost ratio 0.69-1.43 measured only on a load-34 node: undecided, not admitted silently)",
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "DMCQuadrupedWalk",
+      "device": "cpu",
+      "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+      "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "DMCQuadrupedWalk",
+      "device": "cuda",
+      "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
+      "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
+     }
+    ],
+    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
     "per_device": {
      "cpu": "PASS",
      "cuda": "PASS"
     },
     "raw": "PASS",
-    "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json; examples/results/step7/closure2/gate_a/cuda_vis311.json",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
     "status": "PASS"
    },
    "gpu_tier": {
@@ -3388,6 +3507,7 @@
    "examples/results/step8/certification/colour_law_ceiling.json",
    "examples/results/step8/certification/corpus_index.json",
    "examples/results/step8/certification/downsample_provenance.json",
+   "examples/results/step8/certification/gate_a_rejudged.json",
    "examples/results/step8/certification/nvdiff_ulp_classification.json",
    "examples/results/step8/certification/order_invariance_finding.json",
    "examples/results/step8/certification/oscar_paired_tests.json",

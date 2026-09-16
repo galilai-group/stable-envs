@@ -108,8 +108,37 @@ def census_classes() -> dict:
     return {e: (c3.backend_class(e, decls)[0], sorted(union.get(e, ()))) for e in decls}, decls
 
 
-def _gate_a(row: dict) -> dict:
+def _gate_a(row: dict, rejudged: dict | None = None) -> dict:
     g = row.get("gate_a") or {}
+    records = [r for r in (rejudged or {}).get("records", [])
+               if r["cell"] in (row.get("stable_envs_envs") or [])]
+    if records:
+        per_device = {}
+        failures = set()
+        for rec in records:
+            judgment = rec["judgment"]
+            verdict = judgment["gate_a"]
+            # A historical CPU refusal is still an unsupported device, not a failed GPU claim.
+            old = (g.get("per_device") or {}).get(rec["device"], {})
+            if old.get("verdict") == "REFUSED_BY_DESIGN" and verdict == "BLOCKED":
+                verdict = "REFUSED_BY_DESIGN"
+            per_device.setdefault(rec["device"], []).append(verdict)
+            failures.update(judgment["failures"])
+        def aggregate(values):
+            return next((v for v in ("FAIL", "BLOCKED", "PARTIAL", "PASS", "REFUSED_BY_DESIGN")
+                         if v in values), "BLOCKED")
+        devices = {dev: aggregate(values) for dev, values in per_device.items()}
+        overall = aggregate(list(devices.values()))
+        return {"status": STATUS_RULES[overall], "raw": overall,
+                "per_device": {d: STATUS_RULES[v] for d, v in devices.items()},
+                "failing_checks": sorted(failures),
+                "source": "examples/results/step8/certification/gate_a_rejudged.json",
+                "measurements": [{"cell": r["cell"], "device": r["device"],
+                                  "source": r["source"], "source_sha256": r["source_sha256"],
+                                  "blocked_checks": r["judgment"]["blocked"]} for r in records],
+                "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, "
+                        "including family_specific checks. This is not a fresh Step-8 run; "
+                        "unresolved historical protocol/reference issues remain visible."}
     devices = g.get("devices") or {}
     verdicts = {d: STATUS_RULES.get(v, f"?{v}") for d, v in devices.items()}
     overall = g.get("result") or ("FAIL" if "FAIL" in devices.values() else None)
@@ -209,6 +238,7 @@ def build() -> dict:
                          f"artifacts and there is nothing to join")
     classes, decls = census_classes()
     step8 = {"downsample": _load(S8 / "downsample_provenance.json"),
+             "gate_a": _load(S8 / "gate_a_rejudged.json"),
              "nvdiff": _load(S8 / "nvdiff_ulp_classification.json"),
              "order": _load(S8 / "order_invariance_finding.json"),
              "corpora": _load(S8 / "corpus_index.json"),
@@ -230,7 +260,7 @@ def build() -> dict:
             "backends": backends,
             "supported_devices": _devices(r),
             "fidelity": _fidelity(r),
-            "gate_a": _gate_a(r) if pixel else
+            "gate_a": _gate_a(r, step8["gate_a"]) if pixel else
                       {"status": "UNSUPPORTED_BY_DESIGN", "raw": None, "per_device": {},
                        "failing_checks": [],
                        "note": "symbolic id: intentionally renderer-free, there is no frame to gate"},
@@ -243,7 +273,7 @@ def build() -> dict:
                         "why": "no per-row physics verdict is carried in the Step-7 closure matrix; "
                                "check_step_matches_reference is judged on its own axis in "
                                "scratch/step4/certify.py and is not joined here"},
-            "reproducibility": {"status": "PASS" if (r.get("gate_a") or {}).get("result") == "PASS"
+            "reproducibility": {"status": "PASS" if _gate_a(r, step8["gate_a"])["status"] == "PASS"
                                           else "UNMEASURED",
                                 "why": "determinism, batch/batch-size/order/chunk invariance are "
                                        "mandatory Gate-A checks, so the Gate-A verdict carries them"},

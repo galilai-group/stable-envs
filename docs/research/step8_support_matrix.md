@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `003b8b698a7b93e5c3cd79a39ef74bb3b67cc994`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `9d286ce78645f31182976f87159d742764346ea4`
 
 ## The five words
 
@@ -39,7 +39,7 @@ rows                 42
 pixel-producing      40
 symbolic             2
 render covered       40
-gate A               {"FAIL": 3, "PASS": 36, "UNMEASURED": 1, "UNSUPPORTED_BY_DESIGN": 2}
+gate A               {"FAIL": 5, "PASS": 34, "UNMEASURED": 1, "UNSUPPORTED_BY_DESIGN": 2}
 cpu tier status      {"MEASURED": 24, "UNMEASURED": 15, "UNSUPPORTED_BY_DESIGN": 3}
 gpu tier status      {"MEASURED": 40, "UNMEASURED": 2}
 variation map        {"complete": 4, "missing": 34, "n/a": 2, "unknown": 2}
@@ -56,7 +56,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/CartPoleControl-v1` | `CartPole` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/CartpoleDMControl-v0` | `DMCCartpoleBalance`, `DMCCartpoleSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/CheetahDMControl-v0` | `DMCCheetahRun` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **FAIL** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | missing | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
-| `swm/CraftaxClassicPixels-v1` | `CraftaxClassic` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/CraftaxClassicPixels-v1` | `CraftaxClassic` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **FAIL (check_resolution_consistency)** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
 | `swm/CraftaxClassicSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
 | `swm/CraftaxPixels-v1` | `CraftaxFull` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** resolution consistency |
 | `swm/CraftaxSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
@@ -81,7 +81,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/OGBCube-v0` | `OGBCube` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | S | pixel | covered | `raycast3d` | — | `parity` | **PASS** | — | CPU_FAST (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/OGBScene-v0` | `OGBScene` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
+| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **FAIL (check_colors_apply_exactly)** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
 | `swm/PendulumControl-v1` | `Pendulum` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | R | pixel | covered | `navdot` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
@@ -131,6 +131,7 @@ step8_certification:
     examples/results/step8/certification/colour_law_ceiling.json
     examples/results/step8/certification/corpus_index.json
     examples/results/step8/certification/downsample_provenance.json
+    examples/results/step8/certification/gate_a_rejudged.json
     examples/results/step8/certification/nvdiff_ulp_classification.json
     examples/results/step8/certification/order_invariance_finding.json
     examples/results/step8/certification/oscar_paired_tests.json

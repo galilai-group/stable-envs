@@ -1266,7 +1266,7 @@ def resolution_consistency_applicability(env, states=None) -> dict:
                        f"the bound is asserted on every state"}
 
     # A declaration that names ONLY inapplicable bands leaves their complement judged.
-    if not applicable.any() and excluded.any():
+    if not any(status == "applicable" for status in out_bands.values()):
         applicable = ~excluded
     keep = np.flatnonzero(applicable & ~excluded)
     inapplicable = sorted(k for k, s in out_bands.items() if s == "not_applicable")
