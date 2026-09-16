@@ -132,11 +132,13 @@ _OGB_APPEARANCE = {
         "alone; the mover-geom membership is the solid half of the measurement"),
 }
 
+_OGB_MAPPED = ("cube.color", "floor.color")
 _OGB_CUBE_SWM_ONLY = {
     **_OGB_STATE_LEAVES,
-    **{k: v for k, v in _OGB_APPEARANCE.items() if k != "lock_color"},
+    **{k: v for k, v in _OGB_APPEARANCE.items() if k not in (*_OGB_MAPPED, "lock_color")},
 }
-_OGB_SCENE_SWM_ONLY = {**_OGB_STATE_LEAVES, **_OGB_APPEARANCE}
+_OGB_SCENE_SWM_ONLY = {**_OGB_STATE_LEAVES,
+                       **{k: v for k, v in _OGB_APPEARANCE.items() if k not in _OGB_MAPPED}}
 
 
 # ====================================================================== Rocket
@@ -167,10 +169,12 @@ _ROCKET_SWM_ONLY = {
 NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
     "OGBCube": VariationMap(
         swm_id="swm/OGBCube-v0",
+        identical=_OGB_MAPPED,
         swm_only=_OGB_CUBE_SWM_ONLY,
     ),
     "OGBScene": VariationMap(
         swm_id="swm/OGBScene-v0",
+        identical=_OGB_MAPPED,
         swm_only=_OGB_SCENE_SWM_ONLY,
     ),
     "PFRocketLanding": VariationMap(
@@ -248,9 +252,9 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
         "leaves": {
             **{k: _cls("not_applicable", v, PROBES["ogb_model"] + " -- 0 appearance arrays changed")
                for k, v in _OGB_STATE_LEAVES.items()},
-            "floor.color": _cls("unsupported", _OGB_APPEARANCE["floor.color"],
+            "floor.color": _cls("mapped", "Checker RGB pairs update a private texture and plate cache key",
                                 PROBES["ogb_model"] + " -- changes tex_data only (1 row, max 235)",
-                                mechanism="plate cache key extension; escalation candidate"),
+                                mechanism="quantised plate cache key; unchanged marker texels"),
             "light.intensity": _cls("unsupported", _OGB_APPEARANCE["light.intensity"],
                                     PROBES["ogb_model"] + " -- changes light_diffuse only (1 row)",
                                     mechanism="per-world model array in the mjwarp context; "
@@ -266,10 +270,9 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
                                 "alone; mat_rgba rows 8 and 9 move only when co-varied",
                                 mechanism="inverted dirty-flag test in CubeEnv.modify_mjcf_model; "
                                           "conditionally dead"),
-            "cube.color": _cls("unsupported", _OGB_APPEARANCE["cube.color"],
+            "cube.color": _cls("mapped", "Per-world cube and goal-marker RGB; preserves each geom alpha",
                                PROBES["ogb_model"] + " -- geom_rgba on 2 MOVER geoms, no recompile",
-                               mechanism="reachable through the EXISTING per-world rgba upload; the "
-                                         "cheapest of the six and the first one to offer"),
+                               mechanism="per-world rgba upload, including default restores"),
         },
     },
     "swm/OGBScene-v0": {
@@ -277,7 +280,7 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
         "leaves": {
             **{k: _cls("not_applicable", v, PROBES["ogb_model"])
                for k, v in _OGB_STATE_LEAVES.items()},
-            "floor.color": _cls("unsupported", _OGB_APPEARANCE["floor.color"],
+            "floor.color": _cls("mapped", "Checker RGB pairs update a private texture and plate cache key",
                                 PROBES["ogb_model"] + " -- changes tex_data only"),
             "light.intensity": _cls("unsupported", _OGB_APPEARANCE["light.intensity"],
                                     PROBES["ogb_model"] + " -- changes light_diffuse"),
@@ -290,7 +293,7 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
                                 "measured Scene reset-noise set when applied alone",
                                 mechanism="inverted dirty-flag test in CubeEnv.modify_mjcf_model; "
                                           "conditionally dead"),
-            "cube.color": _cls("unsupported", _OGB_APPEARANCE["cube.color"],
+            "cube.color": _cls("mapped", "Per-world cube and goal-marker RGB; preserves each geom alpha",
                                PROBES["ogb_model"] + " -- geom_rgba on 3 MOVER geoms"),
             "lock_color": _cls("unsupported", _OGB_APPEARANCE["lock_color"],
                                PROBES["ogb_model"] + " -- mat_rgba on 2 materials carried by 6 "
@@ -372,6 +375,9 @@ _OGBMAZE_SWM_ONLY = {
 }
 
 _OGBMAZE_OURS_ONLY = {
+    "floor.tint": "Multiplicative tint of the bound texture, not SWM checker RGB replacement",
+    "rendering.decolor_floor": "Flat slate floor, not SWM pixel_encoding=0 two-colour checker; "
+                                "an affine inversion alone cannot reproduce its pixels",
     "agent.scale": "rjepa's `mark_agent_red` enlarges the agent so a 6-pixel body is findable by a "
                    "fixed sky camera; swm has no counterpart",
     "camera.distance_scale": "swm does not expose the camera; ours is needed to reproduce the "

@@ -199,15 +199,13 @@ def test_rocket_pad_color_default_is_white_not_the_declared_two_hundred():
 # ---------------------------------------------------------------- OGB, the empty-style family
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
-def test_ogb_maps_nothing_yet_and_says_so_leaf_by_leaf(swm_id):
+def test_ogb_maps_authorized_cube_and_floor_colours(swm_id):
     """These two cells declare `make_variation_space() -> Dict({})`. That is a deliberate state, not
     a gap: the test pins it so that adding the first style dim is a conscious act with a declaration
     change, rather than something that drifts in."""
     m = _map_for(swm_id)
-    assert m.pairs() == {}, (
-        f"{swm_id} now maps {sorted(m.pairs())}. If the cell gained a style space, update this test "
-        f"and re-baseline the cell's style_dim/style_digest declaration deliberately")
-    assert set(m.swm_only) == set(RECORDED_SWM_LEAVES[swm_id])
+    assert set(m.pairs()) == {"cube.color", "floor.color"}
+    assert set(m.swm_only) == set(RECORDED_SWM_LEAVES[swm_id]) - set(m.pairs())
 
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
