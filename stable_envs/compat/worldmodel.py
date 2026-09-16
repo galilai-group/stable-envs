@@ -207,6 +207,10 @@ VARIATION_MAPS: dict[str, VariationMap] = {
     ),
 }
 
+# Families large enough to live in their own module register themselves here. Fetch is 12 ids over 4
+# scenes; see stable_envs/compat/variation_maps/fetch.py for the leaf-by-leaf classification.
+from .variation_maps.fetch import MAPS as _FETCH_MAPS; VARIATION_MAPS.update(_FETCH_MAPS)  # noqa: E402,E702
+
 
 def _flatten(values: Mapping[str, Any], prefix: str = "") -> dict[str, Any]:
     """Nested ``{'agent': {'color': v}}`` or already-dotted ``{'agent.color': v}`` -> dotted."""
