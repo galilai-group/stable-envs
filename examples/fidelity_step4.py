@@ -378,9 +378,31 @@ def _resolution(env, states) -> dict:
     except BaseException as e:                                              # noqa: BLE001
         return {"status": "error", "why": f"protocol draw: {type(e).__name__}: {str(e)[:400]}",
                 "traceback": traceback.format_exc()[-1200:]}
+    # Step 8: the class may declare, with the official renderer's own oracle result beside it, that
+    # the RELATION does not hold in some or all of its state space. Two Step-7 cells do. Judging a
+    # renderer against a relation its own reference does not satisfy measures the reference, so the
+    # declaration is READ here rather than discovered as a failure -- and no bound value moves: the
+    # frozen DOWNSAMPLE_EXACT_FRAC entry and the 0.005 margin are untouched, the judged STATE SET
+    # narrows to the applicable band. CraftaxClassic is the case that makes the difference concrete:
+    # on the protocol's 8 states it measures 0.8164 mixed and 1.0000 on the 6 that are light >= 0.5,
+    # against a frozen floor of 1.000000 recorded before the night band existed.
+    app = C.resolution_consistency_applicability(env, proto)
+    if not app["applicable"]:
+        return {"status": "not_applicable", "why": app["why"],
+                "applicability": {k: app[k] for k in ("bands", "declaration", "indices")}}
+    judged = proto if app["indices"] is None else np.ascontiguousarray(
+        np.asarray(proto)[np.asarray(app["indices"], int)], np.float32)
     try:
-        r = C.check_resolution_consistency(env, proto)
+        r = C.check_resolution_consistency(env, judged)
         r["protocol"] = C.downsample_protocol(proto)
+        r["applicability"] = app
+        if app["indices"] is not None:
+            # Both numbers, because a reader has to be able to see what the subsetting did. The judged
+            # one is first; the mixed one is recorded so a later run can show the subset moved and not
+            # the renderer.
+            r["protocol"]["judged_states_sha256"] = C.frames_digest(judged)
+            r["protocol"]["judged_n_states"] = int(len(judged))
+            r["all_bands"] = C.check_resolution_consistency(env, proto)
         r["frozen_corpus"] = C.check_resolution_consistency(env, states)
         r["frozen_corpus"]["n_states"] = int(len(states))
         r["frozen_corpus"]["states_sha256"] = C.frames_digest(np.ascontiguousarray(states, np.float32))

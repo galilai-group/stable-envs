@@ -652,6 +652,62 @@ def _skip_if_size_is_not_resolution(env) -> None:
                     f"than two resolutions")
 
 
+def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_bound():
+    """The band reader, on the two declaration shapes in the repo and on the cases that must not fire.
+
+    Pure logic over a declaration and a state array — no renderer — because what has to be guaranteed
+    is that an env WITHOUT a declaration is unaffected and an unparseable band widens nothing. A
+    declaration that narrows the judged set is a claim about the REFERENCE, and getting it wrong in the
+    permissive direction (judging states the reference cannot satisfy) shows up as a loud failure,
+    while getting it wrong in the restrictive direction (silently dropping states) would not show up at
+    all. So the restrictive direction is what these cases pin down.
+    """
+    names = ["x", "light_level"]
+    st = np.array([[0.0, 0.1], [0.0, 0.45], [0.0, 0.5], [0.0, 1.0]], np.float32)
+
+    # 1. no declaration at all: every state, and the caller may skip subsetting entirely.
+    class Bare:
+        state_names = names
+    r = C.resolution_consistency_applicability(Bare(), st)
+    assert r["applicable"] and r["indices"] is None, r
+
+    # 2. the CraftaxClassic shape: one applicable band and one not.
+    class Banded:
+        state_names = names
+        resolution_consistency_applicability = {
+            "light_level >= 0.5": "asserted at the frozen bound",
+            "light_level < 0.5": "not_applicable: the reference is itself inconsistent there",
+            "evidence": "oracle.json"}
+    r = C.resolution_consistency_applicability(Banded(), st)
+    assert r["applicable"] and r["indices"] == [2, 3], r
+    assert r["declaration"] == {"evidence": "oracle.json"}, "the cited evidence must survive"
+
+    # 3. only the INAPPLICABLE band named: the complement is still judged, not dropped.
+    class OnlyBad:
+        state_names = names
+        resolution_consistency_applicability = {
+            "light_level < 0.5": "not_applicable: mechanism", "evidence": "oracle.json"}
+    assert C.resolution_consistency_applicability(OnlyBad(), st)["indices"] == [2, 3]
+
+    # 4. the CraftaxFull shape: the whole cell, answered without looking at a state.
+    class AllBands:
+        state_names = names
+        resolution_consistency_applicability = {"all bands": "not_applicable: mechanism",
+                                                "evidence": "oracle.json"}
+    r = C.resolution_consistency_applicability(AllBands(), st)
+    assert r["applicable"] is False and r["indices"] == [], r
+    assert C.resolution_consistency_applicability(AllBands(), None)["applicable"] is False
+
+    # 5. a band naming a dimension this env does not have must NOT narrow anything. A typo that
+    #    silently dropped states would look like a pass.
+    class Typo:
+        state_names = names
+        resolution_consistency_applicability = {"lightlevel >= 0.5": "asserted",
+                                                "evidence": "oracle.json"}
+    r = C.resolution_consistency_applicability(Typo(), st)
+    assert r["applicable"] and r["indices"] is None and "could not be resolved" in r["why"], r
+
+
 def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
     """Rendering at 2S then box-downsampling, against rendering at S — to a measured, per-env bound.
 
@@ -672,6 +728,16 @@ def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
     if hasattr(type(env), "PLATE_PATHS") and name not in PLATE_REPRESENTATIVES:
         pytest.skip(f"{name}: covered by {sorted(PLATE_REPRESENTATIVES)} — see PLATE_REPRESENTATIVES")
     states, _ = inputs
+    # A class may declare, with the OFFICIAL renderer's own oracle result cited, that the relation
+    # itself does not hold in some or all of its state space -- Craftax draws its night noise field at
+    # the frame's own resolution and Craftax Full resamples every texture PNG at each size, so 2S is a
+    # different picture there for the reference too. This reads that declaration; it moves no bound.
+    app = C.resolution_consistency_applicability(env, states)
+    if not app["applicable"]:
+        pytest.skip(f"{name}: {app['why']}")
+    if app["indices"] is not None:
+        states = np.ascontiguousarray(np.asarray(states)[np.asarray(app["indices"], int)], np.float32)
+        print(f"\n{name}: judged on {len(states)} states in the applicable band(s) {app['bands']}")
     try:
         _skip_if_size_is_not_resolution(env)
         r = C.check_resolution_consistency(env, states)

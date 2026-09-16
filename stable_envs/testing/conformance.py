@@ -1170,6 +1170,120 @@ def downsample_protocol_states(env) -> np.ndarray:
     return np.ascontiguousarray(states, np.float32)
 
 
+#: Keys of a ``resolution_consistency_applicability`` declaration that describe the declaration rather
+#: than naming a band. Everything else in the dict is read as a band condition.
+_APPLICABILITY_METADATA = frozenset({"evidence", "measured_against", "mechanisms", "scope_note",
+                                     "still_required", "note", "notes", "reference_versions"})
+
+#: A band whose value starts with this is one the relation itself does not hold in, on the official
+#: renderer's own evidence. Anything else is a band the bound is asserted in.
+_NOT_APPLICABLE_PREFIX = "not_applicable"
+
+#: The band condition that means "the whole cell", not a subset of its states.
+_ALL_BANDS = frozenset({"all bands", "all", "every band"})
+
+_APPLICABILITY_OPS = {">=": lambda x, v: x >= v, "<=": lambda x, v: x <= v,
+                      ">": lambda x, v: x > v, "<": lambda x, v: x < v,
+                      "==": lambda x, v: x == v, "!=": lambda x, v: x != v}
+
+
+def resolution_consistency_applicability(env, states=None) -> dict:
+    """Which of ``states`` ``check_resolution_consistency``'s bound may be asserted on, and why.
+
+    Two of the Step-7 cells declare, on the class, that the 2x-render-and-box-downsample RELATION does
+    not hold in some or all of their state space -- not because this renderer is wrong there, but
+    because the OFFICIAL renderer is not resolution-consistent there either. Craftax draws its night
+    noise field at the frame's own resolution, so the 2S field is a different field rather than a finer
+    sampling of the same one; Craftax Full additionally resamples every texture PNG with
+    ``Image.NEAREST`` at each size, so its 2S atlas is not a 2x replication of its S one. Both
+    declarations carry the oracle experiment that measured it on the official renderer.
+
+    Judging a renderer against a relation its own reference does not satisfy measures the reference,
+    so the harness has to be able to read that declaration rather than discover it as a failure. It is
+    read, never invented: an env with no ``resolution_consistency_applicability`` is fully applicable,
+    which is every cell but two, and no bound value is touched here -- ``DOWNSAMPLE_EXACT_FRAC`` and
+    ``DOWNSAMPLE_MARGIN`` stay exactly what Step 4 froze.
+
+    A band is a key of the form ``"<state name> <op> <value>"`` resolved against ``env.state_names``,
+    or one of ``"all bands"``/``"all"``/``"every band"`` for the whole cell. A band whose value begins
+    ``not_applicable`` is one the relation does not hold in. A state is judged when it is inside at
+    least one applicable band and outside every inapplicable one, so a declaration that names only the
+    inapplicable band (which is the shape CraftaxClassic uses in spirit, and both shapes work) still
+    leaves the complement judged.
+
+    Returns ``{"applicable": bool, "why": str, "indices": list[int] | None, "declaration": dict,
+    "bands": {...}}``. ``indices is None`` means "every state" -- the ordinary case, and the case a
+    caller may skip subsetting for.
+    """
+    decl = getattr(type(env), "resolution_consistency_applicability", None)
+    full = {"applicable": True, "why": "no resolution_consistency_applicability is declared, so the "
+                                       "bound is asserted on every state",
+            "indices": None, "declaration": None, "bands": {}}
+    if not isinstance(decl, dict) or not decl:
+        return full
+
+    cited = {k: decl[k] for k in sorted(decl) if k in _APPLICABILITY_METADATA}
+    bands = {k: v for k, v in decl.items() if k not in _APPLICABILITY_METADATA}
+    out_bands = {k: ("not_applicable" if str(v).strip().lower().startswith(_NOT_APPLICABLE_PREFIX)
+                     else "applicable") for k, v in bands.items()}
+
+    # "all bands: not_applicable" is the whole cell, and it is answered before any state is looked at:
+    # there is no subset to fall back to and no draw to depend on.
+    for k, v in bands.items():
+        if k.strip().lower() in _ALL_BANDS and out_bands[k] == "not_applicable":
+            return {"applicable": False, "indices": [], "declaration": cited, "bands": out_bands,
+                    "why": f"the class declares '{k}': {v}"}
+
+    if states is None:
+        return {**full, "declaration": cited, "bands": out_bands,
+                "why": "band conditions are declared but no states were supplied to resolve them"}
+
+    x = np.asarray(states, np.float64)
+    names = list(getattr(env, "state_names", None) or [])
+    applicable = np.zeros(len(x), bool)
+    excluded = np.zeros(len(x), bool)
+    unresolved = []
+    for k, v in bands.items():
+        if k.strip().lower() in _ALL_BANDS:
+            (applicable if out_bands[k] == "applicable" else excluded)[:] = True
+            continue
+        parts = k.split()
+        if len(parts) != 3 or parts[1] not in _APPLICABILITY_OPS or parts[0] not in names:
+            unresolved.append(k)
+            continue
+        col = x[:, names.index(parts[0])]
+        try:
+            mask = _APPLICABILITY_OPS[parts[1]](col, float(parts[2]))
+        except ValueError:
+            unresolved.append(k)
+            continue
+        (applicable if out_bands[k] == "applicable" else excluded)[:] |= np.asarray(mask, bool)
+    if unresolved:
+        # A band nobody can resolve must not silently narrow or widen the judged set. Reporting it and
+        # judging everything is the conservative direction: the bound stays asserted where it was.
+        return {**full, "declaration": cited, "bands": out_bands,
+                "why": f"band conditions {unresolved} could not be resolved against state_names, so "
+                       f"the bound is asserted on every state"}
+
+    # A declaration that names ONLY inapplicable bands leaves their complement judged.
+    if not applicable.any() and excluded.any():
+        applicable = ~excluded
+    keep = np.flatnonzero(applicable & ~excluded)
+    inapplicable = sorted(k for k, s in out_bands.items() if s == "not_applicable")
+    if len(keep) == 0:
+        return {"applicable": False, "indices": [], "declaration": cited, "bands": out_bands,
+                "why": f"every drawn state falls in a band the class declares inapplicable "
+                       f"({inapplicable}); {cited}"}
+    if len(keep) == len(x):
+        return {"applicable": True, "indices": None, "declaration": cited, "bands": out_bands,
+                "why": "no drawn state falls in a band the class declares inapplicable"}
+    return {"applicable": True, "indices": [int(i) for i in keep], "declaration": cited,
+            "bands": out_bands,
+            "why": f"{len(keep)} of {len(x)} states are outside the bands the class declares "
+                   f"inapplicable ({inapplicable}); the bound is asserted on those and the rest are "
+                   f"recorded not_applicable with the class's cited evidence"}
+
+
 def check_resolution_consistency(env, states, style=None, factor: int = 2) -> dict:
     """Render at ``factor x S`` and box-downsample to ``S``; how far is that from rendering at ``S``?
 
