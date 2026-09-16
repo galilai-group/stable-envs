@@ -31,6 +31,11 @@ def main() -> int:
     ap.add_argument("--cells", nargs="+", default=["OGBCube", "OGBScene"])
     ap.add_argument("--n", type=int, default=64)
     ap.add_argument("--draws", type=int, default=8)
+    # ATTRIBUTION. The declaration is taken at seeds 0..draws-1 because seed 0 is the draw the gate
+    # checks. `--seed-base 1000` re-takes the SAME measurement at the seeds job 6420033 used on the
+    # pre-fix tree, which is the only way to tell a pixel change caused by this fix apart from the
+    # much larger change caused by measuring different seeds.
+    ap.add_argument("--seed-base", type=int, default=0)
     a = ap.parse_args()
 
     import stable_envs as se
@@ -65,10 +70,12 @@ def main() -> int:
             print(f"{cname} REFUSED: {agree}", flush=True)
             continue
 
-        draws = [dict(gate, seed=0)]
-        for k in range(1, a.draws):
+        base = int(a.seed_base)
+        draws = [dict(gate, seed=0)] if base == 0 else []
+        for k in range(1 if base == 0 else 0, a.draws):
+            sd = base + k
             draws.append(dict(measure(env, cls, ref,
-                                      env.sample_states(a.n, np.random.default_rng(k))), seed=k))
+                                      env.sample_states(a.n, np.random.default_rng(sd))), seed=sd))
             print(f"{cname} draw seed={k}: mean_abs={draws[-1]['mean_abs']:.4f} "
                   f"ssim={draws[-1]['ssim']:.4f} within8={draws[-1]['within8_frac']:.4f}", flush=True)
 
@@ -94,7 +101,7 @@ def main() -> int:
             "ssim_min": float(np.floor((min(ss) - 0.04) * 20) / 20),
             "gate_draw": {"seed": 0, "mean_abs": float(gate["mean_abs"]),
                           "ssim": float(gate["ssim"]), "within8_frac": float(gate["within8_frac"])},
-            "n_states": a.n, "draws": a.draws, "job": job,
+            "n_states": a.n, "draws": a.draws, "seed_base": base, "job": job,
         }
         print(f"{cname} WORST-OF-{a.draws} mean_abs={max(ma):.4f} -> ceiling "
               f"{report[cname]['mean_abs_max']}; gate draw was {gate['mean_abs']:.4f}", flush=True)
