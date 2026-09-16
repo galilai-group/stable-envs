@@ -713,13 +713,14 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'closure fixes in progress: roundtrip + citation fixed; gate job 6420033 (tests/gpu OGB rows in se7-ogb with tracebacks + 8-draw fidelity) running; then re-review and follow-on merge'
+  status: 'CLOSED (final): merged at d4318d2. OGBCube/OGBScene visual tier (declared 4.3 / 8.7 by the gate instrument), Gate A rc=0 both cells incl. check_state_roundtrip, full tests/gpu gate OGB rows 56/32/0/0
+    with renderers 0 closed across the registry; downsample bounds under the table''s protocol; GPU_PARITY capped; CPU raises (CPU3D-OGB-1)'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
   worktree: /Users/samib/stable-envs-step7-ogb-manipulation
   agent_model: opus
-  head_sha: f62625e9 (merged 24d1054)
+  head_sha: 179c4b30 (merged d4318d2)
   phase0:
     classification: FINDING
     registration: swm registers both ids with no kwargs on its own forks of ogbench ManipSpaceEnv; OGBCube 224 px, OGBScene 200 px (SceneEnv omission); camera front_pixels FIXED fovy 45; obs is a rescaled
@@ -997,6 +998,15 @@ workstreams:
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
+    closure_followon_sha: d4318d2
+    final_review:
+      verdict: APPROVE
+      head: 179c4b30
+      verified:
+      - D1 digest by group both directions; eviction reproduction now passes
+      - D2 declaration == committed JSON to 1e-6 (Cube JSON mean_abs_max 4.35 stale by one rounding rule; shipped 4.3 is the tighter, rule-following value)
+      - merge took integration's side; conformance carries exactly the one guard
+      - tests 1053 passed with swm; 32 cell tests
   closure_fixes:
     head: 27e55680
     closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
@@ -1571,6 +1581,8 @@ incident_log:
   item: 'W5: fix verified (0 renderers closed across the registry; Gate A rc=0); downsample bounds for OGBCube/OGBScene added under the table''s protocol; final gate running'
 - date: '2026-09-16'
   item: W5 closure follow-on re-check APPROVE-WITH-CHANGES (digest over hidden sites; missing declaration artifacts); fix after the gate lands
+- date: '2026-09-16'
+  item: W5 CLOSED and merged (d4318d2); integration fec4f6e; broken citations back to the baseline 9; targeted re-sweep launched in the held allocation
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1685,6 +1697,7 @@ blocked_on_oscar_ssh:
 coverage:
   pixel_producing: 40/40 merged on step7/integration (33 pre-Step-7 + CraftaxClassic partial->full + CraftaxPixels, Manipulator, Quadruped, OGBCube, OGBScene, PFRocketLanding)
   symbolic: 2/2 intentionally renderer-free (to be confirmed by the closure sweep)
+  status: ALL SEVEN WORKSTREAMS MERGED at fec4f6e; targeted re-sweep on fec4f6e in progress (closure2); unit suite 925 passed + the baseline citation failure (9 entries)
 closure_sweep:
   branch: step7/closure @ 01b5597 (verified integration 275970c)
   classification: PASS-WITH-KNOWN-DELTAS on everything Step 7 froze; FAIL on two merged cells (OGBCube/OGBScene) - closure NOT yet declarable
