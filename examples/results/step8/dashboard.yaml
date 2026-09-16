@@ -642,11 +642,18 @@ workstreams:
   branch: step8/certification-provenance
   worktree: /Users/samib/stable-envs-step8-certification-provenance
   model: opus
-  status: Wave 1 spawned
+  status: 'delivered (8 tasks); reviewer spawned (sonnet); follow-up requested: Gate-A record must judge family_specific checks'
   authorization: "plan \xA713 (+\xA714 serialised after)"
   affected_ids: all 42
   affected_files: stable_envs/testing/*, scratch/census, scratch/step3+step4 certify, tests/gpu, examples/fidelity_step4.py, step7 corpora meta
   baseline_sha: 43ac952
+  head_sha: 9d286ce
+  finding: 'census 88->100, 0 class changes, unknown 1->0; seven Step-7 corpora resolve via corpus_for; CraftaxClassic downsample judged on the light>=0.5 protocol subset = 1.000000 (threshold untouched);
+    CraftaxFull n/a all bands; DOWNSAMPLE entries added Rocket 0.956137, Quadruped 0.811877 (CraftaxFull, Manipulator deliberately not); check_order_independence exists (Step-7 ''absent'' was a getattr
+    misspelling); nvdiff ULP = DOCUMENTED_LIMITATION and host-dependent (gpu2264: 0/19 widths differ); report.py support matrix 42 rows'
+  tests: 49-config re-judge 0 differ; step4_fidelity_baseline.md byte-identical; paired Oscar se-vis311 7->4 failed, se-step6 2->0, 0 new; tests/unit same 2 pre-existing
+  pixels_changed: none (harness only)
+  shared_files: conformance.py, fidelity_step4.py, step3/step4 certify.py, census, tests/gpu/test_reproducibility.py, 3 corpus meta sidecars, mkdocs.yml
 - workstream: D_swm_integration
   branch: step8/swm-integration
   status: Wave 2
@@ -675,6 +682,22 @@ escalations:
     \ change"
   coordinator_recommendation: pending Workstreams A/B results (Fetch and DMC may need the same per-world array capability, which would make it a shared, justified change rather than one env's request)
   status: open
+- date: '2026-09-16'
+  from: E
+  topic: check_colors_apply_exactly on lit renderers
+  packet: examples/results/step8/certification/colour_check_decision.md (on step8/certification-provenance)
+  summary: 'TinyRenderer''s multiplicative law caps any colour at factor 0.993567 (max over normals, not at n=l), so literal RGB equality is unreachable for any correct implementation and the official PyFlyt
+    frames fail the check too. Options: (a) literal RGB (fails by construction), (b) law-transformed / reference-compared invariant, (c) declared measurement-backed inapplicability. Recommendation: (c)
+    now, applying the CraftaxClassic-night precedent, with (b) commissioned as the successor and three anti-loophole conditions; adopting it edits frozen Step-2 text (VARIATIONS_COMPLETE.complete_requires)
+    scoped to applicability only -> Sami''s ruling required before merge of any contract text change'
+  status: open
+- date: '2026-09-16'
+  from: E
+  topic: CraftaxClassic has two frozen corpora (Step-4 64x127 vs Step-7 64x149)
+  summary: "the cell's state grew in Step 7; Step 7 recorded the Step-4 corpus NOT REPLAYED; retiring the Step-4 corpus is a re-freeze under \xA719"
+  coordinator_recommendation: keep both; the Step-4 corpus stays the oracle for the world rows (replayed exactly via zero-extension, as Step 7 proved); the Step-7 corpus certifies the full observation;
+    record as DOCUMENTED provenance, no retirement
+  status: open for Sami
 refreezes: []
 upstream_findings:
 - source: C
@@ -683,9 +706,12 @@ upstream_findings:
   item: 'swm OGBMaze in the registered ''states'' mode: custom_renderer rebuilt only for ''pixels'' -> all 5 leaves move 0 px'
 - source: C
   item: Rocket pad.color declared 200 but a plain reset gives white; OGBMaze pixel_encoding declared 0 but constructed 1
+- source: E
+  item: 'scratch/swm_matrix.json stale: 6 of 42 rows have empty stable_envs.envs (Workstream D''s file)'
 buckets:
   RELEASE_BLOCKING: []
-  DOCUMENTED_LIMITATION: []
+  DOCUMENTED_LIMITATION:
+  - 'nvdiff x86 CPU sparse-stage one-ulp batch dependence: host-dependent (gpu2264 0/19 widths; login010/node1939 differ); no shipped CPU renderer; Step-7 re-freeze authoritative (E task 7)'
   UPSTREAM_FINDING: []
   STEP9_CLEANUP: []
   DEFERRED_OPTIMIZATION: []
@@ -694,3 +720,5 @@ incident_log:
   item: 'Wave 0: baseline 43ac952 verified (branch, tag, origin, both Step-8 branches); dashboard created; ownership assigned; Wave-1 worktrees created'
 - date: '2026-09-16'
   item: C delivered PATCH_CANDIDATE; reviewer spawned; renderer-change leaves escalated; cheap maps authorized; A asked for the VariationMap extension
+- date: '2026-09-16'
+  item: E delivered; reviewer spawned; colour-check packet + CraftaxClassic corpora question escalated; correct check name is check_order_independence (plan text misspells it)
