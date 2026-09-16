@@ -200,9 +200,28 @@ stable-envs frame: which leaf reaches which array, and whether the reference its
 gymnasium-robotics 1.4.2), which is the interpreter the frozen Fetch corpora were measured in. Fetch
 renders only through MJWarp on cuda, so the registered-default reproduction and the isolation checks
 that need pixels run there:
-`examples/results/step8/variations-fetch/gpu_evidence.json` (default byte-identical through the
-mapping; unmapped leaves moving nothing; mapped leaves moving only their own slot; swm's
-`light.intensity` at the model's own 0.8 reproducing the default frame) and `pixel_parity.json`
-(this branch's default frames against the Step-8 baseline tree on the same card in the same job).
+`examples/results/step8/variations-fetch/gpu_evidence.json` and `pixel_parity.json`.
+
+Measured on an **NVIDIA GeForce RTX 3090** (`gpu2105.oscar.ccv.brown.edu`, driver 575.57.08,
+CUDA 12.6, torch 2.14.0+cu126, mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0), 8 states per scene at
+128 px, **PASS on all four scenes**:
+
+- the registered default is **byte-identical** through the mapping — style and frame, 0/255;
+- `variation_from_style(default)` gives `light.intensity = 0.800000011920929`, the model's own
+  diffuse rather than swm's declared 0.7, and re-applying it returns the default byte for byte;
+- `light.intensity` set to 0.8 reproduces the default frame at **0/255**, which is what the exact
+  1.25 factor buys;
+- all seven declared-unmapped leaves (five on Reach) move **0/255**;
+- every mapped leaf moves pixels and only its own style slot: `table.color` 9.8-23.4 % of the frame,
+  `background.color -> floor.color` **9.30-9.64 %**, `object.color` 0.04-0.09 %, `light.intensity`
+  14.9-20.9 %.
+
+That `floor.color` figure is worth reading twice: the official renderer's floor half of
+`background.color` was measured independently, on a different machine and a different renderer, at
+**9.18-9.45 %**. The two agree, which is the corroboration that the rename is the right one and that
+the residual really is the skybox.
+
+`pixel_parity.json` renders this branch's default frames and the Step-8 baseline tree's on the same
+card in the same job: **0/255 on all four scenes**, verdict `IDENTICAL`.
 
 No performance work was done on this family, and no renderer file was touched.

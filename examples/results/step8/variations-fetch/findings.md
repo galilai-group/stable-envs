@@ -143,11 +143,52 @@ driver, job id, git SHA, mujoco / mujoco_warp versions).
   `test_repo_contracts.py::test_every_cited_scratch_path_resolves`) reproduce identically on a clean
   checkout of the baseline SHA — pre-existing, untouched by this workstream.
 
+## GPU evidence (SLURM job 6451948, re-run as 6452376)
+
+`gpu_evidence.json`, 128 px, 8 states per scene drawn from the env's own pool, on
+**NVIDIA GeForce RTX 3090** / `gpu2105.oscar.ccv.brown.edu` / driver 575.57.08 / CUDA 12.6 /
+torch 2.14.0+cu126 / **mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0** / python 3.12.9 —
+`$SCR/venvs/se-s3b-fetch311`, the interpreter the frozen Fetch corpora were measured in.
+**Verdict: PASS on all four scenes.**
+
+- **Registered default byte-identical through the mapping.** `style_from_variation(env, {})` equals
+  `default_style()` exactly, and the rendered frames are **0/255 over 0 % of the frame** on Reach,
+  Push, Slide and PickAndPlace.
+- **Round trip exact.** `variation_from_style(default)` gives `light.intensity = 0.800000011920929`
+  — the model's own diffuse, *not* swm's declared 0.7 — and re-applying it returns the default style
+  byte for byte.
+- **The 1.25 factor lands where it should.** `light.intensity` set to the model's own 0.8 reproduces
+  the default frame at **0/255**, which is the whole justification for the factor.
+- **Every unmapped leaf moves nothing.** All 7 (5 on Reach) declared-unmapped leaves pushed through
+  the mapping leave the style byte-identical and the frame at **0/255**:
+  `camera.angle_delta`, `rendering.transparent_arm`, `block.mass`, `agent.start_position`,
+  `goal.start_position`, `block.start_position`, `block.angle`, and `object.color` on Reach.
+- **Every mapped leaf moves pixels, and only its own style slot.**
+
+  | leaf | ours | frame changed (Reach / Push / Slide / PickAndPlace) | max |
+  |---|---|---|---|
+  | `table.color` | `table.color` | 10.03 / 9.81 / 23.36 / 9.92 % | 240/255 |
+  | `background.color` | `floor.color` | 9.30 / 9.30 / 9.64 / 9.30 % | 194/255 |
+  | `object.color` | `object.color` | — / 0.084 / 0.043 / 0.087 % | 194/255 |
+  | `light.intensity` | `light.diffuse` | 14.96 / 14.97 / 20.94 / 14.88 % | 86-90/255 |
+
+  Our `floor.color` moves **9.30-9.64 %** of the frame; the official renderer's floor half of
+  `background.color` was measured independently at **9.18-9.45 %**. The two agree, which is the
+  corroboration that the rename is the right one and that the residual really is the skybox.
+
+Job 6451948 also exposed two defects in the evidence harness itself, neither in the mapping: the
+tier-3 fixture errored instead of skipping on an interpreter with `mujoco_warp` and a CUDA device and
+no gymnasium-robotics (24 setup errors), and `provenance()` shelled out to `git rev-parse` in a tree
+`rsync` had stripped of `.git`, so `git_sha` came back null. Both fixed; job 6452376 is the clean
+re-run.
+
 ## Pixel movement
 
 **None expected and measured as none.** This workstream adds a module and one registration line; the
 render path imports neither. `pixel_parity.json` renders the four scenes' default frames from this
-branch and from `$SCR/se8/baseline` on the same card in the same job and compares them byte for byte.
+branch and from `$SCR/se8/baseline` on the same card in the same job and compares them byte for byte:
+**0/255 over 0 % of the frame on all four scenes** (8 states each at 128 px, RTX 3090 gpu2105,
+job 6451948). Verdict `IDENTICAL`.
 
 ## Not done, deliberately
 
