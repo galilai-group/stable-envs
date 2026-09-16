@@ -60,10 +60,24 @@ def main() -> int:
         env = se.make(cname, batch=a.n, device="cuda")
         ref = cls.reference_env()
 
+        # WARM UP THE REFERENCE RENDERER FIRST. Measured on CPU with two renders of one fixed state:
+        # the FIRST render in a process differs from the second by 6 pixels of +/-1, and every render
+        # after that is bit-identical to the one before it. It is an upstream first-frame effect, it
+        # is far too small to move `mean_abs` (unchanged at 12 digits) and far too large to ignore in
+        # an equality check -- it moved `interior_px` by one pixel in 2.5 million and `ssim` by 5e-9,
+        # which is what made the first attempt at this probe REFUSE OGBScene. Burning one frame before
+        # anything is measured keeps the effect out of every draw instead of inside the first one.
+        cls.reference_render(ref, env.sample_states(2, np.random.default_rng(999))[:1])
+
         gate = C.check_visual_fidelity(env, n=a.n)            # THE number the test compares
         mine = measure(env, cls, ref, env.sample_states(a.n, np.random.default_rng(0)))
+        # TOLERANCE, chosen to separate the two things this check exists to tell apart. A DIFFERENT
+        # INSTRUMENT shows up as a gross difference -- the old chain read mean_abs 0.89 low because it
+        # averaged |diff| over channels where `pixel_agreement` averages the per-pixel channel MAX.
+        # The first-frame effect shows up at 1e-9. 1e-6 is comfortably below the former and above the
+        # latter, and the observed delta is recorded either way rather than discarded.
         agree = {k: [gate[k], mine[k]] for k in ("mean_abs", "within8_frac", "ssim")
-                 if abs(float(gate[k]) - float(mine[k])) > 1e-9}
+                 if abs(float(gate[k]) - float(mine[k])) > 1e-6}
         if agree:
             report[cname] = {"REFUSED": "instrument disagreement at seed 0", "delta": agree,
                              "gate": gate, "copy": mine, "job": job}
@@ -102,6 +116,8 @@ def main() -> int:
             "gate_draw": {"seed": 0, "mean_abs": float(gate["mean_abs"]),
                           "ssim": float(gate["ssim"]), "within8_frac": float(gate["within8_frac"])},
             "n_states": a.n, "draws": a.draws, "seed_base": base, "job": job,
+            "instrument_agreement": {k: [float(gate[k]), float(mine[k])]
+                                     for k in ("mean_abs", "within8_frac", "ssim")},
         }
         print(f"{cname} WORST-OF-{a.draws} mean_abs={max(ma):.4f} -> ceiling "
               f"{report[cname]['mean_abs_max']}; gate draw was {gate['mean_abs']:.4f}", flush=True)
