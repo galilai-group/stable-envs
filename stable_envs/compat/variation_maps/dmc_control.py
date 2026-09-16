@@ -1,9 +1,7 @@
 """How the five classic-control cells and the thirteen DM Control cells relate to their
 ``stable_worldmodel`` counterparts, leaf by leaf, with the measurement behind every classification.
 
-Seventeen ``stable_worldmodel`` ids, 161 variation leaves. THIS MODULE LANDS ONE FAMILY GROUP PER
-COMMIT and is incomplete until the last of them; the counts below are the FINAL ones, and
-``EXPECTED_COUNTS`` carries only the ids this commit declares. Every leaf is exactly one of:
+Seventeen ``stable_worldmodel`` ids, 161 variation leaves. Every one of them is exactly one of:
 
 ``mapped``
     reachable through a stable-envs leaf. 46 leaves.
@@ -427,6 +425,31 @@ _DMC_MAPS = {
                         **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
         ours_only=_GRID_OURS),
 
+    "DMCManipulatorBringBall": _dmc(
+        "DMCManipulatorBringBall", "swm/ManipulatorDMControl-v0",
+        mapped_target="material.target", visibility="visibility.target_ball",
+        # swm's Discrete(2) is (0 = box .015, 1 = sphere .015); ours is Discrete(3) whose third
+        # alternative is the compiled model's own sphere .02, which keeps the DEFAULT STYLE a render
+        # of the compiled model. Both swm alternatives are reachable, at the same indices.
+        shape=("target_ball.shape", (0, 1)),
+        notes={"target.shape": "MAPPED at both alternatives. swm's Discrete(2) is (0 = box .015, "
+                               "1 = sphere .015); ours is Discrete(3) whose index 2 is the compiled "
+                               "model's own sphere .02 and is the DEFAULT, which is what keeps the "
+                               "default style a render of the compiled model. swm's registered "
+                               "default is 1, so reaching it is a leaf write, not a no-op.",
+               "rendering.render_target": "MAPPED to visibility.target_ball. swm's registered "
+                                          "default is 0 (the target is NOT drawn), and our leaf's "
+                                          "default is 1, so the registered default is reached "
+                                          "through the leaf. Measured 274 disagreeing pixels of "
+                                          "8x224x224 between the two values upstream."},
+        dead_upstream={"agent.upper_arm_length": _never_read(
+            "The swm source carries ``# TODO should modify length of arm`` at the point it would be "
+            "read; recorded in Step 7 and re-measured here.")},
+        physics_only={"agent.hand_density": _density_phys("the hand's density"),
+                        "agent.upper_arm_density": _density_phys("the upper arm's density")},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS,
+                   "material.background": "the arena backdrop material; swm has no leaf for it"}),
+
     "DMCPendulumSwingup": _dmc(
         "DMCPendulumSwingup", "swm/PendulumDMControl-v0",
         dead_upstream={
@@ -436,6 +459,15 @@ _DMC_MAPS = {
         },
         physics_only={f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS}),
+
+    "DMCQuadrupedWalk": _dmc(
+        "DMCQuadrupedWalk", "swm/QuadrupedDMControl-v0",
+        unsupported={"agent.torso_density": _density_trackcom(135622, 8 * 224 * 224),
+                     "agent.foot_back_left_density": _density_trackcom(137533, 8 * 224 * 224)},
+        dead_upstream={"agent.knee_back_left_locked": _never_read()},
+        physics_only={"floor.friction": _density_phys("the floor's sliding friction"),
+                        **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
+        ours_only={**_GRID_OURS, **_EFFECTOR_OURS}),
 
     "DMCReacherHard": _dmc(
         "DMCReacherHard", "swm/ReacherDMControl-v0",
@@ -512,7 +544,9 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
     "swm/FingerDMControl-v0": {"total": 11, "mapped": 4, "unsupported": 7, "dead_upstream": 0, "not_applicable": 0},
     "swm/HopperDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
     "swm/HumanoidDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
+    "swm/ManipulatorDMControl-v0": {"total": 9, "mapped": 5, "unsupported": 3, "dead_upstream": 1, "not_applicable": 0},
     "swm/PendulumDMControl-v0": {"total": 9, "mapped": 2, "unsupported": 4, "dead_upstream": 3, "not_applicable": 0},
+    "swm/QuadrupedDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
     "swm/ReacherDMControl-v0": {"total": 9, "mapped": 4, "unsupported": 4, "dead_upstream": 1, "not_applicable": 0},
     "swm/WalkerDMControl-v0": {"total": 11, "mapped": 2, "unsupported": 8, "dead_upstream": 1, "not_applicable": 0},
 }
