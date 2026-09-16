@@ -830,6 +830,22 @@ class OGBManipBase(StableEnv):
 
 _PLATE_RIGS: dict = {}
 
+#: EVERY Renderer ever built, held for the life of the PROCESS and never read back.
+#:
+#: `_PLATE_RIGS` already holds each rig, and a rig holds its renderer, so on paper this list is
+#: redundant. It is here because the measurement says otherwise: with the dict as the only owner, a
+#: rig built by `test_resolution_downsample_agrees_within_the_measured_bound` was collected during
+#: the NEXT test -- `__del__` -> `close()` -> a renderer the repo's rule says must never be closed
+#: (job 6437003 names the creation site and the collection site for all four). The four rows pass in
+#: isolation with 0 closes, so this is an ordering effect and not a property of any one test.
+#:
+#: I do not yet have the mechanism that drops the dict's reference, and this list is not a claim to
+#: have found it: it is the invariant the rule states -- created and NEVER released -- enforced
+#: directly rather than as a consequence of a cache I have already been wrong about once. It is
+#: bounded by the number of distinct (cell, resolution) pairs a process renders at, which is a
+#: handful, and explicitly NOT by batch size, which is what the rule forbids.
+_KEEPALIVE: list = []
+
 #: Model arrays the plate depends on, by prefix. `geom_rgba` and `mat_rgba` are EXCLUDED because
 #: swm's `_apply_button_states` writes them into the live model on every button change -- they are
 #: state wearing the shape of appearance, and the rig pins them itself (see `_plate_rig`).
@@ -917,7 +933,14 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
         rig.model.mat_rgba[:] = b.pristine["mat_rgba"]
     rig.data = mujoco.MjData(rig.model)
     rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
+    _KEEPALIVE.append(rig.renderer)             # the rule, enforced directly: never released
     _PLATE_RIGS[key] = rig                      # never evicted; the renderer is never closed
+    if _os.environ.get("SE7_OGB_RIGDEBUG") == "1":
+        import sys
+        mods = [n for n, m in sys.modules.items()
+                if getattr(m, "__name__", None) == __name__ and m is not None]
+        print(f"[rigdebug] built {key}: rigs={len(_PLATE_RIGS)} keepalive={len(_KEEPALIVE)} "
+              f"dict_id={id(_PLATE_RIGS)} module_copies={len(mods)} {mods}", flush=True)
     return rig
 
 
