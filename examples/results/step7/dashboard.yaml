@@ -986,7 +986,7 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
   closure_fixes:
-    head: bac058c8 (fixes 8227143a)
+    head: a91a8a5b
     closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
     citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
     sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
@@ -1005,6 +1005,14 @@ workstreams:
     mechanism_3_ceiling: '1 row: check_visual_fidelity draws sample_states(n) with no rng = default_rng(0), one fixed draw scoring 3.295; declared numbers were from seeds 1000-1007 (2.40-2.44); worst-of-8
       x1.3 = 3.17 still < 3.295 -> not pasted; probe_gate_fidelity.py now calls the gate''s own function for the authoritative number with an explicit-rng agreement check'
     verification_job: 6431616 running (fixes + declaration measurement); then paste, commit, full tests/gpu gate
+    job_6431616: 5 failed / 47 passed / 36 skipped (was 15/41); EGL contexts released 0 (was 8); styleless crash gone; roundtrip passes
+    gate_draw_numbers:
+      OGBCube: gate seed-0 3.2955, worst-of-8 3.3094, ceiling-by-rule 4.35 (declared was 2.4417 / 3.2)
+      OGBScene: 6.6027 / 6.6916 / 8.70 (declared was 5.3813 / 7.0)
+      not_pasted: seed change (0-7 vs 1000-1007) is confounded with the plate pinned to all-zero button bits; if a button/handle geom is in the plate rather than the mover set, pinning would hide state
+        -> job 6433175 re-measures the new tree at seeds 1000-1007 to attribute; a looser ceiling is not shipped on a guess
+    remaining_4_failures: renderers 6 created / 4 closed with 0 context releases; close stacks are GC (__del__ inside a warp allocation) blaming whoever ran; suspect swm's own renderer churn under reference_render;
+      probe records creation stacks to identify the owner
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1493,6 +1501,8 @@ incident_log:
   item: W6 closure follow-on merged; W6 CLOSED
 - date: '2026-09-15'
   item: 'W5: OGB failures = renderer-cache EGL eviction (11), styleless zero-size guard in conformance (2, shared), ceiling from the gate''s own seed-0 draw (1); job 6431616 verifying'
+- date: '2026-09-15'
+  item: 'W5: 15 -> 5 failures; ceiling paste withheld pending attribution of the worse numbers (seed vs plate pinning); job 6433175'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
