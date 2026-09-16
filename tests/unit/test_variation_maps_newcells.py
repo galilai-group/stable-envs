@@ -1,0 +1,257 @@
+"""The Step-7 new cells' VariationMaps: every offered swm leaf is classified, and the classification
+agrees with the map it is supposed to describe.
+
+The point of these tests is NOT that the reasons are well written. It is that no swm leaf can be
+added upstream, or removed from a map here, without something failing: an unclassified leaf is
+exactly the Gate-F gap Step 8 exists to close, and it is invisible unless a test counts.
+
+Most of this runs without ``stable_worldmodel``, against the leaf inventory recorded from the live
+wrappers, because swm is not importable in every environment this suite runs in and a test that
+skips where it matters is not a test. The live enumeration runs as well wherever swm IS importable,
+and asserts the recorded inventory still matches the wrapper.
+"""
+
+import numpy as np
+import pytest
+
+from stable_envs.compat.worldmodel import VARIATION_MAPS, variation_map
+from stable_envs.compat.variation_maps.newcells import (
+    BUCKETS, LEAF_CLASSIFICATION, NEWCELL_VARIATION_MAPS, RECORDED_SWM_LEAVES,
+)
+
+IDS = sorted(RECORDED_SWM_LEAVES)
+
+
+def _map_for(swm_id):
+    ms = [m for m in NEWCELL_VARIATION_MAPS.values() if m.swm_id == swm_id]
+    assert ms, f"no VariationMap declares swm_id={swm_id}"
+    return ms[0]
+
+
+# ---------------------------------------------------------------- registration
+
+def test_the_new_maps_are_registered_in_the_shared_table():
+    """The one line in compat/worldmodel.py is what makes these reachable from `variation_map`."""
+    for name, m in NEWCELL_VARIATION_MAPS.items():
+        assert VARIATION_MAPS.get(name) is m, f"{name} is not registered in VARIATION_MAPS"
+        assert variation_map(name) is m
+
+
+def test_registering_the_new_maps_did_not_disturb_the_pre_existing_ones():
+    for name in ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"):
+        assert name in VARIATION_MAPS, f"{name} was lost when the new maps were merged in"
+
+
+# ---------------------------------------------------------------- completeness
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_every_offered_leaf_is_in_exactly_one_bucket_of_the_map(swm_id):
+    """The invariant `check_mapping` looks for: no leaf in NEITHER, no leaf in BOTH."""
+    m = _map_for(swm_id)
+    leaves = set(RECORDED_SWM_LEAVES[swm_id])
+    mapped = {t for t, _ in m.pairs().values()}
+    declared = set(m.swm_only)
+    undocumented = leaves - mapped - declared
+    assert not undocumented, (
+        f"{swm_id}: {sorted(undocumented)} are offered by swm and appear in NEITHER the mapped "
+        f"leaves nor swm_only. That is a silently unmapped leaf, which is the Gate-F gap Step 8 "
+        f"closes -- classify it rather than deleting this assertion")
+    both = mapped & declared
+    assert not both, f"{swm_id}: {sorted(both)} are both mapped and declared unmapped"
+    assert not (mapped - leaves), (
+        f"{swm_id}: {sorted(mapped - leaves)} are mapped to swm paths swm does not offer")
+    assert not (declared - leaves), (
+        f"{swm_id}: {sorted(declared - leaves)} carry a reason but are not offered by swm")
+
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_every_offered_leaf_has_a_structured_classification(swm_id):
+    cls = LEAF_CLASSIFICATION[swm_id]["leaves"]
+    leaves = set(RECORDED_SWM_LEAVES[swm_id])
+    assert set(cls) == leaves, (
+        f"{swm_id}: classification covers {sorted(set(cls))} but swm offers {sorted(leaves)}")
+
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_every_verdict_is_one_of_the_four_buckets(swm_id):
+    for leaf, rec in LEAF_CLASSIFICATION[swm_id]["leaves"].items():
+        assert rec["classification"] in BUCKETS, (
+            f"{swm_id}:{leaf} has verdict {rec['classification']!r}, which is not one of {BUCKETS}")
+
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_the_structured_verdict_agrees_with_the_map(swm_id):
+    """`mapped` in the table must mean mapped in the VariationMap, and vice versa. Two records of
+    the same fact that can drift apart are worse than one."""
+    m = _map_for(swm_id)
+    mapped = {t for t, _ in m.pairs().values()}
+    for leaf, rec in LEAF_CLASSIFICATION[swm_id]["leaves"].items():
+        if rec["classification"] == "mapped":
+            assert leaf in mapped, f"{swm_id}:{leaf} is classified mapped but the map does not carry it"
+        else:
+            assert leaf not in mapped, (
+                f"{swm_id}:{leaf} is classified {rec['classification']} but the map DOES carry it")
+            assert leaf in m.swm_only, f"{swm_id}:{leaf} is unmapped with no reason in swm_only"
+
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_nothing_is_declared_dead_upstream_without_citing_a_measurement(swm_id):
+    """`dead_upstream` is a claim about the OFFICIAL renderer, not about our reading of its source.
+    It is the one verdict that lets us ship a knob-shaped hole, so it carries the highest evidence
+    bar: a probe, with counts."""
+    for leaf, rec in LEAF_CLASSIFICATION[swm_id]["leaves"].items():
+        if rec["classification"] == "dead_upstream":
+            ev = rec.get("evidence", "")
+            assert ev, f"{swm_id}:{leaf} is dead_upstream with no evidence recorded"
+            assert any(t in ev for t in ("px", "pixel", "arrays")), (
+                f"{swm_id}:{leaf} is dead_upstream but its evidence {ev!r} cites no measurement")
+
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_every_unmapped_leaf_explains_itself(swm_id):
+    for leaf, rec in LEAF_CLASSIFICATION[swm_id]["leaves"].items():
+        if rec["classification"] != "mapped":
+            assert len(rec["reason"]) > 40, (
+                f"{swm_id}:{leaf} is {rec['classification']} with a reason too short to be one")
+
+
+# ---------------------------------------------------------------- Rocket, the one family with dims
+
+ROCKET = "swm/PFRocketLanding-v0"
+
+
+def test_rocket_maps_exactly_the_five_material_colours():
+    m = _map_for(ROCKET)
+    assert set(m.pairs()) == {"rocket.body_color", "rocket.fin_color", "rocket.leg_color",
+                              "rocket.booster_color", "pad.color"}
+    for ours, (theirs, factor) in m.pairs().items():
+        assert ours == theirs, f"{ours} should map by identical path, not to {theirs}"
+        assert factor == 1.0, (
+            f"{ours} carries factor {factor}; both sides are 0-255 RGB and a factor here would be "
+            f"the PushT scale bug in a new place")
+
+
+def test_rocket_ignition_is_ours_only_because_swm_derives_it_from_the_action():
+    m = _map_for(ROCKET)
+    assert "flame.ignited" in m.ours_only
+    assert "flame.ignited" not in RECORDED_SWM_LEAVES[ROCKET]
+
+
+def test_rocket_sky_color_is_dead_upstream_and_not_quietly_mapped():
+    """The one leaf Step 7 measured dead. If a future edit maps it, this fails rather than shipping
+    a knob that moves nothing."""
+    m = _map_for(ROCKET)
+    assert "environment.sky_color" not in {t for t, _ in m.pairs().values()}
+    rec = LEAF_CLASSIFICATION[ROCKET]["leaves"]["environment.sky_color"]
+    assert rec["classification"] == "dead_upstream"
+    assert "0 of 691,200" in rec["evidence"]
+
+
+def test_rocket_start_state_leaves_are_state_not_style():
+    """They move pixels -- by moving the rocket. That makes them our STATE, and mapping them to
+    style would put the same information in two places."""
+    for leaf in ("environment.start_height_ratio", "environment.start_horizontal_offset",
+                 "environment.start_tilt"):
+        rec = LEAF_CLASSIFICATION[ROCKET]["leaves"][leaf]
+        assert rec["classification"] == "not_applicable"
+
+
+def test_rocket_default_variation_round_trips_through_the_style_layout():
+    """The registered default must survive `variation -> style -> variation` unchanged. This is the
+    mapping half of "the registered default is reproducible through the mapping"; the pixel half is
+    the GPU artifact."""
+    rl = pytest.importorskip("stable_envs.envs.rocket_landing")
+    layout = rl.style_layout()
+    default = np.asarray(rl._default_style_row(), np.float64)
+    m = _map_for(ROCKET)
+    for ours, (theirs, factor) in m.pairs().items():
+        assert ours in layout, f"{ours} is mapped but is not a dim of the env's style layout"
+        o, w = layout[ours]
+        back = default[o:o + w] / factor
+        assert np.allclose(back * factor, default[o:o + w]), f"{ours} does not round-trip"
+
+
+def test_rocket_mapped_leaves_are_disjoint_slices_of_the_style_row():
+    """Isolation, structurally: two mapped leaves that overlap in the style row cannot be varied
+    independently no matter what the renderer does."""
+    rl = pytest.importorskip("stable_envs.envs.rocket_landing")
+    layout = rl.style_layout()
+    m = _map_for(ROCKET)
+    seen = {}
+    for ours in m.pairs():
+        o, w = layout[ours]
+        for i in range(o, o + w):
+            assert i not in seen, f"{ours} and {seen[i]} both own style dim {i}"
+            seen[i] = ours
+
+
+def test_rocket_pad_color_default_is_white_not_the_declared_two_hundred():
+    """swm declares pad.color init_value (200,200,200) but a plain reset loads the UNMODIFIED pad
+    URDF -- `_modify_pad_urdf` runs only when a variation is requested -- so the pad is white. Our
+    default is the one a plain reset produces, which is what "the registered default" means."""
+    rl = pytest.importorskip("stable_envs.envs.rocket_landing")
+    layout = rl.style_layout()
+    o, w = layout["pad.color"]
+    row = np.asarray(rl._default_style_row(), np.float64)
+    assert list(row[o:o + w]) == [255.0, 255.0, 255.0]
+
+
+# ---------------------------------------------------------------- OGB, the empty-style family
+
+@pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
+def test_ogb_maps_nothing_yet_and_says_so_leaf_by_leaf(swm_id):
+    """These two cells declare `make_variation_space() -> Dict({})`. That is a deliberate state, not
+    a gap: the test pins it so that adding the first style dim is a conscious act with a declaration
+    change, rather than something that drifts in."""
+    m = _map_for(swm_id)
+    assert m.pairs() == {}, (
+        f"{swm_id} now maps {sorted(m.pairs())}. If the cell gained a style space, update this test "
+        f"and re-baseline the cell's style_dim/style_digest declaration deliberately")
+    assert set(m.swm_only) == set(RECORDED_SWM_LEAVES[swm_id])
+
+
+@pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
+def test_ogb_state_leaves_are_classified_not_applicable(swm_id):
+    for leaf in ("agent.ee_start_position", "cube.start_position", "cube.start_yaw",
+                 "cube.goal_position", "cube.goal_yaw"):
+        rec = LEAF_CLASSIFICATION[swm_id]["leaves"][leaf]
+        assert rec["classification"] == "not_applicable", (
+            f"{swm_id}:{leaf} reaches the frame only through qpos/mocap, which is our state")
+
+
+@pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
+def test_ogb_agent_color_records_the_upstream_dirty_flag_defect(swm_id):
+    rec = LEAF_CLASSIFICATION[swm_id]["leaves"]["agent.color"]
+    assert rec["classification"] == "dead_upstream"
+    assert "allclose" in rec["reason"], (
+        "the reason must name the inverted dirty-flag test, because the leaf is dead only in "
+        "isolation and live when co-varied -- a reader who does not know that will mis-file it")
+
+
+def test_lock_color_is_scene_only():
+    assert "lock_color" in RECORDED_SWM_LEAVES["swm/OGBScene-v0"]
+    assert "lock_color" not in RECORDED_SWM_LEAVES["swm/OGBCube-v0"]
+    assert "lock_color" in _map_for("swm/OGBScene-v0").swm_only
+    assert "lock_color" not in _map_for("swm/OGBCube-v0").swm_only
+
+
+# ---------------------------------------------------------------- against the LIVE wrapper
+
+@pytest.mark.parametrize("swm_id", IDS)
+def test_the_recorded_inventory_still_matches_the_live_wrapper(swm_id):
+    """Everything above is measured against a recorded list. This is the test that keeps that list
+    honest: if swm adds, removes or renames a leaf, the recorded inventory is stale and every
+    completeness assertion above has been checking the wrong set."""
+    gymnasium = pytest.importorskip("gymnasium")
+    pytest.importorskip("stable_worldmodel")
+    try:
+        env = gymnasium.make(swm_id)
+    except Exception as exc:                      # the family's own deps (ogbench, PyFlyt, mujoco)
+        pytest.skip(f"{swm_id} not constructible here: {type(exc).__name__}: {exc}")
+    try:
+        live = sorted(env.unwrapped.variation_space.names())
+    finally:
+        env.close()
+    assert live == sorted(RECORDED_SWM_LEAVES[swm_id]), (
+        f"{swm_id}: the live variation space is {live} but RECORDED_SWM_LEAVES says "
+        f"{sorted(RECORDED_SWM_LEAVES[swm_id])}. Re-enumerate and re-classify the difference")

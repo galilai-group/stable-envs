@@ -208,6 +208,12 @@ VARIATION_MAPS: dict[str, VariationMap] = {
 }
 
 
+# Per-family tables live in `compat/variation_maps/` so families can be written independently; the
+# import is AFTER `VariationMap` and `VARIATION_MAPS` exist because the submodules import the class.
+from .variation_maps.newcells import NEWCELL_VARIATION_MAPS as _NEWCELLS  # noqa: E402
+VARIATION_MAPS.update(_NEWCELLS)
+
+
 def _flatten(values: Mapping[str, Any], prefix: str = "") -> dict[str, Any]:
     """Nested ``{'agent': {'color': v}}`` or already-dotted ``{'agent.color': v}`` -> dotted."""
     out: dict[str, Any] = {}
