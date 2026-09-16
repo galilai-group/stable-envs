@@ -97,7 +97,8 @@ cells gained `cpu3d` beside `mjwarp`/`raycast3d` (S either way), and the four `s
 `navdot` where they previously declared nothing (R either way — but now from the backend rather than
 from the module name).
 
-And the check that matters most: `scratch/step4/universe.configurations()` is **byte-identical** on
+And the check that matters most: the configuration list `scratch/step4/universe.py` builds is
+**byte-identical** on
 the old and the new census — 49 configurations, 0 added, 0 removed, 0 entries changed.
 
 ---
@@ -176,7 +177,7 @@ able to silently narrow the judged set**, because a narrowed set looks like a pa
    reported, and every state stays judged.
 
 Wired into all three consumers: `examples/fidelity_step4._resolution`,
-`tests/gpu/test_reproducibility`, and `scratch/step4/certify._downsample_judge`.
+`tests/gpu/test_reproducibility`, and the `_downsample_judge` in `scratch/step4/certify.py`.
 
 ### Before / after — and why this is the strongest evidence in the workstream
 
@@ -402,6 +403,50 @@ backend class S 28 · R 12 · n/a 2
 
 The page lists what is `UNMEASURED` and which workstream closes each — Gate F is Workstream D,
 semantic is H, the VariationMaps are A/B/C, the quarantined CPU tiers are G.
+
+---
+
+## Verification on hardware
+
+Paired, both legs in the **same SLURM allocation on the same card**: baseline `$SCR/se8/baseline`
+(a pristine `git archive` of `43ac952`) against `$SCR/se8/cert`, on `gpu2264.oscar.ccv.brown.edu`,
+NVIDIA GeForce RTX 3090, driver 575.57.08, alloc `6443480`, `MUJOCO_GL=egl`. Selection
+`-k "downsample or resolution_applicability or order"`.
+Record: `examples/results/step8/certification/oscar_paired_tests.json`.
+
+| venv | baseline | branch | fixed | **new failures** |
+|---|---|---|---|---|
+| `se-vis311` | 7 failed, 50 passed, 27 skipped | 4 failed, 53 passed, 28 skipped | 3 | **0** |
+| `se-step6` | 2 failed, 70 passed, 52 skipped | **0 failed**, 72 passed, 53 skipped | 2 | **0** |
+
+The five fixed are exactly the three cells this workstream's tasks 3 and 4 concern —
+`test_resolution_downsample_agrees_within_the_measured_bound` for `CraftaxClassic` (now judged on its
+declared band), `CraftaxFull` (now skipped on its all-bands declaration) and `DMCQuadrupedWalk` (now
+has a measured bound instead of failing the missing-bound assertion). Error counts are identical in
+both legs; the four remaining `se-vis311` failures are present in both and are unrelated.
+
+The applicability reader was also exercised directly on GPU hardware, on both devices, under
+`se7-craftax-gpu` (`examples/results/step8/certification/oscar/applicability_oscar.txt`) — and it
+reproduces the local numbers exactly:
+
+| cell / device | applicable | judged | `exact_frac` judged | `exact_frac` all bands |
+|---|---|---|---|---|
+| `CraftaxClassic` / cpu | yes | 6 of 8 | **1.000000** (mean 0.0, max 0) | 0.816382 |
+| `CraftaxClassic` / cuda | yes | 6 of 8 | **1.000000** (mean 0.0, max 0) | 0.816382 |
+| `CraftaxFull` / cpu | no | 0 | — | — |
+| `CraftaxFull` / cuda | no | 0 | — | — |
+
+### Local CPU suite
+
+`tests/unit`, `se6-venv`, Apple M5: **2 failed, 1035 passed, 9 skipped** against the baseline's
+**2 failed, 1034 passed, 10 skipped** — the same two pre-existing failures
+(`test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]` and
+`test_every_cited_scratch_path_resolves`, the latter at the baseline's own 9 broken citations), and
+the same 1044 total.
+
+`mkdocs.yml` is the one file outside this workstream's ownership that had to change: adding two docs
+pages makes `test_every_docs_page_is_reachable_from_the_nav` fail until they are in the nav. Two nav
+entries, nothing else.
 
 ---
 
