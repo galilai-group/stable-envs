@@ -1237,7 +1237,7 @@ are now bound to the gate's own functions rather than to reimplementations of th
   path: the four remaining rows are unchanged by it. The ownership probe's output existed at the time
   and had not been read.
 
-## 29. ESCALATION to the cell reviewer: four resource-guard rows with no named mechanism
+## 29. WITHDRAWN ESCALATION: four resource-guard rows, mechanism found (see 29.5)
 
 Four rows fail and I cannot name the mechanism. Everything below is measured; the one thing missing
 is the cause, and I would rather hand over an honest gap than a fifth hypothesis.
@@ -1299,3 +1299,47 @@ not touched it. The cell-level alternatives I can see — none of which I have i
 each one changes behaviour to satisfy a proxy rather than to fix a harm — are: render every plate at
 one canonical resolution and resample; or refuse to build a rig at any resolution beyond the
 registered size. Both trade real fidelity or real flexibility for a counter.
+
+### 29.5 The mechanism, and the escalation is withdrawn
+
+An orphaned allocation from a **failed** constructor. OGBench compiles the scene with
+`visual.global.offwidth/offheight` set to the registered render size (`manipspace/envs/env.py:150`),
+so the model serves 200 (Scene) or 224 (Cube) and no more. Any `mujoco.Renderer` above that raises
+`ValueError: Image width 224 > framebuffer width 200` -- **after `__new__` has allocated the
+object**. The half-built Renderer is unreachable, is collected at an arbitrary later moment,
+`__del__` runs `close()`, and the guard charges that close to whichever test was running.
+
+Measured on CPU with `__new__` and `close` patched, no GPU: three oversize constructions, three
+allocations, three closes.
+
+This accounts for all four facts above, including the three that defeated every hypothesis before it:
+
+| fact | why |
+|---|---|
+| closes charged to tests that create nothing | collection happens long after construction |
+| the four rows pass alone | no earlier failed construction exists to be collected |
+| `_KEEPALIVE` does not prevent them | the append is BELOW the line that raised; the list never saw the object |
+| zero contexts released | the constructor failed before it created one |
+
+**The guard was right and I was wrong about it.** `MUJOCO_RENDERER_CLOSED` fired while
+`EGL_CONTEXT_RELEASED` stayed silent because a renderer really was being closed and no context
+really was being released. I read the disagreement between two counters as evidence that both were
+unreliable, and was one step from asking a reviewer to loosen a shared rule over a defect that was
+entirely mine.
+
+**Fix (cell-level, no shared file):** raise the offscreen buffer on the rig's PRIVATE deep copy
+before constructing, `rig.model.vis.global_.offwidth = max(offwidth, res)` and likewise for height.
+Verified on CPU: 224 and 448 both construct and render, and the reference env's own model still
+reports 200. This is a correction rather than a workaround -- a plate must be bakeable at whatever
+resolution the caller renders at, and the two tests that create the orphans
+(`test_resolution_downsample_agrees_within_the_measured_bound`,
+`test_render_size_does_not_leak_into_later_calls`) ask for exactly the sizes the registered buffer
+cannot serve.
+
+### 29.6 What kept this hidden for four diagnostic jobs
+
+Every instrument I built recorded renderers that were **successfully constructed**. A constructor
+that raises produces no rig, no `[rigdebug]` line, and no `BORN` record -- only a `__new__` that my
+plugin did log, as `born during <not recorded>` once `id()` was reused or the `__init__` record never
+arrived. The thing I needed to see was the absence of a record, and I read absence as noise three
+times before testing the constructor itself, which took one CPU script and no GPU at all.
