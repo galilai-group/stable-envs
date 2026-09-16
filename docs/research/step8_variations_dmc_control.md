@@ -105,7 +105,7 @@ leaf. The other 21 `physics.*` leaves move **0 pixels** and are unsupported as d
 
 ---
 
-## 3. Twelve DM Control leaves are dead in `stable_worldmodel` itself
+## 3. Twenty-one DM Control leaves are dead in `stable_worldmodel` itself
 
 Probed by hashing **every** `numpy` array on the compiled `MjModel` (110+ arrays, plus `opt.gravity`
 and the size scalars) at the leaf's default and at an interior probe, through
@@ -153,7 +153,7 @@ really does recompile (`_dirty` goes back to `False`), and `body_mass` stays `[0
 Contrast finger, reacher and manipulator, whose targets are in **group 0** and are hidden by a
 material *alpha* instead. There the same leaf moves 150-459 px, and there it is mapped.
 
-> **Upstream findings bundle.** All twelve belong in the Step-8 upstream bundle (Workstream D). None
+> **Upstream findings bundle.** All twenty-one belong in the Step-8 upstream bundle (Workstream D). None
 > of them is a stable-envs defect and none should be implemented: implementing a knob the reference
 > does not honour would make stable-envs and `stable_worldmodel` disagree, which is the opposite of
 > the mapping's job.
@@ -182,15 +182,16 @@ the **camera**, which moves every pixel — with `qpos` and `geom_xpos` verified
 Every non-trackcom DM Control cell's density leaves measure **exactly 0 px**, which is what makes the
 mechanism attribution safe rather than a guess. So these ten leaves are **not** "physics with no
 pixel": they are appearance-affecting leaves the cell cannot express, and they are classified
-`unsupported` with the count. The remaining density/mass/friction leaves on the other cells stay
-`not_applicable`.
+`unsupported` with the count. The remaining live density/mass/friction leaves on the other cells
+are also `unsupported`: they request dynamics outside those cells' render-from-state surface,
+despite measuring 0 px at a fixed state. The explicit-mass overrides in §3 remain `dead_upstream`.
 
 `BallInCupDMControl`'s gravity is the same shape of surprise for a different reason: the cup and ball
 are joined by a **spatial tendon**, which MuJoCo draws as a hanging catenary through `mjv_catenary`,
 and `mjv_catenary` reads the model's gravity. At a fixed `qpos`, `gravity.x` moves 178 px and
 `gravity.y` 110 px (`gravity.z` alone moves 0, because scaling z does not rotate the gravity
-direction). All three are `unsupported`; on every other DM Control cell gravity is `not_applicable` at
-a measured 0 px.
+direction). All three are `unsupported`; on every other DM Control cell gravity is also
+`unsupported`, as a dynamics request, with a measured 0 px at a fixed state.
 
 ---
 

@@ -39,7 +39,7 @@ below: there a mass leaf is not physics-only at all.
 Three things this module measured that were not previously written down
 -----------------------------------------------------------------------
 
-**1. Twelve SWM DM Control leaves never reach the compiled model.** Probed by hashing every
+**1. Sixteen SWM DM Control leaves never reach the compiled model.** Probed by hashing every
 ``numpy`` array on ``MjModel`` (110+ arrays, plus ``opt.gravity`` and the size scalars) at the leaf's
 default and at an interior probe value, through ``reset(options={'variation_values': ...})`` on the
 live wrapper. Two distinct mechanisms, both dead:
@@ -53,7 +53,7 @@ live wrapper. Two distinct mechanisms, both dead:
   ``<default class="/"><geom type="capsule" mass="1"/>``, cartpole's ``pole`` class, pendulum's three
   ``mass=`` attributes. An explicit mass wins, so the recompiled model is bit-identical.
 
-**2. Two more leaves reach the model and no pixel, because the element is not drawn.**
+**2. Five more leaves, in two groups, reach the model and no pixel because the element is not drawn.**
 ``Acrobot.target.{color,shape}`` move ``mat_rgba``/``site_type``/``site_size`` on a site in **group 3**,
 and ``BallInCup.{rendering.render_target, target.color, target.shape}`` move ``site_rgba``/``site_type``
 on a site in **group 4**. ``mjvOption``'s default ``geomgroup`` draws groups 0-2, so neither site is

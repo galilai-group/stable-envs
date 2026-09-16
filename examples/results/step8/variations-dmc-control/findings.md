@@ -1,7 +1,7 @@
 # Step 8 Workstream A — VariationMaps: DMC + classic control — findings
 
 **Verdict: `PATCH_CANDIDATE`** (with one `FINDING` for the coordinator, §6, and an upstream bundle
-of twelve dead swm leaves, §3).
+of twenty-one dead swm leaves, §3).
 
 * **Baseline** `43ac95238f7472137619f3e69e7636e11dd088b1`
 * **Branch** `step8/variations-dmc-control`
@@ -42,9 +42,11 @@ Per-id counts are in `leaf_classification.json` and asserted by
 * **Pixel-movement classification: NONE.** No renderer, no cell and no declaration was changed; every
   frame this branch can produce at a default style is the frame the baseline produced.
 
-## 3. Upstream findings — 12 swm leaves are dead (for Workstream D's bundle)
+## 3. Upstream findings — 21 swm leaves are dead (for Workstream D's bundle)
 
-Measured by hashing every `MjModel` array at two leaf values through the live wrapper.
+Sixteen leave the compiled model unchanged: eleven are never read and five density writes are
+overridden by explicit mass. Five more reach hidden target elements and change no pixels.
+Model effects were measured by hashing every `MjModel` array at two leaf values through the live wrapper.
 
 *Never read by swm's own `modify_mjcf_model`* (7 `*_locked` leaves, plus
 `BallInCup.ball.color`, `Cartpole.agent.cart_shape`, `Pendulum.agent.mass_shape`,
@@ -128,8 +130,9 @@ touched.
 | `tests/unit/test_variation_maps_dmc_control.py` | `se6-venv` (no swm) | 10 passed, 128 skipped |
 | `tests/unit` | `se6-venv` | 1043 passed, 137 skipped, **2 failed — both pre-existing at the baseline** (`test_examples.py::...robocasa_visual/render_mjwarp.py`, `test_repo_contracts.py::test_every_cited_scratch_path_resolves`), verified by re-running them with this branch's changes stashed |
 
-`tests/gpu` not run: no CUDA on this machine, and nothing in this change reaches a GPU path.
-No SLURM jobs: no GPU or CPU-certification measurement was required.
+`tests/gpu` not run. This patch changes how callers select existing styles; it does not change
+the renderer that consumes a state/style. The renderer-gate carry-forward scope and evidence are
+recorded in §11; this is not a claim of a fresh GPU pass. No SLURM jobs were submitted for this patch.
 
 ## 9. Method note
 
@@ -142,3 +145,59 @@ a test that releases one. The isolation is what makes the measurement safe to ru
 
 **None required.** No renderer semantics changed, no pixels moved at any default, no fidelity
 declaration or frozen corpus was touched.
+
+## 11. Review follow-up and the ten-part merge gate
+
+This record applies to implementation commit `063f2168ebcc563cd7f433c99dc3d2140d25530c` plus the
+review follow-up correcting prose/docstrings only. It does not authorize a release limitation,
+alter any gate contract, or turn an inherited failure/unmeasured status into a pass.
+
+Independent review on 2026-09-16 reproduced all **138 tests** using live SWM in `se8-vm-venv`
+(`MUJOCO_GL=glfw PYTHONPATH=. .../bin/python -m pytest -q tests/unit/test_variation_maps_dmc_control.py`).
+It also regenerated `leaf_classification.json` byte-for-byte and reproduced the generated documentation
+tables byte-for-byte. Therefore the generator and generated taxonomy do not need a semantic change:
+the corrections are to hand-written prose (21 dead leaves = 11 never-read + 5 ignored density +
+5 hidden target) and the module docstring. Final counts remain 46 mapped, 94 unsupported, 21 dead,
+0 not applicable across 161 distinct per-ID leaves.
+
+### Renderer evidence applicability
+
+`git ls-tree` at baseline `43ac95238f7472137619f3e69e7636e11dd088b1` and implementation
+`063f2168ebcc563cd7f433c99dc3d2140d25530c` returns identical object IDs:
+
+| Path | Identical Git tree object |
+|---|---|
+| `stable_envs/envs` | `b6ba355d0d997ed437db53cc7fcf8fd33993d949` |
+| `stable_envs/render` | `6abd350f218d5f41f7ed9c4158c4b9fe43fa6055` |
+| `stable_envs/testing` | `0a6299acdbd0124fb2426993c14b9049be20e5d3` |
+| `examples/results/step4` | `15a0fc2f71259a70eab41d67158e913a67b55628` |
+| `examples/results/step7` | `93858185db77b45907c3560b7c44ca5480bf4558` |
+
+The accepted corpora and earlier results themselves remain authoritative. No new replay result is claimed.
+The only changed runtime files are `compat/worldmodel.py` and the new `compat/variation_maps`
+package. Neither the renderer/cell implementation nor the testing/GPU replay code imports the
+changed mapping helpers (`rg` for `style_from_variation`, `variation_from_style`, and
+`compat.worldmodel` in `stable_envs/testing` and `tests/gpu` finds no matches).
+For the frozen replay's same stored states/styles, the execution surface, corpus, and declared
+reference remain identical. Existing renderer Gate-A and frozen replay evidence therefore carries
+forward **with its original device/version applicability and limitations**, rather than requiring
+a new GPU run for this mapping-only patch. This source-identity argument does not establish new
+SWM API parity or certify newly selected nondefault styles; those use targeted mapping checks and
+the later integration pass. The coordinator must still run the plan's final full-universe pass.
+
+| §18 item | Evidence / disposition |
+|---|---|
+| 1. Explicit scope | Five classic-control IDs and twelve DMC IDs; mapping/setup only. |
+| 2. Before/after diagnosis | Missing maps become measured leaf classifications; corrected prose agrees with generated artifacts. Existing appearance/range gaps remain visible in §5–6. |
+| 3. Targeted unit tests | Independently reproduced 138 passes; follow-up changes only prose/docstrings. |
+| 4. Affected Gate A/F | Default reproduction, classic official pixel equality, isolation, round-trip, model-light and dead-leaf tests passed. Unchanged renderer invariants carry forward only within the scope above. Full 42-ID Gate F remains D's deliverable, not a claimed result here. |
+| 5. Affected frozen-corpus replay | Inherited unchanged by verified source/corpus identity as above; no fresh replay was performed or claimed. |
+| 6. Pixel movement | No change to existing state/style rendering. Five SWM registered defaults intentionally select pre-existing nondefault styles; their differences remain recorded in the artifact. |
+| 7. Performance regression | Not applicable: renderer hot paths and performance contracts unchanged. No new throughput claim. |
+| 8. Independent verdict | Initial review APPROVE-WITH-CHANGES; this follow-up requires explicit re-review and APPROVE before merge. |
+| 9. Semantic follow-up | No added renderer information, so no downstream rerun required for this patch. No broader semantic claim added. |
+| 10. Dashboard | Coordinator owns recording the follow-up SHA, final reviewer verdict, actual changed files and remaining decisions before merge. |
+
+The floor range-gap decision in §6 remains open for release closure. Carrying forward unchanged
+renderer evidence does not approve shipping that feasible-but-unimplemented variation, relax
+fidelity, or authorize a re-freeze.
