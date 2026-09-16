@@ -1,0 +1,454 @@
+"""The twelve Fetch VariationMaps: coverage, units, isolation, and the default that must not move.
+
+Three tiers, and the split is deliberate rather than defensive:
+
+**Tier 1 — the map is data, so most of it can be checked with nothing installed.** That the twelve
+ids exist, that the three suffixes of a scene share one map body, that every swm leaf is classified
+exactly once, and that the light factor is the exact binary 1.25 are properties of the table. They
+run on any interpreter, which is the only reason they run at all in CI: this family needs
+``mujoco_warp`` and a CUDA device to make a pixel.
+
+**Tier 2 — the frozen leaf snapshot, re-enumerated from the live wrapper when it is present.** The
+snapshot below was read off ``stable_worldmodel`` 176d545 and is what tier 1 checks against; tier 2
+asserts that the snapshot still IS the live wrapper's answer, so an upstream leaf added or renamed
+fails here loudly instead of silently becoming an unclassified leaf.
+
+**Tier 3 — the mapping against a built env.** Needs ``stable_envs.envs.fetch``, i.e. ``mujoco_warp``
+and CUDA; skipped everywhere else. This is where "the registered default is byte-identical through
+the mapping" and "a mapped leaf changes only its own semantics" are actually asserted.
+
+WHAT THE DEFAULT-EQUALITY TESTS COMPARE, PRECISELY
+--------------------------------------------------
+``test_registered_default_is_byte_identical_through_the_mapping`` and
+``test_the_default_style_round_trips_to_swm_units_and_back`` compare stable-envs'
+``env.default_style()`` with ``WM.style_from_variation(env, {})``, and the inverse round trip
+``style -> variation_from_style -> style_from_variation -> style``. They are a statement about THE
+MAPPING: an empty swm config selects our registered default exactly, and our default expresses
+itself in swm's units without loss.
+
+They are **not** equality with the SWM wrapper's registered reset appearance, and must never be
+reported as SWM default parity. They are not, because the wrapper's reset appearance is measurably
+something else: ``_apply_visual_variations`` permanently unbinds the table, floor and object
+materials (``geom_matid[i] = -1``) the first time any visual leaf is active, which
+``DEFAULT_VARIATIONS`` makes true on every plain ``reset()``, moving 19.0-32.3 % of the frame by up
+to 102/255; and swm's declared leaf defaults are not the official appearance either (table 0.3 vs
+0.93, light 0.7 vs 0.8, object (0.8,0.1,0.1) vs 0.2 grey). Both are recorded as upstream findings
+and as an explicit Gate-F status line in
+``examples/results/step8/variations-fetch/findings.md``.
+
+MAKING A CERTIFICATION RUN UNABLE TO PASS BY SKIPPING
+------------------------------------------------------
+Tiers 2 and 3 skip when their dependencies are absent, which is right on a laptop and wrong on a
+certification run: an all-skipped tier is green and proves nothing, and the independent review named
+it. Set ``STABLE_ENVS_REQUIRE_LIVE_SWM=1`` and every skip in those two tiers becomes a failure
+instead, so a run that was supposed to exercise the live wrapper and the GPU cannot report success
+without having done so. The switch is opt-in: the default stays skip, because the tiers genuinely
+cannot run everywhere.
+"""
+from __future__ import annotations
+
+import collections
+import json
+import os
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from stable_envs.compat import worldmodel as WM
+from stable_envs.compat.variation_maps import fetch as FM
+
+ROOT = Path(__file__).resolve().parents[2]
+
+SCENES = ("Reach", "Push", "Slide", "PickAndPlace")
+SUFFIXES = ("", "Dense", "Dict")
+CLASSES = [f"Fetch{s}{x}" for s in SCENES for x in SUFFIXES]
+
+#: Enumerated from the live ``FetchWrapper`` (stable_worldmodel 176d545, gymnasium-robotics 1.4.2,
+#: mujoco 3.12.0) — see ``examples/results/step8/variations-fetch/leaf_classification.json``. Reach
+#: carries no ``block.*`` because it has no object; everything else is identical across the twelve.
+SWM_LEAVES = {
+    "Reach": ("agent.start_position", "background.color", "camera.angle_delta",
+              "goal.start_position", "light.intensity", "object.color",
+              "rendering.transparent_arm", "table.color"),
+    "object": ("agent.start_position", "background.color", "block.angle", "block.mass",
+               "block.start_position", "camera.angle_delta", "goal.start_position",
+               "light.intensity", "object.color", "rendering.transparent_arm", "table.color"),
+}
+
+
+def leaves_for(scene: str) -> tuple[str, ...]:
+    return SWM_LEAVES["Reach"] if scene == "Reach" else SWM_LEAVES["object"]
+
+
+# ============================================================== tier 1: the table, no dependencies
+
+
+def test_every_registered_fetch_id_has_a_map():
+    """All twelve, reachable through the name a caller actually uses.
+
+    ``VARIATION_MAPS`` rather than ``FM.MAPS``, because the one-line registration in
+    ``compat.worldmodel`` is half the deliverable and a module nobody imports registers nothing.
+    """
+    for c in CLASSES:
+        m = WM.variation_map(c)
+        assert m is not None, f"{c} has no VariationMap"
+        scene = c[len("Fetch"):].replace("Dense", "").replace("Dict", "")
+        suffix = c[len("Fetch") + len(scene):]
+        assert m.swm_id == f"swm/Fetch{scene}{suffix}-v3"
+
+
+def test_the_three_suffixes_of_a_scene_share_one_map_body():
+    """Dense changes a reward and Dict an observation container; neither reaches a pixel.
+
+    Twelve hand-written tables would be twelve places for the family to drift. This asserts the
+    thing the module claims: the only field that differs between ``FetchPush``, ``FetchPushDense``
+    and ``FetchPushDict`` is ``swm_id``.
+    """
+    for scene in SCENES:
+        bodies = []
+        for x in SUFFIXES:
+            m = WM.variation_map(f"Fetch{scene}{x}")
+            bodies.append((m.identical, dict(m.renamed), dict(m.scaled), dict(m.partial),
+                           dict(m.unmapped()), dict(m.ours_only)))
+        assert bodies[0] == bodies[1] == bodies[2], f"the three Fetch{scene} ids disagree"
+
+
+def test_every_swm_leaf_is_classified_exactly_once():
+    """The property the whole exercise exists to establish: no leaf is silently unmapped."""
+    for c in CLASSES:
+        m = WM.variation_map(c)
+        scene = c[len("Fetch"):].replace("Dense", "").replace("Dict", "")
+        leaves = set(leaves_for(scene))
+        mapped = {t for t, _ in m.pairs().values()}
+        declared = set(m.unmapped())
+        assert not (mapped & declared), f"{c}: a leaf is both mapped and declared unmapped"
+        # ``partial`` is a mapped leaf whose coverage is incomplete, never a fifth bucket: the
+        # dataclass refuses a partial leaf that no mapping field reaches, and this is the same
+        # invariant read from the other side, so a leaf cannot be "partial" AND unclassified.
+        assert set(m.partial) <= mapped, f"{c}: partial names leaves no mapping field reaches"
+        assert leaves - mapped - declared == set(), (
+            f"{c}: unclassified swm leaves {sorted(leaves - mapped - declared)}")
+        assert mapped - leaves == set(), f"{c}: maps onto leaves swm does not offer"
+        assert declared - leaves == set(), f"{c}: declares reasons for leaves swm does not offer"
+
+
+def test_reach_differs_from_the_object_scenes_in_exactly_two_ways():
+    """The per-task difference is declarative, so it should be small and nameable."""
+    reach, push = WM.variation_map("FetchReach"), WM.variation_map("FetchPush")
+    assert "object.color" in push.identical and "object.color" not in reach.identical
+    assert reach.classification()["object.color"] == "dead_upstream"
+    assert "empty geom list" in reach.dead_upstream["object.color"]
+    assert set(push.unmapped()) - set(reach.unmapped()) == {"block.start_position", "block.angle",
+                                                            "block.mass"}
+    assert set(reach.unmapped()) - set(push.unmapped()) == {"object.color"}
+
+
+def test_the_light_factor_is_exact_and_covers_the_whole_swm_range():
+    """swm's ``light.intensity`` is ABSOLUTE and ours is a multiplier on the model's 0.8.
+
+    Two separate claims. The factor must be exactly representable, or swm's default 0.8 would not
+    round-trip to our default 1.0 and ``test_registered_default_is_byte_identical`` would fail by a
+    ULP rather than by a mistake. And the full swm range must fit ours, because "we support this
+    leaf" is false if half of it clips.
+    """
+    ours, factor = "light.diffuse", WM.variation_map("FetchReach").scaled["light.diffuse"][1]
+    assert WM.variation_map("FetchReach").scaled[ours][0] == "light.intensity"
+    assert factor == 1.25 and factor * FM.LIGHT_DIFFUSE_0 == 1.0     # exact, not approximate
+    assert 0.0 * factor >= 0.0 and 1.0 * factor <= 2.0               # swm Box(0,1) -> our Box(0,2)
+
+
+def test_the_dead_and_unsupported_leaves_carry_their_mechanism():
+    """A reason that does not name a mechanism is a shrug with a docstring."""
+    m, cls = WM.variation_map("FetchPush"), WM.variation_map("FetchPush").classification()
+    # the bucket IS the classification now, so assert both the label and the mechanism in the reason
+    assert cls["camera.angle_delta"] == "dead_upstream"
+    assert "FREE camera" in m.dead_upstream["camera.angle_delta"]
+    assert cls["rendering.transparent_arm"] == "unsupported"
+    assert "alpha" in m.unsupported["rendering.transparent_arm"]
+    assert cls["block.mass"] == "not_applicable" and "dynamics only" in m.not_applicable["block.mass"]
+    for leaf in ("agent.start_position", "goal.start_position", "block.start_position",
+                 "block.angle"):
+        assert cls[leaf] == "not_applicable" and "STATE" in m.not_applicable[leaf], leaf
+    assert not m.swm_only, ("this family uses the Step-8 four-way taxonomy; the undifferentiated "
+                            "swm_only bucket must stay empty or classification() loses the "
+                            "distinction it exists to make")
+
+
+def test_the_dead_camera_leaf_is_not_quietly_mapped_onto_our_working_camera():
+    """We have a camera that moves; the reference's does not. Mapping them would be a divergence."""
+    for c in CLASSES:
+        m = WM.variation_map(c)
+        assert "camera.angle_delta" not in {t for t, _ in m.pairs().values()}
+        assert set(m.ours_only) >= {"camera.azimuth_delta", "camera.elevation_delta",
+                                    "camera.distance_scale"}
+
+
+def test_background_is_partial_not_mapped_and_carries_the_measured_residual():
+    """swm's "background" is floor geoms PLUS a skybox texture; we render only the floor half.
+
+    The rename stays — the floor half is genuinely what swm writes and we write it exactly — and the
+    CLASSIFICATION is ``partial``, which is the whole point of the field: a generated completeness
+    table must not be able to count this leaf as full support. The reason has to carry the measured
+    residual, because "partially supported" without a number is a shrug.
+    """
+    for c in CLASSES:
+        m = WM.variation_map(c)
+        assert m.renamed["floor.color"] == "background.color", f"{c}: the floor rename is gone"
+        assert m.classification()["background.color"] == "partial", (
+            f"{c}: background.color is classified "
+            f"{m.classification()['background.color']}, not partial")
+        why = m.partial["background.color"]
+        assert "skybox" in why and "61.7-73.0 %" in why, f"{c}: the residual is not in the reason"
+    assert "skybox" in FM.__doc__ and "render context per value" in FM.__doc__
+
+
+def test_partial_is_the_only_downgrade_and_every_other_mapped_leaf_is_fully_mapped():
+    """One partial leaf, named. A second one appearing silently is the failure this catches."""
+    for c in CLASSES:
+        cls = WM.variation_map(c).classification()
+        assert {p for p, k in cls.items() if k == "partial"} == {"background.color"}, c
+        assert cls["table.color"] == "mapped" and cls["light.intensity"] == "mapped", c
+        assert "swm_only" not in set(cls.values()), (
+            f"{c}: a leaf is in the undifferentiated bucket; use one of the four")
+
+
+def test_the_committed_classification_artifact_agrees_with_the_maps():
+    """The artifact is generated FROM the maps, so it can drift from them silently.
+
+    ``leaf_classification.json`` is what the docs table, the escalation packet and anything
+    downstream reads. Nothing regenerates it on import, so a map edited without a regeneration
+    leaves a published table making a claim the code does not. This asserts the two agree leaf by
+    leaf, including the ``partial`` downgrade that the whole of review correction 4 is about.
+    """
+    art = json.loads((ROOT / "examples/results/step8/variations-fetch/leaf_classification.json")
+                     .read_text())
+    assert art["totals"]["undocumented"] == 0
+    seen = collections.Counter()
+    for swm_id, rec in art["ids"].items():
+        m = WM.variation_map(rec["stable_envs_class"])
+        assert m is not None and m.swm_id == swm_id
+        cls = m.classification()
+        for leaf, entry in rec["leaves"].items():
+            assert entry["classification"] == cls[leaf], (
+                f"{swm_id}:{leaf}: the artifact says {entry['classification']}, the map says "
+                f"{cls[leaf]} -- regenerate leaf_classification.json")
+        seen.update(e["classification"] for e in rec["leaves"].values())
+    assert dict(seen) == art["totals"]["per_classification"]
+    assert art["totals"]["per_classification"]["partial"] == 12, (
+        "background.color is partial on all twelve ids")
+
+
+# ====================================================== the opt-in strictness switch for tiers 2/3
+
+#: Under ``STABLE_ENVS_REQUIRE_LIVE_SWM=1`` a missing dependency in tier 2 or 3 is a FAILURE.
+REQUIRE_LIVE = os.environ.get("STABLE_ENVS_REQUIRE_LIVE_SWM", "").strip() not in ("", "0", "false")
+
+
+def _unavailable(why: str):
+    """Skip, or fail if this run declared that these tiers must really run.
+
+    The reason is quoted either way. A certification run that cannot reach the live wrapper needs to
+    say so in the failure line, not in a ``-rs`` summary somebody has to remember to ask for.
+    """
+    if REQUIRE_LIVE:
+        pytest.fail(f"STABLE_ENVS_REQUIRE_LIVE_SWM=1 and this tier could not run: {why}")
+    pytest.skip(why)
+
+
+def _need(module: str):
+    """``importorskip``, but honouring the strictness switch."""
+    try:
+        return pytest.importorskip(module)
+    except pytest.skip.Exception:
+        _unavailable(f"{module} is not importable")
+
+
+# ============================================================== tier 2: the live swm wrapper
+
+
+def _live_space(swm_id):
+    _need("stable_worldmodel")
+    _need("gymnasium_robotics")
+    try:
+        return FM.swm_variation_space(swm_id)
+    except Exception as exc:                                          # pragma: no cover
+        _unavailable(f"{swm_id} is not constructible on this interpreter: {exc!r}")
+
+
+def _live_leaves(swm_id):
+    return sorted(_live_space(swm_id).names())
+
+
+@pytest.mark.parametrize("cls", CLASSES)
+def test_the_frozen_leaf_snapshot_is_still_what_the_wrapper_offers(cls):
+    """An upstream leaf added or renamed must fail HERE, not become an unclassified leaf."""
+    m = WM.variation_map(cls)
+    scene = cls[len("Fetch"):].replace("Dense", "").replace("Dict", "")
+    assert _live_leaves(m.swm_id) == sorted(leaves_for(scene))
+
+
+@pytest.mark.parametrize("cls", CLASSES)
+def test_no_live_leaf_is_undocumented(cls):
+    m = WM.variation_map(cls)
+    live = set(_live_leaves(m.swm_id))
+    assert live - {t for t, _ in m.pairs().values()} - set(m.unmapped()) == set()
+
+
+def test_check_mapping_reads_a_fetch_variation_space_through_the_public_function():
+    """The regression test for the wrapper-discovery defect, through the PUBLIC entry point.
+
+    ``check_mapping`` used to read ``gymnasium.make(id).unwrapped.variation_space``, which is right
+    for every swm env whose variation space lives on the env itself and wrong for this family:
+    ``FetchWrapper`` is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so ``unwrapped``
+    reaches PAST the wrapper and raised ``AttributeError`` for all twelve Fetch ids — the Gate-F
+    matrix could not report them at all. Workstream A fixed it centrally by walking the wrapper
+    chain (``worldmodel.swm_variation_space``); this asserts the fix from the outside, on the family
+    that exposed it, because a helper that walks wrappers is worth nothing if the public API never
+    calls it.
+
+    One id, not twelve: the defect is in the discovery, which is per wrapper class and not per id,
+    and twelve live Fetch constructions is a minute of wall clock for one bit of information.
+    """
+    _need("stable_worldmodel")
+    _need("gymnasium_robotics")
+    m = WM.variation_map("FetchPush")
+    space = _live_space(m.swm_id)                       # also proves the walk works standalone
+
+    # ``check_mapping`` needs exactly two things from OUR side -- the class NAME, to find the map,
+    # and ``variation_space.names()``, to report ours_only -- and building a real Fetch env needs
+    # mujoco_warp and a CUDA device. A stand-in keeps this test on the defect it is about (reading
+    # the REFERENCE's variation space through its wrapper) instead of on a GPU.
+    ours = tuple(sorted(set(m.pairs()) | set(m.ours_only)))
+    env = type("FetchPush", (), {})()
+    env.variation_space = type("_Space", (), {"names": staticmethod(lambda: ours)})()
+
+    got = WM.check_mapping(env)
+    assert "error" not in got, got
+    assert got["swm_id"] == "swm/FetchPush-v3"
+    assert got["undocumented"] == [], f"undocumented Fetch leaves: {got['undocumented']}"
+    assert set(got["classification"]) == set(space.names())
+    assert got["classification"]["background.color"] == "partial"
+    assert got["classification"]["table.color"] == "mapped"
+    assert got["classification"]["camera.angle_delta"] == "dead_upstream"
+    assert got["classification"]["rendering.transparent_arm"] == "unsupported"
+    assert got["classification"]["block.mass"] == "not_applicable"
+    assert "background.color" in got["covered"], (
+        "a partial leaf is still a mapped leaf; it must stay in covered, and be qualified by the "
+        "classification rather than dropped from it")
+
+
+# ============================================================== tier 3: against a built env
+
+
+@pytest.fixture(scope="module")
+def envs():
+    """One built env per SCENE (not per id): the three suffixes share a renderer and a model."""
+    torch = _need("torch")
+    _need("mujoco_warp")
+    if not torch.cuda.is_available():
+        _unavailable("the Fetch family renders only through mujoco_warp on cuda")
+    import stable_envs as se
+    if "fetch" in se.envs.import_errors():
+        _unavailable(f"stable_envs.envs.fetch: {se.envs.import_errors()['fetch']}")
+    # import_errors() is not enough, and this is not belt-and-braces. The module's dependency check
+    # is ``warp``/``mujoco_warp``/``mujoco >= 3.11`` at import; ``gymnasium_robotics`` is imported
+    # LAZILY by ``_asset_dir`` at the first build. So on an interpreter with mujoco_warp and a CUDA
+    # device and no gymnasium-robotics -- Oscar's se6-verify, which is the only one there carrying
+    # pytest -- the module imports clean, records no error, and then every one of these tests ERRORS
+    # in setup instead of skipping. Measured, in SLURM job 6451948 stage 3: 24 setup errors.
+    try:
+        return {s: se.make(f"Fetch{s}", batch=2, size=64, device="cuda") for s in SCENES}
+    except Exception as exc:
+        _unavailable(f"this interpreter cannot build a Fetch env: {type(exc).__name__}: {exc}")
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_the_mapped_and_ours_only_paths_are_real_leaves_of_our_space(envs, scene):
+    """A map entry naming a path our space does not have is silently ignored by ``pairs()``."""
+    env = envs[scene]
+    ours = set(env.variation_space.names())
+    m = WM.variation_map(f"Fetch{scene}")
+    assert set(m.pairs()) <= ours, f"{scene}: maps from paths we do not have: {set(m.pairs()) - ours}"
+    assert set(m.ours_only) <= ours, f"{scene}: {set(m.ours_only) - ours}"
+    assert ours - set(m.pairs()) - set(m.ours_only) == set(), (
+        f"{scene}: our leaves with no entry in either direction: "
+        f"{sorted(ours - set(m.pairs()) - set(m.ours_only))}")
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_registered_default_is_byte_identical_through_the_mapping(envs, scene):
+    """An empty swm config must leave our style EXACTLY at the official appearance.
+
+    ``allclose`` would hide the interesting failure. The reason this can be byte-exact at all is that
+    every mapped leaf either has factor 1.0 or has the exactly representable 1.25.
+    """
+    env = envs[scene]
+    default = np.asarray(env.default_style(), np.float32)
+    got = WM.style_from_variation(env, {})
+    assert got.dtype == default.dtype
+    assert np.array_equal(got, default), f"{scene}: an empty variation moved the default style"
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_the_default_style_round_trips_to_swm_units_and_back(envs, scene):
+    """``style -> swm config -> style`` is the identity, including the 1.25 light factor."""
+    env = envs[scene]
+    default = np.asarray(env.default_style(), np.float32)
+    cfg = WM.variation_from_style(env, default)
+    assert np.isclose(cfg["light.intensity"], FM.LIGHT_DIFFUSE_0), (
+        "our default light multiplier must express swm's own 0.8, not its declared 0.7")
+    assert np.array_equal(WM.style_from_variation(env, cfg), default)
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_a_mapped_leaf_changes_only_its_own_style_slot(envs, scene):
+    """Isolation, at the level the mapping owns: one swm leaf touches one of our leaves."""
+    env = envs[scene]
+    layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
+    default = np.asarray(env.default_style(), np.float32)
+    probes = {"table.color": [0.9, 0.2, 0.05], "background.color": [0.9, 0.05, 0.9],
+              "object.color": [0.05, 0.95, 0.2], "light.intensity": [0.55]}
+    m = WM.variation_map(f"Fetch{scene}")
+    inv = {theirs: ours for ours, (theirs, _) in m.pairs().items()}
+    for theirs, value in probes.items():
+        if theirs not in inv:
+            continue
+        ours = inv[theirs]
+        row = WM.style_from_variation(env, {theirs: value})
+        o, w = layout[ours]
+        assert not np.array_equal(row[o:o + w], default[o:o + w]), f"{theirs} moved nothing"
+        rest = np.ones(row.shape, bool)
+        rest[o:o + w] = False
+        assert np.array_equal(row[rest], default[rest]), (
+            f"{scene}: {theirs} changed style slots other than {ours}")
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_an_unmapped_leaf_moves_nothing(envs, scene):
+    """The other half of isolation: a leaf we declare unsupported must not leak into the style."""
+    env = envs[scene]
+    default = np.asarray(env.default_style(), np.float32)
+    values = {"camera.angle_delta": [[10.0, 10.0]], "rendering.transparent_arm": 1,
+              "block.mass": [40.0], "agent.start_position": [1.45, 0.9],
+              "goal.start_position": [1.45, 0.9, 0.4247], "block.start_position": [1.45, 0.9],
+              "block.angle": [1.5]}
+    m = WM.variation_map(f"Fetch{scene}")
+    for leaf in m.unmapped():
+        if leaf not in values:                       # object.color on Reach: dead, and not a style
+            continue
+        assert np.array_equal(WM.style_from_variation(env, {leaf: values[leaf]}), default), (
+            f"{scene}: the unmapped leaf {leaf} moved our style")
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_strict_mode_accepts_a_full_swm_config(envs, scene):
+    """``strict=True`` raises on a leaf with no entry. A complete swm config must pass it."""
+    env = envs[scene]
+    cfg = {"table.color": [0.3, 0.3, 0.3], "object.color": [0.8, 0.1, 0.1],
+           "background.color": [0.1, 0.1, 0.1], "light.intensity": [0.7],
+           "camera.angle_delta": [[0.0, 0.0]], "rendering.transparent_arm": 0,
+           "agent.start_position": [1.3418, 0.7491], "goal.start_position": [1.3, 0.74, 0.4247],
+           **({} if scene == "Reach" else {"block.start_position": [1.3, 0.74],
+                                           "block.angle": [0.0], "block.mass": [2.0]})}
+    WM.style_from_variation(env, cfg, strict=True)        # must not raise

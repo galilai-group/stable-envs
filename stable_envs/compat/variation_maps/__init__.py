@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import Mapping
 
 #: Family modules, in the order they are installed. One line per workstream.
-_MODULES = ("dmc_control",)
+_MODULES = ("dmc_control", "fetch")
 
 
 def _collect() -> dict:

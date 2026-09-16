@@ -1,0 +1,108 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6452376
+##  Job Name : se8-variations-fetch-gpu
+##  Nodelist : gpu2264
+##      CPUs : 
+##  Mem/Node : 49152 MB
+## Directory : $SCR/se8/variations-fetch
+##   Job Started : Wed Sep 16 05:23:19 PM EDT 2026
+###############################################################################
+==============================================================================
+job=6452376 node=gpu2264.oscar.ccv.brown.edu tree=$SCR/se8/variations-fetch sha=4b3d09fae90270c59d1273cfb7d5fc37e041ed75
+date=2026-09-16T21:23:19Z partition=gpu load=24.05 23.71 24.98
+NVIDIA GeForce RTX 3090, 575.57.08
+==============================================================================
+########## STAGE 1 :: mapping evidence, se-s3b-fetch311 :: 2026-09-16T21:23:19Z
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     $SCR/.cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 13.58 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 16.26 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 9.74 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 14.08 ms  (cached)
+Module render__locals___render_megakernel_f3e0042d 403c7f9 load on device 'cuda:0' took 18.73 ms  (cached)
+Reach {"swm_id": "swm/FetchReach-v3", "our_leaves": ["arm.color", "camera.azimuth_delta", "camera.distance_scale", "camera.elevation_delta", "floor.color", "goal.color", "light.diffuse", "table.color"], "default_through_empty_mapping": {"style_byte_identical": true, "pixels": {"maxdiff": 0, "frac_changed": 0.0, "mean": 0.0}}, "round_trip": {"light_intensity": 0.800000011920929, "style_byte_identical": t
+Push {"swm_id": "swm/FetchPush-v3", "our_leaves": ["arm.color", "camera.azimuth_delta", "camera.distance_scale", "camera.elevation_delta", "floor.color", "goal.color", "light.diffuse", "object.color", "table.color"], "default_through_empty_mapping": {"style_byte_identical": true, "pixels": {"maxdiff": 0, "frac_changed": 0.0, "mean": 0.0}}, "round_trip": {"light_intensity": 0.800000011920929, "style_byt
+Module render__locals___render_megakernel_2ac492fa 6c83bc8 load on device 'cuda:0' took 16.63 ms  (cached)
+Slide {"swm_id": "swm/FetchSlide-v3", "our_leaves": ["arm.color", "camera.azimuth_delta", "camera.distance_scale", "camera.elevation_delta", "floor.color", "goal.color", "light.diffuse", "object.color", "table.color"], "default_through_empty_mapping": {"style_byte_identical": true, "pixels": {"maxdiff": 0, "frac_changed": 0.0, "mean": 0.0}}, "round_trip": {"light_intensity": 0.800000011920929, "style_by
+PickAndPlace {"swm_id": "swm/FetchPickAndPlace-v3", "our_leaves": ["arm.color", "camera.azimuth_delta", "camera.distance_scale", "camera.elevation_delta", "floor.color", "goal.color", "light.diffuse", "object.color", "table.color"], "default_through_empty_mapping": {"style_byte_identical": true, "pixels": {"maxdiff": 0, "frac_changed": 0.0, "mean": 0.0}}, "round_trip": {"light_intensity": 0.800000011920929, "s
+VERDICT PASS
+STAGE1 rc=0
+########## STAGE 2 :: default frames vs the Step-8 baseline tree :: 2026-09-16T21:24:04Z
+{
+ "baseline_tree": "$SCR/se8/baseline",
+ "branch_tree": "$SCR/se8/variations-fetch",
+ "size": 128,
+ "n_states": 8,
+ "node": "gpu2264.oscar.ccv.brown.edu",
+ "slurm_job_id": "6452376",
+ "branch_sha": "4b3d09fae90270c59d1273cfb7d5fc37e041ed75",
+ "per_scene": {
+  "Reach": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  },
+  "Push": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  },
+  "Slide": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  },
+  "PickAndPlace": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  }
+ },
+ "verdict": "IDENTICAL"
+}
+STAGE2 rc=0
+########## STAGE 3 :: unit tests, se6-verify :: 2026-09-16T21:25:30Z
+SKIPPED [24] tests/unit/test_variation_maps_fetch.py:155: could not import 'gymnasium_robotics': No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:202: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:215: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:229: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:240: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:263: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:280: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+8 passed, 48 skipped in 6.49s
+STAGE3 rc=0
+########## DONE :: 2026-09-16T21:25:44Z
+total 139
+drwxr-xr-x 2 sboughan ccv-apma2822_24fall   4096 Sep 16 17:21 .
+drwxr-xr-x 2 sboughan ccv-apma2822_24fall   4096 Sep 16 16:58 ..
+-rw-r--r-- 1 sboughan ccv-apma2822_24fall   9748 Sep 16 17:08 findings.md
+-rw-r--r-- 1 sboughan ccv-apma2822_24fall  11721 Sep 16 17:24 gpu_evidence.json
+-rw-r--r-- 1 sboughan ccv-apma2822_24fall 116823 Sep 16 16:59 leaf_classification.json
+-rw-r--r-- 1 sboughan ccv-apma2822_24fall    767 Sep 16 17:25 pixel_parity.json
+-rw-r--r-- 1 sboughan ccv-apma2822_24fall   1112 Sep 16 17:25 unit_tests.txt
