@@ -463,3 +463,31 @@ PYTHONPATH=swm … final3.py / final4.py / final5.py                 # rigs, str
 se6-venv/python (stub envs) -> check_render_is_pure styleless 0.0 / styled unchanged
 grep -rl 6433493|6443480 examples/results tests scratch            # findings.md / test file comment only
 ```
+
+---
+
+# Final confirmation at tip `179c4b30` (= `9ad60519` + merge of `step7/integration`)
+
+Range `9a8a3bd..179c4b3`: 37 commits, all `sami-bg`, 0 trailers; `examples/results/step4|5|6` untouched.
+`git diff --stat step7/integration..HEAD` lists ONLY W5 files (`ogb_manip.py`, `conformance.py`,
+`test_reproducibility.py`, `test_ogb_manip.py`, W5 artifacts and scratch); the W6 files that the previous
+tip lacked (`rocket_landing.py`, `test_nvdiff_triangles.py`, rocket-landing scratch) no longer differ —
+the merge took integration's side. `stable_envs/render/` and the mjwarp tests: zero delta against
+integration. `conformance.py` against integration: exactly the one `... if k0.size else 0.0` guard and
+its comment, nothing else.
+
+## Verdict: APPROVE
+
+| item | check (CPU, se7-ogb venv + swm source) | result |
+|---|---|---|
+| D1, stability | `_appearance_digest(model, scene_option.sitegroup)` over 10 task-changing resets (tasks 1,2,3,4,5,1,3,5,2,4) | **1 distinct digest** on both cells (was 3-4 on the Scene). |
+| D1, sensitivity | on a deep copy: move a hidden (group-5) site; move a site into a drawn group; nudge `geom_size` | hidden-site move: digest unchanged (correct — never drawn); site placed in a drawn group: digest **changes**; `geom_size`: digest **changes**. Masking is by group via `sitegroup`, not by skipping `site_*` (both cells have 0 drawn / 5 and 11 hidden sites). |
+| D1, the repro | first render at task 1 → reset to task 3 → `_PLATE_CACHE` eviction → `_plate(S)` | **OK** on both cells (raised `AssertionError` at 9a8a3bd). |
+| D2, artifacts | `m6/final8/paste_me.json` + `slurm_6433493.log.gz` (gpu2109, md5 `03398d51…` asserted on the node); `m6/downsample/downsample_bound.json` + `provenance.txt` (alloc 6443480, gpu2264, states sha `055d4057…`, md5 `9175233d…`) | present; the honest note explains why the allocation step has no SLURM log. |
+| declaration == JSON | `_fidelity()` vs `paste_me.json`, both cells | `mean_abs`, `within8_frac`, `ssim`, `interior_exact_frac`, `all_exact_frac`, `interior_frac` and all three `draw_spread` ranges equal to 1e-6; gate draw 3.295483 / 6.602667 recorded. Thresholds: Scene (8.7, 0.80, 0.85) equal; Cube declared (4.3, 0.85, 0.85) vs JSON `mean_abs_max 4.35` — the job-time probe rounded the ceiling UP to the next 0.05 (log line "ceiling 4.35"), the committed probe and `_fidelity` use `round(1.3×worst, 1)` = 4.3. The shipped declaration is the tighter of the two and follows the stated rule; the JSON field is stale by one rounding rule. Non-blocking. |
+| tests | `test_ogb_manip.py` **32 passed**; `tests/unit` with swm **1053 passed / 22 skipped** (the two pre-existing Mac failures deselected) | two new digest tests present. |
+| nits | grep | `RIGDEBUG` now gated by `__debug__`; ogbench comment fixed; two comments still say "WORST of the three" (lines 1000, 1095-1096) — cosmetic. |
+
+Cluster-only remains as before (MJWarp `seg`, per-world colours, graph capture, the gate numbers); the
+author's final gate (OGB rows 56/32/0/0, renderers 149 created / 0 closed, Gate A rc=0) is consistent with
+every model-side fact verified here.
