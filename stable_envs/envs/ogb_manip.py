@@ -649,7 +649,7 @@ class OGBManipBase(StableEnv):
         assert shape == rig.shape, (
             f"{self.CELL}: the env recompiled to a different model shape {shape} than the plate rig "
             f"was built for {rig.shape}; the cached plate would be a picture of the old scene")
-        now = _appearance_digest(live)
+        now = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
         assert now == rig.appearance, (
             f"{self.CELL}: an appearance array changed since the plate rig was built "
             f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
@@ -854,7 +854,7 @@ _APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body
 _APPEARANCE_SKIP = ("geom_rgba", "mat_rgba", "geom_group")
 
 
-def _appearance_digest(m) -> str:
+def _appearance_digest(m, sitegroup=None) -> str:
     """A hash of every static-appearance array in an MjModel, so "the plate is bit-static" is CHECKED.
 
     Phase 0 measured that a dirty reset recompiles this scene to identical appearance arrays and only
@@ -865,6 +865,18 @@ def _appearance_digest(m) -> str:
     import hashlib
     h = hashlib.blake2b(digest_size=16)
     n = 0
+    # SITES THE RENDERER NEVER DRAWS ARE NOT APPEARANCE. `SceneEnv.reset` writes `site_pos` for the
+    # per-task target markers -- measured: rows 7 and 9, both group 5, move as the task changes -- and
+    # `scene_option.sitegroup` is [1,1,1,0,0,0], so groups 4 and 5 reach no pixel. Hashing them made
+    # the digest take four values over eight resets, which would fire `_bake_plate`'s assertion on any
+    # rig reused after a task-changing reset: a correct plate rejected for a marker nobody can see.
+    # Masked BY GROUP rather than skipped wholesale, so a site that IS drawn still moves the digest.
+    nsite = int(getattr(m, "nsite", 0) or 0)
+    drawn = None
+    if nsite and sitegroup is not None:
+        flags = np.asarray(sitegroup).ravel()
+        g = np.clip(np.asarray(m.site_group, int), 0, len(flags) - 1)
+        drawn = flags[g] != 0
     for name in sorted(dir(m)):
         if name.startswith("_") or name in _APPEARANCE_SKIP:
             continue
@@ -876,6 +888,8 @@ def _appearance_digest(m) -> str:
             continue
         if isinstance(v, np.ndarray):
             a = np.ascontiguousarray(v)
+            if drawn is not None and name.startswith("site_") and a.shape[:1] == (nsite,):
+                a = np.ascontiguousarray(a[drawn])
             h.update(name.encode())
             h.update(repr(a.shape).encode())
             h.update(a.tobytes())
@@ -920,7 +934,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     b = _bundle(cell)
     live = b.model
     rig = _PlateRig()
-    rig.appearance = _appearance_digest(live)
+    rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
     rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
     rig.model = copy.deepcopy(live)
     # Movers are hidden for the life of the rig -- this model exists only to draw the static scene.
@@ -958,7 +972,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
     _KEEPALIVE.append(rig.renderer)             # the rule, enforced directly: never released
     _PLATE_RIGS[key] = rig                      # never evicted; the renderer is never closed
-    if _os.environ.get("SE7_OGB_RIGDEBUG") == "1":
+    if __debug__ and _os.environ.get("SE7_OGB_RIGDEBUG") == "1":   # diagnostics, off unless asked
         import sys
         mods = [n for n, m in sys.modules.items()
                 if getattr(m, "__name__", None) == __name__ and m is not None]
@@ -967,9 +981,12 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     return rig
 
 
-#: MEASURED, not chosen. Three independent draws of 64 states each on an RTX 3090 (job recorded in
-#: ``examples/results/step7/ogb-manipulation/m3/fidelity.json``), against swm's own EGL frames at the
-#: registered resolution. The declared value is the WORST of the three draws; the threshold beside it
+#: MEASURED, not chosen. EIGHT independent draws of 64 states each on an RTX 3090 (job 6433493, its
+#: JSON and log committed under ``examples/results/step7/ogb-manipulation/m6/final8/``), taken
+#: THROUGH ``check_visual_fidelity`` -- the function that grades the declaration -- against swm's own
+#: EGL frames at the registered resolution. One of the eight IS the graded draw: the check calls
+#: ``sample_states(n)`` with no rng, which is ``default_rng(0)``, the same fixed draw every run.
+#: The declared value is the WORST of the eight draws; the threshold beside it
 #: is a round number with margin, set by the same discipline ``envs/fetch.py`` states for its
 #: ``parity_interior_min``: a threshold is a contract about what the class guarantees, not a running
 #: best, and a threshold equal to a freshly measured value converts a comfortable margin into a
@@ -1041,8 +1058,11 @@ _MEASURED: dict = {
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
 #: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
-#: certifier must compare. swm and ogbench are deliberately absent -- neither number was measured
-#: against a named version of either, and a version nobody measured under is not provenance.
+#: certifier must compare, and ogbench is named beside it because it is the package that compiles the
+#: scene these frames are of -- `tests/unit/test_declarations.py` requires a version declared here to
+#: be named in `measured_at` too, so the two cannot drift. swm itself stays absent: the numbers were
+#: measured against a source checkout rather than a released version, and a version nobody measured
+#: under is not provenance.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
 
 _MEASURED_WITH = {"mujoco_warp": "3.12.0"}
@@ -1054,7 +1074,7 @@ def _fidelity(cell: str) -> dict:
             raise RuntimeError(
                 f"ogb_manip: {cell} has no MEASURED visual_fidelity. This module refuses to register "
                 f"a visual cell with invented numbers. Run "
-                f"scratch/step7/ogb-manipulation/09_m3_fidelity.sbatch, paste its worst-of-three into "
+                f"scratch/step7/ogb-manipulation/probe_gate_fidelity.py, paste its worst-of-eight into "
                 f"_MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only inside that measuring job.")
         return {"mean_abs": -1.0, "within8_frac": -1.0, "ssim": -1.0,
                 "mean_abs_max": -1.0, "within8_min": -1.0, "ssim_min": -1.0,

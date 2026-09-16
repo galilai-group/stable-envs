@@ -55,7 +55,7 @@ echo \"[provenance] ogb_manip.py md5 want=$WANT got=\$GOT\"
 [ '$WANT' = \"\$GOT\" ] || { echo 'MD5 MISMATCH -- the node is not running HEAD; refusing'; exit 3; }
 export SE7_STEP_TAG='$TAG' SE7_ALLOC_JOB='$ALLOC' SE7_OUT='$OUT'
 bash '$BODY'
-" 2>&1
+" 2>&1 | tee -a "$OUT/step.log"
 rc=$?
 echo "[run_in_alloc] step=$TAG rc=$rc out=$OUT"
 exit $rc
