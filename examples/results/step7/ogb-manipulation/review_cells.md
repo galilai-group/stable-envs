@@ -382,3 +382,84 @@ frames, corpus, pool, tier or fidelity JSON changed. `examples/results/step4|5|6
 Nit, non-blocking: the comment above `_REFERENCE_VERSIONS` (lines 910-912) still says "swm and ogbench
 are deliberately absent" while the dict now includes ogbench — update the sentence when the file is next
 touched. Nothing else outstanding; the cluster-only list from the re-review is unchanged.
+
+---
+
+# Final re-check at tip `9a8a3bd` (coordinator request, before the closure merge)
+
+Range `f62625e9..9a8a3bd`: 207 commits (136 first-parent), all `sami-bg`, 0 AI trailers (the one grep hit
+is body text "regenerated with the new --phase rejudge"); `examples/results/step4|5|6` untouched;
+`stable_envs/render/` and the mjwarp tests still byte-identical to `9923594`. The branch now carries the
+integration merges (W1-W4, W6); W5's own delta against `step7/integration` is `ogb_manip.py`,
+`conformance.py` (the one guard), `tests/gpu/test_reproducibility.py` (+8), `test_ogb_manip.py` (+14), and
+scratch. Artifact changes since f62625e9 under `examples/results/step7/ogb-manipulation`: `findings.md`,
+`remeasure.json` (path scrub only: `/oscar/scratch/sboughan` → `$SCR`, + `path_note`), `m6/buttons/
+button_geoms.json` (new), `oscar/provenance_6395175_readback.txt`, and the two review reports copied in. No
+frame, corpus, pool, tier or fidelity JSON moved (the branch's `states/*.npz` are the 6407605 files).
+
+## Verdict: APPROVE-WITH-CHANGES — two defects, neither a pixel defect; the running gate is not invalidated
+
+### (a)-(i) verified
+
+| item | check (CPU, se7-ogb venv + swm source, glfw) | result |
+|---|---|---|
+| (a) dtype | `sample_states` return; cell test | `float32` on both cells; `test_sample_states_returns_the_dtype_the_state_round_trips_in` passes. |
+| (b) scrub | `git diff` of `remeasure.json` | only `stable_worldmodel_path` rewritten to `$SCR/...` plus a `path_note`; no measured value touched. |
+| (c) `_PlateRig` | rigs at S and 2S; sha256 over every MjModel array of the reference before/after; `_bake_plate` twice | rig model `is not` the reference; reference digest unchanged by rig builds and by bakes; plate bit-constant over two sampled states at S on both cells; rigs held in `_PLATE_RIGS` and `_KEEPALIVE`, never popped. Plate pinned at the (0,0) table. |
+| (c) STRANDED | every geom whose `geom_rgba` or material `mat_rgba` differs between bits (0,0) and (1,1) vs `_movers` | button-coloured geoms {71, 83, 95, 111-115}, all movers, `STRANDED_IN_PLATE = []` — matches `m6/buttons/button_geoms.json` field for field. |
+| (d) shared guard | `git diff step7/integration..HEAD -- conformance.py`; stub envs | the only W5 change is `... if k0.size else 0.0` on `style_changed_by_render`; a styleless stub now returns 0.0 instead of raising; a styled stub returns the same dict as before (expression unchanged when `k0.size > 0`). Minimal; no other env's output can change. |
+| (e) roles | `_REF_CACHE` keys | `(cell, None, 'sample')` for `_bundle`/`sample_states`, `(cell, None, 'render')` for `reference_env()`; distinct objects. |
+| (f) declaration | `_fidelity()` vs findings §26.1 | Cube 3.309378 / 0.91581 / 0.919219, ceiling 4.3 = round(1.3×3.309378, 1); Scene 6.691589 / 0.855483 / 0.892792, ceiling 8.7. Floors by `floor(20·(worst − 0.04))/20`: within8 0.85 / **0.80**, ssim 0.85 / 0.85 — rule reproduces every value. `measured_at` names 8 draws, `check_visual_fidelity`, the channel-max instrument, mujoco 3.12.0 and ogbench 1.2.1. **But see D2: no JSON for job 6433493 is committed, so "declaration == JSON" is only "declaration == findings table".** |
+| (g) offscreen buffer | `_plate_rig(cell, 2S)` | rig model `offwidth/offheight` 448/448 (Cube), 400/400 (Scene); reference model stays 224/200 and `u._render_width/height` unchanged; `mujoco.Renderer(reference_model, 2S)` raises `Image width 448 > framebuffer width 224` — the mechanism as stated; the raise is confined to the private copy. |
+| (h) table | `git diff` of `test_reproducibility.py` | exactly two entries added (`OGBCube 0.885782`, `OGBScene 0.805306`) with a provenance comment (alloc 6443480, gpu2264, states sha 055d4057); no existing entry changed. **No JSON artifact for that measurement is committed (D2).** |
+| (i) instruments | `probe_gate_a.py`, `probe_gate_fidelity.py` | Gate A driver now calls the repo checks incl. `check_state_roundtrip`; fidelity probe uses `check_visual_fidelity`. |
+| tests | `tests/unit` | baseline 76dc5116 **823 / 2 / 6**; branch without swm **1035 / 2 / 9**, with swm **1051 / 2 / 22**; cell tests **30 passed**; the two failures are the pre-existing ones on this Mac. |
+
+### D1 (code, pixel-inert, CPU-reproducible): `_bake_plate`'s appearance-digest assertion fires spuriously on OGBScene after a task-changing reset
+
+`_appearance_digest` hashes every `site_*` array, and swm's `SceneEnv.reset` writes `site_pos` of the
+two TARGET sites per task (`drawer_handle_center_target`, `window_handle_center_target`: window y = 0.2 on
+tasks 1 and 5, 0.0 on 2-4; drawer y = −0.16 on 1 and 3). Both sites are group 5 — `scene_option.sitegroup`
+draws 0-2 only — so they reach no pixel: at a fixed state the reference frame is identical across tasks
+(0 px) and a freshly baked plate is identical across tasks (0 px). The digest, however, takes three
+distinct values over the five tasks (`cd90955b`, `ca798769`, `54aae166`, `8d55c8b4`), so any plate rig
+reused after a reset that changed the task trips the assertion. Reproduced through the public path:
+first render at task 1 builds rig(200) → a later reset (what every `sample_states` call does) lands on
+task 3 → the cached plate still serves → after a `_PLATE_CACHE` eviction (`_PLATE_CACHE_MAX = 8`; the 9th
+distinct `(cell, res, device)` clears the whole cache) `_plate(200)` raises
+`AssertionError: Scene: an appearance array changed since the plate rig was built (cd90955b… → ca798769…)`.
+Cube is unaffected (one digest across all five tasks). The 54 passing OGB rows did not reach the eviction,
+which is why the gate did not see it. Fix: exclude site arrays for sites outside `VISIBLE_GROUPS` (or all
+`site_*` arrays, asserting separately that no visible site exists) from `_appearance_digest`, and add the
+task-1 → task-3 bake to `test_ogb_manip.py`. No measured number changes; the rig, the plate and the
+pinning remain correct.
+
+### D2 (artifacts): the declared numbers' source artifacts are not committed
+
+`grep -rl` over the tree: job **6433493** (the eight-draw `check_visual_fidelity` measurement that the
+declaration is filled from; `19_final_measure.sbatch` writes `m6/final8/`) appears only in `findings.md` —
+no JSON, no slurm log; the downsample-bound measurement (alloc **6443480**, `probe_downsample_bound.py
+--out`, states sha 055d4057) has no committed JSON or log; the ownership diagnostics (6437003/6437813)
+likewise. `m6/` holds only `buttons/button_geoms.json` (job 6433228, which is committed and reproduced).
+Every earlier job on this branch committed its JSON and `.log.gz`; the two measurements that now define
+`visual_fidelity` and the reproducibility table are the exception. Required: commit `m6/final8/*.json`
+(per-draw rows, provenance, md5), the downsample JSON with the states sha, and the gzipped logs.
+
+### Nits (non-blocking)
+- Stale comments: `_MEASURED` header and `_fidelity` still say "worst of the three" (lines 972, 983, 1075);
+  the `_REFERENCE_VERSIONS` comment still says ogbench is "deliberately absent" (1044); the
+  `RuntimeError` text cites `09_m3_fidelity.sbatch`/"worst-of-three".
+- `SE7_OGB_RIGDEBUG` diagnostic print (line 961) shipped in production code.
+- The branch is behind `step7/integration` on W6 files (`rocket_landing.py`, `test_nvdiff_triangles.py`,
+  rocket-landing scratch): a merge into closure must take integration's side there, which a normal merge
+  does; noted so the diff is not misread as W5 deleting them.
+
+### Commands
+```
+git log f62625e9..HEAD --format='%an' | sort | uniq -c ; ... --format='%B' | grep -ciE 'co-authored-by|generated with'
+git diff --stat f62625e9..HEAD -- examples/results ; git diff step7/integration..HEAD -- stable_envs/testing/conformance.py
+MUJOCO_GL=glfw se6-venv/python -m pytest tests/unit -q          # base76 823/2/6 ; branch 1035/2/9 ; +swm 1051/2/22 ; cell 30
+PYTHONPATH=swm … final3.py / final4.py / final5.py                 # rigs, stranded geoms, digest per task, eviction repro, thresholds
+se6-venv/python (stub envs) -> check_render_is_pure styleless 0.0 / styled unchanged
+grep -rl 6433493|6443480 examples/results tests scratch            # findings.md / test file comment only
+```

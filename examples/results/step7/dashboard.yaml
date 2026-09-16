@@ -980,6 +980,18 @@ workstreams:
       - m3_fidelity.json superseded
       - check_order_invariance absent in this build
       - floors 0.007-0.016 below worst vs DMC 0.04-0.06
+    closure_recheck_9a8a3bd:
+      verdict: APPROVE-WITH-CHANGES
+      verified: '(a)-(i) on CPU with the real swm models: float32 round-trip; PlateRig private copy (reference sha unchanged); STRANDED_IN_PLATE []; conformance guard minimal (styled stub identical); roles
+        distinct; declaration == findings table by the stated rules; offscreen-buffer mechanism reproduced (reference raises at 2S, private copy renders); two table entries with provenance; hygiene clean;
+        unit suites same pre-existing failures'
+      required:
+      - D1 _appearance_digest hashes hidden group-5 site arrays that swm's reset moves per task -> plate rig reused after a task-changing reset trips the assertion (pixel-inert; Cube unaffected); exclude
+        hidden-group sites; add task 1->3 bake test
+      - D2 commit the eight-draw JSON+log (job 6433493) and the downsample-bound measurement artifacts
+      nits:
+      - stale comments
+      - SE7_OGB_RIGDEBUG print in production path
   merge:
     integration_sha: 24d1054
     date: '2026-09-15'
@@ -1557,6 +1569,8 @@ incident_log:
     withdrawn'
 - date: '2026-09-16'
   item: 'W5: fix verified (0 renderers closed across the registry; Gate A rc=0); downsample bounds for OGBCube/OGBScene added under the table''s protocol; final gate running'
+- date: '2026-09-16'
+  item: W5 closure follow-on re-check APPROVE-WITH-CHANGES (digest over hidden sites; missing declaration artifacts); fix after the gate lands
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
