@@ -621,13 +621,19 @@ workstreams:
   branch: step8/variations-fetch
   worktree: /Users/samib/stable-envs-step8-variations-fetch
   model: opus
-  status: delivered-unreported (7 commits, clean; GPU evidence PASS jobs 6451948/6452376); read findings.md; unreviewed
+  status: MERGED into step8/integration (reviewed APPROVE on resubmission)
   authorization: plan §10
   affected_ids: 12 Fetch ids
   affected_files: stable_envs/compat/variation_maps/fetch.py (new), fetch.py, tests
   baseline_sha: 43ac952
-  head_sha: ce1fcb3
+  head_sha: 84c40e1
   slurm_jobs: 6451876 cancelled, 6451948 gpu2105, 6452376 gpu2264
+  review: review_b.md BLOCK (Codex reviewer) -> corrections -> review_b_resubmission.md APPROVE (sonnet, fresh)
+  finding: '123 leaves: 33 mapped / 12 partial (background.color floor half; skybox residual 61.7-73.0 % pending the shared capability) / 12 unsupported (transparent_arm, no alpha path) / 15 dead upstream
+    / 51 n/a; SWM reset appearance MISMATCH (upstream material unbind) recorded as Gate-F status; light 1.25 factor exact'
+  evidence: 'job 6452376 (SHA 4b3d09f) and re-measure on 5940eb6 in alloc 6443480 gpu2264: gpu_evidence PASS x4, pixel_parity IDENTICAL, frozen Step-4 corpora replay IDENTICAL_AND_ORACLE_REPLAYS (branch
+    = baseline = digest_ours, 4 scenes)'
+  merge_gate: 1-7 PASS/carry-forward per review_b_resubmission.md; 8 APPROVE; 9 none; 10 this row
 - workstream: C_variations_newcells
   branch: step8/variations-newcells
   worktree: /Users/samib/stable-envs-step8-variations-newcells
@@ -723,6 +729,18 @@ escalations:
   coordinator_recommendation: keep both; the Step-4 corpus stays the oracle for the world rows (replayed exactly via zero-extension, as Step 7 proved); the Step-7 corpus certifies the full observation;
     record as DOCUMENTED provenance, no retirement
   status: 'ruled 2026-09-16: keep both'
+- date: '2026-09-16'
+  from: coordinator (aggregation of A/B/C per Sami ruling)
+  topic: shared capability for capability-gated SWM leaves
+  packet: examples/results/step8/capability/per_world_model_arrays.md
+  summary: '(i) per-world MODEL arrays already exist in the mjwarp path (mjw.put_model batch_sizes, used by 5 families): OGB light.intensity/camera.angle_delta/cube.size (6 leaves, 2 ids) are wiring in
+    ogb_manip.py, cost S-M; (ii) per-value texel substitution on the plate bake (retexture + quantise + mjr_uploadTexture, plate cache key extended) unlocks 21 semantically required leaves in 3 families:
+    OGB floor.color (2 ids, proven byte-exact by the C follow-up), DMC parity-tier floor.color (7 ids), Fetch background.color skybox residual (12 ids; INFERRED, needs one bake-vs-recompile diff first);
+    cube.color x2 + Scene lock_color need no capability (geom/mat rgba already per-world); genuinely unsupported: Fetch transparent_arm (no alpha path), DMC floor.color on the 5 trackcom cells, OGBMaze
+    light.intensity (fitted law, one-off)'
+  coordinator_recommendation: confirm requirement after B and C merge; then ONE shared implementation of (ii) reused by OGB/DMC/Fetch plus the OGB (i) wiring; no one-off hacks; each needs default digest
+    identity, isolation, Gate A with new style dims and a paired throughput check
+  status: analysis complete; implementation held until B/C are merged and Sami confirms the requirement (renderer semantics change)
 refreezes: []
 upstream_findings:
 - source: C
@@ -737,7 +755,12 @@ buckets:
   RELEASE_BLOCKING: []
   DOCUMENTED_LIMITATION:
   - 'nvdiff x86 CPU sparse-stage one-ulp batch dependence: host-dependent (gpu2264 0/19 widths; login010/node1939 differ); no shipped CPU renderer; Step-7 re-freeze authoritative (E task 7)'
-  UPSTREAM_FINDING: []
+  - 'Fetch rendering.transparent_arm: mujoco_warp kernel packs a constant alpha; no translucency path (B)'
+  UPSTREAM_FINDING:
+  - swm Fetch _apply_visual_variations unbinds three materials for the env lifetime (19-32 % of frame) so a wrapper parity number measures the wrapper (B)
+  - swm Fetch declared leaf defaults are not the official appearance (B)
+  - swm variation_values list entries used unconverted -> AttributeError (B)
+  - gymnasium-robotics + numpy 2.5.3 + mujoco 3.12 cannot construct Fetch (pybind enum vs np.int32 in) (B)
   STEP9_CLEANUP: []
   DEFERRED_OPTIMIZATION: []
 incident_log:
@@ -753,6 +776,8 @@ incident_log:
   item: Fable coordinator resumed after Codex takeover; fleet reconciled; Codex WIP branches classified (see takeover.codex_dispositions); A re-review and B/C/E finishers launched
 - date: '2026-09-16'
   item: A merged (3abab32) after fresh APPROVE; review files renamed review_*.md for the citation-scanner exemption; handoff/takeover pages added to the nav
+- date: '2026-09-16'
+  item: B merged after fresh APPROVE; strictness switch STABLE_ENVS_REQUIRE_LIVE_SWM added; tier-2 live Fetch construction blocked locally by the numpy 2.5.3 + mujoco 3.12 upstream defect (DOCUMENTED_LIMITATION)
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md

@@ -1,0 +1,350 @@
+{
+ "what_this_is": "merge-gate item 5 for Workstream B: the Step-4 frozen Fetch corpora replayed through this branch and through the Step-8 baseline tree in one job on one card, compared byte for byte and against the frozen Step-4 frame digests",
+ "provenance": {
+  "slurm_job_id": "6443480",
+  "host": "gpu2264.oscar.ccv.brown.edu",
+  "branch_sha": "13ef3789a77fa0d73930f17c189a95fccfb4c7ce",
+  "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
+  "branch_tree": "$SCR/se8/variations-fetch",
+  "baseline_tree": "$SCR/se8/baseline",
+  "venv": "$SCR/venvs/se-s3b-fetch311",
+  "size": 480,
+  "mujoco": "3.11.0",
+  "mujoco_warp": "3.11.0",
+  "torch": "2.14.0+cu126",
+  "numpy": "2.5.3",
+  "python": "3.12.9",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "baseline_versions": {
+   "mujoco": "3.11.0",
+   "mujoco_warp": "3.11.0",
+   "torch": "2.14.0+cu126",
+   "numpy": "2.5.3",
+   "python": "3.12.9",
+   "gpu": "NVIDIA GeForce RTX 3090"
+  }
+ },
+ "corpora": {
+  "FetchReach": {
+   "n_states": 64,
+   "state_dim": 18,
+   "states_sha256": "f5a519689d336623954ad03d9d124dc40aad362282a281ed492c8265acac66b9",
+   "step4_recorded_sha256": "f5a519689d336623954ad03d9d124dc40aad362282a281ed492c8265acac66b9",
+   "npz_file_sha256": {
+    "branch": "c01c606122eb831e85934a68e0ce6406fa4830547e7bc876abb045600af0c0b7",
+    "baseline": "c01c606122eb831e85934a68e0ce6406fa4830547e7bc876abb045600af0c0b7"
+   },
+   "selection": "typical + per-dim extremes + farthest-point spread",
+   "pool": 256,
+   "seed": 20260909,
+   "loaded_from": "examples/results/step4/states/FetchReach.npz",
+   "matches_step4_record": true,
+   "identical_file_in_both_trees": true,
+   "siblings": {
+    "FetchReachDense": {
+     "states_sha256": "f5a519689d336623954ad03d9d124dc40aad362282a281ed492c8265acac66b9",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+     "step4_digest_matches_scene": true
+    },
+    "FetchReachDict": {
+     "states_sha256": "f5a519689d336623954ad03d9d124dc40aad362282a281ed492c8265acac66b9",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+     "step4_digest_matches_scene": true
+    }
+   }
+  },
+  "FetchPush": {
+   "n_states": 64,
+   "state_dim": 25,
+   "states_sha256": "93d8ca8025baf4791ea6a199860be469a0a72fb74062f90134e2c42d09678923",
+   "step4_recorded_sha256": "93d8ca8025baf4791ea6a199860be469a0a72fb74062f90134e2c42d09678923",
+   "npz_file_sha256": {
+    "branch": "ad5f56b0b622e8c1c7ebabcc11585d0473b9b522d4eb24c48cae05f2875249ea",
+    "baseline": "ad5f56b0b622e8c1c7ebabcc11585d0473b9b522d4eb24c48cae05f2875249ea"
+   },
+   "selection": "typical + per-dim extremes + farthest-point spread",
+   "pool": 256,
+   "seed": 20260909,
+   "loaded_from": "examples/results/step4/states/FetchPush.npz",
+   "matches_step4_record": true,
+   "identical_file_in_both_trees": true,
+   "siblings": {
+    "FetchPushDense": {
+     "states_sha256": "93d8ca8025baf4791ea6a199860be469a0a72fb74062f90134e2c42d09678923",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+     "step4_digest_matches_scene": true
+    },
+    "FetchPushDict": {
+     "states_sha256": "93d8ca8025baf4791ea6a199860be469a0a72fb74062f90134e2c42d09678923",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+     "step4_digest_matches_scene": true
+    }
+   }
+  },
+  "FetchSlide": {
+   "n_states": 64,
+   "state_dim": 25,
+   "states_sha256": "17375ce1403e45485aba9f0ddd97e00786978b11e45aafa54fefc05f9ab49a83",
+   "step4_recorded_sha256": "17375ce1403e45485aba9f0ddd97e00786978b11e45aafa54fefc05f9ab49a83",
+   "npz_file_sha256": {
+    "branch": "02ca9e9c81b54b147c49aaeed51633e0d74ef088abb5a6ec3a33c21057d274e9",
+    "baseline": "02ca9e9c81b54b147c49aaeed51633e0d74ef088abb5a6ec3a33c21057d274e9"
+   },
+   "selection": "typical + per-dim extremes + farthest-point spread",
+   "pool": 256,
+   "seed": 20260909,
+   "loaded_from": "examples/results/step4/states/FetchSlide.npz",
+   "matches_step4_record": true,
+   "identical_file_in_both_trees": true,
+   "siblings": {
+    "FetchSlideDense": {
+     "states_sha256": "17375ce1403e45485aba9f0ddd97e00786978b11e45aafa54fefc05f9ab49a83",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+     "step4_digest_matches_scene": true
+    },
+    "FetchSlideDict": {
+     "states_sha256": "17375ce1403e45485aba9f0ddd97e00786978b11e45aafa54fefc05f9ab49a83",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+     "step4_digest_matches_scene": true
+    }
+   }
+  },
+  "FetchPickAndPlace": {
+   "n_states": 64,
+   "state_dim": 25,
+   "states_sha256": "ec78e35a4db90ab5c55e2dac5c607f8ee2b05cdc2a6e63aaad3a4a941da0be44",
+   "step4_recorded_sha256": "ec78e35a4db90ab5c55e2dac5c607f8ee2b05cdc2a6e63aaad3a4a941da0be44",
+   "npz_file_sha256": {
+    "branch": "4d52f1d7408586aa631d66ead7378973014df95c3d312d5ecfb32d313568a219",
+    "baseline": "4d52f1d7408586aa631d66ead7378973014df95c3d312d5ecfb32d313568a219"
+   },
+   "selection": "typical + per-dim extremes + farthest-point spread",
+   "pool": 256,
+   "seed": 20260909,
+   "loaded_from": "examples/results/step4/states/FetchPickAndPlace.npz",
+   "matches_step4_record": true,
+   "identical_file_in_both_trees": true,
+   "siblings": {
+    "FetchPickAndPlaceDense": {
+     "states_sha256": "ec78e35a4db90ab5c55e2dac5c607f8ee2b05cdc2a6e63aaad3a4a941da0be44",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+     "step4_digest_matches_scene": true
+    },
+    "FetchPickAndPlaceDict": {
+     "states_sha256": "ec78e35a4db90ab5c55e2dac5c607f8ee2b05cdc2a6e63aaad3a4a941da0be44",
+     "identical_to_scene_corpus": true,
+     "step4_digest_ours": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+     "step4_digest_matches_scene": true
+    }
+   }
+  }
+ },
+ "per_scene": {
+  "FetchReach": {
+   "frames_shape": [
+    64,
+    480,
+    480,
+    3
+   ],
+   "branch_vs_baseline": {
+    "maxdiff": 0,
+    "frac_changed": 0.0,
+    "bytes_identical": true
+   },
+   "digest_ours": {
+    "branch": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+    "baseline": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+    "step4_frozen": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071"
+   },
+   "digest_ours_default_style": {
+    "branch": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+    "baseline": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071",
+    "step4_frozen": "c8855f3a7bb213baf76420402c869b517800a5b0a3c007bf398e7ea0c363f071"
+   },
+   "mean_pixel": {
+    "branch": 149.7955628571687,
+    "baseline": 149.7955628571687
+   },
+   "states_sha256_seen_by_renderer": {
+    "branch": "f5a519689d336623954ad03d9d124dc40aad362282a281ed492c8265acac66b9",
+    "baseline": "f5a519689d336623954ad03d9d124dc40aad362282a281ed492c8265acac66b9"
+   },
+   "step4_render_config": {
+    "size": 480,
+    "supersample": 1,
+    "batch": 64,
+    "n_states": 64,
+    "device": "cuda"
+   },
+   "branch_matches_baseline": true,
+   "branch_matches_step4_frozen_digest": true,
+   "baseline_matches_step4_frozen_digest": true
+  },
+  "FetchPush": {
+   "frames_shape": [
+    64,
+    480,
+    480,
+    3
+   ],
+   "branch_vs_baseline": {
+    "maxdiff": 0,
+    "frac_changed": 0.0,
+    "bytes_identical": true
+   },
+   "digest_ours": {
+    "branch": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+    "baseline": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+    "step4_frozen": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89"
+   },
+   "digest_ours_default_style": {
+    "branch": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+    "baseline": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89",
+    "step4_frozen": "f729d776c31079975b566c61bf78e4be775d9e94083b238ab8eae5435653ee89"
+   },
+   "mean_pixel": {
+    "branch": 149.57776048448352,
+    "baseline": 149.57776048448352
+   },
+   "states_sha256_seen_by_renderer": {
+    "branch": "93d8ca8025baf4791ea6a199860be469a0a72fb74062f90134e2c42d09678923",
+    "baseline": "93d8ca8025baf4791ea6a199860be469a0a72fb74062f90134e2c42d09678923"
+   },
+   "step4_render_config": {
+    "size": 480,
+    "supersample": 1,
+    "batch": 64,
+    "n_states": 64,
+    "device": "cuda"
+   },
+   "branch_matches_baseline": true,
+   "branch_matches_step4_frozen_digest": true,
+   "baseline_matches_step4_frozen_digest": true
+  },
+  "FetchSlide": {
+   "frames_shape": [
+    64,
+    480,
+    480,
+    3
+   ],
+   "branch_vs_baseline": {
+    "maxdiff": 0,
+    "frac_changed": 0.0,
+    "bytes_identical": true
+   },
+   "digest_ours": {
+    "branch": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+    "baseline": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+    "step4_frozen": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a"
+   },
+   "digest_ours_default_style": {
+    "branch": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+    "baseline": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a",
+    "step4_frozen": "e4aa8398b069587bfe900dae63a32a202cffaf85786e1093b476abca6e49539a"
+   },
+   "mean_pixel": {
+    "branch": 154.28410233109085,
+    "baseline": 154.28410233109085
+   },
+   "states_sha256_seen_by_renderer": {
+    "branch": "17375ce1403e45485aba9f0ddd97e00786978b11e45aafa54fefc05f9ab49a83",
+    "baseline": "17375ce1403e45485aba9f0ddd97e00786978b11e45aafa54fefc05f9ab49a83"
+   },
+   "step4_render_config": {
+    "size": 480,
+    "supersample": 1,
+    "batch": 64,
+    "n_states": 64,
+    "device": "cuda"
+   },
+   "branch_matches_baseline": true,
+   "branch_matches_step4_frozen_digest": true,
+   "baseline_matches_step4_frozen_digest": true
+  },
+  "FetchPickAndPlace": {
+   "frames_shape": [
+    64,
+    480,
+    480,
+    3
+   ],
+   "branch_vs_baseline": {
+    "maxdiff": 0,
+    "frac_changed": 0.0,
+    "bytes_identical": true
+   },
+   "digest_ours": {
+    "branch": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+    "baseline": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+    "step4_frozen": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954"
+   },
+   "digest_ours_default_style": {
+    "branch": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+    "baseline": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954",
+    "step4_frozen": "ad2507dc907dca204385ff206dbe75a3941e01f188ca47f3d4952c4a8338f954"
+   },
+   "mean_pixel": {
+    "branch": 149.58997226291234,
+    "baseline": 149.58997226291234
+   },
+   "states_sha256_seen_by_renderer": {
+    "branch": "ec78e35a4db90ab5c55e2dac5c607f8ee2b05cdc2a6e63aaad3a4a941da0be44",
+    "baseline": "ec78e35a4db90ab5c55e2dac5c607f8ee2b05cdc2a6e63aaad3a4a941da0be44"
+   },
+   "step4_render_config": {
+    "size": 480,
+    "supersample": 1,
+    "batch": 64,
+    "n_states": 64,
+    "device": "cuda"
+   },
+   "branch_matches_baseline": true,
+   "branch_matches_step4_frozen_digest": true,
+   "baseline_matches_step4_frozen_digest": true
+  }
+ },
+ "verdict": "IDENTICAL_AND_ORACLE_REPLAYS",
+ "source_identity": {
+  "why": "The .git directory is not synced to the cluster, so the replay could not derive a SHA on the node; the tree SHAs above are stamped into each tree's .git_sha by the sync. This block is the independent argument that the two trees differ in nothing that can reach a Fetch frame: git ls-tree object ids for the renderer, env and testing packages and for the frozen Step-4 and Step-7 result trees, at the baseline and at this branch tip.",
+  "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
+  "branch_tip_sha": "13ef3789a77fa0d73930f17c189a95fccfb4c7ce",
+  "tree_object_ids": {
+   "stable_envs/envs": {
+    "baseline_43ac952": "b6ba355d0d997ed437db53cc7fcf8fd33993d949",
+    "branch_tip": "b6ba355d0d997ed437db53cc7fcf8fd33993d949",
+    "identical": true
+   },
+   "stable_envs/render": {
+    "baseline_43ac952": "6abd350f218d5f41f7ed9c4158c4b9fe43fa6055",
+    "branch_tip": "6abd350f218d5f41f7ed9c4158c4b9fe43fa6055",
+    "identical": true
+   },
+   "stable_envs/testing": {
+    "baseline_43ac952": "0a6299acdbd0124fb2426993c14b9049be20e5d3",
+    "branch_tip": "0a6299acdbd0124fb2426993c14b9049be20e5d3",
+    "identical": true
+   },
+   "examples/results/step4": {
+    "baseline_43ac952": "15a0fc2f71259a70eab41d67158e913a67b55628",
+    "branch_tip": "15a0fc2f71259a70eab41d67158e913a67b55628",
+    "identical": true
+   },
+   "examples/results/step7": {
+    "baseline_43ac952": "93858185db77b45907c3560b7c44ca5480bf4558",
+    "branch_tip": "93858185db77b45907c3560b7c44ca5480bf4558",
+    "identical": true
+   }
+  },
+  "all_identical": true,
+  "branch_diff_vs_baseline": " 15 files changed, 6143 insertions(+)"
+ }
+}

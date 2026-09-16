@@ -178,6 +178,10 @@ nav:
       # Step-8 coordinator checkpoints: the weekly-limit handoff and the Codex takeover stop note.
       - 'Step 8: handoff checkpoint': research/step8_handoff.md
       - 'Step 8: takeover stop note': research/step8_takeover_stop_handoff.md
+      # Step 8, Workstream B. The leaf-by-leaf account of how the twelve swm/Fetch*-v3 variation
+      # spaces relate to ours: mapped, unsupported, dead upstream or state. Its numbers live in
+      # examples/results/step8/variations-fetch/.
+      - 'Step 8: Fetch variation maps': research/step8_variations_fetch.md
       - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
       # readers ask far more often than "why is this one here" -- and until now all three of them were
