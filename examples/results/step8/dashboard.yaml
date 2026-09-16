@@ -1,0 +1,670 @@
+# Step 8 coordinator dashboard (machine-readable); edit only via yaml load/dump
+step: 8
+baseline_sha: 43ac95238f7472137619f3e69e7636e11dd088b1
+baseline_resolution:
+  milestone_branch: milestone/step7-full-renderer-coverage @43ac952 (origin identical)
+  tag: step7-closure -> 43ac952 (origin identical)
+  sami_pre_step8_baseline: 43ac952
+  step8_integration: 43ac952 (worktree /Users/samib/stable-envs-step8-integration)
+  report_sha_discrepancy: "Step-7 closure artifacts cite earlier integration SHAs (closure/coverage_matrix.json: 275970c; closure2/coverage_matrix.json + docs/research/step7_coverage.md: fec4f6e) because\
+    \ they were generated before the final merge/dashboard commits; per plan \xA71.2 the milestone branch/tag/history (43ac952) are authoritative; the verified tree content is contained in 43ac952 (only\
+    \ the closure2 merge and dashboard commits follow fec4f6e)"
+snapshot:
+  swm_ids: 42
+  pixel_producing: 40
+  symbolic: 2
+  gate_a_pixel_rows:
+    PASS: 36
+    FAIL: 3
+    BLOCKED: 1
+    note: 3 FAIL + 1 BLOCKED = pre-existing DMC trackcom cells (Cheetah/Hopper/Walker visual vs the 3.12 arm; Humanoid provenance); Workstream F resolves the authoritative interpretation
+  variation_maps:
+    complete: 4
+    missing: 34
+    not_applicable: 2
+    complete_ids:
+    - swm/PushT-v1
+    - swm/PushT-Discrete-v1
+    - swm/Piecewise-v0
+    - swm/TwoRoom-v1
+  per_id:
+    swm/AcrobotControl-v1:
+      pixel: true
+      cpu: CPU_REGRESSION
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.classic_control
+      cells:
+      - Acrobot
+    swm/AcrobotDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCAcrobotSwingup
+    swm/BallInCupDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 13
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCBallInCupCatch
+    swm/CartPoleControl-v1:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.classic_control
+      cells:
+      - CartPole
+    swm/CartpoleDMControl-v0:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCCartpoleBalance
+      - DMCCartpoleSwingup
+    swm/CheetahDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: FAIL
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCCheetahRun
+    swm/CraftaxClassicPixels-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q:
+      - BELOW_G4
+      gpu: GPU_FASTER
+      gpu_q:
+      - BATCH_SCALES
+      gate_a: PASS
+      fidelity: parity
+      variation_map: n/a
+      n_swm_leaves: 0
+      module: stable_envs.envs.craftax
+      cells:
+      - CraftaxClassic
+    swm/CraftaxClassicSymbolic-v1:
+      pixel: false
+      cpu: null
+      cpu_q: []
+      gpu: null
+      gpu_q: []
+      gate_a: null
+      fidelity: null
+      variation_map: null
+      n_swm_leaves: null
+      module: null
+      cells: []
+    swm/CraftaxPixels-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: n/a
+      n_swm_leaves: 0
+      module: stable_envs.envs.craftax_full
+      cells:
+      - CraftaxFull
+    swm/CraftaxSymbolic-v1:
+      pixel: false
+      cpu: null
+      cpu_q: []
+      gpu: null
+      gpu_q: []
+      gate_a: null
+      fidelity: null
+      variation_map: null
+      n_swm_leaves: null
+      module: null
+      cells: []
+    swm/FetchPickAndPlace-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPickAndPlace
+    swm/FetchPickAndPlaceDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPickAndPlaceDense
+    swm/FetchPickAndPlaceDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPickAndPlaceDict
+    swm/FetchPush-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPush
+    swm/FetchPushDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPushDense
+    swm/FetchPushDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPushDict
+    swm/FetchReach-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 8
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchReach
+    swm/FetchReachDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 8
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchReachDense
+    swm/FetchReachDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 8
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchReachDict
+    swm/FetchSlide-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchSlide
+    swm/FetchSlideDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchSlideDense
+    swm/FetchSlideDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchSlideDict
+    swm/FingerDMControl-v0:
+      pixel: true
+      cpu: CPU_REGRESSION
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCFingerTurnHard
+    swm/HopperDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: FAIL
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCHopperHop
+    swm/HumanoidDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: BLOCKED
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCHumanoidStand
+    swm/ManipulatorDMControl-v0:
+      pixel: true
+      cpu: CPU_REGRESSION
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q:
+      - HOST_BOUND
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCManipulatorBringBall
+    swm/MountainCarContinuousControl-v0:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 4
+      module: stable_envs.envs.classic_control
+      cells:
+      - MountainCarContinuous
+    swm/MountainCarControl-v0:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 5
+      module: stable_envs.envs.classic_control
+      cells:
+      - MountainCar
+    swm/OGBCube-v0:
+      pixel: true
+      cpu: CPU_MISSING
+      cpu_q:
+      - RAISES_BY_DESIGN
+      gpu: GPU_PARITY
+      gpu_q:
+      - BATCH_SCALES_FAIL
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.ogb_manip
+      cells:
+      - OGBCube
+    swm/OGBMaze-v0:
+      pixel: true
+      cpu: CPU_FAST
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 5
+      module: stable_envs.envs.ogbench
+      cells:
+      - PointmazeLargeNavigate
+      - PointmazeLargeStitch
+    swm/OGBScene-v0:
+      pixel: true
+      cpu: CPU_MISSING
+      cpu_q:
+      - RAISES_BY_DESIGN
+      gpu: GPU_PARITY
+      gpu_q:
+      - BATCH_SCALES_FAIL
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 12
+      module: stable_envs.envs.ogb_manip
+      cells:
+      - OGBScene
+    swm/PFRocketLanding-v0:
+      pixel: true
+      cpu: CPU_MISSING
+      cpu_q:
+      - RAISES_BY_DESIGN
+      gpu: GPU_PARITY
+      gpu_q:
+      - BATCH_SCALES_FAIL
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.rocket_landing
+      cells:
+      - PFRocketLanding
+    swm/PendulumControl-v1:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.classic_control
+      cells:
+      - Pendulum
+    swm/PendulumDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCPendulumSwingup
+    swm/Piecewise-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 21
+      module: stable_envs.envs.swm_nav
+      cells:
+      - Piecewise
+      - PiecewiseZones
+    swm/PushT-Discrete-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 17
+      module: stable_envs.envs.pusht
+      cells:
+      - PushT
+    swm/PushT-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 17
+      module: stable_envs.envs.pusht
+      cells:
+      - PushT
+    swm/QuadrupedDMControl-v0:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q:
+      - LOAD_QUARANTINED
+      gpu: GPU_EXCEPTIONAL
+      gpu_q:
+      - CENSUS_ENTRY_MISSING
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCQuadrupedWalk
+    swm/ReacherDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCReacherHard
+    swm/SimplePointMaze-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 12
+      module: stable_envs.envs.simple_point_maze
+      cells:
+      - SimplePointMaze
+    swm/TwoRoom-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 18
+      module: stable_envs.envs.swm_nav
+      cells:
+      - TwoRoom
+      - TwoRoomTarget
+    swm/WalkerDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: FAIL
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCWalkerWalk
+  open_step7_carryovers: 'see /Users/samib/stable-envs-step7-integration/examples/results/step7/dashboard.yaml: step8_carryovers, deferred_work, escalations (colour-knob check open; BATCH_SCALES edge case)'
+file_ownership:
+  stable_envs/compat/worldmodel.py: coordinator (registry); VariationMap workstreams add ONE import/registration line each and write maps in their own new module stable_envs/compat/variation_maps/<family>.py;
+    VariationMap class changes owned by Workstream A, requested by others
+  stable_envs/envs/dmcontrol.py, classic_control.py: Workstream A
+  stable_envs/envs/fetch.py: Workstream B
+  stable_envs/envs/ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, swm_nav.py, pusht.py: Workstream C
+  ? stable_envs/testing/*, examples/fidelity_step4.py, scratch/step3/certify.py, scratch/step4/certify.py, scratch/census/*, tests/gpu/*, examples/results/step7/*/corpus meta
+  : Workstream E; Workstream F serialised after E
+  stable_envs/render/*: frozen unless a RELEASE_BLOCKING item requires it (coordinator assigns)
+  tests/unit/test_variation_maps_*.py: the respective VariationMap workstream
+  tests/swm/*, docs/research/step8_swm_integration.md: Workstream D
+  docs/research/step8_performance.md, scratch/step8/perf/*: Workstream G
+  scratch/step8/semantic/*, examples/results/step8/semantic/*: Workstream H
+  examples/results/step8/dashboard.yaml, docs/research/step8_support_matrix.md, examples/results/step8/support_matrix.json: coordinator (matrix generated by Workstream E's script)
+workstreams:
+- workstream: A_variations_dmc_control
+  branch: step8/variations-dmc-control
+  worktree: /Users/samib/stable-envs-step8-variations-dmc-control
+  model: opus
+  status: Wave 1 spawned
+  authorization: "plan \xA79"
+  affected_ids: 5 classic control + 12 DMC ids (incl. Manipulator, Quadruped)
+  affected_files: stable_envs/compat/variation_maps/dmc_control.py (new), dmcontrol.py, classic_control.py, tests
+  baseline_sha: 43ac952
+- workstream: B_variations_fetch
+  branch: step8/variations-fetch
+  worktree: /Users/samib/stable-envs-step8-variations-fetch
+  model: opus
+  status: Wave 1 spawned
+  authorization: "plan \xA710"
+  affected_ids: 12 Fetch ids
+  affected_files: stable_envs/compat/variation_maps/fetch.py (new), fetch.py, tests
+  baseline_sha: 43ac952
+- workstream: C_variations_newcells
+  branch: step8/variations-newcells
+  worktree: /Users/samib/stable-envs-step8-variations-newcells
+  model: opus
+  status: Wave 1 spawned
+  authorization: "plan \xA711"
+  affected_ids: 'OGBCube, OGBScene, PFRocketLanding, OGBMaze, SimplePointMaze, Craftax x2 (0 leaves: confirm)'
+  affected_files: stable_envs/compat/variation_maps/newcells.py (new), ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, tests
+  baseline_sha: 43ac952
+- workstream: E_certification_provenance
+  branch: step8/certification-provenance
+  worktree: /Users/samib/stable-envs-step8-certification-provenance
+  model: opus
+  status: Wave 1 spawned
+  authorization: "plan \xA713 (+\xA714 serialised after)"
+  affected_ids: all 42
+  affected_files: stable_envs/testing/*, scratch/census, scratch/step3+step4 certify, tests/gpu, examples/fidelity_step4.py, step7 corpora meta
+  baseline_sha: 43ac952
+- workstream: D_swm_integration
+  branch: step8/swm-integration
+  status: Wave 2
+  model: opus
+- workstream: F_reference_provenance
+  branch: step8/reference-provenance
+  status: Wave 2 (serialised after E)
+  model: opus
+- workstream: G_performance
+  branch: step8/performance
+  status: Wave 2
+  model: opus
+- workstream: H_semantic_craftax
+  branch: step8/semantic-craftax
+  status: Wave 2
+  model: opus
+decisions: []
+escalations: []
+refreezes: []
+upstream_findings: []
+buckets:
+  RELEASE_BLOCKING: []
+  DOCUMENTED_LIMITATION: []
+  UPSTREAM_FINDING: []
+  STEP9_CLEANUP: []
+  DEFERRED_OPTIMIZATION: []
+incident_log:
+- date: '2026-09-16'
+  item: 'Wave 0: baseline 43ac952 verified (branch, tag, origin, both Step-8 branches); dashboard created; ownership assigned; Wave-1 worktrees created'
