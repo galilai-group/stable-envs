@@ -986,7 +986,7 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
   closure_fixes:
-    head: e56ef1b5
+    head: 27e55680
     closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
     citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
     sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
@@ -1039,6 +1039,11 @@ workstreams:
       during test_resolution_downsample_agrees_within_the_measured_bound and test_render_size_does_not_leak_into_later_calls, collected later during test_a_shared_style_broadcasts_to_any_batch / test_dataset_paths_regenerate_identical_frames
       (ordering artefact of the guard); mechanism of collection despite the module dict still unknown (possible second module copy) -> _KEEPALIVE list enforcing ''created and never released'' + SE7_OGB_RIGDEBUG
       readout; first run through the persistent allocation (m6/rigcheck)'
+    renderer_close_ROOT_CAUSE: 'OGBench compiles the scene with visual.global.offwidth/offheight = the registered render size (env.py:150; 200 Scene / 224 Cube). A mujoco.Renderer above that raises ''Image
+      width > framebuffer width'' AFTER __new__ allocated the object; the half-built, unreferenced Renderer is collected at an arbitrary later moment, __del__ -> close() -> counted and charged to whichever
+      test is running; it never made a context, so EGL_CONTEXT_RELEASED stayed 0 (both counters were truthful). Keepalive could not hold it (append is below the raising line). Fix: raise the offscreen buffer
+      on the rig''s private deep copy before constructing (reference env untouched). Escalation withdrawn; no guard change.'
+    next: gate on 27e55680 in allocation 6443480 after the obsolete pre-fix gate in 6437813 finishes
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1540,6 +1545,9 @@ incident_log:
     --overlap (no queue). Model rule: Opus by default.'
 - date: '2026-09-16'
   item: 'W5: renderer-close owner named (own plate rigs at extra resolutions, collected later); keepalive + debug run in the held allocation'
+- date: '2026-09-16'
+  item: 'W5 ROOT CAUSE of the renderer-close guard failures: oversize Renderer construction raising after __new__ (OGBench offscreen buffer = registered size); fixed on the private model copy; escalation
+    withdrawn'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
