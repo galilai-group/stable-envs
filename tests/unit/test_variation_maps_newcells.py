@@ -638,3 +638,13 @@ def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(
     back = variation_from_style(env, row)
     assert np.asarray(back["cube.color"]).reshape(-1) == pytest.approx([0.1, 0.2, 0.3])
     assert np.asarray(back["floor.color"]).reshape(-1).shape == (6,)
+
+
+def test_pixel_encoding_reason_does_not_promise_that_the_affine_flag_alone_maps_it():
+    """Reviewer finding 4. An affine `(factor, offset)` makes the relation WRITEABLE; it does not
+    make swm's two-colour checker and our flat slate the same picture, and that is unmeasured. The
+    reason must say both, because the first half alone reads as "mapped once A merges"."""
+    reason = _map_for(MAZE).swm_only["floor.pixel_encoding"]
+    assert "PENDING-A" in reason.upper()
+    assert "has not been measured" in reason
+    assert "checker" in reason.lower() and "slate" in reason.lower()

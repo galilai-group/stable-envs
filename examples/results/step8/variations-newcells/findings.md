@@ -256,3 +256,81 @@ the plate is taken from the same cache the render used.
 `cube.color` moves **no plate pixel** and `floor.color` moves **no mover pixel**, on both cells.
 Both leaves move pixels, so neither is inert. After both, the default reproduces the (a) digest.
 (`OGBCube` is 64 × 224², `OGBScene` 64 × 200².)
+
+### Tests
+
+Local, Apple M5, `MUJOCO_GL=glfw`, exact commands and exact outputs:
+
+```
+MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q \
+    tests/unit/test_variation_maps_newcells.py tests/unit/test_repo_contracts.py -p no:cacheprovider
+  -> 1 failed, 84 passed, 9 skipped in 0.55s
+
+MUJOCO_GL=glfw /Users/samib/se7-ogb-venv/bin/python -m pytest -q \
+    tests/unit/test_variation_maps_newcells.py tests/unit/test_repo_contracts.py -p no:cacheprovider
+  -> 1 failed, 89 passed, 4 skipped in 5.76s     (live-SWM tier; nothing aborted)
+
+MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q tests/unit/test_variation_maps_newcells.py
+  -> 74 passed, 5 skipped                        (9 skips become 0 additional in se7-ogb: 81 passed, 2 skipped)
+```
+
+The single failure in both interpreters is `test_repo_contracts.py::
+test_every_cited_scratch_path_resolves`, the pre-existing row C already recorded: it lists cited
+`scratch/` paths that live in other Step-6/Step-8 worktrees (`scratch/step8/report.py`,
+`scratch/step8/rejudge_gate_a.py`, `scratch/step8/perf/*`, six Step-6 paths). **None of the listed
+paths is a file this follow-up added or cites**, and `scratch/step8/variations-newcells/gpu_colors.py`
+is committed precisely so its citations resolve.
+
+The live-SWM tier ran to completion here; the earlier **exit 134** the reviewer and the Codex stop
+note both recorded is not reproduced, and an exit 134 remains not a result either way.
+
+Of the tests added by this follow-up, six are the leak regression — `_cube_colours` returning a
+value for the default, custom → default, mixed → default, default → custom → default, cross-instance
+reuse, and a shrinking batch. All six were run against a re-introduced `np.allclose` shortcut and
+**all six failed**, so they test the defect rather than the fix's shape.
+
+## Reviewer findings, answered
+
+**1 — custom-to-default cube colour persists.** Fixed and measured. `_cube_colours` now never
+returns `None` for a cell with cube geoms, so the upload happens for every world of every chunk of
+every render; the module-cache table at the top of `ogb_manip.py` records why that is a requirement
+and not an optimisation choice. `_apply_floor` likewise lost its "the context already holds this"
+shortcut and writes the texture on every plate bake (a plate-cache hit never reaches it, so this
+costs one `mjr_uploadTexture` per miss). Evidence: gate (b), sixteen sequences, all identical to the
+(a) digest; plus six CPU regression tests that fail against the old shortcut. The review's point
+that a tolerance cannot substitute for an exact contract is accepted in full — there is no tolerance
+anywhere in the colour path now.
+
+**2 — the patch was not reflected in maps, declarations, tests or evidence.** Done: `newcells.py`
+classifies both leaves `mapped` with the mechanism recorded; the generated JSON and leaf table are
+regenerated (`generate_report.py --check` passes) and move `mapped` 14 → 18, `unsupported` 13 → 9;
+the docs page and the summary table above are updated; the declaration delta is stated as a value
+(`style_dim` 0 → 9, `default_style_digest` before and after) rather than described. The
+`_grid_texture` / `_apply_floor` byte-identity claims are now backed by measurement on the completed
+code: gate (c) shows `floor.color` moving 2,814,715 / 1,597,112 plate pixels and **zero** mover
+pixels, and gate (a) shows the default plate unchanged byte-for-byte against the baseline. No frozen
+corpus was replaced and no oracle was re-frozen.
+
+**3 — OGBMaze own-side classification incomplete.** `_OGBMAZE_OURS_ONLY` now carries all five own
+leaves with a reason each (`agent.scale`, `floor.tint`, `camera.distance_scale`, `camera.elevation`,
+`rendering.decolor_floor`), and the assertion is no longer a hand-written list: `RECORDED_OURS_LEAVES`
+records every own-side leaf per cell and two parametrised tests require each one to be either mapped
+or to carry a non-empty `ours_only` reason, reject an `ours_only` entry for a leaf we do not have,
+and reject an `ours_only` leaf that swm also offers (which would be a mapping we failed to make).
+
+**4 — do not map `pixel_encoding` by inversion alone.** Not mapped. It stays `unsupported`, now
+explicitly **pending Workstream A** and pending a checker-versus-flat measurement, and the reason
+text says so: our `decolor_floor=1` paints flat slate while swm's `pixel_encoding=0` restores a
+two-colour checker, so A's affine capability resolves representability and not visual equivalence.
+The misleading "the only blocker is the affine transform" language is corrected in `newcells.py`'s
+reason and in `ours_only`, which a test now checks by name.
+
+**5 — GPU evidence could not satisfy the merge gate as stored.** Every JSON this follow-up commits
+carries `provenance.git_sha` (`a9e68ce…`, the exact tree exported with `git archive`) and
+`provenance.baseline_sha` (`43ac9523…`, read from `$SCR/se8/baseline/.git_sha`), plus job, host, GPU,
+driver and the versions of torch / mujoco / mujoco_warp / warp / numpy. The default evidence is the
+**frozen Step-7 corpus**, identified by array SHA-256 that matches `closure2/gate_a/cuda_ogbmanip.json`
+— not eight states from seed 0. The affected Gate-A run is (d), on the completed code, and no claim
+here rests on the earlier round's artifacts. C's five original JSONs are left exactly as committed;
+they still carry `git_sha: null` and absolute `/oscar` paths, which is recorded below as an open item
+rather than edited after the fact.

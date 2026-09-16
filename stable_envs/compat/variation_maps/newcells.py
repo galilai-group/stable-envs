@@ -362,9 +362,12 @@ _OGBMAZE_SWM_ONLY = {
         "official gradient. VariationMap can express `ours = theirs * factor` and nothing else, so "
         "an inverting relation (`ours = 1 - theirs`) has no representation here -- this is a "
         "capability gap in the shared class, reported to the workstream that owns it, not a "
-        "renderer gap. A second question is open regardless: swm's encoding=0 restores the XML "
-        "CHECKER (2 colours) while our decolor_floor=1 paints flat slate, and whether those are the "
-        "same picture has not been measured"),
+        "renderer gap. UNSUPPORTED-PENDING-A, and pending a second measurement that the affine "
+        "capability does NOT settle: swm's encoding=0 restores the XML CHECKER (2 colours) while "
+        "our decolor_floor=1 paints flat slate. An affine `(factor, offset)` resolves whether the "
+        "relation can be WRITTEN DOWN; it says nothing about whether the two settings draw the same "
+        "picture, and that has not been measured. Mapping it on A's merge alone would invert the "
+        "semantics for every caller and call a different floor the same floor"),
     "light.intensity": (
         "the global directional light's diffuse term (MEASURED: writes light_diffuse row 0 only; "
         "intensity 0 moves 43,931 px, 0.5 moves 43,931 px at maxdiff 84, and 1.0 -- the default -- "
@@ -465,8 +468,9 @@ LEAF_CLASSIFICATION.update({
             "floor.pixel_encoding": _cls(
                 "unsupported", _OGBMAZE_SWM_ONLY["floor.pixel_encoding"],
                 _MAZE_PROBES["ogbmaze"] + " -- encoding 1 vs 0 moves 21,029 px at maxdiff 224",
-                mechanism="VariationMap cannot express an inverting relation; ownership request to "
-                          "the workstream that owns the class"),
+                mechanism="VariationMap cannot express an inverting relation (Workstream A), AND "
+                          "checker-versus-flat equivalence is unmeasured; both must resolve before "
+                          "this can be mapped"),
             "light.intensity": _cls(
                 "unsupported", _OGBMAZE_SWM_ONLY["light.intensity"],
                 _MAZE_PROBES["ogbmaze"] + " -- 43,931 px at intensity 0 and 0.5; 0 px at 1.0",

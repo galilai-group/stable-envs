@@ -248,9 +248,12 @@ are in
    default re-measured on the frozen corpus rather than assumed. Scene's `lock_color` was NOT
    included: it is the same mechanism as `cube.color`, but it is held with the light/camera/size
    group pending the shared-capability decision.
-3. **Ownership request** — `VariationMap` cannot express `ours = 1 - theirs`. One `inverted` flag,
-   or an affine `(factor, offset)`, would let `floor.pixel_encoding` become `mapped`. The class is
-   owned by the DMC/classic-control workstream.
+3. **Ownership request** — `VariationMap` cannot express `ours = 1 - theirs`. An `inverted` flag or
+   an affine `(factor, offset)` is *necessary* for `floor.pixel_encoding`; it is **not sufficient**,
+   and the original wording here implied it was. Workstream A's affine capability resolves whether
+   the relation can be written down. It says nothing about whether swm's `pixel_encoding=0`
+   (the XML two-colour checker) and our `decolor_floor=1` (flat slate) draw the same picture, which
+   is unmeasured. The leaf stays `unsupported`, **pending A's merge AND that measurement**.
 4. **Upstream findings bundle** — the `agent.color` inverted dirty flag; `OGBMaze` states-mode
    renderer staleness; `SceneEnv` reset ignoring its seed entirely; `pixel_encoding`'s declared
    default disagreeing with OGBench's constructed appearance; `pad.color`'s declared default not
