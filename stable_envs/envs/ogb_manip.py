@@ -882,8 +882,9 @@ class OGBManipBase(StableEnv):
         between the texel write and the upload. The cost is one `mjr_uploadTexture` per plate-cache
         MISS, never per render: a cache hit does not reach this function at all.
 
-        `rig.floor` is therefore a RECORD of what was last written, kept for diagnostics and for the
-        assertion below, not a permission to skip the write.
+        `rig.floor` is therefore a RECORD of what was last written -- useful when a plate looks wrong
+        and you want to know which colour the context actually holds -- and never a permission to
+        skip the write.
         """
         import mujoco
         g = self._b.grid_tex
