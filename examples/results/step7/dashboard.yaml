@@ -986,7 +986,7 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
   closure_fixes:
-    head: 1bb5f7fe
+    head: c77afa65 (+plugin)
     closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
     citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
     sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
@@ -1021,6 +1021,16 @@ workstreams:
     scene_refusal: first reference render in a process differs from the second by 6 px of +-1 (upstream warm-up); probe burns one frame, 1e-6 tolerance
     button_pinning: exact; STRANDED_IN_PLATE [] locally and on the cluster
     final_measurement_job: '6433493 running: declaration on the final tree + OGB rows; then paste, full tests/gpu gate'
+    declaration_final:
+      OGBCube: worst-of-8 3.309378, gate seed-0 3.295483, ceiling 4.3
+      OGBScene: 6.691589 / 6.602667 / 8.7; within8_min 0.85 -> 0.80 by the stated rule (flagged)
+      instrument: check_visual_fidelity itself (per-pixel channel-max); seed 0 is one of the eight draws by construction
+    renderer_close_status: 'role split did NOT fix the four guard failures (6 created / 4 closed unchanged); ownership probe: 8 created, 0 died during the run -> the deaths need something the suite does;
+      job 6434224 (3090-gcondo) instruments the real pytest session to report builder vs closer per renderer'
+    process_notes:
+    - rsync --delete destroyed node-side results (recovered from $SCR/logs); --delete dropped
+    - a positional splice deleted _UNMEASURED/_REFERENCE_VERSIONS; caught by import failure, restored
+    citations: the 9 remaining broken citations are the Step-6 baseline set (carracing, robocasa, six scratch/sboughan paths), none from W5
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1513,6 +1523,8 @@ incident_log:
   item: 'W5: 15 -> 5 failures; ceiling paste withheld pending attribution of the worse numbers (seed vs plate pinning); job 6433175'
 - date: '2026-09-15'
   item: 'W5: OGB fidelity gap was an instrument mismatch (channel-mean vs per-pixel channel-max); renderer churn was upstream reset behaviour on a shared env instance; final measurement job 6433493'
+- date: '2026-09-16'
+  item: 'W5: OGB declaration pasted from the gate instrument (4.3 / 8.7); four renderer-close guard failures remain, instrumented in the real suite (6434224)'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
