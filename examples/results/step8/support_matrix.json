@@ -12,9 +12,9 @@
    "UNSUPPORTED_BY_DESIGN": 3
   },
   "gate_a": {
-   "FAIL": 5,
-   "PASS": 34,
-   "UNMEASURED": 1,
+   "FAIL": 3,
+   "PASS": 35,
+   "UNMEASURED": 2,
    "UNSUPPORTED_BY_DESIGN": 2
   },
   "gpu_tier_status": {
@@ -26,13 +26,13 @@
   "rows": 42,
   "symbolic": 2,
   "variation_map": {
-   "complete": 4,
-   "missing": 34,
+   "complete": 21,
+   "missing": 17,
    "n/a": 2,
    "unknown": 2
   }
  },
- "generated_at_head_sha": "9d286ce78645f31182976f87159d742764346ea4",
+ "generated_at_head_sha": "878b5c8e285061d52bc20d0e44b1d45a9dc00221",
  "rows": [
   {
    "backend_class": "R",
@@ -100,12 +100,29 @@
    "swm_id": "swm/AcrobotControl-v1",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 4,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "Acrobot"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "physics.link_com_pos_1",
+     "physics.link_com_pos_2",
+     "physics.link_length_1",
+     "physics.link_length_2",
+     "physics.link_mass_1",
+     "physics.link_mass_2",
+     "physics.link_moi"
+    ]
    }
   },
   {
@@ -176,12 +193,32 @@
    "swm_id": "swm/AcrobotDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 5,
+     "mapped": 2,
+     "unsupported": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCAcrobotSwingup"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.lower_arm_density",
+     "agent.upper_arm_density",
+     "agent.upper_arm_locked",
+     "floor.color",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z",
+     "target.color",
+     "target.shape"
+    ]
    }
   },
   {
@@ -252,12 +289,34 @@
    "swm_id": "swm/BallInCupDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 4,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCBallInCupCatch"
+    ],
     "n_swm_leaves": 13,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.density",
+     "ball.color",
+     "ball.density",
+     "ball.size",
+     "floor.color",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z",
+     "rendering.render_target",
+     "target.color",
+     "target.shape"
+    ]
    }
   },
   {
@@ -326,12 +385,28 @@
    "swm_id": "swm/CartPoleControl-v1",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 4,
+     "unsupported": 6
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "CartPole"
+    ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "physics.force_mag",
+     "physics.gravity",
+     "physics.length",
+     "physics.masscart",
+     "physics.masspole",
+     "physics.tau"
+    ]
    }
   },
   {
@@ -404,12 +479,38 @@
    "swm_id": "swm/CartpoleDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
-    "n_swm_leaves": 9,
+    "leaf_classification": {
+     "dead_upstream": 4,
+     "mapped": 4,
+     "unsupported": 10
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCCartpoleBalance",
+     "DMCCartpoleSwingup"
+    ],
+    "n_swm_leaves": 18,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.cart_mass",
+     "agent.cart_mass",
+     "agent.cart_shape",
+     "agent.cart_shape",
+     "agent.pole_density",
+     "agent.pole_density",
+     "floor.color",
+     "floor.color",
+     "gravity.x",
+     "gravity.x",
+     "gravity.y",
+     "gravity.y",
+     "gravity.z",
+     "gravity.z"
+    ]
    }
   },
   {
@@ -482,12 +583,31 @@
    "swm_id": "swm/CheetahDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCCheetahRun"
+    ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.back_foot_density",
+     "agent.back_foot_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
    }
   },
   {
@@ -517,14 +637,65 @@
     "CraftaxClassic": "e403a5648d92156e"
    },
    "gate_a": {
-    "failing_checks": [
-     "check_resolution_consistency"
+    "applicability": [
+     {
+      "all_bands_recorded_not_judged": {
+       "exact_frac": 0.816382137345679,
+       "max_abs": 21,
+       "mean_abs": 0.7734274530606996
+      },
+      "bands": {
+       "light_level < 0.5": "not_applicable",
+       "light_level >= 0.5": "applicable"
+      },
+      "bound": ">= 1.0 - 0.005",
+      "check": "check_resolution_consistency",
+      "device": "cpu",
+      "judged_on_subset": 6,
+      "kind": "judged_on_the_applicable_band",
+      "observed": {
+       "exact_frac": 1.0,
+       "max_abs": 0,
+       "mean_abs": 0.0
+      },
+      "why": "6 of 8 states are outside the bands the class declares inapplicable (['light_level < 0.5']); the bound is asserted on those and the rest are recorded not_applicable with the class's cited evidence"
+     },
+     {
+      "all_bands_recorded_not_judged": {
+       "exact_frac": 0.816382137345679,
+       "max_abs": 21,
+       "mean_abs": 0.7734274530606996
+      },
+      "bands": {
+       "light_level < 0.5": "not_applicable",
+       "light_level >= 0.5": "applicable"
+      },
+      "bound": ">= 1.0 - 0.005",
+      "check": "check_resolution_consistency",
+      "device": "cuda",
+      "judged_on_subset": 6,
+      "kind": "judged_on_the_applicable_band",
+      "observed": {
+       "exact_frac": 1.0,
+       "max_abs": 0,
+       "mean_abs": 0.0
+      },
+      "why": "6 of 8 states are outside the bands the class declares inapplicable (['light_level < 0.5']); the bound is asserted on those and the rest are recorded not_applicable with the class's cited evidence"
+     }
     ],
+    "blocked_checks": [],
+    "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "CraftaxClassic",
       "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
       "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
      },
@@ -532,18 +703,24 @@
       "blocked_checks": [],
       "cell": "CraftaxClassic",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
       "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Applicability READ off the class, recorded in gate_a.applicability: check_resolution_consistency. Step-7 record, kept: all mandatory checks pass; check_resolution_consistency declared not_applicable below light_level 0.5 on the OFFICIAL renderer's own evidence (official 0.1634 == ours 0.1634); the Step-8 certifier must honour resolution_consistency_applicability or judge on the light >= 0.5 subset",
     "per_device": {
-     "cpu": "FAIL",
-     "cuda": "FAIL"
+     "cpu": "PASS",
+     "cuda": "PASS"
     },
-    "raw": "FAIL",
+    "raw": "PASS",
     "source": "examples/results/step8/certification/gate_a_rejudged.json",
-    "status": "FAIL"
+    "status": "PASS"
    },
    "gpu_tier": {
     "note": "",
@@ -570,7 +747,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "UNMEASURED",
+    "status": "PASS",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {
@@ -602,6 +779,7 @@
     "map_status": "n/a",
     "n_swm_leaves": 0,
     "note": "the swm wrapper declares NO variation space (0 leaves), so there is no Gate-F variation gap to close for this id",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "absent",
     "unsupported_or_dead_leaves": []
@@ -669,6 +847,7 @@
     "map_status": "unknown",
     "n_swm_leaves": null,
     "note": "",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": null,
     "unsupported_or_dead_leaves": []
@@ -699,12 +878,20 @@
     "CraftaxFull": "b0c38605fc983eca"
    },
    "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
     "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "CraftaxFull",
       "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
       "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
      },
@@ -712,11 +899,17 @@
       "blocked_checks": [],
       "cell": "CraftaxFull",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
       "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: 18 checks clean; check_resolution_consistency declared not_applicable in ALL bands on the official's own evidence (official fails the frozen 0.995 in every band: world 0.4817 day / 0.0991 night)",
     "per_device": {
      "cpu": "PASS",
      "cuda": "PASS"
@@ -780,6 +973,7 @@
     "map_status": "n/a",
     "n_swm_leaves": 0,
     "note": "the swm wrapper declares NO variation space (0 leaves)",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "absent",
     "unsupported_or_dead_leaves": []
@@ -847,6 +1041,7 @@
     "map_status": "unknown",
     "n_swm_leaves": null,
     "note": "",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": null,
     "unsupported_or_dead_leaves": []
@@ -921,6 +1116,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -995,6 +1191,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1069,6 +1266,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1143,6 +1341,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1217,6 +1416,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1291,6 +1491,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1365,6 +1566,7 @@
     "map_status": "missing",
     "n_swm_leaves": 8,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1439,6 +1641,7 @@
     "map_status": "missing",
     "n_swm_leaves": 8,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1513,6 +1716,7 @@
     "map_status": "missing",
     "n_swm_leaves": 8,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1587,6 +1791,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1661,6 +1866,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1735,6 +1941,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -1808,12 +2015,29 @@
    "swm_id": "swm/FingerDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 4,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCFingerTurnHard"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.fingertip_density",
+     "agent.proximal_density",
+     "floor.color",
+     "spinner.color",
+     "spinner.density",
+     "spinner.friction",
+     "target.shape"
+    ]
    }
   },
   {
@@ -1886,12 +2110,31 @@
    "swm_id": "swm/HopperDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCHopperHop"
+    ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.foot_density",
+     "agent.foot_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
    }
   },
   {
@@ -1964,12 +2207,31 @@
    "swm_id": "swm/HumanoidDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCHumanoidStand"
+    ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.left_knee_locked",
+     "agent.right_lower_arm_density",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
    }
   },
   {
@@ -1999,12 +2261,19 @@
     "DMCManipulatorBringBall": "ebfc481ad7f23962"
    },
    "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
     "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "DMCManipulatorBringBall",
       "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
       "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
      },
@@ -2012,11 +2281,16 @@
       "blocked_checks": [],
       "cell": "DMCManipulatorBringBall",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
       "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: every mandatory check passes; check_state_dims_matter passes with three REPORTED exclusions (ball_y, target_ball_quat_qw, target_ball_quat_qy), approved by Sami as a narrow per-class render-contract exception validated by the check itself against the frozen geom_type",
     "per_device": {
      "cpu": "PASS",
      "cuda": "PASS"
@@ -2083,12 +2357,25 @@
      "target_ball.shape",
      "light.diffuse_scale"
     ],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 5,
+     "unsupported": 3
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCManipulatorBringBall"
+    ],
     "n_swm_leaves": 9,
     "note": "the registered SWM default (hidden target, .015 sphere, light 0.7) is reached THROUGH declared leaves and asserted by Gate F; floor.color is a Gate-F RANGE gap (the leaf exists, its range is not covered), recorded by W3's reviewer as a range gap and not a default gap",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": [
+     "agent.hand_density",
+     "agent.upper_arm_density",
+     "agent.upper_arm_length",
      "floor.color"
     ]
    }
@@ -2159,12 +2446,24 @@
    "swm_id": "swm/MountainCarContinuousControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 2,
+     "unsupported": 2
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "MountainCarContinuous"
+    ],
     "n_swm_leaves": 4,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "physics.max_speed",
+     "physics.power"
+    ]
    }
   },
   {
@@ -2233,12 +2532,25 @@
    "swm_id": "swm/MountainCarControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 2,
+     "unsupported": 3
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "MountainCar"
+    ],
     "n_swm_leaves": 5,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "physics.force",
+     "physics.gravity",
+     "physics.max_speed"
+    ]
    }
   },
   {
@@ -2271,12 +2583,15 @@
     "OGBCube": "560c1398a8a49a3f"
    },
    "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
     "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "OGBCube",
       "device": "cpu",
+      "not_applicable_checks": [],
       "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
       "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
      },
@@ -2284,11 +2599,21 @@
       "blocked_checks": [],
       "cell": "OGBCube",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_default_style_is_official",
+       "check_style_is_state",
+       "check_backend_agreement",
+       "check_colors_apply_exactly",
+       "check_task_object_visibility",
+       "check_variations_do_something",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
       "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: all mandatory checks pass at the W5 closure follow-on (d4318d2). The Step-7 closure sweep had recorded check_state_roundtrip FAIL at max_abs_err 1.17e-07 against a bound of exactly 0, plus a sub-batch shared-style failure and a zero-size reduction crash, none of which any earlier Step-7 interpreter could see because every committed tests/gpu run skipped OGBench; W5 closed them with float32 round-trip states, the PlateRig (private model copy, offscreen buffer raised per rig, hidden-site-group digest) and a role-split reference cache, and the declaration was re-measured on the gate instrument",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
      "cuda": "PASS"
@@ -2354,6 +2679,7 @@
     "map_status": "missing",
     "n_swm_leaves": 11,
     "note": "certified at the registered default (224 px, camera front_pixels, visualize_info=True recorded as a parity_note); the registered-default variation set was taken first and appearance leaves are declared per env",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -2430,6 +2756,7 @@
     "map_status": "missing",
     "n_swm_leaves": 5,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -2465,12 +2792,15 @@
     "OGBScene": "7a0cdff1849ee221"
    },
    "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
     "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "OGBScene",
       "device": "cpu",
+      "not_applicable_checks": [],
       "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
       "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
      },
@@ -2478,11 +2808,21 @@
       "blocked_checks": [],
       "cell": "OGBScene",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_default_style_is_official",
+       "check_style_is_state",
+       "check_backend_agreement",
+       "check_colors_apply_exactly",
+       "check_task_object_visibility",
+       "check_variations_do_something",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
       "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: as OGBCube: all mandatory checks pass at d4318d2, and the closure sweep's check_state_roundtrip FAIL (1.12e-07) is closed. Still ships with a DECLARED residual: the btn_metal cube-map cannot be sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean colour on two small geoms - 0.139% of pixels, max 37/255. Sami ruled: keep the reviewed declared bake",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
      "cuda": "PASS"
@@ -2548,6 +2888,7 @@
     "map_status": "missing",
     "n_swm_leaves": 12,
     "note": "as OGBCube; the two button bits are state dims, not style",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -2583,14 +2924,40 @@
     "PFRocketLanding": "f4707e54f3007b2e"
    },
    "gate_a": {
-    "failing_checks": [
-     "check_colors_apply_exactly"
+    "applicability": [
+     {
+      "check": "check_colors_apply_exactly",
+      "declared_by": "PFRocketLanding.color_exactness_applicability",
+      "device": "cuda",
+      "kind": "declared_not_applicable",
+      "measured_evidence": {
+       "colors_not_applied": [
+        "pad.color->[17, 33, 200]",
+        "pad.color->[200, 17, 33]",
+        "rocket.body_color->[17, 33, 200]",
+        "rocket.body_color->[200, 17, 33]",
+        "rocket.booster_color->[17, 33, 200]",
+        "rocket.booster_color->[200, 17, 33]",
+        "rocket.fin_color->[17, 33, 200]",
+        "rocket.fin_color->[200, 17, 33]",
+        "rocket.leg_color->[17, 33, 200]",
+        "rocket.leg_color->[200, 17, 33]"
+       ]
+      },
+      "why": "declared not_applicable on 5 named lit RGB leaves. 5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none). The measurement is kept: colors_not_applied=['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'], best_abs_diff=None."
+     }
     ],
+    "blocked_checks": [
+     "check_visual_fidelity",
+     "check_visual_fidelity_under_variation"
+    ],
+    "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "PFRocketLanding",
       "device": "cpu",
+      "not_applicable_checks": [],
       "source": "examples/results/step7/closure2/gate_a/cpu_rocket.json",
       "source_sha256": "016b266071d0f7c80076de6d8f9c5a35265906c7b431459f603e9942c8cb9187"
      },
@@ -2601,18 +2968,24 @@
       ],
       "cell": "PFRocketLanding",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_colors_apply_exactly",
+       "check_task_object_visibility",
+       "render_parity_with_official_renderer"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_rocket.json",
       "source_sha256": "244f375bde1ec35315d0e8ae9f53770df3c98e013149a097771cde5f596f478c"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Applicability READ off the class, recorded in gate_a.applicability: check_colors_apply_exactly. UNMEASURED, not failed: check_visual_fidelity, check_visual_fidelity_under_variation could not be judged because the measuring interpreter did not record a declared reference package version. Step-7 record, kept: all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the contact-band bridge flag and fills the declaration. Two tests/gpu assertions still fail, both with a stated mechanism and neither a Gate-A check: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for this cell (measured 0.95614; the sa",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
-     "cuda": "FAIL"
+     "cuda": "UNMEASURED"
     },
-    "raw": "FAIL",
+    "raw": "BLOCKED",
     "source": "examples/results/step8/certification/gate_a_rejudged.json",
-    "status": "FAIL"
+    "status": "UNMEASURED"
    },
    "gpu_tier": {
     "note": "R 241.5, cores 2.61, NO_LARGE_BATCH_REGRESSION 1.253; BATCH_SCALES 14.17 against a bar of 20, which fails because fps(1)=238 is unusually high for a class-S cell (3,374 f/s at B=4096) - correct application of Step-2 6.7 and a definitional edge case recorded for Step 8",
@@ -2680,6 +3053,7 @@
     "map_status": "missing",
     "n_swm_leaves": 9,
     "note": "sky_color is a DEAD leaf in the swm wrapper (it reaches no pixel) and is deliberately not offered; the 5 colours and the ignition bit are the style dims by path",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": [
@@ -2753,12 +3127,28 @@
    "swm_id": "swm/PendulumControl-v1",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 3,
+     "unsupported": 6
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "Pendulum"
+    ],
     "n_swm_leaves": 9,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "physics.dt",
+     "physics.g",
+     "physics.l",
+     "physics.m",
+     "physics.max_speed",
+     "physics.max_torque"
+    ]
    }
   },
   {
@@ -2829,12 +3219,30 @@
    "swm_id": "swm/PendulumDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 3,
+     "mapped": 2,
+     "unsupported": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCPendulumSwingup"
+    ],
     "n_swm_leaves": 9,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.mass_density",
+     "agent.mass_shape",
+     "agent.pole_density",
+     "floor.color",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
    }
   },
   {
@@ -2905,10 +3313,20 @@
    "swm_id": "swm/Piecewise-v0",
    "variation": {
     "declared_in": [],
+    "leaf_classification": {
+     "mapped": 12,
+     "swm_only": 30
+    },
     "map_status": "complete",
-    "n_swm_leaves": 21,
+    "mapped_cells": [
+     "Piecewise",
+     "PiecewiseZones"
+    ],
+    "n_swm_leaves": 42,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -2979,10 +3397,19 @@
    "swm_id": "swm/PushT-Discrete-v1",
    "variation": {
     "declared_in": [],
+    "leaf_classification": {
+     "mapped": 10,
+     "swm_only": 7
+    },
     "map_status": "complete",
+    "mapped_cells": [
+     "PushT"
+    ],
     "n_swm_leaves": 17,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -3053,10 +3480,19 @@
    "swm_id": "swm/PushT-v1",
    "variation": {
     "declared_in": [],
+    "leaf_classification": {
+     "mapped": 10,
+     "swm_only": 7
+    },
     "map_status": "complete",
+    "mapped_cells": [
+     "PushT"
+    ],
     "n_swm_leaves": 17,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -3092,12 +3528,20 @@
     "DMCQuadrupedWalk": "1f0b38b4dca47b92"
    },
    "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
     "failing_checks": [],
     "measurements": [
      {
       "blocked_checks": [],
       "cell": "DMCQuadrupedWalk",
       "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
       "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
      },
@@ -3105,11 +3549,17 @@
       "blocked_checks": [],
       "cell": "DMCQuadrupedWalk",
       "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
       "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
       "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
      }
     ],
-    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: all mandatory checks pass on both devices and both reference arms on the new corpus; ELLIPSOID stays out of _BOUNDED_KINDS (kind-cost ratio 0.69-1.43 measured only on a load-34 node: undecided, not admitted silently)",
     "per_device": {
      "cpu": "PASS",
      "cuda": "PASS"
@@ -3172,12 +3622,31 @@
    "swm_id": "swm/QuadrupedDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCQuadrupedWalk"
+    ],
     "n_swm_leaves": 10,
     "note": "certified at the registered SWM default (camera 2, 224 px, SWM appearance: material self rgba .6 .3 .3, foot_back_left density 1000); no Gate-F leaf gap recorded by the workstream",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.foot_back_left_density",
+     "agent.knee_back_left_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
    }
   },
   {
@@ -3248,12 +3717,28 @@
    "swm_id": "swm/ReacherDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 4,
+     "unsupported": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCReacherHard"
+    ],
     "n_swm_leaves": 9,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.arm_density",
+     "agent.finger_density",
+     "agent.finger_locked",
+     "floor.color",
+     "target.shape"
+    ]
    }
   },
   {
@@ -3325,6 +3810,7 @@
     "map_status": "missing",
     "n_swm_leaves": 12,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
     "status": "UNMEASURED",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
@@ -3398,10 +3884,20 @@
    "swm_id": "swm/TwoRoom-v1",
    "variation": {
     "declared_in": [],
+    "leaf_classification": {
+     "mapped": 22,
+     "swm_only": 14
+    },
     "map_status": "complete",
-    "n_swm_leaves": 18,
+    "mapped_cells": [
+     "TwoRoom",
+     "TwoRoomTarget"
+    ],
+    "n_swm_leaves": 36,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -3476,12 +3972,32 @@
    "swm_id": "swm/WalkerDMControl-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 8
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCWalkerWalk"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "status": "UNMEASURED",
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "agent.left_foot_density",
+     "agent.right_knee_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "floor.rotation_y",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
    }
   }
  ],

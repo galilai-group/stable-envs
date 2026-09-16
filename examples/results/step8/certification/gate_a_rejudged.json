@@ -1,11 +1,251 @@
 {
+  "applicability_is_read_from": "the CLASS (type(env)), never from this file: resolution_consistency_applicability and color_exactness_applicability",
+  "applicability_joins": [
+    {
+      "all_bands_recorded_not_judged": {
+        "exact_frac": 0.816382137345679,
+        "factor": 2,
+        "max_abs": 21,
+        "mean_abs": 0.7734274530606996,
+        "size": 16
+      },
+      "cell": "CraftaxClassic",
+      "check": "check_resolution_consistency",
+      "class_declaration": {
+        "evidence": "examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+        "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there (official world rows 0.1634; this renderer 0.1634, the same number)",
+        "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
+        "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True"
+      },
+      "declared_bands": {
+        "light_level < 0.5": "not_applicable",
+        "light_level >= 0.5": "applicable"
+      },
+      "device": "cpu",
+      "head_sha": "592e59a25f361a9dcbb4f50a79ff41fd4199e836",
+      "judged": {
+        "exact_frac": 1.0,
+        "max_abs": 0,
+        "mean_abs": 0.0
+      },
+      "measured_on": "gpu2264.oscar.ccv.brown.edu",
+      "n_judged": 6,
+      "result": "JOINED",
+      "source": "examples/results/step8/certification/oscar_paired_tests.json",
+      "source_sha256": "0ba814c9b9acb1381da1821d26e2af1d4112635decff0356de5f2b6542d298ee",
+      "why": "the closure2 shard records only the aggregate over its 8-state protocol draw, so the applicable subset cannot be recomputed from it; this is the committed subset judgment for the same draw, on hardware, joined by (cell, device) after its bands and its all_bands numbers were confirmed against the class and against this shard"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "CraftaxClassic",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cpu",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "cell": "CraftaxFull",
+      "check": "check_resolution_consistency",
+      "class_declaration": {
+        "all bands": "not_applicable: the official renderer is itself resolution-inconsistent in every band -- world rows 0.4817 in full daylight and 0.0991 at night, strip rows 0.94 throughout, max abs 191 at S=10/2S=20",
+        "evidence": "examples/results/step7/craftax-full/phase0/resolution_and_dead_dims.json",
+        "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
+        "mechanisms": "craftax.load_texture resamples every PNG with Image.NEAREST at each size, so 2S textures are not a 2x replication of the S ones; and the night noise field is drawn at the frame's own resolution",
+        "scope_note": "broader than CraftaxClassic.resolution_consistency_applicability, which marks only light_level < 0.5 inapplicable and keeps the frozen bound above it",
+        "still_required": "exact parity against the official renderer at 10 px and at 16 px"
+      },
+      "declared_bands": {
+        "all bands": "not_applicable"
+      },
+      "device": "cpu",
+      "result": "the class declares every band inapplicable; no bound is asserted and the measured number is recorded"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "CraftaxFull",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cpu",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "DMCManipulatorBringBall",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cpu",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "DMCQuadrupedWalk",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cpu",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "all_bands_recorded_not_judged": {
+        "exact_frac": 0.816382137345679,
+        "factor": 2,
+        "max_abs": 21,
+        "mean_abs": 0.7734274530606996,
+        "size": 16
+      },
+      "cell": "CraftaxClassic",
+      "check": "check_resolution_consistency",
+      "class_declaration": {
+        "evidence": "examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+        "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there (official world rows 0.1634; this renderer 0.1634, the same number)",
+        "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
+        "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True"
+      },
+      "declared_bands": {
+        "light_level < 0.5": "not_applicable",
+        "light_level >= 0.5": "applicable"
+      },
+      "device": "cuda",
+      "head_sha": "592e59a25f361a9dcbb4f50a79ff41fd4199e836",
+      "judged": {
+        "exact_frac": 1.0,
+        "max_abs": 0,
+        "mean_abs": 0.0
+      },
+      "measured_on": "gpu2264.oscar.ccv.brown.edu",
+      "n_judged": 6,
+      "result": "JOINED",
+      "source": "examples/results/step8/certification/oscar_paired_tests.json",
+      "source_sha256": "0ba814c9b9acb1381da1821d26e2af1d4112635decff0356de5f2b6542d298ee",
+      "why": "the closure2 shard records only the aggregate over its 8-state protocol draw, so the applicable subset cannot be recomputed from it; this is the committed subset judgment for the same draw, on hardware, joined by (cell, device) after its bands and its all_bands numbers were confirmed against the class and against this shard"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "CraftaxClassic",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cuda",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "cell": "CraftaxFull",
+      "check": "check_resolution_consistency",
+      "class_declaration": {
+        "all bands": "not_applicable: the official renderer is itself resolution-inconsistent in every band -- world rows 0.4817 in full daylight and 0.0991 at night, strip rows 0.94 throughout, max abs 191 at S=10/2S=20",
+        "evidence": "examples/results/step7/craftax-full/phase0/resolution_and_dead_dims.json",
+        "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
+        "mechanisms": "craftax.load_texture resamples every PNG with Image.NEAREST at each size, so 2S textures are not a 2x replication of the S ones; and the night noise field is drawn at the frame's own resolution",
+        "scope_note": "broader than CraftaxClassic.resolution_consistency_applicability, which marks only light_level < 0.5 inapplicable and keeps the frozen bound above it",
+        "still_required": "exact parity against the official renderer at 10 px and at 16 px"
+      },
+      "declared_bands": {
+        "all bands": "not_applicable"
+      },
+      "device": "cuda",
+      "result": "the class declares every band inapplicable; no bound is asserted and the measured number is recorded"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "CraftaxFull",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cuda",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "PFRocketLanding",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "device": "cuda",
+      "honoured": true,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [
+        "pad.color->[17, 33, 200]",
+        "pad.color->[200, 17, 33]",
+        "rocket.body_color->[17, 33, 200]",
+        "rocket.body_color->[200, 17, 33]",
+        "rocket.booster_color->[17, 33, 200]",
+        "rocket.booster_color->[200, 17, 33]",
+        "rocket.fin_color->[17, 33, 200]",
+        "rocket.fin_color->[200, 17, 33]",
+        "rocket.leg_color->[17, 33, 200]",
+        "rocket.leg_color->[200, 17, 33]"
+      ],
+      "result": "NOT_APPLICABLE (declared, evidence attached)",
+      "undeclared_leaves_still_judged": [],
+      "why": "5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none)."
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "DMCManipulatorBringBall",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cuda",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    },
+    {
+      "best_abs_diff_note": "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly records it from Step 8 onward, so the next run of this cell carries the per-leaf distance and a knob coming off its primitive moves a number",
+      "cell": "DMCQuadrupedWalk",
+      "check": "check_colors_apply_exactly",
+      "declared_leaves": [],
+      "device": "cuda",
+      "honoured": false,
+      "measured_best_abs_diff": null,
+      "measured_colors_not_applied": [],
+      "result": "no honoured declaration; the check is judged exactly as before",
+      "undeclared_leaves_still_judged": [],
+      "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf"
+    }
+  ],
   "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
-  "generated_at_head_sha": "9d286ce78645f31182976f87159d742764346ea4",
+  "generated_at_head_sha": "878b5c8e285061d52bc20d0e44b1d45a9dc00221",
   "judge": "scratch/step4/certify.py:verdict",
   "judge_sha256": "22e71dc26c8508c2f0631a50a6a486579bbc34b6fb920a75bb577b850fc51b69",
   "records": [
     {
       "cell": "CraftaxClassic",
+      "class_resolved_by": "stable_envs.REGISTRY['CraftaxClassic']",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -102,8 +342,26 @@
             "status": "pass"
           },
           "check_resolution_consistency": {
+            "all_bands_recorded_not_judged": {
+              "exact_frac": 0.816382137345679,
+              "max_abs": 21,
+              "mean_abs": 0.7734274530606996
+            },
+            "applicability": {
+              "bands": {
+                "light_level < 0.5": "not_applicable",
+                "light_level >= 0.5": "applicable"
+              },
+              "declaration": {
+                "evidence": "examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+                "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there (official world rows 0.1634; this renderer 0.1634, the same number)",
+                "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
+                "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True"
+              },
+              "why": "6 of 8 states are outside the bands the class declares inapplicable (['light_level < 0.5']); the bound is asserted on those and the rest are recorded not_applicable with the class's cited evidence"
+            },
             "bound": ">= 1.0 - 0.005",
-            "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+            "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC; asserted on the applicable band only, per the class's resolution_consistency_applicability declaration",
             "frozen_corpus": {
               "exact_frac": 0.766161506558642,
               "max_abs": 38,
@@ -111,11 +369,12 @@
               "n_states": 64
             },
             "group": "family_specific",
+            "judged_on_subset": 6,
             "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
             "observed": {
-              "exact_frac": 0.816382137345679,
-              "max_abs": 21,
-              "mean_abs": 0.7734274530606996
+              "exact_frac": 1.0,
+              "max_abs": 0,
+              "mean_abs": 0.0
             },
             "protocol": {
               "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)",
@@ -127,10 +386,8 @@
               "style": "default appearance"
             },
             "raw_status": "measured",
-            "status": "fail",
-            "violations": [
-              "exact_frac 0.8164 < 1.0 - 0.005"
-            ]
+            "status": "pass",
+            "violations": []
           },
           "check_set_state_copies": {
             "bound": "set_state copies and does not rebind",
@@ -211,10 +468,8 @@
           }
         },
         "config_id": "CraftaxClassic",
-        "failures": [
-          "check_resolution_consistency"
-        ],
-        "gate_a": "FAIL",
+        "failures": [],
+        "gate_a": "PASS",
         "no_declared_bound": [],
         "not_applicable": [
           "check_backend_agreement",
@@ -352,6 +607,7 @@
     },
     {
       "cell": "CraftaxFull",
+      "class_resolved_by": "stable_envs.REGISTRY['CraftaxFull']",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -679,6 +935,7 @@
     },
     {
       "cell": "OGBCube",
+      "class_resolved_by": "stable_envs.REGISTRY['OGBCube']",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -843,6 +1100,7 @@
     },
     {
       "cell": "OGBScene",
+      "class_resolved_by": "stable_envs.REGISTRY['OGBScene']",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -1007,6 +1265,7 @@
     },
     {
       "cell": "PFRocketLanding",
+      "class_resolved_by": "stable_envs.envs.rocket_landing.PFRocketLanding (module import only)",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -1150,6 +1409,7 @@
     },
     {
       "cell": "DMCManipulatorBringBall",
+      "class_resolved_by": "stable_envs.REGISTRY['DMCManipulatorBringBall']",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -1505,6 +1765,7 @@
     },
     {
       "cell": "DMCQuadrupedWalk",
+      "class_resolved_by": "stable_envs.REGISTRY['DMCQuadrupedWalk']",
       "device": "cpu",
       "judgment": {
         "blocked": [],
@@ -1901,6 +2162,7 @@
     },
     {
       "cell": "CraftaxClassic",
+      "class_resolved_by": "stable_envs.REGISTRY['CraftaxClassic']",
       "device": "cuda",
       "judgment": {
         "blocked": [],
@@ -1997,8 +2259,26 @@
             "status": "pass"
           },
           "check_resolution_consistency": {
+            "all_bands_recorded_not_judged": {
+              "exact_frac": 0.816382137345679,
+              "max_abs": 21,
+              "mean_abs": 0.7734274530606996
+            },
+            "applicability": {
+              "bands": {
+                "light_level < 0.5": "not_applicable",
+                "light_level >= 0.5": "applicable"
+              },
+              "declaration": {
+                "evidence": "examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json",
+                "light_level < 0.5": "not_applicable: the reference is itself resolution-inconsistent there (official world rows 0.1634; this renderer 0.1634, the same number)",
+                "light_level >= 0.5": "asserted at the frozen DOWNSAMPLE_EXACT_FRAC; measured 1.000",
+                "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True"
+              },
+              "why": "6 of 8 states are outside the bands the class declares inapplicable (['light_level < 0.5']); the bound is asserted on those and the rest are recorded not_applicable with the class's cited evidence"
+            },
             "bound": ">= 1.0 - 0.005",
-            "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+            "bound_from": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC; asserted on the applicable band only, per the class's resolution_consistency_applicability declaration",
             "frozen_corpus": {
               "exact_frac": 0.766161506558642,
               "max_abs": 38,
@@ -2006,11 +2286,12 @@
               "n_states": 64
             },
             "group": "family_specific",
+            "judged_on_subset": 6,
             "measured_on": "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance",
             "observed": {
-              "exact_frac": 0.816382137345679,
-              "max_abs": 21,
-              "mean_abs": 0.7734274530606996
+              "exact_frac": 1.0,
+              "max_abs": 0,
+              "mean_abs": 0.0
             },
             "protocol": {
               "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)",
@@ -2022,10 +2303,8 @@
               "style": "default appearance"
             },
             "raw_status": "measured",
-            "status": "fail",
-            "violations": [
-              "exact_frac 0.8164 < 1.0 - 0.005"
-            ]
+            "status": "pass",
+            "violations": []
           },
           "check_set_state_copies": {
             "bound": "set_state copies and does not rebind",
@@ -2106,10 +2385,8 @@
           }
         },
         "config_id": "CraftaxClassic",
-        "failures": [
-          "check_resolution_consistency"
-        ],
-        "gate_a": "FAIL",
+        "failures": [],
+        "gate_a": "PASS",
         "no_declared_bound": [],
         "not_applicable": [
           "check_backend_agreement",
@@ -2249,6 +2526,7 @@
     },
     {
       "cell": "CraftaxFull",
+      "class_resolved_by": "stable_envs.REGISTRY['CraftaxFull']",
       "device": "cuda",
       "judgment": {
         "blocked": [],
@@ -2578,6 +2856,7 @@
     },
     {
       "cell": "OGBCube",
+      "class_resolved_by": "stable_envs.REGISTRY['OGBCube']",
       "device": "cuda",
       "judgment": {
         "blocked": [],
@@ -2975,6 +3254,7 @@
     },
     {
       "cell": "OGBScene",
+      "class_resolved_by": "stable_envs.REGISTRY['OGBScene']",
       "device": "cuda",
       "judgment": {
         "blocked": [],
@@ -3372,6 +3652,7 @@
     },
     {
       "cell": "PFRocketLanding",
+      "class_resolved_by": "stable_envs.envs.rocket_landing.PFRocketLanding (module import only)",
       "device": "cuda",
       "judgment": {
         "blocked": [
@@ -3407,22 +3688,25 @@
             "status": "pass"
           },
           "check_colors_apply_exactly": {
-            "bound": "an RGB knob puts that colour in the frame",
+            "declared_by": "PFRocketLanding.color_exactness_applicability",
             "group": "family_specific",
-            "observed": [
-              "pad.color->[17, 33, 200]",
-              "pad.color->[200, 17, 33]",
-              "rocket.body_color->[17, 33, 200]",
-              "rocket.body_color->[200, 17, 33]",
-              "rocket.booster_color->[17, 33, 200]",
-              "rocket.booster_color->[200, 17, 33]",
-              "rocket.fin_color->[17, 33, 200]",
-              "rocket.fin_color->[200, 17, 33]",
-              "rocket.leg_color->[17, 33, 200]",
-              "rocket.leg_color->[200, 17, 33]"
-            ],
-            "raw_status": "measured",
-            "status": "fail"
+            "measured_evidence": {
+              "colors_not_applied": [
+                "pad.color->[17, 33, 200]",
+                "pad.color->[200, 17, 33]",
+                "rocket.body_color->[17, 33, 200]",
+                "rocket.body_color->[200, 17, 33]",
+                "rocket.booster_color->[17, 33, 200]",
+                "rocket.booster_color->[200, 17, 33]",
+                "rocket.fin_color->[17, 33, 200]",
+                "rocket.fin_color->[200, 17, 33]",
+                "rocket.leg_color->[17, 33, 200]",
+                "rocket.leg_color->[200, 17, 33]"
+              ]
+            },
+            "raw_status": "not_applicable",
+            "status": "not_applicable",
+            "why": "declared not_applicable on 5 named lit RGB leaves. 5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none). The measurement is kept: colors_not_applied=['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'], best_abs_diff=None."
           },
           "check_default_style_is_official": {
             "bound": "== 0",
@@ -3655,13 +3939,12 @@
           }
         },
         "config_id": "PFRocketLanding",
-        "failures": [
-          "check_colors_apply_exactly"
-        ],
-        "gate_a": "FAIL",
+        "failures": [],
+        "gate_a": "BLOCKED",
         "no_declared_bound": [],
         "not_applicable": [
           "check_backend_agreement",
+          "check_colors_apply_exactly",
           "check_task_object_visibility",
           "render_parity_with_official_renderer"
         ],
@@ -3804,6 +4087,7 @@
     },
     {
       "cell": "DMCManipulatorBringBall",
+      "class_resolved_by": "stable_envs.REGISTRY['DMCManipulatorBringBall']",
       "device": "cuda",
       "judgment": {
         "blocked": [],
@@ -4161,6 +4445,7 @@
     },
     {
       "cell": "DMCQuadrupedWalk",
+      "class_resolved_by": "stable_envs.REGISTRY['DMCQuadrupedWalk']",
       "device": "cuda",
       "judgment": {
         "blocked": [],
@@ -4558,5 +4843,21 @@
       "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
     }
   ],
-  "scope": "Rejudgment of unchanged historical measurements, not a fresh Step-8 renderer certification. Both mandatory and family_specific groups are judged; unresolved applicability/reference issues remain visible."
+  "sources": {
+    "downsample_provenance": "examples/results/step8/certification/downsample_provenance.json",
+    "downsample_provenance_sha256": "c6b691a7286621a8fe6d8175094dab51ea94b51bef15378f0f367615306c0191",
+    "gate_a": [
+      "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+      "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+      "examples/results/step7/closure2/gate_a/cpu_rocket.json",
+      "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+      "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+      "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+      "examples/results/step7/closure2/gate_a/cuda_rocket.json",
+      "examples/results/step7/closure2/gate_a/cuda_vis311.json"
+    ],
+    "subset_judgment": "examples/results/step8/certification/oscar_paired_tests.json",
+    "subset_judgment_sha256": "0ba814c9b9acb1381da1821d26e2af1d4112635decff0356de5f2b6542d298ee"
+  },
+  "what_this_is": "Gate A for the seven Step-7 cells, rejudged from the UNCHANGED closure2 measurements with the frozen Step-4 judge, mandatory AND family_specific. Historical rejudgment, not a fresh Step-8 certification: nothing rendered."
 }
