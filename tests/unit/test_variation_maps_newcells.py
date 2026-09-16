@@ -12,11 +12,13 @@ and asserts the recorded inventory still matches the wrapper.
 """
 
 import numpy as np
+import torch
 import pytest
 
 from stable_envs.compat.worldmodel import VARIATION_MAPS, variation_map
 from stable_envs.compat.variation_maps.newcells import (
-    BUCKETS, LEAF_CLASSIFICATION, NEWCELL_VARIATION_MAPS, RECORDED_SWM_LEAVES,
+    BUCKETS, LEAF_CLASSIFICATION, NEWCELL_VARIATION_MAPS, RECORDED_OURS_LEAVES,
+    RECORDED_SWM_LEAVES,
 )
 
 IDS = sorted(RECORDED_SWM_LEAVES)
@@ -307,11 +309,58 @@ def test_ogbmaze_pixel_encoding_is_unsupported_because_the_map_cannot_invert():
     assert "decolor_floor" not in {o for o in _map_for(MAZE).pairs()}
 
 
-def test_ogbmaze_camera_and_scale_leaves_are_declared_ours_only():
-    m = _map_for(MAZE)
-    assert set(m.ours_only) == {"agent.scale", "camera.distance_scale", "camera.elevation"}
+@pytest.mark.parametrize("cell", sorted(RECORDED_OURS_LEAVES))
+def test_every_own_side_leaf_is_mapped_or_carries_an_ours_only_reason(cell):
+    """The completeness check in the OTHER direction, and the one the reviewer found missing.
+
+    `test_every_offered_leaf_is_in_exactly_one_bucket_of_the_map` makes every SWM leaf account for
+    itself. Nothing made OUR leaves do the same, so a leaf we render with no swm counterpart could
+    sit in the space with no statement of why -- which is how OGBMaze shipped `floor.tint` and
+    `rendering.decolor_floor` undocumented while three sibling leaves had reasons.
+
+    Every own-side leaf must be either MAPPED (a key of `pairs()`) or carry a non-empty `ours_only`
+    reason, and `ours_only` may not name a leaf we do not actually have.
+    """
+    m = NEWCELL_VARIATION_MAPS[cell]
+    ours = set(RECORDED_OURS_LEAVES[cell])
+    mapped = set(m.pairs())
+    declared = set(m.ours_only)
+    unexplained = ours - mapped - declared
+    assert not unexplained, (
+        f"{cell}: {sorted(unexplained)} are leaves of OUR variation space and appear in NEITHER the "
+        f"map nor ours_only. Give each one a reason -- 'swm has no counterpart' is a claim, and an "
+        f"undocumented leaf is the same Gate-F gap as an unclassified swm leaf, facing the other way")
+    both = mapped & declared
+    assert not both, f"{cell}: {sorted(both)} are both mapped and declared ours-only"
+    assert not (declared - ours), (
+        f"{cell}: ours_only names {sorted(declared - ours)}, which our variation space does not "
+        f"offer; a reason for a leaf that does not exist explains nothing")
+    for leaf in declared:
+        assert m.ours_only[leaf].strip(), f"{cell}:{leaf} has an empty ours_only reason"
+
+
+@pytest.mark.parametrize("cell", sorted(RECORDED_OURS_LEAVES))
+def test_no_ours_only_leaf_is_secretly_offered_by_swm(cell):
+    """An `ours_only` leaf swm ALSO offers is a mapping we failed to make, not a leaf they lack."""
+    m = NEWCELL_VARIATION_MAPS[cell]
+    theirs = set(RECORDED_SWM_LEAVES[m.swm_id])
     for leaf in m.ours_only:
-        assert leaf not in RECORDED_SWM_LEAVES[MAZE]
+        assert leaf not in theirs, (
+            f"{cell}:{leaf} is declared ours-only but swm offers it too. Either map it or move the "
+            f"reason to swm_only, where it will be checked against the swm inventory")
+
+
+def test_ogbmaze_ours_only_names_the_five_leaves_swm_has_no_counterpart_for():
+    """The specific inventory, so a leaf cannot silently leave the list either."""
+    m = _map_for(MAZE)
+    assert set(m.ours_only) == {"agent.scale", "floor.tint", "camera.distance_scale",
+                                "camera.elevation", "rendering.decolor_floor"}
+    assert "checker" in m.ours_only["floor.tint"], (
+        "floor.tint's reason must say WHY it is not swm's floor.color: ours multiplies the bound "
+        "texture, swm replaces the checker's two RGB values")
+    assert "pixel_encoding" in m.ours_only["rendering.decolor_floor"], (
+        "decolor_floor's reason must name pixel_encoding, because the two are the same switch and a "
+        "reader who does not know that will file this as an unmapped swm leaf")
 
 
 def test_both_pointmaze_large_cells_share_one_mapping():
@@ -367,3 +416,225 @@ def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
         assert rec["classification"] == "not_applicable"
         assert "variation_space is None" in rec["evidence"]
         assert sid not in RECORDED_SWM_LEAVES, f"{sid} offers no leaves; it needs no map"
+
+
+# ---------------------------------------------------------------- OGB cube.color, on the CPU
+#
+# These exercise the REAL helper methods -- `_cube_colours`, `_cube_geom_index` and
+# `_upload_cube_colours` -- against a stub bundle and a stub mujoco_warp context, so the
+# custom-to-default leak the reviewer found has a regression test that needs no GPU and no ogbench.
+# They deliberately do not construct an env: `OGBManipBase.__init__` refuses any device but cuda,
+# and the defect lives entirely in these three methods and the module context cache they write to.
+
+_CUBE_DEFAULT = [0.96, 0.26, 0.33]
+_CUBE_GEOMS = [62, 63]
+#: object_0 is opaque; target_object_0 is the translucent goal marker. swm writes rgb and leaves the
+#: alpha channel alone, so the alphas here are what the helper must preserve.
+_CUBE_ALPHAS = [1.0, 0.2]
+
+
+def _stub_env(device="cpu"):
+    """An `OGBManipBase` with only the attributes the colour helpers touch."""
+    import types
+
+    from stable_envs.envs.ogb_manip import OGBManipBase
+    ngeom = 80
+    pristine = np.zeros((ngeom, 4), np.float64)
+    pristine[:, 3] = 1.0
+    for g, a in zip(_CUBE_GEOMS, _CUBE_ALPHAS):
+        pristine[g, :3] = _CUBE_DEFAULT
+        pristine[g, 3] = a
+    env = object.__new__(OGBManipBase)
+    env.device = device
+    env._b = types.SimpleNamespace(
+        cube_geoms=np.asarray(_CUBE_GEOMS, np.int64),
+        pristine={"geom_rgba": pristine},
+        var_defaults={"cube.color": np.asarray(_CUBE_DEFAULT, np.float64)},
+    )
+    return env, ngeom
+
+
+def _stub_context(nworld, ngeom):
+    """A stand-in for the cached mujoco_warp context: one mutable per-world `geom_rgba`.
+
+    Created ONCE per test and reused across renders/chunks/instances on purpose -- that reuse is the
+    property `_CTX_CACHE` has and the reason a skipped default upload leaks.
+    """
+    import types
+    buf = torch.zeros((nworld, ngeom, 4), dtype=torch.float32)
+    buf[:, :, 3] = 1.0
+    return types.SimpleNamespace(wp=types.SimpleNamespace(to_torch=lambda a: a),
+                                 wm=types.SimpleNamespace(geom_rgba=buf)), buf
+
+
+def _sty(rows):
+    """A minimal resolved-style stand-in: `sty[path]` -> a `(B, w)` tensor."""
+    return {"cube.color": torch.as_tensor(np.asarray(rows, np.float64), dtype=torch.float32)}
+
+
+def _upload(env, c, sty, B, nworld):
+    """One render's worth of uploads, chunked exactly as `render` chunks them."""
+    from stable_envs.envs.ogb_manip import MJW_CHUNK
+    cube = env._cube_colours(sty, B)
+    assert cube is not None, (
+        "_cube_colours returned None, so render() would skip the upload entirely. That is the "
+        "defect: a cell with cube geoms must always be given a value to write")
+    for lo in range(0, B, MJW_CHUNK):
+        hi = min(lo + MJW_CHUNK, B)
+        env._upload_cube_colours(c, cube[lo:hi], hi - lo)
+
+
+def _rows(buf, n):
+    return buf[:n][:, _CUBE_GEOMS, :].numpy()
+
+
+def _expect(colours):
+    out = np.zeros((len(colours), len(_CUBE_GEOMS), 4), np.float64)
+    for i, rgb in enumerate(colours):
+        out[i, :, :3] = rgb
+        out[i, :, 3] = _CUBE_ALPHAS
+    return out
+
+
+def test_cube_colours_never_returns_none_for_the_registered_default():
+    """The reviewer's reproduction, inverted into an assertion. The old `_cube_colours` answered
+    `None` whenever the request was close to the default, and `render` then skipped the upload."""
+    env, _ = _stub_env()
+    got = env._cube_colours(_sty([_CUBE_DEFAULT]), 1)
+    assert got is not None
+    assert np.allclose(got.numpy(), _expect([_CUBE_DEFAULT]))
+
+
+def test_custom_then_default_restores_the_default_rgb():
+    """Render red, then render the default. The second render must not draw red.
+
+    This is the exact sequence that failed: OGBCube has no button upload that would rewrite the
+    `geom_rgba` block, so the context kept the previous render's colour.
+    """
+    env, ngeom = _stub_env()
+    c, buf = _stub_context(4, ngeom)
+    _upload(env, c, _sty([[1.0, 0.0, 0.0]] * 4), 4, 4)
+    assert np.allclose(_rows(buf, 4), _expect([[1.0, 0.0, 0.0]] * 4))
+    _upload(env, c, _sty([_CUBE_DEFAULT] * 4), 4, 4)
+    assert np.allclose(_rows(buf, 4), _expect([_CUBE_DEFAULT] * 4)), (
+        "a default render after a custom one drew the custom colour -- the per-world geom_rgba was "
+        "left as the previous render wrote it")
+
+
+def test_mixed_batch_then_default_restores_every_world():
+    """A per-environment style, then a uniform default. Every world must come back, not just world 0."""
+    env, ngeom = _stub_env()
+    c, buf = _stub_context(4, ngeom)
+    mixed = [[1.0, 0.0, 0.0], _CUBE_DEFAULT, [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    _upload(env, c, _sty(mixed), 4, 4)
+    assert np.allclose(_rows(buf, 4), _expect(mixed))
+    _upload(env, c, _sty([_CUBE_DEFAULT] * 4), 4, 4)
+    assert np.allclose(_rows(buf, 4), _expect([_CUBE_DEFAULT] * 4))
+
+
+def test_default_then_custom_then_default_is_bit_identical_to_the_first_default():
+    """The round trip, compared against the FIRST default rather than against the declared value:
+    a restore that merely lands near the default is not a restore."""
+    env, ngeom = _stub_env()
+    c, buf = _stub_context(2, ngeom)
+    _upload(env, c, _sty([_CUBE_DEFAULT] * 2), 2, 2)
+    first = _rows(buf, 2).copy()
+    _upload(env, c, _sty([[0.1, 0.9, 0.4]] * 2), 2, 2)
+    _upload(env, c, _sty([_CUBE_DEFAULT] * 2), 2, 2)
+    assert np.array_equal(_rows(buf, 2), first)
+
+
+def test_a_second_renderer_instance_does_not_inherit_the_first_ones_colour():
+    """`_CTX_CACHE` is keyed by (cell, res, nworld), not by renderer instance, so two envs in one
+    process share the per-world buffer. The second instance's default render must still be default."""
+    a, ngeom = _stub_env()
+    b, _ = _stub_env()
+    c, buf = _stub_context(2, ngeom)
+    _upload(a, c, _sty([[0.0, 0.0, 1.0]] * 2), 2, 2)
+    _upload(b, c, _sty([_CUBE_DEFAULT] * 2), 2, 2)
+    assert np.allclose(_rows(buf, 2), _expect([_CUBE_DEFAULT] * 2))
+
+
+def test_a_small_default_batch_after_a_large_custom_one_leaves_no_stale_world():
+    """Chunking is per-render, so a render of 2 worlds writes worlds 0-1 of a buffer an earlier
+    render filled to 4. The rendered worlds are the ones that must be correct."""
+    env, ngeom = _stub_env()
+    c, buf = _stub_context(4, ngeom)
+    _upload(env, c, _sty([[1.0, 0.0, 1.0]] * 4), 4, 4)
+    _upload(env, c, _sty([_CUBE_DEFAULT] * 2), 2, 4)
+    assert np.allclose(_rows(buf, 2), _expect([_CUBE_DEFAULT] * 2))
+
+
+def test_each_cube_geom_keeps_its_own_alpha():
+    """swm writes `rgba[:3]` and leaves the alpha to the MJCF: the opaque cube and the translucent
+    goal marker must not be flattened to one alpha by the colour write."""
+    env, ngeom = _stub_env()
+    c, buf = _stub_context(1, ngeom)
+    _upload(env, c, _sty([[0.2, 0.4, 0.6]]), 1, 1)
+    assert list(buf[0][_CUBE_GEOMS][:, 3].numpy()) == pytest.approx(_CUBE_ALPHAS)
+
+
+def test_the_colour_write_touches_only_the_cube_geoms():
+    """Isolation, on the CPU: every other geom row of the shared buffer is untouched."""
+    env, ngeom = _stub_env()
+    c, buf = _stub_context(2, ngeom)
+    before = buf.clone()
+    _upload(env, c, _sty([[1.0, 0.0, 0.0]] * 2), 2, 2)
+    other = [g for g in range(ngeom) if g not in _CUBE_GEOMS]
+    assert torch.equal(buf[:, other], before[:, other])
+
+
+# ---------------------------------------------------------------- the cube.color shape contract
+
+def _ogb_space(cell):
+    """The real `make_variation_space` for one OGB cell, with no CUDA.
+
+    `OGBManipBase.__init__` refuses a non-cuda device, but `make_variation_space` only needs the
+    cached bundle, which is mujoco + ogbench on the CPU. Called unbound on a stub carrying `CELL`,
+    so this is the shipped code path and not a copy of it.
+    """
+    import types
+    pytest.importorskip("ogbench")
+    from stable_envs.envs.ogb_manip import OGBManipBase
+    return OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=cell))
+
+
+@pytest.mark.parametrize("cell", ["Cube", "Scene"])
+def test_our_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three(cell):
+    """One shape, decided once. swm declares `cube.color` as `(num_cubes, 3)` and both registered
+    cells are one-cube configurations, so we carry the leaf FLAT: a leading axis of length 1 buys
+    nothing and costs a shape the Box, the style row and the swm value would each spell differently.
+    `floor.color` stays `(2, 3)` because the checker's two colours are not interchangeable.
+    """
+    space = _ogb_space(cell)
+    layout = {p: (o, w) for p, o, w in space.flat_layout()}
+    assert space["cube"]["color"].shape == (3,)
+    assert space["floor"]["color"].shape == (2, 3)
+    assert layout["cube.color"][1] == 3 and layout["floor.color"][1] == 6
+
+
+@pytest.mark.parametrize("cell,swm_id", [("Cube", "swm/OGBCube-v0"), ("Scene", "swm/OGBScene-v0")])
+def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(cell, swm_id):
+    """swm hands out `(1, 3)`; `style_from_variation` flattens before slicing, so its value lands in
+    our width-3 slot unchanged, and `variation_from_style` gives the three numbers back.
+
+    The residual asymmetry is recorded rather than hidden: `variation_from_style` emits a FLAT
+    vector for every multi-row leaf, so feeding its output straight back into a live swm env needs a
+    reshape to `(1, 3)` (and `(2, 3)` for the floor). That is a property of `compat.worldmodel`,
+    which this workstream does not own; findings.md carries it as a boundary reshape.
+    """
+    import types
+
+    from stable_envs.compat.worldmodel import style_from_variation, variation_from_style
+    space = _ogb_space(cell)
+    name = {"Cube": "OGBCube", "Scene": "OGBScene"}[cell]
+    env = types.new_class(name, ())()
+    env.variation_space = space
+    base = np.zeros(sum(w for _, _, w in space.flat_layout()), np.float32)
+    want = np.array([[0.1, 0.2, 0.3]])                       # swm's (num_cubes, 3), num_cubes == 1
+    row = style_from_variation(env, {"cube": {"color": want}}, base=base)
+    o, w = {p: (o, w) for p, o, w in space.flat_layout()}["cube.color"]
+    assert list(row[o:o + w]) == pytest.approx([0.1, 0.2, 0.3])
+    back = variation_from_style(env, row)
+    assert np.asarray(back["cube.color"]).reshape(-1) == pytest.approx([0.1, 0.2, 0.3])
+    assert np.asarray(back["floor.color"]).reshape(-1).shape == (6,)
