@@ -255,3 +255,117 @@ def test_the_recorded_inventory_still_matches_the_live_wrapper(swm_id):
     assert live == sorted(RECORDED_SWM_LEAVES[swm_id]), (
         f"{swm_id}: the live variation space is {live} but RECORDED_SWM_LEAVES says "
         f"{sorted(RECORDED_SWM_LEAVES[swm_id])}. Re-enumerate and re-classify the difference")
+
+
+# ---------------------------------------------------------------- the maze families
+
+MAZE = "swm/OGBMaze-v0"
+SPM = "swm/SimplePointMaze-v0"
+
+
+def test_ogbmaze_wall_color_is_renamed_not_identical():
+    """swm spells it `wall.color`, we spell it `walls.color`. Mapping it as `identical` would map
+    nothing at all, silently, because neither side would find the other's path."""
+    m = _map_for(MAZE)
+    assert m.renamed.get("walls.color") == "wall.color"
+    assert "wall.color" not in m.identical and "walls.color" not in m.identical
+    assert m.pairs()["walls.color"] == ("wall.color", 1.0)
+
+
+def test_ogbmaze_default_conflict_is_resolved_in_favour_of_the_pixel_mode_value():
+    """swm reads wall.color's init_value from the loaded XML, which is 1.0 in states mode and 0.6 in
+    pixels mode. Our renderer reproduces the pixel-mode appearance, so 0.6 is the right default and
+    the reason must say why rather than leaving a reader to rediscover the conflict."""
+    rec = LEAF_CLASSIFICATION[MAZE]["leaves"]["wall.color"]
+    assert rec["classification"] == "mapped"
+    assert "0.6" in rec["evidence"] and "0 of 50,176" in rec["evidence"]
+
+
+def test_ogbmaze_records_that_the_registered_states_mode_config_renders_every_leaf_dead():
+    """The sharpest upstream finding for this id: in ob_type='states' -- which is what the swm id
+    registers -- none of the five leaves reaches a pixel, because compile_model() rebuilds ogbench's
+    renderer only for 'pixels'. A classification that did not say which config it was measured in
+    would be unreadable."""
+    note = LEAF_CLASSIFICATION[MAZE]["config_note"]
+    assert "states" in note and "custom_renderer" in note
+    assert "pixels" in note
+
+
+def test_ogbmaze_floor_color_is_dead_at_the_appearance_we_actually_render():
+    rec = LEAF_CLASSIFICATION[MAZE]["leaves"]["floor.color"]
+    assert rec["classification"] == "dead_upstream"
+    assert "0 of 50,176" in rec["evidence"], (
+        "the dead verdict is conditional on the official pixel_encoding=1 appearance; the evidence "
+        "must carry that count or the verdict cannot be checked")
+
+
+def test_ogbmaze_pixel_encoding_is_unsupported_because_the_map_cannot_invert():
+    """Our `rendering.decolor_floor` IS the same switch, with the opposite sense. It is recorded as
+    unsupported rather than mapped because VariationMap can only express `ours = theirs * factor`,
+    and quietly mapping it would invert the semantics for every caller."""
+    rec = LEAF_CLASSIFICATION[MAZE]["leaves"]["floor.pixel_encoding"]
+    assert rec["classification"] == "unsupported"
+    assert "1 - theirs" in _map_for(MAZE).swm_only["floor.pixel_encoding"]
+    assert "decolor_floor" not in {o for o in _map_for(MAZE).pairs()}
+
+
+def test_ogbmaze_camera_and_scale_leaves_are_declared_ours_only():
+    m = _map_for(MAZE)
+    assert set(m.ours_only) == {"agent.scale", "camera.distance_scale", "camera.elevation"}
+    for leaf in m.ours_only:
+        assert leaf not in RECORDED_SWM_LEAVES[MAZE]
+
+
+def test_both_pointmaze_large_cells_share_one_mapping():
+    """navigate and stitch differ by dataset, not by appearance; two maps that can drift apart would
+    be two records of one fact."""
+    a = NEWCELL_VARIATION_MAPS["PointmazeLargeNavigate"]
+    b = NEWCELL_VARIATION_MAPS["PointmazeLargeStitch"]
+    assert a.swm_id == b.swm_id == MAZE
+    assert a.pairs() == b.pairs() and dict(a.swm_only) == dict(b.swm_only)
+
+
+def test_simple_point_maze_maps_all_seven_appearance_leaves():
+    m = _map_for(SPM)
+    assert set(m.pairs()) == {"agent.color", "agent.radius", "background.color", "walls.color",
+                              "walls.number", "walls.shape", "walls.positions"}
+    for ours, (theirs, factor) in m.pairs().items():
+        assert ours == theirs and factor == 1.0
+
+
+def test_simple_point_maze_goal_leaves_are_not_applicable_because_show_goal_is_off():
+    """Not `unsupported`: the renderer could draw a goal. This registration does not have one, which
+    is a different statement, and it is the pre-existing documented divergence rather than a Step-8
+    decision."""
+    for leaf in ("goal.color", "goal.radius", "goal.position"):
+        rec = LEAF_CLASSIFICATION[SPM]["leaves"][leaf]
+        assert rec["classification"] == "not_applicable"
+        assert "show_goal" in rec["reason"]
+    assert "show_goal=False" in LEAF_CLASSIFICATION[SPM]["config_note"]
+
+
+def test_simple_point_maze_position_and_speed_are_not_style():
+    for leaf in ("agent.position", "agent.speed"):
+        assert LEAF_CLASSIFICATION[SPM]["leaves"][leaf]["classification"] == "not_applicable"
+
+
+def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
+    """The map names OUR paths. If a path is not a leaf of our variation space, the mapping silently
+    does nothing -- which is the failure mode `renamed` exists to prevent."""
+    spm = pytest.importorskip("stable_envs.envs.simple_point_maze")
+    space = spm.SimplePointMaze.make_variation_space(spm.SimplePointMaze)
+    ours = set(space.names())
+    for leaf in _map_for(SPM).pairs():
+        assert leaf in ours, f"{leaf} is mapped but is not a leaf of SimplePointMaze's own space"
+
+
+def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
+    """Confirmed live: CraftaxWrapper.__init__ sets variation_space = None, so there is no Gate-F
+    variation gap for either id. Recorded so the Step-8 count has no implicit exception."""
+    from stable_envs.compat.variation_maps.newcells import CRAFTAX_NO_LEAVES
+    assert set(CRAFTAX_NO_LEAVES) == {"swm/CraftaxClassicPixels-v1", "swm/CraftaxPixels-v1"}
+    for sid, rec in CRAFTAX_NO_LEAVES.items():
+        assert rec["n_swm_leaves"] == 0
+        assert rec["classification"] == "not_applicable"
+        assert "variation_space is None" in rec["evidence"]
+        assert sid not in RECORDED_SWM_LEAVES, f"{sid} offers no leaves; it needs no map"

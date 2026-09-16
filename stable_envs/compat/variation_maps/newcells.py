@@ -324,3 +324,201 @@ RECORDED_SWM_LEAVES: dict[str, tuple[str, ...]] = {
 
 #: The four buckets, and nothing else. A verdict outside this set is a typo, not a new category.
 BUCKETS = ("mapped", "unsupported", "dead_upstream", "not_applicable")
+
+
+# ====================================================================== OGB maze / SimplePointMaze
+
+_MAZE_PROBES = {
+    "ogbmaze": (
+        "examples/results/step8/variations-newcells/probes/probe_ogbmaze.json -- each leaf set to "
+        "explicit values through options['variation_values'], 224x224 (50,176 px), with the task id "
+        "and the qpos/qvel pinned and the global numpy seed fixed so the ~3,000-5,500 px reset noise "
+        "floor (ogbench draws cur_task_id from the GLOBAL np.random) does not swamp the leaf; "
+        "base-vs-base maxdiff 0"),
+    "spm": (
+        "examples/results/step8/variations-newcells/probes/probe_spm.json -- 500x500 (250,000 px). "
+        "SimplePointMazeEnv honours ONLY options['variation'] (a resample list) and silently ignores "
+        "options['variation_values'], so exact values are set on the leaf after a no-variation reset; "
+        "base-vs-base maxdiff 0"),
+}
+
+#: OGBMaze leaves that our raycast3d port reproduces, and the ones it does not. Measured in
+#: ``ob_type='pixels'``, which is the configuration our renderer is certified against
+#: (``reference_id`` is ``ogbench/pointmaze-large-v0``, not the swm id).
+_OGBMAZE_SWM_ONLY = {
+    "floor.color": (
+        "the checker floor texture's rgb1/rgb2. DEAD AT THE APPEARANCE WE REPRODUCE, MEASURED: it "
+        "has an effect only when floor.pixel_encoding==0, and the official OGBench appearance is "
+        "encoding 1 (the position-encoding gradient), where the recompile overwrites tex_data and "
+        "the leaf moves 0 of 50,176 px. At encoding 0 it moves 21,029 px. Our floor.tint is a "
+        "different knob -- a multiplier on whatever texture is bound -- not a checker rgb1/rgb2, so "
+        "it is not offered as this leaf's counterpart"),
+    "floor.pixel_encoding": (
+        "our `rendering.decolor_floor` is the same switch with the OPPOSITE sense: swm's encoding=1 "
+        "is the position-encoding gradient, which is our decolor_floor=0, and both defaults are the "
+        "official gradient. VariationMap can express `ours = theirs * factor` and nothing else, so "
+        "an inverting relation (`ours = 1 - theirs`) has no representation here -- this is a "
+        "capability gap in the shared class, reported to the workstream that owns it, not a "
+        "renderer gap. A second question is open regardless: swm's encoding=0 restores the XML "
+        "CHECKER (2 colours) while our decolor_floor=1 paints flat slate, and whether those are the "
+        "same picture has not been measured"),
+    "light.intensity": (
+        "the global directional light's diffuse term (MEASURED: writes light_diffuse row 0 only; "
+        "intensity 0 moves 43,931 px, 0.5 moves 43,931 px at maxdiff 84, and 1.0 -- the default -- "
+        "moves 0). Our renderer does not carry a light leaf: its lighting is a FITTED law with a "
+        "fixed per-light split calibrated at the default intensity, so scaling the diffuse term is "
+        "not obviously the same operation the official renderer performs. Offering it would need "
+        "the law re-derived as a function of intensity and re-certified. ESCALATED"),
+}
+
+_OGBMAZE_OURS_ONLY = {
+    "agent.scale": "rjepa's `mark_agent_red` enlarges the agent so a 6-pixel body is findable by a "
+                   "fixed sky camera; swm has no counterpart",
+    "camera.distance_scale": "swm does not expose the camera; ours is needed to reproduce the "
+                             "published sky-camera framings",
+    "camera.elevation": "as camera.distance_scale",
+}
+
+_SPM_SWM_ONLY = {
+    "agent.position": "this is our STATE, not our style. MEASURED: swm's render() draws "
+                      "`self.state`, never the leaf -- the leaf is a RESET distribution that seeds "
+                      "the state, so setting it after a reset moves 0 of 250,000 px",
+    "agent.speed": "dynamics only; carried as the class attribute `speed` because it changes no "
+                   "pixel. MEASURED: 0 of 250,000 px at both 0.05 and 2.0, and under resample",
+    "goal.color": "not drawn: this class is the `show_goal=False` configuration, a pre-existing and "
+                  "documented divergence (docs/research/swm_coverage.md). MEASURED: 0 of 250,000 px "
+                  "with show_goal=False, 1,324 px with show_goal=True. Our reference_env passes "
+                  "show_goal=False too, so the fidelity numbers compare like with like",
+    "goal.radius": "as goal.color -- guarded by the same `if self.show_goal`. MEASURED: 0 px with "
+                   "show_goal=False, 1,264-6,812 px with it on. It still affects `terminated`, "
+                   "which is task semantics rather than appearance",
+    "goal.position": "as goal.color. MEASURED: 0 px with show_goal=False, 2,648 px with it on",
+}
+
+NEWCELL_VARIATION_MAPS.update({
+    "SimplePointMaze": VariationMap(
+        swm_id="swm/SimplePointMaze-v0",
+        # Every one of these is the same dotted path, the same units and the same default on both
+        # sides: RGBBox 0-255 for the colours, world units on the 5x5 domain for the radii and
+        # positions, Discrete(3, start=4) for walls.number. Verified leaf by leaf against the live
+        # space rather than assumed from the names.
+        identical=("agent.color", "agent.radius", "background.color",
+                   "walls.color", "walls.number", "walls.shape", "walls.positions"),
+        swm_only=_SPM_SWM_ONLY,
+    ),
+    **{name: VariationMap(
+        swm_id="swm/OGBMaze-v0",
+        identical=("agent.color",),
+        # swm spells it `wall.color`, singular; we spell it `walls.color`. Same units (float 0-1)
+        # and the same absolute semantics -- MEASURED: swm writes the `wall` MATERIAL's mat_rgba and
+        # never geom_rgba, and setting it to our default 0.6 reproduces the default frame bit-exactly
+        # (0 of 50,176 px), which is what settles the apparent default conflict: swm reads its
+        # init_value from the loaded XML, and ogbench rewrites wall rgba to 0.6 only in pixels mode,
+        # so the 1.0 that a states-mode env reports is not the appearance we render.
+        renamed={"walls.color": "wall.color"},
+        swm_only=_OGBMAZE_SWM_ONLY,
+        ours_only=_OGBMAZE_OURS_ONLY,
+    ) for name in ("PointmazeLargeNavigate", "PointmazeLargeStitch")},
+})
+
+RECORDED_SWM_LEAVES.update({
+    "swm/OGBMaze-v0": ("agent.color", "floor.color", "floor.pixel_encoding", "light.intensity",
+                       "wall.color"),
+    "swm/SimplePointMaze-v0": (
+        "agent.color", "agent.position", "agent.radius", "agent.speed", "background.color",
+        "goal.color", "goal.position", "goal.radius", "walls.color", "walls.number",
+        "walls.positions", "walls.shape"),
+})
+
+LEAF_CLASSIFICATION.update({
+    "swm/OGBMaze-v0": {
+        "our_envs": ["PointmazeLargeNavigate", "PointmazeLargeStitch"],
+        "config_note": (
+            "Classified in ob_type='pixels'. UPSTREAM FINDING: the registered id swm/OGBMaze-v0 "
+            "defaults to ob_type='states', and in THAT configuration all five leaves move 0 pixels "
+            "-- swm's compile_model() rebuilds ogbench's `custom_renderer` only for 'pixels', so a "
+            "states-mode render keeps drawing the pre-recompile model even though mat_rgba provably "
+            "changed. Our port reproduces the OGBench pixel renderer (reference_id "
+            "ogbench/pointmaze-large-v0), so the pixels-mode semantics are the ones that bind here"),
+        "leaves": {
+            "agent.color": _cls(
+                "mapped", "identical path, float 0-1, same default [0.7,0.5,0.3]",
+                _MAZE_PROBES["ogbmaze"] + " -- 59 px moved at maxdiff 255",
+                mechanism="MJCF material 'self' -> mat_rgba row 1, carried by 1 geom (pointbody)"),
+            "wall.color": _cls(
+                "mapped", "our walls.color; same float 0-1 units and absolute (not tint) semantics",
+                _MAZE_PROBES["ogbmaze"] + " -- 26,310 px moved at black/red; setting it to our "
+                "default 0.6 moves 0 of 50,176 px",
+                mechanism="MJCF material 'wall' -> mat_rgba row 3, carried by 62 block geoms; "
+                          "geom_rgba is never written"),
+            "floor.color": _cls(
+                "dead_upstream", _OGBMAZE_SWM_ONLY["floor.color"],
+                _MAZE_PROBES["ogbmaze"] + " -- 0 of 50,176 px at pixel_encoding=1 (the official "
+                "appearance); 21,029 px at encoding=0",
+                mechanism="checker texture rgb1/rgb2, overwritten by the position-encoding gradient"),
+            "floor.pixel_encoding": _cls(
+                "unsupported", _OGBMAZE_SWM_ONLY["floor.pixel_encoding"],
+                _MAZE_PROBES["ogbmaze"] + " -- encoding 1 vs 0 moves 21,029 px at maxdiff 224",
+                mechanism="VariationMap cannot express an inverting relation; ownership request to "
+                          "the workstream that owns the class"),
+            "light.intensity": _cls(
+                "unsupported", _OGBMAZE_SWM_ONLY["light.intensity"],
+                _MAZE_PROBES["ogbmaze"] + " -- 43,931 px at intensity 0 and 0.5; 0 px at 1.0",
+                mechanism="light_diffuse row 0; our fitted lighting law is calibrated at the "
+                          "default intensity. Escalation candidate"),
+        },
+    },
+    "swm/SimplePointMaze-v0": {
+        "our_envs": ["SimplePointMaze"],
+        "config_note": (
+            "This class is the show_goal=False configuration, which the swm id itself registers as "
+            "True. That divergence predates Step 8 and is documented in docs/research/"
+            "swm_coverage.md; reference_env passes show_goal=False so fidelity compares like with "
+            "like. It is why the three goal leaves are not_applicable rather than unsupported"),
+        "leaves": {
+            "agent.color": _cls("mapped", "identical path, RGBBox 0-255, default (255,0,0)",
+                                _MAZE_PROBES["spm"] + " -- 344 px moved at maxdiff 255"),
+            "agent.radius": _cls("mapped", "identical path, world units 0.05-0.5 on the 5x5 domain",
+                                 _MAZE_PROBES["spm"] + " -- 284 px at r=0.05, 7,712 px at r=0.5"),
+            "background.color": _cls("mapped", "identical path, RGBBox 0-255",
+                                     _MAZE_PROBES["spm"] + " -- 211,173 px moved"),
+            "walls.color": _cls("mapped", "identical path, RGBBox 0-255",
+                                _MAZE_PROBES["spm"] + " -- 37,552 px moved"),
+            "walls.number": _cls("mapped", "identical path, Discrete(3, start=4), init 5",
+                                 _MAZE_PROBES["spm"] + " -- 3,671 px at n=6, 27 px at n=4"),
+            "walls.shape": _cls("mapped", "identical path, (6,2) in world units 0.5-1.5",
+                                _MAZE_PROBES["spm"] + " -- 15,909 px moved"),
+            "walls.positions": _cls("mapped", "identical path, (6,2) in world units 0-5",
+                                    _MAZE_PROBES["spm"] + " -- 46,153 px moved"),
+            "agent.position": _cls("not_applicable", _SPM_SWM_ONLY["agent.position"],
+                                   _MAZE_PROBES["spm"] + " -- 0 of 250,000 px when set after reset",
+                                   mechanism="render() draws self.state; the leaf only seeds it"),
+            "agent.speed": _cls("not_applicable", _SPM_SWM_ONLY["agent.speed"],
+                                _MAZE_PROBES["spm"] + " -- 0 of 250,000 px at 0.05 and at 2.0",
+                                mechanism="step(): state + speed*action; reaches no draw call"),
+            "goal.color": _cls("not_applicable", _SPM_SWM_ONLY["goal.color"],
+                               _MAZE_PROBES["spm"] + " -- 0 of 250,000 px with show_goal=False, "
+                               "1,324 px with show_goal=True"),
+            "goal.radius": _cls("not_applicable", _SPM_SWM_ONLY["goal.radius"],
+                                _MAZE_PROBES["spm"] + " -- 0 px with show_goal=False, 1,264-6,812 "
+                                "px with show_goal=True"),
+            "goal.position": _cls("not_applicable", _SPM_SWM_ONLY["goal.position"],
+                                  _MAZE_PROBES["spm"] + " -- 0 px with show_goal=False, 2,648 px "
+                                  "with show_goal=True"),
+        },
+    },
+})
+
+#: The two symbolic-adjacent Craftax pixel ids. They are recorded here rather than left out so the
+#: Step-8 completeness count can say "every id is accounted for" without an implicit exception.
+#: MEASURED LIVE: `CraftaxWrapper.__init__` sets `self.variation_space = None` (craftax.py:59) and
+#: there is no `swm.spaces` import anywhere in stable_worldmodel/envs/craftax/, so both ids offer
+#: ZERO leaves and there is no Gate-F variation gap to close for either.
+CRAFTAX_NO_LEAVES = {
+    "swm/CraftaxClassicPixels-v1": {
+        "our_envs": ["CraftaxClassic"], "n_swm_leaves": 0, "classification": "not_applicable",
+        "evidence": "live: CraftaxClassicPixelsWrapper.variation_space is None; frame (63,63,3)"},
+    "swm/CraftaxPixels-v1": {
+        "our_envs": ["CraftaxFull"], "n_swm_leaves": 0, "classification": "not_applicable",
+        "evidence": "live: CraftaxPixelsWrapper.variation_space is None; frame (130,110,3)"},
+}
