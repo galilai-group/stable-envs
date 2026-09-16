@@ -986,7 +986,7 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
   closure_fixes:
-    head: c77afa65 (+plugin)
+    head: e56ef1b5
     closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
     citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
     sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
@@ -1035,6 +1035,10 @@ workstreams:
     remaining_blocker: 'resource guard: 4 renderers closed mid-session (node-independent: gpu2104/2105/2106/2109) with 0 EGL contexts released (6 created / 6 live); the four closed renderers report ''born
       during <not recorded>'' (instrumentation missed their creation; __new__ now patched, -s); job 6437003 asks (A) do the four rows fail alone, (B) who builds them; if still unnamed -> escalate to the
       reviewer as a shared-file judgement (guard proxy fires without the harm it proxies for; closes originate in ogbench''s close()-on-reset)'
+    renderer_close_owner_named: 'job 6437003: the four rows pass alone (4 created / 0 closed); with __new__ patched and capture off the closed renderers are W5''s own _plate_rig Renderers built at new resolutions
+      during test_resolution_downsample_agrees_within_the_measured_bound and test_render_size_does_not_leak_into_later_calls, collected later during test_a_shared_style_broadcasts_to_any_batch / test_dataset_paths_regenerate_identical_frames
+      (ordering artefact of the guard); mechanism of collection despite the module dict still unknown (possible second module copy) -> _KEEPALIVE list enforcing ''created and never released'' + SE7_OGB_RIGDEBUG
+      readout; first run through the persistent allocation (m6/rigcheck)'
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1534,6 +1538,8 @@ incident_log:
 - date: '2026-09-16'
   item: 'Persistent 3090 allocation held for closure work: SLURM 6437813 (se7-interactive-3090) on gpu2101, 12 h, in tmux session se7gpu on the login node; agents run GPU steps via srun --jobid=6437813
     --overlap (no queue). Model rule: Opus by default.'
+- date: '2026-09-16'
+  item: 'W5: renderer-close owner named (own plate rigs at extra resolutions, collected later); keepalive + debug run in the held allocation'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
