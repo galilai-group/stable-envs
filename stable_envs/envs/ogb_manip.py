@@ -885,6 +885,22 @@ class OGBManipBase(StableEnv):
         `rig.floor` is therefore a RECORD of what was last written -- useful when a plate looks wrong
         and you want to know which colour the context actually holds -- and never a permission to
         skip the write.
+
+        THE CURRENT CONTEXT IS THE LOAD-BEARING LINE. `mujoco.Renderer` calls
+        `self._gl_context.make_current()` in exactly two places -- its constructor and `render()` --
+        and `mjr_uploadTexture` is neither. Its `con` argument selects the MuJoCo texture id; the GL
+        calls it issues go to whatever context the THREAD currently has, which is the last rig that
+        rendered. This module keeps one rig per (cell, RESOLUTION), so there are two live contexts
+        the moment `_check_plate_is_constant` bakes at 128 while a render is working at 224 -- and an
+        upload made under the wrong one writes over an unrelated texture object in that context,
+        because GL texture names are per-context.
+
+        MEASURED, on gpu2264, before this line existed: a second `OGBManipBase` constructed after a
+        render with a custom floor failed its own `_check_plate_is_constant` with the two 128 px
+        plates differing by **219/255**, which reads as "the plate depends on the state" and is
+        really "the skybox texture of one context was overwritten by the floor upload of another".
+        Gate A caught it as `check_style_is_state`; it is invisible to any test that builds one
+        renderer at one resolution.
         """
         import mujoco
         g = self._b.grid_tex
@@ -895,6 +911,7 @@ class OGBManipBase(StableEnv):
         flat = rig.model.tex_data[g["adr"]:g["adr"] + g["n"]].reshape(-1, g["nch"])
         flat[g["mask1"], :3] = mj_quantise(want[0])
         flat[g["mask2"], :3] = mj_quantise(want[1])
+        rig.renderer._gl_context.make_current()
         mujoco.mjr_uploadTexture(rig.model, rig.renderer._mjr_context, g["texid"])
         rig.floor = want.copy()
 
