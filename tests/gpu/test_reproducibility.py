@@ -410,6 +410,25 @@ DOWNSAMPLE_MARGIN = 0.005
 #:               plate at 2S -- mean 1.44/255 on cartpole against the mazes' 0.6-1.1. This is the
 #:               loosest family, and the two entries bracket it: point_mass (0.730) has no sky and a
 #:               floor the camera looks straight down on, cartpole (0.282) is 62% speckled skybox.
+#: TWO Step-7 cells are DELIBERATELY ABSENT from this table and neither absence is an oversight:
+#:
+#:   ``CraftaxFull``               the class declares ``resolution_consistency_applicability`` with
+#:                                 "all bands: not_applicable" and the oracle behind it -- craftax's
+#:                                 own ``load_texture`` resamples every PNG with ``Image.NEAREST`` at
+#:                                 each size, so the OFFICIAL renderer's 2S atlas is not a 2x
+#:                                 replication of its S one either (official world rows 0.4817 in
+#:                                 full daylight, 0.0991 at night, max abs 191). This test skips it on
+#:                                 that declaration. A floor recorded here would be a number for a
+#:                                 relation the reference does not satisfy in any band. Measured for
+#:                                 the record, not asserted: 0.794537 at S=10 (closure2 gate_a).
+#:   ``DMCManipulatorBringBall``   carries ``PLATE_PATHS`` and is not a ``PLATE_REPRESENTATIVE``, so
+#:                                 this test skips it exactly as it skips every other PARITY-tier
+#:                                 plate cell in the DM Control family -- ``DMCCartpoleSwingup`` and
+#:                                 ``DMCPointMassEasy`` stand for the two camera geometries. Measured
+#:                                 for the record, not asserted: 0.850842 (cpu and cuda, closure2).
+#:
+#: Both numbers live with their provenance in
+#: ``examples/results/step8/certification/downsample_provenance.json``.
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "AntmazeGiantNavigate":       0.708287,   # mean 1.1419/255
     "AntmazeGiantStitch":         0.708287,   # mean 1.1419/255
@@ -431,7 +450,16 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: tiles are not 7 px tiles doubled. Both are properties of the reference. The floor is low and it
     #: is still a live regression detector: it moves the moment a tile lands in a different place.
     "Crafter":                    0.382263,   # mean 12.5190/255
-    "CraftaxClassic":             1.000000,   # mean 0.0000/255
+    #: STILL 1.000000, unchanged, and now asserted only where it can be. Step 7 measured the night
+    #: band: the noise field is drawn at the FRAME's resolution, so 2S draws a different field and
+    #: not a finer sampling of the same one -- 0.282 at light 0.45 and 0.035 at light 0.1 against
+    #: 1.000 at light >= 0.5. The official craftax renderer is not resolution-consistent there
+    #: either (world rows 0.1634 for both, the same number), so the class declares
+    #: ``resolution_consistency_applicability`` and this test judges the applicable band. On the
+    #: protocol's own 8-state draw that is 6 states and they measure exactly 1.000000.
+    #: Oracle: examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
+    #: Ruling: Sami 2026-09-15 (examples/results/step7/dashboard.yaml, decisions).
+    "CraftaxClassic":             1.000000,   # mean 0.0000/255 on light >= 0.5; see applicability
     "DMCCartpoleSwingup":         0.282065,   # mean 1.4428/255  see DM Control note below
     "DMCPointMassEasy":           0.730424,   # mean 0.2418/255
     #: The five VISUAL-tier DM Control cells draw the whole scene through MJWarp with no plate, so
@@ -441,6 +469,16 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: textures rather than of the geometry. It is still a live detector — the bodies and the camera
     #: are what a regression would move, and moving them collapses it.
     "DMCCheetahRun":              0.533850,   # mean 3.0869/255
+    #: Step 7 added a sixth cell to that VISUAL-tier group and it belongs here for the same reason:
+    #: DMCQuadrupedWalk draws the whole scene through MJWarp with no plate, so PLATE_REPRESENTATIVES
+    #: does not cover it. It sits ABOVE the other five because its camera is much closer to the body
+    #: and sees proportionally less speckled skybox. MEASURED under this table's own protocol
+    #: (8 states at render_worker.STATE_SEED, default appearance, states sha256 52d82312...): the
+    #: minimum over the four committed Step-7 runs -- cpu 0.8118772 (closure2) and 0.8118797
+    #: (closure), cuda 0.8120117 and 0.8120217, at mujoco 3.11.0 and 3.12.0 -- so the floor holds on
+    #: every device and reference pair measured, and the whole spread is 2.5e-05 wide inside a
+    #: 0.005 margin. Artifacts: examples/results/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
+    "DMCQuadrupedWalk":           0.811877,   # mean 0.6329/255
     "DMCHopperHop":               0.550220,   # mean 2.9202/255
     "DMCHumanoidStand":           0.603650,   # mean 2.4394/255
     "DMCSwimmerSwimmer6":         0.609800,   # mean 0.8424/255
@@ -555,6 +593,16 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: reason: its camera looks along the ground at elevation -45, so the plate's re-bake at 2S
     #: re-renders a scene that is mostly flat sky and flat floor, where the OGBench top-down camera
     #: fills the frame with a checkerboard whose every cell edge moves.
+    #: The one nvdiffrast cell outside the Gymnasium locomotion block, and the highest number in this
+    #: part of the table because its scene is a rocket against a flat sky over a checker pad: most of
+    #: the frame is a constant, and the disagreement is the hull silhouette and the pad's texture
+    #: edges. MEASURED under this table's own protocol (8 states at render_worker.STATE_SEED, default
+    #: appearance, states sha256 a5f128ad...), on the RTX 3090 at torch 2.14.0+cu126 / nvdiffrast
+    #: 0.4.0, MUJOCO_GL unused: exact 0.9561372, mean 0.9923/255, max 255 -- the same number in the
+    #: closure and closure2 sweeps. 0.956137 is 0.95614 to five decimals, which is the value the
+    #: Step-7 carry-over recorded. There is no cpu row: PFRocketLanding raises on device="cpu" by
+    #: design. Artifact: examples/results/step7/closure2/gate_a/cuda_rocket.json.
+    "PFRocketLanding":            0.956137,   # mean 0.9923/255
     "PointMazeLarge":             0.913387,   # mean 0.2794/255  (measured on PointMazeMedium)
     "PointMazeMedium":            0.913387,   # mean 0.2794/255
     "PointMazeOpen":              0.913387,   # mean 0.2794/255
@@ -652,6 +700,62 @@ def _skip_if_size_is_not_resolution(env) -> None:
                     f"than two resolutions")
 
 
+def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_bound():
+    """The band reader, on the two declaration shapes in the repo and on the cases that must not fire.
+
+    Pure logic over a declaration and a state array — no renderer — because what has to be guaranteed
+    is that an env WITHOUT a declaration is unaffected and an unparseable band widens nothing. A
+    declaration that narrows the judged set is a claim about the REFERENCE, and getting it wrong in the
+    permissive direction (judging states the reference cannot satisfy) shows up as a loud failure,
+    while getting it wrong in the restrictive direction (silently dropping states) would not show up at
+    all. So the restrictive direction is what these cases pin down.
+    """
+    names = ["x", "light_level"]
+    st = np.array([[0.0, 0.1], [0.0, 0.45], [0.0, 0.5], [0.0, 1.0]], np.float32)
+
+    # 1. no declaration at all: every state, and the caller may skip subsetting entirely.
+    class Bare:
+        state_names = names
+    r = C.resolution_consistency_applicability(Bare(), st)
+    assert r["applicable"] and r["indices"] is None, r
+
+    # 2. the CraftaxClassic shape: one applicable band and one not.
+    class Banded:
+        state_names = names
+        resolution_consistency_applicability = {
+            "light_level >= 0.5": "asserted at the frozen bound",
+            "light_level < 0.5": "not_applicable: the reference is itself inconsistent there",
+            "evidence": "oracle.json"}
+    r = C.resolution_consistency_applicability(Banded(), st)
+    assert r["applicable"] and r["indices"] == [2, 3], r
+    assert r["declaration"] == {"evidence": "oracle.json"}, "the cited evidence must survive"
+
+    # 3. only the INAPPLICABLE band named: the complement is still judged, not dropped.
+    class OnlyBad:
+        state_names = names
+        resolution_consistency_applicability = {
+            "light_level < 0.5": "not_applicable: mechanism", "evidence": "oracle.json"}
+    assert C.resolution_consistency_applicability(OnlyBad(), st)["indices"] == [2, 3]
+
+    # 4. the CraftaxFull shape: the whole cell, answered without looking at a state.
+    class AllBands:
+        state_names = names
+        resolution_consistency_applicability = {"all bands": "not_applicable: mechanism",
+                                                "evidence": "oracle.json"}
+    r = C.resolution_consistency_applicability(AllBands(), st)
+    assert r["applicable"] is False and r["indices"] == [], r
+    assert C.resolution_consistency_applicability(AllBands(), None)["applicable"] is False
+
+    # 5. a band naming a dimension this env does not have must NOT narrow anything. A typo that
+    #    silently dropped states would look like a pass.
+    class Typo:
+        state_names = names
+        resolution_consistency_applicability = {"lightlevel >= 0.5": "asserted",
+                                                "evidence": "oracle.json"}
+    r = C.resolution_consistency_applicability(Typo(), st)
+    assert r["applicable"] and r["indices"] is None and "could not be resolved" in r["why"], r
+
+
 def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
     """Rendering at 2S then box-downsampling, against rendering at S — to a measured, per-env bound.
 
@@ -672,6 +776,16 @@ def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
     if hasattr(type(env), "PLATE_PATHS") and name not in PLATE_REPRESENTATIVES:
         pytest.skip(f"{name}: covered by {sorted(PLATE_REPRESENTATIVES)} — see PLATE_REPRESENTATIVES")
     states, _ = inputs
+    # A class may declare, with the OFFICIAL renderer's own oracle result cited, that the relation
+    # itself does not hold in some or all of its state space -- Craftax draws its night noise field at
+    # the frame's own resolution and Craftax Full resamples every texture PNG at each size, so 2S is a
+    # different picture there for the reference too. This reads that declaration; it moves no bound.
+    app = C.resolution_consistency_applicability(env, states)
+    if not app["applicable"]:
+        pytest.skip(f"{name}: {app['why']}")
+    if app["indices"] is not None:
+        states = np.ascontiguousarray(np.asarray(states)[np.asarray(app["indices"], int)], np.float32)
+        print(f"\n{name}: judged on {len(states)} states in the applicable band(s) {app['bands']}")
     try:
         _skip_if_size_is_not_resolution(env)
         r = C.check_resolution_consistency(env, states)

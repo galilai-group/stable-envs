@@ -261,6 +261,24 @@ def _downsample_judge(bnd: dict):
         if ev.get("frozen_corpus") is not None:
             out["frozen_corpus"] = {k: ev["frozen_corpus"].get(k)
                                     for k in ("exact_frac", "mean_abs", "max_abs", "n_states")}
+        # Step 8: which states the bound was asserted ON, when the class declares that the RELATION
+        # does not hold across its whole state space. The number above is then a number about a
+        # SUBSET, and a record that does not say so is a record a reader would misread. The frozen
+        # floor and the frozen margin are unchanged -- ``floors`` and ``margin`` above come out of
+        # ``bounds.py`` exactly as before; the applicability declaration narrows the state set, never
+        # the bar. A shard measured before Step 8 carries no ``applicability`` and reads as it did.
+        app = ev.get("applicability")
+        if app is not None:
+            out["applicability"] = {k: app.get(k) for k in ("bands", "declaration", "why")}
+            if app.get("indices") is not None:
+                out["judged_on_subset"] = len(app["indices"])
+                out["bound_from"] += ("; asserted on the applicable band only, per the class's "
+                                      "resolution_consistency_applicability declaration")
+        if ev.get("all_bands") is not None:
+            # Recorded, never judged: the mixed-band number, so a later run can show whether the
+            # subset moved or the renderer did.
+            out["all_bands_recorded_not_judged"] = {k: ev["all_bands"].get(k)
+                                                    for k in ("exact_frac", "mean_abs", "max_abs")}
         if "protocol" not in out:
             out["protocol"] = "not recorded: measured on the caller's states (Step 4: the frozen corpus)"
         return ok, out

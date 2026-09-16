@@ -251,11 +251,35 @@ def test_default_style_is_the_official_appearance(env):
 
 
 def test_color_knobs_apply_the_requested_color(env):
+    """Every RGB knob puts its colour in the frame — except where the CLASS declares it cannot.
+
+    The check is unchanged and still probes every leaf. What changed in Step 8 is what this assertion
+    is entitled to conclude from the result: a leaf whose renderer applies a documented lighting law
+    that cannot reach unit gain can never contain the literal triple, and the OFFICIAL renderer
+    cannot either, so asserting it here measures the reference's shading model. Sami's ruling of
+    2026-09-16; the declaration and its five required pieces of evidence live on the class and are
+    read by ``conformance.color_exactness_applicability``.
+
+    A declared leaf is NOT silently dropped: its measured distance is asserted to still exist, so a
+    knob that comes off its primitive still fails something rather than disappearing into the
+    declaration. Every leaf nobody declared is asserted exactly as before.
+    """
     r = C.check_colors_apply_exactly(env)
-    assert not r["colors_not_applied"], (
-        f"colour knobs that did not put the requested colour in the frame: {r['colors_not_applied']} — "
+    part = C.partition_colour_exactness(r)
+    assert not part["asserted"], (
+        f"colour knobs that did not put the requested colour in the frame: {part['asserted']} — "
         f"a knob wired to the wrong primitive, scaled, or channel-swapped still passes the weaker "
-        f"'does it change anything' check")
+        f"'does it change anything' check"
+        + (f" (these are NOT covered by the class's colour-exactness declaration, which covers "
+           f"{[d['probe'] for d in part['not_applicable']]})" if part["honoured"] else ""))
+    for declared in part["not_applicable"]:
+        assert declared["best_abs_diff"] is not None, (
+            f"{declared['probe']} is declared not_applicable but the probe recorded no "
+            f"best_abs_diff — the declaration is only allowed to stop the ASSERTION, never the "
+            f"measurement, or a wiring regression on this leaf would move no number at all")
+    if part["not_applicable"]:
+        print(f"declared not_applicable, measured and reported: {part['not_applicable']} "
+              f"({part['why']})")
 
 
 def test_determinism(env):

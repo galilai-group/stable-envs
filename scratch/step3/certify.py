@@ -46,31 +46,84 @@ def read_censuses(paths) -> dict:
     return out
 
 
-#: Modules that import NO ``stable_envs.render.*`` backend because they draw without one, and the class
-#: Step 2 already assigns to such a renderer. This is the ONE clarifying interpretation Step 3 makes,
-#: and section 21 of the brief is where it is allowed: without it the backend class cannot be COMPUTED
-#: for five envs, and no numeric bar moves as a result.
+#: Backends that entered ``stable_envs.render`` AFTER Step 2 froze ``backend_classes``, and the class
+#: Step 2's own definitions give them. Step 2 assigns a class by what the backend DOES -- section 6.4's
+#: S is "3-D scene", R is "2-D raster/tile" -- and froze the lists that existed on 2026-09-09. Step 6
+#: and Step 7 added four more modules; leaving them out of the mapping does not make them classless, it
+#: makes the class fall through to a MODULE NAME, which is an accident of where a file lives rather
+#: than a fact about the renderer. This table restores the frozen DEFINITION to the modules that
+#: postdate the frozen LISTS. No threshold moves: ``scratch/certification.json`` is not edited, and the
+#: ladder each class is judged on is read from it unchanged.
 #:
-#:   ``craftax``   "the frame is a gather from a texture atlas with two alpha blends over" it (class
-#:                 docstring). Step 2's class R list names "embedded atlas" for exactly this shape.
-#:   ``swm_nav``   the reference is itself torch arithmetic producing a uint8 (3,H,W) image. There is
-#:                 no 3-D scene anywhere in it.
+#:   ``cpu3d``             the shared CPU-native 3-D backend (Step 6): a real camera, real geometry,
+#:                         real visibility over the same scenes ``mjwarp`` draws. Class S.
+#:   ``mjwarp_lightspec``  the light/material specification ``mjwarp`` renders through. Class S, and it
+#:                         never appears without ``mjwarp`` beside it.
+#:   ``navdot``            the ``swm_nav`` dot/zone renderer: torch arithmetic over a 2-D grid, no
+#:                         camera and no 3-D scene anywhere in it. Class R.
+#:   ``gfxdraw_classic``   the two ``gfxdraw`` variants. The frozen R list already names ``gfxdraw``;
+#:   ``gfxdraw_fused``     these are the same 2-D rasterizer, split into a readable and a fused form.
+POST_STEP2_BACKEND_CLASS = {"cpu3d": "S", "mjwarp_lightspec": "S",
+                            "navdot": "R", "gfxdraw_classic": "R", "gfxdraw_fused": "R"}
+
+#: Modules under ``stable_envs.render`` that are NOT renderers and must never decide a class. ``prng``
+#: is Craftax's counter-based random number generator -- it draws the night noise FIELD, not the
+#: picture -- and ``rendernet`` is a learned decoder, not a rasterizer. Both are listed explicitly
+#: rather than left to fall off the end of the S/R lists, because falling off the end is what put
+#: CraftaxFull at ``unknown``: once ``craftax_full`` imported ``prng``, its ``backends`` stopped being
+#: empty, and an empty-backends env is the only kind ``NO_BACKEND_MODULE_CLASS`` was written to catch.
+NOT_A_BACKEND = frozenset({"prng", "rendernet"})
+
+#: Modules that import NO class-bearing ``stable_envs.render.*`` backend because they draw without one,
+#: and the class Step 2 already assigns to such a renderer. This is the ONE clarifying interpretation
+#: Step 3 makes, and section 21 of the brief is where it is allowed: without it the backend class
+#: cannot be COMPUTED for these envs, and no numeric bar moves as a result.
 #:
-#: Both are 2-D and neither touches mjwarp/raycast3d/nvdiff. Class R also holds them to the HIGHER bar
-#: (GPU_FAST at R >= 500 against class S's 4), so this is the conservative reading as well as the
+#:   ``craftax``      "the frame is a gather from a texture atlas with two alpha blends over" it (class
+#:   ``craftax_full``  docstring). Step 2's class R list names "embedded atlas" for exactly this shape.
+#:                    ``craftax_full`` is the same renderer over the full game's atlas and was the one
+#:                    cell Step 7 left at ``unknown``, purely because this table keyed on the module
+#:                    NAME and ``craftax_full`` is not spelled ``craftax``.
+#:   ``swm_nav``      the reference is itself torch arithmetic producing a uint8 (3,H,W) image. There is
+#:                    no 3-D scene anywhere in it. (Its envs now declare ``navdot`` above, so this entry
+#:                    is a belt rather than the load-bearing rule it used to be; both give R.)
+#:   ``minihack``     the same shape as ``craftax`` and identified the same way, from the module's own
+#:                    account of the reference: "the frame is a gather from a finite atlas indexed by
+#:                    the 21x79 glyph grid, and there is no sub-pixel geometry, no blending and no float
+#:                    arithmetic anywhere in the path" (``stable_envs/envs/minihack.py``). It was the
+#:                    second cell left at ``unknown`` and for the same fall-through reason as
+#:                    CraftaxFull, not for any reason to do with the renderer.
+#:
+#: All are 2-D and none touches mjwarp/raycast3d/nvdiff/cpu3d. Class R also holds them to the HIGHER
+#: bar (GPU_FAST at R >= 500 against class S's 4), so this is the conservative reading as well as the
 #: accurate one.
-NO_BACKEND_MODULE_CLASS = {"craftax": "R", "swm_nav": "R"}
+NO_BACKEND_MODULE_CLASS = {"craftax": "R", "craftax_full": "R", "minihack": "R",
+                           "swm_nav": "R"}
 
 
 def backend_class(env: str, census: dict) -> tuple[str, list[str]]:
-    """``("S"|"R"|unknown, backends)`` -- Step 2 section 6.4, assigned from declared backends."""
+    """``("S"|"R"|unknown, backends)`` -- Step 2 section 6.4, assigned from declared backends.
+
+    The class follows what the backends ARE. The frozen lists in ``scratch/certification.json`` are
+    consulted first and never edited; ``POST_STEP2_BACKEND_CLASS`` supplies the same definition for the
+    four modules that were written after those lists were frozen; ``NOT_A_BACKEND`` removes the two
+    ``stable_envs.render`` modules that are not renderers at all; and only when NO class-bearing
+    backend remains does the module name get a say, which is the fall-through that put CraftaxFull at
+    ``unknown``.
+
+    S is checked before R, and that ordering is a claim: an env whose defining module reaches both a
+    3-D backend and a 2-D one is drawing a 3-D scene with 2-D helpers, not the other way round. Every
+    such env in the corpus is a DM Control cell, whose ``backends`` are ``cpu3d``/``mjwarp``/
+    ``raycast3d`` -- three ways to draw the same 3-D scene on two devices, and S under all three.
+    """
     decl = census.get(env) or {}
     b = sorted(decl.get("backends") or [])
-    S = set(SPEC["backend_classes"]["S"]["backends"])
-    R = set(SPEC["backend_classes"]["R"]["backends"])
-    if set(b) & S:
+    bearing = [x for x in b if x not in NOT_A_BACKEND]
+    S = set(SPEC["backend_classes"]["S"]["backends"]) | {k for k, v in POST_STEP2_BACKEND_CLASS.items() if v == "S"}
+    R = set(SPEC["backend_classes"]["R"]["backends"]) | {k for k, v in POST_STEP2_BACKEND_CLASS.items() if v == "R"}
+    if set(bearing) & S:
         return "S", b
-    if set(b) & R:
+    if set(bearing) & R:
         return "R", b
     mod = (decl.get("module") or "").rsplit(".", 1)[-1]
     if mod in NO_BACKEND_MODULE_CLASS:

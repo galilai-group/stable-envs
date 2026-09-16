@@ -655,18 +655,29 @@ workstreams:
   branch: step8/certification-provenance
   worktree: /Users/samib/stable-envs-step8-certification-provenance
   model: opus
-  status: delivered 9d286ce; reviewer cut off; family_specific Gate-A record follow-up started but NOT committed (lost)
+  status: MERGED into step8/integration (reviewed APPROVE)
   authorization: plan §13 (+§14 serialised after)
   affected_ids: all 42
   affected_files: stable_envs/testing/*, scratch/census, scratch/step3+step4 certify, tests/gpu, examples/fidelity_step4.py, step7 corpora meta
   baseline_sha: 43ac952
-  head_sha: 9d286ce
+  head_sha: 2af1e05 (9d286ce + Codex 550cfc6 + follow-up)
   finding: 'census 88->100, 0 class changes, unknown 1->0; seven Step-7 corpora resolve via corpus_for; CraftaxClassic downsample judged on the light>=0.5 protocol subset = 1.000000 (threshold untouched);
     CraftaxFull n/a all bands; DOWNSAMPLE entries added Rocket 0.956137, Quadruped 0.811877 (CraftaxFull, Manipulator deliberately not); check_order_independence exists (Step-7 ''absent'' was a getattr
-    misspelling); nvdiff ULP = DOCUMENTED_LIMITATION and host-dependent (gpu2264: 0/19 widths differ); report.py support matrix 42 rows'
+    misspelling); nvdiff ULP = DOCUMENTED_LIMITATION and host-dependent (gpu2264: 0/19 widths differ); report.py support matrix 42 rows | follow-up: family_specific checks judged in Gate A; colour-check
+    applicability is a class declaration (PFRocketLanding, five lit leaves, ceiling 0.993567, best_abs_diff recorded 4/4/5/6/10) read by the judge and tests/gpu; CraftaxClassic judged on the light>=0.5
+    band via a recorded join (1.000000); Rocket re-swept on cuda (job 6443480, PyFlyt 0.29.0/pybullet 3.2.7) Gate A PASS, supersedes closure2 shard which is byte-unchanged; both CraftaxClassic corpora kept
+    (corpus_index two_frozen_corpora); Gate A 36/3/1 unchanged; variation map 21 complete / 12 partial / 5 missing / 2 n/a / 2 unknown'
   tests: 49-config re-judge 0 differ; step4_fidelity_baseline.md byte-identical; paired Oscar se-vis311 7->4 failed, se-step6 2->0, 0 new; tests/unit same 2 pre-existing
   pixels_changed: none (harness only)
   shared_files: conformance.py, fidelity_step4.py, step3/step4 certify.py, census, tests/gpu/test_reproducibility.py, 3 corpus meta sidecars, mkdocs.yml
+  review: review_e.md APPROVE (opus, fresh); six residual non-blocking defects D1-D6 recorded below
+  residual:
+  - D1 report.py:516 ValueError when outputs written outside ROOT (STEP9_CLEANUP)
+  - 'D2 two committed Oscar logs add two entries to the already-failing cited-paths test (coordinator: gzip or scrub)'
+  - D3 a fresh §21 sweep of PFRocketLanding judges the colour check FAIL unless routed through rejudge_gate_a.py (closure sweep must use the declaration-aware path)
+  - D4 re-sweep tree 1ca3866 differs from tip only by B Fetch map files (cannot affect the rocket path)
+  - D5 oscar_paired_tests.json carries no shard sha256s
+  - D6 the declaration covers every RGB leaf of that env (no unlit leaf exists)
 - workstream: D_swm_integration
   branch: step8/swm-integration
   status: spawned, killed before any work (weekly limit); worktree exists at base
@@ -761,7 +772,8 @@ buckets:
   - swm Fetch declared leaf defaults are not the official appearance (B)
   - swm variation_values list entries used unconverted -> AttributeError (B)
   - gymnasium-robotics + numpy 2.5.3 + mujoco 3.12 cannot construct Fetch (pybind enum vs np.int32 in) (B)
-  STEP9_CLEANUP: []
+  STEP9_CLEANUP:
+  - report.py ValueError when outputs are written outside ROOT (E review D1)
   DEFERRED_OPTIMIZATION: []
 incident_log:
 - date: '2026-09-16'
@@ -778,6 +790,8 @@ incident_log:
   item: A merged (3abab32) after fresh APPROVE; review files renamed review_*.md for the citation-scanner exemption; handoff/takeover pages added to the nav
 - date: '2026-09-16'
   item: B merged after fresh APPROVE; strictness switch STABLE_ENVS_REQUIRE_LIVE_SWM added; tier-2 live Fetch construction blocked locally by the numpy 2.5.3 + mujoco 3.12 upstream defect (DOCUMENTED_LIMITATION)
+- date: '2026-09-16'
+  item: E merged after fresh APPROVE (opus); colour-check ruling implemented as a narrow class declaration; Rocket provenance gap closed on the held allocation
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md

@@ -1,0 +1,46 @@
+{
+ "argmax_normal": [
+  -0.3257,
+  0.1954,
+  0.9251
+ ],
+ "at_argmax": {
+  "n_dot_l": 0.9904,
+  "r_z": 0.9686
+ },
+ "consequence": "f < 1 at every pixel for every normal, so the exact requested RGB triple cannot appear in the frame for ANY correct implementation of this reference; the official PyFlyt frame does not contain it either (brightest body pixel 0.991*int(255*c), phase0_b.json b_light)",
+ "contrast_mujoco": "MuJoCo's specular ADDS white rather than multiplying the material colour, so its bracket reaches and clamps at 1.0 and int(255*c) appears wherever a surface is lit to saturation; every MuJoCo-backed cell records colors_not_applied: []",
+ "defaults": {
+  "A": 0.6,
+  "D": 0.35,
+  "L": [
+   1,
+   1,
+   1
+  ],
+  "S": 0.05,
+  "light_direction_unnormalised": [
+   -50,
+   30,
+   100
+  ],
+  "shadow": false,
+  "spec": 2
+ },
+ "head_sha": "c0e52a91a907834b20f7e88e503d88e15613453e",
+ "law": "out_i = int(255*c_i*(A + shadow*(D*max(0,n.l) + S*max(0,r_z)**spec))*L_i), clamped at 255, truncated",
+ "law_source": "bullet3 TinyRenderer.cpp Shader::fragment; measured and confirmed empirically in examples/results/step7/rocket-landing/findings.md:1209-1217",
+ "max_shading_factor": 0.993567,
+ "method": "maximise f(n)=A+D*max(0,n.l)+S*max(0,r_z)**2 over a 2001x4001 spherical grid of unit normals, r = 2(n.l)n - l",
+ "note_max_is_not_at_n_equals_l": {
+  "f_at_n_equals_l": 0.987313,
+  "why": "the maximum trades a little diffuse for a lot of specular and sits slightly off the light axis"
+ },
+ "reachable_ceiling_for_the_checks_probe_targets": {
+  "17": 16,
+  "200": 198,
+  "33": 32
+ },
+ "reproduced_by": "Step-8 Workstream E, independently of the Step-7 figure, which it matches to 6 dp",
+ "what_this_is": "the numeric ceiling behind the colour-check decision packet, recomputed from the law rather than quoted"
+}
