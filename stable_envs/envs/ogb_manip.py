@@ -932,6 +932,29 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
         rig.model.geom_rgba[:] = b.pristine["geom_rgba"]
         rig.model.mat_rgba[:] = b.pristine["mat_rgba"]
     rig.data = mujoco.MjData(rig.model)
+    # THE OFFSCREEN BUFFER, RAISED ON OUR PRIVATE COPY -- this is the whole mechanism behind the four
+    # resource-guard rows. OGBench writes `visual.global.offwidth/offheight = render_width/height`
+    # when it compiles the scene (manipspace/envs/env.py:150), so the model serves exactly the
+    # registered size and no more. `mujoco.Renderer(m, height=res, width=res)` for any LARGER res
+    # raises `ValueError: Image width 224 > framebuffer width 200` -- AFTER `__new__` has allocated
+    # the object. The half-built Renderer is unreachable and unreferenced, so it is collected at some
+    # arbitrary later moment, `__del__` runs `close()`, and the guard charges that close to whichever
+    # test happened to be running. Measured on CPU: three constructions above the buffer, three
+    # allocations, three closes, and `_KEEPALIVE` never saw them because the line that appends is
+    # below the line that raised.
+    #
+    # That explains every fact the escalation listed: the closes are charged to tests that create
+    # nothing (collection is later), the rows pass alone (no earlier failed construction exists), a
+    # process-lifetime reference does not help (the object never reached it), and no EGL context is
+    # released (the constructor failed before it made one).
+    #
+    # Raising it here is correct rather than a workaround: the rig owns a PRIVATE deep copy, the
+    # reference env's own model keeps its 200 (verified), and a plate must be baked at whatever
+    # resolution the caller renders at -- `test_resolution_downsample_agrees_within_the_measured_bound`
+    # and `test_render_size_does_not_leak_into_later_calls` both ask for sizes the registered buffer
+    # cannot serve.
+    rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
+    rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
     rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
     _KEEPALIVE.append(rig.renderer)             # the rule, enforced directly: never released
     _PLATE_RIGS[key] = rig                      # never evicted; the renderer is never closed
