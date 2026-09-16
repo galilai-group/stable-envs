@@ -143,13 +143,15 @@ driver, job id, git SHA, mujoco / mujoco_warp versions).
   `test_repo_contracts.py::test_every_cited_scratch_path_resolves`) reproduce identically on a clean
   checkout of the baseline SHA — pre-existing, untouched by this workstream.
 
-## GPU evidence (SLURM job 6451948, re-run as 6452376)
+## GPU evidence (SLURM job 6452376, the clean re-run; supersedes 6451948)
 
 `gpu_evidence.json`, 128 px, 8 states per scene drawn from the env's own pool, on
-**NVIDIA GeForce RTX 3090** / `gpu2105.oscar.ccv.brown.edu` / driver 575.57.08 / CUDA 12.6 /
+**NVIDIA GeForce RTX 3090** / `gpu2264.oscar.ccv.brown.edu` / driver 575.57.08 / CUDA 12.6 /
 torch 2.14.0+cu126 / **mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0** / python 3.12.9 —
 `$SCR/venvs/se-s3b-fetch311`, the interpreter the frozen Fetch corpora were measured in.
-**Verdict: PASS on all four scenes.**
+Tested tree SHA `4b3d09fae90270c59d1273cfb7d5fc37e041ed75`, baseline
+`43ac95238f7472137619f3e69e7636e11dd088b1`. Raw stdout of the job is committed beside it as
+`gpu_job_6452376.out.txt`. **Verdict: PASS on all four scenes.**
 
 - **Registered default byte-identical through the mapping.** `style_from_variation(env, {})` equals
   `default_style()` exactly, and the rendered frames are **0/255 over 0 % of the frame** on Reach,
@@ -176,19 +178,22 @@ torch 2.14.0+cu126 / **mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0** / python
   `background.color` was measured independently at **9.18-9.45 %**. The two agree, which is the
   corroboration that the rename is the right one and that the residual really is the skybox.
 
-Job 6451948 also exposed two defects in the evidence harness itself, neither in the mapping: the
-tier-3 fixture errored instead of skipping on an interpreter with `mujoco_warp` and a CUDA device and
-no gymnasium-robotics (24 setup errors), and `provenance()` shelled out to `git rev-parse` in a tree
+Job 6451948 exposed two defects in the evidence harness itself, neither in the mapping: the tier-3
+fixture errored instead of skipping on an interpreter with `mujoco_warp` and a CUDA device and no
+gymnasium-robotics (24 setup errors), and `provenance()` shelled out to `git rev-parse` in a tree
 `rsync` had stripped of `.git`, so `git_sha` came back null. Both fixed; job 6452376 is the clean
-re-run.
+re-run and **its** artifacts are the committed ones. The unit tier inside that job reports
+**8 passed, 48 skipped** — `$SCR/venvs/se6-verify` has no `gymnasium_robotics`, so the 48 live-wrapper
+and GPU-fixture checks skip there. That, not a 32-pass run, is the unit-tier truth for job 6452376.
 
 ## Pixel movement
 
 **None expected and measured as none.** This workstream adds a module and one registration line; the
 render path imports neither. `pixel_parity.json` renders the four scenes' default frames from this
 branch and from `$SCR/se8/baseline` on the same card in the same job and compares them byte for byte:
-**0/255 over 0 % of the frame on all four scenes** (8 states each at 128 px, RTX 3090 gpu2105,
-job 6451948). Verdict `IDENTICAL`.
+**0/255 over 0 % of the frame on all four scenes** (8 states each at 128 px, RTX 3090 gpu2264,
+job 6452376, branch SHA `4b3d09f`). Verdict `IDENTICAL`. This is a random-state smoke check, not the
+frozen-corpus replay; the replay is `frozen_corpus_replay.json` (review correction 2).
 
 ## Not done, deliberately
 

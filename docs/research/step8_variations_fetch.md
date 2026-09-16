@@ -202,9 +202,10 @@ renders only through MJWarp on cuda, so the registered-default reproduction and 
 that need pixels run there:
 `examples/results/step8/variations-fetch/gpu_evidence.json` and `pixel_parity.json`.
 
-Measured on an **NVIDIA GeForce RTX 3090** (`gpu2105.oscar.ccv.brown.edu`, driver 575.57.08,
-CUDA 12.6, torch 2.14.0+cu126, mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0), 8 states per scene at
-128 px, **PASS on all four scenes**:
+Measured on an **NVIDIA GeForce RTX 3090** (`gpu2264.oscar.ccv.brown.edu`, driver 575.57.08,
+CUDA 12.6, torch 2.14.0+cu126, mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0), SLURM job **6452376**,
+tested tree SHA `4b3d09fae90270c59d1273cfb7d5fc37e041ed75`, 8 states per scene at 128 px,
+**PASS on all four scenes**:
 
 - the registered default is **byte-identical** through the mapping — style and frame, 0/255;
 - `variation_from_style(default)` gives `light.intensity = 0.800000011920929`, the model's own
@@ -222,6 +223,8 @@ That `floor.color` figure is worth reading twice: the official renderer's floor 
 the residual really is the skybox.
 
 `pixel_parity.json` renders this branch's default frames and the Step-8 baseline tree's on the same
-card in the same job: **0/255 on all four scenes**, verdict `IDENTICAL`.
+card in the same job: **0/255 on all four scenes**, verdict `IDENTICAL`. Those are randomly sampled
+states, so it is a smoke check; the merge-gate replay of the **Step-4 frozen Fetch corpora** through
+both trees is `frozen_corpus_replay.json` in the same directory.
 
 No performance work was done on this family, and no renderer file was touched.

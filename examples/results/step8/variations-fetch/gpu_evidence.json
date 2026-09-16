@@ -1,10 +1,10 @@
 {
  "provenance": {
-  "git_sha": null,
+  "git_sha": "4b3d09fae90270c59d1273cfb7d5fc37e041ed75",
   "git_branch": null,
-  "host": "gpu2105.oscar.ccv.brown.edu",
-  "slurm_job_id": "6451948",
-  "slurm_nodelist": "gpu2105",
+  "host": "gpu2264.oscar.ccv.brown.edu",
+  "slurm_job_id": "6452376",
+  "slurm_nodelist": "gpu2264",
   "gpu_name": "NVIDIA GeForce RTX 3090",
   "driver": "575.57.08",
   "cuda": "12.6",

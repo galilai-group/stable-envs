@@ -1,11 +1,11 @@
 {
- "baseline_tree": "/oscar/scratch/sboughan/se8/baseline",
- "branch_tree": "/oscar/scratch/sboughan/se8/variations-fetch",
+ "baseline_tree": "$SCR/se8/baseline",
+ "branch_tree": "$SCR/se8/variations-fetch",
  "size": 128,
  "n_states": 8,
- "node": "gpu2105.oscar.ccv.brown.edu",
- "slurm_job_id": "6451948",
- "branch_sha": "a835d9a6ad7511eecf0a00b1377e0562e272adcd",
+ "node": "gpu2264.oscar.ccv.brown.edu",
+ "slurm_job_id": "6452376",
+ "branch_sha": "4b3d09fae90270c59d1273cfb7d5fc37e041ed75",
  "per_scene": {
   "Reach": {
    "maxdiff": 0,
