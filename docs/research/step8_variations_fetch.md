@@ -219,7 +219,13 @@ CUDA 12.6, torch 2.14.0+cu126, mujoco 3.11.0, mujoco_warp 3.11.0, warp 1.17.0), 
 tested tree SHA `4b3d09fae90270c59d1273cfb7d5fc37e041ed75`, 8 states per scene at 128 px,
 **PASS on all four scenes**:
 
-- the registered default is **byte-identical** through the mapping — style and frame, 0/255;
+- **our** registered default is **byte-identical** through the mapping — precisely, stable-envs'
+  `default_style()` equals `style_from_variation(env, {})` and the two render 0/255 apart. This is a
+  statement about the mapping and **not** equality with the SWM wrapper's registered reset
+  appearance, which is measurably different (the wrapper unbinds the table, floor and object
+  materials on every reset that activates a visual leaf — 19.0-32.3 % of the frame, up to 102/255 —
+  and its declared leaf defaults are not the official appearance either). Gate F carries that as
+  `MISMATCH (upstream)`; see `examples/results/step8/variations-fetch/findings.md`;
 - `variation_from_style(default)` gives `light.intensity = 0.800000011920929`, the model's own
   diffuse rather than swm's declared 0.7, and re-applying it returns the default byte for byte;
 - `light.intensity` set to 0.8 reproduces the default frame at **0/255**, which is what the exact
