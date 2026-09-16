@@ -607,25 +607,28 @@ workstreams:
   branch: step8/variations-dmc-control
   worktree: /Users/samib/stable-envs-step8-variations-dmc-control
   model: opus
-  status: Wave 1 spawned
+  status: delivered-unreported (4 commits, clean); agent killed by weekly limit; unreviewed
   authorization: "plan \xA79"
   affected_ids: 5 classic control + 12 DMC ids (incl. Manipulator, Quadruped)
   affected_files: stable_envs/compat/variation_maps/dmc_control.py (new), dmcontrol.py, classic_control.py, tests
   baseline_sha: 43ac952
+  head_sha: 063f216
 - workstream: B_variations_fetch
   branch: step8/variations-fetch
   worktree: /Users/samib/stable-envs-step8-variations-fetch
   model: opus
-  status: Wave 1 spawned
+  status: delivered-unreported (7 commits, clean; GPU evidence PASS jobs 6451948/6452376); read findings.md; unreviewed
   authorization: "plan \xA710"
   affected_ids: 12 Fetch ids
   affected_files: stable_envs/compat/variation_maps/fetch.py (new), fetch.py, tests
   baseline_sha: 43ac952
+  head_sha: ce1fcb3
+  slurm_jobs: 6451876 cancelled, 6451948 gpu2105, 6452376 gpu2264
 - workstream: C_variations_newcells
   branch: step8/variations-newcells
   worktree: /Users/samib/stable-envs-step8-variations-newcells
   model: opus
-  status: 'PATCH_CANDIDATE delivered (49 leaves: 14 mapped / 13 unsupported / 4 dead_upstream / 18 n/a); reviewer spawned (sonnet); cheap OGB cube.color + floor.color authorized as a second commit set'
+  status: 'PATCH_CANDIDATE at a09b407; second commit set (cube.color/floor.color) IN PROGRESS: ogb_manip.py dirty, left untouched; reviewer cut off'
   authorization: "plan \xA711"
   affected_ids: 'OGBCube, OGBScene, PFRocketLanding, OGBMaze, SimplePointMaze, Craftax x2 (0 leaves: confirm)'
   affected_files: stable_envs/compat/variation_maps/newcells.py (new), ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, tests
@@ -642,7 +645,7 @@ workstreams:
   branch: step8/certification-provenance
   worktree: /Users/samib/stable-envs-step8-certification-provenance
   model: opus
-  status: 'delivered (8 tasks); reviewer spawned (sonnet); follow-up requested: Gate-A record must judge family_specific checks'
+  status: delivered 9d286ce; reviewer cut off; family_specific Gate-A record follow-up started but NOT committed (lost)
   authorization: "plan \xA713 (+\xA714 serialised after)"
   affected_ids: all 42
   affected_files: stable_envs/testing/*, scratch/census, scratch/step3+step4 certify, tests/gpu, examples/fidelity_step4.py, step7 corpora meta
@@ -656,7 +659,7 @@ workstreams:
   shared_files: conformance.py, fidelity_step4.py, step3/step4 certify.py, census, tests/gpu/test_reproducibility.py, 3 corpus meta sidecars, mkdocs.yml
 - workstream: D_swm_integration
   branch: step8/swm-integration
-  status: Wave 2
+  status: spawned, killed before any work (weekly limit); worktree exists at base
   model: opus
 - workstream: F_reference_provenance
   branch: step8/reference-provenance
@@ -664,11 +667,11 @@ workstreams:
   model: opus
 - workstream: G_performance
   branch: step8/performance
-  status: Wave 2
+  status: spawned, killed before any work (weekly limit); worktree exists at base
   model: opus
 - workstream: H_semantic_craftax
   branch: step8/semantic-craftax
-  status: Wave 2
+  status: worktree created, never spawned
   model: opus
 decisions: []
 escalations:
@@ -722,3 +725,11 @@ incident_log:
   item: C delivered PATCH_CANDIDATE; reviewer spawned; renderer-change leaves escalated; cheap maps authorized; A asked for the VariationMap extension
 - date: '2026-09-16'
   item: E delivered; reviewer spawned; colour-check packet + CraftaxClassic corpora question escalated; correct check name is check_order_independence (plan text misspells it)
+- date: '2026-09-16'
+  item: 'HANDOFF CHECKPOINT: all Step-8 agents killed by the weekly limit; state recorded in docs/research/step8_handoff.md; nothing merged; no worktree deleted; nothing pushed'
+handoff:
+  date: '2026-09-16'
+  doc: docs/research/step8_handoff.md
+  reason: account weekly usage limit (resets 2026-09-20 02:00 America/Indianapolis); all agents terminated
+  merged: nothing beyond Wave-0 bookkeeping
+  held_allocation: 6443480 (~4.5 h left at checkpoint)
