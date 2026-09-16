@@ -1,0 +1,390 @@
+"""How the five classic-control cells and the thirteen DM Control cells relate to their
+``stable_worldmodel`` counterparts, leaf by leaf, with the measurement behind every classification.
+
+Seventeen ``stable_worldmodel`` ids, 161 variation leaves. THIS MODULE LANDS ONE FAMILY GROUP PER
+COMMIT and is incomplete until the last of them; the counts below are the FINAL ones, and
+``EXPECTED_COUNTS`` carries only the ids this commit declares. Every leaf is exactly one of:
+
+``mapped``
+    reachable through a stable-envs leaf. 46 leaves.
+``unsupported``
+    the leaf has a real effect upstream that THIS cell cannot express. 94 leaves, of three kinds, and
+    the reason on every one of them says which: appearance the cell has no knob for (floor colour,
+    floor tilt, ball size, a per-geom rgba, a target shape); appearance the cell has no knob for that
+    arrives through the PHYSICS (the ten ``trackcom`` mass leaves and ball-in-cup's gravity, S4); and
+    PHYSICS-ONLY leaves of a render-from-state cell, which are unsupported-by-this-cell rather than
+    not-applicable because they do ask something of stable-envs — a dynamics surface these cells do
+    not have — even though they move no pixel.
+``dead_upstream``
+    the leaf reaches no pixel and no state in ``stable_worldmodel`` ITSELF. The reason carries the
+    measurement. 21 leaves.
+``not_applicable``
+    reserved by the taxonomy and UNUSED by this family: every leaf these seventeen ids offer does ask
+    something of stable-envs, even the ones that ask for a simulator. 0 leaves.
+
+Why the physics leaves are ``unsupported`` and not ``not_applicable``
+---------------------------------------------------------------------
+
+The five classic-control cells ship a batched simulator whose trajectories are certified against the
+official env, so ``physics.gravity`` is a feature they could carry and do not. The thirteen DM
+Control cells ship a renderer over states and no simulator at all (``hasattr(env, 'step')`` is
+``False`` on every one), so ``agent.torso_density`` asks them for a dynamics surface that does not
+exist. Both are the same answer to the caller — "this cell cannot honour that leaf" — and both carry
+the mechanism and the measured 0-pixel result in their reason. Calling the second kind
+``not_applicable`` would say the leaf asks nothing of stable-envs, and it does; it asks for a
+simulator. The distinction between the two kinds is preserved in the REASON text, which names which
+it is, rather than in the label.
+
+The exception, and the most interesting measurement in this workstream, is the ``trackcom`` group
+below: there a mass leaf is not physics-only at all.
+
+Three things this module measured that were not previously written down
+-----------------------------------------------------------------------
+
+**1. Twelve SWM DM Control leaves never reach the compiled model.** Probed by hashing every
+``numpy`` array on ``MjModel`` (110+ arrays, plus ``opt.gravity`` and the size scalars) at the leaf's
+default and at an interior probe value, through ``reset(options={'variation_values': ...})`` on the
+live wrapper. Two distinct mechanisms, both dead:
+
+* *the wrapper never reads it* — all seven ``*_locked`` leaves, ``BallInCup.ball.color``,
+  ``Cartpole.agent.cart_shape``, ``Pendulum.agent.mass_shape``, ``Manipulator.agent.upper_arm_length``
+  (the last one already recorded in Step 7 with the ``# TODO should modify length of arm`` beside it).
+* *MuJoCo ignores the write* — ``Acrobot.agent.{upper,lower}_arm_density``,
+  ``Cartpole.agent.pole_density`` and ``Pendulum.agent.{mass,pole}_density`` are written onto the
+  geom's ``density``, but those geoms carry an explicit ``mass``: acrobot's
+  ``<default class="/"><geom type="capsule" mass="1"/>``, cartpole's ``pole`` class, pendulum's three
+  ``mass=`` attributes. An explicit mass wins, so the recompiled model is bit-identical.
+
+**2. Two more leaves reach the model and no pixel, because the element is not drawn.**
+``Acrobot.target.{color,shape}`` move ``mat_rgba``/``site_type``/``site_size`` on a site in **group 3**,
+and ``BallInCup.{rendering.render_target, target.color, target.shape}`` move ``site_rgba``/``site_type``
+on a site in **group 4**. ``mjvOption``'s default ``geomgroup`` draws groups 0-2, so neither site is
+ever rasterised: 0 px over 8 states, and 0 px for ball-in-cup even with ``render_target`` forced to 1.
+Contrast finger, reacher and manipulator, whose targets are in group 0 and hidden by a material
+*alpha* instead — there the same leaf moves 150-459 px and is mapped.
+
+**3. On the five ``trackcom`` cells a mass leaf moves pixels at a fixed state.** ``cheetah``,
+``walker``, ``hopper``, ``humanoid`` and ``quadruped`` all render through a ``mode="trackcom"`` camera,
+whose position is derived from ``subtree_com``. Changing a density changes ``body_mass``, which moves
+the camera, which moves every pixel — 2,115 to 137,533 disagreeing pixels over 8 states with ``qpos``
+and ``geom_xpos`` verified bit-identical. So these leaves are NOT "physics with no pixel": they are
+appearance-affecting leaves this cell cannot express, and they are classified accordingly.
+
+Classic control: an exact-match recolor is not the same picture as drawing in the colour
+-----------------------------------------------------------------------------------------
+
+``GymControlWrapper.render`` renders the official frame and then swaps pixels **exactly equal** to a
+source RGB for the target colour. stable-envs draws the primitive IN the colour. The two agree
+everywhere the reference wrote the source colour verbatim and disagree on the anti-aliased boundary,
+where swm keeps a blend of the ORIGINAL colour and we produce a blend of the new one. Measured over 8
+states per env, one leaf at a time at 90 % of its range:
+
+======================== ============ ======================
+env                      default      one leaf at a probe
+======================== ============ ======================
+Acrobot (8x500x500)      **0 px**     2-2,725 px (<= 0.14 %)
+CartPole (8x400x600)     **0 px**     64-957 px (<= 0.05 %)
+Pendulum (8x500x500)     **0 px**     64-2,726 px (<= 0.14 %)
+MountainCar (8x400x600)  **0 px**     11,033-11,326 px (0.6 %)
+======================== ============ ======================
+
+The registered default is **byte-identical on every one of the five**, which is the property Step 8
+asks for; the divergence is confined to non-default styles and to shape boundaries. It is recorded
+here rather than smoothed over, because reproducing it would mean rendering the default frame and
+then recoloring it, which is a renderer change and a worse picture.
+
+``visuals.fg`` and ``visuals.cart`` are ONE-TO-MANY. swm swaps a source colour wherever it occurs, and
+black occurs on more than one element: MountainCar's ``fg`` is the car, the terrain AND the flag pole,
+CartPole's ``cart`` is the cart AND the track. stable-envs holds those as separate leaves, so one swm
+leaf drives three of ours. The inverse names the first, which is the same appearance.
+"""
+from __future__ import annotations
+
+import numpy as np
+
+from ..worldmodel import VariationMap
+
+# ===================================================================== classic control
+
+#: Every classic-control cell offers exactly this and swm does not, on every one of the five.
+_AA_ONLY = {"rendering.antialias": "exact anti-aliasing on or off; swm's envs are pygame and have no "
+                                   "such switch. See _Classic._aa_space for what it costs."}
+
+#: The dynamics leaves the five cells hold as CLASS CONSTANTS. Each of these is a real feature of the
+#: swm wrapper (it writes the attribute on the official env and the trajectory changes) and a real
+#: absence here: ``_Classic`` certifies its integrator against the reference AT the reference's own
+#: constants, and a per-environment value would be a new state/parameter dimension, not a style row.
+#: Measured at 0 disagreeing pixels over 8 states, so the RENDER is unaffected; the TRAJECTORY is not.
+#: The mapped-colour caveat every classic-control cell carries. See the module docstring for the
+#: measured table; the numbers here are the worst case over the five envs.
+_RECOLOR_NOTE = (
+    "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT "
+    "uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference "
+    "wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend "
+    "of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 "
+    "disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame "
+    "(11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this "
+    "leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).")
+
+
+def _dyn(*names: str) -> dict[str, str]:
+    return {f"physics.{n}": (
+        "dynamics only, and this cell simulates: the value is a class constant on the stable-envs "
+        "cell, whose integrator is certified against the reference at the reference's own constants. "
+        "A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing "
+        "pixels over 8 states of the official render.") for n in names}
+
+
+_CLASSIC_MAPS = {
+    "Acrobot": VariationMap(
+        swm_id="swm/AcrobotControl-v1",
+        rgb255={"background.color": "visuals.bg", "link.color": "visuals.link",
+                "joint.color": "visuals.joint", "ground.color": "visuals.line"},
+        unsupported={
+            **_dyn("link_mass_1", "link_mass_2", "link_com_pos_1", "link_com_pos_2", "link_moi"),
+            "physics.link_length_1":
+                "GEOMETRY as well as dynamics: AcrobotEnv.render draws each link at LINK_LENGTH_1 * "
+                "scale, and moving it to 1.45 moves 37,966 px of 8x500x500 in the official frame. "
+                "The stable-envs cell holds SCALE and the unit-length link quad as class constants "
+                "and declares no geometry leaf, so the appearance is not reachable.",
+            "physics.link_length_2":
+                "the same, on the second link: 38,258 px of 8x500x500 at 1.45.",
+        },
+        notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.link", "visuals.joint",
+                                          "visuals.line")},
+        ours_only=_AA_ONLY),
+    "CartPole": VariationMap(
+        swm_id="swm/CartPoleControl-v1",
+        rgb255={"background.color": "visuals.bg", "cart.color": "visuals.cart",
+                # ONE-TO-MANY: the reference paints the track black too, so swm's ``cart`` swap hits
+                # it as well. Measured: with visuals.cart at a probe value the track changes colour in
+                # the swm arm, and a map that moved only ``cart.color`` would leave it black.
+                "track.color": "visuals.cart",
+                "pole.color": "visuals.pole", "axle.color": "visuals.axle"},
+        unsupported={
+            **_dyn("gravity", "masscart", "masspole", "force_mag", "tau"),
+            "physics.length":
+                "GEOMETRY as well as dynamics: CartPoleEnv.render sets polelen = scale * 2 * length, "
+                "and 0.725 moves 6,621 px of 8x400x600 in the official frame. POLELEN is a class "
+                "constant here (it is also what WIN_POLE and KMAX_POLE are derived from) and there is "
+                "no geometry leaf, so the appearance is not reachable.",
+        },
+        notes={"visuals.bg": _RECOLOR_NOTE, "visuals.pole": _RECOLOR_NOTE,
+               "visuals.axle": _RECOLOR_NOTE,
+               "visuals.cart": _RECOLOR_NOTE + " ONE-TO-MANY: this leaf also drives `track.color`, "
+                                              "because the reference paints the track black too."},
+        ours_only=_AA_ONLY),
+    "Pendulum": VariationMap(
+        swm_id="swm/PendulumControl-v1",
+        rgb255={"background.color": "visuals.bg", "rod.color": "visuals.rod",
+                "axle.color": "visuals.hub"},
+        unsupported=_dyn("g", "m", "l", "max_torque", "max_speed", "dt"),
+        notes={k: _RECOLOR_NOTE for k in ("visuals.bg", "visuals.rod", "visuals.hub")},
+        ours_only=_AA_ONLY),
+}
+
+
+def _mountain_car(swm_id: str, *dyn: str) -> VariationMap:
+    """MountainCar and MountainCarContinuous share a renderer and differ in their dynamics leaves.
+
+    ``visuals.fg`` is the widest one-to-many in the family: the reference paints the car body, the 99
+    terrain segments and the flag POLE all in black, so one swm leaf drives three of ours. The flag
+    cloth (204, 204, 0) and the wheels (128, 128, 128) are not black and swm therefore cannot recolour
+    them at all; they are ``ours_only``.
+    """
+    return VariationMap(
+        swm_id=swm_id,
+        rgb255={"background.color": "visuals.bg",
+                "car.color": "visuals.fg", "terrain.color": "visuals.fg",
+                "flag.pole_color": "visuals.fg"},
+        unsupported=_dyn(*dyn),
+        notes={"visuals.bg": _RECOLOR_NOTE,
+               "visuals.fg": _RECOLOR_NOTE + " ONE-TO-MANY: this leaf drives `car.color`, "
+                                            "`terrain.color` AND `flag.pole_color`, because the "
+                                            "reference paints all three black."},
+        ours_only={**_AA_ONLY,
+                   "flag.color": "the flag cloth is (204, 204, 0) in the reference and swm swaps only "
+                                 "(255,255,255) and (0,0,0), so it has no leaf that reaches it",
+                   "wheel.color": "the wheels are (128, 128, 128); same reason"})
+
+
+_CLASSIC_MAPS["MountainCar"] = _mountain_car("swm/MountainCarControl-v0",
+                                             "gravity", "force", "max_speed")
+_CLASSIC_MAPS["MountainCarContinuous"] = _mountain_car("swm/MountainCarContinuousControl-v0",
+                                                       "power", "max_speed")
+
+# ===================================================================== DM Control
+
+#: ``light.intensity`` is an ABSOLUTE diffuse in [0, 1]; ``light.diffuse_scale`` MULTIPLIES the
+#: compiled model's own diffuse and clips to [0, 1]. The factor is therefore ``1 / base``, and the
+#: base is a property of the domain's XML, read off ``_pristine()["light_diffuse"]``:
+#: 0.7 everywhere except ball_in_cup, finger and manipulator, which are 0.6. Every one of these models
+#: has exactly one light (``nlight == 1``) with an equal diffuse on all three channels, so one scalar
+#: scale really is the whole leaf.
+_LIGHT_BASE = {"DMCAcrobotSwingup": 0.7, "DMCBallInCupCatch": 0.6, "DMCCartpoleBalance": 0.7,
+               "DMCCartpoleSwingup": 0.7, "DMCCheetahRun": 0.7, "DMCFingerTurnHard": 0.6,
+               "DMCHopperHop": 0.7, "DMCHumanoidStand": 0.7, "DMCManipulatorBringBall": 0.6,
+               "DMCPendulumSwingup": 0.7, "DMCQuadrupedWalk": 0.7, "DMCReacherHard": 0.7,
+               "DMCWalkerWalk": 0.7}
+
+
+def _light_reason(base: float) -> str:
+    lo = 0.2 * base
+    return (f"mapped to light.diffuse_scale with factor 1/{base} — the compiled model's own light "
+            f"diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable "
+            f"intensity is [{lo:.3f}, 1.0] (1.8 * {base} clips to 1.0 at the bright end, which costs "
+            f"nothing because swm's range stops at 1.0), and swm's [0, {lo:.3f}) is not reachable. "
+            f"swm's default 0.7 is reached at scale {0.7 / base:.6f}.")
+
+
+#: The floor. Recorded once because the mechanism is identical on all thirteen cells.
+_FLOOR_COLOR = (
+    "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` "
+    "TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor "
+    "knob, ``material.grid``, a 3-vector that multiplies the material rgba — and ``_tex_rgb`` reduces "
+    "the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer "
+    "varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of "
+    "swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for "
+    "certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character "
+    "common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's "
+    "floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range "
+    "needs a texture edit — regenerating the builtin checker into m.tex_data and re-uploading — and "
+    "``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a "
+    "renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.")
+
+_GRAVITY_PHYS = (
+    "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity "
+    "is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that "
+    "exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states "
+    "with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable "
+    "is the trajectory.")
+
+
+def _density_phys(what: str) -> str:
+    return (f"PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or "
+            f"not-applicable: {what} is a real dynamics parameter of the swm env, and this cell is a "
+            f"render-from-state cell that exposes no dynamics parameters to map it through. Measured "
+            f"0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing "
+            f"about the FRAME is lost; what is not reachable is the trajectory.")
+
+
+def _density_trackcom(px: int, n_px: int) -> str:
+    return (f"UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, "
+            f"whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured "
+            f"{px:,} disagreeing pixels of {n_px:,} over 8 states with qpos and geom_xpos bit-"
+            f"identical. The cell declares no mass leaf and its camera follows the compiled model's "
+            f"own COM, so the appearance is not reachable.")
+
+
+_LOCKED_DEAD = ("DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own "
+                "``modify_mjcf_model`` never reads it (0 textual references outside the space "
+                "literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's "
+                "two values, so it reaches neither a pixel nor a state.")
+
+
+def _never_read(extra: str = "") -> str:
+    return _LOCKED_DEAD + (" " + extra if extra else "")
+
+
+def _density_dead(where: str) -> str:
+    return ("DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, "
+            f"but {where} carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. "
+            "Measured: not one MjModel array changes, body_mass included.")
+
+
+def _target_group(group: int, extra: str = "") -> str:
+    return (f"DEAD UPSTREAM: the leaf does reach the compiled model, and the element it reaches is "
+            f"never drawn. The target is in geom/site GROUP {group}, and mjvOption's default "
+            f"``geomgroup`` rasterises groups 0-2 only. Measured 0 disagreeing pixels over 8 states"
+            + (" " + extra if extra else "") + ".")
+
+
+def _dmc(cell: str, swm_id: str, *, mapped_target: str | None = None,
+         visibility: str | None = None, shape: tuple[str, tuple[int, ...]] | None = None,
+         unsupported=None, physics_only=None, dead_upstream=None,
+         notes=None, ours_only=None) -> VariationMap:
+    """The shared skeleton. ``agent.color`` and ``light.intensity`` are mapped on all thirteen."""
+    base = _LIGHT_BASE[cell]
+    renamed = {"material.self": "agent.color"}
+    if mapped_target:
+        renamed[mapped_target] = "target.color"
+    if visibility:
+        renamed[visibility] = "rendering.render_target"
+    return VariationMap(
+        swm_id=swm_id,
+        renamed=renamed,
+        scaled={"light.diffuse_scale": ("light.intensity", 1.0 / base)},
+        enum=({shape[0]: ("target.shape", shape[1])} if shape else {}),
+        notes={"light.intensity": _light_reason(base), **(notes or {})},
+        # ``physics_only`` is merged into ``unsupported`` rather than kept as its own bucket: plan
+        # S9's taxonomy has four labels and a physics leaf of a render-from-state cell is
+        # "unsupported by this cell", not "not applicable" — the coordinator's ruling, and the right
+        # one, because ``not_applicable`` would say the leaf asks nothing of stable-envs and it does.
+        # The separate keyword survives so the REASON is uniform and the count is auditable.
+        unsupported={"floor.color": _FLOOR_COLOR, **(physics_only or {}), **(unsupported or {})},
+        dead_upstream=dict(dead_upstream or {}),
+        ours_only=dict(ours_only or {}))
+
+
+#: ``ours_only`` entries that recur. ``material.grid`` is our floor knob and is deliberately NOT the
+#: mapping for ``floor.color`` — see ``_FLOOR_COLOR``.
+_GRID_OURS = {"material.grid": "our only floor knob: a 3-vector multiplying the floor material's "
+                               "rgba. swm's floor.color edits the texture instead; see the "
+                               "floor.color entry in `unsupported` for why they are not the same leaf"}
+_FOVY_OURS = {"camera.fovy_scale": "a field-of-view multiplier; swm's DMControlWrapper renders at the "
+                                   "model's own camera and offers no such knob"}
+_DECOR_OURS = {"material.decoration": "the rails/arena furniture material; swm recolours only "
+                                      "material `self` and, where it has one, material `target`"}
+_EFFECTOR_OURS = {"material.effector": "the effector material; swm has no leaf that reaches it"}
+
+_DMC_MAPS = {
+}
+
+#: stable-envs CLASS name -> its map. Installed by ``variation_maps.install``.
+MAPS: dict[str, VariationMap] = {**_CLASSIC_MAPS, **_DMC_MAPS}
+
+
+# ===================================================================== the light range gap
+
+#: ``light.intensity`` is mapped, and its RANGE GAP is recorded here rather than in ``unsupported``,
+#: because a leaf that is reachable over 86-88 % of its range is mapped with a documented gap, not
+#: unsupported. ``cell -> (base, reachable_low, reachable_high, note)``.
+LIGHT_RANGE: dict[str, tuple[float, float, float, str]] = {
+    cell: (base, 0.2 * base, 1.0, _light_reason(base)) for cell, base in _LIGHT_BASE.items()
+}
+
+#: The four-way count this module claims, asserted by tests/unit/test_variation_maps_dmc_control.py
+#: against the LIVE swm variation spaces rather than against this table.
+EXPECTED_COUNTS: dict[str, dict[str, int]] = {
+    "swm/AcrobotControl-v1": {"total": 11, "mapped": 4, "unsupported": 7, "dead_upstream": 0, "not_applicable": 0},
+    "swm/CartPoleControl-v1": {"total": 10, "mapped": 4, "unsupported": 6, "dead_upstream": 0, "not_applicable": 0},
+    "swm/PendulumControl-v1": {"total": 9, "mapped": 3, "unsupported": 6, "dead_upstream": 0, "not_applicable": 0},
+    "swm/MountainCarControl-v0": {"total": 5, "mapped": 2, "unsupported": 3, "dead_upstream": 0, "not_applicable": 0},
+    "swm/MountainCarContinuousControl-v0": {"total": 4, "mapped": 2, "unsupported": 2, "dead_upstream": 0, "not_applicable": 0},
+}
+
+#: The swm registered DEFAULT variation config for each id, as a dotted dict. Written down because it
+#: is what "the registered default is reproducible through the mapping" is measured against, and
+#: reading it off a live wrapper makes the test depend on the wrapper it is testing.
+def swm_defaults(swm_id: str) -> dict:
+    """The leaf defaults of ``swm_id``'s variation space, read from the live wrapper.
+
+    Deliberately live rather than transcribed: the claim under test is about the CURRENT swm, and a
+    transcribed table would keep passing after swm moved. The test that uses it also asserts the
+    values it cares about against the numbers in this module's docstring.
+    """
+    import gymnasium
+    import stable_worldmodel  # noqa: F401
+    env = gymnasium.make(swm_id)
+    node = env
+    while node is not None and getattr(node, "variation_space", None) is None:
+        node = getattr(node, "env", None)
+    space = node.variation_space
+    out = {}
+    for name in space.names():
+        leaf = space
+        for part in name.split("."):
+            leaf = leaf[part]
+        out[name] = np.asarray(leaf.init_value)
+    env.close()
+    return out
