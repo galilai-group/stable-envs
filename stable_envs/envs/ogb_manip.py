@@ -778,15 +778,19 @@ class OGBManipBase(StableEnv):
     #: mujoco_warp pass. The same split ``envs/ogbench.py`` already makes for its maze plates.
     PLATE_PATHS = ("floor.color",)
 
-    def _style_leaf(self, sty, path):
-        """``(B, w)`` float64 host copy of one style leaf of a resolved ``StyleTensor``.
+    def _style_host(self, sty) -> dict:
+        """``{path: (B, w) float64}`` -- the WHOLE style row, brought to the host in ONE transfer.
 
-        Read on the host deliberately: both leaves are consumed by MuJoCo (a texture bake) or by a
-        small per-world table, so the values have to cross to the host exactly once either way, and
-        doing it here keeps it to one transfer per render rather than one per chunk.
+        Both leaves are consumed on the host (a MuJoCo texture bake, and a small per-world table
+        assembled with numpy), so the values have to cross either way. They cross ONCE, for the whole
+        row, rather than once per leaf: a device-to-host copy of a nine-float row costs a
+        synchronisation, not bandwidth, and at B=1 a second sync is a measurable fraction of the
+        whole render. Measured on gpu2264: two syncs cost ~0.5 ms per render at B=1 and are lost in
+        the noise at B=4096, which is exactly the shape of a latency term.
         """
-        v = sty[path]
-        return np.asarray(v.reshape(int(v.shape[0]), -1).detach().cpu(), np.float64)
+        v = sty.values
+        host = np.asarray(v.detach().cpu(), np.float64)
+        return {p: host[:, o:o + w] for p, (o, w) in sty.layout.items()}
 
     # ---- the plate ------------------------------------------------------------------------
 
@@ -945,12 +949,13 @@ class OGBManipBase(StableEnv):
         # then takes the ORIGINAL code path below -- one (res,res,3) plate broadcast over the whole
         # chunk -- so "the registered default did not move" is the same arithmetic in the same order,
         # not merely the same digest.
-        reps, gidx = self._floor_plan(sty, B)
+        host = self._style_host(sty)
+        reps, gidx = self._floor_plan(host, B)
         plates = self._floor_plates(reps, res)
         plates1 = plates if ss == 1 else self._floor_plates(reps, size)
         plate = plates[0] if gidx is None else None
         plate1 = (plate if ss == 1 else plates1[0]) if gidx is None else None
-        cube = self._cube_colours(sty, B)
+        cube = self._cube_colours(host, B)
         lut = self._mover_lut()
         b = self._b
         nq, nmoc = b.nq, b.nmocap
@@ -1038,7 +1043,7 @@ class OGBManipBase(StableEnv):
             hit = cache["mover_lut"] = lut
         return hit
 
-    def _floor_plan(self, sty, B: int):
+    def _floor_plan(self, host, B: int):
         """``(reps, gidx)``: one ORIGINAL float representative per distinct floor colour, and which
         environment belongs to which.
 
@@ -1057,7 +1062,7 @@ class OGBManipBase(StableEnv):
         land one byte low (0.16 -> 40 -> 0.15686 -> 39), which would bake a plate one level off the
         colour that keyed it. Bytes group; floats bake; the two never swap roles.
         """
-        f = self._style_leaf(sty, "floor.color")                       # (B, 6)
+        f = host["floor.color"]                                        # (B, 6)
         q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6)
         uniq, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
         reps = [f[i].reshape(2, 3) for i in first]
@@ -1068,9 +1073,11 @@ class OGBManipBase(StableEnv):
 
     def _floor_plates(self, reps, res: int) -> torch.Tensor:
         """``(G, res, res, 3)``: the baked plate for each floor group, from the module plate cache."""
+        if len(reps) == 1:
+            return self._plate(res, floor=reps[0]).unsqueeze(0)   # a VIEW: no copy on the hot path
         return torch.stack([self._plate(res, floor=r) for r in reps])
 
-    def _cube_colours(self, sty, B: int):
+    def _cube_colours(self, host, B: int):
         """``(B, len(cube_geoms), 4)`` rgba to write per world -- ALWAYS, defaults included.
 
         Returning ``None`` for "this is the default anyway" is the defect the reviewer reproduced on
@@ -1089,7 +1096,7 @@ class OGBManipBase(StableEnv):
         gids = b.cube_geoms
         if gids is None or not len(gids):
             return None
-        rgb = self._style_leaf(sty, "cube.color")                       # (B, 3)
+        rgb = host["cube.color"]                                        # (B, 3)
         base = np.asarray(b.pristine["geom_rgba"], np.float64)[gids]    # (G, 4), own alphas
         out = np.broadcast_to(base, (B, len(gids), 4)).copy()
         out[:, :, :3] = rgb[:, None, :]

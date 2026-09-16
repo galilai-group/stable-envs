@@ -431,6 +431,8 @@ _CUBE_GEOMS = [62, 63]
 #: object_0 is opaque; target_object_0 is the translucent goal marker. swm writes rgb and leaves the
 #: alpha channel alone, so the alphas here are what the helper must preserve.
 _CUBE_ALPHAS = [1.0, 0.2]
+#: swm's declared checker default; only its width matters to these tests.
+_FLOOR_DEFAULT = [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]]
 
 
 def _stub_env(device="cpu"):
@@ -467,9 +469,30 @@ def _stub_context(nworld, ngeom):
                                  wm=types.SimpleNamespace(geom_rgba=buf)), buf
 
 
+class _StubStyle:
+    """The two attributes `_style_host` reads off a resolved `StyleTensor`: `values` and `layout`."""
+
+    def __init__(self, cube_rows):
+        cube = np.asarray(cube_rows, np.float32).reshape(-1, 3)
+        floor = np.tile(np.asarray(_FLOOR_DEFAULT, np.float32).reshape(-1), (cube.shape[0], 1))
+        self.values = torch.as_tensor(np.concatenate([cube, floor], axis=1))
+        self.layout = {"cube.color": (0, 3), "floor.color": (3, 6)}
+
+
 def _sty(rows):
-    """A minimal resolved-style stand-in: `sty[path]` -> a `(B, w)` tensor."""
-    return {"cube.color": torch.as_tensor(np.asarray(rows, np.float64), dtype=torch.float32)}
+    """One render's host-side style, produced by the REAL `_style_host`, not hand-built.
+
+    The helpers take the host dict rather than the `StyleTensor` so that the whole nine-float row
+    crosses to the host once per render; routing the stub through `_style_host` is what keeps these
+    tests honest about which units the helpers actually receive.
+    """
+    env = object.__new__(_base_cls())
+    return env._style_host(_StubStyle(rows))
+
+
+def _base_cls():
+    from stable_envs.envs.ogb_manip import OGBManipBase
+    return OGBManipBase
 
 
 def _upload(env, c, sty, B, nworld):
@@ -648,3 +671,27 @@ def test_pixel_encoding_reason_does_not_promise_that_the_affine_flag_alone_maps_
     assert "PENDING-A" in reason.upper()
     assert "has not been measured" in reason
     assert "checker" in reason.lower() and "slate" in reason.lower()
+
+
+def test_the_whole_style_row_crosses_to_the_host_in_one_read():
+    """`_style_host` returns every leaf from ONE device-to-host copy. Two copies cost two
+    synchronisations, which is a measurable fraction of a B=1 render and nothing at B=4096 -- the
+    shape of a latency term, and the reason the helpers take a host dict rather than the tensor."""
+    env = object.__new__(_base_cls())
+    sty = _StubStyle([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+    calls = []
+    real = sty.values.detach
+
+    class _Counting:
+        def __init__(self, t): self._t = t
+        def detach(self):
+            calls.append(1)
+            return real()
+        def __getattr__(self, k): return getattr(self._t, k)
+
+    sty.values = _Counting(sty.values)
+    host = env._style_host(sty)
+    assert calls == [1], f"the style row crossed to the host {len(calls)} times, not once"
+    assert set(host) == {"cube.color", "floor.color"}
+    assert host["cube.color"].shape == (2, 3) and host["floor.color"].shape == (2, 6)
+    assert host["cube.color"][1] == pytest.approx([0.4, 0.5, 0.6])
