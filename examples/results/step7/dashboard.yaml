@@ -1583,6 +1583,8 @@ incident_log:
   item: W5 closure follow-on re-check APPROVE-WITH-CHANGES (digest over hidden sites; missing declaration artifacts); fix after the gate lands
 - date: '2026-09-16'
   item: W5 CLOSED and merged (d4318d2); integration fec4f6e; broken citations back to the baseline 9; targeted re-sweep launched in the held allocation
+- date: '2026-09-16'
+  item: 'STEP 7 CLOSED at 43ac952: milestone branch + tag pushed; Step-8 branches created'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1714,3 +1716,13 @@ closure_sweep:
     + docs/research/step7_coverage.md generated'
   citations: 9 -> 10 from a $SCR path in W5's committed provenance capture
   duplicate_job: 6417178 (not the closure agent's) was re-running the same sbatch into the same $SCR dir; cancelled by the coordinator; committed artifacts unaffected
+step7_status: CLOSED 2026-09-16
+closure:
+  integration_head: 43ac95238f7472137619f3e69e7636e11dd088b1
+  milestone_branch: milestone/step7-full-renderer-coverage (pushed to origin)
+  tag: step7-closure (pushed to origin; annotated 2fc0c75 -> 43ac952)
+  history_check: 298 commits since 76dc5116, sole author sami-bg; 0 trailers; frozen step4/5/6 diff 0 files; clean tree; largest added blob 5.5 MB; tests/unit 925 passed + the baseline citation failure
+    (9 entries)
+  final_resweep: 'closure2 @5b0c8b0 on fec4f6e: replay 43/5/0 with no digest_ours moved; Gate A 7/7 cuda; tests/gpu 0 new / 14 fixed; nvdiff 6/6 identical; coverage 40/40 + 2/2; Gate A 36 PASS / 3 FAIL
+    / 1 BLOCKED (the pre-existing trackcom cells under the 3.12 arm)'
+  step8_branches: sami/pre-step8-baseline and step8/integration at 43ac952 (local; worktree /Users/samib/stable-envs-step8-integration)
