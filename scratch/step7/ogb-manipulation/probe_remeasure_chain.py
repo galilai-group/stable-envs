@@ -182,8 +182,13 @@ def main():
         gate_states = env.sample_states(env.B, np.random.default_rng(99))
         # `check_batch_size_invariance` takes the states explicitly; the others draw their own.
         needs_states = {"check_batch_size_invariance"}
-        for fn in ("check_determinism", "check_batch_invariance", "check_batch_size_invariance",
-                   "check_state_dims_matter", "check_order_invariance"):
+        # `check_state_roundtrip` is MANDATORY Gate A and was missing from this list until the
+        # closure sweep failed on it: this driver ran five checks and called that "Gate A", so the
+        # float64/float32 narrowing in `sample_states` survived every green run I reported. Keep it
+        # first so a regression there is the first thing that speaks.
+        for fn in ("check_state_roundtrip", "check_determinism", "check_batch_invariance",
+                   "check_batch_size_invariance", "check_state_dims_matter",
+                   "check_order_invariance"):
             f = getattr(C, fn, None)
             if f is None:
                 g[fn] = {"status": "absent in this build"}

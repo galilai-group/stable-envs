@@ -623,30 +623,38 @@ class OGBManipBase(StableEnv):
         did not hit a mover. Measured worth, three 64-state draws: interior-exact 0.958 (Cube) and
         0.922 (Scene), whole-frame 0.872 and 0.775.
 
-        Every mutation is undone from a pristine snapshot rather than by inverse edit, so baking
-        twice gives the same model.
+        Drawn through the rig's PRIVATE model and data, so this mutates nothing the reference env or
+        anything else can see, and the "every appearance array is identical across resets" claim the
+        cached plate rests on is asserted here rather than assumed.
         """
         import mujoco
         b = self._b
-        m, d, u = b.model, b.data, b.unwrapped
-        pr = b.pristine
-        keep = np.array(m.geom_group, copy=True)
-        m.geom_group[b.movers] = MW.HIDDEN_GROUP
-        if states is not None:
+        rig = _plate_rig(self.CELL, int(res))
+        live = b.model
+        shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
+        assert shape == rig.shape, (
+            f"{self.CELL}: the env recompiled to a different model shape {shape} than the plate rig "
+            f"was built for {rig.shape}; the cached plate would be a picture of the old scene")
+        now = _appearance_digest(live)
+        assert now == rig.appearance, (
+            f"{self.CELL}: an appearance array changed since the plate rig was built "
+            f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
+            f"it is now wrong; phase 0 measured these arrays identical across resets and this "
+            f"assertion is what keeps that measurement honest")
+        d = rig.data
+        if states is None:
+            d.qpos[:] = b.data.qpos
+            d.mocap_pos[:] = b.data.mocap_pos
+            d.mocap_quat[:] = b.data.mocap_quat
+        else:
             qpos, mp, mq, _ = self._split(np.asarray(states, np.float64))
             d.qpos[:] = qpos
             d.mocap_pos[:] = mp
             d.mocap_quat[:] = mq
         d.qvel[:] = 0.0
-        mujoco.mj_forward(m, d)
-        r = _renderer(self.CELL, int(res))
-        r.update_scene(d, camera=b.cam, scene_option=u._scene_option)
-        img = r.render().copy()
-        m.geom_group[:] = keep
-        m.geom_rgba[:] = pr["geom_rgba"]
-        m.mat_rgba[:] = pr["mat_rgba"]
-        mujoco.mj_forward(m, d)
-        return torch.as_tensor(img, device=self.device)
+        mujoco.mj_forward(rig.model, d)
+        rig.renderer.update_scene(d, camera=b.cam, scene_option=b.unwrapped._scene_option)
+        return torch.as_tensor(rig.renderer.render().copy(), device=self.device)
 
     # ---- render ---------------------------------------------------------------------------
 
@@ -806,33 +814,97 @@ class OGBManipBase(StableEnv):
         return np.stack(out)
 
 
-_RENDERERS: dict = {}
+_PLATE_RIGS: dict = {}
+
+#: Model arrays the plate depends on, by prefix. `geom_rgba` and `mat_rgba` are EXCLUDED because
+#: swm's `_apply_button_states` writes them into the live model on every button change -- they are
+#: state wearing the shape of appearance, and the rig pins them itself (see `_plate_rig`).
+_APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_",
+                        "hfield_", "skin_")
+_APPEARANCE_SKIP = ("geom_rgba", "mat_rgba", "geom_group")
 
 
-def _renderer(cell: str, res: int):
-    """One ``mujoco.Renderer`` per (cell, resolution, MODEL IDENTITY).
+def _appearance_digest(m) -> str:
+    """A hash of every static-appearance array in an MjModel, so "the plate is bit-static" is CHECKED.
 
-    Keyed on ``id(model)`` as well, for the same reason ``_Bundle.model`` is a property: a dirty
-    reset rebinds the env's ``_model``, and a ``Renderer`` holds the model it was built with. Keyed
-    on ``(cell, res)`` alone it would go on rendering a model the env had discarded -- the plate
-    would silently be baked from dead geometry after the first reset.
-
-    Never closed, for the reason ``envs/ogbench.py`` records at length: releasing an EGL context
-    corrupts rendering in every other live renderer in the process. The cache is bounded instead,
-    because a long sampling run rebinds the model many times and one renderer per rebind would
-    exhaust contexts.
+    Phase 0 measured that a dirty reset recompiles this scene to identical appearance arrays and only
+    moves the array handles. The plate rig depends on that measurement being true for the life of the
+    process, and a measurement that nothing re-checks is an assumption. This turns it into an
+    assertion that fires loudly instead of baking a plate from geometry the env has since changed.
     """
+    import hashlib
+    h = hashlib.blake2b(digest_size=16)
+    n = 0
+    for name in sorted(dir(m)):
+        if name.startswith("_") or name in _APPEARANCE_SKIP:
+            continue
+        if not name.startswith(_APPEARANCE_PREFIXES):
+            continue
+        try:
+            v = getattr(m, name)
+        except Exception:                      # pragma: no cover - MjModel exposes only arrays here
+            continue
+        if isinstance(v, np.ndarray):
+            a = np.ascontiguousarray(v)
+            h.update(name.encode())
+            h.update(repr(a.shape).encode())
+            h.update(a.tobytes())
+            n += 1
+    assert n >= 20, (f"appearance digest covered only {n} arrays -- an empty hash would certify "
+                     f"staleness it never looked at")
+    return h.hexdigest()
+
+
+class _PlateRig:
+    """A PRIVATE (MjModel, MjData, Renderer) triple that bakes this cell's plate, built once.
+
+    ONE EGL context per (cell, resolution), for the life of the process, never released. The previous
+    version keyed the renderer on ``id(model)`` and evicted the old entry whenever a dirty reset
+    rebound the env's model -- which dropped the last reference to a live ``mujoco.Renderer``, so
+    ``__del__`` ran ``close()`` and freed its EGL context. Its docstring said "never closed" while the
+    code guaranteed the opposite: the gate run counted 14 contexts created and 8 released, and the
+    resource guard failed 11 of the 15 OGB rows because of it. Releasing one context corrupts
+    rendering in every other live context in the process, silently, which is the defect
+    ``envs/fetch.py`` and ``envs/ogbench.py`` both exist to avoid; ``fetch.py`` avoids it by owning
+    its model rather than borrowing one that rebinds, and this is the same answer.
+
+    Owning the model also removes two hazards the borrowed one carried. The rig renders its OWN
+    ``MjData``, so a bake no longer mutates the reference env's model and restores it afterwards --
+    nothing can leave the reference corrupted if a bake raises in between. And the rig pins the
+    button colours at the ALL-ZERO bits, the same convention ``_context`` takes its copy at, so the
+    plate is baked at a known appearance instead of at whichever bits the last reset happened to
+    choose; today's code baked whatever was live when the cache first filled.
+    """
+
+    __slots__ = ("model", "data", "renderer", "appearance", "shape")
+
+
+def _plate_rig(cell: str, res: int) -> _PlateRig:
+    import copy
+
     import mujoco
-    b = _bundle(cell)
-    m = b.model
-    key = (cell, int(res), id(m))
-    hit = _RENDERERS.get(key)
+    key = (cell, int(res))
+    hit = _PLATE_RIGS.get(key)
     if hit is not None:
         return hit
-    for k in [k for k in _RENDERERS if k[0] == cell and k[1] == int(res)]:
-        _RENDERERS.pop(k, None)          # the model moved; that renderer can never be right again
-    out = _RENDERERS[key] = mujoco.Renderer(m, height=int(res), width=int(res))
-    return out
+    b = _bundle(cell)
+    live = b.model
+    rig = _PlateRig()
+    rig.appearance = _appearance_digest(live)
+    rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
+    rig.model = copy.deepcopy(live)
+    # Movers are hidden for the life of the rig -- this model exists only to draw the static scene.
+    rig.model.geom_group[b.movers] = MW.HIDDEN_GROUP
+    zero = (b.button_tables or {}).get(tuple([0] * b.nbuttons))
+    if zero is not None:
+        rig.model.geom_rgba[:], rig.model.mat_rgba[:] = zero
+    else:
+        rig.model.geom_rgba[:] = b.pristine["geom_rgba"]
+        rig.model.mat_rgba[:] = b.pristine["mat_rgba"]
+    rig.data = mujoco.MjData(rig.model)
+    rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
+    _PLATE_RIGS[key] = rig                      # never evicted; the renderer is never closed
+    return rig
 
 
 #: MEASURED, not chosen. Three independent draws of 64 states each on an RTX 3090 (job recorded in
