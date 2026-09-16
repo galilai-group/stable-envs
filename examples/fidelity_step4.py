@@ -574,8 +574,15 @@ def provenance(device: str) -> dict:
     # draws its night noise with jax's threefry PRNG, and jax_threefry_partitionable selects between
     # two counter layouts that agree on 0 of 448 draws. Without recording it, that declaration could
     # never be confirmed and the parity check would block on "version not recorded" forever.
+    # ``PyFlyt``/``pybullet`` are here for the same reason ``jax`` is, and they were added in Step 8
+    # after the fact: PFRocketLanding declares them as REFERENCE versions, the closure sweeps did not
+    # record them, and ``block_on_reference_mismatch`` therefore blocks its two visual-fidelity
+    # checks on "version not recorded by the measuring interpreter" -- forever, until a run records
+    # them. That block is correct and is reported as UNMEASURED; this is what lets the next run on a
+    # PyFlyt interpreter clear it. It changes no historical artifact.
     for m in ("mujoco", "mujoco_warp", "dm_control", "ogbench", "gym_pusht", "gymnasium",
-              "gymnasium_robotics", "craftax", "jax", "stable_worldmodel", "warp"):
+              "gymnasium_robotics", "craftax", "jax", "stable_worldmodel", "warp",
+              "PyFlyt", "pybullet"):
         # The distribution's version first: ``dm_control`` has no ``__version__`` and was recorded as
         # "present", which the certifier cannot compare with a declared reference version.
         try:

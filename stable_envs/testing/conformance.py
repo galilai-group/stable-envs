@@ -690,6 +690,80 @@ def check_default_style_is_official(env) -> dict:
     return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
 
 
+#: What a ``color_exactness_applicability`` declaration must carry before the harness will honour it.
+#: Every one of these is a condition Sami attached to the 2026-09-16 ruling, and the reader refuses a
+#: declaration that is missing any of them rather than narrowing the check on free text: an opt-out
+#: that costs nothing to write is a way to silence a check, which is the failure mode the ruling names.
+#:
+#:  ``leaves``      the EXACT leaf paths, listed one by one. No wildcard, no prefix, no "all".
+#:  ``mechanism``   the lighting/material law, in words, so a reader knows what is being claimed.
+#:  ``max_shading_factor``  the law's MEASURED ceiling, and it must be < 1 -- the number that makes
+#:                  literal equality unreachable. A law that reaches 1 has no case to make here.
+#:  ``official_renderer_fails_the_same_check``  the demonstration AGAINST the official renderer. The
+#:                  claim is about the reference's shading model, so the reference has to fail it too.
+#:  ``evidence``    the artifact paths the two numbers above were measured in.
+_COLOR_APPLICABILITY_REQUIRED = ("leaves", "mechanism", "max_shading_factor",
+                                 "official_renderer_fails_the_same_check", "evidence")
+
+
+def color_exactness_applicability(env, probes=None) -> dict:
+    """Which leaves ``check_colors_apply_exactly``'s LITERAL-RGB bound may be asserted on, and why.
+
+    The same shape as ``resolution_consistency_applicability`` and for the same reason. A style leaf
+    whose renderer applies a documented lighting/material law that cannot reach unit gain can never
+    put the requested triple in the frame -- not because the knob is wired wrongly, but because the
+    OFFICIAL renderer cannot either, which is measurable and is measured. Judging a renderer against
+    a relation its own reference does not satisfy measures the reference.
+
+    Read, never invented. An env with no ``color_exactness_applicability`` is fully applicable, which
+    is every cell but one, and the check's own verdict (``colors_not_applied``) is not touched here:
+    the probe still runs, the distance still gets recorded, and only the JUDGE consults this.
+
+    ``probes`` are the ``"<leaf path>-><target>"`` keys the check measured. Returns
+    ``{"honoured": bool, "not_applicable_probes": [...], "declared_leaves": [...],
+    "undeclared_leaves_still_judged": [...], "declaration": {...} | None, "why": str}``.
+    """
+    cls = env if isinstance(env, type) else type(env)
+    decl = getattr(cls, "color_exactness_applicability", None)
+    none = {"honoured": False, "not_applicable_probes": [], "declared_leaves": [],
+            "undeclared_leaves_still_judged": sorted(probes or []), "declaration": None,
+            "why": "no color_exactness_applicability is declared, so literal RGB equality is "
+                   "asserted on every RGB leaf"}
+    if not isinstance(decl, dict) or not decl:
+        return none
+
+    missing = [k for k in _COLOR_APPLICABILITY_REQUIRED if decl.get(k) in (None, "", (), [], {})]
+    if missing:
+        return {**none, "declaration": dict(decl), "rejected_because": missing,
+                "why": f"the declaration is missing {missing}, so it is REFUSED and every RGB leaf "
+                       f"stays judged; see _COLOR_APPLICABILITY_REQUIRED"}
+    try:
+        ceiling = float(decl["max_shading_factor"])
+    except (TypeError, ValueError):
+        ceiling = 1.0
+    if not (0.0 < ceiling < 1.0):
+        return {**none, "declaration": dict(decl), "rejected_because": ["max_shading_factor"],
+                "why": f"max_shading_factor {decl['max_shading_factor']!r} is not a measured ceiling "
+                       f"strictly below 1, so the declaration is REFUSED and every leaf stays judged"}
+    if decl["official_renderer_fails_the_same_check"] is not True:
+        return {**none, "declaration": dict(decl),
+                "rejected_because": ["official_renderer_fails_the_same_check"],
+                "why": "the declaration does not assert that the OFFICIAL renderer fails this check "
+                       "too, so it is REFUSED and every leaf stays judged"}
+
+    leaves = [str(x) for x in decl["leaves"]]
+    probes = sorted(probes or [])
+    covered = [k for k in probes if k.split("->", 1)[0] in leaves]
+    rest = sorted({k.split("->", 1)[0] for k in probes} - set(leaves))
+    return {"honoured": True, "not_applicable_probes": covered, "declared_leaves": sorted(leaves),
+            "undeclared_leaves_still_judged": rest, "declaration": dict(decl),
+            "why": f"{len(leaves)} named leaves are rendered through {decl['mechanism']}, whose "
+                   f"measured ceiling is {ceiling:.6f} < 1, so the requested triple is unreachable "
+                   f"for any correct implementation of the reference and the official renderer fails "
+                   f"this check too; evidence {list(decl['evidence'])}. Every other RGB leaf on this "
+                   f"env stays judged ({rest or 'there are none'})."}
+
+
 def check_colors_apply_exactly(env) -> dict:
     """An RGB knob set to a colour must put THAT colour in the frame, not merely change it.
 
@@ -700,6 +774,7 @@ def check_colors_apply_exactly(env) -> dict:
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
     st = env.sample_states(env.B)
     wrong = []
+    best: dict[str, int] = {}
     for path, (off, w) in layout.items():
         node = env.variation_space
         for part in path.split("."):
@@ -710,9 +785,16 @@ def check_colors_apply_exactly(env) -> dict:
             sty = np.tile(env.default_style(), (env.B, 1))
             sty[:, off:off + w] = np.asarray(target, np.float32)
             f = env.render(st, style=sty).cpu().numpy()
-            if not (np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1) == 0).any():
+            d = np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1)
+            # REPORTED, never judged: how close the closest pixel came, in summed absolute channel
+            # error. The verdict below is unchanged -- this is the number a leaf whose literal bound
+            # is declared inapplicable still moves when a knob comes off its primitive, and the
+            # number this check used to throw away. Step 8, at Sami's condition on the colour ruling.
+            best[f"{path}->{target}"] = int(d.min())
+            if not (d == 0).any():
                 wrong.append(f"{path}->{target}")
-    return {"colors_not_applied": wrong}
+    return {"colors_not_applied": wrong, "best_abs_diff": best,
+            "applicability": color_exactness_applicability(env, sorted(best))}
 
 
 #: How close a pixel has to be to count as agreeing inside a task object's footprint. The same 8/255
