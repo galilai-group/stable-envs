@@ -1055,12 +1055,18 @@ def _fidelity(cell: str) -> dict:
             # version in a field nobody reads next to prose that names a different one is worse
             # provenance than either alone.
             f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, camera "
-            f"{spec['camera']}, 3 independent "
+            f"{spec['camera']}, 8 independent "
             f"draws of 64 states from the "
             f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
-            f"against swm's own render(); the declared value is the WORST of the three and "
-            f"draw_spread carries all three, for mean_abs/within8_frac/ssim AND for "
-            f"interior_exact_frac, all_exact_frac and interior_frac. The frame is a baked MuJoCo "
+            f"against swm's own render(); the declared value is the WORST of the eight and "
+            f"draw_spread carries the range, for mean_abs/within8_frac/ssim AND for "
+            f"interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK "
+            f"THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the draw the "
+            f"check takes -- it calls `sample_states(n)` with no rng, which is seed 0, the same "
+            f"fixed draw every time. The previous declaration was measured by a probe that averaged "
+            f"|diff| over the colour channels while `pixel_agreement` averages the per-pixel channel "
+            f"MAX, so it read 0.89/255 low and no widening rule could have covered the gap. The "
+            f"frame is a baked MuJoCo "
             f"plate composited with "
             f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
             f"out-of-range-spot correction applied. {d['job']}"),

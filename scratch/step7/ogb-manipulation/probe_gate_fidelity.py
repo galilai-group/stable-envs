@@ -110,7 +110,9 @@ def main() -> int:
             "all_exact_frac": min(ex),
             "draw_spread": {"mean_abs": [min(ma), max(ma)], "ssim": [min(ss), max(ss)],
                             "within8_frac": [min(w8), max(w8)]},
-            "mean_abs_max": float(np.ceil(max(ma) * 1.3 * 20) / 20),
+            # The SHIPPED rule, spelled exactly as `_fidelity` computes it, so the artifact and the
+            # class cannot disagree about what the threshold is.
+            "mean_abs_max": round(max(ma) * 1.3, 1),
             "within8_min": float(np.floor((min(w8) - 0.04) * 20) / 20),
             "ssim_min": float(np.floor((min(ss) - 0.04) * 20) / 20),
             "gate_draw": {"seed": 0, "mean_abs": float(gate["mean_abs"]),
