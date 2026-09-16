@@ -131,12 +131,43 @@ def select(pool: np.ndarray, n: int) -> tuple[np.ndarray, dict]:
                        "n_spread": int(len(idx) - n_extreme), "indices": idx.tolist()}
 
 
+#: A frozen corpus whose ``.npz`` carries no ``meta`` key may carry it BESIDE the array instead, in
+#: one of these files in the same directory (``{stem}`` is the ``.npz``'s own stem). Step 7 froze
+#: seven corpora and wrote two of them -- both Craftax cells -- with ``states=`` only and the
+#: provenance in a sibling ``corpus.json``, which is a perfectly good record that this loader simply
+#: could not see: it read ``z["meta"]`` unconditionally and a corpus without one raised ``KeyError``.
+#: Reading the sidecar is what lets a committed, READ-ONLY corpus be adopted without rewriting the
+#: array file -- rewriting it would change the bytes of an artifact whose sha256 is already quoted in
+#: committed Gate-A records. ``meta`` inside the npz still wins wherever it exists, so every corpus
+#: frozen in Step 4 loads by exactly the path it always did.
+CORPUS_META_SIDECARS = ("{stem}.meta.json", "corpus.json")
+
+
+def _corpus_meta(p: Path, z) -> dict:
+    """``config_id``'s corpus metadata: from inside the ``.npz`` if it is there, else from a sidecar."""
+    if "meta" in getattr(z, "files", ()):
+        return json.loads(str(z["meta"]))
+    tried = []
+    for pattern in CORPUS_META_SIDECARS:
+        side = p.parent / pattern.format(stem=p.stem)
+        tried.append(str(side.relative_to(ROOT)) if side.is_relative_to(ROOT) else str(side))
+        if side.is_file():
+            meta = json.loads(side.read_text())
+            meta["meta_loaded_from_sidecar"] = tried[-1]
+            return meta
+    raise KeyError(
+        f"{p} carries no 'meta' key and no metadata sidecar beside it (tried {tried}). A corpus "
+        f"without provenance is not a frozen corpus: it cannot say which pool it came from, which "
+        f"seed drew it, or what its array digest is, so a later run cannot show it measured the same "
+        f"states. Write the sidecar rather than redrawing -- redrawing gives a different corpus.")
+
+
 def corpus_for(env, config_id: str, states_dir: Path, n: int, pool: int) -> tuple[np.ndarray, dict]:
     """Load ``config_id``'s frozen corpus, or draw and freeze it. Never redraws an existing one."""
     p = states_dir / f"{config_id}.npz"
     if p.exists():
         z = np.load(p, allow_pickle=False)
-        meta = json.loads(str(z["meta"]))
+        meta = _corpus_meta(p, z)
         meta["loaded_from"] = str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p)
         return z["states"], meta
     raw = env.sample_states(int(pool), rng=np.random.default_rng(STATE_SEED))
