@@ -165,6 +165,11 @@ nav:
       # verdict, on which device" -- one row per registered swm id, with the merge commit that
       # landed each cell. Re-run it after every merge; it needs no edit to pick one up.
       - 'Step 7: renderer coverage closure': research/step7_coverage.md
+      # Step-8 Workstream A. Every stable_worldmodel variation leaf of the five classic-control
+      # and twelve DM Control ids, classified mapped / unsupported / dead upstream / not
+      # applicable, with the measurement behind each class; generated tables from
+      # examples/results/step8/variations-dmc-control/leaf_classification.json.
+      - 'Step 8: variation maps (DMC + classic control)': research/step8_variations_dmc_control.md
       - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
       # readers ask far more often than "why is this one here" -- and until now all three of them were
