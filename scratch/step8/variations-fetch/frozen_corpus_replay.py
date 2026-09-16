@@ -28,7 +28,7 @@ tree is rendered per subprocess and this script drives two of them.
 Run inside an allocation, e.g.::
 
     srun --jobid=<alloc> --overlap -n 1 --cpus-per-task=6 --gres=gpu:1 \
-        bash scratch/step8/variations-fetch/frozen_replay.sbatch
+        bash scratch/step8/variations-fetch/frozen_replay.sh
 """
 from __future__ import annotations
 
