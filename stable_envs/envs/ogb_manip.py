@@ -943,66 +943,62 @@ import os as _os
 #: that defect: interior-exact 0.351 -> 0.958 and all-exact 0.278 -> 0.872 on the Cube.
 _MEASURED: dict = {
         "Cube": {
-            "all_exact_frac": 0.870342,
+            "all_exact_frac": 0.870012,
             "draw_spread": {
                 "mean_abs": [
-                    2.408967,
-                    2.441658
+                    3.265277,
+                    3.309378
                 ],
                 "ssim": [
-                    0.914917,
-                    0.923417
+                    0.919219,
+                    0.926569
                 ],
                 "within8_frac": [
-                    0.915477,
-                    0.916856
+                    0.91581,
+                    0.917723
                 ]
             },
-            "interior_exact_frac": 0.958007,
-            "interior_frac": 0.411172,
-            "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
-            "mean_abs": 2.441658,
-            "mean_abs_max": 3.2,
-            "ssim": 0.914917,
-            "ssim_min": 0.9,
-            "within8_frac": 0.915477,
-            "within8_min": 0.9
+            "gate_draw_mean_abs": 3.295483,
+            "interior_exact_frac": 0.9578,
+            "interior_frac": 0.412552,
+            "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+            "mean_abs": 3.309378,
+            "ssim": 0.919219,
+            "within8_frac": 0.91581
         },
         "Scene": {
-            "all_exact_frac": 0.771891,
+            "all_exact_frac": 0.773417,
             "draw_spread": {
                 "mean_abs": [
-                    5.327423,
-                    5.381315
+                    6.493273,
+                    6.691589
                 ],
                 "ssim": [
-                    0.892819,
-                    0.897032
+                    0.892792,
+                    0.898809
                 ],
                 "within8_frac": [
-                    0.85675,
-                    0.857355
+                    0.855483,
+                    0.860345
                 ]
             },
-            "interior_exact_frac": 0.917805,
-            "interior_frac": 0.2769,
-            "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
-            "mean_abs": 5.381315,
-            "mean_abs_max": 7.0,
-            "ssim": 0.892819,
-            "ssim_min": 0.85,
-            "within8_frac": 0.85675,
-            "within8_min": 0.85
+            "gate_draw_mean_abs": 6.602667,
+            "interior_exact_frac": 0.912032,
+            "interior_frac": 0.278728,
+            "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+            "mean_abs": 6.691589,
+            "ssim": 0.892792,
+            "within8_frac": 0.855483
         }
     }
-
+#: OUR side: the batch raytracer that drew the movers.
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
 #: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
 #: certifier must compare. swm and ogbench are deliberately absent -- neither number was measured
 #: against a named version of either, and a version nobody measured under is not provenance.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
-#: OUR side: the batch raytracer that drew the movers.
+
 _MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
 
