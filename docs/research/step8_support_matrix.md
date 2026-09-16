@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `53a218ac18f77c58aee751cefd3d5661a66f5364`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `003b8b698a7b93e5c3cd79a39ef74bb3b67cc994`
 
 ## The five words
 
@@ -133,5 +133,7 @@ step8_certification:
     examples/results/step8/certification/downsample_provenance.json
     examples/results/step8/certification/nvdiff_ulp_classification.json
     examples/results/step8/certification/order_invariance_finding.json
+    examples/results/step8/certification/oscar_paired_tests.json
+    examples/results/step8/certification/replay49.json
     examples/results/step8/certification/universe8_check.json
 ```

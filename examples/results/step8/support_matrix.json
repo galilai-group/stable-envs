@@ -32,7 +32,7 @@
    "unknown": 2
   }
  },
- "generated_at_head_sha": "53a218ac18f77c58aee751cefd3d5661a66f5364",
+ "generated_at_head_sha": "003b8b698a7b93e5c3cd79a39ef74bb3b67cc994",
  "rows": [
   {
    "backend_class": "R",
@@ -3390,6 +3390,8 @@
    "examples/results/step8/certification/downsample_provenance.json",
    "examples/results/step8/certification/nvdiff_ulp_classification.json",
    "examples/results/step8/certification/order_invariance_finding.json",
+   "examples/results/step8/certification/oscar_paired_tests.json",
+   "examples/results/step8/certification/replay49.json",
    "examples/results/step8/certification/universe8_check.json"
   ]
  },
