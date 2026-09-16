@@ -143,13 +143,27 @@ def _seeded_action_space(u, seed: int):
         setattr(owner, "action_space", original)
 
 
-def _reference_env(cell: str, size: int | None = None):
+def _reference_env(cell: str, size: int | None = None, role: str = "render"):
     """The swm-registered env itself. Needs ``stable_worldmodel``, ``ogbench`` and a GL backend.
 
-    Cached per (cell, size) because each ``mujoco.Renderer`` holds a GL context and this family
+    Cached per (cell, size, ROLE) because each ``mujoco.Renderer`` holds a GL context and this family
     would otherwise open one per call. The env is reset once so the model is compiled.
+
+    THE ROLE IS THE FIX FOR A RENDERER CHURN THAT IS UPSTREAM AND STRUCTURAL. OGBench recompiles on
+    every reset, and `manipspace/envs/env.py:170-172` closes its `mujoco.Renderer` and builds a new
+    one each time it does -- but only if one already exists, because the renderer is created lazily
+    on the first `render()`. So an env that is ONLY reset never opens one and never closes one, and
+    an env that is only rendered and state-written never closes one either: measured on CPU, five
+    `set_state` + `render` cycles the way `reference_render` drives it produce 1 birth and 0 closes,
+    while a single reset AFTER a render produces a close and a rebirth.
+
+    The churn came from one env doing both jobs. `sample_states` resets its env 64 times per draw and
+    `reference_env()` handed out THE SAME INSTANCE whenever it was called without a size, so every
+    draw after the first reference render closed a renderer -- four of them in the gate run, which
+    the resource guard attributes to whichever test was running when the collector woke up. Splitting
+    the roles means the sampling env is never rendered and the rendering env is never reset.
     """
-    key = (cell, int(size) if size else None)
+    key = (cell, int(size) if size else None, str(role))
     hit = _REF_CACHE.get(key)
     if hit is not None:
         return hit
@@ -214,7 +228,7 @@ def _bundle(cell: str) -> _Bundle:
         return hit
     import mujoco
     spec = SPEC[cell]
-    env = _reference_env(cell)
+    env = _reference_env(cell, role="sample")
     u = env.unwrapped
     m, d = u.model, u.data
     b = _Bundle()
@@ -544,7 +558,7 @@ class OGBManipBase(StableEnv):
         import mujoco
         rng = np.random.default_rng(0) if rng is None else rng
         b = self._b
-        env = _reference_env(self.CELL)
+        env = _reference_env(self.CELL, role="sample")   # reset many times; never rendered
         u = env.unwrapped
         out = []
         # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. swm's
@@ -780,7 +794,7 @@ class OGBManipBase(StableEnv):
 
     @classmethod
     def reference_env(cls, size: int | None = None):
-        return _reference_env(cls.CELL, size)
+        return _reference_env(cls.CELL, size, role="render")
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
