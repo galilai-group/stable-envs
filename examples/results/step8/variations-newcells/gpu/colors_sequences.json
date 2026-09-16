@@ -1,0 +1,109 @@
+{
+ "provenance": {
+  "host": "gpu2264.oscar.ccv.brown.edu",
+  "python": "3.12.8",
+  "git_sha": "a9e68cedfba32bae58a25a41dbc9182547f38a6a",
+  "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
+  "tag": "branch",
+  "tree": "$SCR/se8/cfollowup",
+  "slurm_job_id": "6443480",
+  "slurm_nodelist": "gpu2264",
+  "pythonpath": "$SCR/se8/cfollowup:$SCR/se7/stable-worldmodel",
+  "mujoco_gl": "egl",
+  "gpu": "NVIDIA GeForce RTX 3090, 575.57.08, 24576 MiB",
+  "torch": "2.14.0+cu126",
+  "mujoco": "3.12.0",
+  "mujoco_warp": "3.12.0",
+  "warp": "1.17.0",
+  "ogbench": "unavailable: AttributeError",
+  "numpy": "2.5.2"
+ },
+ "mode": "sequences",
+ "cells": {
+  "OGBCube": {
+   "reference_default_digest": "e7e6804f9aa88fbccb45fda7932aab11",
+   "chunk": 256,
+   "steps": {
+    "custom_then_default": "e7e6804f9aa88fbccb45fda7932aab11",
+    "mixed_then_default": "e7e6804f9aa88fbccb45fda7932aab11",
+    "per_env_then_default": "e7e6804f9aa88fbccb45fda7932aab11",
+    "across_chunks_big_batch_then_small_default": "e7e6804f9aa88fbccb45fda7932aab11",
+    "big_default_batch_is_self_consistent": true,
+    "second_instance_default": "e7e6804f9aa88fbccb45fda7932aab11",
+    "first_instance_default_after_second_went_custom": "e7e6804f9aa88fbccb45fda7932aab11",
+    "default_after_a_smaller_custom_batch": "e7e6804f9aa88fbccb45fda7932aab11"
+   },
+   "corpus": {
+    "path": "examples/results/step7/ogb-manipulation/states/OGBCube.npz",
+    "file_sha256": "77966d70809cbcbf8af602d01404bb4e360e914561299cb5d38d1ca56af117ee",
+    "key": "states",
+    "n_states": 64,
+    "array_sha256": "560c1398a8a49a3f89c825ad2eabecbc32283ba9657de3c11852586ac68f8b92"
+   },
+   "all_defaults_identical": true,
+   "mismatches": {},
+   "declaration": {
+    "style_dim": 9,
+    "default_style_digest": "8384a1141f52cbb71a7357e736452180",
+    "default_style": [
+     0.9599999785423279,
+     0.25999999046325684,
+     0.33000001311302185,
+     0.07999999821186066,
+     0.10999999940395355,
+     0.1599999964237213,
+     0.15000000596046448,
+     0.18000000715255737,
+     0.25
+    ],
+    "leaves": [
+     "cube.color",
+     "floor.color"
+    ]
+   }
+  },
+  "OGBScene": {
+   "reference_default_digest": "c60370c7d9ba80154d71f84c18cfb186",
+   "chunk": 256,
+   "steps": {
+    "custom_then_default": "c60370c7d9ba80154d71f84c18cfb186",
+    "mixed_then_default": "c60370c7d9ba80154d71f84c18cfb186",
+    "per_env_then_default": "c60370c7d9ba80154d71f84c18cfb186",
+    "across_chunks_big_batch_then_small_default": "c60370c7d9ba80154d71f84c18cfb186",
+    "big_default_batch_is_self_consistent": true,
+    "second_instance_default": "c60370c7d9ba80154d71f84c18cfb186",
+    "first_instance_default_after_second_went_custom": "c60370c7d9ba80154d71f84c18cfb186",
+    "default_after_a_smaller_custom_batch": "c60370c7d9ba80154d71f84c18cfb186"
+   },
+   "corpus": {
+    "path": "examples/results/step7/ogb-manipulation/states/OGBScene.npz",
+    "file_sha256": "40c372008bb6b44a73414d556f3d2f89f9f9d5adfc025ff3c913431aa2243468",
+    "key": "states",
+    "n_states": 64,
+    "array_sha256": "7a0cdff1849ee2214b55c8721017ffe6cc4d77bc0382bb323e81538a34ed6441"
+   },
+   "all_defaults_identical": true,
+   "mismatches": {},
+   "declaration": {
+    "style_dim": 9,
+    "default_style_digest": "8384a1141f52cbb71a7357e736452180",
+    "default_style": [
+     0.9599999785423279,
+     0.25999999046325684,
+     0.33000001311302185,
+     0.07999999821186066,
+     0.10999999940395355,
+     0.1599999964237213,
+     0.15000000596046448,
+     0.18000000715255737,
+     0.25
+    ],
+    "leaves": [
+     "cube.color",
+     "floor.color"
+    ]
+   }
+  }
+ },
+ "errors": {}
+}

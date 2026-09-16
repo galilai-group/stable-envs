@@ -12,12 +12,17 @@ gap: the renderer is right and the caller cannot ask it for the appearance the w
 
 | swm id | stable-envs | leaves | mapped | unsupported | dead upstream | n/a |
 |---|---|---|---|---|---|---|
-| `swm/OGBCube-v0` | `OGBCube` | 11 | 0 | 5 | 1 | 5 |
-| `swm/OGBScene-v0` | `OGBScene` | 12 | 0 | 6 | 1 | 5 |
+| `swm/OGBCube-v0` | `OGBCube` | 11 | 2 | 3 | 1 | 5 |
+| `swm/OGBScene-v0` | `OGBScene` | 12 | 2 | 4 | 1 | 5 |
 | `swm/PFRocketLanding-v0` | `PFRocketLanding` | 9 | 5 | 0 | 1 | 3 |
 | `swm/OGBMaze-v0` | `PointmazeLarge{Navigate,Stitch}` | 5 | 2 | 2 | 1 | 0 |
 | `swm/SimplePointMaze-v0` | `SimplePointMaze` | 12 | 7 | 0 | 0 | 5 |
-| **total** | | **49** | **14** | **13** | **4** | **18** |
+| **total** | | **49** | **18** | **9** | **4** | **18** |
+
+The four OGB `mapped` rows are the **authorised follow-up**: `cube.color` and `floor.color` on both
+cells, implemented in `stable_envs/envs/ogb_manip.py` after the original delivery classified them
+`unsupported`. That change moves a certified cell's declaration from `style_dim: 0` to
+`style_dim: 9`, and the section below says what was measured before it was believed.
 
 Plus two ids that offer nothing at all: `swm/CraftaxClassicPixels-v1` and `swm/CraftaxPixels-v1`
 both set `variation_space = None` in `CraftaxWrapper.__init__`, confirmed live. Zero leaves is not a
@@ -84,14 +89,14 @@ One default disagreement is recorded rather than smoothed over: swm declares `pa
 Our default of `(255,255,255)` is the one a plain reset produces, which is what "the registered
 default" has to mean.
 
-## OGB Cube / Scene — why an empty style space is a position, not a gap
+## OGB Cube / Scene — two colours honoured, four escalated, and why the split is where it is
 
-Both cells declare `make_variation_space() -> Dict({})`, so all 23 leaves are either state or
-unmapped. That is deliberate. Their frame is a MuJoCo-baked static plate composited with one
-mujoco_warp launch for the movers, and **both halves are built from a single compiled `MjModel`
-whose appearance arrays `_appearance_digest` asserts never change**. swm applies its appearance
-leaves by rewriting the MJCF XML and recompiling, so honouring them per environment means one
-compiled model, one plate rig and one captured mujoco_warp graph *per appearance vector*.
+Their frame is a MuJoCo-baked static plate composited with one mujoco_warp launch for the movers,
+and **both halves are built from a single compiled `MjModel` whose appearance arrays
+`_appearance_digest` asserts never change**. swm applies its appearance leaves by rewriting the MJCF
+XML and recompiling, so honouring them *in general* means one compiled model, one plate rig and one
+captured mujoco_warp graph per appearance vector — which is why these cells shipped with an empty
+style space.
 
 Measuring which model arrays each leaf actually writes is what turns that from a worry into a
 decision. Five of the six split cleanly by cost:
@@ -104,10 +109,49 @@ decision. Five of the six split cleanly by cost:
 | `camera.angle_delta` | `cam_mat0`, `cam_quat` | the camera both halves use | a per-world camera |
 | `cube.size` | `geom_size` + 12 derived | 2 **movers** | a per-world `geom_size` |
 
-The first two are cache-key work. The last three are a renderer change, and per plan §4 this
-workstream reports them as **escalation candidates** rather than declaring them unsupported on its
-own authority: each looks feasible and is arguably semantically required, and that combination is
-exactly the case the plan reserves for Sami.
+The first two are cache-key work and are now **implemented and mapped**. The last three are a
+renderer change, and per plan §4 they remain **escalation candidates** rather than being declared
+unsupported on this workstream's authority: each looks feasible and is arguably semantically
+required, and that combination is exactly the case the plan reserves for Sami. Scene's `lock_color`
+is the same shape of question and is held with them.
+
+### What the two implemented leaves actually do
+
+`cube.color` writes `geom_rgba` on `object_0` and `target_object_0` — both **movers** — through the
+per-world route `_upload_button_colours` already uses, so it never touches the baked plate. Each
+geom keeps its own alpha, because swm writes `rgba[:3]` and leaves the alpha to the MJCF: the cube
+is opaque and the goal marker is translucent, and flattening them to one alpha would be a visible
+change dressed up as a colour.
+
+`floor.color` writes the compiled checker texture and nothing else, and the floor is static, so it
+is a property of the plate alone. swm reaches its picture by rewriting the MJCF `rgb1`/`rgb2` and
+recompiling; we reach the same bytes by substituting the texels in the plate rig's **private** copy
+and calling `mjr_uploadTexture`, which is the half that is easy to forget — `mujoco.Renderer`
+uploads textures when it is built, so writing `tex_data` afterwards changes the model and not the
+GL context, and the leaf would read as inert. The `markrgb` texels are deliberately left alone: swm
+does not touch them either.
+
+Two contracts are worth stating because they are the ones a later change could quietly break.
+
+**Shape.** swm declares `cube.color` as `(num_cubes, 3)` and both registered cells are one-cube
+configurations, so we carry the leaf **flat, as `(3,)`**, with the one-cube assumption asserted where
+the default is read rather than assumed at the `Box`. `floor.color` stays `(2, 3)`, because the
+checker's two colours are not interchangeable. `style_from_variation` flattens before slicing, so
+swm's `(1, 3)` lands in our width-3 slot unchanged; `variation_from_style` emits a flat vector back,
+which needs a reshape before it is fed to a live swm env. That asymmetry is a property of
+`compat.worldmodel`'s flat layout, shared with every multi-row leaf in the repository, and is
+recorded rather than papered over.
+
+**Default restore.** The module caches are keyed by cell, not by renderer instance. The mujoco_warp
+context's per-world `geom_rgba` is mutable and shared across renders, across chunks and across
+renderer instances, and OGBCube has no button upload that would rewrite the block — so a render that
+skipped the upload because "this is the default anyway" would draw whichever colour an earlier render
+left in that world, with the result depending on batch size, chunk boundaries and process history.
+The cube colour is therefore uploaded for every world of every chunk of every render, including the
+default, and the floor texture is written on every plate **bake**. Neither is a tolerance question;
+the first version of this patch used an `np.allclose` shortcut and the reviewer reproduced the leak
+on CPU without a GPU. Six regression tests in
+`tests/unit/test_variation_maps_newcells.py` now fail against that shortcut.
 
 **`agent.color` is dead upstream for a reason worth naming.** `CubeEnv.modify_mjcf_model` computes
 
@@ -186,15 +230,24 @@ No renderer was changed. No cell's `make_variation_space` was touched, so no `st
 byte-identical to the baseline by construction** rather than by re-measurement. The patch is the map
 module, one import line in `compat/worldmodel.py`, the tests and these artifacts.
 
+That statement no longer covers OGBCube and OGBScene. The authorised follow-up changes
+`stable_envs/envs/ogb_manip.py`, so their declaration moved — `style_dim` 0 → 9 on both cells — and
+"the default did not move" became something to measure rather than to argue. It was measured on the
+frozen Step-7 corpus, on the card, against `$SCR/se8/baseline`; the numbers and the merge-gate table
+are in
+[`examples/results/step8/variations-newcells/findings.md`](../../examples/results/step8/variations-newcells/findings.md).
+
 ## Open items for the coordinator
 
 1. **Escalation (plan §4)** — `light.intensity`, `camera.angle_delta` and `cube.size` on OGB
    Cube/Scene, and `light.intensity` on OGB maze. Each appears feasible and semantically required,
    and each needs a per-world model array or a re-derived lighting law, i.e. a renderer change. Not
    declared unsupported on this workstream's authority.
-2. **Cheap follow-ups, if authorised** — `cube.color` needs no new machinery at all, and
-   `floor.color` on OGB Cube/Scene needs only the plate cache key extended. Both move a certified
-   cell's style declaration, so both want a deliberate re-baseline rather than a quiet edit.
+2. ~~**Cheap follow-ups, if authorised**~~ — **DONE.** `cube.color` and `floor.color` on OGB
+   Cube/Scene were authorised and are implemented, with the declaration delta recorded and the
+   default re-measured on the frozen corpus rather than assumed. Scene's `lock_color` was NOT
+   included: it is the same mechanism as `cube.color`, but it is held with the light/camera/size
+   group pending the shared-capability decision.
 3. **Ownership request** — `VariationMap` cannot express `ours = 1 - theirs`. One `inverted` flag,
    or an affine `(factor, offset)`, would let `floor.pixel_encoding` become `mapped`. The class is
    owned by the DMC/classic-control workstream.
