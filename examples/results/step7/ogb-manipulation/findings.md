@@ -1236,3 +1236,66 @@ are now bound to the gate's own functions rather than to reimplementations of th
   correct CPU measurement (reset-after-render closes a renderer) that was not the suite's actual
   path: the four remaining rows are unchanged by it. The ownership probe's output existed at the time
   and had not been read.
+
+## 29. ESCALATION to the cell reviewer: four resource-guard rows with no named mechanism
+
+Four rows fail and I cannot name the mechanism. Everything below is measured; the one thing missing
+is the cause, and I would rather hand over an honest gap than a fifth hypothesis.
+
+```
+FAILED test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[OGBCube]
+FAILED test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[OGBCube]
+FAILED test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[OGBScene]
+FAILED test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[OGBScene]
+```
+
+### 29.1 What is measured
+
+- **Zero EGL contexts are released.** `6 created, 0 released, 6 live` in every run since the
+  `_PlateRig` fix. The harm the rule exists to prevent — releasing a context and corrupting every
+  other live renderer — is not occurring. What fires is `MUJOCO_RENDERER_CLOSED`, a proxy for it.
+- **The four rows pass in isolation**: run alone, `4 passed`, `4 renderers created, 0 closed`. None
+  of the four closes anything. It is an ordering effect and the guard charges whichever test is
+  running when the close happens.
+- **The rows that do the creating are named** (job 6437003, `__new__` patched and capture off):
+  `test_resolution_downsample_agrees_within_the_measured_bound` and
+  `test_render_size_does_not_leak_into_later_calls`, one renderer each, per cell, built at
+  `_plate_rig` → `mujoco.Renderer(...)`.
+- **The cache is sound.** `SE7_OGB_RIGDEBUG=1`: exactly **four rigs** per session —
+  `(Cube,128) (Cube,224) (Scene,128) (Scene,200)` — one `dict_id` throughout, `module_copies=1`.
+  Nothing is created in proportion to batch or resolution, and no module is re-imported underneath
+  the cache.
+- **A process-lifetime strong reference does not prevent the closes.** `_KEEPALIVE` holds every
+  renderer ever built; the four closes still happen. **This disproves garbage collection of the
+  rigs**, which was my own leading hypothesis.
+
+### 29.2 The instance-teardown hypothesis, checked and rejected
+
+Proposed: a temporary env instance's teardown explicitly closes the shared module-level rigs.
+Both legs fail.
+
+1. **Nothing in `stable_envs/` ever calls `.close()` on a renderer.** The only matches for
+   `renderer.close` in the library are the guard's own counters (`resource_guard.py`,
+   `safety_plugin.py`, `supervisor.py`). `ogb_manip.py` defines no `close()` and no `__del__`, and
+   neither does the base `StableEnv` in `core/env.py`.
+2. **Neither failing test constructs a temporary env.** Both receive the module-scoped `env`
+   fixture object. `StateDataset`/`TrajectoryDataset` build an env only from a **string**
+   (`data.py:188` in `render_states`, `data.py:244` in `_init_env`); given an object they keep it.
+
+### 29.3 A defect in my own instrument, stated so nobody reads too much into the counts
+
+`owner_plugin.py` increments its sequence counter in **both** `__new__` and `__init__`, so each real
+renderer consumes two ids — and the guard's `12 created` for six real objects is the same
+double-count. Per-object inference from the instrumented runs is therefore unreliable; the four
+`[rigdebug]` lines and the `0 released` counter are not, because they come from the module and the
+guard rather than from my patch.
+
+### 29.4 What I am asking for
+
+The question is whether `MUJOCO_RENDERER_CLOSED` should fire when **no context is released** and the
+closing caller cannot be attributed to the test being charged. That is a judgement about a SHARED
+file (`stable_envs/testing/resource_guard.py`), so it is not mine to make unilaterally, and I have
+not touched it. The cell-level alternatives I can see — none of which I have implemented, because
+each one changes behaviour to satisfy a proxy rather than to fix a harm — are: render every plate at
+one canonical resolution and resample; or refuse to build a rig at any resolution beyond the
+registered size. Both trade real fidelity or real flexibility for a counter.
