@@ -104,10 +104,17 @@ def _pytest_counts(p: Path) -> dict:
 
 
 def main() -> None:
+    global CLOSURE
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "research" / "step7_coverage.md")
-    ap.add_argument("--matrix", type=Path, default=CLOSURE / "coverage_matrix.json")
+    ap.add_argument("--closure", type=Path, default=CLOSURE,
+                    help="the closure results directory to read; a re-sweep on a later integration "
+                         "SHA writes its own, and the page must say which one it is reading")
+    ap.add_argument("--matrix", type=Path, default=None)
     a = ap.parse_args()
+    CLOSURE = a.closure if a.closure.is_absolute() else (ROOT / a.closure)
+    if a.matrix is None:
+        a.matrix = CLOSURE / "coverage_matrix.json"
 
     dash, repairs = load_dashboard(S7 / "dashboard.yaml")
     matrix = _read_json(a.matrix) or {"rows": [], "counts": {}}
@@ -137,8 +144,7 @@ def main() -> None:
     P(f"| integration HEAD verified | `{matrix.get('integration_head_verified') or sha}` |")
     P(f"| closure branch tip this page was generated at | `{sha}` |")
     P(f"| coverage target | {as_written(dash.get('coverage_target'))} |")
-    P(f"| closure branch | `step7/closure` (this page and everything under "
-      f"`examples/results/step7/closure/`) |")
+    P(f"| closure artifacts read | `{CLOSURE.relative_to(ROOT) if CLOSURE.is_relative_to(ROOT) else CLOSURE}` |")
     if repairs:
         P(f"| dashboard YAML repairs applied to read it | {'; '.join(repairs)} |")
     P("")
@@ -423,7 +429,7 @@ def main() -> None:
         for p in gp + ut:
             c = _pytest_counts(p)
             consumed.add(p)
-            base, _, rest = p.name.partition(".")
+            base, _, rest = p.name.partition(".")  # noqa: PLW2901
             parts = rest.split(".")
             venv = parts[0]
             tree = "baseline `76dc5116`" if "baseline-76dc511" in p.name else "integration HEAD"
@@ -491,7 +497,7 @@ def main() -> None:
         if CLOSURE.is_dir() else []
     if leftover:
         for p in leftover:
-            P(f"- `{p.relative_to(ROOT)}`")
+            P(f"- `{p.relative_to(ROOT) if p.is_relative_to(ROOT) else p}`")
     else:
         P("None: every committed closure artifact is read by this page.")
     P("")

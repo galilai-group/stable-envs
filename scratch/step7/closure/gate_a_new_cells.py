@@ -125,15 +125,60 @@ def _mandatory_ok(name: str, rec: dict) -> tuple[bool | None, str]:
     return (bool(ok), "; ".join(seen))
 
 
+def rejudge(path: Path) -> None:
+    """Recompute the verdicts in an existing document under the current rule. Measures nothing.
+
+    The rows carry every check's status and evidence, so a corrected rule can be applied to a run
+    that already happened -- which is cheaper and more honest than re-rendering 64 states to reach
+    the same numbers, and it keeps the measured values byte-identical to what the card produced.
+    """
+    doc = json.loads(path.read_text())
+    for name, row in (doc.get("configs") or {}).items():
+        man = row.get("mandatory") or {}
+        judged = {k: _mandatory_ok(k, v) for k, v in man.items()}
+        failing = sorted(k for k, (ok, _) in judged.items() if ok is False)
+        not_applicable = sorted(k for k, v in man.items() if v.get("status") == "not_applicable")
+        unreachable = sorted(k for k, v in man.items()
+                             if v.get("status") in ("blocked_environment", "error", None))
+        spec_cell = CELLS.get(name, {})
+        verdict = ("FAIL" if failing else "BLOCKED" if unreachable
+                   else "PARTIAL" if spec_cell.get("registered_default_coverage") == "partial"
+                   else "PASS")
+        if row.get("status") != "measured":
+            verdict = "BLOCKED"
+        v = doc["verdicts"].setdefault(name, {})
+        was = v.get("verdict")
+        v.update({"verdict": verdict, "mandatory_failing": failing,
+                  "mandatory_not_applicable": {k: man[k].get("why") for k in not_applicable},
+                  "mandatory_unreachable": {k: man[k].get("status") for k in unreachable},
+                  "rejudged_from": was,
+                  "rejudge_rule": "scratch/step4/certify.py: a not_applicable mandatory check is a "
+                                  "property the env does not have, never a skipped check; PARTIAL "
+                                  "is reserved for registered_default_coverage == 'partial'"})
+        v.pop("mandatory_not_measured", None)
+        print(f"[{name:26s}] {was} -> {verdict}  n/a={not_applicable or '-'} "
+              f"failing={failing or '-'}")
+    path.write_text(json.dumps(doc, indent=1, sort_keys=True, default=str))
+    print("rewrote", path)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cells", required=True, help="comma-separated cell ids")
-    ap.add_argument("--device", required=True)
-    ap.add_argument("--states-dir", required=True)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--rejudge", type=Path, default=None,
+                    help="recompute the verdicts in an existing document under the current rule "
+                         "and exit; measures nothing")
+    ap.add_argument("--cells", default="", help="comma-separated cell ids")
+    ap.add_argument("--device", default="")
+    ap.add_argument("--states-dir", default="")
+    ap.add_argument("--out", default="")
     ap.add_argument("--n-states", type=int, default=64)
     ap.add_argument("--pool", type=int, default=256)
     a = ap.parse_args()
+    if a.rejudge:
+        rejudge(a.rejudge)
+        return
+    if not (a.cells and a.device and a.states_dir and a.out):
+        ap.error("--cells, --device, --states-dir and --out are required unless --rejudge is given")
 
     spec = importlib.util.spec_from_file_location("fidelity_step4",
                                                   ROOT / "examples" / "fidelity_step4.py")
@@ -185,9 +230,22 @@ def main() -> None:
         fam = row.get("family_specific") or {}
         judged = {k: _mandatory_ok(k, v) for k, v in man.items()}
         failing = sorted(k for k, (ok, _) in judged.items() if ok is False)
-        unmeasured = sorted(k for k, v in man.items() if v.get("status") != "measured")
-        verdict = ("PASS" if not failing and not unmeasured
-                   else "FAIL" if failing else "PARTIAL")
+        # THE REPO'S RULE, not a stricter one of this script's own. scratch/step4/certify.py:
+        # "A not_applicable here is a property the env does not have (an env with no style cannot
+        # fail check_style_is_state), never a check that was skipped for convenience", and its
+        # PARTIAL is reserved for registered_default_coverage == "partial" -- it has nothing to do
+        # with how many checks ran. Counting not_applicable against a cell marked OGBCube and
+        # OGBScene PARTIAL in the first pass of this re-sweep purely because they declare no style,
+        # which is the opposite of what the certifier says. Only a check that was REACHED and was
+        # wrong, or one the interpreter could not reach at all, may count.
+        not_applicable = sorted(k for k, v in man.items() if v.get("status") == "not_applicable")
+        unreachable = sorted(k for k, v in man.items()
+                             if v.get("status") in ("blocked_environment", "error", None))
+        partial_by_declaration = spec_cell.get("registered_default_coverage") == "partial"
+        verdict = ("FAIL" if failing
+                   else "BLOCKED" if unreachable
+                   else "PARTIAL" if partial_by_declaration
+                   else "PASS")
         if row.get("status") != "measured":
             verdict = "BLOCKED"
         doc["verdicts"][name] = {
@@ -195,14 +253,15 @@ def main() -> None:
             "row_status": row.get("status"), "why": str(row.get("why") or "")[:300],
             "mandatory_n": len(man),
             "mandatory_failing": failing,
-            "mandatory_not_measured": {k: man[k].get("status") for k in unmeasured},
+            "mandatory_not_applicable": {k: man[k].get("why") for k in not_applicable},
+            "mandatory_unreachable": {k: man[k].get("status") for k in unreachable},
             "mandatory_observations": {k: judged[k][1] for k in sorted(man)},
             "family_specific_status": {k: v.get("status") for k, v in sorted(fam.items())},
             "corpus": row.get("corpus", {}),
             "seconds": row.get("seconds")}
-        print(f"[{name:26s}] {verdict:8s} mandatory {len(man) - len(failing) - len(unmeasured)}"
-              f"/{len(man)} failing={failing or '-'} notmeasured={unmeasured or '-'} "
-              f"{row.get('seconds')}s", flush=True)
+        print(f"[{name:26s}] {verdict:8s} mandatory {len(man) - len(failing) - len(unreachable)}"
+              f"/{len(man)} failing={failing or '-'} n/a={not_applicable or '-'} "
+              f"unreachable={unreachable or '-'} {row.get('seconds')}s", flush=True)
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(json.dumps(doc, indent=1, sort_keys=True, default=str))
 
