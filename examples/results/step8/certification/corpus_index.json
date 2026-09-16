@@ -10,7 +10,37 @@
    "rows_taken": "all",
    "sibling_corpus_json": "examples/results/step7/craftax-classic-full/corpus/corpus.json",
    "source": "examples/results/step7/craftax-classic-full/corpus/states.npz",
-   "state_dim": 149
+   "state_dim": 149,
+   "two_frozen_corpora": {
+    "consequence": "the Step-7 closure replay records CraftaxClassic as NOT REPLAYED, because the cell can carry one corpus at a time. That is the state of the world at the Step-8 baseline, recorded rather than fixed by retiring an oracle.",
+    "not_done": [
+     "no retirement",
+     "no re-freeze",
+     "neither array rewritten"
+    ],
+    "recorded_by": "Step-8 Workstream E follow-up",
+    "roles": {
+     "step4_64x127": {
+      "array_sha256": "9b0346c3dcb1cb0632a6fe0c34ca6aa84450d64bb61524e1baaab32739e7847d",
+      "frozen_in": "Step 4",
+      "key": "states",
+      "n_states": 64,
+      "npz_sha256": "a5cf313c2a94e8c3d5522d9ac34d5e13e67d1e034bcef325f0744289d3bd630e",
+      "path": "examples/results/step4/states/CraftaxClassic.npz",
+      "role": "the HISTORICAL WORLD-ROW ORACLE, under the zero-extension interpretation: it predates the full nine-row world window, so it certifies the world rows the Step-4 renderer drew and the rest read as zero. Every Step-4 number quoted against CraftaxClassic is a number about THIS draw.",
+      "state_dim": 127
+     },
+     "step7_64x149": {
+      "array_sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+      "frozen_in": "Step 7",
+      "n_states": 64,
+      "path": "examples/results/step7/craftax-classic-full/corpus/states.npz",
+      "role": "certifies the COMPLETE observation -- the 7x9 world window and the 2-row inventory strip -- over the whole day cycle (23 night, 25 dusk, 16 daylight, 30 sleeping). This is the corpus the Step-7 and Step-8 records are judged on.",
+      "state_dim": 149
+     }
+    },
+    "ruling": "DOCUMENTED. Sami, 2026-09-16: both corpora are KEPT, neither is retired and neither is re-frozen. They answer different questions and each stays authoritative for its own, which is why at most one of them being settable on the cell is a recorded limitation rather than a conflict to resolve by deleting one."
+   }
   },
   "CraftaxFull": {
    "array_sha256": "b0c38605fc983ecaac341a065f0791fd9f650d1c1dccc3d08aed68fed5fb197c",

@@ -212,15 +212,54 @@ def _tier(row: dict, key: str) -> dict:
             "source": t.get("source"), "note": ((t.get("detail") or {}).get("note") or "")[:400]}
 
 
-def _variation(row: dict) -> dict:
+def registered_variation_maps() -> dict:
+    """``cell -> VariationMap`` as the library actually installs them, or ``{}`` if it cannot import.
+
+    Read from ``stable_envs.compat.worldmodel.VARIATION_MAPS`` rather than from prose, for the same
+    reason every other column is read from an artifact: a map that is written but not INSTALLED does
+    not exist as far as a caller is concerned, and a table that says otherwise is the drift this file
+    exists to prevent. An interpreter that cannot import the package reports ``unknown``; it never
+    guesses ``present``.
+    """
+    try:
+        from stable_envs.compat.worldmodel import VARIATION_MAPS
+        return dict(VARIATION_MAPS)
+    except BaseException:                                                   # noqa: BLE001
+        return {}
+
+
+def _variation(row: dict, maps: dict | None = None) -> dict:
     v = row.get("variation_space") or {}
     st = v.get("variation_map_status")
     dead = [x for x in (v.get("declared_out") or [])]
-    return {"map_status": st or "unknown",
-            "status": {"present": "PASS", "missing": "UNMEASURED"}.get(st, "UNMEASURED"),
-            "n_swm_leaves": v.get("n_swm_leaves"),
-            "declared_in": v.get("declared_in") or [], "unsupported_or_dead_leaves": dead,
-            "note": (v.get("note") or "")[:400], "swm_status": v.get("swm_status")}
+    out = {"map_status": st or "unknown",
+           "status": {"present": "PASS", "missing": "UNMEASURED"}.get(st, "UNMEASURED"),
+           "n_swm_leaves": v.get("n_swm_leaves"),
+           "declared_in": v.get("declared_in") or [], "unsupported_or_dead_leaves": dead,
+           "note": (v.get("note") or "")[:400], "swm_status": v.get("swm_status"),
+           "source": "examples/results/step7/closure2/coverage_matrix.json"}
+    live = {e: maps[e] for e in (row.get("stable_envs_envs") or []) if e in (maps or {})}
+    if not live:
+        return out
+    # A map that IS installed classifies every swm leaf it was written against, so the column stops
+    # being "somebody wrote one" and becomes the per-leaf taxonomy the map itself computes.
+    per_leaf = Counter()
+    for vmap in live.values():
+        per_leaf.update(vmap.classification().values())
+    complete = not (per_leaf["unknown"] or not per_leaf)
+    out.update({"map_status": "complete" if complete else "partial",
+                "status": "PASS" if complete else "UNMEASURED",
+                "leaf_classification": dict(sorted(per_leaf.items())),
+                "n_swm_leaves": sum(per_leaf.values()),
+                "mapped_cells": sorted(live),
+                "unsupported_or_dead_leaves": sorted(
+                    p for vmap in live.values()
+                    for p, k in vmap.classification().items()
+                    if k in ("unsupported", "dead_upstream")),
+                "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), "
+                          "VariationMap.classification()",
+                "previous_status_in_coverage_matrix": st or "unknown"})
+    return out
 
 
 def _fidelity(row: dict) -> dict:
@@ -272,6 +311,7 @@ def build() -> dict:
         raise SystemExit(f"{COVERAGE_MATRIX} is missing: this table is a join over committed "
                          f"artifacts and there is nothing to join")
     classes, decls = census_classes()
+    vmaps = registered_variation_maps()
     step8 = {"downsample": _load(S8 / "downsample_provenance.json"),
              "gate_a": _load(S8 / "gate_a_rejudged.json"),
              "nvdiff": _load(S8 / "nvdiff_ulp_classification.json"),
@@ -300,7 +340,7 @@ def build() -> dict:
                        "failing_checks": [],
                        "note": "symbolic id: intentionally renderer-free, there is no frame to gate"},
             "cpu_tier": _tier(r, "cpu_tier"), "gpu_tier": _tier(r, "gpu_tier"),
-            "variation": _variation(r),
+            "variation": _variation(r, vmaps),
             "swm_api_gate_f": {"status": "UNMEASURED",
                                "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact "
                                       "exists at this HEAD"},
