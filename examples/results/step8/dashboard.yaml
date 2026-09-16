@@ -723,6 +723,18 @@ escalations:
   coordinator_recommendation: keep both; the Step-4 corpus stays the oracle for the world rows (replayed exactly via zero-extension, as Step 7 proved); the Step-7 corpus certifies the full observation;
     record as DOCUMENTED provenance, no retirement
   status: 'ruled 2026-09-16: keep both'
+- date: '2026-09-16'
+  from: coordinator (aggregation of A/B/C per Sami ruling)
+  topic: shared capability for capability-gated SWM leaves
+  packet: examples/results/step8/capability/per_world_model_arrays.md
+  summary: '(i) per-world MODEL arrays already exist in the mjwarp path (mjw.put_model batch_sizes, used by 5 families): OGB light.intensity/camera.angle_delta/cube.size (6 leaves, 2 ids) are wiring in
+    ogb_manip.py, cost S-M; (ii) per-value texel substitution on the plate bake (retexture + quantise + mjr_uploadTexture, plate cache key extended) unlocks 21 semantically required leaves in 3 families:
+    OGB floor.color (2 ids, proven byte-exact by the C follow-up), DMC parity-tier floor.color (7 ids), Fetch background.color skybox residual (12 ids; INFERRED, needs one bake-vs-recompile diff first);
+    cube.color x2 + Scene lock_color need no capability (geom/mat rgba already per-world); genuinely unsupported: Fetch transparent_arm (no alpha path), DMC floor.color on the 5 trackcom cells, OGBMaze
+    light.intensity (fitted law, one-off)'
+  coordinator_recommendation: confirm requirement after B and C merge; then ONE shared implementation of (ii) reused by OGB/DMC/Fetch plus the OGB (i) wiring; no one-off hacks; each needs default digest
+    identity, isolation, Gate A with new style dims and a paired throughput check
+  status: analysis complete; implementation held until B/C are merged and Sami confirms the requirement (renderer semantics change)
 refreezes: []
 upstream_findings:
 - source: C
