@@ -153,7 +153,23 @@ def test_the_rocket_declaration_is_recorded_as_a_join_not_invented(rejudged):
     assert join["result"].startswith("NOT_APPLICABLE")
     assert join["declared_leaves"] == sorted(ROCKET_LEAVES)
     assert join["undeclared_leaves_still_judged"] == []
-    # Step 7 did not record it; the check records it from Step 8 on, and the gap says so.
+    # The Step-8 re-sweep measured the distances, so the declaration is not the only thing in the
+    # record: every declared probe carries a number a wiring regression would move. Every distance
+    # is > 0, which is the whole claim -- a leaf that could reach its colour would not need the
+    # declaration, and a zero here would mean the declaration had gone stale.
+    best = join["measured_best_abs_diff"]
+    assert best is not None and len(best) == 2 * len(ROCKET_LEAVES)
+    assert all(v > 0 for v in best.values()), best
+    assert join["best_abs_diff_note"] is None
+
+
+def test_a_record_without_the_distance_says_so_rather_than_showing_a_blank(rejudged):
+    """An older shard has no best_abs_diff. The join must name the gap, not imply zero."""
+    rejudge = module("step8_rejudge_nobest", "scratch/step8/rejudge_gate_a.py")
+    from stable_envs.envs.rocket_landing import PFRocketLanding
+    res = {"status": "measured", "evidence": {"colors_not_applied": [
+        f"{leaf}->[17, 33, 200]" for leaf in ROCKET_LEAVES]}}
+    _, join = rejudge._colour_join("PFRocketLanding", "cuda", res, PFRocketLanding)
     assert join["measured_best_abs_diff"] is None
     assert "records it from Step 8 onward" in join["best_abs_diff_note"]
 
@@ -221,21 +237,35 @@ def test_an_applicable_family_failure_still_reaches_the_support_matrix(rejudged,
     assert joined["failing_checks"] == ["check_colors_apply_exactly"]
 
 
-def test_the_rocket_row_records_the_ruling_and_the_reference_gap(rejudged, report):
+def test_the_rocket_row_passes_with_the_ruling_recorded(rejudged, report):
     row = {"stable_envs_envs": ["PFRocketLanding"],
            "gate_a": {"result": "PASS", "note": "the Step-7 record",
                       "per_device": {"cpu": {"verdict": "REFUSED_BY_DESIGN"}}}}
     joined = report._gate_a(row, rejudged)
+    assert joined["status"] == "PASS"
     assert joined["failing_checks"] == []
-    assert joined["per_device"]["cpu"] == "UNSUPPORTED_BY_DESIGN"
-    # The two visual-fidelity checks are UNMEASURED (the measuring interpreter never recorded
-    # PyFlyt/pybullet), which is not the same word as FAIL and must not be collapsed into it.
-    assert joined["blocked_checks"] == ["check_visual_fidelity",
-                                        "check_visual_fidelity_under_variation"]
-    assert joined["per_device"]["cuda"] == "UNMEASURED"
+    # The Step-8 re-sweep records the declared reference versions, so nothing is blocked any more.
+    assert joined["blocked_checks"] == []
+    assert joined["per_device"] == {"cpu": "UNSUPPORTED_BY_DESIGN", "cuda": "PASS"}
     assert any(d["check"] == "check_colors_apply_exactly" and d["kind"] == "declared_not_applicable"
                for d in joined["applicability"])
     assert "the Step-7 record" in joined["note"]
+
+
+def test_the_rocket_row_is_judged_on_the_resweep_and_cites_what_it_supersedes(rejudged):
+    rocket = record(rejudged, "PFRocketLanding", "cuda")
+    assert rocket["measurement"] == "step8_resweep"
+    assert rocket["supersedes"]["source"] == "examples/results/step7/closure2/gate_a/cuda_rocket.json"
+    assert len(rocket["supersedes"]["source_sha256"]) == 64
+    # Same corpus as the shard it supersedes: a re-sweep on a different draw would not be comparable.
+    assert (rocket["judgment"]["config_id"], rocket["device"]) == ("PFRocketLanding", "cuda")
+    # The two checks that were blocked on an unrecorded reference version are now judged.
+    assert rocket["judgment"]["blocked"] == []
+    assert rocket["judgment"]["checks"]["check_visual_fidelity"]["status"] == "pass"
+    assert rocket["judgment"]["gate_a"] == "PASS"
+    # And the closure2 row it replaces is not also present, which would double-count the cell.
+    assert sum(1 for r in rejudged["records"]
+               if r["cell"] == "PFRocketLanding" and r["device"] == "cuda") == 1
 
 
 def test_the_craftax_classic_row_passes_with_the_band_recorded(rejudged, report):

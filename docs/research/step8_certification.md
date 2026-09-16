@@ -591,41 +591,87 @@ checks have), and it is a genuine extension of a Gate-A check in policy-frozen `
 deserves its own review, and presenting it retroactively as part of the Step-2 mandatory contract
 would be exactly the dishonesty this workstream exists to avoid.
 
-## What the rejudgment exposed that the ruling did not cover
+## The reference-provenance gap the rejudgment exposed — measured, and closed
 
-`PFRocketLanding` / cuda is **`UNMEASURED`, not `PASS` and not `FAIL`**, and it is the only row that
-moved. With the colour check ruled not applicable, two other `family_specific` checks come into view
-that the mandatory-only harness never judged:
+With the colour check ruled not applicable, two `family_specific` checks the mandatory-only harness
+never judged came into view on `PFRocketLanding`:
 
 ```text
 check_visual_fidelity                 blocked_environment
 check_visual_fidelity_under_variation blocked_environment
 ```
 
-Not because the numbers are bad — they are well inside the declaration — but because the cell
+Not because the numbers were bad — they were well inside the declaration — but because the cell
 declares `reference_versions = {PyFlyt 0.29.0, pybullet 3.2.7}` and **the measuring interpreter never
-recorded either**. `fidelity_step4.provenance` tracked eleven packages and neither of those was one of
-them, so `block_on_reference_mismatch` reports *"version not recorded by the measuring interpreter"* —
-and "could not confirm" is the blocked case, not the passing one. That is the correct verdict and it
-is a **provenance gap, not a renderer failure**; the row says which two checks and why.
+recorded either**. `fidelity_step4.provenance` tracked eleven packages and neither was one of them,
+so `block_on_reference_mismatch` reported *"version not recorded by the measuring interpreter"* — and
+"could not confirm" is the blocked case, not the passing one. A **provenance gap, not a renderer
+failure**, and no amount of rejudging could close it: only a new measurement could.
 
-`examples/fidelity_step4.py` now records both packages, which is what lets the next run on a PyFlyt
-interpreter clear it. It changes no historical artifact, and no local work can: this needs a GPU
-re-measure.
+### The Step-8 re-sweep
+
+`examples/fidelity_step4.provenance` now records `PyFlyt` and `pybullet`, and the cell was
+**re-measured on that harness**, on the same card, through the same driver:
+
+| | |
+|---|---|
+| artifact | `examples/results/step8/certification/gate_a_resweep/cuda_rocket.json` |
+| driver | `scratch/step7/closure/gate_a_new_cells.py --cells PFRocketLanding --device cuda --n-states 64 --pool 256` — the **same** script that produced the closure2 shard |
+| corpus | the **same** 64 states, sha256 `f4707e54f3007b2e9afb1c236e932626373ee767eaa705161d53faa937d6eedf` |
+| host / GPU | `gpu2264.oscar.ccv.brown.edu`, NVIDIA GeForce RTX 3090, driver 575.57.08 |
+| SLURM job | **6443480** (the held allocation; `srun --overlap`, no new job submitted, nothing cancelled) |
+| interpreter | `$SCR/venvs/se7-rocket` — **PyFlyt 0.29.0, pybullet 3.2.7**, torch 2.14.0+cu126, nvdiffrast 0.4.0 |
+| tree | `$SCR/se8/cert-followup`, git `1ca3866` |
+| runtime | 114.0 s, `status: measured` |
+
+The versions recorded are **exactly** the versions the class declares, so the two checks are now
+judged rather than blocked. The closure2 shard is **kept, unchanged**, as the history of what was
+measured when; the rejudgment reads it, sees a Step-8 re-sweep for that `(cell, device)`, judges the
+re-sweep, and records `supersedes` with the closure2 path, sha256 and previous verdict.
+
+### `PFRocketLanding` / cuda — every check
+
+**Gate A: `PASS`.** 14 of 14 mandatory pass; 9 `family_specific` checks resolve as:
+
+| check | status |
+|---|---|
+| `check_visual_fidelity` | **pass** — mean_abs 7.814 ≤ 10.0, within8 0.9607 ≥ 0.91, SSIM 0.8630 ≥ 0.80, against the class's own declaration, reference version now **confirmed** |
+| `check_visual_fidelity_under_variation` | `no_declared_bound` — the class declares no separate `variation_fidelity`, so the numbers (mean_abs 7.369, within8 0.9606, SSIM 0.8943) are recorded and nothing holds them |
+| `check_resolution_consistency` | **pass** — `exact_frac` 0.956137 ≥ 0.956137 − 0.005; identical to closure2 to every digit |
+| `check_variations_do_something` | **pass** |
+| `check_colors_apply_exactly` | **`not_applicable` (declared, evidence attached)** |
+| `check_backend_agreement`, `check_task_object_visibility`, `render_parity_with_official_renderer` | `not_applicable` — the cell has one backend, declares no task object, and is VISUAL tier |
+
+`cpu` stays `REFUSED_BY_DESIGN`: the cell raises on `device="cpu"` on purpose.
+
+**And the colour check's distances are now measured**, which is what the ruling asked for — the
+Step-7 shard recorded only the knob names:
+
+| leaf | `best_abs_diff` (summed absolute channel error, closest pixel) |
+|---|---|
+| `rocket.body_color`, `rocket.booster_color` | 4 |
+| `pad.color` | 5 |
+| `rocket.leg_color` | 6 |
+| `rocket.fin_color` | 10 |
+
+All ten probes still miss — that is the point, and it is what the 0.993567 ceiling predicts. Every
+distance is **strictly positive**, which is the property a test now asserts: a leaf that could reach
+its colour would not need the declaration, and a zero would mean the declaration had gone stale.
 
 ## Gate A over the 40 pixel-producing rows
 
-| | Workstream E, `9d286ce` | after the rejudgment |
+| | Workstream E, `9d286ce` | after the rejudgment and the re-sweep |
 |---|---|---|
-| `PASS` | 36 | **35** |
+| `PASS` | 36 | **36** |
 | `FAIL` | 3 | 3 |
-| `UNMEASURED` | 1 | **2** |
-| `BLOCKED`/unmeasured symbolic | 2 `UNSUPPORTED_BY_DESIGN` | 2 `UNSUPPORTED_BY_DESIGN` |
+| `UNMEASURED` | 1 | 1 |
 
-Exactly one row moved: `swm/PFRocketLanding-v0`, `PASS → UNMEASURED`, for the reference-provenance
-reason above. `swm/CraftaxClassicPixels-v1` stays `PASS`, now with the band recorded in the row. The
-three `trackcom` `FAIL` rows and the one `UNMEASURED` row are untouched, and no other row moved on any
-column but `VariationMap` — where Workstream A's merge takes 17 ids from `missing` to `complete`.
+**No row's Gate-A verdict differs from E's matrix** — but every verdict now includes the
+`family_specific` group, the two applicability rulings are honoured with their evidence recorded in
+the row, and the Rocket's reference provenance is *recorded* rather than assumed. The three
+`trackcom` `FAIL` rows and the one `UNMEASURED` row (`HumanoidDMControl`) are untouched. The only
+other column that moved is `VariationMap`, where Workstream A's merge takes 17 ids from `missing` to
+`complete`.
 
 **Replay of the 49 frozen Step-4 configurations through the frozen judge: 0 of 49 changed any
 field** — verdict, failures, blocked, `no_declared_bound`, `not_applicable` or any per-check record.
@@ -636,11 +682,11 @@ field** — verdict, failures, blocked, `no_declared_bound`, `not_applicable` or
 |---|---|---|
 | 1 | explicit workstream scope | E follow-up: the Gate-A record, two applicability declarations, the support-matrix join. One additive class attribute on `rocket_landing.py` (C's file), authorised by the coordinator, declaration only. |
 | 2 | before/after diagnosis | above, per row and per check; every join recorded with sha256 in `gate_a_rejudged.json.applicability_joins` |
-| 3 | targeted unit tests | `tests/unit/test_step8_gate_record.py`, 20 tests: one per required declaration key, two refused-join cases, the Rocket `not_applicable`-with-evidence assertion and the CraftaxClassic applicable-subset assertion |
-| 4 | affected Gate-A / Gate-F checks | Gate A: `check_colors_apply_exactly`, `check_resolution_consistency`, and the two reference-blocked visual-fidelity checks now visible. Gate F: untouched (Workstream D) |
+| 3 | targeted unit tests | `tests/unit/test_step8_gate_record.py`, 27 tests: one per required declaration key, two refused-join cases, five on the partition helper the GPU assertion uses, the Rocket `not_applicable`-with-evidence and re-sweep assertions, the CraftaxClassic applicable-subset assertion |
+| 4 | affected Gate-A / Gate-F checks | Gate A: `check_colors_apply_exactly` (GPU assertion now reads the declaration through `partition_colour_exactness`), `check_resolution_consistency`, and the two visual-fidelity checks, re-measured and now judged. Gate F: untouched (Workstream D) |
 | 5 | frozen-corpus replay | 49 of 49 identical; both CraftaxClassic corpora kept and neither rewritten |
-| 6 | pixel-movement classification | **none.** No renderer, shader, atlas or geometry code was touched; `check_colors_apply_exactly`'s verdict is byte-identical and only gains a reported diagnostic |
+| 6 | pixel-movement classification | **none.** No renderer, shader, atlas or geometry code was touched; `check_colors_apply_exactly`'s verdict is byte-identical and only gains a reported diagnostic. The re-sweep confirms it on hardware: `check_resolution_consistency` reproduces 0.956137 to every digit against the closure2 shard |
 | 7 | performance regression check | **not applicable:** no hot-path code changed. The one added computation is `d.min()` inside a check that already computes `d` |
 | 8 | independent reviewer verdict | **OPEN** — none exists for this follow-up |
-| 9 | semantic follow-up decision | **none warranted.** No pixel moved, so no downstream semantic result can have |
+| 9 | semantic follow-up decision | **none warranted.** No pixel moved, so no downstream semantic result can have. The re-sweep is a new measurement of an unchanged renderer, and it reproduces the closure2 numbers |
 | 10 | dashboard update | **OPEN** — `examples/results/step8/dashboard.yaml` is the coordinator's file |

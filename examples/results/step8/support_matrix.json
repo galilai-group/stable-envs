@@ -13,8 +13,8 @@
   },
   "gate_a": {
    "FAIL": 3,
-   "PASS": 35,
-   "UNMEASURED": 2,
+   "PASS": 36,
+   "UNMEASURED": 1,
    "UNSUPPORTED_BY_DESIGN": 2
   },
   "gpu_tier_status": {
@@ -32,7 +32,7 @@
    "unknown": 2
   }
  },
- "generated_at_head_sha": "a5db9469c5bd127dd13e3a92f3e50dac845e85c0",
+ "generated_at_head_sha": "3f59bdd035c08eef24c9ea565abe971b2f1a7509",
  "rows": [
   {
    "backend_class": "R",
@@ -2931,6 +2931,71 @@
       "device": "cuda",
       "kind": "declared_not_applicable",
       "measured_evidence": {
+       "applicability": {
+        "declaration": {
+         "evidence": [
+          "examples/results/step8/certification/colour_law_ceiling.json",
+          "examples/results/step8/certification/colour_check_decision.md",
+          "examples/results/step7/rocket-landing/findings.md:251-257,1209-1220",
+          "examples/results/step7/rocket-landing/review_phase1.md:885-894"
+         ],
+         "leaves": [
+          "pad.color",
+          "rocket.body_color",
+          "rocket.booster_color",
+          "rocket.fin_color",
+          "rocket.leg_color"
+         ],
+         "max_shading_factor": 0.993567,
+         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
+         "mechanism": "bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma",
+         "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest body pixel is 0.991*int(255*c); the requested triple is absent from the OFFICIAL frames too",
+         "official_renderer_fails_the_same_check": true,
+         "reachable_ceiling_for_the_probe_targets": {
+          "17": 16,
+          "200": 198,
+          "33": 32
+         },
+         "ruled_by": "Sami, 2026-09-16, on examples/results/step8/certification/colour_check_decision.md",
+         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays judged against literal equality",
+         "status": "not_applicable: literal RGB equality is unreachable under the reference's own law",
+         "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's response to the knob against the OFFICIAL renderer's response to the same knob"
+        },
+        "declared_leaves": [
+         "pad.color",
+         "rocket.body_color",
+         "rocket.booster_color",
+         "rocket.fin_color",
+         "rocket.leg_color"
+        ],
+        "honoured": true,
+        "not_applicable_probes": [
+         "pad.color->[17, 33, 200]",
+         "pad.color->[200, 17, 33]",
+         "rocket.body_color->[17, 33, 200]",
+         "rocket.body_color->[200, 17, 33]",
+         "rocket.booster_color->[17, 33, 200]",
+         "rocket.booster_color->[200, 17, 33]",
+         "rocket.fin_color->[17, 33, 200]",
+         "rocket.fin_color->[200, 17, 33]",
+         "rocket.leg_color->[17, 33, 200]",
+         "rocket.leg_color->[200, 17, 33]"
+        ],
+        "undeclared_leaves_still_judged": [],
+        "why": "5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none)."
+       },
+       "best_abs_diff": {
+        "pad.color->[17, 33, 200]": 5,
+        "pad.color->[200, 17, 33]": 5,
+        "rocket.body_color->[17, 33, 200]": 4,
+        "rocket.body_color->[200, 17, 33]": 4,
+        "rocket.booster_color->[17, 33, 200]": 4,
+        "rocket.booster_color->[200, 17, 33]": 4,
+        "rocket.fin_color->[17, 33, 200]": 10,
+        "rocket.fin_color->[200, 17, 33]": 10,
+        "rocket.leg_color->[17, 33, 200]": 6,
+        "rocket.leg_color->[200, 17, 33]": 6
+       },
        "colors_not_applied": [
         "pad.color->[17, 33, 200]",
         "pad.color->[200, 17, 33]",
@@ -2944,13 +3009,25 @@
         "rocket.leg_color->[200, 17, 33]"
        ]
       },
-      "why": "declared not_applicable on 5 named lit RGB leaves. 5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none). The measurement is kept: colors_not_applied=['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'], best_abs_diff=None."
+      "why": "declared not_applicable on 5 named lit RGB leaves. 5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none). The measurement is kept: colors_not_applied=['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'], best_abs_diff={'pad.color->[17, 33, 200]': 5, 'pad.color->[200, 17, 33]': 5, 'rocket.body_color->[17, 33, 200]': 4, 'rocket.body_color->[200, 17, 33]': 4, 'rocket.booster_color->[17, 33, 200]': 4, 'rocket.booster_color->[200, 17, 33]': 4, 'rocket.fin_color->[17, 33, 200]': 10, 'rocket.fin_color->[200, 17, 33]': 10, 'rocket.leg_color->[17, 33, 200]': 6, 'rocket.leg_color->[200, 17, 33]': 6}."
+     },
+     {
+      "all_bands_recorded_not_judged": null,
+      "bands": {},
+      "bound": ">= 0.956137 - 0.005",
+      "check": "check_resolution_consistency",
+      "device": "cuda",
+      "judged_on_subset": null,
+      "kind": "judged_on_the_applicable_band",
+      "observed": {
+       "exact_frac": 0.9561371527777778,
+       "max_abs": 255,
+       "mean_abs": 0.9922828052662037
+      },
+      "why": "no resolution_consistency_applicability is declared, so the bound is asserted on every state"
      }
     ],
-    "blocked_checks": [
-     "check_visual_fidelity",
-     "check_visual_fidelity_under_variation"
-    ],
+    "blocked_checks": [],
     "failing_checks": [],
     "measurements": [
      {
@@ -2962,10 +3039,7 @@
       "source_sha256": "016b266071d0f7c80076de6d8f9c5a35265906c7b431459f603e9942c8cb9187"
      },
      {
-      "blocked_checks": [
-       "check_visual_fidelity",
-       "check_visual_fidelity_under_variation"
-      ],
+      "blocked_checks": [],
       "cell": "PFRocketLanding",
       "device": "cuda",
       "not_applicable_checks": [
@@ -2974,18 +3048,18 @@
        "check_task_object_visibility",
        "render_parity_with_official_renderer"
       ],
-      "source": "examples/results/step7/closure2/gate_a/cuda_rocket.json",
-      "source_sha256": "244f375bde1ec35315d0e8ae9f53770df3c98e013149a097771cde5f596f478c"
+      "source": "examples/results/step8/certification/gate_a_resweep/cuda_rocket.json",
+      "source_sha256": "a8db0aed8b075c8f35c9b171ea731c011ec5f283c424a75f1c97f849e7bf2101"
      }
     ],
-    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Applicability READ off the class, recorded in gate_a.applicability: check_colors_apply_exactly. UNMEASURED, not failed: check_visual_fidelity, check_visual_fidelity_under_variation could not be judged because the measuring interpreter did not record a declared reference package version. Step-7 record, kept: all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the contact-band bridge flag and fills the declaration. Two tests/gpu assertions still fail, both with a stated mechanism and neither a Gate-A check: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for this cell (measured 0.95614; the sa",
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Applicability READ off the class, recorded in gate_a.applicability: check_colors_apply_exactly; check_resolution_consistency. Step-7 record, kept: all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the contact-band bridge flag and fills the declaration. Two tests/gpu assertions still fail, both with a stated mechanism and neither a Gate-A check: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for this cell (measured 0.95614; the sa",
     "per_device": {
      "cpu": "UNSUPPORTED_BY_DESIGN",
-     "cuda": "UNMEASURED"
+     "cuda": "PASS"
     },
-    "raw": "BLOCKED",
+    "raw": "PASS",
     "source": "examples/results/step8/certification/gate_a_rejudged.json",
-    "status": "UNMEASURED"
+    "status": "PASS"
    },
    "gpu_tier": {
     "note": "R 241.5, cores 2.61, NO_LARGE_BATCH_REGRESSION 1.253; BATCH_SCALES 14.17 against a bar of 20, which fails because fps(1)=238 is unusually high for a class-S cell (3,374 f/s at B=4096) - correct application of Step-2 6.7 and a definitional edge case recorded for Step 8",
@@ -3006,15 +3080,9 @@
     },
     {
      "artifact": "examples/results/step8/certification/colour_check_decision.md",
-     "detail": "TinyRenderer's multiplicative law caps the shading factor at 0.993567, so the exact requested RGB cannot appear for ANY correct implementation, and does not appear in the official frames either. RULED 2026-09-16: literal RGB equality is not applicable on the five lit leaves the class names, with the law, the measured ceiling and the official-renderer demonstration declared in PFRocketLanding.color_exactness_applicability. The probe still runs and records best_abs_diff per leaf. A law-aware successor check is a PROPOSAL only: not implemented, not mandatory, and not part of the frozen Step-2 contract.",
+     "detail": "TinyRenderer's multiplicative law caps the shading factor at 0.993567, so the exact requested RGB cannot appear for ANY correct implementation, and does not appear in the official frames either. Measured best_abs_diff per leaf on the Step-8 re-sweep: 4 to 10. RULED 2026-09-16: literal RGB equality is not applicable on the five lit leaves the class names, with the law, the measured ceiling and the official-renderer demonstration declared in PFRocketLanding.color_exactness_applicability. The probe still runs and records best_abs_diff per leaf. A law-aware successor check is a PROPOSAL only: not implemented, not mandatory, and not part of the frozen Step-2 contract.",
      "kind": "DOCUMENTED_LIMITATION",
      "what": "check_colors_apply_exactly"
-    },
-    {
-     "artifact": "examples/results/step8/certification/gate_a_rejudged.json",
-     "detail": "blocked_environment, not failed: the cell declares reference versions PyFlyt 0.29.0 / pybullet 3.2.7 and no sweep recorded either, so the comparison cannot be confirmed. fidelity_step4.provenance now records both; clearing this needs a re-measure on a PyFlyt interpreter.",
-     "kind": "UNMEASURED",
-     "what": "check_visual_fidelity (both forms)"
     }
    ],
    "physics": {
@@ -3024,7 +3092,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "UNMEASURED",
+    "status": "PASS",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {

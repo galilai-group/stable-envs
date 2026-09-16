@@ -296,6 +296,7 @@ def limitations(env_names: list[str], row: dict, step8: dict) -> list[dict]:
                     "detail": "TinyRenderer's multiplicative law caps the shading factor at 0.993567, "
                               "so the exact requested RGB cannot appear for ANY correct "
                               "implementation, and does not appear in the official frames either. "
+                              "Measured best_abs_diff per leaf on the Step-8 re-sweep: 4 to 10. "
                               "RULED 2026-09-16: literal RGB equality is not applicable on the five "
                               "lit leaves the class names, with the law, the measured ceiling and "
                               "the official-renderer demonstration declared in "
@@ -304,11 +305,18 @@ def limitations(env_names: list[str], row: dict, step8: dict) -> list[dict]:
                               "PROPOSAL only: not implemented, not mandatory, and not part of the "
                               "frozen Step-2 contract.",
                     "artifact": "examples/results/step8/certification/colour_check_decision.md"})
-        out.append({"kind": "UNMEASURED", "what": "check_visual_fidelity (both forms)",
-                    "detail": "blocked_environment, not failed: the cell declares reference versions "
-                              "PyFlyt 0.29.0 / pybullet 3.2.7 and no sweep recorded either, so the "
-                              "comparison cannot be confirmed. fidelity_step4.provenance now records "
-                              "both; clearing this needs a re-measure on a PyFlyt interpreter.",
+    # Reference-provenance blocks are READ from the rejudged record rather than written here, so a
+    # row stops carrying one the moment a re-sweep records the version -- which is what happened to
+    # the Rocket, and a hardcoded sentence would have gone on claiming it.
+    for rec in (step8.get("gate_a") or {}).get("records", []):
+        if rec["cell"] not in env_names or not rec["judgment"]["blocked"]:
+            continue
+        out.append({"kind": "UNMEASURED",
+                    "what": f"{', '.join(rec['judgment']['blocked'])} on {rec['device']}",
+                    "detail": "blocked_environment, not failed: a declared reference version was not "
+                              "recorded by the measuring interpreter, so the comparison cannot be "
+                              "confirmed. Clearing it needs a re-measure on an interpreter that "
+                              "records it.",
                     "artifact": "examples/results/step8/certification/gate_a_rejudged.json"})
     note = ((row.get("gate_a") or {}).get("note") or "")
     if note and not out:
