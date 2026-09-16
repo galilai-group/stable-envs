@@ -338,7 +338,109 @@ _DECOR_OURS = {"material.decoration": "the rails/arena furniture material; swm r
 _EFFECTOR_OURS = {"material.effector": "the effector material; swm has no leaf that reaches it"}
 
 _DMC_MAPS = {
+    "DMCAcrobotSwingup": _dmc(
+        "DMCAcrobotSwingup", "swm/AcrobotDMControl-v0",
+        dead_upstream={
+            "agent.upper_arm_locked": _never_read(),
+            "agent.upper_arm_density": _density_dead("acrobot's <default class=\"/\"><geom "
+                                                     "type=\"capsule\" mass=\"1\"/> means every geom"),
+            "agent.lower_arm_density": _density_dead("acrobot's <default class=\"/\"><geom "
+                                                     "type=\"capsule\" mass=\"1\"/> means every geom"),
+            "target.color": _target_group(3, "(site `target`, material `target`)"),
+            "target.shape": _target_group(3, "(site `target`; the leaf does move site_type and "
+                                             "site_size)"),
+        },
+        physics_only={f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS}),
+
+    "DMCBallInCupCatch": _dmc(
+        "DMCBallInCupCatch", "swm/BallInCupDMControl-v0",
+        unsupported={
+            "ball.size": "the ball's radius, which is GEOMETRY: 902 disagreeing pixels of 8x84x84 at "
+                         "0.0475. The cell declares colour, light and (elsewhere) visibility leaves "
+                         "and no size leaf, so the appearance is not reachable.",
+            **{f"gravity.{a}": (
+                "UNSUPPORTED rather than physics-only: ball_in_cup's cup and ball are joined by a "
+                "SPATIAL TENDON, which MuJoCo draws as a hanging catenary through mjv_catenary, and "
+                "mjv_catenary reads the model's gravity. Measured at a fixed qpos: gravity.x moves "
+                "178 px and gravity.y 110 px of 8x84x84 (gravity.z alone moves 0, because scaling z "
+                "does not rotate the gravity direction). The cell reproduces mjv_catenary from the "
+                "compiled model's gravity and declares no gravity leaf.") for a in "xyz"},
+        },
+        dead_upstream={
+            "ball.color": _never_read("The ball is drawn with material `self`, which "
+                                      "``agent.color`` already reaches."),
+            "rendering.render_target": _target_group(4, "(site `target`), and 0 px again with "
+                                                        "render_target forced to 1"),
+            "target.color": _target_group(4, "(site `target`, rgba on the site itself)"),
+            "target.shape": _target_group(4, "(site `target`; the leaf does move site_type)"),
+        },
+        physics_only={"agent.density": _density_phys("the cup's density"),
+                        "ball.density": _density_phys("the ball's density")},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_EFFECTOR_OURS}),
+
+    "DMCFingerTurnHard": _dmc(
+        "DMCFingerTurnHard", "swm/FingerDMControl-v0",
+        mapped_target="material.target", visibility="visibility.target",
+        unsupported={
+            "spinner.color": "the spinner's colour is a per-geom ``rgba`` OVERRIDE (the leaf moves "
+                             "geom_rgba, not mat_rgba) and this cell's colour knobs are material-"
+                             "level, one per material carried by a visible element. Measured 2,191 "
+                             "disagreeing pixels of 8x84x84, so the leaf is real; there is simply no "
+                             "leaf here that reaches a single geom's rgba.",
+            "target.shape": "the target site's box/sphere alternative. Measured 459 disagreeing "
+                            "pixels of 8x84x84 WITH the target visible, so the leaf is real. This "
+                            "cell declares SHAPE_KNOBS = {} — only DMCManipulatorBringBall carries a "
+                            "shape leaf — so the default (sphere, index 1) is the compiled model's "
+                            "own and reproduces exactly, and the box alternative is unreachable.",
+        },
+        physics_only={"agent.fingertip_density": _density_phys("the fingertip's density"),
+                        "agent.proximal_density": _density_phys("the proximal link's density"),
+                        "spinner.density": _density_phys("the spinner's density"),
+                        "spinner.friction": _density_phys("the spinner joint's friction loss")},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS}),
+
+    "DMCPendulumSwingup": _dmc(
+        "DMCPendulumSwingup", "swm/PendulumDMControl-v0",
+        dead_upstream={
+            "agent.mass_shape": _never_read(),
+            "agent.mass_density": _density_dead("pendulum.xml's <geom name=\"mass\" ... mass=\"1\"/>"),
+            "agent.pole_density": _density_dead("pendulum.xml's <geom name=\"pole\" ... mass=\"0\"/>"),
+        },
+        physics_only={f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS}),
+
+    "DMCReacherHard": _dmc(
+        "DMCReacherHard", "swm/ReacherDMControl-v0",
+        mapped_target="material.target", visibility="visibility.target",
+        unsupported={"target.shape": "the target geom's box/sphere alternative. Measured 236 "
+                                     "disagreeing pixels of 8x84x84 WITH the target visible, so the "
+                                     "leaf is real. This cell declares SHAPE_KNOBS = {}, so the "
+                                     "default (sphere, index 1) is the compiled model's own and "
+                                     "reproduces exactly, and the box alternative is unreachable."},
+        dead_upstream={"agent.finger_locked": _never_read()},
+        physics_only={"agent.arm_density": _density_phys("the arm's density"),
+                        "agent.finger_density": _density_phys("the finger's density")},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS}),
+
 }
+
+# The two cartpole cells are one swm id. The balance and swingup tasks differ in their reset
+# distribution and in nothing the appearance mapping can see, so they carry the same map built twice
+# rather than one shared object — ``_LIGHT_BASE`` is keyed by cell and a shared instance would hide a
+# future divergence behind an alias.
+for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
+    _DMC_MAPS[_cell] = _dmc(
+        _cell, "swm/CartpoleDMControl-v0",
+        dead_upstream={
+            "agent.cart_shape": _never_read(),
+            "agent.pole_density": _density_dead("cartpole.xml's ``pole`` default class, which sets "
+                                                "an explicit mass on every pole geom"),
+        },
+        physics_only={"agent.cart_mass": _density_phys("the cart's mass"),
+                        **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
+        ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS})
+
 
 #: stable-envs CLASS name -> its map. Installed by ``variation_maps.install``.
 MAPS: dict[str, VariationMap] = {**_CLASSIC_MAPS, **_DMC_MAPS}
@@ -361,6 +463,12 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
     "swm/PendulumControl-v1": {"total": 9, "mapped": 3, "unsupported": 6, "dead_upstream": 0, "not_applicable": 0},
     "swm/MountainCarControl-v0": {"total": 5, "mapped": 2, "unsupported": 3, "dead_upstream": 0, "not_applicable": 0},
     "swm/MountainCarContinuousControl-v0": {"total": 4, "mapped": 2, "unsupported": 2, "dead_upstream": 0, "not_applicable": 0},
+    "swm/AcrobotDMControl-v0": {"total": 11, "mapped": 2, "unsupported": 4, "dead_upstream": 5, "not_applicable": 0},
+    "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 2, "unsupported": 7, "dead_upstream": 4, "not_applicable": 0},
+    "swm/CartpoleDMControl-v0": {"total": 9, "mapped": 2, "unsupported": 5, "dead_upstream": 2, "not_applicable": 0},
+    "swm/FingerDMControl-v0": {"total": 11, "mapped": 4, "unsupported": 7, "dead_upstream": 0, "not_applicable": 0},
+    "swm/PendulumDMControl-v0": {"total": 9, "mapped": 2, "unsupported": 4, "dead_upstream": 3, "not_applicable": 0},
+    "swm/ReacherDMControl-v0": {"total": 9, "mapped": 4, "unsupported": 4, "dead_upstream": 1, "not_applicable": 0},
 }
 
 #: The swm registered DEFAULT variation config for each id, as a dotted dict. Written down because it
