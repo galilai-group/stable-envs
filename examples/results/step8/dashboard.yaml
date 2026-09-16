@@ -625,11 +625,19 @@ workstreams:
   branch: step8/variations-newcells
   worktree: /Users/samib/stable-envs-step8-variations-newcells
   model: opus
-  status: Wave 1 spawned
+  status: 'PATCH_CANDIDATE delivered (49 leaves: 14 mapped / 13 unsupported / 4 dead_upstream / 18 n/a); reviewer spawned (sonnet); cheap OGB cube.color + floor.color authorized as a second commit set'
   authorization: "plan \xA711"
   affected_ids: 'OGBCube, OGBScene, PFRocketLanding, OGBMaze, SimplePointMaze, Craftax x2 (0 leaves: confirm)'
   affected_files: stable_envs/compat/variation_maps/newcells.py (new), ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, tests
   baseline_sha: 43ac952
+  head_sha: a09b407
+  finding: sky_color dead (0/691,200 px x5 seeds); OGB agent.color upstream negation bug; OGBMaze states-mode leaves move 0 px; two declared-default mismatches (Rocket pad.color, OGBMaze pixel_encoding);
+    wall.color 0.6 bit-exact
+  tests: 58 passed / 5 skipped; tests/unit 1093 + 2 pre-existing
+  pixels_changed: none (byte-identical digests on gpu2264, alloc 6443480)
+  semantic_followup: none
+  shared_files: compat/worldmodel.py (2 lines), mkdocs.yml (1 nav line)
+  reviewer: sonnet, spawned
 - workstream: E_certification_provenance
   branch: step8/certification-provenance
   worktree: /Users/samib/stable-envs-step8-certification-provenance
@@ -656,9 +664,25 @@ workstreams:
   status: Wave 2
   model: opus
 decisions: []
-escalations: []
+escalations:
+- date: '2026-09-16'
+  from: Workstream C
+  topic: SWM leaves feasible but requiring a renderer change
+  items:
+  - 'OGBCube/OGBScene light.intensity, camera.angle_delta, cube.size: need a per-world MODEL array in the mujoco_warp context (mjwarp shares one model across worlds)'
+  - 'OGBMaze light.intensity: needs the fitted lighting law re-derived'
+  question: "declare unsupported (plan \xA74 forbids doing so unilaterally when feasible and semantically required) or authorise the per-world-model-array capability in MJWarp as a Step-8 correctness/integration\
+    \ change"
+  coordinator_recommendation: pending Workstreams A/B results (Fetch and DMC may need the same per-world array capability, which would make it a shared, justified change rather than one env's request)
+  status: open
 refreezes: []
-upstream_findings: []
+upstream_findings:
+- source: C
+  item: 'swm OGB modify_mjcf_model: agent_color_changed = np.allclose(current, desired) lacks the negation -> dirty flag never set; agent.color dead alone, live only when co-varied'
+- source: C
+  item: 'swm OGBMaze in the registered ''states'' mode: custom_renderer rebuilt only for ''pixels'' -> all 5 leaves move 0 px'
+- source: C
+  item: Rocket pad.color declared 200 but a plain reset gives white; OGBMaze pixel_encoding declared 0 but constructed 1
 buckets:
   RELEASE_BLOCKING: []
   DOCUMENTED_LIMITATION: []
@@ -668,3 +692,5 @@ buckets:
 incident_log:
 - date: '2026-09-16'
   item: 'Wave 0: baseline 43ac952 verified (branch, tag, origin, both Step-8 branches); dashboard created; ownership assigned; Wave-1 worktrees created'
+- date: '2026-09-16'
+  item: C delivered PATCH_CANDIDATE; reviewer spawned; renderer-change leaves escalated; cheap maps authorized; A asked for the VariationMap extension
