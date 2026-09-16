@@ -37,6 +37,11 @@ sys.path.insert(0, str(ROOT))
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--widths", default="1,2,7,8,31,32,63",
+                    help="batch widths to sample. The closure sweep's original set skips 4-6, and "
+                         "W6's CLOSURE-1 follow-up reports the normals moving at widths 4 and 8 "
+                         "where this probe recorded width 8 identical -- two committed artifacts "
+                         "disagreeing on one width, which a contiguous sweep settles")
     a = ap.parse_args()
     import torch
     from stable_envs.render import nvdiff as ND
@@ -73,7 +78,7 @@ def main() -> None:
     rec["shapes"] = {"view": list(view_t.shape), "proj": list(proj_t.shape)}
     full_mvp = ND.mvp_rows(proj_t, view_t, eyeM)
 
-    for b in (1, 2, 7, 8, 31, 32, 63):
+    for b in [int(x) for x in a.widths.split(",")]:
         row = {}
         p_b, n_b, w_b = S.clip(xpos[:b], xmat[:b], view_t[:b], proj_t)
         for name, got, want in (("clip_pos", p_b, pos[:b]), ("clip_nrm", n_b, nrm[:b]),

@@ -119,10 +119,14 @@ if has 2; then
 fi
 
 # ---------------------------------------------------------- 3. Gate A on the seven Step-7 cells
-if has 3; then
-  stage 3 "Gate A, cuda, on the seven Step-7 cells over their committed corpora"
+if has 3 || has 5 || has 6; then
+  stage "3/5/6 prep" "stage the committed Step-7 corpora into one states directory"
   PYTHONPATH=$TREE $(venv_for step6)/bin/python scratch/step7/closure/stage_corpora.py \
       --out "$STATES" 2>&1 | tail -12
+fi
+
+if has 3; then
+  stage 3 "Gate A, cuda, on the seven Step-7 cells over their committed corpora"
   # One interpreter per cell family, each the one that cell's declaration names.
   run_gate () {  # run_gate <venv-key> <cells> <extra PYTHONPATH>
     local key="$1" cells="$2" extra="${3:-}"
@@ -136,6 +140,20 @@ if has 3; then
   run_gate vis311   "DMCManipulatorBringBall,DMCQuadrupedWalk"
   run_gate ogbmanip "OGBCube,OGBScene" "$SWMSRC"
   run_gate rocket   "PFRocketLanding"
+fi
+
+# ------------------------------- 6. Gate A on device='cpu' for the cells that have a CPU backend
+if has 6; then
+  stage 6 "Gate A, cpu, on the four Step-7 cells with a CPU backend"
+  # Run HERE rather than on a batch node when the sweep lives inside a held GPU allocation: the same
+  # node, the same interpreters, and device='cpu' is still a genuine CPU request -- stable_envs
+  # raises rather than falling back, which stage 5 measures on these very cells.
+  PYTHONPATH=$TREE $(venv_for craftax)/bin/python scratch/step7/closure/gate_a_new_cells.py \
+      --cells CraftaxClassic,CraftaxFull --device cpu --states-dir "$STATES" \
+      --out "$OUT/gate_a/cpu_craftax${TAG}.json" 2>&1 | tail -12
+  PYTHONPATH=$TREE $(venv_for vis311)/bin/python scratch/step7/closure/gate_a_new_cells.py \
+      --cells DMCManipulatorBringBall,DMCQuadrupedWalk --device cpu --states-dir "$STATES" \
+      --out "$OUT/gate_a/cpu_vis311${TAG}.json" 2>&1 | tail -12
 fi
 
 # ------------------------------------- 5. the cells that refuse device='cpu' by design
@@ -159,6 +177,37 @@ if has 7; then
   PYTHONPATH=$TREE:$SWMSRC $(venv_for ogbmanip)/bin/python \
       scratch/step7/closure/probe_ogb_state_roundtrip.py --device cuda \
       --out "$OUT/gate_a/ogb_state_roundtrip.json" 2>&1 | tail -20
+fi
+
+# --------------------------- 8. the class declarations, from interpreters that can import the cell
+if has 8; then
+  stage 8 "dump the live class declarations per interpreter"
+  # No single interpreter can import every cell -- jax, nvdiffrast, PyFlyt and mujoco_warp do not
+  # coexist -- so the coverage matrix is built from the UNION of these dumps. PFRocketLanding in
+  # particular registers in NO interpreter on the Mac, which is why the first closure run recorded
+  # its declaration as `none` and printed an empty fidelity cell for it.
+  for KEY in rocket craftax ogbmanip vis311 step6; do
+    PY=$(venv_for $KEY)/bin/python
+    [ -x "$PY" ] || { echo "SKIP venv $KEY"; continue; }
+    EXTRA=""; [ "$KEY" = "ogbmanip" ] && EXTRA=":$SWMSRC"
+    PYTHONPATH=$TREE$EXTRA $PY scratch/step7/closure/coverage_matrix.py \
+        --dump-declarations "$OUT/declarations/${KEY}.json" 2>&1 | tail -2
+  done
+fi
+
+# ---------------- 9. settle the one width at which two committed CLOSURE-1 artifacts disagree
+if has 9; then
+  stage 9 "contiguous width sweep of the nvdiff CPU clip invariance"
+  # examples/results/step7/closure/nvdiff_cpu_batch/threads*.json records the NORMALS as identical at
+  # width 8; W6's CLOSURE-1 follow-up table records them moving by one ulp at widths 4 and 8. Both
+  # were sampled, neither contiguously. 1..16 plus the far widths settles it, and the artifact says
+  # which of the two it agrees with rather than quietly replacing one.
+  for T in 1 4; do
+    OMP_NUM_THREADS=$T MKL_NUM_THREADS=$T PYTHONPATH=$TREE $(venv_for step6)/bin/python \
+        scratch/step7/closure/probe_nvdiff_cpu_batch.py \
+        --widths 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,31,32,63 \
+        --out "$OUT/nvdiff_cpu_batch/widthsweep_threads${T}.json" 2>&1 | tail -4
+  done
 fi
 
 # ------------------------------------------------------------------------------ 4. the GPU suite

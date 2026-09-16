@@ -1,0 +1,1453 @@
+{
+ "Acrobot": {
+  "default_size": 500,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.classic_control",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "Acrobot-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeGiantNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-giant-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeGiantStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-giant-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeLargeExplore": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeLargeNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeLargeStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeMediumExplore": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeMediumNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeMediumStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeTeleportExplore": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-teleport-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeTeleportNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-teleport-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "AntmazeTeleportStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/antmaze-teleport-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "BabyAIGoToLocal": {
+  "default_size": 256,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "BabyAI-GoToLocal-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "CartPole": {
+  "default_size": 600,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.classic_control",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "CartPole-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "CraftaxClassic": {
+  "default_size": 16,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.craftax",
+  "parity_all_exact_min": 1.0,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": {
+   "S_cpu": 2.8,
+   "cores_cpu": 0.263,
+   "daylight_diagnostic_cores_cpu": 24.2,
+   "daylight_diagnostic_fps": 105742,
+   "daylight_over_night": 104.9,
+   "decode_bar_fps": 4367.4,
+   "host": "node2356 / node2335",
+   "job": "6395527 (throughput), 6409933 (reference)",
+   "mixed_default_batch": 64,
+   "mixed_default_fps": 1150.6,
+   "night_diagnostic_fps": 656,
+   "official_jitted_fps": 213.44,
+   "qualifier": "BELOW_G4",
+   "reference_conditions": "cgroup affinity [8] -- one core",
+   "tier": "CPU_FASTER",
+   "why_lower_than_step6": "the Step-6 tier was measured on an observation that could not represent night; this one is the full observation, about three quarters of which is lit. The daylight path itself is unchanged."
+  },
+  "performance_record_gpu": {
+   "R": 315.98,
+   "batch_scales": 238.0,
+   "card": "NVIDIA GeForce RTX 3090",
+   "cores": 15.4,
+   "daylight_diagnostic_fps": 796702,
+   "decode_bar_fps": 2999.9,
+   "host": "gpu2107 / gpu2109",
+   "job": "6395847 (throughput), 6409934 (reference)",
+   "mixed_default_batch": 4096,
+   "mixed_default_fps": 46187.3,
+   "night_diagnostic_fps": 24353,
+   "no_large_batch_regression": 1.093,
+   "official_jitted_fps": 151.68,
+   "qualifier": "BATCH_SCALES",
+   "reference_conditions": "jax backend 'gpu', CudaDevice(id=0) -- the same card as torch",
+   "tier": "GPU_FASTER",
+   "tier_if_reference_not_jitted_DO_NOT_USE": "GPU_EXCEPTIONAL",
+   "tier_no_reference_alternative": "GPU_FAST"
+  },
+  "reference_id": "Craftax-Classic-Pixels-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "CraftaxFull": {
+  "default_size": 10,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.craftax_full",
+  "parity_all_exact_min": 1.0,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": {
+   "condition": "--cpus-per-task=1; Cpus_allowed_list 1; nproc 1; sched_getaffinity [1]; torch threads 1; jax default_backend cpu",
+   "cores_cpu": 0.342,
+   "decode_bar_fps": 4294.0,
+   "host": "node2339.oscar.ccv.brown.edu",
+   "job": "6409963",
+   "mixed_default_batch": 64,
+   "mixed_default_fps": 1469.1,
+   "official_jitted_fps": 613.4,
+   "paired_verdict": "USABLE -- baseline legs 101,598 and 105,684 f/s (spread 1.040), the baseline reproduces its known 115,166 f/s to 0.90x, load 0.92 per node core",
+   "qualifiers": [
+    "BELOW_G4"
+   ],
+   "s_cpu": 2.395,
+   "superseded": "an earlier take on node2352 under --cpus-per-task=4 read S_cpu 3.810. It is NOT the number: torch.set_num_threads(1) binds torch and says nothing about jax, whose CPU backend has its own pool, so the reference could use four cores while ours used one. The two takes also differ by node, so the drop from 3.810 to 2.395 is not cleanly attributable to the core budget -- what is attributable is that only the second was taken under the condition the ladder is defined at",
+   "tier": "CPU_FASTER"
+  },
+  "performance_record_gpu": {
+   "R": 100.96,
+   "backend_class": "R",
+   "batch_scales": "425x (fps(4096)/fps(1)) against the 20x bar, measured on the sibling gpu2106 run of the same code, job 6397699; the R run drew B=256 and 4096 only, so its own record carries no B=1 cell",
+   "card": "NVIDIA GeForce RTX 3090",
+   "condition": "same card, same job; the official timed from $SCR/venvs/se7-craftax-gpu with jax.default_backend() == 'gpu' and devices ['cuda:0'] ASSERTED before timing, jitted, warm, 6.72 s of compile excluded; ours timed from $SCR/venvs/se7-craftax on the same allocation",
+   "cores": 21.82,
+   "decode_bar_fps": 4323.3,
+   "host": "gpu2109.oscar.ccv.brown.edu",
+   "job": "6410052",
+   "mixed_batch": 4096,
+   "mixed_fps": 94343.9,
+   "official_jitted_fps": 934.5,
+   "size": 10,
+   "tier": "GPU_FASTER",
+   "why_not_no_reference": "$SCR/venvs/se7-craftax is a jax[cpu] build, so jax.default_backend() is 'cpu' inside a GPU job whatever JAX_PLATFORMS says; job 6409535 would have timed the 'same-card reference' on the CPU and was cancelled before it ran. W1's jax[cuda12] venv was reused rather than a second one built, and it carries no torch, so the two interpreters share one allocation"
+  },
+  "reference_id": "Craftax-Pixels-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Crafter": {
+  "default_size": 64,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.crafter",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "CrafterReward-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCAcrobotSwingup": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/acrobot-swingup",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCBallInCupCatch": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/ball_in_cup-catch",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCCartpoleBalance": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/cartpole-balance",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCCartpoleSwingup": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/cartpole-swingup",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCCheetahRun": {
+  "default_size": 84,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/cheetah-run",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.29,
+   "draw_spread": {
+    "mean_abs": [
+     4.986,
+     5.032
+    ],
+    "ssim": [
+     0.6597,
+     0.6615
+    ],
+    "within8_frac": [
+     0.8813,
+     0.8826
+    ]
+   },
+   "floor_share": 0.127,
+   "interior_exact_frac": null,
+   "interior_frac": 0.0,
+   "mean_abs": 5.01,
+   "mean_abs_max": 6.5,
+   "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+   "measured_with": {
+    "mujoco_warp": "3.11.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.11.0"
+   },
+   "skybox_share": 0.831,
+   "ssim": 0.661,
+   "ssim_min": 0.62,
+   "within8_frac": 0.882,
+   "within8_min": 0.84
+  }
+ },
+ "DMCFingerSpin": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/finger-spin",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCFingerTurnEasy": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": 0.89,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/finger-turn_easy",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCFingerTurnHard": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/finger-turn_hard",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCHopperHop": {
+  "default_size": 84,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/hopper-hop",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.307,
+   "draw_spread": {
+    "mean_abs": [
+     4.327,
+     4.364
+    ],
+    "ssim": [
+     0.6826,
+     0.6866
+    ],
+    "within8_frac": [
+     0.9044,
+     0.9051
+    ]
+   },
+   "floor_share": 0.082,
+   "interior_exact_frac": null,
+   "interior_frac": 0.0,
+   "mean_abs": 4.35,
+   "mean_abs_max": 5.7,
+   "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+   "measured_with": {
+    "mujoco_warp": "3.11.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.11.0"
+   },
+   "skybox_share": 0.893,
+   "ssim": 0.684,
+   "ssim_min": 0.64,
+   "within8_frac": 0.905,
+   "within8_min": 0.86
+  }
+ },
+ "DMCHumanoidStand": {
+  "default_size": 84,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/humanoid-stand",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.023,
+   "draw_spread": {
+    "mean_abs": [
+     6.203,
+     6.3
+    ],
+    "ssim": [
+     0.866,
+     0.8707
+    ],
+    "within8_frac": [
+     0.7308,
+     0.7442
+    ]
+   },
+   "floor_share": 0.959,
+   "interior_exact_frac": 0.00018,
+   "interior_frac": 0.0297,
+   "mean_abs": 6.26,
+   "mean_abs_max": 8.2,
+   "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+   "measured_with": {
+    "mujoco_warp": "3.11.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.11.0"
+   },
+   "skybox_share": 0.0,
+   "ssim": 0.868,
+   "ssim_min": 0.82,
+   "within8_frac": 0.735,
+   "within8_min": 0.69
+  }
+ },
+ "DMCManipulatorBringBall": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/manipulator-bring_ball",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCPendulumSwingup": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/pendulum-swingup",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCPointMassEasy": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/point_mass-easy",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCQuadrupedWalk": {
+  "default_size": 224,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/quadruped-walk",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.171,
+   "draw_spread": {
+    "mean_abs": [
+     3.52,
+     3.527
+    ],
+    "ssim": [
+     0.9536,
+     0.9557
+    ],
+    "within8_frac": [
+     0.8964,
+     0.8987
+    ]
+   },
+   "floor_share": 0.806,
+   "interior_exact_frac": 0.206,
+   "interior_frac": 0.0284,
+   "mean_abs": 3.52,
+   "mean_abs_max": 4.6,
+   "measured_at": "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states (SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 (scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)",
+   "measured_with": {
+    "mujoco_warp": "3.11.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.11.0"
+   },
+   "skybox_share": 0.148,
+   "ssim": 0.955,
+   "ssim_min": 0.9,
+   "within8_frac": 0.897,
+   "within8_min": 0.85
+  }
+ },
+ "DMCReacherEasy": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/reacher-easy",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCReacherHard": {
+  "default_size": 84,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/reacher-hard",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "DMCSwimmerSwimmer6": {
+  "default_size": 84,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/swimmer-swimmer6",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.148,
+   "draw_spread": {
+    "interior_exact_frac": [
+     0.515,
+     0.657
+    ],
+    "mean_abs": [
+     3.223,
+     3.452
+    ],
+    "ssim": [
+     0.986,
+     0.986
+    ],
+    "within8_frac": [
+     0.917,
+     0.921
+    ]
+   },
+   "floor_share": 0.981,
+   "interior_exact_frac": 0.515,
+   "interior_frac": 0.0059,
+   "interior_mean_abs": 0.91,
+   "mean_abs": 3.45,
+   "mean_abs_max": 4.8,
+   "measured_at": "84 px, 64 states x 4 independent draws from sample_states, WORST of the four, default appearance, enable_specular=False, one H200, mujoco 3.11.0 / warp 1.16.0, against dm_control's physics.render at camera 0 (scratch/altrender/probe_declare.py --config nospec_native --size 84 --draws 4)",
+   "measured_with": {
+    "warp": "1.16.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.11.0"
+   },
+   "skybox_share": 0.0,
+   "ssim": 0.986,
+   "ssim_min": 0.94,
+   "within8_frac": 0.917,
+   "within8_min": 0.85
+  }
+ },
+ "DMCWalkerWalk": {
+  "default_size": 84,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.dmcontrol",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "dm_control/walker-walk",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.205,
+   "draw_spread": {
+    "mean_abs": [
+     7.636,
+     8.302
+    ],
+    "ssim": [
+     0.817,
+     0.8306
+    ],
+    "within8_frac": [
+     0.6887,
+     0.7199
+    ]
+   },
+   "floor_share": 0.448,
+   "interior_exact_frac": 0.0046,
+   "interior_frac": 0.001,
+   "mean_abs": 8.07,
+   "mean_abs_max": 10.5,
+   "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+   "measured_with": {
+    "mujoco_warp": "3.11.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.11.0"
+   },
+   "skybox_share": 0.478,
+   "ssim": 0.826,
+   "ssim_min": 0.77,
+   "within8_frac": 0.7,
+   "within8_min": 0.65
+  }
+ },
+ "FetchPickAndPlace": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchPickAndPlace-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchPickAndPlaceDense": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchPickAndPlaceDense-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchPickAndPlaceDict": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchPickAndPlace-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchPush": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchPush-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchPushDense": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchPushDense-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchPushDict": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchPush-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchReach": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchReach-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchReachDense": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchReachDense-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchReachDict": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchReach-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchSlide": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchSlide-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchSlideDense": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchSlideDense-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "FetchSlideDict": {
+  "default_size": 480,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.fetch",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "FetchSlide-v4",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Highway": {
+  "default_size": 150,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.highway",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "highway-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "HumanoidmazeGiantNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/humanoidmaze-giant-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "HumanoidmazeGiantStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/humanoidmaze-giant-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "HumanoidmazeLargeNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/humanoidmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "HumanoidmazeLargeStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/humanoidmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "HumanoidmazeMediumNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/humanoidmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "HumanoidmazeMediumStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/humanoidmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Intersection": {
+  "default_size": 600,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.highway",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "intersection-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Merge": {
+  "default_size": 150,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.highway",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "merge-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniGridDoorKey": {
+  "default_size": 256,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MiniGrid-DoorKey-8x8-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniGridEmpty": {
+  "default_size": 256,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MiniGrid-Empty-8x8-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniGridFourRooms": {
+  "default_size": 608,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MiniGrid-FourRooms-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniGridKeyCorridor": {
+  "default_size": 320,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MiniGrid-KeyCorridorS4R3-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniGridLavaCrossing": {
+  "default_size": 288,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MiniGrid-LavaCrossingS9N2-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniGridPOVFetch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minigrid",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MiniGrid-Fetch-8x8-N3-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MiniHack": {
+  "default_size": 16,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.minihack",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "minihack.tiles.glyph_mapper.GlyphMapper",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MountainCar": {
+  "default_size": 600,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.classic_control",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MountainCar-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MountainCarContinuous": {
+  "default_size": 600,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.classic_control",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "MountainCarContinuous-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MujocoInvertedDoublePendulum": {
+  "default_size": 240,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.mujoco_locomotion",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "gymnasium/InvertedDoublePendulum-v5",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MujocoInvertedPendulum": {
+  "default_size": 240,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.mujoco_locomotion",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99999,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "gymnasium/InvertedPendulum-v5",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MujocoPusher": {
+  "default_size": 240,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.mujoco_locomotion",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.99999,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "gymnasium/Pusher-v5",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "MujocoReacher": {
+  "default_size": 240,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.mujoco_locomotion",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "gymnasium/Reacher-v5",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "OGBCube": {
+  "default_size": 224,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.ogb_manip",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/OGBCube-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.870012,
+   "draw_spread": {
+    "mean_abs": [
+     3.265277,
+     3.309378
+    ],
+    "ssim": [
+     0.919219,
+     0.926569
+    ],
+    "within8_frac": [
+     0.91581,
+     0.917723
+    ]
+   },
+   "interior_exact_frac": 0.9578,
+   "interior_frac": 0.412552,
+   "mean_abs": 3.309378,
+   "mean_abs_max": 4.3,
+   "measured_at": "mujoco 3.12.0 / ogbench 1.2.1 reference; 224 px, camera front_pixels, 8 independent draws of 64 states from the env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, against swm's own render(); the declared value is the WORST of the eight and draw_spread carries the range, for mean_abs/within8_frac/ssim AND for interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the draw the check takes -- it calls `sample_states(n)` with no rng, which is seed 0, the same fixed draw every time. The previous declaration was measured by a probe that averaged |diff| over the colour channels while `pixel_agreement` averages the per-pixel channel MAX, so it read 0.89/255 low and no widening rule could have covered the gap. The frame is a baked MuJoCo plate composited with MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared out-of-range-spot correction applied. job 6433493 on gpu2109.oscar.ccv.brown.edu",
+   "measured_with": {
+    "mujoco_warp": "3.12.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1"
+   },
+   "ssim": 0.919219,
+   "ssim_min": 0.85,
+   "within8_frac": 0.91581,
+   "within8_min": 0.85
+  }
+ },
+ "OGBScene": {
+  "default_size": 200,
+  "fidelity_tier": "visual",
+  "module": "stable_envs.envs.ogb_manip",
+  "parity_all_exact_min": null,
+  "parity_interior_min": null,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/OGBScene-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {
+   "all_exact_frac": 0.773417,
+   "draw_spread": {
+    "mean_abs": [
+     6.493273,
+     6.691589
+    ],
+    "ssim": [
+     0.892792,
+     0.898809
+    ],
+    "within8_frac": [
+     0.855483,
+     0.860345
+    ]
+   },
+   "interior_exact_frac": 0.912032,
+   "interior_frac": 0.278728,
+   "mean_abs": 6.691589,
+   "mean_abs_max": 8.7,
+   "measured_at": "mujoco 3.12.0 / ogbench 1.2.1 reference; 200 px, camera front_pixels, 8 independent draws of 64 states from the env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, against swm's own render(); the declared value is the WORST of the eight and draw_spread carries the range, for mean_abs/within8_frac/ssim AND for interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the draw the check takes -- it calls `sample_states(n)` with no rng, which is seed 0, the same fixed draw every time. The previous declaration was measured by a probe that averaged |diff| over the colour channels while `pixel_agreement` averages the per-pixel channel MAX, so it read 0.89/255 low and no widening rule could have covered the gap. The frame is a baked MuJoCo plate composited with MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared out-of-range-spot correction applied. job 6433493 on gpu2109.oscar.ccv.brown.edu",
+   "measured_with": {
+    "mujoco_warp": "3.12.0"
+   },
+   "reference_versions": {
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1"
+   },
+   "ssim": 0.892792,
+   "ssim_min": 0.85,
+   "within8_frac": 0.855483,
+   "within8_min": 0.8
+  }
+ },
+ "Parking": {
+  "default_size": 300,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.highway",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "parking-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Pendulum": {
+  "default_size": 500,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.classic_control",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "Pendulum-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Piecewise": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.swm_nav",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.999995,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/Piecewise-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PiecewiseZones": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.swm_nav",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.999995,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/Piecewise-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointMazeLarge": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.maze2d",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "PointMaze_Large-v3",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointMazeMedium": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.maze2d",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "PointMaze_Medium-v3",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointMazeOpen": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.maze2d",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "PointMaze_Open-v3",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointMazeUMaze": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.maze2d",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "PointMaze_UMaze-v3",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeGiantNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-giant-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeGiantStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-giant-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeLargeNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeLargeStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-large-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeMediumNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeMediumStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-medium-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeTeleportNavigate": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-teleport-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PointmazeTeleportStitch": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.ogbench",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "ogbench/pointmaze-teleport-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "PushT": {
+  "default_size": 96,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.pusht",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "gym_pusht/PushT-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Racetrack": {
+  "default_size": 600,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.highway",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "racetrack-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "Roundabout": {
+  "default_size": 600,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.highway",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "roundabout-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "SimplePointMaze": {
+  "default_size": 500,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.simple_point_maze",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 1.0,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/SimplePointMaze-v0",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "TwoRoom": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.swm_nav",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.999995,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/TwoRoom-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ },
+ "TwoRoomTarget": {
+  "default_size": 224,
+  "fidelity_tier": "parity",
+  "module": "stable_envs.envs.swm_nav",
+  "parity_all_exact_min": null,
+  "parity_interior_min": 0.999995,
+  "performance_record_cpu": null,
+  "performance_record_gpu": null,
+  "reference_id": "swm/TwoRoom-v1",
+  "render_decoder": "renderer",
+  "visual_fidelity": {}
+ }
+}

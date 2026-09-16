@@ -1,0 +1,221 @@
+{
+ "new_dir": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/new/gpu_tests",
+ "no_new_failures_anywhere": true,
+ "old_dir": "/private/tmp/claude-501/-Users-samib-stable-envs/9c7dc93a-8cc8-4d9a-bced-5ad5412bc301/scratchpad/prev/examples/results/step7/closure/gpu_tests",
+ "rows": [
+  {
+   "comparable": false,
+   "file": "test_conformance.craftax.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "error": 798,
+    "passed": 275,
+    "skipped": 128
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_conformance.ogbmanip.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "error": 361,
+    "failed": 10,
+    "passed": 948,
+    "skipped": 452
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_conformance.rocket.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "error": 741,
+    "failed": 23,
+    "passed": 374,
+    "skipped": 196
+   },
+   "old_exists": true
+  },
+  {
+   "carried": [
+    "tests/gpu/test_conformance.py::test_state_is_sufficient[PointmazeGiantNavigate]",
+    "tests/gpu/test_conformance.py::test_state_is_sufficient[PointmazeGiantStitch]",
+    "tests/gpu/test_conformance.py::test_state_is_sufficient[PointmazeTeleportNavigate]",
+    "tests/gpu/test_conformance.py::test_state_is_sufficient[PointmazeTeleportStitch]",
+    "tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]",
+    "tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]",
+    "tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]"
+   ],
+   "error_set_unchanged": true,
+   "file": "test_conformance.verify.results.txt",
+   "fixed": [
+    "tests/gpu/test_conformance.py::test_state_roundtrip[OGBCube]",
+    "tests/gpu/test_conformance.py::test_state_roundtrip[OGBScene]",
+    "tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[OGBCube]"
+   ],
+   "n_errors_new": 437,
+   "n_errors_old": 437,
+   "new": {
+    "error": 437,
+    "failed": 7,
+    "passed": 905,
+    "skipped": 422
+   },
+   "new_exists": true,
+   "new_failures": [],
+   "old": {
+    "error": 437,
+    "failed": 10,
+    "passed": 902,
+    "skipped": 422
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_fast_paths.craftax.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "failed": 28,
+    "passed": 24,
+    "skipped": 245
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_fast_paths.ogbmanip.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "failed": 26,
+    "passed": 259,
+    "skipped": 162
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_fast_paths.rocket.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "failed": 4,
+    "passed": 56,
+    "skipped": 281
+   },
+   "old_exists": true
+  },
+  {
+   "carried": [],
+   "error_set_unchanged": true,
+   "file": "test_fast_paths.verify.results.txt",
+   "fixed": [
+    "tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]",
+    "tests/gpu/test_fast_paths.py::test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]"
+   ],
+   "n_errors_new": 0,
+   "n_errors_old": 0,
+   "new": {
+    "passed": 247,
+    "skipped": 200
+   },
+   "new_exists": true,
+   "new_failures": [],
+   "old": {
+    "failed": 2,
+    "passed": 247,
+    "skipped": 198
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_reproducibility.craftax.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "error": 966,
+    "failed": 3,
+    "passed": 404,
+    "skipped": 82
+   },
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_reproducibility.ogbmanip.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {},
+   "old_exists": true
+  },
+  {
+   "comparable": false,
+   "file": "test_reproducibility.rocket.results.txt",
+   "new": {},
+   "new_exists": false,
+   "old": {
+    "error": 897,
+    "failed": 46,
+    "passed": 554,
+    "skipped": 119
+   },
+   "old_exists": true
+  },
+  {
+   "carried": [
+    "tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportExplore]",
+    "tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportNavigate]",
+    "tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportStitch]",
+    "tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeNavigate]",
+    "tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeStitch]",
+    "tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]",
+    "tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]",
+    "tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCCheetahRun]",
+    "tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCHopperHop]",
+    "tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]",
+    "tests/gpu/test_reproducibility.py::test_resolution_downsample_agrees_within_the_measured_bound[DMCWalkerWalk]",
+    "tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportNavigate]",
+    "tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportStitch]"
+   ],
+   "error_set_unchanged": true,
+   "file": "test_reproducibility.verify.results.txt",
+   "fixed": [
+    "tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[OGBCube]",
+    "tests/gpu/test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[OGBScene]",
+    "tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[OGBCube]",
+    "tests/gpu/test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[OGBScene]",
+    "tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[OGBCube]",
+    "tests/gpu/test_reproducibility.py::test_render_is_pure_and_set_state_is_idempotent[OGBScene]",
+    "tests/gpu/test_reproducibility.py::test_rendering_a_sub_batch_refuses_environment_0_s_style[OGBCube]",
+    "tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]",
+    "tests/gpu/test_reproducibility.py::test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]"
+   ],
+   "n_errors_new": 529,
+   "n_errors_old": 529,
+   "new": {
+    "error": 529,
+    "failed": 13,
+    "passed": 1370,
+    "skipped": 244
+   },
+   "new_exists": true,
+   "new_failures": [],
+   "old": {
+    "error": 529,
+    "failed": 22,
+    "passed": 1358,
+    "skipped": 247
+   },
+   "old_exists": true
+  }
+ ],
+ "what_this_is": "this closure run against the previous one, per file, per test id"
+}

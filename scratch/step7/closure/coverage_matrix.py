@@ -48,12 +48,14 @@ STEP7 = {
         "coverage_change": "partial -> full (inventory strip, night, sleeping)",
         "merged_sha": "9ca318f", "tier_merge_sha": "b1f61b1",
         "cpu_tier": "CPU_FASTER", "cpu_qualifiers": ["BELOW_G4"],
-        "cpu_note": "S_cpu 2.80 paired / 5.39 sweep; cores_cpu 0.263; official jitted 213.44 f/s, "
+        "cpu_note": "SUPERSEDED where the class now carries performance_record_cpu, which the "
+                    "matrix prefers. S_cpu 2.80 paired / 5.39 sweep; cores_cpu 0.263; official jitted 213.44 f/s, "
                     "node2335 cgroup affinity [8], job 6409933. NO_REFERENCE reading retained as a "
                     "diagnostic: CPU_REGRESSION on cores alone, the coverage change (night now "
                     "represented), not a slower renderer",
         "gpu_tier": "GPU_FASTER", "gpu_qualifiers": ["BATCH_SCALES"],
-        "gpu_note": "R 316.0 paired / 304.5 sweep; cores 15.40; official jitted 151.68 f/s on "
+        "gpu_note": "SUPERSEDED where the class now carries performance_record_gpu. "
+                    "R 316.0 paired / 304.5 sweep; cores 15.40; official jitted 151.68 f/s on "
                     "gpu2109 from the se7-craftax-gpu venv, job 6409934",
         "variation_in": [], "variation_out": [],
         "variation_note": "the swm wrapper declares NO variation space (0 leaves), so there is no "
@@ -142,8 +144,15 @@ STEP7 = {
         "variation_note": "certified at the registered default (224 px, camera front_pixels, "
                           "visualize_info=True recorded as a parity_note); the registered-default "
                           "variation set was taken first and appearance leaves are declared per env",
-        "gate_a_note": "determinism, batch invariance, batch-size invariance, order independence, "
-                       "state_dims_matter (dead_dims []) all pass"},
+        "gate_a_note": "all mandatory checks pass at the W5 closure follow-on (d4318d2). The "
+                       "Step-7 closure sweep had recorded check_state_roundtrip FAIL at "
+                       "max_abs_err 1.17e-07 against a bound of exactly 0, plus a sub-batch "
+                       "shared-style failure and a zero-size reduction crash, none of which any "
+                       "earlier Step-7 interpreter could see because every committed tests/gpu run "
+                       "skipped OGBench; W5 closed them with float32 round-trip states, the "
+                       "PlateRig (private model copy, offscreen buffer raised per rig, "
+                       "hidden-site-group digest) and a role-split reference cache, and the "
+                       "declaration was re-measured on the gate instrument"},
     "swm/OGBScene-v0": {
         "ws": "W5 ogb-manipulation", "envs": ["OGBScene"],
         "coverage_change": "renderer gap -> covered (as OGBCube, plus drawer/window/button and the "
@@ -156,10 +165,12 @@ STEP7 = {
                     "best 5,498; official on hardware EGL 1,526 f/s",
         "variation_in": [], "variation_out": [],
         "variation_note": "as OGBCube; the two button bits are state dims, not style",
-        "gate_a_note": "as OGBCube. Ships with a DECLARED residual: the btn_metal cube-map cannot be "
-                       "sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to "
-                       "its mean colour on two small geoms - 0.139% of pixels, max 37/255. Sami "
-                       "ruled: keep the reviewed declared bake"},
+        "gate_a_note": "as OGBCube: all mandatory checks pass at d4318d2, and the closure sweep's "
+                       "check_state_roundtrip FAIL (1.12e-07) is closed. Still ships with a "
+                       "DECLARED residual: the btn_metal cube-map cannot be sampled by "
+                       "mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean "
+                       "colour on two small geoms - 0.139% of pixels, max 37/255. Sami ruled: keep "
+                       "the reviewed declared bake"},
     "swm/PFRocketLanding-v0": {
         "ws": "W6 rocket-landing", "envs": ["PFRocketLanding"],
         "coverage_change": "NO-GO (structural) -> covered at the visual tier (URDF primitives "
@@ -182,13 +193,15 @@ STEP7 = {
                           "deliberately not offered; the 5 colours and the ignition bit are the "
                           "style dims by path",
         "gate_a_note": "all mandatory checks PASS, including batch-size invariance after the "
-                       "batch-invariant mvp. Two conformance tests fail with a stated mechanism: "
-                       "check_colors_apply_exactly is structurally unsatisfiable under "
+                       "batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the "
+                       "contact-band bridge flag and fills the declaration. Two tests/gpu "
+                       "assertions still fail, both with a stated mechanism and neither a Gate-A "
+                       "check: check_colors_apply_exactly is structurally unsatisfiable under "
                        "TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never "
                        "render above 198) and fails for the OFFICIAL frames too - OPEN escalation, "
-                       "Sami did not rule; and DOWNSAMPLE_EXACT_FRAC has no table entry for this "
-                       "cell (measured 0.95614, to be added at the Step-8 freeze since tests/ is "
-                       "frozen in Step 7)"},
+                       "Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for "
+                       "this cell (measured 0.95614; the same commit added OGBCube 0.885782 and "
+                       "OGBScene 0.805306 but not this one), a Step-8 freeze item"},
 }
 
 #: The two ids that produce no frame, with the place the claim is DECLARED. Not our judgement: the
@@ -273,7 +286,8 @@ def _gate_a_frozen(closure: Path) -> tuple[dict, dict, str]:
     for cand in sorted(closure.glob("replay/certify*/certification.json")):
         for c, v in json.loads(cand.read_text())["configs"].items():
             verdicts[c] = v.get("gate_a")
-            source[c] = str(cand.relative_to(ROOT)) + " (this sweep)"
+            source[c] = (str(cand.relative_to(ROOT)) if cand.is_absolute() and
+                         cand.is_relative_to(ROOT) else str(cand)) + " (this sweep)"
             n_closure += 1
         break
     return (verdicts, source, f"{n_closure} configuration(s) re-judged by this sweep; the rest "
@@ -331,10 +345,13 @@ def main() -> None:
                          "an earlier one, so the first interpreter to declare a cell owns it")
     ap.add_argument("--closure", type=Path,
                     default=ROOT / "examples" / "results" / "step7" / "closure")
+    # a relative --closure is resolved against the repo root, not the cwd, so the paths it records
+    # are the repo-relative ones a reader can open
     ap.add_argument("--out", type=Path,
                     default=ROOT / "examples" / "results" / "step7" / "closure" / "coverage_matrix.json")
     a = ap.parse_args()
 
+    a.closure = a.closure if a.closure.is_absolute() else (ROOT / a.closure)
     if a.dump_declarations:
         d = _live_declarations()
         a.dump_declarations.parent.mkdir(parents=True, exist_ok=True)

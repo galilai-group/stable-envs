@@ -8,10 +8,10 @@
 |---|---|
 | parent baseline | `76dc5116f432e61dd47fba8f9e879cf9212c8e46` |
 | integration branch | `step7/integration` |
-| integration HEAD verified | `275970cc2d9e0d92eebf5297ee175b08944b7d04` |
-| closure branch tip this page was generated at | `32e97664669b82bbf62cec535a84260717ace129` |
+| integration HEAD verified | `fec4f6eea606e390c22e2b206b3d0738d11468c8` |
+| closure branch tip this page was generated at | `fec4f6eea606e390c22e2b206b3d0738d11468c8` |
 | coverage target | 40/40 pixel-producing SWM ids at full (33 done + CraftaxClassic partial->full + 6 gaps) |
-| closure branch | `step7/closure` (this page and everything under `examples/results/step7/closure/`) |
+| closure artifacts read | `examples/results/step7/closure2` |
 
 ## Counts
 
@@ -20,8 +20,8 @@
 | registered `swm/` ids | **42** | rows in `coverage_matrix.json`, built from the live swm registry probe |
 | pixel-producing ids covered | **40/40** | a row is covered when the matrix resolves it to at least one stable-envs cell |
 | symbolic ids confirmed renderer-free | **2/2** | the upstream wrapper itself raises rather than returning a frame — quoted per id below |
-| Gate A `PASS` | **34** | `gate_a.result` over the 40 pixel-producing rows |
-| Gate A `FAIL` | **5** | `gate_a.result` over the 40 pixel-producing rows |
+| Gate A `PASS` | **36** | `gate_a.result` over the 40 pixel-producing rows |
+| Gate A `FAIL` | **3** | `gate_a.result` over the 40 pixel-producing rows |
 | Gate A `BLOCKED` | **1** | `gate_a.result` over the 40 pixel-producing rows |
 | CPU tier at or above `CPU_FAST` | **1/40** | the frozen spec's `ladder.environment_done_min_tiers`; tiers are copied, never re-measured here |
 | GPU tier at or above `GPU_FAST` | **17/40** | as above |
@@ -60,10 +60,10 @@ Coverage and performance are different questions and this page keeps them apart:
 | `ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | `parity` interior 1.0 | `PASS` | `CPU_REGRESSION` | `GPU_FAST` [HOST_BOUND] | 9 swm leaves; in: `visibility.target_ball`, `target_ball.shape`, `light.diffuse_scale`; **out: `floor.color`** | yes `1d9dccb` |
 | `MountainCarContinuousControl-v0` | `MountainCarContinuous` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FASTER` | 4 swm leaves | yes (pre-Step-7) |
 | `MountainCarControl-v0` | `MountainCar` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FASTER` | 5 swm leaves | yes (pre-Step-7) |
-| `OGBCube-v0` | `OGBCube` | `visual` 2.441658/0.915477/0.914917 vs 3.2/0.85/0.85 | `FAIL` — `check_state_roundtrip` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 11 swm leaves | yes `24d1054` |
+| `OGBCube-v0` | `OGBCube` | `visual` 3.309378/0.91581/0.919219 vs 4.3/0.85/0.85 | `PASS` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 11 swm leaves | yes `24d1054` |
 | `OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | `parity` interior 1.0 | `PASS` | `CPU_FAST` | `GPU_EXCEPTIONAL` | 5 swm leaves | yes (pre-Step-7) |
-| `OGBScene-v0` | `OGBScene` | `visual` 5.381315/0.85675/0.892819 vs 7.0/0.8/0.85 | `FAIL` — `check_state_roundtrip` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 12 swm leaves | yes `24d1054` |
-| `PFRocketLanding-v0` | `PFRocketLanding` | — | `PASS` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 9 swm leaves; in: `5 RGB material colours`, `flame ignition bit`; **out: `environment.sky_color`** | yes `fd2b8ef` |
+| `OGBScene-v0` | `OGBScene` | `visual` 6.691589/0.855483/0.892792 vs 8.7/0.8/0.85 | `PASS` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 12 swm leaves | yes `24d1054` |
+| `PFRocketLanding-v0` | `PFRocketLanding` | `visual` 7.71/0.961/0.854 vs 10.0/0.91/0.8 | `PASS` | `CPU_MISSING` [RAISES_BY_DESIGN] | `GPU_PARITY` [BATCH_SCALES_FAIL] | 9 swm leaves; in: `5 RGB material colours`, `flame ignition bit`; **out: `environment.sky_color`** | yes `fd2b8ef` |
 | `PendulumControl-v1` | `Pendulum` | `parity` interior 1.0 | `PASS` | `CPU_PARITY` | `GPU_FAST` | 9 swm leaves | yes (pre-Step-7) |
 | `PendulumDMControl-v0` | `DMCPendulumSwingup` | `parity` interior 1.0 | `PASS` | `CPU_FASTER` | `GPU_FAST` | 9 swm leaves | yes (pre-Step-7) |
 | `Piecewise-v0` | `Piecewise`, `PiecewiseZones` | `parity` interior 0.999995 | `PASS` | `CPU_FASTER` | `GPU_FASTER` | 21 swm leaves; VariationMap **yes** | yes (pre-Step-7) |
@@ -180,10 +180,11 @@ A cell is listed when its tier is below the frozen bar (`CPU_FAST` / `GPU_FAST`)
 | verdict | configs |
 |---|---|
 | expected-known | 9 |
-| identical | 39 |
+| gate A improved | 1 |
+| identical | 38 |
 | NOT REPLAYED | 1 (CraftaxClassic) |
 
-**39 of 48 replayed rows are bit-identical to the frozen oracle.** 9 carry a delta that was named in advance with its mechanism; 0 are unexplained.
+**38 of 48 replayed rows are bit-identical to the frozen oracle.** 9 carry a delta that was named in advance with its mechanism; 0 are unexplained.
 
 | config | what moved | mechanism |
 |---|---|---|
@@ -227,88 +228,21 @@ Measured on the committed Step-7 corpora at each cell's registered default size,
 | `DMCQuadrupedWalk` | cpu | **PASS** | 14 | — | `examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz` |
 | `CraftaxClassic` | cuda | **PASS** | 14 | — | `examples/results/step7/craftax-classic-full/corpus/states.npz` |
 | `CraftaxFull` | cuda | **PASS** | 14 | — | `examples/results/step7/craftax-full/corpus/states.npz` |
-| `OGBCube` | cuda | **FAIL** | 14 | `check_state_roundtrip` | `examples/results/step7/ogb-manipulation/states/OGBCube.npz` |
-| `OGBScene` | cuda | **FAIL** | 14 | `check_state_roundtrip` | `examples/results/step7/ogb-manipulation/states/OGBScene.npz` |
+| `OGBCube` | cuda | **PASS** | 14 | — | `examples/results/step7/ogb-manipulation/states/OGBCube.npz` |
+| `OGBScene` | cuda | **PASS** | 14 | — | `examples/results/step7/ogb-manipulation/states/OGBScene.npz` |
 | `PFRocketLanding` | cuda | **PASS** | 14 | — | `examples/results/step7/rocket-landing/reference/states.npz` |
 | `DMCManipulatorBringBall` | cuda | **PASS** | 14 | — | `examples/results/step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz` |
 | `DMCQuadrupedWalk` | cuda | **PASS** | 14 | — | `examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz` |
 
 ### The GPU suite and the unit suites
 
-Per cell first, because that is the question the coverage table above raises. A cell that SKIPS everywhere is not a passing cell, so the count below is over every interpreter that could construct it.
-
-| cell | interpreters that built it | distinct failing tests | which |
-|---|---|---|---|
-| `CraftaxClassic` | 12 | **1** | `test_resolution_downsample_agrees_within_the_measured_bound` |
-| `CraftaxFull` | 12 | **1** | `test_resolution_downsample_agrees_within_the_measured_bound` |
-| `DMCManipulatorBringBall` | 5 | **0** | — |
-| `DMCQuadrupedWalk` | 5 | **1** | `test_resolution_downsample_agrees_within_the_measured_bound` |
-| `OGBCube` | 11 | **8** | `test_a_shared_style_broadcasts_to_any_batch`, `test_dataset_paths_regenerate_identical_frames`, `test_render_is_pure_and_set_state_is_idempotent`, `test_rendering_a_sub_batch_refuses_environment_0_s_style`, `test_state_roundtrip`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces`, `test_the_reference_renderer_on_this_machine_is_deterministic`, `test_visual_tier_matches_its_declared_fidelity` |
-| `OGBScene` | 11 | **6** | `test_a_shared_style_broadcasts_to_any_batch`, `test_dataset_paths_regenerate_identical_frames`, `test_render_is_pure_and_set_state_is_idempotent`, `test_state_roundtrip`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces`, `test_the_reference_renderer_on_this_machine_is_deterministic` |
-| `PFRocketLanding` | 3 | **2** | `test_color_knobs_apply_the_requested_color`, `test_resolution_downsample_agrees_within_the_measured_bound` |
-
-`tests/gpu` is judged against **Step 6's run of the same files in the same chained interpreter** (`examples/results/step6/verify/gpu/`), because "nothing else failing" is a claim about a difference. The error counts are part of the comparison: several hundred of those lines are the environments that interpreter cannot construct at all, and a change there would mean the interpreter moved rather than the code.
-
-| file | Step 6 | this sweep | error set | new failures | failures fixed |
-|---|---|---|---|---|---|
-| `test_conformance` | 437 error, 7 failed, 845 passed, 387 skipped | 437 error, 10 failed, 902 passed, 422 skipped | **unchanged** | **3** | 0 |
-| `test_reproducibility` | 529 error, 17 failed, 1275 passed, 218 skipped | 529 error, 22 failed, 1358 passed, 247 skipped | **unchanged** | **12** | 7 |
-| `test_fast_paths` | 168 passed, 180 skipped | 2 failed, 247 passed, 198 skipped | **unchanged** | **2** | 0 |
-
-New in `test_conformance`:
-
-- `test_state_roundtrip[OGBCube]`
-- `test_state_roundtrip[OGBScene]`
-- `test_visual_tier_matches_its_declared_fidelity[OGBCube]`
-
-New in `test_reproducibility`:
-
-- `test_a_shared_style_broadcasts_to_any_batch[OGBCube]`
-- `test_a_shared_style_broadcasts_to_any_batch[OGBScene]`
-- `test_dataset_paths_regenerate_identical_frames[OGBCube]`
-- `test_dataset_paths_regenerate_identical_frames[OGBScene]`
-- `test_render_is_pure_and_set_state_is_idempotent[OGBCube]`
-- `test_render_is_pure_and_set_state_is_idempotent[OGBScene]`
-- `test_rendering_a_sub_batch_refuses_environment_0_s_style[OGBCube]`
-- `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`
-- `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]`
-- `test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]`
-- `test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]`
-- `test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]`
-
-New in `test_fast_paths`:
-
-- `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]`
-- `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]`
-
 Every run below, and for `tests/unit` its paired run against the pristine `76dc5116` baseline tree on the same machine in the same interpreter.
 
 | suite | interpreter | tree | passed | failed | skipped | failing test ids |
 |---|---|---|---|---|---|---|
-| `test_conformance` | `craftax` | integration HEAD | 275 | 0 | 128 | — |
-| `test_conformance` | `ogbmanip` | integration HEAD | 948 | 10 | 452 | `test_state_is_sufficient[PointmazeGiantNavigate]`, `test_state_is_sufficient[PointmazeGiantStitch]`, `test_state_is_sufficient[PointmazeTeleportNavigate]`, `test_state_is_sufficient[PointmazeTeleportStitch]`, `test_state_roundtrip[OGBCube]`, `test_state_roundtrip[OGBScene]`, `test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]`, `test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]`, `test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]`, `test_visual_tier_matches_its_declared_fidelity[OGBCube]` |
-| `test_conformance` | `rocket` | integration HEAD | 374 | 23 | 196 | `test_batch_invariance[MountainCarContinuous]`, `test_batch_invariance[MountainCar]`, `test_color_knobs_apply_the_requested_color[MountainCarContinuous]`, `test_color_knobs_apply_the_requested_color[MountainCar]`, `test_color_knobs_apply_the_requested_color[PFRocketLanding]`, `test_default_style_is_the_official_appearance[MountainCarContinuous]`, `test_default_style_is_the_official_appearance[MountainCar]`, `test_determinism[MountainCarContinuous]`, `test_determinism[MountainCar]`, `test_every_state_dim_reaches_the_render[MountainCarContinuous]`, `test_every_state_dim_reaches_the_render[MountainCar]`, `test_render_parity_with_official_renderer[Acrobot]`, `test_render_parity_with_official_renderer[CartPole]`, `test_render_parity_with_official_renderer[MountainCarContinuous]`, `test_render_parity_with_official_renderer[MountainCar]`, `test_state_is_sufficient[Acrobot]`, `test_state_is_sufficient[CartPole]`, `test_state_is_sufficient[MountainCarContinuous]`, `test_state_is_sufficient[MountainCar]`, `test_style_is_state[MountainCarContinuous]`, `test_style_is_state[MountainCar]`, `test_variations_all_do_something[MountainCarContinuous]`, `test_variations_all_do_something[MountainCar]` |
-| `test_conformance` | `verify` | integration HEAD | 902 | 10 | 422 | `test_state_is_sufficient[PointmazeGiantNavigate]`, `test_state_is_sufficient[PointmazeGiantStitch]`, `test_state_is_sufficient[PointmazeTeleportNavigate]`, `test_state_is_sufficient[PointmazeTeleportStitch]`, `test_state_roundtrip[OGBCube]`, `test_state_roundtrip[OGBScene]`, `test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]`, `test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]`, `test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]`, `test_visual_tier_matches_its_declared_fidelity[OGBCube]` |
-| `test_fast_paths` | `craftax` | integration HEAD | 24 | 28 | 245 | `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoInvertedDoublePendulum-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoInvertedDoublePendulum-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoInvertedPendulum-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoInvertedPendulum-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoPusher-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoPusher-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoReacher-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[mover-window-vs-full-frame-MujocoReacher-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-MujocoInvertedDoublePendulum-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-MujocoInvertedPendulum-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-MujocoPusher-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-MujocoReacher-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoInvertedDoublePendulum-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoInvertedPendulum-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoPusher-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-MujocoReacher-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoInvertedDoublePendulum-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoInvertedDoublePendulum-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoInvertedPendulum-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoInvertedPendulum-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoPusher-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoPusher-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoReacher-256px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-fused-vs-torch-MujocoReacher-84px]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-primitive-bounds-MujocoInvertedDoublePendulum-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-primitive-bounds-MujocoInvertedPendulum-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-primitive-bounds-MujocoPusher-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raycast3d-primitive-bounds-MujocoReacher-native]` |
-| `test_fast_paths` | `ogbmanip` | integration HEAD | 259 | 26 | 162 | `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchPickAndPlace-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchPickAndPlaceDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchPickAndPlaceDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchPush-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchPushDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchPushDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchReach-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchReachDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchReachDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchSlide-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchSlideDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-FetchSlideDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchPickAndPlace-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchPickAndPlaceDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchPickAndPlaceDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchPush-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchPushDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchPushDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchReach-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchReachDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchReachDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchSlide-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchSlideDense-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-FetchSlideDict-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]` |
-| `test_fast_paths` | `rocket` | integration HEAD | 56 | 4 | 281 | `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[gfxdraw-classic-fused-vs-per-primitive-MountainCar-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[gfxdraw-classic-fused-vs-per-primitive-MountainCarContinuous-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[gfxdraw-classic-fused-vs-per-primitive-extreme-MountainCar-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[gfxdraw-classic-fused-vs-per-primitive-extreme-MountainCarContinuous-native]` |
-| `test_fast_paths` | `verify` | integration HEAD | 247 | 2 | 198 | `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBCube-native]`, `test_the_fast_path_is_bit_identical_to_the_path_it_replaces[raster2d-tile-culling-ss2-OGBScene-native]` |
-| `test_reproducibility` | `craftax` | integration HEAD | 404 | 3 | 82 | `test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[visibility-EMPTY]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]` |
-| `test_reproducibility` | `ogbmanip` | integration HEAD | — | 0 | — | — |
-| `test_reproducibility` | `rocket` | integration HEAD | 554 | 46 | 119 | `test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility[visibility-EMPTY]`, `test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MountainCarContinuous]`, `test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted[MountainCar]`, `test_a_shared_style_broadcasts_to_any_batch[MountainCarContinuous]`, `test_a_shared_style_broadcasts_to_any_batch[MountainCar]`, `test_batch_order_does_not_change_the_frames[MountainCarContinuous]`, `test_batch_order_does_not_change_the_frames[MountainCar]`, `test_chunked_render_states_is_chunk_independent[MountainCarContinuous]`, `test_chunked_render_states_is_chunk_independent[MountainCar]`, `test_dataset_paths_regenerate_identical_frames[MountainCarContinuous]`, `test_dataset_paths_regenerate_identical_frames[MountainCar]`, `test_every_input_form_gives_the_same_frame[MountainCarContinuous]`, `test_every_input_form_gives_the_same_frame[MountainCar]`, `test_frame_i_is_independent_of_batch_size[MountainCarContinuous]`, `test_frame_i_is_independent_of_batch_size[MountainCar]`, `test_frames_are_bit_identical_in_a_fresh_process[MountainCarContinuous]`, `test_frames_are_bit_identical_in_a_fresh_process[MountainCar]`, `test_leading_dimensions_are_preserved[MountainCarContinuous]`, `test_leading_dimensions_are_preserved[MountainCar]`, `test_numpy_and_torch_serialization_round_trip[MountainCarContinuous]`, `test_numpy_and_torch_serialization_round_trip[MountainCar]`, `test_out_buffer_receives_the_same_frames[MountainCarContinuous]`, `test_out_buffer_receives_the_same_frames[MountainCar]`, `test_render_is_pure_and_set_state_is_idempotent[MountainCarContinuous]`, `test_render_is_pure_and_set_state_is_idempotent[MountainCar]`, `test_render_size_does_not_leak_into_later_calls[MountainCarContinuous]`, `test_render_size_does_not_leak_into_later_calls[MountainCar]`, `test_rendering_a_sub_batch_refuses_environment_0_s_style[MountainCarContinuous]`, `test_rendering_a_sub_batch_refuses_environment_0_s_style[MountainCar]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]`, `test_resolution_downsample_agrees_within_the_measured_bound[MountainCarContinuous]`, `test_resolution_downsample_agrees_within_the_measured_bound[MountainCar]`, `test_resolution_downsample_agrees_within_the_measured_bound[PFRocketLanding]`, `test_rollout_seed_reproduces_in_a_fresh_process[MountainCarContinuous]`, `test_rollout_seed_reproduces_in_a_fresh_process[MountainCar]`, `test_seeded_sampling_reproduces_in_a_fresh_process[MountainCarContinuous]`, `test_seeded_sampling_reproduces_in_a_fresh_process[MountainCar]`, `test_the_reference_renderer_on_this_machine_is_deterministic[Acrobot]`, `test_the_reference_renderer_on_this_machine_is_deterministic[CartPole]`, `test_the_reference_renderer_on_this_machine_is_deterministic[MountainCarContinuous]`, `test_the_reference_renderer_on_this_machine_is_deterministic[MountainCar]`, `test_variation_dict_and_style_tensor_agree[MountainCarContinuous]`, `test_variation_dict_and_style_tensor_agree[MountainCar]`, `test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MountainCarContinuous]`, `test_variation_overrides_do_not_drop_the_env_s_per_environment_style[MountainCar]` |
-| `test_reproducibility` | `verify` | integration HEAD | 1358 | 22 | 247 | `test_a_shared_style_broadcasts_to_any_batch[OGBCube]`, `test_a_shared_style_broadcasts_to_any_batch[OGBScene]`, `test_dataset_paths_regenerate_identical_frames[OGBCube]`, `test_dataset_paths_regenerate_identical_frames[OGBScene]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportExplore]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportNavigate]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportStitch]`, `test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeNavigate]`, `test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeStitch]`, `test_render_is_pure_and_set_state_is_idempotent[OGBCube]`, `test_render_is_pure_and_set_state_is_idempotent[OGBScene]`, `test_rendering_a_sub_batch_refuses_environment_0_s_style[OGBCube]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCCheetahRun]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCHopperHop]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCWalkerWalk]`, `test_the_reference_renderer_on_this_machine_is_deterministic[OGBCube]`, `test_the_reference_renderer_on_this_machine_is_deterministic[OGBScene]`, `test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportNavigate]`, `test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportStitch]` |
-| `unit` | `craftax` | baseline `76dc5116` | 776 | 2 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `craftax` | integration HEAD | 919 | 3 | 17 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `rocket` | baseline `76dc5116` | 780 | 11 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `rocket` | integration HEAD | 974 | 12 | 12 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se6-venv` | baseline `76dc5116` | 822 | 2 | 7 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se6-venv` | integration HEAD | 1035 | 2 | 9 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-craftax-venv` | baseline `76dc5116` | 773 | 2 | 13 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-craftax-venv` | integration HEAD | 918 | 2 | 19 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-rocket-venv` | baseline `76dc5116` | 767 | 11 | 10 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `se7-rocket-venv` | integration HEAD | 913 | 11 | 15 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_the_extreme_states_actually_exercise_something[MountainCarContinuous]`, `test_the_extreme_states_actually_exercise_something[MountainCar]`, `test_the_extreme_states_actually_exercise_something[Pendulum]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]`, `test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]`, `test_both_select_branches_draw_the_same_frame[MountainCarContinuous]`, `test_both_select_branches_draw_the_same_frame[MountainCar]`, `test_both_select_branches_draw_the_same_frame[Pendulum]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `step6` | baseline `76dc5116` | 807 | 2 | 22 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_every_cited_scratch_path_resolves` |
-| `unit` | `step6` | integration HEAD | 1018 | 3 | 25 | `test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`, `test_from_triangles_clip_row_is_independent_of_batch_size`, `test_every_cited_scratch_path_resolves` |
+| `test_conformance` | `verify` | integration HEAD | 905 | 7 | 422 | `test_state_is_sufficient[PointmazeGiantNavigate]`, `test_state_is_sufficient[PointmazeGiantStitch]`, `test_state_is_sufficient[PointmazeTeleportNavigate]`, `test_state_is_sufficient[PointmazeTeleportStitch]`, `test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]`, `test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]`, `test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]` |
+| `test_fast_paths` | `verify` | integration HEAD | 247 | 0 | 200 | — |
+| `test_reproducibility` | `verify` | integration HEAD | 1370 | 13 | 244 | `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportExplore]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportNavigate]`, `test_frames_are_bit_identical_in_a_fresh_process[AntmazeTeleportStitch]`, `test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeNavigate]`, `test_frames_are_bit_identical_in_a_fresh_process[HumanoidmazeLargeStitch]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxClassic]`, `test_resolution_downsample_agrees_within_the_measured_bound[CraftaxFull]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCCheetahRun]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCHopperHop]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCQuadrupedWalk]`, `test_resolution_downsample_agrees_within_the_measured_bound[DMCWalkerWalk]`, `test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportNavigate]`, `test_the_reference_renderer_on_this_machine_is_deterministic[PointmazeTeleportStitch]` |
 
 ## Step-8 carry-overs
 
@@ -322,6 +256,7 @@ Copied verbatim from `dashboard.yaml: step8_carryovers`. Each is a thing Step 7 
 | Run the mjwarp prepare_model/texture_gaps registry sweeps on RoboCasa, MetaWorld and HumanoidBench once a venv with their pins (mujoco 3.3.x kitchen cache / metaworld) exists; the spot rule fires only on cutoff outside [0, 90] | W5 shared review item 5 |  |
 | DOWNSAMPLE_EXACT_FRAC['PFRocketLanding'] = 0.95614 measured at the test protocol; add at the Step-8 freeze (tests/ frozen in Step 7) | W6 M4 |  |
 | Step-3 classify() returns 'unknown' for CraftaxFull: the frozen census under scratch/census predates the cell AND NO_BACKEND_MODULE_CLASS keys on module name 'craftax' -> R which 'craftax_full' does not match. Step 8 must regenerate the census and widen the map (also DMCQuadrupedWalk/DMCManipulatorBringBall/OGB/Rocket entries) | W2 tier-final |  |
+| CLOSURE-1: nvdiff sparse per-vertex stage is batch-dependent by one float32 ulp at widths 1-3 on x86 CPU (no consumer); explicit-contraction patch 4dc3d4b is batch-invariant everywhere but moves four locomotion cells on CUDA at 1e-7..1e-10 (second ULP re-freeze). Decide in Step 8's clean re-verification pass. | W6 closure |  |
 
 ## Deferred work
 
@@ -347,25 +282,26 @@ An escalation is open when its `status`/`resolved` field does not record a rulin
 
 Every JSON and results file under `examples/results/step7/closure/` that this generator does not yet understand, named rather than dropped. This list is the next run's to-do list.
 
-- `examples/results/step7/closure/gpu_tests/test_conformance.verify.failure_messages.json`
-- `examples/results/step7/closure/gpu_tests/test_fast_paths.verify.failure_messages.json`
-- `examples/results/step7/closure/gpu_tests/test_reproducibility.verify.failure_messages.json`
-- `examples/results/step7/closure/nvdiff_cpu_batch/apple-m5.json`
-- `examples/results/step7/closure/nvdiff_cpu_batch/threads1.json`
-- `examples/results/step7/closure/nvdiff_cpu_batch/threads2.json`
-- `examples/results/step7/closure/nvdiff_cpu_batch/threads4.json`
-- `examples/results/step7/closure/refreeze/branch.json`
-- `examples/results/step7/closure/refreeze/gatea_branch.json`
-- `examples/results/step7/closure/replay/certify/certification.json`
-- `examples/results/step7/closure/replay/compare49_frozen_interpreters_only.json`
-- `examples/results/step7/closure/replay/craftaxclassic_world_rows.json`
-- `examples/results/step7/closure/replay/craftaxclassic_world_rows_apple-m5.json`
-- `examples/results/step7/closure/replay/dmc.json`
-- `examples/results/step7/closure/replay/dmcvis.json`
-- `examples/results/step7/closure/replay/fetch.json`
-- `examples/results/step7/closure/replay/ogb.json`
-- `examples/results/step7/closure/replay/raster.json`
-- `examples/results/step7/closure/replay/swm.json`
+- `examples/results/step7/closure2/declarations/craftax.json`
+- `examples/results/step7/closure2/declarations/ogbmanip.json`
+- `examples/results/step7/closure2/declarations/rocket.json`
+- `examples/results/step7/closure2/declarations/step6.json`
+- `examples/results/step7/closure2/declarations/vis311.json`
+- `examples/results/step7/closure2/gpu_tests/vs_closure_at_275970c.json`
+- `examples/results/step7/closure2/gpu_tests/vs_step6.json`
+- `examples/results/step7/closure2/nvdiff_cpu_batch/widthsweep_threads1.json`
+- `examples/results/step7/closure2/nvdiff_cpu_batch/widthsweep_threads4.json`
+- `examples/results/step7/closure2/refreeze/branch.json`
+- `examples/results/step7/closure2/refreeze/gatea_branch.json`
+- `examples/results/step7/closure2/replay/certify/certification.json`
+- `examples/results/step7/closure2/replay/compare49_frozen_interpreters_only.json`
+- `examples/results/step7/closure2/replay/craftaxclassic_world_rows.json`
+- `examples/results/step7/closure2/replay/dmc.json`
+- `examples/results/step7/closure2/replay/dmcvis.json`
+- `examples/results/step7/closure2/replay/fetch.json`
+- `examples/results/step7/closure2/replay/ogb.json`
+- `examples/results/step7/closure2/replay/raster.json`
+- `examples/results/step7/closure2/replay/swm.json`
 
 ---
 
