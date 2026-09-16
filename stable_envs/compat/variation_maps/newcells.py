@@ -528,3 +528,29 @@ CRAFTAX_NO_LEAVES = {
         "our_envs": ["CraftaxFull"], "n_swm_leaves": 0, "classification": "not_applicable",
         "evidence": "live: CraftaxPixelsWrapper.variation_space is None; frame (130,110,3)"},
 }
+
+
+#: Our OWN variation-space leaves, per cell, recorded from ``make_variation_space``.
+#:
+#: Recorded rather than enumerated live for the same reason ``RECORDED_SWM_LEAVES`` is: the OGB
+#: manipulation cells refuse to construct without CUDA, so a live enumeration would skip exactly
+#: where the completeness check matters. The live check runs as well wherever the class CAN be built
+#: and asserts this table still matches.
+#:
+#: This is the half of the classification the reviewer found missing. ``swm_only`` makes every swm
+#: leaf account for itself; without this, an OUR-side leaf can exist with no statement of whether
+#: swm has a counterpart, which is the same gap in the other direction.
+RECORDED_OURS_LEAVES: dict[str, tuple[str, ...]] = {
+    "OGBCube": ("cube.color", "floor.color"),
+    "OGBScene": ("cube.color", "floor.color"),
+    "PointmazeLargeNavigate": ("agent.color", "agent.scale", "floor.tint", "walls.color",
+                               "camera.distance_scale", "camera.elevation",
+                               "rendering.decolor_floor"),
+    "PointmazeLargeStitch": ("agent.color", "agent.scale", "floor.tint", "walls.color",
+                             "camera.distance_scale", "camera.elevation",
+                             "rendering.decolor_floor"),
+}
+
+#: ``NEWCELL_VARIATION_MAPS`` under the name the ``variation_maps`` package installer looks for.
+#: The old name is kept because this module's own tests and findings cite it.
+MAPS = NEWCELL_VARIATION_MAPS
