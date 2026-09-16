@@ -62,6 +62,13 @@ OUTPUT = S8 / "gate_a_rejudged.json"
 PAIRED = S8 / "oscar_paired_tests.json"
 DOWNSAMPLE = S8 / "downsample_provenance.json"
 
+#: Step-8 RE-SWEEPS: a shard measured in Step 8 on the same corpus and the same protocol as the
+#: closure2 one, because the closure2 measurement had a provenance gap that only a new measurement
+#: can close. A re-sweep SUPERSEDES the closure2 row for its ``(cell, device)`` and says so, with
+#: the superseded shard's path and sha256 kept in the record. The closure2 shard is never deleted
+#: and never edited: it stays the history of what was measured when.
+RESWEEP = S8 / "gate_a_resweep"
+
 BASELINE_SHA = "43ac95238f7472137619f3e69e7636e11dd088b1"
 
 #: Keys of an applicability declaration that describe it rather than naming a band. Same set as
@@ -219,13 +226,30 @@ def build() -> dict:
     judges = judge_mod.judges(judge_mod.B.load())
     paired = json.loads(PAIRED.read_text()) if PAIRED.is_file() else {}
 
+    # (cell, device) -> the superseded closure2 shard, for every row a Step-8 re-sweep replaces.
+    resweeps = sorted(RESWEEP.glob("*.json")) if RESWEEP.is_dir() else []
+    superseded: dict[tuple, dict] = {}
+    for path in sorted(GATE_A.glob("*.json")):
+        doc = json.loads(path.read_text())
+        for cell in doc.get("configs", {}):
+            superseded[(cell, doc["device"])] = {
+                "source": str(path.relative_to(ROOT)), "source_sha256": _sha256(path),
+                "previous_verdict": doc.get("verdicts", {}).get(cell, {}).get("verdict")}
+    replaced = {(cell, json.loads(p.read_text())["device"])
+                for p in resweeps for cell in json.loads(p.read_text()).get("configs", {})}
+
     records, joins = [], []
     classes: dict[str, tuple] = {}
-    for path in sorted(GATE_A.glob("*.json")):
+    for path in sorted(GATE_A.glob("*.json")) + resweeps:
         raw = path.read_bytes()
         doc = json.loads(raw)
         device = doc["device"]
+        is_resweep = path in resweeps
         for cell, row in sorted(doc.get("configs", {}).items()):
+            if not is_resweep and (cell, device) in replaced:
+                # A Step-8 re-sweep of this exact cell/device exists; its row is the one judged.
+                # The closure2 row is not dropped -- it is cited as ``supersedes`` on that record.
+                continue
             if cell not in classes:
                 classes[cell] = env_class(cell)
             cls, how = classes[cell]
@@ -257,6 +281,8 @@ def build() -> dict:
             records.append({
                 "cell": cell, "device": device,
                 "class_resolved_by": how,
+                "measurement": "step8_resweep" if is_resweep else "step7_closure2",
+                "supersedes": superseded.get((cell, device)) if is_resweep else None,
                 "source": str(path.relative_to(ROOT)),
                 "source_sha256": hashlib.sha256(raw).hexdigest(),
                 "measurement_provenance": doc.get("provenance", {}),
@@ -276,6 +302,8 @@ def build() -> dict:
                                       "resolution_consistency_applicability and "
                                       "color_exactness_applicability",
         "sources": {"gate_a": sorted(str(p.relative_to(ROOT)) for p in GATE_A.glob("*.json")),
+                    "step8_resweeps": sorted(str(p.relative_to(ROOT)) for p in resweeps),
+                    "step8_resweep_sha256": {str(p.relative_to(ROOT)): _sha256(p) for p in resweeps},
                     "subset_judgment": str(PAIRED.relative_to(ROOT)),
                     "subset_judgment_sha256": _sha256(PAIRED) if PAIRED.is_file() else None,
                     "downsample_provenance": str(DOWNSAMPLE.relative_to(ROOT)),
