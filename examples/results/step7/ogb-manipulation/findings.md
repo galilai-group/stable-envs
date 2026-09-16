@@ -1129,3 +1129,217 @@ Prepared and committed, not run:
 
 Blocked: **Oscar SSH is refusing with `Permission denied (keyboard-interactive)`.** Retrying at most
 every 30 minutes, not in a loop. On access: sync, verify the md5 against HEAD, submit, report.
+
+## 25. Closure sweep: what the 15 `tests/gpu` failures actually were
+
+The sweep reported 14 failures and five mechanisms. Run on the merged tip the count was **15**, and
+two of the five do not exist: `check_state_roundtrip` passes (the float32 fix landed), and no
+sub-batch invariance row fails — `test_a_shared_style_broadcasts_to_any_batch` fails on the resource
+guard while its pixel assertions pass. Three mechanisms account for all fifteen.
+
+| mechanism | rows | mine? |
+|---|---|---|
+| resource guard: EGL contexts released | 11 | yes |
+| `zero-size array to reduction` on a `(B, 0)` style | 2 | shared-file gap |
+| `mean_abs` above its declared ceiling | 1 | yes, and see §26 |
+| (after the first fix) renderers still finalised | 4 | under investigation |
+
+### 25.1 The EGL churn was a docstring that contradicted its own code
+
+`_renderer` keyed its cache on `id(model)` and evicted the old entry whenever a dirty reset rebound
+the env's model. Evicting dropped the last reference to a live `mujoco.Renderer`, so `__del__` ran
+`close()` and freed its EGL context — **14 created, 8 released** in the gate run. Directly above that
+code sat the sentence "Never closed, for the reason `envs/ogbench.py` records at length". The
+reasoning in the docstring was about exhausting contexts and it inverted the rule it was citing.
+
+Replaced by `_PlateRig`: one private `(MjModel, MjData, Renderer)` per (cell, resolution), built
+once, never evicted, never closed — the shape `fetch.py` uses, which owns its model instead of
+borrowing one that rebinds. Owning it also stopped the bake mutating the reference env's model, and
+pinned the plate at the all-zero button bits instead of whichever bits were live when the cache first
+filled. `_appearance_digest` now asserts the phase-0 "plate is bit-static" claim at every bake.
+Result: **6 created, 0 released**.
+
+### 25.2 These are the repo's first styleless envs
+
+`check_render_is_pure` takes `np.abs(k1 - k0).max()` of a `(B, 0)` style array. `conformance.py`
+already guards `style_dim == 0` in three other places, so this was a missing guard and not a new
+policy. Shared file; the change went to independent review.
+
+### 25.3 No button-coloured geom is stranded in the plate
+
+Pinning the plate at zero bits is only correct if every geom whose colour depends on a bit is drawn
+per world by the mover pass. Measured (job 6433228, and reproduced locally field-for-field): geoms
+71 and 83 carry button colours directly, materials 8 and 11 carry them for geoms 95 and 111–115, and
+**all eight are in the mover set**. `STRANDED_IN_PLATE: []`.
+
+## 26. The declaration was low because it was measured with the wrong instrument
+
+`pixel_agreement` takes the per-pixel **max over colour channels** and averages that.
+`probe_remeasure_chain.py` averaged `|diff|` over the **channels themselves**. The gate's number is
+necessarily the larger, and 3.29/2.44 = 1.35 is what three channels give you.
+
+The tree is not involved, and this is the proof: seed 0 scores `3.29548302475287` before the
+`_PlateRig` fix and `3.29548302475287` after it, bit for bit, and gate-instrument numbers at seeds
+1000–1007 (3.283–3.328) sit on top of those at seeds 0–7 (3.265–3.309). So the plate rig moved no
+pixels, the seed choice was never the explanation, and **no widening rule applied to the old numbers
+could have covered the gap**: worst-of-eight × 1.3 over those seeds is 3.17 against a graded draw of
+3.295.
+
+`check_visual_fidelity` draws `sample_states(n)` with no rng, which is `default_rng(0)` — ONE fixed
+draw, the only one ever graded. `probe_gate_fidelity.py` therefore calls the gate's own function for
+the authoritative number and re-derives it with an explicit-rng copy as an instrument-agreement
+check, refusing to declare anything if the copy disagrees at seed 0.
+
+### 26.1 Declared, job 6433493
+
+|  | worst of 8 | gate draw (seed 0) | ceiling `round(worst×1.3, 1)` | margin |
+|---|---|---|---|---|
+| OGBCube | 3.309378 | 3.295483 | 4.3 | ×1.305 |
+| OGBScene | 6.691589 | 6.602667 | 8.7 | ×1.318 |
+
+Floors by the stated rule `floor((best − 0.04) × 20) / 20`. **OGBScene's `within8_min` loosens
+0.85 → 0.80**; that is the rule's output on a measured value, recorded here rather than buried.
+
+### 26.2 The reference renderer's first frame differs
+
+OGBScene REFUSED the first agreement check on a 5e-9 `ssim` delta and one pixel in 2.5 million.
+Measured on CPU: the **first** reference render in a process differs from the second by 6 pixels of
+±1, and every render after that is bit-identical to its predecessor. An upstream first-frame effect,
+invisible in `mean_abs` at 12 digits. The probe now burns one frame before measuring and tolerates
+1e-6 — far below a wrong instrument (0.89) and far above a warm-up (5e-9).
+
+## 27. Two instruments of mine that reported green on the wrong thing
+
+Both found the same day, both the same failure mode, and together they explain why every defect in
+§25 and §26 survived a run I had reported as passing.
+
+1. **Gate A was five checks with the mandatory one missing.** `probe_remeasure_chain.py` ran
+   `check_determinism`, `check_batch_invariance`, `check_batch_size_invariance`,
+   `check_state_dims_matter` and `check_order_invariance` and called that Gate A.
+   **`check_state_roundtrip` was not in the list** — the check that was failing. `probe_gate_a.py`
+   now asserts its list against the repo's set, so an omission is a failure rather than a silence.
+2. **Fidelity was measured with a different definition of `mean_abs` than the grader's** (§26).
+
+A probe that measures something adjacent to what the gate measures reports green indefinitely. Both
+are now bound to the gate's own functions rather than to reimplementations of them.
+
+## 28. Process failures in this round, recorded because the artifacts nearly hid them
+
+- **`rsync --delete` destroyed node-side results.** Syncing the worktree over the node mirrored
+  local absence onto the results tree and deleted `m6/owner/` and `m6/gate8/` before they had been
+  read. Recovered only because job stdout also lands in `$SCR/logs`, outside the synced tree.
+  Subsequent syncs drop `--delete`.
+- **A scripted edit deleted live code.** The script that pasted `_MEASURED` spliced by position and
+  took `_UNMEASURED` and `_REFERENCE_VERSIONS` with it. The import failed immediately and it was
+  restored, but a positional splice that lands somewhere less load-bearing fails quietly.
+- **A hypothesis was shipped ahead of its evidence.** The reference-env role split was justified by a
+  correct CPU measurement (reset-after-render closes a renderer) that was not the suite's actual
+  path: the four remaining rows are unchanged by it. The ownership probe's output existed at the time
+  and had not been read.
+
+## 29. WITHDRAWN ESCALATION: four resource-guard rows, mechanism found (see 29.5)
+
+Four rows fail and I cannot name the mechanism. Everything below is measured; the one thing missing
+is the cause, and I would rather hand over an honest gap than a fifth hypothesis.
+
+```
+FAILED test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[OGBCube]
+FAILED test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[OGBCube]
+FAILED test_reproducibility.py::test_a_shared_style_broadcasts_to_any_batch[OGBScene]
+FAILED test_reproducibility.py::test_dataset_paths_regenerate_identical_frames[OGBScene]
+```
+
+### 29.1 What is measured
+
+- **Zero EGL contexts are released.** `6 created, 0 released, 6 live` in every run since the
+  `_PlateRig` fix. The harm the rule exists to prevent — releasing a context and corrupting every
+  other live renderer — is not occurring. What fires is `MUJOCO_RENDERER_CLOSED`, a proxy for it.
+- **The four rows pass in isolation**: run alone, `4 passed`, `4 renderers created, 0 closed`. None
+  of the four closes anything. It is an ordering effect and the guard charges whichever test is
+  running when the close happens.
+- **The rows that do the creating are named** (job 6437003, `__new__` patched and capture off):
+  `test_resolution_downsample_agrees_within_the_measured_bound` and
+  `test_render_size_does_not_leak_into_later_calls`, one renderer each, per cell, built at
+  `_plate_rig` → `mujoco.Renderer(...)`.
+- **The cache is sound.** `SE7_OGB_RIGDEBUG=1`: exactly **four rigs** per session —
+  `(Cube,128) (Cube,224) (Scene,128) (Scene,200)` — one `dict_id` throughout, `module_copies=1`.
+  Nothing is created in proportion to batch or resolution, and no module is re-imported underneath
+  the cache.
+- **A process-lifetime strong reference does not prevent the closes.** `_KEEPALIVE` holds every
+  renderer ever built; the four closes still happen. **This disproves garbage collection of the
+  rigs**, which was my own leading hypothesis.
+
+### 29.2 The instance-teardown hypothesis, checked and rejected
+
+Proposed: a temporary env instance's teardown explicitly closes the shared module-level rigs.
+Both legs fail.
+
+1. **Nothing in `stable_envs/` ever calls `.close()` on a renderer.** The only matches for
+   `renderer.close` in the library are the guard's own counters (`resource_guard.py`,
+   `safety_plugin.py`, `supervisor.py`). `ogb_manip.py` defines no `close()` and no `__del__`, and
+   neither does the base `StableEnv` in `core/env.py`.
+2. **Neither failing test constructs a temporary env.** Both receive the module-scoped `env`
+   fixture object. `StateDataset`/`TrajectoryDataset` build an env only from a **string**
+   (`data.py:188` in `render_states`, `data.py:244` in `_init_env`); given an object they keep it.
+
+### 29.3 A defect in my own instrument, stated so nobody reads too much into the counts
+
+`owner_plugin.py` increments its sequence counter in **both** `__new__` and `__init__`, so each real
+renderer consumes two ids — and the guard's `12 created` for six real objects is the same
+double-count. Per-object inference from the instrumented runs is therefore unreliable; the four
+`[rigdebug]` lines and the `0 released` counter are not, because they come from the module and the
+guard rather than from my patch.
+
+### 29.4 What I am asking for
+
+The question is whether `MUJOCO_RENDERER_CLOSED` should fire when **no context is released** and the
+closing caller cannot be attributed to the test being charged. That is a judgement about a SHARED
+file (`stable_envs/testing/resource_guard.py`), so it is not mine to make unilaterally, and I have
+not touched it. The cell-level alternatives I can see — none of which I have implemented, because
+each one changes behaviour to satisfy a proxy rather than to fix a harm — are: render every plate at
+one canonical resolution and resample; or refuse to build a rig at any resolution beyond the
+registered size. Both trade real fidelity or real flexibility for a counter.
+
+### 29.5 The mechanism, and the escalation is withdrawn
+
+An orphaned allocation from a **failed** constructor. OGBench compiles the scene with
+`visual.global.offwidth/offheight` set to the registered render size (`manipspace/envs/env.py:150`),
+so the model serves 200 (Scene) or 224 (Cube) and no more. Any `mujoco.Renderer` above that raises
+`ValueError: Image width 224 > framebuffer width 200` -- **after `__new__` has allocated the
+object**. The half-built Renderer is unreachable, is collected at an arbitrary later moment,
+`__del__` runs `close()`, and the guard charges that close to whichever test was running.
+
+Measured on CPU with `__new__` and `close` patched, no GPU: three oversize constructions, three
+allocations, three closes.
+
+This accounts for all four facts above, including the three that defeated every hypothesis before it:
+
+| fact | why |
+|---|---|
+| closes charged to tests that create nothing | collection happens long after construction |
+| the four rows pass alone | no earlier failed construction exists to be collected |
+| `_KEEPALIVE` does not prevent them | the append is BELOW the line that raised; the list never saw the object |
+| zero contexts released | the constructor failed before it created one |
+
+**The guard was right and I was wrong about it.** `MUJOCO_RENDERER_CLOSED` fired while
+`EGL_CONTEXT_RELEASED` stayed silent because a renderer really was being closed and no context
+really was being released. I read the disagreement between two counters as evidence that both were
+unreliable, and was one step from asking a reviewer to loosen a shared rule over a defect that was
+entirely mine.
+
+**Fix (cell-level, no shared file):** raise the offscreen buffer on the rig's PRIVATE deep copy
+before constructing, `rig.model.vis.global_.offwidth = max(offwidth, res)` and likewise for height.
+Verified on CPU: 224 and 448 both construct and render, and the reference env's own model still
+reports 200. This is a correction rather than a workaround -- a plate must be bakeable at whatever
+resolution the caller renders at, and the two tests that create the orphans
+(`test_resolution_downsample_agrees_within_the_measured_bound`,
+`test_render_size_does_not_leak_into_later_calls`) ask for exactly the sizes the registered buffer
+cannot serve.
+
+### 29.6 What kept this hidden for four diagnostic jobs
+
+Every instrument I built recorded renderers that were **successfully constructed**. A constructor
+that raises produces no rig, no `[rigdebug]` line, and no `BORN` record -- only a `__new__` that my
+plugin did log, as `born during <not recorded>` once `id()` was reused or the `__init__` record never
+arrived. The thing I needed to see was the absence of a record, and I read absence as noise three
+times before testing the constructor itself, which took one CPU script and no GPU at all.

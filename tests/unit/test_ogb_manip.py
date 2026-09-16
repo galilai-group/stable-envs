@@ -358,3 +358,62 @@ def test_the_SPEC_state_dim_constant_matches_what_bundle_computes(cell):
     where swm IS importable, which is exactly where the truth is available.
     """
     assert ogb.SPEC[cell]["state_dim"] == len(ogb._bundle(cell).state_names)
+
+
+@pytest.mark.parametrize("cell", ["Cube", "Scene"])
+def test_sample_states_returns_the_dtype_the_state_round_trips_in(cell):
+    """`check_state_roundtrip` spells its bound as exactly 0.0, so a narrowing cast is a failure.
+
+    `StableEnv.set_state` stores float32. Returning float64 here made `set_state(get_state())` differ
+    by the narrowing error -- 1.17e-07 on the Cube, 1.12e-07 on the Scene -- against a bound of
+    exactly zero. Asserted on the dtype rather than on a round trip, because the round trip needs a
+    constructed env and this does not.
+    """
+    st = ogb.OGBManipBase.sample_states(_fake(cell), 2, np.random.default_rng(0))
+    assert st.dtype == np.float32, f"got {st.dtype}; the env stores float32"
+    assert np.array_equal(st.astype(np.float32), st), "a float32 round trip must be the identity"
+
+
+def test_the_appearance_digest_ignores_sites_the_renderer_never_draws():
+    """A task-changing reset must not invalidate a cached plate rig.
+
+    ``SceneEnv.reset`` writes ``site_pos`` for the per-task target markers -- measured here, rows 7
+    and 9, both group 5 -- and ``scene_option.sitegroup`` is ``[1, 1, 1, 0, 0, 0]``, so those groups
+    reach no pixel. Hashing them made ``_appearance_digest`` take four values over eight resets, and
+    every one of those would fire ``_bake_plate``'s assertion on a rig reused after the task changed:
+    a correct plate rejected for a marker nobody can see. Reproduced before the fix; this is the
+    regression test for it, and it is the task-1 -> task-3 bake reduced to the quantity the bake
+    actually asserts on.
+    """
+    b = ogb._bundle("Scene")
+    env = ogb._reference_env("Scene", role="sample")
+    sitegroup = b.unwrapped._scene_option.sitegroup
+    seen = set()
+    for seed in range(10):
+        env.reset(seed=seed)              # lands on a different task id as the seed changes
+        seen.add(ogb._appearance_digest(b.model, sitegroup))
+    assert len(seen) == 1, (
+        f"the digest took {len(seen)} values over ten task-changing resets, so a plate rig built "
+        f"before one of them would be rejected by _bake_plate for a change no pixel can show")
+
+
+def test_the_appearance_digest_still_sees_a_site_that_is_drawn():
+    """The mask is BY GROUP, not a blanket skip of every site array.
+
+    Excluding all ``site_*`` state would also excuse a site that really is drawn and really did move,
+    which is the kind of hole that makes an assertion worse than no assertion.
+    """
+    b = ogb._bundle("Scene")
+    m = b.model
+    sitegroup = b.unwrapped._scene_option.sitegroup
+    base = ogb._appearance_digest(m, sitegroup)
+    group, pos = np.array(m.site_group, copy=True), np.array(m.site_pos, copy=True)
+    try:
+        m.site_group[0] = 0               # group 0 is drawn under this scene option
+        m.site_pos[0] = m.site_pos[0] + 0.05
+        moved = ogb._appearance_digest(m, sitegroup)
+    finally:
+        m.site_group[:] = group
+        m.site_pos[:] = pos
+    assert moved != base, "a DRAWN site moved and the digest did not notice"
+    assert ogb._appearance_digest(m, sitegroup) == base, "the restore did not put the model back"

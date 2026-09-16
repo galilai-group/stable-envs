@@ -538,6 +538,14 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: close to a supersample of S rather than a resample of fixed source art (which is what puts
     #: griddly and Procgen at the other end). The residual is the round tiles -- an onion at 3x96 has a
     #: different subpixel boundary from one at 3x192 -- and it is 0.13-0.18/255 in the mean.
+    #: MEASURED under this table's own protocol (`conformance.downsample_protocol_states`:
+    #: 8 states at render_worker.STATE_SEED, default appearance, states sha256 055d4057...),
+    #: alloc 6443480 on gpu2264, RTX 3090, mujoco 3.12.0 / ogbench 1.2.1, MUJOCO_GL=egl. These
+    #: two are a baked MuJoCo plate composited with MJWarp movers, so the 2S picture rebakes
+    #: the plate at 2S rather than doubling it -- the plate agrees with itself to the same
+    #: point sampling everything else in this table does.
+    "OGBCube":                    0.885782,   # mean 1.0329/255
+    "OGBScene":                   0.805306,   # mean 2.0163/255
     "OvercookedAsymmAdvantages":  0.985520,   # mean 0.1493/255
     "OvercookedCoordRing":        0.981630,   # mean 0.1787/255
     "OvercookedCounterCircuit":   0.987140,   # mean 0.1251/255

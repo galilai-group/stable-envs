@@ -143,13 +143,27 @@ def _seeded_action_space(u, seed: int):
         setattr(owner, "action_space", original)
 
 
-def _reference_env(cell: str, size: int | None = None):
+def _reference_env(cell: str, size: int | None = None, role: str = "render"):
     """The swm-registered env itself. Needs ``stable_worldmodel``, ``ogbench`` and a GL backend.
 
-    Cached per (cell, size) because each ``mujoco.Renderer`` holds a GL context and this family
+    Cached per (cell, size, ROLE) because each ``mujoco.Renderer`` holds a GL context and this family
     would otherwise open one per call. The env is reset once so the model is compiled.
+
+    THE ROLE IS THE FIX FOR A RENDERER CHURN THAT IS UPSTREAM AND STRUCTURAL. OGBench recompiles on
+    every reset, and `manipspace/envs/env.py:170-172` closes its `mujoco.Renderer` and builds a new
+    one each time it does -- but only if one already exists, because the renderer is created lazily
+    on the first `render()`. So an env that is ONLY reset never opens one and never closes one, and
+    an env that is only rendered and state-written never closes one either: measured on CPU, five
+    `set_state` + `render` cycles the way `reference_render` drives it produce 1 birth and 0 closes,
+    while a single reset AFTER a render produces a close and a rebirth.
+
+    The churn came from one env doing both jobs. `sample_states` resets its env 64 times per draw and
+    `reference_env()` handed out THE SAME INSTANCE whenever it was called without a size, so every
+    draw after the first reference render closed a renderer -- four of them in the gate run, which
+    the resource guard attributes to whichever test was running when the collector woke up. Splitting
+    the roles means the sampling env is never rendered and the rendering env is never reset.
     """
-    key = (cell, int(size) if size else None)
+    key = (cell, int(size) if size else None, str(role))
     hit = _REF_CACHE.get(key)
     if hit is not None:
         return hit
@@ -214,7 +228,7 @@ def _bundle(cell: str) -> _Bundle:
         return hit
     import mujoco
     spec = SPEC[cell]
-    env = _reference_env(cell)
+    env = _reference_env(cell, role="sample")
     u = env.unwrapped
     m, d = u.model, u.data
     b = _Bundle()
@@ -544,7 +558,7 @@ class OGBManipBase(StableEnv):
         import mujoco
         rng = np.random.default_rng(0) if rng is None else rng
         b = self._b
-        env = _reference_env(self.CELL)
+        env = _reference_env(self.CELL, role="sample")   # reset many times; never rendered
         u = env.unwrapped
         out = []
         # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. swm's
@@ -576,7 +590,12 @@ class OGBManipBase(StableEnv):
                                            np.asarray(bits, np.float64)]))
         finally:
             np.random.set_state(gstate)
-        return np.stack(out).astype(np.float64)
+        # FLOAT32, and this is a correctness requirement rather than a memory one.
+        # `StableEnv.set_state` stores the batch as float32, so `check_state_roundtrip` compares a
+        # float32 read-back against whatever this returns; returning float64 made
+        # `set_state(get_state())` differ by the narrowing error -- 1.17e-07, against a bound the
+        # suite spells as exactly 0.0. The state is carried in the dtype it round-trips in.
+        return np.stack(out).astype(np.float32)
 
     # ---- variation ------------------------------------------------------------------------
 
@@ -618,30 +637,38 @@ class OGBManipBase(StableEnv):
         did not hit a mover. Measured worth, three 64-state draws: interior-exact 0.958 (Cube) and
         0.922 (Scene), whole-frame 0.872 and 0.775.
 
-        Every mutation is undone from a pristine snapshot rather than by inverse edit, so baking
-        twice gives the same model.
+        Drawn through the rig's PRIVATE model and data, so this mutates nothing the reference env or
+        anything else can see, and the "every appearance array is identical across resets" claim the
+        cached plate rests on is asserted here rather than assumed.
         """
         import mujoco
         b = self._b
-        m, d, u = b.model, b.data, b.unwrapped
-        pr = b.pristine
-        keep = np.array(m.geom_group, copy=True)
-        m.geom_group[b.movers] = MW.HIDDEN_GROUP
-        if states is not None:
+        rig = _plate_rig(self.CELL, int(res))
+        live = b.model
+        shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
+        assert shape == rig.shape, (
+            f"{self.CELL}: the env recompiled to a different model shape {shape} than the plate rig "
+            f"was built for {rig.shape}; the cached plate would be a picture of the old scene")
+        now = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
+        assert now == rig.appearance, (
+            f"{self.CELL}: an appearance array changed since the plate rig was built "
+            f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
+            f"it is now wrong; phase 0 measured these arrays identical across resets and this "
+            f"assertion is what keeps that measurement honest")
+        d = rig.data
+        if states is None:
+            d.qpos[:] = b.data.qpos
+            d.mocap_pos[:] = b.data.mocap_pos
+            d.mocap_quat[:] = b.data.mocap_quat
+        else:
             qpos, mp, mq, _ = self._split(np.asarray(states, np.float64))
             d.qpos[:] = qpos
             d.mocap_pos[:] = mp
             d.mocap_quat[:] = mq
         d.qvel[:] = 0.0
-        mujoco.mj_forward(m, d)
-        r = _renderer(self.CELL, int(res))
-        r.update_scene(d, camera=b.cam, scene_option=u._scene_option)
-        img = r.render().copy()
-        m.geom_group[:] = keep
-        m.geom_rgba[:] = pr["geom_rgba"]
-        m.mat_rgba[:] = pr["mat_rgba"]
-        mujoco.mj_forward(m, d)
-        return torch.as_tensor(img, device=self.device)
+        mujoco.mj_forward(rig.model, d)
+        rig.renderer.update_scene(d, camera=b.cam, scene_option=b.unwrapped._scene_option)
+        return torch.as_tensor(rig.renderer.render().copy(), device=self.device)
 
     # ---- render ---------------------------------------------------------------------------
 
@@ -767,7 +794,7 @@ class OGBManipBase(StableEnv):
 
     @classmethod
     def reference_env(cls, size: int | None = None):
-        return _reference_env(cls.CELL, size)
+        return _reference_env(cls.CELL, size, role="render")
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
@@ -801,38 +828,165 @@ class OGBManipBase(StableEnv):
         return np.stack(out)
 
 
-_RENDERERS: dict = {}
+_PLATE_RIGS: dict = {}
+
+#: EVERY Renderer ever built, held for the life of the PROCESS and never read back.
+#:
+#: `_PLATE_RIGS` already holds each rig, and a rig holds its renderer, so on paper this list is
+#: redundant. It is here because the measurement says otherwise: with the dict as the only owner, a
+#: rig built by `test_resolution_downsample_agrees_within_the_measured_bound` was collected during
+#: the NEXT test -- `__del__` -> `close()` -> a renderer the repo's rule says must never be closed
+#: (job 6437003 names the creation site and the collection site for all four). The four rows pass in
+#: isolation with 0 closes, so this is an ordering effect and not a property of any one test.
+#:
+#: I do not yet have the mechanism that drops the dict's reference, and this list is not a claim to
+#: have found it: it is the invariant the rule states -- created and NEVER released -- enforced
+#: directly rather than as a consequence of a cache I have already been wrong about once. It is
+#: bounded by the number of distinct (cell, resolution) pairs a process renders at, which is a
+#: handful, and explicitly NOT by batch size, which is what the rule forbids.
+_KEEPALIVE: list = []
+
+#: Model arrays the plate depends on, by prefix. `geom_rgba` and `mat_rgba` are EXCLUDED because
+#: swm's `_apply_button_states` writes them into the live model on every button change -- they are
+#: state wearing the shape of appearance, and the rig pins them itself (see `_plate_rig`).
+_APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_",
+                        "hfield_", "skin_")
+_APPEARANCE_SKIP = ("geom_rgba", "mat_rgba", "geom_group")
 
 
-def _renderer(cell: str, res: int):
-    """One ``mujoco.Renderer`` per (cell, resolution, MODEL IDENTITY).
+def _appearance_digest(m, sitegroup=None) -> str:
+    """A hash of every static-appearance array in an MjModel, so "the plate is bit-static" is CHECKED.
 
-    Keyed on ``id(model)`` as well, for the same reason ``_Bundle.model`` is a property: a dirty
-    reset rebinds the env's ``_model``, and a ``Renderer`` holds the model it was built with. Keyed
-    on ``(cell, res)`` alone it would go on rendering a model the env had discarded -- the plate
-    would silently be baked from dead geometry after the first reset.
-
-    Never closed, for the reason ``envs/ogbench.py`` records at length: releasing an EGL context
-    corrupts rendering in every other live renderer in the process. The cache is bounded instead,
-    because a long sampling run rebinds the model many times and one renderer per rebind would
-    exhaust contexts.
+    Phase 0 measured that a dirty reset recompiles this scene to identical appearance arrays and only
+    moves the array handles. The plate rig depends on that measurement being true for the life of the
+    process, and a measurement that nothing re-checks is an assumption. This turns it into an
+    assertion that fires loudly instead of baking a plate from geometry the env has since changed.
     """
+    import hashlib
+    h = hashlib.blake2b(digest_size=16)
+    n = 0
+    # SITES THE RENDERER NEVER DRAWS ARE NOT APPEARANCE. `SceneEnv.reset` writes `site_pos` for the
+    # per-task target markers -- measured: rows 7 and 9, both group 5, move as the task changes -- and
+    # `scene_option.sitegroup` is [1,1,1,0,0,0], so groups 4 and 5 reach no pixel. Hashing them made
+    # the digest take four values over eight resets, which would fire `_bake_plate`'s assertion on any
+    # rig reused after a task-changing reset: a correct plate rejected for a marker nobody can see.
+    # Masked BY GROUP rather than skipped wholesale, so a site that IS drawn still moves the digest.
+    nsite = int(getattr(m, "nsite", 0) or 0)
+    drawn = None
+    if nsite and sitegroup is not None:
+        flags = np.asarray(sitegroup).ravel()
+        g = np.clip(np.asarray(m.site_group, int), 0, len(flags) - 1)
+        drawn = flags[g] != 0
+    for name in sorted(dir(m)):
+        if name.startswith("_") or name in _APPEARANCE_SKIP:
+            continue
+        if not name.startswith(_APPEARANCE_PREFIXES):
+            continue
+        try:
+            v = getattr(m, name)
+        except Exception:                      # pragma: no cover - MjModel exposes only arrays here
+            continue
+        if isinstance(v, np.ndarray):
+            a = np.ascontiguousarray(v)
+            if drawn is not None and name.startswith("site_") and a.shape[:1] == (nsite,):
+                a = np.ascontiguousarray(a[drawn])
+            h.update(name.encode())
+            h.update(repr(a.shape).encode())
+            h.update(a.tobytes())
+            n += 1
+    assert n >= 20, (f"appearance digest covered only {n} arrays -- an empty hash would certify "
+                     f"staleness it never looked at")
+    return h.hexdigest()
+
+
+class _PlateRig:
+    """A PRIVATE (MjModel, MjData, Renderer) triple that bakes this cell's plate, built once.
+
+    ONE EGL context per (cell, resolution), for the life of the process, never released. The previous
+    version keyed the renderer on ``id(model)`` and evicted the old entry whenever a dirty reset
+    rebound the env's model -- which dropped the last reference to a live ``mujoco.Renderer``, so
+    ``__del__`` ran ``close()`` and freed its EGL context. Its docstring said "never closed" while the
+    code guaranteed the opposite: the gate run counted 14 contexts created and 8 released, and the
+    resource guard failed 11 of the 15 OGB rows because of it. Releasing one context corrupts
+    rendering in every other live context in the process, silently, which is the defect
+    ``envs/fetch.py`` and ``envs/ogbench.py`` both exist to avoid; ``fetch.py`` avoids it by owning
+    its model rather than borrowing one that rebinds, and this is the same answer.
+
+    Owning the model also removes two hazards the borrowed one carried. The rig renders its OWN
+    ``MjData``, so a bake no longer mutates the reference env's model and restores it afterwards --
+    nothing can leave the reference corrupted if a bake raises in between. And the rig pins the
+    button colours at the ALL-ZERO bits, the same convention ``_context`` takes its copy at, so the
+    plate is baked at a known appearance instead of at whichever bits the last reset happened to
+    choose; today's code baked whatever was live when the cache first filled.
+    """
+
+    __slots__ = ("model", "data", "renderer", "appearance", "shape")
+
+
+def _plate_rig(cell: str, res: int) -> _PlateRig:
+    import copy
+
     import mujoco
-    b = _bundle(cell)
-    m = b.model
-    key = (cell, int(res), id(m))
-    hit = _RENDERERS.get(key)
+    key = (cell, int(res))
+    hit = _PLATE_RIGS.get(key)
     if hit is not None:
         return hit
-    for k in [k for k in _RENDERERS if k[0] == cell and k[1] == int(res)]:
-        _RENDERERS.pop(k, None)          # the model moved; that renderer can never be right again
-    out = _RENDERERS[key] = mujoco.Renderer(m, height=int(res), width=int(res))
-    return out
+    b = _bundle(cell)
+    live = b.model
+    rig = _PlateRig()
+    rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
+    rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
+    rig.model = copy.deepcopy(live)
+    # Movers are hidden for the life of the rig -- this model exists only to draw the static scene.
+    rig.model.geom_group[b.movers] = MW.HIDDEN_GROUP
+    zero = (b.button_tables or {}).get(tuple([0] * b.nbuttons))
+    if zero is not None:
+        rig.model.geom_rgba[:], rig.model.mat_rgba[:] = zero
+    else:
+        rig.model.geom_rgba[:] = b.pristine["geom_rgba"]
+        rig.model.mat_rgba[:] = b.pristine["mat_rgba"]
+    rig.data = mujoco.MjData(rig.model)
+    # THE OFFSCREEN BUFFER, RAISED ON OUR PRIVATE COPY -- this is the whole mechanism behind the four
+    # resource-guard rows. OGBench writes `visual.global.offwidth/offheight = render_width/height`
+    # when it compiles the scene (manipspace/envs/env.py:150), so the model serves exactly the
+    # registered size and no more. `mujoco.Renderer(m, height=res, width=res)` for any LARGER res
+    # raises `ValueError: Image width 224 > framebuffer width 200` -- AFTER `__new__` has allocated
+    # the object. The half-built Renderer is unreachable and unreferenced, so it is collected at some
+    # arbitrary later moment, `__del__` runs `close()`, and the guard charges that close to whichever
+    # test happened to be running. Measured on CPU: three constructions above the buffer, three
+    # allocations, three closes, and `_KEEPALIVE` never saw them because the line that appends is
+    # below the line that raised.
+    #
+    # That explains every fact the escalation listed: the closes are charged to tests that create
+    # nothing (collection is later), the rows pass alone (no earlier failed construction exists), a
+    # process-lifetime reference does not help (the object never reached it), and no EGL context is
+    # released (the constructor failed before it made one).
+    #
+    # Raising it here is correct rather than a workaround: the rig owns a PRIVATE deep copy, the
+    # reference env's own model keeps its 200 (verified), and a plate must be baked at whatever
+    # resolution the caller renders at -- `test_resolution_downsample_agrees_within_the_measured_bound`
+    # and `test_render_size_does_not_leak_into_later_calls` both ask for sizes the registered buffer
+    # cannot serve.
+    rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
+    rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
+    rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
+    _KEEPALIVE.append(rig.renderer)             # the rule, enforced directly: never released
+    _PLATE_RIGS[key] = rig                      # never evicted; the renderer is never closed
+    if __debug__ and _os.environ.get("SE7_OGB_RIGDEBUG") == "1":   # diagnostics, off unless asked
+        import sys
+        mods = [n for n, m in sys.modules.items()
+                if getattr(m, "__name__", None) == __name__ and m is not None]
+        print(f"[rigdebug] built {key}: rigs={len(_PLATE_RIGS)} keepalive={len(_KEEPALIVE)} "
+              f"dict_id={id(_PLATE_RIGS)} module_copies={len(mods)} {mods}", flush=True)
+    return rig
 
 
-#: MEASURED, not chosen. Three independent draws of 64 states each on an RTX 3090 (job recorded in
-#: ``examples/results/step7/ogb-manipulation/m3/fidelity.json``), against swm's own EGL frames at the
-#: registered resolution. The declared value is the WORST of the three draws; the threshold beside it
+#: MEASURED, not chosen. EIGHT independent draws of 64 states each on an RTX 3090 (job 6433493, its
+#: JSON and log committed under ``examples/results/step7/ogb-manipulation/m6/final8/``), taken
+#: THROUGH ``check_visual_fidelity`` -- the function that grades the declaration -- against swm's own
+#: EGL frames at the registered resolution. One of the eight IS the graded draw: the check calls
+#: ``sample_states(n)`` with no rng, which is ``default_rng(0)``, the same fixed draw every run.
+#: The declared value is the WORST of the eight draws; the threshold beside it
 #: is a round number with margin, set by the same discipline ``envs/fetch.py`` states for its
 #: ``parity_interior_min``: a threshold is a contract about what the class guarantees, not a running
 #: best, and a threshold equal to a freshly measured value converts a comfortable margin into a
@@ -852,66 +1006,65 @@ import os as _os
 #: that defect: interior-exact 0.351 -> 0.958 and all-exact 0.278 -> 0.872 on the Cube.
 _MEASURED: dict = {
         "Cube": {
-            "all_exact_frac": 0.870342,
+            "all_exact_frac": 0.870012,
             "draw_spread": {
                 "mean_abs": [
-                    2.408967,
-                    2.441658
+                    3.265277,
+                    3.309378
                 ],
                 "ssim": [
-                    0.914917,
-                    0.923417
+                    0.919219,
+                    0.926569
                 ],
                 "within8_frac": [
-                    0.915477,
-                    0.916856
+                    0.91581,
+                    0.917723
                 ]
             },
-            "interior_exact_frac": 0.958007,
-            "interior_frac": 0.411172,
-            "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
-            "mean_abs": 2.441658,
-            "mean_abs_max": 3.2,
-            "ssim": 0.914917,
-            "ssim_min": 0.9,
-            "within8_frac": 0.915477,
-            "within8_min": 0.9
+            "gate_draw_mean_abs": 3.295483,
+            "interior_exact_frac": 0.9578,
+            "interior_frac": 0.412552,
+            "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+            "mean_abs": 3.309378,
+            "ssim": 0.919219,
+            "within8_frac": 0.91581
         },
         "Scene": {
-            "all_exact_frac": 0.771891,
+            "all_exact_frac": 0.773417,
             "draw_spread": {
                 "mean_abs": [
-                    5.327423,
-                    5.381315
+                    6.493273,
+                    6.691589
                 ],
                 "ssim": [
-                    0.892819,
-                    0.897032
+                    0.892792,
+                    0.898809
                 ],
                 "within8_frac": [
-                    0.85675,
-                    0.857355
+                    0.855483,
+                    0.860345
                 ]
             },
-            "interior_exact_frac": 0.917805,
-            "interior_frac": 0.2769,
-            "job": "job 6407605 on gpu2109.oscar.ccv.brown.edu",
-            "mean_abs": 5.381315,
-            "mean_abs_max": 7.0,
-            "ssim": 0.892819,
-            "ssim_min": 0.85,
-            "within8_frac": 0.85675,
-            "within8_min": 0.85
+            "gate_draw_mean_abs": 6.602667,
+            "interior_exact_frac": 0.912032,
+            "interior_frac": 0.278728,
+            "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+            "mean_abs": 6.691589,
+            "ssim": 0.892792,
+            "within8_frac": 0.855483
         }
     }
-
+#: OUR side: the batch raytracer that drew the movers.
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
 #: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
-#: certifier must compare. swm and ogbench are deliberately absent -- neither number was measured
-#: against a named version of either, and a version nobody measured under is not provenance.
+#: certifier must compare, and ogbench is named beside it because it is the package that compiles the
+#: scene these frames are of -- `tests/unit/test_declarations.py` requires a version declared here to
+#: be named in `measured_at` too, so the two cannot drift. swm itself stays absent: the numbers were
+#: measured against a source checkout rather than a released version, and a version nobody measured
+#: under is not provenance.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
-#: OUR side: the batch raytracer that drew the movers.
+
 _MEASURED_WITH = {"mujoco_warp": "3.12.0"}
 
 
@@ -921,7 +1074,7 @@ def _fidelity(cell: str) -> dict:
             raise RuntimeError(
                 f"ogb_manip: {cell} has no MEASURED visual_fidelity. This module refuses to register "
                 f"a visual cell with invented numbers. Run "
-                f"scratch/step7/ogb-manipulation/09_m3_fidelity.sbatch, paste its worst-of-three into "
+                f"scratch/step7/ogb-manipulation/probe_gate_fidelity.py, paste its worst-of-eight into "
                 f"_MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only inside that measuring job.")
         return {"mean_abs": -1.0, "within8_frac": -1.0, "ssim": -1.0,
                 "mean_abs_max": -1.0, "within8_min": -1.0, "ssim_min": -1.0,
@@ -964,12 +1117,18 @@ def _fidelity(cell: str) -> dict:
             # version in a field nobody reads next to prose that names a different one is worse
             # provenance than either alone.
             f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, camera "
-            f"{spec['camera']}, 3 independent "
+            f"{spec['camera']}, 8 independent "
             f"draws of 64 states from the "
             f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
-            f"against swm's own render(); the declared value is the WORST of the three and "
-            f"draw_spread carries all three, for mean_abs/within8_frac/ssim AND for "
-            f"interior_exact_frac, all_exact_frac and interior_frac. The frame is a baked MuJoCo "
+            f"against swm's own render(); the declared value is the WORST of the eight and "
+            f"draw_spread carries the range, for mean_abs/within8_frac/ssim AND for "
+            f"interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK "
+            f"THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the draw the "
+            f"check takes -- it calls `sample_states(n)` with no rng, which is seed 0, the same "
+            f"fixed draw every time. The previous declaration was measured by a probe that averaged "
+            f"|diff| over the colour channels while `pixel_agreement` averages the per-pixel channel "
+            f"MAX, so it read 0.89/255 low and no widening rule could have covered the gap. The "
+            f"frame is a baked MuJoCo "
             f"plate composited with "
             f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
             f"out-of-range-spot correction applied. {d['job']}"),

@@ -1,0 +1,30 @@
+{
+ "env_id": "swm/OGBScene-v0",
+ "nbuttons": 2,
+ "ngeom": 137,
+ "n_movers": 95,
+ "geoms_coloured_by_buttons": [
+  71,
+  83
+ ],
+ "materials_coloured_by_buttons": [
+  8,
+  11
+ ],
+ "material_users": {
+  "8": [
+   95
+  ],
+  "11": [
+   111,
+   112,
+   113,
+   114,
+   115
+  ]
+ },
+ "STRANDED_IN_PLATE": [],
+ "verdict": "pinning is EXACT: every button-coloured geom is a mover and is drawn per world",
+ "job": "job 6433228 on node2348.oscar.ccv.brown.edu",
+ "reproduced_locally": "identical on every recorded field in se7-ogb-venv on this laptop (stable_worldmodel editable from /Users/samib/stable-worldmodel 176d545, the checkout the cluster uses)"
+}

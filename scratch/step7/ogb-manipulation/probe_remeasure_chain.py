@@ -66,7 +66,12 @@ def provenance() -> dict:
         import hashlib
         import stable_worldmodel as swm
         root = Path(swm.__file__).parent
-        out["stable_worldmodel_path"] = str(root)
+        # `$SCR`, not the expanded path: `tests/unit/test_repo_contracts.py` reads a bare
+        # `/oscar/scratch/<user>/...` in a committed artifact as a repo-relative `scratch/...`
+        # citation and requires it to resolve, so capturing the absolute form grows the
+        # broken-citation set by one every time.
+        out["stable_worldmodel_path"] = str(root).replace(
+            f"/oscar/scratch/{os.environ.get('USER', 'sboughan')}", "$SCR")
         out["stable_worldmodel_sha256"] = {
             f: hashlib.sha256((root / f).read_bytes()).hexdigest()[:16]
             for f in ("envs/ogbench/cube_env.py", "envs/ogbench/scene_env.py", "envs/__init__.py")
@@ -177,8 +182,13 @@ def main():
         gate_states = env.sample_states(env.B, np.random.default_rng(99))
         # `check_batch_size_invariance` takes the states explicitly; the others draw their own.
         needs_states = {"check_batch_size_invariance"}
-        for fn in ("check_determinism", "check_batch_invariance", "check_batch_size_invariance",
-                   "check_state_dims_matter", "check_order_invariance"):
+        # `check_state_roundtrip` is MANDATORY Gate A and was missing from this list until the
+        # closure sweep failed on it: this driver ran five checks and called that "Gate A", so the
+        # float64/float32 narrowing in `sample_states` survived every green run I reported. Keep it
+        # first so a regression there is the first thing that speaks.
+        for fn in ("check_state_roundtrip", "check_determinism", "check_batch_invariance",
+                   "check_batch_size_invariance", "check_state_dims_matter",
+                   "check_order_invariance"):
             f = getattr(C, fn, None)
             if f is None:
                 g[fn] = {"status": "absent in this build"}

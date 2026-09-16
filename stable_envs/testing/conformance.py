@@ -1302,8 +1302,14 @@ def check_render_is_pure(env, states, style=None) -> dict:
     env.set_state(env.get_state())
     s2 = env.get_state().detach().cpu().numpy().copy()
     f2 = env.render().detach().cpu().numpy()
+    # `k0`/`k1` are `(B, style_dim)` and `style_dim` is legitimately 0 -- this file already guards
+    # that case in `check_style_dims_matter`, `check_style_roundtrip` and `_grouped_style`. Without
+    # the same guard here, `.max()` of an empty array raises "zero-size array to reduction operation
+    # maximum which has no identity" and a styleless env cannot pass a check about RENDER PURITY that
+    # has nothing to do with style. An env with no style trivially cannot have its style changed by a
+    # render, so the honest answer for that case is 0.0, not a crash.
     return {"state_changed_by_render": float(np.abs(s1 - s0).max()),
-            "style_changed_by_render": float(np.abs(k1 - k0).max()),
+            "style_changed_by_render": float(np.abs(k1 - k0).max()) if k0.size else 0.0,
             "state_changed_by_double_set": float(np.abs(s2 - s0).max()),
             "frame_changed_by_double_set": int(np.abs(f2.astype(np.int16)
                                                       - f0.astype(np.int16)).max())}
