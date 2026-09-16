@@ -1,5 +1,5 @@
 {
- "schema_version": 1,
+ "schema_version": 2,
  "generated": "2026-09-16",
  "workstream": "step8/variations-fetch",
  "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
@@ -602,7 +602,10 @@
    "ids": "all 12",
    "what": "swm recolours the floor geoms AND the skybox texture; we render the floor half exactly and the skybox not at all. Measured split: floor 9.2-9.4% of the frame, skybox a further 61.7-73.0%.",
    "feasible": "yes, mechanically: overwrite mat/tex data per value. Cost: mujoco_warp uploads textures when a render context is built, so a per-value skybox is one render context per value, which this repo's renderer rules forbid scaling. stable_envs/envs/fetch.py:make_variation_space records the same reason for not making the skybox a knob at all.",
-   "decision_for": "coordinator / Sami (plan section 4: an SWM leaf declared partly unsupported where an implementation appears feasible and semantically required)"
+   "decision_for": "coordinator / Sami (plan section 4: an SWM leaf declared partly unsupported where an implementation appears feasible and semantically required)",
+   "status": "RULED (Sami, via the Step-8 coordinator), 2026-09-16",
+   "ruling": "A feasible, semantically required leaf is NOT declared unsupported merely because a renderer change is needed. The leaf is classified `partial`: the floor half is mapped and the skybox residual is recorded against it. The skybox capability itself is aggregated with the other families' capability needs after Wave 1 and is not implemented by this workstream.",
+   "recorded_as": "VariationMap.partial (added centrally by the coordinator after Workstream A merged); classification() reports the leaf as `partial`, so check_mapping, the Gate-F matrix and every generated support table inherit it."
   }
  ],
  "ids": {
@@ -612,7 +615,8 @@
    "suffix": "sparse",
    "n_leaves": 8,
    "counts": {
-    "mapped": 3,
+    "mapped": 2,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 2,
     "not_applicable": 2
@@ -642,7 +646,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -677,7 +681,8 @@
        "frac": 0.7303292410714286,
        "mean": 101.56356956845238
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "camera.angle_delta": {
      "classification": "dead_upstream",
@@ -858,7 +863,8 @@
    "suffix": "Dense",
    "n_leaves": 8,
    "counts": {
-    "mapped": 3,
+    "mapped": 2,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 2,
     "not_applicable": 2
@@ -888,7 +894,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -923,7 +929,8 @@
        "frac": 0.7303292410714286,
        "mean": 101.56356956845238
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "camera.angle_delta": {
      "classification": "dead_upstream",
@@ -1104,7 +1111,8 @@
    "suffix": "Dict",
    "n_leaves": 8,
    "counts": {
-    "mapped": 3,
+    "mapped": 2,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 2,
     "not_applicable": 2
@@ -1134,7 +1142,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -1169,7 +1177,8 @@
        "frac": 0.7303292410714286,
        "mean": 101.56356956845238
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "camera.angle_delta": {
      "classification": "dead_upstream",
@@ -1350,7 +1359,8 @@
    "suffix": "sparse",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -1380,7 +1390,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -1415,7 +1425,8 @@
        "frac": 0.7319236288265306,
        "mean": 101.81495801445578
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -1664,7 +1675,8 @@
    "suffix": "Dense",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -1694,7 +1706,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -1729,7 +1741,8 @@
        "frac": 0.7319236288265306,
        "mean": 101.81495801445578
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -1978,7 +1991,8 @@
    "suffix": "Dict",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -2008,7 +2022,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -2043,7 +2057,8 @@
        "frac": 0.7319236288265306,
        "mean": 101.81495801445578
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -2292,7 +2307,8 @@
    "suffix": "sparse",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -2322,7 +2338,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -2357,7 +2373,8 @@
        "frac": 0.6167889030612245,
        "mean": 85.61874202806122
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -2598,7 +2615,8 @@
    "suffix": "Dense",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -2628,7 +2646,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -2663,7 +2681,8 @@
        "frac": 0.6167889030612245,
        "mean": 85.61874202806122
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -2904,7 +2923,8 @@
    "suffix": "Dict",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -2934,7 +2954,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -2969,7 +2989,8 @@
        "frac": 0.6167889030612245,
        "mean": 85.61874202806122
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -3210,7 +3231,8 @@
    "suffix": "sparse",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -3240,7 +3262,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -3275,7 +3297,8 @@
        "frac": 0.7303093112244898,
        "mean": 101.56430697278911
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -3516,7 +3539,8 @@
    "suffix": "Dense",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -3546,7 +3570,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -3581,7 +3605,8 @@
        "frac": 0.7303093112244898,
        "mean": 101.56430697278911
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -3822,7 +3847,8 @@
    "suffix": "Dict",
    "n_leaves": 11,
    "counts": {
-    "mapped": 4,
+    "mapped": 3,
+    "partial": 1,
     "unsupported": 1,
     "dead_upstream": 1,
     "not_applicable": 5
@@ -3852,7 +3878,7 @@
      }
     },
     "background.color": {
-     "classification": "mapped",
+     "classification": "partial",
      "ours": "floor.color",
      "factor": 1.0,
      "swm_declared_default": [
@@ -3887,7 +3913,8 @@
        "frac": 0.7303093112244898,
        "mean": 101.56430697278911
       }
-     }
+     },
+     "partial_reason": "the floor half only. The rename floor.color <- background.color is exact and is what swm writes to the floor_mat geoms (9.2-9.4 % of the frame at 480 px, measured in floor_half below); the skybox texture is a further 61.7-73.0 % (skybox_half) and this cell does not render it, because mujoco_warp uploads textures when a render context is built and a per-value skybox is one render context per value. Classified partial rather than mapped so that no generated completeness table can count it as full support, and rather than unsupported because the floor half really is reproduced and because a feasible, semantically required leaf is not declared unsupported for want of a renderer capability (Sami's ruling). The skybox capability is aggregated with the other families' capability needs after Wave 1."
     },
     "block.angle": {
      "classification": "not_applicable",
@@ -4127,7 +4154,8 @@
   "ids": 12,
   "leaves": 123,
   "per_classification": {
-   "mapped": 45,
+   "mapped": 33,
+   "partial": 12,
    "unsupported": 12,
    "dead_upstream": 15,
    "not_applicable": 51

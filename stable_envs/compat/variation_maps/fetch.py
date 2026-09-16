@@ -55,9 +55,15 @@ is two things at once: the ``floor_mat`` geoms AND the skybox texture, recoloure
 ``model.tex_data`` and re-uploading it. Measured split at 480 px, floor versus floor+skybox:
 the floor is **9.2-9.4%** of the frame and the skybox a further **61.7-73.0%**. We render the floor
 half exactly and the skybox not at all, because ``mujoco_warp`` uploads textures when a render
-context is built, so a per-value skybox costs a render context per value — the one thing this
-repo's renderer rules forbid scaling. Recorded as ``mapped`` with the residual stated, and raised as
-a Step-8 escalation candidate rather than silently widened or silently dropped.
+context is built, so a per-value skybox costs a render context per value.
+
+The leaf is therefore declared ``partial``, not ``mapped``: the rename is real and the floor half is
+genuinely what swm writes, and the skybox half is genuinely missing, and
+``VariationMap.classification`` says so, so a generated completeness table cannot count this leaf as
+full support. That field exists because of this leaf — Sami's ruling is that a feasible, semantically
+required leaf is NOT declared unsupported merely because a renderer capability is missing, and the
+skybox capability is aggregated with the other families' capability needs after Wave 1. Until that
+decision lands, the truthful label is ``partial`` and the measured residual travels with it.
 
 ``light.intensity`` -> ``light.diffuse`` is a **scale**, and the factor is not 1. swm assigns the
 light's diffuse ABSOLUTELY (``light_diffuse[0][:3] = [i,i,i]``, ``Box(0, 1)``, declared default
@@ -134,10 +140,29 @@ _BLOCK_MASS = (
     "0/255 over 0% of the frame. Our state is qpos + goal and carries no mass")
 _STATE = "a RESET DISTRIBUTION in swm, and a dimension of our STATE (qpos + goal) here -- "
 
-#: swm leaves that mean the same thing on every Fetch scene and are not carried in the style.
-_COMMON_SWM_ONLY = {
-    "camera.angle_delta": _DEAD_CAMERA,
-    "rendering.transparent_arm": _ARM_ALPHA,
+# The four unmapped buckets below are the Step-8 taxonomy, and this module uses them rather than the
+# older undifferentiated ``swm_only``: ``classification()`` reads them directly, so the Gate-F matrix
+# and every generated support table get the distinction between "upstream moves and we cannot follow"
+# (unsupported), "upstream does not move at all" (dead_upstream) and "not a question a renderer
+# answers" (not_applicable) without anybody parsing a reason string for a shouted prefix.
+
+#: swm leaves with a real upstream effect that THIS cell cannot express. One, and it names its
+#: mechanism.
+_UNSUPPORTED = {"rendering.transparent_arm": _ARM_ALPHA}
+
+#: swm leaves that reach no pixel and no state IN SWM ITSELF, each carrying the measurement.
+_DEAD_UPSTREAM = {"camera.angle_delta": _DEAD_CAMERA}
+#: Reach's only extra: swm still OFFERS object.color there and it reaches nothing.
+_REACH_OBJECT = {
+    "object.color": "DEAD UPSTREAM on Reach (measured 0/255 over 0% of the frame between two "
+                    "maximally different colours): the wrapper resolves the object through the "
+                    "block_mat/puck_mat material, and reach.xml compiles neither onto a geom, so "
+                    "the write lands on an empty geom list. Live on the other three scenes",
+}
+
+#: swm leaves that are not appearance questions at all here: reset distributions that are dimensions
+#: of our STATE, and one pure dynamics parameter. The same classification PushT already carries.
+_NOT_APPLICABLE = {
     "agent.start_position": _STATE + "the wrapper writes it into initial_gripper_xpos; ours is the "
                             "arm's qpos. Note its declared default (1.3418, 0.7491) is not the "
                             "env's own initial gripper xy: applying it at its default moves up to "
@@ -146,19 +171,12 @@ _COMMON_SWM_ONLY = {
                            "is state dimensions goal_x/goal_y/goal_z, which the goal sphere reads",
 }
 #: ...and the three that only exist on a scene with a block.
-_BLOCK_SWM_ONLY = {
+_BLOCK_NOT_APPLICABLE = {
     "block.start_position": _STATE + "the wrapper writes data.qpos[object0:joint][0:2]; ours is "
                             "state dimensions object_x/object_y",
     "block.angle": _STATE + "the wrapper writes the object's quaternion about z; ours is state "
                    "dimensions object_quat_w..object_quat_z",
     "block.mass": _BLOCK_MASS,
-}
-#: Reach's only extra: swm still OFFERS object.color there and it reaches nothing.
-_REACH_OBJECT = {
-    "object.color": "DEAD UPSTREAM on Reach (measured 0/255 over 0% of the frame between two "
-                    "maximally different colours): the wrapper resolves the object through the "
-                    "block_mat/puck_mat material, and reach.xml compiles neither onto a geom, so "
-                    "the write lands on an empty geom list. Live on the other three scenes",
 }
 
 #: Knobs we expose that ``FetchWrapper`` has no leaf for.
@@ -178,6 +196,18 @@ _OURS_ONLY = {
 #: floor geoms (9.2-9.4% of the frame, which we render exactly) AND the skybox texture (a further
 #: 61.7-73.0%, which we do not render because a per-value skybox costs one render context per value).
 _RENAMED = {"floor.color": "background.color"}
+#: ``swm path -> what is NOT reproduced``. The mapping above is kept — the floor half is what swm
+#: writes and we write it exactly — and the classification is downgraded from ``mapped`` to
+#: ``partial`` so that nothing generated from this map can report the leaf as fully supported.
+_PARTIAL = {
+    "background.color": (
+        "the floor half only. swm's background is the floor_mat geoms AND the skybox texture; the "
+        "floor is 9.2-9.4 % of the frame at 480 px and we reproduce it exactly, the skybox is a "
+        "further 61.7-73.0 % and we do not render it, because mujoco_warp uploads textures when a "
+        "render context is built and a per-value skybox is one render context per value. Feasible "
+        "and not implemented: pending the shared renderer-capability decision aggregated across "
+        "families after Wave 1 (Sami's ruling, Step-8 plan section 4)."),
+}
 #: ``our path -> (swm path, factor)`` with ``ours = theirs * factor``.
 _SCALED = {"light.diffuse": ("light.intensity", LIGHT_FACTOR)}
 
@@ -186,17 +216,21 @@ def _map_for(scene: str, suffix: str) -> VariationMap:
     """The map for one of the twelve ids, from the family vocabulary plus the scene's difference."""
     has_object = SCENE_HAS_OBJECT[scene]
     identical = ("table.color",) + (("object.color",) if has_object else ())
-    swm_only = dict(_COMMON_SWM_ONLY)
+    not_applicable = dict(_NOT_APPLICABLE)
+    dead_upstream = dict(_DEAD_UPSTREAM)
     if has_object:
-        swm_only.update(_BLOCK_SWM_ONLY)
+        not_applicable.update(_BLOCK_NOT_APPLICABLE)
     else:
-        swm_only.update(_REACH_OBJECT)
+        dead_upstream.update(_REACH_OBJECT)
     return VariationMap(
         swm_id=f"swm/Fetch{scene}{suffix}-v3",
         identical=identical,
         renamed=dict(_RENAMED),
         scaled=dict(_SCALED),
-        swm_only=swm_only,
+        partial=dict(_PARTIAL),
+        unsupported=dict(_UNSUPPORTED),
+        dead_upstream=dead_upstream,
+        not_applicable=not_applicable,
         ours_only=dict(_OURS_ONLY),
     )
 
@@ -214,25 +248,24 @@ MAPS: dict[str, VariationMap] = {
 def swm_variation_space(swm_id: str):
     """The live ``variation_space`` of a ``swm/Fetch*-v3`` id.
 
-    ``compat.worldmodel.check_mapping`` reaches for ``gymnasium.make(id).unwrapped.variation_space``,
-    which is right for every swm env whose variation space lives on the env itself and WRONG for this
-    family: ``FetchWrapper`` is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so
-    ``unwrapped`` is the official env and has no ``variation_space`` at all (it raises
-    ``AttributeError``). This walks the wrapper chain instead. Reported to the coordinator as a
-    one-line fix ``compat.worldmodel`` should take; kept here so this module's own tests do not
-    depend on that fix landing first.
+    Constructs the id and hands the live env to ``compat.worldmodel.swm_variation_space``, which
+    walks the wrapper chain. It has to be walked rather than read off ``unwrapped``: ``FetchWrapper``
+    is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so ``unwrapped`` is the official env
+    and has no ``variation_space`` at all (it raised ``AttributeError`` for all twelve ids until
+    Workstream A fixed ``check_mapping`` centrally). This is the id-taking convenience over that
+    function, and deliberately not a second implementation of it — the discovery rule lives in one
+    place so a future wrapper change cannot fix ``check_mapping`` and leave this module behind.
+
+    Closes the env on every path, including the failure path.
     """
     import gymnasium
 
     import stable_worldmodel  # noqa: F401
 
+    from ..worldmodel import swm_variation_space as _walk
+
     env = gymnasium.make(swm_id)
     try:
-        node = env
-        while node is not None:
-            if "variation_space" in vars(node):
-                return node.variation_space
-            node = getattr(node, "env", None)
-        raise AttributeError(f"{swm_id} exposes no variation_space anywhere in its wrapper chain")
+        return _walk(env)
     finally:
         env.close()

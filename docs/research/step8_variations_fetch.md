@@ -28,7 +28,7 @@ Applies to all twelve ids. The two per-task differences are marked and nothing e
 |---|---|---|---|---|
 | `table.color` | **mapped** | `table.color` | identical, `[0,1]³` | same geom (22, `table_mat`) |
 | `object.color` | **mapped** ¹ | `object.color` | identical, `[0,1]³` | same geom (23, `block_mat` / `puck_mat`); 0.07–0.12 % of the frame |
-| `background.color` | **mapped, partial** | `floor.color` | identical, `[0,1]³` | floor 9.2–9.4 % of the frame; skybox a further 61.7–73.0 %, not rendered |
+| `background.color` | **partial** | `floor.color` | identical, `[0,1]³` | floor 9.2–9.4 % of the frame, reproduced exactly; skybox a further 61.7–73.0 %, not rendered |
 | `light.intensity` | **mapped, scaled** | `light.diffuse` | `ours = theirs × 1.25` | the model's `light_diffuse` is 0.8 on all four scenes |
 | `camera.angle_delta` | **dead upstream** | — | — | 0/255 over 0 % of the frame at ±10° on all four scenes |
 | `rendering.transparent_arm` | **unsupported (backend)** | — | — | live upstream at 9.3–9.4 % of pixels; `mujoco_warp` has no alpha path |
@@ -40,8 +40,13 @@ Applies to all twelve ids. The two per-task differences are marked and nothing e
 
 ¹ on Reach this leaf is **dead upstream** instead — see below. ² absent from Reach's space.
 
-Totals over the twelve ids and their 123 leaves: **45 mapped, 12 unsupported, 15 dead upstream,
-51 not applicable, 0 undocumented.**
+Totals over the twelve ids and their 123 leaves: **33 mapped, 12 partial, 12 unsupported,
+15 dead upstream, 51 not applicable, 0 undocumented.** The twelve `partial` leaves are
+`background.color` on each of the twelve ids; `VariationMap.classification()` is where that label
+comes from, so `check_mapping`, the Gate-F matrix and every generated support table inherit it and
+none of them can count the leaf as full support. Regenerating
+`examples/results/step8/variations-fetch/leaf_classification.json` is asserted against the maps by
+`tests/unit/test_variation_maps_fetch.py::test_the_committed_classification_artifact_agrees_with_the_maps`.
 
 ### Per-task differences, and there are exactly two
 
@@ -89,7 +94,7 @@ renderer cannot get right anyway, so it is declared unsupported with the mechani
 Classification: `DOCUMENTED_LIMITATION`. The fix is an alpha path in a first-party DeepMind
 dependency, not a stable-envs change.
 
-### `background.color` — mapped, with a stated residual, and an escalation candidate
+### `background.color` — **partial**, with a measured residual and a recorded ruling
 
 swm's "background" is two things at once: the `floor_mat` geoms **and** the skybox texture,
 recoloured by overwriting `model.tex_data` and re-uploading it. Measured split at 480 px, floor
@@ -107,11 +112,18 @@ when a render context is built, so a per-value skybox costs **one render context
 one thing this repo's renderer rules forbid scaling. `FetchBase.make_variation_space` already records
 that reason for not offering a skybox knob at all.
 
-The leaf is mapped rather than dropped, because the floor half is genuinely what swm writes and a
-caller asking for a dark background gets a dark floor. But the residual is the single largest
-appearance term in the family, so this is raised as a **Step-8 escalation candidate** under plan §4
-rather than resolved inside the workstream: an implementation is mechanically feasible and
-architecturally forbidden, and that is a contract decision.
+The leaf is neither dropped nor counted as full support. It is classified **`partial`**: the rename
+is real — the floor half is genuinely what swm writes, and a caller asking for a dark background gets
+a dark floor — and the skybox half is genuinely missing, and the classification says both.
+
+That is the coordinator's ruling (Sami), recorded here because it decides a contract question this
+workstream raised under plan §4: **a feasible, semantically required leaf is not declared
+unsupported merely because a renderer change is needed.** The skybox half is a renderer *capability*
+— a texture upload that does not cost a render context per value — and it is aggregated with the
+other families' capability needs after Wave 1 rather than implemented here. Until that decision
+lands, `partial` plus the measured residual is the truthful label, and it is carried by
+`VariationMap.partial` (added centrally by the coordinator after Workstream A merged) rather than by
+prose beside the map.
 
 ### Four leaves are our state, not our style
 
