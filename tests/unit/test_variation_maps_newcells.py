@@ -695,3 +695,21 @@ def test_the_whole_style_row_crosses_to_the_host_in_one_read():
     assert set(host) == {"cube.color", "floor.color"}
     assert host["cube.color"].shape == (2, 3) and host["floor.color"].shape == (2, 6)
     assert host["cube.color"][1] == pytest.approx([0.4, 0.5, 0.6])
+
+
+def test_the_host_style_read_is_memoised_on_the_tensor_and_invalidated_by_a_write():
+    """A render loop at one appearance should pay ONE device-to-host sync in total, not one a frame:
+    `resolve_style(None, None)` hands back the env's own style tensor every call. The cache is keyed
+    on identity AND `_version`, so writing through the tensor invalidates it, and it holds a strong
+    reference so a freed-and-reused `id()` cannot alias a stale entry. It caches a pure read; it
+    never gates an upload."""
+    env = object.__new__(_base_cls())
+    sty = _StubStyle([[0.1, 0.2, 0.3]])
+    first = env._style_host(sty)
+    assert env._style_host(sty) is first, "a second read of the same tensor re-crossed to the host"
+    with torch.no_grad():
+        sty.values[0, 0] = 0.9
+    again = env._style_host(sty)
+    assert again is not first, "an in-place write to the style row did not invalidate the host copy"
+    assert again["cube.color"][0][0] == pytest.approx(0.9)
+    assert env._style_host(_StubStyle([[0.1, 0.2, 0.3]])) is not again, "a different tensor hit the cache"

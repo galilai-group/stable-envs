@@ -789,8 +789,21 @@ class OGBManipBase(StableEnv):
         the noise at B=4096, which is exactly the shape of a latency term.
         """
         v = sty.values
+        # MEMOISED ON THE TENSOR ITSELF, which is what makes a render loop at the default cost one
+        # sync in total rather than one per frame: `resolve_style(None, None)` hands back the env's
+        # OWN `_style` tensor, the same object every call, so the hit rate on the hot path is 1.
+        #
+        # This is a cache of a PURE READ and never a licence to skip an upload -- `_cube_colours` and
+        # `_apply_floor` are called unconditionally whether this hits or misses. The key is identity
+        # AND `_version`, so an in-place write to the style row invalidates it; the cache holds a
+        # strong reference to the tensor, so an `id()` freed and reused cannot alias a stale entry.
+        hit = self.__dict__.get("_style_host_cache")
+        if hit is not None and hit[0] is v and hit[1] == v._version:
+            return hit[2]
         host = np.asarray(v.detach().cpu(), np.float64)
-        return {p: host[:, o:o + w] for p, (o, w) in sty.layout.items()}
+        out = {p: host[:, o:o + w] for p, (o, w) in sty.layout.items()}
+        self.__dict__["_style_host_cache"] = (v, v._version, out)
+        return out
 
     # ---- the plate ------------------------------------------------------------------------
 
