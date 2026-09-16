@@ -1,0 +1,52 @@
+{
+ "baseline_tree": "$SCR/se8/baseline",
+ "branch_tree": "$SCR/se8/variations-fetch",
+ "size": 128,
+ "n_states": 8,
+ "node": "gpu2264.oscar.ccv.brown.edu",
+ "slurm_job_id": "6443480",
+ "branch_sha": "5940eb6866e2cb0a91c7589f2f0aca1d58997a43",
+ "per_scene": {
+  "Reach": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  },
+  "Push": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  },
+  "Slide": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  },
+  "PickAndPlace": {
+   "maxdiff": 0,
+   "frac_changed": 0.0,
+   "shape": [
+    8,
+    128,
+    128,
+    3
+   ]
+  }
+ },
+ "verdict": "IDENTICAL"
+}
