@@ -1,5 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=se8-variations-fetch-gpu
+# 3090-gcondo is the preferred queue, but the condo GRES budget is held by the simclr/lejepa
+# campaign: the first submission (6451876) pended on QOSGrpGRES with no start estimate and was
+# cancelled and re-submitted to --partition=gpu --qos=norm-gpu, which is the documented fallback.
+# Swap the two SBATCH lines below to run it either way; the card constraint and the node
+# exclusions are the same in both.
 #SBATCH --partition=3090-gcondo
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=geforce3090
