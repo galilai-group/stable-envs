@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `878b5c8e285061d52bc20d0e44b1d45a9dc00221`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `a5db9469c5bd127dd13e3a92f3e50dac845e85c0`
 
 ## The five words
 
@@ -81,7 +81,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/OGBCube-v0` | `OGBCube` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | S | pixel | covered | `raycast3d` | — | `parity` | **PASS** | — | CPU_FAST (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/OGBScene-v0` | `OGBScene` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **UNMEASURED** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
+| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **UNMEASURED** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly; **UNMEASURED** check_visual_fidelity (both forms) |
 | `swm/PendulumControl-v1` | `Pendulum` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | complete | `physics.dt`, `physics.g`, `physics.l`, `physics.m`, `physics.max_speed`, `physics.max_torque` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.mass_density`, `agent.mass_shape`, `agent.pole_density`, `floor.color`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | R | pixel | covered | `navdot` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |

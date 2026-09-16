@@ -296,8 +296,20 @@ def limitations(env_names: list[str], row: dict, step8: dict) -> list[dict]:
                     "detail": "TinyRenderer's multiplicative law caps the shading factor at 0.993567, "
                               "so the exact requested RGB cannot appear for ANY correct "
                               "implementation, and does not appear in the official frames either. "
-                              "OPEN escalation to Sami.",
+                              "RULED 2026-09-16: literal RGB equality is not applicable on the five "
+                              "lit leaves the class names, with the law, the measured ceiling and "
+                              "the official-renderer demonstration declared in "
+                              "PFRocketLanding.color_exactness_applicability. The probe still runs "
+                              "and records best_abs_diff per leaf. A law-aware successor check is a "
+                              "PROPOSAL only: not implemented, not mandatory, and not part of the "
+                              "frozen Step-2 contract.",
                     "artifact": "examples/results/step8/certification/colour_check_decision.md"})
+        out.append({"kind": "UNMEASURED", "what": "check_visual_fidelity (both forms)",
+                    "detail": "blocked_environment, not failed: the cell declares reference versions "
+                              "PyFlyt 0.29.0 / pybullet 3.2.7 and no sweep recorded either, so the "
+                              "comparison cannot be confirmed. fidelity_step4.provenance now records "
+                              "both; clearing this needs a re-measure on a PyFlyt interpreter.",
+                    "artifact": "examples/results/step8/certification/gate_a_rejudged.json"})
     note = ((row.get("gate_a") or {}).get("note") or "")
     if note and not out:
         out.append({"kind": "note", "what": "gate_a note", "detail": note[:300],
