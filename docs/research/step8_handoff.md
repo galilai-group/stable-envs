@@ -1,5 +1,33 @@
 # Step 8 — handoff checkpoint (2026-09-16)
 
+## Coordinator takeover verification (2026-09-16)
+
+Git verified integration at `bd074d5ff48cdfe36886233289070456d73e5efa`: this is the
+handoff commit directly after `e915466`, not a competing implementation checkpoint.
+The milestone, tag, and pre-Step-8 baseline all resolve to
+`43ac95238f7472137619f3e69e7636e11dd088b1`. No implementation was merged at takeover.
+Original integration untracked `STEP_08_AGENT_BRIEFS/` and `STEP_08_HANDOFF.md` are preserved.
+
+C's original dirty `ogb_manip.py` is preserved untouched. Exact binary-capable Git diff:
+`examples/results/step8/takeover/c_authorized_in_progress.patch` (22,578 bytes,
+SHA256 `b44808ed56e48bb2cfde5000959629eeab95b6437076a6c8cde59b22ace7ab60`).
+It is the authorized cube/floor-color patch; independent review found a custom-to-default
+cube-color cache leak. Completion takes place in an isolated follow-up worktree.
+
+Fresh reviews are in `examples/results/step8/reviews/`: A requires changes (138 tests pass;
+generated JSON/tables match, prose stale), B is BLOCK (committed GPU artifacts stale,
+wrapper discovery and partial skybox semantics unresolved), C's committed maps require
+changes and its unfinished renderer is BLOCK. E's review/family-specific follow-up is active.
+No review short of APPROVE authorizes merge.
+
+Oscar queue inspection confirmed allocation `6443480` running on gpu2264, elapsed 8:04/12:00
+at inspection; no job was cancelled. Jobs `6451948` and `6452376` completed. B's newer
+remote evidence exists and cites SHA `4b3d09f`; its unit log says 8 passed / 48 skipped,
+not a GPU-unit pass. Retained rendering evidence still requires independent assessment.
+
+The historical checkpoint below is retained as context; the takeover findings above supersede
+its claims where they conflict. Release decisions remain open; no frozen contract was changed.
+
 Written by the coordinator when all Step-8 agents were terminated by the account's weekly usage limit
 (resets 2026-09-20 02:00 America/Indianapolis). Nothing was pushed. No worktree was deleted.
 No Step-8 work has been independently approved yet, so **nothing beyond Wave-0 bookkeeping is merged**.
@@ -9,7 +37,7 @@ No Step-8 work has been independently approved yet, so **nothing beyond Wave-0 b
 | item | value |
 |---|---|
 | Step-8 baseline (accepted Step-7 milestone) | `43ac95238f7472137619f3e69e7636e11dd088b1` (= `milestone/step7-full-renderer-coverage` = tag `step7-closure`, both on origin) |
-| `step8/integration` HEAD | `e915466` + this handoff commit (see `git log`) — contains ONLY Wave-0 dashboard commits, no code |
+| `step8/integration` HEAD at handoff | `bd074d5ff48cdfe36886233289070456d73e5efa` — `e915466` plus the handoff commit, no implementation merges |
 | `sami/pre-step8-baseline` | `43ac952` (local) |
 | dashboard | `examples/results/step8/dashboard.yaml` |
 | plan | `STEP_08_AGENT_BRIEFS/00_COORDINATOR_PLAN.md` (Sami's; binding) — note: its `check_order_invariance` is spelled `check_order_independence` in the harness |

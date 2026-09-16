@@ -5,10 +5,10 @@ baseline_resolution:
   milestone_branch: milestone/step7-full-renderer-coverage @43ac952 (origin identical)
   tag: step7-closure -> 43ac952 (origin identical)
   sami_pre_step8_baseline: 43ac952
-  step8_integration: 43ac952 (worktree /Users/samib/stable-envs-step8-integration)
-  report_sha_discrepancy: "Step-7 closure artifacts cite earlier integration SHAs (closure/coverage_matrix.json: 275970c; closure2/coverage_matrix.json + docs/research/step7_coverage.md: fec4f6e) because\
-    \ they were generated before the final merge/dashboard commits; per plan \xA71.2 the milestone branch/tag/history (43ac952) are authoritative; the verified tree content is contained in 43ac952 (only\
-    \ the closure2 merge and dashboard commits follow fec4f6e)"
+  step8_integration: bd074d5ff48cdfe36886233289070456d73e5efa (verified takeover HEAD; handoff commit after e915466)
+  report_sha_discrepancy: 'Step-7 closure artifacts cite earlier integration SHAs (closure/coverage_matrix.json: 275970c; closure2/coverage_matrix.json + docs/research/step7_coverage.md: fec4f6e) because
+    they were generated before the final merge/dashboard commits; per plan §1.2 the milestone branch/tag/history (43ac952) are authoritative; the verified tree content is contained in 43ac952 (only the
+    closure2 merge and dashboard commits follow fec4f6e)'
 snapshot:
   swm_ids: 42
   pixel_producing: 40
@@ -608,7 +608,7 @@ workstreams:
   worktree: /Users/samib/stable-envs-step8-variations-dmc-control
   model: opus
   status: delivered-unreported (4 commits, clean); agent killed by weekly limit; unreviewed
-  authorization: "plan \xA79"
+  authorization: plan §9
   affected_ids: 5 classic control + 12 DMC ids (incl. Manipulator, Quadruped)
   affected_files: stable_envs/compat/variation_maps/dmc_control.py (new), dmcontrol.py, classic_control.py, tests
   baseline_sha: 43ac952
@@ -618,7 +618,7 @@ workstreams:
   worktree: /Users/samib/stable-envs-step8-variations-fetch
   model: opus
   status: delivered-unreported (7 commits, clean; GPU evidence PASS jobs 6451948/6452376); read findings.md; unreviewed
-  authorization: "plan \xA710"
+  authorization: plan §10
   affected_ids: 12 Fetch ids
   affected_files: stable_envs/compat/variation_maps/fetch.py (new), fetch.py, tests
   baseline_sha: 43ac952
@@ -629,7 +629,7 @@ workstreams:
   worktree: /Users/samib/stable-envs-step8-variations-newcells
   model: opus
   status: 'PATCH_CANDIDATE at a09b407; second commit set (cube.color/floor.color) IN PROGRESS: ogb_manip.py dirty, left untouched; reviewer cut off'
-  authorization: "plan \xA711"
+  authorization: plan §11
   affected_ids: 'OGBCube, OGBScene, PFRocketLanding, OGBMaze, SimplePointMaze, Craftax x2 (0 leaves: confirm)'
   affected_files: stable_envs/compat/variation_maps/newcells.py (new), ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, tests
   baseline_sha: 43ac952
@@ -646,7 +646,7 @@ workstreams:
   worktree: /Users/samib/stable-envs-step8-certification-provenance
   model: opus
   status: delivered 9d286ce; reviewer cut off; family_specific Gate-A record follow-up started but NOT committed (lost)
-  authorization: "plan \xA713 (+\xA714 serialised after)"
+  authorization: plan §13 (+§14 serialised after)
   affected_ids: all 42
   affected_files: stable_envs/testing/*, scratch/census, scratch/step3+step4 certify, tests/gpu, examples/fidelity_step4.py, step7 corpora meta
   baseline_sha: 43ac952
@@ -673,7 +673,25 @@ workstreams:
   branch: step8/semantic-craftax
   status: worktree created, never spawned
   model: opus
-decisions: []
+decisions:
+- date: '2026-09-16'
+  by: Sami
+  topic: check_colors_apply_exactly
+  ruling: literal RGB equality inapplicable for style leaves whose official renderer applies a known lighting/material law making equality unreachable, demonstrated against the official renderer and scoped
+    narrowly; a law-aware comparison may be added as a successor check but is not retroactively part of the frozen Step-2 mandatory contract; record mechanism and evidence
+- date: '2026-09-16'
+  by: Sami
+  topic: feasible unmapped leaves
+  ruling: do not classify a semantically required SWM leaf unsupported merely because a renderer change is needed; aggregate A/B/C evidence; if several families need the same per-world model-array capability
+    implement one minimal shared capability; no one-off hacks
+- date: '2026-09-16'
+  by: Sami
+  topic: CraftaxClassic corpora
+  ruling: keep both; Step-4 corpus remains the historical world-row oracle (zero-extension), Step-7 corpus certifies the full 149-dim observation; no retirement or re-freeze
+- date: '2026-09-16'
+  by: Sami
+  topic: Rocket BATCH_SCALES
+  ruling: frozen threshold unchanged in Step 8; report the existing classification and document the high-fps(1) edge case; revised taxonomy may be proposed later
 escalations:
 - date: '2026-09-16'
   from: Workstream C
@@ -681,10 +699,10 @@ escalations:
   items:
   - 'OGBCube/OGBScene light.intensity, camera.angle_delta, cube.size: need a per-world MODEL array in the mujoco_warp context (mjwarp shares one model across worlds)'
   - 'OGBMaze light.intensity: needs the fitted lighting law re-derived'
-  question: "declare unsupported (plan \xA74 forbids doing so unilaterally when feasible and semantically required) or authorise the per-world-model-array capability in MJWarp as a Step-8 correctness/integration\
-    \ change"
+  question: declare unsupported (plan §4 forbids doing so unilaterally when feasible and semantically required) or authorise the per-world-model-array capability in MJWarp as a Step-8 correctness/integration
+    change
   coordinator_recommendation: pending Workstreams A/B results (Fetch and DMC may need the same per-world array capability, which would make it a shared, justified change rather than one env's request)
-  status: open
+  status: 'ruled 2026-09-16: aggregate A/B/C then one shared capability if needed'
 - date: '2026-09-16'
   from: E
   topic: check_colors_apply_exactly on lit renderers
@@ -693,14 +711,14 @@ escalations:
     frames fail the check too. Options: (a) literal RGB (fails by construction), (b) law-transformed / reference-compared invariant, (c) declared measurement-backed inapplicability. Recommendation: (c)
     now, applying the CraftaxClassic-night precedent, with (b) commissioned as the successor and three anti-loophole conditions; adopting it edits frozen Step-2 text (VARIATIONS_COMPLETE.complete_requires)
     scoped to applicability only -> Sami''s ruling required before merge of any contract text change'
-  status: open
+  status: ruled 2026-09-16 (see decisions)
 - date: '2026-09-16'
   from: E
   topic: CraftaxClassic has two frozen corpora (Step-4 64x127 vs Step-7 64x149)
-  summary: "the cell's state grew in Step 7; Step 7 recorded the Step-4 corpus NOT REPLAYED; retiring the Step-4 corpus is a re-freeze under \xA719"
+  summary: the cell's state grew in Step 7; Step 7 recorded the Step-4 corpus NOT REPLAYED; retiring the Step-4 corpus is a re-freeze under §19
   coordinator_recommendation: keep both; the Step-4 corpus stays the oracle for the world rows (replayed exactly via zero-extension, as Step 7 proved); the Step-7 corpus certifies the full observation;
     record as DOCUMENTED provenance, no retirement
-  status: open for Sami
+  status: 'ruled 2026-09-16: keep both'
 refreezes: []
 upstream_findings:
 - source: C
@@ -727,9 +745,46 @@ incident_log:
   item: E delivered; reviewer spawned; colour-check packet + CraftaxClassic corpora question escalated; correct check name is check_order_independence (plan text misspells it)
 - date: '2026-09-16'
   item: 'HANDOFF CHECKPOINT: all Step-8 agents killed by the weekly limit; state recorded in docs/research/step8_handoff.md; nothing merged; no worktree deleted; nothing pushed'
+- date: '2026-09-16'
+  item: Fable coordinator resumed after Codex takeover; fleet reconciled; Codex WIP branches classified (see takeover.codex_dispositions); A re-review and B/C/E finishers launched
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md
   reason: account weekly usage limit (resets 2026-09-20 02:00 America/Indianapolis); all agents terminated
   merged: nothing beyond Wave-0 bookkeeping
   held_allocation: 6443480 (~4.5 h left at checkpoint)
+takeover:
+  verified_head: bd074d5ff48cdfe36886233289070456d73e5efa
+  implementation_merges: []
+  c_dirty_diff: examples/results/step8/takeover/c_authorized_in_progress.patch
+  c_dirty_diff_sha256: b44808ed56e48bb2cfde5000959629eeab95b6437076a6c8cde59b22ace7ab60
+  review_A: 'APPROVE-WITH-CHANGES: generated artifacts reproduce; stale prose and gate evidence'
+  review_B: 'BLOCK: stale committed GPU evidence, wrapper discovery, partial skybox mapping'
+  review_C: 'APPROVE-WITH-CHANGES committed; BLOCK dirty renderer: cube custom-to-default cache leak'
+  review_E: active; family_specific follow-up, applicability complement bug, stale census artifact
+  oscar: 6443480 verified RUNNING gpu2264 elapsed8:04/12h; no cancellations
+  policy: Only independent APPROVE permits merge; frozen contracts unchanged
+  codex_dispositions:
+  - item: integration bookkeeping (uncommitted in worktree; branch codex/step8-takeover-wip has no commits)
+    verdict: ACCEPTED
+    reason: resolves the integration SHA row correctly (bd074d5 = e915466 + handoff commit); committed by the coordinator with the dashboard header restored
+  - item: step8/reviewfix-a @0cbb136
+    verdict: ACCEPTED
+    reason: prose/docstring-only count corrections verified against the generated leaf_classification.json (46 mapped / 94 unsupported / 21 dead / 0 n/a); enters A re-review, not merged directly
+  - item: step8/variations-newcells-followup @69e74c4
+    verdict: PARTIALLY_ACCEPTED
+    reason: contains the authorised cube/floor colour patch plus the reviewer-reproduced cache-leak fix and map flip, but 1 unit test fails, generated artifacts are stale and no GPU evidence exists; finished
+      on that branch
+  - item: step8/certification-followup @550cfc6
+    verdict: PARTIALLY_ACCEPTED
+    reason: conformance exclusion-only applicability fix + tests accepted; the Gate-A rejudge ignores the accepted CraftaxClassic night applicability and the colour-check ruling, so its CraftaxClassic/Rocket
+      FAIL rows are not truthful yet; reworked on that branch
+  fleet_reconciliation:
+    date: '2026-09-16'
+    FINISH_NOW: 4
+    REVIEW_ONLY: 3
+    MERGE_CANDIDATE: 2
+    BLOCKED: 4
+    SUPERSEDED_STOP: 8 agents + 19 closed step6/step7 worktrees
+    OPTIONAL_DEFER: 0
+    note: D/F/G/H blocked only on Wave-1 merges; the shared per-world capability (C light/camera/cube.size, B skybox, A DMC floor.color) is aggregated after Wave-1 merges per the feasible-leaves ruling

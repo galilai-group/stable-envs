@@ -1,0 +1,510 @@
+/private/tmp/stable-envs-step8-e-followup
+ M docs/research/step8_support_matrix.md
+ M examples/results/step8/certification/census_class_diff.json
+ M examples/results/step8/support_matrix.json
+ M scratch/step8/report.py
+ M stable_envs/testing/conformance.py
+?? examples/results/step8/certification/gate_a_rejudged.json
+?? scratch/step8/refresh_census_diff.py
+?? scratch/step8/rejudge_gate_a.py
+?? tests/unit/test_step8_gate_record.py
+step8/certification-followup
+9d286ce78645f31182976f87159d742764346ea4
+/Users/samib/stable-envs                                 89fa5ca [sami/pre-step6-baseline]
+/private/tmp/stable-envs-step8-c-followup                a09b407 [step8/variations-newcells-followup]
+/private/tmp/stable-envs-step8-e-followup                9d286ce [step8/certification-followup]
+/private/tmp/stable-envs-step8-reviewfix-a               063f216 [step8/reviewfix-a]
+/Users/samib/stable-envs-step6-cpu-3d                    ff5232c [step6/cpu-3d]
+/Users/samib/stable-envs-step6-fetch-gpu                 d1518b6 [step6/fetch-gpu]
+/Users/samib/stable-envs-step6-gfxdraw                   0410fc3 [step6/gfxdraw]
+/Users/samib/stable-envs-step6-integration               b9ac919 [step6/integration]
+/Users/samib/stable-envs-step6-lance                     eaaae6b [step6/lance-baseline]
+/Users/samib/stable-envs-step6-raster2d                  e86b40b [step6/raster2d]
+/Users/samib/stable-envs-step6-raycast3d                 170f09f [step6/raycast3d]
+/Users/samib/stable-envs-step6-reacher-correctness       8ec5bc4 [step6/reacher-correctness]
+/Users/samib/stable-envs-step6-report                    b81f3e8 [step6/report]
+/Users/samib/stable-envs-step6-texture-fidelity          5a36045 [step6/texture-fidelity]
+/Users/samib/stable-envs-step6-tilemap                   55bf764 [step6/tilemap]
+/Users/samib/stable-envs-step6-verify                    11dde0b [step6/integration-verify]
+/Users/samib/stable-envs-step7-closure                   5b0c8b0 [step7/closure2]
+/Users/samib/stable-envs-step7-craftax-classic-full      f21f60c [step7/craftax-classic-full]
+/Users/samib/stable-envs-step7-craftax-full              707e797 [step7/craftax-full]
+/Users/samib/stable-envs-step7-dmc-manipulator           3ef730c [step7/dmc-manipulator]
+/Users/samib/stable-envs-step7-dmc-quadruped             bb4410d [step7/dmc-quadruped]
+/Users/samib/stable-envs-step7-integration               f5542a9 [step7/integration]
+/Users/samib/stable-envs-step7-ogb-manipulation          179c4b3 [step7/ogb-manipulation]
+/Users/samib/stable-envs-step7-rocket-landing            0b4a14b [step7/rocket-landing]
+/Users/samib/stable-envs-step8-certification-provenance  9d286ce [step8/certification-provenance]
+/Users/samib/stable-envs-step8-integration               bd074d5 [step8/integration]
+/Users/samib/stable-envs-step8-performance               e915466 [step8/performance]
+/Users/samib/stable-envs-step8-semantic-craftax          e915466 [step8/semantic-craftax]
+/Users/samib/stable-envs-step8-swm-integration           e915466 [step8/swm-integration]
+/Users/samib/stable-envs-step8-variations-dmc-control    063f216 [step8/variations-dmc-control]
+/Users/samib/stable-envs-step8-variations-fetch          ce1fcb3 [step8/variations-fetch]
+/Users/samib/stable-envs-step8-variations-newcells       a09b407 [step8/variations-newcells]
+ docs/research/step8_support_matrix.md              |   9 +-
+ .../step8/certification/census_class_diff.json     |  13 +-
+ examples/results/step8/support_matrix.json         | 176 +++++++++++++++++----
+ scratch/step8/report.py                            |  36 ++++-
+ stable_envs/testing/conformance.py                 |   2 +-
+ 5 files changed, 193 insertions(+), 43 deletions(-)
+diff --git a/docs/research/step8_support_matrix.md b/docs/research/step8_support_matrix.md
+index 4671688..ebd00dd 100644
+--- a/docs/research/step8_support_matrix.md
++++ b/docs/research/step8_support_matrix.md
+@@ -8,7 +8,7 @@
+     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
+     drifts from the evidence silently.
+ 
+-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `003b8b698a7b93e5c3cd79a39ef74bb3b67cc994`
++Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `9d286ce78645f31182976f87159d742764346ea4`
+ 
+ ## The five words
+ 
+@@ -39,7 +39,7 @@ rows                 42
+ pixel-producing      40
+ symbolic             2
+ render covered       40
+-gate A               {"FAIL": 3, "PASS": 36, "UNMEASURED": 1, "UNSUPPORTED_BY_DESIGN": 2}
++gate A               {"FAIL": 5, "PASS": 34, "UNMEASURED": 1, "UNSUPPORTED_BY_DESIGN": 2}
+ cpu tier status      {"MEASURED": 24, "UNMEASURED": 15, "UNSUPPORTED_BY_DESIGN": 3}
+ gpu tier status      {"MEASURED": 40, "UNMEASURED": 2}
+ variation map        {"complete": 4, "missing": 34, "n/a": 2, "unknown": 2}
+@@ -56,7 +56,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
+ | `swm/CartPoleControl-v1` | `CartPole` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+ | `swm/CartpoleDMControl-v0` | `DMCCartpoleBalance`, `DMCCartpoleSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+ | `swm/CheetahDMControl-v0` | `DMCCheetahRun` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **FAIL** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | missing | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+-| `swm/CraftaxClassicPixels-v1` | `CraftaxClassic` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
++| `swm/CraftaxClassicPixels-v1` | `CraftaxClassic` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **FAIL (check_resolution_consistency)** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+ | `swm/CraftaxClassicSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+ | `swm/CraftaxPixels-v1` | `CraftaxFull` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** resolution consistency |
+ | `swm/CraftaxSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+@@ -81,7 +81,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
+ | `swm/OGBCube-v0` | `OGBCube` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+ | `swm/OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | S | pixel | covered | `raycast3d` | — | `parity` | **PASS** | — | CPU_FAST (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+ | `swm/OGBScene-v0` | `OGBScene` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+-| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
++| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **FAIL (check_colors_apply_exactly)** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
+ | `swm/PendulumControl-v1` | `Pendulum` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+ | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+ | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | R | pixel | covered | `navdot` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+@@ -131,6 +131,7 @@ step8_certification:
+     examples/results/step8/certification/colour_law_ceiling.json
+     examples/results/step8/certification/corpus_index.json
+     examples/results/step8/certification/downsample_provenance.json
++    examples/results/step8/certification/gate_a_rejudged.json
+     examples/results/step8/certification/nvdiff_ulp_classification.json
+     examples/results/step8/certification/order_invariance_finding.json
+     examples/results/step8/certification/oscar_paired_tests.json
+diff --git a/examples/results/step8/certification/census_class_diff.json b/examples/results/step8/certification/census_class_diff.json
+index d37fcce..f006895 100644
+--- a/examples/results/step8/certification/census_class_diff.json
++++ b/examples/results/step8/certification/census_class_diff.json
+@@ -779,7 +779,7 @@
+   {
+    "env": "MiniHack",
+    "old_class_old_census": "unknown",
+-   "new_class_new_census": "unknown",
++   "new_class_new_census": "R",
+    "old_class_new_census": "unknown",
+    "backends_old": [],
+    "backends_new": []
+@@ -1226,16 +1226,15 @@
+    "backends_new": [
+     "prng"
+    ]
+-  }
+- ],
+- "still_unknown": [
++  },
+   {
+    "env": "MiniHack",
+    "old_class_old_census": "unknown",
+-   "new_class_new_census": "unknown",
++   "new_class_new_census": "R",
+    "old_class_new_census": "unknown",
+    "backends_old": [],
+    "backends_new": []
+   }
+- ]
+-}
+\ No newline at end of file
++ ],
++ "still_unknown": []
++}
+diff --git a/examples/results/step8/support_matrix.json b/examples/results/step8/support_matrix.json
+index 03394dd..3af27ee 100644
+--- a/examples/results/step8/support_matrix.json
++++ b/examples/results/step8/support_matrix.json
+@@ -12,8 +12,8 @@
+    "UNSUPPORTED_BY_DESIGN": 3
+   },
+   "gate_a": {
+-   "FAIL": 3,
+-   "PASS": 36,
++   "FAIL": 5,
++   "PASS": 34,
+    "UNMEASURED": 1,
+    "UNSUPPORTED_BY_DESIGN": 2
+   },
+@@ -32,7 +32,7 @@
+    "unknown": 2
+   }
+  },
+- "generated_at_head_sha": "003b8b698a7b93e5c3cd79a39ef74bb3b67cc994",
++ "generated_at_head_sha": "9d286ce78645f31182976f87159d742764346ea4",
+  "rows": [
+   {
+    "backend_class": "R",
+@@ -517,15 +517,33 @@
+     "CraftaxClassic": "e403a5648d92156e"
+    },
+    "gate_a": {
+-    "failing_checks": [],
+-    "note": "all mandatory checks pass; check_resolution_consistency declared not_applicable below light_level 0.5 on the OFFICIAL renderer's own evidence (official 0.1634 == ours 0.1634); the Step-8 certifier must honour resolution_consistency_applicability or judge on the light >= 0.5 subset",
++    "failing_checks": [
++     "check_resolution_consistency"
++    ],
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "CraftaxClassic",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
++      "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
++     },
++     {
++      "blocked_checks": [],
++      "cell": "CraftaxClassic",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
++      "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+-     "cpu": "PASS",
+-     "cuda": "PASS"
++     "cpu": "FAIL",
++     "cuda": "FAIL"
+     },
+-    "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json; examples/results/step7/closure2/gate_a/cuda_craftax.json",
+-    "status": "PASS"
++    "raw": "FAIL",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
++    "status": "FAIL"
+    },
+    "gpu_tier": {
+     "note": "",
+@@ -552,7 +570,7 @@
+    "pixel_or_symbolic": "pixel",
+    "render_coverage": "covered",
+    "reproducibility": {
+-    "status": "PASS",
++    "status": "UNMEASURED",
+     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+    },
+    "semantic": {
+@@ -682,13 +700,29 @@
+    },
+    "gate_a": {
+     "failing_checks": [],
+-    "note": "18 checks clean; check_resolution_consistency declared not_applicable in ALL bands on the official's own evidence (official fails the frozen 0.995 in every band: world 0.4817 day / 0.0991 night)",
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "CraftaxFull",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
++      "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
++     },
++     {
++      "blocked_checks": [],
++      "cell": "CraftaxFull",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
++      "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+      "cpu": "PASS",
+      "cuda": "PASS"
+     },
+     "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json; examples/results/step7/closure2/gate_a/cuda_craftax.json",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+     "status": "PASS"
+    },
+    "gpu_tier": {
+@@ -1966,13 +2000,29 @@
+    },
+    "gate_a": {
+     "failing_checks": [],
+-    "note": "every mandatory check passes; check_state_dims_matter passes with three REPORTED exclusions (ball_y, target_ball_quat_qw, target_ball_quat_qy), approved by Sami as a narrow per-class render-contract exception validated by the check itself against the frozen geom_type",
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "DMCManipulatorBringBall",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
++      "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
++     },
++     {
++      "blocked_checks": [],
++      "cell": "DMCManipulatorBringBall",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
++      "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+      "cpu": "PASS",
+      "cuda": "PASS"
+     },
+     "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json; examples/results/step7/closure2/gate_a/cuda_vis311.json",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+     "status": "PASS"
+    },
+    "gpu_tier": {
+@@ -2222,13 +2272,29 @@
+    },
+    "gate_a": {
+     "failing_checks": [],
+-    "note": "all mandatory checks pass at the W5 closure follow-on (d4318d2). The Step-7 closure sweep had recorded check_state_roundtrip FAIL at max_abs_err 1.17e-07 against a bound of exactly 0, plus a sub-batch shared-style failure and a zero-size reduction crash, none of which any earlier Step-7 interpreter could see because every committed tests/gpu run skipped OGBench; W5 closed them with float32 round-trip states, the PlateRig (private model copy, offscreen buffer raised per rig, hidden-site-group digest) and a role-split reference cache, and the declaration was re-measured on the gate instrument",
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "OGBCube",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
++      "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
++     },
++     {
++      "blocked_checks": [],
++      "cell": "OGBCube",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
++      "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+      "cpu": "UNSUPPORTED_BY_DESIGN",
+      "cuda": "PASS"
+     },
+     "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json; examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+     "status": "PASS"
+    },
+    "gpu_tier": {
+@@ -2400,13 +2466,29 @@
+    },
+    "gate_a": {
+     "failing_checks": [],
+-    "note": "as OGBCube: all mandatory checks pass at d4318d2, and the closure sweep's check_state_roundtrip FAIL (1.12e-07) is closed. Still ships with a DECLARED residual: the btn_metal cube-map cannot be sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean colour on two small geoms - 0.139% of pixels, max 37/255. Sami ruled: keep the reviewed declared bake",
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "OGBScene",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
++      "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
++     },
++     {
++      "blocked_checks": [],
++      "cell": "OGBScene",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
++      "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+      "cpu": "UNSUPPORTED_BY_DESIGN",
+      "cuda": "PASS"
+     },
+     "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json; examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+     "status": "PASS"
+    },
+    "gpu_tier": {
+@@ -2501,15 +2583,36 @@
+     "PFRocketLanding": "f4707e54f3007b2e"
+    },
+    "gate_a": {
+-    "failing_checks": [],
+-    "note": "all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the contact-band bridge flag and fills the declaration. Two tests/gpu assertions still fail, both with a stated mechanism and neither a Gate-A check: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for this cell (measured 0.95614; the sa",
++    "failing_checks": [
++     "check_colors_apply_exactly"
++    ],
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "PFRocketLanding",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_rocket.json",
++      "source_sha256": "016b266071d0f7c80076de6d8f9c5a35265906c7b431459f603e9942c8cb9187"
++     },
++     {
++      "blocked_checks": [
++       "check_visual_fidelity",
++       "check_visual_fidelity_under_variation"
++      ],
++      "cell": "PFRocketLanding",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_rocket.json",
++      "source_sha256": "244f375bde1ec35315d0e8ae9f53770df3c98e013149a097771cde5f596f478c"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+      "cpu": "UNSUPPORTED_BY_DESIGN",
+-     "cuda": "PASS"
++     "cuda": "FAIL"
+     },
+-    "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_rocket.json; examples/results/step7/closure2/gate_a/cuda_rocket.json",
+-    "status": "PASS"
++    "raw": "FAIL",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
++    "status": "FAIL"
+    },
+    "gpu_tier": {
+     "note": "R 241.5, cores 2.61, NO_LARGE_BATCH_REGRESSION 1.253; BATCH_SCALES 14.17 against a bar of 20, which fails because fps(1)=238 is unusually high for a class-S cell (3,374 f/s at B=4096) - correct application of Step-2 6.7 and a definitional edge case recorded for Step 8",
+@@ -2542,7 +2645,7 @@
+    "pixel_or_symbolic": "pixel",
+    "render_coverage": "covered",
+    "reproducibility": {
+-    "status": "PASS",
++    "status": "UNMEASURED",
+     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+    },
+    "semantic": {
+@@ -2990,13 +3093,29 @@
+    },
+    "gate_a": {
+     "failing_checks": [],
+-    "note": "all mandatory checks pass on both devices and both reference arms on the new corpus; ELLIPSOID stays out of _BOUNDED_KINDS (kind-cost ratio 0.69-1.43 measured only on a load-34 node: undecided, not admitted silently)",
++    "measurements": [
++     {
++      "blocked_checks": [],
++      "cell": "DMCQuadrupedWalk",
++      "device": "cpu",
++      "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
++      "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
++     },
++     {
++      "blocked_checks": [],
++      "cell": "DMCQuadrupedWalk",
++      "device": "cuda",
++      "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
++      "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
++     }
++    ],
++    "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, including family_specific checks. This is not a fresh Step-8 run; unresolved historical protocol/reference issues remain visible.",
+     "per_device": {
+      "cpu": "PASS",
+      "cuda": "PASS"
+     },
+     "raw": "PASS",
+-    "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json; examples/results/step7/closure2/gate_a/cuda_vis311.json",
++    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+     "status": "PASS"
+    },
+    "gpu_tier": {
+@@ -3388,6 +3507,7 @@
+    "examples/results/step8/certification/colour_law_ceiling.json",
+    "examples/results/step8/certification/corpus_index.json",
+    "examples/results/step8/certification/downsample_provenance.json",
++   "examples/results/step8/certification/gate_a_rejudged.json",
+    "examples/results/step8/certification/nvdiff_ulp_classification.json",
+    "examples/results/step8/certification/order_invariance_finding.json",
+    "examples/results/step8/certification/oscar_paired_tests.json",
+diff --git a/scratch/step8/report.py b/scratch/step8/report.py
+index 3fe9149..85b7b1c 100644
+--- a/scratch/step8/report.py
++++ b/scratch/step8/report.py
+@@ -108,8 +108,37 @@ def census_classes() -> dict:
+     return {e: (c3.backend_class(e, decls)[0], sorted(union.get(e, ()))) for e in decls}, decls
+ 
+ 
+-def _gate_a(row: dict) -> dict:
++def _gate_a(row: dict, rejudged: dict | None = None) -> dict:
+     g = row.get("gate_a") or {}
++    records = [r for r in (rejudged or {}).get("records", [])
++               if r["cell"] in (row.get("stable_envs_envs") or [])]
++    if records:
++        per_device = {}
++        failures = set()
++        for rec in records:
++            judgment = rec["judgment"]
++            verdict = judgment["gate_a"]
++            # A historical CPU refusal is still an unsupported device, not a failed GPU claim.
++            old = (g.get("per_device") or {}).get(rec["device"], {})
++            if old.get("verdict") == "REFUSED_BY_DESIGN" and verdict == "BLOCKED":
++                verdict = "REFUSED_BY_DESIGN"
++            per_device.setdefault(rec["device"], []).append(verdict)
++            failures.update(judgment["failures"])
++        def aggregate(values):
++            return next((v for v in ("FAIL", "BLOCKED", "PARTIAL", "PASS", "REFUSED_BY_DESIGN")
++                         if v in values), "BLOCKED")
++        devices = {dev: aggregate(values) for dev, values in per_device.items()}
++        overall = aggregate(list(devices.values()))
++        return {"status": STATUS_RULES[overall], "raw": overall,
++                "per_device": {d: STATUS_RULES[v] for d, v in devices.items()},
++                "failing_checks": sorted(failures),
++                "source": "examples/results/step8/certification/gate_a_rejudged.json",
++                "measurements": [{"cell": r["cell"], "device": r["device"],
++                                  "source": r["source"], "source_sha256": r["source_sha256"],
++                                  "blocked_checks": r["judgment"]["blocked"]} for r in records],
++                "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, "
++                        "including family_specific checks. This is not a fresh Step-8 run; "
++                        "unresolved historical protocol/reference issues remain visible."}
+     devices = g.get("devices") or {}
+     verdicts = {d: STATUS_RULES.get(v, f"?{v}") for d, v in devices.items()}
+     overall = g.get("result") or ("FAIL" if "FAIL" in devices.values() else None)
+@@ -209,6 +238,7 @@ def build() -> dict:
+                          f"artifacts and there is nothing to join")
+     classes, decls = census_classes()
+     step8 = {"downsample": _load(S8 / "downsample_provenance.json"),
++             "gate_a": _load(S8 / "gate_a_rejudged.json"),
+              "nvdiff": _load(S8 / "nvdiff_ulp_classification.json"),
+              "order": _load(S8 / "order_invariance_finding.json"),
+              "corpora": _load(S8 / "corpus_index.json"),
+@@ -230,7 +260,7 @@ def build() -> dict:
+             "backends": backends,
+             "supported_devices": _devices(r),
+             "fidelity": _fidelity(r),
+-            "gate_a": _gate_a(r) if pixel else
++            "gate_a": _gate_a(r, step8["gate_a"]) if pixel else
+                       {"status": "UNSUPPORTED_BY_DESIGN", "raw": None, "per_device": {},
+                        "failing_checks": [],
+                        "note": "symbolic id: intentionally renderer-free, there is no frame to gate"},
+@@ -243,7 +273,7 @@ def build() -> dict:
+                         "why": "no per-row physics verdict is carried in the Step-7 closure matrix; "
+                                "check_step_matches_reference is judged on its own axis in "
+                                "scratch/step4/certify.py and is not joined here"},
+-            "reproducibility": {"status": "PASS" if (r.get("gate_a") or {}).get("result") == "PASS"
++            "reproducibility": {"status": "PASS" if _gate_a(r, step8["gate_a"])["status"] == "PASS"
+                                           else "UNMEASURED",
+                                 "why": "determinism, batch/batch-size/order/chunk invariance are "
+                                        "mandatory Gate-A checks, so the Gate-A verdict carries them"},
+diff --git a/stable_envs/testing/conformance.py b/stable_envs/testing/conformance.py
+index 3c93ac4..46ae20a 100644
+--- a/stable_envs/testing/conformance.py
++++ b/stable_envs/testing/conformance.py
+@@ -1266,7 +1266,7 @@ def resolution_consistency_applicability(env, states=None) -> dict:
+                        f"the bound is asserted on every state"}
+ 
+     # A declaration that names ONLY inapplicable bands leaves their complement judged.
+-    if not applicable.any() and excluded.any():
++    if not any(status == "applicable" for status in out_bands.values()):
+         applicable = ~excluded
+     keep = np.flatnonzero(applicable & ~excluded)
+     inapplicable = sorted(k for k, s in out_bands.items() if s == "not_applicable")
