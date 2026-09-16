@@ -379,6 +379,15 @@ _DMC_MAPS = {
                         "ball.density": _density_phys("the ball's density")},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_EFFECTOR_OURS}),
 
+    "DMCCheetahRun": _dmc(
+        "DMCCheetahRun", "swm/CheetahDMControl-v0",
+        unsupported={"agent.torso_density": _density_trackcom(2115, 8 * 84 * 84),
+                     "agent.back_foot_density": _density_trackcom(4521, 8 * 84 * 84)},
+        dead_upstream={"agent.back_foot_locked": _never_read()},
+        physics_only={"floor.friction": _density_phys("the floor's sliding friction"),
+                        **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
+        ours_only=_GRID_OURS),
+
     "DMCFingerTurnHard": _dmc(
         "DMCFingerTurnHard", "swm/FingerDMControl-v0",
         mapped_target="material.target", visibility="visibility.target",
@@ -399,6 +408,24 @@ _DMC_MAPS = {
                         "spinner.density": _density_phys("the spinner's density"),
                         "spinner.friction": _density_phys("the spinner joint's friction loss")},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS}),
+
+    "DMCHopperHop": _dmc(
+        "DMCHopperHop", "swm/HopperDMControl-v0",
+        unsupported={"agent.torso_density": _density_trackcom(10918, 8 * 84 * 84),
+                     "agent.foot_density": _density_trackcom(11167, 8 * 84 * 84)},
+        dead_upstream={"agent.foot_locked": _never_read()},
+        physics_only={"floor.friction": _density_phys("the floor's sliding friction"),
+                        **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
+        ours_only=_GRID_OURS),
+
+    "DMCHumanoidStand": _dmc(
+        "DMCHumanoidStand", "swm/HumanoidDMControl-v0",
+        unsupported={"agent.torso_density": _density_trackcom(36302, 8 * 84 * 84),
+                     "agent.right_lower_arm_density": _density_trackcom(25419, 8 * 84 * 84)},
+        dead_upstream={"agent.left_knee_locked": _never_read()},
+        physics_only={"floor.friction": _density_phys("the floor's sliding friction"),
+                        **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
+        ours_only=_GRID_OURS),
 
     "DMCPendulumSwingup": _dmc(
         "DMCPendulumSwingup", "swm/PendulumDMControl-v0",
@@ -423,6 +450,21 @@ _DMC_MAPS = {
                         "agent.finger_density": _density_phys("the finger's density")},
         ours_only={**_GRID_OURS, **_FOVY_OURS, **_DECOR_OURS, **_EFFECTOR_OURS}),
 
+    "DMCWalkerWalk": _dmc(
+        "DMCWalkerWalk", "swm/WalkerDMControl-v0",
+        unsupported={
+            "agent.torso_density": _density_trackcom(26328, 8 * 84 * 84),
+            "agent.left_foot_density": _density_trackcom(21374, 8 * 84 * 84),
+            "floor.rotation_y": "walker is the one domain whose swm wrapper TILTS the floor: the leaf "
+                                "writes the floor geom's quat and moves 24,004 disagreeing pixels of "
+                                "8x84x84 at 9 degrees. The cell bakes the floor plane from the "
+                                "compiled model and declares no pose leaf, so the tilt is not "
+                                "reachable. Its default, 0, is the compiled model's own.",
+        },
+        dead_upstream={"agent.right_knee_locked": _never_read()},
+        physics_only={"floor.friction": _density_phys("the floor's sliding friction"),
+                        **{f"gravity.{a}": _GRAVITY_PHYS for a in "xyz"}},
+        ours_only=_GRID_OURS),
 }
 
 # The two cartpole cells are one swm id. The balance and swingup tasks differ in their reset
@@ -466,9 +508,13 @@ EXPECTED_COUNTS: dict[str, dict[str, int]] = {
     "swm/AcrobotDMControl-v0": {"total": 11, "mapped": 2, "unsupported": 4, "dead_upstream": 5, "not_applicable": 0},
     "swm/BallInCupDMControl-v0": {"total": 13, "mapped": 2, "unsupported": 7, "dead_upstream": 4, "not_applicable": 0},
     "swm/CartpoleDMControl-v0": {"total": 9, "mapped": 2, "unsupported": 5, "dead_upstream": 2, "not_applicable": 0},
+    "swm/CheetahDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
     "swm/FingerDMControl-v0": {"total": 11, "mapped": 4, "unsupported": 7, "dead_upstream": 0, "not_applicable": 0},
+    "swm/HopperDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
+    "swm/HumanoidDMControl-v0": {"total": 10, "mapped": 2, "unsupported": 7, "dead_upstream": 1, "not_applicable": 0},
     "swm/PendulumDMControl-v0": {"total": 9, "mapped": 2, "unsupported": 4, "dead_upstream": 3, "not_applicable": 0},
     "swm/ReacherDMControl-v0": {"total": 9, "mapped": 4, "unsupported": 4, "dead_upstream": 1, "not_applicable": 0},
+    "swm/WalkerDMControl-v0": {"total": 11, "mapped": 2, "unsupported": 8, "dead_upstream": 1, "not_applicable": 0},
 }
 
 #: The swm registered DEFAULT variation config for each id, as a dotted dict. Written down because it
