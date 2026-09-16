@@ -246,9 +246,17 @@ def _variation(row: dict, maps: dict | None = None) -> dict:
     per_leaf = Counter()
     for vmap in live.values():
         per_leaf.update(vmap.classification().values())
-    complete = not (per_leaf["unknown"] or not per_leaf)
-    out.update({"map_status": "complete" if complete else "partial",
-                "status": "PASS" if complete else "UNMEASURED",
+    # A `partial` leaf is one whose upstream effect this library reproduces only IN PART -- Step 8's
+    # taxonomy, computed by the map itself. Rolling it into "complete" would be the exact drift this
+    # file exists to prevent: the column would say the mapping is done while a leaf is knowingly
+    # approximate. It is DOCUMENTED_LIMITATION, not UNMEASURED and not PASS -- known, measured and
+    # bounded, with the leaf named in the row.
+    partial = sorted(p for vmap in live.values()
+                     for p, k in vmap.classification().items() if k == "partial")
+    out.update({"map_status": "partial" if partial else ("complete" if per_leaf else "unknown"),
+                "status": "DOCUMENTED_LIMITATION" if partial else ("PASS" if per_leaf
+                                                                   else "UNMEASURED"),
+                "partial_leaves": partial,
                 "leaf_classification": dict(sorted(per_leaf.items())),
                 "n_swm_leaves": sum(per_leaf.values()),
                 "mapped_cells": sorted(live),

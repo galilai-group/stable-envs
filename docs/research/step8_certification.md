@@ -670,8 +670,30 @@ its colour would not need the declaration, and a zero would mean the declaration
 `family_specific` group, the two applicability rulings are honoured with their evidence recorded in
 the row, and the Rocket's reference provenance is *recorded* rather than assumed. The three
 `trackcom` `FAIL` rows and the one `UNMEASURED` row (`HumanoidDMControl`) are untouched. The only
-other column that moved is `VariationMap`, where Workstream A's merge takes 17 ids from `missing` to
-`complete`.
+other column that moved is `VariationMap`, where the A and B merges take 29 ids out of `missing`:
+17 to `complete` and the 12 Fetch ids to **`partial`**, because their maps classify
+`background.color` as a leaf whose upstream effect is reproduced only in part. That is
+`DOCUMENTED_LIMITATION` — known, measured, bounded — and the column reports it as its own word with
+the leaf named in the row, rather than rolling it into `complete` and claiming a mapping is done
+while a leaf is knowingly approximate.
+
+```text
+variation map   complete 21 · partial 12 · missing 5 · n/a 2 · unknown 2
+```
+
+### The GPU assertion, before and after, on hardware
+
+`tests/gpu/test_conformance.py::test_color_knobs_apply_the_requested_color`, whole selection, same
+interpreter (`$SCR/venvs/se7-rocket`), same card, in one `srun` on job `6443480`:
+
+| tree | result |
+|---|---|
+| `43ac952` (baseline) | 3 failed, 28 passed — `MountainCar`, `MountainCarContinuous`, **`PFRocketLanding`** |
+| this branch | 2 failed, 29 passed — `MountainCar`, `MountainCarContinuous` |
+
+**Exactly one test flipped, and it is the declared cell.** The two `MountainCar` failures are
+pre-existing, unrelated, and declare nothing — which is the point: the assertion was narrowed by a
+declaration, not weakened for everyone.
 
 **Replay of the 49 frozen Step-4 configurations through the frozen judge: 0 of 49 changed any
 field** — verdict, failures, blocked, `no_declared_bound`, `not_applicable` or any per-check record.
@@ -682,7 +704,7 @@ field** — verdict, failures, blocked, `no_declared_bound`, `not_applicable` or
 |---|---|---|
 | 1 | explicit workstream scope | E follow-up: the Gate-A record, two applicability declarations, the support-matrix join. One additive class attribute on `rocket_landing.py` (C's file), authorised by the coordinator, declaration only. |
 | 2 | before/after diagnosis | above, per row and per check; every join recorded with sha256 in `gate_a_rejudged.json.applicability_joins` |
-| 3 | targeted unit tests | `tests/unit/test_step8_gate_record.py`, 27 tests: one per required declaration key, two refused-join cases, five on the partition helper the GPU assertion uses, the Rocket `not_applicable`-with-evidence and re-sweep assertions, the CraftaxClassic applicable-subset assertion |
+| 3 | targeted unit tests | `tests/unit/test_step8_gate_record.py`, 30 tests: one per required declaration key, two refused-join cases, five on the partition helper the GPU assertion uses, the Rocket `not_applicable`-with-evidence and re-sweep assertions, the CraftaxClassic applicable-subset assertion, three on the variation column's `partial` taxonomy |
 | 4 | affected Gate-A / Gate-F checks | Gate A: `check_colors_apply_exactly` (GPU assertion now reads the declaration through `partition_colour_exactness`), `check_resolution_consistency`, and the two visual-fidelity checks, re-measured and now judged. Gate F: untouched (Workstream D) |
 | 5 | frozen-corpus replay | 49 of 49 identical; both CraftaxClassic corpora kept and neither rewritten |
 | 6 | pixel-movement classification | **none.** No renderer, shader, atlas or geometry code was touched; `check_colors_apply_exactly`'s verdict is byte-identical and only gains a reported diagnostic. The re-sweep confirms it on hardware: `check_resolution_consistency` reproduces 0.956137 to every digit against the closure2 shard |

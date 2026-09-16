@@ -27,12 +27,13 @@
   "symbolic": 2,
   "variation_map": {
    "complete": 21,
-   "missing": 17,
+   "missing": 5,
    "n/a": 2,
+   "partial": 12,
    "unknown": 2
   }
  },
- "generated_at_head_sha": "3f59bdd035c08eef24c9ea565abe971b2f1a7509",
+ "generated_at_head_sha": "22b27a3a3fb473f03962bece46b172a870814b70",
  "rows": [
   {
    "backend_class": "R",
@@ -110,6 +111,7 @@
     ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -204,6 +206,7 @@
     ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -300,6 +303,7 @@
     ],
     "n_swm_leaves": 13,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -395,6 +399,7 @@
     ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -491,6 +496,7 @@
     ],
     "n_swm_leaves": 18,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -594,6 +600,7 @@
     ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -1113,13 +1120,30 @@
    "swm_id": "swm/FetchPickAndPlace-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPickAndPlace"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1188,13 +1212,30 @@
    "swm_id": "swm/FetchPickAndPlaceDense-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPickAndPlaceDense"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1263,13 +1304,30 @@
    "swm_id": "swm/FetchPickAndPlaceDict-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPickAndPlaceDict"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1338,13 +1396,30 @@
    "swm_id": "swm/FetchPush-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPush"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1413,13 +1488,30 @@
    "swm_id": "swm/FetchPushDense-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPushDense"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1488,13 +1580,30 @@
    "swm_id": "swm/FetchPushDict-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPushDict"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1563,13 +1672,31 @@
    "swm_id": "swm/FetchReach-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 2,
+     "mapped": 2,
+     "not_applicable": 2,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchReach"
+    ],
     "n_swm_leaves": 8,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "object.color",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1638,13 +1765,31 @@
    "swm_id": "swm/FetchReachDense-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 2,
+     "mapped": 2,
+     "not_applicable": 2,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchReachDense"
+    ],
     "n_swm_leaves": 8,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "object.color",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1713,13 +1858,31 @@
    "swm_id": "swm/FetchReachDict-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 2,
+     "mapped": 2,
+     "not_applicable": 2,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchReachDict"
+    ],
     "n_swm_leaves": 8,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "object.color",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1788,13 +1951,30 @@
    "swm_id": "swm/FetchSlide-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchSlide"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1863,13 +2043,30 @@
    "swm_id": "swm/FetchSlideDense-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchSlideDense"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -1938,13 +2135,30 @@
    "swm_id": "swm/FetchSlideDict-v3",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchSlideDict"
+    ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": []
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
    }
   },
   {
@@ -2025,6 +2239,7 @@
     ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -2121,6 +2336,7 @@
     ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -2218,6 +2434,7 @@
     ],
     "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -2368,6 +2585,7 @@
     ],
     "n_swm_leaves": 9,
     "note": "the registered SWM default (hidden target, .015 sphere, light 0.7) is reached THROUGH declared leaves and asserted by Gate F; floor.color is a Gate-F RANGE gap (the leaf exists, its range is not covered), recorded by W3's reviewer as a range gap and not a default gap",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -2456,6 +2674,7 @@
     ],
     "n_swm_leaves": 4,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -2542,6 +2761,7 @@
     ],
     "n_swm_leaves": 5,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3211,6 +3431,7 @@
     ],
     "n_swm_leaves": 9,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3304,6 +3525,7 @@
     ],
     "n_swm_leaves": 9,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3398,6 +3620,7 @@
     ],
     "n_swm_leaves": 42,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "complete",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3481,6 +3704,7 @@
     ],
     "n_swm_leaves": 17,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "complete",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3564,6 +3788,7 @@
     ],
     "n_swm_leaves": 17,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "complete",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3707,6 +3932,7 @@
     ],
     "n_swm_leaves": 10,
     "note": "certified at the registered SWM default (camera 2, 224 px, SWM appearance: material self rgba .6 .3 .3, foot_back_left density 1000); no Gate-F leaf gap recorded by the workstream",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3802,6 +4028,7 @@
     ],
     "n_swm_leaves": 9,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -3969,6 +4196,7 @@
     ],
     "n_swm_leaves": 36,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "complete",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",
@@ -4057,6 +4285,7 @@
     ],
     "n_swm_leaves": 11,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
     "previous_status_in_coverage_matrix": "missing",
     "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
     "status": "PASS",

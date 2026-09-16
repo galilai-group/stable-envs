@@ -333,3 +333,38 @@ def test_the_rocket_declaration_drives_the_partition_end_to_end():
     # The five declared leaves are excused; a sixth leaf nobody declared still fails.
     assert part["asserted"] == [_probe("environment.sky_color")]
     assert len(part["not_applicable"]) == len(probes)
+
+
+# ------------------------------------------------------------- the variation column's taxonomy
+
+def test_a_partial_leaf_is_never_reported_as_a_complete_map(report):
+    """`partial` means the upstream effect is reproduced only IN PART. Rolling it into `complete`
+    would say the mapping is done while a leaf is knowingly approximate."""
+    class Map:
+        @staticmethod
+        def classification():
+            return {"a.color": "mapped", "background.color": "partial", "b.size": "unsupported"}
+    row = {"stable_envs_envs": ["X"], "variation_space": {"variation_map_status": "missing"}}
+    v = report._variation(row, {"X": Map})
+    assert v["map_status"] == "partial"
+    assert v["status"] == "DOCUMENTED_LIMITATION"      # known, measured, bounded — not PASS, not UNMEASURED
+    assert v["partial_leaves"] == ["background.color"]
+
+
+def test_a_map_with_no_partial_leaf_is_complete_and_passes(report):
+    class Map:
+        @staticmethod
+        def classification():
+            return {"a.color": "mapped", "b.size": "unsupported", "c.x": "dead_upstream"}
+    v = report._variation({"stable_envs_envs": ["X"]}, {"X": Map})
+    assert (v["map_status"], v["status"]) == ("complete", "PASS")
+    assert v["partial_leaves"] == []
+    assert v["unsupported_or_dead_leaves"] == ["b.size", "c.x"]
+
+
+def test_an_unregistered_cell_keeps_the_coverage_matrix_answer(report):
+    """No installed map means the column reports what the artifact said, never a guess."""
+    row = {"stable_envs_envs": ["X"], "variation_space": {"variation_map_status": "missing"}}
+    v = report._variation(row, {})
+    assert v["map_status"] == "missing" and v["status"] == "UNMEASURED"
+    assert v["source"] == "examples/results/step7/closure2/coverage_matrix.json"

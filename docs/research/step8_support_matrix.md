@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `3f59bdd035c08eef24c9ea565abe971b2f1a7509`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `22b27a3a3fb473f03962bece46b172a870814b70`
 
 ## The five words
 
@@ -42,7 +42,7 @@ render covered       40
 gate A               {"FAIL": 3, "PASS": 36, "UNMEASURED": 1, "UNSUPPORTED_BY_DESIGN": 2}
 cpu tier status      {"MEASURED": 24, "UNMEASURED": 15, "UNSUPPORTED_BY_DESIGN": 3}
 gpu tier status      {"MEASURED": 40, "UNMEASURED": 2}
-variation map        {"complete": 21, "missing": 17, "n/a": 2, "unknown": 2}
+variation map        {"complete": 21, "missing": 5, "n/a": 2, "partial": 12, "unknown": 2}
 backend class        {"R": 12, "S": 28, "n/a": 2}
 ```
 
@@ -60,18 +60,18 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/CraftaxClassicSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
 | `swm/CraftaxPixels-v1` | `CraftaxFull` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** resolution consistency |
 | `swm/CraftaxSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
-| `swm/FetchPickAndPlace-v3` | `FetchPickAndPlace` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchPickAndPlaceDense-v3` | `FetchPickAndPlaceDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchPickAndPlaceDict-v3` | `FetchPickAndPlaceDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchPush-v3` | `FetchPush` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchPushDense-v3` | `FetchPushDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchPushDict-v3` | `FetchPushDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchReach-v3` | `FetchReach` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchReachDense-v3` | `FetchReachDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchReachDict-v3` | `FetchReachDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchSlide-v3` | `FetchSlide` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchSlideDense-v3` | `FetchSlideDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/FetchSlideDict-v3` | `FetchSlideDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchPickAndPlace-v3` | `FetchPickAndPlace` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchPickAndPlaceDense-v3` | `FetchPickAndPlaceDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchPickAndPlaceDict-v3` | `FetchPickAndPlaceDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchPush-v3` | `FetchPush` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchPushDense-v3` | `FetchPushDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchPushDict-v3` | `FetchPushDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchReach-v3` | `FetchReach` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `object.color`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchReachDense-v3` | `FetchReachDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `object.color`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchReachDict-v3` | `FetchReachDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `object.color`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchSlide-v3` | `FetchSlide` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchSlideDense-v3` | `FetchSlideDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/FetchSlideDict-v3` | `FetchSlideDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/FingerDMControl-v0` | `DMCFingerTurnHard` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_REGRESSION (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.fingertip_density`, `agent.proximal_density`, `floor.color`, `spinner.color`, `spinner.density`, `spinner.friction`, `target.shape` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/HopperDMControl-v0` | `DMCHopperHop` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **FAIL** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.foot_density`, `agent.foot_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
 | `swm/HumanoidDMControl-v0` | `DMCHumanoidStand` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **UNMEASURED** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.left_knee_locked`, `agent.right_lower_arm_density`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
