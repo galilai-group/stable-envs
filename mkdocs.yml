@@ -171,6 +171,14 @@ nav:
       # findings behind it.
       - 'Step 8: certification harness and provenance': research/step8_certification.md
       - 'Step 8: support matrix (42 ids)': research/step8_support_matrix.md
+      # Step-8 Workstream A. Every stable_worldmodel variation leaf of the five classic-control
+      # and twelve DM Control ids, classified mapped / unsupported / dead upstream / not
+      # applicable, with the measurement behind each class; generated tables from
+      # examples/results/step8/variations-dmc-control/leaf_classification.json.
+      - 'Step 8: variation maps (DMC + classic control)': research/step8_variations_dmc_control.md
+      # Step-8 coordinator checkpoints: the weekly-limit handoff and the Codex takeover stop note.
+      - 'Step 8: handoff checkpoint': research/step8_handoff.md
+      - 'Step 8: takeover stop note': research/step8_takeover_stop_handoff.md
       - stable_worldmodel coverage (notes): research/swm_coverage.md
       # The NO-GO notes. They are the reason a family is ABSENT from the registry, which is a question
       # readers ask far more often than "why is this one here" -- and until now all three of them were

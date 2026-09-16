@@ -1,0 +1,2438 @@
+{
+ "swm/AcrobotDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 2,
+  "nv": 2,
+  "base_sig": {
+   "nq": 2,
+   "nv": 2,
+   "sig": "8e797d32be800a4d",
+   "appearance": "e24dc92b403e307c",
+   "qpos": "3418d6ab13cc",
+   "xpos": "f2110577db65",
+   "geom_xpos": "41df57b10dd2"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 80,
+    "px_total": 7056,
+    "max_abs": 209,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.lower_arm_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.upper_arm_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.upper_arm_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 1632,
+    "px_total": 7056,
+    "max_abs": 224,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 1627,
+    "px_total": 7056,
+    "max_abs": 62,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/BallInCupDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 4,
+  "nv": 4,
+  "base_sig": {
+   "nq": 4,
+   "nv": 4,
+   "sig": "7b1fd5c7a53f9e45",
+   "appearance": "f164e8180ea19839",
+   "qpos": "b2c95735b547",
+   "xpos": "feec3c019c57",
+   "geom_xpos": "5ef730353974"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 60,
+    "px_total": 7056,
+    "max_abs": 199,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "ball.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "ball.density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "ball.size": {
+    "probe": [
+     0.04749999940395355
+    ],
+    "default": [
+     0.02500000037252903
+    ],
+    "px_changed": 107,
+    "px_total": 7056,
+    "max_abs": 215,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 1848,
+    "px_total": 7056,
+    "max_abs": 218,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 60,
+    "px_total": 7056,
+    "max_abs": 164,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 43,
+    "px_total": 7056,
+    "max_abs": 129,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 1873,
+    "px_total": 7056,
+    "max_abs": 64,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "rendering.render_target": {
+    "probe": 1,
+    "default": 0,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/CartpoleDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 2,
+  "nv": 2,
+  "base_sig": {
+   "nq": 2,
+   "nv": 2,
+   "sig": "268beaee5753919e",
+   "appearance": "6c1c6bb38b6643cd",
+   "qpos": "b80840d5a4b2",
+   "xpos": "45f50619341b",
+   "geom_xpos": "2627662020cf"
+  },
+  "leaves": {
+   "agent.cart_mass": {
+    "probe": [
+     1.4500000476837158
+    ],
+    "default": [
+     1.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.cart_shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 182,
+    "px_total": 7056,
+    "max_abs": 199,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.pole_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 2423,
+    "px_total": 7056,
+    "max_abs": 223,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 2459,
+    "px_total": 7056,
+    "max_abs": 63,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/CheetahDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 9,
+  "nv": 9,
+  "base_sig": {
+   "nq": 9,
+   "nv": 9,
+   "sig": "e449ff514453573d",
+   "appearance": "ae6c6afbe386a7ac",
+   "qpos": "e6929af49bb4",
+   "xpos": "a414c8e2413a",
+   "geom_xpos": "83972fd6a49e"
+  },
+  "leaves": {
+   "agent.back_foot_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 602,
+    "px_total": 7056,
+    "max_abs": 60,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.back_foot_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 418,
+    "px_total": 7056,
+    "max_abs": 201,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.torso_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 352,
+    "px_total": 7056,
+    "max_abs": 60,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 1066,
+    "px_total": 7056,
+    "max_abs": 211,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.friction": {
+    "probe": [
+     0.10000000149011612
+    ],
+    "default": [
+     1.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 1167,
+    "px_total": 7056,
+    "max_abs": 62,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/FingerDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 3,
+  "nv": 3,
+  "base_sig": {
+   "nq": 3,
+   "nv": 3,
+   "sig": "03e137f3b4eac815",
+   "appearance": "6f3ffd5a7ee79d72",
+   "qpos": "5065b4e1d054",
+   "xpos": "5a4ec81cb681",
+   "geom_xpos": "8aface8f5652"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 190,
+    "px_total": 7056,
+    "max_abs": 229,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.fingertip_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.proximal_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 1848,
+    "px_total": 7056,
+    "max_abs": 218,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 1988,
+    "px_total": 7056,
+    "max_abs": 87,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "rendering.render_target": {
+    "probe": 1,
+    "default": 0,
+    "px_changed": 60,
+    "px_total": 7056,
+    "max_abs": 216,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "spinner.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 265,
+    "px_total": 7056,
+    "max_abs": 229,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "spinner.density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "spinner.friction": {
+    "probe": [
+     0.9100000262260437
+    ],
+    "default": [
+     0.10000000149011612
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/HopperDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 7,
+  "nv": 7,
+  "base_sig": {
+   "nq": 7,
+   "nv": 7,
+   "sig": "baf9f2819fc09b74",
+   "appearance": "4f807b730ea7b267",
+   "qpos": "66a39032c9d8",
+   "xpos": "4a917a63d7b4",
+   "geom_xpos": "42fcae658b72"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 218,
+    "px_total": 7056,
+    "max_abs": 225,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.foot_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 1485,
+    "px_total": 7056,
+    "max_abs": 168,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.foot_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.torso_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 1600,
+    "px_total": 7056,
+    "max_abs": 145,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 1512,
+    "px_total": 7056,
+    "max_abs": 220,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.friction": {
+    "probe": [
+     0.10000000149011612
+    ],
+    "default": [
+     1.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 1546,
+    "px_total": 7056,
+    "max_abs": 64,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/HumanoidDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 28,
+  "nv": 27,
+  "base_sig": {
+   "nq": 28,
+   "nv": 27,
+   "sig": "562d65430d6cc9e0",
+   "appearance": "dc5bbb61155a3fea",
+   "qpos": "17e2f57c6229",
+   "xpos": "9f589abb5f49",
+   "geom_xpos": "2517e6523aee"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 325,
+    "px_total": 7056,
+    "max_abs": 231,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.left_knee_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.right_lower_arm_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 1797,
+    "px_total": 7056,
+    "max_abs": 114,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.torso_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 3067,
+    "px_total": 7056,
+    "max_abs": 115,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 6841,
+    "px_total": 7056,
+    "max_abs": 228,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.friction": {
+    "probe": [
+     0.10000000149011612
+    ],
+    "default": [
+     1.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 3873,
+    "px_total": 7056,
+    "max_abs": 92,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/ManipulatorDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 224,
+  "camera_id": 0,
+  "nq": 11,
+  "nv": 11,
+  "base_sig": {
+   "nq": 11,
+   "nv": 11,
+   "sig": "0b453faf7db4cdd8",
+   "appearance": "566d9e4190d1fdb9",
+   "qpos": "250d9986a138",
+   "xpos": "c8e5e5c3ce43",
+   "geom_xpos": "d26a03ae1733"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 873,
+    "px_total": 50176,
+    "max_abs": 229,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.hand_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.upper_arm_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.upper_arm_length": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 802,
+    "px_total": 50176,
+    "max_abs": 225,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 1268,
+    "px_total": 50176,
+    "max_abs": 93,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "rendering.render_target": {
+    "probe": 1,
+    "default": 0,
+    "px_changed": 36,
+    "px_total": 50176,
+    "max_abs": 170,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/PendulumDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 1,
+  "nv": 1,
+  "base_sig": {
+   "nq": 1,
+   "nv": 1,
+   "sig": "fcb22806f29b4f84",
+   "appearance": "7dcf7325e4de13d4",
+   "qpos": "70152c248606",
+   "xpos": "400f18ce6203",
+   "geom_xpos": "6b08083b91a2"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 74,
+    "px_total": 7056,
+    "max_abs": 188,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.mass_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.mass_shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.pole_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 5825,
+    "px_total": 7056,
+    "max_abs": 228,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 5626,
+    "px_total": 7056,
+    "max_abs": 73,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/QuadrupedDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 224,
+  "camera_id": 2,
+  "nq": 23,
+  "nv": 22,
+  "base_sig": {
+   "nq": 23,
+   "nv": 22,
+   "sig": "0afcc27843ba1e8e",
+   "appearance": "71bc10bd8de3cdb1",
+   "qpos": "bcf53b621f28",
+   "xpos": "36663ba3d085",
+   "geom_xpos": "a9aac3d2eafc"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 3696,
+    "px_total": 50176,
+    "max_abs": 224,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.foot_back_left_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 15734,
+    "px_total": 50176,
+    "max_abs": 158,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.knee_back_left_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.torso_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 9724,
+    "px_total": 50176,
+    "max_abs": 103,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 39970,
+    "px_total": 50176,
+    "max_abs": 228,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.friction": {
+    "probe": [
+     0.10000000149011612
+    ],
+    "default": [
+     1.0
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 50176,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 32035,
+    "px_total": 50176,
+    "max_abs": 96,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/ReacherDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 2,
+  "nv": 2,
+  "base_sig": {
+   "nq": 2,
+   "nv": 2,
+   "sig": "02e70007511e7f2d",
+   "appearance": "d1bdc76a018ec4cd",
+   "qpos": "45eabdd241c6",
+   "xpos": "eda10dee539e",
+   "geom_xpos": "cc6b43525ef3"
+  },
+  "leaves": {
+   "agent.arm_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 109,
+    "px_total": 7056,
+    "max_abs": 231,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.finger_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.finger_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 6654,
+    "px_total": 7056,
+    "max_abs": 222,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 7056,
+    "px_total": 7056,
+    "max_abs": 79,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "rendering.render_target": {
+    "probe": 1,
+    "default": 0,
+    "px_changed": 21,
+    "px_total": 7056,
+    "max_abs": 214,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.color": {
+    "probe": [
+     0.05999999999999994,
+     0.9299999999999999,
+     0.9299999999999999
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "target.shape": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ },
+ "swm/WalkerDMControl-v0": {
+  "noise_control": {
+   "px": 0,
+   "qpos_same": true,
+   "sig_same": true
+  },
+  "size": 84,
+  "camera_id": 0,
+  "nq": 9,
+  "nv": 9,
+  "base_sig": {
+   "nq": 9,
+   "nv": 9,
+   "sig": "7e261b4042a5ef15",
+   "appearance": "0d6c49b8b4acffa3",
+   "qpos": "82af4581c5ed",
+   "xpos": "278e55903434",
+   "geom_xpos": "dae909dbb155"
+  },
+  "leaves": {
+   "agent.color": {
+    "probe": [
+     0.06999999999999995,
+     0.95,
+     0.9299999999999999
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ],
+    "px_changed": 632,
+    "px_total": 7056,
+    "max_abs": 230,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.left_foot_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 2121,
+    "px_total": 7056,
+    "max_abs": 223,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.right_knee_locked": {
+    "probe": 0,
+    "default": 1,
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "agent.torso_density": {
+    "probe": [
+     1450.0
+    ],
+    "default": [
+     1000.0
+    ],
+    "px_changed": 2226,
+    "px_total": 7056,
+    "max_abs": 229,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.color": {
+    "probe": [
+     [
+      0.91,
+      0.9200000000000002,
+      0.9299999999999999
+     ],
+     [
+      0.9200000000000002,
+      0.9299999999999999,
+      0.9400000000000001
+     ]
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ],
+    "px_changed": 2330,
+    "px_total": 7056,
+    "max_abs": 228,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.friction": {
+    "probe": [
+     0.10000000149011612
+    ],
+    "default": [
+     1.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "floor.rotation_y": {
+    "probe": [
+     9.0
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 2330,
+    "px_total": 7056,
+    "max_abs": 119,
+    "model_sig_changed": false,
+    "appearance_sig_changed": false,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.x": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.y": {
+    "probe": [
+     4.5
+    ],
+    "default": [
+     0.0
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "gravity.z": {
+    "probe": [
+     -18.981
+    ],
+    "default": [
+     -9.81
+    ],
+    "px_changed": 0,
+    "px_total": 7056,
+    "max_abs": 0,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   },
+   "light.intensity": {
+    "probe": [
+     0.06999999999999995
+    ],
+    "default": [
+     0.7
+    ],
+    "px_changed": 2371,
+    "px_total": 7056,
+    "max_abs": 91,
+    "model_sig_changed": true,
+    "appearance_sig_changed": true,
+    "nq_changed": false,
+    "qpos_changed": false,
+    "geom_xpos_changed": false
+   }
+  }
+ }
+}

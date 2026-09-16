@@ -1,0 +1,303 @@
+{
+ "Acrobot": {
+  "swm_id": "swm/AcrobotControl-v1",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 2000000,
+  "max_abs": 0,
+  "size": 500,
+  "roundtrip_max_abs": {
+   "visuals.bg": 0.0,
+   "visuals.link": 1.1920928910669204e-08,
+   "visuals.joint": 1.1920928910669204e-08,
+   "visuals.line": 0.0
+  }
+ },
+ "CartPole": {
+  "swm_id": "swm/CartPoleControl-v1",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 1920000,
+  "max_abs": 0,
+  "size": 400,
+  "roundtrip_max_abs": {
+   "visuals.bg": 0.0,
+   "visuals.cart": 0.0,
+   "visuals.pole": 2.4075601623430032e-08,
+   "visuals.axle": 2.945170685109133e-08
+  }
+ },
+ "Pendulum": {
+  "swm_id": "swm/PendulumControl-v1",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 2000000,
+  "max_abs": 0,
+  "size": 500,
+  "roundtrip_max_abs": {
+   "visuals.bg": 0.0,
+   "visuals.rod": 1.1920928910669204e-08,
+   "visuals.hub": 0.0
+  }
+ },
+ "MountainCar": {
+  "swm_id": "swm/MountainCarControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 1920000,
+  "max_abs": 0,
+  "size": 400,
+  "roundtrip_max_abs": {
+   "visuals.bg": 0.0,
+   "visuals.fg": 0.0
+  }
+ },
+ "MountainCarContinuous": {
+  "swm_id": "swm/MountainCarContinuousControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 1920000,
+  "max_abs": 0,
+  "size": 400,
+  "roundtrip_max_abs": {
+   "visuals.bg": 0.0,
+   "visuals.fg": 0.0
+  }
+ },
+ "DMCAcrobotSwingup": {
+  "swm_id": "swm/AcrobotDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCBallInCupCatch": {
+  "swm_id": "swm/BallInCupDMControl-v0",
+  "style_slots_differing": {
+   "light.diffuse_scale": {
+    "default": [
+     1.0
+    ],
+    "mapped": [
+     1.1666666269302368
+    ]
+   }
+  },
+  "px_default_vs_mapped": 14835,
+  "px_total": 56448,
+  "max_abs": 16,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCCheetahRun": {
+  "swm_id": "swm/CheetahDMControl-v0",
+  "style_slots_differing": {
+   "material.self": {
+    "default": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ],
+    "mapped": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896
+    ]
+   }
+  },
+  "px_default_vs_mapped": 2365,
+  "px_total": 56448,
+  "max_abs": 74,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 2.384185793236071e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCFingerTurnHard": {
+  "swm_id": "swm/FingerDMControl-v0",
+  "style_slots_differing": {
+   "light.diffuse_scale": {
+    "default": [
+     1.0
+    ],
+    "mapped": [
+     1.1666666269302368
+    ]
+   },
+   "visibility.target": {
+    "default": [
+     1.0
+    ],
+    "mapped": [
+     0.0
+    ]
+   }
+  },
+  "px_default_vs_mapped": 15644,
+  "px_total": 56448,
+  "max_abs": 221,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "target.color": 2.384185793236071e-08,
+   "rendering.render_target": 0.0,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCHopperHop": {
+  "swm_id": "swm/HopperDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCHumanoidStand": {
+  "swm_id": "swm/HumanoidDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCManipulatorBringBall": {
+  "swm_id": "swm/ManipulatorDMControl-v0",
+  "style_slots_differing": {
+   "light.diffuse_scale": {
+    "default": [
+     1.0
+    ],
+    "mapped": [
+     1.1666666269302368
+    ]
+   },
+   "target_ball.shape": {
+    "default": [
+     2.0
+    ],
+    "mapped": [
+     1.0
+    ]
+   },
+   "visibility.target_ball": {
+    "default": [
+     1.0
+    ],
+    "mapped": [
+     0.0
+    ]
+   }
+  },
+  "px_default_vs_mapped": 9109,
+  "px_total": 401408,
+  "max_abs": 204,
+  "size": 224,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "target.color": 2.384185793236071e-08,
+   "rendering.render_target": 0.0,
+   "light.intensity": 1.1920928910669204e-08,
+   "target.shape": 0.0
+  }
+ },
+ "DMCPendulumSwingup": {
+  "swm_id": "swm/PendulumDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCQuadrupedWalk": {
+  "swm_id": "swm/QuadrupedDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 401408,
+  "max_abs": 0,
+  "size": 224,
+  "roundtrip_max_abs": {
+   "agent.color": 2.384185793236071e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCReacherHard": {
+  "swm_id": "swm/ReacherDMControl-v0",
+  "style_slots_differing": {
+   "visibility.target": {
+    "default": [
+     1.0
+    ],
+    "mapped": [
+     0.0
+    ]
+   }
+  },
+  "px_default_vs_mapped": 115,
+  "px_total": 56448,
+  "max_abs": 216,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "target.color": 2.384185793236071e-08,
+   "rendering.render_target": 0.0,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCWalkerWalk": {
+  "swm_id": "swm/WalkerDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCCartpoleBalance": {
+  "swm_id": "swm/CartpoleDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ },
+ "DMCCartpoleSwingup": {
+  "swm_id": "swm/CartpoleDMControl-v0",
+  "style_slots_differing": {},
+  "px_default_vs_mapped": 0,
+  "px_total": 56448,
+  "max_abs": 0,
+  "size": 84,
+  "roundtrip_max_abs": {
+   "agent.color": 1.1920928966180355e-08,
+   "light.intensity": 1.1920928910669204e-08
+  }
+ }
+}
