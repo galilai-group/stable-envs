@@ -1,0 +1,808 @@
+# Step 8 coordinator dashboard (machine-readable); edit only via yaml load/dump
+step: 8
+baseline_sha: 43ac95238f7472137619f3e69e7636e11dd088b1
+baseline_resolution:
+  milestone_branch: milestone/step7-full-renderer-coverage @43ac952 (origin identical)
+  tag: step7-closure -> 43ac952 (origin identical)
+  sami_pre_step8_baseline: 43ac952
+  step8_integration: 3abab32+ (A merged; see git log)
+  report_sha_discrepancy: 'Step-7 closure artifacts cite earlier integration SHAs (closure/coverage_matrix.json: 275970c; closure2/coverage_matrix.json + docs/research/step7_coverage.md: fec4f6e) because
+    they were generated before the final merge/dashboard commits; per plan §1.2 the milestone branch/tag/history (43ac952) are authoritative; the verified tree content is contained in 43ac952 (only the
+    closure2 merge and dashboard commits follow fec4f6e)'
+snapshot:
+  swm_ids: 42
+  pixel_producing: 40
+  symbolic: 2
+  gate_a_pixel_rows:
+    PASS: 36
+    FAIL: 3
+    BLOCKED: 1
+    note: 3 FAIL + 1 BLOCKED = pre-existing DMC trackcom cells (Cheetah/Hopper/Walker visual vs the 3.12 arm; Humanoid provenance); Workstream F resolves the authoritative interpretation
+  variation_maps:
+    complete: 4
+    missing: 34
+    not_applicable: 2
+    complete_ids:
+    - swm/PushT-v1
+    - swm/PushT-Discrete-v1
+    - swm/Piecewise-v0
+    - swm/TwoRoom-v1
+  per_id:
+    swm/AcrobotControl-v1:
+      pixel: true
+      cpu: CPU_REGRESSION
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.classic_control
+      cells:
+      - Acrobot
+    swm/AcrobotDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCAcrobotSwingup
+    swm/BallInCupDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 13
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCBallInCupCatch
+    swm/CartPoleControl-v1:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.classic_control
+      cells:
+      - CartPole
+    swm/CartpoleDMControl-v0:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCCartpoleBalance
+      - DMCCartpoleSwingup
+    swm/CheetahDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: FAIL
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCCheetahRun
+    swm/CraftaxClassicPixels-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q:
+      - BELOW_G4
+      gpu: GPU_FASTER
+      gpu_q:
+      - BATCH_SCALES
+      gate_a: PASS
+      fidelity: parity
+      variation_map: n/a
+      n_swm_leaves: 0
+      module: stable_envs.envs.craftax
+      cells:
+      - CraftaxClassic
+    swm/CraftaxClassicSymbolic-v1:
+      pixel: false
+      cpu: null
+      cpu_q: []
+      gpu: null
+      gpu_q: []
+      gate_a: null
+      fidelity: null
+      variation_map: null
+      n_swm_leaves: null
+      module: null
+      cells: []
+    swm/CraftaxPixels-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: n/a
+      n_swm_leaves: 0
+      module: stable_envs.envs.craftax_full
+      cells:
+      - CraftaxFull
+    swm/CraftaxSymbolic-v1:
+      pixel: false
+      cpu: null
+      cpu_q: []
+      gpu: null
+      gpu_q: []
+      gate_a: null
+      fidelity: null
+      variation_map: null
+      n_swm_leaves: null
+      module: null
+      cells: []
+    swm/FetchPickAndPlace-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPickAndPlace
+    swm/FetchPickAndPlaceDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPickAndPlaceDense
+    swm/FetchPickAndPlaceDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPickAndPlaceDict
+    swm/FetchPush-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPush
+    swm/FetchPushDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPushDense
+    swm/FetchPushDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchPushDict
+    swm/FetchReach-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 8
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchReach
+    swm/FetchReachDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 8
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchReachDense
+    swm/FetchReachDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 8
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchReachDict
+    swm/FetchSlide-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchSlide
+    swm/FetchSlideDense-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchSlideDense
+    swm/FetchSlideDict-v3:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q: []
+      gpu: GPU_PARITY
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.fetch
+      cells:
+      - FetchSlideDict
+    swm/FingerDMControl-v0:
+      pixel: true
+      cpu: CPU_REGRESSION
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCFingerTurnHard
+    swm/HopperDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: FAIL
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCHopperHop
+    swm/HumanoidDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: BLOCKED
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCHumanoidStand
+    swm/ManipulatorDMControl-v0:
+      pixel: true
+      cpu: CPU_REGRESSION
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q:
+      - HOST_BOUND
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCManipulatorBringBall
+    swm/MountainCarContinuousControl-v0:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 4
+      module: stable_envs.envs.classic_control
+      cells:
+      - MountainCarContinuous
+    swm/MountainCarControl-v0:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 5
+      module: stable_envs.envs.classic_control
+      cells:
+      - MountainCar
+    swm/OGBCube-v0:
+      pixel: true
+      cpu: CPU_MISSING
+      cpu_q:
+      - RAISES_BY_DESIGN
+      gpu: GPU_PARITY
+      gpu_q:
+      - BATCH_SCALES_FAIL
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.ogb_manip
+      cells:
+      - OGBCube
+    swm/OGBMaze-v0:
+      pixel: true
+      cpu: CPU_FAST
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 5
+      module: stable_envs.envs.ogbench
+      cells:
+      - PointmazeLargeNavigate
+      - PointmazeLargeStitch
+    swm/OGBScene-v0:
+      pixel: true
+      cpu: CPU_MISSING
+      cpu_q:
+      - RAISES_BY_DESIGN
+      gpu: GPU_PARITY
+      gpu_q:
+      - BATCH_SCALES_FAIL
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 12
+      module: stable_envs.envs.ogb_manip
+      cells:
+      - OGBScene
+    swm/PFRocketLanding-v0:
+      pixel: true
+      cpu: CPU_MISSING
+      cpu_q:
+      - RAISES_BY_DESIGN
+      gpu: GPU_PARITY
+      gpu_q:
+      - BATCH_SCALES_FAIL
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.rocket_landing
+      cells:
+      - PFRocketLanding
+    swm/PendulumControl-v1:
+      pixel: true
+      cpu: CPU_PARITY
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.classic_control
+      cells:
+      - Pendulum
+    swm/PendulumDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCPendulumSwingup
+    swm/Piecewise-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 21
+      module: stable_envs.envs.swm_nav
+      cells:
+      - Piecewise
+      - PiecewiseZones
+    swm/PushT-Discrete-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 17
+      module: stable_envs.envs.pusht
+      cells:
+      - PushT
+    swm/PushT-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 17
+      module: stable_envs.envs.pusht
+      cells:
+      - PushT
+    swm/QuadrupedDMControl-v0:
+      pixel: true
+      cpu: CPU_UNMEASURED
+      cpu_q:
+      - LOAD_QUARANTINED
+      gpu: GPU_EXCEPTIONAL
+      gpu_q:
+      - CENSUS_ENTRY_MISSING
+      gate_a: PASS
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 10
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCQuadrupedWalk
+    swm/ReacherDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 9
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCReacherHard
+    swm/SimplePointMaze-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FAST
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: missing
+      n_swm_leaves: 12
+      module: stable_envs.envs.simple_point_maze
+      cells:
+      - SimplePointMaze
+    swm/TwoRoom-v1:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_FASTER
+      gpu_q: []
+      gate_a: PASS
+      fidelity: parity
+      variation_map: complete
+      n_swm_leaves: 18
+      module: stable_envs.envs.swm_nav
+      cells:
+      - TwoRoom
+      - TwoRoomTarget
+    swm/WalkerDMControl-v0:
+      pixel: true
+      cpu: CPU_FASTER
+      cpu_q: []
+      gpu: GPU_EXCEPTIONAL
+      gpu_q: []
+      gate_a: FAIL
+      fidelity: visual
+      variation_map: missing
+      n_swm_leaves: 11
+      module: stable_envs.envs.dmcontrol
+      cells:
+      - DMCWalkerWalk
+  open_step7_carryovers: 'see /Users/samib/stable-envs-step7-integration/examples/results/step7/dashboard.yaml: step8_carryovers, deferred_work, escalations (colour-knob check open; BATCH_SCALES edge case)'
+file_ownership:
+  stable_envs/compat/worldmodel.py: coordinator (registry); VariationMap workstreams add ONE import/registration line each and write maps in their own new module stable_envs/compat/variation_maps/<family>.py;
+    VariationMap class changes owned by Workstream A, requested by others
+  stable_envs/envs/dmcontrol.py, classic_control.py: Workstream A
+  stable_envs/envs/fetch.py: Workstream B
+  stable_envs/envs/ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, swm_nav.py, pusht.py: Workstream C
+  ? stable_envs/testing/*, examples/fidelity_step4.py, scratch/step3/certify.py, scratch/step4/certify.py, scratch/census/*, tests/gpu/*, examples/results/step7/*/corpus meta
+  : Workstream E; Workstream F serialised after E
+  stable_envs/render/*: frozen unless a RELEASE_BLOCKING item requires it (coordinator assigns)
+  tests/unit/test_variation_maps_*.py: the respective VariationMap workstream
+  tests/swm/*, docs/research/step8_swm_integration.md: Workstream D
+  docs/research/step8_performance.md, scratch/step8/perf/*: Workstream G
+  scratch/step8/semantic/*, examples/results/step8/semantic/*: Workstream H
+  examples/results/step8/dashboard.yaml, docs/research/step8_support_matrix.md, examples/results/step8/support_matrix.json: coordinator (matrix generated by Workstream E's script)
+workstreams:
+- workstream: A_variations_dmc_control
+  branch: step8/variations-dmc-control
+  worktree: /Users/samib/stable-envs-step8-variations-dmc-control
+  model: opus
+  status: MERGED into step8/integration at 3abab32 (reviewed APPROVE)
+  authorization: plan §9
+  affected_ids: 5 classic control + 12 DMC ids (incl. Manipulator, Quadruped)
+  affected_files: stable_envs/compat/worldmodel.py (VariationMap taxonomy/affine/rgb255, swm_variation_space wrapper walk, check_mapping), stable_envs/compat/variation_maps/{__init__,dmc_control}.py, tests,
+    docs, results; dmcontrol.py/classic_control.py NOT changed
+  baseline_sha: 43ac952
+  head_sha: 0cbb136 (063f216 + prose-count follow-up)
+  review: review_a.md APPROVE-WITH-CHANGES (Codex reviewer) -> review_a_rereview.md APPROVE (sonnet, fresh) at 0cbb136
+  merge_gate: 1 scope PASS; 2 diagnosis PASS; 3 tests 138/138 reproduced; 4 Gate A/F targeted checks + unchanged-renderer carry-forward (tree identity verified); 5 replay carried forward by source identity
+    (no renderer/corpus change); 6 pixel movement none; 7 perf n/a; 8 APPROVE; 9 no semantic follow-up; 10 this row
+- workstream: B_variations_fetch
+  branch: step8/variations-fetch
+  worktree: /Users/samib/stable-envs-step8-variations-fetch
+  model: opus
+  status: delivered-unreported (7 commits, clean; GPU evidence PASS jobs 6451948/6452376); read findings.md; unreviewed
+  authorization: plan §10
+  affected_ids: 12 Fetch ids
+  affected_files: stable_envs/compat/variation_maps/fetch.py (new), fetch.py, tests
+  baseline_sha: 43ac952
+  head_sha: ce1fcb3
+  slurm_jobs: 6451876 cancelled, 6451948 gpu2105, 6452376 gpu2264
+- workstream: C_variations_newcells
+  branch: step8/variations-newcells
+  worktree: /Users/samib/stable-envs-step8-variations-newcells
+  model: opus
+  status: 'PATCH_CANDIDATE at a09b407; second commit set (cube.color/floor.color) IN PROGRESS: ogb_manip.py dirty, left untouched; reviewer cut off'
+  authorization: plan §11
+  affected_ids: 'OGBCube, OGBScene, PFRocketLanding, OGBMaze, SimplePointMaze, Craftax x2 (0 leaves: confirm)'
+  affected_files: stable_envs/compat/variation_maps/newcells.py (new), ogb_manip.py, rocket_landing.py, ogbench.py, simple_point_maze.py, tests
+  baseline_sha: 43ac952
+  head_sha: a09b407
+  finding: sky_color dead (0/691,200 px x5 seeds); OGB agent.color upstream negation bug; OGBMaze states-mode leaves move 0 px; two declared-default mismatches (Rocket pad.color, OGBMaze pixel_encoding);
+    wall.color 0.6 bit-exact
+  tests: 58 passed / 5 skipped; tests/unit 1093 + 2 pre-existing
+  pixels_changed: none (byte-identical digests on gpu2264, alloc 6443480)
+  semantic_followup: none
+  shared_files: compat/worldmodel.py (2 lines), mkdocs.yml (1 nav line)
+  reviewer: sonnet, spawned
+- workstream: E_certification_provenance
+  branch: step8/certification-provenance
+  worktree: /Users/samib/stable-envs-step8-certification-provenance
+  model: opus
+  status: delivered 9d286ce; reviewer cut off; family_specific Gate-A record follow-up started but NOT committed (lost)
+  authorization: plan §13 (+§14 serialised after)
+  affected_ids: all 42
+  affected_files: stable_envs/testing/*, scratch/census, scratch/step3+step4 certify, tests/gpu, examples/fidelity_step4.py, step7 corpora meta
+  baseline_sha: 43ac952
+  head_sha: 9d286ce
+  finding: 'census 88->100, 0 class changes, unknown 1->0; seven Step-7 corpora resolve via corpus_for; CraftaxClassic downsample judged on the light>=0.5 protocol subset = 1.000000 (threshold untouched);
+    CraftaxFull n/a all bands; DOWNSAMPLE entries added Rocket 0.956137, Quadruped 0.811877 (CraftaxFull, Manipulator deliberately not); check_order_independence exists (Step-7 ''absent'' was a getattr
+    misspelling); nvdiff ULP = DOCUMENTED_LIMITATION and host-dependent (gpu2264: 0/19 widths differ); report.py support matrix 42 rows'
+  tests: 49-config re-judge 0 differ; step4_fidelity_baseline.md byte-identical; paired Oscar se-vis311 7->4 failed, se-step6 2->0, 0 new; tests/unit same 2 pre-existing
+  pixels_changed: none (harness only)
+  shared_files: conformance.py, fidelity_step4.py, step3/step4 certify.py, census, tests/gpu/test_reproducibility.py, 3 corpus meta sidecars, mkdocs.yml
+- workstream: D_swm_integration
+  branch: step8/swm-integration
+  status: spawned, killed before any work (weekly limit); worktree exists at base
+  model: opus
+- workstream: F_reference_provenance
+  branch: step8/reference-provenance
+  status: Wave 2 (serialised after E)
+  model: opus
+- workstream: G_performance
+  branch: step8/performance
+  status: spawned, killed before any work (weekly limit); worktree exists at base
+  model: opus
+- workstream: H_semantic_craftax
+  branch: step8/semantic-craftax
+  status: worktree created, never spawned
+  model: opus
+decisions:
+- date: '2026-09-16'
+  by: Sami
+  topic: check_colors_apply_exactly
+  ruling: literal RGB equality inapplicable for style leaves whose official renderer applies a known lighting/material law making equality unreachable, demonstrated against the official renderer and scoped
+    narrowly; a law-aware comparison may be added as a successor check but is not retroactively part of the frozen Step-2 mandatory contract; record mechanism and evidence
+- date: '2026-09-16'
+  by: Sami
+  topic: feasible unmapped leaves
+  ruling: do not classify a semantically required SWM leaf unsupported merely because a renderer change is needed; aggregate A/B/C evidence; if several families need the same per-world model-array capability
+    implement one minimal shared capability; no one-off hacks
+- date: '2026-09-16'
+  by: Sami
+  topic: CraftaxClassic corpora
+  ruling: keep both; Step-4 corpus remains the historical world-row oracle (zero-extension), Step-7 corpus certifies the full 149-dim observation; no retirement or re-freeze
+- date: '2026-09-16'
+  by: Sami
+  topic: Rocket BATCH_SCALES
+  ruling: frozen threshold unchanged in Step 8; report the existing classification and document the high-fps(1) edge case; revised taxonomy may be proposed later
+escalations:
+- date: '2026-09-16'
+  from: Workstream C
+  topic: SWM leaves feasible but requiring a renderer change
+  items:
+  - 'OGBCube/OGBScene light.intensity, camera.angle_delta, cube.size: need a per-world MODEL array in the mujoco_warp context (mjwarp shares one model across worlds)'
+  - 'OGBMaze light.intensity: needs the fitted lighting law re-derived'
+  question: declare unsupported (plan §4 forbids doing so unilaterally when feasible and semantically required) or authorise the per-world-model-array capability in MJWarp as a Step-8 correctness/integration
+    change
+  coordinator_recommendation: pending Workstreams A/B results (Fetch and DMC may need the same per-world array capability, which would make it a shared, justified change rather than one env's request)
+  status: 'ruled 2026-09-16: aggregate A/B/C then one shared capability if needed'
+- date: '2026-09-16'
+  from: E
+  topic: check_colors_apply_exactly on lit renderers
+  packet: examples/results/step8/certification/colour_check_decision.md (on step8/certification-provenance)
+  summary: 'TinyRenderer''s multiplicative law caps any colour at factor 0.993567 (max over normals, not at n=l), so literal RGB equality is unreachable for any correct implementation and the official PyFlyt
+    frames fail the check too. Options: (a) literal RGB (fails by construction), (b) law-transformed / reference-compared invariant, (c) declared measurement-backed inapplicability. Recommendation: (c)
+    now, applying the CraftaxClassic-night precedent, with (b) commissioned as the successor and three anti-loophole conditions; adopting it edits frozen Step-2 text (VARIATIONS_COMPLETE.complete_requires)
+    scoped to applicability only -> Sami''s ruling required before merge of any contract text change'
+  status: ruled 2026-09-16 (see decisions)
+- date: '2026-09-16'
+  from: E
+  topic: CraftaxClassic has two frozen corpora (Step-4 64x127 vs Step-7 64x149)
+  summary: the cell's state grew in Step 7; Step 7 recorded the Step-4 corpus NOT REPLAYED; retiring the Step-4 corpus is a re-freeze under §19
+  coordinator_recommendation: keep both; the Step-4 corpus stays the oracle for the world rows (replayed exactly via zero-extension, as Step 7 proved); the Step-7 corpus certifies the full observation;
+    record as DOCUMENTED provenance, no retirement
+  status: 'ruled 2026-09-16: keep both'
+- date: '2026-09-16'
+  from: coordinator (aggregation of A/B/C per Sami ruling)
+  topic: shared capability for capability-gated SWM leaves
+  packet: examples/results/step8/capability/per_world_model_arrays.md
+  summary: '(i) per-world MODEL arrays already exist in the mjwarp path (mjw.put_model batch_sizes, used by 5 families): OGB light.intensity/camera.angle_delta/cube.size (6 leaves, 2 ids) are wiring in
+    ogb_manip.py, cost S-M; (ii) per-value texel substitution on the plate bake (retexture + quantise + mjr_uploadTexture, plate cache key extended) unlocks 21 semantically required leaves in 3 families:
+    OGB floor.color (2 ids, proven byte-exact by the C follow-up), DMC parity-tier floor.color (7 ids), Fetch background.color skybox residual (12 ids; INFERRED, needs one bake-vs-recompile diff first);
+    cube.color x2 + Scene lock_color need no capability (geom/mat rgba already per-world); genuinely unsupported: Fetch transparent_arm (no alpha path), DMC floor.color on the 5 trackcom cells, OGBMaze
+    light.intensity (fitted law, one-off)'
+  coordinator_recommendation: confirm requirement after B and C merge; then ONE shared implementation of (ii) reused by OGB/DMC/Fetch plus the OGB (i) wiring; no one-off hacks; each needs default digest
+    identity, isolation, Gate A with new style dims and a paired throughput check
+  status: analysis complete; implementation held until B/C are merged and Sami confirms the requirement (renderer semantics change)
+refreezes: []
+upstream_findings:
+- source: C
+  item: 'swm OGB modify_mjcf_model: agent_color_changed = np.allclose(current, desired) lacks the negation -> dirty flag never set; agent.color dead alone, live only when co-varied'
+- source: C
+  item: 'swm OGBMaze in the registered ''states'' mode: custom_renderer rebuilt only for ''pixels'' -> all 5 leaves move 0 px'
+- source: C
+  item: Rocket pad.color declared 200 but a plain reset gives white; OGBMaze pixel_encoding declared 0 but constructed 1
+- source: E
+  item: 'scratch/swm_matrix.json stale: 6 of 42 rows have empty stable_envs.envs (Workstream D''s file)'
+buckets:
+  RELEASE_BLOCKING: []
+  DOCUMENTED_LIMITATION:
+  - 'nvdiff x86 CPU sparse-stage one-ulp batch dependence: host-dependent (gpu2264 0/19 widths; login010/node1939 differ); no shipped CPU renderer; Step-7 re-freeze authoritative (E task 7)'
+  UPSTREAM_FINDING: []
+  STEP9_CLEANUP: []
+  DEFERRED_OPTIMIZATION: []
+incident_log:
+- date: '2026-09-16'
+  item: 'Wave 0: baseline 43ac952 verified (branch, tag, origin, both Step-8 branches); dashboard created; ownership assigned; Wave-1 worktrees created'
+- date: '2026-09-16'
+  item: C delivered PATCH_CANDIDATE; reviewer spawned; renderer-change leaves escalated; cheap maps authorized; A asked for the VariationMap extension
+- date: '2026-09-16'
+  item: E delivered; reviewer spawned; colour-check packet + CraftaxClassic corpora question escalated; correct check name is check_order_independence (plan text misspells it)
+- date: '2026-09-16'
+  item: 'HANDOFF CHECKPOINT: all Step-8 agents killed by the weekly limit; state recorded in docs/research/step8_handoff.md; nothing merged; no worktree deleted; nothing pushed'
+- date: '2026-09-16'
+  item: Fable coordinator resumed after Codex takeover; fleet reconciled; Codex WIP branches classified (see takeover.codex_dispositions); A re-review and B/C/E finishers launched
+- date: '2026-09-16'
+  item: A merged (3abab32) after fresh APPROVE; review files renamed review_*.md for the citation-scanner exemption; handoff/takeover pages added to the nav
+handoff:
+  date: '2026-09-16'
+  doc: docs/research/step8_handoff.md
+  reason: account weekly usage limit (resets 2026-09-20 02:00 America/Indianapolis); all agents terminated
+  merged: nothing beyond Wave-0 bookkeeping
+  held_allocation: 6443480 (~4.5 h left at checkpoint)
+takeover:
+  verified_head: bd074d5ff48cdfe36886233289070456d73e5efa
+  implementation_merges: []
+  c_dirty_diff: examples/results/step8/takeover/c_authorized_in_progress.patch
+  c_dirty_diff_sha256: b44808ed56e48bb2cfde5000959629eeab95b6437076a6c8cde59b22ace7ab60
+  review_A: 'APPROVE-WITH-CHANGES: generated artifacts reproduce; stale prose and gate evidence'
+  review_B: 'BLOCK: stale committed GPU evidence, wrapper discovery, partial skybox mapping'
+  review_C: 'APPROVE-WITH-CHANGES committed; BLOCK dirty renderer: cube custom-to-default cache leak'
+  review_E: active; family_specific follow-up, applicability complement bug, stale census artifact
+  oscar: 6443480 verified RUNNING gpu2264 elapsed8:04/12h; no cancellations
+  policy: Only independent APPROVE permits merge; frozen contracts unchanged
+  codex_dispositions:
+  - item: integration bookkeeping (uncommitted in worktree; branch codex/step8-takeover-wip has no commits)
+    verdict: ACCEPTED
+    reason: resolves the integration SHA row correctly (bd074d5 = e915466 + handoff commit); committed by the coordinator with the dashboard header restored
+  - item: step8/reviewfix-a @0cbb136
+    verdict: ACCEPTED
+    reason: prose/docstring-only count corrections verified against the generated leaf_classification.json (46 mapped / 94 unsupported / 21 dead / 0 n/a); enters A re-review, not merged directly
+  - item: step8/variations-newcells-followup @69e74c4
+    verdict: PARTIALLY_ACCEPTED
+    reason: contains the authorised cube/floor colour patch plus the reviewer-reproduced cache-leak fix and map flip, but 1 unit test fails, generated artifacts are stale and no GPU evidence exists; finished
+      on that branch
+  - item: step8/certification-followup @550cfc6
+    verdict: PARTIALLY_ACCEPTED
+    reason: conformance exclusion-only applicability fix + tests accepted; the Gate-A rejudge ignores the accepted CraftaxClassic night applicability and the colour-check ruling, so its CraftaxClassic/Rocket
+      FAIL rows are not truthful yet; reworked on that branch
+  fleet_reconciliation:
+    date: '2026-09-16'
+    FINISH_NOW: 4
+    REVIEW_ONLY: 3
+    MERGE_CANDIDATE: 2
+    BLOCKED: 4
+    SUPERSEDED_STOP: 8 agents + 19 closed step6/step7 worktrees
+    OPTIONAL_DEFER: 0
+    note: D/F/G/H blocked only on Wave-1 merges; the shared per-world capability (C light/camera/cube.size, B skybox, A DMC floor.color) is aggregated after Wave-1 merges per the feasible-leaves ruling

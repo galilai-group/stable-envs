@@ -1,0 +1,6116 @@
+{
+ "what_this_is": "Step-8 Workstream A: every stable_worldmodel variation leaf of the five classic-control and twelve DM Control ids, classified, with the measurement behind the class.",
+ "schema_version": 1,
+ "step": 8,
+ "workstream": "variations-dmc-control",
+ "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
+ "swm_source": "galilai-group/stable-worldmodel @ 176d545",
+ "venv": "/Users/samib/se8-vm-venv (python 3.12, torch 2.14.0 cpu, mujoco 3.12.0, dm_control 1.0.45, gymnasium 1.3.0, MUJOCO_GL=glfw)",
+ "totals": {
+  "mapped": 46,
+  "unsupported": 94,
+  "dead_upstream": 21,
+  "not_applicable": 0,
+  "leaves": 161,
+  "ids": 17,
+  "cells": 18
+ },
+ "per_id": {
+  "swm/AcrobotControl-v1": {
+   "cells": [
+    "Acrobot"
+   ],
+   "counts": {
+    "total": 11,
+    "mapped": 4,
+    "unsupported": 7,
+    "dead_upstream": 0,
+    "not_applicable": 0
+   },
+   "registered_size": 500,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 2000000
+  },
+  "swm/CartPoleControl-v1": {
+   "cells": [
+    "CartPole"
+   ],
+   "counts": {
+    "total": 10,
+    "mapped": 4,
+    "unsupported": 6,
+    "dead_upstream": 0,
+    "not_applicable": 0
+   },
+   "registered_size": 400,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 1920000
+  },
+  "swm/AcrobotDMControl-v0": {
+   "cells": [
+    "DMCAcrobotSwingup"
+   ],
+   "counts": {
+    "total": 11,
+    "mapped": 2,
+    "unsupported": 4,
+    "dead_upstream": 5,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/BallInCupDMControl-v0": {
+   "cells": [
+    "DMCBallInCupCatch"
+   ],
+   "counts": {
+    "total": 13,
+    "mapped": 2,
+    "unsupported": 7,
+    "dead_upstream": 4,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [
+    "light.diffuse_scale"
+   ],
+   "px_default_vs_mapped_default_8_states": 14835,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.12,
+    1.0
+   ],
+   "light_diffuse_base": 0.6
+  },
+  "swm/CartpoleDMControl-v0": {
+   "cells": [
+    "DMCCartpoleBalance",
+    "DMCCartpoleSwingup"
+   ],
+   "counts": {
+    "total": 9,
+    "mapped": 2,
+    "unsupported": 5,
+    "dead_upstream": 2,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/CheetahDMControl-v0": {
+   "cells": [
+    "DMCCheetahRun"
+   ],
+   "counts": {
+    "total": 10,
+    "mapped": 2,
+    "unsupported": 7,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [
+    "material.self"
+   ],
+   "px_default_vs_mapped_default_8_states": 2365,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/FingerDMControl-v0": {
+   "cells": [
+    "DMCFingerTurnHard"
+   ],
+   "counts": {
+    "total": 11,
+    "mapped": 4,
+    "unsupported": 7,
+    "dead_upstream": 0,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [
+    "light.diffuse_scale",
+    "visibility.target"
+   ],
+   "px_default_vs_mapped_default_8_states": 15644,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.12,
+    1.0
+   ],
+   "light_diffuse_base": 0.6
+  },
+  "swm/HopperDMControl-v0": {
+   "cells": [
+    "DMCHopperHop"
+   ],
+   "counts": {
+    "total": 10,
+    "mapped": 2,
+    "unsupported": 7,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/HumanoidDMControl-v0": {
+   "cells": [
+    "DMCHumanoidStand"
+   ],
+   "counts": {
+    "total": 10,
+    "mapped": 2,
+    "unsupported": 7,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/ManipulatorDMControl-v0": {
+   "cells": [
+    "DMCManipulatorBringBall"
+   ],
+   "counts": {
+    "total": 9,
+    "mapped": 5,
+    "unsupported": 3,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 224,
+   "default_style_slots_moved_to_reach_the_swm_default": [
+    "light.diffuse_scale",
+    "target_ball.shape",
+    "visibility.target_ball"
+   ],
+   "px_default_vs_mapped_default_8_states": 9109,
+   "px_total": 401408,
+   "light_intensity_reachable_range": [
+    0.12,
+    1.0
+   ],
+   "light_diffuse_base": 0.6
+  },
+  "swm/PendulumDMControl-v0": {
+   "cells": [
+    "DMCPendulumSwingup"
+   ],
+   "counts": {
+    "total": 9,
+    "mapped": 2,
+    "unsupported": 4,
+    "dead_upstream": 3,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/QuadrupedDMControl-v0": {
+   "cells": [
+    "DMCQuadrupedWalk"
+   ],
+   "counts": {
+    "total": 10,
+    "mapped": 2,
+    "unsupported": 7,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 224,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 401408,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/ReacherDMControl-v0": {
+   "cells": [
+    "DMCReacherHard"
+   ],
+   "counts": {
+    "total": 9,
+    "mapped": 4,
+    "unsupported": 4,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [
+    "visibility.target"
+   ],
+   "px_default_vs_mapped_default_8_states": 115,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/WalkerDMControl-v0": {
+   "cells": [
+    "DMCWalkerWalk"
+   ],
+   "counts": {
+    "total": 11,
+    "mapped": 2,
+    "unsupported": 8,
+    "dead_upstream": 1,
+    "not_applicable": 0
+   },
+   "registered_size": 84,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 56448,
+   "light_intensity_reachable_range": [
+    0.13999999999999999,
+    1.0
+   ],
+   "light_diffuse_base": 0.7
+  },
+  "swm/MountainCarControl-v0": {
+   "cells": [
+    "MountainCar"
+   ],
+   "counts": {
+    "total": 5,
+    "mapped": 2,
+    "unsupported": 3,
+    "dead_upstream": 0,
+    "not_applicable": 0
+   },
+   "registered_size": 400,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 1920000
+  },
+  "swm/MountainCarContinuousControl-v0": {
+   "cells": [
+    "MountainCarContinuous"
+   ],
+   "counts": {
+    "total": 4,
+    "mapped": 2,
+    "unsupported": 2,
+    "dead_upstream": 0,
+    "not_applicable": 0
+   },
+   "registered_size": 400,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 1920000
+  },
+  "swm/PendulumControl-v1": {
+   "cells": [
+    "Pendulum"
+   ],
+   "counts": {
+    "total": 9,
+    "mapped": 3,
+    "unsupported": 6,
+    "dead_upstream": 0,
+    "not_applicable": 0
+   },
+   "registered_size": 500,
+   "default_style_slots_moved_to_reach_the_swm_default": [],
+   "px_default_vs_mapped_default_8_states": 0,
+   "px_total": 2000000
+  }
+ },
+ "rows": [
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_com_pos_1",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.25
+    ],
+    "high": [
+     0.75
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.5
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_com_pos_2",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.25
+    ],
+    "high": [
+     0.75
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.5
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_length_1",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "GEOMETRY as well as dynamics: AcrobotEnv.render draws each link at LINK_LENGTH_1 * scale, and moving it to 1.45 moves 37,966 px of 8x500x500 in the official frame. The stable-envs cell holds SCALE and the unit-length link quad as class constants and declares no geometry leaf, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 37966,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_length_2",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "the same, on the second link: 38,258 px of 8x500x500 at 1.45.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 38258,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_mass_1",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_mass_2",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "physics.link_moi",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "visuals.bg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "background.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 2569,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "visuals.joint",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.800000011920929,
+     0.800000011920929,
+     0.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "joint.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 704,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "visuals.line",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "ground.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 2,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotControl-v1",
+   "stable_envs_cell": "Acrobot",
+   "leaf": "visuals.link",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.0,
+     0.800000011920929,
+     0.800000011920929
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "link.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 2725,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "physics.force_mag",
+   "swm": {
+    "type": "Box",
+    "low": [
+     5.0
+    ],
+    "high": [
+     15.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     10.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "physics.gravity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     4.900000095367432
+    ],
+    "high": [
+     14.699999809265137
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     9.800000190734863
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "physics.length",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.25
+    ],
+    "high": [
+     0.75
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.5
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "GEOMETRY as well as dynamics: CartPoleEnv.render sets polelen = scale * 2 * length, and 0.725 moves 6,621 px of 8x400x600 in the official frame. POLELEN is a class constant here (it is also what WIN_POLE and KMAX_POLE are derived from) and there is no geometry leaf, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 6621,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "physics.masscart",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "physics.masspole",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.05000000074505806
+    ],
+    "high": [
+     0.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.10000000149011612
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "physics.tau",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.009999999776482582
+    ],
+    "high": [
+     0.03999999910593033
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.019999999552965164
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "visuals.axle",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.5058823823928833,
+     0.5176470875740051,
+     0.7960784435272217
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "axle.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 64,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "visuals.bg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "background.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 805,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "visuals.cart",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "cart.color",
+    "track.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5). ONE-TO-MANY: this leaf also drives `track.color`, because the reference paints the track black too.",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 99,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/CartPoleControl-v1",
+   "stable_envs_cell": "CartPole",
+   "leaf": "visuals.pole",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7921568751335144,
+     0.5960784554481506,
+     0.3960784375667572
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "pole.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 957,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 684,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "agent.lower_arm_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, but acrobot's <default class=\"/\"><geom type=\"capsule\" mass=\"1\"/> means every geom carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. Measured: not one MjModel array changes, body_mass included.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "agent.upper_arm_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, but acrobot's <default class=\"/\"><geom type=\"capsule\" mass=\"1\"/> means every geom carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. Measured: not one MjModel array changes, body_mass included.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "agent.upper_arm_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 13036,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 13103,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "target.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf does reach the compiled model, and the element it reaches is never drawn. The target is in geom/site GROUP 3, and mjvOption's default ``geomgroup`` rasterises groups 0-2 only. Measured 0 disagreeing pixels over 8 states (site `target`, material `target`).",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "stable_envs_cell": "DMCAcrobotSwingup",
+   "leaf": "target.shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf does reach the compiled model, and the element it reaches is never drawn. The target is in geom/site GROUP 3, and mjvOption's default ``geomgroup`` rasterises groups 0-2 only. Measured 0 disagreeing pixels over 8 states (site `target`; the leaf does move site_type and site_size).",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "site_size",
+     "site_type"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 482,
+    "px_changed_8_states_target_visible": 482,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "agent.density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the cup's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "ball.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state. The ball is drawn with material `self`, which ``agent.color`` already reaches.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "ball.density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the ball's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "ball.size",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.009999999776482582
+    ],
+    "high": [
+     0.05000000074505806
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.02500000037252903
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "the ball's radius, which is GEOMETRY: 902 disagreeing pixels of 8x84x84 at 0.0475. The cell declares colour, light and (elsewhere) visibility leaves and no size leaf, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 902,
+    "px_changed_8_states_target_visible": 902,
+    "mjmodel_arrays_changed": [
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "geom_aabb",
+     "geom_rbound",
+     "geom_size",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 14765,
+    "px_changed_8_states_target_visible": 14765,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED rather than physics-only: ball_in_cup's cup and ball are joined by a SPATIAL TENDON, which MuJoCo draws as a hanging catenary through mjv_catenary, and mjv_catenary reads the model's gravity. Measured at a fixed qpos: gravity.x moves 178 px and gravity.y 110 px of 8x84x84 (gravity.z alone moves 0, because scaling z does not rotate the gravity direction). The cell reproduces mjv_catenary from the compiled model's gravity and declares no gravity leaf.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 178,
+    "px_changed_8_states_target_visible": 178,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED rather than physics-only: ball_in_cup's cup and ball are joined by a SPATIAL TENDON, which MuJoCo draws as a hanging catenary through mjv_catenary, and mjv_catenary reads the model's gravity. Measured at a fixed qpos: gravity.x moves 178 px and gravity.y 110 px of 8x84x84 (gravity.z alone moves 0, because scaling z does not rotate the gravity direction). The cell reproduces mjv_catenary from the compiled model's gravity and declares no gravity leaf.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 110,
+    "px_changed_8_states_target_visible": 110,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED rather than physics-only: ball_in_cup's cup and ball are joined by a SPATIAL TENDON, which MuJoCo draws as a hanging catenary through mjv_catenary, and mjv_catenary reads the model's gravity. Measured at a fixed qpos: gravity.x moves 178 px and gravity.y 110 px of 8x84x84 (gravity.z alone moves 0, because scaling z does not rotate the gravity direction). The cell reproduces mjv_catenary from the compiled model's gravity and declares no gravity leaf.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.6 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.120, 1.0] (1.8 * 0.6 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.120) is not reachable. swm's default 0.7 is reached at scale 1.166667.",
+   "evidence": {
+    "px_changed_8_states": 14915,
+    "px_changed_8_states_target_visible": 14915,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "rendering.render_target",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 0
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf does reach the compiled model, and the element it reaches is never drawn. The target is in geom/site GROUP 4, and mjvOption's default ``geomgroup`` rasterises groups 0-2 only. Measured 0 disagreeing pixels over 8 states (site `target`), and 0 px again with render_target forced to 1.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "site_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "target.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf does reach the compiled model, and the element it reaches is never drawn. The target is in geom/site GROUP 4, and mjvOption's default ``geomgroup`` rasterises groups 0-2 only. Measured 0 disagreeing pixels over 8 states (site `target`, rgba on the site itself).",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "site_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "stable_envs_cell": "DMCBallInCupCatch",
+   "leaf": "target.shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf does reach the compiled model, and the element it reaches is never drawn. The target is in geom/site GROUP 4, and mjvOption's default ``geomgroup`` rasterises groups 0-2 only. Measured 0 disagreeing pixels over 8 states (site `target`; the leaf does move site_type).",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "site_type"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "agent.cart_mass",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the cart's mass is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "agent.cart_shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 1394,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "agent.pole_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, but cartpole.xml's ``pole`` default class, which sets an explicit mass on every pole geom carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. Measured: not one MjModel array changes, body_mass included.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 19333,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleBalance",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 19633,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "agent.cart_mass",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the cart's mass is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "agent.cart_shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 1394,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "agent.pole_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, but cartpole.xml's ``pole`` default class, which sets an explicit mass on every pole geom carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. Measured: not one MjModel array changes, body_mass included.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 19333,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "stable_envs_cell": "DMCCartpoleSwingup",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 19633,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "agent.back_foot_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 4,521 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 4521,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "agent.back_foot_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 3337,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "agent.torso_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 2,115 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 2115,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_iquat",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "dof_length",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 7969,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "floor.friction",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the floor's sliding friction is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "geom_friction"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/CheetahDMControl-v0",
+   "stable_envs_cell": "DMCCheetahRun",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 8323,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 1317,
+    "px_changed_8_states_target_visible": 1317,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "agent.fingertip_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the fingertip's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "dof_length",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "agent.proximal_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the proximal link's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "dof_length",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 14755,
+    "px_changed_8_states_target_visible": 14755,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.6 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.120, 1.0] (1.8 * 0.6 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.120) is not reachable. swm's default 0.7 is reached at scale 1.166667.",
+   "evidence": {
+    "px_changed_8_states": 15922,
+    "px_changed_8_states_target_visible": 15985,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "rendering.render_target",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 0
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "visibility.target"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 382,
+    "px_changed_8_states_target_visible": 382,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "spinner.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "the spinner's colour is a per-geom ``rgba`` OVERRIDE (the leaf moves geom_rgba, not mat_rgba) and this cell's colour knobs are material-level, one per material carried by a visible element. Measured 2,191 disagreeing pixels of 8x84x84, so the leaf is real; there is simply no leaf here that reaches a single geom's rgba.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 2191,
+    "px_changed_8_states_target_visible": 2184,
+    "mjmodel_arrays_changed": [
+     "geom_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "spinner.density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the spinner's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "spinner.friction",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.10000000149011612
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the spinner joint's friction loss is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "dof_frictionloss"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "target.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.target"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 323,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/FingerDMControl-v0",
+   "stable_envs_cell": "DMCFingerTurnHard",
+   "leaf": "target.shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "the target site's box/sphere alternative. Measured 459 disagreeing pixels of 8x84x84 WITH the target visible, so the leaf is real. This cell declares SHAPE_KNOBS = {} \u2014 only DMCManipulatorBringBall carries a shape leaf \u2014 so the default (sphere, index 1) is the compiled model's own and reproduces exactly, and the box alternative is unreachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 459,
+    "mjmodel_arrays_changed": [
+     "site_size",
+     "site_type"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 2095,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "agent.foot_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 11,167 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 11167,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "agent.foot_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "agent.torso_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 10,918 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 10918,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_iquat",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "dof_length",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 8354,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "floor.friction",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the floor's sliding friction is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "geom_friction"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HopperDMControl-v0",
+   "stable_envs_cell": "DMCHopperHop",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 8758,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 4257,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "agent.left_knee_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "agent.right_lower_arm_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 25,419 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 25419,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "agent.torso_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 36,302 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 36302,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_iquat",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "dof_length",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 54599,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "floor.friction",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the floor's sliding friction is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "geom_friction"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "stable_envs_cell": "DMCHumanoidStand",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 36515,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 6906,
+    "px_changed_8_states_target_visible": 6902,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "agent.hand_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the hand's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_ipos",
+     "body_mass",
+     "body_subtreemass",
+     "bvh_aabb",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "dof_length",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "agent.upper_arm_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the upper arm's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "agent.upper_arm_length",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state. The swm source carries ``# TODO should modify length of arm`` at the point it would be read; recorded in Step 7 and re-measured here.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 6408,
+    "px_changed_8_states_target_visible": 6408,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.6 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.120, 1.0] (1.8 * 0.6 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.120) is not reachable. swm's default 0.7 is reached at scale 1.166667.",
+   "evidence": {
+    "px_changed_8_states": 9411,
+    "px_changed_8_states_target_visible": 9494,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "rendering.render_target",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 0
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "visibility.target_ball"
+   ],
+   "reason": null,
+   "note": "MAPPED to visibility.target_ball. swm's registered default is 0 (the target is NOT drawn), and our leaf's default is 1, so the registered default is reached through the leaf. Measured 274 disagreeing pixels of 8x224x224 between the two values upstream.",
+   "evidence": {
+    "px_changed_8_states": 274,
+    "px_changed_8_states_target_visible": 274,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "target.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.target"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 270,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "stable_envs_cell": "DMCManipulatorBringBall",
+   "leaf": "target.shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "target_ball.shape"
+   ],
+   "reason": null,
+   "note": "MAPPED at both alternatives. swm's Discrete(2) is (0 = box .015, 1 = sphere .015); ours is Discrete(3) whose index 2 is the compiled model's own sphere .02 and is the DEFAULT, which is what keeps the default style a render of the compiled model. swm's registered default is 1, so reaching it is a leaf write, not a no-op.",
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 371,
+    "mjmodel_arrays_changed": [
+     "body_inertia",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "geom_rbound",
+     "geom_size",
+     "geom_type",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 572,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "agent.mass_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, but pendulum.xml's <geom name=\"mass\" ... mass=\"1\"/> carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. Measured: not one MjModel array changes, body_mass included.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "agent.mass_shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "agent.pole_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the wrapper writes the value onto the geom's ``density`` and recompiles, but pendulum.xml's <geom name=\"pole\" ... mass=\"0\"/> carries an EXPLICIT mass, and in MuJoCo an explicit mass wins over density. Measured: not one MjModel array changes, body_mass included.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 46691,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/PendulumDMControl-v0",
+   "stable_envs_cell": "DMCPendulumSwingup",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 45267,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 29758,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "agent.foot_back_left_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 137,533 disagreeing pixels of 401,408 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 137533,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "agent.knee_back_left_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "agent.torso_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 135,622 disagreeing pixels of 401,408 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 135622,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0",
+     "tendon_invweight0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 321610,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "floor.friction",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the floor's sliding friction is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "geom_friction"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "stable_envs_cell": "DMCQuadrupedWalk",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 263946,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "agent.arm_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the arm's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 850,
+    "px_changed_8_states_target_visible": 846,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "agent.finger_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the finger's density is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "agent.finger_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 53246,
+    "px_changed_8_states_target_visible": 53177,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 56448,
+    "px_changed_8_states_target_visible": 56448,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "rendering.render_target",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 0
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "visibility.target"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 150,
+    "px_changed_8_states_target_visible": 150,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "target.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.6,
+     0.3,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.target"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 148,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/ReacherDMControl-v0",
+   "stable_envs_cell": "DMCReacherHard",
+   "leaf": "target.shape",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "the target geom's box/sphere alternative. Measured 236 disagreeing pixels of 8x84x84 WITH the target visible, so the leaf is real. This cell declares SHAPE_KNOBS = {}, so the default (sphere, index 1) is the compiled model's own and reproduces exactly, and the box alternative is unreachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "px_changed_8_states_target_visible": 236,
+    "mjmodel_arrays_changed": [
+     "geom_rbound",
+     "geom_size",
+     "geom_type"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "agent.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.7,
+     0.5,
+     0.3
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "material.self"
+   ],
+   "reason": null,
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 7074,
+    "mjmodel_arrays_changed": [
+     "mat_rgba"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "agent.left_foot_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 21,374 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 21374,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "agent.right_knee_locked",
+   "swm": {
+    "type": "Discrete",
+    "n": 2,
+    "default": 1
+   },
+   "classification": "dead_upstream",
+   "stable_envs_control": null,
+   "reason": "DEAD UPSTREAM: the leaf is declared by the swm wrapper and its own ``modify_mjcf_model`` never reads it (0 textual references outside the space literal). Measured: not one of the 110+ MjModel arrays changes between the leaf's two values, so it reaches neither a pixel nor a state.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": []
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "agent.torso_density",
+   "swm": {
+    "type": "Box",
+    "low": [
+     500.0
+    ],
+    "high": [
+     1500.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1000.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, not merely physics: this cell renders through a mode=\"trackcom\" camera, whose position comes from subtree_com, so a mass change MOVES THE CAMERA. Measured 26,328 disagreeing pixels of 56,448 over 8 states with qpos and geom_xpos bit-identical. The cell declares no mass leaf and its camera follows the compiled model's own COM, so the appearance is not reachable.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 26328,
+    "mjmodel_arrays_changed": [
+     "actuator_acc0",
+     "body_inertia",
+     "body_invweight0",
+     "body_mass",
+     "body_subtreemass",
+     "cam_poscom0",
+     "dof_M0",
+     "dof_invweight0",
+     "light_poscom0"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "floor.color",
+   "swm": {
+    "type": "Box",
+    "low": [
+     [
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0
+     ]
+    ],
+    "high": [
+     [
+      1.0,
+      1.0,
+      1.0
+     ],
+     [
+      1.0,
+      1.0,
+      1.0
+     ]
+    ],
+    "shape": [
+     2,
+     3
+    ],
+    "default": [
+     [
+      0.1,
+      0.2,
+      0.3
+     ],
+     [
+      0.2,
+      0.3,
+      0.4
+     ]
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 24002,
+    "mjmodel_arrays_changed": [
+     "tex_data"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "floor.friction",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: the floor's sliding friction is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "geom_friction"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "floor.rotation_y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -10.0
+    ],
+    "high": [
+     10.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "walker is the one domain whose swm wrapper TILTS the floor: the leaf writes the floor geom's quat and moves 24,004 disagreeing pixels of 8x84x84 at 9 degrees. The cell bakes the floor plane from the compiled model and declares no pose leaf, so the tilt is not reachable. Its default, 0, is the compiled model's own.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 24004,
+    "mjmodel_arrays_changed": [
+     "bvh_aabb",
+     "geom_quat",
+     "geom_sameframe"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "gravity.x",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "gravity.y",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -5.0
+    ],
+    "high": [
+     5.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "gravity.z",
+   "swm": {
+    "type": "Box",
+    "low": [
+     -20.0
+    ],
+    "high": [
+     0.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     -9.81
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity is a real dynamics parameter of the swm env, and this cell is a render-from-state cell that exposes no dynamics parameters to map it through. Measured 0 disagreeing pixels over 8 states with qpos and geom_xpos bit-identical, so nothing about the FRAME is lost; what is not reachable is the trajectory.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states": 0,
+    "mjmodel_arrays_changed": [
+     "__opt_gravity"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/WalkerDMControl-v0",
+   "stable_envs_cell": "DMCWalkerWalk",
+   "leaf": "light.intensity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0
+    ],
+    "high": [
+     1.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.7
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "light.diffuse_scale"
+   ],
+   "reason": null,
+   "note": "mapped to light.diffuse_scale with factor 1/0.7 \u2014 the compiled model's own light diffuse. RANGE GAP at the dark end: our scale is Box(0.2, 1.8), so the reachable intensity is [0.140, 1.0] (1.8 * 0.7 clips to 1.0 at the bright end, which costs nothing because swm's range stops at 1.0), and swm's [0, 0.140) is not reachable. swm's default 0.7 is reached at scale 1.000000.",
+   "evidence": {
+    "px_changed_8_states": 24753,
+    "mjmodel_arrays_changed": [
+     "light_diffuse"
+    ]
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarControl-v0",
+   "stable_envs_cell": "MountainCar",
+   "leaf": "physics.force",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0005000000237487257
+    ],
+    "high": [
+     0.001500000013038516
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0010000000474974513
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarControl-v0",
+   "stable_envs_cell": "MountainCar",
+   "leaf": "physics.gravity",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0012499999720603228
+    ],
+    "high": [
+     0.0037499999161809683
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.0024999999441206455
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarControl-v0",
+   "stable_envs_cell": "MountainCar",
+   "leaf": "physics.max_speed",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.03500000014901161
+    ],
+    "high": [
+     0.10499999672174454
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.07000000029802322
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarControl-v0",
+   "stable_envs_cell": "MountainCar",
+   "leaf": "visuals.bg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "background.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 11326,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarControl-v0",
+   "stable_envs_cell": "MountainCar",
+   "leaf": "visuals.fg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "car.color",
+    "flag.pole_color",
+    "terrain.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5). ONE-TO-MANY: this leaf drives `car.color`, `terrain.color` AND `flag.pole_color`, because the reference paints all three black.",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 11033,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarContinuousControl-v0",
+   "stable_envs_cell": "MountainCarContinuous",
+   "leaf": "physics.max_speed",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.03500000014901161
+    ],
+    "high": [
+     0.10499999672174454
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.07000000029802322
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarContinuousControl-v0",
+   "stable_envs_cell": "MountainCarContinuous",
+   "leaf": "physics.power",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.000750000006519258
+    ],
+    "high": [
+     0.0022499999031424522
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.001500000013038516
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 1920000
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarContinuousControl-v0",
+   "stable_envs_cell": "MountainCarContinuous",
+   "leaf": "visuals.bg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "background.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 11325,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/MountainCarContinuousControl-v0",
+   "stable_envs_cell": "MountainCarContinuous",
+   "leaf": "visuals.fg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "car.color",
+    "flag.pole_color",
+    "terrain.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5). ONE-TO-MANY: this leaf drives `car.color`, `terrain.color` AND `flag.pole_color`, because the reference paints all three black.",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 11031,
+    "px_total": 1920000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "physics.dt",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.02500000037252903
+    ],
+    "high": [
+     0.10000000149011612
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     0.05000000074505806
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "physics.g",
+   "swm": {
+    "type": "Box",
+    "low": [
+     5.0
+    ],
+    "high": [
+     15.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     10.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "physics.l",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "physics.m",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.5
+    ],
+    "high": [
+     1.5
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     1.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "physics.max_speed",
+   "swm": {
+    "type": "Box",
+    "low": [
+     4.0
+    ],
+    "high": [
+     12.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     8.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "physics.max_torque",
+   "swm": {
+    "type": "Box",
+    "low": [
+     1.0
+    ],
+    "high": [
+     4.0
+    ],
+    "shape": [
+     1
+    ],
+    "default": [
+     2.0
+    ]
+   },
+   "classification": "unsupported",
+   "stable_envs_control": null,
+   "reason": "dynamics only, and this cell simulates: the value is a class constant on the stable-envs cell, whose integrator is certified against the reference at the reference's own constants. A per-environment value is a dynamics parameter, not a style row. Measured 0 disagreeing pixels over 8 states of the official render.",
+   "note": null,
+   "evidence": {
+    "px_changed_8_states_official": 0,
+    "px_total": 2000000
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "visuals.bg",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.6000000238418579,
+     0.6000000238418579,
+     0.6000000238418579
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "background.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 2726,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "visuals.hub",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     0.4000000059604645,
+     0.4000000059604645,
+     0.4000000059604645
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "axle.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 64,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  },
+  {
+   "swm_id": "swm/PendulumControl-v1",
+   "stable_envs_cell": "Pendulum",
+   "leaf": "visuals.rod",
+   "swm": {
+    "type": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "default": [
+     0.800000011920929,
+     0.3019607961177826,
+     0.3019607961177826
+    ]
+   },
+   "classification": "mapped",
+   "stable_envs_control": [
+    "rod.color"
+   ],
+   "reason": null,
+   "note": "MAPPED, and NOT bit-identical away from the default. swm recolours the rendered frame by EXACT uint8 match; stable-envs draws the primitive in the colour. The two agree wherever the reference wrote the source colour verbatim and differ on anti-aliased boundaries, where swm keeps a blend of the ORIGINAL colour. Measured over 8 states, one leaf at a time at 90 % of its range: 0 disagreeing pixels at the registered default on all five envs, and at most 0.6 % of the frame (11,326 px of 8x400x600, MountainCar) at a probe value. The conversion itself is exact: this leaf uses `rgb255`, which applies swm's own uint8(v * 255 + 0.5).",
+   "evidence": {
+    "swm_vs_ours_px_at_probe": 1819,
+    "px_total": 2000000,
+    "swm_vs_ours_px_at_default": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,2733 @@
+{
+ "Acrobot": {
+  "state_dim": 2,
+  "state_names": [
+   "theta1",
+   "theta2"
+  ],
+  "default_size": 500,
+  "reference_id": "Acrobot-v1",
+  "flat_dim": 13,
+  "flat_layout": [
+   [
+    "background.color",
+    0,
+    3
+   ],
+   [
+    "ground.color",
+    3,
+    3
+   ],
+   [
+    "joint.color",
+    6,
+    3
+   ],
+   [
+    "link.color",
+    9,
+    3
+   ],
+   [
+    "rendering.antialias",
+    12,
+    1
+   ]
+  ],
+  "leaves": {
+   "background.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     255,
+     255,
+     255
+    ]
+   },
+   "ground.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "joint.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     204,
+     204,
+     0
+    ]
+   },
+   "link.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     204,
+     204
+    ]
+   },
+   "rendering.antialias": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   }
+  },
+  "has_step": true,
+  "sim_state_names": [
+   "theta1",
+   "theta2",
+   "dtheta1",
+   "dtheta2"
+  ]
+ },
+ "CartPole": {
+  "state_dim": 2,
+  "state_names": [
+   "x",
+   "theta"
+  ],
+  "default_size": 600,
+  "reference_id": "CartPole-v1",
+  "flat_dim": 16,
+  "flat_layout": [
+   [
+    "axle.color",
+    0,
+    3
+   ],
+   [
+    "background.color",
+    3,
+    3
+   ],
+   [
+    "cart.color",
+    6,
+    3
+   ],
+   [
+    "pole.color",
+    9,
+    3
+   ],
+   [
+    "rendering.antialias",
+    12,
+    1
+   ],
+   [
+    "track.color",
+    13,
+    3
+   ]
+  ],
+  "leaves": {
+   "axle.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     129,
+     132,
+     203
+    ]
+   },
+   "background.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     255,
+     255,
+     255
+    ]
+   },
+   "cart.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "pole.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     202,
+     152,
+     101
+    ]
+   },
+   "rendering.antialias": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   },
+   "track.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "has_step": true,
+  "sim_state_names": [
+   "x",
+   "x_dot",
+   "theta",
+   "theta_dot"
+  ]
+ },
+ "MountainCarContinuous": {
+  "state_dim": 1,
+  "state_names": [
+   "position"
+  ],
+  "default_size": 600,
+  "reference_id": "MountainCarContinuous-v0",
+  "flat_dim": 19,
+  "flat_layout": [
+   [
+    "background.color",
+    0,
+    3
+   ],
+   [
+    "car.color",
+    3,
+    3
+   ],
+   [
+    "flag.color",
+    6,
+    3
+   ],
+   [
+    "flag.pole_color",
+    9,
+    3
+   ],
+   [
+    "rendering.antialias",
+    12,
+    1
+   ],
+   [
+    "terrain.color",
+    13,
+    3
+   ],
+   [
+    "wheel.color",
+    16,
+    3
+   ]
+  ],
+  "leaves": {
+   "background.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     255,
+     255,
+     255
+    ]
+   },
+   "car.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "flag.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     204,
+     204,
+     0
+    ]
+   },
+   "flag.pole_color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "rendering.antialias": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   },
+   "terrain.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "wheel.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     128,
+     128,
+     128
+    ]
+   }
+  },
+  "has_step": true,
+  "sim_state_names": [
+   "position",
+   "velocity"
+  ]
+ },
+ "MountainCar": {
+  "state_dim": 1,
+  "state_names": [
+   "position"
+  ],
+  "default_size": 600,
+  "reference_id": "MountainCar-v0",
+  "flat_dim": 19,
+  "flat_layout": [
+   [
+    "background.color",
+    0,
+    3
+   ],
+   [
+    "car.color",
+    3,
+    3
+   ],
+   [
+    "flag.color",
+    6,
+    3
+   ],
+   [
+    "flag.pole_color",
+    9,
+    3
+   ],
+   [
+    "rendering.antialias",
+    12,
+    1
+   ],
+   [
+    "terrain.color",
+    13,
+    3
+   ],
+   [
+    "wheel.color",
+    16,
+    3
+   ]
+  ],
+  "leaves": {
+   "background.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     255,
+     255,
+     255
+    ]
+   },
+   "car.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "flag.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     204,
+     204,
+     0
+    ]
+   },
+   "flag.pole_color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "rendering.antialias": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   },
+   "terrain.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "wheel.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     128,
+     128,
+     128
+    ]
+   }
+  },
+  "has_step": true,
+  "sim_state_names": [
+   "position",
+   "velocity"
+  ]
+ },
+ "Pendulum": {
+  "state_dim": 2,
+  "state_names": [
+   "theta",
+   "torque"
+  ],
+  "default_size": 500,
+  "reference_id": "Pendulum-v1",
+  "flat_dim": 10,
+  "flat_layout": [
+   [
+    "axle.color",
+    0,
+    3
+   ],
+   [
+    "background.color",
+    3,
+    3
+   ],
+   [
+    "rendering.antialias",
+    6,
+    1
+   ],
+   [
+    "rod.color",
+    7,
+    3
+   ]
+  ],
+  "leaves": {
+   "axle.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     0,
+     0,
+     0
+    ]
+   },
+   "background.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     255,
+     255,
+     255
+    ]
+   },
+   "rendering.antialias": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   },
+   "rod.color": {
+    "cls": "RGBBox",
+    "low": [
+     0,
+     0,
+     0
+    ],
+    "high": [
+     255,
+     255,
+     255
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "uint8",
+    "init_value": [
+     204,
+     77,
+     77
+    ]
+   }
+  },
+  "has_step": true,
+  "sim_state_names": [
+   "theta",
+   "theta_dot",
+   "torque"
+  ]
+ },
+ "DMCAcrobotSwingup": {
+  "state_dim": 2,
+  "state_names": [
+   "shoulder",
+   "elbow"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/acrobot-swingup",
+  "flat_dim": 11,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.decoration",
+    2,
+    3
+   ],
+   [
+    "material.grid",
+    5,
+    3
+   ],
+   [
+    "material.self",
+    8,
+    3
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCBallInCupCatch": {
+  "state_dim": 4,
+  "state_names": [
+   "cup_x",
+   "cup_z",
+   "ball_x",
+   "ball_z"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/ball_in_cup-catch",
+  "flat_dim": 11,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.effector",
+    2,
+    3
+   ],
+   [
+    "material.grid",
+    5,
+    3
+   ],
+   [
+    "material.self",
+    8,
+    3
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.effector": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCCartpoleBalance": {
+  "state_dim": 2,
+  "state_names": [
+   "slider",
+   "hinge_1"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/cartpole-balance",
+  "flat_dim": 11,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.decoration",
+    2,
+    3
+   ],
+   [
+    "material.grid",
+    5,
+    3
+   ],
+   [
+    "material.self",
+    8,
+    3
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCCartpoleSwingup": {
+  "state_dim": 2,
+  "state_names": [
+   "slider",
+   "hinge_1"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/cartpole-swingup",
+  "flat_dim": 11,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.decoration",
+    2,
+    3
+   ],
+   [
+    "material.grid",
+    5,
+    3
+   ],
+   [
+    "material.self",
+    8,
+    3
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCCheetahRun": {
+  "state_dim": 9,
+  "state_names": [
+   "rootx",
+   "rootz",
+   "rooty",
+   "bthigh",
+   "bshin",
+   "bfoot",
+   "fthigh",
+   "fshin",
+   "ffoot"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/cheetah-run",
+  "flat_dim": 7,
+  "flat_layout": [
+   [
+    "light.diffuse_scale",
+    0,
+    1
+   ],
+   [
+    "material.grid",
+    1,
+    3
+   ],
+   [
+    "material.self",
+    4,
+    3
+   ]
+  ],
+  "leaves": {
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCFingerTurnHard": {
+  "state_dim": 5,
+  "state_names": [
+   "proximal",
+   "distal",
+   "hinge",
+   "target_pos_x",
+   "target_pos_z"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/finger-turn_hard",
+  "flat_dim": 18,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.decoration",
+    2,
+    3
+   ],
+   [
+    "material.effector",
+    5,
+    3
+   ],
+   [
+    "material.grid",
+    8,
+    3
+   ],
+   [
+    "material.self",
+    11,
+    3
+   ],
+   [
+    "material.target",
+    14,
+    3
+   ],
+   [
+    "visibility.target",
+    17,
+    1
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.effector": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   },
+   "material.target": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896
+    ]
+   },
+   "visibility.target": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCHopperHop": {
+  "state_dim": 7,
+  "state_names": [
+   "rootx",
+   "rootz",
+   "rooty",
+   "waist",
+   "hip",
+   "knee",
+   "ankle"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/hopper-hop",
+  "flat_dim": 7,
+  "flat_layout": [
+   [
+    "light.diffuse_scale",
+    0,
+    1
+   ],
+   [
+    "material.grid",
+    1,
+    3
+   ],
+   [
+    "material.self",
+    4,
+    3
+   ]
+  ],
+  "leaves": {
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCHumanoidStand": {
+  "state_dim": 28,
+  "state_names": [
+   "root_x",
+   "root_y",
+   "root_z",
+   "root_qw",
+   "root_qx",
+   "root_qy",
+   "root_qz",
+   "abdomen_z",
+   "abdomen_y",
+   "abdomen_x",
+   "right_hip_x",
+   "right_hip_z",
+   "right_hip_y",
+   "right_knee",
+   "right_ankle_y",
+   "right_ankle_x",
+   "left_hip_x",
+   "left_hip_z",
+   "left_hip_y",
+   "left_knee",
+   "left_ankle_y",
+   "left_ankle_x",
+   "right_shoulder1",
+   "right_shoulder2",
+   "right_elbow",
+   "left_shoulder1",
+   "left_shoulder2",
+   "left_elbow"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/humanoid-stand",
+  "flat_dim": 7,
+  "flat_layout": [
+   [
+    "light.diffuse_scale",
+    0,
+    1
+   ],
+   [
+    "material.grid",
+    1,
+    3
+   ],
+   [
+    "material.self",
+    4,
+    3
+   ]
+  ],
+  "leaves": {
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCManipulatorBringBall": {
+  "state_dim": 15,
+  "state_names": [
+   "arm_root",
+   "arm_shoulder",
+   "arm_elbow",
+   "arm_wrist",
+   "thumb",
+   "thumbtip",
+   "finger",
+   "fingertip",
+   "ball_x",
+   "ball_z",
+   "ball_y",
+   "target_ball_pos_x",
+   "target_ball_pos_z",
+   "target_ball_quat_qw",
+   "target_ball_quat_qy"
+  ],
+  "default_size": 224,
+  "reference_id": "dm_control/manipulator-bring_ball",
+  "flat_dim": 22,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.background",
+    2,
+    3
+   ],
+   [
+    "material.decoration",
+    5,
+    3
+   ],
+   [
+    "material.effector",
+    8,
+    3
+   ],
+   [
+    "material.grid",
+    11,
+    3
+   ],
+   [
+    "material.self",
+    14,
+    3
+   ],
+   [
+    "material.target",
+    17,
+    3
+   ],
+   [
+    "target_ball.shape",
+    20,
+    1
+   ],
+   [
+    "visibility.target_ball",
+    21,
+    1
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.background": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.effector": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   },
+   "material.target": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896
+    ]
+   },
+   "target_ball.shape": {
+    "cls": "Discrete",
+    "n": 3,
+    "init_value": 2
+   },
+   "visibility.target_ball": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCPendulumSwingup": {
+  "state_dim": 1,
+  "state_names": [
+   "hinge"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/pendulum-swingup",
+  "flat_dim": 14,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.decoration",
+    2,
+    3
+   ],
+   [
+    "material.effector",
+    5,
+    3
+   ],
+   [
+    "material.grid",
+    8,
+    3
+   ],
+   [
+    "material.self",
+    11,
+    3
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.effector": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCQuadrupedWalk": {
+  "state_dim": 23,
+  "state_names": [
+   "root_x",
+   "root_y",
+   "root_z",
+   "root_qw",
+   "root_qx",
+   "root_qy",
+   "root_qz",
+   "yaw_front_left",
+   "pitch_front_left",
+   "knee_front_left",
+   "ankle_front_left",
+   "yaw_front_right",
+   "pitch_front_right",
+   "knee_front_right",
+   "ankle_front_right",
+   "yaw_back_right",
+   "pitch_back_right",
+   "knee_back_right",
+   "ankle_back_right",
+   "yaw_back_left",
+   "pitch_back_left",
+   "knee_back_left",
+   "ankle_back_left"
+  ],
+  "default_size": 224,
+  "reference_id": "dm_control/quadruped-walk",
+  "flat_dim": 10,
+  "flat_layout": [
+   [
+    "light.diffuse_scale",
+    0,
+    1
+   ],
+   [
+    "material.effector",
+    1,
+    3
+   ],
+   [
+    "material.grid",
+    4,
+    3
+   ],
+   [
+    "material.self",
+    7,
+    3
+   ]
+  ],
+  "leaves": {
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.effector": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCReacherHard": {
+  "state_dim": 4,
+  "state_names": [
+   "shoulder",
+   "wrist",
+   "target_pos_x",
+   "target_pos_y"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/reacher-hard",
+  "flat_dim": 18,
+  "flat_layout": [
+   [
+    "camera.fovy_scale",
+    0,
+    1
+   ],
+   [
+    "light.diffuse_scale",
+    1,
+    1
+   ],
+   [
+    "material.decoration",
+    2,
+    3
+   ],
+   [
+    "material.effector",
+    5,
+    3
+   ],
+   [
+    "material.grid",
+    8,
+    3
+   ],
+   [
+    "material.self",
+    11,
+    3
+   ],
+   [
+    "material.target",
+    14,
+    3
+   ],
+   [
+    "visibility.target",
+    17,
+    1
+   ]
+  ],
+  "leaves": {
+   "camera.fovy_scale": {
+    "cls": "Box",
+    "low": [
+     0.550000011920929
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.decoration": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071
+    ]
+   },
+   "material.effector": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.4000000059604645,
+     0.20000000298023224
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   },
+   "material.target": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.6000000238418579,
+     0.30000001192092896,
+     0.30000001192092896
+    ]
+   },
+   "visibility.target": {
+    "cls": "Discrete",
+    "n": 2,
+    "init_value": 1
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ },
+ "DMCWalkerWalk": {
+  "state_dim": 9,
+  "state_names": [
+   "rootz",
+   "rootx",
+   "rooty",
+   "right_hip",
+   "right_knee",
+   "right_ankle",
+   "left_hip",
+   "left_knee",
+   "left_ankle"
+  ],
+  "default_size": 84,
+  "reference_id": "dm_control/walker-walk",
+  "flat_dim": 7,
+  "flat_layout": [
+   [
+    "light.diffuse_scale",
+    0,
+    1
+   ],
+   [
+    "material.grid",
+    1,
+    3
+   ],
+   [
+    "material.self",
+    4,
+    3
+   ]
+  ],
+  "leaves": {
+   "light.diffuse_scale": {
+    "cls": "Box",
+    "low": [
+     0.20000000298023224
+    ],
+    "high": [
+     1.7999999523162842
+    ],
+    "shape": [
+     1
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0
+    ]
+   },
+   "material.grid": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "material.self": {
+    "cls": "Box",
+    "low": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "high": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "shape": [
+     3
+    ],
+    "dtype": "float32",
+    "init_value": [
+     0.699999988079071,
+     0.5,
+     0.30000001192092896
+    ]
+   }
+  },
+  "has_step": false,
+  "sim_state_names": []
+ }
+}

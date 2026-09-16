@@ -1,13 +1,54 @@
-"""Per-family ``stable_worldmodel`` VariationMaps, one module per family.
+"""One ``VariationMap`` module per family, installed into ``worldmodel.VARIATION_MAPS``.
 
-``stable_envs.compat.worldmodel`` owns the ``VariationMap`` dataclass and the four maps that
-predate Step 8. The families added in Step 8 are large enough — twelve Fetch ids, thirteen DM
-Control ids — that keeping them inline would bury the dataclass they use under tables. Each module
-here exports a ``MAPS`` dict (``our class name -> VariationMap``) and nothing else that a caller
-needs; ``worldmodel`` merges them into ``VARIATION_MAPS`` at import, which is the only name any
-caller should read.
+``stable_envs.compat.worldmodel`` carries the four maps that predate Step 8 inline. Everything Step 8
+adds lives here instead, one module per family, for a reason that is about ownership rather than
+tidiness: the maps are written by different workstreams against different evidence, and a single
+dict literal in one file is a merge conflict per workstream and no way to say which measurement a
+given classification rests on.
 
-A module here must import cleanly on ANY interpreter: the maps are data, and a caller that wants to
-know how ``swm/FetchReach-v3``'s leaves are classified should not need ``mujoco_warp``, a GPU, or
-even the env's optional dependencies installed. So nothing here imports ``stable_envs.envs.*``.
+A family module declares ``MAPS: dict[str, VariationMap]``, keyed by the stable-envs CLASS name — the
+same key ``VARIATION_MAPS`` uses, so ``variation_map(env)`` finds it with no extra lookup. Adding a
+family is one import and one entry in ``_MODULES`` below; nothing else in the package changes, and
+nothing in ``worldmodel`` changes at all.
+
+``install`` is called once, from the bottom of ``worldmodel``, and REFUSES to overwrite an existing
+key. Two modules claiming one cell is a coordination bug and the import should say so rather than let
+whichever module imported last win.
 """
+from __future__ import annotations
+
+from typing import Mapping
+
+#: Family modules, in the order they are installed. One line per workstream.
+_MODULES = ("dmc_control", "fetch")
+
+
+def _collect() -> dict:
+    import importlib
+    out: dict = {}
+    for name in _MODULES:
+        mod = importlib.import_module(f"{__name__}.{name}")
+        for cell, vmap in mod.MAPS.items():
+            if cell in out:
+                raise RuntimeError(
+                    f"variation_maps: {cell!r} is declared by both {out[cell][1]} and {name}; one "
+                    f"cell has one appearance mapping — ask the coordinator which module owns it")
+            out[cell] = (vmap, name)
+    return out
+
+
+def install(registry: Mapping) -> dict:
+    """Merge every family module's maps into ``registry`` (``worldmodel.VARIATION_MAPS``).
+
+    Returns ``cell -> module name`` so a caller can say where a map came from. Refuses to replace a
+    map already in ``registry``: the four pre-Step-8 maps are authoritative for their cells.
+    """
+    where = {}
+    for cell, (vmap, name) in _collect().items():
+        if cell in registry:
+            raise RuntimeError(
+                f"variation_maps.{name} declares {cell!r}, which worldmodel.VARIATION_MAPS already "
+                f"carries; remove one of the two rather than shadowing")
+        registry[cell] = vmap
+        where[cell] = name
+    return where
