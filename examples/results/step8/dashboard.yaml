@@ -5,7 +5,7 @@ baseline_resolution:
   milestone_branch: milestone/step7-full-renderer-coverage @43ac952 (origin identical)
   tag: step7-closure -> 43ac952 (origin identical)
   sami_pre_step8_baseline: 43ac952
-  step8_integration: bd074d5ff48cdfe36886233289070456d73e5efa (verified takeover HEAD; handoff commit after e915466)
+  step8_integration: 3abab32+ (A merged; see git log)
   report_sha_discrepancy: 'Step-7 closure artifacts cite earlier integration SHAs (closure/coverage_matrix.json: 275970c; closure2/coverage_matrix.json + docs/research/step7_coverage.md: fec4f6e) because
     they were generated before the final merge/dashboard commits; per plan §1.2 the milestone branch/tag/history (43ac952) are authoritative; the verified tree content is contained in 43ac952 (only the
     closure2 merge and dashboard commits follow fec4f6e)'
@@ -607,12 +607,16 @@ workstreams:
   branch: step8/variations-dmc-control
   worktree: /Users/samib/stable-envs-step8-variations-dmc-control
   model: opus
-  status: delivered-unreported (4 commits, clean); agent killed by weekly limit; unreviewed
+  status: MERGED into step8/integration at 3abab32 (reviewed APPROVE)
   authorization: plan §9
   affected_ids: 5 classic control + 12 DMC ids (incl. Manipulator, Quadruped)
-  affected_files: stable_envs/compat/variation_maps/dmc_control.py (new), dmcontrol.py, classic_control.py, tests
+  affected_files: stable_envs/compat/worldmodel.py (VariationMap taxonomy/affine/rgb255, swm_variation_space wrapper walk, check_mapping), stable_envs/compat/variation_maps/{__init__,dmc_control}.py, tests,
+    docs, results; dmcontrol.py/classic_control.py NOT changed
   baseline_sha: 43ac952
-  head_sha: 063f216
+  head_sha: 0cbb136 (063f216 + prose-count follow-up)
+  review: review_a.md APPROVE-WITH-CHANGES (Codex reviewer) -> review_a_rereview.md APPROVE (sonnet, fresh) at 0cbb136
+  merge_gate: 1 scope PASS; 2 diagnosis PASS; 3 tests 138/138 reproduced; 4 Gate A/F targeted checks + unchanged-renderer carry-forward (tree identity verified); 5 replay carried forward by source identity
+    (no renderer/corpus change); 6 pixel movement none; 7 perf n/a; 8 APPROVE; 9 no semantic follow-up; 10 this row
 - workstream: B_variations_fetch
   branch: step8/variations-fetch
   worktree: /Users/samib/stable-envs-step8-variations-fetch
@@ -747,6 +751,8 @@ incident_log:
   item: 'HANDOFF CHECKPOINT: all Step-8 agents killed by the weekly limit; state recorded in docs/research/step8_handoff.md; nothing merged; no worktree deleted; nothing pushed'
 - date: '2026-09-16'
   item: Fable coordinator resumed after Codex takeover; fleet reconciled; Codex WIP branches classified (see takeover.codex_dispositions); A re-review and B/C/E finishers launched
+- date: '2026-09-16'
+  item: A merged (3abab32) after fresh APPROVE; review files renamed review_*.md for the citation-scanner exemption; handoff/takeover pages added to the nav
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md
