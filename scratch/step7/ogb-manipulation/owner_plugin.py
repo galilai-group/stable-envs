@@ -26,11 +26,25 @@ def pytest_configure(config):                                                # n
     if getattr(mujoco.Renderer, "_owner_patched", False):
         return
 
+    real_new = mujoco.Renderer.__new__
+
+    def new(cls_, *a, **k):
+        # __new__ AS WELL AS __init__: the last run reported four deaths whose birth this plugin
+        # never saw ("born during <not recorded>"). Whatever builds them does not reach the __init__
+        # this patch wraps, so the allocation itself is where the record has to be taken.
+        obj = real_new(cls_) if real_new is object.__new__ else real_new(cls_, *a, **k)
+        _SEQ[0] += 1
+        where = [ln.strip().replace("\n", " | ") for ln in traceback.format_stack()[-10:-1]]
+        _BORN[id(obj)] = (_SEQ[0], _CURRENT[0], where)
+        print(f"\n[RENDERER NEW {_SEQ[0]}] during {_CURRENT[0]}\n    " + "\n    ".join(where[-5:]),
+              flush=True)
+        return obj
+
     def init(self, *a, **k):
         out = real_init(self, *a, **k)
         _SEQ[0] += 1
         where = [ln.strip().replace("\n", " | ") for ln in traceback.format_stack()[-10:-1]]
-        _BORN[id(self)] = (_SEQ[0], _CURRENT[0], where)
+        _BORN.setdefault(id(self), (_SEQ[0], _CURRENT[0], where))
         print(f"\n[RENDERER BORN {_SEQ[0]}] during {_CURRENT[0]}\n    "
               + "\n    ".join(where[-4:]), flush=True)
         return out
@@ -52,6 +66,7 @@ def pytest_configure(config):                                                # n
             except Exception:                                                # noqa: BLE001
                 pass
 
+    mujoco.Renderer.__new__ = new
     mujoco.Renderer.__init__ = init
     if real_close is not None:
         mujoco.Renderer.close = close
