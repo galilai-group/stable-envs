@@ -114,7 +114,7 @@ def _gate_a(row: dict, rejudged: dict | None = None) -> dict:
                if r["cell"] in (row.get("stable_envs_envs") or [])]
     if records:
         per_device = {}
-        failures = set()
+        failures, blocked, declared = set(), set(), []
         for rec in records:
             judgment = rec["judgment"]
             verdict = judgment["gate_a"]
@@ -124,21 +124,56 @@ def _gate_a(row: dict, rejudged: dict | None = None) -> dict:
                 verdict = "REFUSED_BY_DESIGN"
             per_device.setdefault(rec["device"], []).append(verdict)
             failures.update(judgment["failures"])
+            blocked.update(judgment["blocked"])
+            for name, chk in sorted((judgment.get("checks") or {}).items()):
+                # An applicability RULING is part of the row, not a footnote to it: a reader who
+                # sees PASS has to be able to see, in the same row, what was not asserted and why.
+                if chk.get("status") == "not_applicable" and chk.get("declared_by"):
+                    declared.append({"check": name, "device": rec["device"],
+                                     "kind": "declared_not_applicable",
+                                     "declared_by": chk["declared_by"], "why": chk.get("why"),
+                                     "measured_evidence": chk.get("measured_evidence")})
+                if chk.get("applicability"):
+                    declared.append({"check": name, "device": rec["device"],
+                                     "kind": "judged_on_the_applicable_band",
+                                     "bands": chk["applicability"].get("bands"),
+                                     "why": chk["applicability"].get("why"),
+                                     "judged_on_subset": chk.get("judged_on_subset"),
+                                     "observed": chk.get("observed"), "bound": chk.get("bound"),
+                                     "all_bands_recorded_not_judged":
+                                         chk.get("all_bands_recorded_not_judged")})
         def aggregate(values):
             return next((v for v in ("FAIL", "BLOCKED", "PARTIAL", "PASS", "REFUSED_BY_DESIGN")
                          if v in values), "BLOCKED")
         devices = {dev: aggregate(values) for dev, values in per_device.items()}
         overall = aggregate(list(devices.values()))
+        # The Step-7 row's own note is the record of WHY this cell reads the way it does, and the
+        # rejudgment does not make it untrue -- it is kept and the rejudgment appended to it, rather
+        # than replaced by a generic sentence that drops the cell-specific evidence.
+        note = ["Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge "
+                "(scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: "
+                "nothing was rendered and no threshold moved."]
+        if declared:
+            note.append("Applicability READ off the class, recorded in gate_a.applicability: "
+                        + "; ".join(sorted({d["check"] for d in declared})) + ".")
+        if blocked:
+            note.append("UNMEASURED, not failed: " + ", ".join(sorted(blocked)) + " could not be "
+                        "judged because the measuring interpreter did not record a declared "
+                        "reference package version.")
+        if g.get("note"):
+            note.append("Step-7 record, kept: " + g["note"][:600])
         return {"status": STATUS_RULES[overall], "raw": overall,
                 "per_device": {d: STATUS_RULES[v] for d, v in devices.items()},
                 "failing_checks": sorted(failures),
+                "blocked_checks": sorted(blocked),
+                "applicability": declared,
                 "source": "examples/results/step8/certification/gate_a_rejudged.json",
                 "measurements": [{"cell": r["cell"], "device": r["device"],
                                   "source": r["source"], "source_sha256": r["source_sha256"],
-                                  "blocked_checks": r["judgment"]["blocked"]} for r in records],
-                "note": "Historical Step-7 measurements rejudged with the frozen Gate-A judge, "
-                        "including family_specific checks. This is not a fresh Step-8 run; "
-                        "unresolved historical protocol/reference issues remain visible."}
+                                  "blocked_checks": r["judgment"]["blocked"],
+                                  "not_applicable_checks": r["judgment"]["not_applicable"]}
+                                 for r in records],
+                "note": " ".join(note)}
     devices = g.get("devices") or {}
     verdicts = {d: STATUS_RULES.get(v, f"?{v}") for d, v in devices.items()}
     overall = g.get("result") or ("FAIL" if "FAIL" in devices.values() else None)

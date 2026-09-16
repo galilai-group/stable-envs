@@ -1,13 +1,33 @@
-"""Regression coverage for truthful historical Gate-A reporting."""
+"""Regression coverage for truthful historical Gate-A reporting.
+
+Two things are being defended here and they pull against each other, which is why both get tests:
+
+* a family_specific check that IS applicable must reach the Gate-A verdict -- the Step-7 harness
+  judged only the mandatory group, so a cell could be recorded PASS while carrying a failing Gate-A
+  check;
+* a check whose bound the CLASS declares inapplicable, with the official renderer's own evidence
+  attached, must come out ``not_applicable`` with that evidence -- neither FAIL (which would judge a
+  renderer against a relation its reference does not satisfy) nor a silent PASS (which would hide
+  that nothing was asserted).
+
+The loophole tests matter as much as the two above: an applicability declaration that costs nothing
+to write is a way to silence a check, so a declaration missing its evidence must be REFUSED.
+"""
 import importlib.util
 from pathlib import Path
 
 import numpy as np
+import pytest
 
-from stable_envs.testing.conformance import resolution_consistency_applicability
+from stable_envs.testing.conformance import (color_exactness_applicability,
+                                             resolution_consistency_applicability)
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+#: The five leaves PFRocketLanding declares, and nothing else: the ruling is scoped by name.
+ROCKET_LEAVES = ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color",
+                 "rocket.leg_color")
 
 
 def module(name, path):
@@ -16,6 +36,22 @@ def module(name, path):
     spec.loader.exec_module(result)
     return result
 
+
+@pytest.fixture(scope="module")
+def rejudged():
+    return module("step8_rejudge_test", "scratch/step8/rejudge_gate_a.py").build()
+
+
+@pytest.fixture(scope="module")
+def report():
+    return module("step8_report_test", "scratch/step8/report.py")
+
+
+def record(rejudged, cell, device):
+    return next(r for r in rejudged["records"] if r["cell"] == cell and r["device"] == device)
+
+
+# --------------------------------------------------------------- resolution applicability reader
 
 def test_exclusion_only_applies_to_all_states_outside_exclusion():
     class Env:
@@ -38,16 +74,175 @@ def test_empty_explicit_inclusion_does_not_invent_complement():
     assert result["indices"] == []
 
 
-def test_historical_family_failure_reaches_support_matrix():
-    rejudge = module("step8_rejudge_test", "scratch/step8/rejudge_gate_a.py")
-    report = module("step8_report_test", "scratch/step8/report.py")
-    evidence = rejudge.build()
-    rocket = next(r for r in evidence["records"]
-                  if r["cell"] == "PFRocketLanding" and r["device"] == "cuda")
-    assert rocket["previous_mandatory_only_verdict"] == "PASS"
-    assert "check_colors_apply_exactly" in rocket["judgment"]["failures"]
-    row = {"stable_envs_envs": ["PFRocketLanding"], "gate_a": {"result": "PASS"}}
-    joined = report._gate_a(row, evidence)
+# --------------------------------------------------------------- colour applicability reader
+
+def test_no_colour_declaration_leaves_every_leaf_judged():
+    class Env:
+        pass
+    result = color_exactness_applicability(Env, ["a.color->[17, 33, 200]"])
+    assert result["honoured"] is False
+    assert result["not_applicable_probes"] == []
+    assert result["undeclared_leaves_still_judged"] == ["a.color->[17, 33, 200]"]
+
+
+@pytest.mark.parametrize("missing", ["leaves", "mechanism", "max_shading_factor",
+                                     "official_renderer_fails_the_same_check", "evidence"])
+def test_a_declaration_missing_its_evidence_is_refused(missing):
+    """Every required key is load-bearing: drop any one and the check stays judged."""
+    full = {"leaves": ["a.color"], "mechanism": "a law", "max_shading_factor": 0.99,
+            "official_renderer_fails_the_same_check": True, "evidence": ["somewhere.json"]}
+    Env = type("Env", (), {"color_exactness_applicability": {k: v for k, v in full.items()
+                                                             if k != missing}})
+    result = color_exactness_applicability(Env, ["a.color->[17, 33, 200]"])
+    assert result["honoured"] is False
+    assert missing in result["rejected_because"]
+
+
+def test_a_law_that_reaches_unit_gain_is_refused():
+    """The whole argument is that the ceiling is below 1. A ceiling of 1 has no case to make."""
+    Env = type("Env", (), {"color_exactness_applicability": {
+        "leaves": ["a.color"], "mechanism": "a law", "max_shading_factor": 1.0,
+        "official_renderer_fails_the_same_check": True, "evidence": ["somewhere.json"]}})
+    assert color_exactness_applicability(Env, ["a.color->[17, 33, 200]"])["honoured"] is False
+
+
+def test_an_undeclared_leaf_is_not_covered_by_a_declared_one():
+    Env = type("Env", (), {"color_exactness_applicability": {
+        "leaves": ["a.color"], "mechanism": "a law", "max_shading_factor": 0.9,
+        "official_renderer_fails_the_same_check": True, "evidence": ["somewhere.json"]}})
+    result = color_exactness_applicability(Env, ["a.color->[17, 33, 200]", "b.color->[17, 33, 200]"])
+    assert result["honoured"] is True
+    assert result["not_applicable_probes"] == ["a.color->[17, 33, 200]"]
+    assert result["undeclared_leaves_still_judged"] == ["b.color"]
+
+
+def test_the_rocket_declares_exactly_the_five_lit_leaves():
+    """Read off the CLASS, with no env constructed and no PyFlyt installed."""
+    from stable_envs.envs.rocket_landing import PFRocketLanding
+    decl = PFRocketLanding.color_exactness_applicability
+    assert tuple(decl["leaves"]) == ROCKET_LEAVES
+    assert decl["max_shading_factor"] == 0.993567
+    assert decl["official_renderer_fails_the_same_check"] is True
+    assert any("colour_law_ceiling.json" in e for e in decl["evidence"])
+    for cited in decl["evidence"]:
+        assert (ROOT / cited.split(":")[0]).exists(), cited
+
+
+# --------------------------------------------------------------- the rejudged Gate-A record
+
+def test_the_rocket_colour_check_is_not_applicable_with_evidence(rejudged):
+    """Not FAIL, and not a silent PASS: declared, with the mechanism and the artifacts attached."""
+    rocket = record(rejudged, "PFRocketLanding", "cuda")
+    check = rocket["judgment"]["checks"]["check_colors_apply_exactly"]
+    assert check["status"] == "not_applicable"
+    assert "check_colors_apply_exactly" not in rocket["judgment"]["failures"]
+    assert "check_colors_apply_exactly" in rocket["judgment"]["not_applicable"]
+    assert check["declared_by"] == "PFRocketLanding.color_exactness_applicability"
+    assert "0.993567" in check["why"] and "colour_law_ceiling.json" in check["why"]
+    # The measurement survives the ruling: the ten probes are still in the record, so a wiring
+    # regression is still visible even though no bound is asserted on them.
+    kept = check["measured_evidence"]["colors_not_applied"]
+    assert len(kept) == 2 * len(ROCKET_LEAVES)
+    assert {p.split("->")[0] for p in kept} == set(ROCKET_LEAVES)
+
+
+def test_the_rocket_declaration_is_recorded_as_a_join_not_invented(rejudged):
+    join = next(j for j in rejudged["applicability_joins"]
+                if j["cell"] == "PFRocketLanding" and j["check"] == "check_colors_apply_exactly")
+    assert join["result"].startswith("NOT_APPLICABLE")
+    assert join["declared_leaves"] == sorted(ROCKET_LEAVES)
+    assert join["undeclared_leaves_still_judged"] == []
+    # Step 7 did not record it; the check records it from Step 8 on, and the gap says so.
+    assert join["measured_best_abs_diff"] is None
+    assert "records it from Step 8 onward" in join["best_abs_diff_note"]
+
+
+def test_craftax_classic_is_judged_on_its_applicable_subset(rejudged):
+    """The frozen 1.000000 floor, asserted on the band it was recorded for, holds exactly."""
+    for device in ("cpu", "cuda"):
+        check = record(rejudged, "CraftaxClassic", device)["judgment"]["checks"][
+            "check_resolution_consistency"]
+        assert check["status"] == "pass"
+        assert check["observed"]["exact_frac"] == 1.0
+        assert check["judged_on_subset"] == 6
+        assert check["applicability"]["bands"] == {"light_level >= 0.5": "applicable",
+                                                   "light_level < 0.5": "not_applicable"}
+        # The mixed-band number is kept beside it, recorded and never judged.
+        assert check["all_bands_recorded_not_judged"]["exact_frac"] == pytest.approx(0.816382137)
+        assert check["bound"] == ">= 1.0 - 0.005"
+
+
+def test_the_craftax_subset_join_cites_the_artifact_it_read(rejudged):
+    join = next(j for j in rejudged["applicability_joins"]
+                if j["cell"] == "CraftaxClassic" and j["device"] == "cuda"
+                and j["check"] == "check_resolution_consistency")
+    assert join["result"] == "JOINED"
+    assert join["source"] == "examples/results/step8/certification/oscar_paired_tests.json"
+    assert len(join["source_sha256"]) == 64
+    assert join["n_judged"] == 6
+    assert rejudged["sources"]["subset_judgment_sha256"] == join["source_sha256"]
+
+
+def test_a_subset_join_whose_bands_are_not_the_class_s_is_refused():
+    rejudge = module("step8_rejudge_refuse", "scratch/step8/rejudge_gate_a.py")
+    cls = type("Env", (), {"resolution_consistency_applicability": {"a >= 1": "applicable"}})
+    paired = {"applicability_on_gpu_hardware": {"cells": {"X/cuda": {
+        "bands": {"a >= 1": "not_applicable"}, "applicable": True,
+        "judged": {"exact_frac": 1.0}, "n_judged": 6}}}}
+    evidence, join = rejudge._resolution_join("X", "cuda", {"exact_frac": 0.5}, cls, paired)
+    assert join["result"].startswith("REFUSED")
+    assert evidence == {"exact_frac": 0.5}
+
+
+def test_a_subset_join_for_a_different_measurement_is_refused():
+    """The joined subset has to belong to the same draw as the shard it is joined onto."""
+    rejudge = module("step8_rejudge_refuse2", "scratch/step8/rejudge_gate_a.py")
+    cls = type("Env", (), {"resolution_consistency_applicability": {"a >= 1": "applicable"}})
+    paired = {"applicability_on_gpu_hardware": {"cells": {"X/cuda": {
+        "bands": {"a >= 1": "applicable"}, "applicable": True,
+        "all_bands": {"exact_frac": 0.9, "mean_abs": 1.0, "max_abs": 3},
+        "judged": {"exact_frac": 1.0}, "n_judged": 6}}}}
+    shard = {"exact_frac": 0.5, "mean_abs": 1.0, "max_abs": 3}
+    evidence, join = rejudge._resolution_join("X", "cuda", shard, cls, paired)
+    assert join["result"].startswith("REFUSED")
+    assert evidence == shard
+
+
+# --------------------------------------------------------------- the support-matrix join
+
+def test_an_applicable_family_failure_still_reaches_the_support_matrix(rejudged, report):
+    """The inconsistency this whole change exists to fix, on a cell with no declaration."""
+    fake = {"records": [{"cell": "X", "device": "cuda", "source": "s.json", "source_sha256": "0" * 64,
+                         "judgment": {"gate_a": "FAIL", "failures": ["check_colors_apply_exactly"],
+                                      "blocked": [], "not_applicable": [], "checks": {}}}]}
+    joined = report._gate_a({"stable_envs_envs": ["X"], "gate_a": {"result": "PASS"}}, fake)
     assert joined["status"] == "FAIL"
-    assert "check_colors_apply_exactly" in joined["failing_checks"]
-    assert joined["per_device"]["cuda"] == "FAIL"
+    assert joined["failing_checks"] == ["check_colors_apply_exactly"]
+
+
+def test_the_rocket_row_records_the_ruling_and_the_reference_gap(rejudged, report):
+    row = {"stable_envs_envs": ["PFRocketLanding"],
+           "gate_a": {"result": "PASS", "note": "the Step-7 record",
+                      "per_device": {"cpu": {"verdict": "REFUSED_BY_DESIGN"}}}}
+    joined = report._gate_a(row, rejudged)
+    assert joined["failing_checks"] == []
+    assert joined["per_device"]["cpu"] == "UNSUPPORTED_BY_DESIGN"
+    # The two visual-fidelity checks are UNMEASURED (the measuring interpreter never recorded
+    # PyFlyt/pybullet), which is not the same word as FAIL and must not be collapsed into it.
+    assert joined["blocked_checks"] == ["check_visual_fidelity",
+                                        "check_visual_fidelity_under_variation"]
+    assert joined["per_device"]["cuda"] == "UNMEASURED"
+    assert any(d["check"] == "check_colors_apply_exactly" and d["kind"] == "declared_not_applicable"
+               for d in joined["applicability"])
+    assert "the Step-7 record" in joined["note"]
+
+
+def test_the_craftax_classic_row_passes_with_the_band_recorded(rejudged, report):
+    row = {"stable_envs_envs": ["CraftaxClassic"], "gate_a": {"result": "PASS", "note": "kept"}}
+    joined = report._gate_a(row, rejudged)
+    assert joined["status"] == "PASS"
+    assert joined["failing_checks"] == [] and joined["blocked_checks"] == []
+    band = next(d for d in joined["applicability"]
+                if d["check"] == "check_resolution_consistency" and d["device"] == "cuda")
+    assert band["judged_on_subset"] == 6
+    assert band["all_bands_recorded_not_judged"]["exact_frac"] == pytest.approx(0.816382137)
