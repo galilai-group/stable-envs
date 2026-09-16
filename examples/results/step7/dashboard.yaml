@@ -1044,6 +1044,13 @@ workstreams:
       test is running; it never made a context, so EGL_CONTEXT_RELEASED stayed 0 (both counters were truthful). Keepalive could not hold it (append is below the raising line). Fix: raise the offscreen buffer
       on the rig''s private deep copy before constructing (reference env untouched). Escalation withdrawn; no guard change.'
     next: gate on 27e55680 in allocation 6443480 after the obsolete pre-fix gate in 6437813 finishes
+    gate_fixed_tree_6443480_gpu2264: Gate A rc=0 both cells incl. check_state_roundtrip max_abs_err 0.0; suite renderers 149 created / 0 closed (was 4 closed), EGL 192 created / 0 released; OGB rows 54
+      PASSED / 32 SKIPPED / 2 FAILED = the expected downsample-table entries; the 798 errors are other families whose deps the OGB-only venv lacks (out of scope)
+    downsample_bounds_added: DOWNSAMPLE_EXACT_FRAC OGBCube 0.885782, OGBScene 0.805306, measured under the table's own protocol (downsample_protocol_states, 8 states at render_worker.STATE_SEED, default
+      appearance, states sha 055d4057) - a tests/gpu edit adding measured entries for new cells (not a threshold change); reviewer to verify provenance; the other Step-7 cells' entries remain Step-8 items
+      (Craftax needs the applicability mechanism)
+    grep_defect: gate script's 'NO OGB FAILURES' was a false pass (supervisor -v format puts the outcome at line end); re-checked properly
+    final_gate: running on 33c1076 with the bounds in place
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1548,6 +1555,8 @@ incident_log:
 - date: '2026-09-16'
   item: 'W5 ROOT CAUSE of the renderer-close guard failures: oversize Renderer construction raising after __new__ (OGBench offscreen buffer = registered size); fixed on the private model copy; escalation
     withdrawn'
+- date: '2026-09-16'
+  item: 'W5: fix verified (0 renderers closed across the registry; Gate A rc=0); downsample bounds for OGBCube/OGBScene added under the table''s protocol; final gate running'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
