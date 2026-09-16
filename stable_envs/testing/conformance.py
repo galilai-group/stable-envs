@@ -764,6 +764,37 @@ def color_exactness_applicability(env, probes=None) -> dict:
                    f"env stays judged ({rest or 'there are none'})."}
 
 
+def partition_colour_exactness(result: dict) -> dict:
+    """Split ``check_colors_apply_exactly``'s failures into the ones a caller may still ASSERT on.
+
+    The check is deliberately unchanged: it probes every RGB leaf and reports every leaf that did not
+    receive its colour literally. What an ASSERTION is entitled to do with that list is a different
+    question, and this is the one place that answers it, so the GPU suite and the certifier cannot
+    drift apart on it.
+
+    ``asserted``          failures on leaves NOTHING declares inapplicable. A caller asserts this is
+                          empty, exactly as it always has.
+    ``not_applicable``    failures on leaves the class declares, each with the ``best_abs_diff`` the
+                          probe measured. REPORTED, never asserted -- but recorded, so a knob that
+                          comes off its primitive still moves a number.
+
+    A result with no ``applicability`` (an older artifact, or an env with no declaration) puts every
+    failure in ``asserted``: the conservative direction, and the pre-Step-8 behaviour exactly.
+    """
+    failures = list(result.get("colors_not_applied") or [])
+    app = result.get("applicability") or {}
+    best = result.get("best_abs_diff") or {}
+    if not app.get("honoured"):
+        return {"asserted": failures, "not_applicable": [], "honoured": False,
+                "why": app.get("why") or "no honoured colour-exactness declaration, so every failing "
+                                         "probe is asserted on"}
+    excused = set(app.get("not_applicable_probes") or [])
+    return {"asserted": [p for p in failures if p not in excused],
+            "not_applicable": [{"probe": p, "best_abs_diff": best.get(p)}
+                               for p in failures if p in excused],
+            "honoured": True, "why": app.get("why")}
+
+
 def check_colors_apply_exactly(env) -> dict:
     """An RGB knob set to a colour must put THAT colour in the frame, not merely change it.
 

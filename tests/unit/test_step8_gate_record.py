@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 
 from stable_envs.testing.conformance import (color_exactness_applicability,
+                                             partition_colour_exactness,
                                              resolution_consistency_applicability)
 
 
@@ -246,3 +247,59 @@ def test_the_craftax_classic_row_passes_with_the_band_recorded(rejudged, report)
                 if d["check"] == "check_resolution_consistency" and d["device"] == "cuda")
     assert band["judged_on_subset"] == 6
     assert band["all_bands_recorded_not_judged"]["exact_frac"] == pytest.approx(0.816382137)
+
+
+# ------------------------------------------------- the helper the GPU assertion uses (CPU-runnable)
+
+def _probe(leaf, target="[17, 33, 200]"):
+    return f"{leaf}->{target}"
+
+
+def test_partition_without_a_declaration_asserts_everything():
+    """The pre-Step-8 behaviour, exactly: no declaration means every failure is asserted on."""
+    part = partition_colour_exactness({"colors_not_applied": [_probe("a.color"), _probe("b.color")]})
+    assert part["honoured"] is False
+    assert part["asserted"] == [_probe("a.color"), _probe("b.color")]
+    assert part["not_applicable"] == []
+
+
+def test_partition_asserts_the_undeclared_leaves_and_only_those():
+    result = {"colors_not_applied": [_probe("a.color"), _probe("b.color")],
+              "best_abs_diff": {_probe("a.color"): 4, _probe("b.color"): 9},
+              "applicability": {"honoured": True, "why": "a law",
+                                "not_applicable_probes": [_probe("a.color")]}}
+    part = partition_colour_exactness(result)
+    assert part["asserted"] == [_probe("b.color")]
+    assert part["not_applicable"] == [{"probe": _probe("a.color"), "best_abs_diff": 4}]
+
+
+def test_partition_keeps_the_measurement_beside_the_excused_leaf():
+    """The declaration stops the assertion, never the measurement: the number has to come through."""
+    result = {"colors_not_applied": [_probe("a.color")],
+              "best_abs_diff": {_probe("a.color"): 7},
+              "applicability": {"honoured": True, "not_applicable_probes": [_probe("a.color")]}}
+    part = partition_colour_exactness(result)
+    assert part["asserted"] == []
+    assert part["not_applicable"][0]["best_abs_diff"] == 7
+
+
+def test_partition_on_a_passing_env_is_empty_either_way():
+    for result in ({"colors_not_applied": []},
+                   {"colors_not_applied": [], "applicability": {"honoured": True}}):
+        part = partition_colour_exactness(result)
+        assert part["asserted"] == [] and part["not_applicable"] == []
+
+
+def test_the_rocket_declaration_drives_the_partition_end_to_end():
+    """The class declaration, the real probe names, and the helper the GPU suite calls."""
+    from stable_envs.envs.rocket_landing import PFRocketLanding
+    probes = [_probe(leaf, t) for leaf in ROCKET_LEAVES
+              for t in ("[17, 33, 200]", "[200, 17, 33]")]
+    result = {"colors_not_applied": probes + [_probe("environment.sky_color")],
+              "best_abs_diff": {p: 3 for p in probes + [_probe("environment.sky_color")]},
+              "applicability": color_exactness_applicability(PFRocketLanding, probes
+                                                             + [_probe("environment.sky_color")])}
+    part = partition_colour_exactness(result)
+    # The five declared leaves are excused; a sixth leaf nobody declared still fails.
+    assert part["asserted"] == [_probe("environment.sky_color")]
+    assert len(part["not_applicable"]) == len(probes)
