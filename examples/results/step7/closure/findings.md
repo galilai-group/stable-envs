@@ -381,7 +381,7 @@ which this workstream may not edit and both of which are frozen for Step 7. **Re
 failure. Its **set** is not what it was: at `76dc5116` it names **9** unresolvable paths, at
 `275970cc` it names **10**. The tenth is
 
-    scratch/sboughan/se7/swm-src/stable_worldmodel
+    $SCR/se7/swm-src/stable_worldmodel
         cited at examples/results/step7/ogb-manipulation/oscar/provenance_6395175_readback.txt:18
 
 — a `$SCR` path inside a committed Oscar provenance capture, which the scanner reads because it reads

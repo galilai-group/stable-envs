@@ -1042,7 +1042,7 @@ workstreams:
     process_notes:
     - rsync --delete destroyed node-side results (recovered from $SCR/logs); --delete dropped
     - a positional splice deleted _UNMEASURED/_REFERENCE_VERSIONS; caught by import failure, restored
-    citations: the 9 remaining broken citations are the Step-6 baseline set (carracing, robocasa, six scratch/sboughan paths), none from W5
+    citations: the 9 remaining broken citations are the Step-6 baseline set (carracing, robocasa, six $SCR-relative paths), none from W5
     gate_progress: '5 -> 4 failures: OGBCube declared-fidelity test passes with the pasted 4.3 ceiling; OGBScene already passing'
     remaining_blocker: 'resource guard: 4 renderers closed mid-session (node-independent: gpu2104/2105/2106/2109) with 0 EGL contexts released (6 created / 6 live); the four closed renderers report ''born
       during <not recorded>'' (instrumentation missed their creation; __new__ now patched, -s); job 6437003 asks (A) do the four rows fail alone, (B) who builds them; if still unnamed -> escalate to the
