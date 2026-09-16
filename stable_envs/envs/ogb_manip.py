@@ -101,6 +101,33 @@ DEFAULT_VARIATION_PATHS = {
     "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
     "Scene": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
 }
+# ---- MODULE CACHES, and what each one is allowed to remember --------------------------------
+#
+# All four are keyed by CELL, not by renderer instance, and none of them is per-`OGBManipBase`.
+# That is deliberate -- an EGL context and a mujoco_warp graph are process resources -- but it is
+# also the reason a style leaf has to be written with more care here than in an env that owns its
+# own buffers, so the rule is written down once:
+#
+#   _BUNDLE_CACHE   (cell)                 immutable reference model, pristine arrays, cube geom
+#                                          ids, grid-texture masks, swm's declared defaults. Never
+#                                          varies with style; read-only after construction.
+#   _CTX_CACHE      (cell, res, nworld)    the mujoco_warp context. Its per-world `geom_rgba` is
+#                                          MUTABLE and SHARED across renders, across chunks and
+#                                          across renderer instances, so every per-world appearance
+#                                          leaf must be written for EVERY world of EVERY chunk of
+#                                          EVERY render -- INCLUDING when the requested value is the
+#                                          registered default. Skipping the default upload is what
+#                                          leaks a previous render's cube colour into this one, so
+#                                          `_cube_colours` never returns `None` for a cell that has
+#                                          cube geoms.
+#   _PLATE_CACHE    (cell, res, device,    baked static plates. `floorkey` is the QUANTISED floor
+#                    floorkey)             colour -- the bytes MuJoCo would store -- and is `None`
+#                                          for the default, so the default plate keeps exactly the
+#                                          key it had before `floor.color` existed.
+#   _PLATE_RIGS     (cell, res)            the private (model, data, renderer) triple that bakes a
+#                                          plate. Its texture and GL context are MUTATED per bake,
+#                                          so `_apply_floor` writes the floor it wants on every
+#                                          bake rather than trusting what the last bake left.
 _CTX_CACHE: dict = {}
 _CTX_CACHE_MAX = 4
 _PLATE_CACHE: dict = {}
@@ -285,8 +312,28 @@ def _variation_defaults(u) -> dict:
 
     Read from the live space rather than written down here, so our default IS swm's default by
     construction and cannot drift from it in a later swm release.
+
+    SHAPE CONTRACT, decided once and enforced here so nothing downstream has to guess. swm declares
+    ``cube.color`` as ``(num_cubes, 3)`` and both registered cells are one-cube configurations
+    (``CubeEnv(env_type='single')`` and ``SceneEnv``, which pins ``_num_cubes = 1``), so the leaf
+    carries exactly one RGB triple. We carry it FLAT, as ``(3,)``: ``VariationMap`` pairs leaves by
+    dotted path and ``compat.worldmodel`` moves them through ``flat_layout`` widths, so a leading
+    axis of length 1 buys nothing and costs a shape that the Box, the style row and the swm value
+    would each spell differently. ``style_from_variation`` accepts swm's ``(1, 3)`` because it
+    flattens before slicing; ``variation_from_style`` emits the flat ``(3,)`` back, which is the
+    same flattening every multi-row leaf in that module already gets and is recorded in findings.md
+    as a boundary reshape rather than papered over here.
+
+    ``floor.color`` is ``(2, 3)`` on both sides -- the checker's two colours -- and stays shaped,
+    because the two rows are not interchangeable and a flat six-vector would let a caller swap them
+    silently.
     """
     vs = getattr(u, "variation_space", None)
+    ncube = int(getattr(u, "_num_cubes", 1) or 1)
+    assert ncube == 1, (
+        f"this cell has {ncube} cubes, and the (3,) cube.color contract assumes one. A multi-cube "
+        f"configuration needs the leaf widened to (num_cubes, 3) on BOTH sides, plus per-cube geom "
+        f"groups in _cube_geoms; it is not a shape that can be fixed at the Box alone")
     out = {}
     for path, fallback in (("cube.color", [[0.96, 0.26, 0.33]]),
                            ("floor.color", [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]])):
@@ -300,9 +347,9 @@ def _variation_defaults(u) -> dict:
             except Exception:
                 val = None
         out[path] = np.asarray(fallback, np.float64) if val is None else val
-    # swm declares cube.color as (num_cubes, 3); both registered cells have exactly one cube, and we
-    # carry it as a flat (3,) leaf so the mapped path has the same units on both sides.
-    out["cube.color"] = np.asarray(out["cube.color"], np.float64).reshape(1, 3)
+    # swm's (num_cubes, 3) -> our flat (3,); asserted one cube above, so this cannot silently drop a
+    # second cube's colour.
+    out["cube.color"] = np.asarray(out["cube.color"], np.float64).reshape(-1)[:3]
     out["floor.color"] = np.asarray(out["floor.color"], np.float64).reshape(2, 3)
     return out
 
@@ -720,7 +767,7 @@ class OGBManipBase(StableEnv):
         """
         d = _bundle(self.CELL).var_defaults
         return Dict({
-            "cube": Dict({"color": Box(low=0.0, high=1.0, shape=(1, 3),
+            "cube": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
                                        init_value=d["cube.color"])}),
             "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3),
                                         init_value=d["floor.color"])}),
@@ -827,8 +874,16 @@ class OGBManipBase(StableEnv):
         model and not the context, so without the upload the plate would silently keep the old floor
         and every floor.color would read as inert.
 
-        Always written, never skipped when the value looks like the default: the rig is shared across
-        colours, so "the texture is whatever the last bake left" is the one state this must not have.
+        Written on EVERY bake, with no "it already looks like that" shortcut. The rig, its texture
+        and its GL context are one per (cell, res) for the life of the process and are reused by
+        every floor colour any renderer instance asks for, so "the texture is whatever the last bake
+        left" is the one state this must not have. A conditional upload would be correct only if
+        `rig.floor` could never disagree with the context, and it disagrees the moment a bake raises
+        between the texel write and the upload. The cost is one `mjr_uploadTexture` per plate-cache
+        MISS, never per render: a cache hit does not reach this function at all.
+
+        `rig.floor` is therefore a RECORD of what was last written, kept for diagnostics and for the
+        assertion below, not a permission to skip the write.
         """
         import mujoco
         g = self._b.grid_tex
@@ -836,9 +891,6 @@ class OGBManipBase(StableEnv):
             return
         want = self._b.var_defaults["floor.color"] if floor is None else np.asarray(floor, np.float64)
         want = want.reshape(2, 3)
-        if getattr(rig, "floor", None) is not None and np.array_equal(
-                mj_quantise(want), mj_quantise(rig.floor)):
-            return                                   # the context already holds this texture
         flat = rig.model.tex_data[g["adr"]:g["adr"] + g["n"]].reshape(-1, g["nch"])
         flat[g["mask1"], :3] = mj_quantise(want[0])
         flat[g["mask2"], :3] = mj_quantise(want[1])
@@ -870,13 +922,14 @@ class OGBManipBase(StableEnv):
         buf = out.view(B, size, size, 3)
         sty = self.resolve_style(style, variation, batch=B)
         # The batch is grouped by the plate-affecting half of the style, exactly as envs/ogbench.py
-        # groups its maze plates: environments sharing a floor colour share one bake. `floor_groups`
-        # returns None for the common case of one floor across the batch, and that case then takes
-        # the ORIGINAL code path below -- one (res,res,3) plate broadcast over the chunk -- so the
-        # registered default is not merely equal to what it rendered before, it is the same
-        # arithmetic in the same order.
-        plates, gidx = self._floor_groups(sty, res, B)
-        plates1, _ = (plates, gidx) if ss == 1 else self._floor_groups(sty, size, B)
+        # groups its maze plates: environments sharing a floor colour share one bake. `_floor_plan`
+        # returns `gidx is None` for the common case of one floor across the batch, and that case
+        # then takes the ORIGINAL code path below -- one (res,res,3) plate broadcast over the whole
+        # chunk -- so "the registered default did not move" is the same arithmetic in the same order,
+        # not merely the same digest.
+        reps, gidx = self._floor_plan(sty, B)
+        plates = self._floor_plates(reps, res)
+        plates1 = plates if ss == 1 else self._floor_plates(reps, size)
         plate = plates[0] if gidx is None else None
         plate1 = (plate if ss == 1 else plates1[0]) if gidx is None else None
         cube = self._cube_colours(sty, B)
@@ -967,32 +1020,52 @@ class OGBManipBase(StableEnv):
             hit = cache["mover_lut"] = lut
         return hit
 
-    def _floor_groups(self, sty, res: int, B: int):
-        """``(plates, gidx)``: one baked plate per distinct floor colour in the batch.
+    def _floor_plan(self, sty, B: int):
+        """``(reps, gidx)``: one ORIGINAL float representative per distinct floor colour, and which
+        environment belongs to which.
+
+        Computed ONCE per render and reused for every resolution, because a batch has exactly one
+        grouping: two groupings that disagreed would pair a chunk with the wrong plate, and there is
+        no arrangement of this code where that should be possible.
 
         ``gidx`` is ``None`` when the whole batch shares one floor, which is the registered default
         and every run that does not ask for per-environment floors. That case is not an optimisation
         detail -- it keeps the default render on the pre-existing single-plate path, so "the default
         did not move" is a property of the code and not only of a digest comparison.
+
+        Grouping is by the QUANTISED bytes -- the texture MuJoCo would compile -- so two floats that
+        compile to the same checker share one bake. The representative handed to the bake is an
+        ORIGINAL float row and never a byte pair decoded back to float: ``q/255`` re-quantised can
+        land one byte low (0.16 -> 40 -> 0.15686 -> 39), which would bake a plate one level off the
+        colour that keyed it. Bytes group; floats bake; the two never swap roles.
         """
         f = self._style_leaf(sty, "floor.color")                       # (B, 6)
         q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6)
         uniq, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
-        # Preserve an original representative. Decoding bytes as q/255 and quantising again
-        # can truncate one byte lower due to floating-point division/multiplication.
-        stack = torch.stack([self._plate(res, floor=f[i].reshape(2, 3)) for i in first]) \
-            if len(uniq) > 1 else self._plate(res, floor=f[0].reshape(2, 3)).unsqueeze(0)
+        reps = [f[i].reshape(2, 3) for i in first]
         if len(uniq) == 1:
-            return stack, None
-        return stack, torch.as_tensor(np.asarray(inv, np.int64), device=self.device)
+            return reps, None
+        inv = np.asarray(inv, np.int64).reshape(-1)    # numpy >= 2.0 shapes this per input, not flat
+        return reps, torch.as_tensor(inv, device=self.device)
+
+    def _floor_plates(self, reps, res: int) -> torch.Tensor:
+        """``(G, res, res, 3)``: the baked plate for each floor group, from the module plate cache."""
+        return torch.stack([self._plate(res, floor=r) for r in reps])
 
     def _cube_colours(self, sty, B: int):
-        """``(B, len(cube_geoms), 4)`` rgba to write per world, including defaults.
+        """``(B, len(cube_geoms), 4)`` rgba to write per world -- ALWAYS, defaults included.
 
-        Each geom keeps its OWN alpha -- ``object_0`` is opaque and ``target_object_0`` is the
-        translucent goal marker at 0.2 -- because swm writes rgb and leaves rgba[3] alone.
-        Always upload: contexts are shared across renders, chunks and renderer instances, so
-        skipping the default would retain a previous world's custom colour.
+        Returning ``None`` for "this is the default anyway" is the defect the reviewer reproduced on
+        CPU, and it is not fixable with a tighter tolerance. `_CTX_CACHE` hands out one mutable
+        per-world `geom_rgba` per (cell, res, nworld), shared across renders, across chunks and
+        across renderer instances, and OGBCube has no button upload that would rewrite the block.
+        So a render that skipped the upload drew whatever colour some EARLIER render left in world
+        `i` -- a result that depends on batch size, chunk boundaries and process history. The only
+        value that is ``None`` here is "this cell has no cube geoms at all".
+
+        Each geom keeps its OWN alpha -- ``object_0`` is opaque, ``target_object_0`` is the
+        translucent goal marker -- taken from the pristine model, because swm writes rgb and leaves
+        the alpha channel to the MJCF.
         """
         b = self._b
         gids = b.cube_geoms
