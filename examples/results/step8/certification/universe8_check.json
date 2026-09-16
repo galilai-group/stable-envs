@@ -1,0 +1,474 @@
+{
+ "corpora": {
+  "CraftaxClassic": {
+   "expected_n": 64,
+   "expected_sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+   "in_place_meta_from": "examples/results/step7/craftax-classic-full/corpus/states.meta.json",
+   "in_place_meta_keys": [
+    "added_at_head_sha",
+    "added_by",
+    "added_in_step",
+    "added_note",
+    "band_counts",
+    "count_coverage",
+    "env",
+    "frames",
+    "indices",
+    "kept",
+    "meta_loaded_from_sidecar",
+    "n_sleeping",
+    "n_states",
+    "pool",
+    "rows_taken",
+    "seed",
+    "selection",
+    "sha256",
+    "source_key",
+    "source_npz",
+    "state_dim",
+    "state_names",
+    "step"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "added_at_head_sha",
+     "added_by",
+     "added_in_step",
+     "added_note",
+     "band_counts",
+     "count_coverage",
+     "env",
+     "frames",
+     "indices",
+     "kept",
+     "loaded_from",
+     "n_sleeping",
+     "n_states",
+     "pool",
+     "rows_taken",
+     "seed",
+     "selection",
+     "sha256",
+     "source_key",
+     "source_npz",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim",
+     "state_names",
+     "step"
+    ],
+    "n": 64,
+    "sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+    "state_dim": 149
+   }
+  },
+  "CraftaxFull": {
+   "expected_n": 64,
+   "expected_sha256": "b0c38605fc983ecaac341a065f0791fd9f650d1c1dccc3d08aed68fed5fb197c",
+   "in_place_meta_from": "examples/results/step7/craftax-full/corpus/states.meta.json",
+   "in_place_meta_keys": [
+    "added_at_head_sha",
+    "added_by",
+    "added_in_step",
+    "added_note",
+    "coverage",
+    "env",
+    "frames",
+    "indices",
+    "kept",
+    "level_repairs",
+    "meta_loaded_from_sidecar",
+    "mob_classes",
+    "n_states",
+    "pool",
+    "pool_sha256",
+    "projectile_orientations",
+    "rows_taken",
+    "seed",
+    "selection",
+    "sha256",
+    "source_key",
+    "source_npz",
+    "state_dim",
+    "step",
+    "strip_coverage"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "added_at_head_sha",
+     "added_by",
+     "added_in_step",
+     "added_note",
+     "coverage",
+     "env",
+     "frames",
+     "indices",
+     "kept",
+     "level_repairs",
+     "loaded_from",
+     "mob_classes",
+     "n_states",
+     "pool",
+     "pool_sha256",
+     "projectile_orientations",
+     "rows_taken",
+     "seed",
+     "selection",
+     "sha256",
+     "source_key",
+     "source_npz",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim",
+     "step",
+     "strip_coverage"
+    ],
+    "n": 64,
+    "sha256": "b0c38605fc983ecaac341a065f0791fd9f650d1c1dccc3d08aed68fed5fb197c",
+    "state_dim": 544
+   }
+  },
+  "DMCManipulatorBringBall": {
+   "expected_n": 64,
+   "expected_sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+   "in_place_meta_from": "inside the npz",
+   "in_place_meta_keys": [
+    "default_size",
+    "dm_control",
+    "env",
+    "indices",
+    "kept",
+    "mujoco",
+    "n_extreme",
+    "n_spread",
+    "n_typical",
+    "node",
+    "pool",
+    "reference_id",
+    "seed",
+    "selection",
+    "sha256",
+    "sizes",
+    "state_dim",
+    "state_names",
+    "status",
+    "step",
+    "workstream"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "default_size",
+     "dm_control",
+     "env",
+     "indices",
+     "kept",
+     "loaded_from",
+     "mujoco",
+     "n_extreme",
+     "n_spread",
+     "n_typical",
+     "node",
+     "pool",
+     "reference_id",
+     "seed",
+     "selection",
+     "sha256",
+     "sizes",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim",
+     "state_names",
+     "status",
+     "step",
+     "workstream"
+    ],
+    "n": 64,
+    "sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+    "state_dim": 15
+   }
+  },
+  "DMCQuadrupedWalk": {
+   "expected_n": 64,
+   "expected_sha256": "1f0b38b4dca47b9234aec8265165e562bd482b7da3623e8fef1b95c6dbac221f",
+   "in_place_meta_from": "inside the npz",
+   "in_place_meta_keys": [
+    "env",
+    "indices",
+    "kept",
+    "n_extreme",
+    "n_spread",
+    "n_typical",
+    "pool",
+    "seed",
+    "selection",
+    "sha256",
+    "state_dim",
+    "state_names"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "env",
+     "indices",
+     "kept",
+     "loaded_from",
+     "n_extreme",
+     "n_spread",
+     "n_typical",
+     "pool",
+     "seed",
+     "selection",
+     "sha256",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim",
+     "state_names"
+    ],
+    "n": 64,
+    "sha256": "1f0b38b4dca47b9234aec8265165e562bd482b7da3623e8fef1b95c6dbac221f",
+    "state_dim": 23
+   }
+  },
+  "OGBCube": {
+   "expected_n": 64,
+   "expected_sha256": "560c1398a8a49a3f89c825ad2eabecbc32283ba9657de3c11852586ac68f8b92",
+   "in_place_meta_from": "inside the npz",
+   "in_place_meta_keys": [
+    "env",
+    "indices",
+    "kept",
+    "n_extreme",
+    "n_spread",
+    "n_typical",
+    "pool",
+    "provenance",
+    "seed",
+    "selection",
+    "sha256",
+    "state_dim",
+    "state_names"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "env",
+     "indices",
+     "kept",
+     "loaded_from",
+     "n_extreme",
+     "n_spread",
+     "n_typical",
+     "pool",
+     "provenance",
+     "seed",
+     "selection",
+     "sha256",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim",
+     "state_names"
+    ],
+    "n": 64,
+    "sha256": "560c1398a8a49a3f89c825ad2eabecbc32283ba9657de3c11852586ac68f8b92",
+    "state_dim": 24
+   }
+  },
+  "OGBScene": {
+   "expected_n": 64,
+   "expected_sha256": "7a0cdff1849ee2214b55c8721017ffe6cc4d77bc0382bb323e81538a34ed6441",
+   "in_place_meta_from": "inside the npz",
+   "in_place_meta_keys": [
+    "env",
+    "indices",
+    "kept",
+    "n_extreme",
+    "n_spread",
+    "n_typical",
+    "pool",
+    "provenance",
+    "seed",
+    "selection",
+    "sha256",
+    "state_dim",
+    "state_names"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "env",
+     "indices",
+     "kept",
+     "loaded_from",
+     "n_extreme",
+     "n_spread",
+     "n_typical",
+     "pool",
+     "provenance",
+     "seed",
+     "selection",
+     "sha256",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim",
+     "state_names"
+    ],
+    "n": 64,
+    "sha256": "7a0cdff1849ee2214b55c8721017ffe6cc4d77bc0382bb323e81538a34ed6441",
+    "state_dim": 30
+   }
+  },
+  "PFRocketLanding": {
+   "expected_n": 64,
+   "expected_sha256": "f4707e54f3007b2e9afb1c236e932626373ee767eaa705161d53faa937d6eedf",
+   "in_place_meta_from": "examples/results/step7/rocket-landing/reference/states.meta.json",
+   "in_place_meta_keys": [
+    "added_at_head_sha",
+    "added_by",
+    "added_in_step",
+    "added_note",
+    "env",
+    "kept",
+    "meta_loaded_from_sidecar",
+    "n_states",
+    "rows_taken",
+    "sha256",
+    "source_key",
+    "source_npz",
+    "state_dim"
+   ],
+   "ok": true,
+   "staged": {
+    "meta_keys": [
+     "added_at_head_sha",
+     "added_by",
+     "added_in_step",
+     "added_note",
+     "env",
+     "kept",
+     "loaded_from",
+     "n_states",
+     "rows_taken",
+     "sha256",
+     "source_key",
+     "source_npz",
+     "staged_by",
+     "staged_from",
+     "staged_key",
+     "staged_rows",
+     "state_dim"
+    ],
+    "n": 64,
+    "sha256": "f4707e54f3007b2e9afb1c236e932626373ee767eaa705161d53faa937d6eedf",
+    "state_dim": 13
+   }
+  }
+ },
+ "craftax_classic_corpus_conflict": {
+  "conflict": "the two corpora have different state_dim, so at most one of them can be set on the cell as it stands at the Step-8 baseline",
+  "resolution": "ESCALATED: retiring the Step-4 corpus is a re-freeze (plan section 19)",
+  "step4_frozen": {
+   "path": "examples/results/step4/states/CraftaxClassic.npz",
+   "sha256": "9b0346c3dcb1cb0632a6fe0c34ca6aa84450d64bb61524e1baaab32739e7847d",
+   "shape": [
+    64,
+    127
+   ]
+  },
+  "step7_frozen": {
+   "path": "examples/results/step7/craftax-classic-full/corpus/states.npz",
+   "sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+   "shape": [
+    64,
+    149
+   ]
+  }
+ },
+ "staged": {
+  "CraftaxClassic": {
+   "array_sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+   "shape": [
+    64,
+    149
+   ],
+   "source": "examples/results/step7/craftax-classic-full/corpus/states.npz"
+  },
+  "CraftaxFull": {
+   "array_sha256": "b0c38605fc983ecaac341a065f0791fd9f650d1c1dccc3d08aed68fed5fb197c",
+   "shape": [
+    64,
+    544
+   ],
+   "source": "examples/results/step7/craftax-full/corpus/states.npz"
+  },
+  "DMCManipulatorBringBall": {
+   "array_sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+   "shape": [
+    64,
+    15
+   ],
+   "source": "examples/results/step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz"
+  },
+  "DMCQuadrupedWalk": {
+   "array_sha256": "1f0b38b4dca47b9234aec8265165e562bd482b7da3623e8fef1b95c6dbac221f",
+   "shape": [
+    64,
+    23
+   ],
+   "source": "examples/results/step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz"
+  },
+  "OGBCube": {
+   "array_sha256": "560c1398a8a49a3f89c825ad2eabecbc32283ba9657de3c11852586ac68f8b92",
+   "shape": [
+    64,
+    24
+   ],
+   "source": "examples/results/step7/ogb-manipulation/states/OGBCube.npz"
+  },
+  "OGBScene": {
+   "array_sha256": "7a0cdff1849ee2214b55c8721017ffe6cc4d77bc0382bb323e81538a34ed6441",
+   "shape": [
+    64,
+    30
+   ],
+   "source": "examples/results/step7/ogb-manipulation/states/OGBScene.npz"
+  },
+  "PFRocketLanding": {
+   "array_sha256": "f4707e54f3007b2e9afb1c236e932626373ee767eaa705161d53faa937d6eedf",
+   "shape": [
+    64,
+    13
+   ],
+   "source": "examples/results/step7/rocket-landing/reference/states.npz"
+  }
+ },
+ "staged_into": "/var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/se8-states-25yk8t_e",
+ "universe": {
+  "added": [
+   "CraftaxFull",
+   "DMCManipulatorBringBall",
+   "DMCQuadrupedWalk",
+   "OGBCube",
+   "OGBScene",
+   "PFRocketLanding"
+  ],
+  "changed": [],
+  "removed": [],
+  "step4_configs": 49,
+  "step8_configs": 55
+ }
+}

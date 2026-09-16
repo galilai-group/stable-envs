@@ -1,0 +1,43 @@
+{
+ "action_taken": "none to the harness. Adding a check_order_invariance function would duplicate check_order_independence and would be the new mandatory check the plan forbids without escalation.",
+ "answer": "Step 2 DID freeze it as mandatory, and the harness HAS it. It is named check_order_independence, not check_order_invariance. Nothing is missing and nothing was restored.",
+ "head_sha": "356b697e003f4685fe3347bc704def755fb6557b",
+ "implementation": {
+  "asserts": "render(x[perm]) == render(x)[perm] (permutation_max_abs_diff), and a duplicated row renders the same twice (duplicate_max_abs_diff)",
+  "function": "stable_envs/testing/conformance.py:1252 check_order_independence(env, states, style=None, seed=0)",
+  "in_the_certifier": "scratch/step4/certify.py:69 (MANDATORY tuple) and :137-139 (judge: both == 0)",
+  "in_the_frozen_mandatory_runner": "examples/fidelity_step4.py:225, item 5 of mandatory()'s 14",
+  "in_the_tests": "tests/gpu/test_reproducibility.py:932-935 asserts permutation_max_abs_diff == 0; tests/unit/test_step4.py:68",
+  "not_subsumed_by_any_other_check": "check_batch_invariance does not shuffle (it compares index i of a batch to i rendered alone); check_batch_size_invariance varies the WINDOW WIDTH with row order preserved; check_chunked_render_matches varies the chunk boundary. Only check_order_independence permutes, and only it checks the duplicated-row property.",
+  "result_of_record": "docs/research/step4_fidelity_baseline.md:179 -- 49 envs, 0 fail"
+ },
+ "question": "did Step 2 freeze order invariance as mandatory, and does the current harness lack it?",
+ "residual_for_the_coordinator": [
+  "the Step-8 plan itself uses the wrong name at STEP_08_AGENT_BRIEFS/00_COORDINATOR_PLAN.md:606 and :923 -- the same misspelling that caused the Step-7 false negative; normalising it to check_order_independence would stop this recurring",
+  "correct the four Step-7 narrative artifacts and the two remeasure.json entries listed above; the two OGB cells' order independence is asserted by repo machinery and passes"
+ ],
+ "root_cause_of_the_step7_claim": {
+  "cause": "scratch/step7/ogb-manipulation/probe_remeasure_chain.py:189-194 does getattr(C, 'check_order_invariance', None) and records {'status': 'absent in this build'} when it returns None. The function is check_order_independENCE, so that lookup could never succeed. The probe then honestly reported a check that was never missing, only misspelled in the driver's own tuple.",
+  "claim": "'check_order_invariance does not exist in this build' (W5 / OGB manipulation)",
+  "contradicted_in_the_same_corpus": [
+   "examples/results/step7/ogb-manipulation/findings.md:860 -- 'Gate A passes completely on both -- determinism, batch invariance, order invariance, state sufficiency'",
+   "examples/results/step7/closure/coverage_matrix.json:2375 -- 'determinism, batch invariance, batch-size invariance, order independence, state_dims_matter (dead_dims []) all pass', using the correct name and reporting a pass"
+  ],
+  "propagated_to": [
+   "examples/results/step7/ogb-manipulation/findings.md:1086-1091",
+   "examples/results/step7/ogb-manipulation/review_cells.md:286 (row B5)",
+   "examples/results/step7/dashboard.yaml:982 -- under 'recommended', not 'required'",
+   "examples/results/step7/ogb-manipulation/m3/fidelity/remeasure.json:133 and :375"
+  ],
+  "status": "FALSE -- a naming false negative, not a missing check"
+ },
+ "step2_freeze": {
+  "document": "docs/research/certification.md -- Step 2's deliverable; there is no docs/research/step2*.md",
+  "header": "'# Certification: what \"done\" means for a stable-envs renderer' / 'This page is frozen policy, not a measurement'",
+  "location": "docs/research/certification.md:121-137, section 4.1 'Mandatory -- every certified env, both tiers, no exceptions'",
+  "note": "scratch/certification.json carries no per-check mandatory list at all; its header defers to the prose doc, and tests/unit/test_certification.py fails if the two drift apart (certification.md:14)",
+  "row_verbatim": "| `check_order_independence` | permuting the batch changes per-state output |"
+ },
+ "verdict": "NO_OP",
+ "what_this_is": "Step-8 Workstream E resolution of the check_order_invariance question"
+}

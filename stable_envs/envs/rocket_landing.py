@@ -647,6 +647,53 @@ class PFRocketLanding(StableEnv):
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
     }
+    #: The ONE cell in the repo where ``check_colors_apply_exactly``'s literal-RGB bound is declared
+    #: inapplicable, and the declaration is narrow on purpose: these five leaves, named one by one,
+    #: and nothing else. Sami's ruling of 2026-09-16, on the packet at
+    #: ``examples/results/step8/certification/colour_check_decision.md``.
+    #:
+    #: The mechanism is the reference's own shading law, not ours. bullet3's TinyRenderer computes
+    #: ``out_i = int(255 * c_i * (A + D*max(0, n.l) + S*max(0, r_z)**spec) * L_i)``, truncated, with
+    #: ``A=0.6, D=0.35, S=0.05, spec=2`` -- and the specular MULTIPLIES the material colour rather
+    #: than adding white the way MuJoCo's does, so the bracket never reaches 1. Maximised over a
+    #: 2001x4001 grid of unit normals it peaks at 0.993567, which puts the check's own probe targets
+    #: out of reach at their brightest: 200 -> 198, 33 -> 32, 17 -> 16. The exact triple therefore
+    #: cannot appear in the frame for ANY correct implementation of this reference, and it does not
+    #: appear in the OFFICIAL PyFlyt frames either (brightest body pixel 0.991*int(255*c)).
+    #:
+    #: What still carries the wiring claim -- which is what the check exists to establish -- is
+    #: unaffected: ``check_variations_do_something``, the under-variation fidelity numbers, and the
+    #: colour table's agreement with ``getVisualShapeData`` to 1.19e-08 on every geom. And the probe
+    #: still runs: ``check_colors_apply_exactly`` records ``best_abs_diff`` per leaf, so a knob that
+    #: comes off its primitive still moves a number even while the literal bound is not asserted.
+    #:
+    #: NOT a tolerance and NOT a threshold: the bound is unchanged everywhere it is asserted. A
+    #: law-aware successor (compare our response to the knob against the OFFICIAL renderer's response
+    #: to the same knob) is a PROPOSAL only -- see docs/research/step8_certification.md.
+    color_exactness_applicability = {
+        "leaves": ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color",
+                   "rocket.leg_color"),
+        "status": "not_applicable: literal RGB equality is unreachable under the reference's own law",
+        "mechanism": "bullet3 TinyRenderer's MULTIPLICATIVE one-light law "
+                     "out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, "
+                     "A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma",
+        "max_shading_factor": 0.993567,
+        "reachable_ceiling_for_the_probe_targets": {"200": 198, "33": 32, "17": 16},
+        "official_renderer_fails_the_same_check": True,
+        "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest "
+                                      "body pixel is 0.991*int(255*c); the requested triple is absent "
+                                      "from the OFFICIAL frames too",
+        "evidence": ("examples/results/step8/certification/colour_law_ceiling.json",
+                     "examples/results/step8/certification/colour_check_decision.md",
+                     "examples/results/step7/rocket-landing/findings.md:251-257,1209-1220",
+                     "examples/results/step7/rocket-landing/review_phase1.md:885-894"),
+        "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
+        "ruled_by": "Sami, 2026-09-16, on examples/results/step8/certification/colour_check_decision.md",
+        "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
+                      "judged against literal equality",
+        "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's "
+                     "response to the knob against the OFFICIAL renderer's response to the same knob",
+    }
     visual_note = ("A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
                    "Residual: silhouette pixels (different edge rules and float paths), checker-tile edges "
                    "(sub-pixel UV rounding under nearest sampling) and the far ground where tiles are "

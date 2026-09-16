@@ -1,0 +1,242 @@
+{
+ "bound_table": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC",
+ "cells": {
+  "CraftaxClassic": {
+   "decision": "UNCHANGED 1.000000",
+   "max_observed": 0.816382137345679,
+   "min_observed": 0.816382137345679,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+     "device": "cpu",
+     "exact_frac": 0.816382137345679,
+     "max_abs": 21,
+     "mean_abs": 0.7734274530606996,
+     "protocol_states_sha256": "b8ccf78b080e118fcf6f2fa361c617c4f8fd5dce71993ca45754b44fe154dbda",
+     "size": 16,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+     "device": "cuda",
+     "exact_frac": 0.816382137345679,
+     "max_abs": 21,
+     "mean_abs": 0.7734274530606996,
+     "protocol_states_sha256": "b8ccf78b080e118fcf6f2fa361c617c4f8fd5dce71993ca45754b44fe154dbda",
+     "size": 16,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "the frozen entry stays. Task 3's applicability rule judges it on light_level >= 0.5, where it measures exactly 1.000000. The 0.816382 number is the mixed-band one and is recorded, never judged."
+  },
+  "CraftaxFull": {
+   "decision": "NOT ADDED",
+   "max_observed": 0.7945367132867133,
+   "min_observed": 0.7945367132867133,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+     "device": "cpu",
+     "exact_frac": 0.7945367132867133,
+     "max_abs": 11,
+     "mean_abs": 0.292995337995338,
+     "protocol_states_sha256": "a25bbb571ef4fa24b07549aaec8e40eb6826d05110f558c6856c8939683be385",
+     "size": 10,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+     "device": "cuda",
+     "exact_frac": 0.7945367132867133,
+     "max_abs": 11,
+     "mean_abs": 0.292995337995338,
+     "protocol_states_sha256": "a25bbb571ef4fa24b07549aaec8e40eb6826d05110f558c6856c8939683be385",
+     "size": 10,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "the class declares resolution_consistency_applicability 'all bands: not_applicable' on the official renderer's own oracle. A floor here would be a number for a relation the reference does not satisfy in any band. Measured for the record: 0.794537 at S=10."
+  },
+  "DMCManipulatorBringBall": {
+   "decision": "NOT ADDED",
+   "max_observed": 0.8519187460140306,
+   "min_observed": 0.8508425342793368,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+     "device": "cpu",
+     "exact_frac": 0.8508425342793368,
+     "max_abs": 206,
+     "mean_abs": 1.207052840667517,
+     "protocol_states_sha256": "ffff5a1d8aa676916c4c5435de7bed7ef61e4b6df1b220e2d56e4bead31598bb",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
+     "device": "cuda",
+     "exact_frac": 0.8508425342793368,
+     "max_abs": 206,
+     "mean_abs": 1.207052840667517,
+     "protocol_states_sha256": "ffff5a1d8aa676916c4c5435de7bed7ef61e4b6df1b220e2d56e4bead31598bb",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure/gate_a/cpu_vis311.json",
+     "device": "cpu",
+     "exact_frac": 0.8519187460140306,
+     "max_abs": 206,
+     "mean_abs": 1.223093876222364,
+     "protocol_states_sha256": "ffff5a1d8aa676916c4c5435de7bed7ef61e4b6df1b220e2d56e4bead31598bb",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure/gate_a/cuda_vis311.json",
+     "device": "cuda",
+     "exact_frac": 0.8508425342793368,
+     "max_abs": 206,
+     "mean_abs": 1.207052840667517,
+     "protocol_states_sha256": "ffff5a1d8aa676916c4c5435de7bed7ef61e4b6df1b220e2d56e4bead31598bb",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "carries PLATE_PATHS and is not a PLATE_REPRESENTATIVE, so this test skips it exactly as it skips every other PARITY-tier DM Control plate cell; DMCCartpoleSwingup and DMCPointMassEasy stand for the two camera geometries. Recording a floor would create a gate the frozen protocol does not have. Measured for the record: 0.850842."
+  },
+  "DMCQuadrupedWalk": {
+   "decision": "ADDED 0.811877",
+   "max_observed": 0.81201171875,
+   "min_observed": 0.8118771922831632,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+     "device": "cpu",
+     "exact_frac": 0.8118771922831632,
+     "max_abs": 121,
+     "mean_abs": 0.6329129796449829,
+     "protocol_states_sha256": "52d82312bb61e95788c03d7413611671116dd97ad535c03954f301fb21f35f80",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
+     "device": "cuda",
+     "exact_frac": 0.81201171875,
+     "max_abs": 121,
+     "mean_abs": 0.6327269677402211,
+     "protocol_states_sha256": "52d82312bb61e95788c03d7413611671116dd97ad535c03954f301fb21f35f80",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure/gate_a/cpu_vis311.json",
+     "device": "cpu",
+     "exact_frac": 0.8118796835140306,
+     "max_abs": 121,
+     "mean_abs": 0.6329121492346939,
+     "protocol_states_sha256": "52d82312bb61e95788c03d7413611671116dd97ad535c03954f301fb21f35f80",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure/gate_a/cuda_vis311.json",
+     "device": "cuda",
+     "exact_frac": 0.81201171875,
+     "max_abs": 121,
+     "mean_abs": 0.6327269677402211,
+     "protocol_states_sha256": "52d82312bb61e95788c03d7413611671116dd97ad535c03954f301fb21f35f80",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "VISUAL tier with no plate, so PLATE_REPRESENTATIVES does not cover it and it is measured in its own right, exactly like the five other VISUAL-tier DM Control cells. The recorded floor is the MINIMUM over the four committed runs so it holds on every device and reference pair measured; the whole spread is 2.5e-05 inside a 0.005 margin."
+  },
+  "OGBCube": {
+   "decision": "VERIFIED 0.885782",
+   "max_observed": 0.8857820471938775,
+   "min_observed": 0.8857820471938775,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+     "device": "cuda",
+     "exact_frac": 0.8857820471938775,
+     "max_abs": 191,
+     "mean_abs": 1.0328734521152212,
+     "protocol_states_sha256": "ae1cc5e15e750b10c7e031164d87ea32229d6e5df095810ebefe9cdbf4b20d75",
+     "size": 224,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "entry already present; re-verified against the committed closure2 artifact."
+  },
+  "OGBScene": {
+   "decision": "VERIFIED 0.805306",
+   "max_observed": 0.80530625,
+   "min_observed": 0.80530625,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+     "device": "cuda",
+     "exact_frac": 0.80530625,
+     "max_abs": 255,
+     "mean_abs": 2.01629375,
+     "protocol_states_sha256": "055d4057815899c0211b36ce6368194ca36f386fb369fb33599fdf978924f1d5",
+     "size": 200,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "entry already present; re-verified against the committed closure2 artifact."
+  },
+  "PFRocketLanding": {
+   "decision": "ADDED 0.956137",
+   "max_observed": 0.9561371527777778,
+   "min_observed": 0.9561371527777778,
+   "observations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cuda_rocket.json",
+     "device": "cuda",
+     "exact_frac": 0.9561371527777778,
+     "max_abs": 255,
+     "mean_abs": 0.9922828052662037,
+     "protocol_states_sha256": "a5f128ad96a11620e39334f929919f3f503f5057af4ad120b8f97bb14f486996",
+     "size": 480,
+     "status": "measured",
+     "why": null
+    },
+    {
+     "artifact": "examples/results/step7/closure/gate_a/cuda_rocket.json",
+     "device": "cuda",
+     "exact_frac": 0.9561371527777778,
+     "max_abs": 255,
+     "mean_abs": 0.9922828052662037,
+     "protocol_states_sha256": "a5f128ad96a11620e39334f929919f3f503f5057af4ad120b8f97bb14f486996",
+     "size": 480,
+     "status": "measured",
+     "why": null
+    }
+   ],
+   "reason": "no PLATE_PATHS (nvdiffrast draws the whole scene); the test ran and failed on the missing-bound assertion. 0.956137 is 0.95614 to five decimals, the value the Step-7 carry-over recorded. device='cpu' raises by design, so there is no cpu row."
+  }
+ },
+ "head_sha": "b15e95eba2f3485d0e85f80f3e844932b5fe28e7",
+ "margin": 0.005,
+ "protocol": "conformance.downsample_protocol_states: 8 states at render_worker.STATE_SEED, default appearance",
+ "rule": "a value is added ONLY when confirmed against a committed artifact and only where the frozen protocol asserts one; measurements for cells the protocol does not assert are recorded here and not in the table",
+ "what_this_is": "provenance for every DOWNSAMPLE_EXACT_FRAC decision Step-8 Workstream E made"
+}

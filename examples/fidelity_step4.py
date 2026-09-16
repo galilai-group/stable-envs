@@ -131,12 +131,43 @@ def select(pool: np.ndarray, n: int) -> tuple[np.ndarray, dict]:
                        "n_spread": int(len(idx) - n_extreme), "indices": idx.tolist()}
 
 
+#: A frozen corpus whose ``.npz`` carries no ``meta`` key may carry it BESIDE the array instead, in
+#: one of these files in the same directory (``{stem}`` is the ``.npz``'s own stem). Step 7 froze
+#: seven corpora and wrote two of them -- both Craftax cells -- with ``states=`` only and the
+#: provenance in a sibling ``corpus.json``, which is a perfectly good record that this loader simply
+#: could not see: it read ``z["meta"]`` unconditionally and a corpus without one raised ``KeyError``.
+#: Reading the sidecar is what lets a committed, READ-ONLY corpus be adopted without rewriting the
+#: array file -- rewriting it would change the bytes of an artifact whose sha256 is already quoted in
+#: committed Gate-A records. ``meta`` inside the npz still wins wherever it exists, so every corpus
+#: frozen in Step 4 loads by exactly the path it always did.
+CORPUS_META_SIDECARS = ("{stem}.meta.json", "corpus.json")
+
+
+def _corpus_meta(p: Path, z) -> dict:
+    """``config_id``'s corpus metadata: from inside the ``.npz`` if it is there, else from a sidecar."""
+    if "meta" in getattr(z, "files", ()):
+        return json.loads(str(z["meta"]))
+    tried = []
+    for pattern in CORPUS_META_SIDECARS:
+        side = p.parent / pattern.format(stem=p.stem)
+        tried.append(str(side.relative_to(ROOT)) if side.is_relative_to(ROOT) else str(side))
+        if side.is_file():
+            meta = json.loads(side.read_text())
+            meta["meta_loaded_from_sidecar"] = tried[-1]
+            return meta
+    raise KeyError(
+        f"{p} carries no 'meta' key and no metadata sidecar beside it (tried {tried}). A corpus "
+        f"without provenance is not a frozen corpus: it cannot say which pool it came from, which "
+        f"seed drew it, or what its array digest is, so a later run cannot show it measured the same "
+        f"states. Write the sidecar rather than redrawing -- redrawing gives a different corpus.")
+
+
 def corpus_for(env, config_id: str, states_dir: Path, n: int, pool: int) -> tuple[np.ndarray, dict]:
     """Load ``config_id``'s frozen corpus, or draw and freeze it. Never redraws an existing one."""
     p = states_dir / f"{config_id}.npz"
     if p.exists():
         z = np.load(p, allow_pickle=False)
-        meta = json.loads(str(z["meta"]))
+        meta = _corpus_meta(p, z)
         meta["loaded_from"] = str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p)
         return z["states"], meta
     raw = env.sample_states(int(pool), rng=np.random.default_rng(STATE_SEED))
@@ -347,9 +378,31 @@ def _resolution(env, states) -> dict:
     except BaseException as e:                                              # noqa: BLE001
         return {"status": "error", "why": f"protocol draw: {type(e).__name__}: {str(e)[:400]}",
                 "traceback": traceback.format_exc()[-1200:]}
+    # Step 8: the class may declare, with the official renderer's own oracle result beside it, that
+    # the RELATION does not hold in some or all of its state space. Two Step-7 cells do. Judging a
+    # renderer against a relation its own reference does not satisfy measures the reference, so the
+    # declaration is READ here rather than discovered as a failure -- and no bound value moves: the
+    # frozen DOWNSAMPLE_EXACT_FRAC entry and the 0.005 margin are untouched, the judged STATE SET
+    # narrows to the applicable band. CraftaxClassic is the case that makes the difference concrete:
+    # on the protocol's 8 states it measures 0.8164 mixed and 1.0000 on the 6 that are light >= 0.5,
+    # against a frozen floor of 1.000000 recorded before the night band existed.
+    app = C.resolution_consistency_applicability(env, proto)
+    if not app["applicable"]:
+        return {"status": "not_applicable", "why": app["why"],
+                "applicability": {k: app[k] for k in ("bands", "declaration", "indices")}}
+    judged = proto if app["indices"] is None else np.ascontiguousarray(
+        np.asarray(proto)[np.asarray(app["indices"], int)], np.float32)
     try:
-        r = C.check_resolution_consistency(env, proto)
+        r = C.check_resolution_consistency(env, judged)
         r["protocol"] = C.downsample_protocol(proto)
+        r["applicability"] = app
+        if app["indices"] is not None:
+            # Both numbers, because a reader has to be able to see what the subsetting did. The judged
+            # one is first; the mixed one is recorded so a later run can show the subset moved and not
+            # the renderer.
+            r["protocol"]["judged_states_sha256"] = C.frames_digest(judged)
+            r["protocol"]["judged_n_states"] = int(len(judged))
+            r["all_bands"] = C.check_resolution_consistency(env, proto)
         r["frozen_corpus"] = C.check_resolution_consistency(env, states)
         r["frozen_corpus"]["n_states"] = int(len(states))
         r["frozen_corpus"]["states_sha256"] = C.frames_digest(np.ascontiguousarray(states, np.float32))
@@ -521,8 +574,15 @@ def provenance(device: str) -> dict:
     # draws its night noise with jax's threefry PRNG, and jax_threefry_partitionable selects between
     # two counter layouts that agree on 0 of 448 draws. Without recording it, that declaration could
     # never be confirmed and the parity check would block on "version not recorded" forever.
+    # ``PyFlyt``/``pybullet`` are here for the same reason ``jax`` is, and they were added in Step 8
+    # after the fact: PFRocketLanding declares them as REFERENCE versions, the closure sweeps did not
+    # record them, and ``block_on_reference_mismatch`` therefore blocks its two visual-fidelity
+    # checks on "version not recorded by the measuring interpreter" -- forever, until a run records
+    # them. That block is correct and is reported as UNMEASURED; this is what lets the next run on a
+    # PyFlyt interpreter clear it. It changes no historical artifact.
     for m in ("mujoco", "mujoco_warp", "dm_control", "ogbench", "gym_pusht", "gymnasium",
-              "gymnasium_robotics", "craftax", "jax", "stable_worldmodel", "warp"):
+              "gymnasium_robotics", "craftax", "jax", "stable_worldmodel", "warp",
+              "PyFlyt", "pybullet"):
         # The distribution's version first: ``dm_control`` has no ``__version__`` and was recorded as
         # "present", which the certifier cannot compare with a declared reference version.
         try:

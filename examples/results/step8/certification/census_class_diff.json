@@ -1,0 +1,1240 @@
+{
+ "rows": [
+  {
+   "env": "Acrobot",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "gfxdraw"
+   ],
+   "backends_new": [
+    "gfxdraw"
+   ]
+  },
+  {
+   "env": "AntmazeGiantNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeGiantStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeLargeExplore",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeLargeNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeLargeStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeMediumExplore",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeMediumNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeMediumStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeTeleportExplore",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeTeleportNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "AntmazeTeleportStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "BabyAIGoToLocal",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "CartPole",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "gfxdraw"
+   ],
+   "backends_new": [
+    "gfxdraw"
+   ]
+  },
+  {
+   "env": "CraftaxClassic",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [],
+   "backends_new": []
+  },
+  {
+   "env": "CraftaxFull",
+   "old_class_old_census": null,
+   "new_class_new_census": "R",
+   "old_class_new_census": "unknown",
+   "backends_old": null,
+   "backends_new": [
+    "prng"
+   ]
+  },
+  {
+   "env": "Crafter",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "DMCAcrobotSwingup",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCBallInCupCatch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCCartpoleBalance",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCCartpoleSwingup",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCCheetahRun",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCFingerSpin",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCFingerTurnEasy",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCFingerTurnHard",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCHopperHop",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCHumanoidStand",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCManipulatorBringBall",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCPendulumSwingup",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCPointMassEasy",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCQuadrupedWalk",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCReacherEasy",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCReacherHard",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCSwimmerSwimmer6",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "DMCWalkerWalk",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "mjwarp",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "FetchPickAndPlace",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchPickAndPlaceDense",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchPickAndPlaceDict",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchPush",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchPushDense",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchPushDict",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchReach",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchReachDense",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchReachDict",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchSlide",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchSlideDense",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "FetchSlideDict",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "mjwarp"
+   ],
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "Highway",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "raster2d",
+    "scene"
+   ],
+   "backends_new": [
+    "raster2d",
+    "scene"
+   ]
+  },
+  {
+   "env": "HumanoidmazeGiantNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "HumanoidmazeGiantStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "HumanoidmazeLargeNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "HumanoidmazeLargeStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "HumanoidmazeMediumNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "HumanoidmazeMediumStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "Intersection",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "raster2d",
+    "scene"
+   ],
+   "backends_new": [
+    "raster2d",
+    "scene"
+   ]
+  },
+  {
+   "env": "Merge",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "raster2d",
+    "scene"
+   ],
+   "backends_new": [
+    "raster2d",
+    "scene"
+   ]
+  },
+  {
+   "env": "MiniGridDoorKey",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "MiniGridEmpty",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "MiniGridFourRooms",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "MiniGridKeyCorridor",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "MiniGridLavaCrossing",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "MiniGridPOVFetch",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "tilemap"
+   ],
+   "backends_new": [
+    "tilemap"
+   ]
+  },
+  {
+   "env": "MiniHack",
+   "old_class_old_census": "unknown",
+   "new_class_new_census": "R",
+   "old_class_new_census": "unknown",
+   "backends_old": [],
+   "backends_new": []
+  },
+  {
+   "env": "MountainCar",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "gfxdraw"
+   ],
+   "backends_new": [
+    "gfxdraw"
+   ]
+  },
+  {
+   "env": "MountainCarContinuous",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "gfxdraw"
+   ],
+   "backends_new": [
+    "gfxdraw"
+   ]
+  },
+  {
+   "env": "MujocoAnt",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoHalfCheetah",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoHopper",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoHumanoid",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoInvertedDoublePendulum",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "nvdiff",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoInvertedPendulum",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "nvdiff",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoPusher",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "nvdiff",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoReacher",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "nvdiff",
+    "raycast3d"
+   ],
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoSwimmer",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "MujocoWalker2d",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff",
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "OGBCube",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "OGBScene",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "mjwarp"
+   ]
+  },
+  {
+   "env": "PFRocketLanding",
+   "old_class_old_census": null,
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": null,
+   "backends_new": [
+    "nvdiff"
+   ]
+  },
+  {
+   "env": "Parking",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "raster2d",
+    "scene"
+   ],
+   "backends_new": [
+    "raster2d",
+    "scene"
+   ]
+  },
+  {
+   "env": "Pendulum",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "gfxdraw"
+   ],
+   "backends_new": [
+    "gfxdraw"
+   ]
+  },
+  {
+   "env": "Piecewise",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [],
+   "backends_new": []
+  },
+  {
+   "env": "PiecewiseZones",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [],
+   "backends_new": []
+  },
+  {
+   "env": "PointMazeLarge",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointMazeMedium",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointMazeOpen",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointMazeUMaze",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeGiantNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeGiantStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeLargeNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeLargeStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeMediumNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeMediumStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeTeleportNavigate",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PointmazeTeleportStitch",
+   "old_class_old_census": "S",
+   "new_class_new_census": "S",
+   "old_class_new_census": "S",
+   "backends_old": [
+    "raycast3d"
+   ],
+   "backends_new": [
+    "raycast3d"
+   ]
+  },
+  {
+   "env": "PushT",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "scene"
+   ],
+   "backends_new": [
+    "scene"
+   ]
+  },
+  {
+   "env": "Racetrack",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "raster2d",
+    "scene"
+   ],
+   "backends_new": [
+    "raster2d",
+    "scene"
+   ]
+  },
+  {
+   "env": "Roundabout",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "raster2d",
+    "scene"
+   ],
+   "backends_new": [
+    "raster2d",
+    "scene"
+   ]
+  },
+  {
+   "env": "SimplePointMaze",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [
+    "scene"
+   ],
+   "backends_new": [
+    "scene"
+   ]
+  },
+  {
+   "env": "TwoRoom",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [],
+   "backends_new": []
+  },
+  {
+   "env": "TwoRoomTarget",
+   "old_class_old_census": "R",
+   "new_class_new_census": "R",
+   "old_class_new_census": "R",
+   "backends_old": [],
+   "backends_new": []
+  }
+ ],
+ "class_changed": [],
+ "unknown_resolved": [
+  {
+   "env": "CraftaxFull",
+   "old_class_old_census": null,
+   "new_class_new_census": "R",
+   "old_class_new_census": "unknown",
+   "backends_old": null,
+   "backends_new": [
+    "prng"
+   ]
+  },
+  {
+   "env": "MiniHack",
+   "old_class_old_census": "unknown",
+   "new_class_new_census": "R",
+   "old_class_new_census": "unknown",
+   "backends_old": [],
+   "backends_new": []
+  }
+ ],
+ "still_unknown": []
+}

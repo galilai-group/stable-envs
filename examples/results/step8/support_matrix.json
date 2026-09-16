@@ -1,0 +1,4345 @@
+{
+ "baseline_sha": "43ac95238f7472137619f3e69e7636e11dd088b1",
+ "counts": {
+  "backend_class": {
+   "R": 12,
+   "S": 28,
+   "n/a": 2
+  },
+  "cpu_tier_status": {
+   "MEASURED": 24,
+   "UNMEASURED": 15,
+   "UNSUPPORTED_BY_DESIGN": 3
+  },
+  "gate_a": {
+   "FAIL": 3,
+   "PASS": 36,
+   "UNMEASURED": 1,
+   "UNSUPPORTED_BY_DESIGN": 2
+  },
+  "gpu_tier_status": {
+   "MEASURED": 40,
+   "UNMEASURED": 2
+  },
+  "pixel_producing": 40,
+  "render_covered": 40,
+  "rows": 42,
+  "symbolic": 2,
+  "variation_map": {
+   "complete": 21,
+   "missing": 5,
+   "n/a": 2,
+   "partial": 12,
+   "unknown": 2
+  }
+ },
+ "generated_at_head_sha": "22b27a3a3fb473f03962bece46b172a870814b70",
+ "rows": [
+  {
+   "backend_class": "R",
+   "backends": [
+    "gfxdraw"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_REGRESSION"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "Acrobot": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "the probe saw class 'AcrobotEnv' under swm/AcrobotControl-v1, and gymnasium.make() on our reference_id produces the same unwrapped class",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "Acrobot"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/AcrobotControl-v1",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 4,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "Acrobot"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "physics.link_com_pos_1",
+     "physics.link_com_pos_2",
+     "physics.link_length_1",
+     "physics.link_length_2",
+     "physics.link_mass_1",
+     "physics.link_mass_2",
+     "physics.link_moi"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCAcrobotSwingup": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "this id resolves to dm_control/acrobot-swingup_sparse, which no stable-envs env declares; we declare ['dm_control/acrobot-swingup'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCAcrobotSwingup"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/AcrobotDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 5,
+     "mapped": 2,
+     "unsupported": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCAcrobotSwingup"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.lower_arm_density",
+     "agent.upper_arm_density",
+     "agent.upper_arm_locked",
+     "floor.color",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z",
+     "target.color",
+     "target.shape"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCBallInCupCatch": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "reference_id ['dm_control/ball_in_cup-catch'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCBallInCupCatch"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/BallInCupDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 4,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCBallInCupCatch"
+    ],
+    "n_swm_leaves": 13,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.density",
+     "ball.color",
+     "ball.density",
+     "ball.size",
+     "floor.color",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z",
+     "rendering.render_target",
+     "target.color",
+     "target.shape"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "gfxdraw"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_PARITY"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "CartPole": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "the probe saw class 'CartPoleEnv' under swm/CartPoleControl-v1, and gymnasium.make() on our reference_id produces the same unwrapped class",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "CartPole"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CartPoleControl-v1",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 4,
+     "unsupported": 6
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "CartPole"
+    ],
+    "n_swm_leaves": 10,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "physics.force_mag",
+     "physics.gravity",
+     "physics.length",
+     "physics.masscart",
+     "physics.masspole",
+     "physics.tau"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_PARITY"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCCartpoleBalance": null,
+    "DMCCartpoleSwingup": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "this id resolves to dm_control/cartpole-swingup_sparse, which no stable-envs env declares; we declare ['dm_control/cartpole-balance', 'dm_control/cartpole-swingup'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCCartpoleBalance",
+    "DMCCartpoleSwingup"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CartpoleDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 4,
+     "mapped": 4,
+     "unsupported": 10
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCCartpoleBalance",
+     "DMCCartpoleSwingup"
+    ],
+    "n_swm_leaves": 18,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.cart_mass",
+     "agent.cart_mass",
+     "agent.cart_shape",
+     "agent.cart_shape",
+     "agent.pole_density",
+     "agent.pole_density",
+     "floor.color",
+     "floor.color",
+     "gravity.x",
+     "gravity.x",
+     "gravity.y",
+     "gravity.y",
+     "gravity.z",
+     "gravity.z"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.11.0"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "DMCCheetahRun": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "FAIL",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "FAIL"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "reference_id ['dm_control/cheetah-run'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "UNMEASURED",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCCheetahRun"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CheetahDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCCheetahRun"
+    ],
+    "n_swm_leaves": 10,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.back_foot_density",
+     "agent.back_foot_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "prng"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [
+     "BELOW_G4"
+    ],
+    "source": "CraftaxClassic.performance_record_cpu (class declaration)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": 1.0,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "CraftaxClassic": "e403a5648d92156e"
+   },
+   "gate_a": {
+    "applicability": [
+     {
+      "all_bands_recorded_not_judged": {
+       "exact_frac": 0.816382137345679,
+       "max_abs": 21,
+       "mean_abs": 0.7734274530606996
+      },
+      "bands": {
+       "light_level < 0.5": "not_applicable",
+       "light_level >= 0.5": "applicable"
+      },
+      "bound": ">= 1.0 - 0.005",
+      "check": "check_resolution_consistency",
+      "device": "cpu",
+      "judged_on_subset": 6,
+      "kind": "judged_on_the_applicable_band",
+      "observed": {
+       "exact_frac": 1.0,
+       "max_abs": 0,
+       "mean_abs": 0.0
+      },
+      "why": "6 of 8 states are outside the bands the class declares inapplicable (['light_level < 0.5']); the bound is asserted on those and the rest are recorded not_applicable with the class's cited evidence"
+     },
+     {
+      "all_bands_recorded_not_judged": {
+       "exact_frac": 0.816382137345679,
+       "max_abs": 21,
+       "mean_abs": 0.7734274530606996
+      },
+      "bands": {
+       "light_level < 0.5": "not_applicable",
+       "light_level >= 0.5": "applicable"
+      },
+      "bound": ">= 1.0 - 0.005",
+      "check": "check_resolution_consistency",
+      "device": "cuda",
+      "judged_on_subset": 6,
+      "kind": "judged_on_the_applicable_band",
+      "observed": {
+       "exact_frac": 1.0,
+       "max_abs": 0,
+       "mean_abs": 0.0
+      },
+      "why": "6 of 8 states are outside the bands the class declares inapplicable (['light_level < 0.5']); the bound is asserted on those and the rest are recorded not_applicable with the class's cited evidence"
+     }
+    ],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxClassic",
+      "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+      "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxClassic",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+      "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Applicability READ off the class, recorded in gate_a.applicability: check_resolution_consistency. Step-7 record, kept: all mandatory checks pass; check_resolution_consistency declared not_applicable below light_level 0.5 on the OFFICIAL renderer's own evidence (official 0.1634 == ours 0.1634); the Step-8 certifier must honour resolution_consistency_applicability or judge on the light >= 0.5 subset",
+    "per_device": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [
+     "BATCH_SCALES"
+    ],
+    "source": "CraftaxClassic.performance_record_gpu (class declaration)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "W1 craftax-classic-full, merged 9ca318f",
+   "limitations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_craftax.json; examples/results/step7/closure2/gate_a/cuda_craftax.json",
+     "detail": "all mandatory checks pass; check_resolution_consistency declared not_applicable below light_level 0.5 on the OFFICIAL renderer's own evidence (official 0.1634 == ours 0.1634); the Step-8 certifier must honour resolution_consistency_applicability or judge on the light >= 0.5 subset",
+     "kind": "note",
+     "what": "gate_a note"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "CraftaxClassic"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CraftaxClassicPixels-v1",
+   "variation": {
+    "declared_in": [],
+    "map_status": "n/a",
+    "n_swm_leaves": 0,
+    "note": "the swm wrapper declares NO variation space (0 leaves), so there is no Gate-F variation gap to close for this id",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "absent",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "n/a",
+   "backends": [],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": null,
+    "status": "UNMEASURED",
+    "tier": "unknown"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {},
+    "registered_default_coverage": null,
+    "tier": null
+   },
+   "frozen_corpus": {},
+   "gate_a": {
+    "failing_checks": [],
+    "note": "symbolic id: intentionally renderer-free, there is no frame to gate",
+    "per_device": {},
+    "raw": null,
+    "status": "UNSUPPORTED_BY_DESIGN"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": null,
+    "status": "UNMEASURED",
+    "tier": "unknown"
+   },
+   "join_evidence": "no rung matched: no VARIATION_MAPS entry, no docstring mention, no reference_id or reference class in common, no identical scene, no normalized-name match, and no documented manual join",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "symbolic",
+   "render_coverage": "UNSUPPORTED_BY_DESIGN",
+   "reproducibility": {
+    "status": "UNMEASURED",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CraftaxClassicSymbolic-v1",
+   "variation": {
+    "declared_in": [],
+    "map_status": "unknown",
+    "n_swm_leaves": null,
+    "note": "",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": null,
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "prng"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "CraftaxFull.performance_record_cpu (class declaration)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": 1.0,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "CraftaxFull": "b0c38605fc983eca"
+   },
+   "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxFull",
+      "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+      "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "CraftaxFull",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cuda_craftax.json",
+      "source_sha256": "108acc2bc1cba43cab972ac8c00d3b0d949a254dbee6d262ad1c8866e69ee429"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: 18 checks clean; check_resolution_consistency declared not_applicable in ALL bands on the official's own evidence (official fails the frozen 0.995 in every band: world 0.4817 day / 0.0991 night)",
+    "per_device": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "CraftaxFull.performance_record_gpu (class declaration)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "W2 craftax-full, merged d024c1a",
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/certification/downsample_provenance.json",
+     "detail": "the class declares resolution_consistency_applicability 'all bands: not_applicable' on the official renderer's own oracle. A floor here would be a number for a relation the reference does not satisfy in any band. Measured for the record: 0.794537 at S=10.",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "resolution consistency"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "CraftaxFull"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CraftaxPixels-v1",
+   "variation": {
+    "declared_in": [],
+    "map_status": "n/a",
+    "n_swm_leaves": 0,
+    "note": "the swm wrapper declares NO variation space (0 leaves)",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "absent",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "n/a",
+   "backends": [],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": null,
+    "status": "UNMEASURED",
+    "tier": "unknown"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {},
+    "registered_default_coverage": null,
+    "tier": null
+   },
+   "frozen_corpus": {},
+   "gate_a": {
+    "failing_checks": [],
+    "note": "symbolic id: intentionally renderer-free, there is no frame to gate",
+    "per_device": {},
+    "raw": null,
+    "status": "UNSUPPORTED_BY_DESIGN"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": null,
+    "status": "UNMEASURED",
+    "tier": "unknown"
+   },
+   "join_evidence": "no rung matched: no VARIATION_MAPS entry, no docstring mention, no reference_id or reference class in common, no identical scene, no normalized-name match, and no documented manual join",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "symbolic",
+   "render_coverage": "UNSUPPORTED_BY_DESIGN",
+   "reproducibility": {
+    "status": "UNMEASURED",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/CraftaxSymbolic-v1",
+   "variation": {
+    "declared_in": [],
+    "map_status": "unknown",
+    "n_swm_leaves": null,
+    "note": "",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": null,
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchPickAndPlace": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchPickAndPlace-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchPickAndPlace"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchPickAndPlace-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPickAndPlace"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchPickAndPlaceDense": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchPickAndPlaceDense-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchPickAndPlaceDense"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchPickAndPlaceDense-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPickAndPlaceDense"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchPickAndPlaceDict": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchPickAndPlaceDict-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchPickAndPlaceDict"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchPickAndPlaceDict-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPickAndPlaceDict"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchPush": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchPush-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchPush"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchPush-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPush"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchPushDense": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchPushDense-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchPushDense"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchPushDense-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPushDense"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchPushDict": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchPushDict-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchPushDict"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchPushDict-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchPushDict"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchReach": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchReach-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchReach"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchReach-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 2,
+     "mapped": 2,
+     "not_applicable": 2,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchReach"
+    ],
+    "n_swm_leaves": 8,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "object.color",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchReachDense": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchReachDense-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchReachDense"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchReachDense-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 2,
+     "mapped": 2,
+     "not_applicable": 2,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchReachDense"
+    ],
+    "n_swm_leaves": 8,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "object.color",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchReachDict": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchReachDict-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchReachDict"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchReachDict-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 2,
+     "mapped": 2,
+     "not_applicable": 2,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchReachDict"
+    ],
+    "n_swm_leaves": 8,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "object.color",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchSlide": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchSlide-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchSlide"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchSlide-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchSlide"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchSlideDense": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchSlideDense-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchSlideDense"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchSlideDense-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchSlideDense"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.99,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "FetchSlideDict": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/FetchSlideDict-v3",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "FetchSlideDict"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FetchSlideDict-v3",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 3,
+     "not_applicable": 5,
+     "partial": 1,
+     "unsupported": 1
+    },
+    "map_status": "partial",
+    "mapped_cells": [
+     "FetchSlideDict"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [
+     "background.color"
+    ],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "DOCUMENTED_LIMITATION",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "camera.angle_delta",
+     "rendering.transparent_arm"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_REGRESSION"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCFingerTurnHard": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "reference_id ['dm_control/finger-turn_hard'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCFingerTurnHard"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/FingerDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 4,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCFingerTurnHard"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.fingertip_density",
+     "agent.proximal_density",
+     "floor.color",
+     "spinner.color",
+     "spinner.density",
+     "spinner.friction",
+     "target.shape"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.11.0"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "DMCHopperHop": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "FAIL",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "FAIL"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "reference_id ['dm_control/hopper-hop'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "UNMEASURED",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCHopperHop"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/HopperDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCHopperHop"
+    ],
+    "n_swm_leaves": 10,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.foot_density",
+     "agent.foot_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.11.0"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "DMCHumanoidStand": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "BLOCKED",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "UNMEASURED"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "this id resolves to dm_control/humanoid-walk, which no stable-envs env declares; we declare ['dm_control/humanoid-stand'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "UNMEASURED",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCHumanoidStand"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/HumanoidDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCHumanoidStand"
+    ],
+    "n_swm_leaves": 10,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.left_knee_locked",
+     "agent.right_lower_arm_density",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "15.50 f/s at B=1 (224 px) vs official 22.23; S_cpu 0.697, cores_cpu 0.0071; job 6396735 node2315 se-vis311 one thread, gates USABLE. A tier NAME, not a slowdown: no CPU number existed for this cell before. Mechanism: the _fk Python loop per env plus three full-frame ray passes at 50,176 rays",
+    "qualifiers": [],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "MEASURED",
+    "tier": "CPU_REGRESSION"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCManipulatorBringBall": "ebfc481ad7f23962"
+   },
+   "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "DMCManipulatorBringBall",
+      "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+      "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "DMCManipulatorBringBall",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_visual_fidelity",
+       "check_visual_fidelity_under_variation"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
+      "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: every mandatory check passes; check_state_dims_matter passes with three REPORTED exclusions (ball_y, target_ball_quat_qw, target_ball_quat_qy), approved by Sami as a narrow per-class render-contract exception validated by the check itself against the frozen geom_type",
+    "per_device": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "R 32.04, cores 3.72; 8,396.35 f/s at B=4096 vs official dm_control 262.06 on gpu2107 in one process, job 6395157; cpu_frac 1.603 > 1.5 so HOST_BOUND applies per Step-2 6.7",
+    "qualifiers": [
+     "HOST_BOUND"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "W3 dmc-manipulator, merged 1d9dccb",
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/certification/downsample_provenance.json",
+     "detail": "carries PLATE_PATHS and is not a PLATE_REPRESENTATIVE, so this test skips it exactly as it skips every other PARITY-tier DM Control plate cell; DMCCartpoleSwingup and DMCPointMassEasy stand for the two camera geometries. Recording a floor would create a gate the frozen protocol does not have. Measur",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "resolution consistency"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCManipulatorBringBall"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/ManipulatorDMControl-v0",
+   "variation": {
+    "declared_in": [
+     "visibility.target_ball",
+     "target_ball.shape",
+     "light.diffuse_scale"
+    ],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 5,
+     "unsupported": 3
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCManipulatorBringBall"
+    ],
+    "n_swm_leaves": 9,
+    "note": "the registered SWM default (hidden target, .015 sphere, light 0.7) is reached THROUGH declared leaves and asserted by Gate F; floor.color is a Gate-F RANGE gap (the leaf exists, its range is not covered), recorded by W3's reviewer as a range gap and not a default gap",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.hand_density",
+     "agent.upper_arm_density",
+     "agent.upper_arm_length",
+     "floor.color"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "gfxdraw"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_PARITY"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "MountainCarContinuous": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "the probe saw class 'Continuous_MountainCarEnv' under swm/MountainCarContinuousControl-v0, and gymnasium.make() on our reference_id produces the same unwrapped class",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "MountainCarContinuous"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/MountainCarContinuousControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 2,
+     "unsupported": 2
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "MountainCarContinuous"
+    ],
+    "n_swm_leaves": 4,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "physics.max_speed",
+     "physics.power"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "gfxdraw"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_PARITY"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "MountainCar": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "the probe saw class 'MountainCarEnv' under swm/MountainCarControl-v0, and gymnasium.make() on our reference_id produces the same unwrapped class",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "MountainCar"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/MountainCarControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 2,
+     "unsupported": 3
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "MountainCar"
+    ],
+    "n_swm_leaves": 5,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "physics.force",
+     "physics.gravity",
+     "physics.max_speed"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "device='cpu' raises honestly rather than falling back to CUDA. CPU3D-OGB-1: cores_cpu short 56-72x at full rate and 9.9-12.9x even at the 24 ns/tri vertex-setup floor, so CPU_FAST is a demonstrated blocker; S_cpu ~6-7 vs the llvmpipe official means CPU_FASTER is reachable with a shared span rasteriser, deferred to Step 8",
+    "qualifiers": [
+     "RAISES_BY_DESIGN"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "UNSUPPORTED_BY_DESIGN",
+    "tier": "CPU_MISSING"
+   },
+   "fidelity": {
+    "measured_at": "mujoco 3.12.0 / ogbench 1.2.1 reference; 224 px, camera front_pixels, 8 independent draws of 64 states from the env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, against swm's own render(); the declared value is the WORST of the eight and draw_spread carries the range, for mean_abs/within8_frac/ssim AND for interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the dra",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.12.0",
+     "ogbench": "1.2.1"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "OGBCube": "560c1398a8a49a3f"
+   },
+   "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "OGBCube",
+      "device": "cpu",
+      "not_applicable_checks": [],
+      "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+      "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "OGBCube",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_default_style_is_official",
+       "check_style_is_state",
+       "check_backend_agreement",
+       "check_colors_apply_exactly",
+       "check_task_object_visibility",
+       "check_variations_do_something",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+      "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: all mandatory checks pass at the W5 closure follow-on (d4318d2). The Step-7 closure sweep had recorded check_state_roundtrip FAIL at max_abs_err 1.17e-07 against a bound of exactly 0, plus a sub-batch shared-style failure and a zero-size reduction crash, none of which any earlier Step-7 interpreter could see because every committed tests/gpu run skipped OGBench; W5 closed them with float32 round-trip states, the PlateRig (private model copy, offscreen buffer raised per rig, hidden-site-group digest) and a role-split reference cache, and the declaration was re-measured on the gate instrument",
+    "per_device": {
+     "cpu": "UNSUPPORTED_BY_DESIGN",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "R 3.20, cores 1.88, BATCH_SCALES 5.36x against a bar of 20 -> capped at GPU_PARITY per Step-2 6.7. fps(1) 1,200, best 6,025; official on hardware EGL 2,012 f/s (NOT the 6.31 f/s llvmpipe number, which is the CPU comparator)",
+    "qualifiers": [
+     "BATCH_SCALES_FAIL"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "W5 ogb-manipulation, merged 24d1054",
+   "limitations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json; examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+     "detail": "all mandatory checks pass at the W5 closure follow-on (d4318d2). The Step-7 closure sweep had recorded check_state_roundtrip FAIL at max_abs_err 1.17e-07 against a bound of exactly 0, plus a sub-batch shared-style failure and a zero-size reduction crash, none of which any earlier Step-7 interpreter ",
+     "kind": "note",
+     "what": "gate_a note"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "OGBCube"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "UNSUPPORTED_BY_DESIGN",
+     "verdict": "REFUSED_BY_DESIGN",
+     "why": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se"
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/OGBCube-v0",
+   "variation": {
+    "declared_in": [],
+    "map_status": "missing",
+    "n_swm_leaves": 11,
+    "note": "certified at the registered default (224 px, camera front_pixels, visualize_info=True recorded as a parity_note); the registered-default variation set was taken first and appearance leaves are declared per env",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FAST"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "PointmazeLargeNavigate": null,
+    "PointmazeLargeStitch": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "one swm id stands for a whole family. The probe records the REGISTERED default as maze_type='large' with PointEnv in the MRO, and stable_worldmodel's MazeEnv builds loco_env_type in {point, ant, humanoid} x maze_type in {arena, medium, large, giant, teleport}; the default therefore corresponds to ogbench/pointmaze-large-v0, which is the reference_id of PointmazeLargeNavigate and PointmazeLargeStitch (the two dataset suffixes share one rendered scene). The other 23 Antmaze*/Humanoidmaze*/Pointmaze* envs cover the rest of the cross product; we render no 'arena' maze.",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "PointmazeLargeNavigate",
+    "PointmazeLargeStitch"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/OGBMaze-v0",
+   "variation": {
+    "declared_in": [],
+    "map_status": "missing",
+    "n_swm_leaves": 5,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "mjwarp"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "as OGBCube (CPU3D-OGB-1)",
+    "qualifiers": [
+     "RAISES_BY_DESIGN"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "UNSUPPORTED_BY_DESIGN",
+    "tier": "CPU_MISSING"
+   },
+   "fidelity": {
+    "measured_at": "mujoco 3.12.0 / ogbench 1.2.1 reference; 200 px, camera front_pixels, 8 independent draws of 64 states from the env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, against swm's own render(); the declared value is the WORST of the eight and draw_spread carries the range, for mean_abs/within8_frac/ssim AND for interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the dra",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.12.0",
+     "ogbench": "1.2.1"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "OGBScene": "7a0cdff1849ee221"
+   },
+   "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "OGBScene",
+      "device": "cpu",
+      "not_applicable_checks": [],
+      "source": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+      "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "OGBScene",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_default_style_is_official",
+       "check_style_is_state",
+       "check_backend_agreement",
+       "check_colors_apply_exactly",
+       "check_task_object_visibility",
+       "check_variations_do_something",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+      "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: as OGBCube: all mandatory checks pass at d4318d2, and the closure sweep's check_state_roundtrip FAIL (1.12e-07) is closed. Still ships with a DECLARED residual: the btn_metal cube-map cannot be sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean colour on two small geoms - 0.139% of pixels, max 37/255. Sami ruled: keep the reviewed declared bake",
+    "per_device": {
+     "cpu": "UNSUPPORTED_BY_DESIGN",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "R 3.62, cores 2.05, BATCH_SCALES 6.50x -> capped at GPU_PARITY. fps(1) 873, best 5,498; official on hardware EGL 1,526 f/s",
+    "qualifiers": [
+     "BATCH_SCALES_FAIL"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "W5 ogb-manipulation, merged 24d1054",
+   "limitations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json; examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+     "detail": "as OGBCube: all mandatory checks pass at d4318d2, and the closure sweep's check_state_roundtrip FAIL (1.12e-07) is closed. Still ships with a DECLARED residual: the btn_metal cube-map cannot be sampled by mujoco_warp <= 3.12.0 (fixed upstream in 3.13.0) and is baked to its mean colour on two small g",
+     "kind": "note",
+     "what": "gate_a note"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "OGBScene"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "UNSUPPORTED_BY_DESIGN",
+     "verdict": "REFUSED_BY_DESIGN",
+     "why": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S"
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/OGBScene-v0",
+   "variation": {
+    "declared_in": [],
+    "map_status": "missing",
+    "n_swm_leaves": 12,
+    "note": "as OGBCube; the two button bits are state dims, not style",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "nvdiff"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "device='cpu' raises honestly. Measured feasibility: a naive single-thread torch rasteriser draws 486 triangles at 480 px at 1.92 f/s = 0.056x the official 34.25 f/s (S_cpu bar 171) and 0.0016 cores (bar 1,191) - both bars missed by two to three orders. A shared CPU triangle backend is deferred to Step 8",
+    "qualifiers": [
+     "RAISES_BY_DESIGN"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "UNSUPPORTED_BY_DESIGN",
+    "tier": "CPU_MISSING"
+   },
+   "fidelity": {
+    "measured_at": "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, torch 2.14.0+cu126, nvdiffrast 0.4.0 (scratch/step7/rocket-landing/measure_tier.py, examples/results/step7/rocket-landing/tier/job6410105/)",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "PyFlyt": "0.29.0",
+     "pybullet": "3.2.7"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "PFRocketLanding": "f4707e54f3007b2e"
+   },
+   "gate_a": {
+    "applicability": [
+     {
+      "check": "check_colors_apply_exactly",
+      "declared_by": "PFRocketLanding.color_exactness_applicability",
+      "device": "cuda",
+      "kind": "declared_not_applicable",
+      "measured_evidence": {
+       "applicability": {
+        "declaration": {
+         "evidence": [
+          "examples/results/step8/certification/colour_law_ceiling.json",
+          "examples/results/step8/certification/colour_check_decision.md",
+          "examples/results/step7/rocket-landing/findings.md:251-257,1209-1220",
+          "examples/results/step7/rocket-landing/review_phase1.md:885-894"
+         ],
+         "leaves": [
+          "pad.color",
+          "rocket.body_color",
+          "rocket.booster_color",
+          "rocket.fin_color",
+          "rocket.leg_color"
+         ],
+         "max_shading_factor": 0.993567,
+         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
+         "mechanism": "bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma",
+         "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest body pixel is 0.991*int(255*c); the requested triple is absent from the OFFICIAL frames too",
+         "official_renderer_fails_the_same_check": true,
+         "reachable_ceiling_for_the_probe_targets": {
+          "17": 16,
+          "200": 198,
+          "33": 32
+         },
+         "ruled_by": "Sami, 2026-09-16, on examples/results/step8/certification/colour_check_decision.md",
+         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays judged against literal equality",
+         "status": "not_applicable: literal RGB equality is unreachable under the reference's own law",
+         "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's response to the knob against the OFFICIAL renderer's response to the same knob"
+        },
+        "declared_leaves": [
+         "pad.color",
+         "rocket.body_color",
+         "rocket.booster_color",
+         "rocket.fin_color",
+         "rocket.leg_color"
+        ],
+        "honoured": true,
+        "not_applicable_probes": [
+         "pad.color->[17, 33, 200]",
+         "pad.color->[200, 17, 33]",
+         "rocket.body_color->[17, 33, 200]",
+         "rocket.body_color->[200, 17, 33]",
+         "rocket.booster_color->[17, 33, 200]",
+         "rocket.booster_color->[200, 17, 33]",
+         "rocket.fin_color->[17, 33, 200]",
+         "rocket.fin_color->[200, 17, 33]",
+         "rocket.leg_color->[17, 33, 200]",
+         "rocket.leg_color->[200, 17, 33]"
+        ],
+        "undeclared_leaves_still_judged": [],
+        "why": "5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none)."
+       },
+       "best_abs_diff": {
+        "pad.color->[17, 33, 200]": 5,
+        "pad.color->[200, 17, 33]": 5,
+        "rocket.body_color->[17, 33, 200]": 4,
+        "rocket.body_color->[200, 17, 33]": 4,
+        "rocket.booster_color->[17, 33, 200]": 4,
+        "rocket.booster_color->[200, 17, 33]": 4,
+        "rocket.fin_color->[17, 33, 200]": 10,
+        "rocket.fin_color->[200, 17, 33]": 10,
+        "rocket.leg_color->[17, 33, 200]": 6,
+        "rocket.leg_color->[200, 17, 33]": 6
+       },
+       "colors_not_applied": [
+        "pad.color->[17, 33, 200]",
+        "pad.color->[200, 17, 33]",
+        "rocket.body_color->[17, 33, 200]",
+        "rocket.body_color->[200, 17, 33]",
+        "rocket.booster_color->[17, 33, 200]",
+        "rocket.booster_color->[200, 17, 33]",
+        "rocket.fin_color->[17, 33, 200]",
+        "rocket.fin_color->[200, 17, 33]",
+        "rocket.leg_color->[17, 33, 200]",
+        "rocket.leg_color->[200, 17, 33]"
+       ]
+      },
+      "why": "declared not_applicable on 5 named lit RGB leaves. 5 named leaves are rendered through bullet3 TinyRenderer's MULTIPLICATIVE one-light law out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma, whose measured ceiling is 0.993567 < 1, so the requested triple is unreachable for any correct implementation of the reference and the official renderer fails this check too; evidence ['examples/results/step8/certification/colour_law_ceiling.json', 'examples/results/step8/certification/colour_check_decision.md', 'examples/results/step7/rocket-landing/findings.md:251-257,1209-1220', 'examples/results/step7/rocket-landing/review_phase1.md:885-894']. Every other RGB leaf on this env stays judged (there are none). The measurement is kept: colors_not_applied=['pad.color->[17, 33, 200]', 'pad.color->[200, 17, 33]', 'rocket.body_color->[17, 33, 200]', 'rocket.body_color->[200, 17, 33]', 'rocket.booster_color->[17, 33, 200]', 'rocket.booster_color->[200, 17, 33]', 'rocket.fin_color->[17, 33, 200]', 'rocket.fin_color->[200, 17, 33]', 'rocket.leg_color->[17, 33, 200]', 'rocket.leg_color->[200, 17, 33]'], best_abs_diff={'pad.color->[17, 33, 200]': 5, 'pad.color->[200, 17, 33]': 5, 'rocket.body_color->[17, 33, 200]': 4, 'rocket.body_color->[200, 17, 33]': 4, 'rocket.booster_color->[17, 33, 200]': 4, 'rocket.booster_color->[200, 17, 33]': 4, 'rocket.fin_color->[17, 33, 200]': 10, 'rocket.fin_color->[200, 17, 33]': 10, 'rocket.leg_color->[17, 33, 200]': 6, 'rocket.leg_color->[200, 17, 33]': 6}."
+     },
+     {
+      "all_bands_recorded_not_judged": null,
+      "bands": {},
+      "bound": ">= 0.956137 - 0.005",
+      "check": "check_resolution_consistency",
+      "device": "cuda",
+      "judged_on_subset": null,
+      "kind": "judged_on_the_applicable_band",
+      "observed": {
+       "exact_frac": 0.9561371527777778,
+       "max_abs": 255,
+       "mean_abs": 0.9922828052662037
+      },
+      "why": "no resolution_consistency_applicability is declared, so the bound is asserted on every state"
+     }
+    ],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "PFRocketLanding",
+      "device": "cpu",
+      "not_applicable_checks": [],
+      "source": "examples/results/step7/closure2/gate_a/cpu_rocket.json",
+      "source_sha256": "016b266071d0f7c80076de6d8f9c5a35265906c7b431459f603e9942c8cb9187"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "PFRocketLanding",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_colors_apply_exactly",
+       "check_task_object_visibility",
+       "render_parity_with_official_renderer"
+      ],
+      "source": "examples/results/step8/certification/gate_a_resweep/cuda_rocket.json",
+      "source_sha256": "a8db0aed8b075c8f35c9b171ea731c011ec5f283c424a75f1c97f849e7bf2101"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Applicability READ off the class, recorded in gate_a.applicability: check_colors_apply_exactly; check_resolution_consistency. Step-7 record, kept: all mandatory checks PASS, including batch-size invariance after the batch-invariant mvp; the W6 closure follow-on (ffa0ed8) adds the contact-band bridge flag and fills the declaration. Two tests/gpu assertions still fail, both with a stated mechanism and neither a Gate-A check: check_colors_apply_exactly is structurally unsatisfiable under TinyRenderer's multiplicative law (max factor 0.993567, so 200 can never render above 198) and fails for the OFFICIAL frames too - OPEN escalation, Sami did not rule; and DOWNSAMPLE_EXACT_FRAC still has no table entry for this cell (measured 0.95614; the sa",
+    "per_device": {
+     "cpu": "UNSUPPORTED_BY_DESIGN",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "R 241.5, cores 2.61, NO_LARGE_BATCH_REGRESSION 1.253; BATCH_SCALES 14.17 against a bar of 20, which fails because fps(1)=238 is unusually high for a class-S cell (3,374 f/s at B=4096) - correct application of Step-2 6.7 and a definitional edge case recorded for Step 8",
+    "qualifiers": [
+     "BATCH_SCALES_FAIL"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "MEASURED",
+    "tier": "GPU_PARITY"
+   },
+   "join_evidence": "W6 rocket-landing, merged fd2b8ef",
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/certification/nvdiff_ulp_classification.json",
+     "detail": "no shipped renderer draws through nvdiff on cpu; cuda bitwise invariant at every width; the residual does not reproduce on the baseline's own sweep host",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "nvdiff x86 CPU sparse-stage one ULP"
+    },
+    {
+     "artifact": "examples/results/step8/certification/colour_check_decision.md",
+     "detail": "TinyRenderer's multiplicative law caps the shading factor at 0.993567, so the exact requested RGB cannot appear for ANY correct implementation, and does not appear in the official frames either. Measured best_abs_diff per leaf on the Step-8 re-sweep: 4 to 10. RULED 2026-09-16: literal RGB equality is not applicable on the five lit leaves the class names, with the law, the measured ceiling and the official-renderer demonstration declared in PFRocketLanding.color_exactness_applicability. The probe still runs and records best_abs_diff per leaf. A law-aware successor check is a PROPOSAL only: not implemented, not mandatory, and not part of the frozen Step-2 contract.",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "check_colors_apply_exactly"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "PFRocketLanding"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "UNSUPPORTED_BY_DESIGN",
+     "verdict": "REFUSED_BY_DESIGN",
+     "why": "NotImplementedError: PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility."
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/PFRocketLanding-v0",
+   "variation": {
+    "declared_in": [
+     "5 RGB material colours",
+     "flame ignition bit"
+    ],
+    "map_status": "missing",
+    "n_swm_leaves": 9,
+    "note": "sky_color is a DEAD leaf in the swm wrapper (it reaches no pixel) and is deliberately not offered; the 5 colours and the ignition bit are the style dims by path",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "environment.sky_color"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "gfxdraw"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_PARITY"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "Pendulum": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "the probe saw class 'PendulumEnv' under swm/PendulumControl-v1, and gymnasium.make() on our reference_id produces the same unwrapped class",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "Pendulum"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/PendulumControl-v1",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 3,
+     "unsupported": 6
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "Pendulum"
+    ],
+    "n_swm_leaves": 9,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "physics.dt",
+     "physics.g",
+     "physics.l",
+     "physics.m",
+     "physics.max_speed",
+     "physics.max_torque"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCPendulumSwingup": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "reference_id ['dm_control/pendulum-swingup'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCPendulumSwingup"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/PendulumDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 3,
+     "mapped": 2,
+     "unsupported": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCPendulumSwingup"
+    ],
+    "n_swm_leaves": 9,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.mass_density",
+     "agent.mass_shape",
+     "agent.pole_density",
+     "floor.color",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "navdot"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.999995,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "Piecewise": null,
+    "PiecewiseZones": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "stable_envs.compat.worldmodel.VARIATION_MAPS declares swm_id='swm/Piecewise-v0' for Piecewise, PiecewiseZones",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "Piecewise",
+    "PiecewiseZones"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/Piecewise-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 12,
+     "swm_only": 30
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "Piecewise",
+     "PiecewiseZones"
+    ],
+    "n_swm_leaves": 42,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "scene"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "PushT": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "the probe recorded the same env_name, the same variation leaves and the same frame shape as swm/PushT-v1, so it is the same picture",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "PushT"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/PushT-Discrete-v1",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 10,
+     "swm_only": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "PushT"
+    ],
+    "n_swm_leaves": 17,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "scene"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "PushT": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "stable_envs.compat.worldmodel.VARIATION_MAPS declares swm_id='swm/PushT-v1' for PushT",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "PushT"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/PushT-v1",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 10,
+     "swm_only": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "PushT"
+    ],
+    "n_swm_leaves": 17,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": true,
+   "cpu_tier": {
+    "note": "job 6398084 node2301: 73 polls over 6 h, load1 34.1-43.6, never below the load-12 guard, so nothing was measured. Local M5 numbers exist and are NOT certification numbers. The CPU path itself runs: 25/25 CPU identity",
+    "qualifiers": [
+     "LOAD_QUARANTINED"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "UNMEASURED",
+    "tier": "CPU_UNMEASURED"
+   },
+   "fidelity": {
+    "measured_at": "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states (SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 (scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.11.0"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "DMCQuadrupedWalk": "1f0b38b4dca47b92"
+   },
+   "gate_a": {
+    "applicability": [],
+    "blocked_checks": [],
+    "failing_checks": [],
+    "measurements": [
+     {
+      "blocked_checks": [],
+      "cell": "DMCQuadrupedWalk",
+      "device": "cpu",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+      "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c"
+     },
+     {
+      "blocked_checks": [],
+      "cell": "DMCQuadrupedWalk",
+      "device": "cuda",
+      "not_applicable_checks": [
+       "check_backend_agreement",
+       "check_task_object_visibility",
+       "check_visual_fidelity_under_variation",
+       "render_parity_with_official_renderer"
+      ],
+      "source": "examples/results/step7/closure2/gate_a/cuda_vis311.json",
+      "source_sha256": "dcfcf1690ba38d841a7211d3567f369f18993e6aef07a0d7b0354632395a9f58"
+     }
+    ],
+    "note": "Step-8 rejudgment of the UNCHANGED Step-7 measurements with the frozen Gate-A judge (scratch/step4/certify.py:verdict), mandatory AND family_specific. Not a fresh run: nothing was rendered and no threshold moved. Step-7 record, kept: all mandatory checks pass on both devices and both reference arms on the new corpus; ELLIPSOID stays out of _BOUNDED_KINDS (kind-cost ratio 0.69-1.43 measured only on a load-34 node: undecided, not admitted silently)",
+    "per_device": {
+     "cpu": "PASS",
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "source": "examples/results/step8/certification/gate_a_rejudged.json",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "class-S ladder: S 129.9, cores 13.6, BATCH_SCALES pass; 44,374 f/s at B=4096 vs same-node official 341.5, job 6398085 gpu2109. The repo evaluator prints 'unknown' only because the Step-3 census has no entry for this cell yet - a Step-8 freeze item, not a missing measurement",
+    "qualifiers": [
+     "CENSUS_ENTRY_MISSING"
+    ],
+    "source": "examples/results/step7/dashboard.yaml (workstream row)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "W4 dmc-quadruped, merged 0a029bd",
+   "limitations": [
+    {
+     "artifact": "examples/results/step7/closure2/gate_a/cpu_vis311.json; examples/results/step7/closure2/gate_a/cuda_vis311.json",
+     "detail": "all mandatory checks pass on both devices and both reference arms on the new corpus; ELLIPSOID stays out of _BOUNDED_KINDS (kind-cost ratio 0.69-1.43 measured only on a load-34 node: undecided, not admitted silently)",
+     "kind": "note",
+     "what": "gate_a note"
+    }
+   ],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCQuadrupedWalk"
+   ],
+   "supported_devices": {
+    "cpu": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    },
+    "cuda": {
+     "status": "PASS",
+     "verdict": "PASS",
+     "why": ""
+    }
+   },
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/QuadrupedDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 7
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCQuadrupedWalk"
+    ],
+    "n_swm_leaves": 10,
+    "note": "certified at the registered SWM default (camera 2, 224 px, SWM appearance: material self rgba .6 .3 .3, foot_back_left density 1000); no Gate-F leaf gap recorded by the workstream",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.foot_back_left_density",
+     "agent.knee_back_left_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "DMCReacherHard": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "reference_id ['dm_control/reacher-hard'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCReacherHard"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/ReacherDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 4,
+     "unsupported": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCReacherHard"
+    ],
+    "n_swm_leaves": 9,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.arm_density",
+     "agent.finger_density",
+     "agent.finger_locked",
+     "floor.color",
+     "target.shape"
+    ]
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "scene"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "SimplePointMaze": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FAST"
+   },
+   "join_evidence": "the stable-envs class docstring names swm/SimplePointMaze-v0",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "SimplePointMaze"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/SimplePointMaze-v0",
+   "variation": {
+    "declared_in": [],
+    "map_status": "missing",
+    "n_swm_leaves": 12,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "source": "examples/results/step7/closure2/coverage_matrix.json",
+    "status": "UNMEASURED",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "R",
+   "backends": [
+    "navdot"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "",
+    "parity_all_exact_min": null,
+    "parity_interior_min": 0.999995,
+    "reference_versions": {},
+    "registered_default_coverage": "full",
+    "tier": "parity"
+   },
+   "frozen_corpus": {
+    "TwoRoom": null,
+    "TwoRoomTarget": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "PASS",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "PASS"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_FASTER"
+   },
+   "join_evidence": "stable_envs.compat.worldmodel.VARIATION_MAPS declares swm_id='swm/TwoRoom-v1' for TwoRoom, TwoRoomTarget",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "PASS",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "TwoRoom",
+    "TwoRoomTarget"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/TwoRoom-v1",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "mapped": 22,
+     "swm_only": 14
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "TwoRoom",
+     "TwoRoomTarget"
+    ],
+    "n_swm_leaves": 36,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "complete",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": []
+   }
+  },
+  {
+   "backend_class": "S",
+   "backends": [
+    "cpu3d",
+    "mjwarp",
+    "raycast3d"
+   ],
+   "closed_in_step7": false,
+   "cpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "CPU_FASTER"
+   },
+   "fidelity": {
+    "measured_at": "84 px, 64 states per domain from sample_states (the domain's own initialize_episode plus a 0-40 step random-action rollout), default appearance, H200 / driver 590.48.01 / MUJOCO_GL=egl, mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0",
+    "parity_all_exact_min": null,
+    "parity_interior_min": null,
+    "reference_versions": {
+     "mujoco": "3.11.0"
+    },
+    "registered_default_coverage": "full",
+    "tier": "visual"
+   },
+   "frozen_corpus": {
+    "DMCWalkerWalk": null
+   },
+   "gate_a": {
+    "failing_checks": [],
+    "note": "",
+    "per_device": {},
+    "raw": "FAIL",
+    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
+    "status": "FAIL"
+   },
+   "gpu_tier": {
+    "note": "",
+    "qualifiers": [],
+    "source": "docs/research/step6_optimization.md (generated Step-6 tier table)",
+    "status": "MEASURED",
+    "tier": "GPU_EXCEPTIONAL"
+   },
+   "join_evidence": "reference_id ['dm_control/walker-walk'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
+   "limitations": [],
+   "physics": {
+    "status": "UNMEASURED",
+    "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
+   },
+   "pixel_or_symbolic": "pixel",
+   "render_coverage": "covered",
+   "reproducibility": {
+    "status": "UNMEASURED",
+    "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
+   },
+   "semantic": {
+    "status": "UNMEASURED",
+    "why": "Workstream H; no committed Step-8 semantic artifact at this HEAD"
+   },
+   "stable_envs_cells": [
+    "DMCWalkerWalk"
+   ],
+   "supported_devices": {},
+   "swm_api_gate_f": {
+    "status": "UNMEASURED",
+    "why": "Gate F is Workstream D's; no committed Step-8 Gate-F artifact exists at this HEAD"
+   },
+   "swm_id": "swm/WalkerDMControl-v0",
+   "variation": {
+    "declared_in": [],
+    "leaf_classification": {
+     "dead_upstream": 1,
+     "mapped": 2,
+     "unsupported": 8
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "DMCWalkerWalk"
+    ],
+    "n_swm_leaves": 11,
+    "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
+    "swm_status": "present",
+    "unsupported_or_dead_leaves": [
+     "agent.left_foot_density",
+     "agent.right_knee_locked",
+     "agent.torso_density",
+     "floor.color",
+     "floor.friction",
+     "floor.rotation_y",
+     "gravity.x",
+     "gravity.y",
+     "gravity.z"
+    ]
+   }
+  }
+ ],
+ "sources": {
+  "census": [
+   "scratch/census/census_macos-probe.json",
+   "scratch/census/census_oscar-3090-fetch.json",
+   "scratch/census/census_step8-craftax-gpu.json",
+   "scratch/census/census_step8-craftax.json",
+   "scratch/census/census_step8-fetch311.json",
+   "scratch/census/census_step8-ogb.json",
+   "scratch/census/census_step8-rocket.json",
+   "scratch/census/census_step8-step5.json",
+   "scratch/census/census_step8-step6.json",
+   "scratch/census/census_step8-vis311.json"
+  ],
+  "classifier": "scratch/step3/certify.py:backend_class",
+  "coverage_matrix": "examples/results/step7/closure2/coverage_matrix.json",
+  "coverage_matrix_integration_head": "fec4f6eea606e390c22e2b206b3d0738d11468c8",
+  "step8_certification": [
+   "examples/results/step8/certification/census_class_diff.json",
+   "examples/results/step8/certification/colour_check_decision.md",
+   "examples/results/step8/certification/colour_law_ceiling.json",
+   "examples/results/step8/certification/corpus_index.json",
+   "examples/results/step8/certification/downsample_provenance.json",
+   "examples/results/step8/certification/gate_a_rejudged.json",
+   "examples/results/step8/certification/nvdiff_ulp_classification.json",
+   "examples/results/step8/certification/order_invariance_finding.json",
+   "examples/results/step8/certification/oscar_paired_tests.json",
+   "examples/results/step8/certification/replay49.json",
+   "examples/results/step8/certification/universe8_check.json"
+  ]
+ },
+ "status_vocabulary": [
+  "PASS",
+  "DOCUMENTED_LIMITATION",
+  "UPSTREAM_FINDING",
+  "UNSUPPORTED_BY_DESIGN",
+  "UNMEASURED"
+ ],
+ "what_this_is": "the Step-8 support matrix for all 42 stable-worldmodel ids, generated from committed artifacts by scratch/step8/report.py"
+}
