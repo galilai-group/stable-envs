@@ -104,7 +104,8 @@ def unmeasured_table(doc: dict) -> list[str]:
             b = e.get("blocked") or {}
             rows.append([f"`{r['swm_id']}`", dev.upper(), f"`{e['tier']}`", e["status"],
                          (b.get("kind") or "—"),
-                         ((b.get("reason") or e.get("why_this_source") or "—")[:300])])
+                         ((b.get("reason") or e.get("why_this_source") or e.get("why")
+                           or "—")[:300])])
     return table(["SWM id", "device", "tier", "status", "kind", "why, from the record"], rows)
 
 

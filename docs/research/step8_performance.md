@@ -159,10 +159,10 @@ CPU: **24 MEASURED**, **13 UNMEASURED**, **3 MISSING-UNSUPPORTED_BY_DESIGN**, **
 
 | SWM id | device | tier | status | kind | why, from the record |
 |---|---|---|---|---|---|
-| `swm/CraftaxClassicSymbolic-v1` | CPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | — |
-| `swm/CraftaxClassicSymbolic-v1` | GPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | — |
-| `swm/CraftaxSymbolic-v1` | CPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | — |
-| `swm/CraftaxSymbolic-v1` | GPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | — |
+| `swm/CraftaxClassicSymbolic-v1` | CPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | this id produces no frame by design (the upstream env is symbolic), so there is no renderer to tier; the live probe recorded the raise verbatim |
+| `swm/CraftaxClassicSymbolic-v1` | GPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | this id produces no frame by design (the upstream env is symbolic), so there is no renderer to tier; the live probe recorded the raise verbatim |
+| `swm/CraftaxSymbolic-v1` | CPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | this id produces no frame by design (the upstream env is symbolic), so there is no renderer to tier; the live probe recorded the raise verbatim |
+| `swm/CraftaxSymbolic-v1` | GPU | `n/a` | UNSUPPORTED_BY_DESIGN | — | this id produces no frame by design (the upstream env is symbolic), so there is no renderer to tier; the live probe recorded the raise verbatim |
 | `swm/FetchPickAndPlace-v3` | CPU | `CPU_UNMEASURED` | UNMEASURED | backend_missing | RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! |
 | `swm/FetchPickAndPlaceDense-v3` | CPU | `CPU_UNMEASURED` | UNMEASURED | backend_missing | RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! |
 | `swm/FetchPickAndPlaceDict-v3` | CPU | `CPU_UNMEASURED` | UNMEASURED | backend_missing | RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! |
