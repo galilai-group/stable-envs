@@ -149,12 +149,25 @@ class VariationMap:
     notes: Mapping[str, str] = field(default_factory=dict)
     #: ``our_path -> why swm has no counterpart``
     ours_only: Mapping[str, str] = field(default_factory=dict)
+    #: ``swm_path -> what is NOT reproduced`` for a leaf that IS mapped (it must appear in one of the
+    #: mapping fields) but whose upstream effect this cell reproduces only in part -- Fetch's
+    #: ``background.color`` writes the floor material AND the skybox texture, and the map carries the
+    #: floor half. Unlike ``notes`` this is a classification, not a caveat: ``classification`` reports
+    #: such a leaf as ``partial`` so a generated completeness table cannot count it as full support,
+    #: and the reason must carry the measured residual. Added by the coordinator for Workstream B under
+    #: Sami's ruling that a feasible, required leaf is not declared unsupported for want of a renderer
+    #: capability; the capability decision is recorded separately.
+    partial: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         for ours, (theirs, factor, _) in self.affine.items():
             if not float(factor):
                 raise ValueError(f"{ours} -> {theirs}: an affine mapping with factor 0 is not "
                                  f"invertible, so the leaf cannot round-trip; declare it unsupported")
+        stray = set(self.partial) - self.mapped_swm_paths()
+        if stray:
+            raise ValueError(f"partial names {sorted(stray)}, which no mapping field reaches; a leaf "
+                             f"that is not mapped at all belongs in unsupported, not partial")
 
     def pairs(self) -> dict[str, tuple[str, float]]:
         """``our_path -> (swm_path, factor)`` over every leaf mapped by a pure multiply.
@@ -190,11 +203,12 @@ class VariationMap:
                 | set(self.rgb255.values()) | {t for t, _ in self.enum.values()})
 
     def classification(self) -> dict[str, str]:
-        """``swm_path -> one of mapped / unsupported / dead_upstream / not_applicable / swm_only``.
+        """``swm_path -> one of mapped / partial / unsupported / dead_upstream / not_applicable / swm_only``.
 
         The Step-8 taxonomy, per leaf, from the map itself rather than from prose beside it.
         """
         out = {p: "mapped" for p in self.mapped_swm_paths()}
+        out.update({p: "partial" for p in self.partial})
         for label, bucket in (("swm_only", self.swm_only), ("unsupported", self.unsupported),
                               ("dead_upstream", self.dead_upstream),
                               ("not_applicable", self.not_applicable)):
