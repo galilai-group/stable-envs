@@ -713,8 +713,7 @@ workstreams:
   targets:
   - swm/OGBCube-v0
   - swm/OGBScene-v0
-  status: 'CLOSED: merged at 24d1054 (final review APPROVE); OGBCube/OGBScene at visual (interior-exact 0.958/0.922; worst-of-three declared; floors by the 0.04-margin rule); shared MJWarp corrections merged;
-    tiers GPU_PARITY capped by BATCH_SCALES; CPU raises (CPU3D-OGB-1); OGBScene ships with the declared button-texture bake residual (Sami may override)'
+  status: 'closure fixes in progress: roundtrip + citation fixed; gate job 6420033 (tests/gpu OGB rows in se7-ogb with tracebacks + 8-draw fidelity) running; then re-review and follow-on merge'
   capability: mjwarp-backed env on the Fetch pattern (mesh arm); goal/object placement as state; CPU feasibility measured
   wave: 2
   branch: step7/ogb-manipulation
@@ -981,17 +980,95 @@ workstreams:
       - m3_fidelity.json superseded
       - check_order_invariance absent in this build
       - floors 0.007-0.016 below worst vs DMC 0.04-0.06
+    closure_recheck_9a8a3bd:
+      verdict: APPROVE-WITH-CHANGES
+      verified: '(a)-(i) on CPU with the real swm models: float32 round-trip; PlateRig private copy (reference sha unchanged); STRANDED_IN_PLATE []; conformance guard minimal (styled stub identical); roles
+        distinct; declaration == findings table by the stated rules; offscreen-buffer mechanism reproduced (reference raises at 2S, private copy renders); two table entries with provenance; hygiene clean;
+        unit suites same pre-existing failures'
+      required:
+      - D1 _appearance_digest hashes hidden group-5 site arrays that swm's reset moves per task -> plate rig reused after a task-changing reset trips the assertion (pixel-inert; Cube unaffected); exclude
+        hidden-group sites; add task 1->3 bake test
+      - D2 commit the eight-draw JSON+log (job 6433493) and the downsample-bound measurement artifacts
+      nits:
+      - stale comments
+      - SE7_OGB_RIGDEBUG print in production path
   merge:
     integration_sha: 24d1054
     date: '2026-09-15'
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
+  closure_fixes:
+    head: 27e55680
+    closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
+    citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
+    sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
+      ValueError, not the zero-size crash -> the gate suite (job 6420033, se7-ogb, full tracebacks) is the arbiter'
+    closure4_ceiling: re-measuring over 8 draws; ceiling = worst-of-8 x1.3 by rule
+    gate_a_driver_defect: W5's probe_remeasure_chain.py ran five checks (determinism, batch, batch-size, state_dims_matter, order) and reported them as 'Gate A' - check_state_roundtrip was never in the
+      tuple, which is exactly the mandatory check the closure sweep failed. Fixed (added first). Every earlier 'Gate A green' for the OGB cells was on the incomplete set; the gate for the fix is the full
+      tests/gpu suite, which runs check_state_roundtrip.
+    login_node_audit: pre-compaction md5sum over the rsynced swm source tree on a login node (borderline; moved into the job as a startup assert); otherwise all compute in sbatch
+    gate_log_6420033: '15 failed / 41 passed / 32 skipped: check_state_roundtrip PASSES after the dtype fix; NO sub-batch invariance failure (the sweep''s diagnosis was wrong); three mechanisms instead'
+    mechanism_1_resource_guard: '11 rows: _renderer cache keyed on id(model) evicted on dirty reset -> dropped the last ref to a live mujoco.Renderer -> EGL context freed (14 created / 8 released). Replaced
+      by _PlateRig: one private (MjModel, MjData, Renderer) per (cell, resolution), built once, never evicted/closed (fetch.py shape); bake no longer mutates the reference env''s model; plate pinned at
+      all-zero bits; _appearance_digest asserts plate static at every bake'
+    mechanism_2_styleless: '2 rows: zero-size array to reduction in check_render_is_pure on a (B,0) style array - first styleless envs; conformance.py already guards style_dim==0 in three places; guard
+      added there (SHARED file -> independent review)'
+    mechanism_3_ceiling: '1 row: check_visual_fidelity draws sample_states(n) with no rng = default_rng(0), one fixed draw scoring 3.295; declared numbers were from seeds 1000-1007 (2.40-2.44); worst-of-8
+      x1.3 = 3.17 still < 3.295 -> not pasted; probe_gate_fidelity.py now calls the gate''s own function for the authoritative number with an explicit-rng agreement check'
+    verification_job: 6431616 running (fixes + declaration measurement); then paste, commit, full tests/gpu gate
+    job_6431616: 5 failed / 47 passed / 36 skipped (was 15/41); EGL contexts released 0 (was 8); styleless crash gone; roundtrip passes
+    gate_draw_numbers:
+      OGBCube: gate seed-0 3.2955, worst-of-8 3.3094, ceiling-by-rule 4.35 (declared was 2.4417 / 3.2)
+      OGBScene: 6.6027 / 6.6916 / 8.70 (declared was 5.3813 / 7.0)
+      not_pasted: seed change (0-7 vs 1000-1007) is confounded with the plate pinned to all-zero button bits; if a button/handle geom is in the plate rather than the mover set, pinning would hide state
+        -> job 6433175 re-measures the new tree at seeds 1000-1007 to attribute; a looser ceiling is not shipped on a guess
+    remaining_4_failures: renderers 6 created / 4 closed with 0 context releases; close stacks are GC (__del__ inside a warp allocation) blaming whoever ran; suspect swm's own renderer churn under reference_render;
+      probe records creation stacks to identify the owner
+    renderer_close_owner: upstream ogbench manipspace env.py:170-172 closes and rebuilds its mujoco.Renderer on every reset once one exists; one env instance served both sample_states (64 resets/draw) and
+      reference_env -> cache key now (cell, size, role); no upstream edit
+    measurement_gap: the shipped mean_abs (2.44/5.38) was measured by averaging |diff| over channels; the gate's pixel_agreement takes the per-pixel max over channels (x1.35 for three channels). Seed 0
+      scores 3.29548302475287 before and after the plate-rig fix, bit for bit; seeds 1000-1007 under the gate instrument sit on the seed 0-7 values -> the plate rig moved no pixels and seeds were not the
+      cause; the declared number was an instrument mismatch
+    scene_refusal: first reference render in a process differs from the second by 6 px of +-1 (upstream warm-up); probe burns one frame, 1e-6 tolerance
+    button_pinning: exact; STRANDED_IN_PLATE [] locally and on the cluster
+    final_measurement_job: '6433493 running: declaration on the final tree + OGB rows; then paste, full tests/gpu gate'
+    declaration_final:
+      OGBCube: worst-of-8 3.309378, gate seed-0 3.295483, ceiling 4.3
+      OGBScene: 6.691589 / 6.602667 / 8.7; within8_min 0.85 -> 0.80 by the stated rule (flagged)
+      instrument: check_visual_fidelity itself (per-pixel channel-max); seed 0 is one of the eight draws by construction
+    renderer_close_status: 'role split did NOT fix the four guard failures (6 created / 4 closed unchanged); ownership probe: 8 created, 0 died during the run -> the deaths need something the suite does;
+      job 6434224 (3090-gcondo) instruments the real pytest session to report builder vs closer per renderer'
+    process_notes:
+    - rsync --delete destroyed node-side results (recovered from $SCR/logs); --delete dropped
+    - a positional splice deleted _UNMEASURED/_REFERENCE_VERSIONS; caught by import failure, restored
+    citations: the 9 remaining broken citations are the Step-6 baseline set (carracing, robocasa, six scratch/sboughan paths), none from W5
+    gate_progress: '5 -> 4 failures: OGBCube declared-fidelity test passes with the pasted 4.3 ceiling; OGBScene already passing'
+    remaining_blocker: 'resource guard: 4 renderers closed mid-session (node-independent: gpu2104/2105/2106/2109) with 0 EGL contexts released (6 created / 6 live); the four closed renderers report ''born
+      during <not recorded>'' (instrumentation missed their creation; __new__ now patched, -s); job 6437003 asks (A) do the four rows fail alone, (B) who builds them; if still unnamed -> escalate to the
+      reviewer as a shared-file judgement (guard proxy fires without the harm it proxies for; closes originate in ogbench''s close()-on-reset)'
+    renderer_close_owner_named: 'job 6437003: the four rows pass alone (4 created / 0 closed); with __new__ patched and capture off the closed renderers are W5''s own _plate_rig Renderers built at new resolutions
+      during test_resolution_downsample_agrees_within_the_measured_bound and test_render_size_does_not_leak_into_later_calls, collected later during test_a_shared_style_broadcasts_to_any_batch / test_dataset_paths_regenerate_identical_frames
+      (ordering artefact of the guard); mechanism of collection despite the module dict still unknown (possible second module copy) -> _KEEPALIVE list enforcing ''created and never released'' + SE7_OGB_RIGDEBUG
+      readout; first run through the persistent allocation (m6/rigcheck)'
+    renderer_close_ROOT_CAUSE: 'OGBench compiles the scene with visual.global.offwidth/offheight = the registered render size (env.py:150; 200 Scene / 224 Cube). A mujoco.Renderer above that raises ''Image
+      width > framebuffer width'' AFTER __new__ allocated the object; the half-built, unreferenced Renderer is collected at an arbitrary later moment, __del__ -> close() -> counted and charged to whichever
+      test is running; it never made a context, so EGL_CONTEXT_RELEASED stayed 0 (both counters were truthful). Keepalive could not hold it (append is below the raising line). Fix: raise the offscreen buffer
+      on the rig''s private deep copy before constructing (reference env untouched). Escalation withdrawn; no guard change.'
+    next: gate on 27e55680 in allocation 6443480 after the obsolete pre-fix gate in 6437813 finishes
+    gate_fixed_tree_6443480_gpu2264: Gate A rc=0 both cells incl. check_state_roundtrip max_abs_err 0.0; suite renderers 149 created / 0 closed (was 4 closed), EGL 192 created / 0 released; OGB rows 54
+      PASSED / 32 SKIPPED / 2 FAILED = the expected downsample-table entries; the 798 errors are other families whose deps the OGB-only venv lacks (out of scope)
+    downsample_bounds_added: DOWNSAMPLE_EXACT_FRAC OGBCube 0.885782, OGBScene 0.805306, measured under the table's own protocol (downsample_protocol_states, 8 states at render_worker.STATE_SEED, default
+      appearance, states sha 055d4057) - a tests/gpu edit adding measured entries for new cells (not a threshold change); reviewer to verify provenance; the other Step-7 cells' entries remain Step-8 items
+      (Craftax needs the applicability mechanism)
+    grep_defect: gate script's 'NO OGB FAILURES' was a false pass (supervisor -v format puts the outcome at line end); re-checked properly
+    final_gate: running on 33c1076 with the bounds in place
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
-  status: 'CLOSED: merged at fd2b8ef. Visual tier 7.71/0.961/0.854 (ceilings 10.0/0.91/0.80); batch-size invariance 255 -> 0 via the batch-invariant mvp (six locomotion cells ULP_LEVEL/SUB_NOISE_SHIFT,
-    refreeze_ok true, no frozen Step-4 artifact touched); Gate A mandatory PASS; GPU_PARITY [BATCH_SCALES_FAIL] R 241.5 cores 2.61; CPU missing by design (raises; 1.92 f/s feasibility); conformance at the
-    tip 229 passed / 2 known failures (colour knobs law; downsample table entry)'
+  status: 'CLOSED (final): merged; nvdiff.py byte-identical to 4eb1c35; CLOSURE-1 = DOCUMENTED_LIMITATION (x86 CPU sparse stage: positions one ulp at widths 1-6, normals at widths 4 and 8; cuda bitwise
+    at all 11 widths tested); test corrected to the certified property; patch closure1_explicit_pos_rows.patch recorded as the Step-8 candidate (positions only; normals share the stage); x86 tests as a
+    CPU job (6420734: 909 passed / 25 skipped / 1 pre-existing)'
   capability: 'G1-G4 on real frames; if GO: URDF meshes through nvdiff with PyBullet camera/lighting law'
   wave: 1
   agent_model: fable
@@ -1019,7 +1096,7 @@ workstreams:
   - reference = lagged official picture from stepped rollouts carrying velocities; style dims = 5 RGB + flame ignition bit
   - nvdiff extensions generic only (from_triangles, per-row material colour, shading='tiny'+quant='trunc', nearest texture); existing nvdiff defaults unchanged; Fetch nvdiff identity replay script for cuda
   - own env module under stable_envs/envs/; separate commits M1/M2/M3; no SLURM
-  head_sha: 4eb1c35 (merged fd2b8ef)
+  head_sha: 0b4a14b (closure follow-on; merged)
   phase1:
     files:
     - 'stable_envs/render/nvdiff.py (generic: from_triangles, per-row material colour, shading=''tiny''+quant=''trunc'', nearest texture; defaults unchanged)'
@@ -1201,6 +1278,16 @@ workstreams:
     - baseline .git_sha written after a 59-file manifest match to git show 76dc5116
     - reference_render(return_flags=True) returns per-row flags; class attribute kept only for check_visual_fidelity_under_variation (Step-8 carry-over to delete)
     - 'ssim_min 0.80 justified: 0.9368x measurement, margin/spread 3.86 (tightest in the repo)'
+  closure1:
+    finding: the x86 CPU one-ulp batch dependence at widths 1-3 is in the sparse per-vertex stage (torch.sparse.mm(S4,.)), not mvp_rows (already matmul-free since d1e61a1); each element is a 4-term sum
+      whose order the kernel picks by column count; the sweep's widths (1,2,7,8,31,32,63) could not see width 3
+    fix_measured: 'explicit contraction in float32 reproduces torch.sparse.mm bit for bit on arm64 and x86 at every thread count (test 18 passed on x86); on CUDA (job 6419904, gpu2106) it moves four cells
+      vs the re-freeze: Walker2d SSIM +1.2e-10, Ant mean_abs +2.7e-7 SSIM -3.8e-10, Humanoid SSIM -1.3e-9, Swimmer SSIM +5.9e-11 (cuSPARSE accumulates differently) -> a second re-freeze; reverted; patch
+      4dc3d4b + evidence closure1/ kept'
+    ruling: 'coordinator, within Sami''s rules: no second re-freeze in Step 7 (CPU-only, no consumer, certified device invariant); nvdiff.py stays at 4eb1c35; the Step-7 unit test is corrected to assert
+      the certified property (cuda bitwise; cpu bitwise for widths >= 4; widths 1-3 x86 documented); DOCUMENTED_LIMITATION; option (1) is the Step-8 candidate under the clean re-verification pass; reported
+      to Sami in the closure packet'
+    gpu_subset_with_fix: 2 failed (known) / 229 passed; all seven declared-fidelity tests PASS
 decisions:
 - date: '2026-09-15'
   by: Sami
@@ -1276,6 +1363,12 @@ decisions:
     without new optimisation; record the exact integration HEAD; confirm nothing pushed; deliver the closure packet. Then prepare the Step-8 execution plan (VariationMaps; swm API completeness; final full-universe
     certification; deferred provenance/re-freeze items; production-pipeline performance story; semantic follow-up only where warranted; support matrix for all 42 ids). No broad refactor; no Step-8 implementation
     before Step 7 is reported closed.'
+- date: '2026-09-15'
+  by: Sami
+  topic: Step-8 plan approved; Step-7 milestone
+  decision: 'Step-8 plan approved with scope clarifications (recorded in STEP_08_AGENT_BRIEFS/00_COORDINATOR_PLAN.md). Before Step-8 implementation: finish the Step-7 closure; confirm tree/authorship/history
+    clean; create branch milestone/step7-full-renderer-coverage and a tag at the accepted Step-7 closure SHA; PUSH both (first authorised push); then create sami/pre-step8-baseline and the Step-8 integration
+    branch from that SHA.'
 incident_log:
 - '2026-09-15: Oscar SSH denied at auth (keyboard-interactive) at Step-7 launch; wave 1 started with local-only diagnosis.'
 - '2026-09-15: W4 dmc-quadruped agent stalled at start (stream watchdog, no progress 600 s); resumed with the same instructions.'
@@ -1442,6 +1535,42 @@ incident_log:
   item: 'W6 final review: nine conditions PASS; RD-1 comparator fix + one conformance run before merge'
 - date: '2026-09-15'
   item: 'W6 MERGED and CLOSED (fd2b8ef): 40/40 pixel-producing ids covered; closure sweep next'
+- date: '2026-09-15'
+  item: Sami approved the Step-8 plan and authorised the Step-7 milestone branch/tag push after closure
+- date: '2026-09-15'
+  item: 'CLOSURE SWEEP: frozen universe clean; OGBCube/OGBScene fail tests/gpu in se7-ogb (never run pre-merge) -> fixes assigned to W5 with the gpu suite as the gate; nvdiff CPU ulp test failure -> W6;
+    closure held'
+- date: '2026-09-15'
+  item: CLOSURE-1 localised to the sparse stage; second re-freeze declined in Step 7; test scoped to the certified property; Step-8 candidate recorded
+- date: '2026-09-15'
+  item: 'Sami rule: no CPU-heavy work on Oscar login nodes (added to AGENT_COMMON addendum). Audit: W6 ran a CPU probe + tests/unit file on login009 (redirected to a batch job); closure agent ran sub-second
+    log-extraction scripts and interpreter probes on the login node (no measurement produced; all numbers from SLURM jobs; regeneration declined as unnecessary); W5 none reported.'
+- date: '2026-09-15'
+  item: W5 found its own Gate-A driver omitted check_state_roundtrip (why CLOSURE-3 escaped); fixed; gate = full tests/gpu suite
+- date: '2026-09-15'
+  item: W6 closure follow-on merged; W6 CLOSED
+- date: '2026-09-15'
+  item: 'W5: OGB failures = renderer-cache EGL eviction (11), styleless zero-size guard in conformance (2, shared), ceiling from the gate''s own seed-0 draw (1); job 6431616 verifying'
+- date: '2026-09-15'
+  item: 'W5: 15 -> 5 failures; ceiling paste withheld pending attribution of the worse numbers (seed vs plate pinning); job 6433175'
+- date: '2026-09-15'
+  item: 'W5: OGB fidelity gap was an instrument mismatch (channel-mean vs per-pixel channel-max); renderer churn was upstream reset behaviour on a shared env instance; final measurement job 6433493'
+- date: '2026-09-16'
+  item: 'W5: OGB declaration pasted from the gate instrument (4.3 / 8.7); four renderer-close guard failures remain, instrumented in the real suite (6434224)'
+- date: '2026-09-16'
+  item: 'W5: OGB down to the resource-guard blocker; instrumented run 6437003'
+- date: '2026-09-16'
+  item: 'Persistent 3090 allocation held for closure work: SLURM 6437813 (se7-interactive-3090) on gpu2101, 12 h, in tmux session se7gpu on the login node; agents run GPU steps via srun --jobid=6437813
+    --overlap (no queue). Model rule: Opus by default.'
+- date: '2026-09-16'
+  item: 'W5: renderer-close owner named (own plate rigs at extra resolutions, collected later); keepalive + debug run in the held allocation'
+- date: '2026-09-16'
+  item: 'W5 ROOT CAUSE of the renderer-close guard failures: oversize Renderer construction raising after __new__ (OGBench offscreen buffer = registered size); fixed on the private model copy; escalation
+    withdrawn'
+- date: '2026-09-16'
+  item: 'W5: fix verified (0 renderers closed across the registry; Gate A rc=0); downsample bounds for OGBCube/OGBScene added under the table''s protocol; final gate running'
+- date: '2026-09-16'
+  item: W5 closure follow-on re-check APPROVE-WITH-CHANGES (digest over hidden sites; missing declaration artifacts); fix after the gate lands
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
@@ -1541,6 +1670,10 @@ step8_carryovers:
 - item: 'Step-3 classify() returns ''unknown'' for CraftaxFull: the frozen census under scratch/census predates the cell AND NO_BACKEND_MODULE_CLASS keys on module name ''craftax'' -> R which ''craftax_full''
     does not match. Step 8 must regenerate the census and widen the map (also DMCQuadrupedWalk/DMCManipulatorBringBall/OGB/Rocket entries)'
   source: W2 tier-final
+- item: 'CLOSURE-1: nvdiff sparse per-vertex stage is batch-dependent by one float32 ulp at widths 1-3 on x86 CPU (no consumer); explicit-contraction patch 4dc3d4b is batch-invariant everywhere but moves
+    four locomotion cells on CUDA at 1e-7..1e-10 (second ULP re-freeze). Decide in Step 8''s clean re-verification pass.'
+  classification: DOCUMENTED_LIMITATION
+  source: W6 closure
 blocked_on_oscar_ssh:
   since: 2026-09-15 ~08:00 UTC
   items:
@@ -1552,3 +1685,19 @@ blocked_on_oscar_ssh:
 coverage:
   pixel_producing: 40/40 merged on step7/integration (33 pre-Step-7 + CraftaxClassic partial->full + CraftaxPixels, Manipulator, Quadruped, OGBCube, OGBScene, PFRocketLanding)
   symbolic: 2/2 intentionally renderer-free (to be confirmed by the closure sweep)
+closure_sweep:
+  branch: step7/closure @ 01b5597 (verified integration 275970c)
+  classification: PASS-WITH-KNOWN-DELTAS on everything Step 7 froze; FAIL on two merged cells (OGBCube/OGBScene) - closure NOT yet declarable
+  replay_49: '48/49 replayable under the frozen interpreters: 43 identical, 5 known-delta (Step 6''s set), 0 new-delta; HumanoidmazeMediumNavigate Gate A FAIL -> PASS; CraftaxClassic is the coverage change
+    (149 slots, (144,144,3)): world-row digest 1aeabbe8 reproduces from the zero-extended corpus on both architectures'
+  nvdiff_six: 6/6 bit-identical to the re-freeze; Gate A incl. batch-size invariance PASS
+  gate_a_seven: five PASS 14/14 both devices; OGBCube/OGBScene FAIL check_state_roundtrip (1.17e-7 / 1.12e-7 vs bound 0); OGB/Rocket refuse cpu as promised
+  gpu_suite: 'error sets identical id-for-id to Step 6 (437, 529); 17 new failures: Manipulator 0; CraftaxClassic/CraftaxFull/Quadruped 1 each (downsample-table entries, expected); PFRocketLanding exactly
+    the two expected; OGBCube 8, OGBScene 6 in se7-ogb (never run before merge): state_roundtrip, sub-batch rendering invariant (3 of 8 rows differ from the full batch), a zero-size-array crash, OGBCube
+    mean_abs 3.287 vs its 3.2 ceiling'
+  unit: 'paired with 76dc5116 controls: exactly one new failure, test_from_triangles_clip_row_is_independent_of_batch_size on x86-64 CPU only (nvdiff.Scene.clip differs by one float32 ulp at widths 1 and
+    2 on CPU; no shipped renderer draws through nvdiff on cpu)'
+  coverage: '42 ids; 40/40 pixel covered; 2/2 symbolic renderer-free (wrapper raises NotImplementedError: render is only supported for Pixels variants); Gate A 34 PASS / 5 FAIL / 1 BLOCKED; coverage_matrix.json
+    + docs/research/step7_coverage.md generated'
+  citations: 9 -> 10 from a $SCR path in W5's committed provenance capture
+  duplicate_job: 6417178 (not the closure agent's) was re-running the same sbatch into the same $SCR dir; cancelled by the coordinator; committed artifacts unaffected

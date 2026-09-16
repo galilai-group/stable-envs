@@ -1,0 +1,12 @@
+FAILED tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]
+FAILED tests/unit/test_gfxdraw_bounds.py::test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCar]
+FAILED tests/unit/test_gfxdraw_bounds.py::test_the_windows_and_kmax_are_bounds_on_extreme_states[MountainCarContinuous]
+FAILED tests/unit/test_gfxdraw_bounds.py::test_the_windows_and_kmax_are_bounds_on_extreme_states[Pendulum]
+FAILED tests/unit/test_gfxdraw_bounds.py::test_the_extreme_states_actually_exercise_something[MountainCar]
+FAILED tests/unit/test_gfxdraw_bounds.py::test_the_extreme_states_actually_exercise_something[MountainCarContinuous]
+FAILED tests/unit/test_gfxdraw_bounds.py::test_the_extreme_states_actually_exercise_something[Pendulum]
+FAILED tests/unit/test_gfxdraw_select.py::test_both_select_branches_draw_the_same_frame[MountainCar]
+FAILED tests/unit/test_gfxdraw_select.py::test_both_select_branches_draw_the_same_frame[MountainCarContinuous]
+FAILED tests/unit/test_gfxdraw_select.py::test_both_select_branches_draw_the_same_frame[Pendulum]
+FAILED tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves
+11 failed, 767 passed, 10 skipped, 4 warnings in 20.04s

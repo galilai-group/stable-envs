@@ -1,0 +1,298 @@
+{
+ "provenance": {
+  "tag": "branch",
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "slurm_job": "6413321",
+  "threads": 4,
+  "load_average": [
+   15.09,
+   14.7,
+   14.57
+  ],
+  "python": "3.12.9",
+  "torch": "2.14.0+cu126",
+  "pythonpath": "/oscar/scratch/sboughan/se7/closure",
+  "stable_envs_file": "/oscar/scratch/sboughan/se7/closure/stable_envs/__init__.py",
+  "sha": "275970cc2d9e0d92eebf5297ee175b08944b7d04"
+ },
+ "cells": {
+  "MujocoHalfCheetah": {
+   "checks": {
+    "check_determinism": {
+     "identical": true
+    },
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "batch_sizes": [
+      1,
+      3,
+      7,
+      8,
+      64,
+      256
+     ],
+     "n": 256
+    },
+    "check_order_independence": {
+     "permutation_max_abs_diff": 0,
+     "duplicate_max_abs_diff": 0
+    },
+    "check_chunked_render_matches": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "chunks": [
+      1,
+      7,
+      64
+     ]
+    },
+    "check_render_is_pure": {
+     "state_changed_by_render": 0.0,
+     "style_changed_by_render": 0.0,
+     "state_changed_by_double_set": 0.0,
+     "frame_changed_by_double_set": 0
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "pass": true
+  },
+  "MujocoHopper": {
+   "checks": {
+    "check_determinism": {
+     "identical": true
+    },
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "batch_sizes": [
+      1,
+      3,
+      7,
+      8,
+      64,
+      256
+     ],
+     "n": 256
+    },
+    "check_order_independence": {
+     "permutation_max_abs_diff": 0,
+     "duplicate_max_abs_diff": 0
+    },
+    "check_chunked_render_matches": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "chunks": [
+      1,
+      7,
+      64
+     ]
+    },
+    "check_render_is_pure": {
+     "state_changed_by_render": 0.0,
+     "style_changed_by_render": 0.0,
+     "state_changed_by_double_set": 0.0,
+     "frame_changed_by_double_set": 0
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "pass": true
+  },
+  "MujocoWalker2d": {
+   "checks": {
+    "check_determinism": {
+     "identical": true
+    },
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "batch_sizes": [
+      1,
+      3,
+      7,
+      8,
+      64,
+      256
+     ],
+     "n": 256
+    },
+    "check_order_independence": {
+     "permutation_max_abs_diff": 0,
+     "duplicate_max_abs_diff": 0
+    },
+    "check_chunked_render_matches": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "chunks": [
+      1,
+      7,
+      64
+     ]
+    },
+    "check_render_is_pure": {
+     "state_changed_by_render": 0.0,
+     "style_changed_by_render": 0.0,
+     "state_changed_by_double_set": 0.0,
+     "frame_changed_by_double_set": 0
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "pass": true
+  },
+  "MujocoAnt": {
+   "checks": {
+    "check_determinism": {
+     "identical": true
+    },
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "batch_sizes": [
+      1,
+      3,
+      7,
+      8,
+      64,
+      256
+     ],
+     "n": 256
+    },
+    "check_order_independence": {
+     "permutation_max_abs_diff": 0,
+     "duplicate_max_abs_diff": 0
+    },
+    "check_chunked_render_matches": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "chunks": [
+      1,
+      7,
+      64
+     ]
+    },
+    "check_render_is_pure": {
+     "state_changed_by_render": 0.0,
+     "style_changed_by_render": 0.0,
+     "state_changed_by_double_set": 0.0,
+     "frame_changed_by_double_set": 0
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "pass": true
+  },
+  "MujocoHumanoid": {
+   "checks": {
+    "check_determinism": {
+     "identical": true
+    },
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "batch_sizes": [
+      1,
+      3,
+      7,
+      8,
+      64,
+      256
+     ],
+     "n": 256
+    },
+    "check_order_independence": {
+     "permutation_max_abs_diff": 0,
+     "duplicate_max_abs_diff": 0
+    },
+    "check_chunked_render_matches": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "chunks": [
+      1,
+      7,
+      64
+     ]
+    },
+    "check_render_is_pure": {
+     "state_changed_by_render": 0.0,
+     "style_changed_by_render": 0.0,
+     "state_changed_by_double_set": 0.0,
+     "frame_changed_by_double_set": 0
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "pass": true
+  },
+  "MujocoSwimmer": {
+   "checks": {
+    "check_determinism": {
+     "identical": true
+    },
+    "check_batch_invariance": {
+     "max_abs_diff": 0
+    },
+    "check_batch_size_invariance": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "batch_sizes": [
+      1,
+      3,
+      7,
+      8,
+      64,
+      256
+     ],
+     "n": 256
+    },
+    "check_order_independence": {
+     "permutation_max_abs_diff": 0,
+     "duplicate_max_abs_diff": 0
+    },
+    "check_chunked_render_matches": {
+     "max_abs_diff": 0,
+     "worst_case": "",
+     "chunks": [
+      1,
+      7,
+      64
+     ]
+    },
+    "check_render_is_pure": {
+     "state_changed_by_render": 0.0,
+     "style_changed_by_render": 0.0,
+     "state_changed_by_double_set": 0.0,
+     "frame_changed_by_double_set": 0
+    },
+    "check_state_dims_matter": {
+     "dead_dims": []
+    }
+   },
+   "pass": true
+  }
+ },
+ "all_pass": true
+}
