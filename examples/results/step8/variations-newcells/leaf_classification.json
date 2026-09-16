@@ -13,9 +13,9 @@
    "config_note": null,
    "counts": {
     "dead_upstream": 1,
-    "mapped": 0,
+    "mapped": 2,
     "not_applicable": 5,
-    "unsupported": 5
+    "unsupported": 3
    },
    "leaves": {
     "agent.color": {
@@ -36,10 +36,10 @@
      "reason": "perturbs the front_pixels camera's xyaxes (MEASURED: writes cam_mat0 and cam_quat). Same shape of problem as light.intensity -- the plate is a picture taken FROM this camera and the mover pass renders through the same model camera, so per-environment camera angles need a per-world camera in the mujoco_warp context. ESCALATED"
     },
     "cube.color": {
-     "classification": "unsupported",
+     "classification": "mapped",
      "evidence": "examples/results/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) -- geom_rgba on 2 MOVER geoms, no recompile",
-     "mechanism": "reachable through the EXISTING per-world rgba upload; the cheapest of the six and the first one to offer",
-     "reason": "the cube geoms' rgba. MEASURED: swm writes it DIRECTLY on the compiled model in initialize_episode with no recompile, on 2 MOVER geoms (Cube). This is the one appearance leaf reachable through machinery this cell ALREADY has -- _upload_button_colours writes per-world geom_rgba/mat_rgba into the mujoco_warp context for the Scene buttons by exactly this route. Not offered yet only because the cell's style space is empty and adding the first style dim moves the declaration (style_dim, style_digest) for a certified cell"
+     "mechanism": "per-world rgba upload, including default restores",
+     "reason": "Per-world cube and goal-marker RGB; preserves each geom alpha"
     },
     "cube.goal_position": {
      "classification": "not_applicable",
@@ -68,10 +68,10 @@
      "reason": "reset orientation of the cube; reaches the frame through qpos (state)"
     },
     "floor.color": {
-     "classification": "unsupported",
+     "classification": "mapped",
      "evidence": "examples/results/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) -- changes tex_data only (1 row, max 235)",
-     "mechanism": "plate cache key extension; escalation candidate",
-     "reason": "the checker floor texture (swm rewrites the MJCF grid texture rgb1/rgb2 and recompiles). MEASURED: it changes exactly ONE model array, tex_data, and nothing else -- the floor is STATIC, so this is a plate-only leaf and the tractable one. Not offered yet because the plate cache and _PlateRig are keyed on (cell, resolution) alone; honouring it means adding the appearance vector to that key, which is an additive change this workstream is NOT authorised to make to a certified renderer without a pixel re-baseline. ESCALATED"
+     "mechanism": "quantised plate cache key; unchanged marker texels",
+     "reason": "Checker RGB pairs update a private texture and plate cache key"
     },
     "light.intensity": {
      "classification": "unsupported",
@@ -84,7 +84,10 @@
    "our_envs": [
     "OGBCube"
    ],
-   "our_paths_mapped": {},
+   "our_paths_mapped": {
+    "cube.color": "cube.color",
+    "floor.color": "floor.color"
+   },
    "ours_only": {}
   },
   "swm/OGBMaze-v0": {
@@ -140,7 +143,9 @@
    "ours_only": {
     "agent.scale": "rjepa's `mark_agent_red` enlarges the agent so a 6-pixel body is findable by a fixed sky camera; swm has no counterpart",
     "camera.distance_scale": "swm does not expose the camera; ours is needed to reproduce the published sky-camera framings",
-    "camera.elevation": "as camera.distance_scale"
+    "camera.elevation": "as camera.distance_scale",
+    "floor.tint": "Multiplicative tint of the bound texture, not SWM checker RGB replacement",
+    "rendering.decolor_floor": "Flat slate floor, not SWM pixel_encoding=0 two-colour checker; an affine inversion alone cannot reproduce its pixels"
    }
   },
   "swm/OGBScene-v0": {
@@ -148,9 +153,9 @@
    "config_note": null,
    "counts": {
     "dead_upstream": 1,
-    "mapped": 0,
+    "mapped": 2,
     "not_applicable": 5,
-    "unsupported": 6
+    "unsupported": 4
    },
    "leaves": {
     "agent.color": {
@@ -170,9 +175,9 @@
      "reason": "perturbs the front_pixels camera's xyaxes (MEASURED: writes cam_mat0 and cam_quat). Same shape of problem as light.intensity -- the plate is a picture taken FROM this camera and the mover pass renders through the same model camera, so per-environment camera angles need a per-world camera in the mujoco_warp context. ESCALATED"
     },
     "cube.color": {
-     "classification": "unsupported",
+     "classification": "mapped",
      "evidence": "examples/results/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) -- geom_rgba on 3 MOVER geoms",
-     "reason": "the cube geoms' rgba. MEASURED: swm writes it DIRECTLY on the compiled model in initialize_episode with no recompile, on 2 MOVER geoms (Cube). This is the one appearance leaf reachable through machinery this cell ALREADY has -- _upload_button_colours writes per-world geom_rgba/mat_rgba into the mujoco_warp context for the Scene buttons by exactly this route. Not offered yet only because the cell's style space is empty and adding the first style dim moves the declaration (style_dim, style_digest) for a certified cell"
+     "reason": "Per-world cube and goal-marker RGB; preserves each geom alpha"
     },
     "cube.goal_position": {
      "classification": "not_applicable",
@@ -200,9 +205,9 @@
      "reason": "reset orientation of the cube; reaches the frame through qpos (state)"
     },
     "floor.color": {
-     "classification": "unsupported",
+     "classification": "mapped",
      "evidence": "examples/results/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) -- changes tex_data only",
-     "reason": "the checker floor texture (swm rewrites the MJCF grid texture rgb1/rgb2 and recompiles). MEASURED: it changes exactly ONE model array, tex_data, and nothing else -- the floor is STATIC, so this is a plate-only leaf and the tractable one. Not offered yet because the plate cache and _PlateRig are keyed on (cell, resolution) alone; honouring it means adding the appearance vector to that key, which is an additive change this workstream is NOT authorised to make to a certified renderer without a pixel re-baseline. ESCALATED"
+     "reason": "Checker RGB pairs update a private texture and plate cache key"
     },
     "light.intensity": {
      "classification": "unsupported",
@@ -219,7 +224,10 @@
    "our_envs": [
     "OGBScene"
    ],
-   "our_paths_mapped": {},
+   "our_paths_mapped": {
+    "cube.color": "cube.color",
+    "floor.color": "floor.color"
+   },
    "ours_only": {}
   },
   "swm/PFRocketLanding-v0": {
@@ -395,11 +403,11 @@
  "step": 8,
  "totals": {
   "dead_upstream": 4,
-  "mapped": 14,
+  "mapped": 18,
   "n_ids": 5,
   "n_leaves": 49,
   "not_applicable": 18,
-  "unsupported": 13
+  "unsupported": 9
  },
  "what_this_is": "Step-8 Workstream C: every stable_worldmodel variation leaf offered by the Step-7 new cells and the OGB / Rocket / maze families, classified as mapped / unsupported / dead_upstream / not_applicable, with the measurement each verdict rests on.",
  "workstream": "variations-newcells",

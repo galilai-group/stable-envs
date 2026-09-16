@@ -5,28 +5,28 @@ Baseline `43ac95238f7472137619f3e69e7636e11dd088b1`.
 
 | bucket | count |
 |---|---|
-| `mapped` | 14 |
-| `unsupported` | 13 |
+| `mapped` | 18 |
+| `unsupported` | 9 |
 | `dead_upstream` | 4 |
 | `not_applicable` | 18 |
 | **total leaves** | **49** across 5 ids |
 
 ## `swm/OGBCube-v0`
 
-stable-envs: `OGBCube` - 11 swm leaves, 5 unsupported, 1 dead_upstream, 5 not_applicable
+stable-envs: `OGBCube` - 11 swm leaves, 2 mapped, 3 unsupported, 1 dead_upstream, 5 not_applicable
 
 | swm leaf | verdict | our path | evidence |
 |---|---|---|---|
 | `agent.color` | `dead_upstream` | - | 0 model arrays changed when applied alone; mat_rgba rows 8 and 9 move only when co-varied |
 | `agent.ee_start_position` | `not_applicable` | - | 0 appearance arrays changed |
 | `camera.angle_delta` | `unsupported` | - | changes cam_mat0 and cam_quat |
-| `cube.color` | `unsupported` | - | geom_rgba on 2 MOVER geoms, no recompile |
+| `cube.color` | `mapped` | `cube.color` | geom_rgba on 2 MOVER geoms, no recompile |
 | `cube.goal_position` | `not_applicable` | - | 0 appearance arrays changed |
 | `cube.goal_yaw` | `not_applicable` | - | 0 appearance arrays changed |
 | `cube.size` | `unsupported` | - | geom_size on 2 MOVER geoms + 12 derived |
 | `cube.start_position` | `not_applicable` | - | 0 appearance arrays changed |
 | `cube.start_yaw` | `not_applicable` | - | 0 appearance arrays changed |
-| `floor.color` | `unsupported` | - | changes tex_data only (1 row, max 235) |
+| `floor.color` | `mapped` | `floor.color` | changes tex_data only (1 row, max 235) |
 | `light.intensity` | `unsupported` | - | changes light_diffuse only (1 row) |
 
 ## `swm/OGBMaze-v0`
@@ -48,23 +48,25 @@ Leaves we offer that swm does not:
 - `agent.scale` - rjepa's `mark_agent_red` enlarges the agent so a 6-pixel body is findable by a fixed sky camera; swm has no counterpart
 - `camera.distance_scale` - swm does not expose the camera; ours is needed to reproduce the published sky-camera framings
 - `camera.elevation` - as camera.distance_scale
+- `floor.tint` - Multiplicative tint of the bound texture, not SWM checker RGB replacement
+- `rendering.decolor_floor` - Flat slate floor, not SWM pixel_encoding=0 two-colour checker; an affine inversion alone cannot reproduce its pixels
 
 ## `swm/OGBScene-v0`
 
-stable-envs: `OGBScene` - 12 swm leaves, 6 unsupported, 1 dead_upstream, 5 not_applicable
+stable-envs: `OGBScene` - 12 swm leaves, 2 mapped, 4 unsupported, 1 dead_upstream, 5 not_applicable
 
 | swm leaf | verdict | our path | evidence |
 |---|---|---|---|
 | `agent.color` | `dead_upstream` | - | 0 model arrays changed beyond the measured Scene reset-noise set when applied alone |
 | `agent.ee_start_position` | `not_applicable` | - | every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) |
 | `camera.angle_delta` | `unsupported` | - | changes cam_mat0 and cam_quat |
-| `cube.color` | `unsupported` | - | geom_rgba on 3 MOVER geoms |
+| `cube.color` | `mapped` | `cube.color` | geom_rgba on 3 MOVER geoms |
 | `cube.goal_position` | `not_applicable` | - | every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) |
 | `cube.goal_yaw` | `not_applicable` | - | every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) |
 | `cube.size` | `unsupported` | - | geom_size on 2 MOVER geoms |
 | `cube.start_position` | `not_applicable` | - | every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) |
 | `cube.start_yaw` | `not_applicable` | - | every MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into the plate) |
-| `floor.color` | `unsupported` | - | changes tex_data only |
+| `floor.color` | `mapped` | `floor.color` | changes tex_data only |
 | `light.intensity` | `unsupported` | - | changes light_diffuse |
 | `lock_color` | `unsupported` | - | two IDENTICAL seed=0 SceneEnv resets diffed, to separate reset noise from leaf effect |
 
