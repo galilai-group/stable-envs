@@ -1,9 +1,9 @@
 {
  "provenance": {
-  "git_sha": "4b3d09fae90270c59d1273cfb7d5fc37e041ed75",
+  "git_sha": "5940eb6866e2cb0a91c7589f2f0aca1d58997a43",
   "git_branch": null,
   "host": "gpu2264.oscar.ccv.brown.edu",
-  "slurm_job_id": "6452376",
+  "slurm_job_id": "6443480",
   "slurm_nodelist": "gpu2264",
   "gpu_name": "NVIDIA GeForce RTX 3090",
   "driver": "575.57.08",
@@ -97,6 +97,13 @@
      }
     }
    },
+   "_unmapped_leaves_declared": [
+    "agent.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "object.color",
+    "rendering.transparent_arm"
+   ],
    "mapped_leaves_move_pixels": {
     "table.color": {
      "ours": "table.color",
@@ -226,6 +233,15 @@
      }
     }
    },
+   "_unmapped_leaves_declared": [
+    "agent.start_position",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "rendering.transparent_arm"
+   ],
    "mapped_leaves_move_pixels": {
     "table.color": {
      "ours": "table.color",
@@ -365,6 +381,15 @@
      }
     }
    },
+   "_unmapped_leaves_declared": [
+    "agent.start_position",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "rendering.transparent_arm"
+   ],
    "mapped_leaves_move_pixels": {
     "table.color": {
      "ours": "table.color",
@@ -504,6 +529,15 @@
      }
     }
    },
+   "_unmapped_leaves_declared": [
+    "agent.start_position",
+    "block.angle",
+    "block.mass",
+    "block.start_position",
+    "camera.angle_delta",
+    "goal.start_position",
+    "rendering.transparent_arm"
+   ],
    "mapped_leaves_move_pixels": {
     "table.color": {
      "ours": "table.color",

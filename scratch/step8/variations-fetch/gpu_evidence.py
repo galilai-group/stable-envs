@@ -103,8 +103,12 @@ def main():
             style_byte_identical=bool(np.array_equal(s, default)),
             pixels=_cmp(base, env.render(st, style=s[None].repeat(NSTATES, 0))))
 
+        # ``unmapped()``, not ``swm_only``: this family declares its unmapped leaves in the three
+        # typed buckets (unsupported / dead_upstream / not_applicable) and leaves ``swm_only`` empty,
+        # so iterating ``swm_only`` measures nothing and reports an empty section as a pass.
         row["unmapped_leaves_move_nothing"] = {}
-        for leaf in sorted(m.swm_only):
+        row["_unmapped_leaves_declared"] = sorted(m.unmapped())
+        for leaf in sorted(m.unmapped()):
             if leaf not in unmapped_values:
                 continue
             s = WM.style_from_variation(env, {leaf: unmapped_values[leaf]})
@@ -129,7 +133,13 @@ def main():
         res["scenes"][scene] = row
         print(scene, json.dumps(row)[:400], flush=True)
 
+    # The zero-collection rule, because this job has already reported a PASS on an empty section
+    # once: iterating a bucket the map no longer uses measured nothing and "all of nothing is 0/255"
+    # is true. A section that measured no leaf is a FAIL.
     ok = all(
+        len(r["unmapped_leaves_move_nothing"]) >= (5 if scene == "Reach" else 7)
+        and len(r["mapped_leaves_move_pixels"]) >= (3 if scene == "Reach" else 4)
+        for scene, r in res["scenes"].items()) and all(
         r["default_through_empty_mapping"]["style_byte_identical"]
         and r["default_through_empty_mapping"]["pixels"]["maxdiff"] == 0
         and r["round_trip"]["style_byte_identical"]

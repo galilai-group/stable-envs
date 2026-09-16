@@ -4,8 +4,8 @@
  "size": 128,
  "n_states": 8,
  "node": "gpu2264.oscar.ccv.brown.edu",
- "slurm_job_id": "6452376",
- "branch_sha": "4b3d09fae90270c59d1273cfb7d5fc37e041ed75",
+ "slurm_job_id": "6443480",
+ "branch_sha": "5940eb6866e2cb0a91c7589f2f0aca1d58997a43",
  "per_scene": {
   "Reach": {
    "maxdiff": 0,

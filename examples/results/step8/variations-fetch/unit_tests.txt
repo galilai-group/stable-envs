@@ -1,8 +1,8 @@
-SKIPPED [24] tests/unit/test_variation_maps_fetch.py:155: could not import 'gymnasium_robotics': No module named 'gymnasium_robotics'
-SKIPPED [4] tests/unit/test_variation_maps_fetch.py:202: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
-SKIPPED [4] tests/unit/test_variation_maps_fetch.py:215: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
-SKIPPED [4] tests/unit/test_variation_maps_fetch.py:229: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
-SKIPPED [4] tests/unit/test_variation_maps_fetch.py:240: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
-SKIPPED [4] tests/unit/test_variation_maps_fetch.py:263: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
-SKIPPED [4] tests/unit/test_variation_maps_fetch.py:280: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
-8 passed, 48 skipped in 6.49s
+SKIPPED [25] tests/unit/test_variation_maps_fetch.py:256: gymnasium_robotics is not importable
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:366: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:379: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:393: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:404: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:427: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+SKIPPED [4] tests/unit/test_variation_maps_fetch.py:444: this interpreter cannot build a Fetch env: ModuleNotFoundError: No module named 'gymnasium_robotics'
+10 passed, 49 skipped in 6.76s
