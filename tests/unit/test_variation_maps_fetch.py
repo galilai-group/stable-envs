@@ -187,7 +187,16 @@ def envs():
     import stable_envs as se
     if "fetch" in se.envs.import_errors():
         pytest.skip(f"stable_envs.envs.fetch: {se.envs.import_errors()['fetch']}")
-    return {s: se.make(f"Fetch{s}", batch=2, size=64, device="cuda") for s in SCENES}
+    # import_errors() is not enough, and this is not belt-and-braces. The module's dependency check
+    # is ``warp``/``mujoco_warp``/``mujoco >= 3.11`` at import; ``gymnasium_robotics`` is imported
+    # LAZILY by ``_asset_dir`` at the first build. So on an interpreter with mujoco_warp and a CUDA
+    # device and no gymnasium-robotics -- Oscar's se6-verify, which is the only one there carrying
+    # pytest -- the module imports clean, records no error, and then every one of these tests ERRORS
+    # in setup instead of skipping. Measured, in SLURM job 6451948 stage 3: 24 setup errors.
+    try:
+        return {s: se.make(f"Fetch{s}", batch=2, size=64, device="cuda") for s in SCENES}
+    except Exception as exc:
+        pytest.skip(f"this interpreter cannot build a Fetch env: {type(exc).__name__}: {exc}")
 
 
 @pytest.mark.parametrize("scene", SCENES)

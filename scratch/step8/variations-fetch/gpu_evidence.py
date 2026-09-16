@@ -48,8 +48,14 @@ def provenance():
             return None
     import mujoco
     import mujoco_warp
+    # rsync drops .git, so on Oscar `git rev-parse` returns nothing and the artifact came back with
+    # a null SHA (job 6451948). The sync writes the SHA to .git_sha on purpose and _env.sh exports
+    # it; read those FIRST and fall back to git only in a real checkout.
+    sha = (os.environ.get("STABLE_ENVS_GIT_COMMIT")
+           or (open(".git_sha").read().strip() if os.path.exists(".git_sha") else None)
+           or sh("git rev-parse HEAD"))
     return dict(
-        git_sha=sh("git rev-parse HEAD"), git_branch=sh("git rev-parse --abbrev-ref HEAD"),
+        git_sha=sha, git_branch=sh("git rev-parse --abbrev-ref HEAD"),
         host=platform.node(), slurm_job_id=os.environ.get("SLURM_JOB_ID"),
         slurm_nodelist=os.environ.get("SLURM_JOB_NODELIST"),
         gpu_name=torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,

@@ -64,8 +64,10 @@ PYTHONPATH=$TREE BASE_TREE=$BASE $FETCHPY scratch/step8/variations-fetch/pixel_p
 echo "STAGE2 rc=$?"
 
 echo "########## STAGE 3 :: unit tests, se6-verify :: $(date -u +%FT%TZ)"
-PYTHONPATH=$TREE $VERIFYPY -m pytest tests/unit/test_variation_maps_fetch.py -q --no-header \
-  -p no:cacheprovider 2>&1 | grep -E "^(tests/\S+ (PASSED|FAILED|SKIPPED)|[0-9]+ (passed|failed).*|FAILED |ERROR )" \
+# -rs so an all-skipped run says WHY: this interpreter has stable_worldmodel and no
+# gymnasium-robotics, so tiers 2 and 3 cannot build anything and must skip rather than error.
+PYTHONPATH=$TREE $VERIFYPY -m pytest tests/unit/test_variation_maps_fetch.py -q --no-header -rs \
+  -p no:cacheprovider 2>&1 | grep -E "^(SKIPPED|tests/\S+ (PASSED|FAILED|SKIPPED)|[0-9]+ (passed|failed).*|FAILED |ERROR )" \
   | tee examples/results/step8/variations-fetch/unit_tests.txt
 echo "STAGE3 rc=$?"
 
