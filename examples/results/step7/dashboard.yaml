@@ -986,7 +986,7 @@ workstreams:
     gate: hygiene 0 trailers; step4/5/6 untouched; shared review APPROVE (conditional bounded) + cell review APPROVE; Gate A repo checks clean; integration tests/unit 888 passed + the pre-existing citation
       failure
   closure_fixes:
-    head: 2c32151e
+    head: bac058c8 (fixes 8227143a)
     closure3_roundtrip: 'fixed: sample_states returned float64 while set_state stores float32 -> read-back narrowed; state now carried in the round-trip dtype; unit test asserts dtype'
     citation: provenance capture recorded expanded /oscar/scratch path -> rewritten to $SCR; capture function fixed; set back to 9
     sub_batch_probe_6419823: 'does NOT reproduce: batch 1-8 bit-identical to the full render rows on both cells; MJWarp RGB+seg identical nworld 4 vs 8; padded 3-of-8 matches; empty batch raises the base
@@ -996,6 +996,15 @@ workstreams:
       tuple, which is exactly the mandatory check the closure sweep failed. Fixed (added first). Every earlier 'Gate A green' for the OGB cells was on the incomplete set; the gate for the fix is the full
       tests/gpu suite, which runs check_state_roundtrip.
     login_node_audit: pre-compaction md5sum over the rsynced swm source tree on a login node (borderline; moved into the job as a startup assert); otherwise all compute in sbatch
+    gate_log_6420033: '15 failed / 41 passed / 32 skipped: check_state_roundtrip PASSES after the dtype fix; NO sub-batch invariance failure (the sweep''s diagnosis was wrong); three mechanisms instead'
+    mechanism_1_resource_guard: '11 rows: _renderer cache keyed on id(model) evicted on dirty reset -> dropped the last ref to a live mujoco.Renderer -> EGL context freed (14 created / 8 released). Replaced
+      by _PlateRig: one private (MjModel, MjData, Renderer) per (cell, resolution), built once, never evicted/closed (fetch.py shape); bake no longer mutates the reference env''s model; plate pinned at
+      all-zero bits; _appearance_digest asserts plate static at every bake'
+    mechanism_2_styleless: '2 rows: zero-size array to reduction in check_render_is_pure on a (B,0) style array - first styleless envs; conformance.py already guards style_dim==0 in three places; guard
+      added there (SHARED file -> independent review)'
+    mechanism_3_ceiling: '1 row: check_visual_fidelity draws sample_states(n) with no rng = default_rng(0), one fixed draw scoring 3.295; declared numbers were from seeds 1000-1007 (2.40-2.44); worst-of-8
+      x1.3 = 3.17 still < 3.295 -> not pasted; probe_gate_fidelity.py now calls the gate''s own function for the authoritative number with an explicit-rng agreement check'
+    verification_job: 6431616 running (fixes + declaration measurement); then paste, commit, full tests/gpu gate
 - workstream: rocket-landing
   targets:
   - swm/PFRocketLanding-v0
@@ -1482,6 +1491,8 @@ incident_log:
   item: W5 found its own Gate-A driver omitted check_state_roundtrip (why CLOSURE-3 escaped); fixed; gate = full tests/gpu suite
 - date: '2026-09-15'
   item: W6 closure follow-on merged; W6 CLOSED
+- date: '2026-09-15'
+  item: 'W5: OGB failures = renderer-cache EGL eviction (11), styleless zero-size guard in conformance (2, shared), ceiling from the gate''s own seed-0 draw (1); job 6431616 verifying'
 escalations:
 - date: '2026-09-15'
   item: 'dead-dimension check on rotation-invariant sphere orientation dims (Manipulator ball_y, target_ball quat qw/qy): proposal = per-class declared exclusion list validated by check_state_dims_matter
