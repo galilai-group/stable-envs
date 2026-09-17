@@ -688,8 +688,17 @@ workstreams:
   model: opus
 - workstream: G_performance
   branch: step8/performance
-  status: spawned, killed before any work (weekly limit); worktree exists at base
+  status: MERGED into step8/integration (reviewed APPROVE)
   model: opus
+  head_sha: fff274f
+  review: review_g.md APPROVE (sonnet, fresh)
+  finding: '42 ids: CPU 24 MEASURED / 13 UNMEASURED (12 Fetch CPU_BACKEND_MISSING + Quadruped LOAD_QUARANTINED) / 3 MISSING [RAISES_BY_DESIGN] / 2 symbolic; GPU 40 MEASURED / 2 symbolic; 0 tier disagreements
+    vs Step-7 record and vs the support matrix; Rocket GPU_PARITY [BATCH_SCALES_FAIL] 14.17x, Fetch 8.29x, threshold unchanged; revised taxonomy = Step-9 proposal only; microbenchmark and Lance/JPEG production
+    pipeline kept separate'
+  residual:
+  - support matrix should relabel the two symbolic ids tier status UNSUPPORTED_BY_DESIGN instead of UNMEASURED (coordinator/E generator)
+  - REFERENCE_SPLIT_JOB on CraftaxClassic arms; HOST_FROM_PROSE on ManipulatorBringBall GPU (provenance weaknesses recorded on the row)
+  merge_gate: 1-7 PASS/n-a per review_g.md; 8 APPROVE; 9 none; 10 this row
 - workstream: H_semantic_craftax
   branch: step8/semantic-craftax
   status: worktree created, never spawned
@@ -774,7 +783,9 @@ buckets:
   - gymnasium-robotics + numpy 2.5.3 + mujoco 3.12 cannot construct Fetch (pybind enum vs np.int32 in) (B)
   STEP9_CLEANUP:
   - report.py ValueError when outputs are written outside ROOT (E review D1)
-  DEFERRED_OPTIMIZATION: []
+  DEFERRED_OPTIMIZATION:
+  - quiet-node Quadruped CPU measurement (would close CPU_UNMEASURED; not needed for closure)
+  - shared CPU backend for the three GPU-only cells; Fetch has no CPU backend (DOCUMENTED_LIMITATION)
 incident_log:
 - date: '2026-09-16'
   item: 'Wave 0: baseline 43ac952 verified (branch, tag, origin, both Step-8 branches); dashboard created; ownership assigned; Wave-1 worktrees created'
@@ -792,6 +803,8 @@ incident_log:
   item: B merged after fresh APPROVE; strictness switch STABLE_ENVS_REQUIRE_LIVE_SWM added; tier-2 live Fetch construction blocked locally by the numpy 2.5.3 + mujoco 3.12 upstream defect (DOCUMENTED_LIMITATION)
 - date: '2026-09-16'
   item: E merged after fresh APPROVE (opus); colour-check ruling implemented as a narrow class declaration; Rocket provenance gap closed on the held allocation
+- date: '2026-09-16'
+  item: G merged after fresh APPROVE; H returned FINDING (no downstream Craftax evaluator; surfaces byte-identical re-measured), review running; F running
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md
