@@ -951,9 +951,6 @@ _CULL_TILE = (8, 128, 4)
 #: which is cheaper than the scattered stores of a tile narrow enough to divide 600.
 TILE_WASTE_MAX = 0.125
 
-#: Step-8 spelling, kept so a reader grepping the old name still lands here.
-_TILE_WASTE_MAX = TILE_WASTE_MAX
-
 
 def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
     """``(BH, BW)``: the tile a 2-D fused kernel walks one frame in, for ``lanes`` lanes per program.
