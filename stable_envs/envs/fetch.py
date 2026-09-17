@@ -586,11 +586,30 @@ class FetchBase(StableEnv):
         one, so a uint8 default would shift the table by a level and make "our defaults reproduce the
         reference" false.
 
-        Two things that are deliberately NOT knobs. The **skybox** is 72% of the frame and would be the
-        most useful of all, but it is a texture and ``mujoco_warp`` uploads textures when the render
-        context is built, so a per-value skybox means a render context per value — which is exactly the
-        "do not scale context creation" rule this repo enforces. The **headlight** is baked into the
-        megakernel as a compile-time static for the same reason.
+        Two things that are deliberately NOT knobs. The **headlight** is baked into the megakernel as a
+        compile-time static, because ``mujoco_warp`` resolves it when the render context is built and a
+        per-value headlight would mean a render context per distinct value — which is exactly the "do
+        not scale context creation" rule this repo enforces.
+
+        The **skybox** is 72% of the frame and would be the most useful of all. It used to be refused
+        for the headlight's reason, and THAT REASON WAS WRONG: it is true of the ``mujoco_warp`` pass
+        and the delivered skybox does not come from that pass. The floor, the table and the skybox are
+        the MuJoCo-baked plate (``_bake_plate``), and the composite takes ``mujoco_warp``'s output only
+        where the mover mask is set (``torch.where(mv.unsqueeze(-1), rgb, pl)``), so a per-value skybox
+        is a texel substitution on the plate rig — ``stable_envs.envs._plate_texels`` — with one more
+        entry in ``PLATE_PATHS``, and no second context anywhere. Measured, four scenes at 480 px:
+        substituting moves 143,275-171,620 of 230,400 px, and it is the same operation
+        ``stable_worldmodel`` itself performs (its ``background.color`` writes
+        ``(bg * 255).astype(uint8)`` flat over the skybox texels and calls ``mjr_uploadTexture``; it
+        does not recompile either). See ``examples/results/step8/capability/fetch_skybox_probe.json``.
+
+        WHAT ACTUALLY BLOCKS THE LEAF IS THE DEFAULT. swm FLATTENS the skybox to one colour, and this
+        family's skybox is a 16-colour GRADIENT (rgb1 ``.44 .85 .56`` to rgb2 ``.46 .87 .58`` over
+        6,144 texels): no value of a flat-fill leaf reproduces the compiled appearance, and no
+        two-colour masked substitution — the shape that works for DM Control's checker — reproduces
+        swm's flat sky. So the leaf cannot be added without moving this family's DEFAULT frame, which
+        is a frozen pixel oracle on the Step-4 and Step-7 corpora. That is a re-freeze decision, not an
+        implementation decision, and it is escalated rather than taken.
         """
         b = _build_bundle(self.SCENE)
         m, info = b.model, b.info

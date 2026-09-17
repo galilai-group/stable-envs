@@ -1,0 +1,6 @@
+{"cell": "DMCManipulatorBringBall", "B": 4096, "style": "default", "fps_median": 21832.563783828235, "fps": [21846.651012635462, 21822.618110483396, 21832.563783828235]}
+{"cell": "DMCCartpoleBalance", "B": 4096, "style": "default", "fps_median": 42074.46870599836, "fps": [42074.46870599836, 42070.30031536627, 42180.62040065864]}
+{"cell": "DMCManipulatorBringBall", "B": 4096, "style": "default", "fps_median": 21677.484485027027, "fps": [21640.16026716244, 21677.484485027027, 21689.83440053637]}
+{"cell": "DMCCartpoleBalance", "B": 4096, "style": "default", "fps_median": 41748.17246131564, "fps": [41748.17246131564, 41678.05822755866, 41845.85681906258]}
+{"cell": "DMCManipulatorBringBall", "B": 4096, "style": "default", "fps_median": 21697.28771036292, "fps": [21632.93474154753, 21697.28771036292, 21704.494148910257]}
+{"cell": "DMCCartpoleBalance", "B": 4096, "style": "default", "fps_median": 42218.27685273981, "fps": [42211.0737323817, 42218.27685273981, 42269.05782918575]}

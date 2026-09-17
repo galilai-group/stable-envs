@@ -1,0 +1,245 @@
+{
+ "verdict": "IDENTICAL",
+ "rows": [
+  {
+   "cell": "DMCAcrobotSwingup",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "e58af531acb784c581fd5d4da016093663b70a87e0fe5523b197a1e995868d1c",
+   "substitute_frames_sha256": "e58af531acb784c581fd5d4da016093663b70a87e0fe5523b197a1e995868d1c",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCBallInCupCatch",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "6c6f26f04aa3a57725815506e4f8d1051386a3df8bb564bc1976797912a39ea7",
+   "substitute_frames_sha256": "6c6f26f04aa3a57725815506e4f8d1051386a3df8bb564bc1976797912a39ea7",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCCartpoleBalance",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "0d8b1ba9299ec1e307d1e3ddb6ec32cfada8053509d7ae2373e0b9e16241feac",
+   "substitute_frames_sha256": "0d8b1ba9299ec1e307d1e3ddb6ec32cfada8053509d7ae2373e0b9e16241feac",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCCartpoleSwingup",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "bb2f7f988cf22192ecfa779560946af9cfe49d7b58fac78daa7cd8834d295d19",
+   "substitute_frames_sha256": "bb2f7f988cf22192ecfa779560946af9cfe49d7b58fac78daa7cd8834d295d19",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCFingerSpin",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "7d90e50ded6e182e1c3fc3582de9f127f417914beb42fd13f941bf03290e798c",
+   "substitute_frames_sha256": "7d90e50ded6e182e1c3fc3582de9f127f417914beb42fd13f941bf03290e798c",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCFingerTurnEasy",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "2bf7107e0ce491066bf20877df180b4b1808799a85993dcc320363d40238fd64",
+   "substitute_frames_sha256": "2bf7107e0ce491066bf20877df180b4b1808799a85993dcc320363d40238fd64",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCFingerTurnHard",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "827213e876b2373898827eb19c34f852f6e4efabfa17aa5c89d83c182689fccd",
+   "substitute_frames_sha256": "827213e876b2373898827eb19c34f852f6e4efabfa17aa5c89d83c182689fccd",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCManipulatorBringBall",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "de9101f4287ae49cd4eae72bf99d20921c003f99541e30acfb6b8e685a049ade",
+   "substitute_frames_sha256": "de9101f4287ae49cd4eae72bf99d20921c003f99541e30acfb6b8e685a049ade",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCPendulumSwingup",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "6736c98a3510435c58e4bef7ec56a7232c6f511bc8674ea031b5c7d9056ce323",
+   "substitute_frames_sha256": "6736c98a3510435c58e4bef7ec56a7232c6f511bc8674ea031b5c7d9056ce323",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCPointMassEasy",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "ded3bc2eae07e3d942295efc8e45af8fc6b6f29e1b5da445a72970fbd7956792",
+   "substitute_frames_sha256": "ded3bc2eae07e3d942295efc8e45af8fc6b6f29e1b5da445a72970fbd7956792",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCReacherEasy",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "b07ec17100c15143345f1253531c879da2fc4055cf2360acacbec22f6ec4d027",
+   "substitute_frames_sha256": "b07ec17100c15143345f1253531c879da2fc4055cf2360acacbec22f6ec4d027",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCReacherHard",
+   "probe": [
+    [
+     0.9,
+     0.1,
+     0.1
+    ],
+    [
+     0.1,
+     0.1,
+     0.9
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "0d9bc66f16031da2b585d12635cb97f758a44e1eda8d7c447d60297066e322ad",
+   "substitute_frames_sha256": "0d9bc66f16031da2b585d12635cb97f758a44e1eda8d7c447d60297066e322ad",
+   "px_total": 56448
+  }
+ ]
+}

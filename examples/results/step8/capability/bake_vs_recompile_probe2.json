@@ -1,0 +1,245 @@
+{
+ "verdict": "IDENTICAL",
+ "rows": [
+  {
+   "cell": "DMCAcrobotSwingup",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "b6da44ce4e00b4b6f36aaa7d6cce0d449c788622da92c09066eb5e3d19c4a1c5",
+   "substitute_frames_sha256": "b6da44ce4e00b4b6f36aaa7d6cce0d449c788622da92c09066eb5e3d19c4a1c5",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCBallInCupCatch",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "82990f0e74e29eccd4141d020e75f25dcc41ba4ec08efa2313045c781027a66f",
+   "substitute_frames_sha256": "82990f0e74e29eccd4141d020e75f25dcc41ba4ec08efa2313045c781027a66f",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCCartpoleBalance",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "7f1efdeee00f461ed3bcc100faa5fa32e53890a5be4198ebbb1923d6e3a62441",
+   "substitute_frames_sha256": "7f1efdeee00f461ed3bcc100faa5fa32e53890a5be4198ebbb1923d6e3a62441",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCCartpoleSwingup",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "c26c1418cefbeefdd03b725a8bab58709a7b0c55b57f973920d6f9e45456f9b5",
+   "substitute_frames_sha256": "c26c1418cefbeefdd03b725a8bab58709a7b0c55b57f973920d6f9e45456f9b5",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCFingerSpin",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "e02487890643b9481010c4a3a7d74c1bfb8ef679ad3f22635e8d506f2647db0c",
+   "substitute_frames_sha256": "e02487890643b9481010c4a3a7d74c1bfb8ef679ad3f22635e8d506f2647db0c",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCFingerTurnEasy",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "e3670a3c3eec5036aeb1b7aac57593bc04692b0e9252cdf1dff189b1d1cabff7",
+   "substitute_frames_sha256": "e3670a3c3eec5036aeb1b7aac57593bc04692b0e9252cdf1dff189b1d1cabff7",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCFingerTurnHard",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "bd9b2ce659465fbfd1678d38accec77c085be4a5faff93c68ea036039911dd27",
+   "substitute_frames_sha256": "bd9b2ce659465fbfd1678d38accec77c085be4a5faff93c68ea036039911dd27",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCManipulatorBringBall",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "7a2ee69e8487f67021c221dd444c52cddf9132a7c1c62022060eb5e03e224ef1",
+   "substitute_frames_sha256": "7a2ee69e8487f67021c221dd444c52cddf9132a7c1c62022060eb5e03e224ef1",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCPendulumSwingup",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "a46a5092e0444a8e8900870fdfc16a511a67c925ac7111f608761364cd718503",
+   "substitute_frames_sha256": "a46a5092e0444a8e8900870fdfc16a511a67c925ac7111f608761364cd718503",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCPointMassEasy",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "ebe0df2f77b12969b124f907f20951cfdde0f649348dd71422472e58abcaab09",
+   "substitute_frames_sha256": "ebe0df2f77b12969b124f907f20951cfdde0f649348dd71422472e58abcaab09",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCReacherEasy",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "f6e50dd88b1ca8edf2dc2cbb00988daf212fa1a4099ea191019840bc5ba7b6ec",
+   "substitute_frames_sha256": "f6e50dd88b1ca8edf2dc2cbb00988daf212fa1a4099ea191019840bc5ba7b6ec",
+   "px_total": 56448
+  },
+  {
+   "cell": "DMCReacherHard",
+   "probe": [
+    [
+     0.37,
+     0.61,
+     0.24
+    ],
+    [
+     0.05,
+     0.95,
+     0.5
+    ]
+   ],
+   "tex_identical": true,
+   "frames_identical": true,
+   "recompile_frames_sha256": "9e4a3519e7eb5a623db83c2f018cc1ed10930705af4da252f23cd54dcc829b0d",
+   "substitute_frames_sha256": "9e4a3519e7eb5a623db83c2f018cc1ed10930705af4da252f23cd54dcc829b0d",
+   "px_total": 56448
+  }
+ ]
+}

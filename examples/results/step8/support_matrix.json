@@ -30,7 +30,7 @@
    "unknown": 2
   }
  },
- "generated_at_head_sha": "0ee333560234173e0d8a1de5c12284544a97a509",
+ "generated_at_head_sha": "1d4f65d2127069e4229d6d3c8cac6947acd89149",
  "rows": [
   {
    "backend_class": "R",
@@ -194,8 +194,8 @@
     "declared_in": [],
     "leaf_classification": {
      "dead_upstream": 5,
-     "mapped": 2,
-     "unsupported": 4
+     "mapped": 3,
+     "unsupported": 3
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -212,7 +212,6 @@
      "agent.lower_arm_density",
      "agent.upper_arm_density",
      "agent.upper_arm_locked",
-     "floor.color",
      "gravity.x",
      "gravity.y",
      "gravity.z",
@@ -291,8 +290,8 @@
     "declared_in": [],
     "leaf_classification": {
      "dead_upstream": 4,
-     "mapped": 2,
-     "unsupported": 7
+     "mapped": 3,
+     "unsupported": 6
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -310,7 +309,6 @@
      "ball.color",
      "ball.density",
      "ball.size",
-     "floor.color",
      "gravity.x",
      "gravity.y",
      "gravity.z",
@@ -483,8 +481,8 @@
     "declared_in": [],
     "leaf_classification": {
      "dead_upstream": 4,
-     "mapped": 4,
-     "unsupported": 10
+     "mapped": 6,
+     "unsupported": 8
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -505,8 +503,6 @@
      "agent.cart_shape",
      "agent.pole_density",
      "agent.pole_density",
-     "floor.color",
-     "floor.color",
      "gravity.x",
      "gravity.x",
      "gravity.y",
@@ -2295,8 +2291,8 @@
    "variation": {
     "declared_in": [],
     "leaf_classification": {
-     "mapped": 4,
-     "unsupported": 7
+     "mapped": 5,
+     "unsupported": 6
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -2312,7 +2308,6 @@
     "unsupported_or_dead_leaves": [
      "agent.fingertip_density",
      "agent.proximal_density",
-     "floor.color",
      "spinner.color",
      "spinner.density",
      "spinner.friction",
@@ -2775,8 +2770,8 @@
     ],
     "leaf_classification": {
      "dead_upstream": 1,
-     "mapped": 5,
-     "unsupported": 3
+     "mapped": 6,
+     "unsupported": 2
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -2792,8 +2787,7 @@
     "unsupported_or_dead_leaves": [
      "agent.hand_density",
      "agent.upper_arm_density",
-     "agent.upper_arm_length",
-     "floor.color"
+     "agent.upper_arm_length"
     ]
    }
   },
@@ -3750,8 +3744,8 @@
     "declared_in": [],
     "leaf_classification": {
      "dead_upstream": 3,
-     "mapped": 2,
-     "unsupported": 4
+     "mapped": 3,
+     "unsupported": 3
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -3768,7 +3762,6 @@
      "agent.mass_density",
      "agent.mass_shape",
      "agent.pole_density",
-     "floor.color",
      "gravity.x",
      "gravity.y",
      "gravity.z"
@@ -4253,8 +4246,8 @@
     "declared_in": [],
     "leaf_classification": {
      "dead_upstream": 1,
-     "mapped": 4,
-     "unsupported": 4
+     "mapped": 5,
+     "unsupported": 3
     },
     "map_status": "complete",
     "mapped_cells": [
@@ -4271,7 +4264,6 @@
      "agent.arm_density",
      "agent.finger_density",
      "agent.finger_locked",
-     "floor.color",
      "target.shape"
     ]
    }

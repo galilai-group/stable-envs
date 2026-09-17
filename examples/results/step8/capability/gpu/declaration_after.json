@@ -1,0 +1,258 @@
+{
+ "DMCAcrobotSwingup": {
+  "style_dim": 17,
+  "default_style_digest": "66a9945299d92cd90ca425b629bc69d29ffb3bc1024ee820254912f299f6cbc4",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "90163095982a7a543b4451a8b01a108e02eb4ed988cf4171c2412646b3ac2061",
+  "states_digest": "235a38f23163e383ff9472a01d44871d5f308dff06765d4eedc089b59d27043c"
+ },
+ "DMCBallInCupCatch": {
+  "style_dim": 17,
+  "default_style_digest": "b865b2beb8730946a39a4ed9eaf822185def280d76c7d948f643956e0a275c45",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.effector",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "f2e35043e88b68bbb9c7c3828c91fb80b9eaff5cefd40ae2d10badfa259ebce1",
+  "states_digest": "fd607f898b5861c4077957c647122ea8ec2090d281531ca55cee169bbbf48a1b"
+ },
+ "DMCCartpoleBalance": {
+  "style_dim": 17,
+  "default_style_digest": "66a9945299d92cd90ca425b629bc69d29ffb3bc1024ee820254912f299f6cbc4",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "859329fb4e15cd906ec5bd885be26572039c5a288dc98506c1f02d0f787104a5",
+  "states_digest": "c20091434015b83d753893a3859e6c993ec70f26f9b01dc3918ec50f9f7ad2e3"
+ },
+ "DMCCartpoleSwingup": {
+  "style_dim": 17,
+  "default_style_digest": "66a9945299d92cd90ca425b629bc69d29ffb3bc1024ee820254912f299f6cbc4",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "17b428a20168d9d9204cd342fb5815475b954df7acb92f74b35f255b76076c18",
+  "states_digest": "571690331b356861040d0f936d2b0492e4e9cc771a19c099e08d2219c3773a25"
+ },
+ "DMCFingerSpin": {
+  "style_dim": 20,
+  "default_style_digest": "69c98b50d019d02e80735ef4e8fb6db379dcb7bebfa04a5f0371c57517cab8d8",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "56ced8754f495610c97a3c8ea8cc71e2dd1f1016d761a75bd379f5801db7ec3d",
+  "states_digest": "13059408eb153f8a174f771df1321b772ada546c380419301c0419bbc9387fbb"
+ },
+ "DMCFingerTurnEasy": {
+  "style_dim": 24,
+  "default_style_digest": "4fe6f09490b0915afbd539b5a893bf54017edc5ab12db80b13648fc3884448d5",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self",
+   "material.target",
+   "visibility.target"
+  ],
+  "default_frame_digest": "d45677cc7e8e8c3950472e3acab2519f987c3cd98e128d461b632394cd45f7d1",
+  "states_digest": "c117deb5e96debd8dc554d58c0c6b039a2982f3c84d53d0530f80fee52eb11ef"
+ },
+ "DMCFingerTurnHard": {
+  "style_dim": 24,
+  "default_style_digest": "4fe6f09490b0915afbd539b5a893bf54017edc5ab12db80b13648fc3884448d5",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self",
+   "material.target",
+   "visibility.target"
+  ],
+  "default_frame_digest": "82174825b92832db557567fb224914359a2b598da0bc19504c22abe35f195700",
+  "states_digest": "c117deb5e96debd8dc554d58c0c6b039a2982f3c84d53d0530f80fee52eb11ef"
+ },
+ "DMCManipulatorBringBall": {
+  "style_dim": 28,
+  "default_style_digest": "bd9a3d2edccd1ca8f4a653971cd64075513388dd6191bc1dca6a78932fcb76cb",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.background",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self",
+   "material.target",
+   "target_ball.shape",
+   "visibility.target_ball"
+  ],
+  "default_frame_digest": "6c71f488d6c87d40b9714d964582dccf0a8b17cfe34a1697af42bdcd67e2697d",
+  "states_digest": "d3a5b03634f2e36ec015e485c46703a0b87287dc8dc14d071aca233199cfdb04"
+ },
+ "DMCPendulumSwingup": {
+  "style_dim": 20,
+  "default_style_digest": "69c98b50d019d02e80735ef4e8fb6db379dcb7bebfa04a5f0371c57517cab8d8",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "16555ad1693ba2f872d1d968905cf3a7d3f9f81508d632c4d06aea3ee8c24220",
+  "states_digest": "b1b51eef4ebdb8e5e07628d22fc1c2b9dad7631e0625eb5cb5af1f5e375d53da"
+ },
+ "DMCPointMassEasy": {
+  "style_dim": 20,
+  "default_style_digest": "2fd9eed50e74f2cb26d6303f6bfdb07379ccc60ad2aad0fdbd51b8f8b002e5f5",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.grid",
+   "material.self",
+   "material.target"
+  ],
+  "default_frame_digest": "3ecf433878294a6b95bd39e56a7d9b3e7a3dd09aca1275faf7ffe9b61aaf6bc7",
+  "states_digest": "11a85a97ec3f9233d2d2193766c800dcc26757ff0bc7994d3999ac9d08fd8881"
+ },
+ "DMCReacherEasy": {
+  "style_dim": 24,
+  "default_style_digest": "4fe6f09490b0915afbd539b5a893bf54017edc5ab12db80b13648fc3884448d5",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self",
+   "material.target",
+   "visibility.target"
+  ],
+  "default_frame_digest": "e36eb55fa8109d0865167b9e1883a0547fff63ca4a002a14b1fe9103b5f78faf",
+  "states_digest": "e8ade4cd3291485b5d9797db3220f126b2581954c45cc010c8a37070fd3e3e8d"
+ },
+ "DMCReacherHard": {
+  "style_dim": 24,
+  "default_style_digest": "4fe6f09490b0915afbd539b5a893bf54017edc5ab12db80b13648fc3884448d5",
+  "leaves": [
+   "camera.fovy_scale",
+   "floor.color",
+   "light.diffuse_scale",
+   "material.decoration",
+   "material.effector",
+   "material.grid",
+   "material.self",
+   "material.target",
+   "visibility.target"
+  ],
+  "default_frame_digest": "eee072e8ee40e89d07edeb2ed3c5d9999e9813df49bc2494f4215d1fa39580d6",
+  "states_digest": "e8ade4cd3291485b5d9797db3220f126b2581954c45cc010c8a37070fd3e3e8d"
+ },
+ "DMCCheetahRun": {
+  "style_dim": 7,
+  "default_style_digest": "c09f164f9a29f6c3259f8677ba1b12a4aea6bb92d6bfb64ff4721abbc3df57fc",
+  "leaves": [
+   "light.diffuse_scale",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "415d9a80c0f84ebed7aa4c0ed84b10f38a2d85d1e0413773e01494da9e969785",
+  "states_digest": "f65d207f3d88f84b79fb6af4f74d5d2beeed979f00f5241f6100cbd70f212025"
+ },
+ "DMCWalkerWalk": {
+  "style_dim": 7,
+  "default_style_digest": "c09f164f9a29f6c3259f8677ba1b12a4aea6bb92d6bfb64ff4721abbc3df57fc",
+  "leaves": [
+   "light.diffuse_scale",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "7343b459ab4a8e5c83fe7b5855719dba84eacc79096589556579361c4b368abe",
+  "states_digest": "c8711e10c533b89f91781a1181b64f16828149c82e884020b909bb4d7649c24c"
+ },
+ "DMCHopperHop": {
+  "style_dim": 7,
+  "default_style_digest": "c09f164f9a29f6c3259f8677ba1b12a4aea6bb92d6bfb64ff4721abbc3df57fc",
+  "leaves": [
+   "light.diffuse_scale",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "722ba979c1abe03750d654ddf0a81bc40e0320c8e852d2be3e76df669513c364",
+  "states_digest": "07469e1fc9d1e3a195d9a32167b002999982cb6125edb1b5e10d07c32dfdddbc"
+ },
+ "DMCHumanoidStand": {
+  "style_dim": 7,
+  "default_style_digest": "c09f164f9a29f6c3259f8677ba1b12a4aea6bb92d6bfb64ff4721abbc3df57fc",
+  "leaves": [
+   "light.diffuse_scale",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "12c96d217ed3d8a9da4bb418ef52fcb45536f6e774ca8eb929f51a64aae9628e",
+  "states_digest": "8c4bfd8903ae7a778b7a1a596de4781c8616061e46a15609e9cbaa00d2a8ef24"
+ },
+ "DMCQuadrupedWalk": {
+  "style_dim": 10,
+  "default_style_digest": "ce770a390f5febdd347f4ae96fe8c7c4c6166e02c0093ccb843e981b3c0d2361",
+  "leaves": [
+   "light.diffuse_scale",
+   "material.effector",
+   "material.grid",
+   "material.self"
+  ],
+  "default_frame_digest": "32ddfb07cd4e816fff4ad97d42c901596b77d7d76a7e9b9bb2a3dbba49064353",
+  "states_digest": "ac5d3a1c704eb99d76f08f2e139921ffafef00a22eb677a678b8235df2baa5df"
+ },
+ "OGBCube": {
+  "error": "ValueError(\"OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se"
+ },
+ "OGBScene": {
+  "error": "ValueError(\"OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S"
+ },
+ "FetchPush": {
+  "error": "ModuleNotFoundError(\"No module named 'gymnasium_robotics'\")"
+ },
+ "FetchReach": {
+  "error": "ModuleNotFoundError(\"No module named 'gymnasium_robotics'\")"
+ }
+}

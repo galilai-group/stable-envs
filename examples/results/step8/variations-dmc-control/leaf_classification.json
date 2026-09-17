@@ -7,8 +7,8 @@
  "swm_source": "galilai-group/stable-worldmodel @ 176d545",
  "venv": "/Users/samib/se8-vm-venv (python 3.12, torch 2.14.0 cpu, mujoco 3.12.0, dm_control 1.0.45, gymnasium 1.3.0, MUJOCO_GL=glfw)",
  "totals": {
-  "mapped": 46,
-  "unsupported": 94,
+  "mapped": 53,
+  "unsupported": 87,
   "dead_upstream": 21,
   "not_applicable": 0,
   "leaves": 161,
@@ -54,8 +54,8 @@
    ],
    "counts": {
     "total": 11,
-    "mapped": 2,
-    "unsupported": 4,
+    "mapped": 3,
+    "unsupported": 3,
     "dead_upstream": 5,
     "not_applicable": 0
    },
@@ -75,8 +75,8 @@
    ],
    "counts": {
     "total": 13,
-    "mapped": 2,
-    "unsupported": 7,
+    "mapped": 3,
+    "unsupported": 6,
     "dead_upstream": 4,
     "not_applicable": 0
    },
@@ -99,8 +99,8 @@
    ],
    "counts": {
     "total": 9,
-    "mapped": 2,
-    "unsupported": 5,
+    "mapped": 3,
+    "unsupported": 4,
     "dead_upstream": 2,
     "not_applicable": 0
    },
@@ -143,8 +143,8 @@
    ],
    "counts": {
     "total": 11,
-    "mapped": 4,
-    "unsupported": 7,
+    "mapped": 5,
+    "unsupported": 6,
     "dead_upstream": 0,
     "not_applicable": 0
    },
@@ -209,8 +209,8 @@
    ],
    "counts": {
     "total": 9,
-    "mapped": 5,
-    "unsupported": 3,
+    "mapped": 6,
+    "unsupported": 2,
     "dead_upstream": 1,
     "not_applicable": 0
    },
@@ -234,8 +234,8 @@
    ],
    "counts": {
     "total": 9,
-    "mapped": 2,
-    "unsupported": 4,
+    "mapped": 3,
+    "unsupported": 3,
     "dead_upstream": 3,
     "not_applicable": 0
    },
@@ -276,8 +276,8 @@
    ],
    "counts": {
     "total": 9,
-    "mapped": 4,
-    "unsupported": 4,
+    "mapped": 5,
+    "unsupported": 3,
     "dead_upstream": 1,
     "not_applicable": 0
    },
@@ -1184,10 +1184,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 13036,
     "mjmodel_arrays_changed": [
@@ -1618,10 +1620,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 14765,
     "px_changed_8_states_target_visible": 14765,
@@ -2004,10 +2008,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 19333,
     "mjmodel_arrays_changed": [
@@ -2306,10 +2312,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 19333,
     "mjmodel_arrays_changed": [
@@ -2624,7 +2632,7 @@
    },
    "classification": "unsupported",
    "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "reason": "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its textures when the render context is BUILT -- so a per-value floor here is one render context per value, which is the one thing this repo will not scale. The capability that closed this leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply where there is no plate. What IS reachable is the one value that matters for certification: swm's init_value is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped).",
    "note": null,
    "evidence": {
     "px_changed_8_states": 7969,
@@ -2955,10 +2963,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 14755,
     "px_changed_8_states_target_visible": 14755,
@@ -3376,7 +3386,7 @@
    },
    "classification": "unsupported",
    "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "reason": "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its textures when the render context is BUILT -- so a per-value floor here is one render context per value, which is the one thing this repo will not scale. The capability that closed this leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply where there is no plate. What IS reachable is the one value that matters for certification: swm's init_value is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped).",
    "note": null,
    "evidence": {
     "px_changed_8_states": 8354,
@@ -3722,7 +3732,7 @@
    },
    "classification": "unsupported",
    "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "reason": "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its textures when the render context is BUILT -- so a per-value floor here is one render context per value, which is the one thing this repo will not scale. The capability that closed this leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply where there is no plate. What IS reachable is the one value that matters for certification: swm's init_value is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped).",
    "note": null,
    "evidence": {
     "px_changed_8_states": 54599,
@@ -4081,10 +4091,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 6408,
     "px_changed_8_states_target_visible": 6408,
@@ -4377,10 +4389,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 46691,
     "mjmodel_arrays_changed": [
@@ -4693,7 +4707,7 @@
    },
    "classification": "unsupported",
    "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "reason": "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its textures when the render context is BUILT -- so a per-value floor here is one render context per value, which is the one thing this repo will not scale. The capability that closed this leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply where there is no plate. What IS reachable is the one value that matters for certification: swm's init_value is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped).",
    "note": null,
    "evidence": {
     "px_changed_8_states": 321610,
@@ -5037,10 +5051,12 @@
      ]
     ]
    },
-   "classification": "unsupported",
-   "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
-   "note": null,
+   "classification": "mapped",
+   "stable_envs_control": [
+    "floor.color"
+   ],
+   "reason": null,
+   "note": "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute the compiled texture's texels on the plate rig's own model and re-upload the texture to its own GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not argued: over all twelve parity cells, three probe colours and eight states at 84 px, the substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally and left alone exactly as swm's recompile leaves them.",
    "evidence": {
     "px_changed_8_states": 53246,
     "px_changed_8_states_target_visible": 53177,
@@ -5348,7 +5364,7 @@
    },
    "classification": "unsupported",
    "stable_envs_control": null,
-   "reason": "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor knob, ``material.grid``, a 3-vector that multiplies the material rgba \u2014 and ``_tex_rgb`` reduces the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range needs a texture edit \u2014 regenerating the builtin checker into m.tex_data and re-uploading \u2014 and ``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.",
+   "reason": "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its textures when the render context is BUILT -- so a per-value floor here is one render context per value, which is the one thing this repo will not scale. The capability that closed this leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply where there is no plate. What IS reachable is the one value that matters for certification: swm's init_value is character-for-character common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped).",
    "note": null,
    "evidence": {
     "px_changed_8_states": 24002,

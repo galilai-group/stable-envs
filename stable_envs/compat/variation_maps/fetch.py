@@ -54,8 +54,18 @@ THE THREE LEAVES THAT DO MAP, AND THE TWO UNIT SHIFTS IN THEM
 is two things at once: the ``floor_mat`` geoms AND the skybox texture, recoloured by overwriting
 ``model.tex_data`` and re-uploading it. Measured split at 480 px, floor versus floor+skybox:
 the floor is **9.2-9.4%** of the frame and the skybox a further **61.7-73.0%**. We render the floor
-half exactly and the skybox not at all, because ``mujoco_warp`` uploads textures when a render
-context is built, so a per-value skybox costs a render context per value.
+half exactly and offer no leaf for the skybox half.
+
+**The reason for that was measured in Step 8 and replaced** — see
+``examples/results/step8/capability/fetch_skybox_probe.json``. It is NOT, as this module and
+``FetchBase.make_variation_space`` used to say, that a per-value skybox costs one render context
+per distinct value: the delivered frame's skybox comes from the MuJoCo-baked PLATE, not from the ``mujoco_warp``
+pass, so a texel substitution on the plate rig reaches it with no second context, and that is
+exactly the operation ``stable_worldmodel`` itself performs (it does not recompile either). What
+blocks the leaf is the DEFAULT: swm FLATTENS the skybox to one colour and ours is a 16-colour
+gradient, so no flat-fill leaf value reproduces our registered default appearance. Offering the leaf
+moves this family's default frame, which is a frozen pixel oracle — a re-freeze decision, escalated
+rather than taken.
 
 The leaf is therefore declared ``partial``, not ``mapped``: the rename is real and the floor half is
 genuinely what swm writes, and the skybox half is genuinely missing, and
@@ -203,10 +213,22 @@ _PARTIAL = {
     "background.color": (
         "the floor half only. swm's background is the floor_mat geoms AND the skybox texture; the "
         "floor is 9.2-9.4 % of the frame at 480 px and we reproduce it exactly, the skybox is a "
-        "further 61.7-73.0 % and we do not render it, because mujoco_warp uploads textures when a "
-        "render context is built and a per-value skybox is one render context per value. Feasible "
-        "and not implemented: pending the shared renderer-capability decision aggregated across "
-        "families after Wave 1 (Sami's ruling, Step-8 plan section 4)."),
+        "further 61.7-73.0 % and we do not offer a leaf for it. "
+        "THE REASON CHANGED IN STEP 8 AND THE NEW ONE IS NARROWER. The old one -- that a per-value "
+        "skybox costs one render context per distinct value -- was measured WRONG, and the "
+        "measurement is "
+        "examples/results/step8/capability/fetch_skybox_probe.json. The skybox of the DELIVERED "
+        "frame comes from the MuJoCo-baked plate, not from the mujoco_warp pass (the composite takes "
+        "mujoco_warp only under the mover mask), so substituting the skybox texels on the plate rig "
+        "and re-uploading moves 62.2-74.5 % of the frame with no second context -- and that IS the "
+        "operation swm performs, which does not recompile either. "
+        "What blocks the leaf is the DEFAULT, not the mechanism. swm FLATTENS the skybox to one "
+        "colour, and this family's skybox is a 16-colour gradient (.44 .85 .56 to .46 .87 .58 over "
+        "6,144 texels), so no value of a flat-fill leaf reproduces our registered default "
+        "appearance and no two-colour masked substitution reproduces swm's flat sky. Offering the "
+        "leaf therefore moves this family's DEFAULT frame, which is a frozen pixel oracle on the "
+        "Step-4 and Step-7 corpora. That is a re-freeze decision (Step-8 plan section 19), not an "
+        "implementation decision, and it is escalated rather than taken."),
 }
 #: ``our path -> (swm path, factor)`` with ``ours = theirs * factor``.
 _SCALED = {"light.diffuse": ("light.intensity", LIGHT_FACTOR)}
