@@ -67,7 +67,7 @@ too (60.0, 60.4, 60.5 and 60.9 all give the same columns). So the shape is a con
 once, and it is not symmetric: it spans dy and dx from -2 to +1.
 
 Physics is not ported. Box2D's contact solver is chaotic in exactly the way
-``core/env.py`` describes, the legs are two revolute joints with motors and limits, and a
+``env.py`` describes, the legs are two revolute joints with motors and limits, and a
 reimplementation would diverge; the renderer stands on its own, and states come from the official env.
 """
 from __future__ import annotations
@@ -75,7 +75,8 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import gfxdraw as G
 from ..spaces import Dict, Discrete, RGBBox
 
@@ -189,7 +190,7 @@ def _record_aa(gfx: G.Gfx, vi: torch.Tensor) -> list[tuple]:
 
 
 @register
-class LunarLander(StableEnv):
+class LunarLander(Env):
     """LunarLander-v3, from a 38-number render state: terrain, lander, legs and the exhaust.
 
     11 smoothed terrain heights, 3 poses of 3 numbers, and 6 particle slots of ``(x, y, ttl)``. A

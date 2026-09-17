@@ -100,7 +100,8 @@ import math
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict, Discrete, RGBBox
 from . import _stepgraph
@@ -168,7 +169,7 @@ def _code_lookup(device) -> torch.Tensor:
     return out
 
 
-class _TileEnv(StableEnv):
+class _TileEnv(Env):
     """Shared machinery: variation space, atlas plumbing, and the blit. Not registered itself."""
 
     grid_w: int = 8

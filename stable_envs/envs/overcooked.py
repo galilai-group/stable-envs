@@ -109,7 +109,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Dict, RGBBox
 
@@ -394,7 +395,7 @@ class OvercookedAtlas:
         return x.to(torch.uint8).contiguous()
 
 
-class _OvercookedLayout(StableEnv):
+class _OvercookedLayout(Env):
     """One JaxMARL Overcooked layout, rendered as a gather from the 64-tile atlas."""
 
     #: jaxmarl layout key; the class name is the registry key

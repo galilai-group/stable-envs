@@ -84,7 +84,8 @@ import random
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Dict, RGBBox
 
@@ -236,7 +237,7 @@ class _Atlas:
 
 
 @register
-class Sokoban(StableEnv):
+class Sokoban(Env):
     """Sokoban-v0: a 10x10 room with 4 boxes, rendered as a gather from a 7-tile atlas.
 
     State: one index per cell into the seven tiles, so a 10x10 room is 100 numbers against a

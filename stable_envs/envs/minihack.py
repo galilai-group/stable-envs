@@ -54,7 +54,8 @@ import zlib
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Box, Dict, RGBBox
 
 N_TILE = 1082
@@ -743,7 +744,7 @@ class _Assets:
 
 
 @register
-class MiniHack(StableEnv):
+class MiniHack(Env):
     """NetHack's 21x79 glyph grid, rendered as a batched atlas gather. State = the glyph ids."""
 
     name = "minihack"

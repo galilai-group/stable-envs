@@ -183,7 +183,8 @@ if _missing or _mjver < (3, 11):                                              # 
         f"pins mujoco == 3.3.1, so the interpreter that BUILDS a kitchen is never the one that "
         f"renders it; see the module docstring. See docs/research/robocasa.md")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..render import rendernet as RN
 from ..spaces import Box, Dict
@@ -419,7 +420,7 @@ def _reference(kitchen: str, size: int):
     return hit
 
 
-class RoboCasaBase(StableEnv):
+class RoboCasaBase(Env):
     """Base for the RoboCasa cells. VISUAL TIER — see the module docstring.
 
     ``KITCHEN`` and ``CAMERA`` are set by the generated subclasses.

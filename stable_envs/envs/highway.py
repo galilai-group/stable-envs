@@ -88,7 +88,8 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render.raster2d import render as render_scene
 from ..render.scene import Scene2D, SceneBuilder
 from ..spaces import Box, Dict, Discrete, RGBBox
@@ -236,7 +237,7 @@ class _Screen:
     line_w: int
 
 
-class HighwayEnvBase(StableEnv):
+class HighwayEnvBase(Env):
     """Shared renderer for the highway-env family; subclasses supply the road and the cast.
 
     ``state`` is 4 numbers per vehicle — ``x``, ``y``, ``heading``, ``crashed`` — with the ego first.

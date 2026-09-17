@@ -72,7 +72,8 @@ import math
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import gfxdraw as G
 from ..render import gfxdraw_fused as F
 from ..spaces import Box, Dict, Discrete
@@ -378,7 +379,7 @@ def _draw_poly_mask(scr, ys, xs):
 
 # =============================================================================== the env
 @register
-class CarRacing(StableEnv):
+class CarRacing(Env):
     """CarRacing-v3 at its native 96x96. 100.0000% of pixels exact against the official renderer."""
 
     name = "car-racing"

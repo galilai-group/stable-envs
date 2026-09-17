@@ -231,7 +231,8 @@ except Exception as _e:                                                       # 
         f"which is why this check renders a document instead of importing a name. See "
         f"docs/research/pgx.md") from _e
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Box, Dict, RGBBox
 
 #: Rasterized plates, keyed by (game, resolution, colours). Bounded because each miss costs one resvg
@@ -492,7 +493,7 @@ def _drawn_board(game: str, st) -> np.ndarray:
     return b.astype(np.float32)
 
 
-class PgxBoardBase(StableEnv):
+class PgxBoardBase(Env):
     """Base for the 5 board games. ``GAME`` is set by the generated subclasses."""
 
     GAME: str = ""

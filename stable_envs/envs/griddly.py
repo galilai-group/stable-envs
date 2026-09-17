@@ -112,7 +112,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict
 
@@ -513,7 +514,7 @@ def _mask_index_np(grids: np.ndarray, cls: np.ndarray, live, m: int, oob: int) -
     return out
 
 
-class _GriddlyGame(StableEnv):
+class _GriddlyGame(Env):
     """One griddly game at one level, rendered as a gather from an enumerated tile table."""
 
     #: path under griddly's ``resources/games``

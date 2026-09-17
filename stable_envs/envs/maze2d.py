@@ -103,7 +103,8 @@ import torch
 # surfaces as a GLFWError out of every fixture followed by SIGABRT.
 os.environ.setdefault("MUJOCO_GL", "egl")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict, Discrete
 
@@ -252,7 +253,7 @@ def _mat_and_tex(m, g):
     return mat, tex
 
 
-class PointMaze(StableEnv):
+class PointMaze(Env):
     """Base for the four scenes. ``MAZE`` is set by the generated subclasses."""
 
     MAZE: str = ""

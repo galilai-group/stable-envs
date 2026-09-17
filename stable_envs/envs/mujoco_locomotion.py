@@ -160,7 +160,8 @@ import torch
 # renders offscreen. An explicit setting always wins.
 os.environ.setdefault("MUJOCO_GL", "egl")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict
 
@@ -391,7 +392,7 @@ def _upsample_rgb(img: torch.Tensor, ss: int) -> torch.Tensor:
     return img if ss == 1 else img.repeat_interleave(ss, 0).repeat_interleave(ss, 1)
 
 
-class _GymMujocoFamily(StableEnv):
+class _GymMujocoFamily(Env):
     """What the TWO tiers of this family share: gymnasium, its state, and its reference procedure.
 
     Everything here is about the OFFICIAL env rather than about any renderer — how a gymnasium MuJoCo

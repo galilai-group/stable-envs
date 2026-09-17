@@ -110,7 +110,8 @@ import zlib
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict, Discrete
 
@@ -414,7 +415,7 @@ def _luma(x: torch.Tensor) -> torch.Tensor:
 
 
 @register
-class Crafter(StableEnv):
+class Crafter(Env):
     """Crafter's 64x64 observation: a 9x7 lit world window plus the 2x9 inventory strip."""
 
     name = "crafter"

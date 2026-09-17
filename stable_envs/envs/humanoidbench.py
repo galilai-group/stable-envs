@@ -257,7 +257,8 @@ if _missing or _mjver < (3, 11):                                             # p
         f" pulls the renderer half. The envs were measured in {_VENV}. See "
         f"docs/research/humanoidbench.md")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -592,7 +593,7 @@ def _frame(c: _Ctx) -> None:
 
 # --------------------------------------------------------------------------- the env
 
-class HumanoidBenchBase(StableEnv):
+class HumanoidBenchBase(Env):
     """Base for the registered cells. ``ROBOT`` and ``TASK`` are set by the generated subclasses."""
 
     ROBOT: str = ""

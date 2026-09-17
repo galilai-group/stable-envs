@@ -274,7 +274,8 @@ except Exception:                                                             # 
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Box, Dict, RGBBox
 
 #: Where built atlases are memoised. Building one costs P*V official matplotlib renders — 6.0 s for
@@ -747,7 +748,7 @@ def _load_atlas(spec: _Spec, size: int, device) -> dict:
 
 # ===================================================================== the env
 
-class JumanjiGrid(StableEnv):
+class JumanjiGrid(Env):
     """A Jumanji id whose frame is a per-pixel lookup indexed by one cell's symbol."""
 
     SPEC: _Spec = None

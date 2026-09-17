@@ -229,7 +229,8 @@ if _missing or _mjver < (3, 11):                                             # p
         f"mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in "
         f"{_VENV}; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -898,7 +899,7 @@ class _Plate:
 
 # --------------------------------------------------------------------------- the env
 
-class MetaWorldBase(StableEnv):
+class MetaWorldBase(Env):
     """Base for the 50 ids. ``TASK`` is set by the generated subclasses."""
 
     TASK: str = ""

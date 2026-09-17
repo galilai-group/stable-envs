@@ -124,7 +124,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Box, Dict, Discrete
 
 _SPEC = importlib.util.find_spec("procgen")
@@ -855,7 +856,7 @@ def _blend_torch(canvas, atlas, idx, mask, gain):
 
 # ===================================================================== the env
 
-class _ProcgenEnv(StableEnv):
+class _ProcgenEnv(Env):
     """Shared renderer. Subclasses declare only which game they are and how the state is laid out."""
 
     game: str = ""
