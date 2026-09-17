@@ -101,15 +101,16 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-render-3d
   owner: opus (high)
   model: opus
-  status: DELIVERED 899e4a6; GPU arm job 6464319 running; then review
+  status: 'DELIVERED 900065a; one open oracle item (HumanoidmazeGiantNavigate cuda: baseline tree emitted two digests across jobs 6464319/6464500 on different cards; head tree one digest everywhere); same-card
+    self-compare job 6464601 on gpu1503 decides; then review'
   files_owned: stable_envs/render/primitives.py (new), raycast3d.py, cpu3d.py, their tests
   ids_affected: 'every raycast3d/cpu3d consumer (DMC parity cells, OGBMaze, Fetch cpu path): exact-output preservation required'
   baseline_sha: d07ffa8
-  head_sha: 899e4a6
+  head_sha: 900065a
   tests: se6 tests/unit 1263 passed (1246 + 16 new + 1 parametrised); se8-vm 341 passed
-  oracle_diff: 21 cells byte-identical on cpu (12 DMC parity + PointMass + Manipulator via raycast3d; 5 trackcom via cpu3d; 4 gym-MuJoCo), fast and reference expressions; 23 GPU-only ids queued for the
-    GPU arm
-  performance_diff: cpu paired worst ratio 1.017 (bar 1.10); cpu3d 1.000-1.002
+  oracle_diff: '21 cells byte-identical on cpu (12 DMC parity + PointMass + Manipulator via raycast3d; 5 trackcom via cpu3d; 4 gym-MuJoCo), fast and reference expressions; 23 GPU-only ids queued for the
+    GPU arm | GPU arm (6464319, RTX A6000): 58/59 pairs identical; 6464500 (A40): cuda and cpu identical incl. torch/bounds-off paths; six ids covered elsewhere (D/F), trackcom cuda = Workstream I'
+  performance_diff: cpu paired worst ratio 1.017 (bar 1.10); cpu3d 1.000-1.002; GPU paired worst 1.006
   api_diff: new render/primitives.py (shared vocabulary); raycast3d re-exports every moved name; zero consumer call sites changed
 - workstream: B_envs_dmcontrol
   branch: step9/envs-dmcontrol
@@ -176,6 +177,8 @@ incident_log:
     sent renderer-only cells into env.sample on GPU reproducibility tests -> fixed centrally at e1da2f6 with a repo-wide test; review_a launched (sonnet)'
 - date: '2026-09-17'
   item: A merged after APPROVE; H awaiting determinism probe verdict (job 6464500)
+- date: '2026-09-17'
+  item: 'H: probe 6464500 identical on A40; self-compare 6464601 on gpu1503 submitted; H told to merge integration (e1da2f6 harness fix resolves its 66 GPU test failures)'
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
