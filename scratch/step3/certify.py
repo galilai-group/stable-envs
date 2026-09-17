@@ -97,8 +97,22 @@ NOT_A_BACKEND = frozenset({"prng", "rendernet"})
 #: All are 2-D and none touches mjwarp/raycast3d/nvdiff/cpu3d. Class R also holds them to the HIGHER
 #: bar (GPU_FAST at R >= 500 against class S's 4), so this is the conservative reading as well as the
 #: accurate one.
-NO_BACKEND_MODULE_CLASS = {"craftax": "R", "craftax_full": "R", "minihack": "R",
-                           "swm_nav": "R"}
+#: Step 9 renamed two of these modules: Workstream A moved ``swm_nav`` to ``navigation`` and
+#: Workstream E moved ``craftax_full`` to the private ``_craftax_full`` (both keeping a
+#: ``sys.modules`` alias, ruling 6). This table is keyed by module BASENAME, so both spellings must
+#: appear and BOTH must stay: ``certify`` is run against the frozen Step-8 censuses, which record
+#: the pre-rename ``cls.__module__``, AND against censuses regenerated on the Step-9 tree, which
+#: record the new one (``scratch/census/census.py`` reads ``cls.__module__`` live). Dropping the old
+#: spelling would silently return ``unknown`` for the frozen inputs; not adding the new one did
+#: exactly that for the regenerated ones, which is the defect this closes. The class is a property
+#: of the RENDERER, which neither rename touched, so carrying both names preserves behaviour by
+#: definition rather than by measurement. ``scratch/step4/universe.py::shard_of`` already carries
+#: the ``swm_nav``/``navigation`` pair for the same reason (Workstream A added it); it needs no
+#: ``craftax_full`` entry because neither spelling was ever in it -- both fall through to the
+#: ``raster`` shard, so E's rename leaves that routing unchanged (verified over all 81 registered
+#: classes on E's branch: shard tally dmc 18 / ogb 25 / swm 6 / raster 32, identical to integration).
+NO_BACKEND_MODULE_CLASS = {"craftax": "R", "craftax_full": "R", "_craftax_full": "R",
+                           "minihack": "R", "swm_nav": "R", "navigation": "R"}
 
 
 def backend_class(env: str, census: dict) -> tuple[str, list[str]]:
