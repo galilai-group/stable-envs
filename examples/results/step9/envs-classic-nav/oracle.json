@@ -32,6 +32,7 @@
       "rendering.antialias"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "a8715ac880569d8c608b1c8ea384ced5ed91320dbf41a4186c0177fa38beac2c",
     "frames_mean": 252.00735452083333,
@@ -111,6 +112,7 @@
       "track.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "4598212091e176d9ab3c430942ba4f6042ad7fbb05cf1769bff947f09bfe452a",
     "frames_mean": 252.40594466145834,
@@ -193,6 +195,7 @@
       "wheel.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "fbe5504bcc9878027769acd4d215b79d8515c9bda5dc0c4f39f8cb0b85440af8",
     "frames_mean": 253.26333051215278,
@@ -276,6 +279,7 @@
       "wheel.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "da0c0bc6622481ed59c03c88b2fb173d56164b10204e9be45923dc0ad69e90af",
     "frames_mean": 253.26359131944446,
@@ -354,6 +358,7 @@
       "rod.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "feaf201ca40ca177ebf9e66f30a124c03f8d4e2b2e9804e04d1c1b4c572d48be",
     "frames_mean": 252.92123454166668,
@@ -427,6 +432,7 @@
       "border.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "2d41ae6076f430b7824de38dd557748a0a0e0626f1619a240954003accf77054",
     "frames_mean": 236.113103126993,
@@ -508,6 +514,7 @@
       "zones.color_3"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "e215ae82a1ef45d2f722fe81c98ab168e2cc6504b32ba6499bd82de1e47eb5d6",
     "frames_mean": 211.78783847523385,
@@ -595,6 +602,7 @@
       "walls.shape"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "e520afaf03cb2b8a295d8fc65e1f1636061a58fb4fc95df03ba3830efe727f17",
     "frames_mean": 215.365318,
@@ -686,6 +694,7 @@
       "wall.thickness"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "ba79cc30ded03a73bcb84a0cd261db80d84e3981dfea8f2d38888b8854b8f758",
     "frames_mean": 225.65891769305378,
@@ -789,6 +798,7 @@
       "wall.thickness"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "88533f44daab1f25bb0c9b45f0c2ce40e3fc4e0b819b610d6c71b15de16ad554",
     "frames_mean": 224.7399692665152,
@@ -880,10 +890,12 @@
   "PiecewiseZones",
   "SimplePointMaze"
  ],
+ "compare_device": "cpu",
  "compared": [
   "corpus_states",
   "default_style_sha256",
   "describe",
+  "device",
   "fidelity_tier",
   "frames_from_rows_sha256",
   "frames_sha256",
@@ -1043,7 +1055,7 @@
   }
  ],
  "functional_ok": true,
- "head_sha": "136fb966cedf081f4cea62c469629a3663e88fc9",
+ "head_sha": "c753647b742cba827895f5be8f5d569156d87345",
  "identical": true,
  "migrated": {
   "cells": {
@@ -1078,6 +1090,7 @@
       "rendering.antialias"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "a8715ac880569d8c608b1c8ea384ced5ed91320dbf41a4186c0177fa38beac2c",
     "frames_mean": 252.00735452083333,
@@ -1157,6 +1170,7 @@
       "track.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "4598212091e176d9ab3c430942ba4f6042ad7fbb05cf1769bff947f09bfe452a",
     "frames_mean": 252.40594466145834,
@@ -1239,6 +1253,7 @@
       "wheel.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "fbe5504bcc9878027769acd4d215b79d8515c9bda5dc0c4f39f8cb0b85440af8",
     "frames_mean": 253.26333051215278,
@@ -1322,6 +1337,7 @@
       "wheel.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "da0c0bc6622481ed59c03c88b2fb173d56164b10204e9be45923dc0ad69e90af",
     "frames_mean": 253.26359131944446,
@@ -1400,6 +1416,7 @@
       "rod.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "feaf201ca40ca177ebf9e66f30a124c03f8d4e2b2e9804e04d1c1b4c572d48be",
     "frames_mean": 252.92123454166668,
@@ -1473,6 +1490,7 @@
       "border.color"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "2d41ae6076f430b7824de38dd557748a0a0e0626f1619a240954003accf77054",
     "frames_mean": 236.113103126993,
@@ -1554,6 +1572,7 @@
       "zones.color_3"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "e215ae82a1ef45d2f722fe81c98ab168e2cc6504b32ba6499bd82de1e47eb5d6",
     "frames_mean": 211.78783847523385,
@@ -1641,6 +1660,7 @@
       "walls.shape"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "e520afaf03cb2b8a295d8fc65e1f1636061a58fb4fc95df03ba3830efe727f17",
     "frames_mean": 215.365318,
@@ -1732,6 +1752,7 @@
       "wall.thickness"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "ba79cc30ded03a73bcb84a0cd261db80d84e3981dfea8f2d38888b8854b8f758",
     "frames_mean": 225.65891769305378,
@@ -1835,6 +1856,7 @@
       "wall.thickness"
      ]
     },
+    "device": "cpu",
     "fidelity_tier": "parity",
     "frames_from_rows_sha256": "88533f44daab1f25bb0c9b45f0c2ce40e3fc4e0b819b610d6c71b15de16ad554",
     "frames_mean": 224.7399692665152,

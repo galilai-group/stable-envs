@@ -63,6 +63,7 @@ import stable_envs as se
 
 cells = json.loads(sys.argv[1])
 states_dir = sys.argv[2]
+dev = sys.argv[3] if len(sys.argv) > 3 else "cpu"
 
 def h(a):
     return hashlib.sha256(np.ascontiguousarray(a).tobytes()).hexdigest()
@@ -75,14 +76,15 @@ for name in cells:
     n = int(corpus.shape[0])
     cls = se.REGISTRY[name]
     try:
-        env = cls(num_envs=n, device="cpu")
+        env = cls(num_envs=n, device=dev)
     except TypeError:
-        env = cls(batch=n, device="cpu")
+        env = cls(batch=n, device=dev)
     env.set_state(corpus)
     rows = env.get_state().detach().cpu().numpy()
     frames = env.render().detach().cpu().numpy()
     frames_from_rows = env.render(torch.as_tensor(corpus)).detach().cpu().numpy()
     out["cells"][name] = {
+        "device": dev,
         "state_dim": int(env.state_dim),
         "state_names": list(env.state_names),
         "size": int(env.size),
@@ -204,6 +206,7 @@ def _baseline_worktree(sha: str) -> tuple[Path, bool]:
 
 #: Every key the two trees must agree on, and the sentence that says what a difference would mean.
 COMPARED = {
+    "device": "the device the comparison arm ran on",
     "state_dim": "the packed row's width",
     "state_names": "the packed row's column names",
     "size": "the registered default frame size",
@@ -232,16 +235,25 @@ def main() -> int:
     ap.add_argument("--python", default=sys.executable)
     ap.add_argument("--baseline-sha", default=BASELINE_SHA)
     ap.add_argument("--cells", default=",".join(CELLS))
+    #: WHICH DEVICE THE COMPARISON ARM RUNS ON. ``cpu`` is the default and is the whole story for a
+    #: local run; on a CUDA host ``--device cuda`` is the ONE way to compare the fused render paths
+    #: (``render/gfxdraw_classic`` and ``render/navdot`` are CUDA-only, so a cpu comparison never
+    #: executes a line of them) between the two trees.
+    ap.add_argument("--device", default="cpu")
+    #: The tree is an rsync copy inside a clone on a cluster, so ``git rev-parse HEAD`` there names
+    #: the clone's HEAD and not the branch that was measured. Passed explicitly rather than guessed.
+    ap.add_argument("--head-sha", default=None)
     ap.add_argument("--out", default=str(ROOT / "examples/results/step9/envs-classic-nav"))
+    ap.add_argument("--name", default="oracle.json")
     a = ap.parse_args()
     cells = [c for c in a.cells.split(",") if c]
 
     baseline, created = _baseline_worktree(a.baseline_sha)
     try:
         before = _run(PROBE, baseline, a.python, json.dumps(cells),
-                      str(baseline / "examples/results/step4/states"))
+                      str(baseline / "examples/results/step4/states"), a.device)
         after = _run(PROBE, ROOT, a.python, json.dumps(cells),
-                     str(ROOT / "examples/results/step4/states"))
+                     str(ROOT / "examples/results/step4/states"), a.device)
         fn = _run(FUNCTIONAL, ROOT, a.python, json.dumps(cells),
                   str(ROOT / "examples/results/step4/states"))
 
@@ -270,8 +282,10 @@ def main() -> int:
                             and c["render_state_equals_render_rows"] for c in checks)
         record = {
             "baseline_sha": a.baseline_sha,
-            "head_sha": subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT),
-                                       capture_output=True, text=True).stdout.strip(),
+            "head_sha": a.head_sha or subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=str(ROOT),
+                capture_output=True, text=True).stdout.strip(),
+            "compare_device": a.device,
             "workstream": "step9/envs-classic-nav",
             "cells": cells,
             "corpus": "examples/results/step4/states/<Cell>.npz",
@@ -288,7 +302,7 @@ def main() -> int:
         }
         out = Path(a.out)
         out.mkdir(parents=True, exist_ok=True)
-        (out / "oracle.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
+        (out / a.name).write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
 
         print(json.dumps({k: record[k] for k in ("baseline_sha", "head_sha", "identical",
                                                  "unexplained_differences", "expected_differences",

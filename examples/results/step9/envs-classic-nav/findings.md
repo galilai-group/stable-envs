@@ -1,17 +1,21 @@
 # Step 9 — Wave 1, Workstream A: classic control + simple navigation
 
-**Workstream:** `step9/envs-classic-nav` · **Branch HEAD:** `e73af1c` · **Parent:** `step9/integration`
-`d07ffa8` (Wave-0 merge) · **Step-8 baseline:** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc`
+**Workstream:** `step9/envs-classic-nav` · **Parent:** `step9/integration`, merged twice: `d07ffa8`
+(Wave 0) and `b1585fc` (the per-field state dtype and the navigation shard mapping, this round) ·
+**Step-8 baseline:** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc`
 **Host:** Apple M5 Mac (`cis1b1zs2j3`), CPU only — no CUDA device in this ticket.
 **Interpreters:** `/Users/samib/se6-venv` (torch 2.14 CPU, tensordict, loguru) and
 `/Users/samib/se8-vm-venv` (+ `stable_worldmodel`, DM Control). `MUJOCO_GL=glfw`, `-p no:cacheprovider`.
 
-**Result: PATCH.** Ten cells migrated onto the Wave-0 foundation. The frozen Step-4 corpus of every
+**Result: PATCH.** Ten cells migrated onto the Wave-0 foundation. Revised after the coordinator's
+rulings of 2026-09-17: `step9/integration` `b1585fc` merged in (no rebase), the per-field public dtype
+adopted, ESCALATION 1 closed with the coordinator's own measurement, and one new
+foundation defect found and filed (R8). The frozen Step-4 corpus of every
 one of them renders to **byte-identical frames** through this branch and through a detached worktree
 of `21cb306` in the same venv; `describe()`, the style layout, the default appearance, the variation
 taxonomy, the fidelity declarations, the packed layout, `sample_states` and the registry row are
-identical. **Unexplained oracle differences: zero.** Local unit suite **1334 passed** (1246 + 88 new,
-no pre-existing test changed its result); SWM-venv subset **269 passed / 58 skipped**, unchanged.
+identical. **Unexplained oracle differences: zero.** Local unit suite **1355 passed**; SWM-venv subset
+**270 passed / 57 skipped**, which is exactly what `step9/integration` alone produces on this host.
 
 Cells: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar`, `MountainCarContinuous` (classic control);
 `TwoRoom`, `TwoRoomTarget`, `Piecewise`, `PiecewiseZones`, `SimplePointMaze` (navigation).
@@ -100,13 +104,24 @@ of the frozen corpus layout moved**. Pendulum is the exception in the other dire
 is a DRAWN quantity that is not a velocity, which is why the layout is derived from
 `render_from_sim` rather than from "the render dims come first".
 
-**The classic-control State is float64**, and that is the one deliberate departure from PushT's
-template. This family's claim is near-bit-exactness against a float64 reference (MountainCar tracks
-it to 3.3e-16 over 100 steps); the packed row is float32 because that is the renderer's contract. A
-State that rounded the dynamics to float32 would make `transition` a **different, lower-precision
-simulator** from `step` — identical for one step taken from a corpus state, drifting from the second.
-`pack` casts back to the unchanged float32 row, so `pack(env.state) == get_state()` to the bit and
-nothing downstream of the renderer sees a different number. See §10, request R1.
+**The classic-control State is float64.** This family's claim is near-bit-exactness against a
+float64 reference (MountainCar tracks it to 3.3e-16 over 100 steps); the packed row is float32
+because that is the renderer's contract. A State that rounded the dynamics to float32 would make
+`transition` a **different, lower-precision simulator** from `step` — identical for one step taken
+from a corpus state, drifting from the second. Since the coordinator's `b1585fc`, that is declared
+the supported way: `state_layout` carries `torch.float64` as its fourth element, `unpack` and
+`Env.state` honour it, and `pack` still writes the unchanged float32 row, so `pack(env.state) ==
+get_state()` to the bit and nothing downstream of the renderer sees a different number.
+
+`_Classic.state` is nevertheless **kept**, and the reason is measured rather than stylistic: the
+fourth element fixes the DTYPE and not the PROVENANCE. `Env.state` rebuilds the drawn fields by
+widening the packed float32 row, and that row is a lossy projection of the simulator buffer
+(`_state = _sim[:, render_from_sim].to(float32)`), so `float64(float32(x))` is not `x`. Measured on
+CartPole after five steps, the drawn `x` differs from the simulator's own value by **9.6e-08** — and
+that is not cosmetic: `transition(Env.state.fget(env), a)` stops equalling `step(a)` from that point
+on, i.e. the functional path quietly becomes a different simulator. Reading `_sim` is the only way to
+hand back the number the next step will actually start from. `test_transition_still_equals_step_after_the_env_has_been_stepped`
+pins the bit-equality MID-TRAJECTORY, which is where it would show. See §10, request R7.
 
 **`_Classic.frame_shape`** (new): `Env.observation_spec` assumes a square frame, and CartPole,
 MountainCar and MountainCarContinuous render at 400×600, so the spec was reporting `(600, 600, 3)`
