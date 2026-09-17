@@ -1117,6 +1117,9 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
         set_sim(torch.as_tensor(s0[None], dtype=torch.float64, device=dev))
         gpu = np.empty((steps, D), np.float64)
         for i, a in enumerate(acts):
+            # ``step`` is stateful; what it RETURNS differs by cell (a StepResult TensorDict for a
+            # Step-9-migrated env, a packed tensor for the rest), so the reading is done by the
+            # ``get_sim`` the caller supplied, which is the packed row on every path.
             single.step(torch.as_tensor(a, dtype=torch.float32, device=dev).view(1, -1))
             gpu[i] = np.asarray(get_sim().detach().cpu().numpy(), np.float64).reshape(D)
 

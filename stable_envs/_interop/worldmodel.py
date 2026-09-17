@@ -68,7 +68,8 @@ import numpy as np
 import torch
 
 from .. import spaces as se_spaces
-from ..core.env import REGISTRY, make
+from ..dynamics import has_dynamics as _has_dynamics
+from ..registry import REGISTRY, make
 
 #: Keys ``BatchedEnvPool`` puts in the stacked info dict, and where each comes from in a stock World.
 #: Recorded here because the pool bypasses ``MegaWrapper`` and therefore owes the same contract:
@@ -554,14 +555,18 @@ class StableEnvGym(gym.Env):
         return self._obs(), self._info()
 
     def step(self, action):
-        if not hasattr(self.env, "step"):
+        if not _has_dynamics(self.env):
             raise NotImplementedError(
                 f"{self.se_name} ships a renderer and no batched GPU simulator, so this facade "
                 f"cannot advance it. Use stable_envs.compat.worldmodel.swap_renderer to keep the "
                 f"official env's dynamics and replace only its pixels, or drive it from states you "
                 f"already have.")
         a = np.asarray(action, np.float32).reshape(1, -1)
-        self._state = self.env.step(a)[0].detach().cpu().numpy().copy()
+        # ``step`` is stateful and its return type is the env's business (Step 9 made it a StepResult
+        # TensorDict for migrated cells, a packed tensor for the rest); ``get_state()`` is the packed
+        # row on either path and is what this facade has always reported.
+        self.env.step(a)
+        self._state = self.env.get_state()[0].detach().cpu().numpy().copy()
         dist = float(np.linalg.norm(self._state - self._goal_state))
         terminated = bool(self.success_radius > 0.0 and dist < self.success_radius)
         return self._obs(), -dist, terminated, False, self._info()
@@ -813,14 +818,15 @@ class BatchedEnvPool:
         terminateds = np.zeros(self.num_envs, bool)
         truncateds = np.zeros(self.num_envs, bool)
 
-        if not hasattr(self.renderer, "step"):
+        if not _has_dynamics(self.renderer):
             raise NotImplementedError(
                 f"{self.se_name} ships a renderer and no batched GPU simulator, so a pool of them "
                 f"cannot be stepped. Keep the official envs and swap only their renderer "
                 f"(swap_renderer), or render states you already have.")
         prev = self.renderer.get_state().clone()
         act = np.where(sel[:, None], a, 0.0).astype(np.float32)
-        new = self.renderer.step(torch.as_tensor(act, device=self.renderer.device))
+        self.renderer.step(torch.as_tensor(act, device=self.renderer.device))
+        new = self.renderer.get_state()
         if not sel.all():
             keep = torch.as_tensor(~sel, device=self.renderer.device)
             new = torch.where(keep.unsqueeze(1), prev, new)
