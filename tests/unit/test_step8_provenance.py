@@ -126,8 +126,8 @@ def test_no_committed_provenance_file_carries_an_absolute_cluster_path() -> None
     bad = []
     for d in (ROOT / "scratch/step8/provenance", ROOT / "examples/results/step8/provenance"):
         for p in sorted(d.rglob("*")):
-            if not p.is_file():
-                continue
+            if not p.is_file() or p.name == "sanitize.py":
+                continue                   # the scrubber's own patterns, not a path into a home
             try:
                 text = p.read_text()
             except UnicodeDecodeError:
