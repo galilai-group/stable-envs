@@ -65,10 +65,16 @@ workstreams:
   branch: step9/foundation
   owner: opus (high)
   reviewer: opus (high), independent
-  status: IN PROGRESS
+  status: 'IN PROGRESS: author applying D1-D4 + T1, then reviewer re-verification, then merge'
   files_owned: stable_envs/{__init__,__about__,_config,env,dynamics,specs,registry,interop}.py, stable_envs/envs/pusht.py, tests/unit/test_foundation_*.py, pyproject deps (tensordict, loguru) as authorised
   ids_affected: swm/PushT-v1 (canonical example); aliases keep all 42 working
   baseline_sha: 21cb306
+  head_sha: aeaaf6c (+779e7a9 GPU oracle arm)
+  review: 'review_foundation.md APPROVE-WITH-CHANGES (opus high, independent): contract 10/10 PASS, import graph acyclic by AST, suites 1241/269 reproduced; D1-D4 required, T1 hidden-state hook recommended'
+  tests: se6-venv tests/unit 1241 passed / 195 skipped (baseline 1125 + 116 new); se8-vm-venv variation maps + gate record + swm 269 passed / 58 skipped (= baseline); cuda host foundation tests 35 passed
+  oracle_diff: 'PushT frozen Step-4 corpus: frames/describe/style/registry identical on cpu and cuda (job 6463991 gpu1503 RTX A6000); transition == step bitwise on both devices incl. the CUDA-graph path;
+    unroll == repeated transition'
+  performance_diff: 'cpu paired: render -3.5 %, step +1.0 % (inside spread); GPU timings owed with Wave-1 hot-path checks'
 decisions:
 - date: '2026-09-17'
   by: coordinator
@@ -76,11 +82,24 @@ decisions:
   ruling: 'STEP_09_AGENT_BRIEFS/WAVE0_CONTRACT.md (untracked briefs dir): num_envs ctor; TensorDict State with pack/unpack to the Step-8 packed row; hidden dynamics vars (PushT agent velocity) become state
     so transition is pure; small Spec/CompositeSpec, no torchrl; step -> TensorDict{state,reward?,done?}; transition/unroll functional; close/context manager; registry make/spec/list_envs with SWM aliases;
     loguru config; tensordict + loguru core deps; deprecated aliases kept until Wave 3'
+- date: '2026-09-17'
+  by: coordinator
+  topic: foundation escalations
+  ruling: '1 GPU oracle arm: done (job 6463991); 2 rollout.py stays in place until Workstream K moves it (no env.rollout(policy) exists); 3 legacy top-level names stay resolvable via __getattr__ but are
+    not advertised (D3) until Wave 3; 4 StyleTensor in stable_envs/_style.py accepted; 5 public interop.py over private _interop/ accepted; 6 call-time discovery accepted (static graph acyclic); 7 the two
+    adapted pre-existing tests accepted (nothing weakened); 8 tensordict + loguru core deps accepted'
+- date: '2026-09-17'
+  by: coordinator
+  topic: Wave-1 scope from D4
+  ruling: every family workstream must make its classes accept num_envs= and declare state_layout/hidden state through the Env hooks; the pinned count of classes rejecting num_envs may only go down
 escalations: []
 incident_log:
 - date: '2026-09-17'
   item: 'Wave 0 started: baseline 21cb306 verified on origin; step9/integration + sami/pre-step9-baseline created; oracle snapshotted; inventory taken'
 - date: '2026-09-17'
   item: Wave-0 contract frozen; foundation agent launched on step9/foundation
+- date: '2026-09-17'
+  item: foundation delivered (aeaaf6c); GPU oracle arm PASS (job 6463991; first attempt 6463965 failed on a missing loguru in the uv venv, fixed with uv pip); architecture review APPROVE-WITH-CHANGES; author
+    applying D1-D4 + T1
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
