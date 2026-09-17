@@ -89,6 +89,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from . import _resources
+
 os.environ.setdefault("WARP_CACHE_PATH",
                       os.path.expanduser("~/.cache/warp"))
 
@@ -551,13 +553,36 @@ def needs_com_pos(m) -> bool:
                 or np.isin(np.asarray(m.light_mode, np.int64), com).any())
 
 
-#: Downsampled texture arrays whose owning render context would not hold them.
+#: Why the fallback below retains for the life of the process, in ``_resources`` terms.
 #: ``wp.from_torch`` does NOT take ownership, so a torch tensor that goes out of scope after being
 #: handed to a live ``wp.Texture2D`` is freed under it and sampled as whatever the allocator put there
-#: next. The tensors are normally attached to the context they belong to, so they are freed with it;
-#: this is the fallback for a ``mujoco_warp`` build whose context object refuses an attribute, and it
-#: leaks by design rather than by accident — a RoboCasa kitchen at LOD 2 is ~119 MB per context.
-_TEX_KEEP: list = []
+#: next. The tensors are normally attached to the context they belong to, so they are freed with it
+#: (see ``release_render_context``); this is the fallback for a ``mujoco_warp`` build whose context
+#: object refuses an attribute, and it leaks BY DESIGN rather than by accident — a RoboCasa kitchen at
+#: LOD 2 is ~119 MB per context. It goes through ``_resources.retain_process_lifetime`` so that the
+#: deliberate leak is counted and capped in the same place as the EGL contexts, instead of being an
+#: anonymous module-level list.
+TEX_KEEP_REASON = "mjwarp tex_lod texture handed to wp.from_torch (no ownership transfer)"
+
+
+def release_render_context(rc) -> None:
+    """Drop what a render context exclusively owns, without freeing anything shared.
+
+    A ``mujoco_warp`` render context owns device arrays (``rgb_data``, the per-world geom buffers, the
+    texture objects) and they are freed when the last reference to ``rc`` goes — warp arrays are
+    refcounted, there is no ``rc.free()`` to call. What this function exists for is the ONE thing a
+    dropped reference does not cover: the ``tex_lod`` torch tensors that ``create_render_context``
+    attached to the context so they would die with it. Clearing the attribute here makes the release
+    an explicit statement at a chosen point rather than a property of when the collector runs.
+
+    It deliberately does not touch an EGL context (a render context does not own one) and it is safe
+    to call twice, because the caller that owns ``rc`` may be a ``BatchRenderer.close()`` on one path
+    and a cache eviction on another.
+    """
+    try:
+        rc._se_tex_lod_keep = None
+    except Exception:                                                    # noqa: BLE001
+        pass                                              # a C type with no settable attribute
 
 
 def create_render_context(m, tex_lod: int = 1, **kw):
@@ -641,7 +666,8 @@ def create_render_context(m, tex_lod: int = 1, **kw):
         try:
             rc._se_tex_lod_keep = keep
         except AttributeError:                                        # pragma: no cover
-            _TEX_KEEP.extend(keep)
+            for t in keep:
+                _resources.retain_process_lifetime(t, TEX_KEEP_REASON)
     return rc
 
 
@@ -700,14 +726,37 @@ def gl_rounding():
         R.pack_rgba_to_uint32 = original
 
 
-class BatchRenderer:
+class BatchRenderer(_resources.Closeable):
     """``qpos (B,nq)`` -> ``(B,H,W,3)`` uint8 on device, with the pre-pass applied and channels fixed.
 
     The model is prepared and left prepared for the life of the renderer: MJWarp reads the geometry
     once, at ``create_render_context``, so restoring the groups afterwards would not un-draw anything
     and would only make the object's behaviour depend on when the caller looked at the model. Call
     ``restore_model`` explicitly if the same ``MjModel`` is shared with a MuJoCo renderer.
+
+    **What it owns, and therefore what ``close()`` frees.** Everything it builds in ``__init__`` is
+    exclusive to it and sized for this batch width: the MJWarp ``Model`` and ``Data`` (``put_model``/
+    ``put_data(nworld=batch)``), the render context and its ``rgb_data``, the torch view of that
+    buffer, and the captured warp graph. None of it is shared with another renderer and none of it is
+    keyed in a cache, so ``close()`` drops all of it and a closed renderer refuses to ``render``::
+
+        with BatchRenderer(m, batch=64) as br:
+            frames = br.render(qpos)
+        # br.closed is True here; br.render(qpos) now raises UseAfterCloseError
+
+    **What it does NOT free, and this is the part to read before extending it.** The ``MjModel`` it
+    was handed belongs to the caller, so it is neither restored nor released (see the paragraph
+    above). No EGL or GL context is touched: MJWarp does not use one, and the repository-wide rule —
+    measured, and enforced at zero tolerance by ``testing/resource_guard.py`` — is that an EGL
+    context is never released inside a run, because freeing one silently corrupts rendering in every
+    other live context in the process. ``_resources`` states that rule in full.
+
+    There is no ``__del__``: a renderer that is never closed holds its buffers until the process ends
+    and is countable with ``_resources.live("mjwarp.BatchRenderer")``, which is a better failure than
+    one that depends on when the collector runs.
     """
+
+    resource_kind = "mjwarp.BatchRenderer"
 
     def __init__(self, m, batch: int, res: int = 224, camera: int = 0, groups=DEFAULT_GROUPS,
                  textures: bool = True, shadows: bool = True, skybox: bool = True,
@@ -736,8 +785,25 @@ class BatchRenderer:
             int(batch), int(res), int(res), 4)
         self._wp, self._mjw = wp, mjw
         self.graph = None
+        self._opened()
         if capture:
             self._capture()
+
+    def _release(self) -> None:
+        """Drop the graph, the context, the batch-sized Data and the Model view. Idempotent.
+
+        Order matters in one place only: the captured graph replays reads and writes inside ``rc`` and
+        ``d``, so the graph reference goes first. Everything here is a warp object whose device memory
+        is refcounted, so dropping the last reference IS the free; naming each one is what makes the
+        release happen at a point the caller chose.
+        """
+        self.graph = None
+        self._bgra = None
+        rc, self.rc = getattr(self, "rc", None), None
+        if rc is not None:
+            release_render_context(rc)
+        self.d = None
+        self.m = None
 
     def _frame(self):
         self._mjw.kinematics(self.m, self.d)
@@ -760,6 +826,7 @@ class BatchRenderer:
 
     def render(self, qpos):
         """``(B,nq)`` float32 on device -> ``(B,H,W,3)`` uint8 on device, RGB (channels swapped)."""
+        self._check_open("render")
         self._wp.to_torch(self.d.qpos).copy_(qpos)
         if self.graph is not None:
             self._wp.capture_launch(self.graph)
