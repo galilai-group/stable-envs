@@ -357,6 +357,19 @@ class HighwayEnvBase(Env):
         )
 
     @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of a frame at the env's own size. ``Env.observation_spec`` reads this.
+
+        Declared because the base class's default is SQUARE and a highway frame is not: ``size`` is
+        the height and the width follows the road's aspect ratio, so a Parking frame is 300x600 and
+        an unqualified ``observation_spec`` would have told a consumer to allocate 300x300. Found by
+        ``tests/unit/test_envs_mujoco.py``, which compares the spec against a real render; fixed in
+        the family that knows the aspect ratio rather than in the base class, which does not.
+        """
+        sc = self.screen()
+        return int(sc.H), int(sc.W)
+
+    @property
     def H(self) -> int:
         """Frame height at the env's OWN size. Read-only: a render cannot move it any more."""
         return self.screen().H
