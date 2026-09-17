@@ -36,11 +36,28 @@ render(rows) == render()``; a cell with NO batched simulator raises the contract
 WITH one has ``transition`` pure and bit-identical to ``step``, and ``unroll`` equal both to repeated
 ``transition`` and to repeated ``step``.
 
+THE OPTIONAL DEPENDENCIES, and why they are a ``PYTHONPATH`` and not an install. Four of the twenty
+cells in the ``se6-venv`` arm read their reference assets out of a package that is NOT installed in
+any local venv: ``MiniGrid*``/``BabyAI*`` need ``minigrid`` (``render.tilemap.official_colors`` reads
+``COLOR_TO_IDX``/``COLORS`` off the package, and ``make_obj`` builds real objects with it) and
+``Sokoban`` needs ``gym_sokoban`` (the seven 16x16 PNGs ARE the frame) — which in turn executes
+``gym`` and ``pkg_resources`` at import. Nothing is installed into the shared ``se6-venv``: the
+wheels are already unpacked in the uv cache and are put on ``PYTHONPATH`` by
+``SE9_EXTRA_PYTHONPATH``, which ``_run`` prepends to BOTH trees so the two arms see the same
+packages. ``minigrid`` is pinned to **3.1.0** (``docs/research/minigrid.md``), and the uv cache also
+holds a 3.0.0 — the resolved archive paths are recorded in the JSON under ``extra_pythonpath`` so a
+later reader can tell which one produced the digests, instead of finding an unreproducible record.
+Without them those five cells do not even REGISTER and the run dies with ``KeyError`` in the
+baseline tree.
+
 Usage::
 
+    export SE9_EXTRA_PYTHONPATH=$(scratch/step9/envs-mujoco/oracle.py --print-extra-pythonpath)
     MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python scratch/step9/envs-mujoco/oracle.py
     MUJOCO_GL=glfw scratch/step9/envs-mujoco/oracle.py --python /Users/samib/se8-fetch-venv/bin/python \
         --cells PointMazeOpen,PointMazeUMaze,PointMazeMedium,PointMazeLarge --name oracle_maze2d.json
+
+The four maze2d cells need ``gymnasium-robotics`` and no ``SE9_EXTRA_PYTHONPATH``.
 """
 from __future__ import annotations
 
@@ -69,6 +86,33 @@ CELLS = ("MujocoInvertedPendulum", "MujocoInvertedDoublePendulum", "MujocoReache
 #: How many states per cell. Small on purpose: ``Intersection`` renders at 600x600 and these are CPU
 #: ray-casts and tile composites, not a frozen-corpus replay with a fixed size.
 N_STATES = 16
+
+#: The uv-cache archives that carry the optional reference packages, in ``PYTHONPATH`` order. Probed
+#: rather than hardcoded so a cache rebuild is a resolution failure with a name, not a silent
+#: ``KeyError`` five minutes into a run. ``minigrid`` is matched on its pinned version.
+EXTRA_PACKAGES = (("minigrid", "3.1.0"), ("gym_sokoban", None), ("gym", None), ("pkg_resources", None))
+UV_ARCHIVES = Path.home() / ".cache/uv/archive-v0"
+
+
+def _resolve_extra_pythonpath() -> list[str]:
+    """One uv-cache archive dir per package in ``EXTRA_PACKAGES``, in order. Raises if one is gone."""
+    out: list[str] = []
+    for pkg, want in EXTRA_PACKAGES:
+        hits = sorted(UV_ARCHIVES.glob(f"*/{pkg}"))
+        if want is not None:
+            hits = [h for h in hits
+                    if any(d.name.startswith(f"{pkg}-{want}.") or d.name == f"{pkg}-{want}.dist-info"
+                           for d in h.parent.glob(f"{pkg}-*.dist-info"))]
+        if not hits:
+            raise SystemExit(
+                f"{pkg}{'==' + want if want else ''} is not unpacked under {UV_ARCHIVES}. It is not "
+                f"installed in any local venv either, and the MiniGrid/BabyAI/Sokoban cells read "
+                f"their reference assets out of it, so there is no degraded mode: re-populate the "
+                f"cache with `uv pip download`/`uv pip install --python <a throwaway venv>` and "
+                f"re-run.")
+        out.append(str(hits[0].parent))
+    return out
+
 
 #: Sample the states ONCE, in the baseline tree, so both arms render the same input.
 SAMPLE = r'''
@@ -305,7 +349,12 @@ def main() -> int:
     ap.add_argument("--head-sha", default=None)
     ap.add_argument("--out", default=str(ROOT / "examples/results/step9/envs-mujoco"))
     ap.add_argument("--name", default="oracle.json")
+    ap.add_argument("--print-extra-pythonpath", action="store_true",
+                    help="print the resolved SE9_EXTRA_PYTHONPATH for the se6-venv arm and exit")
     a = ap.parse_args()
+    if a.print_extra_pythonpath:
+        print(":".join(_resolve_extra_pythonpath()))
+        return 0
     cells = [c for c in a.cells.split(",") if c]
 
     baseline, created = _baseline_worktree(a.baseline_sha)
@@ -338,6 +387,8 @@ def main() -> int:
                       "this workstream owns has a frozen Step-4 corpus (see the module docstring)",
             "n_states": a.n_states,
             "python": a.python,
+            "extra_pythonpath": os.environ.get("SE9_EXTRA_PYTHONPATH", "").split(":") if
+                                os.environ.get("SE9_EXTRA_PYTHONPATH") else [],
             "compared": sorted(COMPARED),
             "unexplained_differences": diffs,
             "expected_differences": {},
