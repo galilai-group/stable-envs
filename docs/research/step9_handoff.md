@@ -21,6 +21,26 @@ with `/Users/samib/se6-venv/bin/python`), and the review reports under
 | local venvs | `/Users/samib/se6-venv` (CPU, the unit-suite interpreter; has tensordict+loguru), `se8-vm-venv` (stable_worldmodel + dm_control 1.0.44 + mujoco 3.11 + matplotlib), `se8-fetch-venv` (gymnasium-robotics; live Fetch blocked by numpy 2.5.3 + mujoco 3.12), `se7-ogb-venv` (ogbench), `se7-craftax-venv`, `se7-rocket-venv`. uv venvs: install with `/opt/homebrew/bin/uv pip install --python <venv>/bin/python <pkg>` (no pip inside) |
 | unit-suite command (baseline number moves as workstreams merge) | `MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` — 1513+ passed after the B merge (see git log); the two deselected are pre-existing baseline failures (citation scanner; robocasa example help) |
 
+## 0. STOPPING POINT (final, 2026-09-17) — start here
+
+The Fable coordinator stopped at `step9/integration` = the commit carrying this section (parent
+678e1d8). Merged: W0, A, H, B. The Claude Code session that launched the agents below ends with this
+handoff, so **every in-flight agent is dead**; their work is whatever is committed on their branches
+plus the uncommitted files noted (checkpoints to inspect, not trust).
+
+| workstream | branch @ HEAD | commits ahead of integration | worktree state | what to do first |
+|---|---|---|---|---|
+| G 2-D render | step9/render-2d @ 8afa2f4 | 8 | clean; DELIVERED; findings + CPU oracle (20 cells identical) committed | an Opus review was running and is dead: re-launch a reviewer (prompt: §7 of this doc + `reviews/review_h.md` as the model; the fused-kernel host-setup changes have no GPU diff yet, so the static expression-by-expression reading is the pre-merge gate). Merge on APPROVE (merge integration into it first: it branched from 5befc46). |
+| C Fetch | step9/envs-fetch @ 0ef8a97 | 4 | clean, no findings yet | agent died mid-task: inspect commits, re-launch with the §7 brief + "inspect the branch first, continue" |
+| D OGBench | step9/envs-ogbench @ a1352ab | 1 | clean + 4 untracked files | same |
+| E Craftax + Rocket | step9/envs-craftax-rocket @ b5de5f3 | 4 | clean + 2 untracked | same |
+| F MuJoCo/non-42 wrappers | step9/envs-mujoco @ e42a87b | 3 | **7 modified tracked files uncommitted** + | same; inspect `git diff` first, commit as a WIP checkpoint if coherent |
+| I MJWarp/nvdiff/_resources | step9/render-mjwarp-nvdiff @ 0b42598 | 5 | clean + 1 untracked | same; reviewer must be Opus |
+
+Then: finish reviews/merges of C, D, E, F, I; ONE GPU oracle over all 42 ids on the merged Wave-1
+tip (assemble from the workstreams' sbatch sections: A, B, G, H, I each committed one under
+`scratch/step9/<ws>/`); then Wave 2 (J, K, L, M, N), Wave 3 (O), final comparison and closure.
+
 ## 2. Branches / worktrees at handoff
 
 | workstream | branch | worktree | HEAD | state |
