@@ -131,10 +131,15 @@ workstreams:
   branch: step9/render-2d
   worktree: /Users/samib/stable-envs-step9-render-2d
   owner: opus (medium)
-  status: IN PROGRESS
+  status: DELIVERED 8afa2f4; opus review in flight; GPU arm deferred to the post-Wave-1 oracle (scratch/step9/render-2d/gpu_oracle.sbatch is its section)
   files_owned: stable_envs/render/{scene,raster2d,gfxdraw,gfxdraw_classic,gfxdraw_fused,tilemap,navdot,prng}.py, tests
   ids_affected: PushT, TwoRoom/Piecewise/SimplePointMaze, 5 classic-control, Craftax x2 (tilemap/prng), and every non-42 2-D family
   baseline_sha: 5befc46
+  head_sha: 8afa2f4
+  tests: se6 1405 passed (1385 + 20); se8-vm 265 + 20
+  oracle_diff: 20 cells x 64 states byte-identical on cpu (12 of the 42 ids + 8 non-42); fused CUDA kernels (gfxdraw_classic/fused, navdot, tilemap) owed to the GPU oracle
+  performance_diff: 'cpu paired worst 1.077 (SimplePointMaze, explained: identical cProfile, host load 9.8); others 0.960-1.009'
+  api_diff: raster2d.tile_shape, gfxdraw.edge_geometry, gfxdraw.M32, public row_groups (alias kept), scene.Batched type; zero consumer edits
 - workstream: C_envs_fetch
   branch: step9/envs-fetch
   worktree: /Users/samib/stable-envs-step9-envs-fetch
@@ -255,6 +260,9 @@ incident_log:
   item: Sami lifted the 2-agent budget and moved GPU validation to one post-Wave-1 oracle + the final comparison; C, D, E, F, I launched in parallel with B and G
 - date: '2026-09-17'
   item: 'B merged after APPROVE; running: G, C, D, E, F, I'
+- date: '2026-09-17'
+  item: 'G delivered; se7-craftax-venv given tensordict+loguru (G R2); G R3: step4 CraftaxClassic.npz (127-wide) no longer loads since Step 7 widened the cell — Step-7 corpus is the loadable one (note for
+    K/O); G R4: navigation.py imports private raster2d._row_groups (alias kept; K/O)'
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
