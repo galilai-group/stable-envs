@@ -98,6 +98,25 @@ Unchanged, and asserted: `state_dim`, `state_names`, the packed row and its colu
 `sample_states`, `set_state`, `get_state`, `render(rows)`, the whole style API, `scene`, the
 reference-bridge staticmethods, `describe()`, `variation_space`, the fidelity declarations.
 
+**Wave-1 scope (disclosed after the architecture review, defect D4): 41 of the 81 registered classes
+still reject `num_envs=`.** Their own `__init__` declares `batch=` and forwards positionally to
+`Env.__init__`, so they accept the Step-8 spelling, never reach the deprecation branch, and raise
+`TypeError: got an unexpected keyword argument 'num_envs'` for the Step-9 one. Only PushT was in
+Wave-0 scope; migrating the rest is family-agent work:
+
+| family | classes | names |
+|---|---:|---|
+| `highway` | 6 | Highway, Intersection, Merge, Parking, Racetrack, Roundabout |
+| `maze2d` | 4 | PointMazeLarge, PointMazeMedium, PointMazeOpen, PointMazeUMaze |
+| `mujoco_locomotion` | 4 | MujocoInvertedDoublePendulum, MujocoInvertedPendulum, MujocoPusher, MujocoReacher |
+| `ogb_manip` | 2 | OGBCube, OGBScene |
+| `ogbench` | 25 | Antmaze{Giant,Large,Medium,Teleport}{Navigate,Stitch,Explore}, Humanoidmaze{Giant,Large,Medium}{Navigate,Stitch}, Pointmaze{Giant,Large,Medium,Teleport}{Navigate,Stitch} |
+
+(Counted on this interpreter, where 81 classes register. The other 40 inherit `Env.__init__` and take
+both spellings today.) `tests/unit/test_foundation_api.py::test_the_number_of_classes_that_still_reject_num_envs_only_goes_down`
+pins the number at 41 from the class SIGNATURES — no construction, so it is enforced on any machine —
+and fails if it ever grows, so a new env cannot be added on the old constructor.
+
 ## 3. Step-8 IDs affected
 
 **Behaviorally: none.** The 42 SWM ids are unchanged; the migration touches one cell, `PushT`, which
@@ -111,14 +130,14 @@ and the multi-cell ids (`swm/CartpoleDMControl-v0`, `swm/OGBMaze-v0`, `swm/Piece
 
 ## 4. Targeted tests
 
-New, all marked `unit`, 116 tests:
+New, all marked `unit`, 121 tests (116 at review time, 5 added for the review changes):
 
 | file | what it pins |
 |---|---|
 | `test_foundation_specs.py` | Spec/CompositeSpec: shape/dtype/bounds/names, seeded sampling, validation messages, the refusal to sample an unbounded spec |
 | `test_foundation_state.py` | State keys, the packed layout is the Step-8 one, `pack(unpack(rows))` identity, zero-filled hidden field, `render(State) == render(rows) == render()`, reset determinism by seed, the four specs, `num_envs`/`len` |
-| `test_foundation_pusht.py` | stateful `step` returns only `state`; `transition` pure and **bit-equal** to `step`; the hidden velocity changes the answer; `unroll` = repeated `transition`; the renderer-only refusal |
-| `test_foundation_api.py` | the public namespace, the three deprecated names + `batch=` each warning exactly once, config keys and typos, `default_device`, `close` idempotence, a closed env's refusal, the context manager |
+| `test_foundation_pusht.py` | stateful `step` returns only `state`; `transition` pure and **bit-equal** to `step`; the hidden velocity changes the answer; `unroll` = repeated `transition`; the renderer-only refusal; the `StepResult` helper; **a cell with hidden state and no `_hidden_state()` hook fails loudly instead of reporting zeros** |
+| `test_foundation_api.py` | the public namespace (incl. `StepResult`), `__dir__` advertising only the documented names, the three deprecated names + `batch=` each warning exactly once, config keys and typos, `default_device`, `close` idempotence, a closed env's refusal, the context manager, the 41-class `num_envs=` holdout pin |
 | `test_foundation_registry.py` | the 42 SWM ids against `examples/results/step8/support_matrix.json`; every canonical class name against the baseline registry table; `list_envs`/`spec` without constructing; discovery records its failures |
 | `test_foundation_imports.py` | the import graph, parsed: core modules import no backend/env/interop at module scope; `render/*` never imports `envs/*` or SWM; only interop reaches for `stable_worldmodel`; no core cycle; `import stable_envs` needs no optional dependency |
 
@@ -127,18 +146,19 @@ Exact outputs (both commands run from the worktree root):
 ```
 MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit -x \
   --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"
-1241 passed, 195 skipped, 112 deselected, 26619 warnings in 85.39s (0:01:25)
+1246 passed, 195 skipped, 112 deselected, 26619 warnings in 85.07s (0:01:25)
 ```
 
 Baseline for that command on this machine, measured before any edit: `1125 passed, 195 skipped, 112
 deselected` (the brief's "1130" is 5 higher; 1125 is what `21cb306`/`502b533` produces in this venv).
-1125 + 116 new = 1241, i.e. **no pre-existing test changed its result**.
+1125 + 121 new = 1246, i.e. **no pre-existing test changed its result**. (The review was run against
+1241; the five extra tests are the review round's.)
 
 ```
 MUJOCO_GL=glfw /Users/samib/se8-vm-venv/bin/python -m pytest -q -p no:cacheprovider \
   tests/unit/test_variation_maps_dmc_control.py tests/unit/test_variation_maps_newcells.py \
   tests/unit/test_variation_maps_fetch.py tests/unit/test_step8_gate_record.py tests/swm
-269 passed, 58 skipped, 4088 warnings in 26.91s
+269 passed, 58 skipped, 4088 warnings in 26.18s
 ```
 
 The identical command in a worktree of the baseline `21cb306` gives `269 passed, 58 skipped in 26.93s`.
@@ -170,7 +190,13 @@ interpreters — a detached `git worktree` of `21cb306` and this branch, same ve
 The two claims that are new in Step 9 and have no baseline to compare against are checked in the same
 script, per device: `transition` equals the stateful `step` **to the bit**, `unroll` equals repeated
 `transition`, and `render(State)` equals `render(rows)`. On this host that is cpu only
-(`"stateful_path_was_a_cuda_graph": false`); **the CUDA arm is owed** — see ESCALATION 1.
+(`"stateful_path_was_a_cuda_graph": false`). **The CUDA arm is now done** and was run by the
+coordinator on Oscar (commit `779e7a9`, job 6463991, `gpu1503`, RTX A6000,
+`examples/results/step9/foundation/gpu/pusht_oracle.json`): `"identical": true`,
+`"unexplained_differences": {}`, the same frames SHA-256, and on `cuda`
+`transition_equals_step_bitwise: true` WITH `stateful_path_was_a_cuda_graph: true` — i.e. the eager
+functional path reproduces the replayed graph to the bit, which was the one place the two could have
+diverged. PushT GPU test subset: 35 passed.
 
 ## 6. Performance (plan §8)
 
@@ -186,7 +212,7 @@ CPU, median of the per-repeat medians → `examples/results/step9/foundation/per
 Both are inside run-to-run spread (the baseline render repeats span 56.8–63.1 ms). `step` is the path
 that could have cost something — it now builds a StepResult (an `unpack` plus a velocity clone) where
 it used to hand back the buffer — and at 256 envs that is ~0.19 ms against a 10-substep solver. No
-change is anywhere near the 10 % block threshold. GPU numbers are owed with ESCALATION 1.
+change is anywhere near the 10 % block threshold. GPU timings remain owed (ESCALATION 1).
 
 ## 7. Resource lifetime
 
@@ -231,7 +257,60 @@ closed           True
    counts unchanged.
 10. **unexplained oracle differences** — **zero**.
 
-## 10. ESCALATIONS (deviations from WAVE0_CONTRACT.md and the brief)
+## 10. ESCALATIONS — and the architecture review's rulings
+
+Independent review (`examples/results/step9/reviews/review_foundation.md`, reviewed SHA `aeaaf6c`):
+**APPROVE-WITH-CHANGES**. Every ruling below is the reviewer's; the "now" column says what this branch
+did about it.
+
+| # | escalation | ruling | now |
+|---|---|---|---|
+| 1 | GPU arm of the oracle owed | ACCEPT (pending) | **DONE** — coordinator commit `779e7a9`, Oscar job 6463991 on `gpu1503` (RTX A6000): identical, and `transition == step` to the bit on `cuda` against the replayed CUDA graph; PushT GPU subset 35 passed. GPU *timings* are still owed. |
+| 2 | `rollout.py` not moved out of the core | **DEFER-TO-K** | No change. The prohibition the contract makes — no `env.rollout(policy)` — is honoured and was verified by the reviewer (`hasattr(env, "rollout")` is False; no core module imports `rollout`). The move is a ~470-call-site rename; Workstream K owns it. |
+| 3 | Step-8 top-level surface behind a lazy `__getattr__` | **ACCEPT, with D3 as change-now** | **D3 FIXED** — `__dir__` is built from `__all__` plus the registered classes, so the legacy names resolve but are no longer advertised. Pinned by `test_dir_advertises_the_documented_namespace_and_the_environments_only`. |
+| 4 | `StyleTensor` in `stable_envs/_style.py` | **ACCEPT** | No change. |
+| 5 | `interop.py` public over `_interop/` private | **ACCEPT** | No change. |
+| 6 | discovery imports `envs` at call time | **ACCEPT** (tidy the self-re-entry in Wave 3) | No change; the re-entrancy note is carried to Wave 3 below. |
+| 7 | two pre-existing test files edited | **ACCEPT** (diffed line by line; nothing weakened) | No change. |
+| 8 | `tensordict` + `loguru` as core dependencies | **ACCEPT** | No change. |
+
+### Review defects, and what was done
+
+| id | what | state |
+|---|---|---|
+| **D1** | the `Env` docstring's rename sentence was inverted (a sed artifact): it is `StableEnv` that was renamed and that remains the alias | **fixed**, commit `4f7c1d8` |
+| **D2** | `StepResult` was used as a type name in five places and defined nowhere | **fixed**, commit `5f49e15`: `StepResult = TensorDict` beside `State`, exported from the package and the core shim, and built by `Env._step_result(state, **extras)` — one place that fixes the batch size and device and that DROPS a `None` reward/done, so a cell with no such semantics gets an absent key rather than a zero |
+| **D3** | `__dir__` advertised the retained backend names | **fixed**, commit `4f7c1d8` |
+| **D4** | 41 of 81 classes still reject `num_envs=`, undisclosed | **disclosed** in §2 above with the per-family list, and pinned by a signature-based test that can only let the number go down |
+| **T1** | `PushT.state` overrode the property to splice the hidden velocity back in — the one template hazard that would produce a SILENT wrong answer when copied (zeros reported, `transition(env.state, a) != step(a)`) | **landed**, commit `5f49e15`: `Env._hidden_state()` returns `{key: tensor}` for the offset-`None` fields and `Env.state` splices them in; a cell that declares such a field and does not answer gets a `NotImplementedError` naming the field and the hook. PushT's 12-line property became a 2-line declaration. Re-checked against the oracle (below). |
+| **T3/T4** | `step` built its result in both branches; double reshape | **folded into `5f49e15`** — one `_step_result` return; the explicit `(B, 2)` reshape is KEPT and now says why (the captured graph's target buffer would silently BROADCAST a one-row target). |
+| **T5** | `has_dynamics` inlined a third time in `registry.spec()` | **not taken** (reviewer marked it optional); it is two lines of duplication with a test over it. Recommend folding it into Wave 1's first registry edit. |
+| **D5/D6** | stray space before a colon; the same duplication | **not taken**, cosmetic. |
+
+### Post-change verification (this round)
+
+- Oracle re-run on cpu and `examples/results/step9/foundation/pusht_oracle.json` regenerated: the only
+  key that changed against the reviewed record is `head_sha`. `"identical": true`,
+  `"unexplained_differences": {}`, frames SHA-256 `39620967…8c67b`, `ORACLE: PASS`. T1 touches the
+  `state` property, which is why the oracle was re-run rather than reasoned about.
+- `tests/unit`: **1246 passed, 195 skipped, 112 deselected** (1241 at review + 5 new).
+- SWM venv subset: **269 passed, 58 skipped**, unchanged.
+
+### Carried to Wave 3 (reviewer's cleanup list, no action now)
+
+`env.py` is two things in one file (459 lines of Step-8 certification machinery before `class Env`) and
+could lose them to a `_checks.py`; `registry.discover()` re-enters itself once through
+`envs/__init__.py` (correct, all `sys.modules` hits, but set the flag before the walk); the retained
+`reference_*` staticmethods make the PushT template ~100 lines longer to scroll past.
+
+### Merge note (reviewer)
+
+`git diff 7209f14 aeaaf6c` shows `examples/results/step9/dashboard.yaml` as −18 lines: this branch was
+cut from `21cb306` and carries its own dashboard while `step9/integration` has since added the Wave-0
+contract and the ownership table. Divergent artifact, not a regression — keep the integration branch's
+dashboard at merge.
+
+### The eight escalations in full (as filed, before the review)
 
 1. **The GPU arm of the oracle rule is owed.** Contract §10 asks for "a local CPU test and one GPU
    check (PushT is a CPU-capable cell: run both)". This ticket is explicitly local-Mac-only and the
