@@ -12,9 +12,7 @@
    "UNSUPPORTED_BY_DESIGN": 3
   },
   "gate_a": {
-   "FAIL": 3,
-   "PASS": 36,
-   "UNMEASURED": 1,
+   "PASS": 40,
    "UNSUPPORTED_BY_DESIGN": 2
   },
   "gpu_tier_status": {
@@ -33,7 +31,7 @@
    "unknown": 2
   }
  },
- "generated_at_head_sha": "22b27a3a3fb473f03962bece46b172a870814b70",
+ "generated_at_head_sha": "42107937c78f82e63e0ef0e626340ac26555f137",
  "rows": [
   {
    "backend_class": "R",
@@ -548,12 +546,73 @@
     "DMCCheetahRun": null
    },
    "gate_a": {
+    "authoritative_arm": [
+     {
+      "arm": "dmcvis.json",
+      "cell": "DMCCheetahRun",
+      "driver": "575.57.08",
+      "git_commit": "fec4f6eea606e390c22e2b206b3d0738d11468c8",
+      "gpu": "NVIDIA GeForce RTX 3090",
+      "host": "gpu2264.oscar.ccv.brown.edu",
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.44",
+       "gym_pusht": null,
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.11.0",
+       "mujoco_warp": "3.11.0",
+       "ogbench": null,
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "slurm_job_id": "6443480",
+      "source": "examples/results/step7/closure2/replay/dmcvis.json",
+      "source_sha256": "807fd84c7bb2d55a35276a3ee8aff93cfbcb34a7ee54775fedcabff74a36f262"
+     }
+    ],
+    "blocked_checks": [],
     "failing_checks": [],
-    "note": "",
-    "per_device": {},
-    "raw": "FAIL",
-    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
-    "status": "FAIL"
+    "note": "Gate A read from the arm this cell's reference_versions declaration NAMES, not from whichever arm an alphabetical shard-tag tiebreak kept. Both arms were measured in the same closure2 job on the same card; both are judged with the frozen Step-4 judge; both verdicts are in examples/results/step8/provenance/reference_arm.json. Reference drift, recorded and NOT erased: DMCCheetahRun under 3.12.0 -> FAIL. See docs/research/step8_reference_provenance.md.",
+    "per_device": {
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "reference_drift": [
+     {
+      "arm": "dmc.json",
+      "blocked": [
+       "check_visual_fidelity"
+      ],
+      "cell": "DMCCheetahRun",
+      "failures": [
+       "check_resolution_consistency"
+      ],
+      "gate_a": "FAIL",
+      "mismatch": [
+       "mujoco: declared 3.11.0, interpreter had 3.12.0"
+      ],
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.45",
+       "gym_pusht": "0.1.6",
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.12.0",
+       "mujoco_warp": "3.12.0",
+       "ogbench": "1.2.1",
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      }
+     }
+    ],
+    "source": "examples/results/step8/provenance/reference_arm.json",
+    "status": "PASS"
    },
    "gpu_tier": {
     "note": "",
@@ -563,7 +622,14 @@
     "tier": "GPU_EXCEPTIONAL"
    },
    "join_evidence": "reference_id ['dm_control/cheetah-run'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
-   "limitations": [],
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/provenance/reference_arm.json",
+     "detail": "certified against mujoco 3.11.0; the same states measured in the same job against 3.12.0 give Gate A FAIL (visual fidelity blocked_environment, would be fail). MuJoCo 3.12.0 re-anchors finite-plane textures to the corner (changelog item 15, commit cc7fb98c) and mujoco_warp does not, so the floor checker is phase-shifted in the REFERENCE, not in our frame. Cause and per-surface localisation: docs/research/step8_reference_provenance.md.",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "reference/upstream drift"
+    }
+   ],
    "physics": {
     "status": "UNMEASURED",
     "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
@@ -571,7 +637,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "UNMEASURED",
+    "status": "PASS",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {
@@ -2284,12 +2350,73 @@
     "DMCHopperHop": null
    },
    "gate_a": {
+    "authoritative_arm": [
+     {
+      "arm": "dmcvis.json",
+      "cell": "DMCHopperHop",
+      "driver": "575.57.08",
+      "git_commit": "fec4f6eea606e390c22e2b206b3d0738d11468c8",
+      "gpu": "NVIDIA GeForce RTX 3090",
+      "host": "gpu2264.oscar.ccv.brown.edu",
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.44",
+       "gym_pusht": null,
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.11.0",
+       "mujoco_warp": "3.11.0",
+       "ogbench": null,
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "slurm_job_id": "6443480",
+      "source": "examples/results/step7/closure2/replay/dmcvis.json",
+      "source_sha256": "807fd84c7bb2d55a35276a3ee8aff93cfbcb34a7ee54775fedcabff74a36f262"
+     }
+    ],
+    "blocked_checks": [],
     "failing_checks": [],
-    "note": "",
-    "per_device": {},
-    "raw": "FAIL",
-    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
-    "status": "FAIL"
+    "note": "Gate A read from the arm this cell's reference_versions declaration NAMES, not from whichever arm an alphabetical shard-tag tiebreak kept. Both arms were measured in the same closure2 job on the same card; both are judged with the frozen Step-4 judge; both verdicts are in examples/results/step8/provenance/reference_arm.json. Reference drift, recorded and NOT erased: DMCHopperHop under 3.12.0 -> FAIL. See docs/research/step8_reference_provenance.md.",
+    "per_device": {
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "reference_drift": [
+     {
+      "arm": "dmc.json",
+      "blocked": [
+       "check_visual_fidelity"
+      ],
+      "cell": "DMCHopperHop",
+      "failures": [
+       "check_resolution_consistency"
+      ],
+      "gate_a": "FAIL",
+      "mismatch": [
+       "mujoco: declared 3.11.0, interpreter had 3.12.0"
+      ],
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.45",
+       "gym_pusht": "0.1.6",
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.12.0",
+       "mujoco_warp": "3.12.0",
+       "ogbench": "1.2.1",
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      }
+     }
+    ],
+    "source": "examples/results/step8/provenance/reference_arm.json",
+    "status": "PASS"
    },
    "gpu_tier": {
     "note": "",
@@ -2299,7 +2426,14 @@
     "tier": "GPU_EXCEPTIONAL"
    },
    "join_evidence": "reference_id ['dm_control/hopper-hop'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
-   "limitations": [],
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/provenance/reference_arm.json",
+     "detail": "certified against mujoco 3.11.0; the same states measured in the same job against 3.12.0 give Gate A FAIL (visual fidelity blocked_environment, would be fail). MuJoCo 3.12.0 re-anchors finite-plane textures to the corner (changelog item 15, commit cc7fb98c) and mujoco_warp does not, so the floor checker is phase-shifted in the REFERENCE, not in our frame. Cause and per-surface localisation: docs/research/step8_reference_provenance.md.",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "reference/upstream drift"
+    }
+   ],
    "physics": {
     "status": "UNMEASURED",
     "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
@@ -2307,7 +2441,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "UNMEASURED",
+    "status": "PASS",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {
@@ -2382,12 +2516,71 @@
     "DMCHumanoidStand": null
    },
    "gate_a": {
+    "authoritative_arm": [
+     {
+      "arm": "dmcvis.json",
+      "cell": "DMCHumanoidStand",
+      "driver": "575.57.08",
+      "git_commit": "fec4f6eea606e390c22e2b206b3d0738d11468c8",
+      "gpu": "NVIDIA GeForce RTX 3090",
+      "host": "gpu2264.oscar.ccv.brown.edu",
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.44",
+       "gym_pusht": null,
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.11.0",
+       "mujoco_warp": "3.11.0",
+       "ogbench": null,
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "slurm_job_id": "6443480",
+      "source": "examples/results/step7/closure2/replay/dmcvis.json",
+      "source_sha256": "807fd84c7bb2d55a35276a3ee8aff93cfbcb34a7ee54775fedcabff74a36f262"
+     }
+    ],
+    "blocked_checks": [],
     "failing_checks": [],
-    "note": "",
-    "per_device": {},
-    "raw": "BLOCKED",
-    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
-    "status": "UNMEASURED"
+    "note": "Gate A read from the arm this cell's reference_versions declaration NAMES, not from whichever arm an alphabetical shard-tag tiebreak kept. Both arms were measured in the same closure2 job on the same card; both are judged with the frozen Step-4 judge; both verdicts are in examples/results/step8/provenance/reference_arm.json. Reference drift, recorded and NOT erased: DMCHumanoidStand under 3.12.0 -> BLOCKED. See docs/research/step8_reference_provenance.md.",
+    "per_device": {
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "reference_drift": [
+     {
+      "arm": "dmc.json",
+      "blocked": [
+       "check_visual_fidelity"
+      ],
+      "cell": "DMCHumanoidStand",
+      "failures": [],
+      "gate_a": "BLOCKED",
+      "mismatch": [
+       "mujoco: declared 3.11.0, interpreter had 3.12.0"
+      ],
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.45",
+       "gym_pusht": "0.1.6",
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.12.0",
+       "mujoco_warp": "3.12.0",
+       "ogbench": "1.2.1",
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      }
+     }
+    ],
+    "source": "examples/results/step8/provenance/reference_arm.json",
+    "status": "PASS"
    },
    "gpu_tier": {
     "note": "",
@@ -2397,7 +2590,14 @@
     "tier": "GPU_FAST"
    },
    "join_evidence": "this id resolves to dm_control/humanoid-walk, which no stable-envs env declares; we declare ['dm_control/humanoid-stand'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
-   "limitations": [],
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/provenance/reference_arm.json",
+     "detail": "certified against mujoco 3.11.0; the same states measured in the same job against 3.12.0 give Gate A BLOCKED (visual fidelity blocked_environment, would be pass). MuJoCo 3.12.0 re-anchors finite-plane textures to the corner (changelog item 15, commit cc7fb98c) and mujoco_warp does not, so the floor checker is phase-shifted in the REFERENCE, not in our frame. Cause and per-surface localisation: docs/research/step8_reference_provenance.md.",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "reference/upstream drift"
+    }
+   ],
    "physics": {
     "status": "UNMEASURED",
     "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
@@ -2405,7 +2605,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "UNMEASURED",
+    "status": "PASS",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {
@@ -4233,12 +4433,73 @@
     "DMCWalkerWalk": null
    },
    "gate_a": {
+    "authoritative_arm": [
+     {
+      "arm": "dmcvis.json",
+      "cell": "DMCWalkerWalk",
+      "driver": "575.57.08",
+      "git_commit": "fec4f6eea606e390c22e2b206b3d0738d11468c8",
+      "gpu": "NVIDIA GeForce RTX 3090",
+      "host": "gpu2264.oscar.ccv.brown.edu",
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.44",
+       "gym_pusht": null,
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.11.0",
+       "mujoco_warp": "3.11.0",
+       "ogbench": null,
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      },
+      "reference_versions": {
+       "mujoco": "3.11.0"
+      },
+      "slurm_job_id": "6443480",
+      "source": "examples/results/step7/closure2/replay/dmcvis.json",
+      "source_sha256": "807fd84c7bb2d55a35276a3ee8aff93cfbcb34a7ee54775fedcabff74a36f262"
+     }
+    ],
+    "blocked_checks": [],
     "failing_checks": [],
-    "note": "",
-    "per_device": {},
-    "raw": "FAIL",
-    "source": "examples/results/step7/closure2/replay/certify/certification.json (this sweep)",
-    "status": "FAIL"
+    "note": "Gate A read from the arm this cell's reference_versions declaration NAMES, not from whichever arm an alphabetical shard-tag tiebreak kept. Both arms were measured in the same closure2 job on the same card; both are judged with the frozen Step-4 judge; both verdicts are in examples/results/step8/provenance/reference_arm.json. Reference drift, recorded and NOT erased: DMCWalkerWalk under 3.12.0 -> FAIL. See docs/research/step8_reference_provenance.md.",
+    "per_device": {
+     "cuda": "PASS"
+    },
+    "raw": "PASS",
+    "reference_drift": [
+     {
+      "arm": "dmc.json",
+      "blocked": [
+       "check_visual_fidelity"
+      ],
+      "cell": "DMCWalkerWalk",
+      "failures": [
+       "check_resolution_consistency"
+      ],
+      "gate_a": "FAIL",
+      "mismatch": [
+       "mujoco: declared 3.11.0, interpreter had 3.12.0"
+      ],
+      "reference_packages": {
+       "craftax": null,
+       "dm_control": "1.0.45",
+       "gym_pusht": "0.1.6",
+       "gymnasium": "1.3.0",
+       "gymnasium_robotics": null,
+       "jax": null,
+       "mujoco": "3.12.0",
+       "mujoco_warp": "3.12.0",
+       "ogbench": "1.2.1",
+       "stable_worldmodel": null,
+       "warp": "1.17.0"
+      }
+     }
+    ],
+    "source": "examples/results/step8/provenance/reference_arm.json",
+    "status": "PASS"
    },
    "gpu_tier": {
     "note": "",
@@ -4248,7 +4509,14 @@
     "tier": "GPU_EXCEPTIONAL"
    },
    "join_evidence": "reference_id ['dm_control/walker-walk'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
-   "limitations": [],
+   "limitations": [
+    {
+     "artifact": "examples/results/step8/provenance/reference_arm.json",
+     "detail": "certified against mujoco 3.11.0; the same states measured in the same job against 3.12.0 give Gate A FAIL (visual fidelity blocked_environment, would be fail). MuJoCo 3.12.0 re-anchors finite-plane textures to the corner (changelog item 15, commit cc7fb98c) and mujoco_warp does not, so the floor checker is phase-shifted in the REFERENCE, not in our frame. Cause and per-surface localisation: docs/research/step8_reference_provenance.md.",
+     "kind": "DOCUMENTED_LIMITATION",
+     "what": "reference/upstream drift"
+    }
+   ],
    "physics": {
     "status": "UNMEASURED",
     "why": "no per-row physics verdict is carried in the Step-7 closure matrix; check_step_matches_reference is judged on its own axis in scratch/step4/certify.py and is not joined here"
@@ -4256,7 +4524,7 @@
    "pixel_or_symbolic": "pixel",
    "render_coverage": "covered",
    "reproducibility": {
-    "status": "UNMEASURED",
+    "status": "PASS",
     "why": "determinism, batch/batch-size/order/chunk invariance are mandatory Gate-A checks, so the Gate-A verdict carries them"
    },
    "semantic": {

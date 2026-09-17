@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `22b27a3a3fb473f03962bece46b172a870814b70`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `42107937c78f82e63e0ef0e626340ac26555f137`
 
 ## The five words
 
@@ -39,7 +39,7 @@ rows                 42
 pixel-producing      40
 symbolic             2
 render covered       40
-gate A               {"FAIL": 3, "PASS": 36, "UNMEASURED": 1, "UNSUPPORTED_BY_DESIGN": 2}
+gate A               {"PASS": 40, "UNSUPPORTED_BY_DESIGN": 2}
 cpu tier status      {"MEASURED": 24, "UNMEASURED": 15, "UNSUPPORTED_BY_DESIGN": 3}
 gpu tier status      {"MEASURED": 40, "UNMEASURED": 2}
 variation map        {"complete": 21, "missing": 5, "n/a": 2, "partial": 12, "unknown": 2}
@@ -55,7 +55,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/BallInCupDMControl-v0` | `DMCBallInCupCatch` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.density`, `ball.color`, `ball.density`, `ball.size`, `floor.color`, `gravity.x`, `gravity.y`, `gravity.z`, `rendering.render_target`, `target.color`, `target.shape` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/CartPoleControl-v1` | `CartPole` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | complete | `physics.force_mag`, `physics.gravity`, `physics.length`, `physics.masscart`, `physics.masspole`, `physics.tau` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/CartpoleDMControl-v0` | `DMCCartpoleBalance`, `DMCCartpoleSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.cart_mass`, `agent.cart_mass`, `agent.cart_shape`, `agent.cart_shape`, `agent.pole_density`, `agent.pole_density`, `floor.color`, `floor.color`, `gravity.x`, `gravity.x`, `gravity.y`, `gravity.y`, `gravity.z`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/CheetahDMControl-v0` | `DMCCheetahRun` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **FAIL** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.back_foot_density`, `agent.back_foot_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+| `swm/CheetahDMControl-v0` | `DMCCheetahRun` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **PASS** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.back_foot_density`, `agent.back_foot_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** reference/upstream drift |
 | `swm/CraftaxClassicPixels-v1` | `CraftaxClassic` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/CraftaxClassicSymbolic-v1` | — | n/a | symbolic | UNSUPPORTED_BY_DESIGN | — | — | — | **UNSUPPORTED_BY_DESIGN** | — | unknown (UNMEASURED) | unknown (UNMEASURED) | unknown | — | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
 | `swm/CraftaxPixels-v1` | `CraftaxFull` | R | pixel | covered | `prng` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | n/a | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** resolution consistency |
@@ -73,8 +73,8 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/FetchSlideDense-v3` | `FetchSlideDense` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/FetchSlideDict-v3` | `FetchSlideDict` | S | pixel | covered | `mjwarp` | — | `parity` | **PASS** | — | CPU_UNMEASURED (UNMEASURED) | GPU_PARITY (MEASURED) | partial | `camera.angle_delta`, `rendering.transparent_arm` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/FingerDMControl-v0` | `DMCFingerTurnHard` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_REGRESSION (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.fingertip_density`, `agent.proximal_density`, `floor.color`, `spinner.color`, `spinner.density`, `spinner.friction`, `target.shape` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/HopperDMControl-v0` | `DMCHopperHop` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **FAIL** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.foot_density`, `agent.foot_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
-| `swm/HumanoidDMControl-v0` | `DMCHumanoidStand` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **UNMEASURED** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.left_knee_locked`, `agent.right_lower_arm_density`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+| `swm/HopperDMControl-v0` | `DMCHopperHop` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **PASS** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.foot_density`, `agent.foot_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** reference/upstream drift |
+| `swm/HumanoidDMControl-v0` | `DMCHumanoidStand` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **PASS** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.left_knee_locked`, `agent.right_lower_arm_density`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** reference/upstream drift |
 | `swm/ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_REGRESSION (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.hand_density`, `agent.upper_arm_density`, `agent.upper_arm_length`, `floor.color` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** resolution consistency |
 | `swm/MountainCarContinuousControl-v0` | `MountainCarContinuous` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | complete | `physics.max_speed`, `physics.power` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/MountainCarControl-v0` | `MountainCar` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | complete | `physics.force`, `physics.gravity`, `physics.max_speed` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
@@ -91,7 +91,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/ReacherDMControl-v0` | `DMCReacherHard` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.arm_density`, `agent.finger_density`, `agent.finger_locked`, `floor.color`, `target.shape` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/SimplePointMaze-v0` | `SimplePointMaze` | R | pixel | covered | `scene` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/TwoRoom-v1` | `TwoRoom`, `TwoRoomTarget` | R | pixel | covered | `navdot` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/WalkerDMControl-v0` | `DMCWalkerWalk` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **FAIL** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.left_foot_density`, `agent.right_knee_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `floor.rotation_y`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | UNMEASURED | UNMEASURED | — |
+| `swm/WalkerDMControl-v0` | `DMCWalkerWalk` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **PASS** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.left_foot_density`, `agent.right_knee_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `floor.rotation_y`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** reference/upstream drift |
 
 ## What is UNMEASURED at this HEAD, and why
 
