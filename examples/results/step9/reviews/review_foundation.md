@@ -273,3 +273,67 @@ should be re-checked against `scratch/step9/foundation/pusht_oracle.py` if taken
 cut from `21cb306` and carries its own 68-line dashboard, while `step9/integration` has since added the
 Wave-0 contract and the shared-file ownership table. That is a divergent artifact file, not a
 regression — expect and resolve it at merge, keeping the integration branch's dashboard.
+
+---
+
+# Re-review at 67e5039
+
+APPROVE
+
+**Reviewed SHA:** `67e50394d503509fd5ef9dbef2c92fb66db5b881`. **Scope:** `git diff aeaaf6c 67e5039`
+only (commits `779e7a9` coordinator GPU oracle, `4f7c1d8` D1/D3, `5f49e15` D2/T1, `67e5039` D4).
+Worktree clean before and after; nothing edited, committed or pushed; Oscar not touched.
+
+## Requested items
+
+| item | verdict | evidence |
+|---|---|---|
+| **D1** docstring names | **FIXED** | `stable_envs/env.py:471` now reads "renamed this from ``StableEnv``" and `:477` "``StableEnv`` remains as a deprecated alias for this class". The added clause about `isinstance`/`issubclass`/`__init_subclass__` being unaffected is correct and an improvement on what I asked for. |
+| **D2** `StepResult` defined/exported, `_step_result` drops `None` | **FIXED** | `stable_envs/env.py:57` `StepResult = TensorDict` beside `State`, exported from `stable_envs.__all__` (15 names) and from the `core/env.py` shim. Measured: `snv.StepResult is tensordict.TensorDict` → True; `_step_result(state, reward=None, done=None)` → keys `['state']`; `_step_result(state, reward=…, done=…)` → `['done','reward','state']`, `batch_size=[3]`. The docstring's reason ("a fabricated zero reward reads as a measured one") is the right one. |
+| **D3** `__dir__` = `__all__` + env classes | **FIXED** | `dir(snv)` is 96 names; intersection with `{Scene2D, raster2d, raycast3d, render, testing, StyleTensor, render_states, spaces, core, data, rollout, StableEnv, REGISTRY, register}` is **empty**, while `snv.Scene2D`, `snv.StyleTensor`, `snv.spaces` all still resolve. `{Env, StepResult, PushT} ⊂ dir(snv)`. The docstring's point — that `globals()` would advertise whatever the process happened to import, since Python binds imported submodules onto their package — is a better justification than the one I gave. |
+| **D4** Wave-1 scope table + pinned-41 test | **DONE** | findings §2 now carries a per-family table (highway 6, maze2d 4, mujoco_locomotion 4, ogb_manip 2, ogbench 25 = 41) and states the mechanism (they forward `batch` positionally, so they never reach the deprecation branch). `tests/unit/test_foundation_api.py::test_the_number_of_classes_that_still_reject_num_envs_only_goes_down` pins it from `inspect.signature` with `<=`, so it is a ratchet that can only go down, and separately asserts `"PushT" not in holdouts`. Signature-based rather than construction-based, which is the right call — a constructing test would skip on exactly the machines where this is asked. |
+| **T1** `_hidden_state()` hook, loud refusal, PushT ported | **DONE** | `Env._hidden_state()` (`env.py:930`) returns `{}` by default; `Env.state` splices the offset-`None` fields and raises `NotImplementedError` naming the field and the hook for any it was not given. Measured on a subclass that reverts the hook: `F.state: ['agent.velocity'] is declared in state_layout with offset None … and F._hidden_state() does not return it`. PushT's 12-line property override became a 2-line declaration (`envs/pusht.py:517`). Also verified live: after `step`, `env.state["agent","velocity"]` is non-zero and `transition(env.state, a) == step(a)` packs bit-equal. **T3/T4 folded in too** — `step` now has a single `_step_result` return via a `replayed` flag, and the `(B, 2)` reshape is kept with a comment explaining that `copy_` into the captured graph's target buffer would silently *broadcast* a one-row target. Keeping it and explaining it is better than the removal I suggested. |
+
+## Verification re-run by the reviewer at 67e5039
+
+```
+MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python scratch/step9/foundation/pusht_oracle.py --out <scratchpad>
+→ "identical": true, "unexplained_differences": {}, cpu: transition_equals_step_bitwise true,
+  unroll_equals_repeated_transition true, render_state_equals_render_rows true;  ORACLE: PASS
+  frames SHA-256 39620967bc6eba0b1814b7b00543e63d56ce81380231ffc83f795fb84d58c67b (unchanged)
+  vs. the committed record: only `head_sha` differs.
+
+tests/unit (se6-venv)  → 1246 passed, 195 skipped, 112 deselected in 84.80s    [expected 1246 ✓]
+SWM subset (se8-vm-venv) → 269 passed, 58 skipped in 26.77s                    [expected 269/58 ✓]
+```
+T1 changed the `state` property, so the oracle was re-run rather than reasoned about; it is unchanged.
+
+## GPU artifacts (`examples/results/step9/foundation/gpu/`)
+
+`pusht_oracle.json`: `"identical": true`, `"unexplained_differences": {}`, baseline `21cb306`, and the
+frames SHA-256 is **the same `39620967…8c67b` as every CPU run** — the migrated tree on an RTX A6000
+reproduces the frozen corpus byte for byte. `functional_checks` carries both arms; the cuda arm is
+`transition_equals_step_bitwise: true` **with `stateful_path_was_a_cuda_graph: true`**, which closes
+escalation 1: the eager functional path reproduces the replayed CUDA graph to the bit, the one place
+these two could have diverged. `registry_baseline.json` present. **No absolute cluster path is
+committed** — `"python": "$SCR/venvs/se-step6/bin/python"`, and `git grep` over the delta finds no
+`/oscar` or `sboughan` string anywhere in the new artifacts (the only hits in the tree are
+pre-existing filenames and the Step-6/8 tests that *forbid* such paths).
+
+Two notes, neither blocking:
+- `examples/results/step9/foundation/gpu/provenance.txt` is committed **empty (0 bytes)**. The job id
+  (6463991), node (`gpu1503`), card (RTX A6000) and venv live only in the commit message and
+  findings §5. Fill it or drop the file; an empty provenance record is worse than none.
+- The GPU record's `head_sha` is `aeaaf6c`, i.e. the arm was run before D2/T1 landed, and T1 touched
+  the `state` path that `step` returns. The CPU arm is re-verified at `67e5039` and the change is
+  provably equivalent (`_agent_v[:self._live_rows]` vs the former `_agent_v[:n]`, where `n` is
+  `_live_rows` by construction), so the risk is negligible — but a cheap re-run of the GPU arm at the
+  merge SHA would close it exactly. Recommended before the Wave-1 branches are cut, not as a gate.
+
+## Final verdict
+
+**APPROVE.** All four defects and the one template change are fixed, correctly and with tests that
+pin them (5 new, 1246 total); the CPU oracle, both suites and the GPU oracle are green; no behaviour,
+threshold or assertion moved. `step9/foundation` at `67e5039` is fit to be the Wave-1 template. Open,
+non-blocking: the empty `gpu/provenance.txt`; a GPU-arm re-run at the merge SHA; GPU *timings* still
+owed (escalation 1's second half); T5/D5/D6 and the Wave-3 list carried forward as recorded.
