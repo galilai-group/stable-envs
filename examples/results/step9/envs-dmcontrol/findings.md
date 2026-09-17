@@ -223,9 +223,10 @@ and neither claim is weakened:
 
 The corpus replay for all eighteen cells (§6), the T3 `floor.color` capability check (§6), the
 Step-8 support-matrix rows, and `tests/unit/test_variation_maps_dmc_control.py` driven against
-`stable_worldmodel` (**every Step-8 variation mapping still resolves**, unchanged). Gate A, the GPU
-conformance suite, `check_render_parity_with_official_renderer` and the MJWarp tier measurements
-need a CUDA host and are owed — **ESCALATION 1**, `gpu.sbatch` is written and not submitted.
+`stable_worldmodel` (**every Step-8 variation mapping still resolves**, unchanged). The GPU conformance suite, the
+reproducibility suite, the fast-path suite and the MJWarp tier all ran on a CUDA host in job
+**6469088** — 239 + 345 + 78 passed, **0 failed**, with the official-renderer parity probe reporting
+`max_abs_diff: 0` — see §11. **ESCALATION 1 CLOSED.**
 
 ## 6. The oracle — default frames, variation/state comparison
 
@@ -350,13 +351,14 @@ the new test file's own constructions — unchanged behaviour, a pre-existing St
 3. **Step-8 IDs affected** — §3. Behaviorally none.
 4. **targeted tests** — §4. 131 new, 1496 passing locally, 436 in the SWM venv; two pre-existing
    source-reading tests re-pointed at the package, one of them strengthened.
-5. **applicable certification checks** — §5. Corpus replay and T3 done for all eighteen; Gate A and
-   the GPU suites owed (ESCALATION 1).
-6. **default-frame comparison** — §6. Identical SHA-256 over all seventeen cpu-renderable corpora,
-   1,088 frames; the eighteenth is owed to the CUDA arm and its refusal is compared instead.
+5. **applicable certification checks** — §5. Corpus replay and T3 done for all eighteen; the three
+   GPU suites green on an L40S at the declared mujoco 3.11.0 (§11).
+6. **default-frame comparison** — §6 (cpu) and §11 (cuda). Identical SHA-256 over all seventeen
+   cpu-renderable corpora and over **all eighteen** on cuda, 2,240 frames in total.
 7. **variation/state comparison** — §6. Style layout, default appearance, taxonomy, packed layout,
    round trip, reset distribution, every fidelity and provenance declaration: identical.
-8. **performance comparison for hot paths** — §7: −0.44 % and −1.75 %, one per backend path.
+8. **performance comparison for hot paths** — §7 (cpu: −0.44 %, −1.75 %) and §11 (cuda: −0.24 %,
+   −0.23 %, +0.40 %). Five hot paths across four backends, every one inside noise.
 9. **resource-lifetime comparison** — §8: the one-Renderer policy is unchanged and now asserted.
 10. **unexplained oracle differences** — **zero**.
 
@@ -368,9 +370,111 @@ the new test file's own constructions — unchanged behaviour, a pre-existing St
 | **R2** | `envs/dmcontrol.py` is **removed**, not aliased, because a module and a package cannot share a name (§1). The obligation is met differently: 79 Step-8 names checked off the package. | **ACCEPTED by the coordinator**; recorded for Workstream D (`ogbench.py` → `ogbench/`). **CLOSED.** |
 | **R3** | Two tests outside my files read this family's SOURCE by path and had to be re-pointed (§4). The tendon one was a **latent vacuous pass** waiting for any package split. | **Noted and forwarded to Workstream D.** **CLOSED.** |
 | **R4** | `SPECULAR_NOTE` is a DECLARED string carried into `DMCSwimmerSwimmer6.visual_note`, and it self-cites "see SPECULAR_NOTE in stable_envs/envs/dmcontrol.py", which is now a directory. Editing it would change `describe()` and break the oracle's byte-identity. | **Deferred to Wave 3** by the coordinator. `test_every_cited_scratch_path_resolves` only checks `scratch/` citations, so nothing fails today. |
-| **ESC-1** | **the CUDA arm.** `scratch/step9/envs-dmcontrol/gpu.sbatch` is written, syntax-checked and **NOT submitted**. It needs `$SCR/venvs/se-vis311` (the only venv on the declared mujoco 3.11.0 + mujoco-warp 3.11.0 pair; se-step6 is 3.12.0, under which Step 4 recorded three renderer FAILs for a version drift) and a real clone at `$SCR/se9/envs-dmcontrol`. It runs the oracle on cpu AND cuda, `tests/gpu -k "DMC or dmc-"`, the unit files, and paired GPU timings for two parity cells + one trackcom cell on the same card. | Submit and return the job id. Without it, MJWarp — the backend the whole VISUAL tier's numbers were measured with — has not been compared between the two trees, and `DMCSwimmerSwimmer6` has no frame digest at all. |
+| **ESC-1** | the CUDA arm | **DONE.** Job **6469088**, L40S on `gpu3001`, `$SCR/venvs/se-vis311`, mujoco 3.11.0 / torch 2.14.0+cu126, `ALLDONE9B-HEAD` reached. **CLOSED** — §11. |
 
 **A's R9 is MOOT**, and I was wrong to raise it as a risk: `e1da2f6` ("renderer-only cells are
 detected with `dynamics.has_dynamics`, not `hasattr(env, 'step')`") was already in this branch's base
 `86a6ba4`. `render_worker.py:73` and `conformance.py:1075` both call `has_dynamics(env)` today. So
 `tests/gpu -k "DMC or dmc-"` has no known reason to fail on the eighteen renderer-only cells.
+
+
+---
+
+## 11. The CUDA arm — job 6469088, `ALLDONE9B-HEAD`
+
+**L40S on `gpu3001`**, driver 575.57.08, `$SCR/venvs/se-vis311` (mujoco **3.11.0**, torch
+2.14.0+cu126, mujoco_warp present, tensordict/loguru already installed — the job's own preflight
+confirms `deps ok`), tree `$SCR/se9/envs-dmcontrol`, a real clone of **`0f610cf`**. Every artifact is
+committed under `examples/results/step9/envs-dmcontrol/gpu/` with `/oscar/scratch/sboughan` scrubbed
+to `$SCR`.
+
+That venv is the point rather than a detail: this family's certification semantics declare
+mujoco 3.11.0 + mujoco-warp 3.11.0, and the default `se-step6` is 3.12.0, under which Step 4 recorded
+three renderer FAILs for a texture-anchoring drift. The provenance file records `mujoco 3.11.0`, so
+the numbers below are measured against the reference the declarations name.
+
+| section | result | artifact |
+|---|---|---|
+| oracle, comparison arm `--device cpu` | **PASS**, `identical: true`, `unexplained_differences: {}`, `functional_ok: true`, 0 names missing | `gpu/oracle_head_cpu.json` |
+| oracle, comparison arm **`--device cuda`** | **PASS**, `identical: true`, `unexplained_differences: {}`, `functional_ok: true`, 0 names missing | `gpu/oracle_head_cuda.json` |
+| `tests/gpu/test_conformance.py -k "DMC or dmc-"` | **239 passed**, 103 skipped, 1429 deselected, **0 failed** | `gpu/pytest_conformance.txt` |
+| `tests/gpu/test_fast_paths.py -k` | **78 passed**, 48 skipped, 321 deselected, **0 failed** | `gpu/pytest_fast_paths.txt` |
+| `tests/gpu/test_reproducibility.py -k` | **345 passed**, 81 skipped, 1731 deselected, **0 failed** | `gpu/pytest_reproducibility.txt` |
+| unit files on the CUDA host | **235 passed**, 5 skipped | `gpu/pytest_unit_dmcontrol.txt` |
+
+**The `--device cuda` arm is the one that could only be settled here**, and it settles three things a
+cpu run cannot:
+
+1. **MJWarp was compared.** On cpu the six trackcom cells run `cpu3d`; on cuda they run MJWarp, which
+   is the backend every `visual_fidelity` number in this family was measured with. Both trees'
+   probes report `device: "cuda"`, and the frames are **identical between them**.
+2. **`DMCSwimmerSwimmer6` has a frame digest at last** — `6f1387abd1f74c89` over 64 states. It
+   refuses `device="cpu"` by declaration, so the local arm compared its refusal; here it compares its
+   pixels. **All eighteen cells now have byte-identical frames in both trees on at least one device,
+   and seventeen on both.**
+3. **The fused mover pass was compared** for the twelve parity cells.
+
+CUDA frame digests (first 16 hex of the SHA-256 over 64 frames; they differ from the cpu digests
+because the backends differ, which is the declared CPU/GPU policy — "backend implementation may
+differ by device, renderer semantics may not" — and what the oracle claims is identity BETWEEN THE
+TWO TREES on each device, not between devices):
+
+| cell | frames | cell | frames |
+|---|---|---|---|
+| DMCAcrobotSwingup | `f9956beb9b367e3f` | DMCReacherEasy | `7dc1d00b62634dab` |
+| DMCBallInCupCatch | `715096942f107cb9` | DMCReacherHard | `a7b31f4be7815916` |
+| DMCCartpoleBalance | `c2c52d85ea5c15f8` | DMCCheetahRun | `d11566bb3c19931b` |
+| DMCCartpoleSwingup | `a21565d4d097b3bb` | DMCHopperHop | `a59aa37dedfea0d5` |
+| DMCFingerSpin | `d68a9d210a535e54` | DMCHumanoidStand | `742cbbbcf31ebdcf` |
+| DMCFingerTurnEasy | `5840d1659d9e74a1` | DMCQuadrupedWalk | `509b6b660ec88bf5` |
+| DMCFingerTurnHard | `88efa20e53d48eb6` | **DMCSwimmerSwimmer6** | **`6f1387abd1f74c89`** |
+| DMCManipulatorBringBall | `037325a065259bbf` | DMCWalkerWalk | `f0a208f0011bac7a` |
+| DMCPendulumSwingup | `e18fd8599e6350c2` | | |
+| DMCPointMassEasy | `e125aa3edd24378b` | | |
+
+The functional checks ran on `cpu` **and `cuda`** for all eighteen: 18/18 `num_envs` accepted,
+18/18 `pack`/`unpack` round-trip, 18/18 `has_dynamics` False with **both** `step` and `transition`
+refusing by the contract, 18/18 `render(State) == render(rows) == render()`.
+
+**`tests/gpu` is clean and A's R9 is confirmed fixed rather than merely absent.**
+`test_reproducibility.py` — the file R9 said was broken for every renderer-only cell — reports
+**345 passed, 0 failed** over a `-k` that selects all eighteen of mine, which are all renderer-only.
+`e1da2f6` was already in this branch's base `86a6ba4`; both guards call `has_dynamics(env)`. The
+conformance and reproducibility runs also print
+`reference-renderer={'env': 'DMCAcrobotSwingup', 'size': 84, 'max_abs_diff': 0}` — parity against
+dm_control's own renderer, **max absolute difference 0/255**, measured in this job.
+
+### GPU timings (paired, same card, same job)
+
+`perf.py --device cuda`, alternating subprocesses between a detached worktree of `21cb306` and the
+branch, `torch.cuda.synchronize()` around every timed call, 5 repeats × 9 iterations, median of the
+per-repeat medians, 16 envs:
+
+| path | cell | baseline | migrated | delta |
+|---|---|---|---|---|
+| parity, fused mover pass | `DMCCartpoleBalance` | 3.5950 ms | 3.5864 ms | **−0.24 %** |
+| parity, fused mover pass | `DMCReacherHard` | 4.1861 ms | 4.1766 ms | **−0.23 %** |
+| visual, **MJWarp** | `DMCCheetahRun` | 0.5333 ms | 0.5355 ms | **+0.40 %** |
+
+All three are **two orders of magnitude inside plan §8's 10 % bar**, and the per-repeat lists
+overlap completely on all three. Nothing to explain and nothing to accept.
+
+### Which head this evidence is for
+
+The job ran on a clone of **`0f610cf`**; HEAD is now past the `step9/integration` merge. Stated
+explicitly, as asked:
+
+> **`git diff 0f610cf HEAD -- stable_envs/envs/dmcontrol` touches nothing device-specific.** It is
+> one file, `base.py`, 18 insertions and 25 deletions, and all of it is: three docstring/comment
+> paragraphs, and moving the *same* layout computation out of the deleted `_layout` method into an
+> `__init__` assignment that produces the identical tuple. No renderer, no backend selection, no
+> `device`/`cuda`/`cpu` branch, no import of a render module. The CUDA evidence above therefore
+> **carries forward to the post-merge HEAD** for this package — and the CPU oracle re-run at HEAD is
+> the independent confirmation, since it is byte-identical to the one taken at `0f610cf`.
+
+One thing this job does **not** cover, said plainly rather than left to be inferred: the merge also
+brought **Workstream H's raycast3d/cpu3d consolidation** into my tree, and the job's clone predates
+it. H's own GPU oracle covers those files (`examples/results/step9/render-3d/oracle_gpu_*.json`, on
+integration), and my CPU oracle at HEAD shows all seventeen cpu digests unchanged across that merge —
+but **no GPU run has yet exercised H's consolidated backends on DM Control cells**. If the coordinator
+wants that pinned to the merged head, `gpu.sbatch` is committed and re-runs in about 12 minutes.
