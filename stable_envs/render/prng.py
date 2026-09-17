@@ -78,7 +78,7 @@ def threefry2x32(k1: torch.Tensor, k2: torch.Tensor,
     return x[0], x[1]
 
 
-def _counter(n: int, offset: int, device, dtype=torch.int32):
+def _counter(n: int, offset: int, device, dtype: torch.dtype = torch.int32) -> torch.Tensor:
     """``(hi, lo)`` int32 halves of the 64-bit counters ``offset .. offset+n-1``.
 
     Built in int64 as a length-``n`` vector — one cheap allocation, not a ``(B, n)`` one — and
@@ -107,7 +107,7 @@ def random_bits(keys: torch.Tensor, n: int, offset: int = 0) -> torch.Tensor:
     return b1 ^ b2
 
 
-def uniform(keys: torch.Tensor, shape, offset: int = 0) -> torch.Tensor:
+def uniform(keys: torch.Tensor, shape: int | tuple[int, ...], offset: int = 0) -> torch.Tensor:
     """``jax.random.uniform(key, shape)`` on ``[0, 1)`` for a batch of keys.
 
     ``keys`` ``(B, 2)`` int32 -> ``(B, *shape)`` float32. The construction is JAX's: randomise the

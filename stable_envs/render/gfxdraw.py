@@ -233,11 +233,13 @@ def circle_hw(r: int) -> list[int]:
             return hw
 
 
-def _round16(v):
+def _round16(v: torch.Tensor) -> torch.Tensor:
+    """SDL_gfx's 16.16 fixed-point round-to-nearest: ``(v >> 16) + ((v & 0x8000) >> 15)``."""
     return (v >> 16) + ((v & 32768) >> 15)
 
 
-def fill_polygon_mask(vx, vy, ys, xs, W) -> torch.Tensor:
+def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor,
+                      W: int) -> torch.Tensor:
     """``gfxdraw.filled_polygon`` for a batch of CONVEX polygons -> ``(B,H,W)`` bool. Rule 2.
 
     ``vx``/``vy`` are ``(B,n)`` int64 vertices, ALREADY truncated. ``ys``/``xs`` are the row and column
@@ -287,7 +289,8 @@ def disc_offsets(r: int) -> list[tuple[int, int]]:
     return out
 
 
-def fill_circle_mask(cx, cy, r, ys, xs, hw_t) -> torch.Tensor:
+def fill_circle_mask(cx: torch.Tensor, cy: torch.Tensor, r: int, ys: torch.Tensor,
+                     xs: torch.Tensor, hw_t: torch.Tensor) -> torch.Tensor:
     """``gfxdraw.filled_circle`` -> ``(B,H,W)`` bool. ``cx``/``cy`` are ``(B,)`` int64. Rule 3."""
     dy = (ys.view(1, -1) - cy.view(-1, 1)).abs()                      # (B,H)
     h = torch.where(dy <= r, hw_t[dy.clamp(0, r)], torch.full_like(dy, -1))
@@ -296,7 +299,8 @@ def fill_circle_mask(cx, cy, r, ys, xs, hw_t) -> torch.Tensor:
 
 
 # --------------------------------------------------------------------------- blends
-def blend(src, dst, w, sh):
+def blend(src: torch.Tensor, dst: torch.Tensor, w: torch.Tensor,
+          sh: torch.Tensor) -> torch.Tensor:
     """``_putPixelAlpha`` on SDL's masked channel word. ``src``/``dst`` (...,3) int64, ``w`` (...,1).
 
     Rule 4: the blend runs on the channel in its packed bit position, so the truncating ``>>8`` lands
@@ -311,7 +315,7 @@ def blend(src, dst, w, sh):
     return torch.where(w == SOLID, src.expand_as(dst), ((D + v) & (255 << sh)) >> sh)
 
 
-def blit_over(dst, src_rgb, alpha):
+def blit_over(dst: torch.Tensor, src_rgb: torch.Tensor, alpha: torch.Tensor) -> torch.Tensor:
     """SDL's blit of a per-pixel-alpha surface onto an opaque one: ``d + ((s - d) * a) >> 8``.
 
     A *different* rule from ``blend`` above -- this is ``SDL_BlitSurface``, not SDL_gfx's pixel writer,
@@ -323,13 +327,15 @@ def blit_over(dst, src_rgb, alpha):
 
 
 # --------------------------------------------------------------------------- clipping
-def _clip_encode(x, y, W, H):
+def _clip_encode(x: torch.Tensor, y: torch.Tensor, W: int, H: int) -> torch.Tensor:
+    """Cohen-Sutherland's four-bit outcode: left 1, right 2, bottom 4, top 8."""
     z = torch.zeros_like(x)
     c = torch.where(x < 0, z + 1, torch.where(x > W - 1, z + 2, z))
     return c | torch.where(y < 0, z + 8, torch.where(y > H - 1, z + 4, z))
 
 
-def clip_line(x1, y1, x2, y2, W, H, iters: int = 6):
+def clip_line(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor,
+              W: int, H: int, iters: int = 6) -> tuple[torch.Tensor, ...]:
     """SDL_gfx ``clipLine``: Cohen-Sutherland on Sint16 with a float32 slope, batched. Rule 4.
 
     Returns ``(draw, x1, y1, x2, y2)``. The endpoint SWAP is load-bearing: when the first point is
@@ -374,7 +380,7 @@ def clip_line(x1, y1, x2, y2, W, H, iters: int = 6):
 
 
 # --------------------------------------------------------------------------- canvas
-def select_(dst, mask, src) -> None:
+def select_(dst: torch.Tensor, mask: torch.Tensor, src: torch.Tensor) -> None:
     """``dst = mask ? src : dst``, in place, over whatever shapes broadcast. Integer, exact.
 
     The obvious spelling is ``torch.where(mask, src, dst, out=dst)`` and it is what CUDA gets, but on
@@ -528,7 +534,7 @@ class Canvas:
         return out
 
 
-def to_u8(color) -> torch.Tensor:
+def to_u8(color: torch.Tensor) -> torch.Tensor:
     """``(B,3)`` float style values -> uint8, truncating, which is what ``int(c)`` did."""
     return color.to(torch.uint8)
 
@@ -625,7 +631,8 @@ class StyleCanvas(Canvas):
 
 
 # --------------------------------------------------------------------------- primitives
-def edge_geometry(x1, y1, x2, y2, W, H) -> tuple[torch.Tensor, ...]:
+def edge_geometry(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor,
+                  W: int, H: int) -> tuple[torch.Tensor, ...]:
     """``clip_line`` plus every constant ``aalineColor``'s Wu walk needs, for a FLAT batch of edges.
 
     **The one place this arithmetic is written down.** All three anti-aliased paths in this package
@@ -666,7 +673,8 @@ def edge_geometry(x1, y1, x2, y2, W, H) -> tuple[torch.Tensor, ...]:
     return (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
 
 
-def edge_setup(x1, y1, x2, y2, W, H) -> tuple[torch.Tensor, ...]:
+def edge_setup(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor,
+               W: int, H: int) -> tuple[torch.Tensor, ...]:
     """:func:`edge_geometry` in the order :func:`aaline_emit` unpacks it (no clipped far endpoint)."""
     draw, sx, sy, _x2, _y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = \
         edge_geometry(x1, y1, x2, y2, W, H)
@@ -796,7 +804,7 @@ def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool 
         cv.paint(fill_circle_mask(cx, cy, r, ys, xs, hw_t), color, window)
 
 
-def rotate(v, a):
+def rotate(v: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
     """``pygame.math.Vector2.rotate_rad``: ``[[cos,-sin],[sin,cos]]`` in a y-DOWN raster.
 
     Measured, not assumed: ``(1,0).rotate_rad(pi/2)`` is ``(0,1)``, so the matrix is the ordinary CCW

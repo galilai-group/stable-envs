@@ -65,7 +65,7 @@ ALPHA_FLOOR = 2.0 ** -25
 DOT_SIGMAS = math.sqrt(2.0 * math.log(1.0 / ALPHA_FLOOR))
 
 
-def dot_window(pos, sigma, H: int, W: int) -> torch.Tensor:
+def dot_window(pos: torch.Tensor, sigma: torch.Tensor, H: int, W: int) -> torch.Tensor:
     """``(..., 4)`` int64 ``r0, r1, c0, c1`` outside which a normalised dot cannot move a pixel.
 
     ONE definition, used by the CPU path (``swm_nav._blend_dot``) and by the kernel below, because

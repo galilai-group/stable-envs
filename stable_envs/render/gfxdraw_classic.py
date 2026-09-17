@@ -203,7 +203,7 @@ class Ops:
 
 # ------------------------------------------------------------------ the specification, in torch
 @torch.no_grad()
-def render_classic_torch(ops: Ops, out=None) -> torch.Tensor:
+def render_classic_torch(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
     """The fused semantics, in torch, over the whole frame. The readable specification.
 
     Every branch the Triton kernel takes is taken here in the same order over the same closed form;
@@ -611,7 +611,7 @@ WARPS = 1
 
 
 @torch.no_grad()
-def render_classic(ops: Ops, out=None) -> torch.Tensor:
+def render_classic(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
     """Rasterize a classic-control frame list to ``(B,H,W,3)`` uint8, already flipped."""
     if not HAVE_TRITON:
         raise ImportError("triton unavailable")

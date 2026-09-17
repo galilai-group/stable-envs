@@ -89,7 +89,7 @@ except ImportError:                                    # reported by the rendere
     HAVE_TRITON = False
 
 
-def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype):
+def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype) -> tuple[torch.Tensor, torch.Tensor]:
     """Subpixel centres in WORLD coordinates, shape (H,W) each.
 
     Pixel centres, not corners: a pixel covers ``[i, i+1)`` and samples at ``i+0.5``. Sampling at the
@@ -382,7 +382,8 @@ _row_groups = row_groups
 
 
 @torch.no_grad()
-def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor:
+def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
+                 supersample: int = 1) -> torch.Tensor:
     """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast.
 
     Still the executable specification — every per-pixel expression below is the one it always was,
@@ -824,7 +825,7 @@ def _row_bytes(t: torch.Tensor, B: int) -> torch.Tensor:
     return t.contiguous().reshape(B, -1).view(torch.uint8)
 
 
-def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int):
+def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor | None:
     """Bake the leading primitives once, or decline; returns an ``(Rh,Rw,3)`` uint8 image or ``None``.
 
     Two reasons to decline, and neither is a failure mode — the caller draws every primitive instead
@@ -887,7 +888,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int):
     return hit
 
 
-def _destination(out, B: int, H: int, W: int) -> torch.Tensor:
+def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
     """The ``(B,H,W,3)`` uint8 buffer the kernel writes, checked rather than assumed.
 
     ``out.view(B,H,W,3)`` is not a check. When the requested shape is the shape the tensor already
@@ -979,7 +980,7 @@ def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
     return bh, bw
 
 
-def _tiles(H: int, W: int, block: int, cull: bool):
+def _tiles(H: int, W: int, block: int, cull: bool) -> tuple[int, int, int, int, int]:
     """``(BH, BW, n_tiles, n_tiles_x, num_warps)`` for one frame geometry.
 
     Only the culled path is TILED. Without a primitive list to skip there is nothing for a compact
@@ -997,8 +998,9 @@ def _tiles(H: int, W: int, block: int, cull: bool):
 
 
 @torch.no_grad()
-def render_triton(scene: Scene2D, out_size, supersample: int = 1, out=None,
-                  block: int = 128, cull: bool | None = None) -> torch.Tensor:
+def render_triton(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1,
+                  out: torch.Tensor | None = None, block: int = 128,
+                  cull: bool | None = None) -> torch.Tensor:
     """Fused path: ``Scene2D`` -> ``(B,H,W,3)`` uint8, one launch, nothing materialized but the output.
 
     ``cull`` forces the tile-binning pre-pass on or off; ``None`` decides from the primitive count.
@@ -1046,7 +1048,8 @@ def render_triton(scene: Scene2D, out_size, supersample: int = 1, out=None,
 
 
 @torch.no_grad()
-def render(scene: Scene2D, out_size, supersample: int = 1, backend: str = "auto", out=None):
+def render(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1,
+           backend: str = "auto", out: torch.Tensor | None = None) -> torch.Tensor:
     """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction.
 
     ``auto`` is a question about THIS SCENE, not about this host. It used to be answered by

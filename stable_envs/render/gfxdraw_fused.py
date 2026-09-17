@@ -106,7 +106,8 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
 
 
 @torch.no_grad()
-def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int, bin_w: int):
+def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int,
+                   bin_w: int) -> tuple[torch.Tensor, torch.Tensor, int]:
     """Per screen-bin lists of the primitives whose box reaches them, in DRAW ORDER.
 
     ``box`` is ``(B,P,4)`` int32 ``x0,y0,x1,y1`` in output coordinates, with an empty box for a
@@ -454,7 +455,9 @@ WARPS = 1
 
 
 @torch.no_grad()
-def render_surface(vert, meta, edge, aa, H: int, W: int, PG: int, PPOST: int, out=None):
+def render_surface(vert: torch.Tensor, meta: torch.Tensor, edge: torch.Tensor, aa: torch.Tensor,
+                   H: int, W: int, PG: int, PPOST: int,
+                   out: torch.Tensor | None = None) -> torch.Tensor:
     """Rasterize a batch of polygon lists to ``(B,H,W,3)`` uint8, already flipped.
 
     ``vert`` ``(B,P,VMAX,2)`` int32 truncated screen vertices, ``meta`` ``(B,P,PM_W)`` int32,
@@ -481,7 +484,7 @@ def render_surface(vert, meta, edge, aa, H: int, W: int, PG: int, PPOST: int, ou
 
 
 @torch.no_grad()
-def shrink(x: torch.Tensor, plan, out=None) -> torch.Tensor:
+def shrink(x: torch.Tensor, plan, out: torch.Tensor | None = None) -> torch.Tensor:
     """``(A,N,C)`` uint8 -> ``(A,MOUT,C)`` uint8 through one axis of the reference's resample."""
     A, N, C = x.shape
     if out is None:
