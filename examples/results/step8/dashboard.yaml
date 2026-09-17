@@ -588,6 +588,12 @@ snapshot:
       cells:
       - DMCWalkerWalk
   open_step7_carryovers: 'see /Users/samib/stable-envs-step7-integration/examples/results/step7/dashboard.yaml: step8_carryovers, deferred_work, escalations (colour-knob check open; BATCH_SCALES edge case)'
+  gate_a_after_step8:
+    PASS: 40
+    FAIL: 0
+    UNMEASURED: 0
+    UNSUPPORTED_BY_DESIGN: 2
+    note: 'after F: trackcom rows read the declared 3.11 arm; 3.12 drift carried on the row'
 file_ownership:
   stable_envs/compat/worldmodel.py: coordinator (registry); VariationMap workstreams add ONE import/registration line each and write maps in their own new module stable_envs/compat/variation_maps/<family>.py;
     VariationMap class changes owned by Workstream A, requested by others
@@ -684,8 +690,15 @@ workstreams:
   model: opus
 - workstream: F_reference_provenance
   branch: step8/reference-provenance
-  status: Wave 2 (serialised after E)
+  status: MERGED into step8/integration (reviewed APPROVE)
   model: opus
+  head_sha: f4164d3
+  review: review_f.md APPROVE (sonnet, fresh; regenerated reference_arm.json and the matrix)
+  finding: 'four DMC trackcom rows (Cheetah/Hopper/Walker/Humanoid) now certified PASS against their declared mujoco 3.11.0 arm (closure2 dmcvis.json, alloc 6443480 gpu2264); root cause was certify.py merge
+    _richness tiebreak on shard tag ("adhoc" < "dmc"); 3.12 arm preserved as DOCUMENTED_LIMITATION drift (finite-plane texture re-anchoring, mujoco 3.12 changelog 15); Gate A now 40 PASS / 2 by-design;
+    mujoco_warp 3.13: fixes the UV-less mesh crash but moves every frozen digest and drops DMCCheetahRun exact_frac below its floor -> DO NOT BUMP; Antmaze digest mismatch = oracle hole DOCUMENTED_LIMITATION
+    (not one of the 42 ids), no re-freeze'
+  merge_gate: 1-7 PASS/n-a per review_f.md; 8 APPROVE; 9 none; 10 this row
 - workstream: G_performance
   branch: step8/performance
   status: MERGED into step8/integration (reviewed APPROVE)
@@ -784,14 +797,21 @@ buckets:
   - 'nvdiff x86 CPU sparse-stage one-ulp batch dependence: host-dependent (gpu2264 0/19 widths; login010/node1939 differ); no shipped CPU renderer; Step-7 re-freeze authoritative (E task 7)'
   - 'Fetch rendering.transparent_arm: mujoco_warp kernel packs a constant alpha; no translucency path (B)'
   - 'Craftax semantic follow-up not meaningfully testable downstream: no evaluator consumes the added channels; identity of surfaces is the stronger statement (H)'
+  - 'mujoco >= 3.12 re-anchors finite-plane textures, mujoco_warp does not: reference floor checker phase-shifts (F); certification needs mujoco==3.11.0'
+  - 'AntmazeTeleportExplore frozen digest_ours does not reproduce at baseline either: history-dependent bake (oracle hole, not a 42-id row) (F)'
+  - pyproject dmcontrol extra is a floor (mujoco>=3.11), not a pin -> decision for Sami (F)
   UPSTREAM_FINDING:
   - swm Fetch _apply_visual_variations unbinds three materials for the env lifetime (19-32 % of frame) so a wrapper parity number measures the wrapper (B)
   - swm Fetch declared leaf defaults are not the official appearance (B)
   - swm variation_values list entries used unconverted -> AttributeError (B)
   - gymnasium-robotics + numpy 2.5.3 + mujoco 3.12 cannot construct Fetch (pybind enum vs np.int32 in) (B)
   - stable_worldmodel registers four Craftax ids but ships no collector, training/planning config, checkpoint or baseline row (H)
+  - mujoco_warp 3.13.0 ships the UV-less-mesh guard with four independent render-path changes (F)
+  - 'gymnasium-robotics set_joint_qpos asserts under mujoco >= 3.12: Fetch reference unbuildable (F)'
   STEP9_CLEANUP:
   - report.py ValueError when outputs are written outside ROOT (E review D1)
+  - check_resolution_consistency interpreter-sensitive (two stable values across campaigns), carrier unattributed (F)
+  - pure plate bake needs a renderer reset without a new EGL context (F)
   DEFERRED_OPTIMIZATION:
   - quiet-node Quadruped CPU measurement (would close CPU_UNMEASURED; not needed for closure)
   - shared CPU backend for the three GPU-only cells; Fetch has no CPU backend (DOCUMENTED_LIMITATION)
@@ -816,6 +836,9 @@ incident_log:
   item: G merged after fresh APPROVE; H returned FINDING (no downstream Craftax evaluator; surfaces byte-identical re-measured), review running; F running
 - date: '2026-09-16'
   item: H merged (FINDING) after fresh APPROVE
+- date: '2026-09-16'
+  item: F merged after fresh APPROVE; G tier record regenerated after the four trackcom rows moved; C final evidence committed by the coordinator (agent cut off by the spend limit) and under review; D never
+    started (agent cut off at start)
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md
