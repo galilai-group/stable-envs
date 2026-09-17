@@ -1,6 +1,7 @@
 # Step 9 — Wave 1, Workstream E: Craftax (Classic + Full) + PFRocketLanding
 
-**Workstream:** `step9/envs-craftax-rocket` · **Parent:** `step9/integration` `5741b62`, merged in
+**Workstream:** `step9/envs-craftax-rocket` · **Branch HEAD:** `965c40a` (the record's
+`head_sha` is `e3cde09`, the commit before it: a run cannot measure the commit that stores it) · **Parent:** `step9/integration` `5741b62`, merged in
 (no rebase) · **Step-8 baseline:** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc`
 **Host:** Apple M5 Mac (`cis1b1zs2j3`), CPU only — no CUDA device in this ticket.
 **Interpreters:** `/Users/samib/se6-venv` (torch 2.14 CPU, tensordict, loguru),
