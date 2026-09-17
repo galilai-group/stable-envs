@@ -117,16 +117,16 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-envs-dmcontrol
   owner: opus (medium)
   reviewer: opus (high)
-  status: DELIVERED 0f610cf; GPU job 6469088 running; merging integration (R1 instance _layout); then opus-high review
+  status: MERGED into step9/integration (review_b.md APPROVE at 82ce271)
   files_owned: stable_envs/envs/dmcontrol/ (package from dmcontrol.py; DMC use of _plate_texels.py), tests
   ids_affected: 17 DMC swm ids (18 cells) incl. trackcom; T3 floor.color; Step-8 variation maps
   baseline_sha: 86a6ba4
-  head_sha: 0f610cf
-  tests: se6 tests/unit 1496 passed (1368 + 128); se8-vm 436 passed / 4 skipped
-  oracle_diff: '18/18 cells: 35 keys identical vs 21cb306 (frames on cpu for 17/18; Swimmer refuses cpu identically, cuda owed); T3 bake-vs-recompile IDENTICAL; registry rows incl. module identical (package
-    replaces module)'
-  performance_diff: 'cpu paired: Cartpole -0.44 %, Cheetah -1.75 %'
+  head_sha: 82ce271
+  tests: se6 1513 passed; se8-vm 436 passed
+  oracle_diff: 18/18 cells byte-identical on cpu (17) and cuda (18, job 6469088 L40S mujoco 3.11); T3 IDENTICAL; 79/79 names resolve
+  performance_diff: GPU paired -0.24 / -0.23 / +0.40 %; cpu -0.44 / -1.75 %
   api_diff: dmcontrol.py -> dmcontrol/ package (22 modules); four hand tables replaced by views over the cells
+  review: 'review_b.md APPROVE (opus, independent; declarations AST-compared to 21cb306: 0 differences)'
 - workstream: G_render_2d
   branch: step9/render-2d
   worktree: /Users/samib/stable-envs-step9-render-2d
@@ -253,6 +253,8 @@ incident_log:
   item: B delivered 0f610cf; GPU job 6469088 submitted; R1 landed f24d94c; G running
 - date: '2026-09-17'
   item: Sami lifted the 2-agent budget and moved GPU validation to one post-Wave-1 oracle + the final comparison; C, D, E, F, I launched in parallel with B and G
+- date: '2026-09-17'
+  item: 'B merged after APPROVE; running: G, C, D, E, F, I'
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'

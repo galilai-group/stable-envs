@@ -19,7 +19,7 @@ with `/Users/samib/se6-venv/bin/python`), and the review reports under
 | primary checkout | `/Users/samib/stable-envs` is still on `sami/pre-step6-baseline`; Step-6/7/8 worktrees under `/Users/samib/stable-envs-step{6,7,8}-*` are closed history — leave them |
 | coordinator memory (Claude Code) | `/Users/samib/.claude/projects/-Users-samib-stable-envs/memory/step6-coordination-state.md` |
 | local venvs | `/Users/samib/se6-venv` (CPU, the unit-suite interpreter; has tensordict+loguru), `se8-vm-venv` (stable_worldmodel + dm_control 1.0.44 + mujoco 3.11 + matplotlib), `se8-fetch-venv` (gymnasium-robotics; live Fetch blocked by numpy 2.5.3 + mujoco 3.12), `se7-ogb-venv` (ogbench), `se7-craftax-venv`, `se7-rocket-venv`. uv venvs: install with `/opt/homebrew/bin/uv pip install --python <venv>/bin/python <pkg>` (no pip inside) |
-| unit-suite command (baseline number moves as workstreams merge) | `MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` — 1385 passed at 38de3bd; the two deselected are pre-existing baseline failures (citation scanner; robocasa example help) |
+| unit-suite command (baseline number moves as workstreams merge) | `MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` — 1513+ passed after the B merge (see git log); the two deselected are pre-existing baseline failures (citation scanner; robocasa example help) |
 
 ## 2. Branches / worktrees at handoff
 
@@ -28,7 +28,7 @@ with `/Users/samib/se6-venv/bin/python`), and the review reports under
 | W0 foundation | step9/foundation | /Users/samib/stable-envs-step9-foundation | 67e5039 (+ later merges) | MERGED d07ffa8; review_foundation.md APPROVE |
 | A classic control + navigation | step9/envs-classic-nav | /Users/samib/stable-envs-step9-envs-classic-nav | c688882 | MERGED 4c88668; review_a.md APPROVE |
 | H raycast3d/cpu3d/primitives | step9/render-3d | /Users/samib/stable-envs-step9-render-3d | d231a8f | MERGED 38de3bd; review_h.md APPROVE |
-| B DMControl | step9/envs-dmcontrol | /Users/samib/stable-envs-step9-envs-dmcontrol | 82ce271 | DELIVERED, integration merged, GPU job 6469088 incorporated (oracle identical cpu+cuda, tests/gpu 0 failed, timings ±0.4 %); **Opus review in flight** (`reviews/review_b.md` when done); merge on APPROVE |
+| B DMControl | step9/envs-dmcontrol | /Users/samib/stable-envs-step9-envs-dmcontrol | 82ce271 | MERGED (review_b.md APPROVE); oracle identical cpu+cuda |
 | G 2-D rendering | step9/render-2d | /Users/samib/stable-envs-step9-render-2d | cd97cd3 (6 ahead) | IN PROGRESS (agent) |
 | C Fetch | step9/envs-fetch | /Users/samib/stable-envs-step9-envs-fetch | b3f3a81 | IN PROGRESS (agent, just launched) |
 | D OGBench | step9/envs-ogbench | /Users/samib/stable-envs-step9-envs-ogbench | b3f3a81 | IN PROGRESS (agent, just launched) |
