@@ -371,3 +371,27 @@ style, cube-only, floor-only, uniform-floor and default cases.
 This is invisible to any test that builds one renderer at one resolution, and it is exactly the
 class of defect the reviewer's fifth finding demanded be measured on the completed code rather than
 inferred from an earlier evidence round.
+
+## Final evidence at d3ff997 (committed by the coordinator after the agent was cut off)
+
+The agent's last run (`run_final4`, allocation `6443480`, gpu2264, RTX 3090, driver 575.57.08, tested tree
+sha `d3ff997`, baseline `43ac952`) completed but was never pulled before the agent terminated. The
+coordinator pulled it verbatim into `gpu/final/` (Oscar paths rewritten to `$SCR`). The tip `76f69a4`
+differs from `d3ff997` only in this findings file. Verdicts, read from the JSON, not from any log:
+
+- **(a) default identity on the frozen Step-7 corpus**: OGBCube `e7e6804f…` and OGBScene `c60370c7…`
+  byte-identical between baseline and branch (64 states, 224 px each).
+- **(b) sequences**: every route (custom→default, mixed→default, per-env→default, across chunks,
+  second instance, first instance after the second went custom, smaller custom batch) returns the
+  reference default digest on both cells.
+- **(c) isolation**: recorded per cell in `colors_isolation.json` (cube.color moves no plate pixel,
+  floor.color moves no mover pixel, default reproduced after both).
+- **(d) targeted Gate A on cuda**: OGBCube PASS 14/14 mandatory, OGBScene PASS 14/14
+  (`gate_a_cuda_ogbmanip_followup.json`).
+- **(e) throughput, paired, same card/job** (fps median of 5): OGBCube B=1 1213 → 826, B=4096
+  6115 → 6169; OGBScene B=1 894 → 640, B=4096 5298 → 5264. The certification points (B=4096)
+  are unchanged within noise; the B=1 cost (one host style read + per-world rgba upload per render)
+  is a **DEFERRED_OPTIMIZATION**, not a tier change: tiers are never certified on B=1 and
+  NO_LARGE_BATCH_REGRESSION is judged at large batches. The declaration delta is style_dim 0 → 9
+  with default_style_digest `cae66941…` → `8384a114…`; the default frame is unchanged, so no oracle
+  moves and no re-freeze is involved.
