@@ -113,7 +113,9 @@ def test_the_seventeen_ids_total_161_leaves():
         for k in totals:
             totals[k] += EXPECTED_COUNTS[m.swm_id][k]
     assert len(seen) == 17
-    assert totals == {"mapped": 46, "unsupported": 94, "dead_upstream": 21, "not_applicable": 0}
+    # mapped 46 -> 53 and unsupported 94 -> 87 in the Step-8 capability patch: ``floor.color`` moved
+    # on the seven DM Control ids whose cells bake a plate. The total cannot move.
+    assert totals == {"mapped": 53, "unsupported": 87, "dead_upstream": 21, "not_applicable": 0}
     assert sum(totals.values()) == 161
 
 
@@ -502,3 +504,49 @@ def test_strict_accepts_the_whole_swm_space(cell):
     """``strict=True`` is the caller-facing form of the completeness claim."""
     env = _env(cell)
     style_from_variation(env, swm_defaults(variation_map(env).swm_id), strict=True)
+
+
+# --------------------------------------------------------------- the Step-8 capability patch
+
+@needs_dmc
+def test_the_parity_floor_set_is_the_plate_baking_tier():
+    """``_PARITY_FLOOR`` is transcribed, so derive it from the classes and assert it.
+
+    The set decides which seven swm ids report ``floor.color`` as mapped, and the module cannot
+    import ``stable_envs.envs`` to derive it. A cell that moved between the two DM Control tiers
+    would otherwise leave the map claiming support the renderer no longer has -- or withholding
+    support it does have -- and nothing else in this file would notice.
+    """
+    from stable_envs.compat.variation_maps.dmc_control import _PARITY_FLOOR
+    from stable_envs.envs.dmcontrol import DMControlSuite
+
+    # Every DM Control id declares swm's floor.color, so "which of our cells can honour it" is
+    # exactly "which of our cells bake a plate", which is the DMControlSuite tier.
+    derived = {c for c in MAPS if c in REGISTRY and issubclass(REGISTRY[c], DMControlSuite)}
+    assert derived == set(_PARITY_FLOOR), (
+        f"the plate-baking tier is {sorted(derived)} but the map declares {sorted(_PARITY_FLOOR)}")
+
+
+@needs_dmc
+@pytest.mark.parametrize("cell", sorted(
+    c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped"))
+def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+    """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+
+    The default half is the one that matters for certification and is the one a classification table
+    cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+    ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+    BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+    """
+    env = make(cell, batch=2, size=84, device="cpu")
+    layout = dict((p, (o, w)) for p, o, w in env.variation_space.flat_layout())
+    assert "floor.color" in layout and layout["floor.color"][1] == 6, layout
+    d = np.asarray(env.variation_space["floor"]["color"].value, np.float64).reshape(2, 3)
+    assert np.allclose(d, [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]]), d
+    st = env.sample_states(2, np.random.default_rng(0))
+    a = env.render(st)
+    b = env.render(st, variation={"floor.color": np.asarray([[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]])})
+    assert int((a != b).any(-1).sum()) > 0, f"{cell}: floor.color moved no pixel"
+    c = env.render(st, variation={"floor.color": d})
+    assert torch.equal(a, c), f"{cell}: rendering AT the declared default is not the default frame"
+    assert torch.equal(a, env.render(st)), f"{cell}: a custom floor leaked into the next render"

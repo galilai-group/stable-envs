@@ -58,8 +58,8 @@ half exactly and offer no leaf for the skybox half.
 
 **The reason for that was measured in Step 8 and replaced** — see
 ``examples/results/step8/capability/fetch_skybox_probe.json``. It is NOT, as this module and
-``FetchBase.make_variation_space`` used to say, that a per-value skybox costs a render context per
-value: the delivered frame's skybox comes from the MuJoCo-baked PLATE, not from the ``mujoco_warp``
+``FetchBase.make_variation_space`` used to say, that a per-value skybox costs one render context
+per distinct value: the delivered frame's skybox comes from the MuJoCo-baked PLATE, not from the ``mujoco_warp``
 pass, so a texel substitution on the plate rig reaches it with no second context, and that is
 exactly the operation ``stable_worldmodel`` itself performs (it does not recompile either). What
 blocks the leaf is the DEFAULT: swm FLATTENS the skybox to one colour and ours is a 16-colour
@@ -214,8 +214,9 @@ _PARTIAL = {
         "the floor half only. swm's background is the floor_mat geoms AND the skybox texture; the "
         "floor is 9.2-9.4 % of the frame at 480 px and we reproduce it exactly, the skybox is a "
         "further 61.7-73.0 % and we do not offer a leaf for it. "
-        "THE REASON CHANGED IN STEP 8 AND THE NEW ONE IS NARROWER. It is NOT that a per-value "
-        "skybox costs a render context per value: that reason was wrong, and the measurement is "
+        "THE REASON CHANGED IN STEP 8 AND THE NEW ONE IS NARROWER. The old one -- that a per-value "
+        "skybox costs one render context per distinct value -- was measured WRONG, and the "
+        "measurement is "
         "examples/results/step8/capability/fetch_skybox_probe.json. The skybox of the DELIVERED "
         "frame comes from the MuJoCo-baked plate, not from the mujoco_warp pass (the composite takes "
         "mujoco_warp only under the mover mask), so substituting the skybox texels on the plate rig "

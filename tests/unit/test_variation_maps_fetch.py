@@ -200,7 +200,16 @@ def test_background_is_partial_not_mapped_and_carries_the_measured_residual():
             f"{m.classification()['background.color']}, not partial")
         why = m.partial["background.color"]
         assert "skybox" in why and "61.7-73.0 %" in why, f"{c}: the residual is not in the reason"
-    assert "skybox" in FM.__doc__ and "render context per value" in FM.__doc__
+        # Step-8 capability patch: the REASON changed and the classification did not. The old reason
+        # ("a per-value skybox costs a render context per value") was measured wrong -- the skybox is
+        # in the baked plate -- and the reason that replaces it is about the DEFAULT, not the
+        # mechanism. Asserted so the corrected reason cannot quietly revert to the refuted one.
+        assert "render context per value" not in why, (
+            f"{c}: the refuted reason is back; see examples/results/step8/capability/"
+            f"fetch_skybox_probe.json")
+        assert "gradient" in why and "default" in why.lower(), (
+            f"{c}: the residual no longer says why the leaf is blocked")
+    assert "skybox" in FM.__doc__ and "gradient" in FM.__doc__
 
 
 def test_partial_is_the_only_downgrade_and_every_other_mapped_leaf_is_fully_mapped():
