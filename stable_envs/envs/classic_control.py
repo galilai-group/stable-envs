@@ -291,11 +291,11 @@ class _Classic(Env):
     def _check_state_layout_is_complete(cls) -> None:
         """At CLASS CREATION: the derived layout covers the packed row and names every variable once.
 
-        This is what buys the ``state`` property above the right to skip the base class's
-        per-call guard: a hidden field cannot be forgotten if the layout and the hidden set are the
-        same generated fact, and the generation is checked here, once, for every class that will ever
-        exist. A cell that declared four ``sim_state_names`` and a ``render_from_sim`` pointing at a
-        two-column packed row would fail to IMPORT rather than report zeros at run time.
+``state_layout``, ``_hidden_state`` and ``_live_state`` are three views of one generated
+        fact, and this is where the generation is checked — once, for every class that will ever
+        exist, rather than on every ``step``. A cell that declared four ``sim_state_names`` and a
+        ``render_from_sim`` pointing at a two-column packed row would fail to IMPORT rather than
+        report zeros at run time.
         """
         drawn = tuple(cls.render_from_sim)
         if len(set(drawn)) != len(drawn) or any(i >= len(cls.sim_state_names) for i in drawn):
@@ -309,17 +309,34 @@ class _Classic(Env):
             raise TypeError(f"{cls.__name__}.sim_state_names={cls.sim_state_names} has a duplicate; "
                             f"they become the public state's keys and must be distinct")
 
-    def _hidden_state(self) -> dict:
-        """The dynamical variables the packed row does not carry — the velocities, and nothing else.
+    def _sim_columns(self, drawn: bool) -> dict:
+        """The live float64 columns of ``_sim``, split by whether the packed row carries them.
 
-        Mechanically the complement of ``render_from_sim``, from the same buffer ``step`` writes, so
-        the declaration above and this answer cannot drift: both are generated from the two class
-        attributes that define the family's state.
+        One function for both halves of the answer the base class asks for, because they ARE one
+        fact — the simulator's state — cut by ``render_from_sim``. Writing them separately is how the
+        two would come to disagree.
         """
-        drawn = set(self.render_from_sim)
+        want = set(self.render_from_sim)
         n = self._live_rows
         return {(nm,): self._sim[:n, i:i + 1].clone()
-                for i, nm in enumerate(self.sim_state_names) if i not in drawn}
+                for i, nm in enumerate(self.sim_state_names) if (i in want) == drawn}
+
+    def _hidden_state(self) -> dict:
+        """The velocities: dynamical variables the packed row does not carry (offset ``None``)."""
+        return self._sim_columns(drawn=False)
+
+    def _live_state(self) -> dict:
+        """The DRAWN variables, at the precision they are simulated in rather than the row's.
+
+        The packed row is ``_sim[:, render_from_sim].to(float32)``, so widening it back gives
+        ``float64(float32(x))``, which is not ``x``: measured on CartPole after five steps the drawn
+        ``x`` moves by 9.6e-08, and that is enough for ``transition(env.state, a)`` to stop equalling
+        ``step(a)`` — the functional path quietly becoming a different simulator. Answering here is
+        what the foundation's ``_live_state`` hook exists for (findings §10, R7); before it existed
+        this family had to override the ``state`` property, which was the one thing the Wave-0
+        review's T1 defect asks cells not to do.
+        """
+        return self._sim_columns(drawn=True)
 
     def _state_td(self, sim: torch.Tensor) -> TensorDict:
         """``(n, sim_dim)`` float64 -> the public :data:`State`, one key per dynamical variable.
@@ -363,36 +380,6 @@ class _Classic(Env):
                            f"This env's state keys are {list(names)}.") from e
         return torch.cat(cols, dim=1)
 
-    @property
-    def state(self) -> TensorDict:
-        """The state the env holds, read from the buffer the DYNAMICS write. ``get_state()`` is the row.
-
-        PROVENANCE, not dtype. The ``state_layout`` above now declares float64 (foundation commit
-        `b1585fc`), so ``Env.state`` would return float64 tensors — but it BUILDS the drawn fields by
-        widening the packed float32 row, and the packed row is a lossy projection of ``_sim``: it is
-        ``_sim[:, render_from_sim].to(float32)``, so ``float64(float32(x))`` is not ``x``. Measured on
-        CartPole after five steps, the drawn ``x`` differs from the simulator's own value by
-        **9.6e-08**, and that is not cosmetic — ``transition(Env.state.fget(env), a)`` stops equalling
-        ``step(a)`` from that point on, which is the functional path quietly becoming a different
-        simulator. Reading ``_sim`` directly is the only way to hand back the number the next step
-        will actually start from. See findings §10, request R7: a symmetric hook for DRAWN fields
-        (what ``_hidden_state`` is for the hidden ones) would retire this override.
-
-        ``pack(env.state)`` is still ``get_state()`` to the bit, because ``pack`` casts back to
-        float32 exactly as ``_advance`` does, so nothing downstream of the renderer sees a different
-        number.
-
-        The base implementation is not called, which is a considered exception to the rule the
-        Wave-0 review's T1 defect installed. T1's hazard is a cell that overrides ``state`` and
-        FORGETS a hidden field, reporting zeros — a wrong answer rather than a crash. Here the layout
-        and the hidden fields are BOTH generated from ``sim_state_names``/``render_from_sim`` by
-        ``__init_subclass__``, so there is no field to forget; the check that they agree is done once,
-        at class creation, by ``_check_state_layout_is_complete``. ``_hidden_state`` is still
-        implemented, so anything that goes through ``Env.state`` gets the hidden half right, and the
-        two paths are asserted to agree to float32 in ``tests/unit/test_envs_classic_nav.py``.
-        """
-        return self._state_td(self._sim[:self._live_rows])
-
     @torch.no_grad()
     def transition(self, state, action) -> TensorDict:
         """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
@@ -432,7 +419,13 @@ class _Classic(Env):
                 replayed = True
         if not replayed:
             self._advance()
-        return self._step_result(self.state)
+        # Built straight from the simulator buffer rather than read back through ``self.state``.
+        # The two are the same object by construction — ``_live_state``/``_hidden_state`` are these
+        # very columns, and ``test_step_returns_exactly_env_state`` asserts it for every cell — but
+        # the property round-trips the packed row through ``unpack`` (a copy, a TensorDict, then two
+        # splices) to arrive back where ``_sim`` already is. On the cheapest step in the repository
+        # that doubled the cost of ``step``: measured 0.063 ms against 0.037 ms at 64 environments.
+        return self._step_result(self._state_td(self._sim[:self._live_rows]))
 
     def _close(self) -> None:
         """Drop the captured step graph. ``Env.close`` calls this once and is idempotent."""

@@ -250,24 +250,27 @@ def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
 
 
 @pytest.mark.parametrize("name", CLASSIC)
-def test_the_fast_state_property_agrees_with_the_base_class_path(name):
-    """``_Classic.state`` skips ``Env.state``; the two must not be able to disagree.
+def test_env_state_is_the_simulator_buffer_and_not_the_widened_packed_row(name):
+    """The two hooks together must cover the state exactly, with no field left to the lossy row.
 
-    ``Env.state`` builds the State from the packed float32 row and splices in ``_hidden_state()``,
-    which is the path anything holding an ``Env`` reference takes. ``_Classic.state`` reads the
-    float64 buffer directly, which is both cheaper and more precise. They must agree to float32 —
-    i.e. everywhere the packed row can express the answer — or one of the two is wrong.
+    ``Env.state`` builds from ``unpack(get_state())`` and then takes ``_live_state()`` for the drawn
+    fields and ``_hidden_state()`` for the hidden ones. This asserts the two answer for EVERY key —
+    so no field is being served by the widened float32 row — and that what comes back is the
+    simulator's own float64 buffer bit for bit, after the env has been stepped, which is when the row
+    and the buffer have actually diverged.
     """
-    from stable_envs.env import Env
-
     env = _env(name)
     env.set_state(env.sample_states(4, np.random.default_rng(4)))
     for _ in range(3):
         env.step(_actions(env, 4))
-    fast, base = env.state, Env.state.fget(env)
-    assert sorted(base.keys()) == sorted(fast.keys())
-    for k in KEYS[name]:
-        assert torch.equal(base[k].to(torch.float32), fast[k].to(torch.float32)), k
+
+    answered = {*env._live_state(), *env._hidden_state()}
+    assert answered == set(KEYS[name]), "a field would be served by the lossy packed row"
+    st = env.state
+    for i, nm in enumerate(env.sim_state_names):
+        assert torch.equal(st[nm], env.sim_state()[:, i:i + 1]), nm
+    # and the row the renderer sees is still exactly the packed float32 one
+    assert torch.equal(env.pack(st), env.get_state())
     env.close()
 
 
@@ -329,4 +332,26 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     for k in KEYS[name]:
         assert torch.equal(out["state"][k], held[k]), (
             f"{'.'.join(k)} in a StepResult changed when the env was stepped again")
+    env.close()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_step_returns_exactly_env_state(name):
+    """Whatever ``step`` builds its result from, it must be what ``env.state`` reports.
+
+    Classic control's ``step`` builds the StepResult from the simulator buffer directly instead of
+    reading it back through the property, because the property round-trips the packed row to arrive
+    where the buffer already is. That is only sound while the two are the same numbers, which is what
+    this asserts — after several steps, when the row and the buffer have diverged.
+    """
+    env = _env(name)
+    env.set_state(env.sample_states(4, np.random.default_rng(9)))
+    for _ in range(3):
+        env.step(_actions(env, 4, seed=9))
+    out = env.step(_actions(env, 4, seed=10))
+    held = env.state
+    assert sorted(out["state"].keys()) == sorted(held.keys())
+    for k in KEYS[name]:
+        assert torch.equal(out["state"][k], held[k]), k
+        assert out["state"][k].dtype == held[k].dtype
     env.close()
