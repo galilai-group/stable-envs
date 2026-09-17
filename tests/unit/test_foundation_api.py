@@ -209,3 +209,13 @@ def test_the_context_manager_closes_and_does_not_swallow_exceptions():
         with snv.PushT(num_envs=2, device="cpu") as env2:
             1 / 0
     assert env2.closed
+
+
+def test_testing_harness_asks_has_dynamics_not_hasattr_step():
+    """Wave 0 gave every Env a ``step``; a ``hasattr(env, "step")`` guard is therefore always true and
+    sends renderer-only cells into ``env.sample``, which refuses them (Workstream A, R9)."""
+    import pathlib, re
+    root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
+    offenders = [str(p.relative_to(root.parent)) for p in root.rglob("*.py")
+                 if p.name != "dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())]
+    assert offenders == [], offenders

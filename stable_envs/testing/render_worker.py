@@ -69,7 +69,8 @@ def rollout_digests(env, n: int) -> dict:
     ``reset``, a CUDA generator whose default device changed. Four steps is enough — a seed that is
     going to differ differs at step one.
     """
-    if not hasattr(env, "step"):
+    from stable_envs.dynamics import has_dynamics
+    if not has_dynamics(env):
         return {}
     tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
     out = {"rollout_states_sha": _digest(tr["states"].detach().cpu().numpy())}
