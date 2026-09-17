@@ -5108,7 +5108,7 @@
    "roles": [
     "cross-check: Workstream E support matrix (tier columns)"
    ],
-   "sha256": "55069d7636f4727fcf79db4065e1c44dbf0e982c3749c016d0957f5db54aab8e"
+   "sha256": "7adb020c27099741000daaf1caa7c6c4b514c2338acd5b88f0b4055b12c0391f"
   },
   {
    "path": "scratch/census/census_macos-probe.json",

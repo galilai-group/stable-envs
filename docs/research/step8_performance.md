@@ -241,7 +241,7 @@ The shape of the answer: **on a GPU, regenerating from state beats reading store
 
 The four cells Step 7 added — `DMCManipulatorBringBall`, `DMCQuadrupedWalk`, `OGBCube` and `OGBScene` — could not be re-judged at all before Workstream E merged: the Step-3 census had no entry for them, so the frozen evaluator could not assign a backend class and returned `unknown` instead of a tier (the Step-7 carryover "Step 8 must regenerate the census"). E's regenerated census (88 -> 100 entries) assigns all four **class S**, and the re-judgement now reproduces their Step-7 tiers exactly. That carryover is closed, and every measured row on this page is re-judgeable from committed evidence in this tree.
 
-**Against the Step-8 support matrix** (`examples/results/step8/support_matrix.json`, sha256 `55069d7636f4727f…`, Workstream E, merged at `4210793`): 42 of 42 ids compared, **0 tier disagreements**. The two pages reach the tier column by different code — the matrix through its own generator, this page through the underlying measurement artifacts — and they agree on every id.
+**Against the Step-8 support matrix** (`examples/results/step8/support_matrix.json`, sha256 `7adb020c27099741…`, Workstream E, merged at `4210793`): 42 of 42 ids compared, **0 tier disagreements**. The two pages reach the tier column by different code — the matrix through its own generator, this page through the underlying measurement artifacts — and they agree on every id.
 
 What does differ is **vocabulary on rows that have no tier** (7 status words, 4 placeholder strings), and one of the two is worth acting on:
 
@@ -288,7 +288,7 @@ What does differ is **vocabulary on rows that have no tier** (7 status words, 4 
 | `examples/results/step7/dmc-quadruped/phase1/tier_gpu/tiers_B_branch_gpu2109_6398085.json` | `5a2df4aa5d3c8754…` | tier evidence: DMCQuadrupedWalk gpu |
 | `examples/results/step7/ogb-manipulation/m3/fidelity/remeasure.json` | `f343dff01f08becb…` | cpu raise record: OGBCube; cpu raise record: OGBScene; tier evidence: OGBCube gpu; tier evidence: OGBScene gpu |
 | `examples/results/step7/rocket-landing/tier/job6410105/gpu2106.json` | `155b94c16bfb3e4d…` | tier evidence: PFRocketLanding gpu |
-| `examples/results/step8/support_matrix.json` | `55069d7636f4727f…` | cross-check: Workstream E support matrix (tier columns) |
+| `examples/results/step8/support_matrix.json` | `7adb020c27099741…` | cross-check: Workstream E support matrix (tier columns) |
 | `scratch/census/census_macos-probe.json` | `d9327a0952b19daa…` | backend-class census (Step-1 declarations) |
 | `scratch/census/census_oscar-3090-fetch.json` | `55ace7358a566323…` | backend-class census (Step-1 declarations) |
 | `scratch/census/census_step8-craftax-gpu.json` | `7df2868c51e381c0…` | backend-class census (Step-1 declarations) |
