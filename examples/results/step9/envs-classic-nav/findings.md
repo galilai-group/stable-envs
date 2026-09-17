@@ -301,15 +301,24 @@ the two trees (A B A B …), 5 repeats × 15 timed iterations, `torch.set_num_th
 `examples/results/step9/envs-classic-nav/performance.json`. One cell per family, because within a
 family every cell shares the code the migration touched.
 
+Re-measured at the final head, after both integration merges:
+
 | path | baseline | migrated | delta |
 |---|---|---|---|
-| `CartPole.render(rows)`, 64 envs, 400×600 | 28.32 ms | 28.27 ms | **−0.19 %** |
-| `TwoRoom.render(rows)`, 256 envs, 224×224 | 40.04 ms | 40.13 ms | **+0.24 %** |
-| `CartPole.step(a)`, 64 envs | 0.0281 ms | 0.0403 ms | +43 % (**+12 µs**) |
-| `TwoRoom.step(a)`, 256 envs | 0.0696 ms | 0.0974 ms | +40 % (**+28 µs**) |
+| `CartPole.render(rows)`, 64 envs, 400×600 | 27.71 ms | 27.57 ms | **−0.50 %** |
+| `TwoRoom.render(rows)`, 256 envs, 224×224 | 39.60 ms | 39.55 ms | **−0.12 %** |
+| `CartPole.step(a)`, 64 envs | 0.0257 ms | 0.0376 ms | +47 % (**+12 µs**) |
+| `TwoRoom.step(a)`, 256 envs | 0.0703 ms | 0.0903 ms | +28 % (**+20 µs**) |
 
-**The render hot paths are unchanged** — both deltas are a quarter of a percent, i.e. inside
+**The render hot paths are unchanged** — both deltas are half a percent or less, i.e. inside
 run-to-run spread, and render is what plan §8 is about and what the brief asked for.
+
+Retiring `_Classic.state` for `_live_state()` was measured, not assumed: routing `step` through the
+`state` property took CartPole to **0.0634 ms (+137 %)**, because the property rebuilds the State
+from the packed row (a copy, a TensorDict, then the two hook splices) to arrive where `_sim` already
+is. Building the StepResult from `_sim` — the same numbers, asserted by
+`test_step_returns_exactly_env_state` — puts it back at 0.0376 ms. The override is gone; the cost
+did not come back with it.
 
 The `step` deltas are above the 10 % line and are reported rather than buried. Mechanism, measured
 (`env.state` 8.1 µs, `_step_result` 10.4 µs on CartPole): the whole of the increase is **building the
@@ -319,10 +328,10 @@ because these are the cheapest `step`s in the repository (CartPole is four float
 cosine, ~28 µs for 64 environments) rather than a 10-substep contact solver, so a fixed ~15 µs of
 TensorDict construction is 40 % of them and 0.1 % of PushT's. In absolute terms it is 12–28 µs per
 call against a 28–40 ms render of the same states — 0.04–0.07 % of one frame — and it does not scale
-with `num_envs`. One round of this was already paid back: `_Classic.state` originally built the State
-twice per step (once through `Env.state`, once from `_sim`), which put CartPole at +153 %; reading
-`_sim` directly removed 40 µs of it, and the per-call hidden-field guard that skipped is replaced by
-a strictly stronger check at class creation. What remains is the contract, and I do not see a way to
+with `num_envs`. Two rounds of it were paid back along the way, both by the same insight — do not
+rebuild the State from the packed row when the simulator buffer is right there: +153 % → +47 % when
+`_Classic.state` stopped building the State twice, and +137 % → +47 % again when `step` stopped
+routing through the property after the override was retired. What remains is the contract, and I do not see a way to
 pay less for it without making `step` return something other than a StepResult. **The absolute cost
 is the TensorDict construction Wave 0 already measured on PushT** — the same `_step_result` and the
 same `unpack`, +1.0 % there against a 10-substep contact solver and 28–46 % here against four float64
@@ -474,10 +483,72 @@ The other nine agree across hosts. Pendulum is the one cell whose frame contains
 `smoothscale` blit (the torque-arrow sprite), so a different pygame build gives different bytes. It
 is **identical between the two trees on each host**, which is the only thing the oracle claims.
 
-### Job 6464378 — mine, at the post-merge head
+### Job 6464378 — mine, `A40` on `gpu1505`, sha `b8cc599`, `ALLDONE9A-HEAD` reached
 
-`scratch/step9/envs-classic-nav/gpu.sbatch`: both oracle arms (`--device cpu` and, for the first
-time, `--device cuda`, which is what puts the fused kernels' output under the byte comparison), the
-five `tests/gpu` files with **every run writing its own results file** and its summary echoed, and
-the unit tests. Results below.
+`scratch/step9/envs-classic-nav/gpu.sbatch`. Every artifact is committed under
+`examples/results/step9/envs-classic-nav/gpu/` with `/oscar/scratch/sboughan` scrubbed to `$SCR`.
 
+| section | result | artifact |
+|---|---|---|
+| oracle, comparison arm `--device cpu` | **PASS**, `identical: true`, `unexplained_differences: {}` | `oracle_head_cpu.json` |
+| oracle, comparison arm **`--device cuda`** | **PASS**, `identical: true`, `unexplained_differences: {}` | `oracle_head_cuda.json` |
+| `tests/gpu/test_gfxdraw_classic.py` (whole file) | **80 passed** | `pytest_gfxdraw_classic.txt` |
+| `tests/gpu/test_navdot_fused.py` (whole file) | **24 passed** | `pytest_navdot_fused.txt` |
+| `tests/gpu/test_conformance.py` `-k` | **204 passed**, 100 skipped, 1239 deselected | `pytest_conformance.txt` |
+| `tests/gpu/test_fast_paths.py` `-k` | **42 passed**, 30 skipped, 351 deselected | `pytest_fast_paths.txt` |
+| `tests/gpu/test_reproducibility.py` `-k` | 288 passed, 66 skipped, 1509 deselected, **18 failed** — none of them this workstream's cells; see R9 | `pytest_reproducibility.txt` |
+| `tests/unit/test_envs_classic_nav.py` on the CUDA host | **108 passed** | `pytest_unit_classic_nav.txt` |
+
+**The `--device cuda` arm is the one that was missing**, and it does what it was added for: the
+records confirm `compare_device: "cuda"` and every cell's probe reporting `device: "cuda"` in BOTH
+trees, so the frames compared there came out of `render/gfxdraw_classic` and `render/navdot` — the
+fused CUDA kernels that a cpu comparison never executes. They are **identical between the two trees**,
+and they are also identical to the per-primitive digests, which is the right answer and is
+independently what `test_gfxdraw_classic.py`/`test_navdot_fused.py` assert (the fused path is
+bit-identical to the per-primitive one, so the same frame from two backends is the claim, not a
+coincidence).
+
+Both arms also re-ran the functional checks: 10/10 cells on `cpu` and 10/10 on `cuda` for
+`transition_is_pure`, `transition_equals_step_bitwise`, `unroll_equals_repeated_transition`,
+`unroll_equals_four_stateful_steps` and `render_state_equals_render_rows`, with
+`stateful_path_was_a_cuda_graph` true for exactly the five classic-control cells.
+
+Note the GPU evidence is at `b8cc599`. The two commits after it — adopting `_live_state()` and
+building the StepResult from `_sim` — are CPU-verified here (oracle PASS, 1357 local tests) and
+touch no device-specific code: one replaces a `state` property with two hooks the base class calls,
+the other changes which of two provably-equal tensors `step` wraps. A re-run at the final head is
+cheap (`gpu.sbatch` is committed and takes ~8 minutes) if the reviewer wants the arm pinned to it.
+
+
+### R9 (new) — `hasattr(env, "step")` survives in two shared files, and it now breaks a GPU suite
+
+The 18 failures above are **not this workstream's cells** — they are `DMCAcrobotSwingup`,
+`DMCCartpoleBalance`, `DMCCartpoleSwingup`, `DMCPendulumSwingup`, `MujocoInvertedPendulum`,
+`MujocoInvertedDoublePendulum`, each failing `test_seeded_sampling_reproduces_in_a_fresh_process`,
+`test_frames_are_bit_identical_in_a_fresh_process` and `test_rollout_seed_reproduces_in_a_fresh_process`.
+They were pulled into my run because `-k "... or pendulum or acrobot or cartpole ..."` matches
+case-insensitively, which is a filter I wrote too broadly — and it is a good thing it did, because
+the failure is real and is nobody's Wave-1 work:
+
+```
+render_worker.rollout_digests -> env.sample(...) -> rollout.sample
+NotImplementedError: DMCAcrobotSwingup ships a renderer but no batched GPU simulator, so it cannot
+generate trajectories.
+```
+
+`stable_envs/testing/render_worker.py:72` still guards with `if not hasattr(env, "step"): return {}`.
+Wave 0 made **every** `Env` define `step` — it has to, in order to raise the precise refusal instead
+of an `AttributeError` — so that guard is now always False, renderer-only cells fall through to
+`env.sample`, and `rollout.sample`'s own (correct) `has_dynamics` check raises. The Wave-0 findings
+named this exact migration and listed the four call sites it updated; these two were missed:
+
+| file:line | guard | what it should be |
+|---|---|---|
+| `stable_envs/testing/render_worker.py:72` | `if not hasattr(env, "step"): return {}` | `dynamics.has_dynamics(env)` |
+| `stable_envs/testing/conformance.py:1074` | `if not hasattr(env, "step"): raise ValueError(...)` | `dynamics.has_dynamics(env)` — today it never raises, so a renderer-only cell reaches the next check and is refused for the wrong reason |
+
+I did **not** edit either file: they are shared testing machinery, the breakage spans every
+renderer-only cell in the repository (my `-k` happened to select six of them), and the fix should
+land once rather than in whichever family branch trips over it next. `git diff step9/integration..HEAD`
+touches neither file. **This blocks `tests/gpu/test_reproducibility.py` for renderer-only cells
+repo-wide and is not visible in any CPU run**, because the whole file is CUDA-gated.

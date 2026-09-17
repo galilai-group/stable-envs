@@ -1,0 +1,4 @@
+host gpu1505.oscar.ccv.brown.edu
+job 6464378
+sha b8cc599bffb0436bb08217599e10761f3058f5a6
+NVIDIA A40, 575.57.08
