@@ -139,6 +139,10 @@ removal, packaging/CI).
 - No shared renderer/resource ownership changed on the tip (C's change is inside `ogb_manip.py`'s
   private rig), so no fresh-process/resource-lifetime rerun was triggered.
 
+## Acceptance
+
+Accepted by Sami on 2026-09-17 at `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc` = `milestone/step8-functional-completion` = annotated tag `step8-closure`, both on origin. This commit is the immutable Step-9 starting point.
+
 ## After acceptance
 
 Prepare `milestone/step8-functional-completion` + tag at the accepted HEAD; push only when Sami

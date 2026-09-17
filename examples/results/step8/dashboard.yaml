@@ -773,6 +773,11 @@ decisions:
     (DMC/Fetch/OGB via T3, Rocket via E applicability); NO full 49-config + Step-7 mega-sweep unless a targeted test shows cross-cell regression, a shared change is unbounded, or prior evidence is stale;
     T3 plate texel capability APPROVED IN PRINCIPLE (minimum implementation; Fetch skybox only after the bake-vs-recompile diff); D consumes existing artifacts; settled rulings not reopened; no global mujoco
     pin; ≤2 concurrent subagents, Opus only for contract-sensitive/renderer reasoning
+- date: '2026-09-17'
+  by: Sami
+  topic: Fetch background.color skybox half
+  ruling: keep partial support permanently for this milestone; do NOT re-freeze the Fetch default frames merely to support the gradient-skybox half; preserve the limitation explicitly in the support matrix
+    (variation status DOCUMENTED_LIMITATION, background.color named on all 12 Fetch rows) and closure docs; may be reconsidered later
 escalations:
 - date: '2026-09-16'
   from: Workstream C
@@ -818,7 +823,7 @@ escalations:
   summary: supporting it requires flattening a 16-colour gradient skybox to one colour, which moves the Fetch default frame (frozen Step-4/Step-7 oracle) -> re-freeze under plan §19; alternatives considered
     in examples/results/step8/capability/findings.md §1
   question: re-freeze the Fetch default appearance to swm flat sky, or accept partial permanently
-  status: open for Sami; DOCUMENTED_LIMITATION meanwhile
+  status: 'RULED 2026-09-17: partial kept permanently for this milestone; no re-freeze'
 refreezes: []
 upstream_findings:
 - source: C
@@ -894,6 +899,8 @@ incident_log:
   item: T3 delivered (CPU evidence) and reviewed APPROVE-PENDING-GPU; Oscar SSH back; evidence jobs 6459757/6459781 submitted, pending; closure packet written
 - date: '2026-09-17'
   item: T3 GPU evidence produced on the gpu partition (4 jobs), final APPROVE, merged 69e7f8e; closure packet updated; Step 8 at closure state
+- date: '2026-09-17'
+  item: Step 8 ACCEPTED at 21cb306; milestone/step8-functional-completion + tag step8-closure pushed and verified; Fetch skybox ruling recorded; Step-8 worktrees/branches cleaned up
 handoff:
   date: 2026-09-16 evening
   doc: docs/research/step8_handoff.md
@@ -944,3 +951,7 @@ closure:
   pushed: nothing
   t3: MERGED at 69e7f8e
   gate_f: '42 ids: registry 42, state/obs/API 40/2, variation 38/4, devices 7 MEASURED / 35 UNMEASURED'
+  accepted_by_sami: '2026-09-17'
+  accepted_head: 21cb30678b7a7d0f3344b59f176f33d3f3b09ffc
+  milestone_branch: 'milestone/step8-functional-completion (origin: 21cb306)'
+  tag: step8-closure (annotated 045849e -> 21cb306, origin)

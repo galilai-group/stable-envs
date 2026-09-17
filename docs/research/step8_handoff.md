@@ -16,11 +16,12 @@ from the pre-existing citation-scanner baseline.
 (`examples/results/step8/capability/gpu/`, jobs 6459781 / 6460099 / 6460346 / 6460478) and a final
 `APPROVE` (`reviews/review_t3.md`). Nothing from Step 8 is left unmerged.
 
-### Open decisions for Sami
+### Decisions taken (2026-09-17)
 
-1. Fetch `background.color` skybox half: swm flat-fills a 16-colour gradient skybox, so supporting
-   it moves the family's frozen default frame (re-freeze, plan §19). Accept `partial` permanently or
-   authorise the re-freeze (T3 findings §1 lists the alternatives).
+1. Fetch `background.color` skybox half: RULED — partial support kept permanently for this milestone;
+   no re-freeze of the Fetch default frames; limitation preserved in the support matrix
+   (DOCUMENTED_LIMITATION on all 12 Fetch rows) and closure packet §12.
+0. Step 8 ACCEPTED at `21cb306` = `milestone/step8-functional-completion` = tag `step8-closure` (origin).
 2. Certification interpreter is `mujoco==3.11.0` by convention; no global pin was made (your ruling).
 3. After acceptance: `milestone/step8-functional-completion` branch + tag at the accepted HEAD;
    push only on your instruction.
