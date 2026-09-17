@@ -158,13 +158,31 @@ def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
 
     got = env._fk(states, sc)
 
-    real_batch, real_cat = D._chain_capsules_batch, D.catenary
+    # The two callables are substituted WHERE THEY ARE LOOKED UP, which since the Step-9 package
+    # split is the module that calls each: ``suite`` calls ``_chain_capsules_batch`` and
+    # ``_tendon._tendon_polyline`` calls ``catenary``. Patching the package attribute instead would
+    # leave the real implementations running on both sides and this test would pass vacuously, so
+    # the substitution is COUNTED and the count is asserted.
+    calls = {"chain": 0, "cat": 0}
+
+    def _chain_patched(pts, nseg):
+        calls["chain"] += 1
+        return _chain_reference(list(pts), nseg)
+
+    def _cat_patched(*a, **kw):
+        calls["cat"] += 1
+        return _catenary_reference(*a, **kw)
+
+    real_batch, real_cat = D.suite._chain_capsules_batch, D._tendon.catenary
     try:
-        D._chain_capsules_batch = lambda pts, nseg: _chain_reference(list(pts), nseg)
-        D.catenary = _catenary_reference
+        D.suite._chain_capsules_batch = _chain_patched
+        D._tendon.catenary = _cat_patched
         want = env._fk(states, sc)
     finally:
-        D._chain_capsules_batch, D.catenary = real_batch, real_cat
+        D.suite._chain_capsules_batch, D._tendon.catenary = real_batch, real_cat
+    assert calls["chain"] and calls["cat"], (
+        f"the reference implementations were never called ({calls}), so the comparison below would "
+        f"be the batched path against itself")
 
     for name, g, w in zip(("xpos", "xmat", "size", "rgb"), got, want):
         g, w = g.numpy(), w.numpy()

@@ -1,0 +1,1585 @@
+{
+ "arms": [
+  "baseline",
+  "head"
+ ],
+ "baseline": {
+  "_cells": {
+   "Acrobot": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "a8715ac880569d8c608b1c8ea384ced5ed91320dbf41a4186c0177fa38beac2c",
+     "frames_mean": 252.007354521,
+     "frames_sha256": "a8715ac880569d8c608b1c8ea384ced5ed91320dbf41a4186c0177fa38beac2c",
+     "frames_shape": [
+      64,
+      500,
+      500,
+      3
+     ],
+     "n_states": 64,
+     "size": 500,
+     "states_sha256": "2799f8fbcee214da6a2bbbd01b80809537d6e0fe5f840272b2c46999fec04b44",
+     "status": "ok"
+    }
+   },
+   "AntmazeGiantNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeGiantStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeLargeExplore": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeLargeNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeLargeStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeMediumExplore": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeMediumNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeMediumStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeTeleportExplore": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeTeleportNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeTeleportStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "BabyAIGoToLocal": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "CartPole": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "4598212091e176d9ab3c430942ba4f6042ad7fbb05cf1769bff947f09bfe452a",
+     "frames_mean": 252.405944661,
+     "frames_sha256": "4598212091e176d9ab3c430942ba4f6042ad7fbb05cf1769bff947f09bfe452a",
+     "frames_shape": [
+      64,
+      400,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "021356df50a87943194e2b2a6cce57a2657783613be5eff28ed081655b83c047",
+     "status": "ok"
+    }
+   },
+   "CraftaxClassic": {
+    "device_cpu": {
+     "backends": [
+      "prng.random_bits",
+      "prng.threefry2x32",
+      "prng.uniform"
+     ],
+     "frames_from_rows_sha256": "d06c468ce0eea2c84ab256f003d693dbbc284c4eab414ff0c7257fa9797c1b0c",
+     "frames_mean": 64.094747159,
+     "frames_sha256": "d06c468ce0eea2c84ab256f003d693dbbc284c4eab414ff0c7257fa9797c1b0c",
+     "frames_shape": [
+      64,
+      144,
+      144,
+      3
+     ],
+     "n_states": 64,
+     "size": 16,
+     "states_sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+     "status": "ok"
+    }
+   },
+   "CraftaxFull": {
+    "device_cpu": {
+     "backends": [
+      "prng.random_bits",
+      "prng.threefry2x32",
+      "prng.uniform"
+     ],
+     "frames_from_rows_sha256": "82d83319a48bd3c88b23bfa569b4451f559341ce5c5d8a2c4fec7357dcaf23cb",
+     "frames_mean": 60.242589598,
+     "frames_sha256": "82d83319a48bd3c88b23bfa569b4451f559341ce5c5d8a2c4fec7357dcaf23cb",
+     "frames_shape": [
+      64,
+      130,
+      110,
+      3
+     ],
+     "n_states": 64,
+     "size": 10,
+     "states_sha256": "b0c38605fc983ecaac341a065f0791fd9f650d1c1dccc3d08aed68fed5fb197c",
+     "status": "ok"
+    }
+   },
+   "Crafter": {
+    "device_cpu": {
+     "backends": [
+      "tilemap.blit",
+      "tilemap.blit_torch"
+     ],
+     "frames_from_rows_sha256": "f06f6095655ac81c84947f9278b6076075792bc9ad717793ee8f35cce349a6cf",
+     "frames_mean": 59.656158447,
+     "frames_sha256": "f06f6095655ac81c84947f9278b6076075792bc9ad717793ee8f35cce349a6cf",
+     "frames_shape": [
+      64,
+      64,
+      64,
+      3
+     ],
+     "n_states": 64,
+     "size": 64,
+     "states_sha256": "a8f7bc06088f32f1cfc139cee20c74b713d0c0d9617175bfb3b1abb83f04fb3b",
+     "status": "ok"
+    }
+   },
+   "DMCSwimmerSwimmer6": {
+    "device_cpu": {
+     "reason": "ValueError: DMCSwimmerSwimmer6 (swimmer-swimmer6) is not certified on the CPU backend and is refused on device='cpu' by CPU_UNCERTIFIED (no CPU certification (Step 7 allow-",
+     "status": "skipped"
+    }
+   },
+   "Highway": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "50218fb94df3371bb2c562d21d690eef093bf4ff039bdbaa52c57ac5bdd9ed21",
+     "frames_mean": 104.758545255,
+     "frames_sha256": "50218fb94df3371bb2c562d21d690eef093bf4ff039bdbaa52c57ac5bdd9ed21",
+     "frames_shape": [
+      64,
+      150,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 150,
+     "states_sha256": "69f0d3f9b2c0cb84ea46cf432272a88f5a18d8c56426e81aa3c7f7b9f233eaf9",
+     "status": "ok"
+    }
+   },
+   "HumanoidmazeGiantNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeGiantStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeLargeNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeLargeStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeMediumNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeMediumStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "Intersection": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "84646ab3f64e09051de9480c9e9ace7028bc769161e60aa24fae5c5dd0543bf2",
+     "frames_mean": 102.398916262,
+     "frames_sha256": "84646ab3f64e09051de9480c9e9ace7028bc769161e60aa24fae5c5dd0543bf2",
+     "frames_shape": [
+      64,
+      600,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "933fe7dc48893f68fd291cb241f05aa40308d7314ae1747802776f48dbcf1575",
+     "status": "ok"
+    }
+   },
+   "Merge": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "831bbe175388be755a76ac807d92527284654bc7fa6454567ca6820368ba13b6",
+     "frames_mean": 103.779717303,
+     "frames_sha256": "831bbe175388be755a76ac807d92527284654bc7fa6454567ca6820368ba13b6",
+     "frames_shape": [
+      64,
+      150,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 150,
+     "states_sha256": "c11a1514c875118db26d21bad167c4089df4467438b8b365aa7b4cd55aef4558",
+     "status": "ok"
+    }
+   },
+   "MiniGridDoorKey": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridEmpty": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridFourRooms": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridKeyCorridor": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridLavaCrossing": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridPOVFetch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MountainCar": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "fbe5504bcc9878027769acd4d215b79d8515c9bda5dc0c4f39f8cb0b85440af8",
+     "frames_mean": 253.263330512,
+     "frames_sha256": "fbe5504bcc9878027769acd4d215b79d8515c9bda5dc0c4f39f8cb0b85440af8",
+     "frames_shape": [
+      64,
+      400,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "d28cbfb4db48ea400f36063e04c33361cf40774315e88918f3bd93af4bd8f3eb",
+     "status": "ok"
+    }
+   },
+   "MountainCarContinuous": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "da0c0bc6622481ed59c03c88b2fb173d56164b10204e9be45923dc0ad69e90af",
+     "frames_mean": 253.263591319,
+     "frames_sha256": "da0c0bc6622481ed59c03c88b2fb173d56164b10204e9be45923dc0ad69e90af",
+     "frames_shape": [
+      64,
+      400,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "d28cbfb4db48ea400f36063e04c33361cf40774315e88918f3bd93af4bd8f3eb",
+     "status": "ok"
+    }
+   },
+   "OGBCube": {
+    "device_cpu": {
+     "reason": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves un",
+     "status": "skipped"
+    }
+   },
+   "OGBScene": {
+    "device_cpu": {
+     "reason": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves u",
+     "status": "skipped"
+    }
+   },
+   "Parking": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "15a2e514599ee73c9f637b3bf7f54f3c35baf4fc4957d9c4d3ebb489206cc7c4",
+     "frames_mean": 102.13863044,
+     "frames_sha256": "15a2e514599ee73c9f637b3bf7f54f3c35baf4fc4957d9c4d3ebb489206cc7c4",
+     "frames_shape": [
+      64,
+      300,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 300,
+     "states_sha256": "6d09459e7d3e579ddc004f3f590187c8d728fe6539a78cd111086a8f9946a861",
+     "status": "ok"
+    }
+   },
+   "Pendulum": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "feaf201ca40ca177ebf9e66f30a124c03f8d4e2b2e9804e04d1c1b4c572d48be",
+     "frames_mean": 252.921234542,
+     "frames_sha256": "feaf201ca40ca177ebf9e66f30a124c03f8d4e2b2e9804e04d1c1b4c572d48be",
+     "frames_shape": [
+      64,
+      500,
+      500,
+      3
+     ],
+     "n_states": 64,
+     "size": 500,
+     "states_sha256": "9701fe2b41aafe373eefca7012330bc3d956a7add16ff020c70f476f3d4dbcf6",
+     "status": "ok"
+    }
+   },
+   "Piecewise": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "2d41ae6076f430b7824de38dd557748a0a0e0626f1619a240954003accf77054",
+     "frames_mean": 236.113103127,
+     "frames_sha256": "2d41ae6076f430b7824de38dd557748a0a0e0626f1619a240954003accf77054",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "42bde47df366eca102ac6efeee982384cf8f4cf97bd9673e55319fd0777aeb27",
+     "status": "ok"
+    }
+   },
+   "PiecewiseZones": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "e215ae82a1ef45d2f722fe81c98ab168e2cc6504b32ba6499bd82de1e47eb5d6",
+     "frames_mean": 211.787838475,
+     "frames_sha256": "e215ae82a1ef45d2f722fe81c98ab168e2cc6504b32ba6499bd82de1e47eb5d6",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "42bde47df366eca102ac6efeee982384cf8f4cf97bd9673e55319fd0777aeb27",
+     "status": "ok"
+    }
+   },
+   "PointMazeLarge": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointMazeMedium": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointMazeOpen": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointMazeUMaze": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeGiantNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeGiantStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeLargeNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeLargeStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeMediumNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeMediumStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeTeleportNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeTeleportStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PushT": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "39620967bc6eba0b1814b7b00543e63d56ce81380231ffc83f795fb84d58c67b",
+     "frames_mean": 248.35818877,
+     "frames_sha256": "39620967bc6eba0b1814b7b00543e63d56ce81380231ffc83f795fb84d58c67b",
+     "frames_shape": [
+      64,
+      96,
+      96,
+      3
+     ],
+     "n_states": 64,
+     "size": 96,
+     "states_sha256": "9e92de1dc6f96ce4264298a7886a497566cf20992c4ca71775112328f0135bb0",
+     "status": "ok"
+    }
+   },
+   "Racetrack": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "2aea405431477b745b7c9dddb133745fa1f742dc8149368d8d8fb6c8e7ac77c9",
+     "frames_mean": 101.348811487,
+     "frames_sha256": "2aea405431477b745b7c9dddb133745fa1f742dc8149368d8d8fb6c8e7ac77c9",
+     "frames_shape": [
+      64,
+      600,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "e0db1495fceaba604d270bf866aff3a9eaf97f1b815bb65f4008da86b9a37cf9",
+     "status": "ok"
+    }
+   },
+   "Roundabout": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "554cc76b6a29d9f656524af180d5b36449b5952f8a9385ae5097058e034adba3",
+     "frames_mean": 101.81206305,
+     "frames_sha256": "554cc76b6a29d9f656524af180d5b36449b5952f8a9385ae5097058e034adba3",
+     "frames_shape": [
+      64,
+      600,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "d620badeea4429473071a0f3b5c78d488422639c94edd00c1accd982e4442e12",
+     "status": "ok"
+    }
+   },
+   "SimplePointMaze": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "e520afaf03cb2b8a295d8fc65e1f1636061a58fb4fc95df03ba3830efe727f17",
+     "frames_mean": 215.365318,
+     "frames_sha256": "e520afaf03cb2b8a295d8fc65e1f1636061a58fb4fc95df03ba3830efe727f17",
+     "frames_shape": [
+      64,
+      500,
+      500,
+      3
+     ],
+     "n_states": 64,
+     "size": 500,
+     "states_sha256": "90d88f4d7cd64276ed7f2aaffd22f0eddeab7de22d90839e2400b25c9b4087f2",
+     "status": "ok"
+    }
+   },
+   "TwoRoom": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "ba79cc30ded03a73bcb84a0cd261db80d84e3981dfea8f2d38888b8854b8f758",
+     "frames_mean": 225.658917693,
+     "frames_sha256": "ba79cc30ded03a73bcb84a0cd261db80d84e3981dfea8f2d38888b8854b8f758",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "49d8f772a927646e8aa4e951e9cb49c79e3d8fa606990b0289bb413cef5c2cdc",
+     "status": "ok"
+    }
+   },
+   "TwoRoomTarget": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "88533f44daab1f25bb0c9b45f0c2ce40e3fc4e0b819b610d6c71b15de16ad554",
+     "frames_mean": 224.739969267,
+     "frames_sha256": "88533f44daab1f25bb0c9b45f0c2ce40e3fc4e0b819b610d6c71b15de16ad554",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "a9c8cd5b1fd0a4c33f6ac0bd6c963ee942a1f1c73aa70eedae5b2e4c727e1fc2",
+     "status": "ok"
+    }
+   }
+  },
+  "_registry": [
+   "Acrobot",
+   "AntmazeGiantNavigate",
+   "AntmazeGiantStitch",
+   "AntmazeLargeExplore",
+   "AntmazeLargeNavigate",
+   "AntmazeLargeStitch",
+   "AntmazeMediumExplore",
+   "AntmazeMediumNavigate",
+   "AntmazeMediumStitch",
+   "AntmazeTeleportExplore",
+   "AntmazeTeleportNavigate",
+   "AntmazeTeleportStitch",
+   "BabyAIGoToLocal",
+   "CartPole",
+   "CraftaxClassic",
+   "CraftaxFull",
+   "Crafter",
+   "DMCAcrobotSwingup",
+   "DMCBallInCupCatch",
+   "DMCCartpoleBalance",
+   "DMCCartpoleSwingup",
+   "DMCCheetahRun",
+   "DMCFingerSpin",
+   "DMCFingerTurnEasy",
+   "DMCFingerTurnHard",
+   "DMCHopperHop",
+   "DMCHumanoidStand",
+   "DMCManipulatorBringBall",
+   "DMCPendulumSwingup",
+   "DMCPointMassEasy",
+   "DMCQuadrupedWalk",
+   "DMCReacherEasy",
+   "DMCReacherHard",
+   "DMCSwimmerSwimmer6",
+   "DMCWalkerWalk",
+   "Highway",
+   "HumanoidmazeGiantNavigate",
+   "HumanoidmazeGiantStitch",
+   "HumanoidmazeLargeNavigate",
+   "HumanoidmazeLargeStitch",
+   "HumanoidmazeMediumNavigate",
+   "HumanoidmazeMediumStitch",
+   "Intersection",
+   "Merge",
+   "MiniGridDoorKey",
+   "MiniGridEmpty",
+   "MiniGridFourRooms",
+   "MiniGridKeyCorridor",
+   "MiniGridLavaCrossing",
+   "MiniGridPOVFetch",
+   "MiniHack",
+   "MountainCar",
+   "MountainCarContinuous",
+   "MujocoInvertedDoublePendulum",
+   "MujocoInvertedPendulum",
+   "MujocoPusher",
+   "MujocoReacher",
+   "OGBCube",
+   "OGBScene",
+   "Parking",
+   "Pendulum",
+   "Piecewise",
+   "PiecewiseZones",
+   "PointMazeLarge",
+   "PointMazeMedium",
+   "PointMazeOpen",
+   "PointMazeUMaze",
+   "PointmazeGiantNavigate",
+   "PointmazeGiantStitch",
+   "PointmazeLargeNavigate",
+   "PointmazeLargeStitch",
+   "PointmazeMediumNavigate",
+   "PointmazeMediumStitch",
+   "PointmazeTeleportNavigate",
+   "PointmazeTeleportStitch",
+   "PushT",
+   "Racetrack",
+   "Roundabout",
+   "SimplePointMaze",
+   "TwoRoom",
+   "TwoRoomTarget"
+  ]
+ },
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "cells": {
+  "Acrobot/cpu": "ok",
+  "AntmazeGiantNavigate/cpu": "skipped",
+  "AntmazeGiantStitch/cpu": "skipped",
+  "AntmazeLargeExplore/cpu": "skipped",
+  "AntmazeLargeNavigate/cpu": "skipped",
+  "AntmazeLargeStitch/cpu": "skipped",
+  "AntmazeMediumExplore/cpu": "skipped",
+  "AntmazeMediumNavigate/cpu": "skipped",
+  "AntmazeMediumStitch/cpu": "skipped",
+  "AntmazeTeleportExplore/cpu": "skipped",
+  "AntmazeTeleportNavigate/cpu": "skipped",
+  "AntmazeTeleportStitch/cpu": "skipped",
+  "BabyAIGoToLocal/cpu": "skipped",
+  "CartPole/cpu": "ok",
+  "CraftaxClassic/cpu": "ok",
+  "CraftaxFull/cpu": "ok",
+  "Crafter/cpu": "ok",
+  "DMCSwimmerSwimmer6/cpu": "skipped",
+  "Highway/cpu": "ok",
+  "HumanoidmazeGiantNavigate/cpu": "skipped",
+  "HumanoidmazeGiantStitch/cpu": "skipped",
+  "HumanoidmazeLargeNavigate/cpu": "skipped",
+  "HumanoidmazeLargeStitch/cpu": "skipped",
+  "HumanoidmazeMediumNavigate/cpu": "skipped",
+  "HumanoidmazeMediumStitch/cpu": "skipped",
+  "Intersection/cpu": "ok",
+  "Merge/cpu": "ok",
+  "MiniGridDoorKey/cpu": "skipped",
+  "MiniGridEmpty/cpu": "skipped",
+  "MiniGridFourRooms/cpu": "skipped",
+  "MiniGridKeyCorridor/cpu": "skipped",
+  "MiniGridLavaCrossing/cpu": "skipped",
+  "MiniGridPOVFetch/cpu": "skipped",
+  "MountainCar/cpu": "ok",
+  "MountainCarContinuous/cpu": "ok",
+  "OGBCube/cpu": "skipped",
+  "OGBScene/cpu": "skipped",
+  "Parking/cpu": "ok",
+  "Pendulum/cpu": "ok",
+  "Piecewise/cpu": "ok",
+  "PiecewiseZones/cpu": "ok",
+  "PointMazeLarge/cpu": "skipped",
+  "PointMazeMedium/cpu": "skipped",
+  "PointMazeOpen/cpu": "skipped",
+  "PointMazeUMaze/cpu": "skipped",
+  "PointmazeGiantNavigate/cpu": "skipped",
+  "PointmazeGiantStitch/cpu": "skipped",
+  "PointmazeLargeNavigate/cpu": "skipped",
+  "PointmazeLargeStitch/cpu": "skipped",
+  "PointmazeMediumNavigate/cpu": "skipped",
+  "PointmazeMediumStitch/cpu": "skipped",
+  "PointmazeTeleportNavigate/cpu": "skipped",
+  "PointmazeTeleportStitch/cpu": "skipped",
+  "PushT/cpu": "ok",
+  "Racetrack/cpu": "ok",
+  "Roundabout/cpu": "ok",
+  "SimplePointMaze/cpu": "ok",
+  "TwoRoom/cpu": "ok",
+  "TwoRoomTarget/cpu": "ok"
+ },
+ "compared": [
+  "backends",
+  "frames_from_rows_sha256",
+  "frames_sha256",
+  "frames_shape",
+  "n_states",
+  "reason",
+  "size",
+  "states_sha256",
+  "status",
+  "variants"
+ ],
+ "devices": [
+  "cpu"
+ ],
+ "head": {
+  "_cells": {
+   "Acrobot": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "a8715ac880569d8c608b1c8ea384ced5ed91320dbf41a4186c0177fa38beac2c",
+     "frames_mean": 252.007354521,
+     "frames_sha256": "a8715ac880569d8c608b1c8ea384ced5ed91320dbf41a4186c0177fa38beac2c",
+     "frames_shape": [
+      64,
+      500,
+      500,
+      3
+     ],
+     "n_states": 64,
+     "size": 500,
+     "states_sha256": "2799f8fbcee214da6a2bbbd01b80809537d6e0fe5f840272b2c46999fec04b44",
+     "status": "ok"
+    }
+   },
+   "AntmazeGiantNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeGiantStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeLargeExplore": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeLargeNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeLargeStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeMediumExplore": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeMediumNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeMediumStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeTeleportExplore": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeTeleportNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "AntmazeTeleportStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "BabyAIGoToLocal": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "CartPole": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "4598212091e176d9ab3c430942ba4f6042ad7fbb05cf1769bff947f09bfe452a",
+     "frames_mean": 252.405944661,
+     "frames_sha256": "4598212091e176d9ab3c430942ba4f6042ad7fbb05cf1769bff947f09bfe452a",
+     "frames_shape": [
+      64,
+      400,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "021356df50a87943194e2b2a6cce57a2657783613be5eff28ed081655b83c047",
+     "status": "ok"
+    }
+   },
+   "CraftaxClassic": {
+    "device_cpu": {
+     "backends": [
+      "prng.random_bits",
+      "prng.threefry2x32",
+      "prng.uniform"
+     ],
+     "frames_from_rows_sha256": "d06c468ce0eea2c84ab256f003d693dbbc284c4eab414ff0c7257fa9797c1b0c",
+     "frames_mean": 64.094747159,
+     "frames_sha256": "d06c468ce0eea2c84ab256f003d693dbbc284c4eab414ff0c7257fa9797c1b0c",
+     "frames_shape": [
+      64,
+      144,
+      144,
+      3
+     ],
+     "n_states": 64,
+     "size": 16,
+     "states_sha256": "e403a5648d92156e09fc366d58283b7cd83c1ad5bb5d2a0e3c1f95b8e9ce75cd",
+     "status": "ok"
+    }
+   },
+   "CraftaxFull": {
+    "device_cpu": {
+     "backends": [
+      "prng.random_bits",
+      "prng.threefry2x32",
+      "prng.uniform"
+     ],
+     "frames_from_rows_sha256": "82d83319a48bd3c88b23bfa569b4451f559341ce5c5d8a2c4fec7357dcaf23cb",
+     "frames_mean": 60.242589598,
+     "frames_sha256": "82d83319a48bd3c88b23bfa569b4451f559341ce5c5d8a2c4fec7357dcaf23cb",
+     "frames_shape": [
+      64,
+      130,
+      110,
+      3
+     ],
+     "n_states": 64,
+     "size": 10,
+     "states_sha256": "b0c38605fc983ecaac341a065f0791fd9f650d1c1dccc3d08aed68fed5fb197c",
+     "status": "ok"
+    }
+   },
+   "Crafter": {
+    "device_cpu": {
+     "backends": [
+      "tilemap.blit",
+      "tilemap.blit_torch"
+     ],
+     "frames_from_rows_sha256": "f06f6095655ac81c84947f9278b6076075792bc9ad717793ee8f35cce349a6cf",
+     "frames_mean": 59.656158447,
+     "frames_sha256": "f06f6095655ac81c84947f9278b6076075792bc9ad717793ee8f35cce349a6cf",
+     "frames_shape": [
+      64,
+      64,
+      64,
+      3
+     ],
+     "n_states": 64,
+     "size": 64,
+     "states_sha256": "a8f7bc06088f32f1cfc139cee20c74b713d0c0d9617175bfb3b1abb83f04fb3b",
+     "status": "ok"
+    }
+   },
+   "DMCSwimmerSwimmer6": {
+    "device_cpu": {
+     "reason": "ValueError: DMCSwimmerSwimmer6 (swimmer-swimmer6) is not certified on the CPU backend and is refused on device='cpu' by CPU_UNCERTIFIED (no CPU certification (Step 7 allow-",
+     "status": "skipped"
+    }
+   },
+   "Highway": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "50218fb94df3371bb2c562d21d690eef093bf4ff039bdbaa52c57ac5bdd9ed21",
+     "frames_mean": 104.758545255,
+     "frames_sha256": "50218fb94df3371bb2c562d21d690eef093bf4ff039bdbaa52c57ac5bdd9ed21",
+     "frames_shape": [
+      64,
+      150,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 150,
+     "states_sha256": "69f0d3f9b2c0cb84ea46cf432272a88f5a18d8c56426e81aa3c7f7b9f233eaf9",
+     "status": "ok"
+    }
+   },
+   "HumanoidmazeGiantNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeGiantStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeLargeNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeLargeStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeMediumNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "HumanoidmazeMediumStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "Intersection": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "84646ab3f64e09051de9480c9e9ace7028bc769161e60aa24fae5c5dd0543bf2",
+     "frames_mean": 102.398916262,
+     "frames_sha256": "84646ab3f64e09051de9480c9e9ace7028bc769161e60aa24fae5c5dd0543bf2",
+     "frames_shape": [
+      64,
+      600,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "933fe7dc48893f68fd291cb241f05aa40308d7314ae1747802776f48dbcf1575",
+     "status": "ok"
+    }
+   },
+   "Merge": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "831bbe175388be755a76ac807d92527284654bc7fa6454567ca6820368ba13b6",
+     "frames_mean": 103.779717303,
+     "frames_sha256": "831bbe175388be755a76ac807d92527284654bc7fa6454567ca6820368ba13b6",
+     "frames_shape": [
+      64,
+      150,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 150,
+     "states_sha256": "c11a1514c875118db26d21bad167c4089df4467438b8b365aa7b4cd55aef4558",
+     "status": "ok"
+    }
+   },
+   "MiniGridDoorKey": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridEmpty": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridFourRooms": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridKeyCorridor": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridLavaCrossing": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MiniGridPOVFetch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'minigrid'",
+     "status": "skipped"
+    }
+   },
+   "MountainCar": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "fbe5504bcc9878027769acd4d215b79d8515c9bda5dc0c4f39f8cb0b85440af8",
+     "frames_mean": 253.263330512,
+     "frames_sha256": "fbe5504bcc9878027769acd4d215b79d8515c9bda5dc0c4f39f8cb0b85440af8",
+     "frames_shape": [
+      64,
+      400,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "d28cbfb4db48ea400f36063e04c33361cf40774315e88918f3bd93af4bd8f3eb",
+     "status": "ok"
+    }
+   },
+   "MountainCarContinuous": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "da0c0bc6622481ed59c03c88b2fb173d56164b10204e9be45923dc0ad69e90af",
+     "frames_mean": 253.263591319,
+     "frames_sha256": "da0c0bc6622481ed59c03c88b2fb173d56164b10204e9be45923dc0ad69e90af",
+     "frames_shape": [
+      64,
+      400,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "d28cbfb4db48ea400f36063e04c33361cf40774315e88918f3bd93af4bd8f3eb",
+     "status": "ok"
+    }
+   },
+   "OGBCube": {
+    "device_cpu": {
+     "reason": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves un",
+     "status": "skipped"
+    }
+   },
+   "OGBScene": {
+    "device_cpu": {
+     "reason": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves u",
+     "status": "skipped"
+    }
+   },
+   "Parking": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "15a2e514599ee73c9f637b3bf7f54f3c35baf4fc4957d9c4d3ebb489206cc7c4",
+     "frames_mean": 102.13863044,
+     "frames_sha256": "15a2e514599ee73c9f637b3bf7f54f3c35baf4fc4957d9c4d3ebb489206cc7c4",
+     "frames_shape": [
+      64,
+      300,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 300,
+     "states_sha256": "6d09459e7d3e579ddc004f3f590187c8d728fe6539a78cd111086a8f9946a861",
+     "status": "ok"
+    }
+   },
+   "Pendulum": {
+    "device_cpu": {
+     "backends": [
+      "gfxdraw.blend",
+      "gfxdraw.circle",
+      "gfxdraw.polygon"
+     ],
+     "frames_from_rows_sha256": "feaf201ca40ca177ebf9e66f30a124c03f8d4e2b2e9804e04d1c1b4c572d48be",
+     "frames_mean": 252.921234542,
+     "frames_sha256": "feaf201ca40ca177ebf9e66f30a124c03f8d4e2b2e9804e04d1c1b4c572d48be",
+     "frames_shape": [
+      64,
+      500,
+      500,
+      3
+     ],
+     "n_states": 64,
+     "size": 500,
+     "states_sha256": "9701fe2b41aafe373eefca7012330bc3d956a7add16ff020c70f476f3d4dbcf6",
+     "status": "ok"
+    }
+   },
+   "Piecewise": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "2d41ae6076f430b7824de38dd557748a0a0e0626f1619a240954003accf77054",
+     "frames_mean": 236.113103127,
+     "frames_sha256": "2d41ae6076f430b7824de38dd557748a0a0e0626f1619a240954003accf77054",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "42bde47df366eca102ac6efeee982384cf8f4cf97bd9673e55319fd0777aeb27",
+     "status": "ok"
+    }
+   },
+   "PiecewiseZones": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "e215ae82a1ef45d2f722fe81c98ab168e2cc6504b32ba6499bd82de1e47eb5d6",
+     "frames_mean": 211.787838475,
+     "frames_sha256": "e215ae82a1ef45d2f722fe81c98ab168e2cc6504b32ba6499bd82de1e47eb5d6",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "42bde47df366eca102ac6efeee982384cf8f4cf97bd9673e55319fd0777aeb27",
+     "status": "ok"
+    }
+   },
+   "PointMazeLarge": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointMazeMedium": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointMazeOpen": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointMazeUMaze": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeGiantNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeGiantStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeLargeNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeLargeStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeMediumNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeMediumStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeTeleportNavigate": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PointmazeTeleportStitch": {
+    "device_cpu": {
+     "reason": "ModuleNotFoundError: No module named 'ogbench'",
+     "status": "skipped"
+    }
+   },
+   "PushT": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "39620967bc6eba0b1814b7b00543e63d56ce81380231ffc83f795fb84d58c67b",
+     "frames_mean": 248.35818877,
+     "frames_sha256": "39620967bc6eba0b1814b7b00543e63d56ce81380231ffc83f795fb84d58c67b",
+     "frames_shape": [
+      64,
+      96,
+      96,
+      3
+     ],
+     "n_states": 64,
+     "size": 96,
+     "states_sha256": "9e92de1dc6f96ce4264298a7886a497566cf20992c4ca71775112328f0135bb0",
+     "status": "ok"
+    }
+   },
+   "Racetrack": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "2aea405431477b745b7c9dddb133745fa1f742dc8149368d8d8fb6c8e7ac77c9",
+     "frames_mean": 101.348811487,
+     "frames_sha256": "2aea405431477b745b7c9dddb133745fa1f742dc8149368d8d8fb6c8e7ac77c9",
+     "frames_shape": [
+      64,
+      600,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "e0db1495fceaba604d270bf866aff3a9eaf97f1b815bb65f4008da86b9a37cf9",
+     "status": "ok"
+    }
+   },
+   "Roundabout": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "554cc76b6a29d9f656524af180d5b36449b5952f8a9385ae5097058e034adba3",
+     "frames_mean": 101.81206305,
+     "frames_sha256": "554cc76b6a29d9f656524af180d5b36449b5952f8a9385ae5097058e034adba3",
+     "frames_shape": [
+      64,
+      600,
+      600,
+      3
+     ],
+     "n_states": 64,
+     "size": 600,
+     "states_sha256": "d620badeea4429473071a0f3b5c78d488422639c94edd00c1accd982e4442e12",
+     "status": "ok"
+    }
+   },
+   "SimplePointMaze": {
+    "device_cpu": {
+     "backends": [
+      "raster2d.render_torch",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "e520afaf03cb2b8a295d8fc65e1f1636061a58fb4fc95df03ba3830efe727f17",
+     "frames_mean": 215.365318,
+     "frames_sha256": "e520afaf03cb2b8a295d8fc65e1f1636061a58fb4fc95df03ba3830efe727f17",
+     "frames_shape": [
+      64,
+      500,
+      500,
+      3
+     ],
+     "n_states": 64,
+     "size": 500,
+     "states_sha256": "90d88f4d7cd64276ed7f2aaffd22f0eddeab7de22d90839e2400b25c9b4087f2",
+     "status": "ok"
+    }
+   },
+   "TwoRoom": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "ba79cc30ded03a73bcb84a0cd261db80d84e3981dfea8f2d38888b8854b8f758",
+     "frames_mean": 225.658917693,
+     "frames_sha256": "ba79cc30ded03a73bcb84a0cd261db80d84e3981dfea8f2d38888b8854b8f758",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "49d8f772a927646e8aa4e951e9cb49c79e3d8fa606990b0289bb413cef5c2cdc",
+     "status": "ok"
+    }
+   },
+   "TwoRoomTarget": {
+    "device_cpu": {
+     "backends": [
+      "navdot.dot_window",
+      "raster2d.row_groups"
+     ],
+     "frames_from_rows_sha256": "88533f44daab1f25bb0c9b45f0c2ce40e3fc4e0b819b610d6c71b15de16ad554",
+     "frames_mean": 224.739969267,
+     "frames_sha256": "88533f44daab1f25bb0c9b45f0c2ce40e3fc4e0b819b610d6c71b15de16ad554",
+     "frames_shape": [
+      64,
+      224,
+      224,
+      3
+     ],
+     "n_states": 64,
+     "size": 224,
+     "states_sha256": "a9c8cd5b1fd0a4c33f6ac0bd6c963ee942a1f1c73aa70eedae5b2e4c727e1fc2",
+     "status": "ok"
+    }
+   }
+  },
+  "_registry": [
+   "Acrobot",
+   "AntmazeGiantNavigate",
+   "AntmazeGiantStitch",
+   "AntmazeLargeExplore",
+   "AntmazeLargeNavigate",
+   "AntmazeLargeStitch",
+   "AntmazeMediumExplore",
+   "AntmazeMediumNavigate",
+   "AntmazeMediumStitch",
+   "AntmazeTeleportExplore",
+   "AntmazeTeleportNavigate",
+   "AntmazeTeleportStitch",
+   "BabyAIGoToLocal",
+   "CartPole",
+   "CraftaxClassic",
+   "CraftaxFull",
+   "Crafter",
+   "DMCAcrobotSwingup",
+   "DMCBallInCupCatch",
+   "DMCCartpoleBalance",
+   "DMCCartpoleSwingup",
+   "DMCCheetahRun",
+   "DMCFingerSpin",
+   "DMCFingerTurnEasy",
+   "DMCFingerTurnHard",
+   "DMCHopperHop",
+   "DMCHumanoidStand",
+   "DMCManipulatorBringBall",
+   "DMCPendulumSwingup",
+   "DMCPointMassEasy",
+   "DMCQuadrupedWalk",
+   "DMCReacherEasy",
+   "DMCReacherHard",
+   "DMCSwimmerSwimmer6",
+   "DMCWalkerWalk",
+   "Highway",
+   "HumanoidmazeGiantNavigate",
+   "HumanoidmazeGiantStitch",
+   "HumanoidmazeLargeNavigate",
+   "HumanoidmazeLargeStitch",
+   "HumanoidmazeMediumNavigate",
+   "HumanoidmazeMediumStitch",
+   "Intersection",
+   "Merge",
+   "MiniGridDoorKey",
+   "MiniGridEmpty",
+   "MiniGridFourRooms",
+   "MiniGridKeyCorridor",
+   "MiniGridLavaCrossing",
+   "MiniGridPOVFetch",
+   "MiniHack",
+   "MountainCar",
+   "MountainCarContinuous",
+   "MujocoInvertedDoublePendulum",
+   "MujocoInvertedPendulum",
+   "MujocoPusher",
+   "MujocoReacher",
+   "OGBCube",
+   "OGBScene",
+   "Parking",
+   "Pendulum",
+   "Piecewise",
+   "PiecewiseZones",
+   "PointMazeLarge",
+   "PointMazeMedium",
+   "PointMazeOpen",
+   "PointMazeUMaze",
+   "PointmazeGiantNavigate",
+   "PointmazeGiantStitch",
+   "PointmazeLargeNavigate",
+   "PointmazeLargeStitch",
+   "PointmazeMediumNavigate",
+   "PointmazeMediumStitch",
+   "PointmazeTeleportNavigate",
+   "PointmazeTeleportStitch",
+   "PushT",
+   "Racetrack",
+   "Roundabout",
+   "SimplePointMaze",
+   "TwoRoom",
+   "TwoRoomTarget"
+  ]
+ },
+ "head_sha": "de0ba10a35bb089b5b922e5b0acd95568225b477",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "identical": true,
+ "n_states_requested": 64,
+ "python": "/Users/samib/se6-venv/bin/python",
+ "unexplained_differences": {}
+}

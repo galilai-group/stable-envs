@@ -649,23 +649,42 @@ def test_a_malformed_reference_version_field_is_refused(bad):
 def _dmc_declaration_table() -> dict:
     """``stable_envs.envs.dmcontrol.VISUAL_FIDELITY``, read off the SOURCE rather than the module.
 
-    The module imports mujoco with ``MUJOCO_GL=egl`` at import time, so on a host without EGL (this
-    laptop) the family does not register and the module cannot be imported -- but the declaration is
-    a table of literals and names, and the claim under test is about the table. Only the module-level
-    assignments the table is built from are executed, in an empty namespace.
+    The package imports mujoco with ``MUJOCO_GL=egl`` at import time, so on a host without EGL (this
+    laptop) the family does not register and it cannot be imported -- but the declaration is a table
+    of literals and names, and the claim under test is about the table. Only the module-level
+    assignments the table is built from are executed, in one shared namespace.
+
+    Step 9 split ``envs/dmcontrol.py`` into ``envs/dmcontrol/``, where each trackcom domain declares
+    its OWN ``VISUAL_FIDELITY`` entry beside the cell it describes and the shared provenance strings
+    live in ``_cells.py``. So the walk is over every module of the package, ``_cells`` first because
+    the per-domain entries name ``_AT``/``_AT_VERSIONS``/``_AT_MEASURED_WITH``, and the tables are
+    merged. The claim is unchanged: the same entries, read off the source, never imported.
     """
     import ast
-    src = (ROOT / "stable_envs" / "envs" / "dmcontrol.py").read_text()
+    pkg = ROOT / "stable_envs" / "envs" / "dmcontrol"
     want = {"_AT", "_SWIMMER_AT", "_AT_VERSIONS", "_SWIMMER_AT_VERSIONS", "_AT_MEASURED_WITH",
             "_SWIMMER_AT_MEASURED_WITH", "_QUADRUPED_AT", "_QUADRUPED_AT_MEASURED_WITH",
             "VISUAL_FIDELITY"}
-    keep = [n for n in ast.parse(src).body
-            if isinstance(n, (ast.Assign, ast.AnnAssign))
-            and any(isinstance(t, ast.Name) and t.id in want
-                    for t in (n.targets if isinstance(n, ast.Assign) else [n.target]))]
+    # ``__init__.py`` is skipped: its ``VISUAL_FIDELITY`` is a VIEW of the per-domain tables
+    # (``{n: globals()[n].visual_fidelity ...}``), not a declaration, and reading it would either
+    # need the classes or hide the literals this check exists to read.
+    skip = {"_cells.py", "__init__.py"}
+    paths = [pkg / "_cells.py"] + sorted(p for p in pkg.glob("*.py") if p.name not in skip)
     ns: dict = {}
-    exec(compile(ast.Module(body=keep, type_ignores=[]), "dmcontrol.py<declarations>", "exec"), ns)
-    return ns["VISUAL_FIDELITY"]
+    table: dict = {}
+    for path in paths:
+        keep = [n for n in ast.parse(path.read_text()).body
+                if isinstance(n, (ast.Assign, ast.AnnAssign))
+                and any(isinstance(t, ast.Name) and t.id in want
+                        for t in (n.targets if isinstance(n, ast.Assign) else [n.target]))]
+        if not keep:
+            continue
+        ns.pop("VISUAL_FIDELITY", None)
+        exec(compile(ast.Module(body=keep, type_ignores=[]),
+                     f"{path.name}<declarations>", "exec"), ns)
+        table.update(ns.get("VISUAL_FIDELITY", {}))
+    assert table, f"no VISUAL_FIDELITY entries found under {pkg}; the walk has drifted"
+    return table
 
 
 def _declared_reference_versions() -> list[tuple[str, dict, str]]:
