@@ -727,6 +727,12 @@ workstreams:
     -> UPSTREAM_FINDING for the bundle; channels are live (strip 22.2/30.8 % of frame; night/sleeping move 97-100 % of world px, 0 % of strip); Step-5 claims unaffected (Craftax never a Step-5 representative;
     step4/5/6 results unchanged by Step 7)'
   merge_gate: 1-7 PASS/n-a per review_h.md; 8 APPROVE; 9 this IS the semantic decision; 10 this row
+- workstream: T3_capability_plate_texels
+  branch: step8/capability-plate-texels
+  worktree: /Users/samib/stable-envs-step8-capability
+  baseline_sha: 2b4b5c3
+  status: 'IN PROGRESS (opus): DMC parity floor.color, Fetch skybox after probe, OGB reuse; targeted GPU evidence'
+  affected_files: stable_envs/envs/{dmcontrol,fetch,ogb_manip}.py plate/texture path, a small shared helper, VariationMap modules, tests, artifacts
 decisions:
 - date: '2026-09-16'
   by: Sami
@@ -746,6 +752,13 @@ decisions:
   by: Sami
   topic: Rocket BATCH_SCALES
   ruling: frozen threshold unchanged in Step 8; report the existing classification and document the high-fps(1) edge case; revised taxonomy may be proposed later
+- date: '2026-09-16'
+  by: Sami
+  topic: closure strategy
+  ruling: finish only genuinely missing functionality; reuse authoritative existing evidence for unchanged codepaths/cells; targeted merged-tip validation only over codepaths affected by the final changes
+    (DMC/Fetch/OGB via T3, Rocket via E applicability); NO full 49-config + Step-7 mega-sweep unless a targeted test shows cross-cell regression, a shared change is unbounded, or prior evidence is stale;
+    T3 plate texel capability APPROVED IN PRINCIPLE (minimum implementation; Fetch skybox only after the bake-vs-recompile diff); D consumes existing artifacts; settled rulings not reopened; no global mujoco
+    pin; ≤2 concurrent subagents, Opus only for contract-sensitive/renderer reasoning
 escalations:
 - date: '2026-09-16'
   from: Workstream C
@@ -784,7 +797,7 @@ escalations:
     light.intensity (fitted law, one-off)'
   coordinator_recommendation: confirm requirement after B and C merge; then ONE shared implementation of (ii) reused by OGB/DMC/Fetch plus the OGB (i) wiring; no one-off hacks; each needs default digest
     identity, isolation, Gate A with new style dims and a paired throughput check
-  status: analysis complete; implementation held until B/C are merged and Sami confirms the requirement (renderer semantics change)
+  status: APPROVED IN PRINCIPLE 2026-09-16 (T3 in flight on step8/capability-plate-texels)
 refreezes: []
 upstream_findings:
 - source: C
@@ -846,6 +859,8 @@ incident_log:
     started (agent cut off at start)
 - date: '2026-09-16'
   item: C merged after fresh APPROVE; matrices regenerated on 5d5a461; handoff written; closure = CONTINUE STEP 8 FOR T1/T2/T3
+- date: '2026-09-16'
+  item: closure strategy changed by Sami (targeted validation, no mega-sweep); T3 (opus) and D (sonnet, evidence-consumption) launched; D worktree fast-forwarded to 2b4b5c3
 handoff:
   date: 2026-09-16 evening
   doc: docs/research/step8_handoff.md
