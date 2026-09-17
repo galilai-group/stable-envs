@@ -147,3 +147,47 @@ def test_state_layout_entry_may_name_a_public_dtype():
     assert td["x"].dtype == torch.float64 and td["y"].dtype == torch.float32
     assert env.pack(td).dtype == torch.float32 and torch.equal(env.pack(td), rows)
     assert env.state_spec is not None
+
+
+def test_unpack_and_state_never_alias_the_env_buffer():
+    """A StepResult or ``env.state`` must not change under the caller's feet at the next step."""
+    import torch
+    from stable_envs import PushT
+    env = PushT(num_envs=4, device="cpu")
+    env.reset(seed=0)
+    a = torch.zeros(4, 2)
+    out = env.step(a)
+    snap = out["state"]["agent", "position"].clone()
+    st = env.state
+    snap2 = st["block", "position"].clone()
+    env.step(torch.full((4, 2), 300.0))
+    assert torch.equal(out["state"]["agent", "position"], snap)
+    assert torch.equal(st["block", "position"], snap2)
+    td = env.unpack(env.get_state())
+    td["agent", "position"].add_(1.0)
+    assert not torch.equal(td["agent", "position"], env.unpack(env.get_state())["agent", "position"])
+
+
+def test_live_state_hook_overrides_the_widened_row():
+    import torch
+    from stable_envs.env import Env
+    from stable_envs.spaces import Dict
+
+    class F64(Env):
+        state_dim = 2
+        state_names = ("a", "b")
+        state_layout = ((("x",), 2, 0, torch.float64),)
+
+        def make_variation_space(self):
+            return Dict({})
+
+        def scene(self, states, variation=None, style=None):  # pragma: no cover
+            raise NotImplementedError
+
+        def _live_state(self):
+            return {("x",): torch.tensor([[0.1, 0.2]], dtype=torch.float64)}
+
+    env = F64(num_envs=1, device="cpu")
+    env.set_state(torch.tensor([[0.1, 0.2]], dtype=torch.float32))
+    assert torch.equal(env.state["x"], torch.tensor([[0.1, 0.2]], dtype=torch.float64))
+    assert not torch.equal(env.unpack(env.get_state())["x"], env.state["x"])
