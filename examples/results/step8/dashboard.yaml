@@ -701,8 +701,15 @@ workstreams:
   merge_gate: 1-7 PASS/n-a per review_g.md; 8 APPROVE; 9 none; 10 this row
 - workstream: H_semantic_craftax
   branch: step8/semantic-craftax
-  status: worktree created, never spawned
+  status: MERGED into step8/integration (FINDING; reviewed APPROVE)
   model: opus
+  head_sha: 89421eb
+  review: review_h.md APPROVE (sonnet, fresh; reproduced identity recheck, channel probe, evaluator inventory)
+  finding: 'FINDING (DOCUMENTED_LIMITATION): Step 7 completed, not extended, the official surface; both frozen Step-7 corpora re-render byte-identically through ours and official craftax 1.6.1 (256 frames,
+    4 (cell,tile) pairs), so a paired Gate H would compare identical byte streams; no downstream Craftax evaluator exists anywhere (no checkpoint, collector, plan config, baseline row, success criterion)
+    -> UPSTREAM_FINDING for the bundle; channels are live (strip 22.2/30.8 % of frame; night/sleeping move 97-100 % of world px, 0 % of strip); Step-5 claims unaffected (Craftax never a Step-5 representative;
+    step4/5/6 results unchanged by Step 7)'
+  merge_gate: 1-7 PASS/n-a per review_h.md; 8 APPROVE; 9 this IS the semantic decision; 10 this row
 decisions:
 - date: '2026-09-16'
   by: Sami
@@ -776,11 +783,13 @@ buckets:
   DOCUMENTED_LIMITATION:
   - 'nvdiff x86 CPU sparse-stage one-ulp batch dependence: host-dependent (gpu2264 0/19 widths; login010/node1939 differ); no shipped CPU renderer; Step-7 re-freeze authoritative (E task 7)'
   - 'Fetch rendering.transparent_arm: mujoco_warp kernel packs a constant alpha; no translucency path (B)'
+  - 'Craftax semantic follow-up not meaningfully testable downstream: no evaluator consumes the added channels; identity of surfaces is the stronger statement (H)'
   UPSTREAM_FINDING:
   - swm Fetch _apply_visual_variations unbinds three materials for the env lifetime (19-32 % of frame) so a wrapper parity number measures the wrapper (B)
   - swm Fetch declared leaf defaults are not the official appearance (B)
   - swm variation_values list entries used unconverted -> AttributeError (B)
   - gymnasium-robotics + numpy 2.5.3 + mujoco 3.12 cannot construct Fetch (pybind enum vs np.int32 in) (B)
+  - stable_worldmodel registers four Craftax ids but ships no collector, training/planning config, checkpoint or baseline row (H)
   STEP9_CLEANUP:
   - report.py ValueError when outputs are written outside ROOT (E review D1)
   DEFERRED_OPTIMIZATION:
@@ -805,6 +814,8 @@ incident_log:
   item: E merged after fresh APPROVE (opus); colour-check ruling implemented as a narrow class declaration; Rocket provenance gap closed on the held allocation
 - date: '2026-09-16'
   item: G merged after fresh APPROVE; H returned FINDING (no downstream Craftax evaluator; surfaces byte-identical re-measured), review running; F running
+- date: '2026-09-16'
+  item: H merged (FINDING) after fresh APPROVE
 handoff:
   date: '2026-09-16'
   doc: docs/research/step8_handoff.md
