@@ -1,0 +1,1406 @@
+{
+ "arms": [
+  "baseline",
+  "head"
+ ],
+ "baseline": {
+  "AntmazeGiantNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0b10e228f65f86ecb49f674f8443ef79d3a758de997ea5ac45ac74357f21e2e7",
+    "frames_mean": 175.833605812,
+    "frames_sha256": "0b10e228f65f86ecb49f674f8443ef79d3a758de997ea5ac45ac74357f21e2e7",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "f8ff5a81a5435c2f678f87a93b877a94276e48a5c1f1df685b0e5d16f787a4bf",
+    "status": "ok"
+   }
+  },
+  "AntmazeLargeExplore": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "54c4c75fc9366c80ce87c500956d9ba97c6aa3de6f0aae69b83251144a55f4eb",
+    "frames_mean": 186.66405513,
+    "frames_sha256": "54c4c75fc9366c80ce87c500956d9ba97c6aa3de6f0aae69b83251144a55f4eb",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "effff09e3d86a34cad4dbdf127be479cd5b94ca4ba8a3ffbe5d0ff2b1fd7f4f0",
+    "status": "ok"
+   }
+  },
+  "AntmazeMediumExplore": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "adb5a64e68c62f9443dad8b6ada1e458a16734136174ff87992114321560a244",
+    "frames_mean": 182.848173077,
+    "frames_sha256": "adb5a64e68c62f9443dad8b6ada1e458a16734136174ff87992114321560a244",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "13a2e04353c3a5e57e5aaa71baa9a0b9c18506e2995ce77d9d8b65a9988a85bc",
+    "status": "ok"
+   }
+  },
+  "AntmazeTeleportExplore": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "823a2384934adcb8f65d7a1b561021c38b666f71b5858dad49464110742d076c",
+    "frames_mean": 187.260322,
+    "frames_sha256": "823a2384934adcb8f65d7a1b561021c38b666f71b5858dad49464110742d076c",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "573cd9b755183602ed4a3c25c8354911da13ac629ad95771b99595c3691ac108",
+    "status": "ok"
+   }
+  },
+  "DMCAcrobotSwingup": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "237399ad461170ca412bef4a93fc85d32375316c843e58d38ffe114037debfd9",
+    "frames_mean": 77.103556961,
+    "frames_sha256": "237399ad461170ca412bef4a93fc85d32375316c843e58d38ffe114037debfd9",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "70fd5d89b09903910cbd731e38d0d39952e837a024af731cf45befd9141a6c49",
+    "status": "ok"
+   }
+  },
+  "DMCBallInCupCatch": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+    "frames_mean": 58.846128295,
+    "frames_sha256": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "e8a3a9f0790c5c25208d49538ad22539cbfe86bc5e1a107cc58947e410def2ee",
+    "status": "ok",
+    "switches": {
+     "composite_window": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+     "cover_compaction_off": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+     "primitive_bounds_off": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546"
+    }
+   }
+  },
+  "DMCCartpoleBalance": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "dfa157b91e21edae309cd8070ddcb5d84b88dcc544d5d4ade984c26c3fa4182f",
+    "frames_mean": 77.888752333,
+    "frames_sha256": "dfa157b91e21edae309cd8070ddcb5d84b88dcc544d5d4ade984c26c3fa4182f",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "04bba054a02de378445eab6bbe8ee1e2ee63e19b251ab22cc79c0f8e2ad379d3",
+    "status": "ok"
+   }
+  },
+  "DMCCartpoleSwingup": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "e2bbd8f12be44fc3ccc4a0b2818c040a47b0550aca262c54067a096e76576067",
+    "frames_mean": 78.14292579,
+    "frames_sha256": "e2bbd8f12be44fc3ccc4a0b2818c040a47b0550aca262c54067a096e76576067",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "c4353f9226f17ddd36f6540a8357b8605ec4d9f9911266c9bb72001df69e4857",
+    "status": "ok"
+   }
+  },
+  "DMCCheetahRun": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCFingerSpin": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "f4557de29788d13006944e0a0586a33874c2d24db70acad43910e9dd78072aa3",
+    "frames_mean": 63.600935079,
+    "frames_sha256": "f4557de29788d13006944e0a0586a33874c2d24db70acad43910e9dd78072aa3",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "512e6d77187ecaaaa7126d6e62f61fd35c12b933308ec1c645b79119f01c908d",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnEasy": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "1af56d439ba8c2965db22c81837280449ac1207b8d71dedf3f55908bcba6a7ac",
+    "frames_mean": 64.341215219,
+    "frames_sha256": "1af56d439ba8c2965db22c81837280449ac1207b8d71dedf3f55908bcba6a7ac",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnHard": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "426c619918bdb4c93a25ca4fcd092744654d866d47f5a5f8231fde2572fe2abf",
+    "frames_mean": 63.734306353,
+    "frames_sha256": "426c619918bdb4c93a25ca4fcd092744654d866d47f5a5f8231fde2572fe2abf",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCHopperHop": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCHumanoidStand": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCManipulatorBringBall": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "50294551304e4755604ae286231540edd5e58a863512e8e0e688ea3bf4cb945e",
+    "frames_mean": 78.421672899,
+    "frames_sha256": "50294551304e4755604ae286231540edd5e58a863512e8e0e688ea3bf4cb945e",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+    "status": "ok"
+   }
+  },
+  "DMCPendulumSwingup": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "50b6b6b341d21987ebac59ed9c1999f202a7cc1dbcb317a3a709c6d0e108e017",
+    "frames_mean": 74.998390849,
+    "frames_sha256": "50b6b6b341d21987ebac59ed9c1999f202a7cc1dbcb317a3a709c6d0e108e017",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "168c4e4bf39bd9ef1263697dc76243521100f353247b1f0275ecc585265eeb1d",
+    "status": "ok"
+   }
+  },
+  "DMCPointMassEasy": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "98f9c58f233d59f15977df9eeb9a62c1d62ed119fb6425ed33ff1c9352f6858e",
+    "frames_mean": 78.665895308,
+    "frames_sha256": "98f9c58f233d59f15977df9eeb9a62c1d62ed119fb6425ed33ff1c9352f6858e",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "db9702fe4bb02714b507fd1cea0e4fe20665106805cffb7687cacfec1f9b6822",
+    "status": "ok"
+   }
+  },
+  "DMCQuadrupedWalk": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCReacherEasy": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "8b4a66ae653c3b14022be19fe4bdcff81066f80c5a1bae75cccd497549dba645",
+    "frames_mean": 80.105812724,
+    "frames_sha256": "8b4a66ae653c3b14022be19fe4bdcff81066f80c5a1bae75cccd497549dba645",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok"
+   }
+  },
+  "DMCReacherHard": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+    "frames_mean": 79.026297802,
+    "frames_sha256": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok",
+    "switches": {
+     "composite_window": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+     "cover_compaction_off": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+     "primitive_bounds_off": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45"
+    }
+   }
+  },
+  "DMCWalkerWalk": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "HumanoidmazeGiantNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+    "frames_mean": 172.771393653,
+    "frames_sha256": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "b3ef97fadfa0b298881980493dfc059a8b2429c4b04ddfe34bfd55878ca9bf59",
+    "status": "ok"
+   }
+  },
+  "HumanoidmazeLargeNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "823b7277e16ca09eaa095ed9dc9f487f8c4f76a2dfc96d88a51c5f1c9775cded",
+    "frames_mean": 184.665040723,
+    "frames_sha256": "823b7277e16ca09eaa095ed9dc9f487f8c4f76a2dfc96d88a51c5f1c9775cded",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "19106fe44bce4c7bb164e7357ce048aa6f3eafdbb21eeb48bb37233c3e3b99c8",
+    "status": "ok"
+   }
+  },
+  "HumanoidmazeMediumNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "f202e1711a74aa0cab69c6f4a045af7242e613e4f309c868aca20d980c3d660b",
+    "frames_mean": 182.834803886,
+    "frames_sha256": "f202e1711a74aa0cab69c6f4a045af7242e613e4f309c868aca20d980c3d660b",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "5ba0c9ab4a303283435daa62835524c6b8bd87b06c0b38a12e92b3c54a0331e0",
+    "status": "ok"
+   }
+  },
+  "MujocoInvertedDoublePendulum": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "6382478ee319fcf06cae988faa7812428962204c99e2d9ab21438d4c20b2c20e",
+    "frames_mean": 81.167093099,
+    "frames_sha256": "6382478ee319fcf06cae988faa7812428962204c99e2d9ab21438d4c20b2c20e",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "6f73d2aff8a76c0d5a649f3250e16925a2f00afa9257de9703fcabe1989f53fd",
+    "status": "ok"
+   }
+  },
+  "MujocoInvertedPendulum": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "ca984d4e0551d429f7190189afbe9801d322a4542ed946e3c29cc1bcaeb63c9e",
+    "frames_mean": 3.070459798,
+    "frames_sha256": "ca984d4e0551d429f7190189afbe9801d322a4542ed946e3c29cc1bcaeb63c9e",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "88b431fb41ab53bb076f2931718549d906b76142d954d38cbabebaed075c8bbb",
+    "status": "ok"
+   }
+  },
+  "MujocoPusher": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0d4cd5ab1524f06d9e388a4b1e1893712dd086e1460a88b0323616a14d39e48c",
+    "frames_mean": 13.983820801,
+    "frames_sha256": "0d4cd5ab1524f06d9e388a4b1e1893712dd086e1460a88b0323616a14d39e48c",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "95bbc9a98b346e0487c8f2be1767b00d2e7f2819dab4e39c26338f73f0f438ed",
+    "status": "ok"
+   }
+  },
+  "MujocoReacher": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "7a5df4dc0240b099a1c451c10ab113490a7be5dd4e1cc9f40569e770493f9fcf",
+    "frames_mean": 80.077273582,
+    "frames_sha256": "7a5df4dc0240b099a1c451c10ab113490a7be5dd4e1cc9f40569e770493f9fcf",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "0fe0f45f9d5d19d2a2e280d18c54856d431596f0bea1377d6c252a792c1214a2",
+    "status": "ok"
+   }
+  },
+  "OGBCube": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'stable_worldmodel'",
+    "status": "skipped"
+   }
+  },
+  "OGBScene": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'stable_worldmodel'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeLarge": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeMedium": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeOpen": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeUMaze": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeGiantNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "4cd1bb903091bf3c09001042bf81ca5ffe07344855844dabc45a2322f679944a",
+    "frames_mean": 175.814413265,
+    "frames_sha256": "4cd1bb903091bf3c09001042bf81ca5ffe07344855844dabc45a2322f679944a",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "96d1c95d6a826ab0f1d0ec956ad5d6cda04ec93dc7c7b5e6c8b4992b7b6fbb74",
+    "status": "ok"
+   }
+  },
+  "PointmazeLargeNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "bc1a61fdb738cc383f4a81ee1d3552cb8d40132df4c19e4a5319d8523bcd6066",
+    "frames_mean": 186.624036205,
+    "frames_sha256": "bc1a61fdb738cc383f4a81ee1d3552cb8d40132df4c19e4a5319d8523bcd6066",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "cf17f314391e6616ac8ee475485d52545a33b2d71dc3a9f77981fd56ae2fdcb4",
+    "status": "ok"
+   }
+  },
+  "PointmazeMediumNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "501002ac5c270c5603748e3cad04b80e1de707c09643f4502991d3675c5d525c",
+    "frames_mean": 182.736279961,
+    "frames_sha256": "501002ac5c270c5603748e3cad04b80e1de707c09643f4502991d3675c5d525c",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "be9b12076bbb9245722482aea839bc1f412820e11d06a62134512730fd50a700",
+    "status": "ok"
+   }
+  },
+  "PointmazeTeleportNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "9121944f35db2c5db7f408124bcd5c6963241e272a9cfb9f9535aa22d628baab",
+    "frames_mean": 187.225624448,
+    "frames_sha256": "9121944f35db2c5db7f408124bcd5c6963241e272a9cfb9f9535aa22d628baab",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "96652f3f44b09553ca28afadc24509e0324f48755c910ca5fe34c1959bfa127f",
+    "status": "ok"
+   }
+  }
+ },
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "cells": {
+  "AntmazeGiantNavigate/cuda": "ok",
+  "AntmazeLargeExplore/cuda": "ok",
+  "AntmazeMediumExplore/cuda": "ok",
+  "AntmazeTeleportExplore/cuda": "ok",
+  "DMCAcrobotSwingup/cuda": "ok",
+  "DMCBallInCupCatch/cuda": "ok",
+  "DMCCartpoleBalance/cuda": "ok",
+  "DMCCartpoleSwingup/cuda": "ok",
+  "DMCCheetahRun/cuda": "skipped",
+  "DMCFingerSpin/cuda": "ok",
+  "DMCFingerTurnEasy/cuda": "ok",
+  "DMCFingerTurnHard/cuda": "ok",
+  "DMCHopperHop/cuda": "skipped",
+  "DMCHumanoidStand/cuda": "skipped",
+  "DMCManipulatorBringBall/cuda": "ok",
+  "DMCPendulumSwingup/cuda": "ok",
+  "DMCPointMassEasy/cuda": "ok",
+  "DMCQuadrupedWalk/cuda": "skipped",
+  "DMCReacherEasy/cuda": "ok",
+  "DMCReacherHard/cuda": "ok",
+  "DMCWalkerWalk/cuda": "skipped",
+  "HumanoidmazeGiantNavigate/cuda": "ok",
+  "HumanoidmazeLargeNavigate/cuda": "ok",
+  "HumanoidmazeMediumNavigate/cuda": "ok",
+  "MujocoInvertedDoublePendulum/cuda": "ok",
+  "MujocoInvertedPendulum/cuda": "ok",
+  "MujocoPusher/cuda": "ok",
+  "MujocoReacher/cuda": "ok",
+  "OGBCube/cuda": "skipped",
+  "OGBScene/cuda": "skipped",
+  "PointMazeLarge/cuda": "skipped",
+  "PointMazeMedium/cuda": "skipped",
+  "PointMazeOpen/cuda": "skipped",
+  "PointMazeUMaze/cuda": "skipped",
+  "PointmazeGiantNavigate/cuda": "ok",
+  "PointmazeLargeNavigate/cuda": "ok",
+  "PointmazeMediumNavigate/cuda": "ok",
+  "PointmazeTeleportNavigate/cuda": "ok"
+ },
+ "compared": [
+  "backends",
+  "frames_from_rows_sha256",
+  "frames_sha256",
+  "frames_shape",
+  "n_states",
+  "reason",
+  "size",
+  "states_sha256",
+  "status",
+  "switches"
+ ],
+ "devices": [
+  "cuda"
+ ],
+ "head": {
+  "AntmazeGiantNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0b10e228f65f86ecb49f674f8443ef79d3a758de997ea5ac45ac74357f21e2e7",
+    "frames_mean": 175.833605812,
+    "frames_sha256": "0b10e228f65f86ecb49f674f8443ef79d3a758de997ea5ac45ac74357f21e2e7",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "f8ff5a81a5435c2f678f87a93b877a94276e48a5c1f1df685b0e5d16f787a4bf",
+    "status": "ok"
+   }
+  },
+  "AntmazeLargeExplore": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "54c4c75fc9366c80ce87c500956d9ba97c6aa3de6f0aae69b83251144a55f4eb",
+    "frames_mean": 186.66405513,
+    "frames_sha256": "54c4c75fc9366c80ce87c500956d9ba97c6aa3de6f0aae69b83251144a55f4eb",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "effff09e3d86a34cad4dbdf127be479cd5b94ca4ba8a3ffbe5d0ff2b1fd7f4f0",
+    "status": "ok"
+   }
+  },
+  "AntmazeMediumExplore": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "adb5a64e68c62f9443dad8b6ada1e458a16734136174ff87992114321560a244",
+    "frames_mean": 182.848173077,
+    "frames_sha256": "adb5a64e68c62f9443dad8b6ada1e458a16734136174ff87992114321560a244",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "13a2e04353c3a5e57e5aaa71baa9a0b9c18506e2995ce77d9d8b65a9988a85bc",
+    "status": "ok"
+   }
+  },
+  "AntmazeTeleportExplore": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "823a2384934adcb8f65d7a1b561021c38b666f71b5858dad49464110742d076c",
+    "frames_mean": 187.260322,
+    "frames_sha256": "823a2384934adcb8f65d7a1b561021c38b666f71b5858dad49464110742d076c",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "573cd9b755183602ed4a3c25c8354911da13ac629ad95771b99595c3691ac108",
+    "status": "ok"
+   }
+  },
+  "DMCAcrobotSwingup": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "237399ad461170ca412bef4a93fc85d32375316c843e58d38ffe114037debfd9",
+    "frames_mean": 77.103556961,
+    "frames_sha256": "237399ad461170ca412bef4a93fc85d32375316c843e58d38ffe114037debfd9",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "70fd5d89b09903910cbd731e38d0d39952e837a024af731cf45befd9141a6c49",
+    "status": "ok"
+   }
+  },
+  "DMCBallInCupCatch": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+    "frames_mean": 58.846128295,
+    "frames_sha256": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "e8a3a9f0790c5c25208d49538ad22539cbfe86bc5e1a107cc58947e410def2ee",
+    "status": "ok",
+    "switches": {
+     "composite_window": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+     "cover_compaction_off": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546",
+     "primitive_bounds_off": "0d99897f9a1267600585700dd563f2c500cb9303fd57d48afd50d8441480c546"
+    }
+   }
+  },
+  "DMCCartpoleBalance": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "dfa157b91e21edae309cd8070ddcb5d84b88dcc544d5d4ade984c26c3fa4182f",
+    "frames_mean": 77.888752333,
+    "frames_sha256": "dfa157b91e21edae309cd8070ddcb5d84b88dcc544d5d4ade984c26c3fa4182f",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "04bba054a02de378445eab6bbe8ee1e2ee63e19b251ab22cc79c0f8e2ad379d3",
+    "status": "ok"
+   }
+  },
+  "DMCCartpoleSwingup": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "e2bbd8f12be44fc3ccc4a0b2818c040a47b0550aca262c54067a096e76576067",
+    "frames_mean": 78.14292579,
+    "frames_sha256": "e2bbd8f12be44fc3ccc4a0b2818c040a47b0550aca262c54067a096e76576067",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "c4353f9226f17ddd36f6540a8357b8605ec4d9f9911266c9bb72001df69e4857",
+    "status": "ok"
+   }
+  },
+  "DMCCheetahRun": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCFingerSpin": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "f4557de29788d13006944e0a0586a33874c2d24db70acad43910e9dd78072aa3",
+    "frames_mean": 63.600935079,
+    "frames_sha256": "f4557de29788d13006944e0a0586a33874c2d24db70acad43910e9dd78072aa3",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "512e6d77187ecaaaa7126d6e62f61fd35c12b933308ec1c645b79119f01c908d",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnEasy": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "1af56d439ba8c2965db22c81837280449ac1207b8d71dedf3f55908bcba6a7ac",
+    "frames_mean": 64.341215219,
+    "frames_sha256": "1af56d439ba8c2965db22c81837280449ac1207b8d71dedf3f55908bcba6a7ac",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnHard": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "426c619918bdb4c93a25ca4fcd092744654d866d47f5a5f8231fde2572fe2abf",
+    "frames_mean": 63.734306353,
+    "frames_sha256": "426c619918bdb4c93a25ca4fcd092744654d866d47f5a5f8231fde2572fe2abf",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCHopperHop": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCHumanoidStand": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCManipulatorBringBall": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "50294551304e4755604ae286231540edd5e58a863512e8e0e688ea3bf4cb945e",
+    "frames_mean": 78.421672899,
+    "frames_sha256": "50294551304e4755604ae286231540edd5e58a863512e8e0e688ea3bf4cb945e",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+    "status": "ok"
+   }
+  },
+  "DMCPendulumSwingup": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "50b6b6b341d21987ebac59ed9c1999f202a7cc1dbcb317a3a709c6d0e108e017",
+    "frames_mean": 74.998390849,
+    "frames_sha256": "50b6b6b341d21987ebac59ed9c1999f202a7cc1dbcb317a3a709c6d0e108e017",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "168c4e4bf39bd9ef1263697dc76243521100f353247b1f0275ecc585265eeb1d",
+    "status": "ok"
+   }
+  },
+  "DMCPointMassEasy": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "98f9c58f233d59f15977df9eeb9a62c1d62ed119fb6425ed33ff1c9352f6858e",
+    "frames_mean": 78.665895308,
+    "frames_sha256": "98f9c58f233d59f15977df9eeb9a62c1d62ed119fb6425ed33ff1c9352f6858e",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "db9702fe4bb02714b507fd1cea0e4fe20665106805cffb7687cacfec1f9b6822",
+    "status": "ok"
+   }
+  },
+  "DMCQuadrupedWalk": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "DMCReacherEasy": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "8b4a66ae653c3b14022be19fe4bdcff81066f80c5a1bae75cccd497549dba645",
+    "frames_mean": 80.105812724,
+    "frames_sha256": "8b4a66ae653c3b14022be19fe4bdcff81066f80c5a1bae75cccd497549dba645",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok"
+   }
+  },
+  "DMCReacherHard": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+    "frames_mean": 79.026297802,
+    "frames_sha256": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok",
+    "switches": {
+     "composite_window": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+     "cover_compaction_off": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45",
+     "primitive_bounds_off": "2f62cecdd8f9af56be574f43ed65ce42e369066660f4e0eb3927879f672e5b45"
+    }
+   }
+  },
+  "DMCWalkerWalk": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'warp'",
+    "status": "skipped"
+   }
+  },
+  "HumanoidmazeGiantNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+    "frames_mean": 172.771393653,
+    "frames_sha256": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "b3ef97fadfa0b298881980493dfc059a8b2429c4b04ddfe34bfd55878ca9bf59",
+    "status": "ok"
+   }
+  },
+  "HumanoidmazeLargeNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "823b7277e16ca09eaa095ed9dc9f487f8c4f76a2dfc96d88a51c5f1c9775cded",
+    "frames_mean": 184.665040723,
+    "frames_sha256": "823b7277e16ca09eaa095ed9dc9f487f8c4f76a2dfc96d88a51c5f1c9775cded",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "19106fe44bce4c7bb164e7357ce048aa6f3eafdbb21eeb48bb37233c3e3b99c8",
+    "status": "ok"
+   }
+  },
+  "HumanoidmazeMediumNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "f202e1711a74aa0cab69c6f4a045af7242e613e4f309c868aca20d980c3d660b",
+    "frames_mean": 182.834803886,
+    "frames_sha256": "f202e1711a74aa0cab69c6f4a045af7242e613e4f309c868aca20d980c3d660b",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "5ba0c9ab4a303283435daa62835524c6b8bd87b06c0b38a12e92b3c54a0331e0",
+    "status": "ok"
+   }
+  },
+  "MujocoInvertedDoublePendulum": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "6382478ee319fcf06cae988faa7812428962204c99e2d9ab21438d4c20b2c20e",
+    "frames_mean": 81.167093099,
+    "frames_sha256": "6382478ee319fcf06cae988faa7812428962204c99e2d9ab21438d4c20b2c20e",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "6f73d2aff8a76c0d5a649f3250e16925a2f00afa9257de9703fcabe1989f53fd",
+    "status": "ok"
+   }
+  },
+  "MujocoInvertedPendulum": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "ca984d4e0551d429f7190189afbe9801d322a4542ed946e3c29cc1bcaeb63c9e",
+    "frames_mean": 3.070459798,
+    "frames_sha256": "ca984d4e0551d429f7190189afbe9801d322a4542ed946e3c29cc1bcaeb63c9e",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "88b431fb41ab53bb076f2931718549d906b76142d954d38cbabebaed075c8bbb",
+    "status": "ok"
+   }
+  },
+  "MujocoPusher": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0d4cd5ab1524f06d9e388a4b1e1893712dd086e1460a88b0323616a14d39e48c",
+    "frames_mean": 13.983820801,
+    "frames_sha256": "0d4cd5ab1524f06d9e388a4b1e1893712dd086e1460a88b0323616a14d39e48c",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "95bbc9a98b346e0487c8f2be1767b00d2e7f2819dab4e39c26338f73f0f438ed",
+    "status": "ok"
+   }
+  },
+  "MujocoReacher": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "7a5df4dc0240b099a1c451c10ab113490a7be5dd4e1cc9f40569e770493f9fcf",
+    "frames_mean": 80.077273582,
+    "frames_sha256": "7a5df4dc0240b099a1c451c10ab113490a7be5dd4e1cc9f40569e770493f9fcf",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "0fe0f45f9d5d19d2a2e280d18c54856d431596f0bea1377d6c252a792c1214a2",
+    "status": "ok"
+   }
+  },
+  "OGBCube": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'stable_worldmodel'",
+    "status": "skipped"
+   }
+  },
+  "OGBScene": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'stable_worldmodel'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeLarge": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeMedium": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeOpen": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeUMaze": {
+   "device_cuda": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeGiantNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "4cd1bb903091bf3c09001042bf81ca5ffe07344855844dabc45a2322f679944a",
+    "frames_mean": 175.814413265,
+    "frames_sha256": "4cd1bb903091bf3c09001042bf81ca5ffe07344855844dabc45a2322f679944a",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "96d1c95d6a826ab0f1d0ec956ad5d6cda04ec93dc7c7b5e6c8b4992b7b6fbb74",
+    "status": "ok"
+   }
+  },
+  "PointmazeLargeNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "bc1a61fdb738cc383f4a81ee1d3552cb8d40132df4c19e4a5319d8523bcd6066",
+    "frames_mean": 186.624036205,
+    "frames_sha256": "bc1a61fdb738cc383f4a81ee1d3552cb8d40132df4c19e4a5319d8523bcd6066",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "cf17f314391e6616ac8ee475485d52545a33b2d71dc3a9f77981fd56ae2fdcb4",
+    "status": "ok"
+   }
+  },
+  "PointmazeMediumNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "501002ac5c270c5603748e3cad04b80e1de707c09643f4502991d3675c5d525c",
+    "frames_mean": 182.736279961,
+    "frames_sha256": "501002ac5c270c5603748e3cad04b80e1de707c09643f4502991d3675c5d525c",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "be9b12076bbb9245722482aea839bc1f412820e11d06a62134512730fd50a700",
+    "status": "ok"
+   }
+  },
+  "PointmazeTeleportNavigate": {
+   "device_cuda": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.composite",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "9121944f35db2c5db7f408124bcd5c6963241e272a9cfb9f9535aa22d628baab",
+    "frames_mean": 187.225624448,
+    "frames_sha256": "9121944f35db2c5db7f408124bcd5c6963241e272a9cfb9f9535aa22d628baab",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "96652f3f44b09553ca28afadc24509e0324f48755c910ca5fe34c1959bfa127f",
+    "status": "ok"
+   }
+  }
+ },
+ "head_sha": "900065a0a5ab9e8b010c7e8ccb94ff7d90adb76e",
+ "host": "gpu1503.oscar.ccv.brown.edu",
+ "identical": true,
+ "n_states_requested": 64,
+ "python": "$SCR/venvs/se-step6/bin/python",
+ "unexplained_differences": {}
+}

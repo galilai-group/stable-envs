@@ -1,0 +1,1288 @@
+{
+ "baseline": {
+  "AntmazeGiantNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "AntmazeLargeExplore": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "AntmazeMediumExplore": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "AntmazeTeleportExplore": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "DMCAcrobotSwingup": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "70c38db8566c3385658edeb678bbd285d4f28b996c1509ec56c3021e52072eda",
+    "frames_mean": 77.362626518,
+    "frames_sha256": "70c38db8566c3385658edeb678bbd285d4f28b996c1509ec56c3021e52072eda",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "70fd5d89b09903910cbd731e38d0d39952e837a024af731cf45befd9141a6c49",
+    "status": "ok"
+   }
+  },
+  "DMCBallInCupCatch": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+    "frames_mean": 48.914238916,
+    "frames_sha256": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "e8a3a9f0790c5c25208d49538ad22539cbfe86bc5e1a107cc58947e410def2ee",
+    "status": "ok",
+    "switches": {
+     "composite_window": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+     "cover_compaction_off": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+     "primitive_bounds_off": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2"
+    }
+   }
+  },
+  "DMCCartpoleBalance": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "ca2b5b48070957233da6685a7ff5bcbb61fc818005dbaddb2f0ff0fac84777f7",
+    "frames_mean": 78.022581993,
+    "frames_sha256": "ca2b5b48070957233da6685a7ff5bcbb61fc818005dbaddb2f0ff0fac84777f7",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "04bba054a02de378445eab6bbe8ee1e2ee63e19b251ab22cc79c0f8e2ad379d3",
+    "status": "ok"
+   }
+  },
+  "DMCCartpoleSwingup": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "a5f0b80d81b412df18e2b7da58f7d0d0002302d9e92a9a7c593083e19f7aa55f",
+    "frames_mean": 78.276297064,
+    "frames_sha256": "a5f0b80d81b412df18e2b7da58f7d0d0002302d9e92a9a7c593083e19f7aa55f",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "c4353f9226f17ddd36f6540a8357b8605ec4d9f9911266c9bb72001df69e4857",
+    "status": "ok"
+   }
+  },
+  "DMCCheetahRun": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "35f82063efe3cff1dbcd9e489fc79285f0ee11b974d152536f62fd4b5193e3a1",
+    "frames_mean": 79.080565299,
+    "frames_sha256": "35f82063efe3cff1dbcd9e489fc79285f0ee11b974d152536f62fd4b5193e3a1",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "ec35fd6d5b6f4a96521dda5e663b5dc6be64aea0dc8824f58b2cd5f894fe0975",
+    "status": "ok"
+   }
+  },
+  "DMCFingerSpin": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "dd260f76793a5db83fa8a53fa7d04f403e9fa97643ad8b999cb8be0c7fa8e11e",
+    "frames_mean": 53.664929079,
+    "frames_sha256": "dd260f76793a5db83fa8a53fa7d04f403e9fa97643ad8b999cb8be0c7fa8e11e",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "512e6d77187ecaaaa7126d6e62f61fd35c12b933308ec1c645b79119f01c908d",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnEasy": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "604f41bc88a657de74c7db9a19e65fd1b66a14db4e07432da213815a135ac78c",
+    "frames_mean": 54.42698516,
+    "frames_sha256": "604f41bc88a657de74c7db9a19e65fd1b66a14db4e07432da213815a135ac78c",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnHard": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "9403e1927e1741b22c9a364a34236212a7cb6976726190103c6ea0adc75a2a0b",
+    "frames_mean": 53.818402925,
+    "frames_sha256": "9403e1927e1741b22c9a364a34236212a7cb6976726190103c6ea0adc75a2a0b",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCHopperHop": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "f89c27575e5ead5ee1bbd67a2afd6b1f98e447e700125afbb8489b2675dfb67a",
+    "frames_mean": 78.146253336,
+    "frames_sha256": "f89c27575e5ead5ee1bbd67a2afd6b1f98e447e700125afbb8489b2675dfb67a",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "7075fe6db21850a6c586aa8b1a5323159298577e6219dd10810f9efba805635a",
+    "status": "ok"
+   }
+  },
+  "DMCHumanoidStand": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "f85750ead20563820e8e57a269b1a8250ff0f9878dfd88bb72cd6453c50ebf8c",
+    "frames_mean": 62.615422601,
+    "frames_sha256": "f85750ead20563820e8e57a269b1a8250ff0f9878dfd88bb72cd6453c50ebf8c",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "a0daa64710a4a91a0583c6cc5522ca2a762980879823dafae11e896405859ed0",
+    "status": "ok"
+   }
+  },
+  "DMCManipulatorBringBall": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "f137a58113718c70fbbd202589a8d0c9e4bf1e72eb44c35187c387b2d2bc647f",
+    "frames_mean": 78.295296701,
+    "frames_sha256": "f137a58113718c70fbbd202589a8d0c9e4bf1e72eb44c35187c387b2d2bc647f",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+    "status": "ok"
+   }
+  },
+  "DMCPendulumSwingup": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "2837b0eaf102cdbee8d36572baddda1db9e88ec3f71ff04c2c1a4f2aa1ba3c7a",
+    "frames_mean": 75.071537078,
+    "frames_sha256": "2837b0eaf102cdbee8d36572baddda1db9e88ec3f71ff04c2c1a4f2aa1ba3c7a",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "168c4e4bf39bd9ef1263697dc76243521100f353247b1f0275ecc585265eeb1d",
+    "status": "ok"
+   }
+  },
+  "DMCPointMassEasy": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "63c4969f1a3da9812891f01a0829f9bc17eb1a03956a905c5a496c003b77b528",
+    "frames_mean": 78.7572242,
+    "frames_sha256": "63c4969f1a3da9812891f01a0829f9bc17eb1a03956a905c5a496c003b77b528",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "db9702fe4bb02714b507fd1cea0e4fe20665106805cffb7687cacfec1f9b6822",
+    "status": "ok"
+   }
+  },
+  "DMCQuadrupedWalk": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "ec0f760f5104360f704316212080ff0d6660a9f591e547886366c25b6068d306",
+    "frames_mean": 68.227917937,
+    "frames_sha256": "ec0f760f5104360f704316212080ff0d6660a9f591e547886366c25b6068d306",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "1f0b38b4dca47b9234aec8265165e562bd482b7da3623e8fef1b95c6dbac221f",
+    "status": "ok"
+   }
+  },
+  "DMCReacherEasy": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0e3bd4c118893b8cb0e04decf6abece08b00575d14428e9ffe72646b3e240df8",
+    "frames_mean": 80.178758179,
+    "frames_sha256": "0e3bd4c118893b8cb0e04decf6abece08b00575d14428e9ffe72646b3e240df8",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok"
+   }
+  },
+  "DMCReacherHard": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+    "frames_mean": 79.099332572,
+    "frames_sha256": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok",
+    "switches": {
+     "composite_window": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+     "cover_compaction_off": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+     "primitive_bounds_off": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb"
+    }
+   }
+  },
+  "DMCWalkerWalk": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "ed980c67d9395b9eead9155cc8e01e8a40a4d90398da0b549ee050bba6d2cf01",
+    "frames_mean": 70.95262823,
+    "frames_sha256": "ed980c67d9395b9eead9155cc8e01e8a40a4d90398da0b549ee050bba6d2cf01",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "190e350aa3ef97c3b4214ec90e8a81fe0b0f0280f08406032c288dd63d8d1145",
+    "status": "ok"
+   }
+  },
+  "HumanoidmazeGiantNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "HumanoidmazeLargeNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "HumanoidmazeMediumNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "MujocoInvertedDoublePendulum": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "966ab1abf56972802156b1471452d497dd95473d91eb7416c70bd60ed318f351",
+    "frames_mean": 81.13481798,
+    "frames_sha256": "966ab1abf56972802156b1471452d497dd95473d91eb7416c70bd60ed318f351",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "6f73d2aff8a76c0d5a649f3250e16925a2f00afa9257de9703fcabe1989f53fd",
+    "status": "ok"
+   }
+  },
+  "MujocoInvertedPendulum": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "92759a110e2dcfeb214555832642f0fd8da7e5a59ca6b7f978e730252605b311",
+    "frames_mean": 3.095208966,
+    "frames_sha256": "92759a110e2dcfeb214555832642f0fd8da7e5a59ca6b7f978e730252605b311",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "88b431fb41ab53bb076f2931718549d906b76142d954d38cbabebaed075c8bbb",
+    "status": "ok"
+   }
+  },
+  "MujocoPusher": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "e17007d05151a1d1acaf75e553e08081faf0cebd790d6672e45444fadb488b7e",
+    "frames_mean": 13.992265354,
+    "frames_sha256": "e17007d05151a1d1acaf75e553e08081faf0cebd790d6672e45444fadb488b7e",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "d0965feec25cc0c10f122efebbf896e8e33b765895a8e107c7b6d59ee0a9a617",
+    "status": "ok"
+   }
+  },
+  "MujocoReacher": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "04671858d87e3538748f3ac5cf84303704131e71d41f68406a9b785ca0a352ba",
+    "frames_mean": 80.087404966,
+    "frames_sha256": "04671858d87e3538748f3ac5cf84303704131e71d41f68406a9b785ca0a352ba",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "0fe0f45f9d5d19d2a2e280d18c54856d431596f0bea1377d6c252a792c1214a2",
+    "status": "ok"
+   }
+  },
+  "OGBCube": {
+   "device_cpu": {
+    "reason": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves un",
+    "status": "skipped"
+   }
+  },
+  "OGBScene": {
+   "device_cpu": {
+    "reason": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves u",
+    "status": "skipped"
+   }
+  },
+  "PointMazeLarge": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeMedium": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeOpen": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeUMaze": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeGiantNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeLargeNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeMediumNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeTeleportNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  }
+ },
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "cells": {
+  "AntmazeGiantNavigate/cpu": "skipped",
+  "AntmazeLargeExplore/cpu": "skipped",
+  "AntmazeMediumExplore/cpu": "skipped",
+  "AntmazeTeleportExplore/cpu": "skipped",
+  "DMCAcrobotSwingup/cpu": "ok",
+  "DMCBallInCupCatch/cpu": "ok",
+  "DMCCartpoleBalance/cpu": "ok",
+  "DMCCartpoleSwingup/cpu": "ok",
+  "DMCCheetahRun/cpu": "ok",
+  "DMCFingerSpin/cpu": "ok",
+  "DMCFingerTurnEasy/cpu": "ok",
+  "DMCFingerTurnHard/cpu": "ok",
+  "DMCHopperHop/cpu": "ok",
+  "DMCHumanoidStand/cpu": "ok",
+  "DMCManipulatorBringBall/cpu": "ok",
+  "DMCPendulumSwingup/cpu": "ok",
+  "DMCPointMassEasy/cpu": "ok",
+  "DMCQuadrupedWalk/cpu": "ok",
+  "DMCReacherEasy/cpu": "ok",
+  "DMCReacherHard/cpu": "ok",
+  "DMCWalkerWalk/cpu": "ok",
+  "HumanoidmazeGiantNavigate/cpu": "skipped",
+  "HumanoidmazeLargeNavigate/cpu": "skipped",
+  "HumanoidmazeMediumNavigate/cpu": "skipped",
+  "MujocoInvertedDoublePendulum/cpu": "ok",
+  "MujocoInvertedPendulum/cpu": "ok",
+  "MujocoPusher/cpu": "ok",
+  "MujocoReacher/cpu": "ok",
+  "OGBCube/cpu": "skipped",
+  "OGBScene/cpu": "skipped",
+  "PointMazeLarge/cpu": "skipped",
+  "PointMazeMedium/cpu": "skipped",
+  "PointMazeOpen/cpu": "skipped",
+  "PointMazeUMaze/cpu": "skipped",
+  "PointmazeGiantNavigate/cpu": "skipped",
+  "PointmazeLargeNavigate/cpu": "skipped",
+  "PointmazeMediumNavigate/cpu": "skipped",
+  "PointmazeTeleportNavigate/cpu": "skipped"
+ },
+ "compared": [
+  "backends",
+  "frames_from_rows_sha256",
+  "frames_sha256",
+  "frames_shape",
+  "n_states",
+  "reason",
+  "size",
+  "states_sha256",
+  "status",
+  "switches"
+ ],
+ "devices": [
+  "cpu"
+ ],
+ "head": {
+  "AntmazeGiantNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "AntmazeLargeExplore": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "AntmazeMediumExplore": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "AntmazeTeleportExplore": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "DMCAcrobotSwingup": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "70c38db8566c3385658edeb678bbd285d4f28b996c1509ec56c3021e52072eda",
+    "frames_mean": 77.362626518,
+    "frames_sha256": "70c38db8566c3385658edeb678bbd285d4f28b996c1509ec56c3021e52072eda",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "70fd5d89b09903910cbd731e38d0d39952e837a024af731cf45befd9141a6c49",
+    "status": "ok"
+   }
+  },
+  "DMCBallInCupCatch": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+    "frames_mean": 48.914238916,
+    "frames_sha256": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "e8a3a9f0790c5c25208d49538ad22539cbfe86bc5e1a107cc58947e410def2ee",
+    "status": "ok",
+    "switches": {
+     "composite_window": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+     "cover_compaction_off": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2",
+     "primitive_bounds_off": "58008166168f115eaa281b75564766f5217ed5c9a7cdb525cff83c808c37d2f2"
+    }
+   }
+  },
+  "DMCCartpoleBalance": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "ca2b5b48070957233da6685a7ff5bcbb61fc818005dbaddb2f0ff0fac84777f7",
+    "frames_mean": 78.022581993,
+    "frames_sha256": "ca2b5b48070957233da6685a7ff5bcbb61fc818005dbaddb2f0ff0fac84777f7",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "04bba054a02de378445eab6bbe8ee1e2ee63e19b251ab22cc79c0f8e2ad379d3",
+    "status": "ok"
+   }
+  },
+  "DMCCartpoleSwingup": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "a5f0b80d81b412df18e2b7da58f7d0d0002302d9e92a9a7c593083e19f7aa55f",
+    "frames_mean": 78.276297064,
+    "frames_sha256": "a5f0b80d81b412df18e2b7da58f7d0d0002302d9e92a9a7c593083e19f7aa55f",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "c4353f9226f17ddd36f6540a8357b8605ec4d9f9911266c9bb72001df69e4857",
+    "status": "ok"
+   }
+  },
+  "DMCCheetahRun": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "35f82063efe3cff1dbcd9e489fc79285f0ee11b974d152536f62fd4b5193e3a1",
+    "frames_mean": 79.080565299,
+    "frames_sha256": "35f82063efe3cff1dbcd9e489fc79285f0ee11b974d152536f62fd4b5193e3a1",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "ec35fd6d5b6f4a96521dda5e663b5dc6be64aea0dc8824f58b2cd5f894fe0975",
+    "status": "ok"
+   }
+  },
+  "DMCFingerSpin": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "dd260f76793a5db83fa8a53fa7d04f403e9fa97643ad8b999cb8be0c7fa8e11e",
+    "frames_mean": 53.664929079,
+    "frames_sha256": "dd260f76793a5db83fa8a53fa7d04f403e9fa97643ad8b999cb8be0c7fa8e11e",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "512e6d77187ecaaaa7126d6e62f61fd35c12b933308ec1c645b79119f01c908d",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnEasy": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "604f41bc88a657de74c7db9a19e65fd1b66a14db4e07432da213815a135ac78c",
+    "frames_mean": 54.42698516,
+    "frames_sha256": "604f41bc88a657de74c7db9a19e65fd1b66a14db4e07432da213815a135ac78c",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCFingerTurnHard": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "9403e1927e1741b22c9a364a34236212a7cb6976726190103c6ea0adc75a2a0b",
+    "frames_mean": 53.818402925,
+    "frames_sha256": "9403e1927e1741b22c9a364a34236212a7cb6976726190103c6ea0adc75a2a0b",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "4350419ed5ae1bf3b00657f8cc6f0fc3501b50a44386d02858275b6239d0fbef",
+    "status": "ok"
+   }
+  },
+  "DMCHopperHop": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "f89c27575e5ead5ee1bbd67a2afd6b1f98e447e700125afbb8489b2675dfb67a",
+    "frames_mean": 78.146253336,
+    "frames_sha256": "f89c27575e5ead5ee1bbd67a2afd6b1f98e447e700125afbb8489b2675dfb67a",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "7075fe6db21850a6c586aa8b1a5323159298577e6219dd10810f9efba805635a",
+    "status": "ok"
+   }
+  },
+  "DMCHumanoidStand": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "f85750ead20563820e8e57a269b1a8250ff0f9878dfd88bb72cd6453c50ebf8c",
+    "frames_mean": 62.615422601,
+    "frames_sha256": "f85750ead20563820e8e57a269b1a8250ff0f9878dfd88bb72cd6453c50ebf8c",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "a0daa64710a4a91a0583c6cc5522ca2a762980879823dafae11e896405859ed0",
+    "status": "ok"
+   }
+  },
+  "DMCManipulatorBringBall": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "f137a58113718c70fbbd202589a8d0c9e4bf1e72eb44c35187c387b2d2bc647f",
+    "frames_mean": 78.295296701,
+    "frames_sha256": "f137a58113718c70fbbd202589a8d0c9e4bf1e72eb44c35187c387b2d2bc647f",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "ebfc481ad7f23962dc34461ee226af3c6a120f2ad5ee0d78c503f5a47aa8a133",
+    "status": "ok"
+   }
+  },
+  "DMCPendulumSwingup": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "2837b0eaf102cdbee8d36572baddda1db9e88ec3f71ff04c2c1a4f2aa1ba3c7a",
+    "frames_mean": 75.071537078,
+    "frames_sha256": "2837b0eaf102cdbee8d36572baddda1db9e88ec3f71ff04c2c1a4f2aa1ba3c7a",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "168c4e4bf39bd9ef1263697dc76243521100f353247b1f0275ecc585265eeb1d",
+    "status": "ok"
+   }
+  },
+  "DMCPointMassEasy": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "63c4969f1a3da9812891f01a0829f9bc17eb1a03956a905c5a496c003b77b528",
+    "frames_mean": 78.7572242,
+    "frames_sha256": "63c4969f1a3da9812891f01a0829f9bc17eb1a03956a905c5a496c003b77b528",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "db9702fe4bb02714b507fd1cea0e4fe20665106805cffb7687cacfec1f9b6822",
+    "status": "ok"
+   }
+  },
+  "DMCQuadrupedWalk": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "ec0f760f5104360f704316212080ff0d6660a9f591e547886366c25b6068d306",
+    "frames_mean": 68.227917937,
+    "frames_sha256": "ec0f760f5104360f704316212080ff0d6660a9f591e547886366c25b6068d306",
+    "frames_shape": [
+     64,
+     224,
+     224,
+     3
+    ],
+    "n_states": 64,
+    "size": 224,
+    "states_sha256": "1f0b38b4dca47b9234aec8265165e562bd482b7da3623e8fef1b95c6dbac221f",
+    "status": "ok"
+   }
+  },
+  "DMCReacherEasy": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "0e3bd4c118893b8cb0e04decf6abece08b00575d14428e9ffe72646b3e240df8",
+    "frames_mean": 80.178758179,
+    "frames_sha256": "0e3bd4c118893b8cb0e04decf6abece08b00575d14428e9ffe72646b3e240df8",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok"
+   }
+  },
+  "DMCReacherHard": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+    "frames_mean": 79.099332572,
+    "frames_sha256": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "bbf77497ba2d4ea91d96a227ff3d0a46a21d4a210274ae377be5d670e47bf491",
+    "status": "ok",
+    "switches": {
+     "composite_window": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+     "cover_compaction_off": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb",
+     "primitive_bounds_off": "7fe9113d8cad8bafcabc228041a9ca81f22337b0d8d760435b355fb84c9f32bb"
+    }
+   }
+  },
+  "DMCWalkerWalk": {
+   "device_cpu": {
+    "backends": [
+     "cpu3d.render",
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch"
+    ],
+    "frames_from_rows_sha256": "ed980c67d9395b9eead9155cc8e01e8a40a4d90398da0b549ee050bba6d2cf01",
+    "frames_mean": 70.95262823,
+    "frames_sha256": "ed980c67d9395b9eead9155cc8e01e8a40a4d90398da0b549ee050bba6d2cf01",
+    "frames_shape": [
+     64,
+     84,
+     84,
+     3
+    ],
+    "n_states": 64,
+    "size": 84,
+    "states_sha256": "190e350aa3ef97c3b4214ec90e8a81fe0b0f0280f08406032c288dd63d8d1145",
+    "status": "ok"
+   }
+  },
+  "HumanoidmazeGiantNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "HumanoidmazeLargeNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "HumanoidmazeMediumNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "MujocoInvertedDoublePendulum": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "966ab1abf56972802156b1471452d497dd95473d91eb7416c70bd60ed318f351",
+    "frames_mean": 81.13481798,
+    "frames_sha256": "966ab1abf56972802156b1471452d497dd95473d91eb7416c70bd60ed318f351",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "6f73d2aff8a76c0d5a649f3250e16925a2f00afa9257de9703fcabe1989f53fd",
+    "status": "ok"
+   }
+  },
+  "MujocoInvertedPendulum": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "92759a110e2dcfeb214555832642f0fd8da7e5a59ca6b7f978e730252605b311",
+    "frames_mean": 3.095208966,
+    "frames_sha256": "92759a110e2dcfeb214555832642f0fd8da7e5a59ca6b7f978e730252605b311",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "88b431fb41ab53bb076f2931718549d906b76142d954d38cbabebaed075c8bbb",
+    "status": "ok"
+   }
+  },
+  "MujocoPusher": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.any_blocking",
+     "raycast3d.any_blocking_torch",
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "e17007d05151a1d1acaf75e553e08081faf0cebd790d6672e45444fadb488b7e",
+    "frames_mean": 13.992265354,
+    "frames_sha256": "e17007d05151a1d1acaf75e553e08081faf0cebd790d6672e45444fadb488b7e",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "d0965feec25cc0c10f122efebbf896e8e33b765895a8e107c7b6d59ee0a9a617",
+    "status": "ok"
+   }
+  },
+  "MujocoReacher": {
+   "device_cpu": {
+    "backends": [
+     "raycast3d.cast_nearest",
+     "raycast3d.cast_nearest_torch",
+     "raycast3d.static_depth"
+    ],
+    "frames_from_rows_sha256": "04671858d87e3538748f3ac5cf84303704131e71d41f68406a9b785ca0a352ba",
+    "frames_mean": 80.087404966,
+    "frames_sha256": "04671858d87e3538748f3ac5cf84303704131e71d41f68406a9b785ca0a352ba",
+    "frames_shape": [
+     64,
+     240,
+     240,
+     3
+    ],
+    "n_states": 64,
+    "size": 240,
+    "states_sha256": "0fe0f45f9d5d19d2a2e280d18c54856d431596f0bea1377d6c252a792c1214a2",
+    "status": "ok"
+   }
+  },
+  "OGBCube": {
+   "device_cpu": {
+    "reason": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves un",
+    "status": "skipped"
+   }
+  },
+  "OGBScene": {
+   "device_cpu": {
+    "reason": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves u",
+    "status": "skipped"
+   }
+  },
+  "PointMazeLarge": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeMedium": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeOpen": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointMazeUMaze": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'gymnasium_robotics'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeGiantNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeLargeNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeMediumNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  },
+  "PointmazeTeleportNavigate": {
+   "device_cpu": {
+    "reason": "ModuleNotFoundError: No module named 'ogbench'",
+    "status": "skipped"
+   }
+  }
+ },
+ "head_sha": "6bf885a9083f1533433b7947513fc351ff6a3c53",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "identical": true,
+ "n_states_requested": 64,
+ "python": "/Users/samib/se6-venv/bin/python",
+ "unexplained_differences": {}
+}
