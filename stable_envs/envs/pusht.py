@@ -81,10 +81,23 @@ solver carries ``c`` and ``theta``, while the reported and rendered ``block posi
 ``draw_fat_segment`` paints a 5 px stroke, measured by pixel count. The two numbers describe different
 things and making them agree would break one of them.
 
-The agent's velocity is NOT in the compact state, exactly as in ``gym_pusht``'s own observation, so
-``set_state`` zeroes it — the condition the reference is in after ``reset``. Two rollouts from the same
-stored state therefore agree; a rollout *resumed* mid-episode does not inherit the previous velocity,
-and neither does the reference's.
+The agent's velocity is NOT in the compact PACKED state, exactly as in ``gym_pusht``'s own observation,
+so ``set_state`` zeroes it — the condition the reference is in after ``reset``. Two rollouts from the
+same stored state therefore agree; a rollout *resumed* mid-episode does not inherit the previous
+velocity, and neither does the reference's.
+
+Step 9 made that velocity part of the PUBLIC state — ``state["agent", "velocity"]`` — while leaving the
+packed row at the same five columns. The two statements are not in tension and the distinction is the
+whole point of ``pack``/``unpack``:
+
+  * the PACKED row is what a corpus stores, what every renderer reads and what every frozen Step-4
+    digest was computed from, and it is byte-for-byte what it was in Step 8;
+  * the PUBLIC state is what the dynamics need to be a FUNCTION. While the velocity lived in an
+    attribute, ``transition(state, action)`` was not pure — it silently consulted whatever the env had
+    been doing — so two calls with the same ``state`` could disagree. Now it cannot.
+
+``unpack`` fills the velocity with zeros, which is not a placeholder: it is exactly the condition
+``set_state`` puts the env in, so a state loaded from a corpus behaves as it always did.
 """
 from __future__ import annotations
 
@@ -93,7 +106,10 @@ import math
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from tensordict import TensorDict
+
+from ..env import Env
+from ..registry import register
 from ..render.scene import Scene2D, SceneBuilder
 from ..spaces import Box, Dict, Discrete, RGBBox
 
@@ -143,7 +159,7 @@ def _cross2(a, b):
 
 
 @register
-class PushT(StableEnv):
+class PushT(Env):
     """T-block pushing. State ``[agent_x, agent_y, block_x, block_y, block_angle]`` in a 512 board."""
 
     name = "push-t"
@@ -480,26 +496,91 @@ class PushT(StableEnv):
             self._step_graph_error = f"{type(e).__name__}: {e}"
             self.use_step_graph = False
 
+    # ------------------------------------------------------------------ Step-9 state / lifecycle
+
+    #: The public state, grouped by entity, and how it maps onto the five packed columns.
+    #: ``("agent", "velocity")`` carries offset ``None``: it is real dynamical state that the packed
+    #: row has never carried (neither does gym_pusht's observation), which is what makes
+    #: ``transition`` pure without moving a single column of the corpus layout.
+    state_layout = ((("agent", "position"), 2, 0),
+                    (("agent", "velocity"), 2, None),
+                    (("block", "position"), 2, 2),
+                    (("block", "angle"), 1, 4))
+
+    #: Bounds for ``state_spec``: the 512-unit board, the reference's own action range for the
+    #: velocity (the PD controller cannot exceed it by construction), and a full turn for the angle.
+    state_bounds = {("agent", "position"): (0.0, SCREEN),
+                    ("agent", "velocity"): (-SCREEN, SCREEN),
+                    ("block", "position"): (0.0, SCREEN),
+                    ("block", "angle"): (-math.pi, math.pi)}
+
+    @property
+    def state(self) -> TensorDict:
+        """The live state INCLUDING the agent velocity the packed row does not carry.
+
+        ``Env.state`` unpacks ``get_state()`` and therefore reports a velocity of zero; here the env
+        holds the real one, and ``step`` -> ``state`` -> ``transition`` must agree to the bit or the
+        functional path is a different simulator. So the hidden half is spliced in from ``_agent_v``.
+        """
+        td = super().state
+        n = int(td.batch_size[0])
+        td["agent", "velocity"] = self._agent_v[:n].clone()
+        return td
+
+    def _target(self, action) -> torch.Tensor:
+        return torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, 2)
+
     @torch.no_grad()
-    def step(self, action) -> torch.Tensor:
+    def transition(self, state: TensorDict, action) -> TensorDict:
+        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
+
+        Bit-identical to ``step`` on the same device for the same state, because it is the same
+        ``_advance`` over the same float32 inputs — the eager path, since a CUDA graph reads fixed
+        addresses (``self._state``, ``self._agent_v``) and this call may not write them. ``step``
+        keeps the captured path; ``tests/unit/test_foundation_pusht.py`` asserts the two agree to the
+        bit on CPU and the oracle script asserts it again on CUDA.
+        """
+        rows = self.pack(state)
+        av = torch.as_tensor(state["agent", "velocity"], device=self.device,
+                             dtype=torch.float32).reshape(-1, 2)
+        st, av = self._advance(rows, av, self._target(action))
+        out = self.unpack(st)
+        out["agent", "velocity"] = av
+        return out
+
+    @torch.no_grad()
+    def step(self, action) -> TensorDict:
         """Advance every environment one control step. ``action`` is ``(B,2)``, the absolute PD target.
 
-        Returns the new ``(B,5)`` state. Tracks pymunk to a median 0.68 px over 100 steps and is NOT
-        bit-exact — see the module docstring. ``stable_envs.testing.conformance``'s
-        ``check_step_matches_reference`` measures that rather than asserting it.
+        STATEFUL: it writes ``env.state``. Returns a ``StepResult`` TensorDict carrying ``"state"``
+        AND NOTHING ELSE — PushT has no reward and no termination in stable-envs. gym_pusht's reward
+        is a coverage score computed from the goal pose, which is an APPEARANCE knob here
+        (``goal.position``/``goal.angle`` are variation, not physics), so a reward computed from it
+        would be a different quantity wearing the same name. A ``"reward"`` of zeros would be worse:
+        it reads as a measured value. The cell omits both (contract §5).
+
+        Tracks pymunk to a median 0.68 px over 100 steps and is NOT bit-exact — see the module
+        docstring. ``stable_envs.testing.conformance``'s ``check_step_matches_reference`` measures
+        that rather than asserting it.
         """
-        target = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, 2)
+        self._check_open("step")
+        target = self._target(action).reshape(self.B, 2)
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None:
                 self._capture_step()
             if self._step_graph is not None:
                 self._step_target.copy_(target)
                 self._step_graph.replay()
-                return self._state
+                return TensorDict({"state": self.state}, batch_size=[self.B], device=self.device)
         st, av = self._advance(self._state, self._agent_v, target)
         self._state.copy_(st)
         self._agent_v.copy_(av)
-        return self._state
+        return TensorDict({"state": self.state}, batch_size=[self.B], device=self.device)
+
+    def _close(self) -> None:
+        """Drop the captured CUDA graph. ``Env.close`` calls this once and is idempotent."""
+        self._step_graph = None
+        self._step_target = None
 
     # reference bridge, used by the parity tests
 
