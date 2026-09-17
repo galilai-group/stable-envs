@@ -251,3 +251,20 @@ bake. All eight need their own default-identity row.
    families". **The measured figure is 9 leaves across 9 ids in 2 families** — OGB's 2 (already
    merged) plus DM Control's 7. The 12 Fetch ids are blocked by §1's default problem, which the
    packet's cost estimate ("M — one texture, one key entry") did not see.
+
+## GPU evidence (added by the coordinator once Oscar accepted SSH; tested tree `64a38e7`)
+
+All artifacts under `examples/results/step8/capability/gpu/` (Oscar paths rewritten to `$SCR`).
+Every comparison is within-job on one card; the four jobs ran on the `gpu` partition
+(`norm-gpu` QOS) because the 3090 group quota was held by unrelated jobs.
+
+| merge-gate item | evidence | verdict |
+|---|---|---|
+| default frames unchanged | job 6459781, gpu3002 (L40S): `declaration_{before,after}.json`, 17 DMC cells, `default_frame_digest` identical in every cell; `style_dim` 11→17 / 14→20 / 18→24 / 22→28 on the 12 parity cells, unchanged on the 5 trackcom cells | identical |
+| bake vs full recompile on cuda | same job: `bake_vs_recompile_gpu_probe{0,1,2}.json` | IDENTICAL ×3 |
+| 5 frozen-corpus replay | job 6460099, gpu1504: `digest_replay_{before,after}.json`, 8 cells (7 parity + Manipulator), digests identical before/after | identical |
+| 4 Gate A on cuda with the new style_dim | job 6460346, gpu1506 (A40): `gate_a_cuda_dmc_parity.json` via `examples/fidelity_step4.py` (the driver that certified these cells in Steps 4–7), 7 configs; job 6460099: `gate_a_cuda_dmc_manipulator.json` via the closure2 driver on the Step-7 corpus. Judged locally with the frozen `scratch/step4/certify.py` judge: **8/8 PASS, 14/14 mandatory, no family failure, nothing blocked** | PASS |
+| 7 paired throughput | job 6460099: `throughput_{before,after}.json` (8 cells, B=1 and B=4096, default / shared floor / 96 distinct floors). Default-style B=4096 ratios 0.92–1.15 on seven cells; Manipulator read 0.72 on that mixed node. Re-measured in job 6460478, gpu1501 (RTX A6000, quiet), three ALTERNATING rounds: Manipulator 22236/22545/22567 → 21833/21677/21697 fps (spread 1.01, ratio **0.96**); Cartpole 44983/45577/45788 → 42074/41748/42218 (spread 1.02, ratio **0.92**). The 0.72 was a shared-node artefact; the real default-path cost is 4–8 % at B=4096 (the per-render floor-colour read of the style tensor), inside the 1.25× paired tolerance and far from any tier boundary (`GPU_FAST` needs R ≥ 4). `DEFERRED_OPTIMIZATION`. The 96-distinct-colour batch runs at ~1,200 fps (Manipulator 127) because every distinct quantised colour bakes one plate: a documented cost of USING the leaf at high cardinality, not of the default path | no regression |
+
+The three EGL `Renderer.__del__` tracebacks after each driver's "wrote" line are the known
+interpreter-teardown noise (Step-7 NODE-2, retracted), not measurement failures.
