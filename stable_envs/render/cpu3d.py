@@ -57,15 +57,17 @@ import numpy as np
 import torch
 
 from . import raycast3d as R3
+from .primitives import (BOX, CAPSULE, CYLINDER, ELLIPSOID, GEOM_NAMES, INF,  # noqa: F401
+                         PLANE, PRIMITIVE_KINDS, SPHERE, bound_radius)
+from .primitives import dot3 as _dot
 
-#: mjtGeom codes this backend draws as movers (the ones ``raycast3d`` intersects) and the plane.
-#: ELLIPSOID joined in Step 7 (``raycast3d._ellipsoid``, for DM Control's quadruped torso); nothing
-#: else here is kind-specific -- the window and the shadow footprint read ``bound_radius``.
-PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
-MOVER_KINDS = (SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)
-GEOM_NAMES = {0: "mjGEOM_PLANE", 1: "mjGEOM_HFIELD", 2: "mjGEOM_SPHERE", 3: "mjGEOM_CAPSULE",
-              4: "mjGEOM_ELLIPSOID", 5: "mjGEOM_CYLINDER", 6: "mjGEOM_BOX", 7: "mjGEOM_MESH",
-              8: "mjGEOM_SDF"}
+#: mjtGeom codes this backend draws as movers: every analytic primitive ``raycast3d`` intersects
+#: except the plane, which this module draws itself as the one static floor. Derived from
+#: ``PRIMITIVE_KINDS`` rather than listed again, so a kind added to the intersectors is a mover here
+#: without a second edit. ELLIPSOID joined in Step 7 (``raycast3d._ellipsoid``, for DM Control's
+#: quadruped torso); nothing else here is kind-specific -- the window and the shadow footprint read
+#: the shared ``bound_radius``.
+MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
 #: mjtLightType: 0 SPOT, 1 DIRECTIONAL, 2 POINT, 3 IMAGE. The megakernel treats every non-directional
 #: light as positional and applies the spot cone when the model has any spot light; this backend
 #: implements SPOT and DIRECTIONAL and refuses POINT/IMAGE at ``Scene`` construction.
@@ -292,10 +294,11 @@ class Scene:
                                      dtype=torch.float32, device=self.device).reshape(-1, 3)
         self.mover_matid = np.asarray([int(m.geom_matid[g]) for g in self.movers], np.int64)
         self.mover_rgba = np.asarray([m.geom_rgba[g] for g in self.movers], np.float64).reshape(-1, 4)
-        self.radii = torch.as_tensor(R3.Primitives(
-            kind=np.asarray(kinds), size=self.sizes.cpu().numpy(), mat_rgb=np.zeros((len(kinds), 3)),
-            tex_rgb=np.ones((len(kinds), 3)), spec=np.zeros(len(kinds))).bound_radius(),
-            dtype=torch.float32, device=self.device)
+        # the shared law, rather than a throwaway ``Primitives`` with zeroed colours built only to
+        # call the method on it: this radius bounds the mover window and the shadow footprint below,
+        # and both are claims that nothing outside it can be hit
+        self.radii = torch.as_tensor(bound_radius(kinds, self.sizes.cpu().numpy()),
+                                     dtype=torch.float32, device=self.device)
 
         # materials: specular / shininess per material id, the kernel's defaults for none
         nmat = int(m.nmat)
@@ -395,9 +398,8 @@ class Scene:
 
 # --------------------------------------------------------------------------- helpers
 
-def _dot(a, b):
-    return a[..., 0] * b[..., 0] + a[..., 1] * b[..., 1] + a[..., 2] * b[..., 2]
-
+# ``_dot`` is ``primitives.dot3``, imported at the top: the same unrolled expression the
+# intersectors use, for the same reproducibility reason, from one definition instead of two.
 
 def _normalize(v):
     n = torch.sqrt(_dot(v, v))
@@ -549,7 +551,6 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
         ok = ok & (p0.abs() <= sx)
     if sy > 0:
         ok = ok & (p1.abs() <= sy)
-    INF = R3.INF
     t_best = torch.where(ok, t_plane, torch.full_like(t_plane, INF))
     prim = torch.where(ok, torch.zeros_like(t_plane, dtype=torch.int64),
                        torch.full_like(t_plane, -1, dtype=torch.int64))   # 0 = plane, 1.. = movers

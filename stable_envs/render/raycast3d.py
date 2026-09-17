@@ -42,6 +42,13 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+from .primitives import (BOX, CAPSULE, CYLINDER, ELLIPSOID, GEOM_NAMES, INF,  # noqa: F401
+                         PLANE, PRIMITIVE_KINDS, SPHERE, Primitives)
+from .primitives import bound_radius_tensor as _bound_radius
+from .primitives import dot3 as _dot
+from .primitives import mtv3 as _mtv
+from .primitives import mv3 as _mv
+
 try:
     import triton
     import triton.language as tl
@@ -49,10 +56,11 @@ try:
 except ImportError:                                    # reported by the renderer, never silent
     HAVE_TRITON = False
 
-#: mjtGeom codes, so a scene can be built straight from an MjModel without a translation table
-PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
-
-INF = 1e30
+# The mjtGeom kind codes, ``INF``, the ``Primitives`` scene description, the unrolled 3-vector
+# arithmetic and the bounding-radius law live in ``primitives`` because ``cpu3d`` needs exactly the
+# same ones and used to carry its own copies. They are re-exported here under the names they have
+# always had, so ``R3.SPHERE``, ``R3.INF``, ``R3.Primitives``, ``R3._dot``, ``R3._mv``, ``R3._mtv``
+# and ``R3._bound_radius`` are unchanged for every caller and every test.
 
 
 @dataclass(frozen=True)
@@ -186,101 +194,15 @@ class Lights:
         return (t(self.dirs), t(self.ambient), t(self.diffuse), t(self.specular))
 
 
-@dataclass
-class Primitives:
-    """A set of geoms sharing one draw. ``kind``/``size`` are static; poses come in per frame."""
-
-    kind: np.ndarray            # (P,) mjtGeom
-    size: np.ndarray            # (P,3)
-    mat_rgb: np.ndarray         # (P,3) in [0,1]
-    tex_rgb: np.ndarray         # (P,3) in [0,1]; ones when untextured
-    spec: np.ndarray            # (P,) material specular
-
-    def __len__(self):
-        return len(self.kind)
-
-    def to(self, device, dtype=torch.float32):
-        t = lambda x, d=dtype: torch.tensor(np.asarray(x), device=device, dtype=d)  # noqa: E731
-        return dict(kind=[int(k) for k in self.kind], size=t(self.size), mat=t(self.mat_rgb),
-                    tex=t(self.tex_rgb), spec=t(self.spec))
-
-    def radii(self, device, dtype, scale: float):
-        """``bound_radius() * scale`` as a device tensor, or None if any primitive is unbounded.
-
-        Memoised on the instance: a ``Primitives`` is built once per baked scene and its sizes do not
-        change, so rebuilding this per chunk was one blocking host-to-device copy per window per chunk.
-        """
-        cache = getattr(self, "_radii_cache", None)
-        if cache is None:
-            cache = self._radii_cache = {}
-        key = (str(device), dtype, float(scale))
-        if key not in cache:
-            r = self.bound_radius() * float(scale)
-            cache[key] = None if not np.isfinite(r).all() else \
-                torch.tensor(r, device=device, dtype=dtype)
-        return cache[key]
-
-    def bound_radius(self) -> np.ndarray:
-        """(P,) a radius that contains the primitive about its own origin. Conservative, for tiling."""
-        s = np.asarray(self.size, np.float64)
-        out = np.zeros(len(self.kind))
-        for i, k in enumerate(self.kind):
-            if k == SPHERE:
-                out[i] = s[i, 0]
-            elif k in (CAPSULE, CYLINDER):
-                out[i] = s[i, 0] + s[i, 1]
-            elif k == BOX:
-                out[i] = float(np.linalg.norm(s[i]))
-            elif k == ELLIPSOID:
-                out[i] = float(s[i].max())            # the largest semi-axis contains it
-            else:
-                out[i] = INF
-        return out
-
-
 # --------------------------------------------------------------------------- frame changes
 # Every primitive except the sphere works in its own frame, so each one starts by rotating the ray into
 # that frame and ends by rotating the normal back out. Both are 3x3 matrix-vector products, and how they
-# are SPELLED decides whether the renderer is batch-size reproducible.
-#
-# The obvious spelling, ``torch.einsum("...ij,...j->...i", M, v)``, is not. einsum contracts j by
-# lowering to ``bmm``, so a bundle of shape (B, N, 3) becomes B*N independent 3x3-by-3x1 gemms and
-# cuBLAS chooses the kernel from that batch COUNT. Different kernels accumulate the three products in
-# different orders, so ``M @ v`` for one fixed (M, v) comes back one ulp apart at B=1 and at B=8.
-#
-# One ulp does not stay one ulp. It enters the ray quadratic as ``disc = b*b - a*c``, which on a
-# silhouette ray is the difference of two nearly equal numbers and amplifies it by ~1e3-1e4 (measured on
-# AntmazeMediumNavigate: 1.2e-7 in ``dl`` -> 2.4e-4 in ``disc``), and ``disc > 0`` is then a HIT/MISS
-# decision. A ray grazing the agent's silhouette hits at one batch size and misses at another, and the
-# pixel flips between agent colour and plate: measured 8-44 pixels a frame, up to 59/255, on every one of
-# the 17 legged OGBench cells. The sphere branch has no matmul in it and is bit-identical throughout,
-# which is why pointmaze never showed the defect.
-#
-# Written out as nine multiplies and six adds, the product is a chain of ELEMENTWISE kernels. An
-# elementwise kernel computes each output from its own inputs with no accumulation across threads, so
-# its result cannot depend on how many other elements were launched beside it, and Python's
-# left-to-right ``+`` fixes the summation order at the source instead of leaving it to a kernel
-# heuristic. That is the whole fix; it is exact rather than tighter, and it does not cost a tolerance.
-
-def _mv(M, v):
-    """``M @ v`` for 3-vectors. ``M`` (...,3,3), ``v`` (...,3), broadcasting against each other."""
-    return torch.stack([M[..., 0, 0] * v[..., 0] + M[..., 0, 1] * v[..., 1] + M[..., 0, 2] * v[..., 2],
-                        M[..., 1, 0] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 1, 2] * v[..., 2],
-                        M[..., 2, 0] * v[..., 0] + M[..., 2, 1] * v[..., 1] + M[..., 2, 2] * v[..., 2]],
-                       -1)
-
-
-def _mtv(M, v):
-    """``M.T @ v``: world -> geom frame. Same argument as ``_mv``; the transpose is read off the index."""
-    return torch.stack([M[..., 0, 0] * v[..., 0] + M[..., 1, 0] * v[..., 1] + M[..., 2, 0] * v[..., 2],
-                        M[..., 0, 1] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 2, 1] * v[..., 2],
-                        M[..., 0, 2] * v[..., 0] + M[..., 1, 2] * v[..., 1] + M[..., 2, 2] * v[..., 2]],
-                       -1)
-
-
-def _dot(a, b):
-    """``(a*b).sum(-1)`` for 3-vectors, unrolled for the same reason ``_mv`` is."""
-    return a[..., 0] * b[..., 0] + a[..., 1] * b[..., 1] + a[..., 2] * b[..., 2]
+# are SPELLED decides whether the renderer is batch-size reproducible: ``_mv``/``_mtv``/``_dot`` are
+# ``primitives.mv3``/``mtv3``/``dot3``, written out as nine multiplies and six adds rather than as an
+# ``einsum``, and that module's note carries the measurement (a cuBLAS kernel chosen from the batch
+# COUNT moves ``M @ v`` by an ulp, the ray quadratic amplifies it by ~1e3-1e4, and ``disc > 0`` is a
+# HIT/MISS decision that then flips 8-44 pixels a frame). They are imported rather than defined here
+# because ``cpu3d`` needs the same property from the same expression.
 
 
 # --------------------------------------------------------------------------- intersections
@@ -670,23 +592,9 @@ def _kind_is_bounded(kind: int) -> bool:
     return kind in _BOUNDED_KINDS
 
 
-def _bound_radius(kind: int, size):
-    """``(B,1)`` radius containing the primitive about its own origin, or ``None`` if unbounded.
-
-    Computed from the SIZES THE CALLER PASSED rather than from ``Primitives.bound_radius``, so a
-    per-environment ``size_scale`` (which ``composite`` applies before calling) is already in it and
-    cannot drift out of sync with the geometry being tested.
-    """
-    if kind == SPHERE:
-        return size[..., 0]
-    if kind in (CAPSULE, CYLINDER):
-        return size[..., 0] + size[..., 1]
-    if kind == BOX:
-        return torch.sqrt(size[..., 0] ** 2 + size[..., 1] ** 2 + size[..., 2] ** 2)
-    if kind == ELLIPSOID:
-        return torch.maximum(torch.maximum(size[..., 0], size[..., 1]), size[..., 2])
-    return None                       # PLANE, and any future unbounded kind: always tested
-
+# ``_bound_radius`` is ``primitives.bound_radius_tensor``, imported at the top: the radius the
+# ray bound uses is the same geometric law as the one ``Primitives.bound_radius`` bakes for the
+# screen tile and ``cpu3d`` uses for its mover window, and the three must not drift apart.
 
 def _rays_near(pos_k, rad, o, d, dd):
     """``(B,N)`` bool: could this ray hit a sphere of radius ``rad`` about ``pos_k`` at ``t > 0``?
@@ -1196,8 +1104,7 @@ def _kind_tensor(kinds, device) -> torch.Tensor:
     if hit is None:
         # The kernel's last branch IS the plane, so an unrecognised code would be drawn as one
         # instead of raising the way ``intersect`` does. Same error, at the same place, either path.
-        bad = sorted({k for k in key[1]
-                      if k not in (PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)})
+        bad = sorted({k for k in key[1] if k not in PRIMITIVE_KINDS})
         if bad:
             raise ValueError(f"raycast3d has no intersector for mjtGeom {bad}; scenes here are "
                              f"primitive-only")
