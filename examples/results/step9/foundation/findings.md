@@ -44,10 +44,13 @@ Created:
   `swap_renderer`, `StableEnvGym`, `BatchedEnvPool`, `attach_batched_pool`, `register_gym_ids`,
   `pusht_state`, `style_from_swm_env`, `variation_map`, `INFO_KEYS`.
 - `stable_envs/_interop/__init__.py`, `stable_envs/compat/__init__.py` (shim), rewritten
-  `stable_envs/core/{__init__,env,style}.py` (shims), rewritten `stable_envs/__init__.py`.
-- Tests: `tests/unit/test_foundation_{specs,state,pusht,api,registry,imports}.py`.
-- Scripts: `scratch/step9/foundation/{pusht_oracle.py,pusht_perf.py,demo_wave0.py}`.
-- Artifacts: `examples/results/step9/foundation/{pusht_oracle.json,registry_baseline.json,performance.json,findings.md}`.
+  `stable_envs/core/__init__.py`, `stable_envs/core/env.py`, `stable_envs/core/style.py` (shims), rewritten `stable_envs/__init__.py`.
+- Tests: `tests/unit/test_foundation_specs.py`, `..._state.py`, `..._pusht.py`,
+  `..._api.py`, `..._registry.py`, `..._imports.py`.
+- Scripts: `scratch/step9/foundation/pusht_oracle.py`, `scratch/step9/foundation/pusht_perf.py`,
+  `scratch/step9/foundation/demo_wave0.py`.
+- Artifacts under `examples/results/step9/foundation/`: `pusht_oracle.json`,
+  `registry_baseline.json`, `performance.json`, `findings.md`.
 
 Removed: **nothing**. `stable_envs.core.env`, `stable_envs.core.style`,
 `stable_envs.compat.worldmodel` and `stable_envs.compat.variation_maps.*` all still import and yield
