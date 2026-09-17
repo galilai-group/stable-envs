@@ -1,4 +1,60 @@
-# Step 8 — handoff checkpoint (2026-09-16)
+# Step 8 — handoff checkpoint (2026-09-16, evening)
+
+Written by the Fable coordinator for the next agent (not necessarily a Claude Code agent). Supersedes
+the two earlier checkpoints below the line. Git and artifacts are the source of truth; where this
+prose conflicts with them, they win.
+
+## Closure recommendation
+
+**CONTINUE STEP 8 FOR** three finite tickets (plan §23 label). Everything else in §23 is satisfied on
+`step8/integration` with an independent `APPROVE` per workstream.
+
+| ticket | what is missing | where to start |
+|---|---|---|
+| T1 Workstream D — SWM integration / Gate F | never started (agent cut off at launch). Needs the generated 42-id Gate-F/API matrix, the upstream findings bundle (`docs/research/step8_upstream_findings.md`), and the Craftax JIT declaration. Brief: plan §12; inputs listed in the dashboard row `D_swm_integration.brief_inputs`. | worktree `/Users/samib/stable-envs-step8-swm-integration`, branch `step8/swm-integration` (fast-forward it to `step8/integration` first) |
+| T2 Final full-universe check (plan §21) on the final tip | the per-workstream evidence is complete, but no single sweep of all 40 pixel ids has been run on the *merged* tip. Needed: `scratch/step8/rejudge_gate_a.py` + `scratch/step8/report.py` regenerate (done, byte-identical), plus one Gate-A/replay sweep on cuda over the 49-config universe + the 7 Step-7 cells from the merged tree (the closure2 driver `scratch/step7/closure/gate_a_new_cells.py` and `scratch/step8/certify/` show the protocol). Note review_e.md D3: a fresh Rocket sweep must be judged through the declaration-aware rejudge, not the raw judge. | Oscar, `3090-gcondo` with `--constraint=geforce3090`, one job, ~2 h |
+| T3 Shared capability decision (Sami) | `examples/results/step8/capability/per_world_model_arrays.md`. Per-world model arrays already exist in the mjwarp path; the one shared new capability is per-value texel substitution on the plate bake (21 required leaves across OGB/DMC/Fetch; the Fetch skybox claim is inferred and needs one bake-vs-recompile diff). Not implemented. Sami must confirm before anyone implements it; until then those leaves are `unsupported`/`partial` with the reason recorded. | coordinator decision, then one workstream with GPU validation |
+
+## Exact state
+
+| item | value |
+|---|---|
+| baseline (Step-7 milestone) | `43ac95238f7472137619f3e69e7636e11dd088b1` = `milestone/step7-full-renderer-coverage` = tag `step7-closure` (origin) |
+| `step8/integration` tip | the commit carrying this file; parent merge `5d5a461` (C). `git log --oneline 43ac952..step8/integration` |
+| merged workstreams (all reviewed APPROVE, reports in `examples/results/step8/reviews/review_*.md`) | A `0cbb136` (3abab32), B `84c40e1` (cab9b1e), E `2af1e05` (7bb1e48), G `fff274f`, H `89421eb` (FINDING), F `f4164d3` (f793fc3), C `260d413` (5d5a461) |
+| not merged | D (nothing to merge); Codex branch `codex/step8-takeover-wip` (no commits; bookkeeping already committed) |
+| support matrix on the tip | Gate A 40 PASS / 2 UNSUPPORTED_BY_DESIGN; variation map 26 complete / 12 partial (Fetch background.color) / 2 n/a / 2 unknown; CPU tiers 24 MEASURED / 15 UNMEASURED / 3 by-design; GPU 40 MEASURED |
+| unit suite on the tip | 1093 passed, 195 skipped, 112 deselected (`tests/unit/test_examples.py` deselected; `test_every_cited_scratch_path_resolves` is the pre-existing baseline failure — its remaining entries are the Step-6 sboughan/carracing/robocasa citations plus `scratch/step8/semantic/*`-style dashboard globs) |
+| dashboard | `examples/results/step8/dashboard.yaml` (edit only via yaml load/dump) — workstream rows, Sami's four rulings under `decisions`, buckets, escalations, Codex dispositions |
+| commits | author `sami-bg`, no AI trailers (plan §23) |
+| pushed | nothing from Step 8 (plan forbids without Sami) |
+
+## Sami's rulings applied (2026-09-16)
+
+1. `check_colors_apply_exactly`: inapplicable for lit RGB leaves under a known law, narrowly, with evidence → implemented as the class declaration `PFRocketLanding.color_exactness_applicability` read by `stable_envs/testing/conformance.py` (`color_exactness_applicability`, `partition_colour_exactness`), the frozen judge path in `scratch/step8/rejudge_gate_a.py`, and `tests/gpu/test_conformance.py`. Frozen Step-2 text unchanged; law-aware successor check = proposal only.
+2. Feasible unmapped leaves: aggregated (T3), nothing declared permanently unsupported for want of a capability.
+3. CraftaxClassic corpora: both kept (`corpus_index.json: two_frozen_corpora`).
+4. Rocket BATCH_SCALES: threshold unchanged; Rocket `GPU_PARITY [BATCH_SCALES_FAIL]` 14.17x, Fetch 8.29x; revised taxonomy = Step-9 proposal.
+
+## Open decisions for Sami (none blocks the merged work)
+
+- T3 above.
+- `pyproject.toml` `dmcontrol` extra is a floor (`mujoco>=3.11`), not a pin; certification needs `mujoco==3.11.0` (F). Pinning is a dependency-contract change.
+- `scratch/certification.json` `VARIATIONS_COMPLETE.complete_requires` still names `check_colors_apply_exactly` with no applicability escape (E, packet question 3): frozen text deliberately untouched.
+
+## Deferred / cleanup (recorded in dashboard `buckets`)
+
+DEFERRED_OPTIMIZATION: OGB B=1 throughput after the per-world colour upload (B=4096 unchanged); quiet-node Quadruped CPU measurement; CPU backend for the three GPU-only cells. STEP9_CLEANUP: `report.py` ValueError outside ROOT; interpreter-sensitive `check_resolution_consistency`; pure plate bake without a new EGL context. UPSTREAM_FINDING: see dashboard (swm Fetch material unbind, declared defaults, list entries, numpy 2.5.3 + mujoco 3.12 Fetch construction; OGB agent.color negation; OGBMaze states-mode leaves; mujoco_warp 3.13 bundle; gymnasium-robotics ≥3.12 assertion; stable_worldmodel ships no Craftax evaluator).
+
+## Worktrees / branches
+
+`git worktree list` is authoritative. Step-8 worktrees: integration (`/Users/samib/stable-envs-step8-integration`), A/B/C/E/F/G/H (`/Users/samib/stable-envs-step8-*`, plus `/private/tmp/stable-envs-step8-{c-followup,e-followup,reviewfix-a}`), D (`/Users/samib/stable-envs-step8-swm-integration`, at e915466, no work). All clean. None deleted. The original C worktree still carries its archived dirty `ogb_manip.py` (superseded by the merged follow-up; safe to discard, but nothing was discarded).
+
+## Oscar
+
+Held allocation `6443480` (gpu2264) ends ~22:45 local on 2026-09-16; nothing else of ours running. `$SCR/se8/` holds the per-workstream trees and logs (`cfollowup4` = C's final tested tree `d3ff997`; `reference-provenance`; `cert-followup`; venv `$SCR/venvs/se8-mjwarp313` created by F, not adopted). Never touch the `simclr_*` / `lejepa_*` jobs.
+
+---
 
 ## Coordinator takeover verification (2026-09-16)
 
