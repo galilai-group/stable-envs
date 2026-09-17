@@ -689,9 +689,15 @@ workstreams:
   - D6 the declaration covers every RGB leaf of that env (no unlit leaf exists)
 - workstream: D_swm_integration
   branch: step8/swm-integration
-  status: 'NOT STARTED: agent cut off by the spend limit at launch; ticket T1 in docs/research/step8_handoff.md'
+  status: MERGED into step8/integration (reviewed APPROVE after D1/D2)
   model: opus
   brief_inputs: plan §12; examples/swm_compat/*; stable_envs/compat/worldmodel.py; per-workstream findings.md under examples/results/step8/*; dashboard upstream_findings; B strictness convention STABLE_ENVS_REQUIRE_LIVE_SWM
+  head_sha: 1c2639c (+wording)
+  review: review_d.md APPROVE-WITH-CHANGES -> re-review APPROVE (sonnet)
+  finding: 'Gate-F/API matrix 42 ids from existing evidence: registry 42 MEASURED; registered default 38 MEASURED / 4 n/a; SWM wrapper reset appearance 12 MISMATCH(upstream, Fetch) / 28 UNMEASURED / 2 n/a;
+    variation map 38/4; state/obs/API 40/2; device behaviour 7 MEASURED / 35 UNMEASURED (support-matrix supported_devices only populated for the 7 Step-7 cells); wrapper path swap_renderer 40/2; upstream
+    bundle 19 items; Craftax SWM_WRAPPER_GATE_F declaration; no RELEASE_BLOCKING defect'
+  merge_gate: 1-7 PASS/n-a per review_d.md; 8 APPROVE; 9 none; 10 this row
 - workstream: F_reference_provenance
   branch: step8/reference-provenance
   status: MERGED into step8/integration (reviewed APPROVE)
@@ -829,6 +835,9 @@ buckets:
   - report.py ValueError when outputs are written outside ROOT (E review D1)
   - check_resolution_consistency interpreter-sensitive (two stable values across campaigns), carrier unattributed (F)
   - pure plate bake needs a renderer reset without a new EGL context (F)
+  - support_matrix.json supported_devices populated for 7/42 rows only (D open item 1)
+  - legacy scratch/swm_matrix.json superseded by gate_f_matrix.json; 6 stale rows (D)
+  - SWM wrapper reset appearance UNMEASURED for 28 non-Fetch ids; DMC/classic subset is CPU-measurable (D)
   DEFERRED_OPTIMIZATION:
   - quiet-node Quadruped CPU measurement (would close CPU_UNMEASURED; not needed for closure)
   - shared CPU backend for the three GPU-only cells; Fetch has no CPU backend (DOCUMENTED_LIMITATION)
@@ -861,6 +870,8 @@ incident_log:
   item: C merged after fresh APPROVE; matrices regenerated on 5d5a461; handoff written; closure = CONTINUE STEP 8 FOR T1/T2/T3
 - date: '2026-09-16'
   item: closure strategy changed by Sami (targeted validation, no mega-sweep); T3 (opus) and D (sonnet, evidence-consumption) launched; D worktree fast-forwarded to 2b4b5c3
+- date: '2026-09-16'
+  item: D merged (e9dc245) after fresh APPROVE; T3 still in flight
 handoff:
   date: 2026-09-16 evening
   doc: docs/research/step8_handoff.md
