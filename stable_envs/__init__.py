@@ -120,7 +120,21 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:
-    return sorted({*globals(), *_registry.REGISTRY, *_LEGACY_MODULES, *_LEGACY_ATTRS, *_DEPRECATED})
+    """The documented namespace and the environments — NOT the retained Step-8 backend names.
+
+    ``snv.Scene2D``, ``snv.raster2d``, ``snv.spaces``, ``snv.testing`` … still RESOLVE, because ~470
+    call sites depend on them until Workstream K migrates them, but contract §1 says the top level
+    exposes the happy path and not backend machinery, so they are not advertised here: tab completion
+    and ``dir(snv)`` show what a new user should use. The same applies to the deprecated aliases —
+    ``StableEnv``, ``REGISTRY``, ``register`` — which resolve, warn once, and are on their way out.
+
+    Built from ``__all__`` rather than from ``globals()``, because Python itself binds every imported
+    submodule as an attribute of its package (importing ``stable_envs.spaces`` anywhere puts
+    ``spaces`` in this module's globals), so a ``globals()``-based listing advertises whatever the
+    process happened to import. The environments are added because the concrete classes ARE the
+    primary public API (contract §1): ``snv.PushT`` must be completable.
+    """
+    return sorted({*__all__, *_registry.REGISTRY})
 
 
 __all__ = ["Env", "State", "Spec", "CompositeSpec", "Dynamics", "make", "spec", "list_envs",

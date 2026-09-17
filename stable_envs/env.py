@@ -460,12 +460,13 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 class Env:
     """Base class: a batched, GPU-renderable environment defined by ``scene()``.
 
-    Step 9 renamed this from ``Env`` and gave it the lifecycle every ``stable-*`` package has —
+    Step 9 renamed this from ``StableEnv`` and gave it the lifecycle every ``stable-*`` package has —
     ``reset``/``step``/``transition``/``unroll``/``render``/``close``, a TensorDict :data:`State`, and
     the four specs — WITHOUT changing what any of it computes. The packed float32 row
     (``state_dim``/``state_names``) is still the internal layout every renderer, every frozen corpus
     and every certification check uses, and ``pack``/``unpack`` are the only bridge between it and the
-    public entity-grouped state. ``Env`` remains as a deprecated alias.
+    public entity-grouped state. ``StableEnv`` remains as a deprecated alias for this class — the same
+    class object, so ``isinstance``, ``issubclass`` and every ``__init_subclass__`` hook are unaffected.
     """
 
     #: dataset name, hyphenated-lowercase; the env is identified by its class name
