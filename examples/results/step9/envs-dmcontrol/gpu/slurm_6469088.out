@@ -1,0 +1,140 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6469088
+##  Job Name : se9-envs-dmcontrol-gpu
+##  Nodelist : gpu3001
+##      CPUs : 
+##  Mem/Node : 49152 MB
+## Directory : $SCR/se9/envs-dmcontrol
+##   Job Started : Thu Sep 17 12:10:48 PM EDT 2026
+###############################################################################
+host gpu3001.oscar.ccv.brown.edu
+job 6469088
+sha 0f610cf77df35feec5b6d53edc8135b4da7f47be
+python $SCR/venvs/se-vis311/bin/python
+NVIDIA L40S, 575.57.08
+mujoco 3.11.0 torch 2.14.0+cu126
+Using Python 3.12.9 environment at: $SCR/venvs/se-vis311
+Resolved 37 packages in 540ms
+Installed 4 packages in 322ms
+ + importlib-metadata==9.0.1
+ + orjson==3.12.0
+ + pyvers==0.2.3
+ + tensordict==0.14.2
+Using Python 3.12.9 environment at: $SCR/venvs/se-vis311
+Resolved 1 package in 26ms
+Installed 1 package in 230ms
+ + loguru==0.7.3
+deps ok
+=== oracle, comparison arm on CPU (raycast3d CPU + cpu3d; 17 of 18 cells render)
+ "head_sha": "0f610cf77df35feec5b6d53edc8135b4da7f47be",
+ "compare_device": "cpu",
+ "identical": true,
+ "unexplained_differences": {},
+ "step8_module_names_checked": 79,
+ "step8_module_names_missing": [],
+ "expected_differences": {
+  "_make_classes": "the private factory that built the eighteen classes from two tables; the cells are now declared in their own domain modules, so there is no loop to name. Never referenced outside the module."
+ },
+ "functional_ok": true
+}
+  DMCAcrobotSwingup          frames cf40f8587e32aa0a  states 64
+  DMCBallInCupCatch          frames 715096942f107cb9  states 64
+  DMCCartpoleBalance         frames c2c52d85ea5c15f8  states 64
+  DMCCartpoleSwingup         frames a21565d4d097b3bb  states 64
+  DMCFingerSpin              frames d68a9d210a535e54  states 64
+  DMCFingerTurnEasy          frames 5840d1659d9e74a1  states 64
+  DMCFingerTurnHard          frames 88efa20e53d48eb6  states 64
+  DMCManipulatorBringBall    frames 037325a065259bbf  states 64
+  DMCPendulumSwingup         frames e18fd8599e6350c2  states 64
+  DMCPointMassEasy           frames e125aa3edd24378b  states 64
+  DMCReacherEasy             frames 7dc1d00b62634dab  states 64
+  DMCReacherHard             frames a7b31f4be7815916  states 64
+  DMCCheetahRun              frames 577f0adc52520070  states 64
+  DMCHopperHop               frames 4a57ea2f90203706  states 64
+  DMCHumanoidStand           frames bd90ee883ad8f922  states 64
+  DMCQuadrupedWalk           frames eb6fbf33e326269f  states 64
+  DMCSwimmerSwimmer6         frames None  states None
+  DMCWalkerWalk              frames d8d30e1c869a9e1b  states 64
+ORACLE: PASS
+=== oracle, comparison arm on CUDA (the fused mover pass + MJWARP; all 18 cells render)
+ "head_sha": "0f610cf77df35feec5b6d53edc8135b4da7f47be",
+ "compare_device": "cuda",
+ "identical": true,
+ "unexplained_differences": {},
+ "step8_module_names_checked": 79,
+ "step8_module_names_missing": [],
+ "expected_differences": {
+  "_make_classes": "the private factory that built the eighteen classes from two tables; the cells are now declared in their own domain modules, so there is no loop to name. Never referenced outside the module."
+ },
+ "functional_ok": true
+}
+  DMCAcrobotSwingup          frames f9956beb9b367e3f  states 64
+  DMCBallInCupCatch          frames 715096942f107cb9  states 64
+  DMCCartpoleBalance         frames c2c52d85ea5c15f8  states 64
+  DMCCartpoleSwingup         frames a21565d4d097b3bb  states 64
+  DMCFingerSpin              frames d68a9d210a535e54  states 64
+  DMCFingerTurnEasy          frames 5840d1659d9e74a1  states 64
+  DMCFingerTurnHard          frames 88efa20e53d48eb6  states 64
+  DMCManipulatorBringBall    frames 037325a065259bbf  states 64
+  DMCPendulumSwingup         frames e18fd8599e6350c2  states 64
+  DMCPointMassEasy           frames e125aa3edd24378b  states 64
+  DMCReacherEasy             frames 7dc1d00b62634dab  states 64
+  DMCReacherHard             frames a7b31f4be7815916  states 64
+  DMCCheetahRun              frames d11566bb3c19931b  states 64
+  DMCHopperHop               frames a59aa37dedfea0d5  states 64
+  DMCHumanoidStand           frames 742cbbbcf31ebdcf  states 64
+  DMCQuadrupedWalk           frames 509b6b660ec88bf5  states 64
+  DMCSwimmerSwimmer6         frames 6f1387abd1f74c89  states 64
+  DMCWalkerWalk              frames f0a208f0011bac7a  states 64
+ORACLE: PASS
+=== tests/gpu/test_conformance.py -k "DMC or dmc-"
+exit 0 :: 239 passed, 103 skipped, 1429 deselected, 117186 warnings in 191.72s (0:03:11)
+=== tests/gpu/test_fast_paths.py -k "DMC or dmc-"
+exit 0 :: 78 passed, 48 skipped, 321 deselected, 23209 warnings in 31.46s
+=== tests/gpu/test_reproducibility.py -k "DMC or dmc-"
+exit 0 :: 345 passed, 81 skipped, 1731 deselected, 397397 warnings in 181.14s (0:03:01)
+=== the new unit tests on the cuda host
+exit 0 :: 235 passed, 5 skipped, 28859 warnings in 53.37s
+=== paired GPU render timings (2 parity + 1 trackcom)
+HEAD is now at 21cb306 Step 8 closure packet and handoff: T3 merged; FUNCTIONALLY COMPLETE WITH DOCUMENTED LIMITATIONS
+   "migrated_median_ms": 4.1766,
+   "delta_pct": -0.23,
+   "baseline_repeats": [
+    4.2076,
+    4.1658,
+    4.194,
+    4.1861,
+    4.1681
+   ],
+   "migrated_repeats": [
+    4.1807,
+    4.1766,
+    4.1741,
+    4.2018,
+    4.1709
+   ]
+  }
+ },
+ "DMCCheetahRun": {
+  "render_ms": {
+   "baseline_median_ms": 0.5333,
+   "migrated_median_ms": 0.5355,
+   "delta_pct": 0.4,
+   "baseline_repeats": [
+    0.5314,
+    0.533,
+    0.5333,
+    0.535,
+    0.5337
+   ],
+   "migrated_repeats": [
+    0.5355,
+    0.537,
+    0.5302,
+    0.53,
+    0.5358
+   ]
+  }
+ }
+}
+ALLDONE9B-HEAD 2026-09-17T12:24:52-04:00

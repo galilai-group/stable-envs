@@ -63,7 +63,9 @@ EG_W = 16
 #: ``kind``: which of ``aalineColor``'s three cases this edge takes
 K_GEN, K_VERT, K_HORIZ = 0, 1, 2
 
-M32 = (1 << 32) - 1
+#: mask for the unsigned-32 arithmetic SDL_gfx's blend relies on. ``gfxdraw``'s, not a second copy:
+#: ``_blend`` below is that module's ``blend`` in Triton and the two must mask at the same width.
+M32 = G.M32
 
 
 # ------------------------------------------------------------------ host-side pre-pass
@@ -79,23 +81,13 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
     M = vx.shape[0]
     nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
     a, b, c, d = (t.reshape(-1) for t in (vx, vy, nx, ny))
-    draw, x1, y1, x2, y2 = G.clip_line(a, b, c, d, W, H)
-
-    flip = y1 > y2
-    xx0 = torch.where(flip, x2, x1)
-    yy0 = torch.where(flip, y2, y1)
-    dxs = torch.where(flip, x1, x2) - xx0
-    dy = torch.where(flip, y1, y2) - yy0
-    xdir = torch.where(dxs >= 0, 1, -1)
-    dx = dxs.abs()
-    vert = dx == 0
-    horiz = (dy == 0) & ~vert
+    # The clip and the walk's constants come from ``gfxdraw`` itself rather than from a second
+    # transcription of them here: the per-primitive path this kernel is diffed against computes the
+    # same sixteen quantities, and two copies of the same integer arithmetic in two modules that
+    # must agree pixel for pixel is one edit away from a fringe that moves in one path only.
+    (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major,
+     E, lo) = G.edge_geometry(a, b, c, d, W, H)
     kind = torch.where(vert, K_VERT, torch.where(horiz, K_HORIZ, K_GEN))
-    ymaj = dy > dx
-    major = torch.where(ymaj, dy, dx)
-    minor = torch.where(ymaj, dx, dy)
-    E = torch.div(minor << 16, major.clamp_min(1), rounding_mode="floor")
-    lo = torch.minimum(xx0, xx0 + xdir * dx)
     # ``kind`` already says which axis is major for the two degenerate cases; for a general edge the
     # kernel needs it, and it is exactly ``dy > dx``. Folded into ``kind`` as a third bit rather than
     # a column of its own.
@@ -114,7 +106,8 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
 
 
 @torch.no_grad()
-def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int, bin_w: int):
+def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int,
+                   bin_w: int) -> tuple[torch.Tensor, torch.Tensor, int]:
     """Per screen-bin lists of the primitives whose box reaches them, in DRAW ORDER.
 
     ``box`` is ``(B,P,4)`` int32 ``x0,y0,x1,y1`` in output coordinates, with an empty box for a
@@ -462,7 +455,9 @@ WARPS = 1
 
 
 @torch.no_grad()
-def render_surface(vert, meta, edge, aa, H: int, W: int, PG: int, PPOST: int, out=None):
+def render_surface(vert: torch.Tensor, meta: torch.Tensor, edge: torch.Tensor, aa: torch.Tensor,
+                   H: int, W: int, PG: int, PPOST: int,
+                   out: torch.Tensor | None = None) -> torch.Tensor:
     """Rasterize a batch of polygon lists to ``(B,H,W,3)`` uint8, already flipped.
 
     ``vert`` ``(B,P,VMAX,2)`` int32 truncated screen vertices, ``meta`` ``(B,P,PM_W)`` int32,
@@ -489,7 +484,7 @@ def render_surface(vert, meta, edge, aa, H: int, W: int, PG: int, PPOST: int, ou
 
 
 @torch.no_grad()
-def shrink(x: torch.Tensor, plan, out=None) -> torch.Tensor:
+def shrink(x: torch.Tensor, plan, out: torch.Tensor | None = None) -> torch.Tensor:
     """``(A,N,C)`` uint8 -> ``(A,MOUT,C)`` uint8 through one axis of the reference's resample."""
     A, N, C = x.shape
     if out is None:
