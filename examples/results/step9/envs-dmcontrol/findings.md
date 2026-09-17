@@ -183,6 +183,16 @@ MUJOCO_GL=glfw /Users/samib/se8-vm-venv/bin/python -m pytest -q -p no:cacheprovi
 ```
 (the four named suites alone are `200 passed`, the number this branch produced before the migration.)
 
+The two tests the brief deselects — `test_repo_contracts.py::test_every_cited_scratch_path_resolves`
+and `test_examples.py::...[robocasa_visual/render_mjwarp.py]` — were run anyway and fail on
+`step9/integration` `86a6ba4` with the **identical** set of 14 unresolved citations and the same one
+example. Neither is this workstream's: none of the 14 citations is a DM Control path, and no file I
+touched cites a `scratch/` path that does not exist.
+
+The oracle record's `head_sha` is `648f074`, the last commit that changed package code — the two
+commits after it add the new test file and this document, and the commit that carries a record cannot
+be the one it measured.
+
 **Two pre-existing tests were edited**, both of them tests that read this family's SOURCE by path,
 and neither claim is weakened:
 
