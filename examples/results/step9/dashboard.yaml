@@ -111,6 +111,15 @@ workstreams:
     GPU arm
   performance_diff: cpu paired worst ratio 1.017 (bar 1.10); cpu3d 1.000-1.002
   api_diff: new render/primitives.py (shared vocabulary); raycast3d re-exports every moved name; zero consumer call sites changed
+- workstream: B_envs_dmcontrol
+  branch: step9/envs-dmcontrol
+  worktree: /Users/samib/stable-envs-step9-envs-dmcontrol
+  owner: opus (medium)
+  reviewer: opus (high)
+  status: IN PROGRESS
+  files_owned: stable_envs/envs/dmcontrol/ (package from dmcontrol.py; DMC use of _plate_texels.py), tests
+  ids_affected: 17 DMC swm ids (18 cells) incl. trackcom; T3 floor.color; Step-8 variation maps
+  baseline_sha: 86a6ba4
 decisions:
 - date: '2026-09-17'
   by: coordinator
