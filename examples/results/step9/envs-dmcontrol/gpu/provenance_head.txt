@@ -1,0 +1,7 @@
+host gpu3001.oscar.ccv.brown.edu
+job 6469088
+sha 0f610cf77df35feec5b6d53edc8135b4da7f47be
+python $SCR/venvs/se-vis311/bin/python
+NVIDIA L40S, 575.57.08
+mujoco 3.11.0 torch 2.14.0+cu126
+deps ok
