@@ -114,7 +114,8 @@ import zlib
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import prng
 from ..spaces import Box, Dict, Discrete
 from ._craftax_full_tex import MOB_BASE, N_MOB_SLOT, N_PROJ_SLOT, TABLES
@@ -758,7 +759,7 @@ def _strip_index(device):
 
 
 @register
-class CraftaxFull(StableEnv):
+class CraftaxFull(Env):
     """Full Craftax: nine levels, an item/mob/projectile stencil over a block window, and a 4-row strip.
 
     **The render window is wider than the reference bridge in one place, and it is stated here rather
@@ -971,6 +972,42 @@ class CraftaxFull(StableEnv):
                  "The ruling is applied literally: the speed ratio uses the renderer as a user runs "
                  "it, and NO_REFERENCE is retained only where it cannot be timed on the host."),
     }
+
+    # ------------------------------------------------------------------ Step-9 state
+    #
+    # The public :data:`State` groups the 544 packed numbers by what they describe. Five per-tile
+    # planes (the block, the item drawn over it, the mob slot, the projectile slot and the light-map
+    # value), the player's own four scalars, the day-cycle key, and the 41 inventory/attribute slots
+    # the 4-row strip reads. Every offset is the Step-7 packed column it has always been, in the order
+    # ``state_names`` gives, so ``pack`` writes the frozen row and the frozen corpus round-trips
+    # unchanged.
+    #
+    # No field has offset ``None``: there is no hidden dynamical state because there is no simulator
+    # here at all (``step`` raises the contract's refusal), so the packed row IS the whole state.
+    state_layout = (
+        (("world", "blocks"), N_TILE, 0),
+        (("world", "items"), N_TILE, N_TILE),
+        (("world", "mobs"), N_TILE, 2 * N_TILE),
+        (("world", "projectiles"), N_TILE, 3 * N_TILE),
+        (("world", "light_map"), N_TILE, 4 * N_TILE),
+        (("player", "facing"), 1, 5 * N_TILE),
+        (("player", "is_sleeping"), 1, 5 * N_TILE + 1),
+        (("player", "level"), 1, 5 * N_TILE + 2),
+        (("world", "light_level"), 1, 5 * N_TILE + 3),
+        (("world", "rng_key"), N_KEY_HALVES, 5 * N_TILE + 4),
+    ) + tuple((("inventory", nm), 1, 5 * N_TILE + 4 + N_KEY_HALVES + i)
+              for i, nm in enumerate(STRIP_SLOTS))
+
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of one frame. ``size`` is the TILE edge here, not the frame edge.
+
+        ``Env.observation_spec`` assumes a square frame of ``size`` pixels, and this frame is neither
+        ``size`` pixels nor square: at the registered 10 px tile it is ``(130, 110)``. A consumer
+        allocating from the spec would get a buffer of the wrong shape AND the wrong size, so the cell
+        answers for its own geometry, exactly as the classic-control family does for its 400x600.
+        """
+        return ((OBS_H + STRIP_H) * self.size, OBS_W * self.size)
 
     def make_variation_space(self) -> Dict:
         """Knobs that are the identity at their defaults and genuinely move pixels off them.
