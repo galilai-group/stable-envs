@@ -37,6 +37,7 @@ floor and 6.8e-2 on the agent — and a multiplicative model fitted on the floor
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -48,6 +49,13 @@ from .primitives import bound_radius_tensor as _bound_radius
 from .primitives import dot3 as _dot
 from .primitives import mtv3 as _mtv
 from .primitives import mv3 as _mv
+
+#: What the cast functions take and give back. ``Kinds`` is host-side on purpose: the torch loop
+#: branches on each code in Python and the Triton path turns it into a device tensor once, memoised,
+#: so a tensor here would be a host-to-device copy on every pass. ``Cast`` is (t, normal, index):
+#: the ray parameter, the world-space unit normal at the hit, and the winning primitive's index.
+Kinds = Sequence[int] | np.ndarray
+Cast = tuple[torch.Tensor, torch.Tensor, torch.Tensor]
 
 try:
     import triton
@@ -91,7 +99,7 @@ class Camera:
         v = a if glcam_b is None else tuple((x + y) / 2 for x, y in zip(a, g(glcam_b)))
         return Camera(tuple(v[0]), tuple(v[1]), tuple(v[2]), v[3], v[4], v[5], v[6])
 
-    def basis(self):
+    def basis(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         f = np.asarray(self.forward, np.float64)
         f = f / np.linalg.norm(f)
         r = np.cross(f, np.asarray(self.up, np.float64))
@@ -99,7 +107,7 @@ class Camera:
         u = np.cross(r, f)
         return r, u, f
 
-    def rays(self, H: int, W: int, device, dtype=torch.float32):
+    def rays(self, H: int, W: int, device, dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
         """``(o (3,), d (H*W,3))`` unit ray directions through pixel CENTRES, row 0 at the top."""
         r, u, f = self.basis()
         half_h = 0.5 * (self.top - self.bottom)
@@ -386,7 +394,8 @@ def _plane(o, d, pos, R, size):
     return torch.where(ok, t, torch.full_like(t, INF)), n.expand_as(p)
 
 
-def intersect(kind: int, size, pos, R, o, d):
+def intersect(kind: int, size: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+              o: torch.Tensor, d: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """One primitive against a ray bundle. ``pos`` (...,3), ``R`` (...,3,3), ``o``/``d`` (...,3)."""
     if kind == SPHERE:
         return _sphere(o, d, pos, size[..., 0:1].squeeze(-1))
@@ -427,7 +436,8 @@ def intersect(kind: int, size, pos, R, o, d):
 # diff the fused kernel against it. The fused kernel is the one that removes the traffic, by keeping
 # the whole primitive loop in registers and writing only the answer.
 
-def _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d):
+def _cast_nearest_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor,
+                                  R: torch.Tensor, o: torch.Tensor, d: torch.Tensor) -> Cast:
     """``cast_nearest_torch`` with every primitive tested against every ray. THE DEFINITION.
 
     Kept verbatim as the thing ``PRIMITIVE_BOUNDS`` has to be bit-identical to, for the reason
@@ -618,7 +628,8 @@ def _kind_is_bounded(kind: int) -> bool:
 # ray bound uses is the same geometric law as the one ``Primitives.bound_radius`` bakes for the
 # screen tile and ``cpu3d`` uses for its mover window, and the three must not drift apart.
 
-def _rays_near(pos_k, rad, o, d, dd):
+def _rays_near(pos_k: torch.Tensor, rad: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
+               dd: torch.Tensor) -> torch.Tensor:
     """``(B,N)`` bool: could this ray hit a sphere of radius ``rad`` about ``pos_k`` at ``t > 0``?
 
     ``|oc x d|^2 <= r^2 |d|^2`` is the perpendicular-distance test with ``|d|^2`` multiplied through,
@@ -636,7 +647,8 @@ def _rays_near(pos_k, rad, o, d, dd):
     return (_dot(cr, cr) <= r2 * dd) & (_dot(oc, d) + torch.sqrt(r2 * dd) >= 0)
 
 
-def cast_nearest_torch(kinds, sizes, pos, R, o, d):
+def cast_nearest_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                       o: torch.Tensor, d: torch.Tensor) -> Cast:
     """Nearest primitive hit over a ray bundle: ``(t, normal, index)``. The readable definition.
 
     ``kinds`` (K,) host-side ints; ``sizes`` (B,K,S), ``pos`` (B,K,3), ``R`` (B,K,3,3); ``o``/``d``
@@ -707,7 +719,10 @@ def cast_nearest_torch(kinds, sizes, pos, R, o, d):
     return best, nrm, idx
 
 
-def _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip=None):
+def _any_blocking_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor,
+                                  R: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
+                                  lim: torch.Tensor,
+                                  skip: torch.Tensor | None = None) -> torch.Tensor:
     """``any_blocking_torch`` with every primitive tested against every ray. THE DEFINITION."""
     B, N = o.shape[0], o.shape[1]
     blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)
@@ -720,7 +735,9 @@ def _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip=None):
     return blocked
 
 
-def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
+def any_blocking_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                       o: torch.Tensor, d: torch.Tensor, lim: torch.Tensor,
+                       skip: torch.Tensor | None = None) -> torch.Tensor:
     """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above.
 
     Same bound and the same argument: a ray outside a primitive's bounding sphere gets ``t = INF``,
@@ -1217,7 +1234,8 @@ def _launch(kinds, sizes, pos, R, o, d, lim, skip, mode):
     return (t_out, n_out, i_out) if mode == 0 else b_out.view(torch.bool)
 
 
-def cast_nearest(kinds, sizes, pos, R, o, d, backend: str = "auto"):
+def cast_nearest(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                 o: torch.Tensor, d: torch.Tensor, backend: str = "auto") -> Cast:
     """Nearest primitive hit over a ray bundle: ``(t, normal, index)``.
 
     ``auto`` fuses on CUDA and falls back to ``cast_nearest_torch`` everywhere else. The two are
@@ -1231,7 +1249,9 @@ def cast_nearest(kinds, sizes, pos, R, o, d, backend: str = "auto"):
     return _launch(kinds, sizes, pos, R, o, d, None, None, 0)
 
 
-def any_blocking(kinds, sizes, pos, R, o, d, lim, skip=None, backend: str = "auto"):
+def any_blocking(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                 o: torch.Tensor, d: torch.Tensor, lim: torch.Tensor,
+                 skip: torch.Tensor | None = None, backend: str = "auto") -> torch.Tensor:
     """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above."""
     backend = FORCE_BACKEND or backend
     if backend == "torch" or (backend == "auto"
@@ -1247,7 +1267,8 @@ _RAY_CACHE_MAX = 8
 _RAY_CACHE = _Memo(_RAY_CACHE_MAX)
 
 
-def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32):
+def cached_rays(cam: Camera, H: int, W: int, device,
+                dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
     """``cam.rays(H, W, device)``, memoised on the camera itself.
 
     ``Camera`` is a frozen dataclass of tuples and floats, so it is its own cache key and two scenes
@@ -1266,7 +1287,9 @@ def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32):
 
 # --------------------------------------------------------------------------- shading
 
-def shade(n, v, ldir, lamb, ldif, lspec, exponent, mat, tex, spec):
+def shade(n: torch.Tensor, v: torch.Tensor, ldir: torch.Tensor, lamb: torch.Tensor,
+          ldif: torch.Tensor, lspec: torch.Tensor, exponent: float, mat: torch.Tensor,
+          tex: torch.Tensor, spec: torch.Tensor) -> torch.Tensor:
     """``(...,3)`` colour in [0,1]. See the module docstring for why specular is additive and white."""
     amb = lamb.sum()
     prim = mat * amb
