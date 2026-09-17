@@ -44,9 +44,25 @@ file_ownership:
   - stable_envs/_config.py
   - pyproject.toml
   - examples/results/step9/dashboard.yaml
-workstreams: []
-decisions: []
+workstreams:
+- workstream: W0_foundation
+  branch: step9/foundation
+  owner: opus (high)
+  reviewer: opus (high), independent
+  status: IN PROGRESS
+  files_owned: stable_envs/{__init__,__about__,_config,env,dynamics,specs,registry,interop}.py, stable_envs/envs/pusht.py, tests/unit/test_foundation_*.py, pyproject deps (tensordict, loguru) as authorised
+  ids_affected: swm/PushT-v1 (canonical example); aliases keep all 42 working
+  baseline_sha: 21cb306
+decisions:
+- date: '2026-09-17'
+  by: coordinator
+  topic: Wave-0 contract frozen
+  ruling: 'STEP_09_AGENT_BRIEFS/WAVE0_CONTRACT.md (untracked briefs dir): num_envs ctor; TensorDict State with pack/unpack to the Step-8 packed row; hidden dynamics vars (PushT agent velocity) become state
+    so transition is pure; small Spec/CompositeSpec, no torchrl; step -> TensorDict{state,reward?,done?}; transition/unroll functional; close/context manager; registry make/spec/list_envs with SWM aliases;
+    loguru config; tensordict + loguru core deps; deprecated aliases kept until Wave 3'
 escalations: []
 incident_log:
 - date: '2026-09-17'
   item: 'Wave 0 started: baseline 21cb306 verified on origin; step9/integration + sami/pre-step9-baseline created; oracle snapshotted; inventory taken'
+- date: '2026-09-17'
+  item: Wave-0 contract frozen; foundation agent launched on step9/foundation
