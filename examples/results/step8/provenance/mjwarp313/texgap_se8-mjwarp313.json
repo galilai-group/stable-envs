@@ -1,0 +1,10 @@
+{
+  "model_probe_error": "ModuleNotFoundError: No module named 'stable_worldmodel'",
+  "sample_texture_guards_missing_texcoords": true,
+  "sample_texture_sha256": "cfe07bc8b8bf30d7e9f5067ee5730294184a6741216d187c359328743f563891",
+  "versions": {
+    "mujoco": "3.13.0",
+    "mujoco-warp": "3.13.0",
+    "warp-lang": "1.17.0"
+  }
+}

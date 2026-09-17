@@ -171,6 +171,10 @@ nav:
       # findings behind it.
       - 'Step 8: certification harness and provenance': research/step8_certification.md
       - 'Step 8: support matrix (42 ids)': research/step8_support_matrix.md
+      # Workstream F: which reference version each fidelity claim is certified against, the
+      # 3.12 drift that is recorded beside it, the 3.13 bump evaluation, and the Antmaze
+      # bake classification. Artifacts: examples/results/step8/provenance/.
+      - 'Step 8: reference versions and provenance': research/step8_reference_provenance.md
       # Step-8 Workstream A. Every stable_worldmodel variation leaf of the five classic-control
       # and twelve DM Control ids, classified mapped / unsupported / dead upstream / not
       # applicable, with the measurement behind each class; generated tables from
