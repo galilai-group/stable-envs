@@ -938,16 +938,35 @@ _CULL_TILE = (8, 128, 4)
 #: hangs off the right edge still runs the whole primitive loop for the lanes it masks, so at 96 px a
 #: flat 128-wide tile would pay for 33% more pixels than the frame has; at 600 px it pays for 6.7%,
 #: which is cheaper than the scattered stores of a tile narrow enough to divide 600.
-_TILE_WASTE_MAX = 0.125
+TILE_WASTE_MAX = 0.125
+
+#: Step-8 spelling, kept so a reader grepping the old name still lands here.
+_TILE_WASTE_MAX = TILE_WASTE_MAX
 
 
-def _fit(target: int, W: int) -> int:
-    """Tile width: the widest power of two at most ``target`` that does not waste too many lanes."""
-    cap = min(target, 1 << max(0, (W - 1).bit_length()))
-    bw = cap
-    while bw > 1 and (bw * -(-W // bw) - W) > _TILE_WASTE_MAX * W:
+def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
+    """``(BH, BW)``: the tile a 2-D fused kernel walks one frame in, for ``lanes`` lanes per program.
+
+    ONE definition, because both 2-D fused kernels in this package pick their tile by the same law
+    and for the same two reasons, and a second copy of it is a second thing to keep in step:
+
+      * ``raster2d.render_triton``'s culled path, at ``lanes = 1024`` and ``max_width = 128``;
+      * ``navdot.blend_dots``' two passes, at ``lanes = 1024`` and ``max_width = 1024``.
+
+    The law: take the widest power of two at most ``max_width`` (and at most the frame's own width
+    rounded up to a power of two), halve it while more than ``TILE_WASTE_MAX`` of a row of tiles
+    would be masked-off lanes, then give the tile whatever height the remaining lanes allow.
+
+    Why a rectangle and why a WIDE one is measured in each caller's own tile constant: both kernels
+    skip work a tile's bounds miss, which wants a compact footprint in the plane, and both store
+    ``(B,H,W,3)`` uint8 with a stride of 3, which punishes a narrow tile. ``max_width`` is where the
+    two callers differ, so it is the argument; the rest is identical arithmetic and is not.
+    """
+    bw = min(max_width, 1 << max(0, (W - 1).bit_length()))
+    while bw > 1 and (bw * -(-W // bw) - W) > TILE_WASTE_MAX * W:
         bw //= 2
-    return bw
+    bh = max(1, min(lanes // bw, 1 << max(0, (H - 1).bit_length())))
+    return bh, bw
 
 
 def _tiles(H: int, W: int, block: int, cull: bool):
@@ -961,9 +980,8 @@ def _tiles(H: int, W: int, block: int, cull: bool):
     """
     if not cull:
         return 1, block, triton.cdiv(H * W, block), 1, 4
-    bh, bw, warps = _CULL_TILE
-    bw = _fit(bw, W)
-    bh = max(1, min((_CULL_TILE[0] * _CULL_TILE[1]) // bw, 1 << max(0, (H - 1).bit_length())))
+    warps = _CULL_TILE[2]
+    bh, bw = tile_shape(H, W, lanes=_CULL_TILE[0] * _CULL_TILE[1], max_width=_CULL_TILE[1])
     ntx = triton.cdiv(W, bw)
     return bh, bw, ntx * triton.cdiv(H, bh), ntx, warps
 
