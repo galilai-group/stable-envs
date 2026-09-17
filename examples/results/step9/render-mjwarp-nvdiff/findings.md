@@ -53,7 +53,7 @@ satisfied**, and this branch should not merge on the local evidence alone.
 | `stable_envs/render/nvdiff.py` | `Scene` and `BatchRenderer` are `Closeable`; `owns_scene` records and can be set; `_ray_cache` becomes a `BoundedCache(8)`; `render` guards with `_check_open`. |
 | `stable_envs/render/rendernet.py` | `_Runner` and `LoadedCorrector` are `Closeable`; the captured CUDA graph is `reset()` before its static buffers are dropped. |
 | `tests/unit/test_render_resources.py` | **new**, 28 test IDs (27 pass, 1 skips without `mujoco_warp`). §5. |
-| `scratch/step9/render-mjwarp-nvdiff/{oracle.py,bench.py,gpu_oracle.sbatch}` | **new** evidence harness, none of it run (§7). |
+| `scratch/step9/render-mjwarp-nvdiff/oracle.py`, `scratch/step9/render-mjwarp-nvdiff/bench.py`, `scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch` | **new** evidence harness, none of it run (§7). |
 | `examples/results/step9/render-mjwarp-nvdiff/findings.md` | this file. |
 
 **No file outside those was touched.** Nothing removed, nothing renamed, no public symbol deleted:
@@ -146,6 +146,7 @@ here.
 | `tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` at the parent `b3f3a81` | se6-venv | **1385 passed**, 195 skipped, 112 deselected (142 s) — the brief's baseline, reproduced |
 | the same command at HEAD `86e782d` | se6-venv | **1413 passed, 196 skipped**, 112 deselected (96 s) |
 | `tests/unit/test_render_resources.py` alone | se6-venv | **27 passed, 1 skipped** (the skip is the `mujoco_warp` cast-memo check; the package is not installed locally) |
+| `test_repo_contracts.py::test_every_cited_scratch_path_resolves` (the test the brief deselects) | se6-venv | **fails, pre-existing**: 14 unresolved citations, every one an `/oscar/scratch/sboughan/...` path cited by Step-6/7/8 findings and by `examples/results/step9/envs-classic-nav/findings.md`. **None is this workstream's**, checked by grepping the failure for `render-mjwarp-nvdiff` (no hit). The three scratch paths this branch cites are spelled out individually rather than brace-expanded, so they resolve. |
 
 **The delta is fully accounted for, by a collected-ID diff and not by arithmetic.**
 `pytest --collect-only -q` in each tree (the parent in a detached worktree, the same venv, the same
