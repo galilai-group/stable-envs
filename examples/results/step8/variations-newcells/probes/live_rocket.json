@@ -1,0 +1,546 @@
+{
+ "env_id": "swm/PFRocketLanding-v0",
+ "probe": "options['variation'] resample, 5 seeds, 3 frames, 480x480",
+ "leaves": {
+  "environment.sky_color": {
+   "verdict": "NO_PIXEL_MOVEMENT",
+   "worst_maxdiff": 0,
+   "worst_npix": 0,
+   "default": [
+    135,
+    206,
+    235
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      43,
+      202,
+      87
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      83,
+      34,
+      164
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      149,
+      165,
+      44
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      68,
+      60,
+      118
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      193,
+      112,
+      64
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "environment.start_height_ratio": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 255,
+   "worst_npix": 18,
+   "default": 0.9,
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": 0.8859662413597107,
+     "maxdiff": 1,
+     "npix": 16
+    },
+    {
+     "seed": 1,
+     "drawn": 0.8677095770835876,
+     "maxdiff": 1,
+     "npix": 8
+    },
+    {
+     "seed": 2,
+     "drawn": 0.8599973917007446,
+     "maxdiff": 1,
+     "npix": 7
+    },
+    {
+     "seed": 3,
+     "drawn": 0.8562254905700684,
+     "maxdiff": 255,
+     "npix": 18
+    },
+    {
+     "seed": 4,
+     "drawn": 0.8599752187728882,
+     "maxdiff": 1,
+     "npix": 12
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "environment.start_horizontal_offset": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 255,
+   "worst_npix": 28,
+   "default": [
+    0.0,
+    0.0
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      0.6902592778205872,
+      0.8557756543159485
+     ],
+     "maxdiff": 255,
+     "npix": 28
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      -1.3727566003799438,
+      0.684273898601532
+     ],
+     "maxdiff": 1,
+     "npix": 12
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      -1.8324968814849854,
+      0.01376517117023468
+     ],
+     "maxdiff": 1,
+     "npix": 17
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      -1.7788808345794678,
+      0.2279137372970581
+     ],
+     "maxdiff": 1,
+     "npix": 7
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      -1.2192975282669067,
+      -1.3931502103805542
+     ],
+     "maxdiff": 255,
+     "npix": 15
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "environment.start_tilt": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 255,
+   "worst_npix": 55257,
+   "default": [
+    0.0,
+    0.0
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      -0.16853301227092743,
+      -0.15347115695476532
+     ],
+     "maxdiff": 255,
+     "npix": 55257
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      0.10490205138921738,
+      0.011777292005717754
+     ],
+     "maxdiff": 255,
+     "npix": 40525
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      0.11816822737455368,
+      0.017798563465476036
+     ],
+     "maxdiff": 255,
+     "npix": 40826
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      0.08050958067178726,
+      -0.19671402871608734
+     ],
+     "maxdiff": 255,
+     "npix": 54759
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      0.15807944536209106,
+      0.07022690027952194
+     ],
+     "maxdiff": 255,
+     "npix": 54597
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "pad.color": {
+   "verdict": "NO_PIXEL_MOVEMENT",
+   "worst_maxdiff": 0,
+   "worst_npix": 0,
+   "default": [
+    200,
+    200,
+    200
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      104,
+      60,
+      3
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      38,
+      14,
+      106
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      5,
+      69,
+      218
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      240,
+      132,
+      195
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      242,
+      127,
+      98
+     ],
+     "maxdiff": 0,
+     "npix": 0
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "rocket.body_color": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 241,
+   "worst_npix": 35551,
+   "default": [
+    255,
+    204,
+    0
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      229,
+      133,
+      228
+     ],
+     "maxdiff": 226,
+     "npix": 35551
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      13,
+      221,
+      6
+     ],
+     "maxdiff": 241,
+     "npix": 35551
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      164,
+      150,
+      196
+     ],
+     "maxdiff": 194,
+     "npix": 35551
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      156,
+      231,
+      179
+     ],
+     "maxdiff": 177,
+     "npix": 35551
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      239,
+      81,
+      221
+     ],
+     "maxdiff": 219,
+     "npix": 35551
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "rocket.booster_color": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 191,
+   "worst_npix": 573,
+   "default": [
+    51,
+    51,
+    51
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      247,
+      116,
+      96
+     ],
+     "maxdiff": 191,
+     "npix": 573
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      64,
+      83,
+      198
+     ],
+     "maxdiff": 143,
+     "npix": 573
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      128,
+      153,
+      115
+     ],
+     "maxdiff": 100,
+     "npix": 573
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      200,
+      74,
+      52
+     ],
+     "maxdiff": 145,
+     "npix": 573
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      51,
+      28,
+      181
+     ],
+     "maxdiff": 127,
+     "npix": 573
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "rocket.fin_color": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 186,
+   "worst_npix": 16858,
+   "default": [
+    51,
+    51,
+    51
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      154,
+      91,
+      88
+     ],
+     "maxdiff": 97,
+     "npix": 16858
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      247,
+      214,
+      158
+     ],
+     "maxdiff": 185,
+     "npix": 16858
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      87,
+      146,
+      42
+     ],
+     "maxdiff": 90,
+     "npix": 16858
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      42,
+      248,
+      245
+     ],
+     "maxdiff": 186,
+     "npix": 16858
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      59,
+      21,
+      95
+     ],
+     "maxdiff": 42,
+     "npix": 16858
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  },
+  "rocket.leg_color": {
+   "verdict": "MOVES_PIXELS",
+   "worst_maxdiff": 218,
+   "worst_npix": 228,
+   "default": [
+    0,
+    0,
+    0
+   ],
+   "draws": [
+    {
+     "seed": 0,
+     "drawn": [
+      212,
+      84,
+      138
+     ],
+     "maxdiff": 199,
+     "npix": 228
+    },
+    {
+     "seed": 1,
+     "drawn": [
+      196,
+      101,
+      36
+     ],
+     "maxdiff": 184,
+     "npix": 228
+    },
+    {
+     "seed": 2,
+     "drawn": [
+      35,
+      231,
+      132
+     ],
+     "maxdiff": 217,
+     "npix": 228
+    },
+    {
+     "seed": 3,
+     "drawn": [
+      93,
+      233,
+      58
+     ],
+     "maxdiff": 218,
+     "npix": 228
+    },
+    {
+     "seed": 4,
+     "drawn": [
+      43,
+      90,
+      232
+     ],
+     "maxdiff": 218,
+     "npix": 228
+    }
+   ],
+   "n_seeds": 5,
+   "total_pixels": 691200
+  }
+ }
+}

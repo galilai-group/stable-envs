@@ -1,0 +1,68 @@
+{
+ "provenance": {
+  "host": "gpu2264.oscar.ccv.brown.edu",
+  "python": "3.12.8",
+  "slurm_job_id": "6443480",
+  "slurm_nodelist": "gpu2264",
+  "pythonpath": "/oscar/scratch/sboughan/se8/baseline:/oscar/scratch/sboughan/se7/stable-worldmodel",
+  "git_sha": null,
+  "gpu": "NVIDIA GeForce RTX 3090, 575.57.08, 24576 MiB",
+  "torch": "2.14.0+cu126",
+  "mujoco": "3.12.0",
+  "mujoco_warp": "3.12.0",
+  "warp": "1.17.0",
+  "stable_worldmodel": "unavailable: AttributeError",
+  "ogbench": "unavailable: AttributeError",
+  "PyFlyt": "unavailable: ModuleNotFoundError",
+  "nvdiffrast": "unavailable: ModuleNotFoundError",
+  "cuda": {
+   "available": true,
+   "device": "NVIDIA GeForce RTX 3090",
+   "capability": [
+    8,
+    6
+   ]
+  }
+ },
+ "mode": "default",
+ "tag": "baseline",
+ "cells": [
+  {
+   "cell": "OGBCube",
+   "state_dim": 24,
+   "size": 224,
+   "style_dim": 0,
+   "n_states": 8,
+   "frames_shape": [
+    8,
+    224,
+    224,
+    3
+   ],
+   "frames_digest": "13f725346c21e3ebd99d72384586fcb6",
+   "states_digest": "f87405e959762e4d01c04b1641325e21",
+   "default_style_digest": "cae66941d9efbd404e4d88758ea67670",
+   "default_style": []
+  },
+  {
+   "cell": "OGBScene",
+   "state_dim": 30,
+   "size": 200,
+   "style_dim": 0,
+   "n_states": 8,
+   "frames_shape": [
+    8,
+    200,
+    200,
+    3
+   ],
+   "frames_digest": "dd22ec9fce3e9a6943c37ded982f8bcf",
+   "states_digest": "ceb276227d6d41809ede78cea60ae870",
+   "default_style_digest": "cae66941d9efbd404e4d88758ea67670",
+   "default_style": []
+  }
+ ],
+ "errors": {
+  "PFRocketLanding": "KeyError: \"unknown env 'PFRocketLanding'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'AntmazeTeleportStitch', 'BabyAIGoToLocal', 'CartPole', 'CraftaxClassic', 'CraftaxFull', 'Crafter', 'DMCAcrobotSwingup', 'DMCBallInCupCatch', 'DMCCartpoleBalance', 'DMCCartpoleSwingup', 'DMCCheetahRun', 'DMCFingerSpin', 'DMCFingerTurnEasy', 'DMCFingerTurnHard', 'DMCHopperHop', 'DMCHumanoidStand', 'DMCManipulatorBringBall', 'DMCPendulumSwingup', 'DMCPointMassEasy', 'DMCQuadrupedWalk', 'DMCReacherEasy', 'DMCReacherHard', 'DMCSwimmerSwimmer6', 'DMCWalkerWalk', 'FetchPickAndPlace', 'FetchPickAndPlaceDense', 'FetchPickAndPlaceDict', 'FetchPush', 'FetchPushDense', 'FetchPushDict', 'FetchReach', 'FetchReachDense', 'FetchReachDict', 'FetchSlide', 'FetchSlideDense', 'FetchSlideDict', 'Highway', 'HumanoidmazeGiantNavigate', 'HumanoidmazeGiantStitch', 'HumanoidmazeLargeNavigate', 'HumanoidmazeLargeStitch', 'HumanoidmazeMediumNavigate', 'HumanoidmazeMediumStitch', 'Intersection', 'Merge', 'MiniGridDoorKey', 'MiniGridEmpty', 'MiniGridFourRooms', 'MiniGridKeyCorridor', 'MiniGridLavaCrossing', 'MiniGridPOVFetch', 'MiniHack', 'MountainCar', 'MountainCarContinuous', 'MujocoInvertedDoublePendulum', 'MujocoInvertedPendulum', 'MujocoPusher', 'MujocoReacher', 'OGBCube', 'OGBScene', 'Parking', 'Pendulum', 'Piecewise', 'PiecewiseZones', 'PointMazeLarge', 'PointMazeMedium', 'PointMazeOpen', 'PointMazeUMaze', 'PointmazeGiantNavigate', 'PointmazeGiantStitch', 'PointmazeLargeNavigate', 'PointmazeLargeStitch', 'PointmazeMediumNavigate', 'PointmazeMediumStitch', 'PointmazeTeleportNavigate', 'PointmazeTeleportStitch', 'PushT', 'Racetrack', 'Roundabout', 'SimplePointMaze', 'TwoRoom', 'TwoRoomTarget']\""
+ }
+}

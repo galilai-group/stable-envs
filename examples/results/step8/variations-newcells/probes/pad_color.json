@@ -1,0 +1,86 @@
+{
+ "what": "pad.color: does it reach the reference MODEL, and does it reach a reference PIXEL?",
+ "frames_per_trial": [
+  6,
+  480,
+  480,
+  3
+ ],
+ "total_pixels": 1382400,
+ "no_variation_reset": {
+  "pad_rgba_applied": [
+   [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  ],
+  "declared_pad_color_init_value": [
+   200,
+   200,
+   200
+  ],
+  "note": "a plain reset loads the UNMODIFIED pad URDF (_modify_pad_urdf runs only when a variation is requested), so the pad is WHITE and the declared init_value (200,200,200) is not what the registered default produces"
+ },
+ "trials": [
+  {
+   "seed": 0,
+   "drawn_pad_color": [
+    104,
+    60,
+    3
+   ],
+   "pad_rgba_applied": [
+    [
+     0.408,
+     0.235,
+     0.012,
+     1.0
+    ]
+   ],
+   "maxdiff": 0,
+   "npix": 0,
+   "quantisation": "URDF rewrite formats each channel as f'{v:.3f}', which material_table reproduces"
+  },
+  {
+   "seed": 1,
+   "drawn_pad_color": [
+    38,
+    14,
+    106
+   ],
+   "pad_rgba_applied": [
+    [
+     0.149,
+     0.055,
+     0.416,
+     1.0
+    ]
+   ],
+   "maxdiff": 0,
+   "npix": 0,
+   "quantisation": "URDF rewrite formats each channel as f'{v:.3f}', which material_table reproduces"
+  },
+  {
+   "seed": 2,
+   "drawn_pad_color": [
+    5,
+    69,
+    218
+   ],
+   "pad_rgba_applied": [
+    [
+     0.02,
+     0.271,
+     0.855,
+     1.0
+    ]
+   ],
+   "maxdiff": 0,
+   "npix": 0,
+   "quantisation": "URDF rewrite formats each channel as f'{v:.3f}', which material_table reproduces"
+  }
+ ],
+ "verdict": "reaches the model (getVisualShapeData confirms the quantised rgba) but reaches NO reference pixel in the sampled regime: the landing pad is never in the render camera's view over 120 steps from a ~430 m drop. mapped, not dead_upstream"
+}

@@ -24,14 +24,13 @@
   "rows": 42,
   "symbolic": 2,
   "variation_map": {
-   "complete": 21,
-   "missing": 5,
+   "complete": 26,
    "n/a": 2,
    "partial": 12,
    "unknown": 2
   }
  },
- "generated_at_head_sha": "c2770c5f2027375d8c573959539c4297b1d35ed6",
+ "generated_at_head_sha": "0ee333560234173e0d8a1de5c12284544a97a509",
  "rows": [
   {
    "backend_class": "R",
@@ -3096,11 +3095,20 @@
    "swm_id": "swm/OGBCube-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 2,
+     "swm_only": 9
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "OGBCube"
+    ],
     "n_swm_leaves": 11,
     "note": "certified at the registered default (224 px, camera front_pixels, visualize_info=True recorded as a parity_note); the registered-default variation set was taken first and appearance leaves are declared per env",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -3173,11 +3181,21 @@
    "swm_id": "swm/OGBMaze-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
-    "n_swm_leaves": 5,
+    "leaf_classification": {
+     "mapped": 4,
+     "swm_only": 6
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "PointmazeLargeNavigate",
+     "PointmazeLargeStitch"
+    ],
+    "n_swm_leaves": 10,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -3305,11 +3323,20 @@
    "swm_id": "swm/OGBScene-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 2,
+     "swm_only": 10
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "OGBScene"
+    ],
     "n_swm_leaves": 12,
     "note": "as OGBCube; the two button bits are state dims, not style",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }
@@ -3544,15 +3571,22 @@
      "5 RGB material colours",
      "flame ignition bit"
     ],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 5,
+     "swm_only": 4
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "PFRocketLanding"
+    ],
     "n_swm_leaves": 9,
     "note": "sky_color is a DEAD leaf in the swm wrapper (it reaches no pixel) and is deliberately not offered; the 5 colours and the ignition bit are the style dims by path",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
-    "unsupported_or_dead_leaves": [
-     "environment.sky_color"
-    ]
+    "unsupported_or_dead_leaves": []
    }
   },
   {
@@ -4308,11 +4342,20 @@
    "swm_id": "swm/SimplePointMaze-v0",
    "variation": {
     "declared_in": [],
-    "map_status": "missing",
+    "leaf_classification": {
+     "mapped": 7,
+     "swm_only": 5
+    },
+    "map_status": "complete",
+    "mapped_cells": [
+     "SimplePointMaze"
+    ],
     "n_swm_leaves": 12,
     "note": "pre-Step-7 coverage; no Step-7 workstream re-examined this id's leaves",
-    "source": "examples/results/step7/closure2/coverage_matrix.json",
-    "status": "UNMEASURED",
+    "partial_leaves": [],
+    "previous_status_in_coverage_matrix": "missing",
+    "source": "stable_envs.compat.worldmodel.VARIATION_MAPS (installed), VariationMap.classification()",
+    "status": "PASS",
     "swm_status": "present",
     "unsupported_or_dead_leaves": []
    }

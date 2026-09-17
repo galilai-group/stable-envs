@@ -1,0 +1,43 @@
+{
+ "venv": "/Users/samib/se7-craftax-venv/bin/python",
+ "ids": {
+  "swm/CraftaxClassicPixels-v1": {
+   "variation_space_repr": "None",
+   "is_None": true,
+   "n_leaves": 0,
+   "frame_shape": [
+    63,
+    63,
+    3
+   ],
+   "obs_shape": [
+    63,
+    63,
+    3
+   ],
+   "env_name": "CraftaxClassicPixelsWrapper"
+  },
+  "swm/CraftaxPixels-v1": {
+   "variation_space_repr": "None",
+   "is_None": true,
+   "n_leaves": 0,
+   "frame_shape": [
+    130,
+    110,
+    3
+   ],
+   "obs_shape": [
+    130,
+    110,
+    3
+   ],
+   "env_name": "CraftaxPixelsWrapper"
+  }
+ },
+ "mode": "direct module import",
+ "source_evidence": {
+  "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/craftax/craftax.py",
+  "line": "self.variation_space = None  # in CraftaxWrapper.__init__ (~line 59)",
+  "no_swm_spaces_import": true
+ }
+}

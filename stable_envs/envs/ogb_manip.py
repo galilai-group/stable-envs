@@ -101,6 +101,33 @@ DEFAULT_VARIATION_PATHS = {
     "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
     "Scene": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
 }
+# ---- MODULE CACHES, and what each one is allowed to remember --------------------------------
+#
+# All four are keyed by CELL, not by renderer instance, and none of them is per-`OGBManipBase`.
+# That is deliberate -- an EGL context and a mujoco_warp graph are process resources -- but it is
+# also the reason a style leaf has to be written with more care here than in an env that owns its
+# own buffers, so the rule is written down once:
+#
+#   _BUNDLE_CACHE   (cell)                 immutable reference model, pristine arrays, cube geom
+#                                          ids, grid-texture masks, swm's declared defaults. Never
+#                                          varies with style; read-only after construction.
+#   _CTX_CACHE      (cell, res, nworld)    the mujoco_warp context. Its per-world `geom_rgba` is
+#                                          MUTABLE and SHARED across renders, across chunks and
+#                                          across renderer instances, so every per-world appearance
+#                                          leaf must be written for EVERY world of EVERY chunk of
+#                                          EVERY render -- INCLUDING when the requested value is the
+#                                          registered default. Skipping the default upload is what
+#                                          leaks a previous render's cube colour into this one, so
+#                                          `_cube_colours` never returns `None` for a cell that has
+#                                          cube geoms.
+#   _PLATE_CACHE    (cell, res, device,    baked static plates. `floorkey` is the QUANTISED floor
+#                    floorkey)             colour -- the bytes MuJoCo would store -- and is `None`
+#                                          for the default, so the default plate keeps exactly the
+#                                          key it had before `floor.color` existed.
+#   _PLATE_RIGS     (cell, res)            the private (model, data, renderer) triple that bakes a
+#                                          plate. Its texture and GL context are MUTATED per bake,
+#                                          so `_apply_floor` writes the floor it wants on every
+#                                          bake rather than trusting what the last bake left.
 _CTX_CACHE: dict = {}
 _CTX_CACHE_MAX = 4
 _PLATE_CACHE: dict = {}
@@ -194,7 +221,8 @@ class _Bundle:
     """
 
     __slots__ = ("cam", "movers", "nq", "nv", "nmocap", "nbuttons",
-                 "state_names", "pristine", "size", "unwrapped", "button_tables")
+                 "state_names", "pristine", "size", "unwrapped", "button_tables",
+                 "cube_geoms", "grid_tex", "var_defaults")
 
     @property
     def model(self):
@@ -262,8 +290,123 @@ def _bundle(cell: str) -> _Bundle:
                   "geom_rgba": np.array(m.geom_rgba, copy=True),
                   "mat_rgba": np.array(m.mat_rgba, copy=True)}
     b.button_tables = _button_tables(u, m, b.nbuttons)
+    b.var_defaults = _variation_defaults(u)
+    b.cube_geoms = _cube_geoms(u, m)
+    b.grid_tex = _grid_texture(m, b.var_defaults["floor.color"])
     _BUNDLE_CACHE[cell] = b
     return b
+
+
+def mj_quantise(v) -> np.ndarray:
+    """A float colour as MuJoCo's own texture compiler stores it: ``int(255 * v)``, TRUNCATED.
+
+    Not rounded, and the difference is visible: the default floor's 0.16 becomes 40, where rounding
+    gives 41, and 0.18 becomes 45 where rounding gives 46. Measured against the compiled ``tex_data``
+    of both cells at six default channels and five probe channels; every one truncates.
+    """
+    return np.clip((np.asarray(v, np.float64) * 255.0).astype(np.int64), 0, 255).astype(np.uint8)
+
+
+def _variation_defaults(u) -> dict:
+    """The swm variation leaves we offer, at their declared init values.
+
+    Read from the live space rather than written down here, so our default IS swm's default by
+    construction and cannot drift from it in a later swm release.
+
+    SHAPE CONTRACT, decided once and enforced here so nothing downstream has to guess. swm declares
+    ``cube.color`` as ``(num_cubes, 3)`` and both registered cells are one-cube configurations
+    (``CubeEnv(env_type='single')`` and ``SceneEnv``, which pins ``_num_cubes = 1``), so the leaf
+    carries exactly one RGB triple. We carry it FLAT, as ``(3,)``: ``VariationMap`` pairs leaves by
+    dotted path and ``compat.worldmodel`` moves them through ``flat_layout`` widths, so a leading
+    axis of length 1 buys nothing and costs a shape that the Box, the style row and the swm value
+    would each spell differently. ``style_from_variation`` accepts swm's ``(1, 3)`` because it
+    flattens before slicing; ``variation_from_style`` emits the flat ``(3,)`` back, which is the
+    same flattening every multi-row leaf in that module already gets and is recorded in findings.md
+    as a boundary reshape rather than papered over here.
+
+    ``floor.color`` is ``(2, 3)`` on both sides -- the checker's two colours -- and stays shaped,
+    because the two rows are not interchangeable and a flat six-vector would let a caller swap them
+    silently.
+    """
+    vs = getattr(u, "variation_space", None)
+    ncube = int(getattr(u, "_num_cubes", 1) or 1)
+    assert ncube == 1, (
+        f"this cell has {ncube} cubes, and the (3,) cube.color contract assumes one. A multi-cube "
+        f"configuration needs the leaf widened to (num_cubes, 3) on BOTH sides, plus per-cube geom "
+        f"groups in _cube_geoms; it is not a shape that can be fixed at the Box alone")
+    out = {}
+    for path, fallback in (("cube.color", [[0.96, 0.26, 0.33]]),
+                           ("floor.color", [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]])):
+        val = None
+        if vs is not None:
+            node = vs
+            try:
+                for part in path.split("."):
+                    node = node[part]
+                val = np.asarray(node.value, np.float64)
+            except Exception:
+                val = None
+        out[path] = np.asarray(fallback, np.float64) if val is None else val
+    # swm's (num_cubes, 3) -> our flat (3,); asserted one cube above, so this cannot silently drop a
+    # second cube's colour.
+    out["cube.color"] = np.asarray(out["cube.color"], np.float64).reshape(-1)[:3]
+    out["floor.color"] = np.asarray(out["floor.color"], np.float64).reshape(2, 3)
+    return out
+
+
+def _cube_geoms(u, m) -> np.ndarray:
+    """The geoms swm's ``initialize_episode`` paints with ``cube.color``.
+
+    MEASURED (both cells): rows 62 ``object_0`` and 63 ``target_object_0``, and both are MOVERS, so
+    this leaf never touches the baked plate. Resolved BY NAME rather than by the measured ids, since
+    an id is a property of one compilation and a name is a property of the MJCF. The alpha channel is
+    deliberately NOT part of this: ``object_0`` is opaque and ``target_object_0`` is the translucent
+    goal marker at alpha 0.2, and swm preserves each geom's own alpha while writing only rgb.
+    """
+    import mujoco
+    ids = []
+    for lst in getattr(u, "_cube_geom_ids_list", []) or []:
+        ids.extend(int(g) for g in lst)
+    for i in range(int(getattr(u, "_num_cubes", 1) or 1)):
+        for nm in (f"object_{i}", f"target_object_{i}"):
+            g = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, nm)
+            if g >= 0 and g not in ids:
+                ids.append(int(g))
+    return np.asarray(sorted(set(ids)), np.int64)
+
+
+def _grid_texture(m, floor_default) -> dict | None:
+    """Where the checker floor lives in ``tex_data``, and which texels are rgb1 / rgb2.
+
+    swm honours ``floor.color`` by rewriting the MJCF texture's rgb1/rgb2 and RECOMPILING the scene.
+    The plate does not need a recompile to reproduce that: the compiled texture is a two-colour
+    checker plus a mark colour, so the same picture is reached by substituting the texels in a
+    PRIVATE copy and re-uploading the texture to the renderer's own context.
+
+    The masks are taken once, from the DEFAULT texture, so a later write cannot be confused by the
+    two requested colours happening to collide with each other. ``markrgb`` texels (204,204,204) are
+    deliberately left alone: swm does not touch them, and measured they are 1,023 of the 262,144.
+
+    VERIFIED, not assumed: rewriting these texels and calling ``mjr_uploadTexture`` gives a plate
+    BYTE-IDENTICAL to letting swm recompile the whole model at the same floor.color -- tex_data 0
+    bytes differing, 0 of 50,176 pixels differing (both cells).
+    """
+    import mujoco
+    t = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
+    if t < 0:
+        return None
+    adr = int(m.tex_adr[t])
+    nch = int(getattr(m, "tex_nchannel", [3] * (t + 1))[t]) if hasattr(m, "tex_nchannel") else 3
+    n = int(m.tex_height[t]) * int(m.tex_width[t]) * nch
+    flat = np.asarray(m.tex_data[adr:adr + n]).reshape(-1, nch)
+    c1, c2 = mj_quantise(floor_default[0]), mj_quantise(floor_default[1])
+    m1 = np.all(flat[:, :3] == c1[None, :3], axis=1)
+    m2 = np.all(flat[:, :3] == c2[None, :3], axis=1)
+    assert m1.any() and m2.any(), (
+        "the grid texture carries neither of the default floor colours, so the texel masks would be "
+        "empty and floor.color would silently do nothing")
+    return {"texid": int(t), "adr": adr, "n": n, "nch": nch, "mask1": m1, "mask2": m2,
+            "default": np.asarray(floor_default, np.float64).copy()}
 
 
 def _button_tables(u, m, nbuttons: int) -> dict | None:
@@ -600,37 +743,98 @@ class OGBManipBase(StableEnv):
     # ---- variation ------------------------------------------------------------------------
 
     def make_variation_space(self) -> Dict:
-        """The REGISTERED DEFAULT variation set, and nothing else yet.
+        """The two swm appearance leaves this cell can honour without a per-world model array.
 
-        swm's own space has appearance leaves -- ``floor.color``, ``light.intensity``,
-        ``camera.angle_delta``, ``cube.size``, ``agent.color`` and (Scene) ``lock_color`` -- and each
-        of them makes the baked plate a function of the variation vector rather than a constant. They
-        are tractable exactly as the DM Control cells handle theirs, as per-env tables keyed into the
-        bake cache, and they are deliberately OUT of scope until parity is established: widening the
-        bake's cache key silently is how a plate stops being the thing that was asserted constant.
-        The Gate-F gap list says so explicitly rather than leaving it to be inferred.
+        swm offers six. Which ones are reachable is not a matter of taste: it is decided by WHICH
+        MODEL ARRAY each one writes and whether the geoms it writes are movers or plate, and that was
+        measured leaf by leaf (see docs/research/step8_variations_newcells.md).
 
-        What IS in the registered default set -- ``cube.start_position``, ``cube.start_yaw``,
-        ``cube.goal_position``, ``cube.goal_yaw`` -- reaches the frame only through ``qpos`` and the
-        mocap pose, which are state, not appearance. That is why this space is empty and the plate is
-        bit-static: measured in phase 0 across resets, every ``MjModel`` appearance array is
-        identical.
+        ``cube.color`` writes ``geom_rgba`` on two MOVER geoms -- ``object_0`` and the translucent
+        ``target_object_0`` -- with no recompile, which is exactly what ``_upload_button_colours``
+        already does per world for the Scene buttons. ``floor.color`` writes the checker texture and
+        nothing else, and the floor is STATIC, so it is a property of the baked plate alone and costs
+        one cache key.
+
+        The other four are deliberately still OUT, and not because they are hard to spell:
+        ``light.intensity`` (``light_diffuse``), ``camera.angle_delta`` (``cam_mat0``/``cam_quat``)
+        and ``cube.size`` (``geom_size``) all need the value to differ PER WORLD inside one
+        mujoco_warp context, which this renderer cannot express; ``agent.color`` is dead upstream in
+        isolation (swm's dirty-flag test is inverted, so the colour never reaches the compiled
+        model). Those are recorded as escalations rather than quietly approximated.
+
+        The defaults are read from swm's own variation space at bundle time, so "our default is the
+        registered default" is true by construction rather than by a copied literal.
         """
-        return Dict({})
+        d = _bundle(self.CELL).var_defaults
+        return Dict({
+            "cube": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
+                                       init_value=d["cube.color"])}),
+            "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3),
+                                        init_value=d["floor.color"])}),
+        })
+
+    #: Style leaves that change the STATIC scene, so the batch is grouped by them and each group
+    #: gets its own baked plate. Everything else is a mover property, applied per world in the
+    #: mujoco_warp pass. The same split ``envs/ogbench.py`` already makes for its maze plates.
+    PLATE_PATHS = ("floor.color",)
+
+    def _style_host(self, sty) -> dict:
+        """``{path: (B, w) float64}`` -- the WHOLE style row, brought to the host in ONE transfer.
+
+        Both leaves are consumed on the host (a MuJoCo texture bake, and a small per-world table
+        assembled with numpy), so the values have to cross either way. They cross ONCE, for the whole
+        row, rather than once per leaf: a device-to-host copy of a nine-float row costs a
+        synchronisation, not bandwidth, and at B=1 a second sync is a measurable fraction of the
+        whole render. Measured on gpu2264: two syncs cost ~0.5 ms per render at B=1 and are lost in
+        the noise at B=4096, which is exactly the shape of a latency term.
+        """
+        v = sty.values
+        # MEMOISED ON THE TENSOR ITSELF, which is what makes a render loop at the default cost one
+        # sync in total rather than one per frame: `resolve_style(None, None)` hands back the env's
+        # OWN `_style` tensor, the same object every call, so the hit rate on the hot path is 1.
+        #
+        # This is a cache of a PURE READ and never a licence to skip an upload -- `_cube_colours` and
+        # `_apply_floor` are called unconditionally whether this hits or misses. The key is identity
+        # AND `_version`, so an in-place write to the style row invalidates it; the cache holds a
+        # strong reference to the tensor, so an `id()` freed and reused cannot alias a stale entry.
+        hit = self.__dict__.get("_style_host_cache")
+        if hit is not None and hit[0] is v and hit[1] == v._version:
+            return hit[2]
+        host = np.asarray(v.detach().cpu(), np.float64)
+        out = {p: host[:, o:o + w] for p, (o, w) in sty.layout.items()}
+        self.__dict__["_style_host_cache"] = (v, v._version, out)
+        return out
 
     # ---- the plate ------------------------------------------------------------------------
 
-    def _plate(self, res: int) -> torch.Tensor:
-        key = (self.CELL, int(res), str(self.device))
+    def _plate(self, res: int, floor=None) -> torch.Tensor:
+        """The baked static plate for one floor colour, cached.
+
+        The key gained the floor colour when ``floor.color`` became offerable. It is keyed on the
+        QUANTISED colour -- the bytes MuJoCo would actually store -- rather than on the float, so two
+        requests that compile to the same texture share one bake instead of rendering it twice.
+        """
+        fq = self._floor_key(floor)
+        key = (self.CELL, int(res), str(self.device), fq)
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
         if len(_PLATE_CACHE) >= _PLATE_CACHE_MAX:
             _PLATE_CACHE.clear()
-        out = _PLATE_CACHE[key] = self._bake_plate(res)
+        out = _PLATE_CACHE[key] = self._bake_plate(res, floor=floor)
         return out
 
-    def _bake_plate(self, res: int, states=None) -> torch.Tensor:
+    def _floor_key(self, floor):
+        """The cache key for a floor colour: the bytes MuJoCo stores, or ``None`` for the default."""
+        if floor is None:
+            return None
+        g = self._b.grid_tex
+        q = mj_quantise(np.asarray(floor, np.float64).reshape(2, 3))
+        if g is not None and np.array_equal(q, mj_quantise(g["default"])):
+            return None                       # the default, by whatever route it was requested
+        return tuple(q.reshape(-1).tolist())
+
+    def _bake_plate(self, res: int, states=None, floor=None) -> torch.Tensor:
         """MuJoCo's own raster of the static scene: the floor plane and the skybox.
 
         Exact because MuJoCo drew it -- and only reaching the frame where the mover LUT says MJWarp
@@ -655,6 +859,7 @@ class OGBManipBase(StableEnv):
             f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
             f"it is now wrong; phase 0 measured these arrays identical across resets and this "
             f"assertion is what keeps that measurement honest")
+        self._apply_floor(rig, floor)
         d = rig.data
         if states is None:
             d.qpos[:] = b.data.qpos
@@ -669,6 +874,63 @@ class OGBManipBase(StableEnv):
         mujoco.mj_forward(rig.model, d)
         rig.renderer.update_scene(d, camera=b.cam, scene_option=b.unwrapped._scene_option)
         return torch.as_tensor(rig.renderer.render().copy(), device=self.device)
+
+    def _apply_floor(self, rig, floor) -> None:
+        """Put one ``floor.color`` into the rig's PRIVATE texture, and onto the renderer's context.
+
+        swm reaches the same picture by rewriting the MJCF rgb1/rgb2 and recompiling the scene. A
+        recompile is exactly what this cell cannot afford -- it would invalidate the plate rig, the
+        appearance digest and the mujoco_warp graph all at once -- and it turns out not to be
+        necessary: the compiled texture is a two-colour checker plus an untouched mark colour, so
+        substituting the texels reaches the same bytes. VERIFIED byte-for-byte against letting swm
+        recompile, on both cells: ``tex_data`` 0 bytes differing and the baked plate 0 of 50,176
+        pixels differing.
+
+        ``mjr_uploadTexture`` is the half that is easy to forget. ``mujoco.Renderer`` uploads
+        textures to its GL context when it is BUILT; writing ``tex_data`` afterwards changes the
+        model and not the context, so without the upload the plate would silently keep the old floor
+        and every floor.color would read as inert.
+
+        Written on EVERY bake, with no "it already looks like that" shortcut. The rig, its texture
+        and its GL context are one per (cell, res) for the life of the process and are reused by
+        every floor colour any renderer instance asks for, so "the texture is whatever the last bake
+        left" is the one state this must not have. A conditional upload would be correct only if
+        `rig.floor` could never disagree with the context, and it disagrees the moment a bake raises
+        between the texel write and the upload. The cost is one `mjr_uploadTexture` per plate-cache
+        MISS, never per render: a cache hit does not reach this function at all.
+
+        `rig.floor` is therefore a RECORD of what was last written -- useful when a plate looks wrong
+        and you want to know which colour the context actually holds -- and never a permission to
+        skip the write.
+
+        THE CURRENT CONTEXT IS THE LOAD-BEARING LINE. `mujoco.Renderer` calls
+        `self._gl_context.make_current()` in exactly two places -- its constructor and `render()` --
+        and `mjr_uploadTexture` is neither. Its `con` argument selects the MuJoCo texture id; the GL
+        calls it issues go to whatever context the THREAD currently has, which is the last rig that
+        rendered. This module keeps one rig per (cell, RESOLUTION), so there are two live contexts
+        the moment `_check_plate_is_constant` bakes at 128 while a render is working at 224 -- and an
+        upload made under the wrong one writes over an unrelated texture object in that context,
+        because GL texture names are per-context.
+
+        MEASURED, on gpu2264, before this line existed: a second `OGBManipBase` constructed after a
+        render with a custom floor failed its own `_check_plate_is_constant` with the two 128 px
+        plates differing by **219/255**, which reads as "the plate depends on the state" and is
+        really "the skybox texture of one context was overwritten by the floor upload of another".
+        Gate A caught it as `check_style_is_state`; it is invisible to any test that builds one
+        renderer at one resolution.
+        """
+        import mujoco
+        g = self._b.grid_tex
+        if g is None:
+            return
+        want = self._b.var_defaults["floor.color"] if floor is None else np.asarray(floor, np.float64)
+        want = want.reshape(2, 3)
+        flat = rig.model.tex_data[g["adr"]:g["adr"] + g["n"]].reshape(-1, g["nch"])
+        flat[g["mask1"], :3] = mj_quantise(want[0])
+        flat[g["mask2"], :3] = mj_quantise(want[1])
+        rig.renderer._gl_context.make_current()
+        mujoco.mjr_uploadTexture(rig.model, rig.renderer._mjr_context, g["texid"])
+        rig.floor = want.copy()
 
     # ---- render ---------------------------------------------------------------------------
 
@@ -693,8 +955,20 @@ class OGBManipBase(StableEnv):
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
-        plate = self._plate(res)
-        plate1 = plate if ss == 1 else self._plate(size)
+        sty = self.resolve_style(style, variation, batch=B)
+        # The batch is grouped by the plate-affecting half of the style, exactly as envs/ogbench.py
+        # groups its maze plates: environments sharing a floor colour share one bake. `_floor_plan`
+        # returns `gidx is None` for the common case of one floor across the batch, and that case
+        # then takes the ORIGINAL code path below -- one (res,res,3) plate broadcast over the whole
+        # chunk -- so "the registered default did not move" is the same arithmetic in the same order,
+        # not merely the same digest.
+        host = self._style_host(sty)
+        reps, gidx = self._floor_plan(host, B)
+        plates = self._floor_plates(reps, res)
+        plates1 = plates if ss == 1 else self._floor_plates(reps, size)
+        plate = plates[0] if gidx is None else None
+        plate1 = (plate if ss == 1 else plates1[0]) if gidx is None else None
+        cube = self._cube_colours(host, B)
         lut = self._mover_lut()
         b = self._b
         nq, nmoc = b.nq, b.nmocap
@@ -718,6 +992,11 @@ class OGBManipBase(StableEnv):
                 wp.to_torch(c.wd.mocap_quat)[:n] = self._identity_quat(nmoc, n)
             if b.nbuttons:
                 self._upload_button_colours(c, chunk, n)
+            # AFTER the buttons, and that order is load-bearing: `_upload_button_colours` replaces
+            # the WHOLE `geom_rgba` row-block for each world from its table, so a cube colour written
+            # first would be overwritten by the button bake.
+            if cube is not None:
+                self._upload_cube_colours(c, cube[lo:hi], n)
             # torch wrote the per-world arrays on its stream; warp replays the graph on its own.
             # The two syncs bracket the launch so a frame can never be rendered from half-written
             # state -- microseconds against the difference between deterministic and nearly so.
@@ -733,7 +1012,13 @@ class OGBManipBase(StableEnv):
             # `index_select` on the int32 segmentation rather than `lut[seg.long() + 1]`: the latter
             # materialises a 64-bit copy of the whole frame stack to index with.
             mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
-            comp = torch.where(mv.unsqueeze(-1), rgb, plate)
+            if gidx is None:
+                pl, pl1 = plate, plate1
+            else:
+                g = gidx[lo:hi]
+                pl = plates.index_select(0, g)
+                pl1 = pl if ss == 1 else plates1.index_select(0, g)
+            comp = torch.where(mv.unsqueeze(-1), rgb, pl)
             if ss == 1:
                 buf[lo:hi] = comp
             else:
@@ -741,7 +1026,7 @@ class OGBManipBase(StableEnv):
                          .reshape(n, size, ss, size, ss, 3).mean((2, 4)).round_()
                          .clamp_(0, 255).to(torch.uint8))
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
-                buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, plate1)
+                buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
 
     def _identity_quat(self, nmoc: int, n: int) -> torch.Tensor:
@@ -770,6 +1055,84 @@ class OGBManipBase(StableEnv):
             lut[torch.as_tensor(np.asarray(self._b.movers, np.int64) + 1, device=self.device)] = True
             hit = cache["mover_lut"] = lut
         return hit
+
+    def _floor_plan(self, host, B: int):
+        """``(reps, gidx)``: one ORIGINAL float representative per distinct floor colour, and which
+        environment belongs to which.
+
+        Computed ONCE per render and reused for every resolution, because a batch has exactly one
+        grouping: two groupings that disagreed would pair a chunk with the wrong plate, and there is
+        no arrangement of this code where that should be possible.
+
+        ``gidx`` is ``None`` when the whole batch shares one floor, which is the registered default
+        and every run that does not ask for per-environment floors. That case is not an optimisation
+        detail -- it keeps the default render on the pre-existing single-plate path, so "the default
+        did not move" is a property of the code and not only of a digest comparison.
+
+        Grouping is by the QUANTISED bytes -- the texture MuJoCo would compile -- so two floats that
+        compile to the same checker share one bake. The representative handed to the bake is an
+        ORIGINAL float row and never a byte pair decoded back to float: ``q/255`` re-quantised can
+        land one byte low (0.16 -> 40 -> 0.15686 -> 39), which would bake a plate one level off the
+        colour that keyed it. Bytes group; floats bake; the two never swap roles.
+        """
+        f = host["floor.color"]                                        # (B, 6)
+        q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6)
+        uniq, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
+        reps = [f[i].reshape(2, 3) for i in first]
+        if len(uniq) == 1:
+            return reps, None
+        inv = np.asarray(inv, np.int64).reshape(-1)    # numpy >= 2.0 shapes this per input, not flat
+        return reps, torch.as_tensor(inv, device=self.device)
+
+    def _floor_plates(self, reps, res: int) -> torch.Tensor:
+        """``(G, res, res, 3)``: the baked plate for each floor group, from the module plate cache."""
+        if len(reps) == 1:
+            return self._plate(res, floor=reps[0]).unsqueeze(0)   # a VIEW: no copy on the hot path
+        return torch.stack([self._plate(res, floor=r) for r in reps])
+
+    def _cube_colours(self, host, B: int):
+        """``(B, len(cube_geoms), 4)`` rgba to write per world -- ALWAYS, defaults included.
+
+        Returning ``None`` for "this is the default anyway" is the defect the reviewer reproduced on
+        CPU, and it is not fixable with a tighter tolerance. `_CTX_CACHE` hands out one mutable
+        per-world `geom_rgba` per (cell, res, nworld), shared across renders, across chunks and
+        across renderer instances, and OGBCube has no button upload that would rewrite the block.
+        So a render that skipped the upload drew whatever colour some EARLIER render left in world
+        `i` -- a result that depends on batch size, chunk boundaries and process history. The only
+        value that is ``None`` here is "this cell has no cube geoms at all".
+
+        Each geom keeps its OWN alpha -- ``object_0`` is opaque, ``target_object_0`` is the
+        translucent goal marker -- taken from the pristine model, because swm writes rgb and leaves
+        the alpha channel to the MJCF.
+        """
+        b = self._b
+        gids = b.cube_geoms
+        if gids is None or not len(gids):
+            return None
+        rgb = host["cube.color"]                                        # (B, 3)
+        base = np.asarray(b.pristine["geom_rgba"], np.float64)[gids]    # (G, 4), own alphas
+        out = np.broadcast_to(base, (B, len(gids), 4)).copy()
+        out[:, :, :3] = rgb[:, None, :]
+        return torch.as_tensor(out, dtype=torch.float32, device=self.device)
+
+    def _cube_geom_index(self) -> torch.Tensor:
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        hit = cache.get("cube_geoms")
+        if hit is None:
+            hit = cache["cube_geoms"] = torch.as_tensor(
+                np.asarray(self._b.cube_geoms, np.int64), device=self.device)
+        return hit
+
+    def _upload_cube_colours(self, c, rgba, n: int) -> None:
+        """Write each world's cube colour into the mujoco_warp context's per-world ``geom_rgba``.
+
+        The same route ``_upload_button_colours`` takes, and the reason ``cube.color`` is offerable
+        while ``cube.size`` is not: a colour is a per-world GEOM array the context already exposes,
+        whereas a size is a MODEL array shared by every world in the context.
+        """
+        geom = c.wp.to_torch(c.wm.geom_rgba)
+        idx = self._cube_geom_index()
+        geom[:n, idx] = rgba[:n]
 
     def _upload_button_colours(self, c, chunk, n: int) -> None:
         """Write each world's button colours from its own state bits.
@@ -920,7 +1283,7 @@ class _PlateRig:
     choose; today's code baked whatever was live when the cache first filled.
     """
 
-    __slots__ = ("model", "data", "renderer", "appearance", "shape")
+    __slots__ = ("model", "data", "renderer", "appearance", "shape", "floor")
 
 
 def _plate_rig(cell: str, res: int) -> _PlateRig:
@@ -934,6 +1297,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     b = _bundle(cell)
     live = b.model
     rig = _PlateRig()
+    rig.floor = None                       # which floor.color the GL context currently holds
     rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
     rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
     rig.model = copy.deepcopy(live)

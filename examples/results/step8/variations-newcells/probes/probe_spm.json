@@ -1,0 +1,2494 @@
+{
+ "env_id": "swm/SimplePointMaze-v0",
+ "reset_mechanism": "SimplePointMazeEnv.reset does NOT call swm.spaces.reset_variation_space; it only reads options['variation'] (list of leaf names to RESAMPLE). options['variation_values'] is silently IGNORED. Fixed-value probe = reset(seed=0, options={'variation': []}) then leaf.set_value(v) then env.render() (render reads variation_space live).",
+ "probe_verification": "base-vs-base maxdiff==0; leaf.value read back after set_value; known-live leaf background.color moved 211173/250000 px; walls.positions needed leaf._value= because set_value's constrain_fn rejected the shifted layout (recorded as applied_via).",
+ "show_goal": {
+  "swm_default": true,
+  "registered_kwargs_for_swm/SimplePointMaze-v0": "none (so True)",
+  "our_port": "False"
+ },
+ "runs": {
+  "default": {
+   "make_kw": {},
+   "show_goal_attr": true,
+   "leaves": {
+    "agent.color": {
+     "default": [
+      255,
+      0,
+      0
+     ],
+     "trials": {
+      "blue": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 344,
+       "of": 250000
+      },
+      "white": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        255,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 344,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        83,
+        34,
+        164
+       ],
+       "maxdiff": 172,
+       "npix": 344
+      },
+      "seed2": {
+       "value": [
+        149,
+        165,
+        44
+       ],
+       "maxdiff": 165,
+       "npix": 344
+      },
+      "seed3": {
+       "value": [
+        68,
+        60,
+        118
+       ],
+       "maxdiff": 187,
+       "npix": 344
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.position": {
+     "default": [
+      0.5,
+      0.5
+     ],
+     "trials": {
+      "p4.5": {
+       "applied_via": "set_value",
+       "readback": [
+        4.5,
+        4.5
+       ],
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        3.354191541671753,
+        0.724826455116272
+       ],
+       "maxdiff": 255,
+       "npix": 697
+      },
+      "seed2": {
+       "value": [
+        3.1999480724334717,
+        4.6975226402282715
+       ],
+       "maxdiff": 255,
+       "npix": 690
+      },
+      "seed3": {
+       "value": [
+        3.1245105266571045,
+        2.5689518451690674
+       ],
+       "maxdiff": 255,
+       "npix": 695
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.radius": {
+     "default": 0.10000000149011612,
+     "trials": {
+      "r0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 255,
+       "npix": 284,
+       "of": 250000
+      },
+      "r0.5": {
+       "applied_via": "set_value",
+       "readback": 0.5,
+       "maxdiff": 255,
+       "npix": 7712,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 0.12056487798690796,
+       "maxdiff": 255,
+       "npix": 224
+      },
+      "seed2": {
+       "value": 0.06884410232305527,
+       "maxdiff": 255,
+       "npix": 224
+      },
+      "seed3": {
+       "value": 0.07487589865922928,
+       "maxdiff": 255,
+       "npix": 196
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.speed": {
+     "default": 1.0,
+     "trials": {
+      "s0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      },
+      "s2.0": {
+       "applied_via": "set_value",
+       "readback": 2.0,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 1.5363974571228027,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed2": {
+       "value": 1.6010700464248657,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed3": {
+       "value": 1.417484164237976,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "NO_PIXEL_MOVEMENT"
+    },
+    "background.color": {
+     "default": [
+      255,
+      255,
+      255
+     ],
+     "trials": {
+      "black": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        0
+       ],
+       "maxdiff": 255,
+       "npix": 211173,
+       "of": 250000
+      },
+      "blue": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 211173,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        38,
+        14,
+        106
+       ],
+       "maxdiff": 241,
+       "npix": 211173
+      },
+      "seed2": {
+       "value": [
+        5,
+        69,
+        218
+       ],
+       "maxdiff": 250,
+       "npix": 211173
+      },
+      "seed3": {
+       "value": [
+        240,
+        132,
+        195
+       ],
+       "maxdiff": 123,
+       "npix": 211173
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.color": {
+     "default": [
+      0,
+      255,
+      0
+     ],
+     "trials": {
+      "red": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        0,
+        0
+       ],
+       "maxdiff": 128,
+       "npix": 1324,
+       "of": 250000
+      },
+      "black": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        0
+       ],
+       "maxdiff": 128,
+       "npix": 1324,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        13,
+        221,
+        6
+       ],
+       "maxdiff": 18,
+       "npix": 1324
+      },
+      "seed2": {
+       "value": [
+        164,
+        150,
+        196
+       ],
+       "maxdiff": 98,
+       "npix": 1324
+      },
+      "seed3": {
+       "value": [
+        156,
+        231,
+        179
+       ],
+       "maxdiff": 89,
+       "npix": 1324
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.position": {
+     "default": [
+      4.5,
+      4.5
+     ],
+     "trials": {
+      "p0.5": {
+       "applied_via": "set_value",
+       "readback": [
+        0.6000000238418579,
+        2.5
+       ],
+       "maxdiff": 128,
+       "npix": 2648,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        1.2526805400848389,
+        1.6384743452072144
+       ],
+       "maxdiff": 128,
+       "npix": 2652
+      },
+      "seed2": {
+       "value": [
+        1.1051193475723267,
+        1.8817710876464844
+       ],
+       "maxdiff": 128,
+       "npix": 2655
+      },
+      "seed3": {
+       "value": [
+        3.921619176864624,
+        1.453556776046753
+       ],
+       "maxdiff": 128,
+       "npix": 2652
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.radius": {
+     "default": 0.20000000298023224,
+     "trials": {
+      "r0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 128,
+       "npix": 1264,
+       "of": 250000
+      },
+      "r0.5": {
+       "applied_via": "set_value",
+       "readback": 0.5,
+       "maxdiff": 128,
+       "npix": 6812,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": "ERROR AssertionError: Values must be within space!",
+      "seed2": {
+       "value": 0.20444068312644958,
+       "maxdiff": 66,
+       "npix": 212
+      },
+      "seed3": {
+       "value": 0.12520922720432281,
+       "maxdiff": 128,
+       "npix": 876
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.color": {
+     "default": [
+      0,
+      0,
+      0
+     ],
+     "trials": {
+      "red": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        0,
+        0
+       ],
+       "maxdiff": 255,
+       "npix": 37552,
+       "of": 250000
+      },
+      "white": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        255,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 37552,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        43,
+        153,
+        155
+       ],
+       "maxdiff": 155,
+       "npix": 37552
+      },
+      "seed2": {
+       "value": [
+        171,
+        183,
+        173
+       ],
+       "maxdiff": 183,
+       "npix": 37552
+      },
+      "seed3": {
+       "value": [
+        171,
+        142,
+        33
+       ],
+       "maxdiff": 171,
+       "npix": 37552
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.number": {
+     "default": 5,
+     "trials": {
+      "n4": {
+       "applied_via": "set_value",
+       "readback": 4,
+       "maxdiff": 255,
+       "npix": 27,
+       "of": 250000
+      },
+      "n6": {
+       "applied_via": "set_value",
+       "readback": 6,
+       "maxdiff": 255,
+       "npix": 3671,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 6,
+       "maxdiff": 255,
+       "npix": 3671
+      },
+      "seed2": {
+       "value": 6,
+       "maxdiff": 255,
+       "npix": 3671
+      },
+      "seed3": {
+       "value": 5,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.positions": {
+     "default": [
+      [
+       1.035264492034912,
+       3.455474853515625
+      ],
+      [
+       3.002354621887207,
+       3.4422965049743652
+      ],
+      [
+       1.5345234870910645,
+       2.9165356159210205
+      ],
+      [
+       2.142178535461426,
+       2.783087968826294
+      ],
+      [
+       1.2603342533111572,
+       3.453317880630493
+      ],
+      [
+       1.504300832748413,
+       2.397299289703369
+      ]
+     ],
+     "trials": {
+      "shift": {
+       "applied_via": "_value (set_value raised ValueError)",
+       "readback": [
+        [
+         2.035264492034912,
+         4.455474853515625
+        ],
+        [
+         4.002354621887207,
+         4.442296504974365
+        ],
+        [
+         2.5345234870910645,
+         3.9165356159210205
+        ],
+        [
+         3.142178535461426,
+         3.783087968826294
+        ],
+        [
+         2.2603342533111572,
+         4.453317642211914
+        ],
+        [
+         2.504300832748413,
+         3.397299289703369
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 46153,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        [
+         0.1492518186569214,
+         1.6533493995666504
+        ],
+        [
+         2.8849239349365234,
+         0.9466785788536072
+        ],
+        [
+         2.335630416870117,
+         1.0584958791732788
+        ],
+        [
+         3.4353737831115723,
+         0.015461278147995472
+        ],
+        [
+         1.9278197288513184,
+         3.3764729499816895
+        ],
+        [
+         0.4462131857872009,
+         2.6256799697875977
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 75641
+      },
+      "seed2": {
+       "value": [
+        [
+         0.1645509898662567,
+         1.6652626991271973
+        ],
+        [
+         2.6795153617858887,
+         3.4905974864959717
+        ],
+        [
+         2.2709851264953613,
+         3.4773504734039307
+        ],
+        [
+         0.5911839008331299,
+         2.565499782562256
+        ],
+        [
+         3.0615811347961426,
+         2.9156787395477295
+        ],
+        [
+         3.529731035232544,
+         3.10282039642334
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 53122
+      },
+      "seed3": {
+       "value": [
+        [
+         0.5779319405555725,
+         1.7762404680252075
+        ],
+        [
+         2.642427921295166,
+         3.423905849456787
+        ],
+        [
+         1.242828369140625,
+         1.0710822343826294
+        ],
+        [
+         1.7964739799499512,
+         2.355984926223755
+        ],
+        [
+         0.11152184754610062,
+         0.851437509059906
+        ],
+        [
+         4.196754455566406,
+         0.8232743144035339
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 48633
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.shape": {
+     "default": [
+      [
+       1.289385199546814,
+       0.8406872749328613
+      ],
+      [
+       1.2444018125534058,
+       1.0428158044815063
+      ],
+      [
+       0.6597925424575806,
+       1.3639332056045532
+      ],
+      [
+       1.1124801635742188,
+       1.0994874238967896
+      ],
+      [
+       0.9639119505882263,
+       0.6164624691009521
+      ],
+      [
+       0.7141286134719849,
+       0.6556037068367004
+      ]
+     ],
+     "trials": {
+      "big": {
+       "applied_via": "set_value",
+       "readback": [
+        [
+         1.5,
+         1.1406872272491455
+        ],
+        [
+         1.5,
+         1.34281587600708
+        ],
+        [
+         0.9597925543785095,
+         1.5
+        ],
+        [
+         1.412480115890503,
+         1.3994874954223633
+        ],
+        [
+         1.2639119625091553,
+         0.9164624810218811
+        ],
+        [
+         1.0141286849975586,
+         0.9556037187576294
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 15909,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        [
+         1.0336512327194214,
+         1.4796102046966553
+        ],
+        [
+         0.9916449189186096,
+         1.4091832637786865
+        ],
+        [
+         0.8695184588432312,
+         1.4593416452407837
+        ],
+        [
+         0.6090301275253296,
+         1.400736689567566
+        ],
+        [
+         1.0042988061904907,
+         1.401302456855774
+        ],
+        [
+         0.5321139097213745,
+         0.9507744908332825
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 19829
+      },
+      "seed2": {
+       "value": [
+        [
+         1.2318660020828247,
+         1.1620383262634277
+        ],
+        [
+         0.650831937789917,
+         1.2619900703430176
+        ],
+        [
+         1.2877862453460693,
+         1.203762173652649
+        ],
+        [
+         1.0103117227554321,
+         0.6514330506324768
+        ],
+        [
+         0.7487767934799194,
+         1.4767823219299316
+        ],
+        [
+         0.584151029586792,
+         0.6927686929702759
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 16701
+      },
+      "seed3": {
+       "value": [
+        [
+         0.6839456558227539,
+         1.4851245880126953
+        ],
+        [
+         1.1675382852554321,
+         1.4479897022247314
+        ],
+        [
+         1.112016201019287,
+         0.835137128829956
+        ],
+        [
+         0.8512036800384521,
+         1.480391502380371
+        ],
+        [
+         1.3272663354873657,
+         0.8553702235221863
+        ],
+        [
+         0.5049886703491211,
+         1.466322898864746
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 14373
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    }
+   },
+   "names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "goal.color",
+    "goal.position",
+    "goal.radius",
+    "walls.color",
+    "walls.number",
+    "walls.positions",
+    "walls.shape"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ],
+   "determinism_maxdiff": 0
+  },
+  "1": {
+   "make_kw": {
+    "show_goal": true
+   },
+   "show_goal_attr": true,
+   "leaves": {
+    "agent.color": {
+     "default": [
+      255,
+      0,
+      0
+     ],
+     "trials": {
+      "blue": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 344,
+       "of": 250000
+      },
+      "white": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        255,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 344,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        83,
+        34,
+        164
+       ],
+       "maxdiff": 172,
+       "npix": 344
+      },
+      "seed2": {
+       "value": [
+        149,
+        165,
+        44
+       ],
+       "maxdiff": 165,
+       "npix": 344
+      },
+      "seed3": {
+       "value": [
+        68,
+        60,
+        118
+       ],
+       "maxdiff": 187,
+       "npix": 344
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.position": {
+     "default": [
+      0.5,
+      0.5
+     ],
+     "trials": {
+      "p4.5": {
+       "applied_via": "set_value",
+       "readback": [
+        4.5,
+        4.5
+       ],
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        3.354191541671753,
+        0.724826455116272
+       ],
+       "maxdiff": 255,
+       "npix": 697
+      },
+      "seed2": {
+       "value": [
+        3.1999480724334717,
+        4.6975226402282715
+       ],
+       "maxdiff": 255,
+       "npix": 690
+      },
+      "seed3": {
+       "value": [
+        3.1245105266571045,
+        2.5689518451690674
+       ],
+       "maxdiff": 255,
+       "npix": 695
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.radius": {
+     "default": 0.10000000149011612,
+     "trials": {
+      "r0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 255,
+       "npix": 284,
+       "of": 250000
+      },
+      "r0.5": {
+       "applied_via": "set_value",
+       "readback": 0.5,
+       "maxdiff": 255,
+       "npix": 7712,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 0.12056487798690796,
+       "maxdiff": 255,
+       "npix": 224
+      },
+      "seed2": {
+       "value": 0.06884410232305527,
+       "maxdiff": 255,
+       "npix": 224
+      },
+      "seed3": {
+       "value": 0.07487589865922928,
+       "maxdiff": 255,
+       "npix": 196
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.speed": {
+     "default": 1.0,
+     "trials": {
+      "s0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      },
+      "s2.0": {
+       "applied_via": "set_value",
+       "readback": 2.0,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 1.5363974571228027,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed2": {
+       "value": 1.6010700464248657,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed3": {
+       "value": 1.417484164237976,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "NO_PIXEL_MOVEMENT"
+    },
+    "background.color": {
+     "default": [
+      255,
+      255,
+      255
+     ],
+     "trials": {
+      "black": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        0
+       ],
+       "maxdiff": 255,
+       "npix": 211173,
+       "of": 250000
+      },
+      "blue": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 211173,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        38,
+        14,
+        106
+       ],
+       "maxdiff": 241,
+       "npix": 211173
+      },
+      "seed2": {
+       "value": [
+        5,
+        69,
+        218
+       ],
+       "maxdiff": 250,
+       "npix": 211173
+      },
+      "seed3": {
+       "value": [
+        240,
+        132,
+        195
+       ],
+       "maxdiff": 123,
+       "npix": 211173
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.color": {
+     "default": [
+      0,
+      255,
+      0
+     ],
+     "trials": {
+      "red": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        0,
+        0
+       ],
+       "maxdiff": 128,
+       "npix": 1324,
+       "of": 250000
+      },
+      "black": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        0
+       ],
+       "maxdiff": 128,
+       "npix": 1324,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        13,
+        221,
+        6
+       ],
+       "maxdiff": 18,
+       "npix": 1324
+      },
+      "seed2": {
+       "value": [
+        164,
+        150,
+        196
+       ],
+       "maxdiff": 98,
+       "npix": 1324
+      },
+      "seed3": {
+       "value": [
+        156,
+        231,
+        179
+       ],
+       "maxdiff": 89,
+       "npix": 1324
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.position": {
+     "default": [
+      4.5,
+      4.5
+     ],
+     "trials": {
+      "p0.5": {
+       "applied_via": "set_value",
+       "readback": [
+        0.6000000238418579,
+        2.5
+       ],
+       "maxdiff": 128,
+       "npix": 2648,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        1.2526805400848389,
+        1.6384743452072144
+       ],
+       "maxdiff": 128,
+       "npix": 2652
+      },
+      "seed2": {
+       "value": [
+        1.1051193475723267,
+        1.8817710876464844
+       ],
+       "maxdiff": 128,
+       "npix": 2655
+      },
+      "seed3": {
+       "value": [
+        3.921619176864624,
+        1.453556776046753
+       ],
+       "maxdiff": 128,
+       "npix": 2652
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.radius": {
+     "default": 0.20000000298023224,
+     "trials": {
+      "r0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 128,
+       "npix": 1264,
+       "of": 250000
+      },
+      "r0.5": {
+       "applied_via": "set_value",
+       "readback": 0.5,
+       "maxdiff": 128,
+       "npix": 6812,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": "ERROR AssertionError: Values must be within space!",
+      "seed2": {
+       "value": 0.20444068312644958,
+       "maxdiff": 66,
+       "npix": 212
+      },
+      "seed3": {
+       "value": 0.12520922720432281,
+       "maxdiff": 128,
+       "npix": 876
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.color": {
+     "default": [
+      0,
+      0,
+      0
+     ],
+     "trials": {
+      "red": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        0,
+        0
+       ],
+       "maxdiff": 255,
+       "npix": 37552,
+       "of": 250000
+      },
+      "white": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        255,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 37552,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        43,
+        153,
+        155
+       ],
+       "maxdiff": 155,
+       "npix": 37552
+      },
+      "seed2": {
+       "value": [
+        171,
+        183,
+        173
+       ],
+       "maxdiff": 183,
+       "npix": 37552
+      },
+      "seed3": {
+       "value": [
+        171,
+        142,
+        33
+       ],
+       "maxdiff": 171,
+       "npix": 37552
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.number": {
+     "default": 5,
+     "trials": {
+      "n4": {
+       "applied_via": "set_value",
+       "readback": 4,
+       "maxdiff": 255,
+       "npix": 27,
+       "of": 250000
+      },
+      "n6": {
+       "applied_via": "set_value",
+       "readback": 6,
+       "maxdiff": 255,
+       "npix": 3671,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 6,
+       "maxdiff": 255,
+       "npix": 3671
+      },
+      "seed2": {
+       "value": 6,
+       "maxdiff": 255,
+       "npix": 3671
+      },
+      "seed3": {
+       "value": 5,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.positions": {
+     "default": [
+      [
+       1.035264492034912,
+       3.455474853515625
+      ],
+      [
+       3.002354621887207,
+       3.4422965049743652
+      ],
+      [
+       1.5345234870910645,
+       2.9165356159210205
+      ],
+      [
+       2.142178535461426,
+       2.783087968826294
+      ],
+      [
+       1.2603342533111572,
+       3.453317880630493
+      ],
+      [
+       1.504300832748413,
+       2.397299289703369
+      ]
+     ],
+     "trials": {
+      "shift": {
+       "applied_via": "_value (set_value raised ValueError)",
+       "readback": [
+        [
+         2.035264492034912,
+         4.455474853515625
+        ],
+        [
+         4.002354621887207,
+         4.442296504974365
+        ],
+        [
+         2.5345234870910645,
+         3.9165356159210205
+        ],
+        [
+         3.142178535461426,
+         3.783087968826294
+        ],
+        [
+         2.2603342533111572,
+         4.453317642211914
+        ],
+        [
+         2.504300832748413,
+         3.397299289703369
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 46153,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        [
+         0.1492518186569214,
+         1.6533493995666504
+        ],
+        [
+         2.8849239349365234,
+         0.9466785788536072
+        ],
+        [
+         2.335630416870117,
+         1.0584958791732788
+        ],
+        [
+         3.4353737831115723,
+         0.015461278147995472
+        ],
+        [
+         1.9278197288513184,
+         3.3764729499816895
+        ],
+        [
+         0.4462131857872009,
+         2.6256799697875977
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 75641
+      },
+      "seed2": {
+       "value": [
+        [
+         0.1645509898662567,
+         1.6652626991271973
+        ],
+        [
+         2.6795153617858887,
+         3.4905974864959717
+        ],
+        [
+         2.2709851264953613,
+         3.4773504734039307
+        ],
+        [
+         0.5911839008331299,
+         2.565499782562256
+        ],
+        [
+         3.0615811347961426,
+         2.9156787395477295
+        ],
+        [
+         3.529731035232544,
+         3.10282039642334
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 53122
+      },
+      "seed3": {
+       "value": [
+        [
+         0.5779319405555725,
+         1.7762404680252075
+        ],
+        [
+         2.642427921295166,
+         3.423905849456787
+        ],
+        [
+         1.242828369140625,
+         1.0710822343826294
+        ],
+        [
+         1.7964739799499512,
+         2.355984926223755
+        ],
+        [
+         0.11152184754610062,
+         0.851437509059906
+        ],
+        [
+         4.196754455566406,
+         0.8232743144035339
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 48633
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.shape": {
+     "default": [
+      [
+       1.289385199546814,
+       0.8406872749328613
+      ],
+      [
+       1.2444018125534058,
+       1.0428158044815063
+      ],
+      [
+       0.6597925424575806,
+       1.3639332056045532
+      ],
+      [
+       1.1124801635742188,
+       1.0994874238967896
+      ],
+      [
+       0.9639119505882263,
+       0.6164624691009521
+      ],
+      [
+       0.7141286134719849,
+       0.6556037068367004
+      ]
+     ],
+     "trials": {
+      "big": {
+       "applied_via": "set_value",
+       "readback": [
+        [
+         1.5,
+         1.1406872272491455
+        ],
+        [
+         1.5,
+         1.34281587600708
+        ],
+        [
+         0.9597925543785095,
+         1.5
+        ],
+        [
+         1.412480115890503,
+         1.3994874954223633
+        ],
+        [
+         1.2639119625091553,
+         0.9164624810218811
+        ],
+        [
+         1.0141286849975586,
+         0.9556037187576294
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 15909,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        [
+         1.0336512327194214,
+         1.4796102046966553
+        ],
+        [
+         0.9916449189186096,
+         1.4091832637786865
+        ],
+        [
+         0.8695184588432312,
+         1.4593416452407837
+        ],
+        [
+         0.6090301275253296,
+         1.400736689567566
+        ],
+        [
+         1.0042988061904907,
+         1.401302456855774
+        ],
+        [
+         0.5321139097213745,
+         0.9507744908332825
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 19829
+      },
+      "seed2": {
+       "value": [
+        [
+         1.2318660020828247,
+         1.1620383262634277
+        ],
+        [
+         0.650831937789917,
+         1.2619900703430176
+        ],
+        [
+         1.2877862453460693,
+         1.203762173652649
+        ],
+        [
+         1.0103117227554321,
+         0.6514330506324768
+        ],
+        [
+         0.7487767934799194,
+         1.4767823219299316
+        ],
+        [
+         0.584151029586792,
+         0.6927686929702759
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 16701
+      },
+      "seed3": {
+       "value": [
+        [
+         0.6839456558227539,
+         1.4851245880126953
+        ],
+        [
+         1.1675382852554321,
+         1.4479897022247314
+        ],
+        [
+         1.112016201019287,
+         0.835137128829956
+        ],
+        [
+         0.8512036800384521,
+         1.480391502380371
+        ],
+        [
+         1.3272663354873657,
+         0.8553702235221863
+        ],
+        [
+         0.5049886703491211,
+         1.466322898864746
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 14373
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    }
+   },
+   "names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "goal.color",
+    "goal.position",
+    "goal.radius",
+    "walls.color",
+    "walls.number",
+    "walls.positions",
+    "walls.shape"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ],
+   "determinism_maxdiff": 0
+  },
+  "0": {
+   "make_kw": {
+    "show_goal": false
+   },
+   "show_goal_attr": false,
+   "leaves": {
+    "agent.color": {
+     "default": [
+      255,
+      0,
+      0
+     ],
+     "trials": {
+      "blue": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 344,
+       "of": 250000
+      },
+      "white": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        255,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 344,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        83,
+        34,
+        164
+       ],
+       "maxdiff": 172,
+       "npix": 344
+      },
+      "seed2": {
+       "value": [
+        149,
+        165,
+        44
+       ],
+       "maxdiff": 165,
+       "npix": 344
+      },
+      "seed3": {
+       "value": [
+        68,
+        60,
+        118
+       ],
+       "maxdiff": 187,
+       "npix": 344
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.position": {
+     "default": [
+      0.5,
+      0.5
+     ],
+     "trials": {
+      "p4.5": {
+       "applied_via": "set_value",
+       "readback": [
+        4.5,
+        4.5
+       ],
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        3.354191541671753,
+        0.724826455116272
+       ],
+       "maxdiff": 255,
+       "npix": 697
+      },
+      "seed2": {
+       "value": [
+        3.1999480724334717,
+        4.6975226402282715
+       ],
+       "maxdiff": 255,
+       "npix": 690
+      },
+      "seed3": {
+       "value": [
+        3.1245105266571045,
+        2.5689518451690674
+       ],
+       "maxdiff": 255,
+       "npix": 695
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.radius": {
+     "default": 0.10000000149011612,
+     "trials": {
+      "r0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 255,
+       "npix": 284,
+       "of": 250000
+      },
+      "r0.5": {
+       "applied_via": "set_value",
+       "readback": 0.5,
+       "maxdiff": 255,
+       "npix": 7712,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 0.12056487798690796,
+       "maxdiff": 255,
+       "npix": 224
+      },
+      "seed2": {
+       "value": 0.06884410232305527,
+       "maxdiff": 255,
+       "npix": 224
+      },
+      "seed3": {
+       "value": 0.07487589865922928,
+       "maxdiff": 255,
+       "npix": 196
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "agent.speed": {
+     "default": 1.0,
+     "trials": {
+      "s0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      },
+      "s2.0": {
+       "applied_via": "set_value",
+       "readback": 2.0,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 1.5363974571228027,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed2": {
+       "value": 1.6010700464248657,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed3": {
+       "value": 1.417484164237976,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "NO_PIXEL_MOVEMENT"
+    },
+    "background.color": {
+     "default": [
+      255,
+      255,
+      255
+     ],
+     "trials": {
+      "black": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        0
+       ],
+       "maxdiff": 255,
+       "npix": 211173,
+       "of": 250000
+      },
+      "blue": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 211173,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        38,
+        14,
+        106
+       ],
+       "maxdiff": 241,
+       "npix": 211173
+      },
+      "seed2": {
+       "value": [
+        5,
+        69,
+        218
+       ],
+       "maxdiff": 250,
+       "npix": 211173
+      },
+      "seed3": {
+       "value": [
+        240,
+        132,
+        195
+       ],
+       "maxdiff": 123,
+       "npix": 211173
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "goal.color": {
+     "default": [
+      0,
+      255,
+      0
+     ],
+     "trials": {
+      "red": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        0,
+        0
+       ],
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      },
+      "black": {
+       "applied_via": "set_value",
+       "readback": [
+        0,
+        0,
+        0
+       ],
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        13,
+        221,
+        6
+       ],
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed2": {
+       "value": [
+        164,
+        150,
+        196
+       ],
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed3": {
+       "value": [
+        156,
+        231,
+        179
+       ],
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "NO_PIXEL_MOVEMENT"
+    },
+    "goal.position": {
+     "default": [
+      4.5,
+      4.5
+     ],
+     "trials": {
+      "p0.5": {
+       "applied_via": "set_value",
+       "readback": [
+        0.6000000238418579,
+        2.5
+       ],
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        1.2526805400848389,
+        1.6384743452072144
+       ],
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed2": {
+       "value": [
+        1.1051193475723267,
+        1.8817710876464844
+       ],
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed3": {
+       "value": [
+        3.921619176864624,
+        1.453556776046753
+       ],
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "NO_PIXEL_MOVEMENT"
+    },
+    "goal.radius": {
+     "default": 0.20000000298023224,
+     "trials": {
+      "r0.05": {
+       "applied_via": "set_value",
+       "readback": 0.05000000074505806,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      },
+      "r0.5": {
+       "applied_via": "set_value",
+       "readback": 0.5,
+       "maxdiff": 0,
+       "npix": 0,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": "ERROR AssertionError: Values must be within space!",
+      "seed2": {
+       "value": 0.20444068312644958,
+       "maxdiff": 0,
+       "npix": 0
+      },
+      "seed3": {
+       "value": 0.12520922720432281,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "NO_PIXEL_MOVEMENT",
+     "verdict_resample": "NO_PIXEL_MOVEMENT"
+    },
+    "walls.color": {
+     "default": [
+      0,
+      0,
+      0
+     ],
+     "trials": {
+      "red": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        0,
+        0
+       ],
+       "maxdiff": 255,
+       "npix": 37552,
+       "of": 250000
+      },
+      "white": {
+       "applied_via": "set_value",
+       "readback": [
+        255,
+        255,
+        255
+       ],
+       "maxdiff": 255,
+       "npix": 37552,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        43,
+        153,
+        155
+       ],
+       "maxdiff": 155,
+       "npix": 37552
+      },
+      "seed2": {
+       "value": [
+        171,
+        183,
+        173
+       ],
+       "maxdiff": 183,
+       "npix": 37552
+      },
+      "seed3": {
+       "value": [
+        171,
+        142,
+        33
+       ],
+       "maxdiff": 171,
+       "npix": 37552
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.number": {
+     "default": 5,
+     "trials": {
+      "n4": {
+       "applied_via": "set_value",
+       "readback": 4,
+       "maxdiff": 255,
+       "npix": 27,
+       "of": 250000
+      },
+      "n6": {
+       "applied_via": "set_value",
+       "readback": 6,
+       "maxdiff": 255,
+       "npix": 3671,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": 6,
+       "maxdiff": 255,
+       "npix": 3671
+      },
+      "seed2": {
+       "value": 6,
+       "maxdiff": 255,
+       "npix": 3671
+      },
+      "seed3": {
+       "value": 5,
+       "maxdiff": 0,
+       "npix": 0
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.positions": {
+     "default": [
+      [
+       1.035264492034912,
+       3.455474853515625
+      ],
+      [
+       3.002354621887207,
+       3.4422965049743652
+      ],
+      [
+       1.5345234870910645,
+       2.9165356159210205
+      ],
+      [
+       2.142178535461426,
+       2.783087968826294
+      ],
+      [
+       1.2603342533111572,
+       3.453317880630493
+      ],
+      [
+       1.504300832748413,
+       2.397299289703369
+      ]
+     ],
+     "trials": {
+      "shift": {
+       "applied_via": "_value (set_value raised ValueError)",
+       "readback": [
+        [
+         2.035264492034912,
+         4.455474853515625
+        ],
+        [
+         4.002354621887207,
+         4.442296504974365
+        ],
+        [
+         2.5345234870910645,
+         3.9165356159210205
+        ],
+        [
+         3.142178535461426,
+         3.783087968826294
+        ],
+        [
+         2.2603342533111572,
+         4.453317642211914
+        ],
+        [
+         2.504300832748413,
+         3.397299289703369
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 46153,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        [
+         0.1492518186569214,
+         1.6533493995666504
+        ],
+        [
+         2.8849239349365234,
+         0.9466785788536072
+        ],
+        [
+         2.335630416870117,
+         1.0584958791732788
+        ],
+        [
+         3.4353737831115723,
+         0.015461278147995472
+        ],
+        [
+         1.9278197288513184,
+         3.3764729499816895
+        ],
+        [
+         0.4462131857872009,
+         2.6256799697875977
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 75641
+      },
+      "seed2": {
+       "value": [
+        [
+         0.1645509898662567,
+         1.6652626991271973
+        ],
+        [
+         2.6795153617858887,
+         3.4905974864959717
+        ],
+        [
+         2.2709851264953613,
+         3.4773504734039307
+        ],
+        [
+         0.5911839008331299,
+         2.565499782562256
+        ],
+        [
+         3.0615811347961426,
+         2.9156787395477295
+        ],
+        [
+         3.529731035232544,
+         3.10282039642334
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 53122
+      },
+      "seed3": {
+       "value": [
+        [
+         0.5779319405555725,
+         1.7762404680252075
+        ],
+        [
+         2.642427921295166,
+         3.423905849456787
+        ],
+        [
+         1.242828369140625,
+         1.0710822343826294
+        ],
+        [
+         1.7964739799499512,
+         2.355984926223755
+        ],
+        [
+         0.11152184754610062,
+         0.851437509059906
+        ],
+        [
+         4.196754455566406,
+         0.8232743144035339
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 48633
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    },
+    "walls.shape": {
+     "default": [
+      [
+       1.289385199546814,
+       0.8406872749328613
+      ],
+      [
+       1.2444018125534058,
+       1.0428158044815063
+      ],
+      [
+       0.6597925424575806,
+       1.3639332056045532
+      ],
+      [
+       1.1124801635742188,
+       1.0994874238967896
+      ],
+      [
+       0.9639119505882263,
+       0.6164624691009521
+      ],
+      [
+       0.7141286134719849,
+       0.6556037068367004
+      ]
+     ],
+     "trials": {
+      "big": {
+       "applied_via": "set_value",
+       "readback": [
+        [
+         1.5,
+         1.1406872272491455
+        ],
+        [
+         1.5,
+         1.34281587600708
+        ],
+        [
+         0.9597925543785095,
+         1.5
+        ],
+        [
+         1.412480115890503,
+         1.3994874954223633
+        ],
+        [
+         1.2639119625091553,
+         0.9164624810218811
+        ],
+        [
+         1.0141286849975586,
+         0.9556037187576294
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 15909,
+       "of": 250000
+      }
+     },
+     "resample": {
+      "seed1": {
+       "value": [
+        [
+         1.0336512327194214,
+         1.4796102046966553
+        ],
+        [
+         0.9916449189186096,
+         1.4091832637786865
+        ],
+        [
+         0.8695184588432312,
+         1.4593416452407837
+        ],
+        [
+         0.6090301275253296,
+         1.400736689567566
+        ],
+        [
+         1.0042988061904907,
+         1.401302456855774
+        ],
+        [
+         0.5321139097213745,
+         0.9507744908332825
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 19829
+      },
+      "seed2": {
+       "value": [
+        [
+         1.2318660020828247,
+         1.1620383262634277
+        ],
+        [
+         0.650831937789917,
+         1.2619900703430176
+        ],
+        [
+         1.2877862453460693,
+         1.203762173652649
+        ],
+        [
+         1.0103117227554321,
+         0.6514330506324768
+        ],
+        [
+         0.7487767934799194,
+         1.4767823219299316
+        ],
+        [
+         0.584151029586792,
+         0.6927686929702759
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 16701
+      },
+      "seed3": {
+       "value": [
+        [
+         0.6839456558227539,
+         1.4851245880126953
+        ],
+        [
+         1.1675382852554321,
+         1.4479897022247314
+        ],
+        [
+         1.112016201019287,
+         0.835137128829956
+        ],
+        [
+         0.8512036800384521,
+         1.480391502380371
+        ],
+        [
+         1.3272663354873657,
+         0.8553702235221863
+        ],
+        [
+         0.5049886703491211,
+         1.466322898864746
+        ]
+       ],
+       "maxdiff": 255,
+       "npix": 14373
+      }
+     },
+     "verdict_setvalue": "MOVES_PIXELS",
+     "verdict_resample": "MOVES_PIXELS"
+    }
+   },
+   "names": [
+    "agent.color",
+    "agent.position",
+    "agent.radius",
+    "agent.speed",
+    "background.color",
+    "goal.color",
+    "goal.position",
+    "goal.radius",
+    "walls.color",
+    "walls.number",
+    "walls.positions",
+    "walls.shape"
+   ],
+   "frame_shape": [
+    500,
+    500,
+    3
+   ],
+   "determinism_maxdiff": 0
+  }
+ }
+}

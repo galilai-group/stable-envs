@@ -1,0 +1,200 @@
+{
+ "cell": "Scene",
+ "env_id": "swm/OGBScene-v0",
+ "ngeom": 137,
+ "n_movers": 95,
+ "leaves": {
+  "agent.color": {
+   "changed_arrays": [
+    "dof_damping",
+    "geom_rgba",
+    "mat_rgba",
+    "site_pos"
+   ],
+   "n_changed_arrays": 4,
+   "detail": {
+    "geom_rgba": {
+     "n_rows": 1,
+     "rows_are_movers": 1,
+     "rows_are_static": 0
+    },
+    "mat_rgba": {
+     "n_materials": 1,
+     "geoms_using": 1,
+     "geoms_are_movers": 1,
+     "geoms_are_static": 0
+    }
+   },
+   "recompiled": false
+  },
+  "agent.ee_start_position": {
+   "changed_arrays": [
+    "dof_damping",
+    "geom_rgba",
+    "mat_rgba",
+    "site_pos"
+   ],
+   "n_changed_arrays": 4,
+   "detail": {
+    "geom_rgba": {
+     "n_rows": 1,
+     "rows_are_movers": 1,
+     "rows_are_static": 0
+    },
+    "mat_rgba": {
+     "n_materials": 1,
+     "geoms_using": 1,
+     "geoms_are_movers": 1,
+     "geoms_are_static": 0
+    }
+   },
+   "recompiled": false
+  },
+  "camera.angle_delta": {
+   "changed_arrays": [
+    "cam_mat0",
+    "cam_quat",
+    "dof_damping",
+    "geom_rgba",
+    "mat_rgba",
+    "site_pos"
+   ],
+   "n_changed_arrays": 6,
+   "detail": {
+    "geom_rgba": {
+     "n_rows": 1,
+     "rows_are_movers": 1,
+     "rows_are_static": 0
+    },
+    "mat_rgba": {
+     "n_materials": 1,
+     "geoms_using": 5,
+     "geoms_are_movers": 5,
+     "geoms_are_static": 0
+    },
+    "cam_mat0": {
+     "n_rows": 1,
+     "max_abs": 0.12244672438971571
+    },
+    "cam_quat": {
+     "n_rows": 1,
+     "max_abs": 0.04023518383256597
+    }
+   },
+   "recompiled": false
+  },
+  "cube.color": {
+   "changed_arrays": [
+    "dof_damping",
+    "geom_rgba",
+    "mat_rgba",
+    "site_pos"
+   ],
+   "n_changed_arrays": 4,
+   "detail": {
+    "geom_rgba": {
+     "n_rows": 3,
+     "rows_are_movers": 3,
+     "rows_are_static": 0
+    },
+    "mat_rgba": {
+     "n_materials": 1,
+     "geoms_using": 1,
+     "geoms_are_movers": 1,
+     "geoms_are_static": 0
+    }
+   },
+   "recompiled": false
+  },
+  "cube.size": {
+   "changed_arrays": [
+    "body_inertia",
+    "body_invweight0",
+    "body_mass",
+    "body_subtreemass",
+    "bvh_aabb",
+    "cam_poscom0",
+    "dof_M0",
+    "dof_invweight0",
+    "dof_length",
+    "geom_aabb",
+    "geom_rbound",
+    "geom_size",
+    "light_poscom0"
+   ],
+   "n_changed_arrays": 13,
+   "detail": {
+    "geom_size": {
+     "n_rows": 2,
+     "rows_are_movers": 2,
+     "rows_are_static": 0
+    }
+   },
+   "recompiled": false
+  },
+  "floor.color": {
+   "changed_arrays": [
+    "tex_data"
+   ],
+   "n_changed_arrays": 1,
+   "detail": {
+    "tex_data": {
+     "n_rows": 1,
+     "max_abs": 235.0
+    }
+   },
+   "recompiled": false
+  },
+  "light.intensity": {
+   "changed_arrays": [
+    "dof_damping",
+    "geom_rgba",
+    "light_diffuse",
+    "mat_rgba",
+    "site_pos"
+   ],
+   "n_changed_arrays": 5,
+   "detail": {
+    "geom_rgba": {
+     "n_rows": 1,
+     "rows_are_movers": 1,
+     "rows_are_static": 0
+    },
+    "mat_rgba": {
+     "n_materials": 1,
+     "geoms_using": 1,
+     "geoms_are_movers": 1,
+     "geoms_are_static": 0
+    },
+    "light_diffuse": {
+     "n_rows": 1,
+     "max_abs": 0.3999999761581421
+    }
+   },
+   "recompiled": false
+  },
+  "lock_color": {
+   "changed_arrays": [
+    "dof_damping",
+    "geom_rgba",
+    "mat_rgba",
+    "site_pos"
+   ],
+   "n_changed_arrays": 4,
+   "detail": {
+    "geom_rgba": {
+     "n_rows": 2,
+     "rows_are_movers": 2,
+     "rows_are_static": 0
+    },
+    "mat_rgba": {
+     "n_materials": 2,
+     "geoms_using": 6,
+     "geoms_are_movers": 6,
+     "geoms_are_static": 0
+    }
+   },
+   "recompiled": false
+  }
+ }
+}

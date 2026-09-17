@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `c2770c5f2027375d8c573959539c4297b1d35ed6`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `0ee333560234173e0d8a1de5c12284544a97a509`
 
 ## The five words
 
@@ -42,7 +42,7 @@ render covered       40
 gate A               {"PASS": 40, "UNSUPPORTED_BY_DESIGN": 2}
 cpu tier status      {"MEASURED": 24, "UNMEASURED": 15, "UNSUPPORTED_BY_DESIGN": 3}
 gpu tier status      {"MEASURED": 40, "UNMEASURED": 2}
-variation map        {"complete": 21, "missing": 5, "n/a": 2, "partial": 12, "unknown": 2}
+variation map        {"complete": 26, "n/a": 2, "partial": 12, "unknown": 2}
 backend class        {"R": 12, "S": 28, "n/a": 2}
 ```
 
@@ -78,10 +78,10 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | cpu:PASS, cuda:PASS | `parity` | **PASS** | — | CPU_REGRESSION (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.hand_density`, `agent.upper_arm_density`, `agent.upper_arm_length`, `floor.color` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** resolution consistency |
 | `swm/MountainCarContinuousControl-v0` | `MountainCarContinuous` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | complete | `physics.max_speed`, `physics.power` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/MountainCarControl-v0` | `MountainCar` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FASTER (MEASURED) | complete | `physics.force`, `physics.gravity`, `physics.max_speed` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/OGBCube-v0` | `OGBCube` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | S | pixel | covered | `raycast3d` | — | `parity` | **PASS** | — | CPU_FAST (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/OGBScene-v0` | `OGBScene` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | missing | `environment.sky_color` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
+| `swm/OGBCube-v0` | `OGBCube` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/OGBMaze-v0` | `PointmazeLargeNavigate`, `PointmazeLargeStitch` | S | pixel | covered | `raycast3d` | — | `parity` | **PASS** | — | CPU_FAST (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/OGBScene-v0` | `OGBScene` | S | pixel | covered | `mjwarp` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | mujoco 3.12.0, ogbench 1.2.1 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/PFRocketLanding-v0` | `PFRocketLanding` | S | pixel | covered | `nvdiff` | cpu:UNSUPPORTED_BY_DESIGN, cuda:PASS | `visual` | **PASS** | PyFlyt 0.29.0, pybullet 3.2.7 | CPU_MISSING (UNSUPPORTED_BY_DESIGN) | GPU_PARITY (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** nvdiff x86 CPU sparse-stage one ULP; **DOCUMENTED_LIMITATION** check_colors_apply_exactly |
 | `swm/PendulumControl-v1` | `Pendulum` | R | pixel | covered | `gfxdraw` | — | `parity` | **PASS** | — | CPU_PARITY (MEASURED) | GPU_FAST (MEASURED) | complete | `physics.dt`, `physics.g`, `physics.l`, `physics.m`, `physics.max_speed`, `physics.max_torque` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.mass_density`, `agent.mass_shape`, `agent.pole_density`, `floor.color`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | R | pixel | covered | `navdot` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
@@ -89,7 +89,7 @@ backend class        {"R": 12, "S": 28, "n/a": 2}
 | `swm/PushT-v1` | `PushT` | R | pixel | covered | `scene` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | cpu:PASS, cuda:PASS | `visual` | **PASS** | mujoco 3.11.0 | CPU_UNMEASURED (UNMEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.foot_back_left_density`, `agent.knee_back_left_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/ReacherDMControl-v0` | `DMCReacherHard` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | `agent.arm_density`, `agent.finger_density`, `agent.finger_locked`, `floor.color`, `target.shape` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
-| `swm/SimplePointMaze-v0` | `SimplePointMaze` | R | pixel | covered | `scene` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | missing | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
+| `swm/SimplePointMaze-v0` | `SimplePointMaze` | R | pixel | covered | `scene` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FAST (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/TwoRoom-v1` | `TwoRoom`, `TwoRoomTarget` | R | pixel | covered | `navdot` | — | `parity` | **PASS** | — | CPU_FASTER (MEASURED) | GPU_FASTER (MEASURED) | complete | — | UNMEASURED | UNMEASURED | PASS | UNMEASURED | — |
 | `swm/WalkerDMControl-v0` | `DMCWalkerWalk` | S | pixel | covered | `cpu3d`, `mjwarp`, `raycast3d` | — | `visual` | **PASS** | mujoco 3.11.0 | CPU_FASTER (MEASURED) | GPU_EXCEPTIONAL (MEASURED) | complete | `agent.left_foot_density`, `agent.right_knee_locked`, `agent.torso_density`, `floor.color`, `floor.friction`, `floor.rotation_y`, `gravity.x`, `gravity.y`, `gravity.z` | UNMEASURED | UNMEASURED | PASS | UNMEASURED | **DOCUMENTED_LIMITATION** reference/upstream drift |
 
