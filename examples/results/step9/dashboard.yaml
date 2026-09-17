@@ -82,19 +82,32 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-envs-classic-nav
   owner: opus (medium)
   model: opus
-  status: IN PROGRESS
+  status: DELIVERED aa1608e; incorporating rulings (merge integration b1585fc, drop state override) + GPU arm job 6464309; then review
   files_owned: stable_envs/envs/classic_control.py, stable_envs/envs/navigation.py (from swm_nav.py + simple_point_maze.py), their tests
   ids_affected: swm/{CartPole,Acrobot,MountainCar,MountainCarContinuous,Pendulum}Control-v1, swm/SimplePointMaze-v0, swm/Piecewise-v0, swm/TwoRoom*-v0 (8 families of the 42)
   baseline_sha: d07ffa8
+  head_sha: aa1608e
+  tests: se6 tests/unit 1334 passed (1246 + 88 new); se8-vm subset 269/58 unchanged
+  oracle_diff: '10/10 cells frames byte-identical vs 21cb306 (640 frozen states), describe/style/taxonomy/registry identical; transition == step bitwise, unroll == 4x transition; live SWM bridges 0.99974-0.99994
+    exact (declared residual); SimplePointMaze matplotlib bridge run by the coordinator: interior exact 1.0, step exact; EXPECTED difference: navigation cells registry module = stable_envs.envs.navigation
+    (mandated merge)'
+  performance_diff: render -0.19 % / +0.24 % (noise); step +12/+28 us absolute from the StepResult TensorDict (accepted, mechanism recorded)
+  api_diff: num_envs=; State/transition/unroll; swm_nav.py + simple_point_maze.py are sys.modules aliases of navigation.py until Wave 3
 - workstream: H_render_3d
   branch: step9/render-3d
   worktree: /Users/samib/stable-envs-step9-render-3d
   owner: opus (high)
   model: opus
-  status: IN PROGRESS
+  status: DELIVERED 899e4a6; GPU arm job 6464319 running; then review
   files_owned: stable_envs/render/primitives.py (new), raycast3d.py, cpu3d.py, their tests
   ids_affected: 'every raycast3d/cpu3d consumer (DMC parity cells, OGBMaze, Fetch cpu path): exact-output preservation required'
   baseline_sha: d07ffa8
+  head_sha: 899e4a6
+  tests: se6 tests/unit 1263 passed (1246 + 16 new + 1 parametrised); se8-vm 341 passed
+  oracle_diff: 21 cells byte-identical on cpu (12 DMC parity + PointMass + Manipulator via raycast3d; 5 trackcom via cpu3d; 4 gym-MuJoCo), fast and reference expressions; 23 GPU-only ids queued for the
+    GPU arm
+  performance_diff: cpu paired worst ratio 1.017 (bar 1.10); cpu3d 1.000-1.002
+  api_diff: new render/primitives.py (shared vocabulary); raycast3d re-exports every moved name; zero consumer call sites changed
 decisions:
 - date: '2026-09-17'
   by: coordinator
@@ -112,6 +125,19 @@ decisions:
   by: coordinator
   topic: Wave-1 scope from D4
   ruling: every family workstream must make its classes accept num_envs= and declare state_layout/hidden state through the Env hooks; the pinned count of classes rejecting num_envs may only go down
+- date: '2026-09-17'
+  by: coordinator
+  topic: per-field public dtype in state_layout (A R1)
+  ruling: 'implemented centrally at b1585fc: optional 4th element; unpack/state honour it, pack stays float32; DMC/MuJoCo use it too'
+- date: '2026-09-17'
+  by: coordinator
+  topic: registry-row test vs file moves (A R2)
+  ruling: 'Wave-1-wide: semantic columns compared exactly; module compared by reachability (same class, old import path resolves) until Wave 3'
+- date: '2026-09-17'
+  by: coordinator
+  topic: StepResult cost on trivially cheap steps (A)
+  ruling: 'accepted: the plan 10 % bar applies to render/dynamics hot paths; +12-28 us absolute per step is the TensorDict construction accepted at Wave 0; render unchanged; recorded as a Wave-3 candidate
+    (lazy StepResult) not a blocker'
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -123,6 +149,8 @@ incident_log:
     applying D1-D4 + T1
 - date: '2026-09-17'
   item: 'foundation merged d07ffa8; GPU oracle re-run at the merge SHA submitted (job 6464120); Wave 1 pair 1 launched: A classic/nav (opus medium) and H render-3d (opus high)'
+- date: '2026-09-17'
+  item: 'A and H delivered; foundation dtype change b1585fc; universe.shard_of fix; SPM matplotlib parity run by coordinator (PASS); GPU arms submitted: A 6464309, H 6464319'
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
