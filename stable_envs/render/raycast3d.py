@@ -143,9 +143,35 @@ class Camera:
 # a set of bounding radii -- rebuilt because they were written where they are used rather than where
 # they are computed. Memoising them is not an optimisation of the arithmetic; it removes a stall.
 
-_PROJ_CACHE: dict = {}
-_CORNER_CACHE: dict = {}
+class _Memo(dict):
+    """A dict for a value that is a pure function of its key, with a bound on how many it keeps.
+
+    Five things in this module are memoised -- a camera basis, the eight corner sign patterns, the
+    kind vector, a ray bundle, a tile's flat offsets -- and each one used to carry its own copy of
+    "look it up; if it is missing and the dict is full, clear it; build it; store it". The eviction
+    is a CLEAR rather than an LRU on purpose: the keys are (camera, resolution, device) tuples that
+    a process holds a couple of live combinations of, so the cap exists to stop an adversarial
+    caller growing the dict without bound, not to manage a working set, and a policy nobody can
+    trip is better as three lines in one place than as five near-copies.
+
+    A plain ``dict`` subclass, so ``len``/``clear``/``copy`` and every reader keep working.
+    """
+
+    def __init__(self, cap: int):
+        super().__init__()
+        self.cap = int(cap)
+
+    def put(self, key, value):
+        """Store and return ``value``, emptying the cache first if it is at its cap."""
+        if len(self) >= self.cap:
+            self.clear()
+        self[key] = value
+        return value
+
+
 _CACHE_MAX = 32
+_PROJ_CACHE = _Memo(_CACHE_MAX)
+_CORNER_CACHE = _Memo(_CACHE_MAX)
 
 
 def _proj_tensors(cam: "Camera", device, dtype):
@@ -153,11 +179,9 @@ def _proj_tensors(cam: "Camera", device, dtype):
     key = (cam, str(device), dtype)
     hit = _PROJ_CACHE.get(key)
     if hit is None:
-        if len(_PROJ_CACHE) >= _CACHE_MAX:
-            _PROJ_CACHE.clear()
         r, u, f = cam.basis()
-        hit = _PROJ_CACHE[key] = (torch.tensor(np.stack([r, u, f]), device=device, dtype=dtype),
-                                  torch.tensor(cam.pos, device=device, dtype=dtype))
+        hit = _PROJ_CACHE.put(key, (torch.tensor(np.stack([r, u, f]), device=device, dtype=dtype),
+                                    torch.tensor(cam.pos, device=device, dtype=dtype)))
     return hit
 
 
@@ -166,11 +190,9 @@ def _corner_masks(device):
     key = str(device)
     hit = _CORNER_CACHE.get(key)
     if hit is None:
-        if len(_CORNER_CACHE) >= _CACHE_MAX:
-            _CORNER_CACHE.clear()
-        hit = _CORNER_CACHE[key] = [
+        hit = _CORNER_CACHE.put(key, [
             torch.tensor([bool(m & 1), bool(m & 2), bool(m & 4)], device=device).view(1, 1, 3)
-            for m in range(8)]
+            for m in range(8)])
     return hit
 
 
@@ -1095,7 +1117,7 @@ CAST_BLOCK = 256
 #: (device, kinds) -> the (K,) int32 the kernel branches on. Cast kinds arrive as a numpy array or a
 #: Python list and are constant for the life of a scene, so rebuilding the tensor per call would be a
 #: host-to-device copy on the critical path of every pass.
-_KIND_CACHE: dict = {}
+_KIND_CACHE = _Memo(64)
 
 
 def _kind_tensor(kinds, device) -> torch.Tensor:
@@ -1108,9 +1130,7 @@ def _kind_tensor(kinds, device) -> torch.Tensor:
         if bad:
             raise ValueError(f"raycast3d has no intersector for mjtGeom {bad}; scenes here are "
                              f"primitive-only")
-        if len(_KIND_CACHE) > 64:
-            _KIND_CACHE.clear()
-        hit = _KIND_CACHE[key] = torch.tensor(key[1], device=device, dtype=torch.int32)
+        hit = _KIND_CACHE.put(key, torch.tensor(key[1], device=device, dtype=torch.int32))
     return hit
 
 
@@ -1223,8 +1243,8 @@ def any_blocking(kinds, sizes, pos, R, o, d, lim, skip=None, backend: str = "aut
 #: ``(camera, Rh, Rw, device)`` -> the ray bundle through it. Small, because a bundle is
 #: ``Rh*Rw*3`` float32 -- 3.1 MB at 512x512 -- and no caller here has more than a couple of live
 #: (camera, resolution) pairs at once.
-_RAY_CACHE: dict = {}
 _RAY_CACHE_MAX = 8
+_RAY_CACHE = _Memo(_RAY_CACHE_MAX)
 
 
 def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32):
@@ -1240,9 +1260,7 @@ def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32):
     key = (cam, int(H), int(W), str(device), dtype)
     hit = _RAY_CACHE.get(key)
     if hit is None:
-        if len(_RAY_CACHE) >= _RAY_CACHE_MAX:
-            _RAY_CACHE.clear()
-        hit = _RAY_CACHE[key] = cam.rays(H, W, device, dtype)
+        hit = _RAY_CACHE.put(key, cam.rays(H, W, device, dtype))
     return hit
 
 
@@ -1654,8 +1672,8 @@ def _tile_origin(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: 
 
 
 #: ``(tile, ss, width, device)`` -> the ``(tile*ss)^2`` flat offsets of a window at the origin.
-_TILE_CACHE: dict = {}
 _TILE_CACHE_MAX = 16
+_TILE_CACHE = _Memo(_TILE_CACHE_MAX)
 
 
 def _expand_tile(org, tile: int, ss: int, Wpix: int, device) -> torch.Tensor:
@@ -1672,9 +1690,7 @@ def _expand_tile(org, tile: int, ss: int, Wpix: int, device) -> torch.Tensor:
     key = (int(tile), int(ss), int(Wpix), str(device))
     base = _TILE_CACHE.get(key)
     if base is None:
-        if len(_TILE_CACHE) >= _TILE_CACHE_MAX:
-            _TILE_CACHE.clear()
         T = tile * ss
         ar = torch.arange(T, device=device)
-        base = _TILE_CACHE[key] = (ar.view(T, 1) * Wpix + ar.view(1, T)).reshape(1, -1)
+        base = _TILE_CACHE.put(key, (ar.view(T, 1) * Wpix + ar.view(1, T)).reshape(1, -1))
     return (y0.view(B, 1) * ss * Wpix + x0.view(B, 1) * ss) + base
