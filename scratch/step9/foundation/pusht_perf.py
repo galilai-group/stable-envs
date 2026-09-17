@@ -12,6 +12,12 @@ The trees are measured by ALTERNATING subprocesses (A B A B ...) rather than one
 thermal or scheduler drift during the run lands on both arms instead of on whichever went second, and
 the reported number is the median of the per-repeat medians. Threads are pinned to one, as every CPU
 measurement in this repository is.
+
+The baseline arm needs a checkout of the Step-8 SHA; create one first (and remove it afterwards)::
+
+    git worktree add --detach /tmp/se9-baseline 21cb30678b7a7d0f3344b59f176f33d3f3b09ffc
+    MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python scratch/step9/foundation/pusht_perf.py
+    git worktree remove /tmp/se9-baseline
 """
 from __future__ import annotations
 
