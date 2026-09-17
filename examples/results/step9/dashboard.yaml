@@ -138,6 +138,11 @@ decisions:
   topic: StepResult cost on trivially cheap steps (A)
   ruling: 'accepted: the plan 10 % bar applies to render/dynamics hot paths; +12-28 us absolute per step is the TensorDict construction accepted at Wave 0; render unchanged; recorded as a Wave-3 candidate
     (lazy StepResult) not a blocker'
+- date: '2026-09-17'
+  by: coordinator
+  topic: drawn fields with a more precise live value (A R7)
+  ruling: 'Env._live_state() hook (3490156): a cell returns its higher-precision live columns for drawn fields and Env.state takes them over the widened row; DM Control/MuJoCo workstreams must use it rather
+    than override state'
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -151,6 +156,9 @@ incident_log:
   item: 'foundation merged d07ffa8; GPU oracle re-run at the merge SHA submitted (job 6464120); Wave 1 pair 1 launched: A classic/nav (opus medium) and H render-3d (opus high)'
 - date: '2026-09-17'
   item: 'A and H delivered; foundation dtype change b1585fc; universe.shard_of fix; SPM matplotlib parity run by coordinator (PASS); GPU arms submitted: A 6464309, H 6464319'
+- date: '2026-09-17'
+  item: DEFECT in coordinator commit b1585fc (unpack returned a view of the packed buffer for undeclared-dtype fields; a StepResult changed under the caller at the next step). Found by Workstream A (R8).
+    Fixed at 3490156 (.to(dt, copy=True)) with a regression test over PushT; Env._live_state() hook added (A R7) so float64 simulators need no state-property override
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
