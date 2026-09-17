@@ -184,15 +184,18 @@ MJW_CHUNK = 256
 class _Cache(dict):
     """A dict with a cap, which CLEARS rather than evicting one entry when it is reached.
 
-    Six caches in this module were the same four lines each — look up, build on a miss, clear the
-    whole thing when it is full, store — written out five times with three different orderings and
-    two different places for the bound check. They are one thing, so they are written once.
+    Six caches in this module asked the same question — look up, build on a miss, store — and wrote
+    it out six times. Three of them are also bounded, and the bound was checked in two different
+    places relative to the build: ``_CTX_CACHE`` and ``_PLATE_CACHE`` cleared BEFORE inserting, so
+    they held at most ``maxsize``; ``_CAM_CACHE`` cleared AFTER, so it held ``maxsize + 1``. That is
+    the kind of difference nobody intends and nobody notices, and it is why these are one type now.
+    The bound is applied before the insert, as the two that matter already did.
 
-    CLEARING ALL OF IT is the existing policy and is kept deliberately rather than replaced with LRU:
-    what these hold is render contexts and MuJoCo models, whose cost is dominated by the FIRST one
-    (an EGL context, a model compile), and an LRU that keeps five stale contexts alive holds
-    ``nworld * H * W * 12`` bytes apiece for them. ``maxsize=None`` means unbounded, which is what the
-    three per-scene caches want: there are four scenes and their entries are the point.
+    CLEARING ALL OF IT is the existing policy, kept deliberately rather than replaced with LRU: what
+    these hold is render contexts and compiled models, whose cost is dominated by the FIRST one (an
+    EGL context, a model compile), and an LRU that keeps five stale contexts alive holds
+    ``nworld * H * W * 12`` bytes apiece for them. ``maxsize=None`` means unbounded, which is what
+    the three per-scene caches want: there are four scenes and their entries are the point.
     """
 
     def __init__(self, name: str, maxsize: int | None = None):
@@ -245,9 +248,10 @@ def _restore(m, pr) -> None:
 
     ``_bake_plate`` writes them on the way in (so that baking appearance B after A gives the same
     model as baking B first — ``cam.distance`` is a MULTIPLIER and would otherwise compound) and
-    again on the way out (so that no other reader of the shared model sees a bake's leftovers). Two
-    copies of the same list is two places for the next array to be added to only one of them, which
-    is how ``geom_rgba`` came to be written and not restored once already.
+    again on the way out (so that no other reader of the shared model sees a bake's leftovers). The
+    two lists had already drifted apart: the entry copy omitted ``cam_pos``/``cam_quat``, which was
+    harmless only because the bake overwrites the one camera it uses a few lines later. One list is
+    one place for the next array to be added, instead of two places for it to be added to one.
     """
     m.mat_rgba[:] = pr["mat_rgba"]
     m.geom_rgba[:] = pr["geom_rgba"]
