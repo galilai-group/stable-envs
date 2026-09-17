@@ -33,7 +33,7 @@ from typing import Any
 from .__about__ import __version__  # noqa: F401
 from ._config import get_config, set  # noqa: A004,F401
 from .dynamics import Dynamics  # noqa: F401
-from .env import Env, State  # noqa: F401
+from .env import Env, State, StepResult  # noqa: F401
 from .registry import (SWM_IDS, import_errors, list_envs, list_families,  # noqa: F401
                        make as _make, spec)
 from .specs import CompositeSpec, Spec  # noqa: F401
@@ -137,5 +137,6 @@ def __dir__() -> list[str]:
     return sorted({*__all__, *_registry.REGISTRY})
 
 
-__all__ = ["Env", "State", "Spec", "CompositeSpec", "Dynamics", "make", "spec", "list_envs",
-           "list_families", "import_errors", "set", "get_config", "SWM_IDS", "__version__"]
+__all__ = ["Env", "State", "StepResult", "Spec", "CompositeSpec", "Dynamics", "make", "spec",
+           "list_envs", "list_families", "import_errors", "set", "get_config", "SWM_IDS",
+           "__version__"]

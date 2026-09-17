@@ -111,5 +111,50 @@ def test_a_cell_without_dynamics_says_so_precisely():
     e.close()
 
 
+def test_the_step_result_is_built_by_the_shared_helper(env):
+    """One helper, so forty cells cannot each get the batch size or the device subtly different."""
+    env.reset(seed=0)
+    out = env.step(_actions(6))
+    assert isinstance(out, snv.StepResult)
+    assert list(out.batch_size) == [6] and out.device == env.device
+
+    built = env._step_result(env.state, reward=torch.zeros(6), done=torch.zeros(6, dtype=torch.bool))
+    assert set(built.keys()) == {"state", "reward", "done"}
+    assert list(built["reward"].shape) == [6] and list(built["done"].shape) == [6]
+    assert set(env._step_result(env.state, reward=None).keys()) == {"state"}, (
+        "a cell with no reward semantics passes None and the key is ABSENT, not zero")
+
+
+def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_zeros():
+    """The one template hazard worth a test: forgetting the hook must not be a silent wrong answer.
+
+    A hidden field left unfilled would come back as zeros — ``env.state`` looking fine while
+    ``transition(env.state, a)`` quietly stopped matching ``step(a)``.
+    """
+    class Forgetful(snv.PushT):
+        _hidden_state = snv.Env._hidden_state
+
+    e = Forgetful(num_envs=2, device="cpu")
+    e.set_state(e.sample_states(2))
+    with pytest.raises(NotImplementedError) as exc:
+        e.state
+    msg = str(exc.value)
+    assert "agent.velocity" in msg and "offset " in msg and "ZEROS" in msg
+    assert "_hidden_state()" in msg, "the message must name the hook that fixes it"
+    e.close()
+
+
+def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_step(env):
+    st = env.reset(seed=6)
+    assert float(env.state["agent", "velocity"].abs().max()) == 0.0
+    env.step(_actions(6, 6))
+    live = env.state["agent", "velocity"]
+    assert float(live.abs().max()) > 0.0, "after a step the agent is moving and state must say so"
+    assert torch.equal(live, env._hidden_state()[("agent", "velocity")])
+    # the whole point: state -> transition must reproduce the next step exactly
+    a = _actions(6, 7)
+    assert torch.equal(env.pack(env.transition(env.state, a)), env.pack(env.step(a)["state"]))
+
+
 def test_pusht_declares_that_it_has_dynamics(env):
     assert env.has_dynamics and snv.spec("PushT")["has_dynamics"]

@@ -54,6 +54,14 @@ from .specs import CompositeSpec, Spec
 #: internal layout and is reached through ``env.pack`` / ``env.unpack``.
 State = TensorDict
 
+#: What ``step`` returns: a ``TensorDict`` carrying ``"state"`` and, for a cell that HAS them, a
+#: ``"reward"`` ``(num_envs,)`` and a ``"done"`` ``(num_envs,)``. An alias for the same reason
+#: :data:`State` is one — there is no private type to learn — and a name because the word was being
+#: used in five docstrings while nothing defined it, which is how forty cells end up hand-rolling the
+#: same ``TensorDict(...)`` call five slightly different ways. Build one with
+#: :meth:`Env._step_result`, never by hand.
+StepResult = TensorDict
+
 #: How many offending rows/columns a diagnostic lists before it says "and N more". Long enough to see
 #: a pattern (one bad row, or a whole column), short enough not to bury the sentence explaining it.
 _MAX_LISTED = 8
@@ -919,10 +927,68 @@ class Env:
             node[key[-1]] = v
         return TensorDict(out, batch_size=[n], device=self.device)
 
+    def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
+        """``{key path: (n, width) tensor}`` for the fields whose offset in the packed row is ``None``.
+
+        THE HOOK EXISTS SO THAT A HIDDEN FIELD CANNOT BE FORGOTTEN QUIETLY. A cell that declares a
+        field with offset ``None`` is saying "this is real dynamical state that the packed row does
+        not carry" — PushT's agent velocity. ``unpack`` fills such a field with zeros, which is right
+        for a state loaded from a corpus and WRONG for the env's own live state after a step. A cell
+        that overrode the ``state`` property to splice its live value back in would be one forgotten
+        override away from a silent wrong answer: ``env.state`` reporting zeros, and
+        ``transition(env.state, a) != step(a)`` — a wrong number rather than a crash.
+
+        So the base class asks instead, and REFUSES to guess: declare a hidden field and you must
+        answer here. The default returns ``{}``, which is correct for the majority of cells (they
+        declare no hidden field at all) and raises for the rest, in ``state``, naming the field.
+        """
+        return {}
+
     @property
     def state(self) -> TensorDict:
-        """The state the env currently holds, as a :data:`State`. ``get_state()`` is the packed row."""
-        return self.unpack(self.get_state())
+        """The state the env currently holds, as a :data:`State`. ``get_state()`` is the packed row.
+
+        The packed half comes from ``unpack(get_state())``; the hidden half — the fields the row does
+        not carry — comes from :meth:`_hidden_state`, because only the cell knows where it lives.
+        """
+        td = self.unpack(self.get_state())
+        hidden = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
+                  for k, v in (self._hidden_state() or {}).items()}
+        n = int(td.batch_size[0])
+        missing = []
+        for key, w, off in self._layout():
+            if off is not None:
+                continue
+            if key not in hidden:
+                missing.append(".".join(key))
+                continue
+            td[key] = torch.as_tensor(hidden[key], device=self.device,
+                                      dtype=torch.float32).reshape(-1, w)[:n]
+        if missing:
+            raise NotImplementedError(
+                f"{type(self).__name__}.state: {missing} is declared in state_layout with offset "
+                f"None — real dynamical state that the packed row does not carry — and "
+                f"{type(self).__name__}._hidden_state() does not return it. Unfilled, it would be "
+                f"reported as ZEROS, which is a wrong answer rather than a failure: env.state would "
+                f"look fine and transition(env.state, action) would stop matching step(action). "
+                f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state().")
+        return td
+
+    def _step_result(self, state: TensorDict, **extras) -> TensorDict:
+        """Build the :data:`StepResult` ``step`` returns: ``{"state": ..., **extras}``.
+
+        Every cell builds it the same way through here rather than writing the ``TensorDict(...)``
+        call itself, so the batch size and device cannot drift between cells. ``extras`` are
+        ``reward``/``done`` for the cells that HAVE them; a cell with no reward or termination
+        semantics passes none, and the keys are absent rather than zero — a fabricated zero reward
+        reads as a measured one (contract §5).
+        """
+        td = {"state": state}
+        for k, v in extras.items():
+            if v is None:
+                continue
+            td[k] = torch.as_tensor(v, device=self.device).reshape(int(state.batch_size[0]))
+        return StepResult(td, batch_size=[int(state.batch_size[0])], device=self.device)
 
     def state_names_of(self, key) -> list[str]:
         """Which packed columns a State key occupies. Used by the tests and by ``describe``."""
@@ -1017,8 +1083,9 @@ class Env:
     def step(self, actions) -> TensorDict:
         """Advance every environment one control step. STATEFUL: it writes ``env.state``.
 
-        Returns a ``StepResult`` TensorDict holding at least ``"state"``. A cell with no reward or
-        termination semantics omits those keys rather than fabricating zeros (contract §5).
+        Returns a :data:`StepResult` holding at least ``"state"``, built with ``_step_result``. A
+        cell with no reward or termination semantics omits those keys rather than fabricating zeros
+        (contract §5).
         """
         _dynamics.no_dynamics(self, "step")
 

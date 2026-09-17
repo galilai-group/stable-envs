@@ -514,20 +514,18 @@ class PushT(Env):
                     ("block", "position"): (0.0, SCREEN),
                     ("block", "angle"): (-math.pi, math.pi)}
 
-    @property
-    def state(self) -> TensorDict:
-        """The live state INCLUDING the agent velocity the packed row does not carry.
+    def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
+        """Where the one field the packed row does not carry actually lives.
 
-        ``Env.state`` unpacks ``get_state()`` and therefore reports a velocity of zero; here the env
-        holds the real one, and ``step`` -> ``state`` -> ``transition`` must agree to the bit or the
-        functional path is a different simulator. So the hidden half is spliced in from ``_agent_v``.
+        ``unpack`` fills the velocity with zeros, which is right for a state loaded from a corpus and
+        wrong for the env's own live state after a step: ``step`` -> ``state`` -> ``transition`` must
+        agree to the bit or the functional path is a different simulator. This is the whole of what a
+        cell with hidden dynamics has to say; ``Env.state`` does the splicing.
         """
-        td = super().state
-        n = int(td.batch_size[0])
-        td["agent", "velocity"] = self._agent_v[:n].clone()
-        return td
+        return {("agent", "velocity"): self._agent_v[:self._live_rows].clone()}
 
     def _target(self, action) -> torch.Tensor:
+        """The absolute PD target as ``(n, 2)`` float32 on this env's device."""
         return torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, 2)
 
     @torch.no_grad()
@@ -552,8 +550,8 @@ class PushT(Env):
     def step(self, action) -> TensorDict:
         """Advance every environment one control step. ``action`` is ``(B,2)``, the absolute PD target.
 
-        STATEFUL: it writes ``env.state``. Returns a ``StepResult`` TensorDict carrying ``"state"``
-        AND NOTHING ELSE — PushT has no reward and no termination in stable-envs. gym_pusht's reward
+        STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
+        ``"state"`` AND NOTHING ELSE — PushT has no reward and no termination in stable-envs. gym_pusht's reward
         is a coverage score computed from the goal pose, which is an APPEARANCE knob here
         (``goal.position``/``goal.angle`` are variation, not physics), so a reward computed from it
         would be a different quantity wearing the same name. A ``"reward"`` of zeros would be worse:
@@ -564,18 +562,22 @@ class PushT(Env):
         that rather than asserting it.
         """
         self._check_open("step")
+        # ``(B, 2)`` and not ``(-1, 2)``: the captured graph's target buffer is ``(B, 2)`` and
+        # ``copy_`` would BROADCAST a one-row target across every environment instead of refusing it.
         target = self._target(action).reshape(self.B, 2)
+        replayed = False
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None:
                 self._capture_step()
             if self._step_graph is not None:
                 self._step_target.copy_(target)
                 self._step_graph.replay()
-                return TensorDict({"state": self.state}, batch_size=[self.B], device=self.device)
-        st, av = self._advance(self._state, self._agent_v, target)
-        self._state.copy_(st)
-        self._agent_v.copy_(av)
-        return TensorDict({"state": self.state}, batch_size=[self.B], device=self.device)
+                replayed = True
+        if not replayed:
+            st, av = self._advance(self._state, self._agent_v, target)
+            self._state.copy_(st)
+            self._agent_v.copy_(av)
+        return self._step_result(self.state)
 
     def _close(self) -> None:
         """Drop the captured CUDA graph. ``Env.close`` calls this once and is idempotent."""

@@ -13,6 +13,7 @@ pytest.importorskip("tensordict")
 
 import stable_envs as snv
 from stable_envs import _config
+from stable_envs import registry as R
 
 pytestmark = pytest.mark.unit
 
@@ -44,9 +45,23 @@ def _clean_config():
 # ------------------------------------------------------------------ namespace
 
 
+def test_dir_advertises_the_documented_namespace_and_the_environments_only():
+    """Contract §1: the top level exposes the happy path, not backend machinery.
+
+    The retained Step-8 names still RESOLVE (escalation 3) — they must, until Workstream K migrates
+    ~470 call sites — but tab completion must not teach them to anyone new.
+    """
+    listed = set(dir(snv))
+    assert {"Env", "State", "StepResult", "make", "spec", "PushT"} <= listed
+    assert not listed & {"Scene2D", "raster2d", "raycast3d", "render", "testing", "StyleTensor",
+                         "render_states", "StableEnv", "REGISTRY", "register"}
+    for name in ("Scene2D", "StyleTensor", "render_states"):
+        assert getattr(snv, name) is not None, f"snv.{name} must still resolve, just not be listed"
+
+
 def test_the_public_namespace_is_the_contract():
     for name in ("Env", "State", "Spec", "CompositeSpec", "make", "spec", "list_envs", "set",
-                 "get_config", "import_errors", "__version__"):
+                 "get_config", "import_errors", "StepResult", "__version__"):
         assert hasattr(snv, name), f"snv.{name} is part of the Step-9 public namespace"
     assert snv.__version__ == __import__("stable_envs.__about__", fromlist=["x"]).__version__
 
@@ -63,9 +78,12 @@ def test_an_unknown_attribute_says_how_to_find_the_environments():
     assert "list_envs()" in str(e.value) and "import_errors()" in str(e.value)
 
 
-def test_state_is_the_tensordict_type_and_not_a_private_subclass():
+def test_state_and_stepresult_are_the_tensordict_type_and_not_private_subclasses():
     from tensordict import TensorDict
-    assert snv.State is TensorDict
+    assert snv.State is TensorDict and snv.StepResult is TensorDict
+    assert "StepResult" in snv.__all__, ("`StepResult` is the name five docstrings and the contract "
+                                         "use for what step returns; it must be exported so cells do "
+                                         "not each hand-roll the TensorDict call")
 
 
 # ------------------------------------------------------------------ deprecated aliases
@@ -103,6 +121,31 @@ def test_make_with_batch_still_builds_an_env_and_warns_once(records):
     warnings = [r for r in records if "batch=" in r]
     assert len(warnings) == 1 and "num_envs=" in warnings[0]
     env.close(); env2.close()
+
+
+#: Classes whose own ``__init__`` still declares ``batch=`` and not ``num_envs=``. They accept the
+#: Step-8 spelling and REJECT the Step-9 one, because they forward positionally to ``Env.__init__``
+#: and never reach its deprecation branch. Migrating them is Wave-1 family-agent work (findings §2,
+#: "Wave-1 scope"); the number is pinned here so it can only go DOWN.
+NUM_ENVS_HOLDOUTS = 41
+
+
+def test_the_number_of_classes_that_still_reject_num_envs_only_goes_down():
+    """Wave-0 migrated one cell. This is the size of the job Wave 1 inherits, as a number.
+
+    Checked from the SIGNATURE rather than by constructing: most of these families need a GPU, an EGL
+    context or a compiled scene, so a test that instantiated would skip on the machine where this
+    question is asked and the count would quietly stop being enforced.
+    """
+    import inspect
+
+    holdouts = sorted(n for n, c in R.REGISTRY.items()
+                      if "batch" in inspect.signature(c.__init__).parameters
+                      and "num_envs" not in inspect.signature(c.__init__).parameters)
+    assert len(holdouts) <= NUM_ENVS_HOLDOUTS, (
+        f"{len(holdouts)} registered classes reject num_envs=, up from {NUM_ENVS_HOLDOUTS}. A new "
+        f"env must take the Step-9 constructor: {holdouts}")
+    assert "PushT" not in holdouts, "the Wave-0 template must take num_envs="
 
 
 def test_num_envs_and_batch_cannot_disagree():
