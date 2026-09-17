@@ -1,0 +1,98 @@
+[
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 1,
+  "style": "default",
+  "fps": 204.61588441918641
+ },
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 4096,
+  "style": "default",
+  "fps": 40274.92902460399
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 1,
+  "style": "default",
+  "fps": 206.0194050171839
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 4096,
+  "style": "default",
+  "fps": 11998.426095694696
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 1,
+  "style": "default",
+  "fps": 211.6470247533601
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 4096,
+  "style": "default",
+  "fps": 70915.63511690407
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 1,
+  "style": "default",
+  "fps": 182.13430359284382
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 4096,
+  "style": "default",
+  "fps": 58136.865295489406
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 1,
+  "style": "default",
+  "fps": 234.7882356892556
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 4096,
+  "style": "default",
+  "fps": 31862.528895769705
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 1,
+  "style": "default",
+  "fps": 187.1402390393807
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 4096,
+  "style": "default",
+  "fps": 47021.41788504843
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 1,
+  "style": "default",
+  "fps": 181.71409439233565
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 4096,
+  "style": "default",
+  "fps": 22786.081429158086
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 1,
+  "style": "default",
+  "fps": 269.386281820313
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 4096,
+  "style": "default",
+  "fps": 30351.217839494748
+ }
+]

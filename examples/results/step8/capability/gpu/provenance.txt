@@ -1,0 +1,4 @@
+host gpu3002.oscar.ccv.brown.edu
+job 6459781
+sha unknown
+torch 2.14.0+cu126 mujoco 3.11.0
