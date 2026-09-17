@@ -117,10 +117,16 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-envs-dmcontrol
   owner: opus (medium)
   reviewer: opus (high)
-  status: IN PROGRESS
+  status: DELIVERED 0f610cf; GPU job 6469088 running; merging integration (R1 instance _layout); then opus-high review
   files_owned: stable_envs/envs/dmcontrol/ (package from dmcontrol.py; DMC use of _plate_texels.py), tests
   ids_affected: 17 DMC swm ids (18 cells) incl. trackcom; T3 floor.color; Step-8 variation maps
   baseline_sha: 86a6ba4
+  head_sha: 0f610cf
+  tests: se6 tests/unit 1496 passed (1368 + 128); se8-vm 436 passed / 4 skipped
+  oracle_diff: '18/18 cells: 35 keys identical vs 21cb306 (frames on cpu for 17/18; Swimmer refuses cpu identically, cuda owed); T3 bake-vs-recompile IDENTICAL; registry rows incl. module identical (package
+    replaces module)'
+  performance_diff: 'cpu paired: Cartpole -0.44 %, Cheetah -1.75 %'
+  api_diff: dmcontrol.py -> dmcontrol/ package (22 modules); four hand tables replaced by views over the cells
 - workstream: G_render_2d
   branch: step9/render-2d
   worktree: /Users/samib/stable-envs-step9-render-2d
@@ -164,6 +170,15 @@ decisions:
   topic: drawn fields with a more precise live value (A R7)
   ruling: 'Env._live_state() hook (3490156): a cell returns its higher-precision live columns for drawn fields and Env.state takes them over the widened row; DM Control/MuJoCo workstreams must use it rather
     than override state'
+- date: '2026-09-17'
+  by: coordinator
+  topic: Env._layout instance method (B R1)
+  ruling: implemented at f24d94c; families with compiled-model state widths (DMC, Fetch, RoboCasa) need no override
+- date: '2026-09-17'
+  by: coordinator
+  topic: module -> package migrations (B R2)
+  ruling: a package may replace the module of the same name (no sys.modules shim possible); the obligation is a test that every Step-8 module-level name still resolves off the package; applies to D (ogbench/)
+    too
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -189,6 +204,8 @@ incident_log:
   item: 'H: probe 6464500 identical on A40; self-compare 6464601 on gpu1503 submitted; H told to merge integration (e1da2f6 harness fix resolves its 66 GPU test failures)'
 - date: '2026-09-17'
   item: H merged after APPROVE; B restarted after a spend-limit cut (partial files inspected by the new agent)
+- date: '2026-09-17'
+  item: B delivered 0f610cf; GPU job 6469088 submitted; R1 landed f24d94c; G running
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
