@@ -63,6 +63,8 @@ from mujoco_warp._src import math  # noqa: F401  (referenced by the vendored fun
 from mujoco_warp._src.types import MJ_MAXVAL, Data, GeomType, Model, ObjType, RenderContext
 from mujoco_warp._src.warp_util import event_scope
 
+from . import _resources
+
 wp.set_module_options({"enable_backward": False})
 
 #: The mujoco_warp release this file was generated from. A bump is not automatically wrong, it is
@@ -92,13 +94,27 @@ def applies_to(m: Model, rc: RenderContext) -> bool:
     return cs is not None and len(cs.shape) == 2 and cs.shape[0] == 1
 
 
+#: Entries kept by ``_CASTS_CACHE``. One per (model, shadow setting) that has ever been rendered, and
+#: each entry is a tuple of bools plus a reference to a warp array the model already owns, so the
+#: memory is negligible and the bound exists only so that a long-lived process cannot accumulate one
+#: entry per model built. 64 is far above any measured working set — the largest family in the
+#: repository holds four contexts.
+CASTS_CACHE_MAX = 64
+
 #: Memo for ``light_casts``, and it is a correctness requirement rather than a saving. ``render`` is
 #: called once to warm up and then AGAIN INSIDE ``wp.ScopedCapture``; reading ``light_castshadow``
 #: with ``.numpy()`` is a device-to-host copy, which CUDA refuses during a capture with
 #: "operation would make the legacy stream depend on a capturing blocking stream". The warm-up call
 #: fills this, so the capturing call never copies. The value keeps a reference to the array so the
 #: pointer it is keyed on cannot be freed and reissued to a different model.
-_CASTS_CACHE: dict = {}
+#:
+#: BOUNDED, AND THE POLICY IS LOAD-BEARING. It was an unbounded dict, which is a leak; it must not
+#: become the ``clear()``-on-full idiom the rest of the repository grew, because clearing wholesale
+#: can throw away the entry the WARM-UP call just wrote and leave the CAPTURING call to do the
+#: device-to-host copy CUDA forbids — i.e. a cache eviction policy that turns into a capture failure.
+#: LRU cannot do that: the warm-up call makes its key the most recently used, so it is the last thing
+#: an insertion by anything else would evict, and no insertion happens between the two calls anyway.
+_CASTS_CACHE = _resources.BoundedCache(CASTS_CACHE_MAX, name="mjwarp_lightspec.casts")
 
 
 def light_casts(m: Model, rc: RenderContext) -> tuple:
@@ -110,7 +126,7 @@ def light_casts(m: Model, rc: RenderContext) -> tuple:
             casts = tuple(False for _ in range(int(m.nlight)))
         else:
             casts = tuple(bool(x) for x in m.light_castshadow.numpy()[0])
-        hit = _CASTS_CACHE[key] = (casts, m.light_castshadow)
+        hit = _CASTS_CACHE.put(key, (casts, m.light_castshadow))
     return hit[0]
 
 
