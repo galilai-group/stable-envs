@@ -14,7 +14,7 @@ foundation defect found and filed (R8). The frozen Step-4 corpus of every
 one of them renders to **byte-identical frames** through this branch and through a detached worktree
 of `21cb306` in the same venv; `describe()`, the style layout, the default appearance, the variation
 taxonomy, the fidelity declarations, the packed layout, `sample_states` and the registry row are
-identical. **Unexplained oracle differences: zero.** Local unit suite **1355 passed**; SWM-venv subset
+identical. **Unexplained oracle differences: zero.** Local unit suite **1367 passed**; SWM-venv subset
 **270 passed / 57 skipped**, which is exactly what `step9/integration` alone produces on this host.
 
 Cells: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar`, `MountainCarContinuous` (classic control);
@@ -31,7 +31,7 @@ Cells: `CartPole`, `Pendulum`, `Acrobot`, `MountainCar`, `MountainCarContinuous`
 | `stable_envs/envs/classic_control.py` | edited in place (`StableEnv` → `Env`, the Step-9 block) |
 
 Created: `stable_envs/envs/navigation.py` (1,527 lines), `tests/unit/test_envs_classic_nav.py`
-(88 tests), `scratch/step9/envs-classic-nav/oracle.py`, `scratch/step9/envs-classic-nav/perf.py`,
+(118 tests), `scratch/step9/envs-classic-nav/oracle.py`, `scratch/step9/envs-classic-nav/perf.py`,
 `examples/results/step9/envs-classic-nav/{oracle.json,performance.json,findings.md}`.
 
 Removed: **nothing importable.** `stable_envs.envs.swm_nav` and `stable_envs.envs.simple_point_maze`
@@ -154,7 +154,8 @@ caller.
 
 ## 4. Targeted tests
 
-`tests/unit/test_envs_classic_nav.py`, 88 tests, marker `unit`, parametrised over all ten cells:
+`tests/unit/test_envs_classic_nav.py`, **118 tests**, marker `unit`, parametrised over all ten
+cells. The first thirteen are the original migration set:
 
 | test | what it pins |
 |---|---|
@@ -169,33 +170,42 @@ caller.
 | `the_old_navigation_module_paths_are_the_merged_module` | the two shims are the same module object and carry the names the other tests reach for |
 | `the_registered_default_frame_size_and_the_specs_agree` | `size`, `action_spec`, `state_spec` leaves |
 | `the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way` | on a stub: `options={"variation": []}`, `u.state` float32, `render("rgb_array")` — see ESCALATION 1 |
-| `the_fast_state_property_agrees_with_the_base_class_path` | `_Classic.state` vs `Env.state` after three steps |
-| `a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import` | the class-creation check that replaces the per-call hidden-field guard |
+| `env_state_is_the_simulator_buffer_and_not_the_widened_packed_row` | that `_live_state()` and `_hidden_state()` between them answer for EVERY key — so no field is served by the lossy widened row — and that `env.state` is the float64 simulator buffer bit for bit after stepping, while `pack(state)` is still `get_state()` |
+| `a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import` | the class-creation check that `state_layout`, `_hidden_state` and `_live_state` are three views of one generated fact |
 
-Two more tests were added after the coordinator's rulings, parametrised over all ten cells (+20):
+Three more were added over the two rounds of coordinator rulings, each parametrised over all ten
+cells (+30, giving 118):
 
 | test | what it pins |
 |---|---|
-| `transition_still_equals_step_after_the_env_has_been_stepped` | the bit-equality MID-TRAJECTORY, which is where a State rebuilt from the lossy packed row stops matching (§2) |
+| `transition_still_equals_step_after_the_env_has_been_stepped` | the bit-equality MID-TRAJECTORY, which is where a State rebuilt from the lossy packed row stops matching (§2) — R7 |
 | `a_step_result_is_not_a_view_of_the_env_that_produced_it` | a `StepResult` the caller keeps does not change when the env is stepped again — the silent corruption R8 describes |
+| `step_returns_exactly_env_state` | `_Classic.step` builds its result from `_sim` rather than reading it back through the property; this is what makes that sound — same numbers, same dtypes, after several steps |
 
-Exact outputs, both from the worktree root, at the post-merge head:
+Exact outputs, all from the worktree root, at **HEAD `60b515d`**:
 
 ```
 MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit \
   --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"
-1355 passed, 195 skipped, 112 deselected, 26619 warnings in 54.83s
+1367 passed, 195 skipped, 112 deselected, 26619 warnings in 55.83s
 ```
 
-Accounting: 1246 (Wave-0) + 108 mine + 1 (`b1585fc`'s own dtype test) = 1355. **No pre-existing test
-changed its result** at any point.
+Accounting: 1246 (Wave-0) + 118 mine + 3 (the foundation's own tests from `b1585fc` and `3490156`)
+= 1367. **No pre-existing test changed its result** at any point.
+
+```
+MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider \
+  tests/unit/test_envs_classic_nav.py
+118 passed in 0.42s
+```
 
 ```
 MUJOCO_GL=glfw /Users/samib/se8-vm-venv/bin/python -m pytest -q -p no:cacheprovider \
   tests/unit/test_variation_maps_dmc_control.py tests/unit/test_variation_maps_newcells.py \
   tests/unit/test_variation_maps_fetch.py tests/unit/test_step8_gate_record.py tests/swm
-270 passed, 57 skipped, 4088 warnings in 18.26s
+270 passed, 57 skipped, 4088 warnings in 18.16s
 ```
+(with `tests/unit/test_envs_classic_nav.py` added: `388 passed, 57 skipped`.)
 
 That is **270/57 and not the 269/58 of the Wave-0 baseline**, and the difference is not mine: a
 detached worktree of `step9/integration` alone produces `270 passed, 57 skipped` on this host, so one
@@ -251,6 +261,13 @@ Per-cell default-frame digests (first 16 hex of the SHA-256 over 64 frames):
 
 **Unexplained differences: zero** (`"unexplained_differences": {}`, `"identical": true` in
 `examples/results/step9/envs-classic-nav/oracle.json`).
+
+The record's `head_sha` is `60b515d`, which is the last commit that changed code — the commit that
+then adds the regenerated record cannot be the one it measured. Everything after it in this branch is
+documentation. When the oracle was re-run there, the only key that changed against the previous
+record was `head_sha` itself: all ten frame digests, `describe()`, the style layout, the registry
+rows and the functional checks are byte for byte what they were, so retiring `_Classic.state` for the
+foundation's `_live_state()` hook moved nothing the oracle can see.
 
 **The one EXPECTED difference**, declared in the script rather than discovered in the diff: the five
 navigation cells' `registry_table()[i]["module"]` moved from `stable_envs.envs.swm_nav` /
@@ -356,7 +373,9 @@ gone.
 2. **API changes** — §2. Additive except `step`'s return type (the Wave-0 contract), plus one
    genuine bug fix (`frame_shape`).
 3. **Step-8 IDs affected** — §3. Behaviorally none; the six ids these cells serve are byte-identical.
-4. **targeted tests** — §4. 88 new, 1334 passing locally, 269 unchanged in the SWM venv.
+4. **targeted tests** — §4. 118 new, 1367 passing locally, 270/57 in the SWM venv (which is
+   `step9/integration`'s own number on this host), and the 108 the file then had green on the CUDA
+   host (§11).
 5. **applicable certification checks** — §5. Step-4 replay done for all ten; Gate A and the GPU
    suites owed (ESCALATION 2).
 6. **default-frame comparison** — §6. Identical SHA-256 over all ten corpora, 640 frames.
@@ -474,8 +493,8 @@ result that was claimed and wrong — they were results that were not produced:
    was an EGL teardown traceback (`OpenGL.raw.EGL._errors.EGLError` from `mujoco.egl.__del__`), so
    the subset's result is **indeterminate**, not passing. `COMPLETED` was not evidence.
 
-Its unit-test run on the CUDA host did report: `88 passed` (the count at `aa1608e`; the file is 108
-tests now).
+Its unit-test run on the CUDA host did report: `88 passed` — the count at `aa1608e`; the file is
+**118** tests at HEAD, and job 6464378 ran the 108 it had at `b8cc599` (§11, next).
 
 One incidental observation, recorded because it would otherwise look like a discrepancy: on that
 host `Pendulum`'s 64-frame digest is `2698c4a43016c321` where this Mac produces `feaf201ca40ca177`.
@@ -514,7 +533,8 @@ Both arms also re-ran the functional checks: 10/10 cells on `cpu` and 10/10 on `
 `stateful_path_was_a_cuda_graph` true for exactly the five classic-control cells.
 
 Note the GPU evidence is at `b8cc599`. The two commits after it — adopting `_live_state()` and
-building the StepResult from `_sim` — are CPU-verified here (oracle PASS, 1357 local tests) and
+building the StepResult from `_sim` — are CPU-verified here (oracle PASS at HEAD, 1367 local tests)
+and
 touch no device-specific code: one replaces a `state` property with two hooks the base class calls,
 the other changes which of two provably-equal tensors `step` wraps. A re-run at the final head is
 cheap (`gpu.sbatch` is committed and takes ~8 minutes) if the reviewer wants the arm pinned to it.
