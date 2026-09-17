@@ -90,6 +90,71 @@ with the brief text below (§6) and "inspect the worktree first".
 - Job ids so far: 6463991/6464120 (PushT oracle, foundation/merge SHA), 6464309/6464378 (A),
   6464319/6464500/6464601 (H), 6469088 (B, COMPLETED, being incorporated by B's agent).
 
+## 3a. Oscar: how it works and how this project uses it
+
+**What it is.** Brown's Oscar cluster (CCV). Login nodes are shared, for editing/git/rsync/light
+installs only — Sami's rule: **no CPU-heavy work on login nodes** (no pytest, probes, renders). All
+compute goes through SLURM to compute nodes. The stable-envs Claude skills for it live on Oscar at
+`~/.claude/skills/oscar*` (read them for partition/queue details before inventing commands).
+
+**Access.** `ssh -o BatchMode=yes sboughan@sshcampus.ccv.brown.edu` (key auth; needs Sami's VPN up —
+"Permission denied (keyboard-interactive)" means the VPN/auth is down, not a fault of yours: retry
+every few minutes, ask Sami if it lasts). Every command below runs over that ssh. Two harmless
+lines print on every login (`.bashrc: module: command not found` + the consent banner); strip them
+with `sed '1,/^#####*$/d' | grep -v 'bashrc: line 51'`.
+
+**Storage.** `SCR=/oscar/scratch/sboughan` (large, purgeable scratch: all trees, venvs, caches,
+logs live here). `$SCR/logs/` holds job stdout (`%x_%j.out`). `$SCR/venvs/` holds the uv venvs
+(see §3). `$SCR/cache/{uv,pip,xdg,torch,warp,hf}` — export the matching env vars in every job so
+nothing writes to the small `$HOME`. Never `rsync --delete` onto Oscar; pull results into a staging
+dir on the Mac, then copy into the worktree with `/oscar/scratch/sboughan` rewritten to `$SCR`.
+
+**Getting code there.** The oracle scripts need a real git repo (they `git worktree add --detach
+21cb306`), so ship branches as bundles:
+```
+git bundle create x.bundle 21cb306 <branch>
+rsync -az x.bundle sboughan@sshcampus.ccv.brown.edu:$SCR/x.bundle
+ssh ... 'cd $SCR/se9 && git clone -q -b <branch> $SCR/x.bundle <name>'      # first time
+ssh ... 'cd $SCR/se9/<name> && git fetch <bundle> <branch> && git checkout -q FETCH_HEAD -B <branch>'  # update
+```
+Move untracked leftovers aside before a checkout (`git status --porcelain | grep '^??'`).
+
+**Venvs on Oscar** (uv-made; no pip inside — install with `~/.local/bin/uv pip install --python
+<venv>/bin/python <pkgs>`; `import stable_envs` needs `tensordict` + `loguru` since Wave 0):
+`se-step6` (torch 2.14 cu126, general; no warp), `se-vis311` (mujoco 3.11.0 + mujoco_warp 3.11.0:
+the DMC/MJWarp certification arm), `se7-ogb` (ogbench + mjwarp), `se7-rocket` (PyFlyt 0.29.0 +
+nvdiffrast), `se-s3b-fetch311` (gymnasium-robotics + mujoco 3.11: the only interpreter where Fetch
+builds), `se7-craftax-gpu` (craftax + jax cuda), `se8-mjwarp313` (3.13 evaluation, not adopted).
+
+**Submitting work.** Batch jobs only (an interactive `interact3090`/`salloc` alias exists but the
+held allocation pattern from Step 7/8 is gone). Header that works:
+```
+#SBATCH --partition=gpu --qos=norm-gpu --gres=gpu:1 --cpus-per-task=4 --mem=48G --time=01:00:00
+#SBATCH --output=/oscar/scratch/sboughan/logs/%x_%j.out
+```
+`gpu` is the partition, `norm-gpu` the QOS (the earlier `3090-gcondo` partition needs
+`--constraint=geforce3090` and its group quota is usually held by Sami's simclr/lejepa arrays —
+never touch those jobs; never `scancel` anything you did not submit). Cards you get on `gpu`: A40,
+RTX A6000, L40S — fine for identity/isolation diffs (both arms run in the same job on the same
+card); the frozen Step-4/7 digests were made on RTX 3090s, so a *cross-card* digest comparison is
+not a valid oracle, a same-job baseline-vs-branch one is. `sbatch script.sbatch` → job id; watch
+with `sacct -j <id> -n -X -o State,Elapsed,NodeList` (poll no more than every 2–3 min) or
+`squeue -u sboughan`; read `$SCR/logs/<jobname>_<id>.out`. Typical Step-9 evidence job: 2–30 min.
+
+**Job-script habits that saved us.** `set -uo pipefail` (not `-e`: later sections must still run
+and report); print a provenance block first (host, job id, `git rev-parse HEAD` of the tree, GPU
+name/driver, python/torch/mujoco versions); write full pytest output to a file and echo only the
+summary (MuJoCo's EGL teardown prints dozens of `Exception ignored in __del__` lines AFTER the
+verdict — they are noise, not failures — and `| tail` would hide the summary); end with an
+`ALLDONE` marker line; report exit code 5 (no tests collected) as a warning, never as a pass.
+`MUJOCO_GL=egl` on compute nodes (`glfw` on the Mac). Compute nodes may lack internet: install
+packages from the login node with uv beforehand.
+
+**Reading results.** Every committed artifact must be scrubbed (`sed 's#/oscar/scratch/sboughan#$SCR#g'`);
+`tests/unit/test_repo_contracts.py` fails on absolute cluster paths. Sizes of things: the Step-9
+oracle over 38 cells ≈ 10 min; a family GPU test selection ≈ 10–15 min; the `tests/gpu` full run
+≈ 30 min plus 400+ "errors" that are just missing optional packages in whichever venv you chose.
+
 ## 4. Rulings in force (all recorded in dashboard `decisions`)
 
 1. Wave-0 contract (WAVE0_CONTRACT.md): `num_envs=`; TensorDict State with `pack`/`unpack` to the
