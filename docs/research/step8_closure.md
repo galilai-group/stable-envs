@@ -102,8 +102,9 @@ dashboard `upstream_findings` / `buckets.UPSTREAM_FINDING`.
 
 nvdiff x86 CPU sparse-stage one-ULP batch dependence (host-dependent, no CPU consumer) · Fetch
 `rendering.transparent_arm` (no alpha path in mujoco_warp) · Fetch `background.color` skybox half
-(swm flat-fills a 16-colour gradient skybox: supporting it moves the family's frozen default frame —
-Sami's call, T3 findings §1) · DMC trackcom `floor.color` (no plate) · mujoco ≥ 3.12 re-anchors
+(swm flat-fills a 16-colour gradient skybox: supporting it would move the family's frozen default
+frame; **ruled 2026-09-17: partial support kept permanently for this milestone, no re-freeze**,
+reconsider later if warranted; T3 findings §1) · DMC trackcom `floor.color` (no plate) · mujoco ≥ 3.12 re-anchors
 finite-plane textures (certification interpreter is `mujoco==3.11.0`; not pinned globally) ·
 Antmaze history-dependent bake (oracle hole, not a 42-id row) · Craftax semantic follow-up not
 meaningfully testable downstream · Quadruped CPU tier `UNMEASURED [LOAD_QUARANTINED]` · Fetch has
