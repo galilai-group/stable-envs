@@ -1,0 +1,210 @@
+"""Workstream A's cells on the Wave-0 foundation: the same pixels, a pure ``transition``.
+
+The oracle that the BEHAVIOR did not change is
+``scratch/step9/envs-classic-nav/oracle.py`` (frozen Step-4 corpus, both trees, byte-identical
+frames). This file pins the claims that are NEW in Step 9 and therefore have no baseline to compare
+against, for all ten cells at once:
+
+  * the Step-9 constructor (``num_envs=``) and the lifecycle (``close``, the context manager);
+  * ``state_layout``: what the public State's keys are, and — for classic control — that the
+    velocities the packed row never carried are declared with offset ``None`` and answered by
+    ``_hidden_state``;
+  * ``pack``/``unpack`` round-trip the frozen packed layout, and ``pack(env.state)`` is exactly the
+    packed row every renderer and digest is computed from;
+  * ``transition`` equals the stateful ``step`` **to the bit**, and ``unroll`` equals repeated
+    ``transition`` — for classic control over FOUR steps, because that is where a State that had
+    rounded the dynamics to float32 would start to drift while a one-step check still passed;
+  * ``render(State) == render(rows) == render()``;
+  * the deprecated module paths still resolve to the merged module.
+
+Sizes are small (4-8 envs) and every cell renders at its reference's native canvas, so the whole file
+is a few seconds on CPU.
+"""
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+pytest.importorskip("torch")
+pytest.importorskip("tensordict")
+
+import torch
+from tensordict import TensorDict
+
+import stable_envs as snv
+
+pytestmark = pytest.mark.unit
+
+CLASSIC = ("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous")
+NAV = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze")
+ALL = CLASSIC + NAV
+
+#: What each cell's public State is keyed by. Written out rather than derived from the class, so a
+#: silent change of the public vocabulary is a failure and not a tautology.
+KEYS = {
+    "CartPole": [("x",), ("x_dot",), ("theta",), ("theta_dot",)],
+    "Pendulum": [("theta",), ("theta_dot",), ("torque",)],
+    "Acrobot": [("theta1",), ("theta2",), ("dtheta1",), ("dtheta2",)],
+    "MountainCar": [("position",), ("velocity",)],
+    "MountainCarContinuous": [("position",), ("velocity",)],
+    "TwoRoom": [("agent", "position")],
+    "TwoRoomTarget": [("agent", "position"), ("target", "position")],
+    "Piecewise": [("agent", "position")],
+    "PiecewiseZones": [("agent", "position")],
+    "SimplePointMaze": [("agent", "position")],
+}
+
+
+def _env(name, n=4):
+    return getattr(snv, name)(num_envs=n, device="cpu")
+
+
+def _actions(env, n, steps=None, seed=0):
+    g = torch.Generator().manual_seed(seed)
+    shape = (n, env.action_dim) if steps is None else (steps, n, env.action_dim)
+    lo, hi = float(env.action_low), float(env.action_high)
+    return lo + (hi - lo) * torch.rand(*shape, generator=g)
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_every_cell_takes_the_step9_constructor(name):
+    with _env(name, 3) as env:
+        assert env.num_envs == 3 == env.B and len(env) == 3
+        assert env.device.type == "cpu"
+    assert env.closed
+    env.close()                                   # idempotent
+    with pytest.raises(RuntimeError, match="closed"):
+        env.render()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_the_state_keys_are_the_declared_ones_and_cover_the_packed_row(name):
+    env = _env(name)
+    layout = env._layout()
+    assert [k for k, _, _ in layout] == KEYS[name]
+    assert sum(w for _, w, o in layout if o is not None) == env.state_dim
+    rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
+    td = env.unpack(rows)
+    assert isinstance(td, TensorDict) and list(td.batch_size) == [4]
+    assert torch.equal(env.pack(td), rows), "pack/unpack must round-trip the frozen packed layout"
+    env.close()
+
+
+@pytest.mark.parametrize("name", CLASSIC)
+def test_classic_velocities_are_hidden_state_the_packed_row_does_not_carry(name):
+    """The velocities are public state (so ``transition`` is pure) and no column of the row moved."""
+    env = _env(name)
+    hidden = [k for k, _, o in env._layout() if o is None]
+    drawn = set(env.render_from_sim)
+    assert hidden == [(nm,) for i, nm in enumerate(env.sim_state_names) if i not in drawn]
+    assert hidden, "every classic-control cell has at least one velocity the frame never shows"
+    # unpack fills them with zeros -- the condition set_state puts the env in, and the reference's
+    # own condition after reset -- and the cell answers with the live value from its own buffer.
+    rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
+    assert all(float(env.unpack(rows)[k].abs().max()) == 0.0 for k in hidden)
+    assert sorted(env._hidden_state()) == sorted(hidden)
+    env.close()
+
+
+@pytest.mark.parametrize("name", CLASSIC)
+def test_the_classic_public_state_is_float64_and_packs_back_to_the_float32_row(name):
+    """The dtype the family SIMULATES in, which is what makes the functional path the same simulator.
+
+    A float32 State would still pass a one-step ``transition == step`` check (a corpus state is a
+    float32 value with the velocities at rest) and drift from the second step on.
+    """
+    env = _env(name)
+    env.set_state(env.sample_states(4, np.random.default_rng(0)))
+    st = env.state
+    assert all(st[k].dtype == torch.float64 for k in KEYS[name])
+    assert torch.equal(env.pack(st), env.get_state())
+    env.close()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_transition_is_bit_identical_to_the_stateful_step(name):
+    env = _env(name)
+    s0 = env.sample_states(4, np.random.default_rng(0))
+    env.set_state(s0)
+    a = _actions(env, 4)
+
+    functional = env.transition(env.state, a)
+    stateful = env.step(a)["state"]
+    assert torch.equal(env.pack(functional), env.pack(stateful))
+    for k in KEYS[name]:
+        assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs"
+    env.close()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_transition_does_not_touch_the_env_and_unroll_is_repeated_transition(name):
+    env = _env(name)
+    s0 = env.sample_states(4, np.random.default_rng(1))
+    env.set_state(s0)
+    held = env.get_state().clone()
+    acts = _actions(env, 4, steps=4, seed=1)
+
+    traj = env.unroll(env.state, acts)
+    assert torch.equal(env.get_state(), held), "transition/unroll must not write the env's buffers"
+    assert list(traj.batch_size) == [4, 4]
+
+    cur = env.state
+    for t in range(4):
+        cur = env.transition(cur, acts[t])
+        for k in KEYS[name]:
+            assert torch.equal(traj[t][k], cur[k])
+
+    # ... and four steps of the stateful path land on exactly the same numbers.
+    for t in range(4):
+        env.step(acts[t])
+    for k in KEYS[name]:
+        assert torch.equal(traj[3][k], env.state[k]), f"{'.'.join(k)} drifted over four steps"
+    env.close()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(name):
+    env = _env(name, 2)
+    s0 = env.sample_states(2, np.random.default_rng(2))
+    env.set_state(s0)
+    a = env.render()
+    b = env.render(torch.as_tensor(s0, device=env.device))
+    c = env.render(env.state)
+    assert a.dtype == torch.uint8 and a.shape[0] == 2
+    assert torch.equal(a, b) and torch.equal(a, c)
+    assert tuple(env.observation_spec.shape) == tuple(a.shape[1:])
+    env.close()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_step_reports_a_state_and_does_not_fabricate_a_reward(name):
+    env = _env(name, 2)
+    env.set_state(env.sample_states(2, np.random.default_rng(3)))
+    out = env.step(_actions(env, 2))
+    assert list(out.keys()) == ["state"], (
+        "these cells have no reward and no termination semantics in stable-envs; an absent key is "
+        "the honest answer and a zero would read as a measured one")
+    assert env.has_dynamics
+
+
+def test_the_old_navigation_module_paths_are_the_merged_module():
+    from stable_envs.envs import navigation, simple_point_maze, swm_nav
+    assert swm_nav is navigation and simple_point_maze is navigation
+    # the names the render tests and the parity scripts reach for, through the old paths
+    for attr in ("IMG", "_ALPHA_FLOOR", "_alpha_blend", "_gaussian_dot"):
+        assert hasattr(swm_nav, attr)
+    for attr in ("DEFAULT_WALL_SHAPE", "DEFAULT_WALL_POS", "SimplePointMaze"):
+        assert hasattr(simple_point_maze, attr)
+    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == \
+        {"stable_envs.envs.navigation"}
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_the_registered_default_frame_size_and_the_specs_agree(name):
+    env = _env(name, 2)
+    assert env.size == env.default_size
+    assert tuple(env.action_spec.shape) == (env.action_dim,)
+    spec = env.state_spec
+    assert sorted(tuple(k) if isinstance(k, tuple) else (k,)
+                  for k in spec.keys(nested=True)) == sorted(KEYS[name])
+    env.close()

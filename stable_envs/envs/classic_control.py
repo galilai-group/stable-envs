@@ -433,6 +433,16 @@ class _Classic(Env):
             img = cv.rgb(o)
         return img.view(*lead, H, W, 3) if lead else img
 
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of the frame, which in this family is NOT ``(size, size)``.
+
+        ``Env.observation_spec`` assumes a square frame unless the env says otherwise, and three of
+        these five are 400x600: the reference hardcodes its canvas, ``size`` is its WIDTH, and a spec
+        that reported ``(600, 600, 3)`` would be wrong about the buffer every consumer allocates.
+        """
+        return self.native
+
     def _use_fused(self) -> bool:
         """The fused kernel is CUDA-only and opt-outable, and it never silently replaces the CPU
         path: Triton has no CPU backend here, so a ``device="cpu"`` render is the per-primitive one
