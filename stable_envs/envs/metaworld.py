@@ -967,6 +967,15 @@ class MetaWorldBase(Env):
         b = _build_bundle(self.TASK)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
+        # Step-9 state (contract §3): two keys, and they are what the two halves ARE rather than an
+        # invention. ``qpos`` is the simulator's configuration; ``episode`` is what the task wrote
+        # into the MODEL when the episode began (``_live_slots``), which is a different KIND of
+        # quantity and is the whole subject of the widening this family performs. Assigned per
+        # instance because both widths come from the compiled model. Every column is covered by one
+        # of the two, so no offset is ``None``, ``_hidden_state`` is never consulted and
+        # ``pack``/``unpack`` round-trip the frozen corpus bit for bit.
+        k = self.state_dim - b.nq
+        self.state_layout = ((("qpos",), b.nq, 0),) + ((((("episode",), k, b.nq)),) if k else ())
         super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)

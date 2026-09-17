@@ -408,6 +408,37 @@ class _GymMujocoFamily(Env):
     """
 
     ENV_ID: str = ""
+
+    #: ---- Step-9 state (contract §3) --------------------------------------------------------
+    #:
+    #: The packed float32 row is unchanged: it IS ``qpos``, exactly the Step-8 layout every frozen
+    #: digest and certification check speaks. What Step 9 adds is a name for it. One key and not
+    #: several, because this family's state has no second half to separate from the first -- unlike
+    #: DM Control there is nothing drawn per episode, so ``qpos`` covers every column and the layout
+    #: is one entry with offset 0. It is assigned PER INSTANCE in ``_declare_state`` for the reason
+    #: DM Control assigns its own there: ``nq`` is a property of the compiled model and is not known
+    #: until one exists.
+    #:
+    #: NOTHING IS HIDDEN. ``qpos`` carries every column, so no field has offset ``None``,
+    #: ``_hidden_state`` is never consulted, and ``pack``/``unpack`` round-trip the corpus bit for
+    #: bit. There is no ``_live_state`` either: the packed row IS this family's live state --
+    #: ``set_state`` writes it and ``render`` reads it -- so there is no more precise buffer to
+    #: answer from. Velocities are not state here at all: gymnasium integrates them, this package
+    #: renders from a pose, and a ``qvel`` column would be a dimension the frame never reads.
+    #:
+    #: NO DYNAMICS, and that is a declaration rather than an omission: both tiers ship a renderer
+    #: over gymnasium's own MuJoCo physics and there is no batched simulator in this package for any
+    #: of these domains, so ``step``/``transition`` raise ``Env``'s precise refusal and
+    #: ``has_dynamics`` is False. ``reset`` and ``render`` work as usual.
+    #:
+    #: NO ``_close``. Everything this family holds -- the gymnasium bundle and its EGL context
+    #: (``_ENV_CACHE``), the baked plates (``_SCENE_CACHE``), the nvdiffrast contexts
+    #: (``_NVD_CACHE``), the headless sampler (``_SAMPLER_CACHE``) -- is keyed on (env id, size) and
+    #: SHARED by every instance, and releasing an EGL context corrupts every other live one in the
+    #: process (the rule ``testing/conformance.py`` carries). An instance owns no resource of its
+    #: own, so ``close()`` buys exactly the contract's other half here: a closed env REFUSES to
+    #: render rather than handing back frames drawn through something a caller believes is gone.
+
     #: Half of gymnasium's own 480x480 default, chosen so ``check_resolution_consistency``'s 2x
     #: render lands exactly on the official default rather than on an invented resolution. Parity is
     #: measured here; throughput at 84, 240 and 480 (``docs/research/mujoco_locomotion.md``).
@@ -417,6 +448,17 @@ class _GymMujocoFamily(Env):
     #: on resets alone would describe one pose. This is the env's OWN visited distribution under a
     #: random policy, which is the population every conformance number should be measured over.
     ROLLOUT_STEPS = 60
+
+    def _declare_state(self, m) -> None:
+        """``state_dim``/``state_names``/``state_layout`` off the compiled model, for BOTH tiers.
+
+        Written once here rather than twice in the two constructors, which is where it was and where
+        the two could have drifted: the parity tier and the visual tier draw the same domain and must
+        agree about what its state IS, whatever draws it.
+        """
+        self.state_dim = int(m.nq)
+        self.state_names = self._qpos_names(m)
+        self.state_layout = ((("qpos",), self.state_dim, 0),)
 
     @classmethod
     def _fresh(cls, size: int):
@@ -611,9 +653,7 @@ class GymMujoco(_GymMujocoFamily):
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
                  device: str = "cuda", backend: str = "auto", seed: int = 0,
                  batch: int | None = None):
-        m = self._model()
-        self.state_dim = int(m.nq)
-        self.state_names = self._qpos_names(m)
+        self._declare_state(self._model())
         super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
@@ -1610,9 +1650,7 @@ class GymMujocoVisual(_GymMujocoFamily):
         if NVDIFF_IMPORT_ERROR is not None:                                   # pragma: no cover
             raise ImportError(f"{type(self).__name__} renders through nvdiffrast, which this "
                               f"interpreter cannot import: {NVDIFF_IMPORT_ERROR}")
-        m = self._model()
-        self.state_dim = int(m.nq)
-        self.state_names = self._qpos_names(m)
+        self._declare_state(self._model())
         super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)

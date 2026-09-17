@@ -445,6 +445,12 @@ class RoboCasaBase(Env):
         self._live_idx = live
         self.state_dim = len(live)
         self.state_names = tuple(s.qpos_names[i] for i in live)
+        # Step-9 state (contract §3): one key over the packed row, assigned per instance because the
+        # LIVE dims are a property of the compiled kitchen and the camera (``_live_dims``) and are
+        # not known until one is chosen. ``qpos`` is the honest name -- these columns are a SUBSET of
+        # the model's qpos, the rest of which is pinned (``_full_qpos``) and is not state. Every
+        # column is covered, so nothing is hidden and the corpus layout is untouched.
+        self.state_layout = ((("qpos",), self.state_dim, 0),)
         super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
                          device=device, backend=backend, seed=seed)
         self._s = s

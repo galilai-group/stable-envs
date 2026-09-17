@@ -608,6 +608,11 @@ class HumanoidBenchBase(Env):
         b = _build_bundle(self.ROBOT, self.TASK)
         self.state_dim = b.nq
         self.state_names = b.state_names
+        # Step-9 state (contract §3): the packed row IS ``qpos`` and nothing else, so the public
+        # State is one key over it, assigned per instance because ``nq`` is a property of the
+        # compiled model. Nothing is hidden (every column is covered, no offset is ``None``) and
+        # there is no ``_live_state``: the packed row is this family's live state.
+        self.state_layout = ((("qpos",), self.state_dim, 0),)
         super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b

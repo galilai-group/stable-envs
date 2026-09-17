@@ -259,6 +259,14 @@ class PointMaze(Env):
     MAZE: str = ""
     state_dim = 4
     state_names = STATE_NAMES
+    #: Step-9 state (contract §3): the four columns are two positions in a plane, and saying so is
+    #: the whole of this family's state structure. The packed row is unchanged -- ball then goal, the
+    #: order ``STATE_NAMES`` has always named -- and every column is covered, so nothing is hidden,
+    #: ``_hidden_state`` is never consulted and the frozen layout does not move. The ball's velocity
+    #: is deliberately NOT here: the official env integrates it, this package renders from a pose,
+    #: and a column the frame never reads would be a dimension the conformance suite reports as dead.
+    state_layout = ((("ball", "position"), 2, 0),
+                    (("goal", "position"), 2, 2))
     default_size = 224
     #: The reference is multisampled at 4 samples; a hard silhouette is the wrong answer at the edge
     #: of a 12-pixel sphere. As ``ogbench``, and for the same reason.
