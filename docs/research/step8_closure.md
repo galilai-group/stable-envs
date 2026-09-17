@@ -7,23 +7,21 @@ Every number below is read from a generated file named beside it; none is hand-e
 
 **STEP 8 FUNCTIONALLY COMPLETE WITH DOCUMENTED LIMITATIONS.**
 
-All eight workstreams (A–H) are merged with an independent `APPROVE` each
-(`examples/results/step8/reviews/review_*.md`). No `RELEASE_BLOCKING` item is open
-(`dashboard.yaml: buckets.RELEASE_BLOCKING = []`). One approved-in-principle capability patch (T3,
-DMControlSuite `floor.color` via per-value plate texel substitution) is **complete and CPU-verified
-but unmerged**: its GPU evidence (Gate A on cuda with the new style_dim, frozen-corpus replay, paired
-throughput) could not be produced because Oscar refused SSH for the whole evening and the held
-allocation ended. On the merged tip those seven leaves remain truthfully `unsupported`, which is a
-documented limitation, not a false claim. T3 merges through the normal gate once
-`scratch/step8/capability/gpu_evidence.sbatch` (on branch `step8/capability-plate-texels`) has run.
+All eight workstreams (A–H) and the approved shared capability T3 (DMControlSuite `floor.color`
+via per-value plate texel substitution, `stable_envs/envs/_plate_texels.py`) are merged, each with
+an independent `APPROVE` (`examples/results/step8/reviews/review_*.md`; T3's final verdict at
+`9e66b0b` after its GPU evidence: Gate A 8/8 PASS on cuda with the new style_dim, frozen-corpus
+replay identical, default frames byte-identical on all 17 DMC cells, bake-vs-recompile IDENTICAL,
+paired throughput 0.92–0.96× at B=4096 with spreads 1.01–1.02). No `RELEASE_BLOCKING` item is open
+(`dashboard.yaml: buckets.RELEASE_BLOCKING = []`).
 
 ## 1–2. SHAs
 
 | item | value |
 |---|---|
 | baseline (accepted Step-7 milestone) | `43ac95238f7472137619f3e69e7636e11dd088b1` (= `milestone/step7-full-renderer-coverage` = tag `step7-closure`) |
-| `step8/integration` HEAD | the commit carrying this file; its parent is `4f466f2` (D merged). `git log --oneline 43ac952..step8/integration` |
-| unmerged, reviewed-pending-GPU | `step8/capability-plate-texels` @ `64a38e7` (T3) |
+| `step8/integration` HEAD | the commit carrying this file; its parent chain ends in `69e7f8e` (T3 merged). `git log --oneline 43ac952..step8/integration` |
+| T3 merged | `step8/capability-plate-texels` @ `9e66b0b` → merge `69e7f8e` |
 | pushed | nothing (plan §1; awaiting Sami) |
 
 ## 3. 42-id support counts (`examples/results/step8/support_matrix.json: counts`)
@@ -49,7 +47,9 @@ complete 26 · partial 12 (all Fetch: `background.color` floor half mapped, skyb
 61.7–73.0 % measured) · n/a 2 (symbolic) · unknown 2 (interpreter cannot import the family locally;
 maps exist). Per-leaf taxonomy across the families with maps: every offered leaf is exactly one of
 mapped / partial / unsupported / dead_upstream / not_applicable, asserted by tests
-(A 46/94/21/0 of 161; B 33/12/12/15/51 of 123; C 49 leaves; pre-Step-8 four maps unchanged).
+(A after T3: 53 mapped / 87 unsupported / 21 dead / 0 n/a of 161 — T3 moved DMControlSuite
+`floor.color` from unsupported to mapped on 7 swm ids; B 33/12/12/15/51 of 123; C 49 leaves
+including OGB cube.color/floor.color mapped; pre-Step-8 four maps unchanged).
 Registered default reproducible through every map (`default_style() == style_from_variation(env, {})`,
 round trip exact; CPU probe 26/41 classes, GPU evidence for Fetch/OGB/Rocket). Variation isolation
 evidence: A (targeted tests), B (`variations-fetch/gpu_evidence.json` PASS ×4), C
@@ -78,7 +78,7 @@ Step-5 claims carry forward (representative pixels unchanged; Step 7 changed no 
 step4/5/6 results). Craftax follow-up = FINDING: no downstream Craftax evaluator exists anywhere;
 both frozen corpora re-render byte-identically through ours and official craftax 1.6.1 (256 frames),
 so a paired Gate H would compare identical streams. No Step-8 renderer change moved a default frame
-(C: OGB defaults byte-identical; T3 pending).
+(C: OGB defaults byte-identical; T3: 17/17 DMC default frames byte-identical).
 
 ## 9. Production-pipeline summary (Step-6 Lance/JPEG comparison, reproduced on the G page)
 
@@ -135,11 +135,11 @@ removal, packaging/CI).
   sequences, isolation, Gate A ×2 on d3ff997), Rocket (E: cuda re-sweep PASS on 1ca3866 with the
   declaration-aware assertion), DMC trackcom (F: both arms judged from unchanged shards). The
   merged tip adds no renderer change beyond those branches, whose `stable_envs` trees are the
-  ones tested. Pending: T3's DMC parity cells (job written, not run).
+  ones tested. T3's DMC parity cells: jobs 6459781 / 6460099 / 6460346 / 6460478 (L40S, gpu1504, A40, RTX A6000).
 - No shared renderer/resource ownership changed on the tip (C's change is inside `ogb_manip.py`'s
   private rig), so no fresh-process/resource-lifetime rerun was triggered.
 
 ## After acceptance
 
 Prepare `milestone/step8-functional-completion` + tag at the accepted HEAD; push only when Sami
-says so; Step 9 starts from that immutable milestone. Merge T3 first if its GPU evidence is in.
+says so; Step 9 starts from that immutable milestone.

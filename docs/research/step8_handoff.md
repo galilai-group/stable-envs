@@ -10,20 +10,11 @@ artifacts are the source of truth; where this prose conflicts with them, they wi
 `buckets.RELEASE_BLOCKING` is empty; Gate A 40 PASS / 2 by-design; unit + swm suites green apart
 from the pre-existing citation-scanner baseline.
 
-### One follow-on, not a blocker: T3
+### T3 merged
 
-`step8/capability-plate-texels` @ `64a38e7` (DMControlSuite `floor.color` via the shared plate
-texel helper) is reviewed **APPROVE-PENDING-GPU** (`reviews/review_t3.md`): every CPU-verifiable
-merge-gate item passes; items 4/5/7 need the GPU job. Tree synced to `$SCR/se8/capability`;
-jobs **6459757** (3090-gcondo, waiting on the group GPU quota) and **6459781** (gpu partition,
-norm-gpu QOS) are PENDING — whichever runs, cancel the other (both are ours; never touch the
-simclr/lejepa jobs). When it completes: pull `$SCR/se8/capability/examples/results/step8/capability/gpu/`
-into a staging dir (no --delete), scrub `/oscar/...` to `$SCR`, commit on the T3 branch, verify
-Gate A PASS on the 8 DMC parity cells with the new style_dim, frozen-corpus replay identical,
-paired throughput B=4096 unchanged, then merge with `--no-ff`, regenerate
-`scratch/step8/report.py`, `scratch/step8/perf/build_performance.py` + `write_doc.py`,
-`scratch/step8/swm/build_gate_f.py`, and update the closure packet's §5 (variation map 26 → 33
-complete). If the job fails, T3 stays unmerged and the closure recommendation is unchanged.
+`step8/capability-plate-texels` @ `9e66b0b` merged at `69e7f8e` after its GPU evidence
+(`examples/results/step8/capability/gpu/`, jobs 6459781 / 6460099 / 6460346 / 6460478) and a final
+`APPROVE` (`reviews/review_t3.md`). Nothing from Step 8 is left unmerged.
 
 ### Open decisions for Sami
 
