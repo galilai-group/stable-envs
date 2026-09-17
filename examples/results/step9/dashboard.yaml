@@ -82,15 +82,16 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-envs-classic-nav
   owner: opus (medium)
   model: opus
-  status: DELIVERED aa1608e; incorporating rulings (merge integration b1585fc, drop state override) + GPU arm job 6464309; then review
+  status: DELIVERED 60b515d (final); under review
   files_owned: stable_envs/envs/classic_control.py, stable_envs/envs/navigation.py (from swm_nav.py + simple_point_maze.py), their tests
   ids_affected: swm/{CartPole,Acrobot,MountainCar,MountainCarContinuous,Pendulum}Control-v1, swm/SimplePointMaze-v0, swm/Piecewise-v0, swm/TwoRoom*-v0 (8 families of the 42)
   baseline_sha: d07ffa8
-  head_sha: aa1608e
-  tests: se6 tests/unit 1334 passed (1246 + 88 new); se8-vm subset 269/58 unchanged
+  head_sha: 60b515d
+  tests: se6 tests/unit 1367 passed; se8-vm subset 270/57 (= integration)
   oracle_diff: '10/10 cells frames byte-identical vs 21cb306 (640 frozen states), describe/style/taxonomy/registry identical; transition == step bitwise, unroll == 4x transition; live SWM bridges 0.99974-0.99994
     exact (declared residual); SimplePointMaze matplotlib bridge run by the coordinator: interior exact 1.0, step exact; EXPECTED difference: navigation cells registry module = stable_envs.envs.navigation
-    (mandated merge)'
+    (mandated merge) | after both merges and the _live_state refactor: all ten digests unchanged; cuda arm identical with compare_device cuda (fused kernels diffed); CUDA graph transition == step on the
+    five classic cells'
   performance_diff: render -0.19 % / +0.24 % (noise); step +12/+28 us absolute from the StepResult TensorDict (accepted, mechanism recorded)
   api_diff: num_envs=; State/transition/unroll; swm_nav.py + simple_point_maze.py are sys.modules aliases of navigation.py until Wave 3
 - workstream: H_render_3d
@@ -159,6 +160,9 @@ incident_log:
 - date: '2026-09-17'
   item: DEFECT in coordinator commit b1585fc (unpack returned a view of the packed buffer for undeclared-dtype fields; a StepResult changed under the caller at the next step). Found by Workstream A (R8).
     Fixed at 3490156 (.to(dt, copy=True)) with a regression test over PushT; Env._live_state() hook added (A R7) so float64 simulators need no state-property override
+- date: '2026-09-17'
+  item: 'A final at 60b515d (oracle identical cpu+cuda incl. fused gfxdraw_classic/navdot paths; jobs 6464309/6464378); A R9: two stale hasattr(env,"step") guards in testing/render_worker.py and conformance.py
+    sent renderer-only cells into env.sample on GPU reproducibility tests -> fixed centrally at e1da2f6 with a repo-wide test; review_a launched (sonnet)'
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
