@@ -5,8 +5,12 @@
 **host** Apple M5 Mac (`cis1b1zs2j3`), `/Users/samib/se6-venv` (torch 2.14 CPU, mujoco 3.12.0,
 dm_control 1.0.45) and `/Users/samib/se8-vm-venv` for the DM Control subset.
 
-**Result: PATCH.** Four commits. Zero pixels moved, zero unexplained oracle differences, worst
-paired CPU timing ratio 1.017 against a 1.10 bar and a 4.8 % same-arm noise floor.
+**Result: PATCH, with one open item.** Six commits. On CPU: zero pixels moved on 21 cells, worst
+paired timing ratio 1.017 against a 1.10 bar. On GPU (job 6464319, RTX A6000, `gpu1503`): 58 of 59
+cell/device pairs byte-identical, worst paired timing ratio 1.006, and **one difference —
+`HumanoidmazeGiantNavigate` on cuda only** — which is not yet classified and is the subject of a
+prepared follow-up job (§9a). Until that job runs, plan §17's "unexplained oracle differences: zero"
+is **not** satisfied and this branch should not merge.
 
 ---
 
@@ -77,6 +81,7 @@ arm's job and are already enumerated in `oracle.py`'s `CELLS`, skipped with a re
 | `tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` | se6-venv | **1263 passed**, 195 skipped, 112 deselected (56 s) |
 | same, at the branch parent `d07ffa8` | se6-venv | 1246 passed — the brief's baseline, reproduced |
 | `test_variation_maps_dmc_control.py`, `test_raycast3d_*.py`, `test_cpu3d.py`, `test_render_primitives.py` | se8-vm-venv | **341 passed** |
+| `tests/gpu -k "raycast or cpu3d or DMC or Pointmaze or Fetch"` | se-step6 on `gpu1503` | **no result** — the summary was truncated out of the log by my own sbatch; re-run queued (§9) |
 
 The 1246 → 1263 delta is fully accounted for: **+16** new tests in
 `tests/unit/test_render_primitives.py` and **+1** because
@@ -165,20 +170,86 @@ GPU timings are §9's job: the same script with `--set gpu` runs both legs on th
 the one SLURM job, over the fused Triton cast and the tiled composite, which is where the CPU arm
 has nothing to say.
 
-## 9. GPU arm (prepared, not submitted)
+## 9. GPU arm — job 6464319 (COMPLETED, 29:39, `gpu1503`, RTX A6000, driver 575.57.08)
 
-`scratch/step9/render-3d/gpu_oracle.sbatch` — `--partition=gpu --qos=norm-gpu --gres=gpu:1
---cpus-per-task=4 --mem=48G --time=01:00:00`, venv `$SCR/venvs/se-step6/bin/python`, tree
-`$SCR/se9/render-3d`, logs `$SCR/logs/%x_%j.out`, nothing written to HOME. Three sections in one job
-on one card: the same oracle with `--devices cpu,cuda` (which is what finally covers the 17 OGBench
-maze IDs, the 4 maze2d IDs and the 2 OGB manipulation IDs, none of which can be built on the Mac),
-the paired alternating GPU timings, and
-`pytest tests/gpu -k "raycast or cpu3d or DMC or Pointmaze or Fetch"`.
+`scratch/step9/render-3d/gpu_oracle.sbatch`, tree `$SCR/se9/render-3d` at `899e4a6`,
+`baseline_present yes`, venv `$SCR/venvs/se-step6/bin/python` (torch 2.14.0+cu126, triton 3.8.0).
+Artifacts (absolute `/oscar/...` paths scrubbed to `$SCR`): `oracle_gpu_6464319.json`,
+`timings_gpu_6464319.json`, `provenance_gpu_6464319.txt`.
 
-**Requirement on the coordinator's clone:** both scripts obtain the baseline with
-`git worktree add --detach 21cb306…`, so `$SCR/se9/render-3d` must be a real git clone whose history
-contains that commit, with a writable `$TMPDIR`. The sbatch prints `baseline_present yes|NO` in its
-provenance block before anything else runs.
+**Oracle, `--devices cpu,cuda`, 64 frozen states per cell: 59 of 76 cell/device pairs ran, 58
+byte-identical, 1 different.**
+
+* cpu: 32 of 38 ran, **all identical** — including the 17 OGBench maze IDs, which the Mac cannot
+  build, and the five `cpu3d` trackcom cells.
+* cuda: 27 of 38 ran, 26 identical. The two switch cells were also rendered on cuda with
+  `PRIMITIVE_BOUNDS`, `COVER_COMPACTION` and `COMPOSITE_COMPACT_MERGE` off: every digest equals the
+  shipped one, so the fused Triton cast, the torch fallback and the uncompacted composite all agree
+  with the baseline.
+* **The difference: `HumanoidmazeGiantNavigate` on cuda.** Its own cpu arm is identical, and every
+  other maze (3 other humanoidmazes, 4 antmazes, 4 pointmazes) is identical on both devices. The
+  frame mean moves from 172.771413583 to 172.771393653 — 1.99e-5 over 9,633,792 subpixels, a signed
+  total of about 192 levels, i.e. of the order of three levels per frame over 64 frames. See §9a.
+
+**Environment gaps in `se-step6` — these IDs are still uncovered on cuda and nothing in this job
+says anything about them:**
+
+| missing package | consequence |
+|---|---|
+| `warp` | the 5 DM Control trackcom cells skipped on **cuda** (that is the MJWarp path, Workstream I's, not this one). Their **cpu** arm — `cpu3d`, which is mine — ran and is identical. |
+| `stable_worldmodel` | `swm/OGBCube-v0` and `swm/OGBScene-v0` skipped on cuda; they have no CPU backend by declaration, so **these two IDs are not covered at all**. |
+| `gymnasium_robotics` | the four `PointMaze_*-v3` maze2d IDs skipped on both devices — **not covered at all**. |
+
+**GPU paired timings** (same card, same job, 5 alternating rounds x 5 reps):
+
+| cell | batch | baseline ms | head ms | ratio | same-arm spread |
+|---|---|---|---|---|---|
+| DMCReacherHard | 256 | 14.61 | 14.69 | 1.006 | 2.0 % |
+| DMCBallInCupCatch | 256 | 40.10 | 39.97 | 0.997 | 0.7 % |
+| DMCManipulatorBringBall | 64 | 11.08 | 11.07 | 0.999 | 1.8 % |
+| PointmazeLargeNavigate | 256 | 5.58 | 5.59 | 1.001 | 3.7 % |
+| AntmazeLargeExplore | 256 | 8.25 | 8.26 | 1.001 | 1.3 % |
+| HumanoidmazeGiantNavigate | 64 | 6.02 | 5.99 | 0.994 | 7.6 % |
+
+Worst **1.006** against the 1.10 bar; OGBCube and DMCWalkerWalk skipped for the missing packages
+above. **No GPU regression.**
+
+**GPU tests: no result, and that is my harness's fault.** The sbatch piped pytest into `tail -40`,
+and MuJoCo's EGL teardown — dozens of `Exception ignored in __del__` lines printed *after* pytest's
+verdict — pushed the summary out of the window. `TEST_RC=1` is therefore uninterpretable: it is
+equally consistent with real failures and with a nonzero exit from teardown. The sbatch now writes
+the whole output to `$OUT/gpu_tests_<tag>.log` and echoes only the summary, and the selection is
+re-run in the follow-up job.
+
+## 9a. The open item, and the job that will classify it (prepared, NOT submitted)
+
+`scratch/step9/render-3d/hmg_determinism.py` + `hmg_determinism.sbatch`
+(`--partition=gpu --qos=norm-gpu --gres=gpu:1 --cpus-per-task=4 --mem=48G --time=00:45:00`).
+
+**The prior question is not "what did the patch change" but "is this cell reproducible at all".**
+The patch contains **no arithmetic change whatsoever** — `git diff 21cb306..HEAD` over both modules
+is imports, type annotations, comments, the `_Memo` refactor and the moved-verbatim definitions;
+every numeric expression is character-identical and the moved functions are the same objects under
+the same names. And this is precisely the configuration `raycast3d._BOUND_SLACK_NOISE` already
+documents as the one with the lever arm: the camera is ~100 m from a 5 cm capsule, `c = olx^2 +
+oly^2 - r^2` loses the radius entirely in float32 there, `disc > 0` then decides hit-or-miss on
+rounding noise, and job 6348207 moved one pixel of 3,211,264 by 22/255 on **this cell and no
+other**.
+
+So the follow-up runs, on one card in one job: three *fresh processes per tree* (baseline vs
+baseline, head vs head, baseline vs head), a second render inside one process, the same render with
+`FORCE_BACKEND="torch"` and with `PRIMITIVE_BOUNDS=False` (which says whether any disagreement lives
+in the Triton kernel or in the shared torch expression), and a pixel-level diff (how many pixels, by
+how many levels, in how many frames). It prints one `VERDICT` line:
+
+* *baseline is not process-reproducible* → the oracle difference is not evidence about the patch;
+  record it as a pre-existing property of the largest maze on this card.
+* *both trees self-consistent and different* → the patch changed this cell, and the merge is blocked
+  until it is explained.
+
+The script was smoke-tested locally end to end on `DMCReacherHard`/cpu (both trees self-consistent,
+identical, 0 differing pixels of 1,354,752), so only the cuda answer is missing. The same job
+re-runs the GPU test selection with its summary preserved.
 
 ## 10. Resource lifetime
 
@@ -192,7 +263,11 @@ resource rule is already satisfied and Workstream I's work does not extend to th
 
 ## 11. Unexplained oracle differences
 
-**Zero.**
+**CPU: zero** (21 cells, 64 frozen states each, fast and reference expressions).
+**GPU: one** — `HumanoidmazeGiantNavigate` on cuda, of 59 cell/device pairs — **currently
+unclassified**. It is not yet attributable to the patch (the patch has no arithmetic in it) and it is
+not yet excused either; §9a is the job that decides which. Plan §17 requires zero, so **this is an
+open gate item, not a footnote**.
 
 ## 12. Deliberate non-consolidations (per plan §16, recorded so they are not re-proposed)
 
@@ -212,9 +287,11 @@ resource rule is already satisfied and Workstream I's work does not extend to th
 
 ## 13. Semantic follow-up recommendation
 
-**None.** No pixel moved on any cell that can be measured locally, on either the fast or the
-reference expression, so there is nothing for a DINO tripwire or a semantic smoke to be sensitive
-to. Revisit only if the GPU arm reports a difference.
+**Deferred to the §9a verdict.** No pixel moved on 21 CPU cells or on 26 of 27 cuda cells, so there
+is nothing for a DINO tripwire to be sensitive to there. If §9a returns "the patch changed this
+cell", `HumanoidmazeGiantNavigate` needs a paired semantic check before merge; if it returns
+"baseline is not process-reproducible", none is needed and the instability should be recorded
+against the cell rather than against this branch.
 
 ## 14. Commits
 
@@ -223,4 +300,6 @@ to. Revisit only if the GPU arm reports a difference.
 c0c98e0  raycast3d: one bounded memo instead of five near-copies
 a0887c7  step9 render-3d: oracle, paired timing harness, GPU sbatch
 6bf885a  render 3-D: types on the cast API, a named window sentinel, tests for the shared vocabulary
+899e4a6  step9 render-3d: findings, CPU oracle record and paired timings
+<this>   step9 render-3d: GPU arm results, and the probe for the one difference
 ```

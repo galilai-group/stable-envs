@@ -57,9 +57,15 @@ PYTHONPATH="$WS" $PY scratch/step9/render-3d/bench.py \
     --python "$PY" --device cuda --set gpu --rounds 5 --reps 5 --tag "$TAG" 2>&1 | tail -40
 
 echo "=== 3/3 GPU tests that can see this workstream's code ==="
+# The WHOLE output goes to a file, and only the summary is echoed. Job 6464319 piped this straight
+# into `tail -40` and MuJoCo's EGL teardown -- dozens of "Exception ignored in __del__" lines that
+# arrive AFTER pytest has printed its verdict -- pushed the summary out of the window, so the run
+# produced no test counts at all. Interpreter teardown noise must never be able to eat the result.
 PYTHONPATH="$WS" $PY -m pytest -q -p no:cacheprovider tests/gpu \
-    -k "raycast or cpu3d or DMC or Pointmaze or Fetch" 2>&1 | tail -40
-TEST_RC=${PIPESTATUS[0]}
+    -k "raycast or cpu3d or DMC or Pointmaze or Fetch" > "$OUT/gpu_tests_${TAG}.log" 2>&1
+TEST_RC=$?
+grep -E "passed|failed|error" "$OUT/gpu_tests_${TAG}.log" | grep -v "Exception ignored" | tail -5
+echo "(full pytest output: $OUT/gpu_tests_${TAG}.log)"
 
 echo "ORACLE_RC=$ORACLE_RC TEST_RC=$TEST_RC"
 echo "artifacts in $OUT (oracle_${TAG}.json, timings_${TAG}.json, provenance_${TAG}.txt)"
