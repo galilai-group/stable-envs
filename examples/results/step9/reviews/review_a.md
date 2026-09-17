@@ -135,3 +135,26 @@ No other defects found. R7 (`_live_state` hook) and R8 (`unpack` aliasing) are f
 correctly identified, escalated, and (per the merge history) resolved upstream rather than patched
 in this workstream's own files. R9 is correctly identified as a foundation-owned defect and correctly
 left unfixed here.
+
+## Final verdict at c688882
+
+APPROVE
+
+`git diff 60b515d c688882 -- stable_envs tests scratch` is empty — zero code delta; only
+`examples/results/step9/envs-classic-nav/{findings.md,oracle.json}` changed.
+
+- `oracle.json`: only `head_sha` changed, `0af53ab...` → `60b515d...` (the last code commit; the
+  commits after it, including c688882 itself, are documentation-only, as findings §6 now states
+  explicitly). Compared this file key-for-key against my own independent oracle re-run from the
+  previous pass (`--device cpu`, fresh temp dir, target `60b515d`): `identical`, `unexplained_differences`,
+  `expected_differences`, `old_module_paths_resolve` all equal, and all ten cells' `frames_sha256`/
+  `rows_sha256` under `migrated.cells` match exactly, with no mismatches.
+- `findings.md`: counts refreshed to **1367** (local unit suite, matches my earlier live run),
+  **118** (`test_envs_classic_nav.py`, matches my earlier live run of that file alone), and
+  **270 passed / 57 skipped** (SWM-venv subset, matches my earlier live run) throughout — the top
+  summary, §1, §4's accounting and transcript, §6, §9 item 4, and §11's CUDA-host bookkeeping are now
+  internally consistent and consistent with what I independently measured. No new claims were
+  introduced that I haven't already verified.
+
+D1 is resolved. Nothing else changed, so the substantive review from `60b515d` stands unmodified.
+**Final verdict: APPROVE.**
