@@ -91,6 +91,33 @@ SETS: dict[str, list[tuple[str, int]]] = {
     ],
 }
 
+#: Sample each cell's states ONCE, in the BASELINE tree, and write them to a temp ``.npz`` the legs
+#: load. Two reasons, and the second is the important one:
+#:
+#:   * ``sample_states`` is SETUP, not the timed region, and for MiniGrid and Sokoban it is the
+#:     dominant cost of a leg -- Sokoban rejection-samples whole solvable rooms. Re-drawing it in
+#:     every one of the 100+ legs multiplied the run by ~20x and measured nothing;
+#:   * both legs then time the SAME states. Otherwise a ratio mixes the patch with whichever poses
+#:     each leg happened to draw, and for a renderer whose cost depends on what is on screen (how
+#:     many vehicles, how much lava) that is a real confound and not a rounding one.
+#:
+#: This is ``oracle.py``'s argument for its own corpus, applied to timings, and the same shape as
+#: ``scratch/step9/render-2d/bench.py``'s frozen ``CORPUS`` -- except that no cell here HAS a frozen
+#: corpus (see oracle.py's docstring), so it is sampled at a fixed seed instead.
+SAMPLE = r'''
+import json, sys
+import numpy as np
+import stable_envs as se
+
+cells, out_dir = json.loads(sys.argv[1]), sys.argv[2]
+for name, batch in cells:
+    env = se.REGISTRY[name](batch=int(batch), device="cpu")
+    s = np.asarray(env.sample_states(int(batch), np.random.default_rng(0)), np.float32)
+    np.savez(f"{out_dir}/{name}.npz", states=s)
+    getattr(env, "close", lambda: None)()      # the Step-8 baseline tree has no Env.close
+print("@@JSON@@" + json.dumps({"ok": True}))
+'''
+
 #: Run inside ONE tree and time ONE cell. Written as a string and executed with ``PYTHONPATH``
 #: pointed at the tree under test, because the two trees define the same module names and cannot both
 #: be imported into one interpreter. ``batch=`` and not ``num_envs=``: it is the spelling BOTH trees
@@ -102,9 +129,10 @@ import stable_envs as se
 
 name, batch, device = sys.argv[1], int(sys.argv[2]), sys.argv[3]
 warmup, reps, what = int(sys.argv[4]), int(sys.argv[5]), sys.argv[6]
+states_dir = sys.argv[7]
 
 env = se.REGISTRY[name](batch=batch, device=device)
-s = np.asarray(env.sample_states(batch, np.random.default_rng(0)), np.float32)
+s = np.load(f"{states_dir}/{name}.npz")["states"].astype(np.float32)
 env.set_state(s)
 sync = (lambda: torch.cuda.synchronize()) if device == "cuda" else (lambda: None)
 
@@ -140,16 +168,30 @@ def _worktree(sha: str) -> tuple[Path, bool]:
     return path, True
 
 
+def _leg_sample(tree: Path, python: str, cells: list[tuple[str, int]], states_dir: str):
+    """Draw every cell's states ONCE, in the baseline tree, so both legs time the same input."""
+    env = dict(os.environ)
+    extra = os.environ.get("SE9_EXTRA_PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{tree}:{extra}" if extra else str(tree)
+    env.setdefault("MUJOCO_GL", "glfw")
+    r = subprocess.run([python, "-c", SAMPLE, json.dumps(cells), states_dir],
+                       capture_output=True, text=True, cwd=str(tree), env=env)
+    hit = [ln for ln in r.stdout.splitlines() if ln.startswith("@@JSON@@")]
+    if not hit:
+        return None, f"{r.stdout[-800:]}\n{r.stderr[-800:]}"
+    return json.loads(hit[-1][len("@@JSON@@"):]), None
+
+
 def _leg(tree: Path, python: str, name: str, batch: int, device: str, warmup: int, reps: int,
-         what: str):
+         what: str, states_dir: str):
     env = dict(os.environ)
     extra = os.environ.get("SE9_EXTRA_PYTHONPATH", "")
     env["PYTHONPATH"] = f"{tree}:{extra}" if extra else str(tree)
     env.setdefault("MUJOCO_GL", "glfw")
     env.setdefault("OMP_NUM_THREADS", "1")
     env.setdefault("MKL_NUM_THREADS", "1")
-    r = subprocess.run([python, "-c", LEG, name, str(batch), device, str(warmup), str(reps), what],
-                       capture_output=True, text=True, cwd=str(tree), env=env)
+    r = subprocess.run([python, "-c", LEG, name, str(batch), device, str(warmup), str(reps), what,
+                        states_dir], capture_output=True, text=True, cwd=str(tree), env=env)
     hit = [ln for ln in r.stdout.splitlines() if ln.startswith("@@JSON@@")]
     if not hit:
         return None, f"{r.stdout[-600:]}\n{r.stderr[-600:]}"
@@ -178,7 +220,12 @@ def main() -> int:
     what = "render" if a.which in ("render", "maze2d") else "step"
 
     baseline, created = _worktree(a.baseline_sha)
+    states_tmp = tempfile.TemporaryDirectory()
+    states_dir = states_tmp.name
     try:
+        got, e = _leg_sample(baseline, a.python, SETS[a.which], states_dir)
+        if got is None:
+            raise SystemExit(f"could not sample states in the baseline tree:\n{e}")
         rows = []
         for name, batch in SETS[a.which]:
             legs: dict[str, list[float]] = {"baseline": [], "head": []}
@@ -188,7 +235,7 @@ def main() -> int:
                 trees = {"baseline": baseline, "head": ROOT}
                 for label, arm in (("baseline", arm_names[0]), ("head", arm_names[1])):
                     got, e = _leg(trees[arm], a.python, name, batch, a.device, a.warmup, a.reps,
-                                  what)
+                                  what, states_dir)
                     if got is None:
                         err = e
                         break
@@ -219,6 +266,9 @@ def main() -> int:
                   "set": a.which, "path": what,
                   "host": os.uname().nodename, "python": a.python, "rounds": a.rounds,
                   "reps_per_leg": a.reps, "rows": rows, "worst_ratio": worst,
+                  "states": "sampled ONCE in the BASELINE tree with sample_states(batch, "
+                            "default_rng(0)); both legs time the same states, and sampling is not "
+                            "inside the timed region",
                   "regression_bar": 1.10, "blocks_merge": bool(worst > 1.10),
                   "extra_pythonpath": (os.environ.get("SE9_EXTRA_PYTHONPATH", "").split(":")
                                        if os.environ.get("SE9_EXTRA_PYTHONPATH") else []),
@@ -232,6 +282,7 @@ def main() -> int:
               f"{'REGRESSION' if worst > 1.10 else 'within bar'}")
         return 0
     finally:
+        states_tmp.cleanup()
         if created:
             subprocess.run(["git", "worktree", "remove", "--force", str(baseline)], cwd=str(ROOT),
                            capture_output=True)
