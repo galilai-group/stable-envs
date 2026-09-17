@@ -132,7 +132,7 @@
     ],
     "venv": "$SCR/venvs/se8-mjwarp313"
   },
-  "generated_at_head_sha": "d8678a4cac2cf795146ac8b9a04f2acc5f080bd6",
+  "generated_at_head_sha": "c2770c5f2027375d8c573959539c4297b1d35ed6",
   "recommendation": "DO NOT BUMP",
   "recommendation_why": "Condition 1 holds and conditions 2 and 3 do not. mujoco_warp 3.13.0 does fix the UV-less-mesh crash -- the guard is in the shipped source and names the exact field -- but the same release also changes ray tie-breaking, vertex normals, the no-light fallback and sample resolution, and every frozen digest measured here moves: OGBCube, OGBScene and DMCCheetahRun. DMCCheetahRun's downsample number crosses its frozen floor, so the bump would create a Gate-A FAIL. And the bump buys nothing that is currently costing anything: OGBScene already renders, because the cell bakes the unsamplable material away, at a DECLARED residual of 0.139 % of pixels with interior_exact 1.0. Dropping that bake under 3.13 would itself change pixels and need a re-declaration. Separately, mujoco >= 3.12 cannot build the Fetch reference env at all, so 3.13 is not a candidate for the interpreter that certifies Fetch either.",
   "what_this_is": "the mujoco / mujoco-warp 3.13.0 bump evaluation against plan section 14's three conditions, assembled from committed measurement arms. No pin is changed by this workstream; this is a recommendation.",

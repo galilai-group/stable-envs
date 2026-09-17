@@ -2378,7 +2378,7 @@
       "why": "the one arm whose recorded reference_packages satisfy the class's declared reference_versions"
     }
   },
-  "generated_at_head_sha": "42107937c78f82e63e0ef0e626340ac26555f137",
+  "generated_at_head_sha": "c2770c5f2027375d8c573959539c4297b1d35ed6",
   "judge": "scratch/step4/certify.py:verdict",
   "judge_sha256": "22e71dc26c8508c2f0631a50a6a486579bbc34b6fb920a75bb577b850fc51b69",
   "selection_rule": "stable_envs.testing.provenance.reference_version_mismatch(class reference_versions, shard provenance.reference_packages) == []",

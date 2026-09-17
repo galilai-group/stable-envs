@@ -8,7 +8,7 @@
     makes it wrong at the next regeneration, which is the point: a hand-maintained matrix
     drifts from the evidence silently.
 
-Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `42107937c78f82e63e0ef0e626340ac26555f137`
+Baseline `43ac95238f7472137619f3e69e7636e11dd088b1` · generated at `c2770c5f2027375d8c573959539c4297b1d35ed6`
 
 ## The five words
 
