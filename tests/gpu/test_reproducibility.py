@@ -1267,8 +1267,13 @@ def test_cuda_graph_step_matches_eager(env):
     worst = 0.0
     for _ in range(8):
         a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
-        sg = graphed.step(a).detach().cpu().numpy().copy()
-        se_ = eager.step(a).detach().cpu().numpy().copy()
+        # ``step`` is stateful and, for a Step-9-migrated cell, returns a StepResult TensorDict
+        # rather than the packed buffer. ``get_state()`` is the packed row on every path and is what
+        # this comparison has always been about.
+        graphed.step(a)
+        eager.step(a)
+        sg = graphed.get_state().detach().cpu().numpy().copy()
+        se_ = eager.get_state().detach().cpu().numpy().copy()
         worst = max(worst, float(np.abs(sg - se_).max()))
     if getattr(graphed, "_step_graph", None) is None:
         pytest.skip(f"{cls.__name__}: graph capture did not happen "
@@ -1287,8 +1292,10 @@ def test_cuda_graph_step_matches_eager(env):
         f"buffer the setter no longer writes")
     eager.set_state(st2)
     a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
-    assert np.abs(graphed.step(a).detach().cpu().numpy()
-                  - eager.step(a).detach().cpu().numpy()).max() == 0.0, (
+    graphed.step(a)
+    eager.step(a)
+    assert np.abs(graphed.get_state().detach().cpu().numpy()
+                  - eager.get_state().detach().cpu().numpy()).max() == 0.0, (
         f"{cls.__name__}: after set_state, the graphed step diverges from the eager one — the replay "
         f"is running on stale state")
 
