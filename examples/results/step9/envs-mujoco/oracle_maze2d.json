@@ -443,6 +443,7 @@
   "variation_names"
  ],
  "expected_differences": {},
+ "extra_pythonpath": [],
  "functional_checks": [
   {
    "cell": "PointMazeOpen",
@@ -506,7 +507,7 @@
   }
  ],
  "functional_ok": true,
- "head_sha": "c2542599b9adaf7bcd8ac8441140fa7afbd10e0d",
+ "head_sha": "a4667569382891c55945a19d0eda984f6d62ec47",
  "identical": true,
  "migrated": {
   "cells": {

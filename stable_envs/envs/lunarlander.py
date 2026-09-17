@@ -224,6 +224,20 @@ class LunarLander(Env):
     #: number and its decomposition.
     parity_interior_min = 1.0
 
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of a frame: always ``native``, i.e. 400x600.
+
+        ``Env.observation_spec`` assumes a SQUARE frame unless the env says otherwise, and this one is
+        not: ``size`` is the reference viewport's HEIGHT, so an unqualified spec described a 400x400
+        buffer and the frame is 400x600. There is no size at which it is square -- ``render`` raises
+        for any ``size != 400`` because every primitive is hardcoded in pixels -- so this is a
+        constant, not an aspect ratio. Same declaration, for the same reason, as
+        ``classic_control.ClassicControlEnv.frame_shape`` (three of those five are also 400x600) and
+        ``highway``/``minihack``.
+        """
+        return self.native
+
     def _close(self) -> None:
         """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
 
