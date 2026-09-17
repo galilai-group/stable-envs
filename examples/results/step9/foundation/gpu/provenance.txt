@@ -1,0 +1,6 @@
+host gpu1503.oscar.ccv.brown.edu
+job 6463991
+sha aeaaf6cfac5296c33c4e4d8f1caf0fdcc14afb65
+NVIDIA RTX A6000, 575.57.08
+torch 2.14.0+cu126 tensordict 0.14.2
+python $SCR/venvs/se-step6/bin/python

@@ -460,7 +460,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
                     out.add(t.attr)
         return out
 
-    owned = self_attrs(ast.parse((root / "stable_envs" / "core" / "env.py").read_text()))
+    owned = self_attrs(ast.parse((root / "stable_envs" / "env.py").read_text()))
     assert {"_state", "device", "_live_rows"} <= owned, (
         f"read the base class wrong — it must assign self._state, self.device and self._live_rows, "
         f"and it appears to assign {sorted(owned)}. The collision check below is worthless if this "
@@ -475,7 +475,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
         assigns both to the same object.
         """
         classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-        derived, changed = {"StableEnv"}, True
+        derived, changed = {"Env", "StableEnv"}, True
         while changed:
             changed = False
             for c in classes:

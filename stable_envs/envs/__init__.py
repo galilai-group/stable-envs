@@ -9,29 +9,13 @@ Failures are recorded, never silent. Most env modules need an optional dependenc
 machine without one should lose exactly that env, not the whole package. ``import_errors()`` reports
 what failed and why, and the conformance suite prints it, so "my env vanished" is answerable in one
 line instead of being mistaken for a registration bug.
+
+The walk itself now lives in ``stable_envs/registry.py`` (Step 9), because discovery is a registry
+operation and the registry is what the rest of the package asks. This module keeps the two names it
+has always exported so that ``stable_envs.envs.import_errors()`` keeps answering.
 """
 from __future__ import annotations
 
-import importlib
-import pkgutil
+from ..registry import discover, import_errors  # noqa: F401
 
-#: module name -> the exception that stopped it importing
-_IMPORT_ERRORS: dict[str, str] = {}
-
-
-def _discover() -> None:
-    for mod in pkgutil.iter_modules(__path__):
-        if mod.name.startswith("_"):
-            continue
-        try:
-            importlib.import_module(f"{__name__}.{mod.name}")
-        except Exception as e:                     # optional dependency, or a broken env module
-            _IMPORT_ERRORS[mod.name] = f"{type(e).__name__}: {e}"
-
-
-def import_errors() -> dict[str, str]:
-    """``module -> error`` for env modules that could not be imported."""
-    return dict(_IMPORT_ERRORS)
-
-
-_discover()
+discover()

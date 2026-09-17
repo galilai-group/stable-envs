@@ -41,6 +41,8 @@ from typing import Any
 import numpy as np
 import torch
 
+from .dynamics import has_dynamics
+
 
 class BasePolicy:
     """``get_action(obs) -> (B, action_dim)``. Mirrors ``stable_worldmodel.policy.BasePolicy``."""
@@ -115,7 +117,7 @@ def sample(env, steps: int = 100, batch: int | None = None, policy: BasePolicy |
     ``style`` is carried in the return value because it is part of the state: without it the stored
     trajectory does not determine its own frames.
     """
-    if not hasattr(env, "step"):
+    if not has_dynamics(env):
         raise NotImplementedError(
             f"{type(env).__name__} ships a renderer but no batched GPU simulator, so it cannot generate "
             f"trajectories. That is a deliberate split: rendering and simulation are separable, and an "

@@ -9,7 +9,9 @@ description = "Famous research environments as GPU-batched, state-driven rendere
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-dependencies = ["numpy>=1.24", "torch>=2.2", "gymnasium>=1.0"]
+# tensordict: the public state IS a TensorDict (Step 9, contract §3) — pure torch, no torchrl.
+# loguru: the package's logger, as in every sibling stable-* repository.
+dependencies = ["numpy>=1.24", "torch>=2.2", "gymnasium>=1.0", "tensordict>=0.6", "loguru>=0.7"]
 
 [project.optional-dependencies]
 # ONE EXTRA PER ENV FAMILY, and each one installs what that family's REFERENCE needs.
@@ -206,6 +208,12 @@ include = ["stable_envs*"]
 #   behind it are documented there, on DEFAULT_TIMEOUT.)
 addopts = ["-p", "no:randomly"]
 markers = [
+  # The five Step-9 markers (plan §2). `unit`, `integration` and `certification` are new; `gpu` and
+  # `slow` already existed and keep their meaning. `reference`, `smoke` and `selftest` stay until
+  # Workstream K retires them.
+  "unit: fast, CPU-only, no reference package and no device",
+  "integration: several components together (env + renderer + registry + interop)",
+  "certification: the frozen Step-4/Step-8 oracle — corpora, digests, support matrix",
   "gpu: requires a CUDA device (skipped otherwise)",
   "reference: requires the official reference env to be installed",
   "slow: long-running throughput benchmark",
