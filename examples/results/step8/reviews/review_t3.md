@@ -1,6 +1,6 @@
 # Step 8 T3 review — shared per-value texel substitution on the baked plate (DMControlSuite `floor.color`)
 
-APPROVE-PENDING-GPU
+APPROVE-PENDING-GPU (superseded below — see "Final verdict at 9e66b0b": **APPROVE**)
 
 Reviewed SHA: `64a38e7` (worktree `/Users/samib/stable-envs-step8-capability`, branch
 `step8/capability-plate-texels`), delta against `2b4b5c3` (`step8/integration`). Independent
@@ -181,3 +181,53 @@ under a high-cardinality `floor.color` batch) remain **PENDING GPU** — `gpu_ev
 but has never been submitted, and no job ID exists. **This review's APPROVE-PENDING-GPU verdict does
 not by itself authorize merge**: per plan §18 only `APPROVE` may merge, and items 4/5/7 must return
 from Oscar before that bar is met.
+
+---
+
+## Final verdict at 9e66b0b
+
+APPROVE
+
+Re-review scope: three new commits (`e65602e`, `0d879a2`, `9e66b0b`) add GPU evidence only.
+`git diff --stat 64a38e7 9e66b0b -- stable_envs tests` is empty — confirmed directly; the
+implementation reviewed above is unchanged. Only merge-gate items 4/5/7 were re-checked against
+the new `examples/results/step8/capability/gpu/` artifacts and the "GPU evidence" section appended
+to `findings.md`.
+
+- **Item 4 (Gate A on cuda, new `style_dim`) — PASS.** Independently judged, not just read: ran
+  the frozen `scratch/step4/certify.py` judge (`judge.judges(judge.B.load())` /
+  `judge.verdict(row, J, doc.get("provenance"))`) over both
+  `gate_a_cuda_dmc_parity.json` (7 configs, job 6460346) and
+  `gate_a_cuda_dmc_manipulator.json` (job 6460099) in `se8-vm-venv`. Result: **8/8 `gate_a="PASS"`,
+  zero `failures`, zero `blocked`** across all 8 cells — matches the claimed "8/8 PASS, 14/14
+  mandatory, nothing blocked" exactly.
+- **Item 5 (frozen-corpus replay) — PASS.** `digest_replay_before.json` vs
+  `digest_replay_after.json`: 8 cells in each, identical key sets, **0 cells differing**.
+  `declaration_before.json` vs `declaration_after.json`: 17 DMC cells, `default_frame_digest`
+  identical in all 17; `style_dim` moves by exactly +6 on exactly the 12 parity cells
+  (Acrobot, BallInCup, Cartpole×2, FingerSpin, FingerTurnEasy, FingerTurnHard, Manipulator,
+  Pendulum, PointMassEasy, Reacher×2) and is unchanged on the 5 trackcom cells (Cheetah, Walker,
+  Hopper, Humanoid, Quadruped) — checked programmatically, no other deltas.
+- **Item 7 (paired throughput) — no regression, correctly classified `DEFERRED_OPTIMIZATION`.**
+  Recomputed from `throughput_rounds_{before,after}.jsonl` directly: three-round spreads are
+  1.01–1.02× before and after for both cells (≤ 1.25× tolerance), and before/after median ratios
+  at default-style B=4096 are **Manipulator 0.962** and **Cartpole 0.923** — matching the claimed
+  ~0.96 / ~0.92 exactly. Judged against the frozen tier rules: `DMCManipulatorBringBall`'s
+  certified R is 32.04 (`docs/research/step7_coverage.md:116`) and `DMCCartpoleBalance`'s is 7.31
+  (`docs/research/step3_benchmarks.md:187`); even applying the measured 4–8 % dip directly to R
+  (32.04→~30.8, 7.31→~6.7) both stay far above the `GPU_FAST` floor of `R ≥ 4`, so no cell's tier
+  is threatened. `NO_LARGE_BATCH_REGRESSION` (`fps(4096) ≥ 0.9×fps(256)`) is an orthogonal
+  within-run batch-scaling check, not a before/after-implementation comparison, and this patch does
+  not touch batch-scaling code — the 96-distinct-colour cache-thrash case (~1,200 fps) is a
+  separate, correctly-labeled cost of *using* the new leaf at high cardinality, not a regression at
+  the default style this check would gate on.
+- No absolute `/oscar/...` paths in any committed JSON/txt evidence file under
+  `examples/results/step8/capability/gpu/` or in `findings.md` (`grep -l "/oscar"` returns nothing
+  for those files); the four `.sbatch` scripts under `scratch/step8/capability/` legitimately
+  reference `/oscar/scratch/sboughan` as their SLURM working paths.
+
+All three previously-outstanding items are satisfied by evidence I independently re-derived
+(re-ran the frozen judge myself rather than trusting the recorded verdict; recomputed digest-set
+equality, style_dim deltas, spreads and medians from the raw JSON/JSONL rather than the prose
+summary). Combined with the already-passing CPU-verifiable items (1, 2, 3, 6, 8, 9) from the first
+pass, all ten plan §18 merge-gate items are now satisfied. **Verdict: APPROVE.**
