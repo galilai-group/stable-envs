@@ -82,11 +82,11 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-envs-classic-nav
   owner: opus (medium)
   model: opus
-  status: DELIVERED 60b515d (final); under review
+  status: MERGED into step9/integration (review_a.md APPROVE at c688882)
   files_owned: stable_envs/envs/classic_control.py, stable_envs/envs/navigation.py (from swm_nav.py + simple_point_maze.py), their tests
   ids_affected: swm/{CartPole,Acrobot,MountainCar,MountainCarContinuous,Pendulum}Control-v1, swm/SimplePointMaze-v0, swm/Piecewise-v0, swm/TwoRoom*-v0 (8 families of the 42)
   baseline_sha: d07ffa8
-  head_sha: 60b515d
+  head_sha: c688882
   tests: se6 tests/unit 1367 passed; se8-vm subset 270/57 (= integration)
   oracle_diff: '10/10 cells frames byte-identical vs 21cb306 (640 frozen states), describe/style/taxonomy/registry identical; transition == step bitwise, unroll == 4x transition; live SWM bridges 0.99974-0.99994
     exact (declared residual); SimplePointMaze matplotlib bridge run by the coordinator: interior exact 1.0, step exact; EXPECTED difference: navigation cells registry module = stable_envs.envs.navigation
@@ -94,6 +94,8 @@ workstreams:
     five classic cells'
   performance_diff: render -0.19 % / +0.24 % (noise); step +12/+28 us absolute from the StepResult TensorDict (accepted, mechanism recorded)
   api_diff: num_envs=; State/transition/unroll; swm_nav.py + simple_point_maze.py are sys.modules aliases of navigation.py until Wave 3
+  review: review_a.md APPROVE-WITH-CHANGES (D1 doc-only) -> APPROVE
+  merge_sha: see git log
 - workstream: H_render_3d
   branch: step9/render-3d
   worktree: /Users/samib/stable-envs-step9-render-3d
@@ -163,6 +165,8 @@ incident_log:
 - date: '2026-09-17'
   item: 'A final at 60b515d (oracle identical cpu+cuda incl. fused gfxdraw_classic/navdot paths; jobs 6464309/6464378); A R9: two stale hasattr(env,"step") guards in testing/render_worker.py and conformance.py
     sent renderer-only cells into env.sample on GPU reproducibility tests -> fixed centrally at e1da2f6 with a repo-wide test; review_a launched (sonnet)'
+- date: '2026-09-17'
+  item: A merged after APPROVE; H awaiting determinism probe verdict (job 6464500)
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
