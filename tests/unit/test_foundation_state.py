@@ -121,3 +121,29 @@ def test_the_specs_describe_the_state_the_actions_the_frames_and_the_style(env):
 
 def test_num_envs_is_the_batch_and_len_agrees(env):
     assert env.num_envs == 8 == len(env) == env.B
+
+
+def test_state_layout_entry_may_name_a_public_dtype():
+    """A fourth ``state_layout`` element is the field's public dtype; pack still writes float32."""
+    import torch
+    from tensordict import TensorDict
+    from stable_envs.env import Env
+
+    class F64(Env):
+        state_dim = 3
+        state_names = ("a", "b", "c")
+        state_layout = ((("x",), 2, 0, torch.float64), (("y",), 1, 2))
+
+        def make_variation_space(self):
+            from stable_envs.spaces import Dict
+            return Dict({})
+
+        def scene(self, states, variation=None, style=None):  # pragma: no cover - not rendered here
+            raise NotImplementedError
+
+    env = F64(num_envs=2, device="cpu")
+    rows = torch.tensor([[1.5, 2.5, 3.5], [4.5, 5.5, 6.5]], dtype=torch.float32)
+    td = env.unpack(rows)
+    assert td["x"].dtype == torch.float64 and td["y"].dtype == torch.float32
+    assert env.pack(td).dtype == torch.float32 and torch.equal(env.pack(td), rows)
+    assert env.state_spec is not None
