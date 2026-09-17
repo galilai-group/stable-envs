@@ -37,10 +37,25 @@ floor and 6.8e-2 on the agent — and a multiplicative model fitted on the floor
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
 import torch
+
+from .primitives import (BOX, CAPSULE, CYLINDER, ELLIPSOID, GEOM_NAMES, INF,  # noqa: F401
+                         PLANE, PRIMITIVE_KINDS, SPHERE, Primitives)
+from .primitives import bound_radius_tensor as _bound_radius
+from .primitives import dot3 as _dot
+from .primitives import mtv3 as _mtv
+from .primitives import mv3 as _mv
+
+#: What the cast functions take and give back. ``Kinds`` is host-side on purpose: the torch loop
+#: branches on each code in Python and the Triton path turns it into a device tensor once, memoised,
+#: so a tensor here would be a host-to-device copy on every pass. ``Cast`` is (t, normal, index):
+#: the ray parameter, the world-space unit normal at the hit, and the winning primitive's index.
+Kinds = Sequence[int] | np.ndarray
+Cast = tuple[torch.Tensor, torch.Tensor, torch.Tensor]
 
 try:
     import triton
@@ -49,10 +64,11 @@ try:
 except ImportError:                                    # reported by the renderer, never silent
     HAVE_TRITON = False
 
-#: mjtGeom codes, so a scene can be built straight from an MjModel without a translation table
-PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
-
-INF = 1e30
+# The mjtGeom kind codes, ``INF``, the ``Primitives`` scene description, the unrolled 3-vector
+# arithmetic and the bounding-radius law live in ``primitives`` because ``cpu3d`` needs exactly the
+# same ones and used to carry its own copies. They are re-exported here under the names they have
+# always had, so ``R3.SPHERE``, ``R3.INF``, ``R3.Primitives``, ``R3._dot``, ``R3._mv``, ``R3._mtv``
+# and ``R3._bound_radius`` are unchanged for every caller and every test.
 
 
 @dataclass(frozen=True)
@@ -83,7 +99,7 @@ class Camera:
         v = a if glcam_b is None else tuple((x + y) / 2 for x, y in zip(a, g(glcam_b)))
         return Camera(tuple(v[0]), tuple(v[1]), tuple(v[2]), v[3], v[4], v[5], v[6])
 
-    def basis(self):
+    def basis(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         f = np.asarray(self.forward, np.float64)
         f = f / np.linalg.norm(f)
         r = np.cross(f, np.asarray(self.up, np.float64))
@@ -91,7 +107,7 @@ class Camera:
         u = np.cross(r, f)
         return r, u, f
 
-    def rays(self, H: int, W: int, device, dtype=torch.float32):
+    def rays(self, H: int, W: int, device, dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
         """``(o (3,), d (H*W,3))`` unit ray directions through pixel CENTRES, row 0 at the top."""
         r, u, f = self.basis()
         half_h = 0.5 * (self.top - self.bottom)
@@ -135,9 +151,35 @@ class Camera:
 # a set of bounding radii -- rebuilt because they were written where they are used rather than where
 # they are computed. Memoising them is not an optimisation of the arithmetic; it removes a stall.
 
-_PROJ_CACHE: dict = {}
-_CORNER_CACHE: dict = {}
+class _Memo(dict):
+    """A dict for a value that is a pure function of its key, with a bound on how many it keeps.
+
+    Five things in this module are memoised -- a camera basis, the eight corner sign patterns, the
+    kind vector, a ray bundle, a tile's flat offsets -- and each one used to carry its own copy of
+    "look it up; if it is missing and the dict is full, clear it; build it; store it". The eviction
+    is a CLEAR rather than an LRU on purpose: the keys are (camera, resolution, device) tuples that
+    a process holds a couple of live combinations of, so the cap exists to stop an adversarial
+    caller growing the dict without bound, not to manage a working set, and a policy nobody can
+    trip is better as three lines in one place than as five near-copies.
+
+    A plain ``dict`` subclass, so ``len``/``clear``/``copy`` and every reader keep working.
+    """
+
+    def __init__(self, cap: int):
+        super().__init__()
+        self.cap = int(cap)
+
+    def put(self, key, value):
+        """Store and return ``value``, emptying the cache first if it is at its cap."""
+        if len(self) >= self.cap:
+            self.clear()
+        self[key] = value
+        return value
+
+
 _CACHE_MAX = 32
+_PROJ_CACHE = _Memo(_CACHE_MAX)
+_CORNER_CACHE = _Memo(_CACHE_MAX)
 
 
 def _proj_tensors(cam: "Camera", device, dtype):
@@ -145,11 +187,9 @@ def _proj_tensors(cam: "Camera", device, dtype):
     key = (cam, str(device), dtype)
     hit = _PROJ_CACHE.get(key)
     if hit is None:
-        if len(_PROJ_CACHE) >= _CACHE_MAX:
-            _PROJ_CACHE.clear()
         r, u, f = cam.basis()
-        hit = _PROJ_CACHE[key] = (torch.tensor(np.stack([r, u, f]), device=device, dtype=dtype),
-                                  torch.tensor(cam.pos, device=device, dtype=dtype))
+        hit = _PROJ_CACHE.put(key, (torch.tensor(np.stack([r, u, f]), device=device, dtype=dtype),
+                                    torch.tensor(cam.pos, device=device, dtype=dtype)))
     return hit
 
 
@@ -158,11 +198,9 @@ def _corner_masks(device):
     key = str(device)
     hit = _CORNER_CACHE.get(key)
     if hit is None:
-        if len(_CORNER_CACHE) >= _CACHE_MAX:
-            _CORNER_CACHE.clear()
-        hit = _CORNER_CACHE[key] = [
+        hit = _CORNER_CACHE.put(key, [
             torch.tensor([bool(m & 1), bool(m & 2), bool(m & 4)], device=device).view(1, 1, 3)
-            for m in range(8)]
+            for m in range(8)])
     return hit
 
 
@@ -186,101 +224,15 @@ class Lights:
         return (t(self.dirs), t(self.ambient), t(self.diffuse), t(self.specular))
 
 
-@dataclass
-class Primitives:
-    """A set of geoms sharing one draw. ``kind``/``size`` are static; poses come in per frame."""
-
-    kind: np.ndarray            # (P,) mjtGeom
-    size: np.ndarray            # (P,3)
-    mat_rgb: np.ndarray         # (P,3) in [0,1]
-    tex_rgb: np.ndarray         # (P,3) in [0,1]; ones when untextured
-    spec: np.ndarray            # (P,) material specular
-
-    def __len__(self):
-        return len(self.kind)
-
-    def to(self, device, dtype=torch.float32):
-        t = lambda x, d=dtype: torch.tensor(np.asarray(x), device=device, dtype=d)  # noqa: E731
-        return dict(kind=[int(k) for k in self.kind], size=t(self.size), mat=t(self.mat_rgb),
-                    tex=t(self.tex_rgb), spec=t(self.spec))
-
-    def radii(self, device, dtype, scale: float):
-        """``bound_radius() * scale`` as a device tensor, or None if any primitive is unbounded.
-
-        Memoised on the instance: a ``Primitives`` is built once per baked scene and its sizes do not
-        change, so rebuilding this per chunk was one blocking host-to-device copy per window per chunk.
-        """
-        cache = getattr(self, "_radii_cache", None)
-        if cache is None:
-            cache = self._radii_cache = {}
-        key = (str(device), dtype, float(scale))
-        if key not in cache:
-            r = self.bound_radius() * float(scale)
-            cache[key] = None if not np.isfinite(r).all() else \
-                torch.tensor(r, device=device, dtype=dtype)
-        return cache[key]
-
-    def bound_radius(self) -> np.ndarray:
-        """(P,) a radius that contains the primitive about its own origin. Conservative, for tiling."""
-        s = np.asarray(self.size, np.float64)
-        out = np.zeros(len(self.kind))
-        for i, k in enumerate(self.kind):
-            if k == SPHERE:
-                out[i] = s[i, 0]
-            elif k in (CAPSULE, CYLINDER):
-                out[i] = s[i, 0] + s[i, 1]
-            elif k == BOX:
-                out[i] = float(np.linalg.norm(s[i]))
-            elif k == ELLIPSOID:
-                out[i] = float(s[i].max())            # the largest semi-axis contains it
-            else:
-                out[i] = INF
-        return out
-
-
 # --------------------------------------------------------------------------- frame changes
 # Every primitive except the sphere works in its own frame, so each one starts by rotating the ray into
 # that frame and ends by rotating the normal back out. Both are 3x3 matrix-vector products, and how they
-# are SPELLED decides whether the renderer is batch-size reproducible.
-#
-# The obvious spelling, ``torch.einsum("...ij,...j->...i", M, v)``, is not. einsum contracts j by
-# lowering to ``bmm``, so a bundle of shape (B, N, 3) becomes B*N independent 3x3-by-3x1 gemms and
-# cuBLAS chooses the kernel from that batch COUNT. Different kernels accumulate the three products in
-# different orders, so ``M @ v`` for one fixed (M, v) comes back one ulp apart at B=1 and at B=8.
-#
-# One ulp does not stay one ulp. It enters the ray quadratic as ``disc = b*b - a*c``, which on a
-# silhouette ray is the difference of two nearly equal numbers and amplifies it by ~1e3-1e4 (measured on
-# AntmazeMediumNavigate: 1.2e-7 in ``dl`` -> 2.4e-4 in ``disc``), and ``disc > 0`` is then a HIT/MISS
-# decision. A ray grazing the agent's silhouette hits at one batch size and misses at another, and the
-# pixel flips between agent colour and plate: measured 8-44 pixels a frame, up to 59/255, on every one of
-# the 17 legged OGBench cells. The sphere branch has no matmul in it and is bit-identical throughout,
-# which is why pointmaze never showed the defect.
-#
-# Written out as nine multiplies and six adds, the product is a chain of ELEMENTWISE kernels. An
-# elementwise kernel computes each output from its own inputs with no accumulation across threads, so
-# its result cannot depend on how many other elements were launched beside it, and Python's
-# left-to-right ``+`` fixes the summation order at the source instead of leaving it to a kernel
-# heuristic. That is the whole fix; it is exact rather than tighter, and it does not cost a tolerance.
-
-def _mv(M, v):
-    """``M @ v`` for 3-vectors. ``M`` (...,3,3), ``v`` (...,3), broadcasting against each other."""
-    return torch.stack([M[..., 0, 0] * v[..., 0] + M[..., 0, 1] * v[..., 1] + M[..., 0, 2] * v[..., 2],
-                        M[..., 1, 0] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 1, 2] * v[..., 2],
-                        M[..., 2, 0] * v[..., 0] + M[..., 2, 1] * v[..., 1] + M[..., 2, 2] * v[..., 2]],
-                       -1)
-
-
-def _mtv(M, v):
-    """``M.T @ v``: world -> geom frame. Same argument as ``_mv``; the transpose is read off the index."""
-    return torch.stack([M[..., 0, 0] * v[..., 0] + M[..., 1, 0] * v[..., 1] + M[..., 2, 0] * v[..., 2],
-                        M[..., 0, 1] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 2, 1] * v[..., 2],
-                        M[..., 0, 2] * v[..., 0] + M[..., 1, 2] * v[..., 1] + M[..., 2, 2] * v[..., 2]],
-                       -1)
-
-
-def _dot(a, b):
-    """``(a*b).sum(-1)`` for 3-vectors, unrolled for the same reason ``_mv`` is."""
-    return a[..., 0] * b[..., 0] + a[..., 1] * b[..., 1] + a[..., 2] * b[..., 2]
+# are SPELLED decides whether the renderer is batch-size reproducible: ``_mv``/``_mtv``/``_dot`` are
+# ``primitives.mv3``/``mtv3``/``dot3``, written out as nine multiplies and six adds rather than as an
+# ``einsum``, and that module's note carries the measurement (a cuBLAS kernel chosen from the batch
+# COUNT moves ``M @ v`` by an ulp, the ray quadratic amplifies it by ~1e3-1e4, and ``disc > 0`` is a
+# HIT/MISS decision that then flips 8-44 pixels a frame). They are imported rather than defined here
+# because ``cpu3d`` needs the same property from the same expression.
 
 
 # --------------------------------------------------------------------------- intersections
@@ -442,7 +394,8 @@ def _plane(o, d, pos, R, size):
     return torch.where(ok, t, torch.full_like(t, INF)), n.expand_as(p)
 
 
-def intersect(kind: int, size, pos, R, o, d):
+def intersect(kind: int, size: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+              o: torch.Tensor, d: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """One primitive against a ray bundle. ``pos`` (...,3), ``R`` (...,3,3), ``o``/``d`` (...,3)."""
     if kind == SPHERE:
         return _sphere(o, d, pos, size[..., 0:1].squeeze(-1))
@@ -483,7 +436,8 @@ def intersect(kind: int, size, pos, R, o, d):
 # diff the fused kernel against it. The fused kernel is the one that removes the traffic, by keeping
 # the whole primitive loop in registers and writing only the answer.
 
-def _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d):
+def _cast_nearest_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor,
+                                  R: torch.Tensor, o: torch.Tensor, d: torch.Tensor) -> Cast:
     """``cast_nearest_torch`` with every primitive tested against every ray. THE DEFINITION.
 
     Kept verbatim as the thing ``PRIMITIVE_BOUNDS`` has to be bit-identical to, for the reason
@@ -670,25 +624,12 @@ def _kind_is_bounded(kind: int) -> bool:
     return kind in _BOUNDED_KINDS
 
 
-def _bound_radius(kind: int, size):
-    """``(B,1)`` radius containing the primitive about its own origin, or ``None`` if unbounded.
+# ``_bound_radius`` is ``primitives.bound_radius_tensor``, imported at the top: the radius the
+# ray bound uses is the same geometric law as the one ``Primitives.bound_radius`` bakes for the
+# screen tile and ``cpu3d`` uses for its mover window, and the three must not drift apart.
 
-    Computed from the SIZES THE CALLER PASSED rather than from ``Primitives.bound_radius``, so a
-    per-environment ``size_scale`` (which ``composite`` applies before calling) is already in it and
-    cannot drift out of sync with the geometry being tested.
-    """
-    if kind == SPHERE:
-        return size[..., 0]
-    if kind in (CAPSULE, CYLINDER):
-        return size[..., 0] + size[..., 1]
-    if kind == BOX:
-        return torch.sqrt(size[..., 0] ** 2 + size[..., 1] ** 2 + size[..., 2] ** 2)
-    if kind == ELLIPSOID:
-        return torch.maximum(torch.maximum(size[..., 0], size[..., 1]), size[..., 2])
-    return None                       # PLANE, and any future unbounded kind: always tested
-
-
-def _rays_near(pos_k, rad, o, d, dd):
+def _rays_near(pos_k: torch.Tensor, rad: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
+               dd: torch.Tensor) -> torch.Tensor:
     """``(B,N)`` bool: could this ray hit a sphere of radius ``rad`` about ``pos_k`` at ``t > 0``?
 
     ``|oc x d|^2 <= r^2 |d|^2`` is the perpendicular-distance test with ``|d|^2`` multiplied through,
@@ -706,7 +647,8 @@ def _rays_near(pos_k, rad, o, d, dd):
     return (_dot(cr, cr) <= r2 * dd) & (_dot(oc, d) + torch.sqrt(r2 * dd) >= 0)
 
 
-def cast_nearest_torch(kinds, sizes, pos, R, o, d):
+def cast_nearest_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                       o: torch.Tensor, d: torch.Tensor) -> Cast:
     """Nearest primitive hit over a ray bundle: ``(t, normal, index)``. The readable definition.
 
     ``kinds`` (K,) host-side ints; ``sizes`` (B,K,S), ``pos`` (B,K,3), ``R`` (B,K,3,3); ``o``/``d``
@@ -777,7 +719,10 @@ def cast_nearest_torch(kinds, sizes, pos, R, o, d):
     return best, nrm, idx
 
 
-def _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip=None):
+def _any_blocking_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor,
+                                  R: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
+                                  lim: torch.Tensor,
+                                  skip: torch.Tensor | None = None) -> torch.Tensor:
     """``any_blocking_torch`` with every primitive tested against every ray. THE DEFINITION."""
     B, N = o.shape[0], o.shape[1]
     blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)
@@ -790,7 +735,9 @@ def _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip=None):
     return blocked
 
 
-def any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip=None):
+def any_blocking_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                       o: torch.Tensor, d: torch.Tensor, lim: torch.Tensor,
+                       skip: torch.Tensor | None = None) -> torch.Tensor:
     """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above.
 
     Same bound and the same argument: a ray outside a primitive's bounding sphere gets ``t = INF``,
@@ -1187,7 +1134,7 @@ CAST_BLOCK = 256
 #: (device, kinds) -> the (K,) int32 the kernel branches on. Cast kinds arrive as a numpy array or a
 #: Python list and are constant for the life of a scene, so rebuilding the tensor per call would be a
 #: host-to-device copy on the critical path of every pass.
-_KIND_CACHE: dict = {}
+_KIND_CACHE = _Memo(64)
 
 
 def _kind_tensor(kinds, device) -> torch.Tensor:
@@ -1196,14 +1143,11 @@ def _kind_tensor(kinds, device) -> torch.Tensor:
     if hit is None:
         # The kernel's last branch IS the plane, so an unrecognised code would be drawn as one
         # instead of raising the way ``intersect`` does. Same error, at the same place, either path.
-        bad = sorted({k for k in key[1]
-                      if k not in (PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)})
+        bad = sorted({k for k in key[1] if k not in PRIMITIVE_KINDS})
         if bad:
             raise ValueError(f"raycast3d has no intersector for mjtGeom {bad}; scenes here are "
                              f"primitive-only")
-        if len(_KIND_CACHE) > 64:
-            _KIND_CACHE.clear()
-        hit = _KIND_CACHE[key] = torch.tensor(key[1], device=device, dtype=torch.int32)
+        hit = _KIND_CACHE.put(key, torch.tensor(key[1], device=device, dtype=torch.int32))
     return hit
 
 
@@ -1290,7 +1234,8 @@ def _launch(kinds, sizes, pos, R, o, d, lim, skip, mode):
     return (t_out, n_out, i_out) if mode == 0 else b_out.view(torch.bool)
 
 
-def cast_nearest(kinds, sizes, pos, R, o, d, backend: str = "auto"):
+def cast_nearest(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                 o: torch.Tensor, d: torch.Tensor, backend: str = "auto") -> Cast:
     """Nearest primitive hit over a ray bundle: ``(t, normal, index)``.
 
     ``auto`` fuses on CUDA and falls back to ``cast_nearest_torch`` everywhere else. The two are
@@ -1304,7 +1249,9 @@ def cast_nearest(kinds, sizes, pos, R, o, d, backend: str = "auto"):
     return _launch(kinds, sizes, pos, R, o, d, None, None, 0)
 
 
-def any_blocking(kinds, sizes, pos, R, o, d, lim, skip=None, backend: str = "auto"):
+def any_blocking(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
+                 o: torch.Tensor, d: torch.Tensor, lim: torch.Tensor,
+                 skip: torch.Tensor | None = None, backend: str = "auto") -> torch.Tensor:
     """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above."""
     backend = FORCE_BACKEND or backend
     if backend == "torch" or (backend == "auto"
@@ -1316,11 +1263,12 @@ def any_blocking(kinds, sizes, pos, R, o, d, lim, skip=None, backend: str = "aut
 #: ``(camera, Rh, Rw, device)`` -> the ray bundle through it. Small, because a bundle is
 #: ``Rh*Rw*3`` float32 -- 3.1 MB at 512x512 -- and no caller here has more than a couple of live
 #: (camera, resolution) pairs at once.
-_RAY_CACHE: dict = {}
 _RAY_CACHE_MAX = 8
+_RAY_CACHE = _Memo(_RAY_CACHE_MAX)
 
 
-def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32):
+def cached_rays(cam: Camera, H: int, W: int, device,
+                dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
     """``cam.rays(H, W, device)``, memoised on the camera itself.
 
     ``Camera`` is a frozen dataclass of tuples and floats, so it is its own cache key and two scenes
@@ -1333,15 +1281,15 @@ def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32):
     key = (cam, int(H), int(W), str(device), dtype)
     hit = _RAY_CACHE.get(key)
     if hit is None:
-        if len(_RAY_CACHE) >= _RAY_CACHE_MAX:
-            _RAY_CACHE.clear()
-        hit = _RAY_CACHE[key] = cam.rays(H, W, device, dtype)
+        hit = _RAY_CACHE.put(key, cam.rays(H, W, device, dtype))
     return hit
 
 
 # --------------------------------------------------------------------------- shading
 
-def shade(n, v, ldir, lamb, ldif, lspec, exponent, mat, tex, spec):
+def shade(n: torch.Tensor, v: torch.Tensor, ldir: torch.Tensor, lamb: torch.Tensor,
+          ldif: torch.Tensor, lspec: torch.Tensor, exponent: float, mat: torch.Tensor,
+          tex: torch.Tensor, spec: torch.Tensor) -> torch.Tensor:
     """``(...,3)`` colour in [0,1]. See the module docstring for why specular is additive and white."""
     amb = lamb.sum()
     prim = mat * amb
@@ -1747,8 +1695,8 @@ def _tile_origin(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: 
 
 
 #: ``(tile, ss, width, device)`` -> the ``(tile*ss)^2`` flat offsets of a window at the origin.
-_TILE_CACHE: dict = {}
 _TILE_CACHE_MAX = 16
+_TILE_CACHE = _Memo(_TILE_CACHE_MAX)
 
 
 def _expand_tile(org, tile: int, ss: int, Wpix: int, device) -> torch.Tensor:
@@ -1765,9 +1713,7 @@ def _expand_tile(org, tile: int, ss: int, Wpix: int, device) -> torch.Tensor:
     key = (int(tile), int(ss), int(Wpix), str(device))
     base = _TILE_CACHE.get(key)
     if base is None:
-        if len(_TILE_CACHE) >= _TILE_CACHE_MAX:
-            _TILE_CACHE.clear()
         T = tile * ss
         ar = torch.arange(T, device=device)
-        base = _TILE_CACHE[key] = (ar.view(T, 1) * Wpix + ar.view(1, T)).reshape(1, -1)
+        base = _TILE_CACHE.put(key, (ar.view(T, 1) * Wpix + ar.view(1, T)).reshape(1, -1))
     return (y0.view(B, 1) * ss * Wpix + x0.view(B, 1) * ss) + base

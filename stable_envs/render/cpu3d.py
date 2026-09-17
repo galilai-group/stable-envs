@@ -57,15 +57,17 @@ import numpy as np
 import torch
 
 from . import raycast3d as R3
+from .primitives import (BOX, CAPSULE, CYLINDER, ELLIPSOID, GEOM_NAMES, INF,  # noqa: F401
+                         PLANE, PRIMITIVE_KINDS, SPHERE, bound_radius)
+from .primitives import dot3 as _dot
 
-#: mjtGeom codes this backend draws as movers (the ones ``raycast3d`` intersects) and the plane.
-#: ELLIPSOID joined in Step 7 (``raycast3d._ellipsoid``, for DM Control's quadruped torso); nothing
-#: else here is kind-specific -- the window and the shadow footprint read ``bound_radius``.
-PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
-MOVER_KINDS = (SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)
-GEOM_NAMES = {0: "mjGEOM_PLANE", 1: "mjGEOM_HFIELD", 2: "mjGEOM_SPHERE", 3: "mjGEOM_CAPSULE",
-              4: "mjGEOM_ELLIPSOID", 5: "mjGEOM_CYLINDER", 6: "mjGEOM_BOX", 7: "mjGEOM_MESH",
-              8: "mjGEOM_SDF"}
+#: mjtGeom codes this backend draws as movers: every analytic primitive ``raycast3d`` intersects
+#: except the plane, which this module draws itself as the one static floor. Derived from
+#: ``PRIMITIVE_KINDS`` rather than listed again, so a kind added to the intersectors is a mover here
+#: without a second edit. ELLIPSOID joined in Step 7 (``raycast3d._ellipsoid``, for DM Control's
+#: quadruped torso); nothing else here is kind-specific -- the window and the shadow footprint read
+#: the shared ``bound_radius``.
+MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
 #: mjtLightType: 0 SPOT, 1 DIRECTIONAL, 2 POINT, 3 IMAGE. The megakernel treats every non-directional
 #: light as positional and applies the spot cone when the model has any spot light; this backend
 #: implements SPOT and DIRECTIONAL and refuses POINT/IMAGE at ``Scene`` construction.
@@ -292,10 +294,11 @@ class Scene:
                                      dtype=torch.float32, device=self.device).reshape(-1, 3)
         self.mover_matid = np.asarray([int(m.geom_matid[g]) for g in self.movers], np.int64)
         self.mover_rgba = np.asarray([m.geom_rgba[g] for g in self.movers], np.float64).reshape(-1, 4)
-        self.radii = torch.as_tensor(R3.Primitives(
-            kind=np.asarray(kinds), size=self.sizes.cpu().numpy(), mat_rgb=np.zeros((len(kinds), 3)),
-            tex_rgb=np.ones((len(kinds), 3)), spec=np.zeros(len(kinds))).bound_radius(),
-            dtype=torch.float32, device=self.device)
+        # the shared law, rather than a throwaway ``Primitives`` with zeroed colours built only to
+        # call the method on it: this radius bounds the mover window and the shadow footprint below,
+        # and both are claims that nothing outside it can be hit
+        self.radii = torch.as_tensor(bound_radius(kinds, self.sizes.cpu().numpy()),
+                                     dtype=torch.float32, device=self.device)
 
         # materials: specular / shininess per material id, the kernel's defaults for none
         nmat = int(m.nmat)
@@ -395,17 +398,28 @@ class Scene:
 
 # --------------------------------------------------------------------------- helpers
 
-def _dot(a, b):
-    return a[..., 0] * b[..., 0] + a[..., 1] * b[..., 1] + a[..., 2] * b[..., 2]
+# ``_dot`` is ``primitives.dot3``, imported at the top: the same unrolled expression the
+# intersectors use, for the same reproducibility reason, from one definition instead of two.
 
-
-def _normalize(v):
+def _normalize(v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """``(v / |v|, |v|)``, leaving a zero vector alone rather than dividing by zero."""
     n = torch.sqrt(_dot(v, v))
     return v / torch.where(n > 0, n, torch.ones_like(n)).unsqueeze(-1), n
 
 
-def _mover_window(scene: Scene, xpos_rel: torch.Tensor):
+#: What ``_mover_window`` returns when the movers project to nothing on screen: there is no window to
+#: cast, and no mover can contribute a pixel. A named sentinel rather than a bare ``"empty"`` at two
+#: call sites, because it is a third outcome next to "a window" and ``None`` ("the whole frame").
+WINDOW_EMPTY = "empty"
+
+
+def _mover_window(scene: Scene, xpos_rel: torch.Tensor
+                  ) -> tuple[torch.Tensor, torch.Tensor, int, int] | str | None:
     """Per-env pixel rectangle enclosing every mover's bounding sphere, and its common size.
+
+    Three outcomes: ``(x0, y0, w, h)`` for a window, ``None`` for "cast the whole frame" (a mover
+    reaches the camera plane, or the window is not smaller than the frame), and ``WINDOW_EMPTY``
+    for "nothing on screen".
 
     ``xpos_rel`` is ``(B,K,3)`` mover positions RELATIVE TO THE CAMERA. Projected through the
     same frustum the rays use, padded by one pixel; a sphere that reaches the camera plane makes
@@ -438,7 +452,7 @@ def _mover_window(scene: Scene, xpos_rel: torch.Tensor):
     w = int((x1 - x0).max())
     h = int((y1 - y0).max())
     if w <= 0 or h <= 0:
-        return "empty"
+        return WINDOW_EMPTY
     if w * h >= W * H:
         return None
     x0 = torch.minimum(x0, torch.full_like(x0, W - w))
@@ -446,7 +460,8 @@ def _mover_window(scene: Scene, xpos_rel: torch.Tensor):
     return x0, y0, w, h
 
 
-def _window_index(x0, y0, w, h, W, device):
+def _window_index(x0: torch.Tensor, y0: torch.Tensor, w: int, h: int, W: int,
+                  device) -> torch.Tensor:
     """``(B, h*w)`` flat pixel indices of each env's window."""
     ar_y = torch.arange(h, device=device).view(1, h, 1)
     ar_x = torch.arange(w, device=device).view(1, 1, w)
@@ -505,7 +520,10 @@ def render(scene: Scene, cam_pos: torch.Tensor, xpos: torch.Tensor, xmat: torch.
     return out
 
 
-def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_diffuse):
+def _render_chunk(scene: Scene, cam: torch.Tensor, xpos: torch.Tensor, xmat: torch.Tensor,
+                  light_pos: torch.Tensor, light_dir: torch.Tensor, mat_rgb: torch.Tensor,
+                  light_diffuse: torch.Tensor) -> torch.Tensor:
+    """One ``CPU_CHUNK``-sized group of frames: ``(B, N, 3)`` uint8, flat in the pixel axis."""
     dev = scene.device
     B = int(cam.shape[0])
     K = len(scene.kinds)
@@ -549,7 +567,6 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
         ok = ok & (p0.abs() <= sx)
     if sy > 0:
         ok = ok & (p1.abs() <= sy)
-    INF = R3.INF
     t_best = torch.where(ok, t_plane, torch.full_like(t_plane, INF))
     prim = torch.where(ok, torch.zeros_like(t_plane, dtype=torch.int64),
                        torch.full_like(t_plane, -1, dtype=torch.int64))   # 0 = plane, 1.. = movers
@@ -557,8 +574,8 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
     nrm = n_plane.view(1, 1, 3).expand(B, N, 3).clone()
 
     # ---- the movers, cast only inside their window, through the shared intersectors
-    win = "empty" if not K else (None if FORCE_FULL_FRAME else _mover_window(scene, xpos_rel))
-    if win != "empty":
+    win = WINDOW_EMPTY if not K else (None if FORCE_FULL_FRAME else _mover_window(scene, xpos_rel))
+    if win != WINDOW_EMPTY:
         if win is None:
             idx = None
             oo = torch.zeros((B, N, 3), device=dev)
@@ -726,7 +743,9 @@ def _render_chunk(scene, cam, xpos, xmat, light_pos, light_dir, mat_rgb, light_d
     return torch.floor(q).clamp_(0, 255).to(torch.uint8)
 
 
-def _any_blocking_flat(scene, xpos_rel, xmat, env, o, d, lim):
+def _any_blocking_flat(scene: Scene, xpos_rel: torch.Tensor, xmat: torch.Tensor,
+                       env: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
+                       lim: torch.Tensor) -> torch.Tensor:
     """Shadow rays for a compacted set of hit points: ``(Q,)`` bool via ``raycast3d.any_blocking``.
 
     The shared intersectors take ``(B, N, ...)`` bundles; the candidates are regrouped per env by
