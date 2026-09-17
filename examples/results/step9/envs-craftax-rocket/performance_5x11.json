@@ -1,0 +1,103 @@
+{
+ "baseline_tree": "/tmp/se9e-baseline",
+ "cells": {
+  "CraftaxClassic": {
+   "num_envs": 64,
+   "summary": {
+    "float_chain_ms": {
+     "baseline_median_ms": 76.8775,
+     "baseline_repeats": [
+      104.9297,
+      73.4569,
+      95.7906,
+      70.5424,
+      76.8775
+     ],
+     "delta_pct": -0.35,
+     "migrated_median_ms": 76.6095,
+     "migrated_repeats": [
+      76.6095,
+      76.08,
+      100.7087,
+      76.1443,
+      77.3865
+     ]
+    },
+    "uint8_gather_ms": {
+     "baseline_median_ms": 0.7928,
+     "baseline_repeats": [
+      1.0037,
+      0.7803,
+      1.1348,
+      0.7295,
+      0.7928
+     ],
+     "delta_pct": 22.18,
+     "migrated_median_ms": 0.9686,
+     "migrated_repeats": [
+      0.9878,
+      0.9686,
+      1.2595,
+      0.7514,
+      0.8393
+     ]
+    }
+   },
+   "tile_px": 16
+  },
+  "CraftaxFull": {
+   "num_envs": 64,
+   "summary": {
+    "float_chain_ms": {
+     "baseline_median_ms": 28.6046,
+     "baseline_repeats": [
+      24.9607,
+      31.2694,
+      28.7392,
+      28.6046,
+      27.9133
+     ],
+     "delta_pct": -4.45,
+     "migrated_median_ms": 27.3304,
+     "migrated_repeats": [
+      27.3304,
+      26.5749,
+      28.1898,
+      26.8966,
+      29.8871
+     ]
+    },
+    "uint8_gather_ms": {
+     "baseline_median_ms": 6.2401,
+     "baseline_repeats": [
+      6.2401,
+      4.7933,
+      7.5693,
+      6.2513,
+      5.94
+     ],
+     "delta_pct": -1.88,
+     "migrated_median_ms": 6.123,
+     "migrated_repeats": [
+      4.8934,
+      4.8671,
+      6.5916,
+      6.9581,
+      6.123
+     ]
+    }
+   },
+   "tile_px": 10
+  }
+ },
+ "device": "cpu",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "iters": 11,
+ "owed": {
+  "PFRocketLanding": "renders only on cuda; timing owed to the GPU oracle"
+ },
+ "paired": "alternating subprocesses, median of per-repeat medians",
+ "python": "/Users/samib/se7-craftax-venv/bin/python",
+ "repeats": 5,
+ "threads": 1
+}
