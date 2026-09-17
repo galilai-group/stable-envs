@@ -1,5 +1,5 @@
 {
-  "baseline_sha": "2b4b5c3a62b998a1c27918832bfd2311f608c533",
+  "baseline_sha": "579e3999b725a91fa8ebea9d1f798e6b453e4f32",
   "rows": [
     {
       "backends": [
@@ -557,6 +557,7 @@
               "check_state_roundtrip": "pass",
               "render_parity_with_official_renderer": "pass"
             },
+            "device": "cpu",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
             "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d",
             "source_within": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
@@ -682,6 +683,7 @@
               "check_state_roundtrip": "pass",
               "render_parity_with_official_renderer": "pass"
             },
+            "device": "cpu",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
             "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d",
             "source_within": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
@@ -2077,6 +2079,7 @@
               "check_state_roundtrip": "pass",
               "render_parity_with_official_renderer": "pass"
             },
+            "device": "cpu",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
             "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c",
             "source_within": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
@@ -2331,10 +2334,15 @@
       "state_observation_api": {
         "per_cell": {
           "OGBCube": {
-            "checks": {},
+            "checks": {
+              "check_default_style_is_official": "not_applicable",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cuda",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
-            "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62",
-            "source_within": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+            "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535",
+            "source_within": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
             "status": "MEASURED"
           }
         },
@@ -2533,10 +2541,15 @@
       "state_observation_api": {
         "per_cell": {
           "OGBScene": {
-            "checks": {},
+            "checks": {
+              "check_default_style_is_official": "not_applicable",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cuda",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
-            "source_sha256": "c173d33373aeb6cca64a8a99d6a324dc41fe81ee0ffdf0a599b2775f4b235c62",
-            "source_within": "examples/results/step7/closure2/gate_a/cpu_ogbmanip.json",
+            "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535",
+            "source_within": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
             "status": "MEASURED"
           }
         },
@@ -2630,10 +2643,15 @@
       "state_observation_api": {
         "per_cell": {
           "PFRocketLanding": {
-            "checks": {},
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cuda",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
-            "source_sha256": "016b266071d0f7c80076de6d8f9c5a35265906c7b431459f603e9942c8cb9187",
-            "source_within": "examples/results/step7/closure2/gate_a/cpu_rocket.json",
+            "source_sha256": "a8db0aed8b075c8f35c9b171ea731c011ec5f283c424a75f1c97f849e7bf2101",
+            "source_within": "examples/results/step8/certification/gate_a_resweep/cuda_rocket.json",
             "status": "MEASURED"
           }
         },
@@ -3180,6 +3198,7 @@
               "check_state_roundtrip": "pass",
               "render_parity_with_official_renderer": "not_applicable"
             },
+            "device": "cpu",
             "source": "examples/results/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
             "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c",
             "source_within": "examples/results/step7/closure2/gate_a/cpu_vis311.json",

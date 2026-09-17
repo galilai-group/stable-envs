@@ -173,7 +173,7 @@ changes needed.
 MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/swm/test_gate_f_matrix.py
 # 5 passed
 MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_repo_contracts.py
-# 9 passed, 2 failed -- BOTH failures pre-exist at the step8/integration baseline (verified via
+# 10 passed, 1 failed -- BOTH failures pre-exist at the step8/integration baseline (verified via
 # `git stash`): 11 unrelated dead scratch/sboughan/* citations from other Step-6/7/8 workstreams'
 # findings.md files, none touched by this workstream. The nav-orphan failure this workstream WOULD
 # have introduced (the two new docs pages) is fixed by the two additive mkdocs.yml nav entries.

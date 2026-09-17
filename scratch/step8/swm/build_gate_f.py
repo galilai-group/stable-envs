@@ -293,14 +293,25 @@ def state_observation_api_status(cells: list[str], sid: str) -> dict:
             continue
         if c in rejudged:
             recs = rejudged[c]
-            cpu = next((r for r in recs if r["device"] == "cpu"), recs[0])
-            checks = cpu["judgment"]["checks"]
+            # Prefer the device record that actually carries judged checks (a BLOCKED / refused
+            # cpu record has `checks: {}` for the three GPU-only cells); among those, the cpu
+            # record first for CPU-certified cells. A record with no checks is not evidence.
+            judged = [r for r in recs if r["judgment"].get("checks")]
+            if not judged:
+                per_cell[c] = {"status": "UNMEASURED",
+                               "why": "every rejudged record for this cell is BLOCKED with no "
+                                      "judged checks",
+                               "source": f"{_rel(GATE_A_REJUDGED)}"}
+                continue
+            rec = next((r for r in judged if r["device"] == "cpu"), judged[0])
+            checks = rec["judgment"]["checks"]
             per_cell[c] = {
                 "status": "MEASURED",
+                "device": rec["device"],
                 "checks": {k: checks.get(k, {}).get("status") for k in _CHECKS_OF_INTEREST
                           if k in checks},
                 "source": f"{_rel(GATE_A_REJUDGED)} (Workstream E rejudgment of the Step-7 shard)",
-                "source_within": cpu.get("source"), "source_sha256": cpu.get("source_sha256"),
+                "source_within": rec.get("source"), "source_sha256": rec.get("source_sha256"),
             }
             continue
         cfg = bulk.get(c)
