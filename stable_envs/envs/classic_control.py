@@ -279,7 +279,11 @@ class _Classic(Env):
         super().__init_subclass__(**kw)
         if cls.sim_state_names:
             col = {i: j for j, i in enumerate(cls.render_from_sim)}
-            cls.state_layout = tuple(((nm,), 1, col.get(i))
+            # The fourth element is the PUBLIC DTYPE (foundation commit b1585fc): float64, because
+            # this family's claim is near-bit-exactness against a float64 reference and a float32
+            # State would make ``transition`` a lower-precision simulator. ``pack`` still writes the
+            # unchanged float32 row, so no digest and no frozen corpus moves.
+            cls.state_layout = tuple(((nm,), 1, col.get(i), torch.float64)
                                      for i, nm in enumerate(cls.sim_state_names))
             cls._check_state_layout_is_complete()
 
@@ -361,20 +365,31 @@ class _Classic(Env):
 
     @property
     def state(self) -> TensorDict:
-        """The state the env holds, at the dtype it is SIMULATED in. ``get_state()`` is the packed row.
+        """The state the env holds, read from the buffer the DYNAMICS write. ``get_state()`` is the row.
 
-        Read straight off ``_sim``, of which the packed row is the float32 cast, so ``pack(env.state)``
-        is ``get_state()`` to the bit and nothing downstream of the renderer sees a different number.
+        PROVENANCE, not dtype. The ``state_layout`` above now declares float64 (foundation commit
+        `b1585fc`), so ``Env.state`` would return float64 tensors — but it BUILDS the drawn fields by
+        widening the packed float32 row, and the packed row is a lossy projection of ``_sim``: it is
+        ``_sim[:, render_from_sim].to(float32)``, so ``float64(float32(x))`` is not ``x``. Measured on
+        CartPole after five steps, the drawn ``x`` differs from the simulator's own value by
+        **9.6e-08**, and that is not cosmetic — ``transition(Env.state.fget(env), a)`` stops equalling
+        ``step(a)`` from that point on, which is the functional path quietly becoming a different
+        simulator. Reading ``_sim`` directly is the only way to hand back the number the next step
+        will actually start from. See findings §10, request R7: a symmetric hook for DRAWN fields
+        (what ``_hidden_state`` is for the hidden ones) would retire this override.
 
-        The base implementation (packed row -> ``unpack`` -> splice in ``_hidden_state``) is NOT
-        called, and that is a considered exception to the rule the Wave-0 review's T1 defect
-        installed. T1's hazard is a cell that overrides ``state`` and FORGETS a hidden field, which
-        reports zeros — a wrong answer rather than a crash. Here the layout and the hidden fields are
-        BOTH generated from ``sim_state_names``/``render_from_sim`` by ``__init_subclass__``, so
-        there is no field to forget: the check that they agree is done once, at class creation, by
-        ``_check_state_layout_is_complete`` below, instead of on every ``step``. ``_hidden_state`` is
-        still implemented, so anything that goes through ``Env.state`` gets the same answer — asserted
-        in ``tests/unit/test_envs_classic_nav.py``.
+        ``pack(env.state)`` is still ``get_state()`` to the bit, because ``pack`` casts back to
+        float32 exactly as ``_advance`` does, so nothing downstream of the renderer sees a different
+        number.
+
+        The base implementation is not called, which is a considered exception to the rule the
+        Wave-0 review's T1 defect installed. T1's hazard is a cell that overrides ``state`` and
+        FORGETS a hidden field, reporting zeros — a wrong answer rather than a crash. Here the layout
+        and the hidden fields are BOTH generated from ``sim_state_names``/``render_from_sim`` by
+        ``__init_subclass__``, so there is no field to forget; the check that they agree is done once,
+        at class creation, by ``_check_state_layout_is_complete``. ``_hidden_state`` is still
+        implemented, so anything that goes through ``Env.state`` gets the hidden half right, and the
+        two paths are asserted to agree to float32 in ``tests/unit/test_envs_classic_nav.py``.
         """
         return self._state_td(self._sim[:self._live_rows])
 

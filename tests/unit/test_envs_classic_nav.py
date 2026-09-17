@@ -286,3 +286,47 @@ def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_impo
             state_dim = 2
             sim_state_names = ("a", "a", "c")
             render_from_sim = (0, 2)
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_transition_still_equals_step_after_the_env_has_been_stepped(name):
+    """The bit-equality must hold MID-TRAJECTORY, not only from a corpus state.
+
+    A state loaded by ``set_state`` is float32 values with the velocities at rest, so a functional
+    path that had lost precision — by rounding the state, or by rebuilding it from the packed row
+    rather than from the buffer the dynamics write — still passes a check made straight after
+    ``set_state``. Measured on CartPole, ``Env.state``'s drawn ``x`` differs from the simulator's own
+    value by 9.6e-08 after five steps, which is exactly enough to break this. See
+    ``_Classic.state``'s docstring.
+    """
+    env = _env(name)
+    env.set_state(env.sample_states(4, np.random.default_rng(5)))
+    for _ in range(5):
+        env.step(_actions(env, 4, seed=5))
+
+    a = _actions(env, 4, seed=6)
+    functional = env.transition(env.state, a)
+    stateful = env.step(a)["state"]
+    assert torch.equal(env.pack(functional), env.pack(stateful))
+    for k in KEYS[name]:
+        assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs after five steps"
+    env.close()
+
+
+@pytest.mark.parametrize("name", ALL)
+def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
+    """``step`` hands back a state, not a window onto the env's buffer.
+
+    The failure this pins is silent: a caller that keeps ``out["state"]`` and steps again would find
+    the value it is holding had changed, with nothing raised and nothing logged. See findings §10,
+    request R8 — the base class's ``unpack`` stopped cloning in foundation commit ``b1585fc``.
+    """
+    env = _env(name)
+    env.set_state(env.sample_states(4, np.random.default_rng(7)))
+    out = env.step(_actions(env, 4, seed=7))
+    held = {k: out["state"][k].clone() for k in KEYS[name]}
+    env.step(_actions(env, 4, seed=8))
+    for k in KEYS[name]:
+        assert torch.equal(out["state"][k], held[k]), (
+            f"{'.'.join(k)} in a StepResult changed when the env was stepped again")
+    env.close()

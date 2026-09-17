@@ -637,7 +637,13 @@ class _SWMPort(Env):
         act = torch.as_tensor(action, device=self.device,
                               dtype=torch.float32).reshape(self.B, self.action_dim)
         self._state.copy_(self._advance_rows(self._state, act, self._style))
-        return self._step_result(self.state)
+        # ``.clone()``, and NOT ``self.state``, until the foundation's ``unpack`` owns its output
+        # again: commit b1585fc replaced ``r[:, off:off+w].clone()`` with ``.to(dtype)``, which is a
+        # NO-OP for a float32 field, so the State this StepResult carries would ALIAS ``_state`` and
+        # change under the caller on the next ``step``. Classic control is unaffected (it builds its
+        # State from ``_sim``); every cell whose State is float32 is not. findings §10, request R8 —
+        # delete this clone when ``unpack`` clones again.
+        return self._step_result(self.unpack(self.get_state().clone()))
 
     def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor,
                       sty) -> torch.Tensor:
