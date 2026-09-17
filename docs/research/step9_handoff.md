@@ -28,7 +28,7 @@ with `/Users/samib/se6-venv/bin/python`), and the review reports under
 | W0 foundation | step9/foundation | /Users/samib/stable-envs-step9-foundation | 67e5039 (+ later merges) | MERGED d07ffa8; review_foundation.md APPROVE |
 | A classic control + navigation | step9/envs-classic-nav | /Users/samib/stable-envs-step9-envs-classic-nav | c688882 | MERGED 4c88668; review_a.md APPROVE |
 | H raycast3d/cpu3d/primitives | step9/render-3d | /Users/samib/stable-envs-step9-render-3d | d231a8f | MERGED 38de3bd; review_h.md APPROVE |
-| B DMControl | step9/envs-dmcontrol | /Users/samib/stable-envs-step9-envs-dmcontrol | 296d3bf (10 ahead) | DELIVERED (0f610cf) → agent merging integration f24d94c and incorporating GPU job 6469088 (COMPLETED); needs an **Opus** review (plan §12 B), then merge |
+| B DMControl | step9/envs-dmcontrol | /Users/samib/stable-envs-step9-envs-dmcontrol | 82ce271 | DELIVERED, integration merged, GPU job 6469088 incorporated (oracle identical cpu+cuda, tests/gpu 0 failed, timings ±0.4 %); **Opus review in flight** (`reviews/review_b.md` when done); merge on APPROVE |
 | G 2-D rendering | step9/render-2d | /Users/samib/stable-envs-step9-render-2d | cd97cd3 (6 ahead) | IN PROGRESS (agent) |
 | C Fetch | step9/envs-fetch | /Users/samib/stable-envs-step9-envs-fetch | b3f3a81 | IN PROGRESS (agent, just launched) |
 | D OGBench | step9/envs-ogbench | /Users/samib/stable-envs-step9-envs-ogbench | b3f3a81 | IN PROGRESS (agent, just launched) |
