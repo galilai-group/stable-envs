@@ -254,12 +254,21 @@ def main() -> int:
     ap.add_argument("--n-states", type=int, default=64)
     ap.add_argument("--out", default=str(ROOT / "examples/results/step9/render-3d"))
     ap.add_argument("--tag", default=None, help="suffix for the record file (e.g. the host)")
+    ap.add_argument("--arms", default="baseline,head",
+                    help="which TREE each arm runs: baseline|head for each. The default compares the "
+                         "two trees. ``--arms baseline,baseline`` runs the SAME tree twice in the "
+                         "same 38-cell process shape, which is how a cell that is not reproducible "
+                         "across processes is told apart from a cell this branch changed.")
     a = ap.parse_args()
 
     baseline, created = _baseline_worktree(a.baseline_sha)
     try:
-        before = _run_probe(baseline, a.python, a.devices, a.n_states)
-        after = _run_probe(ROOT, a.python, a.devices, a.n_states)
+        arms = a.arms.split(",")
+        if len(arms) != 2 or any(x not in ("baseline", "head") for x in arms):
+            raise SystemExit("--arms takes exactly two of baseline|head, e.g. baseline,baseline")
+        trees = {"baseline": baseline, "head": ROOT}
+        before = _run_probe(trees[arms[0]], a.python, a.devices, a.n_states)
+        after = _run_probe(trees[arms[1]], a.python, a.devices, a.n_states)
 
         diffs, cells = {}, {}
         for name, _ in CELLS:
@@ -272,6 +281,7 @@ def main() -> int:
                     diffs[f"{name}/{dev}"] = d
                 cells[f"{name}/{dev}"] = m.get("status", "missing")
         record = {
+            "arms": arms,
             "baseline_sha": a.baseline_sha,
             "head_sha": subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT),
                                        capture_output=True, text=True).stdout.strip(),
@@ -291,7 +301,8 @@ def main() -> int:
         fn = f"oracle{'_' + a.tag if a.tag else ''}.json"
         (out / fn).write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
         ran = sum(1 for v in cells.values() if v == "ok")
-        print(json.dumps({"baseline_sha": record["baseline_sha"], "head_sha": record["head_sha"],
+        print(json.dumps({"arms": arms, "baseline_sha": record["baseline_sha"],
+                          "head_sha": record["head_sha"],
                           "identical": record["identical"], "cells_ok": ran,
                           "cells": cells, "unexplained_differences": diffs}, indent=1))
         print(f"wrote {out / fn}")

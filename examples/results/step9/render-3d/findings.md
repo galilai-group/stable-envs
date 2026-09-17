@@ -5,12 +5,16 @@
 **host** Apple M5 Mac (`cis1b1zs2j3`), `/Users/samib/se6-venv` (torch 2.14 CPU, mujoco 3.12.0,
 dm_control 1.0.45) and `/Users/samib/se8-vm-venv` for the DM Control subset.
 
-**Result: PATCH, with one open item.** Six commits. On CPU: zero pixels moved on 21 cells, worst
-paired timing ratio 1.017 against a 1.10 bar. On GPU (job 6464319, RTX A6000, `gpu1503`): 58 of 59
-cell/device pairs byte-identical, worst paired timing ratio 1.006, and **one difference —
-`HumanoidmazeGiantNavigate` on cuda only** — which is not yet classified and is the subject of a
-prepared follow-up job (§9a). Until that job runs, plan §17's "unexplained oracle differences: zero"
-is **not** satisfied and this branch should not merge.
+**Result: PATCH, with one open item narrowed but not yet closed.** Seven commits. On CPU: zero
+pixels moved on 21 cells, worst paired timing ratio 1.017 against a 1.10 bar. On GPU (job 6464319,
+`gpu1503`, RTX A6000): 58 of 59 cell/device pairs byte-identical, worst paired timing ratio 1.006,
+and **one difference — `HumanoidmazeGiantNavigate` on cuda only**. The follow-up (job 6464500,
+`gpu1504`, A40) could not reproduce it: six runs, three per tree, all the same digest and zero
+differing pixels — and the digest they all produced is the one the HEAD tree produced in 6464319,
+so **the baseline tree has now emitted both digests and the head tree only ever one** (§9a). Two
+variables changed at once between the jobs (card, and process shape), so §9b is the run that
+isolates them. Until it reports, plan §17's "unexplained oracle differences: zero" is **not**
+satisfied and this branch should not merge.
 
 ---
 
@@ -81,7 +85,7 @@ arm's job and are already enumerated in `oracle.py`'s `CELLS`, skipped with a re
 | `tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` | se6-venv | **1263 passed**, 195 skipped, 112 deselected (56 s) |
 | same, at the branch parent `d07ffa8` | se6-venv | 1246 passed — the brief's baseline, reproduced |
 | `test_variation_maps_dmc_control.py`, `test_raycast3d_*.py`, `test_cpu3d.py`, `test_render_primitives.py` | se8-vm-venv | **341 passed** |
-| `tests/gpu -k "raycast or cpu3d or DMC or Pointmaze or Fetch"` | se-step6 on `gpu1503` | **no result** — the summary was truncated out of the log by my own sbatch; re-run queued (§9) |
+| `tests/gpu -k "raycast or cpu3d or DMC or Pointmaze or Fetch"` | se-step6 on `gpu1504` (job 6464500) | **66 failed, 790 passed, 314 skipped, 2431 deselected, 462 errors** — none of it this branch's code; see §9c |
 
 The 1246 → 1263 delta is fully accounted for: **+16** new tests in
 `tests/unit/test_render_primitives.py` and **+1** because
@@ -221,35 +225,84 @@ equally consistent with real failures and with a nonzero exit from teardown. The
 the whole output to `$OUT/gpu_tests_<tag>.log` and echoes only the summary, and the selection is
 re-run in the follow-up job.
 
-## 9a. The open item, and the job that will classify it (prepared, NOT submitted)
+## 9a. The open item — job 6464500 (COMPLETED, 11:36, `gpu1504`, NVIDIA A40)
 
-`scratch/step9/render-3d/hmg_determinism.py` + `hmg_determinism.sbatch`
-(`--partition=gpu --qos=norm-gpu --gres=gpu:1 --cpus-per-task=4 --mem=48G --time=00:45:00`).
+`scratch/step9/render-3d/hmg_determinism.py` via `hmg_determinism.sbatch`, tree at `d5e4970`.
+Record: `hmg_determinism_gpu_6464500.json`, `provenance_hmg_gpu_6464500.txt`.
 
-**The prior question is not "what did the patch change" but "is this cell reproducible at all".**
-The patch contains **no arithmetic change whatsoever** — `git diff 21cb306..HEAD` over both modules
-is imports, type annotations, comments, the `_Memo` refactor and the moved-verbatim definitions;
-every numeric expression is character-identical and the moved functions are the same objects under
-the same names. And this is precisely the configuration `raycast3d._BOUND_SLACK_NOISE` already
-documents as the one with the lever arm: the camera is ~100 m from a 5 cm capsule, `c = olx^2 +
-oly^2 - r^2` loses the radius entirely in float32 there, `disc > 0` then decides hit-or-miss on
-rounding noise, and job 6348207 moved one pixel of 3,211,264 by 22/255 on **this cell and no
-other**.
+**The verdict line, verbatim:**
 
-So the follow-up runs, on one card in one job: three *fresh processes per tree* (baseline vs
-baseline, head vs head, baseline vs head), a second render inside one process, the same render with
-`FORCE_BACKEND="torch"` and with `PRIMITIVE_BOUNDS=False` (which says whether any disagreement lives
-in the Triton kernel or in the shared torch expression), and a pixel-level diff (how many pixels, by
-how many levels, in how many frames). It prints one `VERDICT` line:
+```
+VERDICT: cuda: identical on this run; cpu: identical on this run
+```
 
-* *baseline is not process-reproducible* → the oracle difference is not evidence about the patch;
-  record it as a pre-existing property of the largest maze on this card.
-* *both trees self-consistent and different* → the patch changed this cell, and the merge is blocked
-  until it is explained.
+Both devices, both trees, three fresh processes each:
 
-The script was smoke-tested locally end to end on `DMCReacherHard`/cpu (both trees self-consistent,
-identical, 0 differing pixels of 1,354,752), so only the cuda answer is missing. The same job
-re-runs the GPU test selection with its summary preserved.
+| | cuda | cpu |
+|---|---|---|
+| baseline digests (3 processes) | `6c5385e4…` (one distinct value) | one distinct value |
+| head digests (3 processes) | `6c5385e4…` (one distinct value) | one distinct value |
+| baseline vs head | **identical** | identical |
+| pixels differing / total | **0 / 9,633,792** | 0 / 9,633,792 |
+| frames touched | 0 of 64 | 0 of 64 |
+
+**What this does and does not settle.** The digest all six cuda runs produced, `6c5385e4…`, is the
+one the **head** tree produced in job 6464319. The value the baseline produced there, `929f7c09…`,
+has not appeared since. So the **baseline tree has emitted two different digests for this cell on
+cuda** (`929f7c09…` once, `6c5385e4…` three times) while the head tree has emitted exactly one, on
+two different cards. That is evidence against the difference being a property of the patch — the
+same unmodified source produced both values — but it is not yet proof, because **two variables
+changed between the jobs at once**:
+
+1. the card: 6464319 ran on `gpu1503` (RTX A6000), 6464500 on `gpu1504` (A40);
+2. the process shape: the oracle renders all 38 cells in one process, the probe renders this one
+   cell in a fresh process.
+
+I am not classifying the difference on that evidence, and per the coordinator's ruling the verdict
+string is neither of the two anticipated branches, so the classification is not mine to make.
+
+## 9b. The run that isolates it (prepared, NOT submitted)
+
+`scratch/step9/render-3d/oracle_selfcompare.sbatch` — same partition/QOS/resources,
+**`--nodelist=gpu1503`**, the card that showed the difference, `--time=01:00:00`. `oracle.py` gained
+an `--arms` option so both arms can run the SAME tree in the original 38-cell process shape, and the
+job runs three legs on that one card:
+
+```
+leg 1  --arms baseline,baseline      leg 2  --arms head,head      leg 3  --arms baseline,head
+```
+
+* leg 1 reports `HumanoidmazeGiantNavigate/cuda` as a difference → the cell is not reproducible from
+  one process to the next in that shape, and 6464319's finding is a property of the cell rather than
+  of this branch (then: `DOCUMENTED_LIMITATION`, citing `_BOUND_SLACK_NOISE` and job 6348207, which
+  moved a pixel by 22/255 on this same configuration and no other).
+* legs 1 and 2 clean and leg 3 different → the patch changed this cell; stop, do not fix, report.
+
+`--arms baseline,baseline` was smoke-tested locally (21 cells, identical, ORACLE PASS).
+
+## 9c. The GPU test failures belong to Wave 0, not to this workstream
+
+Summary: `gpu_tests_gpu_6464500_summary.txt` (distilled from the 28,966-line log, which stays on
+Oscar at `$SCR/se9/render-3d/examples/results/step9/render-3d/gpu_tests_gpu_6464500.log`).
+
+* **462 errors are missing optional packages** in `se-step6` at collection/setup: `warp` (252),
+  `gymnasium_robotics` (168), `minigrid` (42). Coordinator ruling: covered elsewhere.
+* **66 failures are one mechanism, and it is not in my files.** Every one goes through
+  `testing/render_worker.py` → `env.sample` → `rollout.py:121`, which raises
+  `NotImplementedError: <cell> ships a renderer but no batched GPU simulator`. The fresh-process
+  worker calls `rollout_digests` for every cell, so each renderer-only DM Control cell fails its
+  fresh-process reproducibility and rollout-seed tests.
+* **Attribution, from the trees themselves.** `git diff --name-only d07ffa8 HEAD` is my three render
+  modules, my test file, my scratch and my results — nothing else. The guard that now raises changed
+  in **Wave 0**: at `21cb306` `rollout.sample` began `if not hasattr(env, "step")`, and at `d07ffa8`
+  it begins `if not has_dynamics(env)`. Renderer-only cells now carry a `step` from the canonical
+  `Env`, so the old guard let them through and the new one does not, while `render_worker` still
+  calls it unconditionally. **This is a `step9/integration` item (foundation/Workstream K), it
+  predates this branch, and it will fail identically for every workstream that runs `tests/gpu`.**
+  I have not touched it.
+* What this selection does NOT yet give is a baseline-tree run of the same selection in the same
+  venv. If the coordinator wants that certainty rather than the diff-based attribution above, a leg
+  with `PYTHONPATH` pointed at the baseline worktree can be added to §9b's job.
 
 ## 10. Resource lifetime
 
@@ -264,10 +317,17 @@ resource rule is already satisfied and Workstream I's work does not extend to th
 ## 11. Unexplained oracle differences
 
 **CPU: zero** (21 cells, 64 frozen states each, fast and reference expressions).
-**GPU: one** — `HumanoidmazeGiantNavigate` on cuda, of 59 cell/device pairs — **currently
-unclassified**. It is not yet attributable to the patch (the patch has no arithmetic in it) and it is
-not yet excused either; §9a is the job that decides which. Plan §17 requires zero, so **this is an
-open gate item, not a footnote**.
+**GPU: one** — `HumanoidmazeGiantNavigate` on cuda, of 59 cell/device pairs — **still
+unclassified, but narrowed**: the baseline tree has since produced the head tree's digest three
+times out of three on another card (§9a), so the same unmodified source has now emitted both values,
+while the head tree has emitted only one. §9b isolates the two variables that changed at once.
+Plan §17 requires zero, so **this remains an open gate item, not a footnote**, and I am not
+classifying it myself.
+
+Also uncovered, by coordinator ruling rather than by omission: `swm/OGBCube-v0`, `swm/OGBScene-v0`
+and the four `PointMaze_*-v3` maze2d IDs are **covered elsewhere** (Workstreams D and F, with their
+own venvs), and the five DM Control trackcom cells' **cuda** arm is Workstream I's MJWarp path. I
+installed nothing. Their CPU arms — `cpu3d`, mine — are covered and identical.
 
 ## 12. Deliberate non-consolidations (per plan §16, recorded so they are not re-proposed)
 
@@ -301,5 +361,6 @@ c0c98e0  raycast3d: one bounded memo instead of five near-copies
 a0887c7  step9 render-3d: oracle, paired timing harness, GPU sbatch
 6bf885a  render 3-D: types on the cast API, a named window sentinel, tests for the shared vocabulary
 899e4a6  step9 render-3d: findings, CPU oracle record and paired timings
-<this>   step9 render-3d: GPU arm results, and the probe for the one difference
+d5e4970  step9 render-3d: GPU arm results, and the probe for the one difference
+<this>   step9 render-3d: follow-up job 6464500, and the run that isolates the one difference
 ```

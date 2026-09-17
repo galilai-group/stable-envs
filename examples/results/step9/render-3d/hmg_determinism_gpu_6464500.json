@@ -1,0 +1,136 @@
+{
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "cell": "HumanoidmazeGiantNavigate",
+ "devices": {
+  "cpu": {
+   "baseline_digests": [
+    "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+   ],
+   "baseline_equals_head": true,
+   "baseline_self_consistent": true,
+   "frames_total": 64,
+   "frames_touched": 0,
+   "head_digests": [
+    "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+   ],
+   "head_self_consistent": true,
+   "max_abs_diff_levels": 0,
+   "pixels_differing": 0,
+   "pixels_total": 9633792,
+   "runs": {
+    "baseline": [
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     }
+    ],
+    "head": [
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     }
+    ]
+   }
+  },
+  "cuda": {
+   "baseline_digests": [
+    "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+   ],
+   "baseline_equals_head": true,
+   "baseline_self_consistent": true,
+   "frames_total": 64,
+   "frames_touched": 0,
+   "head_digests": [
+    "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+   ],
+   "head_self_consistent": true,
+   "max_abs_diff_levels": 0,
+   "pixels_differing": 0,
+   "pixels_total": 9633792,
+   "runs": {
+    "baseline": [
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     }
+    ],
+    "head": [
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     },
+     {
+      "composite_window": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "force_torch": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "primitive_bounds_off": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e",
+      "shipped_again": "6c5385e44d6a62ec79c76bca24b4a385d8b07b919b8a1774d3a9e408e8be4b1e"
+     }
+    ]
+   }
+  }
+ },
+ "head_sha": "d5e4970d1f7d4270251b0a13810b1f13f8f9c852",
+ "host": "gpu1504.oscar.ccv.brown.edu"
+}
