@@ -1,6 +1,8 @@
 # Step 9 — Wave 1, Workstream B: the DM Control family
 
-**Workstream:** `step9/envs-dmcontrol` · **Parent:** `step9/integration` `86a6ba4` (A merged) ·
+**Workstream:** `step9/envs-dmcontrol` · **Parent:** `step9/integration`, merged twice: `86a6ba4`
+(A merged) and `b3f3a81` (the R1 instance-method `_layout`, and Workstream H's raycast3d/cpu3d
+consolidation), no rebase ·
 **Step-8 baseline:** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc`
 **Host:** Apple M5 Mac (`cis1b1zs2j3`), CPU only — no CUDA device in this ticket.
 **Interpreters:** `/Users/samib/se8-vm-venv` (dm_control 1.0.44 + mujoco 3.11 + stable_worldmodel +
@@ -99,13 +101,15 @@ live state — `set_state` writes it and `render` reads it — so unlike classic
 simulator there is no more precise buffer to answer from. The `state` property is **not** overridden
 anywhere in this family.
 
-**`_layout` is an instance method here where the base class has a classmethod**, and it is the one
-place the foundation did not fit. `Env._layout` is a `classmethod` reading `cls.state_dim`, and for
-this family `state_dim` is 0 on the class: the real width is `nq` plus however many model entries
-the task draws per episode, discovered by compiling the model and running six episodes
-(`_episode_slots`). Every caller in `env.py` reaches it as `self._layout()`, so an instance method is
-the whole of the override; the alternative would be compiling eighteen MuJoCo models at IMPORT time
-to learn a number the constructor learns anyway. **Request R1** below.
+**`state_layout` is an INSTANCE attribute and this family overrides nothing of the state machinery.**
+Its width is `nq` plus however many model entries the task draws per episode, discovered by compiling
+the model and running six episodes (`_episode_slots`), so it is not a per-class fact. The first round
+of this patch carried an `_layout` override for that reason and filed it as R1; the foundation
+**took R1** (`step9/integration` `f24d94c` made `Env._layout` and `Env._layout_dtypes` instance
+methods reading `self.state_layout`), so the override is now **deleted** and `__init__` assigns
+`state_layout` where the model is compiled. Not `state`, not `_layout`, not `_hidden_state`, not
+`_live_state` — nothing. `test_the_public_state_is_qpos_plus_the_episode_draw_and_hides_nothing`
+asserts `"_layout" not in vars(_DMCModel)` so the override cannot come back quietly. **R1 is CLOSED.**
 
 **NO DYNAMICS, declared rather than omitted.** There is no batched simulator in this package for any
 DM Control cell, so `has_dynamics` is False and `step`/`transition` raise `Env`'s precise refusal
@@ -183,6 +187,12 @@ MUJOCO_GL=glfw /Users/samib/se8-vm-venv/bin/python -m pytest -q -p no:cacheprovi
 ```
 (the four named suites alone are `200 passed`, the number this branch produced before the migration.)
 
+**After merging `step9/integration` `b3f3a81`** (the R1 foundation change and Workstream H's
+raycast3d/cpu3d consolidation), re-measured at HEAD: **1513 passed / 198 skipped** locally and
+**436 passed / 4 skipped** in the SWM venv. The +17 is integration's own, 16 of it
+`tests/unit/test_render_primitives.py`; my file is unchanged at 131 collected. **No pre-existing test
+changed its result**, and the oracle re-ran identical — see §6.
+
 The two tests the brief deselects — `test_repo_contracts.py::test_every_cited_scratch_path_resolves`
 and `test_examples.py::...[robocasa_visual/render_mjwarp.py]` — were run anyway and fail on
 `step9/integration` `86a6ba4` with the **identical** set of 14 unresolved citations and the same one
@@ -244,6 +254,13 @@ then compares **35 keys** per cell:
 **Unexplained differences: zero** (`"unexplained_differences": {}`, `"identical": true` in
 `examples/results/step9/envs-dmcontrol/oracle.json`). The one **expected** entry is
 `_make_classes`, declared in the script with its reason rather than discovered in the diff.
+
+**Re-run after merging `step9/integration` `b3f3a81`**: still `"identical": true`,
+`"unexplained_differences": {}`, `"functional_ok": true`, and **every one of the seventeen cpu frame
+digests below is unchanged**, down to the hex. That is worth stating as a result rather than as
+housekeeping: the merge brought **Workstream H's raycast3d/cpu3d consolidation**, i.e. the two
+backends that draw this entire family on CPU, and it moves no DM Control pixel. Deleting the
+`_layout` override moves none either. Only `head_sha` changed in the record.
 
 Per-cell default-frame digests (first 16 hex of the SHA-256 over 64 frames, `device="cpu"`):
 
@@ -347,16 +364,13 @@ the new test file's own constructions — unchanged behaviour, a pre-existing St
 
 | # | subject | ask |
 |---|---|---|
-| **R1** | `Env._layout` is a `classmethod` reading `cls.state_dim`; this family's `state_dim` is a property of the COMPILED MODEL and is 0 on the class, so `_DMCModel` overrides `_layout` as an instance method. Every caller in `env.py` already reaches it as `self._layout()`, so nothing is broken — but the classmethod signature advertises a per-class fact that is not one. | Make `Env._layout` an instance method (or let `state_layout` be a property the foundation resolves per instance). Then this override goes in Wave 3. Affects any family whose width comes from a model file: DM Control, Fetch, RoboCasa. |
-| **R2** | `envs/dmcontrol.py` is **removed**, not aliased, because a module and a package cannot share a name (§1). This is a deviation from the brief's "keep it as a `sys.modules` shim" and it is not optional. The obligation is met differently: 79 Step-8 names checked off the package. | Confirm the deviation. The same will apply to Workstream D (`ogbench.py` → `ogbench/`) and to anything else plan §3 turns into a package. |
-| **R3** | Two tests outside my files read this family's SOURCE by path and had to be re-pointed (§4). The tendon one was a **latent vacuous pass** waiting for any package split. | No action needed; recorded because Workstream D will hit the same class of test and because the vacuity fix is worth copying. |
-| **R4** | `SPECULAR_NOTE` is a DECLARED string carried into `DMCSwimmerSwimmer6.visual_note`, and it self-cites "see SPECULAR_NOTE in stable_envs/envs/dmcontrol.py", which is now a directory. Editing it would change `describe()` and break the oracle's byte-identity. | Leave it. Fix the sentence in Wave 3 together with the re-freeze of nothing (the text is prose, not a number), or accept it as a stale path. `test_every_cited_scratch_path_resolves` only checks `scratch/` citations, so nothing fails today. |
+| **R1** | `Env._layout` was a `classmethod` reading `cls.state_dim`, which this family only knows once a model is compiled, so `_DMCModel` overrode it. | **DONE by the foundation at `f24d94c`** — `_layout`/`_layout_dtypes` are instance methods. Merged here (no rebase); the override is deleted and `state_layout` is assigned in `__init__`. **CLOSED**, §2. |
+| **R2** | `envs/dmcontrol.py` is **removed**, not aliased, because a module and a package cannot share a name (§1). The obligation is met differently: 79 Step-8 names checked off the package. | **ACCEPTED by the coordinator**; recorded for Workstream D (`ogbench.py` → `ogbench/`). **CLOSED.** |
+| **R3** | Two tests outside my files read this family's SOURCE by path and had to be re-pointed (§4). The tendon one was a **latent vacuous pass** waiting for any package split. | **Noted and forwarded to Workstream D.** **CLOSED.** |
+| **R4** | `SPECULAR_NOTE` is a DECLARED string carried into `DMCSwimmerSwimmer6.visual_note`, and it self-cites "see SPECULAR_NOTE in stable_envs/envs/dmcontrol.py", which is now a directory. Editing it would change `describe()` and break the oracle's byte-identity. | **Deferred to Wave 3** by the coordinator. `test_every_cited_scratch_path_resolves` only checks `scratch/` citations, so nothing fails today. |
 | **ESC-1** | **the CUDA arm.** `scratch/step9/envs-dmcontrol/gpu.sbatch` is written, syntax-checked and **NOT submitted**. It needs `$SCR/venvs/se-vis311` (the only venv on the declared mujoco 3.11.0 + mujoco-warp 3.11.0 pair; se-step6 is 3.12.0, under which Step 4 recorded three renderer FAILs for a version drift) and a real clone at `$SCR/se9/envs-dmcontrol`. It runs the oracle on cpu AND cuda, `tests/gpu -k "DMC or dmc-"`, the unit files, and paired GPU timings for two parity cells + one trackcom cell on the same card. | Submit and return the job id. Without it, MJWarp — the backend the whole VISUAL tier's numbers were measured with — has not been compared between the two trees, and `DMCSwimmerSwimmer6` has no frame digest at all. |
 
-**Note for the coordinator on `tests/gpu`:** Workstream A's R9 (`hasattr(env, "step")` in
-`stable_envs/testing/render_worker.py:72` and `conformance.py:1074`) breaks
-`tests/gpu/test_reproducibility.py` for **every renderer-only cell**, and all eighteen of mine are
-renderer-only — A's run failed on four of them by accident of its `-k`. My `-k "DMC or dmc-"` selects
-all eighteen deliberately, so unless R9 lands first this job will report those failures again. They
-are **not** this workstream's: the fix is two lines in shared testing machinery I do not own, and
-`git diff step9/integration..HEAD` touches neither file.
+**A's R9 is MOOT**, and I was wrong to raise it as a risk: `e1da2f6` ("renderer-only cells are
+detected with `dynamics.has_dynamics`, not `hasattr(env, 'step')`") was already in this branch's base
+`86a6ba4`. `render_worker.py:73` and `conformance.py:1075` both call `has_dynamics(env)` today. So
+`tests/gpu -k "DMC or dmc-"` has no known reason to fail on the eighteen renderer-only cells.
