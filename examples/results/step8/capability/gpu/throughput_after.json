@@ -1,0 +1,290 @@
+[
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 1,
+  "style": "default",
+  "fps": 209.68977511476734
+ },
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 207.63972737194155
+ },
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 202.20058888039134
+ },
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 4096,
+  "style": "default",
+  "fps": 36957.79650744214
+ },
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 39134.570836504405
+ },
+ {
+  "cell": "DMCAcrobotSwingup",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1207.4681682596502
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 1,
+  "style": "default",
+  "fps": 212.75753299168755
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 209.5705635657391
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 198.73502761933557
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 4096,
+  "style": "default",
+  "fps": 11733.86853112746
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 11692.326888910286
+ },
+ {
+  "cell": "DMCBallInCupCatch",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1131.7524019169105
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 1,
+  "style": "default",
+  "fps": 204.52209636411706
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 203.4249817138731
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 197.62998731698173
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 4096,
+  "style": "default",
+  "fps": 66549.76836392081
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 66132.35662515362
+ },
+ {
+  "cell": "DMCCartpoleBalance",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1215.2240260876827
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 1,
+  "style": "default",
+  "fps": 182.65978902314757
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 185.1051519047797
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 180.83540445832432
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 4096,
+  "style": "default",
+  "fps": 66590.6203833944
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 66623.4396169855
+ },
+ {
+  "cell": "DMCCartpoleSwingup",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1193.2507185781035
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 1,
+  "style": "default",
+  "fps": 231.48460947090246
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 227.09345573328469
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 224.18040564612804
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 4096,
+  "style": "default",
+  "fps": 31082.906399056348
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 30870.639084399387
+ },
+ {
+  "cell": "DMCFingerTurnHard",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1232.924304171309
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 1,
+  "style": "default",
+  "fps": 188.8326541109538
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 180.04862951389333
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 174.10753040787864
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 4096,
+  "style": "default",
+  "fps": 45031.54754299826
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 44912.75308077906
+ },
+ {
+  "cell": "DMCPendulumSwingup",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1201.475066401858
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 1,
+  "style": "default",
+  "fps": 177.46435348239692
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 174.0029557149018
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 147.27718640288805
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 4096,
+  "style": "default",
+  "fps": 22260.790560160844
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 22236.712909250746
+ },
+ {
+  "cell": "DMCReacherHard",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 1149.4303338365642
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 1,
+  "style": "default",
+  "fps": 249.97265097950915
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 1,
+  "style": "shared_floor",
+  "fps": 235.75224938450356
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 1,
+  "style": "per_env_floor_96",
+  "fps": 228.19989030169754
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 4096,
+  "style": "default",
+  "fps": 21889.39407095032
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 4096,
+  "style": "shared_floor",
+  "fps": 28958.373419124924
+ },
+ {
+  "cell": "DMCManipulatorBringBall",
+  "B": 4096,
+  "style": "per_env_floor_96",
+  "fps": 126.90862452676188
+ }
+]
