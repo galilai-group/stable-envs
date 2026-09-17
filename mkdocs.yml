@@ -176,6 +176,11 @@ nav:
       # applicable, with the measurement behind each class; generated tables from
       # examples/results/step8/variations-dmc-control/leaf_classification.json.
       - 'Step 8: variation maps (DMC + classic control)': research/step8_variations_dmc_control.md
+      # Step-8 Workstream H. Why the Craftax semantic follow-up returns a FINDING rather than a
+      # Gate-H run: both cells are byte-identical to the official renderer (re-measured on that
+      # branch), and stable_worldmodel ships no Craftax checkpoint, corpus, planner config or
+      # success criterion. Evidence in examples/results/step8/semantic/.
+      - 'Step 8: Craftax semantic follow-up': research/step8_semantic_craftax.md
       # Step-8 coordinator checkpoints: the weekly-limit handoff and the Codex takeover stop note.
       - 'Step 8: handoff checkpoint': research/step8_handoff.md
       - 'Step 8: takeover stop note': research/step8_takeover_stop_handoff.md

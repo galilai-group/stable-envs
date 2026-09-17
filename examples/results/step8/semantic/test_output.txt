@@ -1,0 +1,21 @@
+# Step-8 Workstream H test record
+# host: cis1b1zs2j3.ad.brown.edu  machine: arm64  date: 2026-09-16T23:59:41Z
+# interpreter: /Users/samib/se6-venv/bin/python
+# branch: step8/semantic-craftax  parent: 4210793
+
+$ MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit/test_repo_contracts.py tests/unit/test_step8_semantic_craftax.py
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+FAILED tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves
+1 failed, 20 passed in 0.36s
+
+# The single failure is PRE-EXISTING and belongs to no file this branch adds: the same test
+# fails identically on the parent worktree (step8/integration at 4210793), with the same 12
+# unresolved citations, none of which is under scratch/step8/semantic/.
+
+$ (in the step8/integration worktree) ... tests/unit/test_repo_contracts.py
+=========================== short test summary info ============================
+FAILED tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves
+1 failed, 10 passed in 0.34s
