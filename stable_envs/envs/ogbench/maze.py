@@ -54,6 +54,29 @@ including the three mechanisms that were tried and what each one did.
 frames. Their agreement is therefore a statement about a silhouette, not about a renderer, and that is
 a property of OGBench's camera — it is the same fact that makes proprioception unreadable from these
 observations, not a limitation introduced here.
+
+STEP 9 ADDS THREE THINGS AND CHANGES NOTHING ELSE
+-------------------------------------------------
+
+  * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated Step-8 spelling;
+  * a public entity-grouped :data:`State` over the UNCHANGED packed row (contract §3) —
+    ``{"root": {"position", "orientation"}, "joints"}`` for the legged bodies and
+    ``{"root": {"position"}}`` for the point, which is what ``qpos`` IS for each body. Nothing is
+    hidden (no field has offset ``None``), so ``pack``/``unpack`` round-trip the frozen corpus bit
+    for bit and every Step-4 digest is untouched;
+  * ``close()``, which refuses to render afterwards without releasing anything shared. The baked
+    scenes, the reference envs and their ``mujoco.Renderer``s live in MODULE caches and are never
+    released for the reason recorded above: releasing one EGL context corrupts every other live one
+    in the process.
+
+NO DYNAMICS, declared rather than omitted: there is no batched maze simulator in this package, so
+``has_dynamics`` is False and ``step``/``transition`` raise ``Env``'s precise refusal naming the cell
+and the reason, while ``reset`` and ``render`` work as usual. This is the Step-8 behaviour — those
+calls raised there too — said out loud.
+
+The module is one half of the ``stable_envs.envs.ogbench`` PACKAGE; ``manipulation`` is the other.
+Every Step-8 module-level name still resolves off the package, which is what the ``__init__``
+re-exports are for and what the oracle checks name by name.
 """
 from __future__ import annotations
 
@@ -70,9 +93,10 @@ import torch
 # runs on renders offscreen, so EGL is the right default; an explicit setting always wins.
 os.environ.setdefault("MUJOCO_GL", "egl")
 
-from ..core.env import StableEnv, register
-from ..render import raycast3d as R3
-from ..spaces import Box, Dict, Discrete
+from ...env import Env
+from ...registry import register
+from ...render import raycast3d as R3
+from ...spaces import Box, Dict, Discrete
 
 #: (A, D, Sp, p) of the shading law, least-squares over 13,069 AGENT-INTERIOR pixels pooled across the
 #: four pointmaze scenes. Calibrated there and not on the floor for a specific reason: the plate carries
@@ -230,7 +254,7 @@ def _scene_env(loco: str, maze: str, size: int):
 #: Driven directly, two fresh instances are bit-identical (``scratch/ogbench/two_instances.py``).
 
 
-class OGBenchMaze(StableEnv):
+class OGBenchMaze(Env):
     """Base for the 25 cells. ``LOCO`` / ``MAZE`` are set by the generated subclasses."""
 
     LOCO: str = ""
@@ -286,11 +310,33 @@ class OGBenchMaze(StableEnv):
         "headlight directional or point crossed with Blinn or Phong, could not explain floor and "
         "agent with one curve).")
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    #: The public :data:`State`, declared per BODY rather than per cell, because the packed row is
+    #: ``qpos`` and ``qpos``'s structure is a property of the MJCF body: a point is two slide joints,
+    #: and the two legged bodies are a free joint (3 position + 4 quaternion) followed by hinges.
+    #: One vocabulary covers all three — ``root.position`` / ``root.orientation`` / ``joints`` — and
+    #: the point simply has neither of the last two. Every offset is a real column of the packed row
+    #: (nothing is hidden: these cells have no dynamics, so there is no velocity to hide), so
+    #: ``pack``/``unpack`` round-trip the frozen corpus bit for bit and no digest moved.
+    STATE_LAYOUT = {
+        "point": ((("root", "position"), 2, 0),),
+        "ant": ((("root", "position"), 3, 0), (("root", "orientation"), 4, 3), (("joints",), 8, 7)),
+        "humanoid": ((("root", "position"), 3, 0), (("root", "orientation"), 4, 3),
+                     (("joints",), 21, 7)),
+    }
+
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
+        """``num_envs`` environments on ``device`` (contract §2); ``batch=`` is the Step-8 spelling.
+
+        ``state_layout`` is assigned here rather than declared on the class only because it depends on
+        ``LOCO``, which the generated subclass sets; it is a per-BODY constant, not a per-instance
+        discovery, and ``_check_names`` still verifies it against the compiled model below.
+        """
         self.state_dim = len(BODY_STATE[self.LOCO])
         self.state_names = BODY_STATE[self.LOCO]
-        super().__init__(batch=batch, size=size,
+        self.state_layout = self.STATE_LAYOUT[self.LOCO]
+        super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         sc = self._scene()
@@ -689,13 +735,22 @@ class OGBenchMaze(StableEnv):
         return np.stack(out)
 
 
+#: Every cell's ``__module__`` is PINNED to the package, not left at ``type()``'s default.
+#: ``registry.spec`` derives an env's FAMILY from the last component of ``__module__``, so the
+#: default (``stable_envs.envs.ogbench.maze``) would rename this family from ``ogbench`` to ``maze``
+#: and move ``spec(name)["family"]``, ``list_envs(family=...)``, ``list_families()`` and the registry
+#: row every Step-8 artifact recorded. The attribute is also accurate: the class IS reachable at
+#: ``stable_envs.envs.ogbench.<name>``, because the package re-exports it.
+_MODULE = "stable_envs.envs.ogbench"
+
+
 def _make_classes():
     """One registered class per dataset cell. ``navigate``/``stitch``/``explore`` share a renderer."""
     made = {}
     for loco, maze, dataset in CELLS:
         cname = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
         cls = register(type(cname, (OGBenchMaze,), dict(
-            LOCO=loco, MAZE=maze,
+            LOCO=loco, MAZE=maze, __module__=_MODULE,
             name=f"{loco}maze-{maze}-{dataset}",
             reference_id=f"ogbench/{loco}maze-{maze}-v0",
             state_dim=len(BODY_STATE[loco]),
@@ -709,4 +764,9 @@ def _make_classes():
     return made
 
 
-globals().update(_make_classes())
+#: ``{name: class}`` for every registered cell this module declares, so the package ``__init__``
+#: can re-export them by NAME without transcribing the naming rule a second time. The names are also
+#: injected into this module's own globals, exactly as Step 8 did, so ``from
+#: stable_envs.envs.ogbench.maze import PointmazeLargeNavigate`` and the Step-8 module path both work.
+CELL_CLASSES = _make_classes()
+globals().update(CELL_CLASSES)
