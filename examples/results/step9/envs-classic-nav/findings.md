@@ -418,11 +418,15 @@ the other direction. `unpack`'s own docstring promises a fresh State ("`unpack(p
 environment"), and every migrated cell whose State is float32 is affected; classic control happens
 not to be, because it builds its State from `_sim`.
 
+`step`'s result is not the only surface: `Env.state` is `unpack(get_state())`, so
+`st = env.state; env.step(a)` also mutates `st` for any cell whose State is float32. That one is
+purely in the base class and cannot be fixed from a family module.
+
 **Fix (one token, in a file I do not own):** `r[:, off:off + w].to(dt)` → `...to(dt).clone()`, or
 `.clone().to(dt)`. I did **not** edit `env.py`. `_SWMPort.step` clones the packed row before
 unpacking it, with a comment pointing here and saying to delete the clone once `unpack` clones again,
 and `test_a_step_result_is_not_a_view_of_the_env_that_produced_it` pins the property for these ten
-cells. **PushT and every future migrated cell are still exposed.**
+cells. **`env.state`, PushT and every future migrated cell are still exposed.**
 
 ## 11. The CUDA arm (ESCALATION 2)
 
