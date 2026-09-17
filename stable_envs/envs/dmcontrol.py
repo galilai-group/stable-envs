@@ -187,6 +187,10 @@ import torch
 os.environ.setdefault("MUJOCO_GL", "egl")
 
 from ..core.env import StableEnv, register
+from ._plate_texels import quantise as _quantise
+from ._plate_texels import substitute as _substitute_texels
+from ._plate_texels import texel_key as _texel_key
+from ._plate_texels import texel_slots as _texel_slots
 from ..render import cpu3d as C3
 from ..render import mjwarp as MW
 from ..render import raycast3d as R3
@@ -320,6 +324,12 @@ TRACKCOM_DOMAINS: dict[str, tuple[str, str, int]] = {
 
 _SCENE_CACHE: dict = {}
 _SCENE_CACHE_MAX = 96
+#: ``(width, height, nchannel) -> (rgb1 mask, rgb2 mask)`` over the suite's builtin ``grid`` checker,
+#: and ``{}`` until the first parity cell asks. See ``_grid_masks``.
+_GRID_MASKS: dict = {}
+#: ``(domain, task, size) -> texel slots for that cell's grid texture``, or ``None`` for a cell that
+#: has no grid texture. Keyed per cell because the slots carry that model's ``tex_adr``.
+_GRID_SLOTS: dict = {}
 #: (domain, task, size) -> (dm_control env, MjModel, MjData, pristine snapshot, mujoco.Renderer,
 #: episode slots). One Renderer per (domain, size), built once and NEVER closed.
 _ENV_CACHE: dict = {}
@@ -382,6 +392,93 @@ def _mat_spec_shin(m, matid: int) -> tuple[float, float]:
     if matid < 0:
         return 0.5, 0.5                                # MuJoCo's material defaults
     return float(m.mat_specular[matid]), float(m.mat_shininess[matid])
+
+
+def _grid_defaults() -> np.ndarray:
+    """``[rgb1, rgb2, markrgb]`` -- the suite's own ``grid`` texture, READ from ``dm_control``'s
+    ``common/materials.xml`` rather than transcribed here.
+
+    ``markrgb`` is carried alongside the leaf's two colours because it is what makes the edge marks
+    separable at all: the suite ships ``markrgb=".2 .3 .4"``, EQUAL to ``rgb2``, so in the shipped
+    texture the marks are invisible to an equality mask -- but a recompile at a different ``rgb2``
+    separates them, and ``_grid_masks`` uses exactly that to check its masks against whatever
+    texture it is handed.
+
+    It is read because it is simultaneously three things that must not be allowed to drift apart: the
+    compiled texture's colours, this family's declared ``floor.color`` default, and
+    ``stable_worldmodel``'s own ``init_value`` for the leaf (``[[0.1,0.2,0.3],[0.2,0.3,0.4]]``, in
+    every one of its twelve DM Control wrappers). A constant here would make "our default IS swm's
+    default" a coincidence that a ``dm_control`` release could quietly end.
+    """
+    import re
+    from dm_control.suite import common
+    xml = common.ASSETS["./common/materials.xml"].decode()
+    mat = re.search(r'<texture[^>]*name="grid"[^>]*/>', xml)
+    assert mat, "dm_control's common/materials.xml no longer declares a texture named 'grid'"
+    out = []
+    for attr in ("rgb1", "rgb2", "markrgb"):
+        got = re.search(attr + r'="([^"]+)"', mat.group(0))
+        assert got, f"the suite's grid texture no longer declares {attr}"
+        out.append([float(x) for x in got.group(1).split()])
+    return np.asarray(out, np.float64)
+
+
+def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
+    """Which texels of the compiled ``grid`` texture are rgb1 and which are rgb2.
+
+    NOT DERIVED BY EQUALITY, and that is the whole point of this function. The suite declares
+    ``markrgb=".2 .3 .4"``, which is EXACTLY its ``rgb2``, so in the compiled texture the 1,196
+    edge-mark texels and the 44,402 rgb2 texels are byte-identical. ``stable_worldmodel`` honours
+    ``floor.color`` by writing ``rgb1``/``rgb2`` and RECOMPILING: the recompile moves the rgb2 texels
+    and leaves ``markrgb`` at its literal ``.2 .3 .4``. A mask taken by equality would move both, and
+    the 1,196 marks are the frame's grid lines -- the most visible feature on the floor.
+
+    So the masks are taken from a PROBE TEXTURE: the same builtin, the same size, the same ``mark``,
+    compiled once with three mutually distinct colours, which separates the three sets positionally.
+    The probe is a four-line MJCF and no part of any cell; the assertion below is what ties it to the
+    real texture, by reconstructing that texture from the masks and the declared defaults and
+    requiring the result to be byte-identical to what MuJoCo compiled.
+
+    Cached on the texture's shape, because all twelve parity cells share one 300x300 checker.
+    """
+    import mujoco
+    key = (int(m.tex_width[texid]), int(m.tex_height[texid]),
+           int(m.tex_nchannel[texid]) if hasattr(m, "tex_nchannel") else 3)
+    hit = _GRID_MASKS.get(key)
+    if hit is not None:
+        return hit
+    w, h, nch = key
+    probe = mujoco.MjModel.from_xml_string(
+        f'<mujoco><asset><texture name="grid" type="2d" builtin="checker" rgb1="1 0 0" '
+        f'rgb2="0 1 0" width="{w}" height="{h}" mark="edge" markrgb="0 0 1"/>'
+        f'<material name="grid" texture="grid"/></asset><worldbody>'
+        f'<geom type="plane" size="1 1 1" material="grid"/></worldbody></mujoco>')
+    pt = mujoco.mj_name2id(probe, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
+    pa = int(probe.tex_adr[pt])
+    pn = w * h * (int(probe.tex_nchannel[pt]) if hasattr(probe, "tex_nchannel") else 3)
+    pf = np.asarray(probe.tex_data[pa:pa + pn]).reshape(w * h, -1)[:, :3]
+    m1 = np.all(pf == np.array([255, 0, 0], np.uint8)[None, :], axis=1)
+    m2 = np.all(pf == np.array([0, 255, 0], np.uint8)[None, :], axis=1)
+    mk = np.all(pf == np.array([0, 0, 255], np.uint8)[None, :], axis=1)
+    assert (m1 | m2 | mk).all(), (
+        "the probe checker compiled to a colour that is none of its three declared ones, so the "
+        "masks do not describe MuJoCo's builtin and must not be used")
+    # The tie to the REAL texture: rebuild it from the masks plus the suite's declared colours
+    # (markrgb == rgb2, so the marks take rgb2's default) and require MuJoCo's own bytes.
+    d = _grid_defaults()
+    adr = int(m.tex_adr[texid])
+    n = w * h * nch
+    real = np.asarray(m.tex_data[adr:adr + n]).reshape(-1, nch)[:, :3]
+    rebuilt = np.empty_like(real)
+    rebuilt[m1] = _quantise(d[0])
+    rebuilt[m2] = _quantise(d[1])
+    rebuilt[mk] = _quantise(d[2])
+    assert np.array_equal(rebuilt, real), (
+        f"the probe masks plus the suite's declared grid colours rebuild {int((rebuilt != real).any(1).sum())} "
+        f"of {w * h} texels differently from the compiled texture; the probe no longer describes "
+        f"this texture and a substitution through it would paint the wrong texels")
+    _GRID_MASKS[key] = (m1, m2)
+    return _GRID_MASKS[key]
 
 
 def _tex_rgb(m, matid: int) -> np.ndarray:
@@ -1439,6 +1536,56 @@ class DMControlSuite(_DMCModel):
         sc = self._scene()
         assert sc.model.nq == self.nq, f"{type(self).__name__}: nq changed under us"
 
+    @classmethod
+    def _grid_slots(cls):
+        """This cell's ``grid`` texel slots, or ``None`` if it has no grid texture.
+
+        Built from the PRISTINE compiled texture -- ``_bundle``'s model is shared by every instance
+        and is mutated by every bake, so masks taken from the live texture would describe whatever
+        the last bake left. The slots are positional (texel indices), so they stay correct however
+        many colours have been written since.
+        """
+        key = (cls.DOMAIN, cls.TASK, int(cls.default_size))
+        if key in _GRID_SLOTS:
+            return _GRID_SLOTS[key]
+        import mujoco
+        m = cls._model()
+        t = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
+        if t < 0:
+            _GRID_SLOTS[key] = None
+            return None
+        _GRID_SLOTS[key] = _texel_slots(m, t, _grid_defaults()[:2], masks=_grid_masks(m, t))
+        return _GRID_SLOTS[key]
+
+    def make_variation_space(self) -> Dict:
+        """The base family's knobs plus ``floor.color``, the suite's checker texture.
+
+        A TEXTURE leaf, and the only one here. Every other knob in this family is a material colour,
+        a light scale, a camera scale or a visibility bit, all of which are read per frame -- which is
+        why ``_bundle`` could keep ONE ``mujoco.Renderer`` per (domain, size) for the life of the
+        process and say in its own comment that "only a TEXTURE edit would [need a second GL
+        context], and none is offered". This is that edit, and the comment's conclusion does not
+        follow from it: the escape it does not consider is an in-place texel write on the EXISTING
+        context, which is what ``_plate_texels.substitute`` does. No second context is created and
+        the one-Renderer-per-(domain, size) policy is unchanged.
+
+        ``(2, 3)`` and in that order because that is ``stable_worldmodel``'s own shape and order for
+        the leaf, in all twelve of its DM Control wrappers: ``rgb1`` then ``rgb2`` of the builtin
+        ``grid`` texture. The default is read from ``dm_control``'s ``common/materials.xml`` (see
+        ``_grid_defaults``), which is the same file swm's ``init_value`` transcribes -- so the
+        registered default is the compiled appearance BY CONSTRUCTION and the default plate cannot
+        move. That is asserted rather than trusted: ``texel_key`` returns ``None`` at the default, so
+        a default render keeps exactly the plate-cache key it had before this leaf existed.
+        """
+        space = super().make_variation_space()
+        slots = self._grid_slots()
+        if slots is None:
+            return space
+        d = slots["default"]
+        return Dict({**{k: space[k] for k in space},
+                     "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3),
+                                                 init_value=d.tolist())})})
+
     @property
     def PLATE_PATHS(self) -> tuple[str, ...]:                          # noqa: N802
         """Style leaves that change the STATIC scene and therefore the three baked plates.
@@ -1454,8 +1601,22 @@ class DMControlSuite(_DMCModel):
     # ---- scene bake -------------------------------------------------------
 
     def _plate_key(self, size, variation):
-        return ((self.DOMAIN, self.TASK, int(self.CAMERA), int(size), str(self.device))
-                + tuple(tuple(np.round(self._var(variation, p), 6)) for p in self.PLATE_PATHS))
+        """Every plate leaf, rounded -- except the texture leaf, which is keyed on the BYTES.
+
+        ``floor.color`` is quantised rather than rounded because ``int(255 * v)`` is what MuJoCo
+        actually stores: 0.1 and 0.1003 compile to the same texture and must share one bake, and at
+        the registered default ``texel_key`` returns ``None``, which is exactly the key this tuple
+        carried before the leaf existed. A default render therefore hits a cache that was warm before
+        this patch and bakes nothing extra.
+        """
+        out = [(self.DOMAIN, self.TASK, int(self.CAMERA), int(size), str(self.device))]
+        for p in self.PLATE_PATHS:
+            if p == "floor.color":
+                out.append(_texel_key(self._grid_slots(),
+                                      self._var(variation, p).reshape(2, 3)))
+            else:
+                out.append(tuple(np.round(self._var(variation, p), 6)))
+        return tuple(out)
 
     def _scene(self, size=None, variation=None) -> _Scene:
         size = int(size or self.size)
@@ -1599,10 +1760,35 @@ class DMControlSuite(_DMCModel):
              if int(m.site_bodyid[i]) != 0 or i in ep_s]
         return g, s
 
+    def _apply_floor(self, m, r, variation) -> None:
+        """Put one ``floor.color`` into this (domain, size)'s texture and onto its GL context.
+
+        Absolute, from the pristine masks, on EVERY bake, with no "it already looks like that"
+        shortcut -- the same rule ``_apply_variation`` follows one line above, and for the same
+        reason: the model and the renderer are shared by every instance of this class and carry
+        whatever the last bake left, so a bake that skipped the write would inherit a previous
+        caller's floor. That is not hypothetical here, because the plate cache is keyed on the
+        appearance and a MISS is the only thing that reaches this function: two misses in a row with
+        different colours are the normal case.
+
+        ``substitute`` makes the renderer's own GL context current before uploading. This family
+        keeps one ``Renderer`` per (domain, SIZE) and a process rendering at two sizes therefore
+        holds two live contexts; GL texture names are per-context, so an upload under the wrong one
+        silently overwrites an unrelated texture object in it. Workstream C measured exactly that on
+        gpu2264 in the OGB port -- two 128 px plates differing by 219/255, read as "the plate depends
+        on the state" -- before the ``make_current`` line existed. It is the reason this goes through
+        the shared helper instead of two lines here.
+        """
+        slots = self._grid_slots()
+        if slots is None:
+            return
+        _substitute_texels(m, r, slots, self._var(variation, "floor.color").reshape(2, 3))
+
     def _bake(self, size: int, variation) -> _Scene:
         import mujoco
         env, m, d, pr, r, _ = self._bundle(size)
         self._apply_variation(m, pr, variation)
+        self._apply_floor(m, r, variation)
 
         gmov, smov = self._movers(m)
         gstat = [i for i in self._visible(m, "geom") if i not in gmov]
