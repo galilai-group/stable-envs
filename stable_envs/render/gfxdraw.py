@@ -625,16 +625,28 @@ class StyleCanvas(Canvas):
 
 
 # --------------------------------------------------------------------------- primitives
-def edge_setup(x1, y1, x2, y2, W, H):
-    """``clip_line`` plus the Wu walk's constants, for a FLAT batch of edges. Rule 4.
+def edge_geometry(x1, y1, x2, y2, W, H) -> tuple[torch.Tensor, ...]:
+    """``clip_line`` plus every constant ``aalineColor``'s Wu walk needs, for a FLAT batch of edges.
 
-    Split out of ``aaline`` because it is the whole of the per-edge python cost and none of the
-    per-edge order. Six Cohen-Sutherland iterations are ~180 tiny operator calls whatever the edge's
-    length, so at batch 1 they are the renderer: 3.1 ms of an 8.1 ms CartPole frame, 38%, in eight
-    calls. Computing them for every edge of a polygon at once makes that one call. The WRITES stay
-    per edge and in order -- two edges of a polygon can land on the same pixel at a shared vertex,
-    and a batched scatter would read every destination before writing any of them, so merging them
-    would change the picture at corners.
+    **The one place this arithmetic is written down.** All three anti-aliased paths in this package
+    need exactly it -- the per-primitive path (:func:`edge_setup` -> :func:`aaline_emit`), the fused
+    CarRacing kernel's pre-pass (``gfxdraw_fused.edge_table``) and, through that table, the fused
+    classic-control kernel. It used to be transcribed twice, character for character, in two modules
+    that are certified against each other pixel for pixel; a single edited line in one copy would
+    have moved a fringe in one path and not the other, and the diff test would have found it only on
+    the polygons it happened to cover.
+
+    Rule 4, and the reason the setup is split from the writes: six Cohen-Sutherland iterations are
+    ~180 tiny operator calls whatever the edge's length, so at batch 1 they are the renderer (3.1 ms
+    of an 8.1 ms CartPole frame, 38%, in eight calls). Doing them for every edge at once makes that
+    one call. The WRITES stay per edge and in order -- two edges of a polygon can land on the same
+    pixel at a shared vertex, and a batched scatter would read every destination before writing any
+    of them, so merging those would change the picture at corners.
+
+    Returns ``(draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)``,
+    where ``x1, y1, x2, y2`` are the CLIPPED endpoints (the clip's endpoint swap included, because
+    it decides which end gets the solid initial pixel) and ``xx0, yy0`` is the walk's origin after
+    the walk's own top-to-bottom flip.
     """
     draw, x1, y1, x2, y2 = clip_line(x1, y1, x2, y2, W, H)
     flip = y1 > y2
@@ -651,7 +663,14 @@ def edge_setup(x1, y1, x2, y2, W, H):
     minor = torch.where(ymaj, dx, dy)
     E = torch.div(minor << 16, major.clamp_min(1), rounding_mode="floor")
     lo = torch.minimum(xx0, xx0 + xdir * dx)
-    return (draw, x1, y1, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
+    return (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
+
+
+def edge_setup(x1, y1, x2, y2, W, H) -> tuple[torch.Tensor, ...]:
+    """:func:`edge_geometry` in the order :func:`aaline_emit` unpacks it (no clipped far endpoint)."""
+    draw, sx, sy, _x2, _y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = \
+        edge_geometry(x1, y1, x2, y2, W, H)
+    return (draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
 
 
 def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
