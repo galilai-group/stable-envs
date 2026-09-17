@@ -1,0 +1,289 @@
+{
+ "arms": [
+  "baseline",
+  "head"
+ ],
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "blocks_merge": false,
+ "device": "cpu",
+ "head_sha": "d7222350f1f84e0007a56339dacc1cb4b0a35b87",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "python": "/Users/samib/se6-venv/bin/python",
+ "regression_bar": 1.1,
+ "reps_per_leg": 5,
+ "rounds": 7,
+ "rows": [
+  {
+   "baseline_leg_spread": 0.1631,
+   "baseline_ms": 19.796,
+   "baseline_rounds_ms": [
+    18.738,
+    19.659,
+    21.458,
+    19.524,
+    21.966,
+    19.796,
+    19.885
+   ],
+   "batch": 64,
+   "config": "PushT",
+   "head_ms": 18.833,
+   "head_rounds_ms": [
+    18.142,
+    18.531,
+    30.254,
+    20.511,
+    23.316,
+    18.451,
+    18.833
+   ],
+   "ratio_head_over_baseline": 0.9513,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.3241,
+   "baseline_ms": 19.843,
+   "baseline_rounds_ms": [
+    18.682,
+    20.068,
+    25.013,
+    19.729,
+    18.581,
+    19.989,
+    19.843
+   ],
+   "batch": 16,
+   "config": "SimplePointMaze",
+   "head_ms": 20.744,
+   "head_rounds_ms": [
+    36.26,
+    20.764,
+    26.632,
+    20.744,
+    20.066,
+    20.306,
+    20.58
+   ],
+   "ratio_head_over_baseline": 1.0454,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.1525,
+   "baseline_ms": 147.725,
+   "baseline_rounds_ms": [
+    144.361,
+    151.521,
+    166.89,
+    148.209,
+    147.725,
+    145.278,
+    145.339
+   ],
+   "batch": 8,
+   "config": "Roundabout",
+   "head_ms": 147.827,
+   "head_rounds_ms": [
+    147.924,
+    148.357,
+    146.927,
+    146.529,
+    149.403,
+    143.144,
+    147.827
+   ],
+   "ratio_head_over_baseline": 1.0007,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0631,
+   "baseline_ms": 7.167,
+   "baseline_rounds_ms": [
+    7.09,
+    7.483,
+    7.181,
+    7.031,
+    7.118,
+    7.173,
+    7.167
+   ],
+   "batch": 32,
+   "config": "TwoRoom",
+   "head_ms": 7.112,
+   "head_rounds_ms": [
+    7.036,
+    6.985,
+    7.274,
+    7.112,
+    7.264,
+    7.291,
+    7.07
+   ],
+   "ratio_head_over_baseline": 0.9923,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0255,
+   "baseline_ms": 14.201,
+   "baseline_rounds_ms": [
+    14.14,
+    14.208,
+    13.952,
+    14.201,
+    14.264,
+    14.001,
+    14.315
+   ],
+   "batch": 16,
+   "config": "CartPole",
+   "head_ms": 14.311,
+   "head_rounds_ms": [
+    13.99,
+    13.966,
+    14.357,
+    13.956,
+    14.311,
+    14.334,
+    14.494
+   ],
+   "ratio_head_over_baseline": 1.0077,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.8246,
+   "baseline_ms": 18.219,
+   "baseline_rounds_ms": [
+    17.79,
+    18.029,
+    20.154,
+    18.219,
+    32.813,
+    18.387,
+    17.972
+   ],
+   "batch": 16,
+   "config": "Acrobot",
+   "head_ms": 18.512,
+   "head_rounds_ms": [
+    18.512,
+    17.638,
+    20.827,
+    28.729,
+    18.022,
+    18.008,
+    18.766
+   ],
+   "ratio_head_over_baseline": 1.0161,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0378,
+   "baseline_ms": 14.124,
+   "baseline_rounds_ms": [
+    14.124,
+    14.108,
+    13.984,
+    14.132,
+    14.518,
+    14.025,
+    14.367
+   ],
+   "batch": 16,
+   "config": "Pendulum",
+   "head_ms": 14.319,
+   "head_rounds_ms": [
+    14.096,
+    14.334,
+    13.955,
+    14.849,
+    14.444,
+    13.989,
+    14.319
+   ],
+   "ratio_head_over_baseline": 1.0138,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.2666,
+   "baseline_ms": 4.805,
+   "baseline_rounds_ms": [
+    4.767,
+    5.879,
+    4.922,
+    4.805,
+    4.665,
+    5.129,
+    4.598
+   ],
+   "batch": 32,
+   "config": "Crafter",
+   "head_ms": 4.767,
+   "head_rounds_ms": [
+    6.2,
+    5.409,
+    4.642,
+    4.703,
+    4.812,
+    4.69,
+    4.767
+   ],
+   "ratio_head_over_baseline": 0.9921,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0354,
+   "baseline_ms": 17.883,
+   "baseline_rounds_ms": [
+    17.519,
+    17.599,
+    17.886,
+    17.883,
+    17.821,
+    18.153,
+    18.062
+   ],
+   "batch": 32,
+   "config": "CraftaxClassic",
+   "head_ms": 17.859,
+   "head_rounds_ms": [
+    17.859,
+    17.53,
+    17.11,
+    18.387,
+    18.108,
+    18.14,
+    17.79
+   ],
+   "ratio_head_over_baseline": 0.9987,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0549,
+   "baseline_ms": 7.583,
+   "baseline_rounds_ms": [
+    7.827,
+    7.675,
+    7.529,
+    7.411,
+    7.619,
+    7.583,
+    7.56
+   ],
+   "batch": 32,
+   "config": "CraftaxFull",
+   "head_ms": 7.568,
+   "head_rounds_ms": [
+    7.568,
+    7.386,
+    7.488,
+    7.658,
+    7.516,
+    7.91,
+    7.629
+   ],
+   "ratio_head_over_baseline": 0.9981,
+   "status": "ok"
+  }
+ ],
+ "set": "cpu",
+ "worst_ratio": 1.0454
+}

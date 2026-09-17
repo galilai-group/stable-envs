@@ -1,0 +1,81 @@
+{
+ "arms": [
+  "head",
+  "head"
+ ],
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "blocks_merge": false,
+ "device": "cpu",
+ "head_sha": "d7222350f1f84e0007a56339dacc1cb4b0a35b87",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "python": "/Users/samib/se6-venv/bin/python",
+ "regression_bar": 1.1,
+ "reps_per_leg": 7,
+ "rounds": 9,
+ "rows": [
+  {
+   "baseline_leg_spread": 0.0777,
+   "baseline_ms": 18.262,
+   "baseline_rounds_ms": [
+    19.059,
+    19.476,
+    18.142,
+    18.262,
+    18.131,
+    18.057,
+    18.23,
+    18.913,
+    19.243
+   ],
+   "batch": 16,
+   "config": "SimplePointMaze",
+   "head_ms": 19.075,
+   "head_rounds_ms": [
+    18.917,
+    19.075,
+    18.292,
+    19.507,
+    18.186,
+    18.672,
+    20.252,
+    19.148,
+    19.981
+   ],
+   "ratio_head_over_baseline": 1.0445,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0932,
+   "baseline_ms": 19.305,
+   "baseline_rounds_ms": [
+    19.959,
+    19.633,
+    19.188,
+    19.305,
+    18.161,
+    19.62,
+    19.125,
+    19.387,
+    18.406
+   ],
+   "batch": 64,
+   "config": "PushT",
+   "head_ms": 19.016,
+   "head_rounds_ms": [
+    20.04,
+    18.192,
+    19.016,
+    18.766,
+    18.952,
+    19.132,
+    18.408,
+    20.69,
+    19.915
+   ],
+   "ratio_head_over_baseline": 0.985,
+   "status": "ok"
+  }
+ ],
+ "set": "cpu",
+ "worst_ratio": 1.0445
+}
