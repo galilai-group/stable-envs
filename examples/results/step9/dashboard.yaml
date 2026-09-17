@@ -5,7 +5,7 @@ baseline_resolution:
   milestone_branch: milestone/step8-functional-completion @21cb306 (origin identical)
   tag: step8-closure (annotated 045849e) -> 21cb306 (origin identical)
   sami_pre_step9_baseline: 21cb306
-  step9_integration: 21cb306 at Wave 0 start (worktree /Users/samib/stable-envs-step9-integration)
+  step9_integration: d07ffa8 (foundation merged; Wave 1 template = stable_envs/envs/pusht.py + examples/results/step9/foundation/findings.md)
 oracle:
   files: examples/results/step9/oracle/{step8_support_matrix,step8_gate_f_matrix,step8_tiers}.json (+SHA256SUMS)
   counts:
@@ -65,16 +65,49 @@ workstreams:
   branch: step9/foundation
   owner: opus (high)
   reviewer: opus (high), independent
-  status: 'IN PROGRESS: author applying D1-D4 + T1, then reviewer re-verification, then merge'
+  status: MERGED into step9/integration at d07ffa8 (re-review APPROVE at 67e5039)
   files_owned: stable_envs/{__init__,__about__,_config,env,dynamics,specs,registry,interop}.py, stable_envs/envs/pusht.py, tests/unit/test_foundation_*.py, pyproject deps (tensordict, loguru) as authorised
   ids_affected: swm/PushT-v1 (canonical example); aliases keep all 42 working
   baseline_sha: 21cb306
-  head_sha: aeaaf6c (+779e7a9 GPU oracle arm)
-  review: 'review_foundation.md APPROVE-WITH-CHANGES (opus high, independent): contract 10/10 PASS, import graph acyclic by AST, suites 1241/269 reproduced; D1-D4 required, T1 hidden-state hook recommended'
+  head_sha: 67e5039
+  review: 'review_foundation.md APPROVE-WITH-CHANGES (opus high, independent): contract 10/10 PASS, import graph acyclic by AST, suites 1241/269 reproduced; D1-D4 required, T1 hidden-state hook recommended
+    -> re-review APPROVE'
   tests: se6-venv tests/unit 1241 passed / 195 skipped (baseline 1125 + 116 new); se8-vm-venv variation maps + gate record + swm 269 passed / 58 skipped (= baseline); cuda host foundation tests 35 passed
   oracle_diff: 'PushT frozen Step-4 corpus: frames/describe/style/registry identical on cpu and cuda (job 6463991 gpu1503 RTX A6000); transition == step bitwise on both devices incl. the CUDA-graph path;
     unroll == repeated transition'
   performance_diff: 'cpu paired: render -3.5 %, step +1.0 % (inside spread); GPU timings owed with Wave-1 hot-path checks'
+  merge_sha: d07ffa8
+- workstream: A_envs_classic_nav
+  branch: step9/envs-classic-nav
+  worktree: /Users/samib/stable-envs-step9-envs-classic-nav
+  owner: opus (medium)
+  model: opus
+  status: DELIVERED aa1608e; incorporating rulings (merge integration b1585fc, drop state override) + GPU arm job 6464309; then review
+  files_owned: stable_envs/envs/classic_control.py, stable_envs/envs/navigation.py (from swm_nav.py + simple_point_maze.py), their tests
+  ids_affected: swm/{CartPole,Acrobot,MountainCar,MountainCarContinuous,Pendulum}Control-v1, swm/SimplePointMaze-v0, swm/Piecewise-v0, swm/TwoRoom*-v0 (8 families of the 42)
+  baseline_sha: d07ffa8
+  head_sha: aa1608e
+  tests: se6 tests/unit 1334 passed (1246 + 88 new); se8-vm subset 269/58 unchanged
+  oracle_diff: '10/10 cells frames byte-identical vs 21cb306 (640 frozen states), describe/style/taxonomy/registry identical; transition == step bitwise, unroll == 4x transition; live SWM bridges 0.99974-0.99994
+    exact (declared residual); SimplePointMaze matplotlib bridge run by the coordinator: interior exact 1.0, step exact; EXPECTED difference: navigation cells registry module = stable_envs.envs.navigation
+    (mandated merge)'
+  performance_diff: render -0.19 % / +0.24 % (noise); step +12/+28 us absolute from the StepResult TensorDict (accepted, mechanism recorded)
+  api_diff: num_envs=; State/transition/unroll; swm_nav.py + simple_point_maze.py are sys.modules aliases of navigation.py until Wave 3
+- workstream: H_render_3d
+  branch: step9/render-3d
+  worktree: /Users/samib/stable-envs-step9-render-3d
+  owner: opus (high)
+  model: opus
+  status: DELIVERED 899e4a6; GPU arm job 6464319 running; then review
+  files_owned: stable_envs/render/primitives.py (new), raycast3d.py, cpu3d.py, their tests
+  ids_affected: 'every raycast3d/cpu3d consumer (DMC parity cells, OGBMaze, Fetch cpu path): exact-output preservation required'
+  baseline_sha: d07ffa8
+  head_sha: 899e4a6
+  tests: se6 tests/unit 1263 passed (1246 + 16 new + 1 parametrised); se8-vm 341 passed
+  oracle_diff: 21 cells byte-identical on cpu (12 DMC parity + PointMass + Manipulator via raycast3d; 5 trackcom via cpu3d; 4 gym-MuJoCo), fast and reference expressions; 23 GPU-only ids queued for the
+    GPU arm
+  performance_diff: cpu paired worst ratio 1.017 (bar 1.10); cpu3d 1.000-1.002
+  api_diff: new render/primitives.py (shared vocabulary); raycast3d re-exports every moved name; zero consumer call sites changed
 decisions:
 - date: '2026-09-17'
   by: coordinator
@@ -92,6 +125,19 @@ decisions:
   by: coordinator
   topic: Wave-1 scope from D4
   ruling: every family workstream must make its classes accept num_envs= and declare state_layout/hidden state through the Env hooks; the pinned count of classes rejecting num_envs may only go down
+- date: '2026-09-17'
+  by: coordinator
+  topic: per-field public dtype in state_layout (A R1)
+  ruling: 'implemented centrally at b1585fc: optional 4th element; unpack/state honour it, pack stays float32; DMC/MuJoCo use it too'
+- date: '2026-09-17'
+  by: coordinator
+  topic: registry-row test vs file moves (A R2)
+  ruling: 'Wave-1-wide: semantic columns compared exactly; module compared by reachability (same class, old import path resolves) until Wave 3'
+- date: '2026-09-17'
+  by: coordinator
+  topic: StepResult cost on trivially cheap steps (A)
+  ruling: 'accepted: the plan 10 % bar applies to render/dynamics hot paths; +12-28 us absolute per step is the TensorDict construction accepted at Wave 0; render unchanged; recorded as a Wave-3 candidate
+    (lazy StepResult) not a blocker'
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -101,5 +147,10 @@ incident_log:
 - date: '2026-09-17'
   item: foundation delivered (aeaaf6c); GPU oracle arm PASS (job 6463991; first attempt 6463965 failed on a missing loguru in the uv venv, fixed with uv pip); architecture review APPROVE-WITH-CHANGES; author
     applying D1-D4 + T1
+- date: '2026-09-17'
+  item: 'foundation merged d07ffa8; GPU oracle re-run at the merge SHA submitted (job 6464120); Wave 1 pair 1 launched: A classic/nav (opus medium) and H render-3d (opus high)'
+- date: '2026-09-17'
+  item: 'A and H delivered; foundation dtype change b1585fc; universe.shard_of fix; SPM matplotlib parity run by coordinator (PASS); GPU arms submitted: A 6464309, H 6464319'
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
+wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'
