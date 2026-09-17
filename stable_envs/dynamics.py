@@ -77,11 +77,13 @@ def unroll_from_transition(env, state: TensorDict, actions) -> TensorDict:
     agree to the bit.
     """
     acts = actions if torch.is_tensor(actions) else torch.as_tensor(actions)
-    if acts.ndim < 2:
+    n = int(getattr(env, "num_envs", 0) or 0)
+    if acts.ndim < 2 or (n and int(acts.shape[1]) != n):
         raise ValueError(
             f"{type(env).__name__}.unroll: actions are (T, num_envs, ...) — time first — and this "
-            f"input has shape {tuple(acts.shape)}. One action for every environment at every one of "
-            f"the T steps; there is no policy here to fill them in.")
+            f"input has shape {tuple(acts.shape)} for {n or 'num_envs'} environment(s). One action "
+            f"for every environment at every one of the T steps; there is no policy here to fill "
+            f"them in. A single step's actions are what `transition(state, action)` takes.")
     out = [ ]
     s = state
     for t in range(int(acts.shape[0])):

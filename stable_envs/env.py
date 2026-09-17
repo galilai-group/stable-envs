@@ -976,8 +976,12 @@ class Env:
         the gymnasium-style object the certification harness samples and validates against; this is
         the same layout in the package's own vocabulary.
         """
-        lo, hi = [], []
+        lo, hi, names = [], [], []
         for path, off, w in self.variation_space.flat_layout():
+            # ONE NAME PER COLUMN, which ``style_names`` is not: a leaf of width 3 (an RGB colour)
+            # occupies three columns under one path, and a spec whose names do not line up with its
+            # columns is a labelling that would be wrong exactly where it is consulted.
+            names.extend([path] if w == 1 else [f"{path}[{i}]" for i in range(w)])
             node = self.variation_space
             for part in path.split("."):
                 node = node[part]
@@ -991,8 +995,7 @@ class Env:
                 lo.extend([-np.inf] * w)
                 hi.extend([np.inf] * w)
         return Spec(shape=(int(self.style_dim),), low=np.asarray(lo, np.float64),
-                    high=np.asarray(hi, np.float64), device=self.device,
-                    names=tuple(self.style_names))
+                    high=np.asarray(hi, np.float64), device=self.device, names=tuple(names))
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -1055,3 +1058,9 @@ class Env:
     def __exit__(self, *exc) -> bool:
         self.close()
         return False
+
+
+#: ``dynamics.has_dynamics`` asks whether a class OVERRIDES ``step``/``transition``, and it needs the
+#: class they are inherited from to compare against. Set here rather than inside ``dynamics`` because
+#: ``env`` imports ``dynamics`` and not the other way round: the arrow stays one-way.
+Env._se_dynamics_base = Env
