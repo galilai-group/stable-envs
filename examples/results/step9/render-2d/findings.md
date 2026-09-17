@@ -339,6 +339,12 @@ MiniHack) — all of them in §9 stage 1. Nothing was installed.
 there is nothing for a DINO tripwire or a semantic smoke to be sensitive to. If the GPU arm returns a
 difference, that cell needs a paired semantic check before merge and this recommendation changes.
 
+## 13a. Provenance of the records
+
+`oracle_cpu_local.json` carries `head_sha de0ba10` (the findings commit). The three timing records
+carry `cd97cd3`, the commit before it; `git diff cd97cd3 HEAD -- stable_envs tests` is empty, so they
+describe the code at HEAD.
+
 ## 14. Commits
 
 ```
