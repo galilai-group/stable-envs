@@ -267,6 +267,12 @@ interpreters — a detached `git worktree` of `21cb306` and this branch, the sam
 Workstream B there is not even one declared exception, because every Step-8 module-level name of both
 modules still resolves.
 
+The record's `head_sha` is `f00ddcf`, the last commit before the one that carries it — the commit
+that adds a record cannot be the one it measured. The oracle was re-run there after the findings
+landed, and the ONLY key that changed against the record measured at `a1352ab` (the migration commit
+itself) was `head_sha`: all eleven frame digests, `describe()`, the style layout, the registry rows,
+the declarations and the functional checks are byte for byte what they were.
+
 Per-scene default-frame digests (first 16 hex of the SHA-256 over 64 frames at 224 px, ss=2; the
 dataset siblings of a scene share its digest, which is the fact the plate cache is keyed on):
 
