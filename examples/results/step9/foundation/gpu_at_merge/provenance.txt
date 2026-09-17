@@ -1,0 +1,6 @@
+host gpu1505.oscar.ccv.brown.edu
+job 6464120
+sha d07ffa8eb4d300ad2ee92eaa5a94c80099da8429 (step9/integration after the foundation merge)
+NVIDIA A40, 575.57.08
+python $SCR/venvs/se-step6/bin/python (torch 2.14.0+cu126, tensordict 0.14.2)
+result: ORACLE PASS, identical: true; tests/gpu PushT subset 35 passed / 9 skipped; foundation unit tests on the cuda host 40 passed
