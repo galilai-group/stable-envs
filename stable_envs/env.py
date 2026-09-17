@@ -548,9 +548,13 @@ class Env:
     #: condition ``set_state`` puts the env in, and the reference's condition after ``reset``), and is
     #: dropped by ``pack``, so the packed row, its digests and every frozen corpus are untouched.
     #:
+    #: An entry may carry a FOURTH element, the public dtype of that field (``torch.float64`` for a
+    #: cell whose claim is near-bit-exactness against a float64 reference); ``unpack`` and ``state``
+    #: honour it and ``pack`` still writes the float32 row, so digests and corpora are untouched.
+    #:
     #: Left empty, an env gets the trivial layout ``{"state": (state_dim,)}``: no ceremony for a cell
     #: whose state is one vector (contract §3).
-    state_layout: tuple[tuple[tuple[str, ...], int, int | None], ...] = ()
+    state_layout: tuple[tuple, ...] = ()
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
                  device: str | None = None, backend: str = "auto", seed: int = 0,
@@ -865,9 +869,19 @@ class Env:
     def _layout(cls) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
         """This env's ``state_layout``, or the trivial one-key layout when it declares none."""
         if cls.state_layout:
-            return tuple((tuple(k) if isinstance(k, (tuple, list)) else (k,), int(w),
-                          None if o is None else int(o)) for k, w, o in cls.state_layout)
+            return tuple((tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],), int(e[1]),
+                          None if e[2] is None else int(e[2])) for e in cls.state_layout)
         return ((("state",), int(cls.state_dim), 0),)
+
+    @classmethod
+    def _layout_dtypes(cls) -> dict[tuple[str, ...], torch.dtype]:
+        """``{key path: public dtype}`` for the fields whose ``state_layout`` entry names one."""
+        out = {}
+        for e in cls.state_layout or ():
+            if len(e) >= 4 and e[3] is not None:
+                key = tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],)
+                out[key] = e[3] if isinstance(e[3], torch.dtype) else getattr(torch, str(e[3]))
+        return out
 
     def _check_layout(self) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
         lay = self._layout()
@@ -915,12 +929,16 @@ class Env:
         ``reset``, so ``unpack(pack(s))`` is the same environment and not an approximation of it.
         """
         lay = self._check_layout()
+        dtypes = self._layout_dtypes()
         r = check_states(self, rows, f"{type(self).__name__}.unpack").reshape(-1, int(self.state_dim))
         n = int(r.shape[0])
         out: dict = {}
         for key, w, off in lay:
-            v = (r[:, off:off + w].clone() if off is not None
-                 else torch.zeros(n, w, device=self.device, dtype=torch.float32))
+            dt = dtypes.get(key, torch.float32)
+            # ``copy=True``: ``.to`` on a same-dtype tensor returns the SAME storage, and a State that
+            # aliases the env's packed buffer changes under the caller's feet at the next step.
+            v = (r[:, off:off + w].to(dt, copy=True) if off is not None
+                 else torch.zeros(n, w, device=self.device, dtype=dt))
             node = out
             for part in key[:-1]:
                 node = node.setdefault(part, {})
@@ -944,17 +962,38 @@ class Env:
         """
         return {}
 
+    def _live_state(self) -> dict[tuple[str, ...], torch.Tensor]:
+        """``{key path: (n, width) tensor}`` for DRAWN fields whose live value is more precise than
+        the packed row.
+
+        The packed float32 row is a lossy projection for a cell that simulates in float64 (classic
+        control's claim is near-bit-exactness against a float64 reference): widening the row back
+        gives ``float64(float32(x)) != x``, so ``transition(env.state, a)`` would silently diverge
+        from ``step(a)`` from the second step on. A cell that keeps a higher-precision live buffer
+        answers here for the fields it carries; ``state`` takes these over the widened row. Optional:
+        the default is ``{}`` and is correct for every cell whose live state IS the packed row.
+        """
+        return {}
+
     @property
     def state(self) -> TensorDict:
         """The state the env currently holds, as a :data:`State`. ``get_state()`` is the packed row.
 
-        The packed half comes from ``unpack(get_state())``; the hidden half — the fields the row does
-        not carry — comes from :meth:`_hidden_state`, because only the cell knows where it lives.
+        The packed half comes from ``unpack(get_state())`` unless :meth:`_live_state` offers a more
+        precise live value; the hidden half — the fields the row does not carry — comes from
+        :meth:`_hidden_state`, because only the cell knows where it lives.
         """
         td = self.unpack(self.get_state())
         hidden = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
                   for k, v in (self._hidden_state() or {}).items()}
         n = int(td.batch_size[0])
+        dtypes = self._layout_dtypes()
+        live = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
+                for k, v in (self._live_state() or {}).items()}
+        for key, w, off in self._layout():
+            if off is not None and key in live:
+                td[key] = torch.as_tensor(live[key], device=self.device,
+                                          dtype=dtypes.get(key, torch.float32)).reshape(-1, w)[:n].clone()
         missing = []
         for key, w, off in self._layout():
             if off is not None:
@@ -963,7 +1002,7 @@ class Env:
                 missing.append(".".join(key))
                 continue
             td[key] = torch.as_tensor(hidden[key], device=self.device,
-                                      dtype=torch.float32).reshape(-1, w)[:n]
+                                      dtype=dtypes.get(key, torch.float32)).reshape(-1, w)[:n]
         if missing:
             raise NotImplementedError(
                 f"{type(self).__name__}.state: {missing} is declared in state_layout with offset "

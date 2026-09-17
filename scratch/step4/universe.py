@@ -149,7 +149,7 @@ def shard_of(c: dict) -> str:
     """Which interpreter a configuration needs. Named so a shard file says what it was launched for."""
     mod = (c.get("module") or "").rsplit(".", 1)[-1]
     return {"dmcontrol": "dmc", "fetch": "fetch", "ogbench": "ogb", "craftax": "swm",
-            "swm_nav": "swm", "simple_point_maze": "swm"}.get(mod, "raster")
+            "swm_nav": "swm", "simple_point_maze": "swm", "navigation": "swm"}.get(mod, "raster")
 
 
 if __name__ == "__main__":

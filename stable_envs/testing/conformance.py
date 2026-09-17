@@ -1070,8 +1070,9 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
     overall final-step median for envs that have no such groups — one env's vocabulary should not
     decide whether another env can be checked at all.
     """
+    from stable_envs.dynamics import has_dynamics
     cls = type(env)
-    if not hasattr(env, "step"):
+    if not has_dynamics(env):
         raise ValueError(f"{cls.__name__} has no step(); there is no solver to compare. Envs that ship "
                          f"a renderer alone are covered by the render-parity checks instead.")
     if not hasattr(cls, "reference_sim_state"):

@@ -110,8 +110,10 @@ import math
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
-from ..core.env import StableEnv, register
+from ..env import Env, check_states
+from ..registry import register
 from ..render import gfxdraw as G
 from ..spaces import Dict, Discrete, RGBBox
 from . import _stepgraph
@@ -159,7 +161,7 @@ def _box(H: int, W: int, y0, y1, x0, x1, m: int = 2):
             max(0, int(x0) - m), min(W, int(x1) + 1 + m))
 
 
-class _Classic(StableEnv):
+class _Classic(Env):
     """Shared scaffolding: fixed native canvas, float64 geometry, arbitrary leading dims.
 
     Subclasses implement ``_draw(cv, s, sty)`` on a pre-flip canvas, where ``sty`` is the resolved
@@ -263,18 +265,149 @@ class _Classic(StableEnv):
         self._sim.copy_(self._dynamics(self._sim, self._act))
         self._state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
 
+    # ------------------------------------------------------------------ Step-9 state / dynamics
+    #
+    # ``state_layout`` is DERIVED, in ``__init_subclass__`` below, from ``sim_state_names`` and
+    # ``render_from_sim`` rather than written out five times. Those two already say everything the
+    # layout needs — which dynamical variables exist and which of them the packed row carries — so a
+    # hand-written layout would be the same fact in a second place, free to disagree with the first.
+    # The velocities the packed row does not carry get offset ``None``, which is exactly PushT's
+    # agent velocity: real dynamical state, part of the public State so ``transition`` can be pure,
+    # dropped by ``pack`` so the frozen corpus layout is untouched.
+
+    def __init_subclass__(cls, **kw):
+        super().__init_subclass__(**kw)
+        if cls.sim_state_names:
+            col = {i: j for j, i in enumerate(cls.render_from_sim)}
+            # The fourth element is the PUBLIC DTYPE (foundation commit b1585fc): float64, because
+            # this family's claim is near-bit-exactness against a float64 reference and a float32
+            # State would make ``transition`` a lower-precision simulator. ``pack`` still writes the
+            # unchanged float32 row, so no digest and no frozen corpus moves.
+            cls.state_layout = tuple(((nm,), 1, col.get(i), torch.float64)
+                                     for i, nm in enumerate(cls.sim_state_names))
+            cls._check_state_layout_is_complete()
+
+    @classmethod
+    def _check_state_layout_is_complete(cls) -> None:
+        """At CLASS CREATION: the derived layout covers the packed row and names every variable once.
+
+``state_layout``, ``_hidden_state`` and ``_live_state`` are three views of one generated
+        fact, and this is where the generation is checked — once, for every class that will ever
+        exist, rather than on every ``step``. A cell that declared four ``sim_state_names`` and a
+        ``render_from_sim`` pointing at a two-column packed row would fail to IMPORT rather than
+        report zeros at run time.
+        """
+        drawn = tuple(cls.render_from_sim)
+        if len(set(drawn)) != len(drawn) or any(i >= len(cls.sim_state_names) for i in drawn):
+            raise TypeError(f"{cls.__name__}.render_from_sim={drawn} must index distinct entries of "
+                            f"sim_state_names={cls.sim_state_names}")
+        if len(drawn) != int(cls.state_dim):
+            raise TypeError(f"{cls.__name__}: render_from_sim names {len(drawn)} of the "
+                            f"{cls.state_dim} packed column(s); every column of the frozen row "
+                            f"belongs to exactly one dynamical variable")
+        if len(set(cls.sim_state_names)) != len(cls.sim_state_names):
+            raise TypeError(f"{cls.__name__}.sim_state_names={cls.sim_state_names} has a duplicate; "
+                            f"they become the public state's keys and must be distinct")
+
+    def _sim_columns(self, drawn: bool) -> dict:
+        """The live float64 columns of ``_sim``, split by whether the packed row carries them.
+
+        One function for both halves of the answer the base class asks for, because they ARE one
+        fact — the simulator's state — cut by ``render_from_sim``. Writing them separately is how the
+        two would come to disagree.
+        """
+        want = set(self.render_from_sim)
+        n = self._live_rows
+        return {(nm,): self._sim[:n, i:i + 1].clone()
+                for i, nm in enumerate(self.sim_state_names) if (i in want) == drawn}
+
+    def _hidden_state(self) -> dict:
+        """The velocities: dynamical variables the packed row does not carry (offset ``None``)."""
+        return self._sim_columns(drawn=False)
+
+    def _live_state(self) -> dict:
+        """The DRAWN variables, at the precision they are simulated in rather than the row's.
+
+        The packed row is ``_sim[:, render_from_sim].to(float32)``, so widening it back gives
+        ``float64(float32(x))``, which is not ``x``: measured on CartPole after five steps the drawn
+        ``x`` moves by 9.6e-08, and that is enough for ``transition(env.state, a)`` to stop equalling
+        ``step(a)`` — the functional path quietly becoming a different simulator. Answering here is
+        what the foundation's ``_live_state`` hook exists for (findings §10, R7); before it existed
+        this family had to override the ``state`` property, which was the one thing the Wave-0
+        review's T1 defect asks cells not to do.
+        """
+        return self._sim_columns(drawn=True)
+
+    def _state_td(self, sim: torch.Tensor) -> TensorDict:
+        """``(n, sim_dim)`` float64 -> the public :data:`State`, one key per dynamical variable.
+
+        FLOAT64, and that is the whole reason this family carries its own State builder. The claim
+        this file makes is near-bit-exactness against a float64 reference (3.3e-16 over 100 steps for
+        MountainCar), and the packed row is float32 because that is the renderer's contract — it
+        truncates to integer pixels anyway. A State that rounded the dynamical variables to float32
+        would make ``transition`` a DIFFERENT, lower-precision simulator from ``step``: identical for
+        one step taken from a corpus state (where the velocities are zero and the drawn columns are
+        float32 values), and drifting from the second step on. Keeping the public State at the
+        dtype the dynamics are computed in is what makes ``transition`` equal ``step`` to the bit and
+        ``unroll`` equal repeated ``transition`` for any number of steps.
+        """
+        n = int(sim.shape[0])
+        return TensorDict({nm: sim[:, i:i + 1].clone()
+                           for i, nm in enumerate(self.sim_state_names)},
+                          batch_size=[n], device=self.device)
+
+    def _sim_from_state(self, state) -> torch.Tensor:
+        """A :data:`State` (or packed rows) -> the ``(n, sim_dim)`` float64 vector ``_dynamics`` takes.
+
+        Packed rows are accepted and the velocities come back at rest, which is not a guess: it is
+        exactly what ``set_state`` writes and exactly what ``reference_set_state`` puts into the
+        official env, so ``transition(rows, a)`` and ``step(a)`` after ``set_state(rows)`` start from
+        the same condition.
+        """
+        names = self.sim_state_names
+        if not isinstance(state, TensorDict):
+            rows = check_states(self, state, f"{type(self).__name__}.transition"
+                                ).reshape(-1, self.state_dim)
+            sim = torch.zeros(rows.shape[0], len(names), device=self.device, dtype=torch.float64)
+            sim[:, self._cols] = rows.to(torch.float64)
+            return sim
+        n = int(state.batch_size[0]) if state.batch_size else 1
+        try:
+            cols = [torch.as_tensor(state[nm], device=self.device,
+                                    dtype=torch.float64).reshape(n, 1) for nm in names]
+        except KeyError as e:
+            raise KeyError(f"{type(self).__name__}.transition: the state is missing {e.args[0]!r}. "
+                           f"This env's state keys are {list(names)}.") from e
+        return torch.cat(cols, dim=1)
+
     @torch.no_grad()
-    def step(self, action) -> torch.Tensor:
+    def transition(self, state, action) -> TensorDict:
+        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
+
+        The same ``_dynamics`` over the same float64 inputs that ``step`` uses, so the two agree to
+        the bit — eager, because a captured CUDA graph reads ``_sim``/``_state`` at fixed addresses
+        and this call may not write them.
+        """
+        sim = self._sim_from_state(state)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32
+                              ).reshape(-1, self.action_dim)
+        return self._state_td(self._dynamics(sim, act))
+
+    @torch.no_grad()
+    def step(self, action) -> TensorDict:
         """Advance every environment one control step. ``action`` is ``(B, action_dim)``.
 
-        Returns the new ``(B, state_dim)`` compact state; ``sim_state()`` has the velocities. There is
-        no termination here and that is deliberate: the reference's ``step`` integrates whatever state
-        it is in and reports ``terminated`` as a separate flag, so a batched simulator that reset or
-        froze an environment on its own would be simulating something else. Apply the published
-        predicate to the returned states.
+        STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
+        ``"state"`` and nothing else. There is no reward and no termination here and that is
+        deliberate: the reference's ``step`` integrates whatever state it is in and reports
+        ``terminated`` as a separate flag, so a batched simulator that reset or froze an environment
+        on its own would be simulating something else, and a fabricated zero reward would read as a
+        measured one (contract §5). Apply the published predicate to the returned states.
         """
+        self._check_open("step")
         self._act.copy_(torch.as_tensor(action, device=self.device, dtype=torch.float32
                                         ).reshape(self.B, self.action_dim))
+        replayed = False
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None and not self._step_graph_error:
                 self._step_graph, self._step_graph_error = _stepgraph.capture(
@@ -283,9 +416,20 @@ class _Classic(StableEnv):
                     self.use_step_graph = False
             if self._step_graph is not None:
                 self._step_graph.replay()
-                return self._state
-        self._advance()
-        return self._state
+                replayed = True
+        if not replayed:
+            self._advance()
+        # Built straight from the simulator buffer rather than read back through ``self.state``.
+        # The two are the same object by construction — ``_live_state``/``_hidden_state`` are these
+        # very columns, and ``test_step_returns_exactly_env_state`` asserts it for every cell — but
+        # the property round-trips the packed row through ``unpack`` (a copy, a TensorDict, then two
+        # splices) to arrive back where ``_sim`` already is. On the cheapest step in the repository
+        # that doubled the cost of ``step``: measured 0.063 ms against 0.037 ms at 64 environments.
+        return self._step_result(self._state_td(self._sim[:self._live_rows]))
+
+    def _close(self) -> None:
+        """Drop the captured step graph. ``Env.close`` calls this once and is idempotent."""
+        self._step_graph = None
 
     # --- contract ---------------------------------------------------------------------------
 
@@ -324,6 +468,16 @@ class _Classic(StableEnv):
             self._draw(cv, s, sty)
             img = cv.rgb(o)
         return img.view(*lead, H, W, 3) if lead else img
+
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of the frame, which in this family is NOT ``(size, size)``.
+
+        ``Env.observation_spec`` assumes a square frame unless the env says otherwise, and three of
+        these five are 400x600: the reference hardcodes its canvas, ``size`` is its WIDTH, and a spec
+        that reported ``(600, 600, 3)`` would be wrong about the buffer every consumer allocates.
+        """
+        return self.native
 
     def _use_fused(self) -> bool:
         """The fused kernel is CUDA-only and opt-outable, and it never silently replaces the CPU
@@ -574,7 +728,7 @@ class CartPole(_Classic):
         return np.stack([rng.uniform(-2.4, 2.4, batch),
                          rng.uniform(-0.2095, 0.2095, batch)], 1).astype(np.float32)
 
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **0 push left, 1 push right**, floored.
 
         Declared per env rather than inherited because the number means something different in each of
@@ -763,7 +917,7 @@ class Pendulum(_Classic):
         return np.stack([rng.uniform(-np.pi, np.pi, batch),
                          rng.uniform(-2.0, 2.0, batch)], 1).astype(np.float32)
 
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **a continuous torque, clipped to [-2, 2]** —
         and the value that gets DRAWN, since the torque arrow is part of the render state."""
         return super().step(action)
@@ -962,7 +1116,7 @@ class Acrobot(_Classic):
         rng = rng or self.rng
         return rng.uniform(-np.pi, np.pi, (batch, 2)).astype(np.float32)
 
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **0 = -1 torque, 1 = 0, 2 = +1**, floored, applied
         to the ELBOW joint only — the shoulder is unactuated, which is the whole task."""
         return super().step(action)
@@ -1160,7 +1314,7 @@ class MountainCar(_Classic):
         rng = rng or self.rng
         return rng.uniform(self.MINP, self.MAXP, (batch, 1)).astype(np.float32)
 
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **0 push left, 1 coast, 2 push right**, floored."""
         return super().step(action)
 
@@ -1228,7 +1382,7 @@ class MountainCarContinuous(MountainCar):
         vel = torch.where((pos == np.float32(self.MINP)) & (vel < 0), torch.zeros_like(vel), vel)
         return torch.stack([pos.to(torch.float64), vel.to(torch.float64)], 1)
 
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **a continuous force, clipped to [-1, 1]** — not
         MountainCar-v0's three-way push, which is the second thing these two envs do not share."""
         return super().step(action)
