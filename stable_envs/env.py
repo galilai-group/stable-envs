@@ -865,19 +865,21 @@ class Env:
 
     # ------------------------------------------------------------------ state: packed row <-> State
 
-    @classmethod
-    def _layout(cls) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
-        """This env's ``state_layout``, or the trivial one-key layout when it declares none."""
-        if cls.state_layout:
-            return tuple((tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],), int(e[1]),
-                          None if e[2] is None else int(e[2])) for e in cls.state_layout)
-        return ((("state",), int(cls.state_dim), 0),)
+    def _layout(self) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
+        """This env's ``state_layout``, or the trivial one-key layout when it declares none.
 
-    @classmethod
-    def _layout_dtypes(cls) -> dict[tuple[str, ...], torch.dtype]:
+        An instance method, not a classmethod: a family whose state width comes from a compiled
+        model (DM Control, Fetch, RoboCasa) only knows ``state_dim`` once it is built.
+        """
+        if self.state_layout:
+            return tuple((tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],), int(e[1]),
+                          None if e[2] is None else int(e[2])) for e in self.state_layout)
+        return ((("state",), int(self.state_dim), 0),)
+
+    def _layout_dtypes(self) -> dict[tuple[str, ...], torch.dtype]:
         """``{key path: public dtype}`` for the fields whose ``state_layout`` entry names one."""
         out = {}
-        for e in cls.state_layout or ():
+        for e in self.state_layout or ():
             if len(e) >= 4 and e[3] is not None:
                 key = tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],)
                 out[key] = e[3] if isinstance(e[3], torch.dtype) else getattr(torch, str(e[3]))
