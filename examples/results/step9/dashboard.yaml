@@ -1,0 +1,52 @@
+# Step 9 coordinator dashboard (machine-readable); edit only via yaml load/dump
+step: 9
+baseline_sha: 21cb30678b7a7d0f3344b59f176f33d3f3b09ffc
+baseline_resolution:
+  milestone_branch: milestone/step8-functional-completion @21cb306 (origin identical)
+  tag: step8-closure (annotated 045849e) -> 21cb306 (origin identical)
+  sami_pre_step9_baseline: 21cb306
+  step9_integration: 21cb306 at Wave 0 start (worktree /Users/samib/stable-envs-step9-integration)
+oracle:
+  files: examples/results/step9/oracle/{step8_support_matrix,step8_gate_f_matrix,step8_tiers}.json (+SHA256SUMS)
+  counts:
+    backend_class:
+      R: 12
+      S: 28
+      n/a: 2
+    cpu_tier_status:
+      MEASURED: 24
+      UNMEASURED: 15
+      UNSUPPORTED_BY_DESIGN: 3
+    gate_a:
+      PASS: 40
+      UNSUPPORTED_BY_DESIGN: 2
+    gpu_tier_status:
+      MEASURED: 40
+      UNMEASURED: 2
+    pixel_producing: 40
+    render_covered: 40
+    rows: 42
+    symbolic: 2
+    variation_map:
+      complete: 26
+      n/a: 2
+      partial: 12
+      unknown: 2
+  rule: immutable input; every Step-9 difference is API_ONLY / INTENTIONAL_IMPROVEMENT / REGRESSION; closure requires REGRESSION = 0
+plan: STEP_09_AGENT_BRIEFS/STEP_09_OSS_REFACTOR_AND_PRODUCTIZATION.md (Sami; binding)
+file_ownership:
+  coordinator:
+  - stable_envs/__init__.py
+  - stable_envs/env.py
+  - stable_envs/dynamics.py
+  - stable_envs/specs.py
+  - stable_envs/registry.py
+  - stable_envs/_config.py
+  - pyproject.toml
+  - examples/results/step9/dashboard.yaml
+workstreams: []
+decisions: []
+escalations: []
+incident_log:
+- date: '2026-09-17'
+  item: 'Wave 0 started: baseline 21cb306 verified on origin; step9/integration + sami/pre-step9-baseline created; oracle snapshotted; inventory taken'
