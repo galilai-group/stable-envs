@@ -602,13 +602,14 @@ class HumanoidBenchBase(Env):
     fidelity_tier = "visual"
     parity_interior_min = None
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         b = _build_bundle(self.ROBOT, self.TASK)
         self.state_dim = b.nq
         self.state_names = b.state_names
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
         self._b = b
 
     # ---- variation ------------------------------------------------------------------------

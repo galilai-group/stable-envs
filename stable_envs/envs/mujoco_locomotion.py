@@ -608,12 +608,13 @@ class GymMujoco(_GymMujocoFamily):
         "(within-1 0.872 -> 0.885) and InvertedPendulum (0.728 -> 0.736) and makes Reacher (0.685 -> "
         "0.668) and Pusher (0.729 -> 0.677) worse, so the documented law is kept.")
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         m = self._model()
         self.state_dim = int(m.nq)
         self.state_names = self._qpos_names(m)
-        super().__init__(batch=batch, size=size,
+        super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         sc = self._scene()
@@ -1603,15 +1604,16 @@ class GymMujocoVisual(_GymMujocoFamily):
     parity_interior_min = None
     parity_note = ""
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         if NVDIFF_IMPORT_ERROR is not None:                                   # pragma: no cover
             raise ImportError(f"{type(self).__name__} renders through nvdiffrast, which this "
                               f"interpreter cannot import: {NVDIFF_IMPORT_ERROR}")
         m = self._model()
         self.state_dim = int(m.nq)
         self.state_names = self._qpos_names(m)
-        super().__init__(batch=batch, size=size,
+        super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._check_scene_is_supported(self._nvd())

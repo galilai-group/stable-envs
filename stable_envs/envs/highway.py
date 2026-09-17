@@ -289,7 +289,7 @@ class HighwayEnvBase(Env):
     reference_id: str | None = None
     reference_config: dict = {}
 
-    def __init__(self, batch: int = 1, size: int | None = None, **kw):
+    def __init__(self, num_envs: int = 1, size: int | None = None, **kw):
         n_obj = len(self.STATE_OBJECTS)
         self.veh_dim = 4 if self.CRASHED_VISIBLE else 3
         self.steer_off = self.veh_dim * self.N_VEHICLES
@@ -309,7 +309,7 @@ class HighwayEnvBase(Env):
         #: what the next render draws.
         self._plan_cache: dict = {}
         self._obj_runs = None
-        super().__init__(batch=batch, size=size, **kw)
+        super().__init__(num_envs=num_envs, size=size, **kw)
 
     # --- geometry that depends on the output size -------------------------------------------------
 

@@ -872,9 +872,10 @@ class _ProcgenEnv(Env):
     #: enemy-sprite dimension dead.
     pool_warmup = 48
 
-    def __init__(self, batch=1, size=None, supersample=1, device="cuda", backend="auto", seed=0):
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+    def __init__(self, num_envs: int = 1, size=None, supersample=1, device="cuda",
+                 backend="auto", seed=0, batch: int | None = None):
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
         self._pool = None
 
     @property

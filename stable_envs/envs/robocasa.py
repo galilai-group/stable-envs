@@ -437,15 +437,16 @@ class RoboCasaBase(Env):
     TEX_LOD: int = 1
     BACKFACE_CULL: bool | None = None
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         s = _scene(self.KITCHEN)
         live = _live_dims(self.KITCHEN, self.CAMERA, int(size or self.default_size))
         self._live_idx = live
         self.state_dim = len(live)
         self.state_names = tuple(s.qpos_names[i] for i in live)
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
         self._s = s
         self._live_t = torch.as_tensor(live, device=self.device, dtype=torch.long)
         self._pinned_t = torch.as_tensor(s.pinned, device=self.device, dtype=torch.float32)
