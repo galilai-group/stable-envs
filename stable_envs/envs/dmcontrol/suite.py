@@ -5,9 +5,10 @@ declarations their leaf class carries (``acrobot.py``, ``cartpole.py``, ...); no
 per-domain, and a domain that needed something here would be a domain that does not belong in this
 tier. See the package docstring for what splits the two tiers and for what the plates cover.
 
-``catenary``/``_chain_capsules_batch`` are imported BY NAME from ``._tendon`` and are therefore
-this module's globals, which is what ``tests/unit/test_dmcontrol_tendon.py`` substitutes when it
-checks the vectorised chain against the scalar reference.
+``_chain_capsules_batch`` is imported BY NAME from ``._tendon`` and is therefore one of this
+module's globals, which is where ``tests/unit/test_dmcontrol_tendon.py`` substitutes it when it
+checks the vectorised chain against the scalar reference (``catenary`` is substituted on
+``._tendon``, which is where ``_tendon_polyline`` calls it from).
 """
 from __future__ import annotations
 

@@ -7,9 +7,10 @@ from ``libmujoco`` and absent from the Python bindings, which is why it exists a
 bit-exact — 0 ULP against the C implementation over the sweep in
 ``tests/unit/test_dmcontrol_tendon.py``.
 
-Patching for a test: ``suite`` looks ``catenary`` and ``_chain_capsules_batch`` up in ITS OWN module
-globals, so a test that substitutes a reference implementation patches
-``stable_envs.envs.dmcontrol.suite``, not this module.
+Patching for a test: each callable is looked up in the module that CALLS it, so
+``tests/unit/test_dmcontrol_tendon.py`` substitutes ``_chain_capsules_batch`` on
+``stable_envs.envs.dmcontrol.suite`` (which calls it) and ``catenary`` on this module (which
+``_tendon_polyline`` calls it from). Patching the package attribute reaches neither.
 """
 from __future__ import annotations
 
