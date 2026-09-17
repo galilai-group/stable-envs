@@ -263,7 +263,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
         rr0, rr1, cc0, cc1 = (int(v) for v in row[6 + 2 * V:])
         win = [(None, rr0, rr1, cc0, cc1)]
         if i in wide:
-            win = _row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
+            win = row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
         out.append((disc, ring, poly, outline, seg, edges, win))
     return out
 
@@ -306,7 +306,7 @@ _GROUP_DISPATCH_PIXELS = 10_000
 _ACCEPT_MARGIN = 1.25
 
 
-def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
+def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     """Windows for one primitive: either ``[(None, r0, r1, c0, c1)]`` or one window per row group.
 
     The batch-union window is what one torch op over the whole batch can cover, and for a primitive
@@ -331,6 +331,11 @@ def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
     hold by construction rather than by test.
 
     ``box`` is ``(B,4)`` int64 pixel boxes, ``r0..c1`` the union window already computed from them.
+
+    Public because it has a second caller outside this module: ``envs/navigation.py`` groups the
+    swm_nav dot windows by exactly this partition, so that the fused kernel and the torch path agree
+    about which rows share a window. It was reaching in for ``_row_groups``; the name it reaches for
+    is now part of this module's surface rather than a private one two modules deep.
     """
     import numpy as np
 
@@ -369,6 +374,11 @@ def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
     if B * union < _ACCEPT_MARGIN * (work + len(groups) * _GROUP_DISPATCH_PIXELS):
         return [(None, r0, r1, c0, c1)]
     return groups
+
+
+#: Step-8 spelling. ``envs/navigation.py`` imports it under this name and Workstream G does not own
+#: that file; the alias keeps the call site working, and there is exactly one function.
+_row_groups = row_groups
 
 
 @torch.no_grad()
