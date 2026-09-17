@@ -173,6 +173,16 @@ test_every_cited_scratch_path_resolves`); both were re-confirmed failing on the 
 
 `tests/gpu` **not run** — see §5.
 
+### Regeneration
+
+`leaf_classification.json`, `support_matrix.{json,md}`, `performance/tiers.json` and
+`step8_performance.md` are regenerated with their own generators and committed. Note the existing
+convention these generators carry: each embeds `generated_at_head_sha`, so a regeneration is
+byte-identical only when run at the HEAD the artifact records — one commit behind the commit that
+contains it. That is how every merged Step-8 copy of these files already reads (the baseline's matrix
+records `0ee3335` while HEAD was `2b4b5c3`); it is not something this patch introduced and there is
+no fixpoint to reach.
+
 ### GPU evidence — **BLOCKED**
 
 Not run, and not runnable this session. Oscar SSH returned `Permission denied
