@@ -364,3 +364,25 @@ a0887c7  step9 render-3d: oracle, paired timing harness, GPU sbatch
 d5e4970  step9 render-3d: GPU arm results, and the probe for the one difference
 <this>   step9 render-3d: follow-up job 6464500, and the run that isolates the one difference
 ```
+
+## §9d. Same-card self-compare (job 6464601, gpu1503 RTX A6000) — gate cleared (coordinator)
+
+`scratch/step9/render-3d/oracle_selfcompare.sbatch`, three legs on the card that produced the one
+difference in job 6464319, in the original 38-cell process shape, cuda, 64 frozen states:
+
+| leg | arms | HumanoidmazeGiantNavigate/cuda | verdict |
+|---|---|---|---|
+| 1 | baseline, baseline | ok (identical) | ORACLE: PASS |
+| 2 | head, head | ok (identical) | ORACLE: PASS |
+| 3 | baseline, head | ok (identical) | ORACLE: PASS |
+
+Record: `selfcompare_gpu_6464601.log`. Together with §9a–§9c the four observations of this cell on
+cuda are: job 6464319 baseline `929f7c09…` vs head `6c5385e4…` (RTX A6000); job 6464500 baseline ×3
+and head ×3 all `6c5385e4…` (A40); job 6464601 baseline and head identical on the RTX A6000 in the
+original process shape. The head tree has produced ONE digest on every run and every card; the
+baseline tree produced a different digest exactly once. Classification (coordinator ruling):
+**DOCUMENTED_LIMITATION — `HumanoidmazeGiantNavigate` on cuda is not process-reproducible across
+runs on gpu1503** (the `_BOUND_SLACK_NOISE` configuration: a ~100 m camera and a 5 cm capsule put
+`disc > 0` on float32 rounding noise; Step-6 job 6348207 moved one pixel by 22/255 on this cell and no
+other). It is not evidence about this patch, whose numeric expressions are character-identical to the
+baseline. Unexplained oracle differences attributable to the patch: **0**.
