@@ -303,6 +303,20 @@ class HighwayEnvBase(Env):
         for k, (kind, _, _) in enumerate(self.STATE_OBJECTS):
             names += [f"{kind}{k}_x", f"{kind}{k}_y", f"{kind}{k}_heading"]
         self.state_names = tuple(names)
+        # Step-9 state (contract §3). The packed row is unchanged -- vehicles, then the ego's
+        # steering angle if it has tires, then the static objects, exactly the order the offsets
+        # above have always fixed -- and the layout names the three runs it already consists of.
+        # Assigned per instance because all three widths are functions of the class's own
+        # ``N_VEHICLES`` / ``CRASHED_VISIBLE`` / ``EGO_HAS_TIRES`` / ``STATE_OBJECTS`` declarations,
+        # which is exactly what ``state_dim`` is computed from two lines up.
+        #
+        # ``vehicles`` is ONE key of ``N_VEHICLES * veh_dim`` columns rather than a key per vehicle:
+        # the vehicles are a homogeneous array whose rows differ only by index, and a state with
+        # ``v0``..``v14`` as separate keys would be fifteen names for one fact. Nothing is hidden --
+        # every column is covered, so ``pack``/``unpack`` round-trip the frozen layout bit for bit.
+        self.state_layout = ((("vehicles",), self.veh_dim * self.N_VEHICLES, 0),) + (
+            ((("ego", "steering"), 1, self.steer_off),) if self.EGO_HAS_TIRES else ()) + (
+            ((("objects",), 3 * n_obj, self.obj_off),) if n_obj else ())
         #: per output size, the lane-marking tables ``_plan`` builds. Keyed on the frame geometry
         #: because ``stripes_count`` and ``_slots_for`` are functions of it, and NOT stored as
         #: attributes for the reason ``_Screen`` exists: a preview at another size must not change
@@ -310,6 +324,18 @@ class HighwayEnvBase(Env):
         self._plan_cache: dict = {}
         self._obj_runs = None
         super().__init__(num_envs=num_envs, size=size, **kw)
+
+    def _close(self) -> None:
+        """Drop the two per-instance tables. ``Env.close`` calls this once and is idempotent.
+
+        Neither is an external handle -- this family owns no GL context, no simulator and no atlas,
+        because it draws every frame itself. What it does own is the lane-marking plan per output
+        size and the object run-lengths, both device tensors that can be large for a 600 px
+        racetrack, and both rebuildable from the class alone. Releasing them is what a closed env of
+        this family has to release; refusing to render afterwards is the rest of the contract.
+        """
+        self._plan_cache = {}
+        self._obj_runs = None
 
     # --- geometry that depends on the output size -------------------------------------------------
 

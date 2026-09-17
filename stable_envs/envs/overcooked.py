@@ -412,6 +412,18 @@ class _OvercookedLayout(Env):
         self._pool_labels: np.ndarray | None = None
         self._default_t: torch.Tensor | None = None
 
+    def _close(self) -> None:
+        """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.
+
+        The tile atlas is keyed on (tile size, device) and SHARED by every instance of every layout,
+        so it is not released here: releasing a cache another live env is drawing through is the same
+        class of error as releasing a shared EGL context. An instance owns its sampled state pool,
+        the labels beside it and its default-style tensor, all rebuildable.
+        """
+        self._pool = None
+        self._pool_labels = None
+        self._default_t = None
+
     # geometry
 
     def _tile(self, size: int) -> int:

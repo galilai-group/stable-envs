@@ -531,6 +531,17 @@ class _GriddlyGame(Env):
         self._check_grid(self.dec)
         self._pool: np.ndarray | None = None
 
+    def _close(self) -> None:
+        """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
+
+        The griddly wrapper and the decoder are NOT released, and that is this module's standing
+        policy rather than an oversight: ``GymWrapper.__del__`` runs ``game.release()``, which
+        segfaults at interpreter exit (see ``_open``), so the wrapper cache exists precisely to keep
+        every one of them alive. What an instance owns is the pool of states sampled off the
+        reference, which is rebuildable.
+        """
+        self._pool = None
+
     def _check_grid(self, dec) -> None:
         if (dec.grid_w, dec.grid_h) != (self.grid_w, self.grid_h):
             raise AssertionError(

@@ -532,6 +532,17 @@ class PgxBoardBase(Env):
             f"canvas {b.native}")
         self._check_plate_is_constant()
 
+    def _close(self) -> None:
+        """Drop the three per-instance draw caches. ``Env.close`` calls this once and is idempotent.
+
+        The rendered document bundle, the plates and the colour tables are keyed on (game, size) and
+        SHARED by every instance, so they are not released here. What an instance builds lazily for
+        itself is the outline colours, the separable lattice coordinates per resolution and the
+        per-scale coverage maps, all of them device tensors and all rebuildable on the next call.
+        """
+        for k in ("_outline_cache", "_lat_cache", "_alpha_cache"):
+            self.__dict__.pop(k, None)
+
     # ---- the assumption the whole design rests on, checked rather than assumed ----------------
 
     def _check_plate_is_constant(self) -> None:

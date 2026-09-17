@@ -100,6 +100,8 @@ import math
 import numpy as np
 import torch
 
+from tensordict import TensorDict
+
 from ..env import Env
 from ..registry import register
 from ..render import tilemap as tm
@@ -185,6 +187,19 @@ class _TileEnv(Env):
         self.code_lookup = _code_lookup(self.device)
         self._pool: np.ndarray | None = None
         self._default_t: torch.Tensor | None = None
+
+    def _close(self) -> None:
+        """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.
+
+        The tile atlas and the two code tables are keyed on (tile size, device) and SHARED by every
+        instance of every class in this family, so they are not released here: releasing a cache
+        another live env is drawing through is the same class of error as releasing a shared EGL
+        context. An instance owns its sampled state pool and its default-style tensor, both
+        rebuildable, and a subclass that owns more (``MiniGridTopDown``'s captured step graph)
+        extends this.
+        """
+        self._pool = None
+        self._default_t = None
 
     # geometry
 
@@ -482,11 +497,50 @@ class MiniGridTopDown(_TileEnv):
         self._step_graph = None
         self._step_graph_error = ""
 
+    def _close(self) -> None:
+        """As ``_TileEnv``, and drop the captured step graph."""
+        super()._close()
+        self._step_graph = None
+
     def set_state(self, states, style=None) -> "MiniGridTopDown":
         """As the base class, and empty the agent's hands — the compact state does not carry them."""
         super().set_state(states, style=style)
         self._carry.fill_(CARRY_NONE)
         return self
+
+    # ------------------------------------------------------------------ Step-9 state / dynamics
+
+    def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
+        """Where the one field the packed row does not carry lives: the object in the agent's hands.
+
+        ``unpack`` fills it with ``CARRY_NONE``'s zero-based code by filling it with ZEROS, which is
+        right for a state loaded from a corpus (``set_state`` empties the hands, and so does the
+        reference after ``reset``) and wrong for the env's own live state after a step. Without this
+        hook ``env.state`` would report empty hands after a pickup and ``transition(env.state, a)``
+        would stop matching ``step(a)`` — a wrong number rather than a failure. ``Env.state`` does
+        the splicing; this is the whole of what the cell has to say.
+        """
+        return {("agent", "carrying"): self._carry[:self._live_rows].reshape(-1, 1).to(torch.float32)}
+
+    @torch.no_grad()
+    def transition(self, state: TensorDict, action) -> TensorDict:
+        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
+
+        Bit-identical to ``step`` on the same device for the same state, and identical by
+        CONSTRUCTION rather than by resemblance: both call ``_advance_into``, which is the whole
+        transition, over buffers the caller names. ``step`` passes the env's own three and may replay
+        them from a CUDA graph; this one passes three fresh ones, because a captured graph reads
+        FIXED ADDRESSES and this call may not write the env's.
+        """
+        rows = self.pack(state).clone()
+        carry = torch.as_tensor(state["agent", "carrying"], device=self.device
+                                ).reshape(-1).round().to(torch.long)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32
+                              ).reshape(-1, self.action_dim)
+        self._advance_into(rows, carry, act)
+        out = self.unpack(rows)
+        out["agent", "carrying"] = carry.reshape(-1, 1).to(torch.float32)
+        return out
 
     def sim_state(self) -> torch.Tensor:
         """``(B, state_dim + 1)`` — the compact state with ``carrying`` appended."""
@@ -500,7 +554,16 @@ class MiniGridTopDown(_TileEnv):
         return self
 
     def _advance(self) -> None:
+        """The env's OWN buffers advanced one step, at the fixed addresses a CUDA graph requires."""
+        self._advance_into(self._state, self._carry, self._act)
+
+    def _advance_into(self, s, carry, act) -> None:
         """``MiniGridEnv.step`` for the whole batch, as one straight-line sequence of masked writes.
+
+        Writes IN PLACE into the three buffers it is given — the compact state, the carried-object
+        codes and the actions — rather than into ``self``, which is what lets ``transition`` be pure
+        while ``step`` keeps the captured graph: one body, two callers, no second implementation of
+        the decision table to drift from this one.
 
         Every branch of the reference's if/elif chain is evaluated for every environment and selected
         by a mask, because a batch holds all seven actions at once; the chain is mutually exclusive on
@@ -511,14 +574,13 @@ class MiniGridTopDown(_TileEnv):
         agent can face outward from a legal state. A state assembled by hand can, and the conservative
         reading is taken — the cell beyond the edge behaves as a wall, and nothing is written there.
         """
-        R, A, s = self._rules, self._A, self._state
+        R, A = self._rules, self._A
         W, H, N = self.grid_w, self.grid_h, self.grid_w * self.grid_h
-        a = self._act[:, 0].floor().clamp(0, self.N_ACTIONS - 1).long()
+        a = act[:, 0].floor().clamp(0, self.N_ACTIONS - 1).long()
         codes = torch.round(s[:, :N]).long() % tm.N_CODE
         ax = torch.round(s[:, N]).long() % W
         ay = torch.round(s[:, N + 1]).long() % H
         ad = torch.round(s[:, N + 2]).long() % 4
-        carry = self._carry
 
         d = R["dir_vec"][ad]                                        # front_pos = agent_pos + dir_vec
         fx, fy = ax + d[:, 0], ay + d[:, 1]
@@ -554,13 +616,18 @@ class MiniGridTopDown(_TileEnv):
         s[:, N] = ax_new.to(torch.float32)
         s[:, N + 1] = ay_new.to(torch.float32)
         s[:, N + 2] = ad_new.to(torch.float32)
-        self._carry.copy_(torch.where(pick, cell, torch.where(drop, self._none, carry)))
+        carry.copy_(torch.where(pick, cell, torch.where(drop, self._none, carry)))
 
     @torch.no_grad()
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """Advance every environment one step. ``action`` is ``(B, 1)``, floored to ``[0, 7)``.
 
-        Returns the new ``(B, state_dim)`` compact state. Termination is not applied here and the reward
+        STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
+        ``"state"`` AND NOTHING ELSE. MiniGrid's reference does compute a reward and a termination
+        flag, and they are deliberately omitted rather than fabricated (contract §5): both are
+        functions of the episode's step COUNT as well as its state — the reward is
+        ``1 - 0.9 * step_count / max_steps`` — and this env holds no step counter, so a number
+        reported under either name would be a different quantity wearing the same one. Termination is not applied here and the reward
         is not computed: the reference reports both as flags beside a state it integrates regardless,
         so an env that froze or reset itself would be simulating something else. ``carrying`` is not in
         the returned state — see ``sim_state()`` — which means a stored trajectory does not determine
@@ -577,9 +644,9 @@ class MiniGridTopDown(_TileEnv):
                     self.use_step_graph = False
             if self._step_graph is not None:
                 self._step_graph.replay()
-                return self._state
+                return self._step_result(self.state)
         self._advance()
-        return self._state
+        return self._step_result(self.state)
 
     @classmethod
     def reference_sim_state(cls, ref) -> np.ndarray:
@@ -844,6 +911,15 @@ def topdown(class_name: str, env_id: str, w: int, h: int, stw: bool, lava: bool 
         "grid_w": w, "grid_h": h, "see_through_walls": stw, "has_lava": lava,
         "state_dim": n + 3,
         "state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir"),
+        # Step-9 state (contract §3). The packed row is unchanged — the grid, then the agent's cell
+        # and heading — and ``("agent", "carrying")`` carries offset ``None``: it is real dynamical
+        # state that the row has never carried, because ``get_full_render`` provably never reads it,
+        # which is what makes ``transition`` pure without moving one column of the frozen layout.
+        # ``sim_state_names`` above is the same fact in the reference bridge's vocabulary.
+        "state_layout": ((("grid",), n, 0),
+                         (("agent", "position"), 2, n),
+                         (("agent", "direction"), 1, n + 2),
+                         (("agent", "carrying"), 1, None)),
         "default_size": h * tile,
         # the dynamical state is the render state plus the carried object; see MiniGridTopDown
         "sim_state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir", "carrying"),

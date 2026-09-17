@@ -206,12 +206,32 @@ class LunarLander(Env):
         tuple(f"terrain[{i}]" for i in range(N_TERRAIN))
         + tuple(f"{b}_{f}" for b in ("lander", "leg0", "leg1") for f in ("x", "y", "angle"))
         + tuple(f"p{k}_{f}" for k in range(N_PARTICLES) for f in ("x", "y", "ttl")))
+    #: Step-9 state (contract §3). The row is already four runs and the layout names them: the
+    #: smoothed terrain profile, the three rigid bodies as ``(x, y, angle)`` each, and the exhaust
+    #: particle slots as ``(x, y, ttl)`` each. Column order is unchanged, every column is covered,
+    #: nothing is hidden. The lander's VELOCITY is deliberately absent: Box2D integrates it, this
+    #: package renders from a pose, and a column the frame never reads would be a dead dimension --
+    #: which is also why ``step``/``transition`` refuse rather than pretending to simulate.
+    state_layout = ((("terrain",), N_TERRAIN, 0),
+                    (("lander", "pose"), 3, BODY_OFF),
+                    (("leg0", "pose"), 3, BODY_OFF + 3),
+                    (("leg1", "pose"), 3, BODY_OFF + 6),
+                    (("particles",), 3 * N_PARTICLES, PART_OFF))
 
     #: Interior pixels are exact; the residual is the two ``pygame.draw`` rasterizers this module does
     #: not reimplement, and it lives entirely on shape boundaries. Kept as a declared floor of 1.0
     #: because that is what is measured -- see ``docs/research/lunarlander.md`` for the all-pixel
     #: number and its decomposition.
     parity_interior_min = 1.0
+
+    def _close(self) -> None:
+        """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
+
+        This env owns no external handle: the Box2D world it samples from is built per call and
+        discarded, and everything else it holds is a constant device tensor baked from the module's
+        own geometry. The pool is the one growable thing, and a closed env has no use for it.
+        """
+        self._pool = None
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)

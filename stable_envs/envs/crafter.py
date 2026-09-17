@@ -423,6 +423,15 @@ class Crafter(Env):
     state_names = (tuple(f"cell[{x},{y}]" for x in range(GRID_W) for y in range(GRID_H))
                    + tuple(f"inv_{n}" for n in ITEMS)
                    + ("daylight",))
+    #: Step-9 state (contract §3). Three keys because the row is genuinely three things -- the lit
+    #: world window, the inventory strip below it, and the scalar that decides how the world half is
+    #: tinted -- drawn by three different parts of the renderer. The packed row and its column order
+    #: are unchanged, every column is covered, so nothing is hidden and the frozen layout does not
+    #: move. ``cells`` stays ONE key of ``N_CELL`` columns rather than a 9x7 nest: the public State
+    #: describes the environment, and a per-cell key would be 63 names for one grid.
+    state_layout = ((("cells",), N_CELL, 0),
+                    (("inventory",), N_ITEM, N_CELL),
+                    (("daylight",), 1, N_CELL + N_ITEM))
     default_size = 64
     reference_id = "CrafterReward-v1"
 
