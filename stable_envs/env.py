@@ -935,7 +935,9 @@ class Env:
         out: dict = {}
         for key, w, off in lay:
             dt = dtypes.get(key, torch.float32)
-            v = (r[:, off:off + w].to(dt) if off is not None
+            # ``copy=True``: ``.to`` on a same-dtype tensor returns the SAME storage, and a State that
+            # aliases the env's packed buffer changes under the caller's feet at the next step.
+            v = (r[:, off:off + w].to(dt, copy=True) if off is not None
                  else torch.zeros(n, w, device=self.device, dtype=dt))
             node = out
             for part in key[:-1]:
@@ -960,18 +962,38 @@ class Env:
         """
         return {}
 
+    def _live_state(self) -> dict[tuple[str, ...], torch.Tensor]:
+        """``{key path: (n, width) tensor}`` for DRAWN fields whose live value is more precise than
+        the packed row.
+
+        The packed float32 row is a lossy projection for a cell that simulates in float64 (classic
+        control's claim is near-bit-exactness against a float64 reference): widening the row back
+        gives ``float64(float32(x)) != x``, so ``transition(env.state, a)`` would silently diverge
+        from ``step(a)`` from the second step on. A cell that keeps a higher-precision live buffer
+        answers here for the fields it carries; ``state`` takes these over the widened row. Optional:
+        the default is ``{}`` and is correct for every cell whose live state IS the packed row.
+        """
+        return {}
+
     @property
     def state(self) -> TensorDict:
         """The state the env currently holds, as a :data:`State`. ``get_state()`` is the packed row.
 
-        The packed half comes from ``unpack(get_state())``; the hidden half — the fields the row does
-        not carry — comes from :meth:`_hidden_state`, because only the cell knows where it lives.
+        The packed half comes from ``unpack(get_state())`` unless :meth:`_live_state` offers a more
+        precise live value; the hidden half — the fields the row does not carry — comes from
+        :meth:`_hidden_state`, because only the cell knows where it lives.
         """
         td = self.unpack(self.get_state())
         hidden = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
                   for k, v in (self._hidden_state() or {}).items()}
         n = int(td.batch_size[0])
         dtypes = self._layout_dtypes()
+        live = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
+                for k, v in (self._live_state() or {}).items()}
+        for key, w, off in self._layout():
+            if off is not None and key in live:
+                td[key] = torch.as_tensor(live[key], device=self.device,
+                                          dtype=dtypes.get(key, torch.float32)).reshape(-1, w)[:n].clone()
         missing = []
         for key, w, off in self._layout():
             if off is not None:
