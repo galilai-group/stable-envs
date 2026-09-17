@@ -11,9 +11,9 @@ produced by ``parity_cell``/``trackcom_cell`` from the data in the eighteen doma
 The Step-9 foundation additions live here too, and there are only three:
 
   * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated spelling;
-  * a two-key public ``State`` (contract §3) — ``{"qpos": (nq,), "episode": (k,)}`` — built by
-    ``_layout`` PER INSTANCE, because a DM Control cell's ``state_dim`` is a property of the compiled
-    model and is not known until one is constructed;
+  * a two-key public ``State`` (contract §3) — ``{"qpos": (nq,), "episode": (k,)}`` — whose
+    ``state_layout`` is assigned PER INSTANCE, because a DM Control cell's ``state_dim`` is a
+    property of the compiled model and is not known until one is constructed;
   * ``close()`` refusing to render afterwards, without releasing the shared EGL context, which this
     family must never release.
 
@@ -92,14 +92,21 @@ class _DMCModel(Env):
 
         ``state_dim`` and ``state_names`` are read off the COMPILED MODEL here and not declared on the
         class, because they are: ``nq`` plus however many model entries this task draws per episode,
-        and both are discovered (``_episode_slots``) rather than transcribed. That is why ``_layout``
-        below is an instance method where the base class has a classmethod — the public State's shape
-        is not known until a model has been compiled.
+        and both are discovered (``_episode_slots``) rather than transcribed. ``state_layout`` is
+        likewise built here rather than declared on the class, for the same reason: the public
+        State's shape is not known until a model has been compiled.
         """
         m = self._model()
         self.nq = int(m.nq)
         self.state_dim = self.nq + len(self._slots())
         self.state_names = self._qpos_names(m) + self._slot_names(m)
+        # ``state_layout`` is set PER INSTANCE, which is the whole of this family's Step-9 state
+        # machinery since the foundation made ``Env._layout`` an instance method (integration
+        # f24d94c, this workstream's request R1). The two keys are what the halves ARE, and the
+        # ``episode`` key is absent on the eleven cells that draw nothing per episode.
+        k = self.state_dim - self.nq
+        self.state_layout = ((("qpos",), self.nq, 0),) + (
+            ((("episode",), k, self.nq),) if k else ())
         super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
@@ -120,25 +127,11 @@ class _DMCModel(Env):
     # trip the frozen corpus bit for bit. There is no ``_live_state`` either: the packed row IS this
     # family's live state -- ``set_state`` writes it and ``render`` reads it -- so there is no more
     # precise buffer to answer from, unlike classic control's float64 simulator.
-
-    def _layout(self):
-        """``state_layout``, per INSTANCE, because ``state_dim`` is a property of the compiled model.
-
-        ``Env._layout`` is a classmethod reading ``cls.state_dim``, and for this family that is 0 on
-        the class -- the real width is ``nq`` plus the episode draw and is only known once a model has
-        been compiled. Every caller in ``env.py`` reaches it as ``self._layout()``, so an instance
-        method is the whole of the override; the alternative would be compiling eighteen MuJoCo models
-        and running six episodes on each at IMPORT time, to learn a number the constructor learns
-        anyway. Recorded as request R1 in the findings: a ``state_layout`` the foundation resolves per
-        instance would delete this.
-        """
-        if not getattr(self, "nq", None):
-            return Env._layout.__func__(type(self))
-        k = int(self.state_dim) - int(self.nq)
-        lay = [(("qpos",), int(self.nq), 0)]
-        if k:
-            lay.append((("episode",), k, int(self.nq)))
-        return tuple(lay)
+    #
+    # ``state_layout`` is an INSTANCE attribute, assigned in ``__init__`` above, and there is no
+    # ``_layout`` override any more: ``Env._layout`` reads ``self.state_layout``, so a family whose
+    # width comes from a compiled model declares it where the model is compiled. That is request R1,
+    # done by the foundation at f24d94c.
 
     def _close(self) -> None:
         """Release what this INSTANCE owns, which is the per-instance CPU scene cache and nothing else.

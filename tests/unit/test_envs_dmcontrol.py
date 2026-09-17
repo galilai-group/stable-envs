@@ -262,6 +262,11 @@ def test_the_public_state_is_qpos_plus_the_episode_draw_and_hides_nothing(name):
         assert torch.equal(env.pack(env.unpack(rows)), rows)
         assert torch.equal(env.pack(env.state), rows)
         assert env._hidden_state() == {} and env._live_state() == {}
+        # R1, done by the foundation at f24d94c: ``Env._layout`` is an instance method reading
+        # ``self.state_layout``, so this family declares the layout where the model is compiled and
+        # overrides NOTHING. The assertion is what keeps the override from coming back.
+        assert "_layout" not in vars(dmc._DMCModel)
+        assert env.state_layout == lay and type(env).state_layout == ()
         # the State keys name the packed columns they occupy, in order and covering all of them
         named = [n for k in keys for n in env.state_names_of(k)]
         assert named == list(env.state_names)
