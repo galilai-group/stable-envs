@@ -172,24 +172,35 @@ caller.
 | `the_fast_state_property_agrees_with_the_base_class_path` | `_Classic.state` vs `Env.state` after three steps |
 | `a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import` | the class-creation check that replaces the per-call hidden-field guard |
 
-Exact outputs, both from the worktree root:
+Two more tests were added after the coordinator's rulings, parametrised over all ten cells (+20):
+
+| test | what it pins |
+|---|---|
+| `transition_still_equals_step_after_the_env_has_been_stepped` | the bit-equality MID-TRAJECTORY, which is where a State rebuilt from the lossy packed row stops matching (§2) |
+| `a_step_result_is_not_a_view_of_the_env_that_produced_it` | a `StepResult` the caller keeps does not change when the env is stepped again — the silent corruption R8 describes |
+
+Exact outputs, both from the worktree root, at the post-merge head:
 
 ```
-MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit -x \
+MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit \
   --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"
-1334 passed, 195 skipped, 112 deselected, 26619 warnings in 55.11s
+1355 passed, 195 skipped, 112 deselected, 26619 warnings in 54.83s
 ```
 
-1246 (the Wave-0 figure, reproduced on this branch before any edit) + 88 new = 1334: **no
-pre-existing test changed its result.**
+Accounting: 1246 (Wave-0) + 108 mine + 1 (`b1585fc`'s own dtype test) = 1355. **No pre-existing test
+changed its result** at any point.
 
 ```
 MUJOCO_GL=glfw /Users/samib/se8-vm-venv/bin/python -m pytest -q -p no:cacheprovider \
   tests/unit/test_variation_maps_dmc_control.py tests/unit/test_variation_maps_newcells.py \
   tests/unit/test_variation_maps_fetch.py tests/unit/test_step8_gate_record.py tests/swm
-269 passed, 58 skipped, 4088 warnings in 19.25s          # identical to the Wave-0 baseline
+270 passed, 57 skipped, 4088 warnings in 18.26s
 ```
-(with `tests/unit/test_envs_classic_nav.py` added: `357 passed, 58 skipped`.)
+
+That is **270/57 and not the 269/58 of the Wave-0 baseline**, and the difference is not mine: a
+detached worktree of `step9/integration` alone produces `270 passed, 57 skipped` on this host, so one
+test moved from skipped to passing somewhere between `d07ffa8` and `b1585fc`. My branch matches
+integration exactly on this subset.
 
 **One pre-existing test was edited**, and only in how it compares one column:
 `tests/unit/test_foundation_registry.py::test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baseline`
@@ -261,8 +272,26 @@ one place the two could diverge — exactly the case the Wave-0 GPU run settled 
 **Reference bridges, driven live** in `se8-vm-venv` against `stable_worldmodel`, after the
 `_SWMPort` merge: `TwoRoom` 0.99988 of pixels exact, `TwoRoomTarget` 0.99974, `Piecewise` 0.99987,
 `PiecewiseZones` 0.99994, max deviation 1/255 on all four — the declared `parity_interior_min`
-0.999995 residual described in the module docstring (one ulp of `exp`), unchanged. `SimplePointMaze`
-could not be driven: ESCALATION 1.
+0.999995 residual described in the module docstring (one ulp of `exp`), unchanged.
+
+`SimplePointMaze` could not be driven on this host (neither venv has matplotlib), and **the
+coordinator closed that gap**: they ran `scratch/spm_parity.py` on cpu in `se8-vm-venv` with
+matplotlib installed, against the merged `_SWMPort` bridge, and measured
+
+| check | result |
+|---|---|
+| `check_colors_apply_exactly` | **all 0** |
+| parity, interior exact fraction | **1.0** — the declared bar, not relaxed |
+| parity, all-pixel exact fraction | **0.99969** |
+| parity, within 8/255 | **0.99974** |
+| max absolute deviation | **241** (the anti-aliased agent rim and the four spine crossings; the residual the module docstring describes and quantifies) |
+| `step` vs the official simulator | `exact_claim True`, **every error 0.0** |
+
+Those numbers reproduce the module docstring's own measured table
+(`interior 100.000%`, `all pixels 99.9690%`, `max 241/255`, `step exact_frac 1.000, max error 0.0`),
+i.e. the merge changed nothing the reference can see. Coordinator-run evidence, recorded here rather
+than reproduced: the only part of the script that did not run is its CUDA timing tail. **ESCALATION 1
+CLOSED.**
 
 ## 7. Performance (plan §8)
 
@@ -294,8 +323,11 @@ with `num_envs`. One round of this was already paid back: `_Classic.state` origi
 twice per step (once through `Env.state`, once from `_sim`), which put CartPole at +153 %; reading
 `_sim` directly removed 40 µs of it, and the per-call hidden-field guard that skipped is replaced by
 a strictly stronger check at class creation. What remains is the contract, and I do not see a way to
-pay less for it without making `step` return something other than a StepResult. **Recommendation:
-accept, with the mechanism recorded here.**
+pay less for it without making `step` return something other than a StepResult. **The absolute cost
+is the TensorDict construction Wave 0 already measured on PushT** — the same `_step_result` and the
+same `unpack`, +1.0 % there against a 10-substep contact solver and 28–46 % here against four float64
+expressions and a cosine — so it is not a new cost, it is that same fixed cost seen against the
+smallest denominator in the repository. **ACCEPTED by the coordinator with the mechanism recorded.**
 
 ## 8. Resource lifetime
 
@@ -327,56 +359,121 @@ gone.
    unchanged.
 10. **unexplained oracle differences** — **zero**.
 
-## 10. ESCALATIONS and requests for the coordinator
+## 10. ESCALATIONS and requests — status after the coordinator's rulings (2026-09-17)
 
-**ESCALATION 1 — `SimplePointMaze`'s live reference bridge is unverified on this host.** Its
-reference is a matplotlib figure and **neither local venv has matplotlib** (`se6-venv` and
-`se8-vm-venv` both fail `import matplotlib`), so `reference_render` could not be run against the
-official env after the `_SWMPort` merge. Mitigated three ways and no further: the four sibling cells
-share the identical code path and ARE measured live (§6); a stub test pins the call sequence the
-merge could have changed (reset with `options={"variation": []}`, `u.state` written as float32,
-`render("rgb_array")`); and the frame comparison against `21cb306` is byte-identical, which covers
-everything except the reference side. **Ask:** run `scratch/spm_parity.py` in an interpreter with
-matplotlib + `stable_worldmodel` before the final oracle comparison.
+| # | subject | ruling | state |
+|---|---|---|---|
+| ESC-1 | `SimplePointMaze`'s live reference bridge unverifiable here (no matplotlib in either venv) | **CLOSED by the coordinator**, who ran `scratch/spm_parity.py` themselves | §6: colours all 0, interior 1.0, all-pixel 0.99969, within-8 0.99974, max 241, `step` exact with every error 0.0 — the module docstring's own table, reproduced |
+| ESC-2 | the CUDA arm | **IN FLIGHT then DONE** (job 6464309, A40 `gpu1505`), plus my follow-up job for the two gaps it left | §11 |
+| R1 | per-field dtype in `state_layout` | **DONE** on integration at `b1585fc` | merged here (no rebase); adopted — and found to be necessary but not sufficient, which is R7 |
+| R2 | the registry-row `module` comparison | **ACCEPTED as the Wave-1-wide ruling** | no further change; B–F inherit it |
+| R3 | `scratch/step4/universe.py::shard_of` | **DONE** on integration in the same commit (`"navigation": "swm"`) | merged here; verified present |
+| R4 | `docs/api/envs.md` | **forwarded to Workstream M** | no action here |
+| R5 | the `num_envs` ratchet cannot go down for this workstream | **noted** | unchanged at 41 |
+| R6 | the five one-line `step` re-declarations | **deferred to Workstream K** | no action here |
+| perf | `step` +12/+20 µs | **ACCEPTED with the mechanism recorded** | §7 |
 
-**ESCALATION 2 — the CUDA arm is owed.** No CUDA device in this ticket. Both scripts take
-`--python`, so `oracle.py` and `perf.py` run unchanged on Oscar. The GPU-specific claims that are
-unproved: `transition == step` where `step` is a captured CUDA graph (`_Classic.use_step_graph`) and
-`transition` is eager; the fused `gfxdraw_classic` / `navdot` render paths, which are CUDA-only, so
-every frame digest in §6 is from the per-primitive/torch path; `tests/gpu/test_gfxdraw_classic.py`,
-`tests/gpu/test_navdot_fused.py`, `tests/gpu/test_conformance.py`, `tests/gpu/test_fast_paths.py`.
+### R7 (new) — the fourth element fixes the dtype, not the provenance
 
-**R1 — foundation change requested: per-field dtype in `state_layout`.** `Env.state` and
-`Env.unpack` force float32 on every field. Classic control needs float64 in the public State (§2),
-and the only way to get it without touching `env.py` was to override the `state` property, which is
-exactly the hazard the Wave-0 review's T1 defect closed. I contained it — the layout and the hidden
-set are generated from one pair of attributes and checked at class creation, so the "forgot a hidden
-field" failure T1 describes cannot occur here — but the right shape is a 4th optional element in
-`state_layout` (or a `state_dtypes` dict) honoured by `unpack` and by `Env.state`, with `pack` still
-writing float32 into the packed row. That would let `_Classic` delete its `state` override. Other
-float64 families (DM Control, MuJoCo) will want it too.
+`b1585fc` is adopted and does exactly what it says: `state_layout`'s fourth element makes `unpack`
+and `Env.state` return float64 for this family while `pack` keeps the float32 row. It does **not**
+let `_Classic` delete its `state` override, and the reason is measurable rather than a matter of
+taste. `Env.state` builds the DRAWN fields by widening the packed row, and the packed row is a lossy
+projection of the simulator buffer (`_state = _sim[:, render_from_sim].to(float32)`), so
+`float64(float32(x)) != x`. Measured on CartPole after five steps:
 
-**R2 — `tests/unit/test_foundation_registry.py` is a Wave-1-wide blocker.** Its registry-row
-comparison includes `module`, which every file-moving workstream changes. I made the minimal change
-(§4) on the branch; the coordinator should decide whether that is the ruling for B–F or whether the
-baseline table should be re-recorded once, and make it once rather than five times in five branches.
+```
+Env.state.fget(env)["x"]  vs  env.state["x"]      max |diff| = 9.56e-08
+transition(env.state, a)          == step(a)      True
+transition(Env.state.fget(env), a) == step(a)      False
+```
 
-**R3 — `scratch/step4/universe.py::shard_of` maps `swm_nav` and `simple_point_maze` to the `swm`
-shard by module name**, and will now send those five cells to the `raster` shard, whose interpreter
-has no `stable_worldmodel`. I do not own that file. One-line fix: add `"navigation": "swm"`. It
-affects certification sweeps, not the local suite, so nothing is red today.
+So the base path silently becomes a different simulator from the second step on. **Ask:** a hook for
+DRAWN fields symmetric with `_hidden_state` — e.g. `Env._live_state()` returning
+`{key: authoritative tensor}` consulted by `Env.state` for any field the cell answers for — would let
+this override go in Wave 3 and would close the same hole for any other cell whose packed row is a
+narrowing of its simulator state (DM Control and MuJoCo are the obvious candidates). Until then the
+override is contained: the layout and the hidden set are generated from one pair of class attributes,
+checked at class creation, and `test_transition_still_equals_step_after_the_env_has_been_stepped`
+pins the property the override exists for.
 
-**R4 — `docs/api/envs.md`** has `::: stable_envs.envs.simple_point_maze` and `:::
-stable_envs.envs.swm_nav`. Both still resolve through the aliases, but after Wave 3 they will not;
-Workstream M should point them at `stable_envs.envs.navigation`.
+### R8 (new, and I would call it a BLOCKER) — `Env.unpack` stopped owning its output
 
-**R5 — the `num_envs` ratchet cannot go down for this workstream.** None of the ten cells was ever a
-holdout (§2); the 41 are Workstreams D's and F's. The number in
-`tests/unit/test_foundation_api.py` is unchanged and correct.
+`b1585fc` replaced `unpack`'s `r[:, off:off + w].clone()` with `r[:, off:off + w].to(dt)`. For a
+field with no declared dtype, `dt` is `torch.float32` and `.to(torch.float32)` on a float32 tensor is
+a **no-op that returns the same tensor**, so `unpack` now hands back a VIEW of the packed buffer.
+Repro on this branch before my workaround, and it reproduces on PushT:
 
-**R6 — a Wave-3 note.** `Piecewise`/`PiecewiseZones`/`TwoRoom`/`TwoRoomTarget`/`SimplePointMaze` each
-re-declare `step` as a one-line `super().step(action)` purely so
-`test_gpu_step_tracks_the_reference_simulator`'s `"step" in cls.__dict__` guard sees it. That guard
-predates `dynamics.has_dynamics`; when Workstream K rewrites the conformance suite it could ask
-`has_dynamics` and `type(env).transition is not Env.transition` instead, and five cells would lose a
-method that exists only to satisfy a test's introspection.
+```python
+env = snv.TwoRoom(num_envs=4, device="cpu"); env.set_state(env.sample_states(4))
+out  = env.step(a)
+snap = out["state"]["agent", "position"].clone()
+env.step(a)
+torch.equal(out["state"]["agent", "position"], snap)   # False
+```
+
+A caller who keeps the `StepResult` finds the value it holds has changed, with nothing raised and
+nothing logged — the class of failure the Wave-0 review's T1 defect exists to prevent, arriving from
+the other direction. `unpack`'s own docstring promises a fresh State ("`unpack(pack(s))` is the same
+environment"), and every migrated cell whose State is float32 is affected; classic control happens
+not to be, because it builds its State from `_sim`.
+
+**Fix (one token, in a file I do not own):** `r[:, off:off + w].to(dt)` → `...to(dt).clone()`, or
+`.clone().to(dt)`. I did **not** edit `env.py`. `_SWMPort.step` clones the packed row before
+unpacking it, with a comment pointing here and saying to delete the clone once `unpack` clones again,
+and `test_a_step_result_is_not_a_view_of_the_env_that_produced_it` pins the property for these ten
+cells. **PushT and every future migrated cell are still exposed.**
+
+## 11. The CUDA arm (ESCALATION 2)
+
+### Job 6464309 — coordinator-launched, `A40` on `gpu1505`, sha `aa1608e`, venv `$SCR/venvs/se-step6`
+
+Artifacts: `examples/results/step9/envs-classic-nav/gpu/oracle_6464309.json` and
+`provenance_6464309.txt` (absolute `/oscar/scratch/sboughan` paths scrubbed to `$SCR`).
+
+**The oracle is identical on the CUDA host** — `"identical": true`, `"unexplained_differences": {}`,
+the same single expected `registry_row.module` difference, both old import paths resolving — and the
+functional checks ran on `cpu` **and `cuda`** for all ten cells:
+
+| claim | cpu | cuda |
+|---|---|---|
+| `transition_is_pure` | 10/10 | 10/10 |
+| `transition_equals_step_bitwise` | 10/10 | **10/10** |
+| `unroll_equals_repeated_transition` | 10/10 | 10/10 |
+| `unroll_equals_four_stateful_steps` | 10/10 | 10/10 |
+| `render_state_equals_render_rows` | 10/10 | 10/10 |
+| `stateful_path_was_a_cuda_graph` | 0/10 (expected) | **5/10 — every classic-control cell** |
+
+The bolded pair is the claim that could only be settled on a GPU and the one this escalation was
+about: on `cuda`, `_Classic.step` is a **replayed CUDA graph** (`_stepgraph.capture`) while
+`transition` is deliberately eager, and the two agree **to the bit** for all five cells. The five
+navigation cells report no graph, which is correct — their `step` is not captured. This is the
+classic-control analogue of what the Wave-0 GPU run settled for PushT.
+
+**Two gaps that job left**, both now closed by my own follow-up (below), and neither of them a
+result that was claimed and wrong — they were results that were not produced:
+
+1. **The comparison arm ran on `device="cpu"` in both trees.** The probe hardcoded it. The fused
+   render paths — `render/gfxdraw_classic` and `render/navdot` — are CUDA-only, so **not one line of
+   them was executed**, let alone diffed baseline-vs-branch. Every frame digest in §6 and in that
+   job's record is from the per-primitive/torch path.
+2. **The `tests/gpu` subset produced no pytest summary.** All that reached the log for that section
+   was an EGL teardown traceback (`OpenGL.raw.EGL._errors.EGLError` from `mujoco.egl.__del__`), so
+   the subset's result is **indeterminate**, not passing. `COMPLETED` was not evidence.
+
+Its unit-test run on the CUDA host did report: `88 passed` (the count at `aa1608e`; the file is 108
+tests now).
+
+One incidental observation, recorded because it would otherwise look like a discrepancy: on that
+host `Pendulum`'s 64-frame digest is `2698c4a43016c321` where this Mac produces `feaf201ca40ca177`.
+The other nine agree across hosts. Pendulum is the one cell whose frame contains a pygame
+`smoothscale` blit (the torque-arrow sprite), so a different pygame build gives different bytes. It
+is **identical between the two trees on each host**, which is the only thing the oracle claims.
+
+### Job 6464378 — mine, at the post-merge head
+
+`scratch/step9/envs-classic-nav/gpu.sbatch`: both oracle arms (`--device cpu` and, for the first
+time, `--device cuda`, which is what puts the fused kernels' output under the byte comparison), the
+five `tests/gpu` files with **every run writing its own results file** and its summary echoed, and
+the unit tests. Results below.
+
