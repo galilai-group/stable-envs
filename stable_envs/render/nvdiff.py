@@ -1008,6 +1008,13 @@ class BatchRenderer(_resources.Closeable):
             ...
         scene.close()
 
+    ``owns_scene`` is a plain attribute and is meant to be set. A caller that builds a scene purely
+    to hand it to one renderer and keeps no other reference to it — ``rocket_landing.py`` is exactly
+    that — writes ``br.owns_scene = True`` after construction, and the scene is then closed with the
+    renderer instead of surviving, unreferenced, until the collector notices. The default is the
+    conservative one because the damage runs the other way: a renderer that closed a scene its caller
+    was still using would be a use-after-free in whatever renders next.
+
     No ``__del__``, for the reason ``_resources.Closeable`` records. An unclosed renderer holds its
     context until the process ends and is countable with ``_resources.live("nvdiff.BatchRenderer")``.
     """
