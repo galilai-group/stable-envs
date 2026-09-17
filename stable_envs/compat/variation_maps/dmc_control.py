@@ -235,20 +235,45 @@ def _light_reason(base: float) -> str:
             f"swm's default 0.7 is reached at scale {0.7 / base:.6f}.")
 
 
-#: The floor. Recorded once because the mechanism is identical on all thirteen cells.
+#: The eight PARITY-TIER cells (``DMControlSuite``) that carry swm's ``floor.color``: seven swm ids,
+#: eight of our cells. They bake three static plates through a ``mujoco.Renderer`` and ray-cast the
+#: movers, so the floor is plate-only and a texel substitution on the plate rig reaches it. The other
+#: five (``DMControlTrackCom``) hand the whole scene to mujoco_warp and have no plate.
+#:
+#: Written down rather than derived with ``issubclass`` because this module must import without
+#: ``stable_envs.envs``; ``test_the_parity_floor_set_is_the_plate_baking_tier`` derives it from the
+#: classes and asserts this set, so the transcription cannot drift.
+_PARITY_FLOOR = frozenset({
+    "DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup",
+    "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCPendulumSwingup", "DMCReacherHard"})
+
+#: The floor, on the eight parity cells: MAPPED, identically, as of the Step-8 capability patch.
+_FLOOR_MAPPED = (
+    "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the "
+    "builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- "
+    "the same file swm's init_value [[.1,.2,.3],[.2,.3,.4]] transcribes -- so it is `identical`, not "
+    "a rename or a scale. swm honours the leaf by rewriting the MJCF and RECOMPILING; we substitute "
+    "the compiled texture's texels on the plate rig's own model and re-upload the texture to its own "
+    "GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not "
+    "argued: over all twelve parity cells, three probe colours and eight states at 84 px, the "
+    "substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite "
+    "at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). "
+    "The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally "
+    "and left alone exactly as swm's recompile leaves them.")
+
+#: The floor, on the five trackcom cells: still unsupported, and now for a narrower reason.
 _FLOOR_COLOR = (
-    "UNSUPPORTED, and it is a RANGE gap rather than a default gap. swm writes the builtin ``grid`` "
-    "TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. stable-envs has exactly one floor "
-    "knob, ``material.grid``, a 3-vector that multiplies the material rgba — and ``_tex_rgb`` reduces "
-    "the whole checker to its MEAN colour, so even the checker pattern is not a thing this renderer "
-    "varies. Three degrees of freedom cannot cover six: the reachable set is a measure-zero subset of "
-    "swm's Box, i.e. 0 % of the range. What IS reachable is the one value that matters for "
-    "certification: swm's init_value [[.1,.2,.3],[.2,.3,.4]] is character-for-character "
-    "common/materials.xml's own grid texture, so the REGISTERED DEFAULT floor is the compiled model's "
-    "floor and needs no leaf at all (material.grid stays at its default [1,1,1]). Closing the range "
-    "needs a texture edit — regenerating the builtin checker into m.tex_data and re-uploading — and "
-    "``_bundle`` holds one mujoco.Renderer per (domain, size) that is never closed, so that is a "
-    "renderer change. ESCALATION CANDIDATE, carried forward from the Step-7 manipulator finding.")
+    "UNSUPPORTED on this cell, and it is a RANGE gap rather than a default gap. swm writes the "
+    "builtin ``grid`` TEXTURE's rgb1/rgb2 (2x3 = six free scalars) and recompiles. This cell is in "
+    "the ``DMControlTrackCom`` tier: the camera rides the body, there is no static half of the scene "
+    "and therefore no baked plate, and the whole scene is handed to mujoco_warp, which uploads its "
+    "textures when the render context is BUILT -- so a per-value floor here is one render context "
+    "per value, which is the one thing this repo will not scale. The capability that closed this "
+    "leaf on the eight parity cells (per-value texel substitution on a baked plate) does not apply "
+    "where there is no plate. What IS reachable is the one value that matters for certification: "
+    "swm's init_value is character-for-character common/materials.xml's own grid texture, so the "
+    "REGISTERED DEFAULT floor is the compiled model's floor and needs no leaf at all. "
+    "DOCUMENTED_LIMITATION, five ids (Cheetah, Walker, Hopper, Humanoid, Quadruped).")
 
 _GRAVITY_PHYS = (
     "PHYSICS-ONLY, and therefore UNSUPPORTED-BY-THIS-CELL rather than dead or not-applicable: gravity "
@@ -308,27 +333,33 @@ def _dmc(cell: str, swm_id: str, *, mapped_target: str | None = None,
         renamed[mapped_target] = "target.color"
     if visibility:
         renamed[visibility] = "rendering.render_target"
+    parity = cell in _PARITY_FLOOR
     return VariationMap(
         swm_id=swm_id,
+        identical=(("floor.color",) if parity else ()),
         renamed=renamed,
         scaled={"light.diffuse_scale": ("light.intensity", 1.0 / base)},
         enum=({shape[0]: ("target.shape", shape[1])} if shape else {}),
-        notes={"light.intensity": _light_reason(base), **(notes or {})},
+        notes={"light.intensity": _light_reason(base),
+               **({"floor.color": _FLOOR_MAPPED} if parity else {}), **(notes or {})},
         # ``physics_only`` is merged into ``unsupported`` rather than kept as its own bucket: plan
         # S9's taxonomy has four labels and a physics leaf of a render-from-state cell is
         # "unsupported by this cell", not "not applicable" — the coordinator's ruling, and the right
         # one, because ``not_applicable`` would say the leaf asks nothing of stable-envs and it does.
         # The separate keyword survives so the REASON is uniform and the count is auditable.
-        unsupported={"floor.color": _FLOOR_COLOR, **(physics_only or {}), **(unsupported or {})},
+        unsupported={**({} if parity else {"floor.color": _FLOOR_COLOR}),
+                     **(physics_only or {}), **(unsupported or {})},
         dead_upstream=dict(dead_upstream or {}),
         ours_only=dict(ours_only or {}))
 
 
 #: ``ours_only`` entries that recur. ``material.grid`` is our floor knob and is deliberately NOT the
 #: mapping for ``floor.color`` — see ``_FLOOR_COLOR``.
-_GRID_OURS = {"material.grid": "our only floor knob: a 3-vector multiplying the floor material's "
-                               "rgba. swm's floor.color edits the texture instead; see the "
-                               "floor.color entry in `unsupported` for why they are not the same leaf"}
+_GRID_OURS = {"material.grid": "a 3-vector multiplying the floor MATERIAL's rgba, which is a "
+                               "different knob from the checker TEXTURE and composes with it: swm "
+                               "has no material-level floor knob. Our floor.color is swm's "
+                               "floor.color and is mapped `identical` on the parity cells; on the "
+                               "five trackcom cells this is the only floor knob there is"}
 _FOVY_OURS = {"camera.fovy_scale": "a field-of-view multiplier; swm's DMControlWrapper renders at the "
                                    "model's own camera and offers no such knob"}
 _DECOR_OURS = {"material.decoration": "the rails/arena furniture material; swm recolours only "
