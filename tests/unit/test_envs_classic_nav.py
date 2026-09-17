@@ -208,3 +208,81 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     assert sorted(tuple(k) if isinstance(k, tuple) else (k,)
                   for k in spec.keys(nested=True)) == sorted(KEYS[name])
     env.close()
+
+
+def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
+    """The one refactor this host cannot measure against the live reference, checked on a stub.
+
+    ``SimplePointMaze``'s reference is a matplotlib figure, and neither local interpreter has
+    matplotlib, so ``reference_render`` cannot be run against the official env here (the other four
+    navigation cells share the identical ``_SWMPort`` code path and ARE measured against theirs —
+    see findings §6). What is checkable without it is the call SEQUENCE, which is the whole of what
+    the merge changed: the reset must pass ``options={"variation": []}`` (a plain reset resamples
+    ``agent.position`` and every number measured afterwards would describe a different appearance),
+    the state must be written to ``u.state`` as float32, and ``render`` must be called with
+    ``"rgb_array"`` — matplotlib's env requires the mode, the torch-rendered cells refuse it.
+    """
+    calls = []
+
+    class _Stub:
+        state = np.zeros(2, np.float32)
+
+        def reset(self, seed=None, options=None):
+            calls.append(("reset", seed, options))
+
+        def render(self, *args):
+            calls.append(("render", args))
+            return np.zeros((500, 500, 3), np.uint8)
+
+        @property
+        def unwrapped(self):
+            return self
+
+    ref = _Stub()
+    want = np.array([[1.0, 2.0], [3.0, 4.0]], np.float32)
+    frames = snv.SimplePointMaze.reference_render(ref, want)
+
+    assert frames.shape == (2, 500, 500, 3)
+    assert calls[0] == ("reset", 0, {"variation": []})
+    assert [c for c in calls if c[0] == "render"] == [("render", ("rgb_array",))] * 2
+    assert ref.state.dtype == np.float32 and np.array_equal(ref.state, want[1])
+    assert snv.SimplePointMaze.reference_kwargs == {"show_goal": False}
+
+
+@pytest.mark.parametrize("name", CLASSIC)
+def test_the_fast_state_property_agrees_with_the_base_class_path(name):
+    """``_Classic.state`` skips ``Env.state``; the two must not be able to disagree.
+
+    ``Env.state`` builds the State from the packed float32 row and splices in ``_hidden_state()``,
+    which is the path anything holding an ``Env`` reference takes. ``_Classic.state`` reads the
+    float64 buffer directly, which is both cheaper and more precise. They must agree to float32 —
+    i.e. everywhere the packed row can express the answer — or one of the two is wrong.
+    """
+    from stable_envs.env import Env
+
+    env = _env(name)
+    env.set_state(env.sample_states(4, np.random.default_rng(4)))
+    for _ in range(3):
+        env.step(_actions(env, 4))
+    fast, base = env.state, Env.state.fget(env)
+    assert sorted(base.keys()) == sorted(fast.keys())
+    for k in KEYS[name]:
+        assert torch.equal(base[k].to(torch.float32), fast[k].to(torch.float32)), k
+    env.close()
+
+
+def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import():
+    """The check that lets ``_Classic.state`` skip the base class's per-call hidden-field guard."""
+    from stable_envs.envs.classic_control import _Classic
+
+    with pytest.raises(TypeError, match="packed column"):
+        class _Broken(_Classic):
+            state_dim = 2
+            sim_state_names = ("a", "b", "c")
+            render_from_sim = (0,)
+
+    with pytest.raises(TypeError, match="duplicate"):
+        class _Dup(_Classic):
+            state_dim = 2
+            sim_state_names = ("a", "a", "c")
+            render_from_sim = (0, 2)

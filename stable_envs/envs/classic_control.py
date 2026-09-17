@@ -281,6 +281,29 @@ class _Classic(Env):
             col = {i: j for j, i in enumerate(cls.render_from_sim)}
             cls.state_layout = tuple(((nm,), 1, col.get(i))
                                      for i, nm in enumerate(cls.sim_state_names))
+            cls._check_state_layout_is_complete()
+
+    @classmethod
+    def _check_state_layout_is_complete(cls) -> None:
+        """At CLASS CREATION: the derived layout covers the packed row and names every variable once.
+
+        This is what buys the ``state`` property above the right to skip the base class's
+        per-call guard: a hidden field cannot be forgotten if the layout and the hidden set are the
+        same generated fact, and the generation is checked here, once, for every class that will ever
+        exist. A cell that declared four ``sim_state_names`` and a ``render_from_sim`` pointing at a
+        two-column packed row would fail to IMPORT rather than report zeros at run time.
+        """
+        drawn = tuple(cls.render_from_sim)
+        if len(set(drawn)) != len(drawn) or any(i >= len(cls.sim_state_names) for i in drawn):
+            raise TypeError(f"{cls.__name__}.render_from_sim={drawn} must index distinct entries of "
+                            f"sim_state_names={cls.sim_state_names}")
+        if len(drawn) != int(cls.state_dim):
+            raise TypeError(f"{cls.__name__}: render_from_sim names {len(drawn)} of the "
+                            f"{cls.state_dim} packed column(s); every column of the frozen row "
+                            f"belongs to exactly one dynamical variable")
+        if len(set(cls.sim_state_names)) != len(cls.sim_state_names):
+            raise TypeError(f"{cls.__name__}.sim_state_names={cls.sim_state_names} has a duplicate; "
+                            f"they become the public state's keys and must be distinct")
 
     def _hidden_state(self) -> dict:
         """The dynamical variables the packed row does not carry — the velocities, and nothing else.
@@ -340,15 +363,20 @@ class _Classic(Env):
     def state(self) -> TensorDict:
         """The state the env holds, at the dtype it is SIMULATED in. ``get_state()`` is the packed row.
 
-        The base class builds the State from the packed float32 row plus ``_hidden_state``; this
-        replaces every field with the float64 original from ``_sim``, of which the packed row is the
-        float32 cast. ``pack`` casts straight back, so ``pack(env.state)`` is ``get_state()`` to the
-        bit and nothing downstream of the renderer sees a different number. The base call is kept
-        rather than bypassed because it carries the guard that refuses a declared-but-unanswered
-        hidden field.
+        Read straight off ``_sim``, of which the packed row is the float32 cast, so ``pack(env.state)``
+        is ``get_state()`` to the bit and nothing downstream of the renderer sees a different number.
+
+        The base implementation (packed row -> ``unpack`` -> splice in ``_hidden_state``) is NOT
+        called, and that is a considered exception to the rule the Wave-0 review's T1 defect
+        installed. T1's hazard is a cell that overrides ``state`` and FORGETS a hidden field, which
+        reports zeros — a wrong answer rather than a crash. Here the layout and the hidden fields are
+        BOTH generated from ``sim_state_names``/``render_from_sim`` by ``__init_subclass__``, so
+        there is no field to forget: the check that they agree is done once, at class creation, by
+        ``_check_state_layout_is_complete`` below, instead of on every ``step``. ``_hidden_state`` is
+        still implemented, so anything that goes through ``Env.state`` gets the same answer — asserted
+        in ``tests/unit/test_envs_classic_nav.py``.
         """
-        td = Env.state.fget(self)
-        return self._state_td(self._sim[:int(td.batch_size[0])])
+        return self._state_td(self._sim[:self._live_rows])
 
     @torch.no_grad()
     def transition(self, state, action) -> TensorDict:
