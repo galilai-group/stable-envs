@@ -121,6 +121,14 @@ workstreams:
   files_owned: stable_envs/envs/dmcontrol/ (package from dmcontrol.py; DMC use of _plate_texels.py), tests
   ids_affected: 17 DMC swm ids (18 cells) incl. trackcom; T3 floor.color; Step-8 variation maps
   baseline_sha: 86a6ba4
+- workstream: G_render_2d
+  branch: step9/render-2d
+  worktree: /Users/samib/stable-envs-step9-render-2d
+  owner: opus (medium)
+  status: IN PROGRESS
+  files_owned: stable_envs/render/{scene,raster2d,gfxdraw,gfxdraw_classic,gfxdraw_fused,tilemap,navdot,prng}.py, tests
+  ids_affected: PushT, TwoRoom/Piecewise/SimplePointMaze, 5 classic-control, Craftax x2 (tilemap/prng), and every non-42 2-D family
+  baseline_sha: 5befc46
 decisions:
 - date: '2026-09-17'
   by: coordinator
