@@ -1,0 +1,992 @@
+.....s..........s..s........s..........s..s...FFF..s..........s..s.s.FFF [ 19%]
+..s..........s..s.s.FFF................s.s.FFF..s..........s..s.s......s [ 38%]
+..........s..s........s..........s..s...FFF..s..........s..s.s.FFF..s... [ 58%]
+.......s..s.s......s..........s..s........s..........s..s.ss.....s...... [ 77%]
+....s..s.ss.....s..........s..s.ss.....s..........s..s.ss.....s......... [ 96%]
+.s..s.ssssss                                                             [100%]
+=================================== FAILURES ===================================
+____ test_seeded_sampling_reproduces_in_a_fresh_process[DMCAcrobotSwingup] _____
+
+env = <stable_envs.envs.dmcontrol.DMCAcrobotSwingup object at 0x7f980f0811c0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
+        """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
+    
+        Stated separately from the frame check below, and asserted first, because the two failures have
+        different owners. If the states differ, the renderer is not implicated at all and a frame
+        comparison built on them would be comparing two different experiments; if the states agree and the
+        frames do not, the renderer is carrying process state.
+        """
+>       rec = _record(fresh_process, type(env).__name__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCAcrobotSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCAcrobotSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCAcrobotSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_frames_are_bit_identical_in_a_fresh_process[DMCAcrobotSwingup] ______
+
+env = <stable_envs.envs.dmcontrol.DMCAcrobotSwingup object at 0x7f980f0811c0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
+        """The gate. Same states, same style, new interpreter, identical bytes.
+    
+        Unconditional on the seeded sampler: the states come over the wire in the subprocess's own npz, so
+        this holds even if the seeded API were broken. What it rules out is everything a process
+        accumulates — a cached plate keyed on something mutable, an autotuner picking a different kernel
+        on the second run, a texture atlas built from a dict whose order changed, a float that was
+        initialised from an address. Every one of those is invisible to a same-process determinism check
+        and fatal to a stored corpus.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCAcrobotSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCAcrobotSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCAcrobotSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+______ test_rollout_seed_reproduces_in_a_fresh_process[DMCAcrobotSwingup] ______
+
+env = <stable_envs.envs.dmcontrol.DMCAcrobotSwingup object at 0x7f980f0811c0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
+        """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    
+        That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
+        generator bound to whatever device was current, a global numpy call inside a step. The states and
+        the actions are checked separately because a reproducible action sequence driving a
+        non-reproducible simulator and the reverse are different bugs.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCAcrobotSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCAcrobotSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCAcrobotSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+____ test_seeded_sampling_reproduces_in_a_fresh_process[DMCCartpoleBalance] ____
+
+env = <stable_envs.envs.dmcontrol.DMCCartpoleBalance object at 0x7f97399d1ee0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
+        """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
+    
+        Stated separately from the frame check below, and asserted first, because the two failures have
+        different owners. If the states differ, the renderer is not implicated at all and a frame
+        comparison built on them would be comparing two different experiments; if the states agree and the
+        frames do not, the renderer is carrying process state.
+        """
+>       rec = _record(fresh_process, type(env).__name__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCCartpoleBalance'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCCartpoleBalance could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCCartpoleBalance ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_frames_are_bit_identical_in_a_fresh_process[DMCCartpoleBalance] _____
+
+env = <stable_envs.envs.dmcontrol.DMCCartpoleBalance object at 0x7f97399d1ee0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
+        """The gate. Same states, same style, new interpreter, identical bytes.
+    
+        Unconditional on the seeded sampler: the states come over the wire in the subprocess's own npz, so
+        this holds even if the seeded API were broken. What it rules out is everything a process
+        accumulates — a cached plate keyed on something mutable, an autotuner picking a different kernel
+        on the second run, a texture atlas built from a dict whose order changed, a float that was
+        initialised from an address. Every one of those is invisible to a same-process determinism check
+        and fatal to a stored corpus.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCCartpoleBalance'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCCartpoleBalance could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCCartpoleBalance ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_rollout_seed_reproduces_in_a_fresh_process[DMCCartpoleBalance] ______
+
+env = <stable_envs.envs.dmcontrol.DMCCartpoleBalance object at 0x7f97399d1ee0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
+        """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    
+        That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
+        generator bound to whatever device was current, a global numpy call inside a step. The states and
+        the actions are checked separately because a reproducible action sequence driving a
+        non-reproducible simulator and the reverse are different bugs.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCCartpoleBalance'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCCartpoleBalance could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCCartpoleBalance ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+____ test_seeded_sampling_reproduces_in_a_fresh_process[DMCCartpoleSwingup] ____
+
+env = <stable_envs.envs.dmcontrol.DMCCartpoleSwingup object at 0x7f9739a9f9b0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
+        """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
+    
+        Stated separately from the frame check below, and asserted first, because the two failures have
+        different owners. If the states differ, the renderer is not implicated at all and a frame
+        comparison built on them would be comparing two different experiments; if the states agree and the
+        frames do not, the renderer is carrying process state.
+        """
+>       rec = _record(fresh_process, type(env).__name__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCCartpoleSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCCartpoleSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCCartpoleSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_frames_are_bit_identical_in_a_fresh_process[DMCCartpoleSwingup] _____
+
+env = <stable_envs.envs.dmcontrol.DMCCartpoleSwingup object at 0x7f9739a9f9b0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
+        """The gate. Same states, same style, new interpreter, identical bytes.
+    
+        Unconditional on the seeded sampler: the states come over the wire in the subprocess's own npz, so
+        this holds even if the seeded API were broken. What it rules out is everything a process
+        accumulates — a cached plate keyed on something mutable, an autotuner picking a different kernel
+        on the second run, a texture atlas built from a dict whose order changed, a float that was
+        initialised from an address. Every one of those is invisible to a same-process determinism check
+        and fatal to a stored corpus.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCCartpoleSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCCartpoleSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCCartpoleSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_rollout_seed_reproduces_in_a_fresh_process[DMCCartpoleSwingup] ______
+
+env = <stable_envs.envs.dmcontrol.DMCCartpoleSwingup object at 0x7f9739a9f9b0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
+        """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    
+        That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
+        generator bound to whatever device was current, a global numpy call inside a step. The states and
+        the actions are checked separately because a reproducible action sequence driving a
+        non-reproducible simulator and the reverse are different bugs.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCCartpoleSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCCartpoleSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCCartpoleSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+____ test_seeded_sampling_reproduces_in_a_fresh_process[DMCPendulumSwingup] ____
+
+env = <stable_envs.envs.dmcontrol.DMCPendulumSwingup object at 0x7f96fbe87e30>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
+        """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
+    
+        Stated separately from the frame check below, and asserted first, because the two failures have
+        different owners. If the states differ, the renderer is not implicated at all and a frame
+        comparison built on them would be comparing two different experiments; if the states agree and the
+        frames do not, the renderer is carrying process state.
+        """
+>       rec = _record(fresh_process, type(env).__name__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCPendulumSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCPendulumSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCPendulumSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_frames_are_bit_identical_in_a_fresh_process[DMCPendulumSwingup] _____
+
+env = <stable_envs.envs.dmcontrol.DMCPendulumSwingup object at 0x7f96fbe87e30>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
+        """The gate. Same states, same style, new interpreter, identical bytes.
+    
+        Unconditional on the seeded sampler: the states come over the wire in the subprocess's own npz, so
+        this holds even if the seeded API were broken. What it rules out is everything a process
+        accumulates — a cached plate keyed on something mutable, an autotuner picking a different kernel
+        on the second run, a texture atlas built from a dict whose order changed, a float that was
+        initialised from an address. Every one of those is invisible to a same-process determinism check
+        and fatal to a stored corpus.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCPendulumSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCPendulumSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCPendulumSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_____ test_rollout_seed_reproduces_in_a_fresh_process[DMCPendulumSwingup] ______
+
+env = <stable_envs.envs.dmcontrol.DMCPendulumSwingup object at 0x7f96fbe87e30>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
+        """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    
+        That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
+        generator bound to whatever device was current, a global numpy call inside a step. The states and
+        the actions are checked separately because a reproducible action sequence driving a
+        non-reproducible simulator and the reverse are different bugs.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'DMCPendulumSwingup'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: DMCPendulumSwingup could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: DMCPendulumSwingup ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_ test_seeded_sampling_reproduces_in_a_fresh_process[MujocoInvertedDoublePendulum] _
+
+env = <stable_envs.envs.mujoco_locomotion.MujocoInvertedDoublePendulum object at 0x7f96dd4fb4a0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
+        """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
+    
+        Stated separately from the frame check below, and asserted first, because the two failures have
+        different owners. If the states differ, the renderer is not implicated at all and a frame
+        comparison built on them would be comparing two different experiments; if the states agree and the
+        frames do not, the renderer is carrying process state.
+        """
+>       rec = _record(fresh_process, type(env).__name__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'MujocoInvertedDoublePendulum'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: MujocoInvertedDoublePendulum could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: MujocoInvertedDoublePendulum ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_ test_frames_are_bit_identical_in_a_fresh_process[MujocoInvertedDoublePendulum] _
+
+env = <stable_envs.envs.mujoco_locomotion.MujocoInvertedDoublePendulum object at 0x7f96dd4fb4a0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
+        """The gate. Same states, same style, new interpreter, identical bytes.
+    
+        Unconditional on the seeded sampler: the states come over the wire in the subprocess's own npz, so
+        this holds even if the seeded API were broken. What it rules out is everything a process
+        accumulates — a cached plate keyed on something mutable, an autotuner picking a different kernel
+        on the second run, a texture atlas built from a dict whose order changed, a float that was
+        initialised from an address. Every one of those is invisible to a same-process determinism check
+        and fatal to a stored corpus.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'MujocoInvertedDoublePendulum'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: MujocoInvertedDoublePendulum could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: MujocoInvertedDoublePendulum ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+_ test_rollout_seed_reproduces_in_a_fresh_process[MujocoInvertedDoublePendulum] _
+
+env = <stable_envs.envs.mujoco_locomotion.MujocoInvertedDoublePendulum object at 0x7f96dd4fb4a0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
+        """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    
+        That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
+        generator bound to whatever device was current, a global numpy call inside a step. The states and
+        the actions are checked separately because a reproducible action sequence driving a
+        non-reproducible simulator and the reverse are different bugs.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'MujocoInvertedDoublePendulum'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: MujocoInvertedDoublePendulum could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: MujocoInvertedDoublePendulum ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+__ test_seeded_sampling_reproduces_in_a_fresh_process[MujocoInvertedPendulum] __
+
+env = <stable_envs.envs.mujoco_locomotion.MujocoInvertedPendulum object at 0x7f97057ebcb0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
+        """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
+    
+        Stated separately from the frame check below, and asserted first, because the two failures have
+        different owners. If the states differ, the renderer is not implicated at all and a frame
+        comparison built on them would be comparing two different experiments; if the states agree and the
+        frames do not, the renderer is carrying process state.
+        """
+>       rec = _record(fresh_process, type(env).__name__)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'MujocoInvertedPendulum'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: MujocoInvertedPendulum could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: MujocoInvertedPendulum ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+___ test_frames_are_bit_identical_in_a_fresh_process[MujocoInvertedPendulum] ___
+
+env = <stable_envs.envs.mujoco_locomotion.MujocoInvertedPendulum object at 0x7f97057ebcb0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
+        """The gate. Same states, same style, new interpreter, identical bytes.
+    
+        Unconditional on the seeded sampler: the states come over the wire in the subprocess's own npz, so
+        this holds even if the seeded API were broken. What it rules out is everything a process
+        accumulates — a cached plate keyed on something mutable, an autotuner picking a different kernel
+        on the second run, a texture atlas built from a dict whose order changed, a float that was
+        initialised from an address. Every one of those is invisible to a same-process determinism check
+        and fatal to a stored corpus.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'MujocoInvertedPendulum'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: MujocoInvertedPendulum could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: MujocoInvertedPendulum ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+___ test_rollout_seed_reproduces_in_a_fresh_process[MujocoInvertedPendulum] ____
+
+env = <stable_envs.envs.mujoco_locomotion.MujocoInvertedPendulum object at 0x7f97057ebcb0>
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+
+    def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
+        """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    
+        That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
+        generator bound to whatever device was current, a global numpy call inside a step. The states and
+        the actions are checked separately because a reproducible action sequence driving a
+        non-reproducible simulator and the reverse are different bugs.
+        """
+        name = type(env).__name__
+>       rec = _record(fresh_process, name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/gpu/test_reproducibility.py:314: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fresh_process = ({'envs': {'Acrobot': {'states_sha': '89c581e8ad44d407917ccccc9f39338f6a613635d263050eda5e9706465cd463', 'style_sha': ...roc0/inputs.npz' with keys: Acrobot::states, Acrobot::style, CartPole::states, CartPole::style, MountainCar::states...)
+name = 'MujocoInvertedPendulum'
+
+    def _record(fresh_process, name: str) -> dict:
+        report, _ = fresh_process
+        rec = report["envs"].get(name)
+        assert rec is not None, (
+            f"{name} is registered in this process but the fresh process did not report it — the two "
+            f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        if "error" in rec:
+>           pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
+                        f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+E           Failed: MujocoInvertedPendulum could not be built or rendered in a fresh process, while it builds here. That asymmetry is the bug, not a missing dependency:
+E           Traceback (most recent call last):
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 98, in run
+E               rec.update(rollout_digests(env, n))
+E                          ^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/testing/render_worker.py", line 74, in rollout_digests
+E               tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/env.py", line 811, in sample
+E               return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+E               return func(*args, **kwargs)
+E                      ^^^^^^^^^^^^^^^^^^^^^
+E             File "$SCR/se9/classic-nav/stable_envs/rollout.py", line 121, in sample
+E               raise NotImplementedError(
+E           NotImplementedError: MujocoInvertedPendulum ships a renderer but no batched GPU simulator, so it cannot generate trajectories. That is a deliberate split: rendering and simulation are separable, and an env earns a step() only where its dynamics can be ported AND checked. Either supply states you already have (stable_envs.render_states / StateDataset), or roll out the official CPU env and render the states it produces.
+
+tests/gpu/test_reproducibility.py:246: Failed
+=============================== warnings summary ===============================
+../../venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: 122 warnings
+tests/gpu/test_reproducibility.py: 105627 warnings
+  $SCR/venvs/se-step6/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    key_item.shape = original_shape
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 13 EGL contexts created, 0 released, 13 live (peak 13); renderers 5 created / 0 closed
+node: gpu1505 slurm=mix reason=none reference-renderer={'env': 'DMCAcrobotSwingup', 'size': 84, 'max_abs_diff': 0}
+=========================== short test summary info ============================
+FAILED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCAcrobotSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCAcrobotSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCAcrobotSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCCartpoleBalance]
+FAILED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCCartpoleBalance]
+FAILED tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCCartpoleBalance]
+FAILED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCCartpoleSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCCartpoleSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCCartpoleSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[DMCPendulumSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[DMCPendulumSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[DMCPendulumSwingup]
+FAILED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoInvertedDoublePendulum]
+FAILED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoInvertedDoublePendulum]
+FAILED tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[MujocoInvertedDoublePendulum]
+FAILED tests/gpu/test_reproducibility.py::test_seeded_sampling_reproduces_in_a_fresh_process[MujocoInvertedPendulum]
+FAILED tests/gpu/test_reproducibility.py::test_frames_are_bit_identical_in_a_fresh_process[MujocoInvertedPendulum]
+FAILED tests/gpu/test_reproducibility.py::test_rollout_seed_reproduces_in_a_fresh_process[MujocoInvertedPendulum]
+18 failed, 288 passed, 66 skipped, 1509 deselected, 105749 warnings in 85.55s (0:01:25)
+Exception ignored in: <function OffScreenViewer.__del__ at 0x7f96dd430720>
+Traceback (most recent call last):
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "$SCR/se9/classic-nav/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f98b34e6480>
+Traceback (most recent call last):
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se9/classic-nav/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function OffScreenViewer.__del__ at 0x7f96dd430720>
+Traceback (most recent call last):
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 235, in __del__
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 232, in free
+  File "$SCR/se9/classic-nav/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f98b34e6480>
+Traceback (most recent call last):
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "$SCR/se9/classic-nav/stable_envs/testing/resource_guard.py", line 140, in wrapper
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "$SCR/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

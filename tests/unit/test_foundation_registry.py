@@ -17,6 +17,7 @@ interpreter is not the one the baseline was taken on.
 """
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
 
@@ -80,7 +81,20 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
     then = {r["name"]: r for r in base["registry_table"]}
     assert sorted(now) == sorted(then), "the set of registered class names changed"
     for name, row in then.items():
-        assert now[name] == row, f"the registry row for {name} changed"
+        # ``module`` is compared SEPARATELY, and by what it guarantees rather than by its spelling.
+        # Wave 1 moves files on purpose (plan §3 renames ``swm_nav``/``simple_point_maze`` to
+        # ``navigation``, ``dmcontrol.py`` to a package, ...), and the guarantee the baseline row was
+        # protecting is that the class is still THE SAME CLASS and still reachable under the import
+        # path it had. A workstream that moves a class must leave that path working, which is what
+        # the deprecated shim modules are for; the semantic columns below may not move at all.
+        assert {k: v for k, v in now[name].items() if k != "module"} == \
+               {k: v for k, v in row.items() if k != "module"}, \
+            f"the registry row for {name} changed"
+        if now[name]["module"] != row["module"]:
+            old = importlib.import_module(row["module"])
+            assert getattr(old, name, None) is R.REGISTRY[name], (
+                f"{name} moved from {row['module']} to {now[name]['module']} and the old import path "
+                f"no longer yields it; a moved class keeps a shim until Wave 3 retires it")
         assert R.make.__module__ and R._resolve(name, "make") is R.REGISTRY[name]
 
 
