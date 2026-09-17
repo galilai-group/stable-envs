@@ -264,27 +264,30 @@ Local, Apple M5, `MUJOCO_GL=glfw`, exact commands and exact outputs:
 ```
 MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q \
     tests/unit/test_variation_maps_newcells.py tests/unit/test_repo_contracts.py -p no:cacheprovider
-  -> 1 failed, 84 passed, 9 skipped in 0.55s
+  -> 1 failed, 87 passed, 9 skipped
 
 MUJOCO_GL=glfw /Users/samib/se7-ogb-venv/bin/python -m pytest -q \
     tests/unit/test_variation_maps_newcells.py tests/unit/test_repo_contracts.py -p no:cacheprovider
-  -> 1 failed, 89 passed, 4 skipped in 5.76s     (live-SWM tier; nothing aborted)
+  -> 1 failed, 92 passed, 4 skipped               (live-SWM tier; nothing aborted)
 
-MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q tests/unit/test_variation_maps_newcells.py
-  -> 74 passed, 5 skipped                        (9 skips become 0 additional in se7-ogb: 81 passed, 2 skipped)
+MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q tests/unit -p no:cacheprovider
+  -> 2 failed, 1165 passed, 195 skipped
 ```
 
-The single failure in both interpreters is `test_repo_contracts.py::
-test_every_cited_scratch_path_resolves`, the pre-existing row C already recorded: it lists cited
+The failures are the two pre-existing rows C already recorded:
+`test_repo_contracts.py::test_every_cited_scratch_path_resolves`: it lists cited
 `scratch/` paths that live in other Step-6/Step-8 worktrees (`scratch/step8/report.py`,
 `scratch/step8/rejudge_gate_a.py`, `scratch/step8/perf/*`, six Step-6 paths). **None of the listed
 paths is a file this follow-up added or cites**, and `scratch/step8/variations-newcells/gpu_colors.py`
-is committed precisely so its citations resolve.
+is committed precisely so its citations resolve — and
+`test_examples.py::test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]`.
+Both reproduce at the baseline commit with this branch stashed.
 
 The live-SWM tier ran to completion here; the earlier **exit 134** the reviewer and the Codex stop
 note both recorded is not reproduced, and an exit 134 remains not a result either way.
 
-Of the tests added by this follow-up, six are the leak regression — `_cube_colours` returning a
+The test module now carries 47 test functions. Of the tests this follow-up added, six are the leak
+regression — `_cube_colours` returning a
 value for the default, custom → default, mixed → default, default → custom → default, cross-instance
 reuse, and a shrinking batch. All six were run against a re-introduced `np.allclose` shortcut and
 **all six failed**, so they test the defect rather than the fix's shape.
@@ -334,3 +337,37 @@ driver and the versions of torch / mujoco / mujoco_warp / warp / numpy. The defa
 here rests on the earlier round's artifacts. C's five original JSONs are left exactly as committed;
 they still carry `git_sha: null` and absolute `/oscar` paths, which is recorded below as an open item
 rather than edited after the fact.
+
+## The defect this follow-up's own gate found, and fixed
+
+Recorded first because it is the most useful thing in this document: **gate (d) failed the first
+time, on the completed patch, and the failure was real.**
+
+`check_style_is_state` was `not_applicable` at Step 7 ("env declares no style"). With `style_dim: 9`
+it became applicable, and at `a9e68ce` both cells **FAILED** it:
+
+| cell | verdict at `a9e68ce` | `check_style_is_state` |
+|---|---|---|
+| `OGBCube` | **FAIL** | `max_abs_diff=175` |
+| `OGBScene` | **FAIL** | `max_abs_diff=173` |
+
+Recorded as committed evidence in `gpu/gate_a_cuda_ogbmanip_a9e68ce_FAIL.json`, because a gate that
+only keeps its passes is not a gate.
+
+**Diagnosis** (`gpu/gl_context_diagnosis_38150c3.json`). A second `OGBManipBase` constructed after a
+render with a custom floor failed its OWN `_check_plate_is_constant`, with the two 128 px plates
+differing by **219/255** — which reads as "the plate depends on the state" and is nothing of the
+kind. `mujoco.Renderer` calls `self._gl_context.make_current()` in exactly two places, its
+constructor and `render()`. `mjr_uploadTexture` is neither: its `con` argument picks the MuJoCo
+texture id, but the GL calls it issues go to whatever context the thread currently holds — the last
+rig that rendered. This module keeps one rig per (cell, **resolution**), so `_check_plate_is_constant`
+baking at 128 while a render works at 224 means two live contexts, and an upload made under the
+wrong one overwrites an unrelated texture object, because GL texture names are per context.
+
+**Fix** (`38150c3`): make the rig's own context current immediately before the upload. One line,
+and the diagnosis run afterwards reports `fresh_vs_env: 0` and `env_vs_env_again: 0` for the sampled
+style, cube-only, floor-only, uniform-floor and default cases.
+
+This is invisible to any test that builds one renderer at one resolution, and it is exactly the
+class of defect the reviewer's fifth finding demanded be measured on the completed code rather than
+inferred from an earlier evidence round.
