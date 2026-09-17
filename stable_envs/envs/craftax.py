@@ -729,6 +729,39 @@ class CraftaxClassic(StableEnv):
     #: and the strip layout. ``jax`` is here for a reason that is not obvious and is load-bearing:
     #: see :meth:`reference_env`, which refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
+    #: **Step 8, Workstream D.** ``stable_worldmodel``'s ``CraftaxWrapper`` (
+    #: ``stable_worldmodel/envs/craftax/craftax.py``) builds its step function as
+    #: ``self._step_fn = jax.jit(_step, backend=self.backend)`` (and reset likewise), so a LIVE
+    #: ``gymnasium.make("swm/CraftaxClassicPixels-v1")`` workflow always observes the JIT-produced
+    #: frame, never the un-jitted one. The parity claim certified above (100.0000% exact, max |diff|
+    #: 0, see :meth:`reference_env`) is measured against the renderer as WRITTEN -- un-jitted -- for
+    #: the reason given there: jit fuses the arithmetic differently and the reference disagrees with
+    #: its own un-jitted self by up to 1.5e-05 in float32, which a sleeping or lit row's desaturation
+    #: can turn into a uint8 rounding flip. So there are two honest, DIFFERENT numbers depending on
+    #: which official frame a caller means: **un-jitted 100.0000% exact / max |diff| 0** (what this
+    #: class certifies against) and **jitted 99.7854% exact at 7 px / 99.7225% at 16 px, max |diff|
+    #: 1** (what a live SWM caller actually receives). Neither number is hidden behind the other; a
+    #: workflow built on ``swm/CraftaxClassicPixels-v1`` should expect the jitted number, and the gap
+    #: is stated below rather than omitted.
+    SWM_WRAPPER_GATE_F = {
+        "swm_wrapper_jits": ["reset", "step"],
+        "swm_wrapper_source": "stable_worldmodel/envs/craftax/craftax.py:CraftaxWrapper.__init__ "
+                              "(self._reset_fn = jax.jit(_reset, ...); self._step_fn = "
+                              "jax.jit(_step, ...))",
+        "certified_reference": "un-jitted craftax 1.6.1 (see reference_env)",
+        "live_swm_reference": "jitted craftax 1.6.1, via CraftaxWrapper",
+        "certified_exact_frac": 1.0,
+        "certified_max_abs_diff": 0,
+        "live_swm_exact_frac_7px": 0.997854,
+        "live_swm_exact_frac_16px": 0.997225,
+        "max_abs_diff_swm_wrapper_vs_certified": 1,
+        "mechanism": "jax.jit fuses the renderer's float32 arithmetic differently; the jitted "
+                     "reference disagrees with its own un-jitted self by up to 1.5e-05, which a "
+                     "sleeping or lit row's desaturation can turn into a uint8 rounding flip",
+        "note": "not hidden: this is a stated, bounded (<=1 uint8 step) discrepancy between the "
+                "certified claim and what a live stable_worldmodel workflow observes, not a "
+                "renderer defect here.",
+    }
     #: Where ``check_resolution_consistency`` applies to this env, and where it cannot -- **decided by
     #: an experiment on the OFFICIAL renderer, not by argument from this one**. The check renders at
     #: S and 2S, box-downsamples, and asks how much agrees. Running its exact protocol on craftax's

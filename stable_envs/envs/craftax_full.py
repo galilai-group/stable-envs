@@ -794,6 +794,33 @@ class CraftaxFull(StableEnv):
     #: the strip layout and the texture resampling; ``jax`` is load-bearing for the reason
     #: :meth:`reference_env` refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
+    #: **Step 8, Workstream D.** ``stable_worldmodel``'s ``CraftaxWrapper`` (
+    #: ``stable_worldmodel/envs/craftax/craftax.py``) builds its step function as
+    #: ``self._step_fn = jax.jit(_step, backend=self.backend)`` (and reset likewise), so a LIVE
+    #: ``gymnasium.make("swm/CraftaxPixels-v1")`` workflow always observes the JIT-produced frame,
+    #: never the un-jitted one the parity claim above is measured against. See
+    #: ``CraftaxClassic.SWM_WRAPPER_GATE_F`` for the mechanism (jit fuses float32 arithmetic
+    #: differently and disagrees with its own un-jitted self by up to 1.5e-05, which a sleeping or
+    #: lit row can turn into a uint8 rounding flip); the same identity-recheck evidence
+    #: (``examples/results/step8/semantic/identity_recheck.json``) establishes the un-jitted
+    #: byte-identity this class certifies, and the same bounded (<=1 uint8 step) gap applies to a
+    #: live SWM caller of this cell.
+    SWM_WRAPPER_GATE_F = {
+        "swm_wrapper_jits": ["reset", "step"],
+        "swm_wrapper_source": "stable_worldmodel/envs/craftax/craftax.py:CraftaxWrapper.__init__ "
+                              "(self._reset_fn = jax.jit(_reset, ...); self._step_fn = "
+                              "jax.jit(_step, ...))",
+        "certified_reference": "un-jitted craftax 1.6.1 (see reference_env)",
+        "live_swm_reference": "jitted craftax 1.6.1, via CraftaxWrapper",
+        "certified_exact_frac": 1.0,
+        "certified_max_abs_diff": 0,
+        "live_swm_exact_frac_phase0_pool": "48/49 states uint8-identical jitted vs un-jitted; 1/49 "
+                                           "differed on 0.0023% of pixels, max |diff| 1 (see "
+                                           "parity_note above, phase-0 pool)",
+        "max_abs_diff_swm_wrapper_vs_certified": 1,
+        "note": "not hidden: a stated discrepancy between the certified claim and what a live "
+                "stable_worldmodel workflow observes, not a renderer defect here.",
+    }
     parity_all_exact_min = 1.0
     parity_note = (
         "Measured on the frozen Step-7 corpus at 10 px (the registered observation) and 16 px, over "

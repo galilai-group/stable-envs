@@ -1,0 +1,396 @@
+{
+  "baseline_sha": "2b4b5c3a62b998a1c27918832bfd2311f608c533",
+  "runs": {
+    "/Users/samib/se6-venv/bin/python": {
+      "classes": {
+        "Acrobot": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 13
+        },
+        "CartPole": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 16
+        },
+        "DMCAcrobotSwingup": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCBallInCupCatch": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCCartpoleBalance": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCCartpoleSwingup": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCCheetahRun": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "DMCFingerTurnHard": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 18
+        },
+        "DMCHopperHop": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "DMCHumanoidStand": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "DMCManipulatorBringBall": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 22
+        },
+        "DMCPendulumSwingup": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 14
+        },
+        "DMCQuadrupedWalk": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 10
+        },
+        "DMCReacherHard": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 18
+        },
+        "DMCWalkerWalk": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "FetchPickAndPlace": {
+          "reason": "KeyError: \"unknown env 'FetchPickAndPlace'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate",
+          "status": "SKIPPED"
+        },
+        "FetchPickAndPlaceDense": {
+          "reason": "KeyError: \"unknown env 'FetchPickAndPlaceDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNav",
+          "status": "SKIPPED"
+        },
+        "FetchPickAndPlaceDict": {
+          "reason": "KeyError: \"unknown env 'FetchPickAndPlaceDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavi",
+          "status": "SKIPPED"
+        },
+        "FetchPush": {
+          "reason": "KeyError: \"unknown env 'FetchPush'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'Antm",
+          "status": "SKIPPED"
+        },
+        "FetchPushDense": {
+          "reason": "KeyError: \"unknown env 'FetchPushDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', ",
+          "status": "SKIPPED"
+        },
+        "FetchPushDict": {
+          "reason": "KeyError: \"unknown env 'FetchPushDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', '",
+          "status": "SKIPPED"
+        },
+        "FetchReach": {
+          "reason": "KeyError: \"unknown env 'FetchReach'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'Ant",
+          "status": "SKIPPED"
+        },
+        "FetchReachDense": {
+          "reason": "KeyError: \"unknown env 'FetchReachDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate',",
+          "status": "SKIPPED"
+        },
+        "FetchReachDict": {
+          "reason": "KeyError: \"unknown env 'FetchReachDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', ",
+          "status": "SKIPPED"
+        },
+        "FetchSlide": {
+          "reason": "KeyError: \"unknown env 'FetchSlide'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'Ant",
+          "status": "SKIPPED"
+        },
+        "FetchSlideDense": {
+          "reason": "KeyError: \"unknown env 'FetchSlideDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate',",
+          "status": "SKIPPED"
+        },
+        "FetchSlideDict": {
+          "reason": "KeyError: \"unknown env 'FetchSlideDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', ",
+          "status": "SKIPPED"
+        },
+        "MountainCar": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 19
+        },
+        "MountainCarContinuous": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 19
+        },
+        "OGBCube": {
+          "reason": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se",
+          "status": "SKIPPED"
+        },
+        "OGBScene": {
+          "reason": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S",
+          "status": "SKIPPED"
+        },
+        "PFRocketLanding": {
+          "reason": "KeyError: \"unknown env 'PFRocketLanding'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate',",
+          "status": "SKIPPED"
+        },
+        "Pendulum": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 10
+        },
+        "Piecewise": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 10
+        },
+        "PiecewiseZones": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 22
+        },
+        "PointmazeLargeNavigate": {
+          "reason": "ModuleNotFoundError: No module named 'ogbench'",
+          "status": "SKIPPED"
+        },
+        "PointmazeLargeStitch": {
+          "reason": "ModuleNotFoundError: No module named 'ogbench'",
+          "status": "SKIPPED"
+        },
+        "PushT": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 29
+        },
+        "SimplePointMaze": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 35
+        },
+        "TwoRoom": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 22
+        },
+        "TwoRoomTarget": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 26
+        }
+      },
+      "host": "Mac.lan",
+      "python": "3.12.11"
+    },
+    "/Users/samib/se7-ogb-venv/bin/python": {
+      "classes": {
+        "Acrobot": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 13
+        },
+        "CartPole": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 16
+        },
+        "DMCAcrobotSwingup": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCBallInCupCatch": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCCartpoleBalance": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCCartpoleSwingup": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 11
+        },
+        "DMCCheetahRun": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "DMCFingerTurnHard": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 18
+        },
+        "DMCHopperHop": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "DMCHumanoidStand": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "DMCManipulatorBringBall": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 22
+        },
+        "DMCPendulumSwingup": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 14
+        },
+        "DMCQuadrupedWalk": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 10
+        },
+        "DMCReacherHard": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 18
+        },
+        "DMCWalkerWalk": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 7
+        },
+        "FetchPickAndPlace": {
+          "reason": "KeyError: \"unknown env 'FetchPickAndPlace'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate",
+          "status": "SKIPPED"
+        },
+        "FetchPickAndPlaceDense": {
+          "reason": "KeyError: \"unknown env 'FetchPickAndPlaceDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNav",
+          "status": "SKIPPED"
+        },
+        "FetchPickAndPlaceDict": {
+          "reason": "KeyError: \"unknown env 'FetchPickAndPlaceDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavi",
+          "status": "SKIPPED"
+        },
+        "FetchPush": {
+          "reason": "KeyError: \"unknown env 'FetchPush'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'Antm",
+          "status": "SKIPPED"
+        },
+        "FetchPushDense": {
+          "reason": "KeyError: \"unknown env 'FetchPushDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', ",
+          "status": "SKIPPED"
+        },
+        "FetchPushDict": {
+          "reason": "KeyError: \"unknown env 'FetchPushDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', '",
+          "status": "SKIPPED"
+        },
+        "FetchReach": {
+          "reason": "KeyError: \"unknown env 'FetchReach'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'Ant",
+          "status": "SKIPPED"
+        },
+        "FetchReachDense": {
+          "reason": "KeyError: \"unknown env 'FetchReachDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate',",
+          "status": "SKIPPED"
+        },
+        "FetchReachDict": {
+          "reason": "KeyError: \"unknown env 'FetchReachDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', ",
+          "status": "SKIPPED"
+        },
+        "FetchSlide": {
+          "reason": "KeyError: \"unknown env 'FetchSlide'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', 'Ant",
+          "status": "SKIPPED"
+        },
+        "FetchSlideDense": {
+          "reason": "KeyError: \"unknown env 'FetchSlideDense'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate',",
+          "status": "SKIPPED"
+        },
+        "FetchSlideDict": {
+          "reason": "KeyError: \"unknown env 'FetchSlideDict'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate', ",
+          "status": "SKIPPED"
+        },
+        "MountainCar": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 19
+        },
+        "MountainCarContinuous": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 19
+        },
+        "OGBCube": {
+          "reason": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se",
+          "status": "SKIPPED"
+        },
+        "OGBScene": {
+          "reason": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S",
+          "status": "SKIPPED"
+        },
+        "PFRocketLanding": {
+          "reason": "KeyError: \"unknown env 'PFRocketLanding'; known: ['Acrobot', 'AntmazeGiantNavigate', 'AntmazeGiantStitch', 'AntmazeLargeExplore', 'AntmazeLargeNavigate', 'AntmazeLargeStitch', 'AntmazeMediumExplore', 'AntmazeMediumNavigate', 'AntmazeMediumStitch', 'AntmazeTeleportExplore', 'AntmazeTeleportNavigate',",
+          "status": "SKIPPED"
+        },
+        "Pendulum": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 10
+        },
+        "Piecewise": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 10
+        },
+        "PiecewiseZones": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 22
+        },
+        "PointmazeLargeNavigate": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 13
+        },
+        "PointmazeLargeStitch": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 13
+        },
+        "PushT": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 29
+        },
+        "SimplePointMaze": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 35
+        },
+        "TwoRoom": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 22
+        },
+        "TwoRoomTarget": {
+          "default_equals_style_from_empty_variation": true,
+          "status": "MEASURED",
+          "style_dim": 26
+        }
+      },
+      "host": "Mac.lan",
+      "python": "3.12.11"
+    }
+  },
+  "what_this_is": "Cheap, CPU-only probe: does ``default_style() == style_from_variation(env, {})`` for every\nstable-envs class that carries a ``VariationMap``.\n\nThis is the \"registered default is reproducible through the mapping\" check plan section 23 asks\nfor, run directly rather than inferred: construct the class at a tiny size, read its own default\nstyle row, run the SAME empty-variation config through ``style_from_variation``, and compare with\n``np.array_equal`` (not ``allclose`` -- the round trip is claimed exact).\n\nA class that cannot be constructed under this interpreter (GPU-only backend: Fetch, OGBCube,\nOGBScene, PFRocketLanding; or a missing optional dependency: OGBench's Pointmaze pair) is recorded\nas ``SKIPPED`` with the reason, not silently dropped -- ``build_gate_f.py`` fills those rows from\nthe existing committed GPU evidence\n(``examples/results/step8/variations-fetch/gpu_evidence.json``,\n``examples/results/step8/variations-newcells/gpu/default_{ogb,rocket}_{baseline,branch}.json``)\ninstead of leaving them blank.\n\nRun once per available CPU interpreter and merge the outputs (this script never overwrites a class\nanother run already recorded, so `se6-venv` + `se7-ogb-venv` together cover everything constructible\nwithout a GPU):\n\n    MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python scratch/step8/swm/probe_default_roundtrip.py\n    MUJOCO_GL=glfw /Users/samib/se7-ogb-venv/bin/python scratch/step8/swm/probe_default_roundtrip.py\n"
+}
