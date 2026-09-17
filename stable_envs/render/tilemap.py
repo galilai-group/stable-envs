@@ -401,7 +401,8 @@ if HAVE_TRITON:
                  mask=m)
 
 
-def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int, out=None) -> torch.Tensor:
+def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int,
+         out: torch.Tensor | None = None) -> torch.Tensor:
     """``idx`` (B,H,W) int32 of atlas slots -> ``(B, H*T, W*T, 3)`` uint8, in one pass.
 
     One program per (batch, output row, column block); each lane resolves its own tile and copies a
@@ -427,7 +428,8 @@ def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int, out=None) -
     return out
 
 
-def blit_torch(atlas_rgb: torch.Tensor, idx: torch.Tensor, out=None) -> torch.Tensor:
+def blit_torch(atlas_rgb: torch.Tensor, idx: torch.Tensor,
+               out: torch.Tensor | None = None) -> torch.Tensor:
     """The readable reference for :func:`blit`: gather whole tiles, then untile."""
     B, H, W = idx.shape
     T = atlas_rgb.shape[1]

@@ -1,0 +1,21 @@
+.........s.s..ssss..........s.s..ssss..........s.s..ssss..........s.s..s [ 21%]
+sss..........s.s.s.sss..........s.s..ssss..........s....ssss..........s. [ 42%]
+...ssss..........s.s.s.sss..........s.s.s.sss..........s....ssss........ [ 63%]
+..s.s..ssss..........s.s..ssss..........s.s.s.sss..........s....ssss.... [ 84%]
+......s....ssss..........s.s.s.sss..........s.s.s.sss.                   [100%]
+=============================== warnings summary ===============================
+../../venvs/se-vis311/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: 122 warnings
+tests/gpu/test_conformance.py: 117063 warnings
+  $SCR/venvs/se-vis311/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    key_item.shape = original_shape
+
+tests/gpu/test_conformance.py::test_describe_is_complete[DMCQuadrupedWalk]
+  $SCR/venvs/se-vis311/lib/python3.12/site-packages/mujoco_warp/_src/io.py:713: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER')]. At most 1 contact will be generated for these pairs.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 36 EGL contexts created, 0 released, 36 live (peak 36); renderers 18 created / 0 closed
+node: gpu3001 slurm=mix reason=none reference-renderer={'env': 'DMCAcrobotSwingup', 'size': 84, 'max_abs_diff': 0}
+239 passed, 103 skipped, 1429 deselected, 117186 warnings in 191.72s (0:03:11)

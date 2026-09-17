@@ -89,7 +89,7 @@ except ImportError:                                    # reported by the rendere
     HAVE_TRITON = False
 
 
-def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype):
+def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype) -> tuple[torch.Tensor, torch.Tensor]:
     """Subpixel centres in WORLD coordinates, shape (H,W) each.
 
     Pixel centres, not corners: a pixel covers ``[i, i+1)`` and samples at ``i+0.5``. Sampling at the
@@ -263,7 +263,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
         rr0, rr1, cc0, cc1 = (int(v) for v in row[6 + 2 * V:])
         win = [(None, rr0, rr1, cc0, cc1)]
         if i in wide:
-            win = _row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
+            win = row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
         out.append((disc, ring, poly, outline, seg, edges, win))
     return out
 
@@ -306,7 +306,7 @@ _GROUP_DISPATCH_PIXELS = 10_000
 _ACCEPT_MARGIN = 1.25
 
 
-def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
+def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     """Windows for one primitive: either ``[(None, r0, r1, c0, c1)]`` or one window per row group.
 
     The batch-union window is what one torch op over the whole batch can cover, and for a primitive
@@ -331,6 +331,11 @@ def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
     hold by construction rather than by test.
 
     ``box`` is ``(B,4)`` int64 pixel boxes, ``r0..c1`` the union window already computed from them.
+
+    Public because it has a second caller outside this module: ``envs/navigation.py`` groups the
+    swm_nav dot windows by exactly this partition, so that the fused kernel and the torch path agree
+    about which rows share a window. It was reaching in for ``_row_groups``; the name it reaches for
+    is now part of this module's surface rather than a private one two modules deep.
     """
     import numpy as np
 
@@ -371,8 +376,14 @@ def _row_groups(box, r0: int, r1: int, c0: int, c1: int):
     return groups
 
 
+#: Step-8 spelling. ``envs/navigation.py`` imports it under this name and Workstream G does not own
+#: that file; the alias keeps the call site working, and there is exactly one function.
+_row_groups = row_groups
+
+
 @torch.no_grad()
-def render_torch(scene: Scene2D, out_size, supersample: int = 1) -> torch.Tensor:
+def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
+                 supersample: int = 1) -> torch.Tensor:
     """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast.
 
     Still the executable specification — every per-pixel expression below is the one it always was,
@@ -814,7 +825,7 @@ def _row_bytes(t: torch.Tensor, B: int) -> torch.Tensor:
     return t.contiguous().reshape(B, -1).view(torch.uint8)
 
 
-def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int):
+def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor | None:
     """Bake the leading primitives once, or decline; returns an ``(Rh,Rw,3)`` uint8 image or ``None``.
 
     Two reasons to decline, and neither is a failure mode — the caller draws every primitive instead
@@ -877,7 +888,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int):
     return hit
 
 
-def _destination(out, B: int, H: int, W: int) -> torch.Tensor:
+def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
     """The ``(B,H,W,3)`` uint8 buffer the kernel writes, checked rather than assumed.
 
     ``out.view(B,H,W,3)`` is not a check. When the requested shape is the shape the tensor already
@@ -938,19 +949,35 @@ _CULL_TILE = (8, 128, 4)
 #: hangs off the right edge still runs the whole primitive loop for the lanes it masks, so at 96 px a
 #: flat 128-wide tile would pay for 33% more pixels than the frame has; at 600 px it pays for 6.7%,
 #: which is cheaper than the scattered stores of a tile narrow enough to divide 600.
-_TILE_WASTE_MAX = 0.125
+TILE_WASTE_MAX = 0.125
 
 
-def _fit(target: int, W: int) -> int:
-    """Tile width: the widest power of two at most ``target`` that does not waste too many lanes."""
-    cap = min(target, 1 << max(0, (W - 1).bit_length()))
-    bw = cap
-    while bw > 1 and (bw * -(-W // bw) - W) > _TILE_WASTE_MAX * W:
+def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
+    """``(BH, BW)``: the tile a 2-D fused kernel walks one frame in, for ``lanes`` lanes per program.
+
+    ONE definition, because both 2-D fused kernels in this package pick their tile by the same law
+    and for the same two reasons, and a second copy of it is a second thing to keep in step:
+
+      * ``raster2d.render_triton``'s culled path, at ``lanes = 1024`` and ``max_width = 128``;
+      * ``navdot.blend_dots``' two passes, at ``lanes = 1024`` and ``max_width = 1024``.
+
+    The law: take the widest power of two at most ``max_width`` (and at most the frame's own width
+    rounded up to a power of two), halve it while more than ``TILE_WASTE_MAX`` of a row of tiles
+    would be masked-off lanes, then give the tile whatever height the remaining lanes allow.
+
+    Why a rectangle and why a WIDE one is measured in each caller's own tile constant: both kernels
+    skip work a tile's bounds miss, which wants a compact footprint in the plane, and both store
+    ``(B,H,W,3)`` uint8 with a stride of 3, which punishes a narrow tile. ``max_width`` is where the
+    two callers differ, so it is the argument; the rest is identical arithmetic and is not.
+    """
+    bw = min(max_width, 1 << max(0, (W - 1).bit_length()))
+    while bw > 1 and (bw * -(-W // bw) - W) > TILE_WASTE_MAX * W:
         bw //= 2
-    return bw
+    bh = max(1, min(lanes // bw, 1 << max(0, (H - 1).bit_length())))
+    return bh, bw
 
 
-def _tiles(H: int, W: int, block: int, cull: bool):
+def _tiles(H: int, W: int, block: int, cull: bool) -> tuple[int, int, int, int, int]:
     """``(BH, BW, n_tiles, n_tiles_x, num_warps)`` for one frame geometry.
 
     Only the culled path is TILED. Without a primitive list to skip there is nothing for a compact
@@ -961,16 +988,16 @@ def _tiles(H: int, W: int, block: int, cull: bool):
     """
     if not cull:
         return 1, block, triton.cdiv(H * W, block), 1, 4
-    bh, bw, warps = _CULL_TILE
-    bw = _fit(bw, W)
-    bh = max(1, min((_CULL_TILE[0] * _CULL_TILE[1]) // bw, 1 << max(0, (H - 1).bit_length())))
+    warps = _CULL_TILE[2]
+    bh, bw = tile_shape(H, W, lanes=_CULL_TILE[0] * _CULL_TILE[1], max_width=_CULL_TILE[1])
     ntx = triton.cdiv(W, bw)
     return bh, bw, ntx * triton.cdiv(H, bh), ntx, warps
 
 
 @torch.no_grad()
-def render_triton(scene: Scene2D, out_size, supersample: int = 1, out=None,
-                  block: int = 128, cull: bool | None = None) -> torch.Tensor:
+def render_triton(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1,
+                  out: torch.Tensor | None = None, block: int = 128,
+                  cull: bool | None = None) -> torch.Tensor:
     """Fused path: ``Scene2D`` -> ``(B,H,W,3)`` uint8, one launch, nothing materialized but the output.
 
     ``cull`` forces the tile-binning pre-pass on or off; ``None`` decides from the primitive count.
@@ -1018,7 +1045,8 @@ def render_triton(scene: Scene2D, out_size, supersample: int = 1, out=None,
 
 
 @torch.no_grad()
-def render(scene: Scene2D, out_size, supersample: int = 1, backend: str = "auto", out=None):
+def render(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1,
+           backend: str = "auto", out: torch.Tensor | None = None) -> torch.Tensor:
     """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction.
 
     ``auto`` is a question about THIS SCENE, not about this host. It used to be answered by
