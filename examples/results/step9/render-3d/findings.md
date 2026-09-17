@@ -386,3 +386,15 @@ runs on gpu1503** (the `_BOUND_SLACK_NOISE` configuration: a ~100 m camera and a
 `disc > 0` on float32 rounding noise; Step-6 job 6348207 moved one pixel by 22/255 on this cell and no
 other). It is not evidence about this patch, whose numeric expressions are character-identical to the
 baseline. Unexplained oracle differences attributable to the patch: **0**.
+
+## §10a. Review notes recorded (review_h.md, APPROVE)
+
+- D1: `_Memo.put` evicts at `>= cap` where the baseline `_KIND_CACHE` evicted at `> 64`, so that memo
+  now holds 64 entries instead of 65. No output effect (a memo entry is a pure function of its key);
+  recorded here as the one deviation from "same cap semantics". Wave-3 note: align if anyone cares.
+- D2: four of the 66 GPU-test failures in job 6464500 route through
+  `conformance.check_step_matches_reference` rather than `render_worker.py`; same mechanism, same
+  fix (`e1da2f6`, merged at `430bb6d`). Post-merge confirmation is the integration-level `tests/gpu`
+  pass, not this workstream's.
+- Staleness note: findings §4's "1263 passed" and the CPU artifacts' `head_sha 6bf885a` predate the
+  merges; `git diff 900065a HEAD -- stable_envs/render` is empty, so they describe the code at HEAD.
