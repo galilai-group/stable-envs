@@ -1,10 +1,42 @@
-# Step 8 — handoff checkpoint (2026-09-16, evening)
+# Step 8 — handoff checkpoint (updated 2026-09-17)
 
-Written by the Fable coordinator for the next agent (not necessarily a Claude Code agent). Supersedes
-the two earlier checkpoints below the line. Git and artifacts are the source of truth; where this
-prose conflicts with them, they win.
+Written by the Fable coordinator for the next agent (not necessarily a Claude Code agent). Git and
+artifacts are the source of truth; where this prose conflicts with them, they win.
 
-## Closure recommendation
+## Closure recommendation (2026-09-17)
+
+**STEP 8 FUNCTIONALLY COMPLETE WITH DOCUMENTED LIMITATIONS** — full packet in
+`docs/research/step8_closure.md`. All eight workstreams A–H are merged with an independent APPROVE;
+`buckets.RELEASE_BLOCKING` is empty; Gate A 40 PASS / 2 by-design; unit + swm suites green apart
+from the pre-existing citation-scanner baseline.
+
+### One follow-on, not a blocker: T3
+
+`step8/capability-plate-texels` @ `64a38e7` (DMControlSuite `floor.color` via the shared plate
+texel helper) is reviewed **APPROVE-PENDING-GPU** (`reviews/review_t3.md`): every CPU-verifiable
+merge-gate item passes; items 4/5/7 need the GPU job. Tree synced to `$SCR/se8/capability`;
+jobs **6459757** (3090-gcondo, waiting on the group GPU quota) and **6459781** (gpu partition,
+norm-gpu QOS) are PENDING — whichever runs, cancel the other (both are ours; never touch the
+simclr/lejepa jobs). When it completes: pull `$SCR/se8/capability/examples/results/step8/capability/gpu/`
+into a staging dir (no --delete), scrub `/oscar/...` to `$SCR`, commit on the T3 branch, verify
+Gate A PASS on the 8 DMC parity cells with the new style_dim, frozen-corpus replay identical,
+paired throughput B=4096 unchanged, then merge with `--no-ff`, regenerate
+`scratch/step8/report.py`, `scratch/step8/perf/build_performance.py` + `write_doc.py`,
+`scratch/step8/swm/build_gate_f.py`, and update the closure packet's §5 (variation map 26 → 33
+complete). If the job fails, T3 stays unmerged and the closure recommendation is unchanged.
+
+### Open decisions for Sami
+
+1. Fetch `background.color` skybox half: swm flat-fills a 16-colour gradient skybox, so supporting
+   it moves the family's frozen default frame (re-freeze, plan §19). Accept `partial` permanently or
+   authorise the re-freeze (T3 findings §1 lists the alternatives).
+2. Certification interpreter is `mujoco==3.11.0` by convention; no global pin was made (your ruling).
+3. After acceptance: `milestone/step8-functional-completion` branch + tag at the accepted HEAD;
+   push only on your instruction.
+
+### Previous ticket list (superseded)
+
+## Previous closure recommendation (superseded)
 
 **CONTINUE STEP 8 FOR** three finite tickets (plan §23 label). Everything else in §23 is satisfied on
 `step8/integration` with an independent `APPROVE` per workstream.

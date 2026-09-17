@@ -737,8 +737,14 @@ workstreams:
   branch: step8/capability-plate-texels
   worktree: /Users/samib/stable-envs-step8-capability
   baseline_sha: 2b4b5c3
-  status: 'IN PROGRESS (opus): DMC parity floor.color, Fetch skybox after probe, OGB reuse; targeted GPU evidence'
+  status: 'REVIEWED APPROVE-PENDING-GPU at 64a38e7 (review_t3.md, sonnet); NOT merged: merge-gate items 4/5/7 await GPU evidence; jobs 6459757 (3090-gcondo, QOSGrpGRES) and 6459781 (gpu partition, norm-gpu
+    QOS) PENDING; tree synced to $SCR/se8/capability'
   affected_files: stable_envs/envs/{dmcontrol,fetch,ogb_manip}.py plate/texture path, a small shared helper, VariationMap modules, tests, artifacts
+  head_sha: 64a38e7
+  finding: 'shared helper stable_envs/envs/_plate_texels.py; DMControlSuite floor.color mapped as identical on 7 swm ids / 8 cells (bake vs full recompile IDENTICAL: 12 cells x 3 colours x 8 states; default
+    frames byte-identical vs 2b4b5c3; style_dim +6 on 12 parity cells, default frame unchanged); trackcom floor.color stays unsupported (no plate); Fetch skybox probe CONFIRMED the skybox is in the baked
+    plate (62-75 % of frame) but swm flat-fills a 16-colour gradient, so offering the leaf moves the frozen default frame -> re-freeze needed -> ESCALATED, background.color stays partial with the corrected
+    reason; OGB refactor onto the helper declined (STEP9_CLEANUP); VariationMap totals 46->53 mapped / 94->87 unsupported'
 decisions:
 - date: '2026-09-16'
   by: Sami
@@ -804,6 +810,13 @@ escalations:
   coordinator_recommendation: confirm requirement after B and C merge; then ONE shared implementation of (ii) reused by OGB/DMC/Fetch plus the OGB (i) wiring; no one-off hacks; each needs default digest
     identity, isolation, Gate A with new style dims and a paired throughput check
   status: APPROVED IN PRINCIPLE 2026-09-16 (T3 in flight on step8/capability-plate-texels)
+- date: '2026-09-17'
+  from: T3
+  topic: Fetch background.color skybox half
+  summary: supporting it requires flattening a 16-colour gradient skybox to one colour, which moves the Fetch default frame (frozen Step-4/Step-7 oracle) -> re-freeze under plan §19; alternatives considered
+    in examples/results/step8/capability/findings.md §1
+  question: re-freeze the Fetch default appearance to swm flat sky, or accept partial permanently
+  status: open for Sami; DOCUMENTED_LIMITATION meanwhile
 refreezes: []
 upstream_findings:
 - source: C
@@ -872,6 +885,8 @@ incident_log:
   item: closure strategy changed by Sami (targeted validation, no mega-sweep); T3 (opus) and D (sonnet, evidence-consumption) launched; D worktree fast-forwarded to 2b4b5c3
 - date: '2026-09-16'
   item: D merged (e9dc245) after fresh APPROVE; T3 still in flight
+- date: '2026-09-17'
+  item: T3 delivered (CPU evidence) and reviewed APPROVE-PENDING-GPU; Oscar SSH back; evidence jobs 6459757/6459781 submitted, pending; closure packet written
 handoff:
   date: 2026-09-16 evening
   doc: docs/research/step8_handoff.md
@@ -913,10 +928,12 @@ takeover:
     OPTIONAL_DEFER: 0
     note: D/F/G/H blocked only on Wave-1 merges; the shared per-world capability (C light/camera/cube.size, B skybox, A DMC floor.color) is aggregated after Wave-1 merges per the feasible-leaves ruling
 closure:
-  recommendation: CONTINUE STEP 8 FOR T1 (Workstream D Gate-F/API matrix + upstream bundle), T2 (final full-universe sweep on the merged tip), T3 (shared capability decision by Sami)
-  merged: A B C E F G H (7/8), each with independent APPROVE
+  recommendation: STEP 8 FUNCTIONALLY COMPLETE WITH DOCUMENTED LIMITATIONS (docs/research/step8_closure.md)
+  merged: A B C D E F G H (8/8), each with independent APPROVE
   integration_tip: see git log (commit carrying docs/research/step8_handoff.md)
-  gate_a: 40 PASS / 2 UNSUPPORTED_BY_DESIGN on the tip (matrix regenerated at 5d5a461)
-  unit_suite: 1093 passed / 195 skipped / 112 deselected; test_every_cited_scratch_path_resolves pre-existing baseline failure
+  gate_a: 40 PASS / 2 UNSUPPORTED_BY_DESIGN
+  unit_suite: 1098 passed / 195 skipped / 112 deselected on 4f466f2 (tests/unit + tests/swm)
   frozen_contracts: unchanged (verified by review_e.md and review_f.md)
   pushed: nothing
+  t3: reviewed APPROVE-PENDING-GPU, unmerged; merges on GPU evidence through the normal gate
+  gate_f: '42 ids: registry 42, state/obs/API 40/2, variation 38/4, devices 7 MEASURED / 35 UNMEASURED'
