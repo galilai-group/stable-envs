@@ -117,24 +117,70 @@ workstreams:
   worktree: /Users/samib/stable-envs-step9-envs-dmcontrol
   owner: opus (medium)
   reviewer: opus (high)
-  status: DELIVERED 0f610cf; GPU job 6469088 running; merging integration (R1 instance _layout); then opus-high review
+  status: MERGED into step9/integration (review_b.md APPROVE at 82ce271)
   files_owned: stable_envs/envs/dmcontrol/ (package from dmcontrol.py; DMC use of _plate_texels.py), tests
   ids_affected: 17 DMC swm ids (18 cells) incl. trackcom; T3 floor.color; Step-8 variation maps
   baseline_sha: 86a6ba4
-  head_sha: 0f610cf
-  tests: se6 tests/unit 1496 passed (1368 + 128); se8-vm 436 passed / 4 skipped
-  oracle_diff: '18/18 cells: 35 keys identical vs 21cb306 (frames on cpu for 17/18; Swimmer refuses cpu identically, cuda owed); T3 bake-vs-recompile IDENTICAL; registry rows incl. module identical (package
-    replaces module)'
-  performance_diff: 'cpu paired: Cartpole -0.44 %, Cheetah -1.75 %'
+  head_sha: 82ce271
+  tests: se6 1513 passed; se8-vm 436 passed
+  oracle_diff: 18/18 cells byte-identical on cpu (17) and cuda (18, job 6469088 L40S mujoco 3.11); T3 IDENTICAL; 79/79 names resolve
+  performance_diff: GPU paired -0.24 / -0.23 / +0.40 %; cpu -0.44 / -1.75 %
   api_diff: dmcontrol.py -> dmcontrol/ package (22 modules); four hand tables replaced by views over the cells
+  review: 'review_b.md APPROVE (opus, independent; declarations AST-compared to 21cb306: 0 differences)'
 - workstream: G_render_2d
   branch: step9/render-2d
   worktree: /Users/samib/stable-envs-step9-render-2d
   owner: opus (medium)
-  status: IN PROGRESS
+  status: MERGED into step9/integration (review_g.md APPROVE at 8afa2f4)
   files_owned: stable_envs/render/{scene,raster2d,gfxdraw,gfxdraw_classic,gfxdraw_fused,tilemap,navdot,prng}.py, tests
   ids_affected: PushT, TwoRoom/Piecewise/SimplePointMaze, 5 classic-control, Craftax x2 (tilemap/prng), and every non-42 2-D family
   baseline_sha: 5befc46
+  head_sha: 8afa2f4
+  tests: se6 1405 passed (1385 + 20); se8-vm 265 + 20
+  oracle_diff: 20 cells x 64 states byte-identical on cpu (12 of the 42 ids + 8 non-42); fused CUDA kernels (gfxdraw_classic/fused, navdot, tilemap) owed to the GPU oracle
+  performance_diff: 'cpu paired worst 1.077 (SimplePointMaze, explained: identical cProfile, host load 9.8); others 0.960-1.009'
+  api_diff: raster2d.tile_shape, gfxdraw.edge_geometry, gfxdraw.M32, public row_groups (alias kept), scene.Batched type; zero consumer edits
+  review: 'review_g.md APPROVE (opus): tile law 1.21M pairs 0 mismatches; edge table bit-identical vs baseline modules; kernel sources unchanged'
+- workstream: C_envs_fetch
+  branch: step9/envs-fetch
+  worktree: /Users/samib/stable-envs-step9-envs-fetch
+  owner: opus
+  status: IN PROGRESS
+  files_owned: stable_envs/envs/fetch.py, tests
+  ids_affected: 12 Fetch ids
+  baseline_sha: b3f3a81
+- workstream: D_envs_ogbench
+  branch: step9/envs-ogbench
+  worktree: /Users/samib/stable-envs-step9-envs-ogbench
+  owner: opus
+  status: IN PROGRESS
+  files_owned: stable_envs/envs/ogbench/ (from ogbench.py + ogb_manip.py), tests
+  ids_affected: OGBMaze (17 maze ids + PointmazeLarge*), OGBCube, OGBScene
+  baseline_sha: b3f3a81
+- workstream: E_envs_craftax_rocket
+  branch: step9/envs-craftax-rocket
+  worktree: /Users/samib/stable-envs-step9-envs-craftax-rocket
+  owner: opus
+  status: IN PROGRESS
+  files_owned: stable_envs/envs/craftax.py (+craftax_full.py, _craftax_full_tex.py), rocket_landing.py, tests
+  ids_affected: CraftaxClassic, CraftaxFull, PFRocketLanding
+  baseline_sha: b3f3a81
+- workstream: F_envs_mujoco
+  branch: step9/envs-mujoco
+  worktree: /Users/samib/stable-envs-step9-envs-mujoco
+  owner: opus
+  status: IN PROGRESS
+  files_owned: stable_envs/envs/mujoco_locomotion.py, humanoidbench.py, metaworld.py, robocasa.py, maze2d.py wrappers, tests
+  ids_affected: non-42 families (behaviour-preserving migration only)
+  baseline_sha: b3f3a81
+- workstream: I_render_mjwarp_nvdiff
+  branch: step9/render-mjwarp-nvdiff
+  worktree: /Users/samib/stable-envs-step9-render-mjwarp-nvdiff
+  owner: opus
+  status: IN PROGRESS
+  files_owned: stable_envs/render/{mjwarp,mjwarp_lightspec,nvdiff,rendernet,_resources(new)}.py, tests
+  ids_affected: 'every MJWarp/nvdiff consumer: DMC trackcom cuda, Fetch, OGB, Rocket, RoboCasa, MetaWorld, HumanoidBench'
+  baseline_sha: b3f3a81
 decisions:
 - date: '2026-09-17'
   by: coordinator
@@ -179,6 +225,11 @@ decisions:
   topic: module -> package migrations (B R2)
   ruling: a package may replace the module of the same name (no sys.modules shim possible); the obligation is a test that every Step-8 module-level name still resolves off the package; applies to D (ogbench/)
     too
+- date: '2026-09-17'
+  by: Sami
+  topic: concurrency and GPU validation cadence
+  ruling: run all remaining Wave-1 workstreams in parallel; no per-workstream GPU jobs; keep per-workstream CPU oracles; one GPU oracle over all 42 ids after the Wave-1 merges and the final §20 comparison
+    at closure
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -206,6 +257,15 @@ incident_log:
   item: H merged after APPROVE; B restarted after a spend-limit cut (partial files inspected by the new agent)
 - date: '2026-09-17'
   item: B delivered 0f610cf; GPU job 6469088 submitted; R1 landed f24d94c; G running
+- date: '2026-09-17'
+  item: Sami lifted the 2-agent budget and moved GPU validation to one post-Wave-1 oracle + the final comparison; C, D, E, F, I launched in parallel with B and G
+- date: '2026-09-17'
+  item: 'B merged after APPROVE; running: G, C, D, E, F, I'
+- date: '2026-09-17'
+  item: 'G delivered; se7-craftax-venv given tensordict+loguru (G R2); G R3: step4 CraftaxClassic.npz (127-wide) no longer loads since Step 7 widened the cell — Step-7 corpus is the loadable one (note for
+    K/O); G R4: navigation.py imports private raster2d._row_groups (alias kept; K/O)'
+- date: '2026-09-17'
+  item: G merged after APPROVE (coordinator stopped otherwise; C, D, E, I delivered and recorded in the handoff; F still in flight)
 non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
   outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N -> O; pairs never share a render backend'

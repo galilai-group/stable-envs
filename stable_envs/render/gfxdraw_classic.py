@@ -52,7 +52,9 @@ import numpy as np
 import torch
 
 from . import gfxdraw as G
-from .gfxdraw_fused import HAVE_TRITON, edge_table
+from .gfxdraw_fused import (EG_DRAW, EG_DX, EG_DY, EG_E, EG_KIND, EG_LO, EG_MAJOR, EG_SX, EG_SY,
+                            EG_W, EG_X0, EG_XDIR, EG_Y0, HAVE_TRITON, K_GEN, K_HORIZ, K_VERT,
+                            edge_table)
 
 if HAVE_TRITON:
     import triton
@@ -200,13 +202,8 @@ class Ops:
 
 
 # ------------------------------------------------------------------ the specification, in torch
-def _blend_t(src, dst, w, sh):
-    """``gfxdraw.blend`` on scalars-per-pixel: ``src``/``dst`` ``(...,3)``, ``w`` ``(...,1)``."""
-    return G.blend(src, dst, w, sh)
-
-
 @torch.no_grad()
-def render_classic_torch(ops: Ops, out=None) -> torch.Tensor:
+def render_classic_torch(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
     """The fused semantics, in torch, over the whole frame. The readable specification.
 
     Every branch the Triton kernel takes is taken here in the same order over the same closed form;
@@ -290,14 +287,12 @@ def _disc_torch(ops, m, col, ypre, xs, box, aa, sh, c3):
         w = torch.where(near, wmap[iy, ix], torch.zeros_like(iy))
         live = (w > 0) & aa
         col = torch.where(live.unsqueeze(-1),
-                          _blend_t(c3, col, w.unsqueeze(-1), sh), col)
+                          G.blend(c3, col, w.unsqueeze(-1), sh), col)
     h = torch.where(dy.abs() <= r, hw[dy.abs().clamp(0, r)], torch.full_like(dy, -1))
     return torch.where((box & (dx.abs() <= h)).unsqueeze(-1), c3, col)
 
 
 def _poly_torch(ops, m, col, ypre, xs, box, aa, sh, c3, slot):
-    from .gfxdraw_fused import (EG_DRAW, EG_DX, EG_DY, EG_E, EG_KIND, EG_LO, EG_MAJOR, EG_SX,
-                                EG_SY, EG_X0, EG_XDIR, EG_Y0, K_GEN, K_HORIZ, K_VERT)
     B, W = ops.B, ops.W
     nv = int(m[0, CM_A])
     eg = ops.edge_t[:, slot].to(torch.int64)                          # (B,4,EG_W)
@@ -326,7 +321,7 @@ def _poly_torch(ops, m, col, ypre, xs, box, aa, sh, c3, slot):
         hb = ok & torch.where(ymaj, X == xx0 + xdir * (wraps + 1), Y == yy0 + wraps + 1)
         w = torch.where(ha, 255 - wgt, wgt)
         live = (ha | hb) & aa
-        col = torch.where(live.unsqueeze(-1), _blend_t(c3, col, w.unsqueeze(-1), sh), col)
+        col = torch.where(live.unsqueeze(-1), G.blend(c3, col, w.unsqueeze(-1), sh), col)
 
     v = ops.vert_t[:, slot].to(torch.int64)                           # (B,4,2)
     maxy = v[:, :nv, 1].amax(1).view(-1, 1, 1)
@@ -356,25 +351,24 @@ def _poly_torch(ops, m, col, ypre, xs, box, aa, sh, c3, slot):
 
 # ------------------------------------------------------------------ the kernel
 if HAVE_TRITON:
-    from .gfxdraw_fused import (EG_DRAW, EG_DX, EG_DY, EG_E, EG_KIND, EG_LO, EG_MAJOR, EG_SX,
-                                EG_SY, EG_W, EG_X0, EG_XDIR, EG_Y0, K_GEN, K_HORIZ, K_VERT)
+    # The edge layout's constexpr twins, the Wu blend and the 16.16 rounding come from
+    # ``gfxdraw_fused``: this kernel reads the table THAT module writes, so a second set of column
+    # constexprs here would be a second thing to keep in step with the layout they name.
+    from .gfxdraw_fused import (cEG_DRAW, cEG_DX, cEG_DY, cEG_E, cEG_KIND, cEG_LO, cEG_MAJOR,
+                                cEG_SX, cEG_SY, cEG_W, cEG_X0, cEG_XDIR, cEG_Y0, cK_GEN, cK_HORIZ,
+                                cK_VERT, cK_YMAJ)
     from .gfxdraw_fused import _blend, _round16
 
     # A kernel may only read a global that IS a ``tl.constexpr`` object, and the column names have
     # to stay plain ints because the host side indexes tensors with them -- so each gets a
     # constexpr twin rather than being duplicated as a literal where it would drift from the layout
-    # it names. Same device as ``gfxdraw_fused``.
+    # it names.
     _c = tl.constexpr
     cCM_W, cCM_OP, cCM_R, cCM_G, cCM_B = _c(CM_W), _c(CM_OP), _c(CM_R), _c(CM_G), _c(CM_B)
     cCM_X0, cCM_Y0, cCM_X1, cCM_Y1 = _c(CM_X0), _c(CM_Y0), _c(CM_X1), _c(CM_Y1)
     cCM_A, cCM_B2, cCM_C, cCM_D = _c(CM_A), _c(CM_B2), _c(CM_C), _c(CM_D)
     cOP_POLY, cOP_DISC, cOP_HLINE, cOP_VLINE, cOP_BLIT = (_c(OP_POLY), _c(OP_DISC), _c(OP_HLINE),
                                                           _c(OP_VLINE), _c(OP_BLIT))
-    cEG_W, cEG_DRAW, cEG_SX, cEG_SY = _c(EG_W), _c(EG_DRAW), _c(EG_SX), _c(EG_SY)
-    cEG_X0, cEG_Y0, cEG_DX, cEG_DY = _c(EG_X0), _c(EG_Y0), _c(EG_DX), _c(EG_DY)
-    cEG_XDIR, cEG_KIND, cEG_MAJOR, cEG_E, cEG_LO = (_c(EG_XDIR), _c(EG_KIND), _c(EG_MAJOR),
-                                                    _c(EG_E), _c(EG_LO))
-    cK_VERT, cK_HORIZ, cK_GEN, cK_YMAJ = _c(K_VERT), _c(K_HORIZ), _c(K_GEN), _c(K_GEN + 4)
 
     @triton.jit
     def _classic_kernel(meta_ptr, vert_ptr, edge_ptr, disc_ptr, bg_ptr, plate_ptr, sprite_ptr,
@@ -617,7 +611,7 @@ WARPS = 1
 
 
 @torch.no_grad()
-def render_classic(ops: Ops, out=None) -> torch.Tensor:
+def render_classic(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
     """Rasterize a classic-control frame list to ``(B,H,W,3)`` uint8, already flipped."""
     if not HAVE_TRITON:
         raise ImportError("triton unavailable")

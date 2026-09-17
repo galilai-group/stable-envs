@@ -53,6 +53,8 @@ import math
 
 import torch
 
+from .raster2d import tile_shape
+
 #: The smallest alpha ``swm_nav._alpha_blend`` can act on, MEASURED against that function over every
 #: uint8 contrast (``scratch/step6/raster2d/alpha_bound.py``): 2.98e-8 = 2^-25, reached at img=1,
 #: colour=0 because ``img * (1 - a)`` goes through ``1 - a``, which rounds to exactly 1.0 in float32
@@ -63,7 +65,7 @@ ALPHA_FLOOR = 2.0 ** -25
 DOT_SIGMAS = math.sqrt(2.0 * math.log(1.0 / ALPHA_FLOOR))
 
 
-def dot_window(pos, sigma, H: int, W: int) -> torch.Tensor:
+def dot_window(pos: torch.Tensor, sigma: torch.Tensor, H: int, W: int) -> torch.Tensor:
     """``(..., 4)`` int64 ``r0, r1, c0, c1`` outside which a normalised dot cannot move a pixel.
 
     ONE definition, used by the CPU path (``swm_nav._blend_dot``) and by the kernel below, because
@@ -219,11 +221,13 @@ def _tile(H: int, W: int) -> tuple[int, int, int, int]:
 
     Wide at equal area, because the output is ``(B,H,W,3)`` uint8 and the three stores are strided
     by 3, so a narrow tile scatters its writes. At 224 px this is 32x32 and divides exactly.
+
+    The shape itself is ``raster2d.tile_shape``: this kernel and the scene rasterizer pick their
+    tile by the same law (widest power of two that wastes at most ``TILE_WASTE_MAX`` of a row of
+    lanes, then whatever height the lanes allow), and it was written out twice. Only the width cap
+    differs -- unbounded here, 128 there -- so only the width cap is an argument.
     """
-    bw = min(_BLOCK, 1 << max(0, (W - 1).bit_length()))
-    while bw > 1 and (bw * -(-W // bw) - W) > 0.125 * W:
-        bw //= 2
-    bh = max(1, min(_BLOCK // bw, 1 << max(0, (H - 1).bit_length())))
+    bh, bw = tile_shape(H, W, lanes=_BLOCK, max_width=_BLOCK)
     ntx = -(-W // bw)
     return bh, bw, ntx, ntx * (-(-H // bh))
 

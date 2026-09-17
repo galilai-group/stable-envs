@@ -39,10 +39,20 @@ product is 0, which passes) but would otherwise pin the outline distance to 0 an
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any, Union
 
 import torch
 
+#: What every ``SceneBuilder`` argument accepts, and the whole reason appearance variation is free:
+#: a python scalar or sequence SHARED by the batch, or a tensor with a leading batch axis holding one
+#: value per environment. The builder broadcasts, so an env writes the same call whether the block
+#: colour is one colour or 4,096 different ones. Spelled out as a name because the alternative is
+#: repeating the sentence on every method, and it was previously on none of them.
+Batched = Union[float, int, Sequence[float], torch.Tensor]
+
+#: ``kind`` codes. ``KIND_NONE`` is a real feature -- see the module docstring -- not padding hygiene.
 KIND_NONE = 0
 KIND_DISC = 1
 KIND_POLY = 2
@@ -83,17 +93,21 @@ class Scene2D:
 
     @property
     def batch(self) -> int:
+        """Environments in this scene: the leading axis of every array."""
         return int(self.kind.shape[0])
 
     @property
     def n_prims(self) -> int:
+        """Primitive slots per environment, including the disabled ones."""
         return int(self.kind.shape[1])
 
     @property
     def vertices(self) -> int:
+        """``V``: the polygon width ``geom`` is padded to, in whole ``(x, y)`` pairs."""
         return int(self.geom.shape[2]) // 2
 
-    def to(self, device=None, dtype=None) -> "Scene2D":
+    def to(self, device: Any = None, dtype: Any = None) -> "Scene2D":
+        """This scene on another device and/or float dtype. ``kind`` keeps its int32 dtype."""
         f = lambda t, d=None: t.to(device=device, dtype=d or t.dtype)
         return Scene2D(kind=f(self.kind), geom=f(self.geom, dtype), fill=f(self.fill, dtype),
                        line=f(self.line, dtype), line_w=f(self.line_w, dtype),
@@ -125,8 +139,8 @@ class SceneBuilder:
     builder broadcasts.
     """
 
-    def __init__(self, batch: int, device="cuda", vertices: int = 4, dtype=torch.float32,
-                 style=None):
+    def __init__(self, batch: int, device: Any = "cuda", vertices: int = 4,
+                 dtype: torch.dtype = torch.float32, style: Any = None) -> None:
         self.B = int(batch)
         self.V = int(vertices)
         self.device = torch.device(device)
@@ -149,7 +163,7 @@ class SceneBuilder:
 
     # broadcasting helpers
 
-    def _b(self, v, width: int) -> torch.Tensor:
+    def _b(self, v: Batched, width: int) -> torch.Tensor:
         """Scalar / (width,) / (B,width) -> (B,width) float32 on device."""
         t = torch.as_tensor(v, device=self.device, dtype=self.dtype)
         if t.ndim == 0:
@@ -159,7 +173,7 @@ class SceneBuilder:
                  else t.reshape(-1, 1).expand(self.B, width))
         return t.reshape(self.B, width).contiguous()
 
-    def _enabled(self, enabled) -> torch.Tensor:
+    def _enabled(self, enabled: Batched | None) -> torch.Tensor:
         """Per-primitive on/off, broadcast to ``(B,)`` bool.
 
         ``enabled`` lands in ``kind``, and the static bake takes ``kind[:1]``, so a prefix whose only
@@ -173,7 +187,7 @@ class SceneBuilder:
         t = torch.as_tensor(enabled, device=self.device)
         return (t.reshape(1).expand(self.B) if t.ndim == 0 else t.reshape(self.B)).bool()
 
-    def _bn(self, v, n: int, width: int) -> torch.Tensor:
+    def _bn(self, v: Batched, n: int, width: int) -> torch.Tensor:
         """``_b`` with a primitive axis: scalar / ``(width,)`` / ``(B,width)`` / ``(B,n,width)``."""
         t = torch.as_tensor(v, device=self.device, dtype=self.dtype)
         if t.ndim == 0:
@@ -185,7 +199,8 @@ class SceneBuilder:
             t = t.reshape(self.B, 1, width).expand(self.B, n, width)
         return t.reshape(self.B, n, width).contiguous()
 
-    def _enabled_n(self, enabled, n: int) -> torch.Tensor:
+    def _enabled_n(self, enabled: Batched | None, n: int) -> torch.Tensor:
+        """:meth:`_enabled` with a primitive axis, broadcast to ``(B, n)`` bool."""
         if enabled is None:
             return torch.ones((self.B, n), device=self.device, dtype=torch.bool)
         t = torch.as_tensor(enabled, device=self.device)
@@ -195,7 +210,8 @@ class SceneBuilder:
             t = t.reshape(self.B, 1).expand(self.B, n)
         return t.reshape(self.B, n).bool()
 
-    def _push(self, kind_id, geom, fill, line, line_w, enabled, n: int = 1):
+    def _push(self, kind_id: int, geom: torch.Tensor, fill: Batched, line: Batched | None,
+              line_w: Batched, enabled: Batched | None, n: int = 1) -> None:
         """Append ``n`` primitives. ``n == 1`` takes ``(B, ...)``; otherwise ``(B, n, ...)``.
 
         The batched form exists because dispatch, not arithmetic, is what a scene of a few hundred
@@ -232,7 +248,9 @@ class SceneBuilder:
 
     # primitives
 
-    def add_disc(self, center, radius, color, inner_radius=0.0, inner_color=None, enabled=None):
+    def add_disc(self, center: Batched, radius: Batched, color: Batched,
+                 inner_radius: Batched = 0.0, inner_color: Batched | None = None,
+                 enabled: Batched | None = None) -> None:
         """A filled disc, optionally with a concentric inner disc drawn on top (a ring).
 
         The ring is one primitive rather than two because that is how the reference renderers draw it —
@@ -246,7 +264,8 @@ class SceneBuilder:
         self._push(KIND_DISC, geom, color, inner_color if inner_color is not None else color,
                    0.0, enabled)
 
-    def add_poly(self, verts, color, outline_color=None, outline_w=0.0, enabled=None):
+    def add_poly(self, verts: Batched, color: Batched, outline_color: Batched | None = None,
+                 outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
         """A convex polygon, vertices CCW, ``(B,V,2)`` or ``(V,2)``. Padded to the builder's V."""
         t = torch.as_tensor(verts, device=self.device, dtype=self.dtype)
         if t.ndim == 2:
@@ -257,13 +276,15 @@ class SceneBuilder:
         self._push(KIND_POLY, t[:, :self.V].reshape(self.B, -1).contiguous(),
                    color, outline_color, outline_w, enabled)
 
-    def add_segment(self, a, b, half_w, color, enabled=None):
+    def add_segment(self, a: Batched, b: Batched, half_w: Batched, color: Batched,
+                    enabled: Batched | None = None) -> None:
         """A thick line segment with round caps — a capsule, i.e. distance-to-segment <= half_w."""
         geom = torch.cat([self._b(a, 2), self._b(b, 2), self._b(half_w, 1)], dim=1)
         self._push(KIND_SEGMENT, geom, color, color, 0.0, enabled)
 
-    def add_rect(self, center, size, color, angle=None, outline_color=None, outline_w=0.0,
-                 enabled=None):
+    def add_rect(self, center: Batched, size: Batched, color: Batched,
+                 angle: Batched | None = None, outline_color: Batched | None = None,
+                 outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
         """Axis-aligned or rotated rectangle, as a convex polygon. The most common primitive by far."""
         c = self._b(center, 2)
         s = self._b(size, 2) * 0.5
@@ -287,7 +308,8 @@ class SceneBuilder:
     # but ``einsum`` and ``norm`` over an extra axis are each entitled to a different last bit, and
     # one ulp on a vertex is a pixel wherever that vertex lands on a boundary.
 
-    def add_segments(self, a, b, half_w, color, enabled=None) -> None:
+    def add_segments(self, a: torch.Tensor, b: torch.Tensor, half_w: Batched, color: Batched,
+                     enabled: Batched | None = None) -> None:
         """``n`` capsules per environment: ``a``/``b`` ``(B,n,2)``, ``half_w`` ``(B,n)`` or scalar."""
         n = int(a.shape[1])
         hw = (half_w.reshape(self.B, n, 1).to(device=self.device, dtype=self.dtype)
@@ -295,7 +317,8 @@ class SceneBuilder:
         geom = torch.cat([self._bn(a, n, 2), self._bn(b, n, 2), hw], dim=-1)
         self._push(KIND_SEGMENT, geom, color, color, 0.0, enabled, n=n)
 
-    def add_polys(self, verts, color, outline_color=None, outline_w=0.0, enabled=None) -> None:
+    def add_polys(self, verts: torch.Tensor, color: Batched, outline_color: Batched | None = None,
+                  outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
         """``n`` convex polygons per environment, ``verts`` ``(B,n,v,2)``, padded to the builder's V."""
         n, v = int(verts.shape[1]), int(verts.shape[2])
         t = verts.to(device=self.device, dtype=self.dtype)
@@ -304,8 +327,9 @@ class SceneBuilder:
         self._push(KIND_POLY, t[:, :, :self.V].reshape(self.B, n, -1).contiguous(),
                    color, outline_color, outline_w, enabled, n=n)
 
-    def add_rects(self, center, size, color, angle=None, outline_color=None, outline_w=0.0,
-                  enabled=None) -> None:
+    def add_rects(self, center: torch.Tensor, size: torch.Tensor, color: Batched,
+                  angle: Batched | None = None, outline_color: Batched | None = None,
+                  outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
         """``n`` rectangles per environment: ``center``/``size`` ``(B,n,2)``, ``angle`` ``(B,n)``."""
         n = int(center.shape[1])
         M = self.B * n
@@ -359,7 +383,9 @@ class SceneBuilder:
             return K
         return K if self._style.shared else 0
 
-    def build(self, background, world, flip_y: bool = False) -> Scene2D:
+    def build(self, background: Batched, world: Sequence[float],
+              flip_y: bool = False) -> Scene2D:
+        """The finished, validated ``Scene2D``. ``world`` is ``(x0, y0, x1, y1)`` in the env's units."""
         assert self._kind, "scene has no primitives"
         cat = lambda xs: (xs[0] if len(xs) == 1 else torch.cat(xs, dim=1)).contiguous()  # noqa: E731
         return Scene2D(
