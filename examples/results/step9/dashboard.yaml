@@ -44,6 +44,22 @@ file_ownership:
   - stable_envs/_config.py
   - pyproject.toml
   - examples/results/step9/dashboard.yaml
+  W0_foundation: stable_envs/{env,dynamics,specs,registry,_config,__about__,interop}.py, __init__.py, envs/pusht.py
+  A_envs_classic_nav: stable_envs/envs/classic_control.py, navigation.py (from swm_nav.py + simple_point_maze.py), render usage only
+  B_envs_dmcontrol: stable_envs/envs/dmcontrol/ (from dmcontrol.py + _plate_texels.py DMC use)
+  C_envs_fetch: stable_envs/envs/fetch.py
+  D_envs_ogbench: stable_envs/envs/ogbench/ (from ogbench.py + ogb_manip.py)
+  E_envs_craftax_rocket: stable_envs/envs/craftax.py (+craftax_full.py, _craftax_full_tex.py), rocket_landing.py
+  F_envs_mujoco: 'stable_envs/envs/mujoco_locomotion.py, humanoidbench.py, metaworld.py, robocasa.py, maze2d.py wrappers (non-42-id families: preserve, do not certify)'
+  G_render_2d: stable_envs/render/{scene,raster2d,gfxdraw,gfxdraw_classic,gfxdraw_fused,tilemap,navdot,prng}.py
+  H_render_3d: stable_envs/render/{primitives (new),raycast3d,cpu3d}.py
+  I_render_mjwarp_nvdiff: stable_envs/render/{mjwarp,mjwarp_lightspec,nvdiff,rendernet,_resources (new)}.py
+  J_interop: stable_envs/interop.py, tests/integration/test_worldmodel.py
+  K_testing: tests/ layout, markers, stable_envs/testing/ -> tests/certification + fixtures, conftest
+  L_packaging_ci: pyproject.toml (granted), .github/, .pre-commit-config.yaml, mkdocs.yaml
+  M_docs_examples: README.md, docs/, examples/{render,batched_env,functional_dynamics,worldmodel}.py
+  N_benchmarks: benchmarks/
+  O_cleanup: scratch/, examples/results/, superseded modules (Wave 3 only)
 workstreams:
 - workstream: W0_foundation
   branch: step9/foundation
@@ -66,3 +82,5 @@ incident_log:
   item: 'Wave 0 started: baseline 21cb306 verified on origin; step9/integration + sami/pre-step9-baseline created; oracle snapshotted; inventory taken'
 - date: '2026-09-17'
   item: Wave-0 contract frozen; foundation agent launched on step9/foundation
+non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are
+  outside the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership with existing unit tests as the bar, no new certification
