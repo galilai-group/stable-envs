@@ -118,7 +118,8 @@ import zlib
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import prng
 from ..spaces import Box, Dict, Discrete
 
@@ -703,7 +704,7 @@ class _Composite:
 
 
 @register
-class CraftaxClassic(StableEnv):
+class CraftaxClassic(Env):
     """Craftax Classic: a 7x9 block window, the player, one mob per tile, and the inventory strip."""
 
     name = "craftax-classic"
@@ -928,6 +929,40 @@ class CraftaxClassic(StableEnv):
         "jax is a declared reference version because jax_threefry_partitionable selects between two "
         "threefry counter layouts that agree on 0 of 448 draws, and the night noise field is drawn "
         "from one of them.")
+
+    # ------------------------------------------------------------------ Step-9 state
+    #
+    # The public :data:`State` is the render WINDOW grouped by what it describes, which is what this
+    # cell's whole thesis is about (module docstring): the 149 numbers are the tiles on screen, the
+    # sprites over them, the sixteen inventory counts, the day-cycle light and the PRNG key — not the
+    # simulator's 20,952-byte ``EnvState``. Every offset below is the Step-4/Step-7 packed column it
+    # has always been, in the order ``state_names`` gives, so ``pack`` writes the frozen row and both
+    # frozen corpora round-trip unchanged.
+    #
+    # There is no offset-``None`` field, because there is no hidden dynamical state: this cell has no
+    # simulator at all (see :meth:`step`'s inherited refusal), so the packed row IS the whole state.
+    state_layout = (
+        (("world", "blocks"), OBS_H * OBS_W, 0),
+        (("world", "mobs"), OBS_H * OBS_W, OBS_H * OBS_W),
+        (("player", "facing"), 1, 2 * OBS_H * OBS_W),
+    ) + tuple((("inventory", nm), 1, 2 * OBS_H * OBS_W + 1 + i)
+              for i, nm in enumerate(STRIP_NAMES)) + (
+        (("player", "is_sleeping"), 1, 2 * OBS_H * OBS_W + 1 + N_STRIP),
+        (("world", "light_level"), 1, 2 * OBS_H * OBS_W + 2 + N_STRIP),
+        (("world", "rng_key"), N_KEY_HALVES, 2 * OBS_H * OBS_W + 3 + N_STRIP),
+    )
+
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of one frame. ``size`` is the TILE edge here, not the frame edge.
+
+        ``Env.observation_spec`` assumes a square frame of ``size`` pixels, which would report
+        ``(16, 16)`` for a picture that is ``(144, 144)``: the buffer a consumer allocates from the
+        spec would be 81x too small. The window is ``OBS_H + STRIP_H`` rows by ``OBS_W`` columns of
+        ``size``-pixel tiles, and it happens to be square only because 7 + 2 == 9; the arithmetic is
+        written out rather than relying on that coincidence.
+        """
+        return ((OBS_H + STRIP_H) * self.size, OBS_W * self.size)
 
     def make_variation_space(self) -> Dict:
         """Knobs that are the identity at their defaults and genuinely move pixels off them.
