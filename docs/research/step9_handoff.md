@@ -31,7 +31,7 @@ plus the uncommitted files noted (checkpoints to inspect, not trust).
 | workstream | branch @ HEAD | commits ahead of integration | worktree state | what to do first |
 |---|---|---|---|---|
 | G 2-D render | step9/render-2d @ 8afa2f4 | 8 | clean; DELIVERED; findings + CPU oracle (20 cells identical) committed | an Opus review was running and is dead: re-launch a reviewer (prompt: §7 of this doc + `reviews/review_h.md` as the model; the fused-kernel host-setup changes have no GPU diff yet, so the static expression-by-expression reading is the pre-merge gate). Merge on APPROVE (merge integration into it first: it branched from 5befc46). |
-| C Fetch | step9/envs-fetch @ 0ef8a97 | 4 | clean, no findings yet | agent died mid-task: inspect commits, re-launch with the §7 brief + "inspect the branch first, continue" |
+| C Fetch | step9/envs-fetch @ 0ef8a97 | 4 | clean; DELIVERED (findings + oracle.json committed: 12 cells, 41 keys identical incl. baked plates and taxonomy 33/12/12/15/51; frames CUDA-only, owed to the GPU oracle; tensordict installed into se8-fetch-venv) | launch a reviewer (Sonnet is fine: mechanical), merge integration into the branch, merge on APPROVE; Workstream I must keep `HIDDEN_GROUP`, `DEFAULT_GROUPS`, `gl_rounding`, `create_render_context` re-exported from render/mjwarp |
 | D OGBench | step9/envs-ogbench @ a1352ab | 1 | clean + 4 untracked files | same |
 | E Craftax + Rocket | step9/envs-craftax-rocket @ b5de5f3 | 4 | clean + 2 untracked | same |
 | F MuJoCo/non-42 wrappers | step9/envs-mujoco @ e42a87b | 3 | **7 modified tracked files uncommitted** + | same; inspect `git diff` first, commit as a WIP checkpoint if coherent |
