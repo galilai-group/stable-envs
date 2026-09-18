@@ -881,6 +881,7 @@ class Scene(_resources.Closeable):
 
     def clip(self, xpos, xmat, view, proj):
         """``(B, V, 4)`` clip-space vertices, ``(B, V, 3)`` world normals and world positions."""
+        self._check_open("clip")
         import torch
         B, G = xpos.shape[0], self.G
         M = torch.zeros(B, G, 4, 4, device=xpos.device, dtype=xpos.dtype)
@@ -1107,10 +1108,12 @@ class BatchRenderer(_resources.Closeable):
     # -- setup -------------------------------------------------------------
 
     def set_lights(self, lights: Lights) -> None:
+        self._check_open("set_lights")
         self.lights = lights
 
     def set_skybox(self, m) -> None:
         """Attach the model's skybox texture, if it has one."""
+        self._check_open("set_skybox")
         import mujoco
         if m is None:
             return
@@ -1126,6 +1129,7 @@ class BatchRenderer(_resources.Closeable):
         model at all -- so the only trustworthy source for what is actually lighting the scene is the
         scene MuJoCo builds. This costs one ``mjv_updateScene`` at construction and nothing per frame.
         """
+        self._check_open("resolve_from_mujoco")
         import mujoco
         opt = option if option is not None else mujoco.MjvOption()
         scn = mujoco.MjvScene(m, maxgeom=max(m.ngeom * 2, 1000))
@@ -1199,6 +1203,7 @@ class BatchRenderer(_resources.Closeable):
 
     def render_qpos(self, qpos, cam: Camera | None = None, camera_id: int = -1, out=None):
         """``(B,nq)`` -> frames, running MuJoCo's own CPU kinematics. Convenience, not the fast path."""
+        self._check_open("render_qpos")
         import mujoco
         import torch
         q = np.asarray(qpos.cpu() if hasattr(qpos, "cpu") else qpos, np.float64)

@@ -667,7 +667,11 @@ def create_render_context(m, tex_lod: int = 1, **kw):
             rc._se_tex_lod_keep = keep
         except AttributeError:                                        # pragma: no cover
             for t in keep:
-                _resources.retain_process_lifetime(t, TEX_KEEP_REASON)
+                # This is the compatibility path for context types that cannot carry an ownership
+                # attribute. The old _TEX_KEEP list was unbounded and never refused construction;
+                # retain (with an observable warning) past the global tripwire rather than freeing a
+                # tensor still referenced by wp.Texture2D or introducing a new hard failure.
+                _resources.retain_process_lifetime(t, TEX_KEEP_REASON, overflow="retain")
     return rc
 
 

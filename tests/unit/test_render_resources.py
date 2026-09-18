@@ -14,6 +14,8 @@ across repeated create/close cycles; see ``scratch/step9/render-mjwarp-nvdiff/gp
 from __future__ import annotations
 
 import gc
+import inspect
+import threading
 
 import pytest
 
@@ -124,6 +126,48 @@ def test_the_counters_track_create_and_close_cycles():
     assert d["closed"]["test.FakeBackend"] == 5
 
 
+@pytest.mark.unit
+def test_concurrent_close_releases_once():
+    log = []
+    b = FakeBackend(log)
+    threads = [threading.Thread(target=b.close) for _ in range(16)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert log == ["released"]
+
+
+@pytest.mark.unit
+def test_a_failed_release_is_observable_and_not_counted_as_closed():
+    class Boom(RES.Closeable):
+        resource_kind = "test.Boom"
+
+        def __init__(self):
+            self.calls = 0
+            self._opened()
+
+        def _release(self):
+            self.calls += 1
+            raise RuntimeError("the free failed")
+
+    before = RES.counts()
+    live0 = RES.live("test.Boom")
+    b = Boom()
+    with pytest.raises(RuntimeError, match="the free failed"):
+        b.close()
+    assert b.closed and b.calls == 1
+    assert RES.live("test.Boom") == live0 + 1
+    change = RES.delta(before)
+    assert change["created"]["test.Boom"] == 1
+    assert change["release_failed"]["test.Boom"] == 1
+    assert "test.Boom" not in change["closed"]
+    assert RES.release_failures()[-1] == {
+        "kind": "test.Boom", "error": "RuntimeError", "message": "the free failed"}
+    b.close()
+    assert b.calls == 1
+
+
 # --------------------------------------------------------------------------- the bounded cache
 
 @pytest.mark.unit
@@ -204,10 +248,15 @@ def test_clear_releases_everything():
 def test_a_failing_release_does_not_fail_the_insertion_that_triggered_it():
     def boom(_):
         raise RuntimeError("release failed")
+    before = RES.counts()
+    failures0 = len(RES.release_failures())
     c = RES.BoundedCache(1, name="t", on_evict=boom)
     c.put("a", 1)
     c.put("b", 2)                                       # must not raise: an eviction happens far from
     assert c.get("b") == 2                              # anything the caller is thinking about
+    assert RES.delta(before)["release_failed"]["cache:t"] == 1
+    assert RES.release_failures()[failures0] == {
+        "kind": "cache:t", "error": "RuntimeError", "message": "release failed"}
 
 
 @pytest.mark.unit
@@ -232,6 +281,16 @@ def test_retention_past_the_cap_raises_rather_than_growing_without_limit(monkeyp
         RES.retain_process_lifetime(object(), "one too many")
 
 
+@pytest.mark.unit
+def test_a_foreign_keepalive_fallback_warns_and_retains_past_the_cap(monkeypatch, caplog):
+    before = RES.counts()["retained"]
+    monkeypatch.setattr(RES, "MAX_RETAINED", before)
+    obj = object()
+    assert RES.retain_process_lifetime(obj, "foreign texture owner", overflow="retain") is obj
+    assert RES.counts()["retained"] == before + 1
+    assert "Keeping it" in caplog.text
+
+
 # --------------------------------------------------------------------------- the backends' shape
 
 @pytest.mark.unit
@@ -243,13 +302,60 @@ def test_retention_past_the_cap_raises_rather_than_growing_without_limit(monkeyp
     ("stable_envs.render.rendernet", "_Runner"),
 ])
 def test_every_backend_object_honours_the_close_protocol(module, cls):
-    """Shape, not construction: each of these needs a GPU to build and none to inspect."""
+    """Every backend declares the protocol; actual CPU construction is checked where available."""
     import importlib
     c = getattr(importlib.import_module(module), cls)
     assert issubclass(c, RES.Closeable), f"{module}.{cls} must be Closeable"
     assert c.resource_kind != RES.Closeable.resource_kind, f"{module}.{cls} needs its own kind"
     assert "_release" in c.__dict__, f"{module}.{cls} must say what it releases"
     assert "__del__" not in c.__dict__, f"{module}.{cls} must not free from the collector"
+
+
+@pytest.mark.unit
+def test_every_backend_construction_path_declares_itself_open():
+    from stable_envs.render import mjwarp as MW
+    from stable_envs.render import nvdiff as ND
+    from stable_envs.render import rendernet as RN
+
+    paths = (
+        MW.BatchRenderer.__init__,
+        ND.Scene.__init__,
+        ND.Scene.from_triangles.__func__,
+        ND.BatchRenderer.__init__,
+        RN._Runner.__init__,
+        RN.LoadedCorrector.__init__,
+    )
+    for path in paths:
+        assert "._opened()" in inspect.getsource(path), f"{path.__qualname__} forgot _opened()"
+
+
+@pytest.mark.unit
+def test_a_cpu_scene_releases_every_owned_tensor_and_refuses_reuse():
+    import numpy as np
+    import torch
+
+    from stable_envs.render import nvdiff as ND
+
+    vert, norm, face = ND._box((0.5, 0.25, 1.0))
+    before = RES.counts()
+    live0 = RES.live("nvdiff.Scene")
+    scene = ND.Scene.from_triangles(
+        vert, norm, face, np.zeros(len(vert), np.int64),
+        rgba=[[1.0, 1.0, 1.0, 1.0]], device="cpu")
+    owned = ("vert", "norm", "uv", "vgeom", "face", "fgeom", "mjgeom", "S3", "S4", "S3p",
+             "mat_rgb", "alpha", "spec", "shininess", "emission", "texid")
+    assert all(isinstance(getattr(scene, name), torch.Tensor) for name in owned)
+    assert RES.live("nvdiff.Scene") == live0 + 1
+    scene.close()
+    assert all(getattr(scene, name) is None for name in owned)
+    assert scene.textures == {}
+    assert RES.live("nvdiff.Scene") == live0
+    change = RES.delta(before)
+    assert change["created"]["nvdiff.Scene"] == 1
+    assert change["closed"]["nvdiff.Scene"] == 1
+    assert "nvdiff.Scene" not in change["release_failed"]
+    with pytest.raises(RES.UseAfterCloseError, match=r"Scene\.clip"):
+        scene.clip(None, None, None, None)
 
 
 @pytest.mark.unit

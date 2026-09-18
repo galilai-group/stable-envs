@@ -118,7 +118,7 @@ def _leg(tree: Path, python: str, name: str, batch: int, warmup: int, reps: int,
                         str(tree / corpus) if corpus else ""],
                        capture_output=True, text=True, cwd=str(tree), env=env)
     hit = [ln for ln in r.stdout.splitlines() if ln.startswith("@@JSON@@")]
-    if not hit:
+    if r.returncode or not hit:
         return None, f"{r.stdout[-600:]}\n{r.stderr[-600:]}"
     return json.loads(hit[-1][len("@@JSON@@"):]), None
 
@@ -126,15 +126,15 @@ def _leg(tree: Path, python: str, name: str, batch: int, warmup: int, reps: int,
 def _paired(baseline: Path, python: str, name: str, batch: int, rounds: int, reps: int,
             warmup: int, corpus: str | None):
     legs: dict[str, list[float]] = {"baseline": [], "head": []}
-    meta: dict = {}
+    metadata: dict[str, dict] = {}
     for _ in range(rounds):
         for label, tree in (("baseline", baseline), ("head", ROOT)):
             got, err = _leg(tree, python, name, batch, warmup, reps, corpus)
             if got is None:
                 return None, err
             legs[label].append(statistics.median(got["ms"]))
-            meta = got
-    return (legs, meta), None
+            metadata[label] = got
+    return (legs, metadata), None
 
 
 def main() -> int:
@@ -151,6 +151,8 @@ def main() -> int:
 
     want = set(a.cells.split(",")) if a.cells else None
     cells = [c for c in CELLS if want is None or c[0] in want]
+    if not cells:
+        raise SystemExit(f"--cells matched nothing; known: {[c[0] for c in CELLS]}")
     baseline, created = _worktree(a.baseline_sha)
     try:
         rows = []
@@ -171,7 +173,7 @@ def main() -> int:
                     rows.append(row)
                     print(f"{name:34s} {label:8s} SKIPPED: {row['reason'][:90]}")
                     continue
-                legs, meta = got
+                legs, metadata = got
                 b = statistics.median(legs["baseline"])
                 h = statistics.median(legs["head"])
                 spread = (max(legs["baseline"]) - min(legs["baseline"])) / b if b else 0.0
@@ -180,8 +182,10 @@ def main() -> int:
                             "baseline_leg_spread": round(spread, 4),
                             "fps_baseline": round(row["batch"] / (b / 1e3), 1),
                             "fps_head": round(row["batch"] / (h / 1e3), 1),
-                            "size": meta.get("size"), "card": meta.get("device"),
-                            "peak_bytes": meta.get("peak_bytes"),
+                            "size": metadata["head"].get("size"),
+                            "card": metadata["head"].get("device"),
+                            "peak_bytes_baseline": metadata["baseline"].get("peak_bytes"),
+                            "peak_bytes_head": metadata["head"].get("peak_bytes"),
                             "baseline_rounds_ms": [round(x, 4) for x in legs["baseline"]],
                             "head_rounds_ms": [round(x, 4) for x in legs["head"]]})
                 rows.append(row)
@@ -201,7 +205,8 @@ def main() -> int:
         (out / fn).write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
         print(f"wrote {out / fn}\nworst ratio {worst:.3f} against a 1.10 bar: "
               f"{'REGRESSION' if worst > 1.10 else 'within bar'}")
-        return 0
+        ran = sum(row["status"] == "ok" for row in rows)
+        return 0 if ran and worst <= 1.10 else 1
     finally:
         if created:
             subprocess.run(["git", "worktree", "remove", "--force", str(baseline)], cwd=str(ROOT),

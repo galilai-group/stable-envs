@@ -55,6 +55,7 @@ produced ten closes and left nothing live, which is the thing ``resource_guard``
 """
 from __future__ import annotations
 
+import logging
 import threading
 from collections import OrderedDict
 from typing import Any, Callable, Iterator
@@ -75,7 +76,10 @@ _LOCK = threading.Lock()
 _CREATED: dict[str, int] = {}
 _CLOSED: dict[str, int] = {}
 _EVICTED: dict[str, int] = {}
+_RELEASE_FAILED: dict[str, int] = {}
+_RELEASE_FAILURES: list[dict[str, str]] = []
 _RETAINED: list[tuple[str, Any]] = []
+_LOG = logging.getLogger(__name__)
 
 #: Cap on :func:`retain_process_lifetime`. Anything in that list is a deliberate leak, so the cap is
 #: not a safety margin — it is a tripwire for a caller that retains per frame or per state instead of
@@ -88,15 +92,16 @@ def _bump(d: dict[str, int], kind: str) -> None:
         d[kind] = d.get(kind, 0) + 1
 
 
-def counts() -> dict[str, dict[str, int]]:
-    """``{"created": {...}, "closed": {...}, "evicted": {...}, "retained": n}`` since interpreter start.
+def counts() -> dict[str, Any]:
+    """Resource counters since interpreter start, including failed releases.
 
     Cumulative and never reset, so a caller takes two snapshots and subtracts — the same shape
     ``testing/resource_guard.take``/``delta`` use, for the same reason: a test cares about what
     happened inside its own window, not about what the session did before it.
     """
     with _LOCK:
-        return {"created": dict(_CREATED), "closed": dict(_CLOSED), "evicted": dict(_EVICTED),
+        return {"created": dict(_CREATED), "closed": dict(_CLOSED),
+                "release_failed": dict(_RELEASE_FAILED), "evicted": dict(_EVICTED),
                 "retained": len(_RETAINED)}
 
 
@@ -110,7 +115,7 @@ def delta(before: dict, after: dict | None = None) -> dict[str, dict[str, int]]:
     """What happened between two :func:`counts` snapshots, per kind."""
     after = counts() if after is None else after
     out: dict[str, dict[str, int]] = {}
-    for section in ("created", "closed", "evicted"):
+    for section in ("created", "closed", "release_failed", "evicted"):
         a, b = after[section], before[section]
         keys = set(a) | set(b)
         out[section] = {k: a.get(k, 0) - b.get(k, 0) for k in sorted(keys)
@@ -119,7 +124,22 @@ def delta(before: dict, after: dict | None = None) -> dict[str, dict[str, int]]:
     return out
 
 
-def retain_process_lifetime(obj: Any, why: str) -> Any:
+def release_failures() -> list[dict[str, str]]:
+    """Details of failed releases, in occurrence order, for diagnostics."""
+    with _LOCK:
+        return [dict(x) for x in _RELEASE_FAILURES]
+
+
+def _record_release_failure(kind: str, exc: BaseException) -> None:
+    detail = {"kind": str(kind), "error": type(exc).__name__, "message": str(exc)}
+    with _LOCK:
+        _RELEASE_FAILED[kind] = _RELEASE_FAILED.get(kind, 0) + 1
+        _RELEASE_FAILURES.append(detail)
+    _LOG.warning("resource release failed for %s: %s: %s",
+                 kind, type(exc).__name__, exc)
+
+
+def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> Any:
     """Keep ``obj`` alive until the interpreter exits, on purpose, with the reason recorded.
 
     Two things land here and nothing else should. The first is an EGL/GL context, for the reason in
@@ -128,18 +148,24 @@ def retain_process_lifetime(obj: Any, why: str) -> Any:
     ``wp.Texture2D`` and then dropped is freed under the texture and sampled as whatever the
     allocator put there next, which is a wrong picture with no error.
 
-    Returns ``obj`` so it can be used inline. Raises past :data:`MAX_RETAINED`, because a retention
-    that grows with the frame count is a leak rather than a policy and should say so at the point it
-    happens rather than as an out-of-memory an hour later.
+    Returns ``obj`` so it can be used inline. By default, raises past :data:`MAX_RETAINED`, because
+    growth with frame count is a leak rather than a policy. ``overflow="retain"`` preserves an older
+    unbounded keepalive fallback whose foreign object cannot accept an ownership attribute: it logs
+    the overflow and retains anyway, because refusing there would free storage still in use.
     """
+    if overflow not in ("raise", "retain"):
+        raise ValueError(f"overflow must be 'raise' or 'retain', got {overflow!r}")
     with _LOCK:
         if len(_RETAINED) >= MAX_RETAINED:
-            raise ResourceWarning(
+            message = (
                 f"retain_process_lifetime: {len(_RETAINED)} objects are already retained for the "
                 f"life of the process (cap {MAX_RETAINED}); refusing to retain another for {why!r}. "
                 f"Retention is per model or per context, never per frame or per state — a growing "
                 f"count means the caller is retaining in a loop. Retained so far: "
                 f"{sorted({w for w, _ in _RETAINED})}")
+            if overflow == "raise":
+                raise ResourceWarning(message)
+            _LOG.warning("%s Keeping it because this caller cannot transfer ownership.", message)
         _RETAINED.append((why, obj))
     return obj
 
@@ -180,6 +206,8 @@ class Closeable:
 
     def _opened(self) -> None:
         """Declare the object live and count it. Called once the resources actually exist."""
+        if not hasattr(self, "_se_close_lock"):
+            self._se_close_lock = threading.Lock()
         self._se_closed = False
         if not self._se_counted:
             self._se_counted = True
@@ -201,12 +229,18 @@ class Closeable:
 
     def close(self) -> None:
         """Release this object's resources. Idempotent."""
-        if self._se_closed:
-            return
-        self._se_closed = True
-        try:
-            self._release()
-        finally:
+        lock = getattr(self, "_se_close_lock", None)
+        if lock is None:
+            lock = self._se_close_lock = threading.Lock()
+        with lock:
+            if self._se_closed:
+                return
+            self._se_closed = True
+            try:
+                self._release()
+            except Exception as exc:
+                _record_release_failure(self.resource_kind, exc)
+                raise
             if self._se_counted:
                 _bump(_CLOSED, self.resource_kind)
 
@@ -307,11 +341,13 @@ class BoundedCache:
             return
         try:
             self.on_evict(value)
-        except Exception:                                                    # noqa: BLE001
+        except Exception as exc:                                             # noqa: BLE001
             # A cache must not become the thing that fails. An eviction happens at an arbitrary
             # insertion, far from anything the caller is thinking about, so raising here would
             # attribute a release failure to whichever unrelated call happened to overflow it.
-            pass
+            # It still must be observable: otherwise a repo-wide cache can leak every value while
+            # reporting successful eviction.
+            _record_release_failure(f"cache:{self.name}", exc)
 
     def keys(self) -> list:
         with self._lock:

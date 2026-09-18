@@ -77,8 +77,8 @@ CELLS: list[tuple[str, str | None, str]] = [
     ("FetchSlide", "examples/results/step4/states/FetchSlide.npz", "mjwarp"),
     ("FetchPickAndPlace", "examples/results/step4/states/FetchPickAndPlace.npz", "mjwarp"),
     # --- MJWarp + lightspec + rendernet: RoboCasa needs its 24 GB asset library, so it may skip
-    ("RoboCasaCounterToSink", None, "mjwarp+lightspec"),
-    ("RoboCasaCounterToSinkCorrected", None, "mjwarp+lightspec+rendernet"),
+    ("RoboCasaCounterToSink", None, "mjwarp+mjwarp_lightspec"),
+    ("RoboCasaCounterToSinkCorrected", None, "mjwarp+mjwarp_lightspec+rendernet"),
     # --- nvdiff: the rocket (Scene.from_triangles, i.e. the caller-owned-scene path)
     ("PFRocketLanding", None, "nvdiff"),
     # --- nvdiff: the six visual locomotion cells (BatchRenderer builds its OWN scene)
@@ -191,6 +191,10 @@ for name, corpus, backend in cells:
         rec["frames_from_rows_sha256"] = h(
             env.render(torch.as_tensor(s, device=env.device)).detach().cpu().numpy())
         rec["backends_called"] = sorted(HITS)
+        called_modules = {tag.split(".", 1)[0] for tag in HITS}
+        expected_modules = set(backend.split("+"))
+        rec["backend_modules_called"] = sorted(called_modules)
+        rec["backend_coverage_ok"] = expected_modules <= called_modules
 
         # --- batch invariance: row 0 of every width must be the same frame
         if name in lifetime:
@@ -226,11 +230,19 @@ for name, corpus, backend in cells:
                     rg_per_cycle[-1]["se_closed"] = {k: now["closed"].get(k, 0) - cc["closed"].get(k, 0)
                                                      for k in now["closed"]
                                                      if now["closed"].get(k, 0) != cc["closed"].get(k, 0)}
+                    rg_per_cycle[-1]["se_release_failed"] = {
+                        k: now.get("release_failed", {}).get(k, 0)
+                        - cc.get("release_failed", {}).get(k, 0)
+                        for k in set(now.get("release_failed", {})) | set(cc.get("release_failed", {}))
+                        if now.get("release_failed", {}).get(k, 0)
+                        != cc.get("release_failed", {}).get(k, 0)}
             rec["cycle_frames_sha256"] = digests
             rec["cycles_identical"] = len(set(digests)) == 1
             rec["cycles"] = rg_per_cycle
             rec["egl_released_across_cycles"] = sum(c["context_freed"] for c in rg_per_cycle)
             rec["renderers_closed_across_cycles"] = sum(c["renderer_closed"] for c in rg_per_cycle)
+            rec["release_failures_across_cycles"] = sum(
+                sum(c.get("se_release_failed", {}).values()) for c in rg_per_cycle)
 
         # --- a closed env refuses to render, and closing twice is a no-op
         if name in lifetime:
@@ -301,6 +313,7 @@ COMPARED = {
     "frames_shape": "the frame shape",
     "frames_sha256": "THE FRAMES, byte for byte",
     "frames_from_rows_sha256": "the frames rendered from explicit rows",
+    "backends_called": "the owned backend entry points actually reached",
     "batch_row0_sha256": "row 0 at every batch width",
     "batch_invariant": "whether the width changed the frame",
 }
@@ -313,6 +326,10 @@ LIFETIME_ASSERTIONS = (
      "other live context in the process (testing/resource_guard.py, four incidents)"),
     ("renderers_closed_across_cycles", 0, "and must never close a mujoco.Renderer, for the same reason"),
     ("closed_env_refuses", True, "a closed env must raise rather than hand back a frame"),
+    ("closed_env_error", "RuntimeError",
+     "a closed Env must raise the Wave-0 lifecycle error, not fail through released backend state"),
+    ("release_failures_across_cycles", 0, "no backend release attempted in the cycle may fail"),
+    ("backend_coverage_ok", True, "the cell must actually reach every backend it claims to exercise"),
     ("batch_invariant", True, "the batch width must not change row 0"),
 )
 
@@ -348,6 +365,8 @@ def main() -> int:
         after = _run_probe(trees[arms[1]], a.python, cells, a.n_states, a.cycles)
 
         diffs, status, failures = {}, {}, {}
+        expected_modules = set()
+        called_modules = set()
         for name, _, _ in cells:
             b, m = before.get(name, {}), after.get(name, {})
             d = {k: {"baseline": b.get(k), "head": m.get(k), "means": why}
@@ -355,9 +374,23 @@ def main() -> int:
             if d:
                 diffs[name] = d
             status[name] = m.get("status", "missing")
-            for key, want_val, why in LIFETIME_ASSERTIONS:
-                if key in m and m[key] != want_val:
-                    failures[f"{name}/{key}"] = {"got": m[key], "want": want_val, "means": why}
+            expected_modules.update(next(c[2].split("+") for c in cells if c[0] == name))
+            called_modules.update(m.get("backend_modules_called", ()))
+            if name in LIFETIME_CELLS:
+                for key, want_val, why in LIFETIME_ASSERTIONS:
+                    got = m.get(key, "<missing>")
+                    if got != want_val:
+                        failures[f"{name}/{key}"] = {"got": got, "want": want_val, "means": why}
+            elif m.get("status") == "ok" and not m.get("backend_coverage_ok", False):
+                key, want_val, why = LIFETIME_ASSERTIONS[-2]
+                got = m.get(key, "<missing>")
+                failures[f"{name}/{key}"] = {"got": got, "want": want_val, "means": why}
+
+        missing_modules = sorted(expected_modules - called_modules)
+        if missing_modules:
+            failures["session/backend_coverage"] = {
+                "got": sorted(called_modules), "want": sorted(expected_modules),
+                "means": f"selected arm did not exercise: {missing_modules}"}
 
         record = {
             "arms": arms,
@@ -371,6 +404,8 @@ def main() -> int:
             "cycles": a.cycles,
             "batch_widths": list(BATCH_WIDTHS),
             "cells": status,
+            "expected_backend_modules": sorted(expected_modules),
+            "called_backend_modules": sorted(called_modules),
             "compared": sorted(COMPARED),
             "unexplained_differences": diffs,
             "lifetime_failures": failures,
@@ -389,7 +424,7 @@ def main() -> int:
                           "cells": status, "unexplained_differences": diffs,
                           "lifetime_failures": failures}, indent=1))
         print(f"wrote {out / fn}")
-        ok = record["identical"] and record["lifetime_ok"] and ran
+        ok = record["identical"] and record["lifetime_ok"] and ran == len(cells)
         print("ORACLE:", "PASS" if ok else "FAIL")
         return 0 if ok else 1
     finally:
