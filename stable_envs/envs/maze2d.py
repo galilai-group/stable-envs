@@ -103,7 +103,8 @@ import torch
 # surfaces as a GLFWError out of every fixture followed by SIGABRT.
 os.environ.setdefault("MUJOCO_GL", "egl")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict, Discrete
 
@@ -252,12 +253,20 @@ def _mat_and_tex(m, g):
     return mat, tex
 
 
-class PointMaze(StableEnv):
+class PointMaze(Env):
     """Base for the four scenes. ``MAZE`` is set by the generated subclasses."""
 
     MAZE: str = ""
     state_dim = 4
     state_names = STATE_NAMES
+    #: Step-9 state (contract §3): the four columns are two positions in a plane, and saying so is
+    #: the whole of this family's state structure. The packed row is unchanged -- ball then goal, the
+    #: order ``STATE_NAMES`` has always named -- and every column is covered, so nothing is hidden,
+    #: ``_hidden_state`` is never consulted and the frozen layout does not move. The ball's velocity
+    #: is deliberately NOT here: the official env integrates it, this package renders from a pose,
+    #: and a column the frame never reads would be a dimension the conformance suite reports as dead.
+    state_layout = ((("ball", "position"), 2, 0),
+                    (("goal", "position"), 2, 2))
     default_size = 224
     #: The reference is multisampled at 4 samples; a hard silhouette is the wrong answer at the edge
     #: of a 12-pixel sphere. As ``ogbench``, and for the same reason.
@@ -283,9 +292,10 @@ class PointMaze(StableEnv):
         "1.000000: the interior mask keeps only pixels whose 3x3 neighbourhood in the reference is "
         "one flat colour, and a shaded 12-pixel sphere has none.")
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
-        super().__init__(batch=batch, size=size,
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
+        super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         sc = self._scene()

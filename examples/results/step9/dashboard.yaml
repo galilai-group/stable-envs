@@ -215,15 +215,23 @@ workstreams:
   branch: step9/envs-mujoco
   worktree: /Users/samib/stable-envs-step9-envs-mujoco
   owner: opus
-  status: 'IN PROGRESS. Agent re-launched by the Opus coordinator after the previous session died. Predecessor
-    checkpoint recovered and committed at 42bbf74 by the coordinator after verifying it runs (tests/unit/test_envs_mujoco.py
-    282 lines, 72 passed / 57 skipped; frame_shape on highway.py and minihack.py). Still owed: findings.md,
-    the ratchet constant, the post-merge oracle re-run.'
+  status: MERGED into step9/integration after independent APPROVE
   files_owned: stable_envs/envs/mujoco_locomotion.py, humanoidbench.py, metaworld.py, robocasa.py, maze2d.py
     wrappers, tests
   ids_affected: non-42 families (behaviour-preserving migration only)
   baseline_sha: b3f3a81
-  head_sha: 42bbf74
+  head_sha: 6a52607
+  review: review_f.md APPROVE at 6a52607; review artifact commit 205f36b
+  merge_sha: 9cb3261
+  tests: 1691 passed, 279 skipped, 112 deselected in the prescribed se6 unit suite; reviewer targeted
+    121 passed/16 skipped plus 20 PointMaze passed
+  oracle_diff: 24/24 locally constructible cells byte-identical vs 21cb306; reviewer representative rerun
+    identical with zero unexplained differences. MetaWorld/RoboCasa/HumanoidBench CUDA frames remain UNESTABLISHED
+    for the post-Wave-1 GPU job.
+  performance_diff: render worst ratio 1.0273; Maze2D 1.0181; step absolute overhead 10-21 us inside accepted
+    StepResult band; blocking_configs empty
+  api_diff: 17 non-42 families migrated mechanically to num_envs, public State, lifecycle; holdout ratchet
+    0; no Step-8 support-matrix IDs affected
 - workstream: I_render_mjwarp_nvdiff
   branch: step9/render-mjwarp-nvdiff
   worktree: /Users/samib/stable-envs-step9-render-mjwarp-nvdiff
@@ -298,9 +306,9 @@ decisions:
 - date: '2026-09-17'
   by: Sami
   topic: concurrency and GPU validation cadence
-  ruling: run all remaining Wave-1 workstreams in parallel; no per-workstream GPU jobs; keep per-workstream
-    CPU oracles; one GPU oracle over all 42 ids after the Wave-1 merges and the final §20 comparison at
-    closure
+  ruling: "run all remaining Wave-1 workstreams in parallel; no per-workstream GPU jobs; keep per-workstream\
+    \ CPU oracles; one GPU oracle over all 42 ids after the Wave-1 merges and the final \xA720 comparison\
+    \ at closure"
 - id: D11
   date: '2026-09-17'
   decision: Coordinator merges step9/integration INTO each delivered Wave-1 branch BEFORE its independent
@@ -356,9 +364,9 @@ incident_log:
 - date: '2026-09-17'
   item: 'B merged after APPROVE; running: G, C, D, E, F, I'
 - date: '2026-09-17'
-  item: 'G delivered; se7-craftax-venv given tensordict+loguru (G R2); G R3: step4 CraftaxClassic.npz
-    (127-wide) no longer loads since Step 7 widened the cell — Step-7 corpus is the loadable one (note
-    for K/O); G R4: navigation.py imports private raster2d._row_groups (alias kept; K/O)'
+  item: "G delivered; se7-craftax-venv given tensordict+loguru (G R2); G R3: step4 CraftaxClassic.npz\
+    \ (127-wide) no longer loads since Step 7 widened the cell \u2014 Step-7 corpus is the loadable one\
+    \ (note for K/O); G R4: navigation.py imports private raster2d._row_groups (alias kept; K/O)"
 - date: '2026-09-17'
   item: G merged after APPROVE (coordinator stopped otherwise; C, D, E, I delivered and recorded in the
     handoff; F still in flight)
@@ -377,10 +385,10 @@ incident_log:
     has the same keying and was already fixed for navigation by A; it needs no craftax_full entry (neither
     spelling was ever in it, so both route to raster unchanged -- verified over all 81 registered classes,
     shard tally dmc 18 / ogb 25 / swm 6 / raster 32 on both trees).'
-non_42_families_note: carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld, minigrid,
-  minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench are outside
-  the 42-id oracle (plan §17 of Step 8); Step 9 migrates them mechanically under Workstream F/A ownership
-  with existing unit tests as the bar, no new certification
+non_42_families_note: "carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld,\
+  \ minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench\
+  \ are outside the 42-id oracle (plan \xA717 of Step 8); Step 9 migrates them mechanically under Workstream\
+  \ F/A ownership with existing unit tests as the bar, no new certification"
 wave1_pairing: 'two concurrent agents (budget): A||H -> B||G -> D||E -> I||F -> C||J -> K||L -> M||N ->
   O; pairs never share a render backend'
 buckets:

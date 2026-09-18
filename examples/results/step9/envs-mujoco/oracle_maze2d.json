@@ -1,0 +1,929 @@
+{
+ "baseline": {
+  "cells": {
+   "PointMazeLarge": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-large",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_Large-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "c997148c2f1037f86dd2426de7b732df8c6fb0330b03fc4d17f545aad477c610",
+    "frames_mean": 87.50777845317815,
+    "frames_sha256": "c997148c2f1037f86dd2426de7b732df8c6fb0330b03fc4d17f545aad477c610",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeLarge",
+     "reference_id": "PointMaze_Large-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "c9c8ccb1b29ab1b5f6417e9eef5340cd500b5041b1114c9d2434326ce066d91b",
+    "sample_states_sha256": "c9c8ccb1b29ab1b5f6417e9eef5340cd500b5041b1114c9d2434326ce066d91b",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   },
+   "PointMazeMedium": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-medium",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_Medium-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "f098efcc6a9eec817cac3dd090eb9364cf5afe43e4be7427bb23325375410641",
+    "frames_mean": 87.59552334117241,
+    "frames_sha256": "f098efcc6a9eec817cac3dd090eb9364cf5afe43e4be7427bb23325375410641",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeMedium",
+     "reference_id": "PointMaze_Medium-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "1eb54383bab9e5f1493bc0de9e7f53b15758f60c72125fb1130b96dd8fb2db72",
+    "sample_states_sha256": "1eb54383bab9e5f1493bc0de9e7f53b15758f60c72125fb1130b96dd8fb2db72",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   },
+   "PointMazeOpen": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-open",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_Open-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "24af67f92b2a84a238c72dd8d88c3c49e58e472960e111cbb3676ddbba2bcc0f",
+    "frames_mean": 81.77849262263499,
+    "frames_sha256": "24af67f92b2a84a238c72dd8d88c3c49e58e472960e111cbb3676ddbba2bcc0f",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeOpen",
+     "reference_id": "PointMaze_Open-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "b59abe30d9a4f8c5c3a1e83c3fe277d4a10c4eea93e51d6b44ace4e43abf79a3",
+    "sample_states_sha256": "b59abe30d9a4f8c5c3a1e83c3fe277d4a10c4eea93e51d6b44ace4e43abf79a3",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   },
+   "PointMazeUMaze": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-umaze",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_UMaze-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "ca6ba836791bc7f66474b655182e82918087b48e8bc4e46cfdc0f063640d57c4",
+    "frames_mean": 81.1988953051924,
+    "frames_sha256": "ca6ba836791bc7f66474b655182e82918087b48e8bc4e46cfdc0f063640d57c4",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeUMaze",
+     "reference_id": "PointMaze_UMaze-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "fa36dd1ca9f25a0166af4a8ca552f578f6c9786632f3c310ef573c984f702e7e",
+    "sample_states_sha256": "fa36dd1ca9f25a0166af4a8ca552f578f6c9786632f3c310ef573c984f702e7e",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   }
+  }
+ },
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "cells": [
+  "PointMazeOpen",
+  "PointMazeUMaze",
+  "PointMazeMedium",
+  "PointMazeLarge"
+ ],
+ "compare_device": "cpu",
+ "compared": [
+  "default_style_sha256",
+  "describe",
+  "device",
+  "fidelity_tier",
+  "frames_from_rows_sha256",
+  "frames_sha256",
+  "frames_shape",
+  "parity_all_exact_min",
+  "parity_interior_min",
+  "registry_row",
+  "render_decoder",
+  "roundtrip_exact",
+  "rows_sha256",
+  "sample_states_sha256",
+  "size",
+  "state_dim",
+  "state_names",
+  "states",
+  "style_dim",
+  "style_names",
+  "variation_names"
+ ],
+ "expected_differences": {},
+ "extra_pythonpath": [],
+ "functional_checks": [
+  {
+   "cell": "PointMazeOpen",
+   "closed_refuses_render": true,
+   "device": "cpu",
+   "has_dynamics": false,
+   "pack_state_equals_get_state": true,
+   "render_state_equals_render_held": true,
+   "render_state_equals_render_rows": true,
+   "state_keys": [
+    "ball.position",
+    "goal.position"
+   ],
+   "step_refuses": true,
+   "transition_refuses": true
+  },
+  {
+   "cell": "PointMazeUMaze",
+   "closed_refuses_render": true,
+   "device": "cpu",
+   "has_dynamics": false,
+   "pack_state_equals_get_state": true,
+   "render_state_equals_render_held": true,
+   "render_state_equals_render_rows": true,
+   "state_keys": [
+    "ball.position",
+    "goal.position"
+   ],
+   "step_refuses": true,
+   "transition_refuses": true
+  },
+  {
+   "cell": "PointMazeMedium",
+   "closed_refuses_render": true,
+   "device": "cpu",
+   "has_dynamics": false,
+   "pack_state_equals_get_state": true,
+   "render_state_equals_render_held": true,
+   "render_state_equals_render_rows": true,
+   "state_keys": [
+    "ball.position",
+    "goal.position"
+   ],
+   "step_refuses": true,
+   "transition_refuses": true
+  },
+  {
+   "cell": "PointMazeLarge",
+   "closed_refuses_render": true,
+   "device": "cpu",
+   "has_dynamics": false,
+   "pack_state_equals_get_state": true,
+   "render_state_equals_render_held": true,
+   "render_state_equals_render_rows": true,
+   "state_keys": [
+    "ball.position",
+    "goal.position"
+   ],
+   "step_refuses": true,
+   "transition_refuses": true
+  }
+ ],
+ "functional_ok": true,
+ "head_sha": "a4667569382891c55945a19d0eda984f6d62ec47",
+ "identical": true,
+ "migrated": {
+  "cells": {
+   "PointMazeLarge": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-large",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_Large-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "c997148c2f1037f86dd2426de7b732df8c6fb0330b03fc4d17f545aad477c610",
+    "frames_mean": 87.50777845317815,
+    "frames_sha256": "c997148c2f1037f86dd2426de7b732df8c6fb0330b03fc4d17f545aad477c610",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeLarge",
+     "reference_id": "PointMaze_Large-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "c9c8ccb1b29ab1b5f6417e9eef5340cd500b5041b1114c9d2434326ce066d91b",
+    "sample_states_sha256": "c9c8ccb1b29ab1b5f6417e9eef5340cd500b5041b1114c9d2434326ce066d91b",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   },
+   "PointMazeMedium": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-medium",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_Medium-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "f098efcc6a9eec817cac3dd090eb9364cf5afe43e4be7427bb23325375410641",
+    "frames_mean": 87.59552334117241,
+    "frames_sha256": "f098efcc6a9eec817cac3dd090eb9364cf5afe43e4be7427bb23325375410641",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeMedium",
+     "reference_id": "PointMaze_Medium-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "1eb54383bab9e5f1493bc0de9e7f53b15758f60c72125fb1130b96dd8fb2db72",
+    "sample_states_sha256": "1eb54383bab9e5f1493bc0de9e7f53b15758f60c72125fb1130b96dd8fb2db72",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   },
+   "PointMazeOpen": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-open",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_Open-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "24af67f92b2a84a238c72dd8d88c3c49e58e472960e111cbb3676ddbba2bcc0f",
+    "frames_mean": 81.77849262263499,
+    "frames_sha256": "24af67f92b2a84a238c72dd8d88c3c49e58e472960e111cbb3676ddbba2bcc0f",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeOpen",
+     "reference_id": "PointMaze_Open-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "b59abe30d9a4f8c5c3a1e83c3fe277d4a10c4eea93e51d6b44ace4e43abf79a3",
+    "sample_states_sha256": "b59abe30d9a4f8c5c3a1e83c3fe277d4a10c4eea93e51d6b44ace4e43abf79a3",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   },
+   "PointMazeUMaze": {
+    "default_style_sha256": "30ea3b6dfca5bccb34fd42e28340e145afd1dc9bf2c38bbc807896d116acc8d9",
+    "describe": {
+     "fidelity_tier": "parity",
+     "name": "pointmaze-umaze",
+     "parity_interior_min": 1.0,
+     "reference_id": "PointMaze_UMaze-v3",
+     "render_decoder": "renderer",
+     "size": 224,
+     "state_dim": 4,
+     "state_names": [
+      "ball_x",
+      "ball_y",
+      "goal_x",
+      "goal_y"
+     ],
+     "style_dim": 18,
+     "style_names": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ],
+     "variations": [
+      "agent.color",
+      "agent.scale",
+      "camera.azimuth",
+      "camera.distance_scale",
+      "camera.elevation",
+      "floor.tint",
+      "rendering.decolor_floor",
+      "target.alpha",
+      "target.color",
+      "walls.color"
+     ]
+    },
+    "device": "cpu",
+    "fidelity_tier": "parity",
+    "frames_from_rows_sha256": "ca6ba836791bc7f66474b655182e82918087b48e8bc4e46cfdc0f063640d57c4",
+    "frames_mean": 81.1988953051924,
+    "frames_sha256": "ca6ba836791bc7f66474b655182e82918087b48e8bc4e46cfdc0f063640d57c4",
+    "frames_shape": [
+     16,
+     224,
+     224,
+     3
+    ],
+    "parity_all_exact_min": null,
+    "parity_interior_min": 1.0,
+    "registry_row": {
+     "decoder": "renderer",
+     "module": "stable_envs.envs.maze2d",
+     "name": "PointMazeUMaze",
+     "reference_id": "PointMaze_UMaze-v3",
+     "state_dim": 4,
+     "tier": "parity"
+    },
+    "render_decoder": "renderer",
+    "roundtrip_exact": true,
+    "rows_sha256": "fa36dd1ca9f25a0166af4a8ca552f578f6c9786632f3c310ef573c984f702e7e",
+    "sample_states_sha256": "fa36dd1ca9f25a0166af4a8ca552f578f6c9786632f3c310ef573c984f702e7e",
+    "size": 224,
+    "state_dim": 4,
+    "state_names": [
+     "ball_x",
+     "ball_y",
+     "goal_x",
+     "goal_y"
+    ],
+    "states": 16,
+    "style_dim": 18,
+    "style_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ],
+    "variation_names": [
+     "agent.color",
+     "agent.scale",
+     "camera.azimuth",
+     "camera.distance_scale",
+     "camera.elevation",
+     "floor.tint",
+     "rendering.decolor_floor",
+     "target.alpha",
+     "target.color",
+     "walls.color"
+    ]
+   }
+  }
+ },
+ "n_states": 16,
+ "python": "/Users/samib/se8-fetch-venv/bin/python",
+ "states": "sampled in the BASELINE tree with sample_states(n, default_rng(0)); no cell this workstream owns has a frozen Step-4 corpus (see the module docstring)",
+ "unexplained_differences": {},
+ "workstream": "step9/envs-mujoco"
+}

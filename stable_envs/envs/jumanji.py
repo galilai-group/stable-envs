@@ -274,7 +274,8 @@ except Exception:                                                             # 
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Box, Dict, RGBBox
 
 #: Where built atlases are memoised. Building one costs P*V official matplotlib renders — 6.0 s for
@@ -747,7 +748,7 @@ def _load_atlas(spec: _Spec, size: int, device) -> dict:
 
 # ===================================================================== the env
 
-class JumanjiGrid(StableEnv):
+class JumanjiGrid(Env):
     """A Jumanji id whose frame is a per-pixel lookup indexed by one cell's symbol."""
 
     SPEC: _Spec = None
@@ -758,13 +759,14 @@ class JumanjiGrid(StableEnv):
     default_size = 200
     parity_interior_min = 1.0
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         spec = self.SPEC
         self.state_dim = spec.P
         self.state_names = spec.cell_names()
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
         self._check_size(self.size)
         self._a = _load_atlas(spec, self.size, self.device)
 
