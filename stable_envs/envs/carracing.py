@@ -72,7 +72,8 @@ import math
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import gfxdraw as G
 from ..render import gfxdraw_fused as F
 from ..spaces import Box, Dict, Discrete
@@ -378,7 +379,7 @@ def _draw_poly_mask(scr, ys, xs):
 
 # =============================================================================== the env
 @register
-class CarRacing(StableEnv):
+class CarRacing(Env):
     """CarRacing-v3 at its native 96x96. 100.0000% of pixels exact against the official renderer."""
 
     name = "car-racing"
@@ -390,6 +391,18 @@ class CarRacing(StableEnv):
         "w0_phase", "w1_phase", "w2_phase", "w3_phase",
         "w0_omega", "w1_omega", "w2_omega", "w3_omega",
         "reward", "t")
+    #: Step-9 state (contract §3). Five keys over the unchanged 28 columns, grouped by what draws
+    #: them: the hull's pose and twist, the four wheels' poses, their rolling phases (the tread
+    #: pattern) and their spin rates (the skid marks), and the two scalars the HUD prints. Every
+    #: column is covered and none moved, so the frozen layout and its digests are untouched.
+    #: ``reward`` and ``time`` are STATE here and not a step result -- they are two numbers this
+    #: renderer paints onto the score bar, which is why they are in the row at all.
+    state_layout = ((("hull",), 6, 0),
+                    (("wheels", "pose"), 12, 6),
+                    (("wheels", "phase"), 4, 18),
+                    (("wheels", "omega"), 4, 22),
+                    (("reward",), 1, 26),
+                    (("time",), 1, 27))
     default_size = 96
     reference_id = "CarRacing-v3"
 

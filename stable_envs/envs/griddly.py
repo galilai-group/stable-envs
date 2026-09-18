@@ -112,7 +112,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict
 
@@ -513,7 +514,7 @@ def _mask_index_np(grids: np.ndarray, cls: np.ndarray, live, m: int, oob: int) -
     return out
 
 
-class _GriddlyGame(StableEnv):
+class _GriddlyGame(Env):
     """One griddly game at one level, rendered as a gather from an enumerated tile table."""
 
     #: path under griddly's ``resources/games``
@@ -523,12 +524,36 @@ class _GriddlyGame(StableEnv):
     grid_w: int = 0
     grid_h: int = 0
 
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of a frame: ``(grid_h * T, grid_w * T)``, which is what ``render`` reshapes to.
+
+        ``Env.observation_spec`` assumes a SQUARE frame unless the env says otherwise, and griddly's
+        levels are not: the module header records the frames as ``grid_w*T x grid_h*T`` and the games
+        this family pins are wider than they are tall, so an unqualified spec described a
+        ``(size, size)`` buffer. ``size`` divides the grid HEIGHT into tiles (``_tile``); read off the
+        same two class attributes ``render`` uses, so the spec cannot drift from the frame.
+        """
+        t = self._tile(int(self.size))
+        return self.grid_h * t, self.grid_w * t
+
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self.dec = GriddlyDecoder.get(type(self).__name__, self.game_yaml, self._tile(self.size),
                                       device=str(self.device))
         self._check_grid(self.dec)
         self._pool: np.ndarray | None = None
+
+    def _close(self) -> None:
+        """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
+
+        The griddly wrapper and the decoder are NOT released, and that is this module's standing
+        policy rather than an oversight: ``GymWrapper.__del__`` runs ``game.release()``, which
+        segfaults at interpreter exit (see ``_open``), so the wrapper cache exists precisely to keep
+        every one of them alive. What an instance owns is the pool of states sampled off the
+        reference, which is rebuildable.
+        """
+        self._pool = None
 
     def _check_grid(self, dec) -> None:
         if (dec.grid_w, dec.grid_h) != (self.grid_w, self.grid_h):

@@ -109,7 +109,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Dict, RGBBox
 
@@ -394,7 +395,7 @@ class OvercookedAtlas:
         return x.to(torch.uint8).contiguous()
 
 
-class _OvercookedLayout(StableEnv):
+class _OvercookedLayout(Env):
     """One JaxMARL Overcooked layout, rendered as a gather from the 64-tile atlas."""
 
     #: jaxmarl layout key; the class name is the registry key
@@ -404,12 +405,37 @@ class _OvercookedLayout(StableEnv):
     grid_w: int = 0
     grid_h: int = 0
 
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of a frame: ``(grid_h * T, grid_w * T)``, which is what ``render`` reshapes to.
+
+        ``Env.observation_spec`` assumes a SQUARE frame unless the env says otherwise, and no shipped
+        Overcooked layout is square -- ``size`` divides the grid HEIGHT into tiles (``_tile``) and the
+        width follows the layout's own column count -- so an unqualified spec described a
+        ``(size, size)`` buffer for every cell in this family. Read off the same two class attributes
+        ``render`` uses, so the spec cannot drift from the frame.
+        """
+        t = self._tile(int(self.size))
+        return self.grid_h * t, self.grid_w * t
+
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self.atlas = OvercookedAtlas.get(self._tile(self.size), device=self.device)
         self._pool: np.ndarray | None = None
         self._pool_labels: np.ndarray | None = None
         self._default_t: torch.Tensor | None = None
+
+    def _close(self) -> None:
+        """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.
+
+        The tile atlas is keyed on (tile size, device) and SHARED by every instance of every layout,
+        so it is not released here: releasing a cache another live env is drawing through is the same
+        class of error as releasing a shared EGL context. An instance owns its sampled state pool,
+        the labels beside it and its default-style tensor, all rebuildable.
+        """
+        self._pool = None
+        self._pool_labels = None
+        self._default_t = None
 
     # geometry
 

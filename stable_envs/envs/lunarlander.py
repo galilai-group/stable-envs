@@ -67,7 +67,7 @@ too (60.0, 60.4, 60.5 and 60.9 all give the same columns). So the shape is a con
 once, and it is not symmetric: it spans dy and dx from -2 to +1.
 
 Physics is not ported. Box2D's contact solver is chaotic in exactly the way
-``core/env.py`` describes, the legs are two revolute joints with motors and limits, and a
+``env.py`` describes, the legs are two revolute joints with motors and limits, and a
 reimplementation would diverge; the renderer stands on its own, and states come from the official env.
 """
 from __future__ import annotations
@@ -75,7 +75,8 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import gfxdraw as G
 from ..spaces import Dict, Discrete, RGBBox
 
@@ -189,7 +190,7 @@ def _record_aa(gfx: G.Gfx, vi: torch.Tensor) -> list[tuple]:
 
 
 @register
-class LunarLander(StableEnv):
+class LunarLander(Env):
     """LunarLander-v3, from a 38-number render state: terrain, lander, legs and the exhaust.
 
     11 smoothed terrain heights, 3 poses of 3 numbers, and 6 particle slots of ``(x, y, ttl)``. A
@@ -205,12 +206,46 @@ class LunarLander(StableEnv):
         tuple(f"terrain[{i}]" for i in range(N_TERRAIN))
         + tuple(f"{b}_{f}" for b in ("lander", "leg0", "leg1") for f in ("x", "y", "angle"))
         + tuple(f"p{k}_{f}" for k in range(N_PARTICLES) for f in ("x", "y", "ttl")))
+    #: Step-9 state (contract §3). The row is already four runs and the layout names them: the
+    #: smoothed terrain profile, the three rigid bodies as ``(x, y, angle)`` each, and the exhaust
+    #: particle slots as ``(x, y, ttl)`` each. Column order is unchanged, every column is covered,
+    #: nothing is hidden. The lander's VELOCITY is deliberately absent: Box2D integrates it, this
+    #: package renders from a pose, and a column the frame never reads would be a dead dimension --
+    #: which is also why ``step``/``transition`` refuse rather than pretending to simulate.
+    state_layout = ((("terrain",), N_TERRAIN, 0),
+                    (("lander", "pose"), 3, BODY_OFF),
+                    (("leg0", "pose"), 3, BODY_OFF + 3),
+                    (("leg1", "pose"), 3, BODY_OFF + 6),
+                    (("particles",), 3 * N_PARTICLES, PART_OFF))
 
     #: Interior pixels are exact; the residual is the two ``pygame.draw`` rasterizers this module does
     #: not reimplement, and it lives entirely on shape boundaries. Kept as a declared floor of 1.0
     #: because that is what is measured -- see ``docs/research/lunarlander.md`` for the all-pixel
     #: number and its decomposition.
     parity_interior_min = 1.0
+
+    @property
+    def frame_shape(self) -> tuple[int, int]:
+        """``(H, W)`` of a frame: always ``native``, i.e. 400x600.
+
+        ``Env.observation_spec`` assumes a SQUARE frame unless the env says otherwise, and this one is
+        not: ``size`` is the reference viewport's HEIGHT, so an unqualified spec described a 400x400
+        buffer and the frame is 400x600. There is no size at which it is square -- ``render`` raises
+        for any ``size != 400`` because every primitive is hardcoded in pixels -- so this is a
+        constant, not an aspect ratio. Same declaration, for the same reason, as
+        ``classic_control.ClassicControlEnv.frame_shape`` (three of those five are also 400x600) and
+        ``highway``/``minihack``.
+        """
+        return self.native
+
+    def _close(self) -> None:
+        """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
+
+        This env owns no external handle: the Box2D world it samples from is built per call and
+        discarded, and everything else it holds is a constant device tensor baked from the module's
+        own geometry. The pool is the one growable thing, and a closed env has no use for it.
+        """
+        self._pool = None
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)

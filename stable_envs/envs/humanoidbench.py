@@ -257,7 +257,8 @@ if _missing or _mjver < (3, 11):                                             # p
         f" pulls the renderer half. The envs were measured in {_VENV}. See "
         f"docs/research/humanoidbench.md")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -592,7 +593,7 @@ def _frame(c: _Ctx) -> None:
 
 # --------------------------------------------------------------------------- the env
 
-class HumanoidBenchBase(StableEnv):
+class HumanoidBenchBase(Env):
     """Base for the registered cells. ``ROBOT`` and ``TASK`` are set by the generated subclasses."""
 
     ROBOT: str = ""
@@ -601,13 +602,19 @@ class HumanoidBenchBase(StableEnv):
     fidelity_tier = "visual"
     parity_interior_min = None
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         b = _build_bundle(self.ROBOT, self.TASK)
         self.state_dim = b.nq
         self.state_names = b.state_names
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+        # Step-9 state (contract §3): the packed row IS ``qpos`` and nothing else, so the public
+        # State is one key over it, assigned per instance because ``nq`` is a property of the
+        # compiled model. Nothing is hidden (every column is covered, no offset is ``None``) and
+        # there is no ``_live_state``: the packed row is this family's live state.
+        self.state_layout = ((("qpos",), self.state_dim, 0),)
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
         self._b = b
 
     # ---- variation ------------------------------------------------------------------------

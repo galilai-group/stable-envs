@@ -124,7 +124,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Box, Dict, Discrete
 
 _SPEC = importlib.util.find_spec("procgen")
@@ -855,7 +856,7 @@ def _blend_torch(canvas, atlas, idx, mask, gain):
 
 # ===================================================================== the env
 
-class _ProcgenEnv(StableEnv):
+class _ProcgenEnv(Env):
     """Shared renderer. Subclasses declare only which game they are and how the state is laid out."""
 
     game: str = ""
@@ -871,9 +872,30 @@ class _ProcgenEnv(StableEnv):
     #: enemy-sprite dimension dead.
     pool_warmup = 48
 
-    def __init__(self, batch=1, size=None, supersample=1, device="cuda", backend="auto", seed=0):
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+    def __init__(self, num_envs: int = 1, size=None, supersample=1, device="cuda",
+                 backend="auto", seed=0, batch: int | None = None):
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
+        # Step-9 state (contract §3): the tile grid and the entity slots, which is the division this
+        # class is already built around (``n_cells``, ``has_grid``, ``_unpack``) rather than a new
+        # one. Per instance because ``n_cells`` is a per-game property, and the ``grid`` key is
+        # absent on a game that has none. Every column is covered by one of the two, so nothing is
+        # hidden and the packed row -- whose per-game column order the frozen digests speak -- does
+        # not move. ``entities`` stays one key: its columns differ per game and are named by
+        # ``state_names``, and inventing a per-game nest would be four vocabularies for one row.
+        n = int(self.n_cells)
+        self.state_layout = (((("grid",), n, 0),) if n else ()) + (
+            ((("entities",), int(self.state_dim) - n, n),) if int(self.state_dim) > n else ())
+        self._pool = None
+
+    def _close(self) -> None:
+        """Drop the per-instance draws. ``Env.close`` calls this once and is idempotent.
+
+        The assets and the baked geometry (``_Assets``, ``_Geom``) are keyed on (game, size, device)
+        and SHARED by every instance, so they are not released here -- releasing a cache another live
+        env is drawing through is the same class of error as releasing a shared EGL context. What an
+        instance owns is the sampled state pool, which is rebuildable from the official env.
+        """
         self._pool = None
 
     @property
