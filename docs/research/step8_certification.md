@@ -78,7 +78,9 @@ unchanged and the ladder each class is judged on is exactly Step 2's:
 - `NO_BACKEND_MODULE_CLASS` gains `craftax_full` and `minihack`, both atlas gathers on their own
   modules' account (`minihack.py:1-12`: *"the frame is a gather from a finite atlas indexed by the
   21×79 glyph grid… no sub-pixel geometry, no blending and no float arithmetic anywhere in the
-  path"*).
+  path"*). Step 9 moved the CraftaxFull implementation to `stable_envs/envs/_craftax_full.py`;
+  `stable_envs.envs.craftax_full` remains a `sys.modules` alias, and the classifier table keeps both
+  spellings so a census regenerated on either tree still classifies the cell.
 
 ### Before / after
 

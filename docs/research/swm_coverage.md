@@ -137,7 +137,8 @@ claim is available and is the one to make.
 ### Three constants that were wrong on first reading
 
 Recorded because each cost a measurement and each is invisible by eye. The full set is in the module
-docstrings of `stable_envs/envs/swm_nav.py` and `stable_envs/envs/simple_point_maze.py`.
+docstrings of `stable_envs/envs/navigation.py` (Step 9 merged `swm_nav.py` and `simple_point_maze.py`
+into that module; the old filenames remain `sys.modules` aliases until Wave 3).
 
 **The "agent dot" is a 41-pixel object with a nominal radius of 7.** `TwoRoomEnv` composites a
 normalised Gaussian alpha mask over the whole frame and truncates to uint8, so a background of 255

@@ -5,7 +5,11 @@ frame you would have stored. That is an empirical question with a number attache
 intention, and the suite is where the number comes from.
 
 Every check below corresponds to a specific way the claim can be false. The suite is parameterised over
-`REGISTRY`, so an env added tomorrow is covered without editing a test.
+the registry (`snv.list_envs()`), so an env added tomorrow is covered without editing a test.
+
+Step 9 markers (Workstream K): `unit`, `integration`, `gpu`, `certification`, `slow`. Until that
+restructure merges, the commands below and the existing `reference` / `smoke` / `selftest` markers
+remain the way to run the suite.
 
 ```bash
 sbatch scripts/run_gpu_tests.sbatch            # full suite, crash-isolated
@@ -278,8 +282,8 @@ Neither is a rendering bug and neither would have been found by comparing pixels
 | `INTERIOR_EXACT_MIN` | 1.0 | interior pixels have no anti-aliasing ambiguity; anything below 1.0 is a real error |
 | `ALL_EXACT_MIN` | 0.90 | edges are two rasterizers' coverage rules disagreeing; the reference is not ground truth there |
 | `MEAN_ABS_MAX` | 4.0 / 255 | catches a systematic colour shift that leaves the interior fraction intact only if the shift is small |
-| `StableEnv.parity_interior_min` | 1.0 | per-env override of the interior floor; requires `parity_note` |
-| `StableEnv.visual_fidelity` | — | the visual tier's own thresholds, set from the SPREAD over independent state draws; required in full, or `register()` refuses the class |
+| `Env.parity_interior_min` | 1.0 | per-env override of the interior floor; requires `parity_note` |
+| `Env.visual_fidelity` | — | the visual tier's own thresholds, set from the SPREAD over independent state draws; required in full, or `register()` refuses the class |
 
 If a new env cannot reach interior 1.0, the right move is to find the constant that is wrong — see the
 [measured-constants table](adding-an-env.md#step-2-find-the-references-real-constants) for the five that
