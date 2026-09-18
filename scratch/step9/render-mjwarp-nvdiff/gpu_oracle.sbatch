@@ -43,7 +43,7 @@ export MUJOCO_GL=egl
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 # HOME is at 100% of its quota: nothing may be written there. Every cache above is under $SCR.
 
-WS=$SCR/se9/render-mjwarp-nvdiff
+WS=${SE9_WS:-$SCR/se9/render-mjwarp-nvdiff}
 OUT=$WS/examples/results/step9/render-mjwarp-nvdiff
 TAG=gpu_${SLURM_JOB_ID:-local}
 BASE_SHA=21cb30678b7a7d0f3344b59f176f33d3f3b09ffc

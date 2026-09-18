@@ -33,7 +33,7 @@ export TORCH_HOME=$SCR/cache/torch WARP_CACHE_PATH=$SCR/cache/warp HF_HOME=$SCR/
 export MUJOCO_GL=egl
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 
-WS=$SCR/se9/render-3d
+WS=${SE9_WS:-$SCR/se9/render-3d}
 PY=$SCR/venvs/se-step6/bin/python
 OUT=$WS/examples/results/step9/render-3d
 TAG=gpu_${SLURM_JOB_ID:-local}
