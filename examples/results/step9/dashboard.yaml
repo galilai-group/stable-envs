@@ -248,6 +248,18 @@ workstreams:
     Positive evidence is a static read-through (eleven removed lines argued to change no number, no upload
     and no cache key) plus 28 lifetime tests. Establishing the oracle requires scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch,
     folded into the single post-Wave-1 GPU job.
+- workstream: M_docs_examples
+  branch: step9/docs-examples
+  owner: grok
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: README.md, docs/, examples/{render,batched_env,functional_dynamics,worldmodel}.py
+  head_sha: 1f23f51
+  review: review_m.md APPROVE; review artifact commit cb2a59a
+  merge_sha: 5ccc2af
+  tests: 12 example tests passed; 2 nav checks passed; four --help and CPU smokes passed
+  api_diff: OSS docs and examples now use class-first snv API, num_envs, State, transition/unroll, lifecycle
+    and registry; native World(env=...) documented as unsupported by installed SWM
+  oracle_diff: documentation-only; no behavior or Step-8 oracle rows changed
 decisions:
 - date: '2026-09-17'
   by: coordinator
