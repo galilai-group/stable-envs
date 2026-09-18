@@ -17,11 +17,13 @@ import torch
 import stable_envs as snv
 
 try:  # Support both module and path execution.
-    from ._common import (add_common_arguments, checked_device, env_kwargs, error_record,
-                          finish_provenance, measure, positive_int, provenance, write_json)
+    from ._common import (add_common_arguments, checked_device, configure_threads, env_kwargs,
+                          error_record, finish_provenance, measure, positive_int, provenance,
+                          public_env, write_json)
 except ImportError:  # pragma: no cover - exercised by CLI smoke tests
-    from _common import (add_common_arguments, checked_device, env_kwargs, error_record,
-                         finish_provenance, measure, positive_int, provenance, write_json)
+    from _common import (add_common_arguments, checked_device, configure_threads, env_kwargs,
+                         error_record, finish_provenance, measure, positive_int, provenance,
+                         public_env, write_json)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -121,12 +123,13 @@ def _environment(name: str, args: argparse.Namespace,
                  device: torch.device) -> tuple[dict[str, Any], int]:
     env = None
     try:
-        env = snv.make(name, **env_kwargs(args, args.batch))
+        env = public_env(name, env_kwargs(args, args.batch))
         shape = tuple(int(x) for x in env.observation_spec.shape)
         output_mib = args.batch * shape[0] * shape[1] * shape[2] / 2**20
         if output_mib > args.max_output_mib:
             return ({
                 "status": "skipped",
+                "batch": args.batch,
                 "reason": (
                     f"uint8 output would be {output_mib:.1f} MiB, above "
                     f"--max-output-mib={args.max_output_mib}"),
@@ -142,8 +145,6 @@ def _environment(name: str, args: argparse.Namespace,
             rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
             env.render(rows, out=out)
 
-        if device.type == "cuda":
-            torch.cuda.reset_peak_memory_stats(device)
         timing = measure(
             ingest_and_render, device=device, warmup=args.warmup, repeats=args.repeats)
         median_ms = timing["median_ms"]
@@ -179,7 +180,7 @@ def _environment(name: str, args: argparse.Namespace,
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as exc:  # preserve a machine-readable row for an optional-family failure
-        return error_record(exc), 1
+        return {"batch": args.batch, **error_record(exc)}, 1
     finally:
         if env is not None:
             env.close()
@@ -187,9 +188,10 @@ def _environment(name: str, args: argparse.Namespace,
 
 def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     device = checked_device(args.device)
-    torch.set_num_threads(args.threads)
+    configure_threads(args.threads)
     record = provenance(
         benchmark="host-state-render-pipeline", args=args, snv_version=snv.__version__)
+    record["resolved_device"] = str(device)
     record["methodology"] = {
         "timed_operation": (
             "torch.as_tensor(host packed rows).to(device) -> "
@@ -200,6 +202,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         ],
         "synchronized": device.type in {"cuda", "mps"},
         "statistic": "median wall time; raw synchronized samples retained",
+        "peak_device_memory": "CUDA max_memory_allocated of the timed region after warmup",
         "jpeg_comparison": "optional and separately timed",
         "stable_worldmodel_required": False,
         "correctness_claim": None,

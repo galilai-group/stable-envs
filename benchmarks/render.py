@@ -14,11 +14,13 @@ import torch
 import stable_envs as snv
 
 try:  # Support both ``python -m benchmarks.render`` and ``python benchmarks/render.py``.
-    from ._common import (add_common_arguments, checked_device, env_kwargs, error_record,
-                          finish_provenance, measure, positive_int, provenance, write_json)
+    from ._common import (add_common_arguments, checked_device, configure_threads, env_kwargs,
+                          error_record, finish_provenance, measure, positive_int, provenance,
+                          public_env, write_json)
 except ImportError:  # pragma: no cover - exercised by CLI smoke tests
-    from _common import (add_common_arguments, checked_device, env_kwargs, error_record,
-                         finish_provenance, measure, positive_int, provenance, write_json)
+    from _common import (add_common_arguments, checked_device, configure_threads, env_kwargs,
+                         error_record, finish_provenance, measure, positive_int, provenance,
+                         public_env, write_json)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -35,7 +37,7 @@ def _point(name: str, batch: int, args: argparse.Namespace,
            device: torch.device) -> dict[str, Any]:
     env = None
     try:
-        env = snv.make(name, **env_kwargs(args, batch))
+        env = public_env(name, env_kwargs(args, batch))
         shape = tuple(int(x) for x in env.observation_spec.shape)
         output_mib = batch * shape[0] * shape[1] * shape[2] / 2**20
         if output_mib > args.max_output_mib:
@@ -53,8 +55,6 @@ def _point(name: str, batch: int, args: argparse.Namespace,
         state = env.reset(seed=args.seed)
         first = env.render(state)
         out = torch.empty_like(first)
-        if device.type == "cuda":
-            torch.cuda.reset_peak_memory_stats(device)
         timing = measure(
             lambda: env.render(state, out=out),
             device=device,
@@ -90,14 +90,16 @@ def _point(name: str, batch: int, args: argparse.Namespace,
 
 def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     device = checked_device(args.device)
-    torch.set_num_threads(args.threads)
+    configure_threads(args.threads)
     record = provenance(
         benchmark="renderer-throughput", args=args, snv_version=snv.__version__)
+    record["resolved_device"] = str(device)
     record["methodology"] = {
         "timed_operation": "env.render(public_state, out=reused_uint8_buffer)",
         "setup_excluded": ["environment construction", "reset", "first lazy render", "output allocation"],
         "synchronized": device.type in {"cuda", "mps"},
         "statistic": "median wall time; raw synchronized samples retained",
+        "peak_device_memory": "CUDA max_memory_allocated of the timed region after warmup",
         "correctness_claim": None,
     }
     record["environments"] = {}

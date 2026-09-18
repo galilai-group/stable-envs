@@ -11,6 +11,10 @@ They do **not** test pixel correctness, fidelity, reproducibility, or environmen
 pytest certification suite for those claims. Benchmark output deliberately contains measurements and
 errors, not pass/fail tiers, release gates, badges, or a selected "best" row.
 
+Canonical environment names are constructed through the public class-first API (`snv.PushT(...)`).
+SWM aliases and other registry strings go through `snv.make(...)`. Neither script imports renderer
+internals, `stable_envs.testing`, or `stable_worldmodel`.
+
 ## Quick start
 
 From a repository checkout:
@@ -74,12 +78,18 @@ concern from the cost of turning stable-envs states into frames.
 
 - Environment construction, reset/corpus loading, the first lazy render, and output allocation happen
   before timing.
+- `--warmup` calls are untimed. `--repeats` synchronized samples are the timed region; CUDA peak
+  allocated memory is reset after warmup so it describes that region only.
+- `--threads` sets `torch.set_num_threads` and, unless already exported, `OMP_NUM_THREADS` and
+  `MKL_NUM_THREADS`. The budget is recorded on every device, including CUDA.
 - Every timed device call is synchronized on CUDA and MPS. CPU calls are already synchronous.
+- A requested CUDA or MPS device that is not visible is refused; the scripts never fall back.
 - The median is the headline statistic. Minimum, quartiles, maximum, every raw sample, process CPU
-  seconds per wall second, host load, versions, resolved size/supersampling, and the Git revision are
-  retained in JSON.
-- `native` size and supersampling are represented by omitting those constructor keywords. This
-  preserves each environment's actual defaults instead of substituting a cheaper picture.
+  seconds per wall second, host load, versions, resolved size/supersampling, resolved device, and the
+  Git revision are retained in JSON.
+- `native` size, native supersampling, and `backend=auto` are represented by omitting those
+  constructor keywords. This preserves each environment's actual defaults instead of substituting a
+  cheaper picture.
 - `--max-output-mib` records oversized points as skipped before allocating their frame buffer.
 - Every requested row is written, including unsupported environments, missing optional dependencies,
   and runtime errors. A row error makes the command exit nonzero.
