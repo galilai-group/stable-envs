@@ -161,7 +161,6 @@ def test_a_cell_without_a_simulator_refuses_step_and_transition_by_name(name):
                      lambda: env.transition(env.state, torch.zeros(env.num_envs, 1))):
             with pytest.raises(NotImplementedError) as e:
                 call()
-            assert name.split(".")[-1] or True
             assert type(env).__name__ in str(e.value) and "has dynamics" in str(e.value)
         assert env.render().shape[0] == env.num_envs        # render still works after the refusal
     finally:
