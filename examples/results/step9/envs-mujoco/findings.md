@@ -1,7 +1,7 @@
 # Step 9 — Wave 1, Workstream F: the MuJoCo wrappers and the non-42-id families
 
-**Workstream:** `step9/envs-mujoco` · **Parent:** `step9/integration`, merged at `70c7055`
-(which brought Workstream B's DMControl package and Workstream G's 2-D render consolidation) ·
+**Workstream:** `step9/envs-mujoco` · **Parent:** `step9/integration` at `303255b`, merged by
+`a24d274` (including approved C/D/E and their review records) ·
 **Step-8 baseline:** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc`
 **Host:** Apple M5 Mac, CPU only — no CUDA device in this ticket, and by ruling 8 no GPU job either.
 **Interpreters:** `/Users/samib/se6-venv` (torch 2.14 CPU, mujoco 3.12.0, tensordict, loguru) and
@@ -14,8 +14,8 @@ can construct render byte-identical frames** through this branch and through a d
 taxonomy, the fidelity declarations, the packed layout, `set_state`/`get_state` round-tripping,
 `sample_states` and the registry row (module included) are identical on every one of them.
 **Unexplained oracle differences: zero.** The 24 digests are also bit-for-bit the ones this branch
-produced *before* the integration merge, so **Workstream G's 2-D backend consolidation moved no pixel
-of these families**. Ratchet `NUM_ENVS_HOLDOUTS` **41 → 27**.
+produced before the first integration merge, so **Workstream G's 2-D backend consolidation moved no
+pixel of these families**. The live D+F constructor ratchet is `NUM_ENVS_HOLDOUTS` **41 → 0**.
 
 **What is NOT established and must not be read as established:** ten of the seventeen families own
 no cell this host can build, for two different reasons (§6b). Three of them — `metaworld`,
@@ -69,7 +69,7 @@ these families has an import path to update.
 | `stable_envs/envs/procgen.py` | imports, `num_envs=`, State layout, `_close` |
 
 Created: `tests/unit/test_envs_mujoco.py`, `scratch/step9/envs-mujoco/{oracle.py,bench.py,gpu_oracle.sbatch}`,
-`examples/results/step9/envs-mujoco/{oracle.json,oracle_maze2d.json,timings_*.json,findings.md}`.
+`examples/results/step9/envs-mujoco/{oracle.json,oracle_maze2d.json,oracle_dynamics.json,timings_*.json,findings.md}`.
 Edited outside the family files: `tests/unit/test_foundation_api.py` (the ratchet constant and its
 comment — one number and a note, §2).
 
@@ -125,7 +125,7 @@ Registry rows compared and identical for all 24 cells: `name`, `tier`, `decoder`
 
 ## 4. Targeted tests
 
-`tests/unit/test_envs_mujoco.py` (282 lines, 9 test functions). It pins the claims that are **NEW in
+`tests/unit/test_envs_mujoco.py` (9 test functions). It pins the claims that are **NEW in
 Step 9** and so have no Step-8 baseline to diff against:
 
 | test | what it pins |
@@ -136,26 +136,36 @@ Step 9** and so have no Step-8 baseline to diff against:
 | `test_render_takes_a_state_a_packed_row_or_nothing` | the three spellings are the same frame **and `observation_spec` describes it** — this is the test that found the `frame_shape` defect |
 | `test_a_cell_without_a_simulator_refuses_step_and_transition_by_name` | contract §5: `NotImplementedError` naming the class, from **both** `step` and `transition`, while `reset`/`render` keep working |
 | `test_close_is_idempotent_and_a_closed_env_refuses_to_render` | `close()` twice is fine; a closed env raises; the context manager closes |
-| `test_transition_is_pure_and_bit_identical_to_the_stateful_step` | the env's buffers are untouched and the two results agree bitwise |
+| `test_transition_is_pure_and_bit_identical_to_the_stateful_step` | the env's buffers are untouched, the two results agree bitwise, and a returned State does not alias later steps |
 | `test_unroll_is_repeated_transition_and_repeated_step` | `unroll` equals four `transition`s and four `step`s |
 | `test_minigrids_carried_object_is_hidden_state_the_packed_row_does_not_carry` | the one hidden field is hidden deliberately and reachable through `_hidden_state` |
 
 **Its honest coverage.** `_owned_classes()` reads the **registry**, so a family whose module failed
 to import contributes nothing — which means the signature check, too, reaches only the classes that
-registered. On this host that is 24 cells, and the run is **72 passed / 57 skipped**: the skips are
-the ten families with no local package, named individually in each skip message. Stage 3 of
-`gpu_oracle.sbatch` runs this same file in every Oscar venv, which is where those skips become
-results. I did **not** reach for an AST walk to enumerate classes in a module that does not import;
-that is a second discovery mechanism for one property, and §16 says no.
+registered. The pre-merge checkpoint's GUI-capable run was **72 passed / 57 skipped**; the skips
+named the ten families with no local package. Stage 3 of `gpu_oracle.sbatch` runs this same file in
+every Oscar venv, which is where those skips become results. I did **not** reach for an AST walk to
+enumerate classes in a module that does not import; that is a second discovery mechanism for one
+property, and §16 says no. The post-merge execution limitation is recorded immediately below rather
+than silently carrying that older count forward.
 
-Full local suite (command from the handoff §1, run in `se6-venv`):
+Full local suite command from the handoff §1:
 
 ```
 MUJOCO_GL=glfw /Users/samib/se6-venv/bin/python -m pytest -q -p no:cacheprovider tests/unit -x \
   --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"
 ```
 
-<!--SUITE-->
+The exact command was attempted after merging `303255b`, but this agent's sandbox has no macOS
+window-server access: `dm_control` aborts in `glfw.init()` during collection (exit 134), before
+pytest can issue a verdict. This is an execution-environment limitation, not a passing suite and not
+recorded as one. A diagnostic `MUJOCO_GL=osmesa` run collected the workstream file and reached
+**104 passed / 32 failed**; all 32 failures are the same unsupported-backend error for the four
+Gymnasium MuJoCo and four Maze2D cells across four parametrized tests. The backend-independent
+dynamics selection passed **15/15**, including the new assertion that a returned State does not
+alias the live env buffers. The merged ratchet test passed **1/1** and, because its ceiling is zero,
+establishes the live holdout count is exactly zero. The prescribed `MUJOCO_GL=glfw` unit suite must
+be rerun in a GUI-capable local shell before independent review.
 
 ## 5. Applicable certification checks
 
@@ -178,6 +188,10 @@ inventing a corpus would freeze something Step 4 deliberately did not. What appl
 `scratch/step9/envs-mujoco/oracle.py` → `examples/results/step9/envs-mujoco/oracle.json` (20 cells,
 `se6-venv`) and `oracle_maze2d.json` (4 cells, `se8-fetch-venv`). Both records at head `a466756`,
 baseline `21cb306`, `identical: true`, `unexplained_differences: {}`, `functional_ok: true`.
+Integration `303255b` changed only C/D/E family modules plus the shared ratchet among applicable
+code paths, so it did not require replaying these F frame records. The later State-return hot-path
+change did affect MiniGrid/Sokoban; `oracle_dynamics.json` replays all seven steppable cells at
+`c0ea6f1` and is again `identical: true`, `functional_ok: true`, with zero unexplained differences.
 
 **Where the states come from, and why this differs from A's and D's scripts.** No cell here has a
 frozen Step-4 corpus (§5). So the **baseline tree** samples `sample_states(16, default_rng(0))` for
@@ -332,7 +346,18 @@ accepted +12–28 µs of StepResult on trivially cheap steps; these steps are no
 an indirection through a caller-named buffer is exactly the change that can cost a copy per step, so
 it was measured rather than assumed.
 
-<!--TIMINGS-->
+`timings_render.json`: 11 representative CPU render cells, worst ratio **1.0273** (Crafter);
+`timings_maze2d.json`: all four Maze2D cells, worst ratio **1.0181**. Both are below the 1.10 bar.
+`timings_render_selftime.json` is the preserved `head,head` control; its worst ratio is **1.0245**,
+confirming that differences at that scale are machine noise.
+
+The preserved checkpoint `timings_step.json` correctly found a blocker before optimization:
+MiniGrid was **1.47–1.53x** and Sokoban **1.28x**, an absolute **42–65 µs** increase. `c0ea6f1`
+replaced repeated generic field copies with one independent packed-row snapshot while retaining the
+required TensorDict State. Final `timings_step_merged.json` records MiniGrid **1.20–1.28x**
+(**15–21 µs**) and Sokoban **1.107x** (**10 µs**). The ratios remain large only because the baseline
+steps take 75–90 µs; the absolute cost is within ruling 7's accepted **12–28 µs** StepResult range,
+and `blocking_configs` is empty. The returned-State non-aliasing regression test passes.
 
 ## 9. Resource lifetime
 
@@ -387,15 +412,11 @@ applied it (per the handoff it is assigned after those families merge): `robocas
 
 ## 11. Requests for the coordinator
 
-**R1 — the ratchet, and a line-level conflict that is yours by assignment.** I set
-`tests/unit/test_foundation_api.py::NUM_ENVS_HOLDOUTS` to **27**, the count I measured live on this
-branch after the merge. All 27 remaining are OGBench (25 in `envs/ogbench`, 2 in `envs/ogb_manip`)
-and belong to Workstream D, which set the same constant to **14** on its own branch. The two edits
-are on the same line; per the handoff that conflict is yours. F's contribution is these **fourteen**
-by name: `Highway`, `Merge`, `Roundabout`, `Racetrack`, `Parking`, `Intersection`;
-`PointMazeOpen`, `PointMazeUMaze`, `PointMazeMedium`, `PointMazeLarge`;
+**R1 — resolved.** The integration conflict was resolved to
+`tests/unit/test_foundation_api.py::NUM_ENVS_HOLDOUTS = 0`, the correct live D+F count. The ratchet
+test passes. F's fourteen are `Highway`, `Merge`, `Roundabout`, `Racetrack`, `Parking`,
+`Intersection`; `PointMazeOpen`, `PointMazeUMaze`, `PointMazeMedium`, `PointMazeLarge`;
 `MujocoInvertedPendulum`, `MujocoInvertedDoublePendulum`, `MujocoReacher`, `MujocoPusher`.
-The correct value once both branches are in is **0**.
 
 **R2 — Workstream I's line numbers are stale against this branch.** I's consumer change list cites
 `robocasa.py:336`, `humanoidbench.py:520`, `metaworld.py:760`, `mujoco_locomotion.py:1640`. All four
@@ -445,7 +466,7 @@ see them, so I found them by reading and fixed them the same way.
 | 1 | files moved/removed/created | **nothing moved, nothing removed**; 17 modules edited in place, 1 test file + 3 scratch scripts + this record created (§1) |
 | 2 | API changes | additive only: `num_envs=`, public State, `step`/`transition`/`unroll` on 7 cells, `close()` on 17, `frame_shape` on 5 (§2) |
 | 3 | Step-8 IDs affected | **none of the 42** — the intersection with the support matrix's 43 cells is empty (§3) |
-| 4 | targeted tests | `tests/unit/test_envs_mujoco.py`, 9 functions, 72 passed / 57 skipped; full suite in §4 |
+| 4 | targeted tests | backend-independent dynamics 15 passed; merged ratchet 1 passed; GUI-capable full-suite rerun still required (§4) |
 | 5 | applicable certification checks | no frozen Step-4 corpus exists for any cell here; `check_state_roundtrip`, the declaration checks and the fidelity declarations apply and pass (§5) |
 | 6 | default-frame comparison | **24 cells byte-identical** vs `21cb306` in the same venv, and identical to the pre-merge digests, so G's consolidation moved no pixel (§6) |
 | 7 | variation/state comparison | `variation_names` leaf for leaf, `style_names`/`style_dim`/`default_style`, `state_dim`/`state_names`, `roundtrip_exact`, `sample_states` — identical on all 24 (§6) |
@@ -462,7 +483,17 @@ rather than a pixel.
 
 ## 14. Commits
 
-<!--COMMITS-->
+| commit | content |
+|---|---|
+| `3c83422` | two-tree Workstream-F oracle |
+| `42bbf74` | non-square `frame_shape` checkpoint and family tests |
+| `a466756` | reproducible optional-dependency path and first ratchet reduction |
+| `33d51c5` | oracle replay after B/G integration, static frame shapes, benchmark/GPU scripts |
+| `d2054d6` | single-sample paired benchmark harness and findings draft |
+| `23f09c5` | preserved timing checkpoints and test cleanup |
+| `a24d274` | merge `step9/integration` at `303255b`; resolve live holdout count to zero |
+| `c0ea6f1` | bound State/StepResult snapshot overhead and assert no returned-state alias |
+| final findings/evidence commit | `oracle_dynamics.json`, `timings_step_merged.json`, completed report |
 
 ## 15. Provenance of the records
 
@@ -471,10 +502,13 @@ rather than a pixel.
 | `oracle.json` (20 cells) | `oracle.py`, `se6-venv`, `SE9_EXTRA_PYTHONPATH` = the four uv archives | `a466756` |
 | `oracle_maze2d.json` (4 cells) | `oracle.py --python se8-fetch-venv --cells PointMaze…` | `a466756` |
 | `timings_{render,step,maze2d}.json` | `bench.py`, alternating, 5 rounds × 5 reps, `OMP_NUM_THREADS=1` | `33d51c5` |
+| `oracle_dynamics.json` (7 steppable cells) | `oracle.py`, merged tree after State snapshot optimization | `c0ea6f1` |
+| `timings_step_merged.json` | `bench.py`, alternating, 5 rounds × 5 reps; accepted absolute StepResult gate | `c0ea6f1` |
 | `gpu_oracle.sbatch` | written, **not submitted** (ruling 8) | `33d51c5` |
 
-The oracle record names head `a466756` while the code tip is later. The difference is three
-`frame_shape` properties on `lunarlander`, `overcooked` and `griddly` — **three families that do not
-import in either oracle venv and appear in neither record's cell list** — plus `bench.py`, the
-sbatch and this file. None of them can move a compared key. If you would rather have the record
-carry the tip SHA regardless, say so and I will re-run it.
+The two broad records name `a466756` while the code tip is later. Three subsequent `frame_shape`
+properties are in families absent from both oracle venvs; integration `303255b` changed only C/D/E
+family code among environment paths; and the one later applicable F code change, MiniGrid/Sokoban's
+State snapshot, is covered by `oracle_dynamics.json` at `c0ea6f1`. There is therefore no untested
+CPU-oracle-applicable delta. CUDA-only evidence remains explicitly unestablished until the single
+post-Wave-1 GPU job.
