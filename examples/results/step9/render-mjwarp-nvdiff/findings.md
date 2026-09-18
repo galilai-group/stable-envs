@@ -1,23 +1,44 @@
 # Step 9 — Workstream I (MJWarp / nvdiffrast / renderer resource ownership)
 
-**Branch** `step9/render-mjwarp-nvdiff` · **parent** `b3f3a81` (`step9/integration` after H merged;
-`5741b62` names the same tree plus two dashboard commits — `git diff b3f3a81 5741b62` is
-`examples/results/step9/dashboard.yaml`, 47 lines, nothing else) · **HEAD** `86e782d`, 7 commits ·
+**Branch** `step9/render-mjwarp-nvdiff` · **original parent** `b3f3a81` · **current integration
+merged through** `d3cb4a8` · **HEAD:** use `git rev-parse HEAD` (this findings update follows the
+review-fix commit `6a8f3b8`) ·
 **Step-8 behavioural baseline** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc` ·
 **host** Apple M5 Mac (`cis1b1zs2j3`), `/Users/samib/se6-venv` (torch 2.14 CPU, mujoco 3.12.0,
 dm_control 1.0.45, no CUDA, no warp, no nvdiffrast, no mujoco_warp).
 
 **Result: PATCH — design change delivered, GPU evidence owed.** Explicit resource ownership is in
 place across all four backends plus the new `render/_resources.py`; the static read-through shows
-**not one numeric expression, upload order or cache key changed**; the local suite is
-**1385 → 1413 passed, 195 → 196 skipped** (+28 new lifetime tests, +1 from the parametrised
-dependency-direction check picking up the new file; collected-ID diff +29, none removed). **Every backend this workstream owns is CUDA-only and the local
+**not one numeric expression, upload order or cache key changed**. After the independent review's
+instrument defects were fixed, the merged local suite is **1652 passed, 223 skipped, 112
+deselected**; the focused resource+nvdiff run is **50 passed, 1 skipped**. **Every backend this workstream owns is CUDA-only and the local
 machine has no CUDA, so no frame in this workstream has been rendered.** Frame identity,
 fresh-process reproducibility, the create/close counters, batch invariance and paired throughput are
 all owed to the coordinator's post-Wave-1 GPU oracle; `scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch`
 is this workstream's section of that job and has **not** been submitted (Sami's cadence ruling).
 Until it reports, plan §17's "unexplained oracle differences: zero" is **unestablished, not
 satisfied**, and this branch should not merge on the local evidence alone.
+
+### Independent-review response (`review_i.md`)
+
+The first review was `APPROVE-WITH-CHANGES` because the committed GPU instrument could print a
+pass without exercising or validating release. Commit `6a8f3b8` closes that false-green path:
+
+- release failures are counted, recorded and logged; they are not counted as successful closes;
+- cache callback failures remain non-throwing at an unrelated insertion but are observable;
+- the old `_TEX_KEEP.extend` fallback remains non-refusing past the retention tripwire;
+- `Scene.clip` and renderer setup/convenience calls reject use after close;
+- a CPU test constructs and releases a real `Scene`, and every construction path pins `_opened()`;
+- `oracle.py` compares backend calls, requires all selected cells and backend modules, checks the
+  exact closed-env error and release-failure counters;
+- `bench.py` rejects empty selections, preserves baseline and head memory separately, and exits
+  nonzero above the 1.10 gate;
+- `gpu_oracle.sbatch` aggregates every return code into one verdict, treats missing coverage as a
+  failure, runs explicit GPU test modules, redirects the rendernet cache, and runs direct lifetime
+  probes over all five backend objects plus nvdiff cache overflow.
+
+The CUDA result remains owed; this section records that the measuring instrument can now fail for
+the defects it is supposed to detect, not that it has already passed.
 
 ---
 
@@ -47,13 +68,13 @@ satisfied**, and this branch should not merge on the local evidence alone.
 
 | file | what happened |
 |---|---|
-| `stable_envs/render/_resources.py` | **new**, 333 lines. `Closeable`, `BoundedCache`, `UseAfterCloseError`, `retain_process_lifetime`, `counts()/live()/delta()`. Imports stdlib only — no torch, warp, mujoco or nvdiffrast — so it loads in every interpreter and passes the dependency-direction test unchanged. |
-| `stable_envs/render/mjwarp.py` | `BatchRenderer` is `Closeable` (`_release` drops graph → context → `Data` → `Model`); `render` guards with `_check_open`; the anonymous `_TEX_KEEP` leak becomes a counted, capped `retain_process_lifetime`; new `release_render_context(rc)`. |
+| `stable_envs/render/_resources.py` | **new**. `Closeable`, `BoundedCache`, `UseAfterCloseError`, `retain_process_lifetime`, `counts()/live()/delta()`, and observable release-failure accounting. A failed `_release` is not counted closed; cache callback failures remain non-throwing but are counted, recorded and logged. `close()` is thread-safe. Imports stdlib only. |
+| `stable_envs/render/mjwarp.py` | `BatchRenderer` is `Closeable` (`_release` drops graph → context → `Data` → `Model`); `render` guards with `_check_open`; the anonymous `_TEX_KEEP` leak becomes a counted `retain_process_lifetime`; the compatibility fallback warns and retains past the tripwire because the old list never refused construction; new `release_render_context(rc)`. |
 | `stable_envs/render/mjwarp_lightspec.py` | `_CASTS_CACHE` becomes a `BoundedCache(64)`. |
-| `stable_envs/render/nvdiff.py` | `Scene` and `BatchRenderer` are `Closeable`; `owns_scene` records and can be set; `_ray_cache` becomes a `BoundedCache(8)`; `render` guards with `_check_open`. |
+| `stable_envs/render/nvdiff.py` | `Scene` and `BatchRenderer` are `Closeable`; `owns_scene` records and can be set; `_ray_cache` becomes a `BoundedCache(8)`; `Scene.clip` and every public renderer entry point guard with `_check_open`. |
 | `stable_envs/render/rendernet.py` | `_Runner` and `LoadedCorrector` are `Closeable`; the captured CUDA graph is `reset()` before its static buffers are dropped. |
-| `tests/unit/test_render_resources.py` | **new**, 28 test IDs (27 pass, 1 skips without `mujoco_warp`). §5. |
-| `scratch/step9/render-mjwarp-nvdiff/oracle.py`, `scratch/step9/render-mjwarp-nvdiff/bench.py`, `scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch` | **new** evidence harness, none of it run (§7). |
+| `tests/unit/test_render_resources.py` | **new**, now 33 IDs (32 pass, 1 skips without `mujoco_warp`): failed-release accounting, concurrent close, both `Scene` constructors calling `_opened`, and CPU construction/release of every owned `Scene` tensor. §5. |
+| `scratch/step9/render-mjwarp-nvdiff/{oracle.py,bench.py,resource_probe.py,gpu_oracle.sbatch}` | **new** evidence harness. `resource_probe.py` directly constructs/closes all five backend objects across compatible GPU venvs and exercises ray-cache overflow; none of the CUDA arms has run yet (§7). |
 | `examples/results/step9/render-mjwarp-nvdiff/findings.md` | this file. |
 
 **No file outside those was touched.** Nothing removed, nothing renamed, no public symbol deleted:
@@ -69,11 +90,11 @@ every change is additive except the two cache objects, whose call sites are insi
 | MJWarp `Data` (`put_data(nworld=B)`) | `mjwarp.BatchRenderer` | `BatchRenderer.__init__` | `BatchRenderer._release` | shape test + GPU cycles arm |
 | `mjw` render context (`rgb_data`, per-world geom buffers, textures) | whoever called `create_render_context` — `BatchRenderer`, **or a consumer's `_CTX_CACHE`** | `mjwarp.create_render_context` | `BatchRenderer._release` → `release_render_context`; for a cached one, **the cache** on eviction (§4) | GPU cycles arm; the consumer half is §4 and not yet made |
 | `tex_lod` downsampled textures (torch, given to `wp.from_torch`) | the context they are attached to (`rc._se_tex_lod_keep`) | `create_render_context` | `release_render_context` clears the attribute | `test_retention_past_the_cap_raises…` (the fallback path) |
-| …same, when the context refuses the attribute | **the process, deliberately** | `retain_process_lifetime(..., TEX_KEEP_REASON)` | never — counted and capped at 256 instead | `test_process_lifetime_retention_records_its_reason_and_is_capped` |
+| …same, when the context refuses the attribute | **the process, deliberately** | `retain_process_lifetime(..., TEX_KEEP_REASON, overflow="retain")` | never — counted; warns past 256 but preserves the old unbounded keepalive behavior rather than freeing live foreign storage | both retention-cap tests |
 | captured warp graph (`ScopedCapture`) | `mjwarp.BatchRenderer` | `BatchRenderer._capture` | `_release`, **first**, before the buffers it replays into | GPU cycles arm |
 | `light_castshadow` memo | `mjwarp_lightspec._CASTS_CACHE` (module, process-scoped) | `light_casts` | LRU eviction at 64 keys; nothing device-side to free | `test_the_module_level_cast_memo_is_bounded`, `test_a_key_in_use_survives_an_unrelated_insertion` |
 | nvdiffrast `RasterizeCudaContext` | `nvdiff.BatchRenderer`, always | `BatchRenderer.__init__` | `_release` (`self.ctx = None`), last | shape test + GPU cycles arm |
-| `nvdiff.Scene` (triangle soup, sparse transforms, appearance, texture pyramids) | `BatchRenderer` **iff `owns_scene`**, else the caller | `Scene.__init__` / `Scene.from_triangles` | `Scene._release`; via `BatchRenderer._release` only when `owns_scene` | shape test; `owns_scene` is checked by inspection, GPU arm measures the memory |
+| `nvdiff.Scene` (triangle soup, sparse transforms, appearance, texture pyramids) | `BatchRenderer` **iff `owns_scene`**, else the caller | `Scene.__init__` / `Scene.from_triangles` | `Scene._release`; via `BatchRenderer._release` only when `owns_scene` | CPU construction closes and verifies all 16 tensor attributes; GPU probe measures the CUDA path |
 | skybox texture pyramid | `nvdiff.BatchRenderer` | `set_skybox` | `_release` | GPU cycles arm |
 | ray-direction grids | `BatchRenderer._ray_cache` (per renderer) | `_ray_dirs` | LRU eviction at 8; all of them on `_release` | `test_the_per_renderer_ray_cache_is_bounded`, LRU tests |
 | shadow hook (a closure, usually capturing a second renderer) | the caller that installed it | consumer (`mujoco_locomotion._ShadowPass`) | `BatchRenderer._release` drops the reference | — (consumer-side) |
@@ -129,8 +150,9 @@ Two of those eight carry a second, equally one-line rider:
 None of the twelve lines changes a pixel: each one runs only on a path that was already discarding
 the value, and `release_render_context` is a no-op on anything that has no `tex_lod` tensors attached.
 
-**Recommended follow-up, not requested here:** eight `_CACHE`/`_CACHE_MAX` pairs in `envs/*` still
-spell `if len(C) >= MAX: C.clear()`. Step 6 already replaced that with an `OrderedDict` LRU in
+**Recommended follow-up, not requested here:** the independent review found 23
+`clear()`-on-full sites in `envs/*`; eight are already on the consumer list above, leaving **15**
+additional candidates. Step 6 already replaced that with an `OrderedDict` LRU in
 `envs/ogbench.py:396-403` after measuring the thrash; `_resources.BoundedCache` is that policy with a
 release hook, and the migration is mechanical. It belongs to each file's owner, and it is a
 behaviour-preserving change only in the sense that a miss recomputes the identical value — which is
@@ -144,11 +166,12 @@ here.
 | suite | venv | result |
 |---|---|---|
 | `tests/unit -x --deselect tests/unit/test_examples.py -k "not test_every_cited_scratch_path_resolves"` at the parent `b3f3a81` | se6-venv | **1385 passed**, 195 skipped, 112 deselected (142 s) — the brief's baseline, reproduced |
-| the same command at HEAD `86e782d` | se6-venv | **1413 passed, 196 skipped**, 112 deselected (96 s) |
-| `tests/unit/test_render_resources.py` alone | se6-venv | **27 passed, 1 skipped** (the skip is the `mujoco_warp` cast-memo check; the package is not installed locally) |
+| the same command after merging current integration and the review fixes | se6-venv | **1652 passed, 223 skipped**, 112 deselected (88.56 s) |
+| `tests/unit/test_render_resources.py` alone | se6-venv | **32 passed, 1 skipped** (the skip is the `mujoco_warp` cast-memo check; the package is not installed locally) |
+| `tests/unit/test_render_resources.py tests/unit/test_nvdiff_triangles.py` | se6-venv | **50 passed, 1 skipped** |
 | `test_repo_contracts.py::test_every_cited_scratch_path_resolves` (the test the brief deselects) | se6-venv | **fails, pre-existing**: 14 unresolved citations, every one an `/oscar/scratch/sboughan/...` path cited by Step-6/7/8 findings and by `examples/results/step9/envs-classic-nav/findings.md`. **None is this workstream's**, checked by grepping the failure for `render-mjwarp-nvdiff` (no hit). The three scratch paths this branch cites are spelled out individually rather than brace-expanded, so they resolve. |
 
-**The delta is fully accounted for, by a collected-ID diff and not by arithmetic.**
+**The original delivery delta was fully accounted for, by a collected-ID diff and not by arithmetic.**
 `pytest --collect-only -q` in each tree (the parent in a detached worktree, the same venv, the same
 `-k`) gives 1579 → 1608, **+29 IDs, none removed**:
 
@@ -158,7 +181,9 @@ here.
 * **+1** because `test_foundation_imports.py::test_a_renderer_knows_nothing_about_environments_or_
   stable_worldmodel` is parametrised over `render/*.py` and now includes `_resources.py`.
 
-That is +28 passed and +1 skipped in the run, which is exactly 1385 → 1413 and 195 → 196. (Both
+That was +28 passed and +1 skipped in the delivery run, exactly 1385 → 1413 and 195 → 196. The
+review fix adds five resource tests; the larger current total also includes C/D/E and their tests
+from integration. (Both
 trees collect one ID more than they report run+skipped, 1579 vs 1580 and 1608 vs 1609; the
 off-by-one is identical on both sides and therefore pre-existing, not this patch's.)
 
@@ -179,13 +204,17 @@ What the new tests pin — each one is a way the design could still be wrong:
 * a constructor that raises before `_opened()` leaves the object closed, so `close()` on a half-built
   object is a no-op and not a double free;
 * the counters survive repeated create/close cycles (5 cycles, created == closed, live back to base);
+* concurrent `close()` calls release once; a failed `_release` is counted as failed, is not counted
+  closed, and remains live in the accounting; a cache callback failure is likewise observable;
 * eviction is **least-recently-used and one entry at a time**, and *a key in use survives an
   unrelated insertion* — the property `clear()`-on-full does not have, and the one that makes the
   `_CASTS_CACHE` change safe rather than merely tidy;
 * eviction and **replacement** both release through `on_evict`; `pop` transfers ownership and does
   not; a failing release does not fail the unrelated insertion that triggered it;
-* all five backend classes are `Closeable`, declare their own `resource_kind`, define `_release`, and
-  define no `__del__` (shape, not construction: four of the five need a GPU to build);
+* all five backend classes are `Closeable`, declare their own `resource_kind`, define `_release`,
+  call `_opened()` on every construction path, and define no `__del__`;
+* `nvdiff.Scene.from_triangles` is constructed on CPU, closed, checked for all 16 released tensor
+  attributes, and then checked to raise `UseAfterCloseError` from `clip`;
 * **no owned module reaches `GLContext`, `.free()`, `eglDestroyContext` or `mujoco.Renderer`** —
   checked over the *tokenised* source with comments and strings stripped, because these files
   explain the rule at length in prose and a substring search finds the explanation.
@@ -194,12 +223,12 @@ What the new tests pin — each one is a way the design could still be wrong:
 
 ## 6. Static evidence: nothing numeric moved
 
-`git diff b3f3a81 -- stable_envs/render/` with the prose and comments filtered gives **eleven
-removed lines in total**, and they are:
+The independent review recounted the original delivery as **thirteen removed code lines**, not
+eleven (eight substantive lines plus five class headers). They are:
 
 | removed | replaced by | why it cannot move a pixel |
 |---|---|---|
-| `_TEX_KEEP: list = []` | `retain_process_lifetime(t, TEX_KEEP_REASON)` in the same fallback branch | the tensor kept alive is the same tensor; only the list it is appended to changed |
+| `_TEX_KEEP: list = []` | `retain_process_lifetime(t, TEX_KEEP_REASON, overflow="retain")` in the same fallback branch | the tensor kept alive is the same; the explicit overflow policy preserves the old list's non-refusing behavior and logs the tripwire instead |
 | `_CASTS_CACHE: dict = {}` | `BoundedCache(64, …)` | same key, same value tuple |
 | `hit = _CASTS_CACHE[key] = (casts, m.light_castshadow)` | `hit = _CASTS_CACHE.put(key, (casts, m.light_castshadow))` | `put` returns the value it stored |
 | `self._ray_cache: dict = {}` | `BoundedCache(8, …)` | same key `(int(R), mat.tobytes(), float(cam.fovy))` |
@@ -254,19 +283,25 @@ Each arm runs, and each of these is a question the others cannot answer:
    passes);
 2. **fresh-process reproducibility** — `--arms head,head`: the same tree twice, in two processes,
    which is what tells "not reproducible across processes" apart from "this branch changed it";
-3. **repeated create/close cycles** (5), asserting the frames are identical on every cycle **and**
-   both counters: `_resources` (created == closed, nothing live) and `resource_guard`
-   (`context_freed == 0`, `renderer_closed == 0` — closing an env must **never** release a GL
-   context, and that asymmetry is the design);
-4. **batch-size invariance** at 1 / 2 / 8 / 64, comparing row 0 — a cache with a new eviction policy
+3. **repeated environment create/close cycles** (5), asserting identical frames, zero recorded
+   release failures, and `resource_guard`'s opposite rule (`context_freed == 0`,
+   `renderer_closed == 0` — closing an env must **never** release a GL context);
+4. **direct backend create/close probes** for all five `Closeable` classes, asserting created ==
+   closed, live returns to baseline, failed releases remain zero, allocated memory falls after
+   close, and the nvdiff ray LRU rebuilds the same grid after overflowing;
+5. **batch-size invariance** at 1 / 2 / 8 / 64, comparing row 0 — a cache with a new eviction policy
    is exactly the kind of change that could break this at one width and not another;
-5. **a closed env refuses to render**, and closing twice is a no-op;
-6. **paired alternating throughput** on the same card at **B=1 and B=4096** (stepping down
+6. **a closed env refuses with the exact Wave-0 `RuntimeError`**, and closing twice is a no-op;
+7. **paired alternating throughput** on the same card at **B=1 and B=4096** (stepping down
    4096→1024→256→64 on OOM, recording the width both legs used), one cell per backend path, bar
    1.10 (plan §8). B=1 is where a `move_to_end` could conceivably show; B=large should be 1.000.
-7. the GPU test selection this code can reach, **with the whole pytest output to a file and only the
-   summary echoed** — Workstream H lost a run's counts because MuJoCo's EGL teardown noise arrives
-   after pytest's verdict and a `| tail` showed only the noise.
+8. all four explicit GPU test modules in every compatible venv. Exit 5, missing
+   interpreters/dependencies/baseline, absent backend coverage, skipped selected cells, oracle
+   failures and >10% benchmark regressions all increment a final failure count; the sbatch exits
+   nonzero unless every section passes.
+9. `STABLE_ENVS_RENDERNET_CACHE` is redirected to `$SCR/cache/rendernet`; absent RoboCasa assets or
+   the sealed corrector fail coverage instead of silently producing a partial pass. Full pytest logs
+   are retained because MuJoCo's teardown noise arrives after the verdict.
 
 **Unexplained oracle differences: none observed, because none could be — the oracle has not run.**
 That is a statement about evidence, not about the code, and it is the one open item on this branch.
@@ -306,10 +341,10 @@ modify.
    and this workstream built on them rather than around them. One optional suggestion: `Env.close`
    could log at DEBUG through the Wave-0 Loguru logger when `_close` is absent, so "this family
    releases nothing because it owns nothing" is visible rather than inferred.
-4. **Ruling wanted:** should `_resources.BoundedCache` become the repository-wide cache, i.e. should
-   the eight remaining `clear()`-on-full caches in `envs/*` migrate in Wave 2? It is behaviour-
-   preserving for every one of them (a miss recomputes the identical value) but it is eight files
-   with eight different owners, so it is a coordination question rather than a technical one.
+4. **Ruling wanted:** should `_resources.BoundedCache` become the repository-wide cache? The
+   independent review found **15 additional** `clear()`-on-full sites beyond the eight consumer
+   sites already listed. Apply them as one coordinated Wave-2 sweep, ordered with the release
+   callbacks, rather than as independent edits.
 5. **No recount needed:** the collected-ID diff in §5 was run (1579 → 1608, +29, none removed) and
    closes exactly against 1385 → 1413 passed and 195 → 196 skipped. It is reproducible with
    `pytest --collect-only -q` in each tree if the reviewer wants it independently.
