@@ -260,6 +260,19 @@ workstreams:
   api_diff: OSS docs and examples now use class-first snv API, num_envs, State, transition/unroll, lifecycle
     and registry; native World(env=...) documented as unsupported by installed SWM
   oracle_diff: documentation-only; no behavior or Step-8 oracle rows changed
+- workstream: J_interop
+  branch: step9/interop
+  owner: sol
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: stable_envs/interop.py, tests/integration/test_worldmodel.py
+  head_sha: c9e94dc
+  review: review_j.md APPROVE; review artifact commit 2fa993e
+  merge_sha: 4f04803
+  tests: 42/42 frozen IDs match; SWM integration 5 passed/1 honest upstream skip; matrix 5 passed; dependency/registry
+    71 passed/1 environment skip; VariationMap 81 passed/8 optional-runtime skips
+  api_diff: public interop facade consolidated; swap_renderer and registered-gym World paths preserved;
+    native World(env=...) unsupported by installed stable_worldmodel and documented honestly
+  oracle_diff: all 42 frozen SWM mappings unchanged; 40 pixel and 2 symbolic
 decisions:
 - date: '2026-09-17'
   by: coordinator
