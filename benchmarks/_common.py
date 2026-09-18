@@ -74,7 +74,7 @@ def add_common_arguments(parser: argparse.ArgumentParser, *, batches: bool) -> N
                         help="synchronized timed calls")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--threads", type=positive_int, default=1,
-                        help="torch CPU thread budget (recorded on every device)")
+                        help="torch/OpenMP/MKL CPU thread budget (recorded on every device)")
     parser.add_argument("--size", type=native_int, default=None,
                         help="output size, or native to leave the environment default unchanged")
     parser.add_argument("--supersample", type=native_int, default=None,
@@ -90,16 +90,29 @@ def checked_device(value: str) -> torch.device:
         device = torch.device(value)
     except (RuntimeError, ValueError) as exc:
         raise ValueError(f"invalid torch device {value!r}: {exc}") from exc
-    if device.type == "cuda" and not torch.cuda.is_available():
-        raise ValueError(
-            f"device {value!r} requested, but torch.cuda.is_available() is false; "
-            "choose --device cpu or run in a CUDA-enabled interpreter")
+    if device.type == "cuda":
+        if not torch.cuda.is_available():
+            raise ValueError(
+                f"device {value!r} requested, but torch.cuda.is_available() is false; "
+                "choose --device cpu or run in a CUDA-enabled interpreter")
+        index = 0 if device.index is None else device.index
+        visible = torch.cuda.device_count()
+        if index >= visible:
+            raise ValueError(
+                f"device {value!r} requested, but torch.cuda.device_count() is {visible}")
     if device.type == "mps":
         available = getattr(torch.backends, "mps", None)
         if available is None or not torch.backends.mps.is_available():
             raise ValueError(
                 "device 'mps' requested, but torch.backends.mps.is_available() is false")
     return device
+
+
+def configure_threads(count: int) -> None:
+    """Pin the process thread budget; do not override an already-exported OpenMP/MKL setting."""
+    torch.set_num_threads(count)
+    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ.setdefault(variable, str(count))
 
 
 def synchronize(device: torch.device) -> None:
@@ -126,6 +139,10 @@ def measure(fn: Callable[[], Any], *, device: torch.device, warmup: int,
     for _ in range(warmup):
         fn()
     synchronize(device)
+    # Peak CUDA memory is a property of the timed region. Resetting before warmup would attribute
+    # autotune/lazy setup to the measurement the headline statistic excludes.
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
 
     samples_ms: list[float] = []
     cpu_start = time.process_time()
@@ -154,16 +171,26 @@ def env_kwargs(args: argparse.Namespace, batch: int) -> dict[str, Any]:
     kwargs: dict[str, Any] = {
         "num_envs": batch,
         "device": args.device,
-        "backend": args.backend,
         "seed": args.seed,
     }
     # Absence is intentional: passing a synthetic value would benchmark a different picture than
-    # snv.make(name) produces for environments with their own defaults.
+    # snv.PushT(num_envs=...) / snv.make(name) produce for environments with their own defaults.
     if args.size is not None:
         kwargs["size"] = args.size
     if args.supersample is not None:
         kwargs["supersample"] = args.supersample
+    if args.backend != "auto":
+        kwargs["backend"] = args.backend
     return kwargs
+
+
+def public_env(name: str, kwargs: dict[str, Any]):
+    """Construct via the canonical class when ``name`` is public; otherwise ``snv.make``."""
+    import stable_envs as snv
+    cls = getattr(snv, name, None)
+    if isinstance(cls, type) and issubclass(cls, snv.Env) and cls is not snv.Env:
+        return cls(**kwargs)
+    return snv.make(name, **kwargs)
 
 
 def error_record(exc: BaseException) -> dict[str, str]:
