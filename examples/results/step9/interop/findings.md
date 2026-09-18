@@ -8,7 +8,9 @@ implementation on first use, and preserves the Wave-3 compatibility aliases unde
 `stable_envs.compat`.
 
 Baseline was `dc887b8881a5640441b3e48a6192aebd46d25989`. The required integration merge is
-`d3cb4a81cced123d767661bf485f0c5059a0dd73`.
+`d3cb4a81cced123d767661bf485f0c5059a0dd73`. The implementation commit is
+`dc949fb9eb7145e8e525f509afe72507add8ea89`; the no-rebase integration merge commit is
+`0929128d4f9415f7b46fe2a7fa992d16be4b6b8b`.
 
 ## Frozen Step-8 ID result
 
@@ -96,6 +98,8 @@ Local Apple CPU, Python 3.12.11:
 
 - `/Users/samib/se8-vm-venv/bin/python -m pytest tests/integration/test_worldmodel.py -q -rs`:
   **5 passed, 1 skipped** (only the exact native-World upstream limitation).
+- `/Users/samib/se8-vm-venv/bin/python -m pytest tests/swm/test_gate_f_matrix.py -q -rs`:
+  **5 passed**.
 - `/Users/samib/se6-venv/bin/python -m pytest tests/integration/test_worldmodel.py -q -rs`:
   **3 passed, 3 skipped** (`stable_worldmodel` is not installed; ID and VariationMap facade tests run).
 - `/Users/samib/se8-vm-venv/bin/python -m pytest tests/unit/test_foundation_imports.py
