@@ -9,7 +9,7 @@ from __future__ import annotations
 __title__ = "stable-envs"
 __version__ = "0.1.0"
 __summary__ = "Famous research environments as GPU-batched, state-driven renderers."
-__author__ = "Sami Bou Ghanem"
+__author__ = "Randall Balestriero, Sami BuGhanem"
 __license__ = "MIT"
 
 __all__ = ["__title__", "__version__", "__summary__", "__author__", "__license__"]
