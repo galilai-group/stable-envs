@@ -229,7 +229,8 @@ if _missing or _mjver < (3, 11):                                             # p
         f"mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in "
         f"{_VENV}; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -898,7 +899,7 @@ class _Plate:
 
 # --------------------------------------------------------------------------- the env
 
-class MetaWorldBase(StableEnv):
+class MetaWorldBase(Env):
     """Base for the 50 ids. ``TASK`` is set by the generated subclasses."""
 
     TASK: str = ""
@@ -960,12 +961,22 @@ class MetaWorldBase(StableEnv):
         "pedestal, and every per-episode placement) is exact BY CONSTRUCTION, because it is baked "
         "through MuJoCo itself.")
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         b = _build_bundle(self.TASK)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
-        super().__init__(batch=batch, size=size,
+        # Step-9 state (contract §3): two keys, and they are what the two halves ARE rather than an
+        # invention. ``qpos`` is the simulator's configuration; ``episode`` is what the task wrote
+        # into the MODEL when the episode began (``_live_slots``), which is a different KIND of
+        # quantity and is the whole subject of the widening this family performs. Assigned per
+        # instance because both widths come from the compiled model. Every column is covered by one
+        # of the two, so no offset is ``None``, ``_hidden_state`` is never consulted and
+        # ``pack``/``unpack`` round-trip the frozen corpus bit for bit.
+        k = self.state_dim - b.nq
+        self.state_layout = ((("qpos",), b.nq, 0),) + ((((("episode",), k, b.nq)),) if k else ())
+        super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b

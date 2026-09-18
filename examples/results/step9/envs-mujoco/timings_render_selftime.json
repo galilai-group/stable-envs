@@ -1,0 +1,258 @@
+{
+ "arms": [
+  "head",
+  "head"
+ ],
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "blocks_merge": false,
+ "device": "cpu",
+ "extra_pythonpath": [
+  "/Users/samib/.cache/uv/archive-v0/F9UktszYrYe9baQLBeZl_",
+  "/Users/samib/.cache/uv/archive-v0/n4lMT1BFL-yODyiw3vhbW",
+  "/Users/samib/.cache/uv/archive-v0/7OnrAS3Wc3ZYLidfzMx4b",
+  "/Users/samib/.cache/uv/archive-v0/2nltcTy4vECAjvFpiXdje"
+ ],
+ "head_sha": "d2054d66d8058c15da0f9fc08f5785072b2efb82",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "path": "render",
+ "python": "/Users/samib/se6-venv/bin/python",
+ "regression_bar": 1.1,
+ "reps_per_leg": 5,
+ "rounds": 3,
+ "rows": [
+  {
+   "baseline_leg_spread": 0.0115,
+   "baseline_ms": 16.176,
+   "baseline_rounds_ms": [
+    16.063,
+    16.249,
+    16.176
+   ],
+   "batch": 8,
+   "config": "MujocoReacher",
+   "head_ms": 16.392,
+   "head_rounds_ms": [
+    16.392,
+    16.443,
+    16.078
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0133,
+   "size": 240,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0138,
+   "baseline_ms": 116.394,
+   "baseline_rounds_ms": [
+    117.489,
+    116.394,
+    115.881
+   ],
+   "batch": 8,
+   "config": "MujocoPusher",
+   "head_ms": 116.232,
+   "head_rounds_ms": [
+    116.013,
+    116.232,
+    116.371
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 0.9986,
+   "size": 240,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0152,
+   "baseline_ms": 86.579,
+   "baseline_rounds_ms": [
+    87.654,
+    86.579,
+    86.339
+   ],
+   "batch": 16,
+   "config": "Highway",
+   "head_ms": 86.936,
+   "head_rounds_ms": [
+    87.842,
+    86.936,
+    86.904
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0041,
+   "size": 150,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0307,
+   "baseline_ms": 142.762,
+   "baseline_rounds_ms": [
+    140.837,
+    145.226,
+    142.762
+   ],
+   "batch": 8,
+   "config": "Roundabout",
+   "head_ms": 140.874,
+   "head_rounds_ms": [
+    140.874,
+    140.166,
+    142.312
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 0.9868,
+   "size": 600,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0249,
+   "baseline_ms": 97.92,
+   "baseline_rounds_ms": [
+    97.92,
+    98.71,
+    96.268
+   ],
+   "batch": 8,
+   "config": "Intersection",
+   "head_ms": 98.583,
+   "head_rounds_ms": [
+    99.88,
+    98.583,
+    98.012
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0068,
+   "size": 600,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0261,
+   "baseline_ms": 114.909,
+   "baseline_rounds_ms": [
+    114.909,
+    115.183,
+    112.182
+   ],
+   "batch": 16,
+   "config": "Parking",
+   "head_ms": 113.857,
+   "head_rounds_ms": [
+    115.113,
+    113.857,
+    111.711
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 0.9908,
+   "size": 300,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0096,
+   "baseline_ms": 4.564,
+   "baseline_rounds_ms": [
+    4.594,
+    4.564,
+    4.551
+   ],
+   "batch": 32,
+   "config": "Crafter",
+   "head_ms": 4.676,
+   "head_rounds_ms": [
+    4.691,
+    4.596,
+    4.676
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0245,
+   "size": 64,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0207,
+   "baseline_ms": 4.666,
+   "baseline_rounds_ms": [
+    4.607,
+    4.666,
+    4.704
+   ],
+   "batch": 8,
+   "config": "MiniHack",
+   "head_ms": 4.663,
+   "head_rounds_ms": [
+    4.625,
+    4.693,
+    4.663
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 0.9995,
+   "size": 16,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0184,
+   "baseline_ms": 2.946,
+   "baseline_rounds_ms": [
+    2.937,
+    2.946,
+    2.991
+   ],
+   "batch": 32,
+   "config": "MiniGridEmpty",
+   "head_ms": 2.937,
+   "head_rounds_ms": [
+    2.929,
+    2.937,
+    2.951
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 0.997,
+   "size": 256,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0052,
+   "baseline_ms": 2.028,
+   "baseline_rounds_ms": [
+    2.023,
+    2.034,
+    2.028
+   ],
+   "batch": 32,
+   "config": "MiniGridPOVFetch",
+   "head_ms": 2.037,
+   "head_rounds_ms": [
+    2.035,
+    2.049,
+    2.037
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.004,
+   "size": 224,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0134,
+   "baseline_ms": 1.116,
+   "baseline_rounds_ms": [
+    1.102,
+    1.116,
+    1.117
+   ],
+   "batch": 32,
+   "config": "Sokoban",
+   "head_ms": 1.117,
+   "head_rounds_ms": [
+    1.117,
+    1.121,
+    1.115
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0009,
+   "size": 160,
+   "status": "ok"
+  }
+ ],
+ "set": "render",
+ "states": "sampled ONCE in the BASELINE tree with sample_states(batch, default_rng(0)); both legs time the same states, and sampling is not inside the timed region",
+ "worst_ratio": 1.0245
+}

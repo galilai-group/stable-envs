@@ -1,0 +1,122 @@
+{
+ "arms": [
+  "baseline",
+  "head"
+ ],
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "blocks_merge": false,
+ "device": "cpu",
+ "extra_pythonpath": [],
+ "head_sha": "d2054d66d8058c15da0f9fc08f5785072b2efb82",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "path": "render",
+ "python": "/Users/samib/se8-fetch-venv/bin/python",
+ "regression_bar": 1.1,
+ "reps_per_leg": 5,
+ "rounds": 5,
+ "rows": [
+  {
+   "baseline_leg_spread": 0.0288,
+   "baseline_ms": 4.068,
+   "baseline_rounds_ms": [
+    4.068,
+    4.081,
+    4.121,
+    4.046,
+    4.004
+   ],
+   "batch": 8,
+   "config": "PointMazeOpen",
+   "head_ms": 4.081,
+   "head_rounds_ms": [
+    4.085,
+    4.081,
+    4.06,
+    4.114,
+    4.059
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0033,
+   "size": 224,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0434,
+   "baseline_ms": 4.037,
+   "baseline_rounds_ms": [
+    4.037,
+    3.985,
+    4.027,
+    4.039,
+    4.161
+   ],
+   "batch": 8,
+   "config": "PointMazeUMaze",
+   "head_ms": 4.078,
+   "head_rounds_ms": [
+    4.067,
+    4.036,
+    4.123,
+    4.078,
+    4.106
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0102,
+   "size": 224,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0337,
+   "baseline_ms": 4.686,
+   "baseline_rounds_ms": [
+    4.627,
+    4.752,
+    4.712,
+    4.686,
+    4.594
+   ],
+   "batch": 8,
+   "config": "PointMazeMedium",
+   "head_ms": 4.762,
+   "head_rounds_ms": [
+    4.762,
+    4.815,
+    4.645,
+    4.626,
+    4.768
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0162,
+   "size": 224,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0856,
+   "baseline_ms": 3.374,
+   "baseline_rounds_ms": [
+    3.374,
+    3.387,
+    3.317,
+    3.353,
+    3.606
+   ],
+   "batch": 8,
+   "config": "PointMazeLarge",
+   "head_ms": 3.435,
+   "head_rounds_ms": [
+    3.421,
+    3.557,
+    3.494,
+    3.435,
+    3.372
+   ],
+   "path": "render",
+   "ratio_head_over_baseline": 1.0181,
+   "size": 224,
+   "status": "ok"
+  }
+ ],
+ "set": "maze2d",
+ "states": "sampled ONCE in the BASELINE tree with sample_states(batch, default_rng(0)); both legs time the same states, and sampling is not inside the timed region",
+ "worst_ratio": 1.0181
+}

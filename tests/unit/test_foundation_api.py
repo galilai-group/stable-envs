@@ -128,12 +128,9 @@ def test_make_with_batch_still_builds_an_env_and_warns_once(records):
 #: and never reach its deprecation branch. Migrating them is Wave-1 family-agent work (findings §2,
 #: "Wave-1 scope"); the number is pinned here so it can only go DOWN.
 #:
-#: 41 at Wave-0. Workstream D migrated its 27 (ogbench 25 + ogb_manip 2) and the ceiling comes down
-#: with the merge, measured on the merged tip rather than taken from the workstream's prose: D
-#: reported the count but left the pin at 41, which is a ceiling that no longer constrains anything.
-#: The remaining 14 are Workstream F's (highway 6, maze2d 4, mujoco_locomotion 4) and F lowers this
-#: to 0 when it merges.
-NUM_ENVS_HOLDOUTS = 14
+#: 41 at Wave-0. Workstream D migrated its 27 OGBench classes and Workstream F migrated the
+#: remaining fourteen (highway 6, maze2d 4, mujoco_locomotion 4). The live merged count is zero.
+NUM_ENVS_HOLDOUTS = 0
 
 
 def test_the_number_of_classes_that_still_reject_num_envs_only_goes_down():
