@@ -183,7 +183,8 @@ if _missing or _mjver < (3, 11):                                              # 
         f"pins mujoco == 3.3.1, so the interpreter that BUILDS a kitchen is never the one that "
         f"renders it; see the module docstring. See docs/research/robocasa.md")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..render import rendernet as RN
 from ..spaces import Box, Dict
@@ -419,7 +420,7 @@ def _reference(kitchen: str, size: int):
     return hit
 
 
-class RoboCasaBase(StableEnv):
+class RoboCasaBase(Env):
     """Base for the RoboCasa cells. VISUAL TIER — see the module docstring.
 
     ``KITCHEN`` and ``CAMERA`` are set by the generated subclasses.
@@ -436,15 +437,22 @@ class RoboCasaBase(StableEnv):
     TEX_LOD: int = 1
     BACKFACE_CULL: bool | None = None
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
         s = _scene(self.KITCHEN)
         live = _live_dims(self.KITCHEN, self.CAMERA, int(size or self.default_size))
         self._live_idx = live
         self.state_dim = len(live)
         self.state_names = tuple(s.qpos_names[i] for i in live)
-        super().__init__(batch=batch, size=size, supersample=supersample, device=device,
-                         backend=backend, seed=seed)
+        # Step-9 state (contract §3): one key over the packed row, assigned per instance because the
+        # LIVE dims are a property of the compiled kitchen and the camera (``_live_dims``) and are
+        # not known until one is chosen. ``qpos`` is the honest name -- these columns are a SUBSET of
+        # the model's qpos, the rest of which is pinned (``_full_qpos``) and is not state. Every
+        # column is covered, so nothing is hidden and the corpus layout is untouched.
+        self.state_layout = ((("qpos",), self.state_dim, 0),)
+        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                         device=device, backend=backend, seed=seed)
         self._s = s
         self._live_t = torch.as_tensor(live, device=self.device, dtype=torch.long)
         self._pinned_t = torch.as_tensor(s.pinned, device=self.device, dtype=torch.float32)

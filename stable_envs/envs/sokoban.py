@@ -84,7 +84,10 @@ import random
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from tensordict import TensorDict
+
+from ..env import Env
+from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Dict, RGBBox
 
@@ -236,7 +239,7 @@ class _Atlas:
 
 
 @register
-class Sokoban(StableEnv):
+class Sokoban(Env):
     """Sokoban-v0: a 10x10 room with 4 boxes, rendered as a gather from a 7-tile atlas.
 
     State: one index per cell into the seven tiles, so a 10x10 room is 100 numbers against a
@@ -252,6 +255,13 @@ class Sokoban(StableEnv):
     default_size = ROOM_H * TILE_PX
     state_dim = N_CELLS
     state_names = CELL_NAMES
+    #: Step-9 state (contract §3): one key, because the state IS one grid — the room, in this
+    #: module's seven-tile alphabet. Every column is covered at its unchanged offset, so nothing is
+    #: hidden, ``_hidden_state`` is never consulted and the frozen layout does not move. Unlike
+    #: MiniGrid there is no carried object and no hidden variable of any kind: a stored Sokoban state
+    #: determines its own continuation exactly, which is what ``step``'s docstring claims and what
+    #: makes ``transition`` pure with nothing to splice back in.
+    state_layout = ((("cells",), N_CELLS, 0),)
 
     #: nine actions: 0 no-op, 1-4 push up/down/left/right, 5-8 move up/down/left/right. A policy emits
     #: one float per environment and ``step`` floors it, so the half-open [0, 9) bounds make
@@ -399,7 +409,24 @@ class Sokoban(StableEnv):
     # --- physics ----------------------------------------------------------------------------------
 
     def _advance(self) -> None:
+        """The env's OWN buffers advanced one step, at fixed addresses."""
+        self._advance_into(self._state, self._act)
+
+    def _step_state(self) -> TensorDict:
+        """Snapshot the live cells with one copy for the hot ``step`` return path."""
+        n = self._live_rows
+        return TensorDict(
+            {"cells": self._state[:n].clone()},
+            batch_size=[n],
+            device=self.device,
+        )
+
+    def _advance_into(self, s, act) -> None:
         """``SokobanEnv.step`` for the whole batch, as one straight-line sequence of masked writes.
+
+        Writes IN PLACE into the two buffers it is given rather than into ``self``, which is what
+        lets ``transition`` be pure while ``step`` keeps writing the env's own: one body, two
+        callers, and no second copy of the decision table to drift from this one.
 
         Every branch of the reference's dispatch is evaluated for every environment and selected by a
         mask, because a batch holds all nine actions at once. The branches are mutually exclusive on
@@ -408,9 +435,8 @@ class Sokoban(StableEnv):
         The one thing this decides that the reference does not: a target cell outside the grid. See the
         module docstring -- it is unreachable in a generated room, and it is treated as a wall here.
         """
-        s = self._state
         H, W = self.ROOM_H, self.ROOM_W
-        a = self._act[:, 0].floor().clamp(0, N_ACTIONS - 1).long()
+        a = act[:, 0].floor().clamp(0, N_ACTIONS - 1).long()
         tile = torch.round(s).long() % N_TILE
         st = self._state_of[tile]                                        # room_state
         fx = self._fixed_of[tile]                                        # room_fixed
@@ -457,20 +483,47 @@ class Sokoban(StableEnv):
         s.copy_(out.to(torch.float32))
 
     @torch.no_grad()
-    def step(self, action) -> torch.Tensor:
+    def step(self, action) -> TensorDict:
         """Advance every environment one step. ``action`` is ``(B, 1)``, floored into ``[0, 9)``.
 
-        Returns the new ``(B, 100)`` state. Termination and the reward are not applied: the reference
-        reports both as flags beside a transition it computes regardless, so an env that froze or reset
-        itself on the last box would be simulating something else. Unlike every other steppable env in
-        this repo, the returned state is the WHOLE dynamical state -- there is no hidden velocity, no
-        carried object and no RNG in the transition, so a stored trajectory determines its own
-        continuation exactly.
+        STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
+        ``"state"`` AND NOTHING ELSE. Termination and the reward are not applied and not reported:
+        the reference computes the transition regardless and reports both as flags beside it, so an
+        env that froze or reset itself on the last box would be simulating something else, and a
+        fabricated zero reward would read as a measured one (contract §5). Unlike every other
+        steppable env in this repo the returned state is the WHOLE dynamical state -- no hidden
+        velocity, no carried object, no RNG -- so a stored trajectory determines its own continuation
+        exactly, and ``transition`` needs no hidden field to be pure.
         """
         self._act.copy_(torch.as_tensor(action, device=self.device, dtype=torch.float32
                                         ).reshape(self.B, self.action_dim))
         self._advance()
-        return self._state
+        return self._step_result(self._step_state())
+
+    @torch.no_grad()
+    def transition(self, state: TensorDict, action) -> TensorDict:
+        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
+
+        Bit-identical to ``step`` on the same device for the same state by CONSTRUCTION: both call
+        ``_advance_into``, which is the whole transition, over buffers the caller names.
+        """
+        rows = self.pack(state).clone()
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32
+                              ).reshape(-1, self.action_dim)
+        self._advance_into(rows, act)
+        return self.unpack(rows)
+
+    def _close(self) -> None:
+        """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.
+
+        The 16x16 tile art (``_Atlas``) is shared by every instance and is not released. What an
+        instance owns is the sampled state pool, the default-style tensor and the per-palette RGB
+        cache, all of them rebuildable and all of them device memory a closed env has no use for.
+        """
+        self._pool = None
+        self._pool_has = None
+        self._default_t = None
+        self._rgb_cache = {}
 
     # --- states -----------------------------------------------------------------------------------
 

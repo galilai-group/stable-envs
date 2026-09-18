@@ -1,0 +1,152 @@
+{
+ "arms": [
+  "baseline",
+  "head"
+ ],
+ "baseline_sha": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+ "blocks_merge": true,
+ "device": "cpu",
+ "extra_pythonpath": [
+  "/Users/samib/.cache/uv/archive-v0/F9UktszYrYe9baQLBeZl_",
+  "/Users/samib/.cache/uv/archive-v0/n4lMT1BFL-yODyiw3vhbW",
+  "/Users/samib/.cache/uv/archive-v0/7OnrAS3Wc3ZYLidfzMx4b",
+  "/Users/samib/.cache/uv/archive-v0/2nltcTy4vECAjvFpiXdje"
+ ],
+ "head_sha": "d2054d66d8058c15da0f9fc08f5785072b2efb82",
+ "host": "cis1b1zs2j3.ad.brown.edu",
+ "path": "step",
+ "python": "/Users/samib/se6-venv/bin/python",
+ "regression_bar": 1.1,
+ "reps_per_leg": 5,
+ "rounds": 5,
+ "rows": [
+  {
+   "baseline_leg_spread": 0.0283,
+   "baseline_ms": 0.122,
+   "baseline_rounds_ms": [
+    0.125,
+    0.121,
+    0.122,
+    0.124,
+    0.122
+   ],
+   "batch": 64,
+   "config": "MiniGridEmpty",
+   "head_ms": 0.18,
+   "head_rounds_ms": [
+    0.182,
+    0.183,
+    0.179,
+    0.18,
+    0.179
+   ],
+   "path": "step",
+   "ratio_head_over_baseline": 1.4724,
+   "size": 256,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.6577,
+   "baseline_ms": 0.122,
+   "baseline_rounds_ms": [
+    0.121,
+    0.122,
+    0.121,
+    0.201,
+    0.123
+   ],
+   "batch": 64,
+   "config": "MiniGridDoorKey",
+   "head_ms": 0.187,
+   "head_rounds_ms": [
+    0.183,
+    0.187,
+    0.186,
+    0.19,
+    0.187
+   ],
+   "path": "step",
+   "ratio_head_over_baseline": 1.5338,
+   "size": 256,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0333,
+   "baseline_ms": 0.125,
+   "baseline_rounds_ms": [
+    0.125,
+    0.128,
+    0.124,
+    0.123,
+    0.126
+   ],
+   "batch": 64,
+   "config": "MiniGridLavaCrossing",
+   "head_ms": 0.189,
+   "head_rounds_ms": [
+    0.186,
+    0.19,
+    0.187,
+    0.19,
+    0.189
+   ],
+   "path": "step",
+   "ratio_head_over_baseline": 1.5155,
+   "size": 288,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0502,
+   "baseline_ms": 0.122,
+   "baseline_rounds_ms": [
+    0.122,
+    0.124,
+    0.12,
+    0.122,
+    0.126
+   ],
+   "batch": 64,
+   "config": "BabyAIGoToLocal",
+   "head_ms": 0.184,
+   "head_rounds_ms": [
+    0.185,
+    0.199,
+    0.182,
+    0.183,
+    0.184
+   ],
+   "path": "step",
+   "ratio_head_over_baseline": 1.5063,
+   "size": 256,
+   "status": "ok"
+  },
+  {
+   "baseline_leg_spread": 0.0593,
+   "baseline_ms": 0.147,
+   "baseline_rounds_ms": [
+    0.147,
+    0.143,
+    0.144,
+    0.148,
+    0.151
+   ],
+   "batch": 64,
+   "config": "Sokoban",
+   "head_ms": 0.189,
+   "head_rounds_ms": [
+    0.19,
+    0.191,
+    0.186,
+    0.186,
+    0.189
+   ],
+   "path": "step",
+   "ratio_head_over_baseline": 1.2846,
+   "size": 160,
+   "status": "ok"
+  }
+ ],
+ "set": "step",
+ "states": "sampled ONCE in the BASELINE tree with sample_states(batch, default_rng(0)); both legs time the same states, and sampling is not inside the timed region",
+ "worst_ratio": 1.5338
+}
