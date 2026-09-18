@@ -412,6 +412,15 @@ class Sokoban(Env):
         """The env's OWN buffers advanced one step, at fixed addresses."""
         self._advance_into(self._state, self._act)
 
+    def _step_state(self) -> TensorDict:
+        """Snapshot the live cells with one copy for the hot ``step`` return path."""
+        n = self._live_rows
+        return TensorDict(
+            {"cells": self._state[:n].clone()},
+            batch_size=[n],
+            device=self.device,
+        )
+
     def _advance_into(self, s, act) -> None:
         """``SokobanEnv.step`` for the whole batch, as one straight-line sequence of masked writes.
 
@@ -489,7 +498,7 @@ class Sokoban(Env):
         self._act.copy_(torch.as_tensor(action, device=self.device, dtype=torch.float32
                                         ).reshape(self.B, self.action_dim))
         self._advance()
-        return self._step_result(self.state)
+        return self._step_result(self._step_state())
 
     @torch.no_grad()
     def transition(self, state: TensorDict, action) -> TensorDict:

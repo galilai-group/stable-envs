@@ -212,6 +212,10 @@ def test_transition_is_pure_and_bit_identical_to_the_stateful_step(name):
         keys = [tuple(k) for k, _, _ in env._layout()]
         for k in keys:
             assert torch.equal(functional[k], stateful[k]), f"{name}: {k} differs"
+        returned = stateful.clone()
+        env.step(a)
+        for k in keys:
+            assert torch.equal(stateful[k], returned[k]), f"{name}: returned State aliases env buffers"
     finally:
         env.close()
 

@@ -557,6 +557,24 @@ class MiniGridTopDown(_TileEnv):
         """The env's OWN buffers advanced one step, at the fixed addresses a CUDA graph requires."""
         self._advance_into(self._state, self._carry, self._act)
 
+    def _step_state(self) -> TensorDict:
+        """Snapshot the live state with one packed-row copy for the hot ``step`` return path."""
+        n = self._live_rows
+        N = self.grid_w * self.grid_h
+        rows = self._state[:n].clone()
+        return TensorDict(
+            {
+                "grid": rows[:, :N],
+                "agent": {
+                    "position": rows[:, N:N + 2],
+                    "direction": rows[:, N + 2:N + 3],
+                    "carrying": self._carry[:n].reshape(-1, 1).to(torch.float32),
+                },
+            },
+            batch_size=[n],
+            device=self.device,
+        )
+
     def _advance_into(self, s, carry, act) -> None:
         """``MiniGridEnv.step`` for the whole batch, as one straight-line sequence of masked writes.
 
@@ -644,9 +662,9 @@ class MiniGridTopDown(_TileEnv):
                     self.use_step_graph = False
             if self._step_graph is not None:
                 self._step_graph.replay()
-                return self._step_result(self.state)
+                return self._step_result(self._step_state())
         self._advance()
-        return self._step_result(self.state)
+        return self._step_result(self._step_state())
 
     @classmethod
     def reference_sim_state(cls, ref) -> np.ndarray:

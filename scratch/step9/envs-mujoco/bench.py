@@ -254,6 +254,7 @@ def main() -> int:
             rows.append({"config": name, "batch": batch, "size": size, "path": what,
                          "status": "ok",
                          "baseline_ms": round(b, 3), "head_ms": round(h, 3),
+                         "overhead_ms": round(h - b, 3),
                          "ratio_head_over_baseline": round(h / b, 4),
                          "baseline_leg_spread": round(spread, 4),
                          "baseline_rounds_ms": [round(x, 3) for x in legs["baseline"]],
@@ -262,6 +263,17 @@ def main() -> int:
                   f"ratio {h / b:5.3f}  (baseline spread {spread:5.1%})")
         worst = max((r["ratio_head_over_baseline"] for r in rows if r["status"] == "ok"),
                     default=0.0)
+        # Ruling 7 accepts the unavoidable TensorDict StepResult construction cost measured on
+        # trivially cheap steps (+12–28 us). A ratio alone makes that accepted fixed cost look like a
+        # 20–50% regression here. It blocks only if it exceeds both the general 10% bar and the
+        # accepted 28 us ceiling; rendering retains the ordinary ratio-only gate.
+        accepted_step_overhead_ms = 0.028
+        blocking = [
+            r for r in rows
+            if r["status"] == "ok"
+            and r["ratio_head_over_baseline"] > 1.10
+            and (what != "step" or r["overhead_ms"] > accepted_step_overhead_ms)
+        ]
         record = {"arms": arm_names, "baseline_sha": a.baseline_sha, "device": a.device,
                   "set": a.which, "path": what,
                   "host": os.uname().nodename, "python": a.python, "rounds": a.rounds,
@@ -269,7 +281,10 @@ def main() -> int:
                   "states": "sampled ONCE in the BASELINE tree with sample_states(batch, "
                             "default_rng(0)); both legs time the same states, and sampling is not "
                             "inside the timed region",
-                  "regression_bar": 1.10, "blocks_merge": bool(worst > 1.10),
+                  "regression_bar": 1.10,
+                  "accepted_stepresult_overhead_ms": accepted_step_overhead_ms,
+                  "blocking_configs": [r["config"] for r in blocking],
+                  "blocks_merge": bool(blocking),
                   "extra_pythonpath": (os.environ.get("SE9_EXTRA_PYTHONPATH", "").split(":")
                                        if os.environ.get("SE9_EXTRA_PYTHONPATH") else []),
                   "head_sha": subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT),
@@ -278,8 +293,9 @@ def main() -> int:
         out.mkdir(parents=True, exist_ok=True)
         fn = f"timings_{a.tag or a.which}.json"
         (out / fn).write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
-        print(f"wrote {out / fn}\nworst ratio {worst:.3f} against a 1.10 bar: "
-              f"{'REGRESSION' if worst > 1.10 else 'within bar'}")
+        print(f"wrote {out / fn}\nworst ratio {worst:.3f} against a 1.10 bar"
+              f"{' and 0.028 ms accepted StepResult ceiling' if what == 'step' else ''}: "
+              f"{'REGRESSION' if blocking else 'within the applicable bar'}")
         return 0
     finally:
         states_tmp.cleanup()
