@@ -1,11 +1,11 @@
-# `stable_envs.compat.worldmodel`
+# `stable_envs.interop`
 
-Adapters that let `stable_worldmodel` drive a stable-envs renderer without changing the caller's code.
-The mismatch is structural: `swm.World` loops over a list of single `gym.Env` objects, while a
-stable-envs env has no `reset`, a `step` that takes `(B, action_dim)` and a `render` that is a pure
-function of a `(B, state_dim)` stack.
+Cross-package glue only. Nothing here is imported by `env`, `dynamics`, `specs`, `registry` or `_config`, and nothing is advertised at `import stable_envs as snv` top level.
 
-Three adapters are offered, and they are different trades rather than three spellings of one thing —
-drop-in single-env compatibility, a batched pool, and a direct renderer swap.
+**Ownership.** stable-envs owns `reset` / `step` / `transition` / `unroll` / `render` and state semantics. stable-worldmodel owns policy rollouts, MPC, planning, dataset collection and evaluation. There is no `env.rollout(policy=...)`.
 
-::: stable_envs.compat.worldmodel
+**Native `swm.World(env=snv.PushT(...))` is not a public API.** Workstream J has not merged that path. The frozen contract is the adapters below. See [stable-worldmodel](../concepts/worldmodel.md).
+
+`stable_envs.compat.worldmodel` still resolves to the same module objects until Wave 3.
+
+::: stable_envs.interop

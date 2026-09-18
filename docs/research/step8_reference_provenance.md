@@ -44,7 +44,7 @@ Both arms ran in **one SLURM job** (`6443480`) on **one card** (`gpu2264`, RTX 3
 
 `reference_versions` is a field, not prose: `_AT_VERSIONS = {"mujoco": "3.11.0"}` in
 `stable_envs/envs/dmcontrol.py`, published by `describe()` and read by the certifier through
-`stable_envs.core.env.reference_versions_of`. It names the **reference side only**. Our own
+`stable_envs.env.reference_versions_of` (still re-exported from `stable_envs.core.env` until Wave 3). It names the **reference side only**. Our own
 renderer's versions live in `measured_with`, which is recorded and never compared — a bump of our
 renderer that moves a number is a regression to see, not a reason to refuse to judge.
 

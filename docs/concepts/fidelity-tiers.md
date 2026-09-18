@@ -5,17 +5,16 @@ than a caveat in a README. `describe()` reports it, `stable_envs.format_registry
 docstring says it, and the conformance suite applies a different assertion to each.
 
 ```python
-import stable_envs as se
-print(se.format_registry())
-se.make("PushT").describe()["fidelity_tier"]                  # 'parity'
-se.make("RoboCasaCounterToSink").describe()["fidelity_tier"]  # 'visual'
+import stable_envs as snv
+print(snv.spec("PushT")["fidelity_tier"])                     # 'parity'
+print(snv.spec("RoboCasaCounterToSink")["fidelity_tier"])     # 'visual' (if that extra imported)
 ```
 
 There is a **second, independent field**, and a consumer of the visual tier has to read both:
 
 ```python
-se.make("RoboCasaCounterToSink").describe()["render_decoder"]           # 'renderer'
-se.make("RoboCasaCounterToSinkCorrected").describe()["render_decoder"]  # 'learned'
+snv.spec("RoboCasaCounterToSink")["render_decoder"]            # 'renderer'
+snv.spec("RoboCasaCounterToSinkCorrected")["render_decoder"]   # 'learned'
 ```
 
 `render_decoder` says *what drew the frame*: a rasterizer, or a rasterizer followed by a fixed neural
@@ -96,7 +95,7 @@ review comment:
 
 ```python
 @register
-class MyEnv(StableEnv):
+class MyEnv(Env):
     """... VISUAL TIER — these are not the official pixels. <what the residual is> ..."""
 
     fidelity_tier = "visual"
@@ -128,8 +127,8 @@ level 2 — to the 256 px frame MuJoCo's own renderer would have drawn. Such a c
 `render_decoder = "learned"`, and it is a **separate registry entry** from the plain cell:
 
 ```python
-se.make("RoboCasaCounterToSink")           # MJWarp at 256 px.        render_decoder 'renderer'
-se.make("RoboCasaCounterToSinkCorrected")  # MJWarp at 112 px + a CNN. render_decoder 'learned'
+snv.make("RoboCasaCounterToSink")           # MJWarp at 256 px.        render_decoder 'renderer'
+snv.make("RoboCasaCounterToSinkCorrected")  # MJWarp at 112 px + a CNN. render_decoder 'learned'
 ```
 
 It is faster **and** closer to the official frame, at the same time. On `RoboCasaCounterToSink`, 64
