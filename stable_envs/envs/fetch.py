@@ -143,7 +143,8 @@ if _missing or _mjver < (3, 11):                                              # 
         f"and gymnasium, gymnasium-robotics, torch, triton and scipy stay shared. See "
         f"docs/research/fetch.md")
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -178,20 +179,54 @@ VISIBLE_GROUPS = MW.DEFAULT_GROUPS
 #: The frame is bit-identical at every one of those sizes (``scratch/perf/chunk_invariance.py``:
 #: 512 states, max 0/255 on 0 pixels), so this is a free knob and not a change of contract.
 MJW_CHUNK = 256
+
+
+class _Cache(dict):
+    """A dict with a cap, which CLEARS rather than evicting one entry when it is reached.
+
+    Six caches in this module asked the same question — look up, build on a miss, store — and wrote
+    it out six times. Three of them are also bounded, and the bound was checked in two different
+    places relative to the build: ``_CTX_CACHE`` and ``_PLATE_CACHE`` cleared BEFORE inserting, so
+    they held at most ``maxsize``; ``_CAM_CACHE`` cleared AFTER, so it held ``maxsize + 1``. That is
+    the kind of difference nobody intends and nobody notices, and it is why these are one type now.
+    The bound is applied before the insert, as the two that matter already did.
+
+    CLEARING ALL OF IT is the existing policy, kept deliberately rather than replaced with LRU: what
+    these hold is render contexts and compiled models, whose cost is dominated by the FIRST one (an
+    EGL context, a model compile), and an LRU that keeps five stale contexts alive holds
+    ``nworld * H * W * 12`` bytes apiece for them. ``maxsize=None`` means unbounded, which is what
+    the three per-scene caches want: there are four scenes and their entries are the point.
+    """
+
+    def __init__(self, name: str, maxsize: int | None = None):
+        super().__init__()
+        self.name = name
+        self.maxsize = maxsize
+
+    def __setitem__(self, key, value):
+        if self.maxsize is not None and len(self) >= self.maxsize and key not in self:
+            self.clear()
+        super().__setitem__(key, value)
+
+    def get_or_build(self, key, build):
+        """``self[key]``, building it with ``build()`` on a miss. The only way anything is stored."""
+        hit = self.get(key)
+        if hit is None:
+            hit = self[key] = build()
+        return hit
+
+
 #: Contexts are cached per (scene, resolution, worlds); this bounds the cache rather than the number
 #: of EGL contexts, which are separate and never released.
-_CTX_CACHE: dict = {}
-_CTX_CACHE_MAX = 6
-_PLATE_CACHE: dict = {}
-_PLATE_CACHE_MAX = 32
-_MODEL_CACHE: dict = {}
-_RENDERER_CACHE: dict = {}
-_POOL_CACHE: dict = {}
+_CTX_CACHE = _Cache("render context", 6)
+_PLATE_CACHE = _Cache("baked plate", 32)
+_MODEL_CACHE = _Cache("compiled model")
+_RENDERER_CACHE = _Cache("MuJoCo renderer")
+_POOL_CACHE = _Cache("state pool")
 #: (model, lookat, distance, azimuth, elevation) -> the world pose MuJoCo gives that free camera.
 #: Cached because ``render`` asks for it once per distinct camera appearance per chunk, and the answer
 #: costs an ``MjvScene`` allocation and an ``mjv_updateScene``.
-_CAM_CACHE: dict = {}
-_CAM_CACHE_MAX = 256
+_CAM_CACHE = _Cache("free-camera pose", 256)
 
 
 def _asset_dir() -> str:
@@ -206,6 +241,48 @@ def _effective_rgba(m, g) -> np.ndarray:
     if mid >= 0 and np.allclose(rgba, [0.5, 0.5, 0.5, 1.0]):
         return np.asarray(m.mat_rgba[mid], np.float64)
     return rgba
+
+
+def _restore(m, pr) -> None:
+    """Put the five mutable appearance arrays back to the pristine snapshot.
+
+    ``_bake_plate`` writes them on the way in (so that baking appearance B after A gives the same
+    model as baking B first — ``cam.distance`` is a MULTIPLIER and would otherwise compound) and
+    again on the way out (so that no other reader of the shared model sees a bake's leftovers). The
+    two lists had already drifted apart: the entry copy omitted ``cam_pos``/``cam_quat``, which was
+    harmless only because the bake overwrites the one camera it uses a few lines later. One list is
+    one place for the next array to be added, instead of two places for it to be added to one.
+    """
+    m.mat_rgba[:] = pr["mat_rgba"]
+    m.geom_rgba[:] = pr["geom_rgba"]
+    m.light_diffuse[:] = pr["light_diffuse"]
+    m.cam_pos[:] = pr["cam_pos"]
+    m.cam_quat[:] = pr["cam_quat"]
+
+
+def _style_groups(sty, paths, B: int):
+    """``(uniq, inv, offs)``: the DISTINCT appearances a batch asks for, over ``paths``.
+
+    Both things a render does per batch — bake one plate per distinct static appearance, and place
+    one camera per distinct camera appearance — are this question asked of a different tuple of
+    leaves, and both were written out longhand. ``uniq`` is ``(G, sum(widths))`` of the distinct
+    rows, ``inv`` maps each of the ``B`` environments to its group, and ``offs`` is ``(start, width)``
+    per path so a caller can cut a row back into leaves without re-deriving the widths.
+
+    Rounded to 6 decimals before ``np.unique``, which is what makes the grouping a property of the
+    APPEARANCE rather than of float noise: two environments asked for the same colour must share one
+    bake, or a batch of 1024 identical appearances bakes 1024 plates.
+    """
+    offs, o = [], 0
+    cols = []
+    for path in paths:
+        w = int(sty.layout[path][1])
+        cols.append(sty[path].reshape(-1, w)[:B])
+        offs.append((o, w))
+        o += w
+    key = torch.cat(cols, 1).cpu().numpy()
+    uniq, inv = np.unique(np.round(key.astype(np.float64), 6), axis=0, return_inverse=True)
+    return uniq, inv, offs
 
 
 def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
@@ -239,8 +316,6 @@ def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
     y = np.cross(z, x)
     q = np.empty(4)
     mujoco.mju_mat2Quat(q, np.stack([x, y, z], axis=1).reshape(-1))
-    if len(_CAM_CACHE) > _CAM_CACHE_MAX:
-        _CAM_CACHE.clear()
     _CAM_CACHE[key] = (pos, q)
     return pos, q
 
@@ -425,12 +500,9 @@ def _renderer(scene: str, res: int):
     every LATER official render into a single flat colour.
     """
     import mujoco
-    key = (scene, int(res))
-    hit = _RENDERER_CACHE.get(key)
-    if hit is None:
-        b = _build_bundle(scene)
-        hit = _RENDERER_CACHE[key] = mujoco.Renderer(b.model, width=int(res), height=int(res))
-    return hit
+    return _RENDERER_CACHE.get_or_build(
+        (scene, int(res)),
+        lambda: mujoco.Renderer(_build_bundle(scene).model, width=int(res), height=int(res)))
 
 
 class _Ctx:
@@ -449,8 +521,6 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit
-    if len(_CTX_CACHE) >= _CTX_CACHE_MAX:
-        _CTX_CACHE.clear()
     b = _build_bundle(scene)
     m = b.model
     d0 = mujoco.MjData(m)
@@ -493,8 +563,31 @@ def _frame(c: _Ctx) -> None:
     c.mjw.render(c.wm, c.wd, c.rc)
 
 
-class FetchBase(StableEnv):
-    """Base for the 12 ids. ``SCENE`` and ``REF_ID`` are set by the generated subclasses."""
+class FetchBase(Env):
+    """The whole family. ``SCENE`` and ``REF_ID`` are the only things the 12 cells disagree about.
+
+    ONE CLASS, TWELVE DECLARATIONS. Four scenes x three swm suffixes, and the suffixes change the
+    REWARD and the OBSERVATION CONTAINER — neither of which reaches a pixel — so three ids share
+    each scene's compiled model, plate and ray-cast. There is nothing per-cell to write except the
+    scene and the official id it is validated against, which is why ``CELLS`` is a table and not
+    twelve class bodies: a per-cell body is twelve places for the next fidelity number to drift.
+
+    The Step-9 foundation additions are three, and they are all this family needed:
+
+      * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated spelling;
+      * a two-key public :data:`~stable_envs.env.State` (contract §3) — ``{"qpos": (nq,),
+        "goal": (3,)}`` — whose ``state_layout`` is assigned PER INSTANCE, because a Fetch cell's
+        ``state_dim`` is a property of the COMPILED MODEL (``nq`` differs between Reach and the
+        three scenes that carry a block) and is not known until one is built;
+      * ``close()`` refusing to render afterwards, without releasing the shared MuJoCo renderer or
+        the MJWarp contexts, which this family must never release.
+
+    NO DYNAMICS, declared rather than omitted. These cells ship a renderer over gymnasium-robotics'
+    own MuJoCo physics and there is no batched simulator in this package for any of them, so
+    ``step``/``transition`` raise ``Env``'s precise refusal and ``has_dynamics`` is False.
+    ``reset`` and ``render`` work as usual; to produce trajectories, roll out the official CPU env
+    and render the states it gives you.
+    """
 
     SCENE: str = ""
     REF_ID: str = ""
@@ -545,18 +638,59 @@ class FetchBase(StableEnv):
         "own. The static 91% of the frame -- floor, table, skybox -- is exact by construction, because "
         "it is baked through MuJoCo itself.")
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
+        """``num_envs`` environments on ``device`` (contract §2); ``batch=`` is the Step-8 spelling.
+
+        ``state_dim``, ``state_names`` and ``state_layout`` are read off the COMPILED MODEL here and
+        not declared on the class, because they are properties of the model: Reach has no block and
+        therefore no free joint, so its ``nq`` is 15 where the other three scenes carry 22. The
+        packed row is ``qpos`` then the 3-D goal, exactly the Step-8 layout every frozen corpus and
+        certification check speaks.
+        """
         b = _build_bundle(self.SCENE)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
-        super().__init__(batch=batch, size=size,
+        # Set PER INSTANCE, which is the whole of this family's Step-9 state machinery since the
+        # foundation made ``Env._layout`` an instance method (integration f24d94c, Workstream B's
+        # request R1). The two keys are what the halves ARE: ``qpos`` is the simulator's
+        # configuration, and ``goal`` is the task target the env writes to a MOCAP body rather than
+        # to the simulator — a different kind of quantity, and the one the goal sphere is drawn from.
+        self.state_layout = ((("qpos",), int(b.nq), 0), (("goal",), 3, int(b.nq)))
+        super().__init__(num_envs=num_envs, batch=batch, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b
         assert b.nq + 3 == self.state_dim, (
             f"{type(self).__name__}: model nq={b.nq} but state_dim={self.state_dim}")
         self._check_plate_is_constant()
+
+    # ---- Step-9 state -----------------------------------------------------
+    #
+    # NOTHING IS HIDDEN. Every column of the packed row is carried by one of the two keys, so no
+    # field has offset ``None``, ``_hidden_state`` is never consulted, and ``pack``/``unpack`` round
+    # trip the frozen corpus bit for bit. There is no ``_live_state`` either: the packed float32 row
+    # IS this family's live state — ``set_state`` writes it and ``render`` reads it — so there is no
+    # more precise buffer to answer from, unlike classic control's float64 simulator. The ``state``
+    # property is not overridden, and neither is ``_layout``.
+    #
+    # ``mocap_pos``/``mocap_quat`` are still NOT state, for the reason the module docstring gives:
+    # the only pixels they reach are the four translucent markers this backend cannot draw, so
+    # carrying them would declare seven dimensions the renderer provably ignores.
+
+    def _close(self) -> None:
+        """Release what this INSTANCE owns: the device index tensors and the per-env style buffer.
+
+        The ``mujoco.Renderer`` in ``_RENDERER_CACHE``, the MJWarp contexts in ``_CTX_CACHE`` and the
+        compiled models in ``_MODEL_CACHE`` are NOT released, and that is the family's policy rather
+        than an oversight — they are shared by every instance at the same (scene, resolution, worlds),
+        and releasing an EGL context corrupts every other live one in the process (see ``_renderer``,
+        where that was reproduced). What ``close()`` buys here is the contract's other half: a closed
+        env REFUSES to render rather than handing back frames drawn through something a caller
+        believes is gone.
+        """
+        self.__dict__.pop("_idx_cache", None)
 
     # ---- the assumption the whole design rests on, checked rather than assumed -------------
 
@@ -660,14 +794,8 @@ class FetchBase(StableEnv):
                 *[tuple(np.round(self._var(variation, p), 6).tolist()) for p in self.PLATE_PATHS])
 
     def _plate(self, res, variation) -> torch.Tensor:
-        key = self._plate_key(res, variation)
-        hit = _PLATE_CACHE.get(key)
-        if hit is not None:
-            return hit
-        if len(_PLATE_CACHE) >= _PLATE_CACHE_MAX:
-            _PLATE_CACHE.clear()
-        out = _PLATE_CACHE[key] = self._bake_plate(res, variation)
-        return out
+        return _PLATE_CACHE.get_or_build(self._plate_key(res, variation),
+                                         lambda: self._bake_plate(res, variation))
 
     def _bake_plate(self, res, variation, states=None) -> torch.Tensor:
         """MuJoCo's own raster of the static scene: floor, table, skybox. Exact by construction.
@@ -680,9 +808,7 @@ class FetchBase(StableEnv):
         b = _build_bundle(self.SCENE)
         m, d, info = b.model, b.data, b.info
         pr = b.pristine
-        m.mat_rgba[:] = pr["mat_rgba"]
-        m.geom_rgba[:] = pr["geom_rgba"]
-        m.light_diffuse[:] = pr["light_diffuse"]
+        _restore(m, pr)
         # BOTH arrays, because the two renderers read different ones and this env deliberately keeps
         # them consistent: MuJoCo prefers a geom's own ``rgba`` once it is not the compiler default
         # (which ``_build_bundle`` makes it, by resolving the colour into it), and MJWarp reads the
@@ -707,11 +833,7 @@ class FetchBase(StableEnv):
         r.update_scene(d, camera=info["cam"])
         img = r.render().copy()
         m.geom_group[:] = keep
-        m.cam_pos[:] = pr["cam_pos"]
-        m.cam_quat[:] = pr["cam_quat"]
-        m.mat_rgba[:] = pr["mat_rgba"]
-        m.geom_rgba[:] = pr["geom_rgba"]
-        m.light_diffuse[:] = pr["light_diffuse"]
+        _restore(m, pr)
         return torch.as_tensor(img, device=self.device)
 
     # ---- render ---------------------------------------------------------------------------
@@ -739,13 +861,7 @@ class FetchBase(StableEnv):
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
 
-        key = torch.cat([sty[p].reshape(B, -1) for p in self.PLATE_PATHS], 1).cpu().numpy()
-        uniq, inv = np.unique(np.round(key.astype(np.float64), 6), axis=0, return_inverse=True)
-        offs, o = [], 0
-        for p in self.PLATE_PATHS:
-            w = int(sty.layout[p][1])
-            offs.append((o, w))
-            o += w
+        uniq, inv, offs = _style_groups(sty, self.PLATE_PATHS, B)
         plates, plates1 = [], []
         for row in uniq:
             over = {p: row[a:a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
@@ -801,9 +917,8 @@ class FetchBase(StableEnv):
         context, not of the appearance, so the whole batch's poses are a function of ``sty`` alone.
         """
         keys = ("camera.distance_scale", "camera.azimuth_delta", "camera.elevation_delta")
-        camkey = torch.cat([sty[p].reshape(-1, 1) for p in keys], 1)[:B].cpu().numpy()
-        uniq, inv = np.unique(np.round(camkey.astype(np.float64), 6), axis=0, return_inverse=True)
-        poses = [self._camera({keys[0]: r[0:1], keys[1]: r[1:2], keys[2]: r[2:3]}) for r in uniq]
+        uniq, inv, offs = _style_groups(sty, keys, B)
+        poses = [self._camera({k: r[a:a + w] for k, (a, w) in zip(keys, offs)}) for r in uniq]
         pos = torch.as_tensor(np.stack([p for p, _ in poses])[inv], device=self.device,
                               dtype=torch.float32)
         quat = torch.as_tensor(np.stack([q for _, q in poses])[inv], device=self.device,
@@ -837,21 +952,28 @@ class FetchBase(StableEnv):
         wp.to_torch(c.wm.cam_pos)[:n, cam] = campos[lo:hi]
         wp.to_torch(c.wm.cam_quat)[:n, cam] = camquat[lo:hi]
 
-    def _idx(self, key: str, values) -> torch.Tensor:
-        """A device index tensor, built once per env. ``as_tensor`` per chunk is a host copy each."""
+    def _cached(self, key: str, build) -> torch.Tensor:
+        """A device tensor built once per env and kept. Dropped by ``close()``.
+
+        Everything this holds is a constant of the (model, device) pair that a render would otherwise
+        rebuild per chunk, and a rebuild is a host-to-device copy each. Three of these were written
+        out longhand with the same four lines; they are one thing.
+        """
         cache = self.__dict__.setdefault("_idx_cache", {})
         hit = cache.get(key)
         if hit is None:
-            hit = cache[key] = torch.as_tensor(np.asarray(values, np.int64), device=self.device)
+            hit = cache[key] = build()
         return hit
 
+    def _idx(self, key: str, values) -> torch.Tensor:
+        """A device index tensor, built once per env. ``as_tensor`` per chunk is a host copy each."""
+        return self._cached(key, lambda: torch.as_tensor(np.asarray(values, np.int64),
+                                                         device=self.device))
+
     def _light0(self) -> torch.Tensor:
-        cache = self.__dict__.setdefault("_idx_cache", {})
-        hit = cache.get("light0")
-        if hit is None:
-            hit = cache["light0"] = torch.as_tensor(self._b.pristine["light_diffuse"],
-                                                    device=self.device, dtype=torch.float32)
-        return hit
+        """The model's pristine ``light_diffuse``, on device: what ``light.diffuse`` scales."""
+        return self._cached("light0", lambda: torch.as_tensor(
+            self._b.pristine["light_diffuse"], device=self.device, dtype=torch.float32))
 
     def _mover_lut(self) -> torch.Tensor:
         """``(ngeom+1,)`` bool: is this segmentation id a mover? Indexed, not searched.
@@ -861,14 +983,12 @@ class FetchBase(StableEnv):
         at 1.07 ms per chunk before and 0.05 ms after, which on a batch of 1024 is 16 ms of a 73 ms
         render. The table is one bool per geom, built once per env.
         """
-        cache = self.__dict__.setdefault("_idx_cache", {})
-        hit = cache.get("mover_lut")
-        if hit is None:
-            n = int(self._b.model.ngeom)
-            lut = torch.zeros(n + 1, dtype=torch.bool, device=self.device)
+        def build():
+            lut = torch.zeros(int(self._b.model.ngeom) + 1, dtype=torch.bool, device=self.device)
             lut[torch.as_tensor(np.asarray(self._b.movers, np.int64) + 1, device=self.device)] = True
-            hit = cache["mover_lut"] = lut
-        return hit
+            return lut
+
+        return self._cached("mover_lut", build)
 
     # ---- states ---------------------------------------------------------------------------
 
@@ -1019,7 +1139,20 @@ CELLS = (
 )
 
 
-def _make_classes():
+def _make_classes() -> dict[str, type]:
+    """The twelve cells, from ``CELLS``. DATA, not twelve class bodies (see ``FetchBase``).
+
+    Each carries exactly what distinguishes it — the scene, the official id it is validated against,
+    its registered ``name``, and a docstring naming its swm id — and inherits everything else. The
+    alternative, one written-out class per id, is twelve copies of a body whose only content is two
+    strings, and twelve places for the next fidelity declaration to be applied to eleven of them.
+
+    ``__module__`` is pinned to this module rather than left to ``type()``'s default because
+    ``registry.spec`` derives an env's FAMILY from the last component of it: a wrong value would
+    split one family of twelve and move ``list_families()``, ``spec(name)["family"]`` and
+    ``list_envs(family=...)``. ``type()`` happens to get it right from the calling frame; that is a
+    coincidence of where this function is defined, and this family is not registered on a coincidence.
+    """
     made = {}
     for cname, scene, ref in CELLS:
         suffix = cname[len(f"Fetch{scene}"):]
@@ -1027,6 +1160,7 @@ def _make_classes():
             SCENE=scene, REF_ID=ref,
             name=f"fetch-{scene.lower()}" + (f"-{suffix.lower()}" if suffix else ""),
             reference_id=ref,
+            __module__=__name__,
             __doc__=(f"gymnasium-robotics {ref} (swm/Fetch{scene}{suffix}-v3). State is qpos plus the "
                      f"3-D goal; the {suffix or 'sparse'} variant differs from its siblings in the "
                      f"reward and the observation container, neither of which reaches the renderer, so "
@@ -1036,3 +1170,6 @@ def _make_classes():
 
 
 globals().update(_make_classes())
+
+#: The names this module offers: the twelve cells and the base they are all declared from.
+__all__ = ["FetchBase", *(c for c, _, _ in CELLS)]

@@ -66,7 +66,8 @@ import os
 import numpy as np
 import torch
 
-from ..core.env import StableEnv, register
+from ..env import Env
+from ..registry import register
 from ..spaces import Dict, Discrete, RGBBox
 
 try:
@@ -574,7 +575,7 @@ class _Nvd:
 _NVD_CACHE: dict = {}
 
 
-class PFRocketLanding(StableEnv):
+class PFRocketLanding(Env):
     """swm/PFRocketLanding-v0 (PyFlyt rocket landing), rendered by nvdiffrast. State is obs[:13].
 
     VISUAL TIER — these are NOT the official pixels. The frame is a different rasterization of the same
@@ -702,8 +703,34 @@ class PFRocketLanding(StableEnv):
                    "NOT a substitute for a stored dataset when a policy will be evaluated on official pixels. "
                    + DOCUMENTED_LIMITATIONS)
 
-    def __init__(self, batch: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    # ------------------------------------------------------------------ Step-9 state
+    #
+    # The public :data:`State` is the 13-number observation grouped by what it describes: one rigid
+    # body, its attitude, and the two velocities the camera lag reads. The offsets are the Step-7
+    # packed columns unchanged, in ``state_names`` order, so ``pack`` writes the frozen row and the
+    # corpus round-trips exactly. The quaternion is ONE field of width 4 rather than four scalars,
+    # because it is one quantity with a norm constraint and splitting it invites a caller to write
+    # three of its components.
+    #
+    # No field has offset ``None``: this cell ships a renderer and no simulator (PyFlyt's dynamics
+    # stay in PyFlyt), so the packed row IS the whole state and ``step``/``transition`` raise the
+    # contract's refusal from the base class.
+    state_layout = (
+        (("rocket", "angular_velocity"), 3, 0),
+        (("rocket", "orientation"), 4, 3),
+        (("rocket", "linear_velocity"), 3, 7),
+        (("rocket", "position"), 3, 10),
+    )
+
+    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0,
+                 batch: int | None = None):
+        """``num_envs`` rockets on ``device``. ``batch=`` is the deprecated Step-8 spelling.
+
+        The CPU refusal below is BY DESIGN and is checked before anything is built: a ``device="cpu"``
+        request is never quietly served by CUDA (plan §2's device-honesty rule), and this cell has no
+        CPU textured-triangle rasteriser to serve it with.
+        """
         if missing_backend() is not None:                                      # pragma: no cover
             raise ImportError(f"PFRocketLanding cannot render in this interpreter: {missing_backend()}")
         if str(device).startswith("cpu"):
@@ -711,10 +738,22 @@ class PFRocketLanding(StableEnv):
                 "PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
                 "repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served "
                 "by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility.")
-        super().__init__(batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+                         device=device, backend=backend, seed=seed, batch=batch)
         self._nvd()
+
+    def _close(self) -> None:
+        """Drop this env's reference to the shared nvdiffrast renderer.
+
+        ``_NVD_CACHE`` is keyed by ``(size, supersample, device)`` and deliberately SHARED between
+        envs — building a ``BatchRenderer`` allocates a CUDA context and the scene's vertex buffers,
+        and two envs at the same resolution should not pay for it twice. So ``close`` does not tear
+        the cache down: another live env may be rendering through the same entry, and freeing it here
+        would be a use-after-free in that env rather than a leak in this one. What ``close`` does own
+        is this env's refusal to render afterwards, which ``Env.close`` installs.
+        """
+        return None
 
     # ---- renderer -----------------------------------------------------------
 
