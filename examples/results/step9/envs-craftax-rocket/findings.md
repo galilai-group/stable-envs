@@ -44,18 +44,29 @@ Removed: **nothing importable.**
 The brief offered two shapes: merge `craftax_full.py` into `craftax.py` (plan §3 names one
 `craftax.py` for this family), or keep a private `_craftax_full.py` **if the merge is not
 behaviour-neutral**. It is not, and the reason is countable rather than aesthetic: **the two modules
-share 21 module-level names and the shared names hold DIFFERENT values.**
+share 34 module-level names, of which 15 hold DIFFERENT values.**
+
+> **Coordinator correction (2026-09-17).** This section originally read "share 21 module-level names
+> and the shared names hold DIFFERENT values", which conflated the shared names with the conflicting
+> ones and overstated the conflict count. Independently measured on the merged tip: 34 names are
+> shared, 15 of them genuinely conflict (9 constants, 3 functions, 3 per-device caches) and 19 are
+> identical -- including eight this section listed as differing. `N_TILE` for `craftax` is 976, not
+> 160 (160 is `N_STRIP * N_COUNT`, a different quantity). The DECISION is unaffected: 15 real
+> conflicts is far past the bar the brief set, so the private module stands. Found by the independent
+> reviewer as defect D-1 and reproduced by the coordinator before being applied.
 
 | name | `craftax` | `_craftax_full` | | name | `craftax` | `_craftax_full` |
 |---|---:|---:|---|---|---:|---:|
 | `N_BLOCK` | 17 | 37 | | `STRIP_H` | 2 | 4 |
 | `N_STRIP` | 16 | 41 | | `TILE_PX_AGENT` | 7 | 10 |
 | `N_COUNT` | 10 | 100 | | `OBS_H`, `OBS_W` | 7, 9 | 9, 11 |
-| `N_TILE` | 160 | 99 | | `REFERENCE_TILE_PX` | (7, 16) | (10, 16, 64) |
+| `N_TILE` | 976 | 99 | | `REFERENCE_TILE_PX` | (7, 16) | (10, 16, 64) |
 
-plus `N_FACING`, `N_KEY_HALVES`, `NIGHT_TINT`, `NIGHT_THRESHOLD`, `DAY_LENGTH`, `NO_PLAYER`,
-`PLAYER_ASLEEP`, `TILE_PX_IMG`, `strip_geometry`, `night_vignette`, `_unpack` and the three
-per-device caches. One module object cannot serve both spellings, so a merge would have to **rename
+plus the three functions `strip_geometry`, `night_vignette` and `_unpack`, whose bodies differ, and
+the three same-named-but-distinct per-device caches -- 15 conflicts in all. (`N_FACING`,
+`N_KEY_HALVES`, `NIGHT_TINT`, `NIGHT_THRESHOLD`, `DAY_LENGTH`, `NO_PLAYER`, `PLAYER_ASLEEP` and
+`TILE_PX_IMG` are shared and IDENTICAL; they were listed here as differing and are not.) One module
+object cannot serve both spellings, so a merge would have to **rename
 constants that tests and scratch scripts import by name** — `tests/unit/test_craftax_full.py` alone
 reaches for 48 of them through `CF.<name>`. Renaming them is exactly the kind of non-neutral change
 the brief conditioned the merge on, so the fallback was taken and is asserted by
