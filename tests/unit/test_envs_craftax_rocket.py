@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import inspect
 
+import types
+
 import numpy as np
 import pytest
 import torch
@@ -265,9 +267,13 @@ def test_the_old_craftax_full_import_path_is_the_private_module():
 def test_the_two_craftax_modules_could_not_have_been_merged():
     """The evidence for the brief's fallback, kept beside the choice rather than only in findings.
 
-    21 module-level names are shared and they hold DIFFERENT values, so one module object cannot serve
-    both spellings and a merge would have had to rename constants that tests import by name — which is
-    not behaviour-neutral, the condition the brief attached to the merge.
+    34 module-level names are shared and 15 of them hold DIFFERENT values, so one module object cannot
+    serve both spellings and a merge would have had to rename constants that tests import by name —
+    which is not behaviour-neutral, the condition the brief attached to the merge.
+
+    The count is ASSERTED here rather than only stated. It was prose before, and it drifted: the
+    delivered findings and this docstring both claimed 21, counting eight names that are in fact
+    identical in the two modules. A claim that carries a number and cannot fail is not evidence.
     """
     shared = {"N_BLOCK": (17, 37), "N_STRIP": (16, 41), "STRIP_H": (2, 4),
               "TILE_PX_AGENT": (7, 10), "N_COUNT": (10, 100)}
@@ -275,6 +281,34 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
         assert getattr(craftax, n) == classic
         assert getattr(_craftax_full, n) == full
     assert craftax.OBS_H != _craftax_full.OBS_H
+
+    #: The 15 shared names that genuinely conflict: 9 constants, 3 functions whose bodies differ, and
+    #: 3 same-named but distinct per-device caches. Pinned so that a future edit which makes the two
+    #: modules mergeable has to come here and say so.
+    CONFLICTING = {"N_BLOCK", "N_COUNT", "N_STRIP", "N_TILE", "OBS_H", "OBS_W", "REFERENCE_TILE_PX",
+                   "STRIP_H", "TILE_PX_AGENT", "_unpack", "night_vignette", "strip_geometry",
+                   "_CONST_CACHE", "_GRID_CACHE", "_VIGNETTE_CACHE"}
+    names = {n for n in dir(craftax) if not n.startswith("__")} & \
+            {n for n in dir(_craftax_full) if not n.startswith("__")}
+    assert len(names) == 34, f"shared name count moved to {len(names)}; update the module decision"
+
+    def _differs(n):
+        x, y = getattr(craftax, n), getattr(_craftax_full, n)
+        if isinstance(x, types.FunctionType) and isinstance(y, types.FunctionType):
+            return x.__code__.co_code != y.__code__.co_code
+        if isinstance(x, torch.Tensor) or isinstance(y, torch.Tensor):
+            return not (isinstance(x, torch.Tensor) and isinstance(y, torch.Tensor)
+                        and x.shape == y.shape and bool((x == y).all()))
+        if isinstance(x, dict) and isinstance(y, dict):
+            return x is not y
+        if type(x) is not type(y):
+            return True
+        try:
+            return not bool(x == y)
+        except Exception:                      # noqa: BLE001 -- unorderable objects: identity decides
+            return x is not y
+
+    assert {n for n in names if _differs(n)} == CONFLICTING
 
 
 def test_a_missing_craftax_is_still_recorded_under_the_old_module_key():
