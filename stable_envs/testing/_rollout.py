@@ -40,7 +40,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from .dynamics import has_dynamics
+from ..dynamics import has_dynamics
 
 
 class BasePolicy:

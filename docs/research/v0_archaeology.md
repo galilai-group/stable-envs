@@ -10,7 +10,7 @@ Measured in `/Users/samib/stable-envs-v0-archive` at `41ab42a` (branch
 
 Binding: [v0_release_surface.md](v0_release_surface.md). Earlier, coarser
 Wave-3 labels live in
-[`examples/results/step9/cleanup/findings.md`](../../examples/results/step9/cleanup/findings.md).
+`examples/results/step9/cleanup/findings.md`.
 This file is the size-bearing follow-up those notes asked for.
 
 ---
