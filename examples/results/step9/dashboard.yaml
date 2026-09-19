@@ -273,6 +273,21 @@ workstreams:
   api_diff: public interop facade consolidated; swap_renderer and registered-gym World paths preserved;
     native World(env=...) unsupported by installed stable_worldmodel and documented honestly
   oracle_diff: all 42 frozen SWM mappings unchanged; 40 pixel and 2 symbolic
+- workstream: N_benchmarks
+  branch: step9/benchmarks
+  owner: grok
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: benchmarks/, tests/unit/test_benchmark_surface.py
+  head_sha: f170cd0
+  review: review_n.md APPROVE after re-review; review commit 0a7820d
+  merge_sha: 173d5ff
+  tests: 23 benchmark surface tests passed; 25 historical benchmark tests passed; PushT/CartPole and pipeline
+    CPU smokes passed
+  performance_diff: local CPU harness evidence only, schema stable-envs-benchmark/v1; no certification
+    or cross-machine claim; GPU throughput not measured
+  api_diff: new OSS performance CLIs use class-first public snv API and optional dynamic aliases; no library
+    API changes
+  oracle_diff: none; benchmarks are separated from correctness and certification
 decisions:
 - date: '2026-09-17'
   by: coordinator
