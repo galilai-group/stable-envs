@@ -75,6 +75,11 @@ def _is_reviewer_report(f: Path) -> bool:
     return f.name.startswith("review_") and f.suffix == ".md" and "results" in f.parts
 
 
+def _is_archaeology_inventory(f: Path) -> bool:
+    """``v0_archaeology.md`` names leave-behind trees on purpose, including after ``git rm``."""
+    return f.name == "v0_archaeology.md" and "research" in f.parts
+
+
 def _files():
     for d in SEARCH_ROOTS:
         p = ROOT / d
@@ -86,6 +91,7 @@ def _files():
                     and "__pycache__" not in f.parts
                     and f.resolve() != SELF
                     and not _is_reviewer_report(f)
+                    and not _is_archaeology_inventory(f)
                 ):
                     yield f
     for name in SEARCH_FILES:

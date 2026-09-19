@@ -103,7 +103,7 @@ def test_an_env_with_no_simulator_says_so_and_points_at_the_alternative():
 def test_a_batch_that_is_not_the_env_s_batch_is_refused_at_the_top():
     """Every buffer in the loop is sized ``env.B``; a mismatch would fail deep or, worse, broadcast."""
     with pytest.raises(ValueError, match="batch 8 != env batch 4"):
-        sample(IntegratorEnv(num_envs=4), steps=2, batch=8)
+        sample(IntegratorEnv(batch=4), steps=2, batch=8)
 
 
 # ------------------------------------------------------------------ what sample returns
@@ -116,7 +116,7 @@ def test_the_trajectory_has_one_more_state_than_it_has_actions():
     ``t=0`` entirely, so every stored trajectory is shifted against the actions stored beside it and
     the corpus teaches a transition nobody took.
     """
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     tr = sample(env, steps=5, seed=0)
     assert tr["states"].shape == (4, 6, 3)
     assert tr["actions"].shape == (4, 5, 3)
@@ -130,7 +130,7 @@ def test_the_returned_actions_ARE_the_actions_the_simulator_was_driven_with():
     copy, a reshaped one, the next timestep's — produces a corpus whose transitions simply do not hold,
     and every shape, dtype and range check passes on it.
     """
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     tr = sample(env, steps=6, seed=1)
     delta = tr["states"][:, 1:] - tr["states"][:, :-1]
     assert torch.allclose(delta, tr["actions"], atol=1e-6), "the stored actions do not account for the stored states"
@@ -141,7 +141,7 @@ def test_each_recorded_state_is_a_COPY_and_not_the_env_s_live_buffer():
 
     Silent: the shape is right, the dtype is right, and a loss computed on it converges to something.
     """
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     tr = sample(env, steps=4, seed=2)
     assert not torch.allclose(tr["states"][:, 0], tr["states"][:, -1]), (
         "the first and last states are identical, which for a random-driven integrator means every "
@@ -151,7 +151,7 @@ def test_each_recorded_state_is_a_COPY_and_not_the_env_s_live_buffer():
 
 def test_init_states_are_used_verbatim_as_step_zero():
     """The entry point for continuing a trajectory, or for rolling out from a stored state."""
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     init = np.arange(12, dtype=np.float32).reshape(4, 3)
     tr = sample(env, steps=3, seed=0, init_states=init)
     assert torch.allclose(tr["states"][:, 0], torch.as_tensor(init))
@@ -165,7 +165,7 @@ def test_frames_are_OFF_by_default_and_correct_when_asked_for():
     ``t`` — the loop writes them one timestep at a time into a preallocated buffer, which is where an
     off-by-one or a stale row lives.
     """
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     assert "frames" not in sample(env, steps=3, seed=0)
 
     tr = sample(env, steps=3, seed=0, render=True)
@@ -182,7 +182,7 @@ def test_a_seed_makes_the_whole_rollout_reproducible():
     perfectly, and that is the failure mode — a policy that seeds on ``set_env`` but never re-seeds
     looks reproducible until something else advances the generator.
     """
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     a = sample(env, steps=5, seed=42)["states"]
     b = sample(env, steps=5, seed=42)["states"]
     c = sample(env, steps=5, seed=43)["states"]
@@ -192,7 +192,7 @@ def test_a_seed_makes_the_whole_rollout_reproducible():
 
 def test_the_seed_reaches_the_env_s_own_generator_too():
     """``sample_states`` draws the initial condition, so a seeded rollout must seed that as well."""
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     first = sample(env, steps=1, seed=7)["states"][:, 0].clone()
     env.rng = np.random.default_rng(999)  # advance it somewhere else entirely
     again = sample(env, steps=1, seed=7)["states"][:, 0]
@@ -277,7 +277,7 @@ def test_a_scripted_policy_is_given_the_state_and_the_timestep():
         seen.append((state.clone(), t))
         return torch.full((state.shape[0], 3), float(t))
 
-    env = IntegratorEnv(num_envs=4)
+    env = IntegratorEnv(batch=4)
     tr = sample(env, steps=3, policy=ScriptedPolicy(fn), seed=0)
     assert [t for _, t in seen] == [0, 1, 2], "the timestep is not being passed, or not advancing"
     assert torch.allclose(tr["actions"][:, 2], torch.full((4, 3), 2.0))
@@ -301,7 +301,7 @@ def test_a_policy_gets_set_env_and_reset_before_the_first_action():
             calls.append("action")
             return torch.zeros(obs.shape[0], 3)
 
-    sample(IntegratorEnv(num_envs=4), steps=2, policy=_Recording(), seed=0)
+    sample(IntegratorEnv(batch=4), steps=2, policy=_Recording(), seed=0)
     assert calls[:2] == ["set_env", "reset:4"], calls
     assert calls.count("action") == 2
 
