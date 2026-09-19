@@ -1,12 +1,14 @@
 # Why physics is separate
 
-`StableEnv` has `scene`, `render`, `get_state`, `set_state` and a `variation_space`. It does not have
-`step`. That omission is the design, not a gap waiting to be filled: `step` is an *optional* extra an
-env may offer, and today 18 of the registry's 55 do — the six top-down MiniGrid/BabyAI ids, the five
-classic-control envs, the four `stable_worldmodel` navigation envs, SimplePointMaze, Sokoban and PushT.
-The rest raise from `sample` with the reason and the alternative. Those counts move as envs land, and
-the script that quotes them ([`examples/rollout_with_policy.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/rollout_with_policy.py))
-computes them at run time rather than repeating this sentence.
+Every `Env` has `reset`, `render`, `get_state`, `set_state` and a `variation_space`. Batched dynamics
+are optional: `step` / `transition` / `unroll` exist on every class so a renderer-only cell can raise
+with the exact reason instead of an `AttributeError`, and only cells that override them ship a
+simulator. How many of the registry that is changes as families land; `env.has_dynamics` is the check,
+and `hasattr(env, "step")` is always true. The call-shape difference — stateful `step` vs functional
+`transition` / `unroll` — is [Stateful vs functional](dynamics.md).
+
+The rest of this page is why that split exists: a renderer can be bit-exact against the official
+frame, and a contact solver cannot.
 
 ## The two halves have incompatible fidelity stories
 

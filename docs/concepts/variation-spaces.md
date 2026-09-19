@@ -4,9 +4,9 @@ Every env declares a `variation_space`: a tree of samplable Spaces covering colo
 and toggles. It is the answer to "what can change about the picture without changing the state".
 
 ```python
-import stable_envs as se
+import stable_envs as snv
 
-env = se.make("PushT", batch=4096, size=96)
+env = snv.PushT(num_envs=4096, size=96, device="cpu")
 env.variation_space.names()
 # ['agent.color', 'agent.inner_color', 'agent.scale', 'background.color', 'block.color',
 #  'block.outline_color', 'block.scale', 'goal.angle', 'goal.color', 'goal.position',

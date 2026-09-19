@@ -81,7 +81,15 @@ plugins:
 
 nav:
   - Home: index.md
+  - Quickstart: quickstart.md
+  - Environments: environments.md
   - Concepts:
+      - State and specs: concepts/state.md
+      - Stateful vs functional: concepts/dynamics.md
+      - Lifecycle: concepts/lifecycle.md
+      - Registry: concepts/registry.md
+      - stable-worldmodel: concepts/worldmodel.md
+      - Backend and device limitations: concepts/limitations.md
       - The Scene2D IR: concepts/scene-ir.md
       - The fused rasterizer: concepts/rasterizer.md
       - Writing a bit-exact Triton kernel: concepts/bit-exact-triton.md
@@ -94,8 +102,8 @@ nav:
       - Throughput: benchmarks.md
       - Gallery: gallery.md
   - API reference:
-      - stable_envs.core.env: api/env.md
-      - stable_envs.core.style: api/style.md
+      - stable_envs.env: api/env.md
+      - stable_envs._style: api/style.md
       - stable_envs.data: api/data.md
       - stable_envs.rollout: api/rollout.md
       - stable_envs.render.scene: api/scene.md
@@ -107,7 +115,7 @@ nav:
       - stable_envs.render.rendernet: api/rendernet.md
       - stable_envs.spaces: api/spaces.md
       - stable_envs.envs: api/envs.md
-      - stable_envs.compat.worldmodel: api/compat.md
+      - stable_envs.interop: api/compat.md
       - stable_envs.testing: api/testing.md
   - Research notes:
       - When does this pay off: research/when_does_this_pay_off.md

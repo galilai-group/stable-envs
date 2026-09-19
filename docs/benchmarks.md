@@ -1,5 +1,39 @@
 # Throughput
 
+## Methodology
+
+Correctness and performance are separate. This page is the latter. Certification, pixel identity and
+the Step-8 support matrix do not live here.
+
+How a number on this page was produced, so a later re-run can disagree honestly rather than silently:
+
+1. **Same job, same card, paired.** A before/after or GPU-vs-reference comparison is timed in one
+   process on one device. Cross-card digest or throughput comparison is not a valid oracle: frozen
+   Step-4/7 digests were taken on RTX 3090s, and later jobs land on A40 / A6000 / L40S.
+2. **Native supersample.** `--ss` defaults to `native`: whatever the class declares
+   (`default_supersample`). Forcing `1` on the 44 classes that declare `2` measures a different
+   picture, four times cheaper in rays, than `snv.make(name)` returns.
+3. **Both sides do the same job.** Take a state, produce a uint8 frame, on the same states, drawn
+   from the env's own reset distribution. The CPU side goes through the env's own reference bridge
+   where one exists.
+4. **Host-bound rows travel badly.** A render whose process CPU time is near 0 per second of wall
+   clock is one kernel on a device the job owns and repeats across nodes to under a percent. Ray-cast
+   families spend 100–206% of the timed loop on CPU; `DMCBallInCupCatch` measured 3,664 frames/s idle
+   and 271–978 contended. Every GPU row therefore carries `cpu%` (or `cpu_frac`) and the load
+   average. Read a row near 0 as the device and a row at or above 100% as a measurement of the node's
+   processor under its load.
+5. **The generated file is the source.** Tables transcribed below are copies of
+   `examples/results/bench_gpu_vs_cpu.md` (and the decode/storage sweeps they name). When the two
+   disagree, believe the generated file.
+6. **Step 9 is not an optimisation phase.** A roughly >10% repeatable regression on a core hot path
+   (shared 2-D, raycast/CPU3D, MJWarp, nvdiff, dynamics moved into new abstractions) blocks merge
+   unless causally explained and accepted. Ordinary noise is tolerated; paired measurements on the
+   same hardware are the comparison.
+
+OSS-facing harnesses, once Workstream N lands, live under `benchmarks/`. Until then the scripts named
+on this page (`examples/bench_gpu_vs_cpu.py`, `examples/bench_vs_decode.py`,
+`examples/bench_step3_pipeline.py`) are the measurement path.
+
 The PushT sections on this page were produced by
 [`examples/bench_gpu_vs_cpu.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/bench_gpu_vs_cpu.py)
 on one NVIDIA H200 with an Intel Xeon Platinum 8558 (16 cores visible to the job), torch 2.11.0+cu130, triton 3.6.0 — and re-measured unchanged on torch 2.13.0+cu130 / triton 3.7.1 (geomean 1.003x over 12 cells, `scratch/census/triton_ab.sbatch`), at PushT's own `default_supersample` of 1. Raw output, including the host load average
@@ -12,7 +46,7 @@ The registry-wide table further down is a separate sweep and says so where it st
 `scripts/bench.py`, so every env renders at its own `default_supersample` instead of at a forced 1. That
 is a correction rather than a preference. Forty-four registered classes declare `default_supersample = 2`
 — 25 OGBench mazes, 11 DM Control domains, 4 D4RL mazes, 4 MuJoCo locomotion envs — because their
-reference is MSAA'd, so `se.make(name)` hands a user ss=2, and ss=2 is the picture every parity number in
+reference is MSAA'd, so `snv.make(name)` hands a user ss=2, and ss=2 is the picture every parity number in
 this repo is measured on. Every throughput row published for those classes before this fix was taken at
 `--ss 1`, which is a different picture, four times cheaper in rays. Measured in one process on an idle
 node, `supersample=1` against the class's own value: DMCBallInCupCatch at 84px batch 4096 is 4,272

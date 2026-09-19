@@ -27,21 +27,25 @@ in an afternoon rather than after a port.
 
 Drop a module into `stable_envs/envs/` — that is the whole registration step. The package auto-discovers
 its modules, so there is no shared import list to edit and no second place to forget. A module that fails
-to import (a missing optional dependency) loses exactly that env, and `stable_envs.envs.import_errors()`
+to import (a missing optional dependency) loses exactly that env, and `snv.import_errors()`
 says why; the conformance suite prints it, so "my env vanished" is answerable in one line instead of
 looking like a registration bug.
 
 ```python
-from stable_envs.core.env import StableEnv, register
+from stable_envs.env import Env
+from stable_envs.registry import register
 
 @register
-class MyEnv(StableEnv):
+class MyEnv(Env):
     name = "my-env"                 # dataset name, hyphenated-lowercase
     state_dim = 5
     state_names = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
     default_size = 96
     reference_id = "gym_pusht/PushT-v0"
 ```
+
+Construct with `num_envs=` (not `batch=`). `snv.MyEnv(num_envs=8, device="cpu")` after registration.
+The Step-8 names `StableEnv` and `batch=` still resolve and warn once until Wave 3.
 
 `state_names` is not decoration. The conformance suite asserts `len(state_names) == state_dim` with the
 reasoning that a state vector whose fields are unnamed cannot be checked or reused by anyone, and the
@@ -251,8 +255,8 @@ failure, and it looks like a rendering discrepancy.
 
 ## Step 7: run the suite and read the numbers
 
-Nothing needs editing — the suite is parameterised over `REGISTRY`, so the new env is covered the moment
-it is registered:
+Nothing needs editing — the suite is parameterised over the registry, so the new env is covered the
+moment it is registered (`snv.list_envs()` / `snv.spec("MyEnv")`):
 
 ```bash
 sbatch scripts/run_gpu_tests.sbatch     # or, on a GPU node:
