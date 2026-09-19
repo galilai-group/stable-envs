@@ -117,6 +117,7 @@ select = ["E9", "F63", "F7"]
 
 [tool.pytest.ini_options]
 addopts = ["-p", "no:randomly"]
+testpaths = ["tests"]
 markers = [
   "unit: fast, CPU-only, no reference package and no device",
   "integration: several components together (env + renderer + registry + interop)",
