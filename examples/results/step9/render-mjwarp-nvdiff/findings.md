@@ -7,17 +7,26 @@ review-fix commit `6a8f3b8`) ·
 **host** Apple M5 Mac (`cis1b1zs2j3`), `/Users/samib/se6-venv` (torch 2.14 CPU, mujoco 3.12.0,
 dm_control 1.0.45, no CUDA, no warp, no nvdiffrast, no mujoco_warp).
 
-**Result: PATCH — design change delivered, GPU evidence owed.** Explicit resource ownership is in
+**Result: PATCH — GPU pixels established, job exit is classified.** Explicit resource ownership is in
 place across all four backends plus the new `render/_resources.py`; the static read-through shows
-**not one numeric expression, upload order or cache key changed**. After the independent review's
-instrument defects were fixed, the merged local suite is **1652 passed, 223 skipped, 112
-deselected**; the focused resource+nvdiff run is **50 passed, 1 skipped**. **Every backend this workstream owns is CUDA-only and the local
-machine has no CUDA, so no frame in this workstream has been rendered.** Frame identity,
-fresh-process reproducibility, the create/close counters, batch invariance and paired throughput are
-all owed to the coordinator's post-Wave-1 GPU oracle; `scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch`
-is this workstream's section of that job and has **not** been submitted (Sami's cadence ruling).
-Until it reports, plan §17's "unexplained oracle differences: zero" is **unestablished, not
-satisfied**, and this branch should not merge on the local evidence alone.
+**not one numeric expression, upload order or cache key changed**. CUDA evidence is job **6509711**
+(RTX A6000, `gpu1501`, HEAD `fc05512`) after the `bash -e` harness abort on **6507919**:
+
+| arm | frames vs 21cb306 | lifetime | worst bench ratio (bar 1.10) |
+|---|---|---|---|
+| vis311 DMC trackcom (5 cells) | identical | ok | 0.999 |
+| OGB Cube/Scene | identical | ok | 1.006 |
+| Rocket / nvdiff (3 cells) | identical | ok | within bar |
+| Fetch (4 cells) | identical | ok | 1.017 |
+
+Direct probes: `mjwarp` PASS, `nvdiff` PASS (ray-cache LRU overflow). `rendernet` failed because the
+probe constructed `LoadedCorrector` around a **CPU** `ESPCN` (`cuda` input vs CPU weights). Production
+`load` / `unsealed` move weights; the probe now calls `unsealed`. Broad `tests/gpu` in family venvs
+still fail on missing optional packages (`warp` / `gymnasium_robotics`) and Fetch's venv has no
+`pytest` — classified as harness/venv, not pixel regressions. 2D and 3D sections of `6507919` already
+passed frames/timings (3D worst ratio 1.003).
+
+Plan §17 unexplained oracle differences on the cells this workstream can construct: **zero**.
 
 ### Independent-review response (`review_i.md`)
 

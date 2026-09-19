@@ -84,15 +84,17 @@ def _rendernet() -> tuple[list[str], dict]:
     from stable_envs.render import _resources as RES
     from stable_envs.render import rendernet as RN
 
-    module = RN.ESPCN(in_size=16, out_size=16, width=8, depth=2)
-    header = {
-        "cell": {"env_class": "ResourceProbe"},
-        "render": {"render_size": 16, "out_size": 16, "tex_lod": 1, "backface_cull": False},
-        "net": "resource_probe",
-    }
-    corrector = RN.LoadedCorrector(
-        module, header, "<resource-probe>", device="cuda", mode="eager", net_batch=2)
-    module = None
+    # ``load`` / ``unsealed`` move weights onto ``device``. Constructing ``LoadedCorrector``
+    # around a CPU module is not a supported path (job 6509711: cuda input, CPU weights).
+    corrector = RN.unsealed(
+        RN.ESPCN(in_size=16, out_size=16, width=8, depth=2),
+        cell={"env_class": "ResourceProbe"},
+        render={"render_size": 16, "out_size": 16, "tex_lod": 1, "backface_cull": False},
+        net="resource_probe",
+        device="cuda",
+        mode="eager",
+        net_batch=2,
+    )
     runner = corrector.runner()
     runner(torch.zeros((1, 16, 16, 3), dtype=torch.uint8, device="cuda"))
     corrector.close()
