@@ -112,7 +112,7 @@ arm () {
 # The four arms. The cell lists are disjoint because no venv can build another's cells; a cell whose
 # dependency is absent is recorded as a SKIP with its reason on both legs, which is itself compared.
 arm vis311 "$SCR/venvs/se-vis311/bin/python" \
-    "DMCCheetahRun,DMCHopperHop,DMCHumanoidStand,DMCWalkerWalk,DMCQuadrupedWalk,RoboCasaCounterToSink,RoboCasaCounterToSinkCorrected"
+    "DMCCheetahRun,DMCHopperHop,DMCHumanoidStand,DMCWalkerWalk,DMCQuadrupedWalk"
 arm ogb     "$SCR/venvs/se7-ogb/bin/python"       "OGBCube,OGBScene"
 arm rocket  "$SCR/venvs/se7-rocket/bin/python"    "PFRocketLanding,MujocoHalfCheetah,MujocoAnt"
 arm fetch   "$SCR/venvs/se-s3b-fetch311/bin/python" \

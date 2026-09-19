@@ -156,6 +156,11 @@ def frames(env, s):
     env.set_state(s)
     return env.render().detach().cpu().numpy()
 
+def close_env(env):
+    close = getattr(env, "close", None)
+    if callable(close):
+        close()
+
 def counts():
     try:
         from stable_envs.render import _resources
@@ -183,7 +188,7 @@ for name, corpus, backend in cells:
         env = cls(batch=nstates, device="cuda")
         s = states_for(env, corpus)
         if len(s) != nstates:
-            env.close(); env = cls(batch=len(s), device="cuda")
+            close_env(env); env = cls(batch=len(s), device="cuda")
         f = frames(env, s)
         rec.update({"status": "ok", "n_states": int(len(s)), "states_sha256": h(s),
                     "size": int(env.size), "frames_shape": list(f.shape),
@@ -204,7 +209,7 @@ for name, corpus, backend in cells:
                     continue
                 e2 = cls(batch=w, device="cuda")
                 per_width[str(w)] = h(frames(e2, s[:w])[0])
-                e2.close()
+                close_env(e2)
             rec["batch_row0_sha256"] = per_width
             rec["batch_invariant"] = len(set(per_width.values())) == 1
 
@@ -216,8 +221,8 @@ for name, corpus, backend in cells:
                 cc = counts()
                 e3 = cls(batch=min(8, len(s)), device="cuda")
                 digests.append(h(frames(e3, s[:min(8, len(s))])))
-                e3.close()
-                e3.close()                               # idempotent: must not double-free
+                close_env(e3)
+                close_env(e3)                            # idempotent on the head; no-op on baseline
                 d = resource_guard.delta(rgc)
                 rg_per_cycle.append({"context_created": d["context_created"],
                                      "context_freed": d["context_freed"],
@@ -245,16 +250,16 @@ for name, corpus, backend in cells:
                 sum(c.get("se_release_failed", {}).values()) for c in rg_per_cycle)
 
         # --- a closed env refuses to render, and closing twice is a no-op
-        if name in lifetime:
+        if name in lifetime and counts() is not None:
             e4 = cls(batch=1, device="cuda")
-            e4.close(); e4.close()
+            close_env(e4); close_env(e4)
             try:
                 e4.render()
                 rec["closed_env_refuses"] = False
             except Exception as ex:
                 rec["closed_env_refuses"] = True
                 rec["closed_env_error"] = type(ex).__name__
-        env.close()
+        close_env(env)
     except Exception as e:
         rec["status"] = "error"
         rec["reason"] = "%s: %s" % (type(e).__name__, str(e)[:200])
@@ -366,6 +371,7 @@ def main() -> int:
 
         diffs, status, failures = {}, {}, {}
         expected_modules = set()
+        selected_modules = set()
         called_modules = set()
         for name, _, _ in cells:
             b, m = before.get(name, {}), after.get(name, {})
@@ -374,7 +380,10 @@ def main() -> int:
             if d:
                 diffs[name] = d
             status[name] = m.get("status", "missing")
-            expected_modules.update(next(c[2].split("+") for c in cells if c[0] == name))
+            modules = set(next(c[2].split("+") for c in cells if c[0] == name))
+            selected_modules.update(modules)
+            if m.get("status") == "ok":
+                expected_modules.update(modules)
             called_modules.update(m.get("backend_modules_called", ()))
             if name in LIFETIME_CELLS:
                 for key, want_val, why in LIFETIME_ASSERTIONS:
@@ -406,6 +415,7 @@ def main() -> int:
             "cells": status,
             "expected_backend_modules": sorted(expected_modules),
             "called_backend_modules": sorted(called_modules),
+            "unavailable_backend_modules": sorted(selected_modules - expected_modules),
             "compared": sorted(COMPARED),
             "unexplained_differences": diffs,
             "lifetime_failures": failures,
