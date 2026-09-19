@@ -1,6 +1,6 @@
 """The GPU half of the safety net: the guard attached to the REAL driver classes, and real crashes.
 
-``tests/test_safety_net.py`` proves the supervisor and the guard's policy on generated CPU-only
+``tests/integration/test_safety_net.py`` proves the supervisor and the guard's policy on generated CPU-only
 modules, in about a second. What it cannot prove is the part that only exists on a GPU node: that the
 counters are wired to the classes MuJoCo and ogbench actually go through, and that a crash with LIVE
 EGL contexts held by a module-scoped fixture behaves the same as a crash in an empty process. That is

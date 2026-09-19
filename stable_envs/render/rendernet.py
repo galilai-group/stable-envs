@@ -84,6 +84,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from . import _resources
+
 #: Where sealed correctors live. One file per cell, named for the env class it is keyed to.
 CACHE_ROOT = os.path.expanduser(
     os.environ.get("STABLE_ENVS_RENDERNET_CACHE", "~/.cache/stable-envs/rendernet"))
@@ -423,7 +425,7 @@ def check_cell(want: dict, got: dict) -> None:
         + f"\n  env cell:        {_describe_cell(want)}")
 
 
-class _Runner:
+class _Runner(_resources.Closeable):
     """One compiled, graph-captured invocation of a corrector at ONE fixed shape.
 
     Three layers, each removing a different cost, and the order matters:
@@ -439,7 +441,15 @@ class _Runner:
     The static input and output buffers are what a graph requires — a replay reads and writes the
     same addresses every time — and they are also what makes the caller's copies contiguous memcpys
     instead of strided gathers.
+
+    **Ownership.** The graph, the two static buffers and the compiled callable are exclusive to this
+    runner; the ``Corrector`` module it was built from belongs to the ``LoadedCorrector`` and is not
+    released here. ``close()`` resets the graph before dropping the buffers, because a captured graph
+    holds a private memory pool that references those exact addresses — freeing the tensors while the
+    graph still exists returns memory the graph would replay into.
     """
+
+    resource_kind = "rendernet.Runner"
 
     def __init__(self, module: Corrector, n: int, r: int, s: int, device, mode: str):
         self.n, self.mode = int(n), str(mode)
@@ -475,6 +485,26 @@ class _Runner:
         self.graph = torch.cuda.CUDAGraph()
         with torch.cuda.graph(self.graph):
             step()
+        self._opened()
+
+    def _release(self) -> None:
+        """Reset the graph, then drop it and the static buffers. Idempotent.
+
+        ``CUDAGraph.reset()`` releases the graph's private memory pool; it is reached through
+        ``getattr`` because it is not part of the API this repository pins a version of, and a torch
+        without it must still close cleanly — dropping the last reference frees the same pool, just at
+        the collector's convenience rather than here.
+        """
+        g, self.graph = getattr(self, "graph", None), None
+        if g is not None:
+            reset = getattr(g, "reset", None)
+            if callable(reset):
+                try:
+                    reset()
+                except Exception:                                        # noqa: BLE001
+                    pass
+        self.sin = None
+        self.sout = None
 
     def __call__(self, low: torch.Tensor) -> torch.Tensor:
         """``(m <= n, r, r, 3)`` in, a VIEW of the static output's first ``m`` rows out.
@@ -485,6 +515,7 @@ class _Runner:
         buffer that carries the previous call's pixels makes "the same states twice" depend on what
         ran in between, and that is exactly the property ``check_determinism`` exists to hold.
         """
+        self._check_open("__call__")
         m = int(low.shape[0])
         self.sin[:m].copy_(low)
         if m < self.n:
@@ -493,7 +524,7 @@ class _Runner:
         return self.sout[:m]
 
 
-class LoadedCorrector:
+class LoadedCorrector(_resources.Closeable):
     """A sealed checkpoint, verified against one cell, ready to be applied in a render path.
 
     Holds the network AND the render configuration it was fitted on, because those are one object: a
@@ -501,7 +532,16 @@ class LoadedCorrector:
     render with full-resolution textures, is being fed an input outside its training distribution and
     will produce a confident wrong picture with no error. ``render`` on the env reads ``render_size``,
     ``tex_lod`` and ``backface_cull`` from HERE and nowhere else.
+
+    **Ownership.** It owns the network's weights and, once something has actually rendered through
+    it, the ``_Runner`` those weights were compiled and captured into. ``close()`` closes the runner
+    and drops the module. It owns no context of any kind. A corrector is normally held in a
+    process-scoped cache keyed by env class (``envs/robocasa._CORRECTOR_CACHE``) and shared by every
+    env of that cell, so THE CACHE closes it, not an env: an env's ``close`` drops its reference and
+    nothing more. See ``_resources`` for why that distinction is the whole design.
     """
+
+    resource_kind = "rendernet.LoadedCorrector"
 
     def __init__(self, module: Corrector, header: dict, path: str, device="cuda",
                  mode: str | None = None, net_batch: int | None = None):
@@ -521,6 +561,14 @@ class LoadedCorrector:
         self.variation_fidelity = dict(header.get("variation_fidelity") or {})
         self.baseline = dict(header.get("baseline") or {})
         self.provenance = dict(header.get("provenance") or {})
+        self._opened()
+
+    def _release(self) -> None:
+        """Close the compiled runner (if one was ever built) and drop the weights. Idempotent."""
+        run, self._runner = self._runner, None
+        if run is not None:
+            run.close()
+        self.module = None
 
     def __repr__(self) -> str:
         return (f"LoadedCorrector({self.cell.get('env_class')}, {self.net}, "
@@ -534,6 +582,7 @@ class LoadedCorrector:
         would make constructing an env — which the conformance suite does per module, and which a
         listing does for nothing — pay for a render nobody asked for.
         """
+        self._check_open("runner")
         if self._runner is None:
             self._runner = _Runner(self.module, self.net_batch, self.render_size, self.out_size,
                                    self.device, self.mode)

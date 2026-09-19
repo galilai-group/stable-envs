@@ -26,7 +26,7 @@ SCR=/oscar/scratch/sboughan
 export UV_CACHE_DIR=$SCR/cache/uv PIP_CACHE_DIR=$SCR/cache/pip XDG_CACHE_HOME=$SCR/cache/xdg
 export TORCH_HOME=$SCR/cache/torch WARP_CACHE_PATH=$SCR/cache/warp HF_HOME=$SCR/cache/hf
 export MUJOCO_GL=egl
-WS=$SCR/se9/envs-dmcontrol
+WS=${SE9_WS:-$SCR/se9/envs-dmcontrol}
 OUT=$WS/examples/results/step9/envs-dmcontrol/gpu
 # The mjwarp arm at the DECLARED 3.11 pair. This family's certification semantics are mujoco 3.11.0 +
 # mujoco-warp 3.11.0 (reference_versions), and se-vis311 is the only venv built on that pair -- the
@@ -80,7 +80,7 @@ done
 echo "=== the new unit tests on the cuda host"
 $PY -m pytest -q -p no:cacheprovider tests/unit/test_envs_dmcontrol.py \
     tests/unit/test_dmcontrol_tendon.py tests/unit/test_dmcontrol_episode_quat.py \
-    tests/unit/test_cpu3d.py tests/unit/test_declarations.py \
+    tests/unit/test_cpu3d.py tests/certification/test_declarations.py \
     > "$OUT/pytest_unit_dmcontrol.txt" 2>&1
 echo "exit $? :: $(tail -1 "$OUT/pytest_unit_dmcontrol.txt")"
 

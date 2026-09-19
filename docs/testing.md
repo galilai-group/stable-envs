@@ -7,33 +7,37 @@ intention, and the suite is where the number comes from.
 Every check below corresponds to a specific way the claim can be false. The suite is parameterised over
 the registry (`snv.list_envs()`), so an env added tomorrow is covered without editing a test.
 
-Step 9 markers (Workstream K): `unit`, `integration`, `gpu`, `certification`, `slow`. Until that
-restructure merges, the commands below and the existing `reference` / `smoke` / `selftest` markers
-remain the way to run the suite.
+Step 9 markers: `unit`, `integration`, `gpu`, `certification`, `slow`. The extra markers
+`reference`, `smoke` and `selftest` stay. Directory markers are applied automatically, so a
+file that forgot `pytestmark` is still selected by its folder.
 
 ```bash
+pytest -m unit                                 # CPU-only family/unit contracts
+pytest -m integration                          # multi-component (safety net, SWM interop)
+pytest -m "certification and not gpu"          # frozen corpora, digests, support matrix
+pytest -m "certification and gpu"              # GPU certification (needs CUDA)
+pytest                                         # full suite
 sbatch scripts/run_gpu_tests.sbatch            # full suite, crash-isolated
 sbatch scripts/run_smoke_tests.sbatch          # one env per family              ~3.4 min
 sbatch scripts/run_smoke_tests.sbatch --fast   # one env per render backend      ~0.9 min
-sbatch scripts/run_unit_tests.sbatch           # contracts only, no rendering    ~2.9 min
-pytest tests/ -v -rs                           # plain pytest, on a GPU node, still works
+sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU certification
 ```
 
-`tests/unit/` is the layer under all of that and it renders nothing: the style batching rule, the
-dataset indexing and episode boundaries, the policy and rollout API, the fidelity and decoder
-declarations, the corrector's refusals, the benchmark scripts' guards, and the repository's own
-citations, docs nav and launcher agreement. It exists because those failures are not about pixels and
-were being reached only through a GPU, a reference install and a trained checkpoint — so on any
-interpreter missing one of the three they were asserted by nothing. Green there says the contracts hold
-and says nothing about the frames; `scripts/run_gpu_tests.sbatch` is still the release gate.
+`tests/unit/` renders nothing: the style batching rule, the dataset indexing and episode
+boundaries, the policy and rollout API, the corrector's refusals, the benchmark scripts' guards,
+and the repository's own citations, docs nav and launcher agreement. `tests/certification/` is
+the frozen Step-3/4/5/6/8 oracle (corpora, digests, declarations, provenance, Gate-F). Green on
+`-m unit` says the contracts hold and says nothing about the frames;
+`scripts/run_gpu_tests.sbatch` is still the release gate.
 
 The full suite's wall time tracks the registry, so it is quoted with the size it was measured at rather
 than as a property of the suite: **45.5 min for 2,580 passed / 648 skipped / 0 failed over a registry of
 64**, 3,228 collected, one segment, 133 EGL contexts created and 0 released, on one H200
 (gb-west-a1-gpu-021). `scripts/run_unit_tests.sbatch` is the CPU-only subset of that at 2.9 min.
 
-It requires a CUDA device by design and skips loudly rather than passing without one. The product is a
-GPU renderer; a suite that goes green on CPU-only CI proves nothing about it.
+The full suite and `-m gpu` require a CUDA device by design and skip loudly rather than passing
+without one. The product is a GPU renderer; a suite that goes green on CPU-only CI proves nothing
+about the frames. `-m unit` is the CPU-only contract layer and does not need CUDA.
 
 ## Running it so that it cannot take itself down
 
@@ -66,7 +70,7 @@ Three more things run alongside it, each answering an incident rather than a hyp
   kills a segment that has gone quiet. The timeout is the fast path; nothing in-process can interrupt a
   thread blocked inside a driver call, which is what a hung EGL or CUDA operation is.
 
-`tests/test_safety_net.py` tests all of that by crashing real processes, and
+`tests/integration/test_safety_net.py` tests all of that by crashing real processes, and
 `tests/gpu/test_crash_isolation.py` does it on the GPU with live EGL contexts (opt-in:
 `SE_SELFTEST_CRASH=1`, since those tests abort the interpreter on purpose).
 

@@ -14,7 +14,7 @@ import sys
 import numpy as np
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..",
-                   "tests", "data", "craftax_full_golden.json")
+                   "tests", "fixtures", "craftax_full_golden.json")
 
 
 def main():

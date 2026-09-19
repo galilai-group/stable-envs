@@ -98,6 +98,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from . import _resources
+
 #: mjtGeom codes, so a scene can be built from an MjModel with no translation table.
 PLANE, HFIELD, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 1, 2, 3, 4, 5, 6, 7
 
@@ -109,6 +111,12 @@ DEFAULT_GROUPS = (0, 1, 2)
 #: the silhouette of the tessellation is what the reference draws -- an analytic sphere is a DIFFERENT
 #: shape, by up to half a pixel at the limb.
 NUMSLICES, NUMSTACKS = 28, 16
+
+#: Ray-direction grids a ``BatchRenderer`` keeps. One grid is ``R*R*n*4`` bytes, the working set is a
+#: single camera orientation per call site, and the bound is the one the uncapped dict already used —
+#: what changed is that the entry over the bound is the LEAST RECENTLY USED one rather than all of
+#: them. See ``BatchRenderer._ray_dirs``.
+RAY_CACHE_MAX = 8
 
 
 # --------------------------------------------------------------------------- quantisation
@@ -604,12 +612,21 @@ class Camera:
         return view, proj
 
 
-class Scene:
+class Scene(_resources.Closeable):
     """Everything static: one triangle soup, per-geom appearance, and the texture pyramids.
 
     Built once per ``MjModel``. A frame then needs only ``geom_xpos``/``geom_xmat``, which is what makes
     the render a pure function of a compact state.
+
+    **Ownership.** A ``Scene`` owns device memory and nothing else — the vertex/normal/uv/index
+    tensors, the sparse transform matrices, the per-geom appearance vectors and the texture pyramids.
+    No context, no EGL, nothing shared. ``close()`` drops them; the ``MjModel`` it was built from is
+    the caller's and is not referenced after construction. A ``Scene`` handed to a ``BatchRenderer``
+    with ``scene=`` stays the CALLER's to close (see ``BatchRenderer``); one the renderer builds
+    itself is closed with it.
     """
+
+    resource_kind = "nvdiff.Scene"
 
     def __init__(self, m, groups=DEFAULT_GROUPS, device="cuda", nslice: int = NUMSLICES,
                  nstack: int = NUMSTACKS, skip_alpha_zero: bool = True, tex_policy: str = "pot"):
@@ -666,6 +683,19 @@ class Scene:
                        np.concatenate(F), np.concatenate(FG), dev)
         self._appearance(m, dev)
         self._sparse(dev)
+        self._opened()
+
+    def _release(self) -> None:
+        """Drop every device tensor this scene holds. Idempotent; frees nothing shared.
+
+        Listed by name rather than swept with ``vars()`` so that a member added later is a deliberate
+        decision about its lifetime instead of silently retained (or silently freed).
+        """
+        for name in ("vert", "norm", "uv", "vgeom", "face", "fgeom", "mjgeom", "S3", "S4", "S3p",
+                     "mat_rgb", "alpha", "spec", "shininess", "emission", "texid"):
+            if hasattr(self, name):
+                setattr(self, name, None)
+        self.textures = {}
 
     def _assemble(self, vert, norm, uv, vgeom, face, fgeom, dev) -> None:
         import torch
@@ -740,6 +770,7 @@ class Scene:
                 raise ValueError(f"tex_of_geom names texture {t} but textures has no such entry")
             self.textures[t] = prepare_texture_array(np.asarray(textures[t]), dev, tex_policy)
         self._sparse(dev)
+        self._opened()
         return self
 
     # -- geometry ----------------------------------------------------------
@@ -851,6 +882,7 @@ class Scene:
     def clip(self, xpos, xmat, view, proj):
         """``(B, V, 4)`` clip-space vertices, ``(B, V, 3)`` world normals and world positions."""
         import torch
+        self._check_open("clip")
         B, G = xpos.shape[0], self.G
         M = torch.zeros(B, G, 4, 4, device=xpos.device, dtype=xpos.dtype)
         M[:, :, :3, :3] = xmat
@@ -950,14 +982,45 @@ def _to_pow2(a: np.ndarray):
 
 # --------------------------------------------------------------------------- the renderer
 
-class BatchRenderer:
+class BatchRenderer(_resources.Closeable):
     """``(B, ngeom, ...)`` geom frames -> ``(B, H, W, 3)`` uint8 on device.
 
     The frames, not the qpos, are the input: producing ``geom_xpos``/``geom_xmat`` from a state is
     MuJoCo's or MJWarp's job and costs 0.6 % of a frame (``docs/research/backend3d.md``), so keeping it
     outside means this class can be driven by either and measured without one of them in the way.
     ``render_qpos`` is the convenience wrapper that runs MuJoCo's own CPU kinematics.
+
+    **Ownership, and the one case where it is conditional.** This renderer always owns its
+    ``nvdiffrast.torch.RasterizeCudaContext`` — a CUDA rasterizer context, which is NOT an EGL/GL
+    context and is not subject to the never-release rule that governs those (``_resources`` states
+    that rule; nvdiffrast's CUDA backend is exactly why this backend was chosen over the OpenGL one).
+    It also owns the skybox texture it prepares and the ray-direction cache.
+
+    The ``Scene`` is the conditional part. Built here (``m=`` given, no ``scene=``) it is owned here
+    and ``close()`` closes it. Handed in (``scene=``) it belongs to the caller — ``rocket_landing.py``
+    builds one ``Scene.from_triangles`` and could hand it to several renderers — so ``close()`` drops
+    the reference and leaves the scene alive. ``owns_scene`` says which, so a caller never has to
+    guess::
+
+        with BatchRenderer(m, res=240) as br:      # br.owns_scene is True; the scene closes with it
+            ...
+        scene = Scene.from_triangles(...)
+        with BatchRenderer(None, scene=scene) as br:   # br.owns_scene is False; scene survives
+            ...
+        scene.close()
+
+    ``owns_scene`` is a plain attribute and is meant to be set. A caller that builds a scene purely
+    to hand it to one renderer and keeps no other reference to it — ``rocket_landing.py`` is exactly
+    that — writes ``br.owns_scene = True`` after construction, and the scene is then closed with the
+    renderer instead of surviving, unreferenced, until the collector notices. The default is the
+    conservative one because the damage runs the other way: a renderer that closed a scene its caller
+    was still using would be a use-after-free in whatever renders next.
+
+    No ``__del__``, for the reason ``_resources.Closeable`` records. An unclosed renderer holds its
+    context until the process ends and is countable with ``_resources.live("nvdiff.BatchRenderer")``.
     """
+
+    resource_kind = "nvdiff.BatchRenderer"
 
     def __init__(self, m=None, res: int = 224, groups=DEFAULT_GROUPS, device: str = "cuda",
                  textures: bool = True, mipmap: bool = True, skybox: bool = True,
@@ -995,6 +1058,9 @@ class BatchRenderer:
         self.tiny = tiny if tiny is not None else (TinyShading() if shading == "tiny" else None)
         self.tex_filter = tex_filter
         self.sample_offset = (float(sample_offset[0]), float(sample_offset[1]))
+        #: True when this renderer BUILT its scene and therefore closes it; False when a caller handed
+        #: one in with ``scene=`` and kept ownership of it.
+        self.owns_scene = scene is None
         self.scene = scene if scene is not None else Scene(m, groups, device=device, nslice=nslice,
                                                            nstack=nstack, tex_policy=tex_policy)
         self.ctx = dr.RasterizeCudaContext(device=self.device)
@@ -1003,8 +1069,11 @@ class BatchRenderer:
         self.skybox_tex = None
         #: ``_ray_dirs``'s grid, which is a constant of (resolution, camera ORIENTATION, fovy) and not
         #: of the camera's position or of the state. See ``_ray_dirs`` for what leaving it uncached
-        #: costs.
-        self._ray_cache: dict = {}
+        #: costs. Bounded and LRU (``_resources.BoundedCache``): it was a dict that emptied itself
+        #: wholesale at eight entries, which discards the grid the CURRENT camera is using as readily
+        #: as the coldest one. The values are identical either way — a miss rebuilds the same array
+        #: from the same expression — so this changes cost, never a pixel.
+        self._ray_cache = _resources.BoundedCache(RAY_CACHE_MAX, name="nvdiff.ray_dirs")
         #: OPTIONAL SHADOW TERM, and the only extension point in the shading law:
         #: ``shadow(light_index, p, n) -> (B,H,W,1) in [0,1]`` or ``None``, where ``p`` and ``n`` are
         #: the world position and unit normal of the shaded point. It multiplies that light's DIFFUSE
@@ -1017,14 +1086,34 @@ class BatchRenderer:
         #: no shadow-casting light needs none at all. ``None`` is the default and costs nothing.
         #: ``stable_envs/envs/mujoco_locomotion.py`` (``_ShadowPass``) is the worked example.
         self.shadow = None
+        self._opened()
+
+    def _release(self) -> None:
+        """Drop the rasterizer context, the ray grids, the skybox, and the scene IF this one owns it.
+
+        The context goes last: nvdiffrast frees its device-side state when the last reference to it
+        goes, and the cached grids and the scene's tensors are ordinary torch allocations that should
+        be back in the caching allocator before that happens. The shadow hook is cleared because it is
+        a closure a caller installed, and it typically captures a second renderer.
+        """
+        self._ray_cache.clear()
+        self.skybox_tex = None
+        self.shadow = None
+        self.lights = None
+        scene, self.scene = self.scene, None
+        if self.owns_scene and scene is not None:
+            scene.close()
+        self.ctx = None
 
     # -- setup -------------------------------------------------------------
 
     def set_lights(self, lights: Lights) -> None:
+        self._check_open("set_lights")
         self.lights = lights
 
     def set_skybox(self, m) -> None:
         """Attach the model's skybox texture, if it has one."""
+        self._check_open("set_skybox")
         import mujoco
         if m is None:
             return
@@ -1040,6 +1129,7 @@ class BatchRenderer:
         model at all -- so the only trustworthy source for what is actually lighting the scene is the
         scene MuJoCo builds. This costs one ``mjv_updateScene`` at construction and nothing per frame.
         """
+        self._check_open("resolve_from_mujoco")
         import mujoco
         opt = option if option is not None else mujoco.MjvOption()
         scn = mujoco.MjvScene(m, maxgeom=max(m.ngeom * 2, 1000))
@@ -1061,6 +1151,7 @@ class BatchRenderer:
         import torch
 
         import nvdiffrast.torch as dr
+        self._check_open("render")
         S = self.scene
         R = self.res * self.ss
         B = int(xpos.shape[0])
@@ -1112,6 +1203,7 @@ class BatchRenderer:
 
     def render_qpos(self, qpos, cam: Camera | None = None, camera_id: int = -1, out=None):
         """``(B,nq)`` -> frames, running MuJoCo's own CPU kinematics. Convenience, not the fast path."""
+        self._check_open("render_qpos")
         import mujoco
         import torch
         q = np.asarray(qpos.cpu() if hasattr(qpos, "cpu") else qpos, np.float64)
@@ -1309,6 +1401,7 @@ class BatchRenderer:
         rebuilt per call by every caller in this repo, and CPython reuses the id of a freed object, so
         an id-keyed cache is both always-miss and occasionally wrong.
         """
+        self._check_open("_ray_dirs")
         import torch
         mat = np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)
         key = (int(R), mat.tobytes(), float(cam.fovy))
@@ -1323,7 +1416,7 @@ class BatchRenderer:
             d = (X[None, ..., None] * right[:, None, None] + Y[None, ..., None] * up[:, None, None]
                  + fwd[:, None, None])
             d = d / np.linalg.norm(d, axis=-1, keepdims=True)
-            if len(self._ray_cache) >= 8:                            # a grid is R*R*n*4 bytes
-                self._ray_cache.clear()
-            t = self._ray_cache[key] = torch.as_tensor(d, dtype=torch.float32, device=self.device)
+            # The bound and the eviction are the cache's (``RAY_CACHE_MAX``, least-recently-used);
+            # a grid is R*R*n*4 bytes.
+            t = self._ray_cache.put(key, torch.as_tensor(d, dtype=torch.float32, device=self.device))
         return t.expand(B, R, R, 3) if t.shape[0] == 1 else t
