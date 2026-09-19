@@ -9,7 +9,7 @@ have no baseline to compare against, across the seventeen families this workstre
     (``minigrid``, ``gym-sokoban``, ``gymnasium-robotics``, ``procgen``, ``jaxmarl``, ``pgx``,
     ``griddly``, Box2D, ``mujoco_warp``, nvdiffrast), so a test that instantiated would SKIP on the
     machine where the question is asked and the property would quietly stop being enforced. This is
-    the same argument ``test_foundation_api.py`` makes for its own ratchet, applied per family;
+    the same argument ``test_public_api.py`` makes for its own ratchet, applied per family;
   * **``state_layout`` is a real layout**: every declared field is a key of the public State, the
     offsets tile the packed row exactly, and ``pack``/``unpack`` round-trip it — checked on the
     class where the layout is a class attribute, and on an instance where it comes from a compiled

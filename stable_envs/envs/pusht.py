@@ -559,7 +559,7 @@ class PushT(Env):
         Bit-identical to ``step`` on the same device for the same state, because it is the same
         ``_advance`` over the same float32 inputs — the eager path, since a CUDA graph reads fixed
         addresses (``self._state``, ``self._agent_v``) and this call may not write them. ``step``
-        keeps the captured path; ``tests/unit/test_foundation_pusht.py`` asserts the two agree to the
+        keeps the captured path; ``tests/unit/test_pusht_api.py`` asserts the two agree to the
         bit on CPU and the oracle script asserts it again on CUDA.
         """
         rows = self.pack(state)

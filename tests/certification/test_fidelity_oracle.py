@@ -567,7 +567,7 @@ def test_no_bound_is_hardcoded_in_the_certifier(C):
     """The judging functions may not contain a numeric literal. Every bar comes from somewhere else.
 
     Scoped to the functions that DECIDE a verdict, so a table width or a string slice in the report
-    cannot trip it -- the same scoping ``tests/certification/test_step3.py`` settled on, and for the same
+    cannot trip it -- the same scoping ``tests/certification/test_semantic_equivalence.py`` settled on, and for the same
     reason: an over-broad AST scan gets suppressed rather than fixed.
     """
     src = Path(C.__file__).read_text()

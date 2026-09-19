@@ -221,7 +221,7 @@ def format_registry(width: int = 34) -> str:
 #: (``examples/results/step8/support_matrix.json``, 42 rows, 40 pixel-producing and 2 symbolic).
 #:
 #: These are aliases, not a second registry: every id resolves to a class that is already registered
-#: under its canonical name, and ``tests/unit/test_foundation_registry.py`` asserts this table against
+#: under its canonical name, and ``tests/unit/test_registry.py`` asserts this table against
 #: the frozen matrix row for row, so the two cannot drift. An id with SEVERAL cells (a DM-Control id
 #: that covers two tasks, the two OGB maze layouts) does not pick one for the caller — the cells are
 #: different environments and choosing silently is how a benchmark ends up reporting the wrong one.
