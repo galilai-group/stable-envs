@@ -22,14 +22,16 @@ Concrete classes are canonical. `snv.make("swm/PushT-v1", …)` is the string AP
 <div class="grid cards" markdown>
 
 - **[Quickstart](quickstart.md)** — install, `reset` / `step` / `render`, specs, logging
+- **[Install](install.md)** — extras, pins, nvdiffrast
 - **[Environments](environments.md)** — `list_envs`, `spec`, SWM aliases, optional extras
 - **[State and specs](concepts/state.md)** — TensorDict keys, pack/unpack, StepResult
 - **[Stateful vs functional](concepts/dynamics.md)** — `step` writes; `transition` / `unroll` do not
+- **[Variations](concepts/variation-spaces.md)** — appearance without changing state
 - **[Lifecycle](concepts/lifecycle.md)** — `close()`, context manager, short batches
-- **[Registry](concepts/registry.md)** — classes canonical, strings secondary
-- **[stable-worldmodel](concepts/worldmodel.md)** — ownership boundary; frozen interop
-- **[Limitations](concepts/limitations.md)** — devices, extras, accepted Step-8 limits
+- **[stable-worldmodel](concepts/worldmodel.md)** — ownership boundary; shipped adapters
+- **[Limitations](concepts/limitations.md)** — devices, extras, accepted limits
 - **[Throughput](benchmarks.md)** — methodology, then the measured tables
+- **[Gallery](gallery.md)** — official renderer and ours, same states
 - **[Adding an environment](adding-an-env.md)** — the worked PushT port
 
 </div>
@@ -77,12 +79,12 @@ An env that can produce a `Scene2D` from a state has *proved* the frame is a fun
 - [The fused rasterizer](concepts/rasterizer.md)
 - [Variation spaces](concepts/variation-spaces.md)
 
-Research notes, including families that were examined and rejected, stay in [research](research/). A no-go is a result, not a gap to hide: [when does this pay off](research/when_does_this_pay_off.md).
+Research notes, including families that were examined and rejected, stay in the [research archive](research/index.md). A no-go is a result, not a gap to hide: [when does this pay off](research/when_does_this_pay_off.md).
 
 ## Building these docs
 
 ```bash
-pip install mkdocs mkdocs-material "mkdocstrings[python]"
+pip install "stable-envs[docs]"
 mkdocs build --strict     # or: mkdocs serve
 ```
 

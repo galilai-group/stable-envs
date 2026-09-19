@@ -6,16 +6,6 @@ List what this interpreter actually imported with `snv.list_envs()` / `snv.spec(
 
 Each module's docstring is where its measured constants live: the reference id, the state layout, and every value that was recovered by pixel-diffing rather than read off the reference's source. Those are reproduced below, one per family, without their class members. PushT is rendered in full because it is the worked example the [porting guide](../adding-an-env.md) follows.
 
-Step-9 module moves (old import paths still resolve as `sys.modules` aliases until Wave 3):
-
-| Step-8 path | now |
-|---|---|
-| `stable_envs.envs.swm_nav` / `simple_point_maze` | `stable_envs.envs.navigation` |
-| `stable_envs.envs.dmcontrol` (module) | `stable_envs.envs.dmcontrol` (package) |
-| `stable_envs.envs.ogbench` (module) | `stable_envs.envs.ogbench` (package: `maze` + `manipulation`) |
-| `stable_envs.envs.ogb_manip` | alias of `stable_envs.envs.ogbench.manipulation` |
-| `stable_envs.envs.craftax_full` | alias of `stable_envs.envs._craftax_full` |
-
 ## PushT
 
 ::: stable_envs.envs.pusht
@@ -62,7 +52,7 @@ Step-9 module moves (old import paths still resolve as `sys.modules` aliases unt
     options:
       members: false
 
-::: stable_envs.envs.craftax_full
+::: stable_envs.envs._craftax_full
     options:
       members: false
 

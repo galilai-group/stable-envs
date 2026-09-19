@@ -137,5 +137,6 @@ def test_the_merge_gate_table_has_all_ten_items(findings):
 
 def test_the_docs_page_exists_and_is_in_the_nav():
     assert DOC.exists(), f"missing {DOC}"
-    nav = (ROOT / "mkdocs.yml").read_text()
-    assert "research/step8_semantic_craftax.md" in nav
+    landing = (ROOT / "docs" / "research" / "index.md").read_text()
+    assert "research/index.md" in (ROOT / "mkdocs.yml").read_text()
+    assert "step8_semantic_craftax.md" in landing

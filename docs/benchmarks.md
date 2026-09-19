@@ -2,14 +2,14 @@
 
 ## Methodology
 
-Correctness and performance are separate. This page is the latter. Certification, pixel identity and
-the Step-8 support matrix do not live here.
+Correctness and performance are separate. This page is the latter. Certification and pixel identity
+do not live here.
 
 How a number on this page was produced, so a later re-run can disagree honestly rather than silently:
 
 1. **Same job, same card, paired.** A before/after or GPU-vs-reference comparison is timed in one
-   process on one device. Cross-card digest or throughput comparison is not a valid oracle: frozen
-   Step-4/7 digests were taken on RTX 3090s, and later jobs land on A40 / A6000 / L40S.
+   process on one device.    Cross-card digest or throughput comparison is not a valid oracle: frozen
+   certification digests were taken on RTX 3090s, and later jobs land on A40 / A6000 / L40S.
 2. **Native supersample.** `--ss` defaults to `native`: whatever the class declares
    (`default_supersample`). Forcing `1` on the 44 classes that declare `2` measures a different
    picture, four times cheaper in rays, than `snv.make(name)` returns.
@@ -25,14 +25,14 @@ How a number on this page was produced, so a later re-run can disagree honestly 
 5. **The generated file is the source.** Tables transcribed below are copies of
    `examples/results/bench_gpu_vs_cpu.md` (and the decode/storage sweeps they name). When the two
    disagree, believe the generated file.
-6. **Step 9 is not an optimisation phase.** A roughly >10% repeatable regression on a core hot path
-   (shared 2-D, raycast/CPU3D, MJWarp, nvdiff, dynamics moved into new abstractions) blocks merge
-   unless causally explained and accepted. Ordinary noise is tolerated; paired measurements on the
-   same hardware are the comparison.
+6. **Paired measurements on the same hardware.** A roughly >10% repeatable regression on a core
+   hot path (shared 2-D, raycast/CPU3D, MJWarp, nvdiff, dynamics) needs a causal explanation.
+   Ordinary noise is tolerated.
 
-OSS-facing harnesses, once Workstream N lands, live under `benchmarks/`. Until then the scripts named
-on this page (`examples/bench_gpu_vs_cpu.py`, `examples/bench_vs_decode.py`,
-`examples/bench_step3_pipeline.py`) are the measurement path.
+OSS-facing harnesses live under [`benchmarks/`](https://github.com/galilai-group/stable-envs/tree/main/benchmarks)
+(`python -m benchmarks.render`, `python -m benchmarks.pipeline`). The tables on this page were
+taken with `examples/bench_gpu_vs_cpu.py`, `examples/bench_vs_decode.py` and
+`examples/bench_step3_pipeline.py`.
 
 The PushT sections on this page were produced by
 [`examples/bench_gpu_vs_cpu.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/bench_gpu_vs_cpu.py)
@@ -294,7 +294,7 @@ python examples/bench_gpu_vs_cpu.py --out examples/results --envs PushT --sizes 
 python examples/bench_gpu_vs_cpu.py --out examples/results --sizes native
 ```
 
-It walks `stable_envs.REGISTRY`, so a newly registered env is benchmarked with no edit. Results merge
+It walks `snv.list_envs()`, so a newly registered env is benchmarked with no edit. Results merge
 into the existing JSON per env, so the sweep can be split across allocations, and they are written after
 every env, so a reference env that takes the process down costs one env rather than the run. Envs without
 a reference renderer get the GPU columns and no speedup column, rather than a fabricated baseline.

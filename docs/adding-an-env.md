@@ -44,8 +44,8 @@ class MyEnv(Env):
     reference_id = "gym_pusht/PushT-v0"
 ```
 
-Construct with `num_envs=` (not `batch=`). `snv.MyEnv(num_envs=8, device="cpu")` after registration.
-The Step-8 names `StableEnv` and `batch=` still resolve and warn once until Wave 3.
+Construct with `num_envs=`. `snv.MyEnv(num_envs=8, device="cpu")` after registration.
+The public base class is `Env`.
 
 `state_names` is not decoration. The conformance suite asserts `len(state_names) == state_dim` with the
 reasoning that a state vector whose fields are unnamed cannot be checked or reused by anyone, and the

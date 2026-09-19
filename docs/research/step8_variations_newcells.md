@@ -30,7 +30,7 @@ gap, and recording it is what lets the Step-8 count say "every id is accounted f
 implicit exception.
 
 The per-leaf tables are generated, not written:
-[`examples/results/step8/variations-newcells/leaf_tables.md`](../../examples/results/step8/variations-newcells/leaf_tables.md)
+[`examples/results/step8/variations-newcells/leaf_tables.md`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step8/variations-newcells/leaf_tables.md)
 and `leaf_classification.json`, both from
 `scratch/step8/variations-newcells/generate_report.py --check`.
 
@@ -235,7 +235,7 @@ That statement no longer covers OGBCube and OGBScene. The authorised follow-up c
 "the default did not move" became something to measure rather than to argue. It was measured on the
 frozen Step-7 corpus, on the card, against `$SCR/se8/baseline`; the numbers and the merge-gate table
 are in
-[`examples/results/step8/variations-newcells/findings.md`](../../examples/results/step8/variations-newcells/findings.md).
+[`examples/results/step8/variations-newcells/findings.md`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step8/variations-newcells/findings.md).
 
 ## Open items for the coordinator
 

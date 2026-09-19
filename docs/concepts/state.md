@@ -18,7 +18,7 @@ Trivial cells may expose a single key (`{"x": (d,)}`) rather than an entity tree
 Every renderer, frozen corpus and certification check still speaks a float32 row of width `state_dim`:
 
 ```python
-rows = env.pack(state)             # (n, state_dim) float32 — the Step-8 layout, byte for byte
+rows = env.pack(state)             # (n, state_dim) float32 — the frozen packed layout
 state = env.unpack(rows)           # entity-grouped view; hidden fields the row does not carry come back as zeros
 names = env.state_names            # column labels of that packed row
 ```

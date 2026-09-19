@@ -28,7 +28,7 @@ with snv.PushT(num_envs=8, device="cpu") as env:
 snv.PushT(num_envs=64, device="cuda", size=None, supersample=1, backend="auto", seed=0)
 ```
 
-- `num_envs` replaces Step-8 `batch` (`batch=` still works and warns once per process until Wave 3).
+- `num_envs` is how many copies this object holds.
 - `env.device` is a `torch.device`.
 - `env.size` is the frame size; `None` means the class default (`default_size`).
 - `len(env) == num_envs`.

@@ -605,15 +605,15 @@ up. The difference panel is amplified 4x and clipped, because a 5/255 residual i
 
 | configuration          | sheet                                                                                               | mean \|Δ\| | max \|Δ\| | panels                                     | sha256       |
 |------------------------|-----------------------------------------------------------------------------------------------------|------------|-----------|--------------------------------------------|--------------|
-| CraftaxClassic         | [`CraftaxClassic.png`](../../examples/results/step4/comparisons/CraftaxClassic.png)                 | 0.000      | 0         | official → stable-envs → \|difference\| x4 | 13dd4fd4b254 |
-| DMCBallInCupCatch      | [`DMCBallInCupCatch.png`](../../examples/results/step4/comparisons/DMCBallInCupCatch.png)           | 0.372      | 188       | official → stable-envs → \|difference\| x4 | 85b6c0ab5dce |
-| DMCHumanoidStand       | [`DMCHumanoidStand.png`](../../examples/results/step4/comparisons/DMCHumanoidStand.png)             | 4.984      | 111       | official → stable-envs → \|difference\| x4 | 080e29b83218 |
-| DMCReacherHard         | [`DMCReacherHard.png`](../../examples/results/step4/comparisons/DMCReacherHard.png)                 | 0.295      | 96        | official → stable-envs → \|difference\| x4 | e97c494cf760 |
-| DMCWalkerWalk          | [`DMCWalkerWalk.png`](../../examples/results/step4/comparisons/DMCWalkerWalk.png)                   | 14.706     | 193       | official → stable-envs → \|difference\| x4 | ed31b3ea8335 |
-| FetchPickAndPlace      | [`FetchPickAndPlace.png`](../../examples/results/step4/comparisons/FetchPickAndPlace.png)           | 0.726      | 244       | official → stable-envs → \|difference\| x4 | 9afd16b16271 |
-| PointmazeLargeNavigate | [`PointmazeLargeNavigate.png`](../../examples/results/step4/comparisons/PointmazeLargeNavigate.png) | 0.017      | 160       | official → stable-envs → \|difference\| x4 | b080495e548d |
-| PushT                  | [`PushT.png`](../../examples/results/step4/comparisons/PushT.png)                                   | 2.286      | 158       | official → stable-envs → \|difference\| x4 | 827abc8e03dd |
-| SimplePointMaze        | [`SimplePointMaze.png`](../../examples/results/step4/comparisons/SimplePointMaze.png)               | 0.012      | 241       | official → stable-envs → \|difference\| x4 | 503929435398 |
+| CraftaxClassic         | [`CraftaxClassic.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/CraftaxClassic.png)                 | 0.000      | 0         | official → stable-envs → \|difference\| x4 | 13dd4fd4b254 |
+| DMCBallInCupCatch      | [`DMCBallInCupCatch.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/DMCBallInCupCatch.png)           | 0.372      | 188       | official → stable-envs → \|difference\| x4 | 85b6c0ab5dce |
+| DMCHumanoidStand       | [`DMCHumanoidStand.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/DMCHumanoidStand.png)             | 4.984      | 111       | official → stable-envs → \|difference\| x4 | 080e29b83218 |
+| DMCReacherHard         | [`DMCReacherHard.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/DMCReacherHard.png)                 | 0.295      | 96        | official → stable-envs → \|difference\| x4 | e97c494cf760 |
+| DMCWalkerWalk          | [`DMCWalkerWalk.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/DMCWalkerWalk.png)                   | 14.706     | 193       | official → stable-envs → \|difference\| x4 | ed31b3ea8335 |
+| FetchPickAndPlace      | [`FetchPickAndPlace.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/FetchPickAndPlace.png)           | 0.726      | 244       | official → stable-envs → \|difference\| x4 | 9afd16b16271 |
+| PointmazeLargeNavigate | [`PointmazeLargeNavigate.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/PointmazeLargeNavigate.png) | 0.017      | 160       | official → stable-envs → \|difference\| x4 | b080495e548d |
+| PushT                  | [`PushT.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/PushT.png)                                   | 2.286      | 158       | official → stable-envs → \|difference\| x4 | 827abc8e03dd |
+| SimplePointMaze        | [`SimplePointMaze.png`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step4/comparisons/SimplePointMaze.png)               | 0.012      | 241       | official → stable-envs → \|difference\| x4 | 503929435398 |
 
 ## What Step 4 does not establish
 

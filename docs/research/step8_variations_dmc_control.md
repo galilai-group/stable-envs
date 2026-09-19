@@ -19,9 +19,9 @@ measurement behind it:
 | `not_applicable` | **0** | reserved by the taxonomy and unused here — see §1 |
 
 Machine-readable, one row per (id, leaf):
-[`examples/results/step8/variations-dmc-control/leaf_classification.json`](../../examples/results/step8/variations-dmc-control/leaf_classification.json).
+[`examples/results/step8/variations-dmc-control/leaf_classification.json`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/step8/variations-dmc-control/leaf_classification.json).
 The raw probe outputs it is built from are under
-[`examples/results/step8/variations-dmc-control/measure/`](../../examples/results/step8/variations-dmc-control/measure/)
+[`examples/results/step8/variations-dmc-control/measure/`](https://github.com/galilai-group/stable-envs/tree/main/examples/results/step8/variations-dmc-control/measure/)
 and the probes themselves under `scratch/step8/variations-dmc-control/`.
 
 ---
