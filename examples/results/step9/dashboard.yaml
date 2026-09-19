@@ -243,9 +243,9 @@ workstreams:
   ids_affected: 'every MJWarp/nvdiff consumer: DMC trackcom cuda, Fetch, OGB, Rocket, RoboCasa, MetaWorld,
     HumanoidBench'
   baseline_sha: b3f3a81
-  head_sha: e67be88
-  review: review_i.md APPROVE-WITH-CHANGES at 50acdf8; GPU contingency closed by job 6509711; probe fix e67be88
-  merge_sha: 4eca3ff
+  head_sha: 0ad1aa4
+  review: review_i.md APPROVE-WITH-CHANGES at 50acdf8; GPU contingency closed by job 6509711; probe fix 0ad1aa4
+  merge_sha: 9a2ddeb
   tests: local CPU resource tests committed; CUDA pixels/lifetime/bench from jobs 6507919 (2D+3D) and 6509711 (MJWarp/nvdiff)
   oracle_diff: vis311 DMC trackcom, OGB Cube/Scene, Rocket, Fetch (4 cells) frames identical vs 21cb306; unexplained_differences empty. Benches 0.999 / 1.006 / within-bar / 1.017 against 1.10. Rendernet resource probe classified as probe construction (CPU ESPCN), not a product regression. Broad tests/gpu missing-dep noise and Fetch venv-without-pytest classified as harness.
   api_diff: Closeable/BoundedCache on five backend objects; EGL contexts still never released; no public renderer math change
@@ -321,8 +321,8 @@ workstreams:
   owner: coordinator
   status: MERGED into step9/integration (inventory; Step-8 oracle retained)
   files_owned: scratch/, examples/results/, superseded modules (Wave 3 only)
-  head_sha: 6ed256c
-  merge_sha: aa52dc6
+  head_sha: 476e601
+  merge_sha: 2809ee1
   review: coordinator classification; conservative v0 keeps shims unadvertised
   tests: documentation/inventory only
   api_diff: README no longer advertises a nonexistent [all] extra; CHANGELOG 0.1.0; support_matrix.json
@@ -494,9 +494,9 @@ incident_log:
 - date: '2026-09-19'
   item: 'GPU jobs 6507919 (2D+3D pixels/timings PASS; tests/gpu missing-dep noise) and 6509711 (MJWarp/nvdiff
     pixels/lifetime/bench PASS; rendernet probe classified as CPU ESPCN construction). Workstream I merged
-    at 4eca3ff.'
+    at 9a2ddeb.'
 - date: '2026-09-19'
-  item: Workstream O merged at aa52dc6. Shims/scratch/examples/results classified KEEP_INTERNAL or ARCHIVE_RESEARCH.
+  item: Workstream O merged at 2809ee1. Shims/scratch/examples/results classified KEEP_INTERNAL or ARCHIVE_RESEARCH.
     README [all] extra removed. support_matrix.json wrapper REGRESSION=0.
 - date: '2026-09-19'
   item: Step-9 v0-draft closure packet at docs/research/step9_closure.md. RELEASE_BLOCKING empty. Push

@@ -31,8 +31,8 @@ extra.
 | version | `0.1.0` |
 
 Workstream merge commits (integration first-parent / recorded `merge_sha` where the dashboard has one):
-W0 `d07ffa8` · A · H · B · G · C · D · E · F `9cb3261` · I `4eca3ff` · M `5ccc2af` · J `4f04803` ·
-N `173d5ff` · L `f4ef912` · K `491b1c1` · O `aa52dc6`. Reviews under `examples/results/step9/reviews/`.
+W0 `d07ffa8` · A · H · B · G · C · D · E · F `9cb3261` · I `9a2ddeb` · M `5ccc2af` · J `4f04803` ·
+N `173d5ff` · L `f4ef912` · K `491b1c1` · O `2809ee1`. Reviews under `examples/results/step9/reviews/`.
 
 ## 3. Final repository tree
 
@@ -122,7 +122,7 @@ Consolidated GPU jobs after Wave 1:
 | job | what passed | classified residual |
 |---|---|---|
 | **6507919** | 2-D frames/timings; 3-D pixels/timings (worst ratio 1.003) | `tests/gpu` in family venvs missing `warp` / `gymnasium_robotics`; 10 Pointmaze official-renderer node faults (not baseline-vs-head; 3-D `unexplained_differences` empty) |
-| **6509711** (RTX A6000, `gpu1501`, tree `fc05512`) | vis311 DMC trackcom identical, bench 0.999; OGB Cube/Scene identical, 1.006; Rocket identical, within 1.10; Fetch 4 cells identical, 1.017. Direct `mjwarp` and `nvdiff` probes PASS. Lifetime ok. | rendernet probe: CPU `ESPCN` in the probe (`LoadedCorrector` does not move weights; production `load`/`unsealed` do). Fixed in `e67be88`. Fetch venv has no `pytest`. |
+| **6509711** (RTX A6000, `gpu1501`, tree `fc05512`) | vis311 DMC trackcom identical, bench 0.999; OGB Cube/Scene identical, 1.006; Rocket identical, within 1.10; Fetch 4 cells identical, 1.017. Direct `mjwarp` and `nvdiff` probes PASS. Lifetime ok. | rendernet probe: CPU `ESPCN` in the probe (`LoadedCorrector` does not move weights; production `load`/`unsealed` do). Fixed in `0ad1aa4`. Fetch venv has no `pytest`. |
 
 Unexplained oracle differences on cells this tree can construct: **zero**.
 

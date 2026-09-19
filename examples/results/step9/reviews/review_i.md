@@ -2,7 +2,7 @@ APPROVE-WITH-CHANGES
 
 ## Coordinator merge note (2026-09-19)
 
-Merged into `step9/integration` at `4eca3ff` (`step9/render-mjwarp-nvdiff` @ `e67be88`, integration
+Merged into `step9/integration` at `9a2ddeb` (`step9/render-mjwarp-nvdiff` @ `0ad1aa4`, integration
 parent `dacf80f`). The independent review stays **APPROVE-WITH-CHANGES**; the contingency was a
 repaired GPU job that can fail, then passing on frames.
 
@@ -10,7 +10,7 @@ That job is **6509711** (RTX A6000, `gpu1501`, tree `fc05512`): vis311 / OGB / R
 identical to `21cb306`, lifetime ok, worst benches 0.999 / 1.006 / within 1.10 / 1.017. Direct
 `mjwarp` and `nvdiff` probes PASS. The rendernet probe failed because it constructed
 `LoadedCorrector` around a CPU `ESPCN`; production `load` / `unsealed` already move weights. Probe
-fix is `e67be88`. Remaining `tests/gpu` failures in family venvs are missing optional packages;
+fix is `0ad1aa4`. Remaining `tests/gpu` failures in family venvs are missing optional packages;
 Fetch's venv has no `pytest`. Consumer `close()` / `BoundedCache` wiring on MJWarp family caches
 remains a documented follow-up, not a pixel regression.
 
