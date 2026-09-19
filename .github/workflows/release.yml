@@ -33,17 +33,17 @@ jobs:
           python -m pip install build twine
           python -m build
           python -m twine check dist/*
-          python scratch/step9/packaging-ci/audit_dist.py dist
+          python scripts/ci/audit_dist.py dist
       - name: Smoke-test wheel
         run: |
           python -m venv .wheel-venv
           .wheel-venv/bin/python -m pip install dist/*.whl
-          .wheel-venv/bin/python scratch/step9/packaging-ci/smoke_installed.py
+          .wheel-venv/bin/python scripts/ci/smoke_installed.py
       - name: Smoke-test source distribution
         run: |
           python -m venv .sdist-venv
           .sdist-venv/bin/python -m pip install dist/*.tar.gz
-          .sdist-venv/bin/python scratch/step9/packaging-ci/smoke_installed.py
+          .sdist-venv/bin/python scripts/ci/smoke_installed.py
       - uses: actions/upload-artifact@v4
         with:
           name: distributions
