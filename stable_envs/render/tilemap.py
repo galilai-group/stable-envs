@@ -39,6 +39,7 @@ The label decomposition handles both — highlight becomes an effective palette
 each subpixel has a single label. ``build()`` asserts the reconstruction reproduces the official atlas
 byte for byte at the default palette, so a wrong constant cannot survive the build.
 """
+
 from __future__ import annotations
 
 import math
@@ -49,20 +50,21 @@ import torch
 
 from . import _resources as _RES
 
-try:                                       # triton is optional; the torch path is the readable one
+try:  # triton is optional; the torch path is the readable one
     import triton
     import triton.language as tl
+
     HAVE_TRITON = True
-except Exception:                          # noqa: BLE001
+except Exception:  # noqa: BLE001
     HAVE_TRITON = False
 
 # ---------------------------------------------------------------- MiniGrid's alphabet
 
 N_TYPE, N_COLOR, N_STATE, N_DIR, N_HL = 11, 6, 3, 5, 2
-NO_AGENT = 4                     #: agent_dir slot meaning "no agent stands on this tile"
-N_GEOM = N_DIR * N_TYPE * N_COLOR * N_STATE          # 990 distinct tile geometries
-N_SLOT = N_HL * N_GEOM                               # 1980 atlas entries
-SUBDIVS = 3                      #: Grid.render_tile's supersampling factor
+NO_AGENT = 4  #: agent_dir slot meaning "no agent stands on this tile"
+N_GEOM = N_DIR * N_TYPE * N_COLOR * N_STATE  # 990 distinct tile geometries
+N_SLOT = N_HL * N_GEOM  # 1980 atlas entries
+SUBDIVS = 3  #: Grid.render_tile's supersampling factor
 
 T_UNSEEN, T_EMPTY, T_WALL, T_FLOOR, T_DOOR = 0, 1, 2, 3, 4
 T_KEY, T_BALL, T_BOX, T_GOAL, T_LAVA, T_AGENT = 5, 6, 7, 8, 9, 10
@@ -84,6 +86,7 @@ DEFAULT_HIGHLIGHT_ALPHA = 0.30
 def official_colors() -> np.ndarray:
     """``COLORS`` as a (6,3) uint8 array in ``COLOR_TO_IDX`` order, read from the package."""
     from minigrid.core.constants import COLOR_TO_IDX, COLORS
+
     out = np.zeros((N_COLOR, 3), np.uint8)
     for name, i in COLOR_TO_IDX.items():
         out[i] = COLORS[name]
@@ -110,40 +113,53 @@ def reachable_codes() -> list[tuple[int, int, int]]:
 
 
 REACHABLE = reachable_codes()
-N_CODE = len(REACHABLE)          # 58
+N_CODE = len(REACHABLE)  # 58
 
 
 def atlas_flat_index(hl, d, t, c, s):
     """Index into the atlas. ``hl*990 + geometry``, so labels[geom] lines up with both halves."""
-    return ((((hl * N_DIR + d) * N_TYPE + t) * N_COLOR + c) * N_STATE + s)
+    return (((hl * N_DIR + d) * N_TYPE + t) * N_COLOR + c) * N_STATE + s
 
 
 def make_obj(t: int, c: int, s: int):
     """The object with encoding ``(t, c, s)``, built faithfully rather than through ``decode``."""
     from minigrid.core.constants import IDX_TO_COLOR
     from minigrid.core.world_object import Ball, Box, Door, Floor, Goal, Key, Lava, Wall
+
     col = IDX_TO_COLOR[c]
     if t in (T_UNSEEN, T_EMPTY, T_AGENT):
         return None
-    return {T_WALL: lambda: Wall(col), T_FLOOR: lambda: Floor(col),
-            T_DOOR: lambda: Door(col, is_open=(s == 0), is_locked=(s == 2)),
-            T_KEY: lambda: Key(col), T_BALL: lambda: Ball(col), T_BOX: lambda: Box(col),
-            T_GOAL: lambda: Goal(col), T_LAVA: Lava}[t]()
+    return {
+        T_WALL: lambda: Wall(col),
+        T_FLOOR: lambda: Floor(col),
+        T_DOOR: lambda: Door(col, is_open=(s == 0), is_locked=(s == 2)),
+        T_KEY: lambda: Key(col),
+        T_BALL: lambda: Ball(col),
+        T_BOX: lambda: Box(col),
+        T_GOAL: lambda: Goal(col),
+        T_LAVA: Lava,
+    }[t]()
 
 
 # ---------------------------------------------------------------- building the atlas
 
+
 def _official_atlas(tile_size: int) -> np.ndarray:
     """(1980,T,T,3) uint8, straight out of ``Grid.render_tile``."""
     from minigrid.core.grid import Grid
+
     out = np.zeros((N_SLOT, tile_size, tile_size, 3), np.uint8)
     for hl in range(N_HL):
         for d in range(N_DIR):
             for t in range(N_TYPE):
                 for c in range(N_COLOR):
                     for s in range(N_STATE):
-                        img = Grid.render_tile(make_obj(t, c, s), agent_dir=(d if d < 4 else None),
-                                               highlight=bool(hl), tile_size=tile_size)
+                        img = Grid.render_tile(
+                            make_obj(t, c, s),
+                            agent_dir=(d if d < 4 else None),
+                            highlight=bool(hl),
+                            tile_size=tile_size,
+                        )
                         # Grid.render assigns this float array into a uint8 frame; same cast here
                         out[atlas_flat_index(hl, d, t, c, s)] = img.astype(np.uint8)
     return out
@@ -161,12 +177,17 @@ def _label_for(color, color_idx: int) -> int:
     if np.allclose(v, DEFAULT_LAVA):
         return LBL_LAVA
     base = official_colors()[color_idx].astype(np.float64)
-    for lbl, cand in ((LBL_PAL + color_idx, base), (LBL_PAL_HALF + color_idx, base / 2),
-                      (LBL_PAL_45 + color_idx, 0.45 * base)):
+    for lbl, cand in (
+        (LBL_PAL + color_idx, base),
+        (LBL_PAL_HALF + color_idx, base / 2),
+        (LBL_PAL_45 + color_idx, 0.45 * base),
+    ):
         if np.allclose(v, cand):
             return lbl
-    raise ValueError(f"unrecognised fill colour {v} for colour index {color_idx}; the label "
-                     f"decomposition is incomplete and a recoloured atlas would be wrong")
+    raise ValueError(
+        f"unrecognised fill colour {v} for colour index {color_idx}; the label "
+        f"decomposition is incomplete and a recoloured atlas would be wrong"
+    )
 
 
 def _label_maps(tile_size: int) -> np.ndarray:
@@ -179,7 +200,7 @@ def _label_maps(tile_size: int) -> np.ndarray:
     catches any divergence by diffing the reconstruction against the official atlas.
     """
     import minigrid.core.world_object as wo
-    from minigrid.utils.rendering import (fill_coords, point_in_rect, point_in_triangle, rotate_fn)
+    from minigrid.utils.rendering import fill_coords, point_in_rect, point_in_triangle, rotate_fn
 
     n = tile_size * SUBDIVS
     out = np.zeros((N_GEOM, n, n), np.uint8)
@@ -190,25 +211,27 @@ def _label_maps(tile_size: int) -> np.ndarray:
             for c in range(N_COLOR):
                 for s in range(N_STATE):
                     obj = make_obj(t, c, s)
-                    key = (obj.encode() if obj is not None else None,
-                           d if d < 4 else None)
+                    key = (obj.encode() if obj is not None else None, d if d < 4 else None)
                     if key not in cache:
-                        lab = np.zeros((n, n, 3), np.uint8)           # LBL_BG == 0
+                        lab = np.zeros((n, n, 3), np.uint8)  # LBL_BG == 0
                         fill_coords(lab, point_in_rect(0, 0.031, 0, 1), (LBL_GRID,) * 3)
                         fill_coords(lab, point_in_rect(0, 1, 0, 0.031), (LBL_GRID,) * 3)
                         if obj is not None:
                             orig = wo.fill_coords
-                            wo.fill_coords = (
-                                lambda img, fn, color, _l=lab, _c=c, _o=orig:
-                                _o(_l, fn, (_label_for(color, _c),) * 3))
+                            wo.fill_coords = lambda img, fn, color, _l=lab, _c=c, _o=orig: _o(
+                                _l, fn, (_label_for(color, _c),) * 3
+                            )
                             try:
                                 obj.render(scratch)
                             finally:
                                 wo.fill_coords = orig
                         if d < 4:
-                            tri = rotate_fn(point_in_triangle((0.12, 0.19), (0.87, 0.50),
-                                                              (0.12, 0.81)),
-                                            cx=0.5, cy=0.5, theta=0.5 * math.pi * d)
+                            tri = rotate_fn(
+                                point_in_triangle((0.12, 0.19), (0.87, 0.50), (0.12, 0.81)),
+                                cx=0.5,
+                                cy=0.5,
+                                theta=0.5 * math.pi * d,
+                            )
                             fill_coords(lab, tri, (LBL_AGENT,) * 3)
                         cache[key] = lab[:, :, 0].copy()
                     out[atlas_flat_index(0, d, t, c, s)] = cache[key]
@@ -227,9 +250,9 @@ def label_palette(values: dict) -> np.ndarray:
     p[LBL_GRID] = np.asarray(values.get("grid_line_color", DEFAULT_GRIDLINE), np.float64)
     p[LBL_AGENT] = np.asarray(values.get("agent_color", DEFAULT_AGENT), np.float64)
     p[LBL_LAVA] = np.asarray(values.get("lava_color", DEFAULT_LAVA), np.float64)
-    p[LBL_PAL:LBL_PAL + N_COLOR] = pal
-    p[LBL_PAL_HALF:LBL_PAL_HALF + N_COLOR] = np.trunc(pal / 2)
-    p[LBL_PAL_45:LBL_PAL_45 + N_COLOR] = np.trunc(0.45 * pal)
+    p[LBL_PAL : LBL_PAL + N_COLOR] = pal
+    p[LBL_PAL_HALF : LBL_PAL_HALF + N_COLOR] = np.trunc(pal / 2)
+    p[LBL_PAL_45 : LBL_PAL_45 + N_COLOR] = np.trunc(0.45 * pal)
     return p
 
 
@@ -258,10 +281,10 @@ def recolour(labels: torch.Tensor, pal_lo, pal_hi, tile_size: int, chunk: int = 
     for hl, pal in ((0, pal_lo), (1, pal_hi)):
         pt = torch.as_tensor(np.asarray(pal, np.float64), device=labels.device)
         for i in range(0, N, chunk):
-            lab = labels[i:i + chunk].long()
-            sub = pt[lab]                                        # (n_chunk, 3T, 3T, 3) float64
+            lab = labels[i : i + chunk].long()
+            sub = pt[lab]  # (n_chunk, 3T, 3T, 3) float64
             x = sub.reshape(lab.shape[0], T, f, T, f, 3).mean(4).mean(2)
-            out[hl * N_GEOM + i: hl * N_GEOM + i + lab.shape[0]] = x.to(torch.uint8)
+            out[hl * N_GEOM + i : hl * N_GEOM + i + lab.shape[0]] = x.to(torch.uint8)
     return out
 
 
@@ -289,7 +312,7 @@ class MiniGridAtlas:
     disk. The disk write is atomic because a test session may build several envs at once.
     """
 
-    _mem: dict[tuple[int, str], "MiniGridAtlas"] = {}
+    _mem: dict[tuple[int, str], MiniGridAtlas] = {}
 
     def __init__(self, tile_size: int, device="cuda", verify: bool = True):
         self.T = int(tile_size)
@@ -300,7 +323,7 @@ class MiniGridAtlas:
         self._rgb_cache = _RES.BoundedCache(8, name="tilemap.rgb")
 
     @classmethod
-    def get(cls, tile_size: int, device="cuda") -> "MiniGridAtlas":
+    def get(cls, tile_size: int, device="cuda") -> MiniGridAtlas:
         # RESOLVE the device before keying on it. ``str("cuda")`` is the same key on every GPU, while
         # ``torch.device("cuda")`` means whichever one is current -- so a process that renders on
         # cuda:0 and then on cuda:1 was handed cuda:0's atlas the second time and Triton refused the
@@ -317,32 +340,32 @@ class MiniGridAtlas:
             try:
                 z = np.load(path)
                 return z["atlas"], z["labels"]
-            except Exception:                                   # noqa: BLE001  corrupt/partial cache
+            except Exception:  # noqa: BLE001  corrupt/partial cache
                 pass
         atlas, labels = _official_atlas(T), _label_maps(T)
         if verify:
             pal = {"palette": official_colors()}
             p = label_palette(pal)
-            rec = recolour(torch.from_numpy(labels), p,
-                           highlight_palette(p, DEFAULT_HIGHLIGHT, DEFAULT_HIGHLIGHT_ALPHA),
-                           T).numpy()
+            rec = recolour(
+                torch.from_numpy(labels), p, highlight_palette(p, DEFAULT_HIGHLIGHT, DEFAULT_HIGHLIGHT_ALPHA), T
+            ).numpy()
             bad = int((rec != atlas).any(axis=(1, 2, 3)).sum())
             if bad:
                 raise AssertionError(
                     f"label-map reconstruction differs from the official atlas in {bad}/{N_SLOT} "
                     f"tiles at the default palette — the decomposition is wrong, so every recoloured "
-                    f"frame would be wrong in a way no parity test would catch")
+                    f"frame would be wrong in a way no parity test would catch"
+                )
         os.makedirs(os.path.dirname(path), exist_ok=True)
         tmp = f"{path}.{os.getpid()}.tmp"
-        with open(tmp, "wb") as fh:               # a handle, not a name: savez appends .npz to names
+        with open(tmp, "wb") as fh:  # a handle, not a name: savez appends .npz to names
             np.savez_compressed(fh, atlas=atlas, labels=labels)
         os.replace(tmp, path)
         return atlas, labels
 
     def rgb(self, values: dict) -> torch.Tensor:
         """(1980,T,T,3) uint8 atlas for these variation values. Default values return the official one."""
-        key = b"|".join(np.ascontiguousarray(np.asarray(values[k], np.float64)).tobytes()
-                        for k in sorted(values))
+        key = b"|".join(np.ascontiguousarray(np.asarray(values[k], np.float64)).tobytes() for k in sorted(values))
         hit = self._rgb_cache.get(key)
         if hit is not None:
             return hit
@@ -350,26 +373,33 @@ class MiniGridAtlas:
             out = self.official
         else:
             p = label_palette(values)
-            hp = highlight_palette(p, values.get("highlight_color", DEFAULT_HIGHLIGHT),
-                                   float(np.asarray(values.get("highlight_alpha",
-                                                               DEFAULT_HIGHLIGHT_ALPHA)).ravel()[0]))
+            hp = highlight_palette(
+                p,
+                values.get("highlight_color", DEFAULT_HIGHLIGHT),
+                float(np.asarray(values.get("highlight_alpha", DEFAULT_HIGHLIGHT_ALPHA)).ravel()[0]),
+            )
             out = recolour(self.labels, p, hp, self.T)
         return self._rgb_cache.put(key, out)
 
     @staticmethod
     def _is_default(values: dict) -> bool:
         def same(k, ref):
-            return np.array_equal(np.asarray(values.get(k, ref), np.float64),
-                                  np.asarray(ref, np.float64))
-        return (same("palette", official_colors()) and same("background_color", DEFAULT_BG)
-                and same("grid_line_color", DEFAULT_GRIDLINE)
-                and same("agent_color", DEFAULT_AGENT) and same("lava_color", DEFAULT_LAVA)
-                and same("highlight_color", DEFAULT_HIGHLIGHT)
-                and float(np.asarray(values.get("highlight_alpha", DEFAULT_HIGHLIGHT_ALPHA)
-                                     ).ravel()[0]) == DEFAULT_HIGHLIGHT_ALPHA)
+            return np.array_equal(np.asarray(values.get(k, ref), np.float64), np.asarray(ref, np.float64))
+
+        return (
+            same("palette", official_colors())
+            and same("background_color", DEFAULT_BG)
+            and same("grid_line_color", DEFAULT_GRIDLINE)
+            and same("agent_color", DEFAULT_AGENT)
+            and same("lava_color", DEFAULT_LAVA)
+            and same("highlight_color", DEFAULT_HIGHLIGHT)
+            and float(np.asarray(values.get("highlight_alpha", DEFAULT_HIGHLIGHT_ALPHA)).ravel()[0])
+            == DEFAULT_HIGHLIGHT_ALPHA
+        )
 
 
 # ---------------------------------------------------------------- the gather itself
+
 
 def word_size(tile_size: int) -> int:
     """Widest word (bytes) that evenly divides a tile row of ``T*3`` bytes.
@@ -385,12 +415,21 @@ def word_size(tile_size: int) -> int:
 _WORD_DTYPE = {4: torch.int32, 2: torch.int16, 1: torch.int8}
 
 if HAVE_TRITON:
+
     @triton.jit
-    def _blit_kernel(atlas_ptr, idx_ptr, out_ptr,
-                     H: tl.constexpr, W: tl.constexpr, T: tl.constexpr,
-                     WPTR: tl.constexpr, WPR: tl.constexpr, WPT: tl.constexpr,
-                     BLOCK: tl.constexpr):
-        row = tl.program_id(0)                 # flattened (batch, output row)
+    def _blit_kernel(
+        atlas_ptr,
+        idx_ptr,
+        out_ptr,
+        H: tl.constexpr,
+        W: tl.constexpr,
+        T: tl.constexpr,
+        WPTR: tl.constexpr,
+        WPR: tl.constexpr,
+        WPT: tl.constexpr,
+        BLOCK: tl.constexpr,
+    ):
+        row = tl.program_id(0)  # flattened (batch, output row)
         b = row // (H * T)
         y = row % (H * T)
         tj, py = y // T, y % T
@@ -398,12 +437,10 @@ if HAVE_TRITON:
         m = w < WPR
         tile = tl.load(idx_ptr + b * (H * W) + tj * W + w // WPTR, mask=m, other=0)
         src = tile.to(tl.int64) * WPT + py * WPTR + (w % WPTR)
-        tl.store(out_ptr + row.to(tl.int64) * WPR + w, tl.load(atlas_ptr + src, mask=m, other=0),
-                 mask=m)
+        tl.store(out_ptr + row.to(tl.int64) * WPR + w, tl.load(atlas_ptr + src, mask=m, other=0), mask=m)
 
 
-def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int,
-         out: torch.Tensor | None = None) -> torch.Tensor:
+def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int, out: torch.Tensor | None = None) -> torch.Tensor:
     """``idx`` (B,H,W) int32 of atlas slots -> ``(B, H*T, W*T, 3)`` uint8, in one pass.
 
     One program per (batch, output row, column block); each lane resolves its own tile and copies a
@@ -424,13 +461,22 @@ def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int,
     # ``render/raster2d.py:render_triton`` for the failure it prevents.
     with torch.cuda.device(idx.device):
         _blit_kernel[(B * H * T, triton.cdiv(wpr, BLOCK))](
-            atlas_w, idx.contiguous(), out.view(-1).view(_WORD_DTYPE[w]),
-            H=H, W=W, T=T, WPTR=T * 3 // w, WPR=wpr, WPT=T * T * 3 // w, BLOCK=BLOCK, num_warps=4)
+            atlas_w,
+            idx.contiguous(),
+            out.view(-1).view(_WORD_DTYPE[w]),
+            H=H,
+            W=W,
+            T=T,
+            WPTR=T * 3 // w,
+            WPR=wpr,
+            WPT=T * T * 3 // w,
+            BLOCK=BLOCK,
+            num_warps=4,
+        )
     return out
 
 
-def blit_torch(atlas_rgb: torch.Tensor, idx: torch.Tensor,
-               out: torch.Tensor | None = None) -> torch.Tensor:
+def blit_torch(atlas_rgb: torch.Tensor, idx: torch.Tensor, out: torch.Tensor | None = None) -> torch.Tensor:
     """The readable reference for :func:`blit`: gather whole tiles, then untile."""
     B, H, W = idx.shape
     T = atlas_rgb.shape[1]
@@ -444,6 +490,7 @@ def blit_torch(atlas_rgb: torch.Tensor, idx: torch.Tensor,
 # ---------------------------------------------------------------- the visibility scan
 
 if HAVE_TRITON:
+
     @triton.jit
     def _vis_kernel(t_ptr, m_ptr, n, V: tl.constexpr, BLOCK: tl.constexpr):
         off = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
@@ -481,8 +528,9 @@ def visibility_scan(transparent: torch.Tensor, view_size: int) -> torch.Tensor:
     V = view_size
     if not HAVE_TRITON or V * V > 63:
         return visibility_scan_torch(transparent, V)
-    p2 = (torch.ones(V * V, dtype=torch.int64, device=transparent.device)
-          << torch.arange(V * V, device=transparent.device))
+    p2 = torch.ones(V * V, dtype=torch.int64, device=transparent.device) << torch.arange(
+        V * V, device=transparent.device
+    )
     bits = (transparent.reshape(B, -1).to(torch.int64) * p2).sum(1).contiguous()
     m = torch.empty_like(bits)
     BLOCK = 128

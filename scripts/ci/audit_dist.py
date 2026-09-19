@@ -69,11 +69,7 @@ def audit_wheel(path: Path, expected_sources: set[str]) -> None:
         assert len(metadata_files) == 1, metadata_files
         _audit_metadata(archive.read(metadata_files[0]).decode())
         assert expected_sources <= names, sorted(expected_sources - names)
-        unexpected = [
-            name
-            for name in names
-            if not (name.startswith("stable_envs/") or ".dist-info/" in name)
-        ]
+        unexpected = [name for name in names if not (name.startswith("stable_envs/") or ".dist-info/" in name)]
         assert unexpected == [], unexpected
 
 
@@ -83,11 +79,7 @@ def audit_sdist(path: Path, expected_sources: set[str]) -> None:
         roots = {name.split("/", 1)[0] for name in raw_names}
         assert len(roots) == 1, roots
         root = roots.pop()
-        names = {
-            name.removeprefix(f"{root}/")
-            for name in raw_names
-            if name != root
-        }
+        names = {name.removeprefix(f"{root}/") for name in raw_names if name != root}
         required = {"LICENSE", "README.md", "pyproject.toml", *expected_sources}
         assert required <= names, sorted(required - names)
         pkg_info = archive.extractfile(f"{root}/PKG-INFO")
@@ -109,10 +101,7 @@ def main() -> None:
     expected_sources = _package_sources(root)
     audit_wheel(wheels[0], expected_sources)
     audit_sdist(sdists[0], expected_sources)
-    print(
-        f"audited {wheels[0].name} and {sdists[0].name}: "
-        f"{len(expected_sources)} package modules"
-    )
+    print(f"audited {wheels[0].name} and {sdists[0].name}: {len(expected_sources)} package modules")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ Run on a GPU node:
 
     python examples/swm_compat/run_swm_workflow.py --out examples/swm_compat/results
 """
+
 from __future__ import annotations
 
 import argparse
@@ -66,14 +67,18 @@ def drive(world, policy, steps: int, seed: int = 0) -> dict:
         actions = policy.get_action(world.infos)
         _, _, _, _, world.infos = world.envs.step(np.asarray(actions))
     dt = time.perf_counter() - t0
-    return {"first_info": first, "last_keys": _keys(world.infos), "steps": steps,
-            "seconds": dt, "env_steps_per_s": steps * world.num_envs / dt,
-            "pixels_shape": list(np.asarray(world.infos["pixels"]).shape)}
+    return {
+        "first_info": first,
+        "last_keys": _keys(world.infos),
+        "steps": steps,
+        "seconds": dt,
+        "env_steps_per_s": steps * world.num_envs / dt,
+        "pixels_shape": list(np.asarray(world.infos["pixels"]).shape),
+    }
 
 
 def arm_official(swm, num_envs: int, steps: int) -> dict:
-    world = swm.World("swm/TwoRoom-v1", num_envs=num_envs, max_episode_steps=1000,
-                      image_shape=(224, 224))
+    world = swm.World("swm/TwoRoom-v1", num_envs=num_envs, max_episode_steps=1000, image_shape=(224, 224))
     try:
         return drive(world, swm.policy.RandomPolicy(), steps)
     finally:
@@ -82,8 +87,7 @@ def arm_official(swm, num_envs: int, steps: int) -> dict:
 
 def arm_facade(swm, num_envs: int, steps: int) -> dict:
     """Arm B. The ONLY difference from arm A is the env id string."""
-    world = swm.World("stable_envs/TwoRoom-v0", num_envs=num_envs, max_episode_steps=1000,
-                      image_shape=(224, 224))
+    world = swm.World("stable_envs/TwoRoom-v0", num_envs=num_envs, max_episode_steps=1000, image_shape=(224, 224))
     try:
         return drive(world, swm.policy.RandomPolicy(), steps)
     finally:
@@ -92,8 +96,7 @@ def arm_facade(swm, num_envs: int, steps: int) -> dict:
 
 def arm_batched(swm, num_envs: int, steps: int) -> dict:
     """Arm C. Arm B plus one line, and the render becomes a single launch for the whole world."""
-    world = swm.World("stable_envs/TwoRoom-v0", num_envs=num_envs, max_episode_steps=1000,
-                      image_shape=(224, 224))
+    world = swm.World("stable_envs/TwoRoom-v0", num_envs=num_envs, max_episode_steps=1000, image_shape=(224, 224))
     try:
         wm.attach_batched_pool(world)
         return drive(world, swm.policy.RandomPolicy(), steps)
@@ -121,6 +124,7 @@ def arm_renderer_swap(steps: int = 40, size: int = 224, seed: int = 0) -> dict:
     """
     import gymnasium
     import stable_worldmodel  # noqa: F401
+
     from stable_envs.testing import conformance as C
 
     env = gymnasium.make("swm/PushT-v1", resolution=size)
@@ -148,11 +152,15 @@ def arm_renderer_swap(steps: int = 40, size: int = 224, seed: int = 0) -> dict:
     env.close()
 
     agree = C.pixel_agreement(ours, official)
-    return {"steps": steps, "size": size, "agreement": agree,
-            "swap_hook_max_abs_diff": swap_matches,
-            "state_dim": int(states.shape[1]),
-            "bytes_per_step_states": int(states.shape[1] * 4),
-            "bytes_per_step_frame": int(np.prod(official.shape[1:]))}
+    return {
+        "steps": steps,
+        "size": size,
+        "agreement": agree,
+        "swap_hook_max_abs_diff": swap_matches,
+        "state_dim": int(states.shape[1]),
+        "bytes_per_step_states": int(states.shape[1] * 4),
+        "bytes_per_step_frame": int(np.prod(official.shape[1:])),
+    }
 
 
 def arm_scaling(swm, steps: int = 10) -> dict:
@@ -166,11 +174,10 @@ def arm_scaling(swm, steps: int = 10) -> dict:
     out = {}
     for n in (8, 32, 128):
         row = {}
-        for arm, fn in (("official", arm_official), ("facade", arm_facade),
-                        ("batched", arm_batched)):
+        for arm, fn in (("official", arm_official), ("facade", arm_facade), ("batched", arm_batched)):
             try:
                 row[arm] = fn(swm, n, steps)["env_steps_per_s"]
-            except Exception as e:                                          # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
                 row[arm] = f"ERR {type(e).__name__}: {e}"
         if all(isinstance(v, float) for v in row.values()):
             row["batched_vs_official"] = row["batched"] / row["official"]
@@ -198,6 +205,7 @@ def arm_config_drives_our_renderer() -> dict:
     """
     import gymnasium
     import stable_worldmodel  # noqa: F401
+
     from stable_envs.testing import conformance as C
 
     env = se.make("TwoRoom", num_envs=8, device="cuda")
@@ -213,6 +221,7 @@ def arm_config_drives_our_renderer() -> dict:
     states = env.sample_states(8, rng=np.random.default_rng(7))
     official = []
     import torch
+
     for st in states:
         u.agent_position = torch.as_tensor(st[:2], dtype=torch.float32)
         official.append(np.ascontiguousarray(u.render()))
@@ -220,11 +229,14 @@ def arm_config_drives_our_renderer() -> dict:
     ours = env.render(states, style=np.tile(style, (8, 1))).cpu().numpy()
     default = env.render(states).cpu().numpy()
     ref.close()
-    return {"randomised_leaves": covered,
-            "agreement_with_swm_config": C.pixel_agreement(ours, official),
-            "agreement_if_config_ignored": C.pixel_agreement(default, official),
-            "swm_variation_values": {k: (v.tolist() if hasattr(v, "tolist") else v)
-                                     for k, v in wm._flatten(u.variation_space.value).items()}}
+    return {
+        "randomised_leaves": covered,
+        "agreement_with_swm_config": C.pixel_agreement(ours, official),
+        "agreement_if_config_ignored": C.pixel_agreement(default, official),
+        "swm_variation_values": {
+            k: (v.tolist() if hasattr(v, "tolist") else v) for k, v in wm._flatten(u.variation_space.value).items()
+        },
+    }
 
 
 def main() -> None:
@@ -252,10 +264,10 @@ def main() -> None:
         try:
             report[name] = fn()
             print(json.dumps(report[name], indent=1, default=str)[:4000], flush=True)
-        except Exception as e:                                              # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             import traceback
-            report[name] = {"error": f"{type(e).__name__}: {e}",
-                            "traceback": traceback.format_exc()}
+
+            report[name] = {"error": f"{type(e).__name__}: {e}", "traceback": traceback.format_exc()}
             print(report[name]["traceback"], flush=True)
 
     ok = [a for a in ("A_official", "B_facade", "C_batched_pool") if "error" not in report[a]]

@@ -23,15 +23,24 @@ NO DYNAMICS, and that is a declaration rather than an omission: these cells ship
 ``render`` work as usual; to produce trajectories, roll out the official CPU env and render the
 states it gives you.
 """
+
 from __future__ import annotations
 
 import numpy as np
 
 from ...env import Env
-from ...registry import register
 from ...spaces import Box, Dict, Discrete
-from ._model import (N_DRAWS, VISIBLE_GROUPS, _effective_alpha, _ENV_CACHE,  # noqa: F401
-                     _episode_slots, _slot_element, _slot_name, _suite)
+from ._model import (  # noqa: F401
+    _ENV_CACHE,
+    N_DRAWS,
+    VISIBLE_GROUPS,
+    _effective_alpha,
+    _episode_slots,
+    _slot_element,
+    _slot_name,
+    _suite,
+)
+
 
 class _DMCModel(Env):
     """What every DM Control cell shares, whichever renderer draws it.
@@ -85,8 +94,15 @@ class _DMCModel(Env):
     #: re-exports the collected mapping as ``CPU_UNCERTIFIED`` for the scripts that read it.
     CPU_UNCERTIFIED_REASON: str = ""
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         """``num_envs`` environments on ``device`` (contract §2).
 
         ``state_dim`` and ``state_names`` are read off the COMPILED MODEL here and not declared on the
@@ -104,11 +120,15 @@ class _DMCModel(Env):
         # f24d94c, this workstream's request R1). The two keys are what the halves ARE, and the
         # ``episode`` key is absent on the eleven cells that draw nothing per episode.
         k = self.state_dim - self.nq
-        self.state_layout = ((("qpos",), self.nq, 0),) + (
-            ((("episode",), k, self.nq),) if k else ())
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        self.state_layout = ((("qpos",), self.nq, 0),) + (((("episode",), k, self.nq),) if k else ())
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         assert len(self.state_names) == self.state_dim
 
     # ---- Step-9 state -----------------------------------------------------
@@ -182,6 +202,7 @@ class _DMCModel(Env):
         if hit is not None:
             return hit
         import mujoco
+
         env = cls._load_env(0)
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
@@ -189,21 +210,23 @@ class _DMCModel(Env):
         m.vis.global_.offheight = max(int(m.vis.global_.offheight), int(size))
         slots = _episode_slots(env, m)
         d = mujoco.MjData(m)
-        pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
-                        geom_rgba=np.array(m.geom_rgba, copy=True),
-                        site_rgba=np.array(m.site_rgba, copy=True),
-                        geom_group=np.array(m.geom_group, copy=True),
-                        site_group=np.array(m.site_group, copy=True),
-                        light_diffuse=np.array(m.light_diffuse, copy=True),
-                        light_specular=np.array(m.light_specular, copy=True),
-                        mat_reflectance=np.array(m.mat_reflectance, copy=True),
-                        cam_fovy=np.array(m.cam_fovy, copy=True),
-                        # geom_type/geom_size are here for ``SHAPE_KNOBS``, and unconditionally, so
-                        # that ``_apply_variation``'s restore is one shape for every cell. They are two
-                        # small arrays and the alternative is a branch in the hottest correctness path
-                        # in this file.
-                        geom_type=np.array(m.geom_type, copy=True),
-                        geom_size=np.array(m.geom_size, copy=True))
+        pristine = dict(
+            mat_rgba=np.array(m.mat_rgba, copy=True),
+            geom_rgba=np.array(m.geom_rgba, copy=True),
+            site_rgba=np.array(m.site_rgba, copy=True),
+            geom_group=np.array(m.geom_group, copy=True),
+            site_group=np.array(m.site_group, copy=True),
+            light_diffuse=np.array(m.light_diffuse, copy=True),
+            light_specular=np.array(m.light_specular, copy=True),
+            mat_reflectance=np.array(m.mat_reflectance, copy=True),
+            cam_fovy=np.array(m.cam_fovy, copy=True),
+            # geom_type/geom_size are here for ``SHAPE_KNOBS``, and unconditionally, so
+            # that ``_apply_variation``'s restore is one shape for every cell. They are two
+            # small arrays and the alternative is a branch in the hottest correctness path
+            # in this file.
+            geom_type=np.array(m.geom_type, copy=True),
+            geom_size=np.array(m.geom_size, copy=True),
+        )
         for arr in {a for a, _ in slots}:
             pristine[arr] = np.array(getattr(m, arr), copy=True)
         # ONE Renderer, kept for the life of the process. Material colours, light colours and the
@@ -254,6 +277,7 @@ class _DMCModel(Env):
         a function of the model and not of a set's iteration order.
         """
         import mujoco
+
         m, pr = cls._model(), cls._pristine()
         galpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
         salpha = _effective_alpha(m, "site", rgba=pr["site_rgba"], mat_rgba=pr["mat_rgba"])
@@ -266,22 +290,28 @@ class _DMCModel(Env):
                 # carried a drawn SITE would need two leaves or one ambiguous ``kind``; nothing in the
                 # shipped set does (manipulator's ``target_ball`` site is in group 3), so it raises
                 # rather than silently hiding half the marker.
-                ids = tuple(i for i in range(m.ngeom) if int(m.geom_bodyid[i]) == eid
-                            and int(pr["geom_group"][i]) in VISIBLE_GROUPS and galpha[i] > 0)
-                bad = [i for i in range(m.nsite) if int(m.site_bodyid[i]) == eid
-                       and int(pr["site_group"][i]) in VISIBLE_GROUPS and salpha[i] > 0]
+                ids = tuple(
+                    i
+                    for i in range(m.ngeom)
+                    if int(m.geom_bodyid[i]) == eid and int(pr["geom_group"][i]) in VISIBLE_GROUPS and galpha[i] > 0
+                )
+                bad = [
+                    i
+                    for i in range(m.nsite)
+                    if int(m.site_bodyid[i]) == eid and int(pr["site_group"][i]) in VISIBLE_GROUPS and salpha[i] > 0
+                ]
                 if bad:
                     raise RuntimeError(
                         f"{cls.__name__}: the episode draws body "
                         f"{mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid)!r}, which carries both "
                         f"drawn geoms {list(ids)} and drawn sites {bad}; one visibility leaf cannot "
-                        f"name both kinds")
+                        f"name both kinds"
+                    )
                 if not ids:
                     # A drawn body with nothing drawn on it is not hideable, and advertising a leaf for
                     # it would fail check_variations_do_something on a knob that was never real.
                     continue
-                kind, name = "geom", (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid)
-                                      or f"body{eid}")
+                kind, name = "geom", (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid) or f"body{eid}")
             elif kind in ("geom", "site"):
                 obj = {"geom": mujoco.mjtObj.mjOBJ_GEOM, "site": mujoco.mjtObj.mjOBJ_SITE}[kind]
                 name = mujoco.mj_id2name(m, obj, eid) or f"{kind}{eid}"
@@ -293,7 +323,8 @@ class _DMCModel(Env):
                 # win. A domain that does this needs a naming rule chosen deliberately, not here.
                 raise RuntimeError(
                     f"{cls.__name__}: the episode draws two different elements both named {name!r} "
-                    f"({seen[name]} and {(kind, ids)}); visibility.{name} would be ambiguous")
+                    f"({seen[name]} and {(kind, ids)}); visibility.{name} would be ambiguous"
+                )
             if name in seen:
                 continue
             seen[name] = (kind, ids)
@@ -326,6 +357,7 @@ class _DMCModel(Env):
         """One label per ``qpos`` entry, read off the model's joint layout rather than transcribed —
         a state vector whose fields are mislabelled is worse than one with no labels."""
         import mujoco
+
         free = ("_x", "_y", "_z", "_qw", "_qx", "_qy", "_qz")
         ball = ("_qw", "_qx", "_qy", "_qz")
         out: list[str] = []
@@ -358,10 +390,13 @@ class _DMCModel(Env):
         failure ``_pristine`` documents, one array further along.
         """
         import mujoco
+
         m, pr = cls._model(), cls._pristine()
         used = []
-        for kind, arr, grp, n in (("geom", m.geom_matid, pr["geom_group"], m.ngeom),
-                                  ("site", m.site_matid, pr["site_group"], m.nsite)):
+        for kind, arr, grp, n in (
+            ("geom", m.geom_matid, pr["geom_group"], m.ngeom),
+            ("site", m.site_matid, pr["site_group"], m.nsite),
+        ):
             alpha = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
             for i in range(n):
                 # alpha as well as group: ``finger-spin`` hides its ``target`` and ``tip`` sites by
@@ -394,20 +429,19 @@ class _DMCModel(Env):
         appearance is still the compiled model's by construction.
         """
         import mujoco
+
         m, pr = self._model(), self._pristine()
         mats = {}
         for name in self._used_materials():
             i = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_MATERIAL, name)
             # from the PRISTINE snapshot, never the live model — see _pristine for what that cost
-            mats[name] = Box(low=0.0, high=1.0, shape=(3,),
-                             init_value=[float(x) for x in pr["mat_rgba"][i][:3]])
+            mats[name] = Box(low=0.0, high=1.0, shape=(3,), init_value=[float(x) for x in pr["mat_rgba"][i][:3]])
         space = {
             "material": Dict(mats),
             "light": Dict({"diffuse_scale": Box(low=0.2, high=1.8, shape=(1,), init_value=[1.0])}),
         }
         if self.CAMERA_KNOB:
-            space["camera"] = Dict({"fovy_scale": Box(low=0.55, high=1.8, shape=(1,),
-                                                      init_value=[1.0])})
+            space["camera"] = Dict({"fovy_scale": Box(low=0.55, high=1.8, shape=(1,), init_value=[1.0])})
         vis = {}
         if self.VISIBILITY_KNOB:
             for kind, name, eids in self._hideable():
@@ -422,11 +456,14 @@ class _DMCModel(Env):
         for gname, alts in self.SHAPE_KNOBS.items():
             gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
             if gid < 0:
-                raise RuntimeError(f"{type(self).__name__}: SHAPE_KNOBS names geom {gname!r}, which "
-                                   f"this model does not have")
-            cur = [k for k, (t, s) in enumerate(alts)
-                   if int(t) == int(pr["geom_type"][gid])
-                   and np.allclose(np.asarray(s, np.float64), pr["geom_size"][gid])]
+                raise RuntimeError(
+                    f"{type(self).__name__}: SHAPE_KNOBS names geom {gname!r}, which this model does not have"
+                )
+            cur = [
+                k
+                for k, (t, s) in enumerate(alts)
+                if int(t) == int(pr["geom_type"][gid]) and np.allclose(np.asarray(s, np.float64), pr["geom_size"][gid])
+            ]
             if len(cur) != 1:
                 raise RuntimeError(
                     f"{type(self).__name__}: {len(cur)} of the {len(alts)} declared shapes for "
@@ -435,7 +472,8 @@ class _DMCModel(Env):
                     f"stops being a render of the compiled model — which is the appearance every "
                     f"parity number here is measured under, and which "
                     f"check_default_style_is_official cannot see (it compares the default style "
-                    f"against itself, never against the official renderer)")
+                    f"against itself, never against the official renderer)"
+                )
             if gname in space:
                 # The leaf lives at ``<geom name>.shape``, so a geom named after one of the groups
                 # above would REPLACE that group and silently delete every leaf in it. Nothing in the
@@ -444,7 +482,8 @@ class _DMCModel(Env):
                 raise RuntimeError(
                     f"{type(self).__name__}: geom {gname!r} would put its shape leaf at "
                     f"{gname}.shape and overwrite the existing {gname!r} variation group "
-                    f"({sorted(space[gname])}); rename the group or the leaf")
+                    f"({sorted(space[gname])}); rename the group or the leaf"
+                )
             space[gname] = Dict({"shape": Discrete(len(alts), init_value=cur[0])})
         return Dict(space)
 
@@ -471,7 +510,7 @@ class _DMCModel(Env):
         target drawn somewhere else.
         """
         rng = rng or self.rng
-        seed = int(rng.integers(0, 2 ** 31 - 1))
+        seed = int(rng.integers(0, 2**31 - 1))
         env = self._load_env(seed)
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
@@ -483,7 +522,7 @@ class _DMCModel(Env):
             env.reset()
             for _ in range(int(r2.integers(0, 40))):
                 env.step(r2.uniform(spec.minimum, spec.maximum))
-            out[i, :self.nq] = np.asarray(p.data.qpos, np.float64)
+            out[i, : self.nq] = np.asarray(p.data.qpos, np.float64)
             for j, (arr, k) in enumerate(slots):
                 out[i, self.nq + j] = np.asarray(getattr(m, arr)).reshape(-1)[k]
         return out.astype(np.float32)
@@ -529,12 +568,14 @@ class _DMCModel(Env):
             with p.reset_context():
                 p.data.qpos[:] = st[:nq]
                 p.data.qvel[:] = 0
-            got = np.concatenate([np.asarray(p.data.qpos, np.float64),
-                                  [np.asarray(getattr(m, arr)).reshape(-1)[k] for arr, k in slots]])
+            got = np.concatenate(
+                [np.asarray(p.data.qpos, np.float64), [np.asarray(getattr(m, arr)).reshape(-1)[k] for arr, k in slots]]
+            )
             if np.abs(got - st).max() > 1e-9:
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested state "
                     f"(max {np.abs(got - st).max():.3e}); every parity number computed from it would "
-                    f"be comparing two different scenes")
+                    f"be comparing two different scenes"
+                )
             out.append(p.render(height=size, width=size, camera_id=cls.CAMERA).copy())
         return np.stack(out)

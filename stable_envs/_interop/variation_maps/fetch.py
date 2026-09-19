@@ -115,6 +115,7 @@ OUR default reproduces the official picture; a swm config's default VALUES do no
 ``style_from_variation`` is right to carry them through unchanged. Recorded here so that a later
 parity number computed through the swm wrapper is not mistaken for a stable-envs regression.
 """
+
 from __future__ import annotations
 
 from ..worldmodel import VariationMap
@@ -139,15 +140,18 @@ _DEAD_CAMERA = (
     "wrapper rotates model.cam_pos for all 4 MODEL cameras, and MujocoFetchEnv renders through the "
     "FREE camera from DEFAULT_CAMERA_CONFIG, which is never one of them. We have a working camera "
     "(camera.azimuth_delta / camera.elevation_delta / camera.distance_scale); mapping onto it would "
-    "move our frame where the reference's does not, so it is classified rather than fabricated")
+    "move our frame where the reference's does not, so it is classified rather than fabricated"
+)
 _ARM_ALPHA = (
     "UNSUPPORTED BY BACKEND. Live in MuJoCo (9.3-9.4% of pixels between 0 and 1) and unreachable "
     "here: it writes geom_rgba[.][3]=0.3 on every robot0: geom, and mujoco_warp's render kernel "
     "reads color[0..2] and packs a constant 255 -- no alpha path at all. Same measured fact that "
-    "makes this family hide the four translucent robot0:mocap markers; see FetchBase.parity_note")
+    "makes this family hide the four translucent robot0:mocap markers; see FetchBase.parity_note"
+)
 _BLOCK_MASS = (
     "NOT APPLICABLE: dynamics only. Measured at 0.01 vs 50.0 kg on Push, Slide and PickAndPlace: "
-    "0/255 over 0% of the frame. Our state is qpos + goal and carries no mass")
+    "0/255 over 0% of the frame. Our state is qpos + goal and carries no mass"
+)
 _STATE = "a RESET DISTRIBUTION in swm, and a dimension of our STATE (qpos + goal) here -- "
 
 # The four unmapped buckets below are the Step-8 taxonomy, and this module uses them rather than the
@@ -165,38 +169,37 @@ _DEAD_UPSTREAM = {"camera.angle_delta": _DEAD_CAMERA}
 #: Reach's only extra: swm still OFFERS object.color there and it reaches nothing.
 _REACH_OBJECT = {
     "object.color": "DEAD UPSTREAM on Reach (measured 0/255 over 0% of the frame between two "
-                    "maximally different colours): the wrapper resolves the object through the "
-                    "block_mat/puck_mat material, and reach.xml compiles neither onto a geom, so "
-                    "the write lands on an empty geom list. Live on the other three scenes",
+    "maximally different colours): the wrapper resolves the object through the "
+    "block_mat/puck_mat material, and reach.xml compiles neither onto a geom, so "
+    "the write lands on an empty geom list. Live on the other three scenes",
 }
 
 #: swm leaves that are not appearance questions at all here: reset distributions that are dimensions
 #: of our STATE, and one pure dynamics parameter. The same classification PushT already carries.
 _NOT_APPLICABLE = {
     "agent.start_position": _STATE + "the wrapper writes it into initial_gripper_xpos; ours is the "
-                            "arm's qpos. Note its declared default (1.3418, 0.7491) is not the "
-                            "env's own initial gripper xy: applying it at its default moves up to "
-                            "55/255 on Reach",
+    "arm's qpos. Note its declared default (1.3418, 0.7491) is not the "
+    "env's own initial gripper xy: applying it at its default moves up to "
+    "55/255 on Reach",
     "goal.start_position": _STATE + "the wrapper writes env.goal and model.site_pos[target0]; ours "
-                           "is state dimensions goal_x/goal_y/goal_z, which the goal sphere reads",
+    "is state dimensions goal_x/goal_y/goal_z, which the goal sphere reads",
 }
 #: ...and the three that only exist on a scene with a block.
 _BLOCK_NOT_APPLICABLE = {
     "block.start_position": _STATE + "the wrapper writes data.qpos[object0:joint][0:2]; ours is "
-                            "state dimensions object_x/object_y",
+    "state dimensions object_x/object_y",
     "block.angle": _STATE + "the wrapper writes the object's quaternion about z; ours is state "
-                   "dimensions object_quat_w..object_quat_z",
+    "dimensions object_quat_w..object_quat_z",
     "block.mass": _BLOCK_MASS,
 }
 
 #: Knobs we expose that ``FetchWrapper`` has no leaf for.
 _OURS_ONLY = {
-    "goal.color": "the red target sphere's colour; swm exposes no goal appearance, only "
-                  "goal.start_position",
+    "goal.color": "the red target sphere's colour; swm exposes no goal appearance, only goal.start_position",
     "arm.color": "the five robot0:blue links; swm's only arm leaf is rendering.transparent_arm, "
-                 "which is an alpha and not a colour",
+    "which is an alpha and not a colour",
     "camera.distance_scale": "a working camera knob; swm's camera.angle_delta is dead upstream "
-                             "(see swm_only) and has no distance term at all",
+    "(see swm_only) and has no distance term at all",
     "camera.azimuth_delta": "a working camera knob; see camera.distance_scale",
     "camera.elevation_delta": "a working camera knob; see camera.distance_scale",
 }
@@ -228,7 +231,8 @@ _PARTIAL = {
         "appearance and no two-colour masked substitution reproduces swm's flat sky. Offering the "
         "leaf therefore moves this family's DEFAULT frame, which is a frozen pixel oracle on the "
         "Step-4 and Step-7 corpora. That is a re-freeze decision (Step-8 plan section 19), not an "
-        "implementation decision, and it is escalated rather than taken."),
+        "implementation decision, and it is escalated rather than taken."
+    ),
 }
 #: ``our path -> (swm path, factor)`` with ``ours = theirs * factor``.
 _SCALED = {"light.diffuse": ("light.intensity", LIGHT_FACTOR)}
@@ -261,9 +265,7 @@ def _map_for(scene: str, suffix: str) -> VariationMap:
 #: registered Fetch id, built from one vocabulary so a change to the family cannot reach eleven of
 #: the twelve.
 MAPS: dict[str, VariationMap] = {
-    f"Fetch{scene}{suffix}": _map_for(scene, suffix)
-    for scene in SCENE_HAS_OBJECT
-    for suffix in SUFFIXES
+    f"Fetch{scene}{suffix}": _map_for(scene, suffix) for scene in SCENE_HAS_OBJECT for suffix in SUFFIXES
 }
 
 
@@ -281,7 +283,6 @@ def swm_variation_space(swm_id: str):
     Closes the env on every path, including the failure path.
     """
     import gymnasium
-
     import stable_worldmodel  # noqa: F401
 
     from ..worldmodel import swm_variation_space as _walk

@@ -13,6 +13,7 @@ or off to the side, degenerate sizes, an origin inside the primitive, and a ``d`
 (the bound's derivation divides by ``|d|^2``, and the shipped form multiplies through instead
 precisely so that ``d = 0`` cannot produce a NaN that silently drops a ray).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -23,30 +24,38 @@ R3 = pytest.importorskip("stable_envs.render.raycast3d")
 KINDS = (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)
 
 
-def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0,
-                kinds=None, dd_at_tol=0):
+def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=False, far=0.0, kinds=None, dd_at_tol=0):
     g = torch.Generator().manual_seed(rng)
-    r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)          # noqa: E731
+    r = lambda *s: torch.rand(*s, generator=g, dtype=torch.float32)  # noqa: E731
     # ``kinds`` PINNED rather than sampled is what makes the per-kind dispatch testable. RAYCAST-5
     # applies the bound only to the kinds whose intersector costs more than the bound does, so a
     # scene now mixes primitives that take the bounded path with primitives that take the verbatim
     # unbounded body, and they write into the same ``best`` / ``blocked``. Sampling reaches those
     # mixes eventually; pinning them means the boundary is covered on every run.
-    kinds = ([KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)]
-             if kinds is None else list(kinds))
+    kinds = [KINDS[int(v)] for v in torch.randint(0, len(KINDS), (K,), generator=g)] if kinds is None else list(kinds)
     K = len(kinds)
-    sizes = (r(B, K, 3) * 0.4 + 0.02)
+    sizes = r(B, K, 3) * 0.4 + 0.02
     if degenerate:
-        sizes[:, ::2] = 0.0                                   # zero radius / half-length / extent
+        sizes[:, ::2] = 0.0  # zero radius / half-length / extent
         sizes[0, 0] = 0.0
     pos = (r(B, K, 3) - 0.5) * 1.5
     q = torch.randn(B, K, 4, generator=g)
     q = q / q.norm(dim=-1, keepdim=True)
     w, x, y, z = q.unbind(-1)
-    R = torch.stack([1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y),
-                     2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x),
-                     2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)],
-                    -1).view(B, K, 3, 3)
+    R = torch.stack(
+        [
+            1 - 2 * (y * y + z * z),
+            2 * (x * y - w * z),
+            2 * (x * z + w * y),
+            2 * (x * y + w * z),
+            1 - 2 * (x * x + z * z),
+            2 * (y * z - w * x),
+            2 * (x * z - w * y),
+            2 * (y * z + w * x),
+            1 - 2 * (x * x + y * y),
+        ],
+        -1,
+    ).view(B, K, 3, 3)
     # ``far`` puts the camera metres away from a small cluster, which is the GIANT maze's geometry:
     # ~100 m to a 5 cm capsule. That is the regime the first version of the bound got wrong, and the
     # regime this file did not cover until the cluster found it -- |oc|^2|d|^2 and (oc.d)^2 are each
@@ -55,9 +64,9 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
     # pruned. Without this case the suite passed and one pixel of 3,211,264 still moved.
     o = ((r(B, N, 3) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4])).contiguous()
     if far:
-        sizes = sizes * 0.05                              # centimetre-scale primitives...
+        sizes = sizes * 0.05  # centimetre-scale primitives...
         pos = pos * 0.05
-        o = o + torch.tensor([0.0, -float(far), 0.35 * float(far)])      # ...seen from far away
+        o = o + torch.tensor([0.0, -float(far), 0.35 * float(far)])  # ...seen from far away
     if tangent:
         # aim a third of the rays exactly at each primitive's bound radius: the grazing case, which is
         # where a bound that is one ulp too small drops a pixel.
@@ -69,7 +78,7 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
     else:
         d = torch.nn.functional.normalize((r(B, N, 3) - 0.5) + torch.tensor([0.0, 1.0, 0.0]), dim=-1)
     if nonunit_d:
-        d = d * (r(B, N, 1) * 3.0)                            # includes exact zeros
+        d = d * (r(B, N, 1) * 3.0)  # includes exact zeros
     if dd_at_tol:
         # Put |d|^2 just INSIDE the admission window: the worst bundle ``_unit_rays`` still lets
         # through. ``d`` is unit to ~1e-7, so scaling by sqrt(1 +/- f*TOL) moves |d|^2 to 1 +/- f*TOL
@@ -86,7 +95,8 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
         d = cand
         assert float((dd - 1.0).abs().max()) > R3._UNIT_D_TOL / 4, (
             "this case is meant to sit at the EDGE of the window; it landed near |d| = 1 and would "
-            f"test nothing new (max |dd-1| = {float((dd - 1.0).abs().max()):.3e})")
+            f"test nothing new (max |dd-1| = {float((dd - 1.0).abs().max()):.3e})"
+        )
     return kinds, sizes.contiguous(), pos.contiguous(), R.contiguous(), o, d.contiguous()
 
 
@@ -116,13 +126,14 @@ def _same(a, b, what):
     else:
         ok = torch.equal(a, b)
     if not ok:
-        diff = (a != b)
+        diff = a != b
         bad = int(diff.sum())
         mx = float((a.float() - b.float()).abs().max())
         raise AssertionError(
             f"{what}: bounded and unbounded casts differ on {bad} of {diff.numel()} values, "
             f"max {mx:.3e}. A bound that excludes a ray the primitive can actually hit drops a "
-            f"pixel, and it drops it on a silhouette where nothing else will notice.")
+            f"pixel, and it drops it on a silhouette where nothing else will notice."
+        )
 
 
 CASES = [
@@ -148,8 +159,9 @@ CASES = [
     dict(rng=15, B=2, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3),
     dict(rng=16, B=2, K=6, N=333, kinds=(R3.CAPSULE, R3.SPHERE) * 3),
     dict(rng=17, B=2, K=5, N=333, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
-    dict(rng=18, B=2, K=5, N=512, far=100.0, tangent=True,
-         kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
+    dict(
+        rng=18, B=2, K=5, N=512, far=100.0, tangent=True, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
+    ),
     dict(rng=19, B=3, K=6, N=333, kinds=(R3.SPHERE, R3.CAPSULE) * 3, degenerate=True),
     # AT THE EDGE OF THE ADMISSION WINDOW, at the lever arm that broke the first bound. Review of
     # 3b9e81c showed the old 1e-4 tolerance admitted bundles on which the identity is FALSE: the
@@ -159,17 +171,32 @@ CASES = [
     # correctly, and they FAIL against the old tolerance.
     dict(rng=20, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=+1),
     dict(rng=21, B=2, K=6, N=512, far=100.0, tangent=True, dd_at_tol=-1),
-    dict(rng=22, B=2, K=5, N=512, far=100.0, dd_at_tol=+1,
-         kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)),
+    dict(
+        rng=22, B=2, K=5, N=512, far=100.0, dd_at_tol=+1, kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX)
+    ),
     # ELLIPSOID (Step 7): unbounded by the table, so it takes the verbatim body beside bounded
     # kinds; pinned alone, mixed, degenerate, tangent-at-distance and at the admission edge.
     dict(rng=23, B=2, K=4, N=333, kinds=(R3.ELLIPSOID,) * 4),
     dict(rng=24, B=2, K=6, N=333, kinds=(R3.ELLIPSOID, R3.CAPSULE) * 3),
     dict(rng=25, B=3, K=6, N=333, kinds=(R3.ELLIPSOID, R3.SPHERE) * 3, degenerate=True),
-    dict(rng=26, B=2, K=6, N=512, far=100.0, tangent=True,
-         kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID)),
-    dict(rng=27, B=2, K=6, N=512, far=100.0, dd_at_tol=-1,
-         kinds=(R3.ELLIPSOID, R3.CAPSULE, R3.ELLIPSOID, R3.BOX, R3.ELLIPSOID, R3.CYLINDER)),
+    dict(
+        rng=26,
+        B=2,
+        K=6,
+        N=512,
+        far=100.0,
+        tangent=True,
+        kinds=(R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX, R3.ELLIPSOID),
+    ),
+    dict(
+        rng=27,
+        B=2,
+        K=6,
+        N=512,
+        far=100.0,
+        dd_at_tol=-1,
+        kinds=(R3.ELLIPSOID, R3.CAPSULE, R3.ELLIPSOID, R3.BOX, R3.ELLIPSOID, R3.CYLINDER),
+    ),
 ]
 
 
@@ -181,8 +208,14 @@ def _case_id(c):
     if c.get("far"):
         tag.append(f"far{int(c['far'])}")
     if c.get("kinds"):
-        names = {R3.PLANE: "pl", R3.SPHERE: "sp", R3.CAPSULE: "ca", R3.CYLINDER: "cy", R3.BOX: "bx",
-                 R3.ELLIPSOID: "el"}
+        names = {
+            R3.PLANE: "pl",
+            R3.SPHERE: "sp",
+            R3.CAPSULE: "ca",
+            R3.CYLINDER: "cy",
+            R3.BOX: "bx",
+            R3.ELLIPSOID: "el",
+        }
         tag.append("".join(names[k] for k in c["kinds"]))
     return "-".join(tag)
 
@@ -201,8 +234,7 @@ def test_any_blocking_is_unchanged_by_the_bound(case):
     kinds, sizes, pos, R, o, d = _rand_scene(**case)
     B, N = o.shape[0], o.shape[1]
     for lim_kind in ("finite", "infinite"):
-        lim = (torch.full((B, N), R3.INF) if lim_kind == "infinite"
-               else torch.rand(B, N) * 6.0)
+        lim = torch.full((B, N), R3.INF) if lim_kind == "infinite" else torch.rand(B, N) * 6.0
         for skip in (None, torch.randint(0, max(1, len(kinds)), (B, N))):
             b, s = _both(R3.any_blocking_torch, kinds, sizes, pos, R, o, d, lim, skip)
             _same(b, s, f"blocked ({lim_kind} lim, skip={'yes' if skip is not None else 'no'})")
@@ -238,6 +270,7 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     """
     import json
     from pathlib import Path
+
     # r6_kind_cost.json is the AUTHORITATIVE table and supersedes r5_kind_cost.json, which priced the
     # any_blocking-shaped bound (cheaper than the cast_nearest branch that actually decides this) and
     # applied a margin scaled by a single run's timing spread. Three runs whose ratios agree to 1-3 %
@@ -247,13 +280,21 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     if not f.is_file():
         pytest.skip(f"no committed measurement at {f}")
     m = json.loads(f.read_text())
-    names = {"PLANE": R3.PLANE, "SPHERE": R3.SPHERE, "CAPSULE": R3.CAPSULE,
-             "CYLINDER": R3.CYLINDER, "BOX": R3.BOX, "ELLIPSOID": R3.ELLIPSOID}
+    names = {
+        "PLANE": R3.PLANE,
+        "SPHERE": R3.SPHERE,
+        "CAPSULE": R3.CAPSULE,
+        "CYLINDER": R3.CYLINDER,
+        "BOX": R3.BOX,
+        "ELLIPSOID": R3.ELLIPSOID,
+    }
     measured = {names[n] for n, on in m["predicate"].items() if on}
     # ELLIPSOID (Step 7) is priced in its own committed aggregate, by the same rule, because the
     # Step-6 file is frozen; absent that file the kind is unbounded and must not be in the table.
-    f7 = (Path(R3.__file__).resolve().parents[2]
-          / "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid.json")
+    f7 = (
+        Path(R3.__file__).resolve().parents[2]
+        / "examples/results/step7/dmc-quadruped/phase1/cpu_oscar/kind_cost_ellipsoid.json"
+    )
     if f7.is_file():
         m7 = json.loads(f7.read_text())
         if m7["predicate"].get("ELLIPSOID"):
@@ -263,7 +304,8 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
         m["predicate"]["ELLIPSOID"] = bool(m7["predicate"].get("ELLIPSOID"))
     assert set(R3._BOUNDED_KINDS) == measured, (
         f"_BOUNDED_KINDS is {sorted(R3._BOUNDED_KINDS)} but the committed measurement "
-        f"({f.name}) chose {sorted(measured)}")
+        f"({f.name}) chose {sorted(measured)}"
+    )
     # And the rule behind it must still hold in the numbers, not merely in the summary field. The rule
     # is "bounded iff the worst ratio is > 1 in EVERY run", so its complement is "some run's worst
     # ratio is <= 1" -- NOT "the best ratio is < 1", which the first version asserted: a kind whose
@@ -276,8 +318,7 @@ def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
         if on:
             assert min(worst) > 1.0, f"{kind} is bounded but its worst ratio is {min(worst):.2f}"
         else:
-            assert min(worst) <= 1.0, (
-                f"{kind} is unbounded but its worst ratio is > 1 in every run ({min(worst):.2f})")
+            assert min(worst) <= 1.0, f"{kind} is unbounded but its worst ratio is > 1 in every run ({min(worst):.2f})"
 
 
 def test_an_unbounded_kind_never_reaches_the_gather():
@@ -303,12 +344,14 @@ def test_an_unbounded_kind_never_reaches_the_gather():
         R3.PRIMITIVE_BOUNDS = True
         R3.cast_nearest_torch(kinds, sizes, pos, R, o, d)
         assert not seen or R3.SPHERE in R3._BOUNDED_KINDS, (
-            "an unbounded kind still went through the bound's nonzero/gather")
+            "an unbounded kind still went through the bound's nonzero/gather"
+        )
         kinds2, s2, p2, R2, o2, d2 = _rand_scene(rng=31, B=2, K=3, N=257, kinds=(R3.CAPSULE,) * 3)
         seen.clear()
         R3.cast_nearest_torch(kinds2, s2, p2, R2, o2, d2)
         assert seen or R3.CAPSULE not in R3._BOUNDED_KINDS, (
-            "a bounded kind did not go through the bound at all; the test would pass vacuously")
+            "a bounded kind did not go through the bound at all; the test would pass vacuously"
+        )
     finally:
         torch.nonzero = real
         R3.PRIMITIVE_BOUNDS = was
@@ -329,10 +372,12 @@ def test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH(rng):
     kinds, s1, p1, R1, o1, d1 = _rand_scene(rng=rng, B=1, K=6, N=311)
     # Rows 1..7 are a DIFFERENT scene and different rays, so the union is genuinely wider.
     _, s8, p8, R8, o8, d8 = _rand_scene(rng=rng + 100, B=8, K=6, N=311)
-    def cat(one, many):                       # row 0 from the B=1 case, rows 1..7 from the other
+
+    def cat(one, many):  # row 0 from the B=1 case, rows 1..7 from the other
         out = torch.cat([one, many[1:]], 0).contiguous()
         assert out.shape[0] == 8 and torch.equal(out[0], one[0])
         return out
+
     s8, p8, R8 = cat(s1, s8), cat(p1, p8), cat(R1, R8)
     o8, d8 = cat(o1, o8), cat(d1, d8)
 

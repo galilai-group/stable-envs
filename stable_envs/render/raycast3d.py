@@ -34,9 +34,9 @@ floor and 6.8e-2 on the agent — and a multiplicative model fitted on the floor
 6.5/255 and mangles the agent's highlight. With the composition right, wall tops go from 13/255 worst to
 2/255 and vertical wall faces become bit-exact.
 """
+
 from __future__ import annotations
 
-import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -44,8 +44,18 @@ import numpy as np
 import torch
 
 from . import _resources as _RES
-from .primitives import (BOX, CAPSULE, CYLINDER, ELLIPSOID, GEOM_NAMES, INF,  # noqa: F401
-                         PLANE, PRIMITIVE_KINDS, SPHERE, Primitives)
+from .primitives import (  # noqa: F401
+    BOX,
+    CAPSULE,
+    CYLINDER,
+    ELLIPSOID,
+    GEOM_NAMES,
+    INF,
+    PLANE,
+    PRIMITIVE_KINDS,
+    SPHERE,
+    Primitives,
+)
 from .primitives import bound_radius_tensor as _bound_radius
 from .primitives import dot3 as _dot
 from .primitives import mtv3 as _mtv
@@ -61,8 +71,9 @@ Cast = tuple[torch.Tensor, torch.Tensor, torch.Tensor]
 try:
     import triton
     import triton.language as tl
+
     HAVE_TRITON = True
-except ImportError:                                    # reported by the renderer, never silent
+except ImportError:  # reported by the renderer, never silent
     HAVE_TRITON = False
 
 # The mjtGeom kind codes, ``INF``, the ``Primitives`` scene description, the unrolled 3-vector
@@ -90,12 +101,20 @@ class Camera:
     center: float = 0.0
 
     @staticmethod
-    def from_mjv(glcam_a, glcam_b=None) -> "Camera":
+    def from_mjv(glcam_a, glcam_b=None) -> Camera:
         """From one ``mjvGLCamera``, or the AVERAGE of two (which is what mono rendering uses)."""
+
         def g(c):
-            return (np.asarray(c.pos, np.float64), np.asarray(c.forward, np.float64),
-                    np.asarray(c.up, np.float64), float(c.frustum_near), float(c.frustum_top),
-                    float(c.frustum_bottom), float(c.frustum_center))
+            return (
+                np.asarray(c.pos, np.float64),
+                np.asarray(c.forward, np.float64),
+                np.asarray(c.up, np.float64),
+                float(c.frustum_near),
+                float(c.frustum_top),
+                float(c.frustum_bottom),
+                float(c.frustum_center),
+            )
+
         a = g(glcam_a)
         v = a if glcam_b is None else tuple((x + y) / 2 for x, y in zip(a, g(glcam_b)))
         return Camera(tuple(v[0]), tuple(v[1]), tuple(v[2]), v[3], v[4], v[5], v[6])
@@ -119,8 +138,10 @@ class Camera:
         X, Y = np.meshgrid(xs, ys)
         d = X[..., None] * r + Y[..., None] * u + self.near * f
         d = d / np.linalg.norm(d, axis=-1, keepdims=True)
-        return (torch.tensor(self.pos, device=device, dtype=dtype),
-                torch.tensor(d.reshape(-1, 3), device=device, dtype=dtype))
+        return (
+            torch.tensor(self.pos, device=device, dtype=dtype),
+            torch.tensor(d.reshape(-1, 3), device=device, dtype=dtype),
+        )
 
     def project(self, pts: torch.Tensor, aspect: float = 1.0) -> torch.Tensor:
         """World ``(...,3)`` -> normalised device coords in [-1,1]^2. Screen-space tiling only.
@@ -159,14 +180,19 @@ _PROJ_CACHE = _Memo(_CACHE_MAX, name="raycast3d.proj")
 _CORNER_CACHE = _Memo(_CACHE_MAX, name="raycast3d.corner")
 
 
-def _proj_tensors(cam: "Camera", device, dtype):
+def _proj_tensors(cam: Camera, device, dtype):
     """``(R, origin)`` for ``Camera.project``. Keyed on the camera, which is a frozen dataclass."""
     key = (cam, str(device), dtype)
     hit = _PROJ_CACHE.get(key)
     if hit is None:
         r, u, f = cam.basis()
-        hit = _PROJ_CACHE.put(key, (torch.tensor(np.stack([r, u, f]), device=device, dtype=dtype),
-                                    torch.tensor(cam.pos, device=device, dtype=dtype)))
+        hit = _PROJ_CACHE.put(
+            key,
+            (
+                torch.tensor(np.stack([r, u, f]), device=device, dtype=dtype),
+                torch.tensor(cam.pos, device=device, dtype=dtype),
+            ),
+        )
     return hit
 
 
@@ -175,9 +201,9 @@ def _corner_masks(device):
     key = str(device)
     hit = _CORNER_CACHE.get(key)
     if hit is None:
-        hit = _CORNER_CACHE.put(key, [
-            torch.tensor([bool(m & 1), bool(m & 2), bool(m & 4)], device=device).view(1, 1, 3)
-            for m in range(8)])
+        hit = _CORNER_CACHE.put(
+            key, [torch.tensor([bool(m & 1), bool(m & 2), bool(m & 4)], device=device).view(1, 1, 3) for m in range(8)]
+        )
     return hit
 
 
@@ -190,10 +216,10 @@ class Lights:
     by the caller if it varies per primitive.
     """
 
-    dirs: np.ndarray            # (L,3), unit, toward the light
-    ambient: np.ndarray         # (L,)
-    diffuse: np.ndarray         # (L,)
-    specular: np.ndarray        # (L,)
+    dirs: np.ndarray  # (L,3), unit, toward the light
+    ambient: np.ndarray  # (L,)
+    diffuse: np.ndarray  # (L,)
+    specular: np.ndarray  # (L,)
     exponent: float
 
     def to(self, device, dtype=torch.float32):
@@ -215,6 +241,7 @@ class Lights:
 # --------------------------------------------------------------------------- intersections
 # Each returns (t, normal) with t = INF where the ray misses. Rays are (..., 3); the primitive pose is
 # broadcast against them. Normals are world-space and unit.
+
 
 def _sphere(o, d, pos, r):
     oc = o - pos
@@ -259,8 +286,7 @@ def _ellipsoid(o, d, pos, R, size):
     a_safe = torch.clamp(a, min=1e-12)
     t = (-b - sq) / a_safe
     t = torch.where(t > 0, t, (-b + sq) / a_safe)
-    hit = ((disc > 0) & (t > 0) & (a > 1e-12)
-           & (size[..., 0] > 0) & (size[..., 1] > 0) & (size[..., 2] > 0))
+    hit = (disc > 0) & (t > 0) & (a > 1e-12) & (size[..., 0] > 0) & (size[..., 1] > 0) & (size[..., 2] > 0)
     t = torch.where(hit, t, torch.full_like(t, INF))
     pl = ol + t.unsqueeze(-1).clamp(max=1e6) * dl
     nl = pl * inv * inv
@@ -285,8 +311,9 @@ def _capsule(o, d, pos, R, r, hh):
         best = torch.where(ok & (t < best), t, best)
     for sz in (-1.0, 1.0):
         zc = sz * hh
-        oc = ol - torch.stack([torch.zeros_like(ol[..., 0]), torch.zeros_like(ol[..., 0]),
-                               torch.zeros_like(ol[..., 0]) + zc], -1)
+        oc = ol - torch.stack(
+            [torch.zeros_like(ol[..., 0]), torch.zeros_like(ol[..., 0]), torch.zeros_like(ol[..., 0]) + zc], -1
+        )
         bb = _dot(oc, dl)
         cc = _dot(oc, oc) - r * r
         dd = bb * bb - cc
@@ -300,6 +327,8 @@ def _capsule(o, d, pos, R, r, hh):
     nl = pl - torch.stack([torch.zeros_like(zc), torch.zeros_like(zc), zc], -1)
     nl = nl / torch.clamp(torch.sqrt(_dot(nl, nl)).unsqueeze(-1), min=1e-12)
     return best, _mv(R, nl)
+
+
 # capsule normals use the clamped-axis form, which is the same expression on the barrel and on both
 # caps: a point beyond an end measures to that end's centre, which is exactly the hemisphere normal.
 
@@ -324,8 +353,7 @@ def _cylinder(o, d, pos, R, r, hh):
     capz = torch.zeros_like(a)
     for sgn in (-1.0, 1.0):
         zc = sgn * hh
-        t = (zc - ol[..., 2]) / torch.where(dl[..., 2].abs() > 1e-12, dl[..., 2],
-                                            torch.full_like(dl[..., 2], 1e-12))
+        t = (zc - ol[..., 2]) / torch.where(dl[..., 2].abs() > 1e-12, dl[..., 2], torch.full_like(dl[..., 2], 1e-12))
         px = ol[..., 0] + t * dl[..., 0]
         py = ol[..., 1] + t * dl[..., 1]
         ok = (t > 0) & (px * px + py * py <= r * r) & (dl[..., 2].abs() > 1e-12)
@@ -362,17 +390,20 @@ def _plane(o, d, pos, R, size):
     n = R[..., :, 2]
     den = _dot(d, n)
     num = _dot(pos - o, n)
-    t = torch.where(den.abs() > 1e-12, num / torch.where(den.abs() > 1e-12, den,
-                                                         torch.full_like(den, 1.0)),
-                    torch.full_like(den, INF))
+    t = torch.where(
+        den.abs() > 1e-12,
+        num / torch.where(den.abs() > 1e-12, den, torch.full_like(den, 1.0)),
+        torch.full_like(den, INF),
+    )
     p = o + t.unsqueeze(-1).clamp(max=1e6) * d
     loc = _mtv(R, p - pos)
     ok = (t > 0) & (loc[..., 0].abs() <= size[..., 0]) & (loc[..., 1].abs() <= size[..., 1])
     return torch.where(ok, t, torch.full_like(t, INF)), n.expand_as(p)
 
 
-def intersect(kind: int, size: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
-              o: torch.Tensor, d: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+def intersect(
+    kind: int, size: torch.Tensor, pos: torch.Tensor, R: torch.Tensor, o: torch.Tensor, d: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
     """One primitive against a ray bundle. ``pos`` (...,3), ``R`` (...,3,3), ``o``/``d`` (...,3)."""
     if kind == SPHERE:
         return _sphere(o, d, pos, size[..., 0:1].squeeze(-1))
@@ -413,8 +444,10 @@ def intersect(kind: int, size: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
 # diff the fused kernel against it. The fused kernel is the one that removes the traffic, by keeping
 # the whole primitive loop in registers and writing only the answer.
 
-def _cast_nearest_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor,
-                                  R: torch.Tensor, o: torch.Tensor, d: torch.Tensor) -> Cast:
+
+def _cast_nearest_torch_unbounded(
+    kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor, o: torch.Tensor, d: torch.Tensor
+) -> Cast:
     """``cast_nearest_torch`` with every primitive tested against every ray. THE DEFINITION.
 
     Kept verbatim as the thing ``PRIMITIVE_BOUNDS`` has to be bit-identical to, for the reason
@@ -426,7 +459,7 @@ def _cast_nearest_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.
     nrm = torch.zeros_like(o)
     idx = torch.zeros((B, N), device=o.device, dtype=torch.long)
     for k, kind in enumerate(int(x) for x in kinds):
-        t, n = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1], o, d)
+        t, n = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
         upd = t < best
         best = torch.where(upd, t, best)
         nrm = torch.where(upd.unsqueeze(-1), n.expand(B, N, 3), nrm)
@@ -537,7 +570,7 @@ def _unit_rays(dd) -> bool:
 #: only where the intersector has already stopped being able to tell. It costs almost no pruning:
 #: at 100 m the effective radius becomes 0.14 m, which is well under a pixel on a giant maze.
 _BOUND_SLACK_REL, _BOUND_SLACK_ABS = 1.01, 1e-6
-_BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7         # (|oc| * sqrt(this))^2, added to r^2
+_BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7  # (|oc| * sqrt(this))^2, added to r^2
 
 
 #: WHICH KINDS THE BOUND IS APPLIED TO, and this table is a measurement rather than a preference.
@@ -605,8 +638,10 @@ def _kind_is_bounded(kind: int) -> bool:
 # ray bound uses is the same geometric law as the one ``Primitives.bound_radius`` bakes for the
 # screen tile and ``cpu3d`` uses for its mover window, and the three must not drift apart.
 
-def _rays_near(pos_k: torch.Tensor, rad: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
-               dd: torch.Tensor) -> torch.Tensor:
+
+def _rays_near(
+    pos_k: torch.Tensor, rad: torch.Tensor, o: torch.Tensor, d: torch.Tensor, dd: torch.Tensor
+) -> torch.Tensor:
     """``(B,N)`` bool: could this ray hit a sphere of radius ``rad`` about ``pos_k`` at ``t > 0``?
 
     ``|oc x d|^2 <= r^2 |d|^2`` is the perpendicular-distance test with ``|d|^2`` multiplied through,
@@ -624,8 +659,9 @@ def _rays_near(pos_k: torch.Tensor, rad: torch.Tensor, o: torch.Tensor, d: torch
     return (_dot(cr, cr) <= r2 * dd) & (_dot(oc, d) + torch.sqrt(r2 * dd) >= 0)
 
 
-def cast_nearest_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
-                       o: torch.Tensor, d: torch.Tensor) -> Cast:
+def cast_nearest_torch(
+    kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor, o: torch.Tensor, d: torch.Tensor
+) -> Cast:
     """Nearest primitive hit over a ray bundle: ``(t, normal, index)``. The readable definition.
 
     ``kinds`` (K,) host-side ints; ``sizes`` (B,K,S), ``pos`` (B,K,3), ``R`` (B,K,3,3); ``o``/``d``
@@ -672,16 +708,15 @@ def cast_nearest_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: 
         return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
     for k, kind in enumerate(int(x) for x in kinds):
         js = None
-        rad = _bound_radius(kind, sizes[:, k:k + 1]) if _kind_is_bounded(kind) else None
+        rad = _bound_radius(kind, sizes[:, k : k + 1]) if _kind_is_bounded(kind) else None
         if rad is not None:
-            js = torch.nonzero(_rays_near(pos[:, k:k + 1], rad, o, d, dd).any(0),
-                               as_tuple=False).reshape(-1)
+            js = torch.nonzero(_rays_near(pos[:, k : k + 1], rad, o, d, dd).any(0), as_tuple=False).reshape(-1)
             if js.numel() == 0:
                 continue
-            if js.numel() == N:            # nothing pruned; the gather would be pure overhead
+            if js.numel() == N:  # nothing pruned; the gather would be pure overhead
                 js = None
         oo, ddir = (o, d) if js is None else (o[:, js], d[:, js])
-        t, n = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1], oo, ddir)
+        t, n = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], oo, ddir)
         if js is None:
             upd = t < best
             best = torch.where(upd, t, best)
@@ -696,15 +731,21 @@ def cast_nearest_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: 
     return best, nrm, idx
 
 
-def _any_blocking_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor,
-                                  R: torch.Tensor, o: torch.Tensor, d: torch.Tensor,
-                                  lim: torch.Tensor,
-                                  skip: torch.Tensor | None = None) -> torch.Tensor:
+def _any_blocking_torch_unbounded(
+    kinds: Kinds,
+    sizes: torch.Tensor,
+    pos: torch.Tensor,
+    R: torch.Tensor,
+    o: torch.Tensor,
+    d: torch.Tensor,
+    lim: torch.Tensor,
+    skip: torch.Tensor | None = None,
+) -> torch.Tensor:
     """``any_blocking_torch`` with every primitive tested against every ray. THE DEFINITION."""
     B, N = o.shape[0], o.shape[1]
     blocked = torch.zeros((B, N), device=o.device, dtype=torch.bool)
     for k, kind in enumerate(int(x) for x in kinds):
-        t, _ = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1], o, d)
+        t, _ = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
         hit = (t > 0) & (t < lim)
         if skip is not None:
             hit = hit & (skip != k)
@@ -712,9 +753,16 @@ def _any_blocking_torch_unbounded(kinds: Kinds, sizes: torch.Tensor, pos: torch.
     return blocked
 
 
-def any_blocking_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
-                       o: torch.Tensor, d: torch.Tensor, lim: torch.Tensor,
-                       skip: torch.Tensor | None = None) -> torch.Tensor:
+def any_blocking_torch(
+    kinds: Kinds,
+    sizes: torch.Tensor,
+    pos: torch.Tensor,
+    R: torch.Tensor,
+    o: torch.Tensor,
+    d: torch.Tensor,
+    lim: torch.Tensor,
+    skip: torch.Tensor | None = None,
+) -> torch.Tensor:
     """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above.
 
     Same bound and the same argument: a ray outside a primitive's bounding sphere gets ``t = INF``,
@@ -739,23 +787,21 @@ def any_blocking_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: 
         return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
     for k, kind in enumerate(int(x) for x in kinds):
         js = None
-        rad = _bound_radius(kind, sizes[:, k:k + 1]) if _kind_is_bounded(kind) else None
+        rad = _bound_radius(kind, sizes[:, k : k + 1]) if _kind_is_bounded(kind) else None
         if rad is not None:
-            js = torch.nonzero(_rays_near(pos[:, k:k + 1], rad, o, d, dd).any(0),
-                               as_tuple=False).reshape(-1)
+            js = torch.nonzero(_rays_near(pos[:, k : k + 1], rad, o, d, dd).any(0), as_tuple=False).reshape(-1)
             if js.numel() == 0:
                 continue
             if js.numel() == N:
                 js = None
         if js is None:
-            t, _ = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1], o, d)
+            t, _ = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o, d)
             hit = (t > 0) & (t < lim)
             if skip is not None:
                 hit = hit & (skip != k)
             blocked |= hit
         else:
-            t, _ = intersect(kind, sizes[:, k:k + 1], pos[:, k:k + 1], R[:, k:k + 1],
-                             o[:, js], d[:, js])
+            t, _ = intersect(kind, sizes[:, k : k + 1], pos[:, k : k + 1], R[:, k : k + 1], o[:, js], d[:, js])
             hit = (t > 0) & (t < lim[:, js])
             if skip is not None:
                 hit = hit & (skip[:, js] != k)
@@ -796,9 +842,32 @@ def any_blocking_torch(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: 
 if HAVE_TRITON:
 
     @triton.jit
-    def _tri_isect(kind, s0, s1, s2, px, py, pz,
-                   r00, r01, r02, r10, r11, r12, r20, r21, r22,
-                   ox, oy, oz, dx, dy, dz, INF: tl.constexpr, BLOCK: tl.constexpr):
+    def _tri_isect(
+        kind,
+        s0,
+        s1,
+        s2,
+        px,
+        py,
+        pz,
+        r00,
+        r01,
+        r02,
+        r10,
+        r11,
+        r12,
+        r20,
+        r21,
+        r22,
+        ox,
+        oy,
+        oz,
+        dx,
+        dy,
+        dz,
+        INF: tl.constexpr,
+        BLOCK: tl.constexpr,
+    ):
         """One primitive against a block of rays: ``(t, nx, ny, nz)``, ``t = INF`` on a miss.
 
         Line for line the same expressions as ``_sphere``/``_capsule``/``_cylinder``/``_box``/``_plane``
@@ -807,13 +876,13 @@ if HAVE_TRITON:
         name and a variable the ``else`` leg does not write has no type to merge.
         """
         zero = tl.zeros([BLOCK], dtype=tl.float32)
-        never = tl.arange(0, BLOCK) < 0                                        # an all-False mask
+        never = tl.arange(0, BLOCK) < 0  # an all-False mask
         t = zero + INF
         nx = zero
         ny = zero
         nz = zero
 
-        if kind == 2:                                                              # SPHERE
+        if kind == 2:  # SPHERE
             r = s0
             ocx = ox - px
             ocy = oy - py
@@ -831,7 +900,7 @@ if HAVE_TRITON:
             ny = tl.math.div_rn(ocy + tc * dy, r)
             nz = tl.math.div_rn(ocz + tc * dz, r)
 
-        elif kind == 3 or kind == 5:                            # CAPSULE (3) and CYLINDER (5)
+        elif kind == 3 or kind == 5:  # CAPSULE (3) and CYLINDER (5)
             r = s0
             hh = s1
             ax = ox - px
@@ -865,7 +934,7 @@ if HAVE_TRITON:
             side = side | u1
 
             capz = zero
-            if kind == 3:                                                          # spherical caps
+            if kind == 3:  # spherical caps
                 for sz in tl.static_range(2):
                     zc = (2.0 * sz - 1.0) * hh
                     ocz = olz - zc
@@ -877,7 +946,7 @@ if HAVE_TRITON:
                     best = tl.where((dd > 0) & (ta > 0) & (ta < best), ta, best)
                     tb = -bb + 1.0 * s2r
                     best = tl.where((dd > 0) & (tb > 0) & (tb < best), tb, best)
-            else:                                                                  # flat caps
+            else:  # flat caps
                 for sz in tl.static_range(2):
                     sgn = 2.0 * sz - 1.0
                     zc = sgn * hh
@@ -915,7 +984,7 @@ if HAVE_TRITON:
             ny = r10 * nlx + r11 * nly + r12 * nlz
             nz = r20 * nlx + r21 * nly + r22 * nlz
 
-        elif kind == 4:                                                            # ELLIPSOID
+        elif kind == 4:  # ELLIPSOID
             # ``_ellipsoid`` line for line: the ray in the geom frame, scaled to the unit sphere
             ax = ox - px
             ay = oy - py
@@ -943,8 +1012,7 @@ if HAVE_TRITON:
             a_safe = tl.maximum(a, 1e-12)
             tt = tl.math.div_rn(-b - sq, a_safe)
             tt = tl.where(tt > 0, tt, tl.math.div_rn(-b + sq, a_safe))
-            hit = ((disc > 0) & (tt > 0) & (a > 1e-12)
-                   & (s0 > 0) & (s1 > 0) & (s2 > 0))
+            hit = (disc > 0) & (tt > 0) & (a > 1e-12) & (s0 > 0) & (s1 > 0) & (s2 > 0)
             t = tl.where(hit, tt, INF)
             tc = tl.minimum(t, 1e6)
             plx = olx0 + tc * dlx0
@@ -961,7 +1029,7 @@ if HAVE_TRITON:
             ny = r10 * nlx + r11 * nly + r12 * nlz
             nz = r20 * nlx + r21 * nly + r22 * nlz
 
-        elif kind == 6:                                                            # BOX
+        elif kind == 6:  # BOX
             ax = ox - px
             ay = oy - py
             az = oz - pz
@@ -980,10 +1048,8 @@ if HAVE_TRITON:
             ay2 = (s1 - oly) * ivy
             az1 = (-s2 - olz) * ivz
             az2 = (s2 - olz) * ivz
-            tmin = tl.maximum(tl.maximum(tl.minimum(ax1, ax2), tl.minimum(ay1, ay2)),
-                              tl.minimum(az1, az2))
-            tmax = tl.minimum(tl.minimum(tl.maximum(ax1, ax2), tl.maximum(ay1, ay2)),
-                              tl.maximum(az1, az2))
+            tmin = tl.maximum(tl.maximum(tl.minimum(ax1, ax2), tl.minimum(ay1, ay2)), tl.minimum(az1, az2))
+            tmax = tl.minimum(tl.minimum(tl.maximum(ax1, ax2), tl.maximum(ay1, ay2)), tl.maximum(az1, az2))
             hit = tmax >= tl.maximum(tmin, 0.0)
             tt = tl.where(tmin > 0, tmin, tmax)
             t = tl.where(hit & (tt > 0), tt, INF)
@@ -1009,7 +1075,7 @@ if HAVE_TRITON:
             ny = r10 * nlx + r11 * nly + r12 * nlz
             nz = r20 * nlx + r21 * nly + r22 * nlz
 
-        else:                                                                      # PLANE
+        else:  # PLANE
             nx = zero + r02
             ny = zero + r12
             nz = zero + r22
@@ -1028,12 +1094,40 @@ if HAVE_TRITON:
         return t, nx, ny, nz
 
     @triton.jit
-    def _tri_cast(kind_ptr, sz_ptr, po_ptr, rm_ptr, o_ptr, d_ptr,
-                  lim_ptr, skip_ptr, t_out, n_out, i_out, b_out,
-                  K, N,
-                  szb, szk, pob, pok, rmb, rmk, ob, on, db, dn, lb, ln, kb, kn,
-                  MODE: tl.constexpr, HAS_SKIP: tl.constexpr, INF: tl.constexpr,
-                  BLOCK: tl.constexpr):
+    def _tri_cast(
+        kind_ptr,
+        sz_ptr,
+        po_ptr,
+        rm_ptr,
+        o_ptr,
+        d_ptr,
+        lim_ptr,
+        skip_ptr,
+        t_out,
+        n_out,
+        i_out,
+        b_out,
+        K,
+        N,
+        szb,
+        szk,
+        pob,
+        pok,
+        rmb,
+        rmk,
+        ob,
+        on,
+        db,
+        dn,
+        lb,
+        ln,
+        kb,
+        kn,
+        MODE: tl.constexpr,
+        HAS_SKIP: tl.constexpr,
+        INF: tl.constexpr,
+        BLOCK: tl.constexpr,
+    ):
         """``MODE=0`` nearest hit (t / normal / index); ``MODE=1`` "is anything blocking before lim".
 
         One program owns ``BLOCK`` rays of one batch element, so every primitive quantity is a SCALAR
@@ -1073,12 +1167,30 @@ if HAVE_TRITON:
             ro = b64 * rmb + k64 * rmk
             t, nx, ny, nz = _tri_isect(
                 tl.load(kind_ptr + k),
-                tl.load(sz_ptr + so + 0), tl.load(sz_ptr + so + 1), tl.load(sz_ptr + so + 2),
-                tl.load(po_ptr + po + 0), tl.load(po_ptr + po + 1), tl.load(po_ptr + po + 2),
-                tl.load(rm_ptr + ro + 0), tl.load(rm_ptr + ro + 1), tl.load(rm_ptr + ro + 2),
-                tl.load(rm_ptr + ro + 3), tl.load(rm_ptr + ro + 4), tl.load(rm_ptr + ro + 5),
-                tl.load(rm_ptr + ro + 6), tl.load(rm_ptr + ro + 7), tl.load(rm_ptr + ro + 8),
-                ox, oy, oz, dx, dy, dz, INF=INF, BLOCK=BLOCK)
+                tl.load(sz_ptr + so + 0),
+                tl.load(sz_ptr + so + 1),
+                tl.load(sz_ptr + so + 2),
+                tl.load(po_ptr + po + 0),
+                tl.load(po_ptr + po + 1),
+                tl.load(po_ptr + po + 2),
+                tl.load(rm_ptr + ro + 0),
+                tl.load(rm_ptr + ro + 1),
+                tl.load(rm_ptr + ro + 2),
+                tl.load(rm_ptr + ro + 3),
+                tl.load(rm_ptr + ro + 4),
+                tl.load(rm_ptr + ro + 5),
+                tl.load(rm_ptr + ro + 6),
+                tl.load(rm_ptr + ro + 7),
+                tl.load(rm_ptr + ro + 8),
+                ox,
+                oy,
+                oz,
+                dx,
+                dy,
+                dz,
+                INF=INF,
+                BLOCK=BLOCK,
+            )
             if MODE == 0:
                 upd = t < best
                 best = tl.where(upd, t, best)
@@ -1092,7 +1204,7 @@ if HAVE_TRITON:
                     hit = hit & (skip != k64)
                 blocked = blocked | hit
 
-        flat = b64 * N + i64                       # int64 throughout: B*N passes 2^31 at 256 px ss=2
+        flat = b64 * N + i64  # int64 throughout: B*N passes 2^31 at 256 px ss=2
         if MODE == 0:
             po = flat * 3
             tl.store(t_out + flat, best, mask=m)
@@ -1122,8 +1234,7 @@ def _kind_tensor(kinds, device) -> torch.Tensor:
         # instead of raising the way ``intersect`` does. Same error, at the same place, either path.
         bad = sorted({k for k in key[1] if k not in PRIMITIVE_KINDS})
         if bad:
-            raise ValueError(f"raycast3d has no intersector for mjtGeom {bad}; scenes here are "
-                             f"primitive-only")
+            raise ValueError(f"raycast3d has no intersector for mjtGeom {bad}; scenes here are primitive-only")
         hit = _KIND_CACHE.put(key, torch.tensor(key[1], device=device, dtype=torch.int32))
     return hit
 
@@ -1198,21 +1309,52 @@ def _launch(kinds, sizes, pos, R, o, d, lim, skip, mode):
     grid = (B, triton.cdiv(N, CAST_BLOCK))
     with torch.cuda.device(dev):
         _tri_cast[grid](
-            kt, sizes, pos, R, o, d, lim_t, skip_t,
-            t_out if mode == 0 else dummy, n_out if mode == 0 else dummy,
-            i_out if mode == 0 else dummy, b_out if mode == 1 else dummy,
-            K, N,
-            sizes.stride(0), sizes.stride(1), pos.stride(0), pos.stride(1),
-            R.stride(0), R.stride(1), o.stride(0), o.stride(1), d.stride(0), d.stride(1),
-            ls[0], ls[1], ks[0], ks[1],
-            MODE=mode, HAS_SKIP=skip is not None, INF=INF, BLOCK=CAST_BLOCK,
+            kt,
+            sizes,
+            pos,
+            R,
+            o,
+            d,
+            lim_t,
+            skip_t,
+            t_out if mode == 0 else dummy,
+            n_out if mode == 0 else dummy,
+            i_out if mode == 0 else dummy,
+            b_out if mode == 1 else dummy,
+            K,
+            N,
+            sizes.stride(0),
+            sizes.stride(1),
+            pos.stride(0),
+            pos.stride(1),
+            R.stride(0),
+            R.stride(1),
+            o.stride(0),
+            o.stride(1),
+            d.stride(0),
+            d.stride(1),
+            ls[0],
+            ls[1],
+            ks[0],
+            ks[1],
+            MODE=mode,
+            HAS_SKIP=skip is not None,
+            INF=INF,
+            BLOCK=CAST_BLOCK,
             enable_fp_fusion=False,
         )
     return (t_out, n_out, i_out) if mode == 0 else b_out.view(torch.bool)
 
 
-def cast_nearest(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
-                 o: torch.Tensor, d: torch.Tensor, backend: str = "auto") -> Cast:
+def cast_nearest(
+    kinds: Kinds,
+    sizes: torch.Tensor,
+    pos: torch.Tensor,
+    R: torch.Tensor,
+    o: torch.Tensor,
+    d: torch.Tensor,
+    backend: str = "auto",
+) -> Cast:
     """Nearest primitive hit over a ray bundle: ``(t, normal, index)``.
 
     ``auto`` fuses on CUDA and falls back to ``cast_nearest_torch`` everywhere else. The two are
@@ -1220,19 +1362,25 @@ def cast_nearest(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.
     synthetic scene.
     """
     backend = FORCE_BACKEND or backend
-    if backend == "torch" or (backend == "auto"
-                              and not (_use_triton(o) and _packed(sizes, pos, R, o, d))):
+    if backend == "torch" or (backend == "auto" and not (_use_triton(o) and _packed(sizes, pos, R, o, d))):
         return cast_nearest_torch(kinds, sizes, pos, R, o, d)
     return _launch(kinds, sizes, pos, R, o, d, None, None, 0)
 
 
-def any_blocking(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.Tensor,
-                 o: torch.Tensor, d: torch.Tensor, lim: torch.Tensor,
-                 skip: torch.Tensor | None = None, backend: str = "auto") -> torch.Tensor:
+def any_blocking(
+    kinds: Kinds,
+    sizes: torch.Tensor,
+    pos: torch.Tensor,
+    R: torch.Tensor,
+    o: torch.Tensor,
+    d: torch.Tensor,
+    lim: torch.Tensor,
+    skip: torch.Tensor | None = None,
+    backend: str = "auto",
+) -> torch.Tensor:
     """Does any primitive block each ray before ``lim``? ``(B,N)`` bool. Shadow-ray form of the above."""
     backend = FORCE_BACKEND or backend
-    if backend == "torch" or (backend == "auto"
-                              and not (_use_triton(o) and _packed(sizes, pos, R, o, d, lim, skip))):
+    if backend == "torch" or (backend == "auto" and not (_use_triton(o) and _packed(sizes, pos, R, o, d, lim, skip))):
         return any_blocking_torch(kinds, sizes, pos, R, o, d, lim, skip)
     return _launch(kinds, sizes, pos, R, o, d, lim.expand(o.shape[0], o.shape[1]), skip, 1)
 
@@ -1244,8 +1392,7 @@ _RAY_CACHE_MAX = 8
 _RAY_CACHE = _Memo(_RAY_CACHE_MAX, name="raycast3d.rays")
 
 
-def cached_rays(cam: Camera, H: int, W: int, device,
-                dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
+def cached_rays(cam: Camera, H: int, W: int, device, dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
     """``cam.rays(H, W, device)``, memoised on the camera itself.
 
     ``Camera`` is a frozen dataclass of tuples and floats, so it is its own cache key and two scenes
@@ -1264,9 +1411,19 @@ def cached_rays(cam: Camera, H: int, W: int, device,
 
 # --------------------------------------------------------------------------- shading
 
-def shade(n: torch.Tensor, v: torch.Tensor, ldir: torch.Tensor, lamb: torch.Tensor,
-          ldif: torch.Tensor, lspec: torch.Tensor, exponent: float, mat: torch.Tensor,
-          tex: torch.Tensor, spec: torch.Tensor) -> torch.Tensor:
+
+def shade(
+    n: torch.Tensor,
+    v: torch.Tensor,
+    ldir: torch.Tensor,
+    lamb: torch.Tensor,
+    ldif: torch.Tensor,
+    lspec: torch.Tensor,
+    exponent: float,
+    mat: torch.Tensor,
+    tex: torch.Tensor,
+    spec: torch.Tensor,
+) -> torch.Tensor:
     """``(...,3)`` colour in [0,1]. See the module docstring for why specular is additive and white."""
     amb = lamb.sum()
     prim = mat * amb
@@ -1284,6 +1441,7 @@ def shade(n: torch.Tensor, v: torch.Tensor, ldir: torch.Tensor, lamb: torch.Tens
 
 # --------------------------------------------------------------------------- the renderer
 
+
 @torch.no_grad()
 def static_depth(cam: Camera, prims: Primitives, xpos, xmat, H: int, W: int, device) -> torch.Tensor:
     """``(H*W,)`` perpendicular-distance-free ray parameter ``t`` of the nearest STATIC surface.
@@ -1298,18 +1456,30 @@ def static_depth(cam: Camera, prims: Primitives, xpos, xmat, H: int, W: int, dev
     for i, k in enumerate(P["kind"]):
         pos = torch.tensor(xpos[i], device=device, dtype=torch.float32)
         R = torch.tensor(xmat[i].reshape(3, 3), device=device, dtype=torch.float32)
-        t, _ = intersect(k, P["size"][i].expand(H * W, 3), pos.expand(H * W, 3),
-                         R.expand(H * W, 3, 3), o.expand(H * W, 3), d)
+        t, _ = intersect(
+            k, P["size"][i].expand(H * W, 3), pos.expand(H * W, 3), R.expand(H * W, 3, 3), o.expand(H * W, 3), d
+        )
         best = torch.minimum(best, t)
     return best
 
 
 @torch.no_grad()
-def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Primitives,
-              xpos: torch.Tensor, xmat: torch.Tensor, lights: Lights, H: int, W: int,
-              supersample: int = 1, out: torch.Tensor | None = None,
-              tile: int | None = None, mat_rgb: torch.Tensor | None = None,
-              size_scale: torch.Tensor | None = None) -> torch.Tensor:
+def composite(
+    plate: torch.Tensor,
+    plate_t: torch.Tensor,
+    cam: Camera,
+    prims: Primitives,
+    xpos: torch.Tensor,
+    xmat: torch.Tensor,
+    lights: Lights,
+    H: int,
+    W: int,
+    supersample: int = 1,
+    out: torch.Tensor | None = None,
+    tile: int | None = None,
+    mat_rgb: torch.Tensor | None = None,
+    size_scale: torch.Tensor | None = None,
+) -> torch.Tensor:
     """``(B,H,W,3)`` uint8: the moving primitives drawn over a baked static plate.
 
     ``plate`` is ``(H,W,3)`` uint8 and ``plate_t`` the matching ``(H*W,)`` ray parameter, both constant
@@ -1332,8 +1502,9 @@ def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Pr
     """
 
     if not COMPOSITE_COMPACT_MERGE:
-        return _composite_window(plate, plate_t, cam, prims, xpos, xmat, lights, H, W,
-                                 supersample, out, tile, mat_rgb, size_scale)
+        return _composite_window(
+            plate, plate_t, cam, prims, xpos, xmat, lights, H, W, supersample, out, tile, mat_rgb, size_scale
+        )
 
     device = plate.device
     B = xpos.shape[0]
@@ -1418,8 +1589,21 @@ def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Pr
         cols = flat - rows * N
         ih = i_hit[rows, cols]
         mat = P["mat"][ih] if mat_rgb is None else mat_rgb[rows, ih]
-        c = shade(n[rows, cols], -dd[rows, cols], ldir, lamb, ldif, lspec, lights.exponent,
-                  mat, P["tex"][ih], P["spec"][ih]) * 255.0
+        c = (
+            shade(
+                n[rows, cols],
+                -dd[rows, cols],
+                ldir,
+                lamb,
+                ldif,
+                lspec,
+                lights.exponent,
+                mat,
+                P["tex"][ih],
+                P["spec"][ih],
+            )
+            * 255.0
+        )
         col.view(-1, 3).index_copy_(0, flat, c)
 
     covf = cov.to(col.dtype)
@@ -1453,13 +1637,13 @@ def composite(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera, prims: Pr
         oidx = obase[:, ps].unsqueeze(-1).expand(B, ps.numel(), 3)
         patch = torch.gather(plate.reshape(1, H * W, 3).expand(B, H * W, 3), 1, oidx).to(col.dtype)
         merged = patch * (1 - covf[:, ps].unsqueeze(-1)) + col.reshape(B, -1, 3)[:, ps]
-        out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255)
-                                       .to(torch.uint8))
+        out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255).to(torch.uint8))
     return out
 
 
-def _fit_tile(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, tile: int,
-              device, bound_scale: float = 1.0):
+def _fit_tile(
+    cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, tile: int, device, bound_scale: float = 1.0
+):
     """``((x0, y0), tile)`` -- the window the BOUND asks for, or None if it does not fit ``tile``.
 
     ``_tile_origin`` answers "does the caller's tile hold the movers"; this answers "what does the
@@ -1489,11 +1673,22 @@ def _fit_tile(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int
 
 
 @torch.no_grad()
-def _composite_window(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera,
-                      prims: Primitives, xpos: torch.Tensor, xmat: torch.Tensor, lights: Lights,
-                      H: int, W: int, supersample: int = 1, out: torch.Tensor | None = None,
-                      tile: int | None = None, mat_rgb: torch.Tensor | None = None,
-                      size_scale: torch.Tensor | None = None) -> torch.Tensor:
+def _composite_window(
+    plate: torch.Tensor,
+    plate_t: torch.Tensor,
+    cam: Camera,
+    prims: Primitives,
+    xpos: torch.Tensor,
+    xmat: torch.Tensor,
+    lights: Lights,
+    H: int,
+    W: int,
+    supersample: int = 1,
+    out: torch.Tensor | None = None,
+    tile: int | None = None,
+    mat_rgb: torch.Tensor | None = None,
+    size_scale: torch.Tensor | None = None,
+) -> torch.Tensor:
     """The pre-RAYCAST-6 ``composite``: the caller's ``tile`` verbatim, the union cover
     compaction, and the whole ``tile x tile`` window gathered, blended and scattered.
 
@@ -1570,16 +1765,15 @@ def _composite_window(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera,
         js = torch.nonzero(cov.any(0), as_tuple=False).reshape(-1)
         if js.numel():
             ih = i_hit[:, js]
-            mat = (P["mat"][ih] if mat_rgb is None
-                   else mat_rgb[torch.arange(B, device=device).unsqueeze(1), ih])
-            c = shade(n[:, js], -dd[:, js], ldir, lamb, ldif, lspec, lights.exponent,
-                      mat, P["tex"][ih], P["spec"][ih]) * 255.0
+            mat = P["mat"][ih] if mat_rgb is None else mat_rgb[torch.arange(B, device=device).unsqueeze(1), ih]
+            c = (
+                shade(n[:, js], -dd[:, js], ldir, lamb, ldif, lspec, lights.exponent, mat, P["tex"][ih], P["spec"][ih])
+                * 255.0
+            )
             col.index_copy_(1, js, torch.where(cov[:, js].unsqueeze(-1), c, torch.zeros_like(c)))
-    else:                                          # the expression above is the identity of this one
-        mat = (P["mat"][i_hit] if mat_rgb is None
-               else mat_rgb[torch.arange(B, device=device).unsqueeze(1), i_hit])
-        c = shade(n, -dd, ldir, lamb, ldif, lspec, lights.exponent,
-                  mat, P["tex"][i_hit], P["spec"][i_hit]) * 255.0
+    else:  # the expression above is the identity of this one
+        mat = P["mat"][i_hit] if mat_rgb is None else mat_rgb[torch.arange(B, device=device).unsqueeze(1), i_hit]
+        c = shade(n, -dd, ldir, lamb, ldif, lspec, lights.exponent, mat, P["tex"][i_hit], P["spec"][i_hit]) * 255.0
         col = torch.where(cov.unsqueeze(-1), c, torch.zeros_like(c))
 
     covf = cov.to(col.dtype)
@@ -1605,8 +1799,7 @@ def _composite_window(plate: torch.Tensor, plate_t: torch.Tensor, cam: Camera,
     out.copy_(plate.view(1, H, W, 3).expand(B, H, W, 3))
     patch = torch.gather(plate.reshape(1, H * W, 3).to(col.dtype).expand(B, H * W, 3), 1, oidx)
     merged = patch * (1 - covf.reshape(B, -1, 1)) + col.reshape(B, -1, 3)
-    out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255)
-                                   .to(torch.uint8))
+    out.view(B, H * W, 3).scatter_(1, oidx, torch.clamp(torch.round(merged), 0, 255).to(torch.uint8))
     return out
 
 
@@ -1619,8 +1812,7 @@ def _upsample_t(plate_t, H, W, ss):
     return plate_t.view(H, W).repeat_interleave(ss, 0).repeat_interleave(ss, 1).reshape(-1)
 
 
-def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, device,
-                bound_scale: float = 1.0):
+def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, device, bound_scale: float = 1.0):
     """``(x0, y0, w, h)``: the window origin per batch element (device) and its worst extent (host).
 
     The bound is deliberately conservative — the world-space AABB of each primitive's bounding sphere,
@@ -1635,12 +1827,12 @@ def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: i
     the tile size, so it is computed once and the ladder is walked on the host.
     """
     radt = prims.radii(device, xpos.dtype, bound_scale)
-    if radt is None:                                        # host-side: a PLANE has no finite bound
+    if radt is None:  # host-side: a PLANE has no finite bound
         return None
     lo = xpos - radt.view(1, -1, 1)
     hi = xpos + radt.view(1, -1, 1)
     corners = [torch.where(mask, hi, lo) for mask in _corner_masks(device)]
-    pts = torch.cat(corners, 1)                                     # (B, 8P, 3)
+    pts = torch.cat(corners, 1)  # (B, 8P, 3)
     ndc = cam.project(pts, aspect=W / H)
     px = (ndc[..., 0] + 1) * 0.5 * W
     py = (1 - ndc[..., 1]) * 0.5 * H
@@ -1648,15 +1840,17 @@ def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: i
     x1 = px.amax(1).ceil().long() + 1
     y0 = py.amin(1).floor().long() - 1
     y1 = py.amax(1).ceil().long() + 1
-    probe = torch.stack([(x1 - x0).max(), (y1 - y0).max(),
-                         torch.isfinite(ndc).all().long()]).cpu()   # the one synchronisation
+    probe = torch.stack(
+        [(x1 - x0).max(), (y1 - y0).max(), torch.isfinite(ndc).all().long()]
+    ).cpu()  # the one synchronisation
     if not int(probe[2]):
         return None
     return x0, y0, int(probe[0]), int(probe[1])
 
 
-def _tile_origin(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, tile: int,
-                 device, bound_scale: float = 1.0):
+def _tile_origin(
+    cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, tile: int, device, bound_scale: float = 1.0
+):
     """``(x0, y0)`` per batch element in OUTPUT pixels, or None if the primitives do not fit ``tile``.
 
     When it does not fit, the caller falls back to the full frame and the output is identical either

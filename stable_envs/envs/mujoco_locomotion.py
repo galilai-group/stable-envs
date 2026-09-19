@@ -148,6 +148,7 @@ against a nominal 0.05. It is re-measured here rather than inherited: swept agai
 improves or ties mover-pixel within-1 agreement on all four domains, by 0.739 -> 0.872 on
 InvertedDoublePendulum and by a fraction of a point elsewhere.
 """
+
 from __future__ import annotations
 
 import os
@@ -216,7 +217,8 @@ PARITY: dict[str, tuple[float, str]] = {
         "states at the shipped supersample 1, all inside the cart or pole capsule and all off by "
         "exactly 1/255; the count is IDENTICAL at supersample 2 and unchanged at supersample 4, so it "
         "is the per-vertex/per-pixel shading difference above and not a coverage rule. The worst "
-        "single draw is 0.9999988, and the floor is set to 0.99999, which is 8.4x inside it."),
+        "single draw is 0.9999988, and the floor is set to 0.99999, which is 8.4x inside it.",
+    ),
     "MujocoPusher": (
         0.99999,
         " INTERIOR: 8 disagreeing interior pixels out of 608,783,153 over 201 seeded draws of 64 "
@@ -231,7 +233,8 @@ PARITY: dict[str, tuple[float, str]] = {
         "the measured worst draw. This env once declared 1.0 on the strength of a single unseeded "
         "draw that happened to come back clean; the floor is set from a draw COUNT, and that rule is "
         "why the supersample change was verified over 201 draws rather than over one large "
-        "evaluation."),
+        "evaluation.",
+    ),
 }
 
 ENVS: dict[str, str] = {
@@ -256,10 +259,12 @@ _SAMPLER_CACHE: dict = {}
 
 def _gym():
     import gymnasium
+
     return gymnasium
 
 
 # --------------------------------------------------------------------------- model reading
+
 
 def _mat_rgb(m, matid: int, rgba) -> np.ndarray:
     """Base colour: the element's own rgba unless that is the compiler default and a material
@@ -295,13 +300,31 @@ class _Lights:
     erase the cone falloff that is most of what the table looks like.
     """
 
-    __slots__ = ("kind", "pos", "dir", "ambient", "diffuse", "specular", "attenuation", "cutoff",
-                 "exponent", "castshadow")
+    __slots__ = (
+        "kind",
+        "pos",
+        "dir",
+        "ambient",
+        "diffuse",
+        "specular",
+        "attenuation",
+        "cutoff",
+        "exponent",
+        "castshadow",
+    )
 
     def __init__(self, scene):
         n = int(scene.nlight)
-        g = lambda f: np.stack([np.asarray(getattr(scene.lights[i], f), np.float64)  # noqa: E731
-                                for i in range(n)]) if n else np.zeros((0, 3))
+        g = lambda f: (
+            np.stack(
+                [
+                    np.asarray(getattr(scene.lights[i], f), np.float64)  # noqa: E731
+                    for i in range(n)
+                ]
+            )
+            if n
+            else np.zeros((0, 3))
+        )
         self.pos, self.dir = g("pos"), g("dir")
         self.ambient, self.diffuse, self.specular = g("ambient"), g("diffuse"), g("specular")
         self.attenuation = g("attenuation")
@@ -310,30 +333,55 @@ class _Lights:
         self.castshadow = np.array([int(scene.lights[i].castshadow) for i in range(n)])
         # mujoco >= 3.2 renamed the flag to a ``type`` enum; both spellings are read so this does not
         # become a version tripwire.
-        self.kind = np.array([int(getattr(scene.lights[i], "type",
-                                          getattr(scene.lights[i], "directional", 1)))
-                              for i in range(n)])
+        self.kind = np.array(
+            [int(getattr(scene.lights[i], "type", getattr(scene.lights[i], "directional", 1))) for i in range(n)]
+        )
 
     def shadow_light(self) -> int:
         idx = np.flatnonzero(self.castshadow > 0)
         return int(idx[0]) if len(idx) else -1
 
     def to(self, device) -> dict:
-        t = lambda x: torch.tensor(np.asarray(x, np.float64), device=device,          # noqa: E731
-                                   dtype=torch.float32)
-        return dict(pos=t(self.pos), dir=t(self.dir), ambient=t(self.ambient),
-                    diffuse=t(self.diffuse), specular=t(self.specular),
-                    attenuation=t(self.attenuation), cutoff=[float(c) for c in self.cutoff],
-                    exponent=[float(e) for e in self.exponent], kind=[int(k) for k in self.kind],
-                    castshadow=[bool(c) for c in self.castshadow])
+        t = lambda x: torch.tensor(
+            np.asarray(x, np.float64),
+            device=device,  # noqa: E731
+            dtype=torch.float32,
+        )
+        return dict(
+            pos=t(self.pos),
+            dir=t(self.dir),
+            ambient=t(self.ambient),
+            diffuse=t(self.diffuse),
+            specular=t(self.specular),
+            attenuation=t(self.attenuation),
+            cutoff=[float(c) for c in self.cutoff],
+            exponent=[float(e) for e in self.exponent],
+            kind=[int(k) for k in self.kind],
+            castshadow=[bool(c) for c in self.castshadow],
+        )
 
 
 class _Scene:
     """Everything a render needs that does not depend on the state."""
 
-    __slots__ = ("plate", "plate_shadow", "static_t", "cam", "model", "data", "movers", "size",
-                 "lights", "prims", "shadow_light", "eps", "pristine", "rays", "shadow_candidates",
-                 "const")
+    __slots__ = (
+        "plate",
+        "plate_shadow",
+        "static_t",
+        "cam",
+        "model",
+        "data",
+        "movers",
+        "size",
+        "lights",
+        "prims",
+        "shadow_light",
+        "eps",
+        "pristine",
+        "rays",
+        "shadow_candidates",
+        "const",
+    )
 
 
 def _light_geometry(L: dict, i: int, p: torch.Tensor):
@@ -356,8 +404,7 @@ def _light_geometry(L: dict, i: int, p: torch.Tensor):
     if cut < 180.0:
         se = _dot(_norm(L["dir"][i].view(shape)).expand_as(l), -l)
         inside = se >= float(np.cos(np.deg2rad(cut)))
-        att = torch.where(inside, att * torch.clamp(se, min=0) ** L["exponent"][i],
-                          torch.zeros_like(att))
+        att = torch.where(inside, att * torch.clamp(se, min=0) ** L["exponent"][i], torch.zeros_like(att))
     return l, att
 
 
@@ -382,7 +429,7 @@ def _shade(p, n, v, L, mat, spec, shininess, unlit=None):
         ndh = torch.clamp(_dot(n, h), min=0)
         out = out + mat * (att * L["ambient"][i][0]).unsqueeze(-1)
         out = out + mat * (lit * ndl * L["diffuse"][i][0]).unsqueeze(-1)
-        highlight = highlight + lit * L["specular"][i][0] * ndh ** exponent
+        highlight = highlight + lit * L["specular"][i][0] * ndh**exponent
     return torch.clamp(out + (highlight * spec * SPECULAR_SCALE).unsqueeze(-1), 0, 1)
 
 
@@ -518,6 +565,7 @@ class _GymMujocoFamily(Env):
         labels, because everything downstream indexes the wrong number in silence.
         """
         import mujoco
+
         free = ("_x", "_y", "_z", "_qw", "_qx", "_qy", "_qz")
         ball = ("_qw", "_qx", "_qy", "_qz")
         out: list[str] = []
@@ -552,11 +600,11 @@ class _GymMujocoFamily(Env):
         hi = np.asarray(env.action_space.high, np.float64)
         out = np.empty((int(batch), self.state_dim), np.float64)
         for i in range(int(batch)):
-            env.reset(seed=int(rng.integers(0, 2 ** 31 - 1)))
+            env.reset(seed=int(rng.integers(0, 2**31 - 1)))
             for _ in range(int(rng.integers(0, self.ROLLOUT_STEPS + 1))):
                 _, _, term, trunc, _ = env.step(rng.uniform(lo, hi).astype(np.float32))
                 if term or trunc:
-                    env.reset(seed=int(rng.integers(0, 2 ** 31 - 1)))
+                    env.reset(seed=int(rng.integers(0, 2**31 - 1)))
             out[i] = np.asarray(u.data.qpos, np.float64)
         return out.astype(np.float32)
 
@@ -579,7 +627,8 @@ class _GymMujocoFamily(Env):
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested qpos (max "
                     f"{np.abs(got - st).max():.3e}); every parity number computed from it would be "
-                    f"comparing two different scenes")
+                    f"comparing two different scenes"
+                )
             out.append(cls._shot(u).copy())
         return np.stack(out)
 
@@ -649,14 +698,27 @@ class GymMujoco(_GymMujocoFamily):
         "per-pixel highlight across a triangle looks like. Adopting that lobe was tried at four "
         "settings and REFUTED as a family-wide constant: it improves InvertedDoublePendulum "
         "(within-1 0.872 -> 0.885) and InvertedPendulum (0.728 -> 0.736) and makes Reacher (0.685 -> "
-        "0.668) and Pusher (0.729 -> 0.677) worse, so the documented law is kept.")
+        "0.668) and Pusher (0.729 -> 0.677) worse, so the documented law is kept."
+    )
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         self._declare_state(self._model())
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         sc = self._scene()
         assert sc.model.nq == self.state_dim, f"{type(self).__name__}: nq changed under us"
         assert len(self.state_names) == self.state_dim
@@ -672,15 +734,18 @@ class GymMujoco(_GymMujocoFamily):
         m = sc.model
         assert int(m.ntex) == 0, (
             f"{type(self).__name__}: the model now carries {int(m.ntex)} textures, and this renderer "
-            f"samples none — a textured surface would be painted its material colour")
+            f"samples none — a textured surface would be painted its material colour"
+        )
         for i in range(int(m.nmat)):
             assert float(m.mat_reflectance[i]) == 0.0, (
                 f"{type(self).__name__}: material {i} is reflective (reflectance "
-                f"{float(m.mat_reflectance[i])}), and this renderer draws no mirror")
+                f"{float(m.mat_reflectance[i])}), and this renderer draws no mirror"
+            )
         for k in sc.prims.kind:
             assert int(k) in (R3.PLANE, R3.SPHERE, R3.CAPSULE, R3.CYLINDER, R3.BOX), (
                 f"{type(self).__name__}: a moving geom is mjtGeom {int(k)}, which the analytic "
-                f"caster has no closed-form intersection for")
+                f"caster has no closed-form intersection for"
+            )
 
     # ---- model / reference plumbing --------------------------------------
 
@@ -705,16 +770,22 @@ class GymMujoco(_GymMujocoFamily):
             site_group=np.array(m.site_group, copy=True),
             light_diffuse=np.array(m.light_diffuse, copy=True),
             light_specular=np.array(m.light_specular, copy=True),
-            cam=cls._read_camera(u))
+            cam=cls._read_camera(u),
+        )
         _ENV_CACHE[key] = (env, u, m, d, pristine)
         return _ENV_CACHE[key]
 
     @staticmethod
     def _read_camera(u) -> dict:
         cam = u.mujoco_renderer.viewer.cam
-        return dict(lookat=np.array(cam.lookat, np.float64), distance=float(cam.distance),
-                    azimuth=float(cam.azimuth), elevation=float(cam.elevation),
-                    type=int(cam.type), fixedcamid=int(cam.fixedcamid))
+        return dict(
+            lookat=np.array(cam.lookat, np.float64),
+            distance=float(cam.distance),
+            azimuth=float(cam.azimuth),
+            elevation=float(cam.elevation),
+            type=int(cam.type),
+            fixedcamid=int(cam.fixedcamid),
+        )
 
     @classmethod
     def _model(cls):
@@ -755,26 +826,34 @@ class GymMujoco(_GymMujocoFamily):
         scene no material colour appears verbatim in any pixel anyway.
         """
         pr = self._pristine()
-        return Dict({
-            "body": Dict({
-                "tint": Box(low=0.0, high=2.0, shape=(3,), init_value=[1.0, 1.0, 1.0]),
-                "scale": Box(low=0.3, high=3.0, shape=(1,), init_value=[1.0]),
-            }),
-            "scenery": Dict({"tint": Box(low=0.0, high=2.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
-            "camera": Dict({
-                "distance_scale": Box(low=0.5, high=2.0, shape=(1,), init_value=[1.0]),
-                # A window around the frozen default rather than a full turn. The range is
-                # not cosmetic: [0, 360] makes its two endpoints the SAME camera, and
-                # ``check_per_env_variation`` — which splits the batch between the two ends and
-                # requires two different pictures — would report a knob that works perfectly as
-                # collapsed.
-                "azimuth": Box(low=float(pr["cam"]["azimuth"]) - 60.0,
-                               high=float(pr["cam"]["azimuth"]) + 60.0,
-                               shape=(1,), init_value=[float(pr["cam"]["azimuth"])]),
-                "elevation": Box(low=-89.0, high=-5.0, shape=(1,),
-                                 init_value=[float(pr["cam"]["elevation"])]),
-            }),
-        })
+        return Dict(
+            {
+                "body": Dict(
+                    {
+                        "tint": Box(low=0.0, high=2.0, shape=(3,), init_value=[1.0, 1.0, 1.0]),
+                        "scale": Box(low=0.3, high=3.0, shape=(1,), init_value=[1.0]),
+                    }
+                ),
+                "scenery": Dict({"tint": Box(low=0.0, high=2.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
+                "camera": Dict(
+                    {
+                        "distance_scale": Box(low=0.5, high=2.0, shape=(1,), init_value=[1.0]),
+                        # A window around the frozen default rather than a full turn. The range is
+                        # not cosmetic: [0, 360] makes its two endpoints the SAME camera, and
+                        # ``check_per_env_variation`` — which splits the batch between the two ends and
+                        # requires two different pictures — would report a knob that works perfectly as
+                        # collapsed.
+                        "azimuth": Box(
+                            low=float(pr["cam"]["azimuth"]) - 60.0,
+                            high=float(pr["cam"]["azimuth"]) + 60.0,
+                            shape=(1,),
+                            init_value=[float(pr["cam"]["azimuth"])],
+                        ),
+                        "elevation": Box(low=-89.0, high=-5.0, shape=(1,), init_value=[float(pr["cam"]["elevation"])]),
+                    }
+                ),
+            }
+        )
 
     def _var(self, variation, path):
         if variation is not None and path in variation:
@@ -787,8 +866,9 @@ class GymMujoco(_GymMujocoFamily):
     # ---- scene bake -------------------------------------------------------
 
     def _plate_key(self, size, variation):
-        return ((self.ENV_ID, int(size), str(self.device))
-                + tuple(tuple(np.round(self._var(variation, p), 6)) for p in self.PLATE_PATHS))
+        return (self.ENV_ID, int(size), str(self.device)) + tuple(
+            tuple(np.round(self._var(variation, p), 6)) for p in self.PLATE_PATHS
+        )
 
     def _scene(self, size=None, variation=None) -> _Scene:
         size = int(size or self.size)
@@ -844,6 +924,7 @@ class GymMujoco(_GymMujocoFamily):
 
     def _bake(self, size: int, variation) -> _Scene:
         import mujoco
+
         env, u, m, d, pr = self._bundle(size)
         self._apply_variation(m, u, pr, variation)
 
@@ -936,13 +1017,22 @@ class GymMujoco(_GymMujocoFamily):
             pos.append(np.asarray(d.site_xpos[i], np.float64))
             mat.append(np.asarray(d.site_xmat[i], np.float64).reshape(3, 3))
         if not kind:
-            prims = R3.Primitives(kind=np.zeros(0, int), size=np.zeros((0, 3)),
-                                  mat_rgb=np.zeros((0, 3)), tex_rgb=np.zeros((0, 3)),
-                                  spec=np.zeros(0))
+            prims = R3.Primitives(
+                kind=np.zeros(0, int),
+                size=np.zeros((0, 3)),
+                mat_rgb=np.zeros((0, 3)),
+                tex_rgb=np.zeros((0, 3)),
+                spec=np.zeros(0),
+            )
             prims.shininess = np.zeros(0)
             return prims, np.zeros((0, 3)), np.zeros((0, 3, 3))
-        prims = R3.Primitives(kind=np.array(kind), size=np.stack(size), mat_rgb=np.stack(rgb),
-                              tex_rgb=np.ones((len(kind), 3)), spec=np.array(spec))
+        prims = R3.Primitives(
+            kind=np.array(kind),
+            size=np.stack(size),
+            mat_rgb=np.stack(rgb),
+            tex_rgb=np.ones((len(kind), 3)),
+            spec=np.array(spec),
+        )
         prims.shininess = np.array(shin)
         return prims, np.stack(pos), np.stack(mat)
 
@@ -982,7 +1072,7 @@ class GymMujoco(_GymMujocoFamily):
             cand = ((a != b).any(-1)) & (self._static_t(sc, ss).view(-1) < R3.INF)
             idx = torch.nonzero(cand, as_tuple=False).reshape(-1)
         else:
-            idx = torch.arange(a.shape[0], device=a.device)   # the pass this compaction replaced
+            idx = torch.arange(a.shape[0], device=a.device)  # the pass this compaction replaced
         rows = _upsample_rgb(sc.plate_shadow, ss).reshape(-1, 3).to(torch.float32)[idx]
         sc.shadow_candidates[key] = hit = (idx, rows.unsqueeze(0))
         return hit
@@ -999,13 +1089,17 @@ class GymMujoco(_GymMujocoFamily):
         hit = sc.const.get(int(ss))
         if hit is None:
             dev = self.device
-            t = lambda x: torch.tensor(x, device=dev, dtype=torch.float32)     # noqa: E731
+            t = lambda x: torch.tensor(x, device=dev, dtype=torch.float32)  # noqa: E731
             P = len(sc.prims.kind)
             hit = sc.const[int(ss)] = (
                 *self._rays(sc, ss),
                 _upsample_rgb(sc.plate, ss).reshape(1, -1, 3).to(torch.float32),
-                t(sc.prims.size).view(1, P, 3), t(sc.prims.mat_rgb).view(1, P, 3),
-                t(sc.prims.spec), t(sc.prims.shininess), sc.lights.to(dev))
+                t(sc.prims.size).view(1, P, 3),
+                t(sc.prims.mat_rgb).view(1, P, 3),
+                t(sc.prims.spec),
+                t(sc.prims.shininess),
+                sc.lights.to(dev),
+            )
         return hit
 
     def _static_shadow_rays(self, sc: _Scene, ss: int):
@@ -1023,8 +1117,7 @@ class GymMujoco(_GymMujocoFamily):
         o, d = self._rays(sc, ss)
         N = (sc.size * int(ss)) ** 2
         st = self._static_t(sc, ss).view(1, N)
-        p = o.expand(1, N, 3)[:, cand] + st[:, cand].clamp(max=1e6).unsqueeze(-1) \
-            * d.view(1, N, 3)[:, cand]
+        p = o.expand(1, N, 3)[:, cand] + st[:, cand].clamp(max=1e6).unsqueeze(-1) * d.view(1, N, 3)[:, cand]
         L = sc.lights.to(self.device)
         sl = sc.shadow_light
         shape = (1,) * (p.dim() - 1) + (3,)
@@ -1055,6 +1148,7 @@ class GymMujoco(_GymMujocoFamily):
         if hit is not None:
             return hit
         import mujoco
+
         m, d = sc.model, sc.data
         pr = sc.pristine
         gmov, smov = sc.movers
@@ -1079,6 +1173,7 @@ class GymMujoco(_GymMujocoFamily):
         magnitude at any size worth rendering.
         """
         import mujoco
+
         gmov, smov = sc.movers
         P = len(gmov) + len(smov)
         B = states.shape[0]
@@ -1095,13 +1190,15 @@ class GymMujoco(_GymMujocoFamily):
             d.qpos[:] = q[i]
             mujoco.mj_kinematics(m, d)
             if gmov:
-                np.take(d.geom_xpos, ng, axis=0, out=xp[i, :len(gmov)])
-                np.take(d.geom_xmat, ng, axis=0, out=xm[i, :len(gmov)])
+                np.take(d.geom_xpos, ng, axis=0, out=xp[i, : len(gmov)])
+                np.take(d.geom_xmat, ng, axis=0, out=xm[i, : len(gmov)])
             if smov:
-                np.take(d.site_xpos, ns, axis=0, out=xp[i, len(gmov):])
-                np.take(d.site_xmat, ns, axis=0, out=xm[i, len(gmov):])
-        return (torch.tensor(xp, device=self.device, dtype=torch.float32),
-                torch.tensor(xm.reshape(B, P, 3, 3), device=self.device, dtype=torch.float32))
+                np.take(d.site_xpos, ns, axis=0, out=xp[i, len(gmov) :])
+                np.take(d.site_xmat, ns, axis=0, out=xm[i, len(gmov) :])
+        return (
+            torch.tensor(xp, device=self.device, dtype=torch.float32),
+            torch.tensor(xm.reshape(B, P, 3, 3), device=self.device, dtype=torch.float32),
+        )
 
     # ---- ray-cast helpers -------------------------------------------------
 
@@ -1135,16 +1232,22 @@ class GymMujoco(_GymMujocoFamily):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment.
 
         The batch is grouped by the plate-affecting half of the style: environments sharing a scenery
         tint and a camera share one bake and are rendered together. Body tint and body scale are
         per-environment inside the ray-cast, so randomising the body never splits the batch.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
@@ -1167,12 +1270,12 @@ class GymMujoco(_GymMujocoFamily):
         scale = sty["body.scale"].reshape(B, 1).to(torch.float32)
         for gi in range(len(uniq)):
             sub = np.flatnonzero(inv == gi)
-            over = {p: uniq[gi][a:a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
+            over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
             sc = self._scene(size, over)
             idx = torch.as_tensor(sub, device=self.device, dtype=torch.long)
             step = max(1, int(self.RAY_BUDGET // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
-                part = idx[a:a + step]
+                part = idx[a : a + step]
                 buf[part] = self._render_group(sc, s[part], size, ss, tint[part], scale[part])
         return buf.view(*lead, size, size, 3) if lead else buf
 
@@ -1188,7 +1291,7 @@ class GymMujoco(_GymMujocoFamily):
     SHADOW_COMPACTION = True
     COVER_COMPACTION = True
 
-    def _mover_idx(self, sc: "_Scene", xpos: torch.Tensor, size: int, ss: int):
+    def _mover_idx(self, sc: _Scene, xpos: torch.Tensor, size: int, ss: int):
         """Flat ray indices covering every pixel the movers can touch, or None for the full frame.
 
         The shadow pass here was already compacted to the covered rays; the primary cast was not, and
@@ -1203,12 +1306,14 @@ class GymMujoco(_GymMujocoFamily):
             tile = max(1, int(size / div))
             if tile >= size or w > tile or h > tile:
                 continue
-            return R3._expand_tile((x0.clamp(0, size - tile), y0.clamp(0, size - tile)),
-                                   tile, ss, size * ss, xpos.device)
+            return R3._expand_tile(
+                (x0.clamp(0, size - tile), y0.clamp(0, size - tile)), tile, ss, size * ss, xpos.device
+            )
         return None
 
-    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int,
-                      tint: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    def _render_group(
+        self, sc: _Scene, s: torch.Tensor, size: int, ss: int, tint: torch.Tensor, scale: torch.Tensor
+    ) -> torch.Tensor:
         dev = self.device
         B = s.shape[0]
         R = size * ss
@@ -1263,8 +1368,12 @@ class GymMujoco(_GymMujocoFamily):
         if sl >= 0:
             cand, dark, ro, rd, lim, valid = self._static_shadow_rays(sc, ss)
             if cand.numel():
-                occ = R3.any_blocking(sc.prims.kind, sizes, xpos, xmat, ro.expand(B, -1, 3),
-                                      rd.expand(B, -1, 3), lim.expand(B, -1)) & valid
+                occ = (
+                    R3.any_blocking(
+                        sc.prims.kind, sizes, xpos, xmat, ro.expand(B, -1, 3), rd.expand(B, -1, 3), lim.expand(B, -1)
+                    )
+                    & valid
+                )
                 base[:, cand] = torch.where(occ.unsqueeze(-1), dark, base[:, cand])
 
         # The movers go on LAST, straight into the plate canvas: ``where(cover, col, base)`` is the
@@ -1273,8 +1382,7 @@ class GymMujoco(_GymMujocoFamily):
             frame = torch.where(cover_w.unsqueeze(-1), col_w, base)
         else:
             w3 = widx.unsqueeze(-1).expand(-1, -1, 3)
-            frame = base.scatter_(1, w3, torch.where(cover_w.unsqueeze(-1), col_w,
-                                                     base.gather(1, w3)))
+            frame = base.scatter_(1, w3, torch.where(cover_w.unsqueeze(-1), col_w, base.gather(1, w3)))
         frame = frame.view(B, size, ss, size, ss, 3).sum((2, 4)) / (ss * ss)
         return torch.clamp(torch.round(frame), 0, 255).to(torch.uint8)
 
@@ -1309,11 +1417,12 @@ class GymMujoco(_GymMujocoFamily):
                 raise AssertionError(
                     f"reference camera {k} is {got[k]} but the plate was baked at {want[k]}; the "
                     f"free camera gymnasium freezes at the first render depends on the state it was "
-                    f"in, so these two are looking at different scenes")
+                    f"in, so these two are looking at different scenes"
+                )
         if np.abs(np.asarray(got["lookat"]) - np.asarray(want["lookat"])).max() > 1e-9:
             raise AssertionError(
-                f"reference camera lookat is {got['lookat']} but the plate was baked at "
-                f"{want['lookat']}")
+                f"reference camera lookat is {got['lookat']} but the plate was baked at {want['lookat']}"
+            )
 
 
 def _hyphen_name(env_id: str) -> str:
@@ -1326,16 +1435,24 @@ def _make_classes():
     made = {}
     for cname, env_id in ENVS.items():
         floor, extra = PARITY.get(cname, (1.0, ""))
-        cls = register(type(cname, (GymMujoco,), dict(
-            ENV_ID=env_id,
-            parity_interior_min=floor,
-            parity_note=GymMujoco.parity_note + extra,
-            name=_hyphen_name(env_id),
-            reference_id=f"gymnasium/{env_id}",
-            __doc__=(f"Gymnasium {env_id}. State is qpos; the frame is a measured pure function of "
-                     f"it, and the camera gymnasium freezes at the first render is carried in the "
-                     f"style."),
-        )))
+        cls = register(
+            type(
+                cname,
+                (GymMujoco,),
+                dict(
+                    ENV_ID=env_id,
+                    parity_interior_min=floor,
+                    parity_note=GymMujoco.parity_note + extra,
+                    name=_hyphen_name(env_id),
+                    reference_id=f"gymnasium/{env_id}",
+                    __doc__=(
+                        f"Gymnasium {env_id}. State is qpos; the frame is a measured pure function of "
+                        f"it, and the camera gymnasium freezes at the first render is carried in the "
+                        f"style."
+                    ),
+                ),
+            )
+        )
         made[cname] = cls
     return made
 
@@ -1362,9 +1479,10 @@ globals().update(_make_classes())
 #: says yes to every one of those and the env then fails on first render.
 try:
     import nvdiffrast.torch as _nvdr
-    _ = _nvdr.RasterizeCudaContext                                            # the class we construct
+
+    _ = _nvdr.RasterizeCudaContext  # the class we construct
     NVDIFF_IMPORT_ERROR: str | None = None
-except Exception as _e:                                                       # pragma: no cover
+except Exception as _e:  # pragma: no cover
     NVDIFF_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
 
 from ..render import nvdiff as ND  # noqa: E402  (imports neither mujoco nor nvdiffrast at module scope)
@@ -1405,12 +1523,25 @@ _NVD_CACHE_MAX = 16
 class _Nvd:
     """One nvdiffrast renderer for one ``(env, size, supersample)``, plus the model it is driven by."""
 
-    __slots__ = ("br", "model", "data", "cam_id", "fovy", "znear", "zfar", "geoms", "lights",
-                 "chunk", "size", "ss", "shadow", "castshadow")
+    __slots__ = (
+        "br",
+        "model",
+        "data",
+        "cam_id",
+        "fovy",
+        "znear",
+        "zfar",
+        "geoms",
+        "lights",
+        "chunk",
+        "size",
+        "ss",
+        "shadow",
+        "castshadow",
+    )
 
 
-def _camera_pose(pos: np.ndarray, mat: np.ndarray, offset: np.ndarray, pan: np.ndarray,
-                 tilt: np.ndarray):
+def _camera_pose(pos: np.ndarray, mat: np.ndarray, offset: np.ndarray, pan: np.ndarray, tilt: np.ndarray):
     """``(B,3), (B,3,3)`` camera pose moved by a per-environment offset, pan and tilt.
 
     The offset is in the CAMERA's own frame and the two angles act on the right of the camera matrix,
@@ -1472,15 +1603,29 @@ class _ShadowPass:
       3 cm gradient, which is further from the reference rather than nearer.
     """
 
-    __slots__ = ("scene", "ctx", "light", "res", "basis", "faces", "movers", "ldir", "gmax",
-                 "depth", "center", "half", "hz")
+    __slots__ = (
+        "scene",
+        "ctx",
+        "light",
+        "res",
+        "basis",
+        "faces",
+        "movers",
+        "ldir",
+        "gmax",
+        "depth",
+        "center",
+        "half",
+        "hz",
+    )
 
-    def __init__(self, c: "_Nvd", light: int, res: int = NVD_SHADOW_RES):
+    def __init__(self, c: _Nvd, light: int, res: int = NVD_SHADOW_RES):
         import torch
+
         self.scene, self.ctx, self.light, self.res = c.br.scene, c.br.ctx, int(light), int(res)
         f = np.asarray(c.lights.dir[light], np.float64).reshape(3)
         f = f / np.linalg.norm(f)
-        self.ldir = -f                                              # unit vector TOWARD the light
+        self.ldir = -f  # unit vector TOWARD the light
         up = np.array([0.0, 0.0, 1.0]) if abs(f[2]) < 0.9 else np.array([0.0, 1.0, 0.0])
         right = np.cross(f, up)
         right = right / np.linalg.norm(right)
@@ -1489,8 +1634,7 @@ class _ShadowPass:
         self.basis = np.stack([right, up, -f], -1)
         mov = [i for i, g in enumerate(c.geoms) if int(c.model.geom_type[g]) != ND.PLANE]
         self.movers = np.asarray(mov, np.int64)
-        keep = torch.as_tensor(np.isin(c.br.scene.fgeom.cpu().numpy(), mov),
-                               device=c.br.scene.face.device)
+        keep = torch.as_tensor(np.isin(c.br.scene.fgeom.cpu().numpy(), mov), device=c.br.scene.face.device)
         self.faces = c.br.scene.face[keep].contiguous()
         #: The largest half-size any casting geom carries, so a capsule's body is inside the box its
         #: CENTRE put it in — the fit below is over geom origins, which are not their extents.
@@ -1506,18 +1650,18 @@ class _ShadowPass:
         version, which took the max over the chunk: ``render(x)[i]`` differed from ``render(x[i])`` by
         up to 227/255.
         """
+        import nvdiffrast.torch as dr
         import torch
 
-        import nvdiffrast.torch as dr
         S = self.scene
         B = int(xpos.shape[0])
-        pm = xp_np[:, self.movers]                                            # (B,M,3)
+        pm = xp_np[:, self.movers]  # (B,M,3)
         ctr = pm.mean(1)
         # The box has to hold the movers AND reach the surface the shadow lands on, which is below
         # them; ``gmax`` is the largest geom radius, so a capsule's body is inside the box its centre
         # put it in.
-        rad = np.abs(pm - ctr[:, None]).max((1, 2)) + self.gmax + 0.05        # (B,)
-        drop = np.abs(ctr[:, 2]) + rad                                        # (B,)
+        rad = np.abs(pm - ctr[:, None]).max((1, 2)) + self.gmax + 0.05  # (B,)
+        drop = np.abs(ctr[:, 2]) + rad  # (B,)
         R = self.basis
         view = np.zeros((B, 4, 4))
         view[:, :3, :3] = R.T
@@ -1528,14 +1672,16 @@ class _ShadowPass:
         proj[:, 2, 2] = -1.0 / drop
         proj[:, 3, 3] = 1.0
         dev = xpos.device
-        pos, _, _ = S.clip(xpos, xmat,
-                           torch.as_tensor(view, dtype=torch.float32, device=dev),
-                           torch.as_tensor(proj, dtype=torch.float32, device=dev))
-        rast, _ = dr.rasterize(self.ctx, pos, self.faces, resolution=[self.res, self.res],
-                               grad_db=False)
+        pos, _, _ = S.clip(
+            xpos,
+            xmat,
+            torch.as_tensor(view, dtype=torch.float32, device=dev),
+            torch.as_tensor(proj, dtype=torch.float32, device=dev),
+        )
+        rast, _ = dr.rasterize(self.ctx, pos, self.faces, resolution=[self.res, self.res], grad_db=False)
         # A texel with no caster is "nothing above this", i.e. the far plane, NOT z = 0.
         z = torch.where(rast[..., 3] > 0, rast[..., 2], torch.ones_like(rast[..., 2]))
-        self.depth = z.unsqueeze(1).contiguous()                              # (B,1,res,res)
+        self.depth = z.unsqueeze(1).contiguous()  # (B,1,res,res)
         self.center = torch.as_tensor(ctr, dtype=torch.float32, device=dev)
         t = lambda x: torch.as_tensor(x, dtype=torch.float32, device=dev).view(B, 1, 1, 1)  # noqa: E731
         self.half, self.hz = t(rad), t(drop)
@@ -1544,6 +1690,7 @@ class _ShadowPass:
         """``1.0`` where this light reaches the point and ``0.0`` where a mover blocks it."""
         import torch
         import torch.nn.functional as F
+
         if int(i) != self.light or self.depth is None:
             return None
         B = int(p.shape[0])
@@ -1561,11 +1708,12 @@ class _ShadowPass:
         # 40%) and cost mean 4.51 -> 7.08/255. See ``nvd_probe6_shadowbias.py``.
         slope = torch.sqrt((1.0 - ndl * ndl).clamp_min(0.0)) / ndl
         p = p + n * (texel * NVD_SHADOW_OFFSET_TEXELS * (1.0 + slope))
-        q = (p - self.center.view(B, 1, 1, 3)) @ R                            # light-eye coordinates
+        q = (p - self.center.view(B, 1, 1, 3)) @ R  # light-eye coordinates
         uv = q[..., :2] / self.half
         z = -q[..., 2:3] / self.hz
-        zmap = F.grid_sample(self.depth, uv, mode="nearest", padding_mode="border",
-                             align_corners=False).permute(0, 2, 3, 1)
+        zmap = F.grid_sample(self.depth, uv, mode="nearest", padding_mode="border", align_corners=False).permute(
+            0, 2, 3, 1
+        )
         outside = (uv.abs() > 1.0).any(-1, keepdim=True)
         return ((z <= zmap + NVD_SHADOW_DEPTH_BIAS / self.hz) | outside).to(p.dtype)
 
@@ -1590,7 +1738,7 @@ def _one_orientation(mat: np.ndarray) -> np.ndarray:
     return mat[:1] if len(mat) > 1 and bool((mat == mat[:1]).all()) else mat
 
 
-def _lights_for(base: "ND.Lights", scale: np.ndarray, tint: np.ndarray) -> "ND.Lights":
+def _lights_for(base: ND.Lights, scale: np.ndarray, tint: np.ndarray) -> ND.Lights:
     """The scene's lights with a PER-WORLD intensity, without a render pass per world.
 
     ``nvdiff.BatchRenderer`` multiplies each light's ``ambient``/``diffuse``/``specular`` into a
@@ -1610,13 +1758,21 @@ def _lights_for(base: "ND.Lights", scale: np.ndarray, tint: np.ndarray) -> "ND.L
     """
     w = np.asarray(scale, np.float64).reshape(-1, 1) * np.asarray(tint, np.float64).reshape(-1, 3)
     if bool((w == 1.0).all()):
-        return base                                   # the default, and provably the official picture
-    w = w[None, :, None, None, :]                                             # (1,B,1,1,3)
-    b3 = lambda x: np.asarray(x, np.float64)[:, None, None, None, :]          # noqa: E731  (L,1,1,1,3)
-    return ND.Lights(pos=base.pos, dir=base.dir, directional=base.directional,
-                     ambient=base.ambient, diffuse=b3(base.diffuse) * w,
-                     specular=b3(base.specular) * w, attenuation=base.attenuation,
-                     cutoff=base.cutoff, exponent=base.exponent, headlight=base.headlight)
+        return base  # the default, and provably the official picture
+    w = w[None, :, None, None, :]  # (1,B,1,1,3)
+    b3 = lambda x: np.asarray(x, np.float64)[:, None, None, None, :]  # noqa: E731  (L,1,1,1,3)
+    return ND.Lights(
+        pos=base.pos,
+        dir=base.dir,
+        directional=base.directional,
+        ambient=base.ambient,
+        diffuse=b3(base.diffuse) * w,
+        specular=b3(base.specular) * w,
+        attenuation=base.attenuation,
+        cutoff=base.cutoff,
+        exponent=base.exponent,
+        headlight=base.headlight,
+    )
 
 
 class GymMujocoVisual(_GymMujocoFamily):
@@ -1640,15 +1796,29 @@ class GymMujocoVisual(_GymMujocoFamily):
     parity_interior_min = None
     parity_note = ""
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
-        if NVDIFF_IMPORT_ERROR is not None:                                   # pragma: no cover
-            raise ImportError(f"{type(self).__name__} renders through nvdiffrast, which this "
-                              f"interpreter cannot import: {NVDIFF_IMPORT_ERROR}")
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
+        if NVDIFF_IMPORT_ERROR is not None:  # pragma: no cover
+            raise ImportError(
+                f"{type(self).__name__} renders through nvdiffrast, which this "
+                f"interpreter cannot import: {NVDIFF_IMPORT_ERROR}"
+            )
         self._declare_state(self._model())
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         self._check_scene_is_supported(self._nvd())
 
     # ---- model / renderer -------------------------------------------------
@@ -1666,6 +1836,7 @@ class GymMujocoVisual(_GymMujocoFamily):
 
     def _nvd(self, size: int | None = None, ss: int | None = None) -> _Nvd:
         import mujoco
+
         size = int(self.size if size is None else size)
         ss = int(self.ss if ss is None else ss)
         key = (self.ENV_ID, size, ss, str(self.device))
@@ -1676,11 +1847,13 @@ class GymMujocoVisual(_GymMujocoFamily):
         c = _Nvd()
         c.model, c.data, c.size, c.ss = m, mujoco.MjData(m), size, ss
         c.cam_id = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, "track")
-        if c.cam_id < 0:                                                      # pragma: no cover
-            raise ValueError(f"{type(self).__name__}: {self.ENV_ID} has no 'track' camera, which is "
-                             f"the one gymnasium renders through by default (MujocoRenderer falls "
-                             f"back to camera_name='track'); there is nothing to be parity or visual "
-                             f"against")
+        if c.cam_id < 0:  # pragma: no cover
+            raise ValueError(
+                f"{type(self).__name__}: {self.ENV_ID} has no 'track' camera, which is "
+                f"the one gymnasium renders through by default (MujocoRenderer falls "
+                f"back to camera_name='track'); there is nothing to be parity or visual "
+                f"against"
+            )
         c.fovy = float(m.cam_fovy[c.cam_id])
         c.znear = float(m.vis.map.znear) * float(m.stat.extent)
         c.zfar = float(m.vis.map.zfar) * float(m.stat.extent)
@@ -1701,8 +1874,11 @@ class GymMujocoVisual(_GymMujocoFamily):
         # ``nvdiff.Lights`` does not carry ``castshadow`` — it is a property of the light for the
         # SHADOW pass rather than for the shading law — so it is taken from the MjvScene here.
         c.castshadow = np.array([int(scn.lights[i].castshadow) for i in range(int(scn.nlight))])
-        cast = [i for i in range(int(scn.nlight)) if c.castshadow[i]
-                and bool(c.br.lights.directional[i]) and not bool(c.br.lights.headlight[i])]
+        cast = [
+            i
+            for i in range(int(scn.nlight))
+            if c.castshadow[i] and bool(c.br.lights.directional[i]) and not bool(c.br.lights.headlight[i])
+        ]
         c.shadow = _ShadowPass(c, cast[0], NVD_SHADOW_RES) if (self.SHADOWS and cast) else None
         per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * c.br.scene.V
         c.chunk = max(1, int(NVD_BUDGET_BYTES // max(1, per_world)))
@@ -1719,28 +1895,32 @@ class GymMujocoVisual(_GymMujocoFamily):
         simply be missing a surface.
         """
         m = c.model
-        visible = [g for g in range(int(m.ngeom))
-                   if int(m.geom_group[g]) in ND.DEFAULT_GROUPS
-                   and ND.effective_rgba(m, g)[3] > 0.0]
+        visible = [
+            g
+            for g in range(int(m.ngeom))
+            if int(m.geom_group[g]) in ND.DEFAULT_GROUPS and ND.effective_rgba(m, g)[3] > 0.0
+        ]
         assert len(c.geoms) == len(visible), (
             f"{type(self).__name__}: nvdiff.Scene drew {len(c.geoms)} of {len(visible)} visible "
             f"geoms — the missing ones are a geom type it skips (heightfield, SDF), and it skips "
-            f"them silently, so the frame would simply be missing a surface")
+            f"them silently, so the frame would simply be missing a surface"
+        )
         assert int(m.nlight) >= 1 and int(m.vis.headlight.active), (
             f"{type(self).__name__}: the lighting this env's fidelity was measured under is the "
             f"model light plus MuJoCo's headlight; this model resolves to nlight={int(m.nlight)}, "
-            f"headlight active={int(m.vis.headlight.active)}")
+            f"headlight active={int(m.vis.headlight.active)}"
+        )
         # A shadow-casting light this pass cannot draw is a SILENTLY missing shadow, which is the same
         # class of error as a silently skipped geom. ``_ShadowPass`` projects orthographically and is
         # therefore directional-only; all six of these models carry exactly one such light and no
         # other caster.
         L = c.br.lights
-        unhandled = [i for i in range(len(L.pos)) if c.castshadow[i] and not L.headlight[i]
-                     and not L.directional[i]]
+        unhandled = [i for i in range(len(L.pos)) if c.castshadow[i] and not L.headlight[i] and not L.directional[i]]
         assert not unhandled, (
             f"{type(self).__name__}: lights {unhandled} cast shadows and are not directional; "
             f"_ShadowPass draws an ORTHOGRAPHIC map and would leave their shadows out of the frame "
-            f"without saying so")
+            f"without saying so"
+        )
 
     # ---- variation --------------------------------------------------------
 
@@ -1761,20 +1941,26 @@ class GymMujocoVisual(_GymMujocoFamily):
         not offered rather than offered at a cost the name does not advertise. The parity four DO
         carry ``body.tint`` and ``body.scale``, because their movers are ray-cast per environment.
         """
-        return Dict({
-            "camera": Dict({
-                # In the camera's own frame. Small, because this camera is 3-4 m from a 1 m body: 6 cm
-                # is ~6 px at 240, and a metre would be a different shot rather than a different
-                # camera.
-                "offset": Box(low=-0.06, high=0.06, shape=(3,), init_value=[0.0, 0.0, 0.0]),
-                "pan": Box(low=-8.0, high=8.0, shape=(1,), init_value=[0.0]),
-                "tilt": Box(low=-8.0, high=8.0, shape=(1,), init_value=[0.0]),
-            }),
-            "light": Dict({
-                "scale": Box(low=0.45, high=1.6, shape=(1,), init_value=[1.0]),
-                "tint": Box(low=0.6, high=1.4, shape=(3,), init_value=[1.0, 1.0, 1.0]),
-            }),
-        })
+        return Dict(
+            {
+                "camera": Dict(
+                    {
+                        # In the camera's own frame. Small, because this camera is 3-4 m from a 1 m body: 6 cm
+                        # is ~6 px at 240, and a metre would be a different shot rather than a different
+                        # camera.
+                        "offset": Box(low=-0.06, high=0.06, shape=(3,), init_value=[0.0, 0.0, 0.0]),
+                        "pan": Box(low=-8.0, high=8.0, shape=(1,), init_value=[0.0]),
+                        "tilt": Box(low=-8.0, high=8.0, shape=(1,), init_value=[0.0]),
+                    }
+                ),
+                "light": Dict(
+                    {
+                        "scale": Box(low=0.45, high=1.6, shape=(1,), init_value=[1.0]),
+                        "tint": Box(low=0.6, high=1.4, shape=(3,), init_value=[1.0, 1.0, 1.0]),
+                    }
+                ),
+            }
+        )
 
     # ---- forward kinematics ----------------------------------------------
 
@@ -1795,6 +1981,7 @@ class GymMujocoVisual(_GymMujocoFamily):
         place (frame mean 34.8/255 against 3.1, ``docs/research/nvdiffrast.md`` Section 2.4).
         """
         import mujoco
+
         m, d = c.model, c.data
         B, G = len(q), len(c.geoms)
         xp = np.empty((B, G, 3))
@@ -1816,14 +2003,20 @@ class GymMujocoVisual(_GymMujocoFamily):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
 
         THESE ARE NOT THE OFFICIAL PIXELS. See ``visual_fidelity`` for what they are instead.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = int(s.shape[0])
@@ -1840,7 +2033,7 @@ class GymMujocoVisual(_GymMujocoFamily):
         # calls are five synchronisations, which is invisible at batch 1024 and is most of the frame
         # at batch 1 — and this env's headline is that a frame costs a fraction of a millisecond.
         flat = sty.values.detach().cpu().numpy()
-        leaf = lambda p: flat[:, sty.layout[p][0]:sty.layout[p][0] + sty.layout[p][1]]  # noqa: E731
+        leaf = lambda p: flat[:, sty.layout[p][0] : sty.layout[p][0] + sty.layout[p][1]]  # noqa: E731
 
         q = s.detach().cpu().numpy().astype(np.float64)
         xp, xm, cp, cm = self._pose(c, q)
@@ -1881,6 +2074,7 @@ class GymMujocoVisual(_GymMujocoFamily):
         number measured here would describe two different shots and read as a rendering discrepancy.
         """
         import mujoco
+
         env, u = cls._fresh(int(size))
         m = u.model
         want = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, "track")
@@ -1889,7 +2083,8 @@ class GymMujocoVisual(_GymMujocoFamily):
             raise AssertionError(
                 f"{cls.__name__}: gymnasium rendered through camera {got} but this env draws camera "
                 f"{want} ('track'); the two are different shots of the same scene and every fidelity "
-                f"number computed from them would be meaningless")
+                f"number computed from them would be meaningless"
+            )
         u._se_size = int(size)
         return env
 
@@ -1901,52 +2096,90 @@ class GymMujocoVisual(_GymMujocoFamily):
 #: than implied. ``interior_*`` are reported and NOT asserted: the visual tier does not claim
 #: interior exactness, and turning a number reported for honesty into a target is how it stops being
 #: reported.
-_VIS_AT = ("240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 "
-           "(driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against "
-           "gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); "
-           "the values below are the WORST of the four draws")
+_VIS_AT = (
+    "240 px, supersample 1, 64 states x 4 independent draws from sample_states, one H200 "
+    "(driver 590.48.01), nvdiffrast 0.4.0 / mujoco 3.9.0 / gymnasium 1.2.3, against "
+    "gymnasium's own rgb_array render at the model's track camera (MuJoCo offsamples=4); "
+    "the values below are the WORST of the four draws"
+)
 VISUAL_FIDELITY: dict[str, dict] = {
     "MujocoHalfCheetah": {
-        "mean_abs": 4.089, "within8_frac": 0.8734, "ssim": 0.9666,
-        "interior_mean_abs": 0.638, "interior_exact_frac": 0.594,
+        "mean_abs": 4.089,
+        "within8_frac": 0.8734,
+        "ssim": 0.9666,
+        "interior_mean_abs": 0.638,
+        "interior_exact_frac": 0.594,
         "draw_spread": {"mean_abs": [3.955, 4.089], "ssim": [0.9666, 0.9677]},
-        "mean_abs_max": 5.5, "within8_min": 0.83, "ssim_min": 0.94, "measured_at": _VIS_AT,
+        "mean_abs_max": 5.5,
+        "within8_min": 0.83,
+        "ssim_min": 0.94,
+        "measured_at": _VIS_AT,
     },
     "MujocoHopper": {
-        "mean_abs": 4.346, "within8_frac": 0.8462, "ssim": 0.9483,
-        "interior_mean_abs": 0.491, "interior_exact_frac": 0.853,
+        "mean_abs": 4.346,
+        "within8_frac": 0.8462,
+        "ssim": 0.9483,
+        "interior_mean_abs": 0.491,
+        "interior_exact_frac": 0.853,
         "draw_spread": {"mean_abs": [4.322, 4.346], "ssim": [0.9483, 0.9499]},
-        "mean_abs_max": 5.8, "within8_min": 0.80, "ssim_min": 0.92, "measured_at": _VIS_AT,
+        "mean_abs_max": 5.8,
+        "within8_min": 0.80,
+        "ssim_min": 0.92,
+        "measured_at": _VIS_AT,
     },
     "MujocoWalker2d": {
-        "mean_abs": 3.861, "within8_frac": 0.8704, "ssim": 0.9467,
-        "interior_mean_abs": 0.370, "interior_exact_frac": 0.799,
+        "mean_abs": 3.861,
+        "within8_frac": 0.8704,
+        "ssim": 0.9467,
+        "interior_mean_abs": 0.370,
+        "interior_exact_frac": 0.799,
         "draw_spread": {"mean_abs": [3.814, 3.861], "ssim": [0.9467, 0.9491]},
-        "mean_abs_max": 5.2, "within8_min": 0.83, "ssim_min": 0.92, "measured_at": _VIS_AT,
+        "mean_abs_max": 5.2,
+        "within8_min": 0.83,
+        "ssim_min": 0.92,
+        "measured_at": _VIS_AT,
     },
     "MujocoAnt": {
         # The largest body in the family (10.3% of the frame) and the one the shadow pass is worth
         # most to: mean 6.21 -> 3.43/255 and SSIM 0.947 -> 0.977 against the same reference.
-        "mean_abs": 3.430, "within8_frac": 0.8935, "ssim": 0.9771,
-        "interior_mean_abs": 0.603, "interior_exact_frac": 0.642,
+        "mean_abs": 3.430,
+        "within8_frac": 0.8935,
+        "ssim": 0.9771,
+        "interior_mean_abs": 0.603,
+        "interior_exact_frac": 0.642,
         "draw_spread": {"mean_abs": [3.329, 3.430], "ssim": [0.9771, 0.9790]},
-        "mean_abs_max": 4.6, "within8_min": 0.85, "ssim_min": 0.95, "measured_at": _VIS_AT,
+        "mean_abs_max": 4.6,
+        "within8_min": 0.85,
+        "ssim_min": 0.95,
+        "measured_at": _VIS_AT,
     },
     "MujocoHumanoid": {
-        "mean_abs": 4.387, "within8_frac": 0.8390, "ssim": 0.9516,
-        "interior_mean_abs": 0.623, "interior_exact_frac": 0.880,
+        "mean_abs": 4.387,
+        "within8_frac": 0.8390,
+        "ssim": 0.9516,
+        "interior_mean_abs": 0.623,
+        "interior_exact_frac": 0.880,
         "draw_spread": {"mean_abs": [4.370, 4.387], "ssim": [0.9516, 0.9527]},
-        "mean_abs_max": 5.8, "within8_min": 0.79, "ssim_min": 0.92, "measured_at": _VIS_AT,
+        "mean_abs_max": 5.8,
+        "within8_min": 0.79,
+        "ssim_min": 0.92,
+        "measured_at": _VIS_AT,
     },
     "MujocoSwimmer": {
         # The best of the six on every column and the worst on interior exactness, which is the one
         # number the tier reports without asserting: its floor is 94.9% of the frame and MAGNIFIED
         # rather than minified, so almost every pixel of it has a flat 3x3 neighbourhood to be counted
         # in and a magnification filter to disagree about.
-        "mean_abs": 1.972, "within8_frac": 0.9454, "ssim": 0.9810,
-        "interior_mean_abs": 0.458, "interior_exact_frac": 0.542,
+        "mean_abs": 1.972,
+        "within8_frac": 0.9454,
+        "ssim": 0.9810,
+        "interior_mean_abs": 0.458,
+        "interior_exact_frac": 0.542,
         "draw_spread": {"mean_abs": [1.931, 1.972], "ssim": [0.9810, 0.9826]},
-        "mean_abs_max": 2.7, "within8_min": 0.91, "ssim_min": 0.96, "measured_at": _VIS_AT,
+        "mean_abs_max": 2.7,
+        "within8_min": 0.91,
+        "ssim_min": 0.96,
+        "measured_at": _VIS_AT,
     },
 }
 
@@ -1985,7 +2218,8 @@ VISUAL_NOTE = (
     "evaluating a policy on official gymnasium pixels. The two pixel distributions differ by the "
     "amounts above and nothing in this repo measures what that difference costs a policy. The four "
     "PARITY envs in this same module (Reacher, Pusher, InvertedPendulum, InvertedDoublePendulum) are "
-    "not affected by any of this and still claim the official frame.")
+    "not affected by any of this and still claim the official frame."
+)
 
 
 def missing_visual_backend() -> str | None:
@@ -2000,30 +2234,37 @@ def missing_visual_backend() -> str | None:
 
 def _make_visual_classes():
     made = {}
-    if NVDIFF_IMPORT_ERROR is not None:                                       # pragma: no cover
+    if NVDIFF_IMPORT_ERROR is not None:  # pragma: no cover
         return made
     for cname, env_id in VISUAL_ENVS.items():
         vf = VISUAL_FIDELITY.get(cname)
-        if vf is None:                                                        # pragma: no cover
+        if vf is None:  # pragma: no cover
             continue
-        made[cname] = register(type(cname, (GymMujocoVisual,), dict(
-            ENV_ID=env_id,
-            name=_hyphen_name(env_id),
-            reference_id=f"gymnasium/{env_id}",
-            visual_fidelity=vf,
-            visual_note=VISUAL_NOTE,
-            __doc__=(
-                f"Gymnasium {env_id}, rendered by nvdiffrast. State is qpos.\n\n"
-                f"VISUAL TIER — these are NOT the official pixels. The frame is a different "
-                f"rasterization of the same scene from the same qpos: same geometry, same "
-                f"tessellation, same track camera, same materials and lights. Measured against "
-                f"gymnasium's own render at 240 px: mean |diff| {vf['mean_abs']:.2f}/255, "
-                f"{100 * vf['within8_frac']:.1f}% of pixels within 8/255, SSIM {vf['ssim']:.4f}, and "
-                f"{100 * vf['interior_exact_frac']:.1f}% of interior pixels bit-exact against the "
-                f"100% every parity env in this registry declares.\n\n"
-                f"Suitable for generating training frames live. NOT a substitute for a stored dataset "
-                f"when a policy will be evaluated on official gymnasium pixels. See visual_note."),
-        )))
+        made[cname] = register(
+            type(
+                cname,
+                (GymMujocoVisual,),
+                dict(
+                    ENV_ID=env_id,
+                    name=_hyphen_name(env_id),
+                    reference_id=f"gymnasium/{env_id}",
+                    visual_fidelity=vf,
+                    visual_note=VISUAL_NOTE,
+                    __doc__=(
+                        f"Gymnasium {env_id}, rendered by nvdiffrast. State is qpos.\n\n"
+                        f"VISUAL TIER — these are NOT the official pixels. The frame is a different "
+                        f"rasterization of the same scene from the same qpos: same geometry, same "
+                        f"tessellation, same track camera, same materials and lights. Measured against "
+                        f"gymnasium's own render at 240 px: mean |diff| {vf['mean_abs']:.2f}/255, "
+                        f"{100 * vf['within8_frac']:.1f}% of pixels within 8/255, SSIM {vf['ssim']:.4f}, and "
+                        f"{100 * vf['interior_exact_frac']:.1f}% of interior pixels bit-exact against the "
+                        f"100% every parity env in this registry declares.\n\n"
+                        f"Suitable for generating training frames live. NOT a substitute for a stored dataset "
+                        f"when a policy will be evaluated on official gymnasium pixels. See visual_note."
+                    ),
+                ),
+            )
+        )
     return made
 
 

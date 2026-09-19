@@ -20,6 +20,7 @@ breaks it and the repository's own registered families are exactly the ones that
 The last test is the regression tripwire the fix is worth: a cube map on a MESH — the geom type the
 old rule declared safe.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -29,7 +30,6 @@ mujoco = pytest.importorskip("mujoco")
 
 from stable_envs.render.mjwarp import TEXTURE_SAMPLER_OK, TEXTURED_OK, texture_gaps
 
-
 #: A tetrahedron with per-vertex UVs. Meshes default to CARRYING texcoords, because a mesh without
 #: them is itself a gap (condition 3) and a fixture that omitted them would make every mesh case in
 #: this file test that one condition by accident instead of the condition it names.
@@ -37,8 +37,9 @@ _MESH_UV = 'vertex="0 0 0  1 0 0  0 1 0  0 0 1" texcoord="0 0  1 0  0 1  1 1"'
 _MESH_NO_UV = 'vertex="0 0 0  1 0 0  0 1 0  0 0 1"'
 
 
-def _model(tex_type: str, geom: str, *, textured: bool = True, group: int = 1,
-           texcoord: bool = True) -> "mujoco.MjModel":
+def _model(
+    tex_type: str, geom: str, *, textured: bool = True, group: int = 1, texcoord: bool = True
+) -> mujoco.MjModel:
     """One geom of type ``geom``, optionally wearing a material with a ``tex_type`` texture."""
     if textured:
         if tex_type == "skybox":
@@ -52,8 +53,9 @@ def _model(tex_type: str, geom: str, *, textured: bool = True, group: int = 1,
     else:
         asset = '<asset><material name="m" rgba="1 0 0 1"/></asset>'
         matattr = 'material="m"'
-    size = {"plane": "1 1 .1", "mesh": "", "box": ".1 .1 .1", "sphere": ".1",
-            "cylinder": ".1 .1", "capsule": ".1 .1"}[geom]
+    size = {"plane": "1 1 .1", "mesh": "", "box": ".1 .1 .1", "sphere": ".1", "cylinder": ".1 .1", "capsule": ".1 .1"}[
+        geom
+    ]
     if geom == "mesh":
         verts = _MESH_UV if texcoord else _MESH_NO_UV
         asset = asset.replace("</asset>", f'<mesh name="mm" {verts}/></asset>')
@@ -122,11 +124,12 @@ def test_a_skybox_material_worn_by_a_geom_is_a_gap():
 
 def test_the_models_own_skybox_is_not_flagged():
     m = mujoco.MjModel.from_xml_string(
-        '<mujoco><asset>'
+        "<mujoco><asset>"
         '<texture name="sky" type="skybox" builtin="gradient" width="8" height="48"/>'
         '<texture name="t" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
         '<material name="m" texture="t"/></asset>'
-        '<worldbody><geom type="plane" size="1 1 .1" group="1" material="m"/></worldbody></mujoco>')
+        '<worldbody><geom type="plane" size="1 1 .1" group="1" material="m"/></worldbody></mujoco>'
+    )
     assert int(m.ntex) == 2 and any(int(m.tex_type[i]) == 2 for i in range(m.ntex))
     assert texture_gaps(m) == [], "a skybox no geom wears is not a geom's texture gap"
 
@@ -144,20 +147,21 @@ def test_every_texture_role_is_examined_not_only_the_largest_id():
         pytest.skip("this mujoco build has a scalar mat_texid; role sweep is not expressible")
     # add a cube texture in a second role on the same material
     m2 = mujoco.MjModel.from_xml_string(
-        '<mujoco><asset>'
+        "<mujoco><asset>"
         '<texture name="a" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
         '<texture name="c" type="cube" builtin="checker" rgb1="0 0 1" rgb2="1 1 0" width="8" height="48"/>'
         f'<mesh name="mm" {_MESH_UV}/>'
         '<material name="m" texture="a"/></asset>'
-        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>')
+        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>'
+    )
     cube = [i for i in range(m2.ntex) if int(m2.tex_type[i]) == 1][0]
     two_d = [i for i in range(m2.ntex) if int(m2.tex_type[i]) == 0][0]
     assert texture_gaps(m2) == []
-    role = np.asarray(m2.mat_texid).shape[1] - 1     # a role the 2-D texture does not occupy
+    role = np.asarray(m2.mat_texid).shape[1] - 1  # a role the 2-D texture does not occupy
     assert cube > two_d, "the cube must have the LARGER id, so np.max would have caught it anyway"
-    m2.mat_texid[0, role] = two_d                    # smaller id in another role: still fine
+    m2.mat_texid[0, role] = two_d  # smaller id in another role: still fine
     assert texture_gaps(m2) == []
-    m2.mat_texid[0, role] = cube                     # a cube in ANY role is fatal
+    m2.mat_texid[0, role] = cube  # a cube in ANY role is fatal
     assert len(texture_gaps(m2)) == 1
 
 
@@ -185,12 +189,13 @@ def test_a_textured_mesh_WITH_texcoords_is_not_a_gap():
     helper useless rather than wrong.
     """
     m = mujoco.MjModel.from_xml_string(
-        '<mujoco><asset>'
+        "<mujoco><asset>"
         '<texture name="t" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 1 0" width="8" height="8"/>'
         '<material name="m" texture="t"/>'
         '<mesh name="mm" vertex="0 0 0  1 0 0  0 1 0  0 0 1" texcoord="0 0  1 0  0 1  1 1"/>'
-        '</asset>'
-        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>')
+        "</asset>"
+        '<worldbody><geom type="mesh" mesh="mm" group="1" material="m"/></worldbody></mujoco>'
+    )
     assert int(m.mesh_texcoordnum[0]) > 0, "this mesh does carry UVs"
     assert texture_gaps(m) == []
 

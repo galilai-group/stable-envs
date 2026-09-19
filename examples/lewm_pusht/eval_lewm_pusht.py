@@ -31,12 +31,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import hydra
 import numpy as np
 import stable_pretraining as spt
+import stable_worldmodel as swm
 import torch
 from omegaconf import DictConfig, OmegaConf
 from sklearn import preprocessing
 from torchvision.transforms import v2 as transforms
-
-import stable_worldmodel as swm
 
 
 def img_transform(cfg):
@@ -75,9 +74,9 @@ def get_dataset(cfg, dataset_name):
 @hydra.main(version_base=None, config_path="./config/eval", config_name="pusht")
 def run(cfg: DictConfig):
     """Run evaluation of dinowm vs random policy."""
-    assert (
-        cfg.plan_config.horizon * cfg.plan_config.action_block <= cfg.eval.eval_budget
-    ), "Planning horizon must be smaller than or equal to eval_budget"
+    assert cfg.plan_config.horizon * cfg.plan_config.action_block <= cfg.eval.eval_budget, (
+        "Planning horizon must be smaller than or equal to eval_budget"
+    )
 
     # -- the only edit: install the renderer swap before any env is built.
     renderer_name = cfg.get("renderer", "official")
@@ -85,19 +84,20 @@ def run(cfg: DictConfig):
     RENDERERS = {
         "stable_envs": ("direct", True, True),
         "stable_envs_resize512": ("resize512", True, True),
-        "stable_envs_live": ("direct", True, False),      # only the per-step observation
-        "stable_envs_dataset": ("direct", False, True),   # only the first obs and the goal image
-        "blank": ("blank", True, True),                   # falsifiability control
+        "stable_envs_live": ("direct", True, False),  # only the per-step observation
+        "stable_envs_dataset": ("direct", False, True),  # only the first obs and the goal image
+        "blank": ("blank", True, True),  # falsifiability control
     }
     swapper = None
     if renderer_name != "official":
         import swap_renderer
 
         mode, live, data = RENDERERS[renderer_name]
-        swapper = swap_renderer.install(size=cfg.eval.img_size, mode=mode,
-                                        swap_live=live, swap_dataset=data)
-        print(f"[renderer] {renderer_name} (mode={mode}, live={live}, dataset={data}, "
-              f"size={cfg.eval.img_size})", flush=True)
+        swapper = swap_renderer.install(size=cfg.eval.img_size, mode=mode, swap_live=live, swap_dataset=data)
+        print(
+            f"[renderer] {renderer_name} (mode={mode}, live={live}, dataset={data}, size={cfg.eval.img_size})",
+            flush=True,
+        )
     else:
         print("[renderer] official swm/PushT-v1 pygame renderer", flush=True)
 
@@ -140,9 +140,7 @@ def run(cfg: DictConfig):
         model.interpolate_pos_encoding = True
         config = swm.PlanConfig(**cfg.plan_config)
         solver = hydra.utils.instantiate(cfg.solver, model=model)
-        policy = swm.policy.WorldModelPolicy(
-            solver=solver, config=config, process=process, transform=transform
-        )
+        policy = swm.policy.WorldModelPolicy(solver=solver, config=config, process=process, transform=transform)
 
     else:
         policy = swm.policy.RandomPolicy()
@@ -155,9 +153,7 @@ def run(cfg: DictConfig):
     max_start_idx_dict = {ep_id: max_start_idx[i] for i, ep_id in enumerate(ep_indices)}
     # Map each dataset row's episode_idx to its max_start_idx
     col_name = "episode_idx" if "episode_idx" in dataset.column_names else "ep_idx"
-    max_start_per_row = np.array(
-        [max_start_idx_dict[ep_id] for ep_id in dataset.get_col_data(col_name)]
-    )
+    max_start_per_row = np.array([max_start_idx_dict[ep_id] for ep_id in dataset.get_col_data(col_name)])
 
     # remove all the lines of dataset for which dataset['step_idx'] > max_start_per_row
     valid_mask = dataset.get_col_data("step_idx") <= max_start_per_row
@@ -165,9 +161,7 @@ def run(cfg: DictConfig):
     print(valid_mask.sum(), "valid starting points found for evaluation.")
 
     g = np.random.default_rng(cfg.seed)
-    random_episode_indices = g.choice(
-        len(valid_indices) - 1, size=cfg.eval.num_eval, replace=False
-    )
+    random_episode_indices = g.choice(len(valid_indices) - 1, size=cfg.eval.num_eval, replace=False)
 
     # sort increasingly to avoid issues with HDF5Dataset indexing
     random_episode_indices = np.sort(valid_indices[random_episode_indices])
@@ -197,9 +191,12 @@ def run(cfg: DictConfig):
     end_time = time.time()
 
     print(metrics)
-    print(f"[RESULT] renderer={renderer_name}  success_rate={float(metrics['success_rate']):.1f}%  "
-          f"n={cfg.eval.num_eval}  seed={cfg.seed}  offset={cfg.eval.goal_offset_steps}  "
-          f"budget={cfg.eval.eval_budget}", flush=True)
+    print(
+        f"[RESULT] renderer={renderer_name}  success_rate={float(metrics['success_rate']):.1f}%  "
+        f"n={cfg.eval.num_eval}  seed={cfg.seed}  offset={cfg.eval.goal_offset_steps}  "
+        f"budget={cfg.eval.eval_budget}",
+        flush=True,
+    )
     if swapper is not None:
         print(f"[renderer] stable_envs render calls: {swapper.n_calls}", flush=True)
 
@@ -219,6 +216,7 @@ def run(cfg: DictConfig):
         "eval_seconds": end_time - start_time,
     }
     import json
+
     (results_path / f"{cfg.output.tag}_{renderer_name}.json").write_text(json.dumps(payload, indent=2))
 
     results_file = results_path / cfg.output.filename

@@ -47,6 +47,7 @@ kernel cannot see. It is computed by ``_dot_max``, a first pass that evaluates t
 and keeps only the maximum -- so nothing is materialised there either. A maximum is exact whatever
 order it is taken in, which is what makes a two-pass split safe where a sum would not be.
 """
+
 from __future__ import annotations
 
 import math
@@ -59,7 +60,7 @@ from .raster2d import tile_shape
 #: uint8 contrast (``scratch/step6/raster2d/alpha_bound.py``): 2.98e-8 = 2^-25, reached at img=1,
 #: colour=0 because ``img * (1 - a)`` goes through ``1 - a``, which rounds to exactly 1.0 in float32
 #: below the spacing at 1.0. Below this alpha the blend is the identity.
-ALPHA_FLOOR = 2.0 ** -25
+ALPHA_FLOOR = 2.0**-25
 
 #: ``d/sigma`` at which a normalised Gaussian drops under ``ALPHA_FLOOR`` for a peak on a sample.
 DOT_SIGMAS = math.sqrt(2.0 * math.log(1.0 / ALPHA_FLOOR))
@@ -99,20 +100,32 @@ def dot_window(pos: torch.Tensor, sigma: torch.Tensor, H: int, W: int) -> torch.
     r1 = torch.floor(y + d).clamp(0, H - 1) + 1
     return torch.stack([r0, r1, c0, c1], dim=-1).to(torch.int64)
 
+
 try:
     import triton
     import triton.language as tl
+
     HAVE_TRITON = True
-except ImportError:                                    # reported by the renderer, never silent
+except ImportError:  # reported by the renderer, never silent
     HAVE_TRITON = False
 
 
 if HAVE_TRITON:
 
     @triton.jit
-    def _dot_max_kernel(pos_ptr, den_ptr, win_ptr, out_ptr, H: tl.constexpr, W: tl.constexpr,
-                        ND: tl.constexpr, NTX: tl.constexpr, NT: tl.constexpr,
-                        BH: tl.constexpr, BW: tl.constexpr):
+    def _dot_max_kernel(
+        pos_ptr,
+        den_ptr,
+        win_ptr,
+        out_ptr,
+        H: tl.constexpr,
+        W: tl.constexpr,
+        ND: tl.constexpr,
+        NTX: tl.constexpr,
+        NT: tl.constexpr,
+        BH: tl.constexpr,
+        BW: tl.constexpr,
+    ):
         """Partial frame maxima of the RAW dot: ``(B, ND, NT)``, reduced by the caller.
 
         The dot is evaluated and thrown away; only the maximum leaves. Two stages rather than an
@@ -131,8 +144,7 @@ if HAVE_TRITON:
         r0 = (t // NTX) * BH
         c0 = (t % NTX) * BW
         wb = win_ptr + (b * ND + d) * 4
-        if (r0 < tl.load(wb + 1)) & (r0 + BH > tl.load(wb + 0)) & \
-           (c0 < tl.load(wb + 3)) & (c0 + BW > tl.load(wb + 2)):
+        if (r0 < tl.load(wb + 1)) & (r0 + BH > tl.load(wb + 0)) & (c0 < tl.load(wb + 3)) & (c0 + BW > tl.load(wb + 2)):
             px = tl.load(pos_ptr + (b * ND + d) * 2 + 0)
             py = tl.load(pos_ptr + (b * ND + d) * 2 + 1)
             den = tl.load(den_ptr + b * ND + d)
@@ -144,15 +156,26 @@ if HAVE_TRITON:
             dist2 = dx * dx + dy * dy
             arg = tl.math.div_rn(-dist2, den)
             dot = tl.exp(arg.to(tl.float64)).to(tl.float32)
-            tl.store(out_ptr + (b * ND + d) * NT + t,
-                     tl.max(tl.where(m, dot, float("-inf"))))
+            tl.store(out_ptr + (b * ND + d) * NT + t, tl.max(tl.where(m, dot, float("-inf"))))
         else:
             tl.store(out_ptr + (b * ND + d) * NT + t, float("-inf"))
 
     @triton.jit
-    def _blend_kernel(base_ptr, pos_ptr, den_ptr, max_ptr, col_ptr, win_ptr, out_ptr,
-                      H: tl.constexpr, W: tl.constexpr, ND: tl.constexpr,
-                      NTX: tl.constexpr, BH: tl.constexpr, BW: tl.constexpr):
+    def _blend_kernel(
+        base_ptr,
+        pos_ptr,
+        den_ptr,
+        max_ptr,
+        col_ptr,
+        win_ptr,
+        out_ptr,
+        H: tl.constexpr,
+        W: tl.constexpr,
+        ND: tl.constexpr,
+        NTX: tl.constexpr,
+        BH: tl.constexpr,
+        BW: tl.constexpr,
+    ):
         """``base`` + ND normalised Gaussian dots -> uint8, one pass, nothing materialised.
 
         The dot loop is ``tl.static_range`` because ND is 1 or 2 and each iteration quantises the
@@ -180,8 +203,12 @@ if HAVE_TRITON:
         gy = rr.to(tl.float32)
         for d in tl.static_range(ND):
             wb = win_ptr + (b * ND + d) * 4
-            if (r0 < tl.load(wb + 1)) & (r0 + BH > tl.load(wb + 0)) & \
-               (c0 < tl.load(wb + 3)) & (c0 + BW > tl.load(wb + 2)):
+            if (
+                (r0 < tl.load(wb + 1))
+                & (r0 + BH > tl.load(wb + 0))
+                & (c0 < tl.load(wb + 3))
+                & (c0 + BW > tl.load(wb + 2))
+            ):
                 px = tl.load(pos_ptr + (b * ND + d) * 2 + 0)
                 py = tl.load(pos_ptr + (b * ND + d) * 2 + 1)
                 den = tl.load(den_ptr + b * ND + d)
@@ -238,8 +265,9 @@ def available(device) -> bool:
 
 
 @torch.no_grad()
-def blend_dots(base: torch.Tensor, pos: torch.Tensor, sigma: torch.Tensor,
-               colour: torch.Tensor, out: torch.Tensor | None = None) -> torch.Tensor:
+def blend_dots(
+    base: torch.Tensor, pos: torch.Tensor, sigma: torch.Tensor, colour: torch.Tensor, out: torch.Tensor | None = None
+) -> torch.Tensor:
     """``(B,H,W,3)`` uint8 base + ``(B,ND,...)`` dots -> ``(B,H,W,3)`` uint8, composited in order.
 
     ``sigma`` is the radius as the env declares it; the float64 ``2*s*s`` and its single rounding to
@@ -262,10 +290,25 @@ def blend_dots(base: torch.Tensor, pos: torch.Tensor, sigma: torch.Tensor,
     bh, bw, ntx, nt = _tile(H, W)
     with torch.cuda.device(dev):
         part = torch.empty((B, ND, nt), dtype=torch.float32, device=dev)
-        _dot_max_kernel[(B, ND, nt)](pos, den, win, part, H=H, W=W, ND=ND, NTX=ntx, NT=nt,
-                                     BH=bh, BW=bw, num_warps=4, enable_fp_fusion=False)
-        mx = part.amax(dim=2).contiguous()            # exact: a maximum has no rounding order
-        _blend_kernel[(B, nt)](base, pos, den, mx, col, win, out,
-                               H=H, W=W, ND=ND, NTX=ntx, BH=bh, BW=bw, num_warps=4,
-                               enable_fp_fusion=False)
+        _dot_max_kernel[(B, ND, nt)](
+            pos, den, win, part, H=H, W=W, ND=ND, NTX=ntx, NT=nt, BH=bh, BW=bw, num_warps=4, enable_fp_fusion=False
+        )
+        mx = part.amax(dim=2).contiguous()  # exact: a maximum has no rounding order
+        _blend_kernel[(B, nt)](
+            base,
+            pos,
+            den,
+            mx,
+            col,
+            win,
+            out,
+            H=H,
+            W=W,
+            ND=ND,
+            NTX=ntx,
+            BH=bh,
+            BW=bw,
+            num_warps=4,
+            enable_fp_fusion=False,
+        )
     return out

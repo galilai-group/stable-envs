@@ -8,6 +8,7 @@ The caches are module-level and deliberately so. One ``mujoco.Renderer`` per (do
 POLICY, not an optimisation — releasing an EGL context corrupts every other live one — and a cache
 that lived on a class or an instance would give a second env a second context. See ``_ENV_CACHE``.
 """
+
 from __future__ import annotations
 
 import os
@@ -64,8 +65,18 @@ HIDDEN_GROUP = 5
 #: Model arrays a DM Control ``initialize_episode`` may DRAW per episode, and that the renderer reads.
 #: The list is deliberately wider than what any task's source shows, because the point of the census in
 #: ``_episode_slots`` is to catch a draw nobody transcribed rather than to confirm one that was.
-EPISODE_ARRAYS = ("geom_pos", "geom_quat", "geom_size", "site_pos", "site_quat", "site_size",
-                  "body_pos", "body_quat", "light_pos", "light_dir")
+EPISODE_ARRAYS = (
+    "geom_pos",
+    "geom_quat",
+    "geom_size",
+    "site_pos",
+    "site_quat",
+    "site_size",
+    "body_pos",
+    "body_quat",
+    "light_pos",
+    "light_dir",
+)
 #: Resets used to discover the draw. Six is what separates a per-episode draw from a task CONSTANT on
 #: every domain here: ``finger-spin`` writes ``site_rgba`` and ``dof_damping`` at every
 #: ``initialize_episode`` and writes the same values every time, so one reset cannot tell the two
@@ -109,16 +120,19 @@ def _check_dm_control_works() -> None:
     and build its index. Milliseconds, and no GL context.
     """
     from dm_control import mujoco as dm_mujoco
+
     try:
         dm_mujoco.Physics.from_xml_string("<mujoco/>")
     except AttributeError as e:
         import mujoco
+
         raise ImportError(
             f"dm_control is installed but cannot compile a model with mujoco "
             f"{mujoco.__version__}: {e}. This is a version skew, not a missing package — no "
             f"dm_control release works with mujoco 3.9. Consistent pairs: mujoco==3.11.0 with "
             f"dm_control==1.0.44, mujoco==3.10.0 with dm_control==1.0.43, mujoco==3.8.1 with "
-            f"dm_control==1.0.41. See docs/research/dmcontrol.md.") from e
+            f"dm_control==1.0.41. See docs/research/dmcontrol.md."
+        ) from e
 
 
 _check_dm_control_works()
@@ -126,10 +140,12 @@ _check_dm_control_works()
 
 def _suite():
     from dm_control import suite
+
     return suite
 
 
 # --------------------------------------------------------------------------- model reading
+
 
 def _mat_rgb(m, matid: int, rgba) -> np.ndarray:
     """Base colour of a geom or site: its own rgba unless that is the compiler default and a material
@@ -142,7 +158,7 @@ def _mat_rgb(m, matid: int, rgba) -> np.ndarray:
 
 def _mat_spec_shin(m, matid: int) -> tuple[float, float]:
     if matid < 0:
-        return 0.5, 0.5                                # MuJoCo's material defaults
+        return 0.5, 0.5  # MuJoCo's material defaults
     return float(m.mat_specular[matid]), float(m.mat_shininess[matid])
 
 
@@ -163,7 +179,9 @@ def _grid_defaults() -> np.ndarray:
     default" a coincidence that a ``dm_control`` release could quietly end.
     """
     import re
+
     from dm_control.suite import common
+
     xml = common.ASSETS["./common/materials.xml"].decode()
     mat = re.search(r'<texture[^>]*name="grid"[^>]*/>', xml)
     assert mat, "dm_control's common/materials.xml no longer declares a texture named 'grid'"
@@ -194,8 +212,12 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
     Cached on the texture's shape, because all twelve parity cells share one 300x300 checker.
     """
     import mujoco
-    key = (int(m.tex_width[texid]), int(m.tex_height[texid]),
-           int(m.tex_nchannel[texid]) if hasattr(m, "tex_nchannel") else 3)
+
+    key = (
+        int(m.tex_width[texid]),
+        int(m.tex_height[texid]),
+        int(m.tex_nchannel[texid]) if hasattr(m, "tex_nchannel") else 3,
+    )
     hit = _GRID_MASKS.get(key)
     if hit is not None:
         return hit
@@ -204,23 +226,25 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
         f'<mujoco><asset><texture name="grid" type="2d" builtin="checker" rgb1="1 0 0" '
         f'rgb2="0 1 0" width="{w}" height="{h}" mark="edge" markrgb="0 0 1"/>'
         f'<material name="grid" texture="grid"/></asset><worldbody>'
-        f'<geom type="plane" size="1 1 1" material="grid"/></worldbody></mujoco>')
+        f'<geom type="plane" size="1 1 1" material="grid"/></worldbody></mujoco>'
+    )
     pt = mujoco.mj_name2id(probe, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
     pa = int(probe.tex_adr[pt])
     pn = w * h * (int(probe.tex_nchannel[pt]) if hasattr(probe, "tex_nchannel") else 3)
-    pf = np.asarray(probe.tex_data[pa:pa + pn]).reshape(w * h, -1)[:, :3]
+    pf = np.asarray(probe.tex_data[pa : pa + pn]).reshape(w * h, -1)[:, :3]
     m1 = np.all(pf == np.array([255, 0, 0], np.uint8)[None, :], axis=1)
     m2 = np.all(pf == np.array([0, 255, 0], np.uint8)[None, :], axis=1)
     mk = np.all(pf == np.array([0, 0, 255], np.uint8)[None, :], axis=1)
     assert (m1 | m2 | mk).all(), (
         "the probe checker compiled to a colour that is none of its three declared ones, so the "
-        "masks do not describe MuJoCo's builtin and must not be used")
+        "masks do not describe MuJoCo's builtin and must not be used"
+    )
     # The tie to the REAL texture: rebuild it from the masks plus the suite's declared colours
     # (markrgb == rgb2, so the marks take rgb2's default) and require MuJoCo's own bytes.
     d = _grid_defaults()
     adr = int(m.tex_adr[texid])
     n = w * h * nch
-    real = np.asarray(m.tex_data[adr:adr + n]).reshape(-1, nch)[:, :3]
+    real = np.asarray(m.tex_data[adr : adr + n]).reshape(-1, nch)[:, :3]
     rebuilt = np.empty_like(real)
     rebuilt[m1] = _quantise(d[0])
     rebuilt[m2] = _quantise(d[1])
@@ -228,7 +252,8 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
     assert np.array_equal(rebuilt, real), (
         f"the probe masks plus the suite's declared grid colours rebuild {int((rebuilt != real).any(1).sum())} "
         f"of {w * h} texels differently from the compiled texture; the probe no longer describes "
-        f"this texture and a substitution through it would paint the wrong texels")
+        f"this texture and a substitution through it would paint the wrong texels"
+    )
     _GRID_MASKS[key] = (m1, m2)
     return _GRID_MASKS[key]
 
@@ -245,7 +270,7 @@ def _tex_rgb(m, matid: int) -> np.ndarray:
     attr = "tex_rgb" if hasattr(m, "tex_rgb") else "tex_data"
     a0 = int(m.tex_adr[tid])
     h, w = int(m.tex_height[tid]), int(m.tex_width[tid])
-    reg = np.asarray(getattr(m, attr)[a0:a0 + 3 * h * w], np.float64).reshape(-1, 3) / 255.0
+    reg = np.asarray(getattr(m, attr)[a0 : a0 + 3 * h * w], np.float64).reshape(-1, 3) / 255.0
     u = np.unique(reg, axis=0)
     return u[0] if len(u) == 1 else reg.mean(0)
 
@@ -293,9 +318,14 @@ def _slot_element(m, arr: str, i: int) -> tuple[str, int]:
 
 def _slot_name(m, arr: str, i: int) -> str:
     import mujoco
+
     kind, eid = _slot_element(m, arr, i)
-    obj = {"geom": mujoco.mjtObj.mjOBJ_GEOM, "site": mujoco.mjtObj.mjOBJ_SITE,
-           "body": mujoco.mjtObj.mjOBJ_BODY, "light": mujoco.mjtObj.mjOBJ_LIGHT}[kind]
+    obj = {
+        "geom": mujoco.mjtObj.mjOBJ_GEOM,
+        "site": mujoco.mjtObj.mjOBJ_SITE,
+        "body": mujoco.mjtObj.mjOBJ_BODY,
+        "light": mujoco.mjtObj.mjOBJ_LIGHT,
+    }[kind]
     name = mujoco.mj_id2name(m, obj, eid) or f"{kind}{eid}"
     w = _row_width(m, arr)
     comp = _COMPONENT.get(w, tuple(str(k) for k in range(w)))[int(i % w)]
@@ -361,5 +391,6 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
             f"primitives carry one size for the whole batch and the lights are captured once per "
             f"bake, so this domain needs a per-row size/light path before it can be honest. "
             f"(Orientation is NOT in this class: a per-episode *_quat goes through mj_kinematics "
-            f"into the per-row xmat and is supported.)")
+            f"into the per-row xmat and is supported.)"
+        )
     return tuple(slots)

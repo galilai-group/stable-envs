@@ -14,6 +14,7 @@ rendering error — the two look identical in an aggregate.
 
     python parity_probe.py --n 64 --out results/parity.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,7 +27,6 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 import numpy as np
-import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -37,12 +37,13 @@ def load_rows(n: int, seed: int) -> tuple[np.ndarray, np.ndarray]:
     """``n`` random (state, stored_frame) pairs from the official corpus."""
     import h5py
     import hdf5plugin  # noqa: F401  -- the pixels column is blosc-compressed; without this the
+
     #                                   read fails with "can't open directory (/usr/local/lib/plugin)"
     with h5py.File(H5, "r") as f:
         total = f["state"].shape[0]
         rows = np.sort(np.random.default_rng(seed).choice(total, size=n, replace=False))
-        states = f["state"][rows]                      # (n,7) float32
-        pixels = f["pixels"][rows]                     # (n,224,224,3) uint8
+        states = f["state"][rows]  # (n,7) float32
+        pixels = f["pixels"][rows]  # (n,224,224,3) uint8
     return states, pixels
 
 
@@ -55,8 +56,9 @@ def main() -> None:
     ap.add_argument("--png", default=None)
     a = ap.parse_args()
 
-    from stable_envs.testing.conformance import pixel_agreement
     from swap_renderer import _Renderer, _variation_from_env
+
+    from stable_envs.testing.conformance import pixel_agreement
 
     states, stored = load_rows(a.n, a.seed)
     print(f"[probe] {a.n} rows from {H5}", flush=True)
@@ -81,12 +83,18 @@ def main() -> None:
     # state it was handed. Quantify it rather than assume it is negligible: if it is not, every frame
     # below is being compared at two different poses and no agreement number means anything.
     drift = np.abs(ref_state[:, :5] - states[:, :5])
-    print(f"[probe] _set_state drift  max_pos={drift[:, :4].max():.4f} px  "
-          f"max_ang={drift[:, 4].max():.6f} rad", flush=True)
+    print(
+        f"[probe] _set_state drift  max_pos={drift[:, :4].max():.4f} px  max_ang={drift[:, 4].max():.6f} rad",
+        flush=True,
+    )
 
-    out: dict = {"n": a.n, "size": a.size, "seed": a.seed,
-                 "set_state_drift_max_pos_px": float(drift[:, :4].max()),
-                 "set_state_drift_max_angle_rad": float(drift[:, 4].max())}
+    out: dict = {
+        "n": a.n,
+        "size": a.size,
+        "seed": a.seed,
+        "set_state_drift_max_pos_px": float(drift[:, :4].max()),
+        "set_state_drift_max_angle_rad": float(drift[:, 4].max()),
+    }
 
     # -- ours, two resampling policies, at BOTH poses. Comparing against ``ref`` means rendering the
     # pose the env actually reached; comparing against ``stored`` means rendering the pose the corpus
@@ -103,11 +111,17 @@ def main() -> None:
     def n_colors(x):
         return float(np.mean([len(np.unique(f.reshape(-1, 3), axis=0)) for f in x[:8]]))
 
-    out["colors_per_frame"] = {"stored": n_colors(stored), "reference": n_colors(ref),
-                               "ours_direct": n_colors(renders["direct"])}
-    print(f"[probe] distinct colours/frame  stored={out['colors_per_frame']['stored']:.1f}  "
-          f"reference={out['colors_per_frame']['reference']:.1f}  "
-          f"ours={out['colors_per_frame']['ours_direct']:.1f}", flush=True)
+    out["colors_per_frame"] = {
+        "stored": n_colors(stored),
+        "reference": n_colors(ref),
+        "ours_direct": n_colors(renders["direct"]),
+    }
+    print(
+        f"[probe] distinct colours/frame  stored={out['colors_per_frame']['stored']:.1f}  "
+        f"reference={out['colors_per_frame']['reference']:.1f}  "
+        f"ours={out['colors_per_frame']['ours_direct']:.1f}",
+        flush=True,
+    )
 
     pairs = {
         "stored_vs_reference": (stored, ref),
@@ -119,16 +133,24 @@ def main() -> None:
     for name, (x, y) in pairs.items():
         m = pixel_agreement(x, y)
         out[name] = m
-        print(f"[probe] {name:32s} exact={m['exact_frac']:.4f}  "
-              f"interior_exact={m['interior_exact_frac']:.4f}  "
-              f"mean_abs={m['mean_abs']:.4f}  max_abs={m['max_abs']}", flush=True)
+        print(
+            f"[probe] {name:32s} exact={m['exact_frac']:.4f}  "
+            f"interior_exact={m['interior_exact_frac']:.4f}  "
+            f"mean_abs={m['mean_abs']:.4f}  max_abs={m['max_abs']}",
+            flush=True,
+        )
 
     if a.png:
         import imageio.v2 as imageio
+
         k = min(4, a.n)
-        strip = np.concatenate([
-            np.concatenate([stored[i], ref[i], renders["direct"][i], renders["resize512"][i]], axis=1)
-            for i in range(k)], axis=0)
+        strip = np.concatenate(
+            [
+                np.concatenate([stored[i], ref[i], renders["direct"][i], renders["resize512"][i]], axis=1)
+                for i in range(k)
+            ],
+            axis=0,
+        )
         Path(a.png).parent.mkdir(parents=True, exist_ok=True)
         imageio.imwrite(a.png, strip)
         print(f"[probe] wrote {a.png}  (columns: stored | reference | ours-direct | ours-resize512)")

@@ -27,15 +27,15 @@ success criterion is touched. The success criterion in particular is computed fr
 so the renderer cannot move the metric except through the planner's decisions — which is exactly the
 channel this experiment is trying to measure.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import torch
 
-
 # gym_pusht/swm PushT geometry constants that stable-envs expresses as multipliers on the reference.
 # swm stores absolute sizes; the T is hard-coded to 30 inside ``add_tee`` regardless of the variation.
-SWM_AGENT_SCALE = 40.0     # add_circle: radius = 0.375 * scale = 15
+SWM_AGENT_SCALE = 40.0  # add_circle: radius = 0.375 * scale = 15
 SWM_GOAL_SCALE = 40.0
 
 
@@ -44,8 +44,7 @@ class _Renderer:
 
     MODES = ("direct", "resize512", "blank")
 
-    def __init__(self, size: int = 224, mode: str = "direct", supersample: int = 1,
-                 device: str = "cuda"):
+    def __init__(self, size: int = 224, mode: str = "direct", supersample: int = 1, device: str = "cuda"):
         import stable_envs as se
 
         if mode not in self.MODES:
@@ -56,8 +55,11 @@ class _Renderer:
         # canvas, then cv2.resize) so that a disagreement can be attributed to the rasteriser rather
         # than to the resampling policy. 'direct' is what the repo actually advertises.
         self.raster_size = 512 if mode == "resize512" else self.size
-        self.env = None if mode == "blank" else se.make(
-            "PushT", num_envs=1, size=self.raster_size, supersample=supersample, device=device)
+        self.env = (
+            None
+            if mode == "blank"
+            else se.make("PushT", num_envs=1, size=self.raster_size, supersample=supersample, device=device)
+        )
         self.n_calls = 0
 
     def __call__(self, states, variation: dict | None = None) -> np.ndarray:
@@ -74,6 +76,7 @@ class _Renderer:
         img = self.env.render(s, size=self.raster_size, variation=variation).cpu().numpy()
         if self.mode == "resize512":
             import cv2
+
             img = np.stack([cv2.resize(f, (self.size, self.size)) for f in img])
         return img
 
@@ -104,32 +107,37 @@ def _variation_from_env(env) -> dict:
     vs = env.variation_space
     agent_scale = float(np.asarray(vs["agent"]["scale"].value).reshape(-1)[0])
     goal_scale = float(np.asarray(vs["goal"]["scale"].value).reshape(-1)[0])
-    if env.shapes[int(vs["agent"]["shape"].value)] != "o" or \
-       env.shapes[int(vs["block"]["shape"].value)] != "T":
+    if env.shapes[int(vs["agent"]["shape"].value)] != "o" or env.shapes[int(vs["block"]["shape"].value)] != "T":
         raise NotImplementedError(
             "swap_renderer only covers the circle-agent / T-block PushT; the env is configured with "
             f"agent={env.shapes[int(vs['agent']['shape'].value)]!r} "
-            f"block={env.shapes[int(vs['block']['shape'].value)]!r}.")
+            f"block={env.shapes[int(vs['block']['shape'].value)]!r}."
+        )
     agent_c = np.asarray(vs["agent"]["color"].value, np.float32)
     block_c = np.asarray(vs["block"]["color"].value, np.float32)
     return {
-        "agent.color": agent_c,                       # outer disc, painted in the shape colour
-        "agent.inner_color": light_color(agent_c),    # inner disc of radius r-4
+        "agent.color": agent_c,  # outer disc, painted in the shape colour
+        "agent.inner_color": light_color(agent_c),  # inner disc of radius r-4
         "agent.scale": np.float32(agent_scale / SWM_AGENT_SCALE),
-        "block.color": light_color(block_c),          # polygon interior
-        "block.outline_color": block_c,               # fat-segment outline
+        "block.color": light_color(block_c),  # polygon interior
+        "block.outline_color": block_c,  # fat-segment outline
         "goal.color": np.asarray(vs["goal"]["color"].value, np.float32),
         "goal.position": np.asarray(env.goal_pose[:2], np.float32),
         "goal.angle": np.float32(env.goal_pose[2]),
         "goal.scale": np.float32(goal_scale / SWM_GOAL_SCALE),
         "background.color": np.asarray(vs["background"]["color"].value, np.float32),
-        "rendering.render_goal": np.float32(
-            bool(vs["rendering"]["render_goal"].value) and bool(env.with_target)),
+        "rendering.render_goal": np.float32(bool(vs["rendering"]["render_goal"].value) and bool(env.with_target)),
     }
 
 
-def install(size: int = 224, mode: str = "direct", supersample: int = 1, device: str = "cuda",
-            swap_live: bool = True, swap_dataset: bool = True) -> _Renderer:
+def install(
+    size: int = 224,
+    mode: str = "direct",
+    supersample: int = 1,
+    device: str = "cuda",
+    swap_live: bool = True,
+    swap_dataset: bool = True,
+) -> _Renderer:
     """Monkeypatch the three pixel sources. Returns the renderer (for call counting)."""
     import stable_worldmodel.world.world as swm_world
     from stable_worldmodel.envs.pusht import env as swm_pusht
@@ -137,6 +145,7 @@ def install(size: int = 224, mode: str = "direct", supersample: int = 1, device:
     renderer = _Renderer(size=size, mode=mode, supersample=supersample, device=device)
 
     if swap_live:
+
         def _render_frame(self, mode_):  # noqa: ARG001 -- signature fixed by the caller
             st = self._get_obs()[:5]
             return renderer(st, _variation_from_env(self))[0]
@@ -147,8 +156,7 @@ def install(size: int = 224, mode: str = "direct", supersample: int = 1, device:
         _orig_extract = swm_world._extract_init_goal
 
         def _extract_init_goal(dataset, episodes_idx, start_steps, goal_offset):
-            init_state, goal_state, dataset_videos = _orig_extract(
-                dataset, episodes_idx, start_steps, goal_offset)
+            init_state, goal_state, dataset_videos = _orig_extract(dataset, episodes_idx, start_steps, goal_offset)
             # The stored frames are a function of the stored states; regenerate rather than read.
             # No variation is passed here, unlike the live path, because a stored frame carries no env
             # to read one off — the corpus was recorded at the stock appearance, which is exactly what

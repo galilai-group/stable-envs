@@ -15,6 +15,7 @@ that merely imported an environment. Instead every record this package emits is 
 ``verbose`` before it is handed to loguru, and the record carries ``extra={"package": "stable_envs"}``
 so an application that does want its own sink can filter for exactly ours.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -26,11 +27,18 @@ from loguru import logger as _loguru_logger
 #: == "stable_envs")``.
 logger = _loguru_logger.bind(package="stable_envs")
 
-_LEVELS = {"TRACE": 5, "DEBUG": 10, "INFO": 20, "SUCCESS": 25, "WARNING": 30, "ERROR": 40,
-           "CRITICAL": 50, "SILENT": 100}
+_LEVELS = {
+    "TRACE": 5,
+    "DEBUG": 10,
+    "INFO": 20,
+    "SUCCESS": 25,
+    "WARNING": 30,
+    "ERROR": 40,
+    "CRITICAL": 50,
+    "SILENT": 100,
+}
 
-_DEFAULTS: dict[str, Any] = {"verbose": "WARNING", "default_device": None,
-                             "warn_on_deprecated": True}
+_DEFAULTS: dict[str, Any] = {"verbose": "WARNING", "default_device": None, "warn_on_deprecated": True}
 _CONFIG: dict[str, Any] = dict(_DEFAULTS)
 
 #: Deprecation keys already announced. One warning per alias per process: a repository with ~470 call
@@ -46,12 +54,12 @@ def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is
         raise KeyError(
             f"stable_envs.set: unknown config key(s) {unknown}. The whole configuration is "
             f"{sorted(_DEFAULTS)}; anything else belongs on the environment itself (device, size, "
-            f"supersample and backend are constructor arguments).")
+            f"supersample and backend are constructor arguments)."
+        )
     if "verbose" in kwargs:
         v = str(kwargs["verbose"]).upper()
         if v not in _LEVELS:
-            raise ValueError(f"stable_envs.set: verbose must be one of {sorted(_LEVELS)}, got "
-                             f"{kwargs['verbose']!r}")
+            raise ValueError(f"stable_envs.set: verbose must be one of {sorted(_LEVELS)}, got {kwargs['verbose']!r}")
         kwargs["verbose"] = v
     if "default_device" in kwargs and kwargs["default_device"] is not None:
         kwargs["default_device"] = str(kwargs["default_device"])

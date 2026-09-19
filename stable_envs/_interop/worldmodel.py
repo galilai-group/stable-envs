@@ -57,11 +57,13 @@ MULTIPLIERS on the reference geometry with default 1.0, because that is what mak
 the official appearance" an identity a test can assert. The conversion is therefore ``ours =
 theirs / 40``, and it is in the table rather than in a caller's head.
 """
+
 from __future__ import annotations
 
 import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping
+from typing import Any
 
 import gymnasium as gym
 import numpy as np
@@ -87,9 +89,23 @@ from ..registry import REGISTRY, make
 #:
 #: ``_needs_flush`` is NOT here: ``World._run_iter`` writes it into the dict after the pool returns,
 #: and ``WorldModelPolicy.get_action`` pops it.
-INFO_KEYS = ("pixels", "render_time", "observation", "state", "proprio", "distance_to_target",
-             "reward", "terminated", "truncated", "action", "step_idx", "id", "goal", "goal_state",
-             "env_name")
+INFO_KEYS = (
+    "pixels",
+    "render_time",
+    "observation",
+    "state",
+    "proprio",
+    "distance_to_target",
+    "reward",
+    "terminated",
+    "truncated",
+    "action",
+    "step_idx",
+    "id",
+    "goal",
+    "goal_state",
+    "env_name",
+)
 
 
 # ====================================================================== variation mapping
@@ -163,12 +179,16 @@ class VariationMap:
     def __post_init__(self):
         for ours, (theirs, factor, _) in self.affine.items():
             if not float(factor):
-                raise ValueError(f"{ours} -> {theirs}: an affine mapping with factor 0 is not "
-                                 f"invertible, so the leaf cannot round-trip; declare it unsupported")
+                raise ValueError(
+                    f"{ours} -> {theirs}: an affine mapping with factor 0 is not "
+                    f"invertible, so the leaf cannot round-trip; declare it unsupported"
+                )
         stray = set(self.partial) - self.mapped_swm_paths()
         if stray:
-            raise ValueError(f"partial names {sorted(stray)}, which no mapping field reaches; a leaf "
-                             f"that is not mapped at all belongs in unsupported, not partial")
+            raise ValueError(
+                f"partial names {sorted(stray)}, which no mapping field reaches; a leaf "
+                f"that is not mapped at all belongs in unsupported, not partial"
+            )
 
     def pairs(self) -> dict[str, tuple[str, float]]:
         """``our_path -> (swm_path, factor)`` over every leaf mapped by a pure multiply.
@@ -200,8 +220,12 @@ class VariationMap:
 
     def mapped_swm_paths(self) -> set[str]:
         """Every swm leaf this map reaches, by whichever mechanism."""
-        return ({t for t, _ in self.pairs().values()} | {t for t, _, _ in self.affine.values()}
-                | set(self.rgb255.values()) | {t for t, _ in self.enum.values()})
+        return (
+            {t for t, _ in self.pairs().values()}
+            | {t for t, _, _ in self.affine.values()}
+            | set(self.rgb255.values())
+            | {t for t, _ in self.enum.values()}
+        )
 
     def classification(self) -> dict[str, str]:
         """``swm_path -> one of mapped / partial / unsupported / dead_upstream / not_applicable / swm_only``.
@@ -210,16 +234,27 @@ class VariationMap:
         """
         out = {p: "mapped" for p in self.mapped_swm_paths()}
         out.update({p: "partial" for p in self.partial})
-        for label, bucket in (("swm_only", self.swm_only), ("unsupported", self.unsupported),
-                              ("dead_upstream", self.dead_upstream),
-                              ("not_applicable", self.not_applicable)):
+        for label, bucket in (
+            ("swm_only", self.swm_only),
+            ("unsupported", self.unsupported),
+            ("dead_upstream", self.dead_upstream),
+            ("not_applicable", self.not_applicable),
+        ):
             for p in bucket:
                 out[p] = label
         return out
 
 
-_TWOROOM_STRUCTURE = ("background.color", "wall.color", "wall.thickness", "wall.axis",
-                      "door.color", "door.number", "door.position", "door.size")
+_TWOROOM_STRUCTURE = (
+    "background.color",
+    "wall.color",
+    "wall.thickness",
+    "wall.axis",
+    "door.color",
+    "door.number",
+    "door.position",
+    "door.size",
+)
 _TWOROOM_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style — see state_names",
     "agent.speed": "dynamics only; carried as env.speed because it changes no pixel",
@@ -252,36 +287,44 @@ VARIATION_MAPS: dict[str, VariationMap] = {
     ),
     "TwoRoomTarget": VariationMap(
         swm_id="swm/TwoRoom-v1",
-        identical=("agent.color", "agent.radius", "target.color", "target.radius")
-                  + _TWOROOM_STRUCTURE,
-        swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items()
-                  if k not in ("target.color", "target.radius")},
+        identical=("agent.color", "agent.radius", "target.color", "target.radius") + _TWOROOM_STRUCTURE,
+        swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items() if k not in ("target.color", "target.radius")},
     ),
     "Piecewise": VariationMap(
         swm_id="swm/Piecewise-v0",
         identical=("agent.color", "agent.radius", "background.color", "border.color"),
-        swm_only={**_PIECEWISE_SWM_ONLY,
-                  **{f"zones.color_{i}": "drawn only with render_zones; see PiecewiseZones"
-                     for i in range(4)}},
+        swm_only={
+            **_PIECEWISE_SWM_ONLY,
+            **{f"zones.color_{i}": "drawn only with render_zones; see PiecewiseZones" for i in range(4)},
+        },
     ),
     "PiecewiseZones": VariationMap(
         swm_id="swm/Piecewise-v0",
         identical=("agent.color", "agent.radius", "background.color", "border.color")
-                  + tuple(f"zones.color_{i}" for i in range(4)),
+        + tuple(f"zones.color_{i}" for i in range(4)),
         swm_only=_PIECEWISE_SWM_ONLY,
     ),
     "PushT": VariationMap(
         swm_id="swm/PushT-v1",
-        identical=("agent.color", "block.color", "goal.color", "goal.position", "goal.angle",
-                   "background.color", "rendering.render_goal"),
+        identical=(
+            "agent.color",
+            "block.color",
+            "goal.color",
+            "goal.position",
+            "goal.angle",
+            "background.color",
+            "rendering.render_goal",
+        ),
         # ours is a MULTIPLIER on the reference geometry (default 1.0); swm's is an ABSOLUTE size in
         # Box(20, 60) with default 40. Mapping them by name alone is wrong by a factor of 40.
-        scaled={"agent.scale": ("agent.scale", 1.0 / 40.0),
-                "block.scale": ("block.scale", 1.0 / 40.0),
-                "goal.scale": ("goal.scale", 1.0 / 40.0)},
+        scaled={
+            "agent.scale": ("agent.scale", 1.0 / 40.0),
+            "block.scale": ("block.scale", 1.0 / 40.0),
+            "goal.scale": ("goal.scale", 1.0 / 40.0),
+        },
         swm_only={
             "agent.shape": "swm's PushT can swap the agent between 8 pymunk shapes; ours is "
-                           "gym_pusht's disc, which is shape index 0 and the default",
+            "gym_pusht's disc, which is shape index 0 and the default",
             "block.shape": "same: 8 shapes, of which ours is the T (index 2, the default)",
             "agent.angle": "the disc agent is rotationally symmetric, so it changes no pixel",
             "block.angle": "swm's RESET angle for the block; ours is state dimension block_angle",
@@ -291,7 +334,7 @@ VARIATION_MAPS: dict[str, VariationMap] = {
         },
         ours_only={
             "agent.inner_color": "pymunk's debug draw paints a lighter inner disc; swm derives it "
-                                 "from agent.color with light_color() and does not expose it",
+            "from agent.color with light_color() and does not expose it",
             "block.outline_color": "same: derived from block.color in swm, separate here",
             "walls.color": "swm hard-codes LightGray on the four wall segments",
             "walls.visible": "swm always draws the walls",
@@ -302,7 +345,9 @@ VARIATION_MAPS: dict[str, VariationMap] = {
 
 #: Step 8's maps live one module per family under ``compat/variation_maps`` and install themselves
 #: here; see that package's docstring for why they are not more entries in the literal above.
-from .variation_maps import install as _install_variation_maps; _install_variation_maps(VARIATION_MAPS)  # noqa: E402,E501
+from .variation_maps import install as _install_variation_maps
+
+_install_variation_maps(VARIATION_MAPS)  # noqa: E402,E501
 
 
 def _flatten(values: Mapping[str, Any], prefix: str = "") -> dict[str, Any]:
@@ -323,8 +368,7 @@ def variation_map(env) -> VariationMap | None:
     return VARIATION_MAPS.get(name)
 
 
-def style_from_variation(env, variation: Mapping[str, Any], base=None,
-                         strict: bool = False) -> np.ndarray:
+def style_from_variation(env, variation: Mapping[str, Any], base=None, strict: bool = False) -> np.ndarray:
     """A swm variation config -> one of our flat ``(style_dim,)`` style rows.
 
     ``variation`` is whatever ``swm``'s ``variation_space.value`` gives (nested) or what goes into
@@ -335,8 +379,10 @@ def style_from_variation(env, variation: Mapping[str, Any], base=None,
     """
     m = variation_map(env)
     if m is None:
-        raise KeyError(f"{type(env).__name__} has no recorded stable_worldmodel counterpart; add a "
-                       f"VariationMap to stable_envs.interop.VARIATION_MAPS")
+        raise KeyError(
+            f"{type(env).__name__} has no recorded stable_worldmodel counterpart; add a "
+            f"VariationMap to stable_envs.interop.VARIATION_MAPS"
+        )
     flat = _flatten(dict(variation))
     row = np.array(env.default_style() if base is None else base, np.float32).reshape(-1).copy()
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
@@ -344,12 +390,12 @@ def style_from_variation(env, variation: Mapping[str, Any], base=None,
         if theirs not in flat or ours not in layout:
             continue
         o, w = layout[ours]
-        row[o:o + w] = np.asarray(flat[theirs], np.float64).reshape(-1)[:w] * factor
+        row[o : o + w] = np.asarray(flat[theirs], np.float64).reshape(-1)[:w] * factor
     for ours, (theirs, factor, offset) in m.affine.items():
         if theirs not in flat or ours not in layout:
             continue
         o, w = layout[ours]
-        row[o:o + w] = np.asarray(flat[theirs], np.float64).reshape(-1)[:w] * factor + offset
+        row[o : o + w] = np.asarray(flat[theirs], np.float64).reshape(-1)[:w] * factor + offset
     for ours, theirs in m.rgb255.items():
         if theirs not in flat or ours not in layout:
             continue
@@ -358,24 +404,28 @@ def style_from_variation(env, variation: Mapping[str, Any], base=None,
         # ``(clip(v, 0, 1) * 255 + 0.5).astype(uint8)``. Written here so a colour that round-trips
         # through this mapping lands on the same uint8 swm would have written.
         v = np.clip(np.asarray(flat[theirs], np.float64).reshape(-1)[:w], 0.0, 1.0)
-        row[o:o + w] = np.floor(v * 255.0 + 0.5)
+        row[o : o + w] = np.floor(v * 255.0 + 0.5)
     for ours, (theirs, table) in m.enum.items():
         if theirs not in flat or ours not in layout:
             continue
         idx = int(np.asarray(flat[theirs]).reshape(-1)[0])
         if not 0 <= idx < len(table):
-            raise KeyError(f"{type(env).__name__}: swm {theirs} = {idx} has no entry in the map's "
-                           f"alternative table {tuple(table)}; an unreachable alternative belongs in "
-                           f"`unsupported`, not in `enum`")
+            raise KeyError(
+                f"{type(env).__name__}: swm {theirs} = {idx} has no entry in the map's "
+                f"alternative table {tuple(table)}; an unreachable alternative belongs in "
+                f"`unsupported`, not in `enum`"
+            )
         o, _ = layout[ours]
         row[o] = float(table[idx])
     if strict:
         known = set(m.unmapped()) | m.mapped_swm_paths()
         unknown = sorted(set(flat) - known)
         if unknown:
-            raise KeyError(f"variation leaves with no entry in the {type(env).__name__} map: "
-                           f"{unknown}. Add them to `identical`/`renamed`/`scaled` if we render "
-                           f"them, or to `swm_only` with the reason if we deliberately do not.")
+            raise KeyError(
+                f"variation leaves with no entry in the {type(env).__name__} map: "
+                f"{unknown}. Add them to `identical`/`renamed`/`scaled` if we render "
+                f"them, or to `swm_only` with the reason if we deliberately do not."
+            )
     return row
 
 
@@ -391,19 +441,19 @@ def variation_from_style(env, style) -> dict[str, Any]:
         if ours not in layout:
             continue
         o, w = layout[ours]
-        v = row[o:o + w] / factor
+        v = row[o : o + w] / factor
         out[theirs] = float(v[0]) if w == 1 else v.astype(np.float64)
     for ours, (theirs, factor, offset) in m.affine.items():
         if ours not in layout:
             continue
         o, w = layout[ours]
-        v = (row[o:o + w].astype(np.float64) - offset) / factor
+        v = (row[o : o + w].astype(np.float64) - offset) / factor
         out[theirs] = float(v[0]) if w == 1 else v
     for ours, theirs in m.rgb255.items():
         if ours not in layout:
             continue
         o, w = layout[ours]
-        out[theirs] = (row[o:o + w].astype(np.float64) / 255.0)
+        out[theirs] = row[o : o + w].astype(np.float64) / 255.0
     for ours, (theirs, table) in m.enum.items():
         if ours not in layout:
             continue
@@ -462,17 +512,19 @@ def check_mapping(env) -> dict:
     ours = set(env.variation_space.names())
     ours_mapped = set(m.affine_pairs()) | set(m.rgb255) | set(m.enum)
     cls = m.classification()
-    return {"swm_id": m.swm_id,
-            "covered": sorted(swm_leaves & mapped),
-            "declared_unmapped": sorted(swm_leaves & set(unmapped)),
-            "undocumented": sorted(swm_leaves - mapped - set(unmapped)),
-            "mapped_but_absent_from_swm": sorted(mapped - swm_leaves),
-            "ours_only": sorted(ours - ours_mapped),
-            "ours_only_documented": sorted(set(m.ours_only)),
-            # the Step-8 four-way taxonomy, one label per swm leaf actually offered by this env
-            "classification": {p: cls.get(p, "undocumented") for p in sorted(swm_leaves)},
-            "reasons": {p: unmapped[p] for p in sorted(swm_leaves & set(unmapped))},
-            "notes": {p: m.notes[p] for p in sorted(swm_leaves & set(m.notes))}}
+    return {
+        "swm_id": m.swm_id,
+        "covered": sorted(swm_leaves & mapped),
+        "declared_unmapped": sorted(swm_leaves & set(unmapped)),
+        "undocumented": sorted(swm_leaves - mapped - set(unmapped)),
+        "mapped_but_absent_from_swm": sorted(mapped - swm_leaves),
+        "ours_only": sorted(ours - ours_mapped),
+        "ours_only_documented": sorted(set(m.ours_only)),
+        # the Step-8 four-way taxonomy, one label per swm leaf actually offered by this env
+        "classification": {p: cls.get(p, "undocumented") for p in sorted(swm_leaves)},
+        "reasons": {p: unmapped[p] for p in sorted(swm_leaves & set(unmapped))},
+        "notes": {p: m.notes[p] for p in sorted(swm_leaves & set(m.notes))},
+    }
 
 
 # ====================================================================== single-env facade
@@ -503,10 +555,17 @@ class StableEnvGym(gym.Env):
 
     metadata = {"render_modes": ["rgb_array"], "render_fps": 10}
 
-    def __init__(self, se_name: str, size: int | None = None, device: str = "cuda",
-                 render_mode: str = "rgb_array", success_radius: float = 0.0,
-                 default_variations: tuple[str, ...] = (), init_value: dict | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        se_name: str,
+        size: int | None = None,
+        device: str = "cuda",
+        render_mode: str = "rgb_array",
+        success_radius: float = 0.0,
+        default_variations: tuple[str, ...] = (),
+        init_value: dict | None = None,
+        **kwargs,
+    ):
         super().__init__()
         self.se_name = se_name
         self.env = make(se_name, num_envs=1, size=size, device=device, **kwargs)
@@ -528,8 +587,7 @@ class StableEnvGym(gym.Env):
         adim = int(getattr(self.env, "action_dim", 1))
         lo = np.broadcast_to(np.float32(getattr(self.env, "action_low", -1.0)), (adim,))
         hi = np.broadcast_to(np.float32(getattr(self.env, "action_high", 1.0)), (adim,))
-        self.action_space = gym.spaces.Box(low=lo.copy(), high=hi.copy(), shape=(adim,),
-                                           dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=lo.copy(), high=hi.copy(), shape=(adim,), dtype=np.float32)
         self._state = np.zeros(d, np.float32)
         self._goal_state = np.zeros(d, np.float32)
         self._goal = None
@@ -538,14 +596,15 @@ class StableEnvGym(gym.Env):
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         super().reset(seed=seed)
-        se_spaces.reset_variation_space(self.variation_space, seed, options or {},
-                                        self.default_variations)
+        se_spaces.reset_variation_space(self.variation_space, seed, options or {}, self.default_variations)
         style = self.variation_space.pack()
         options = options or {}
-        self._state = np.asarray(options.get("state", self.env.sample_states(
-            1, rng=self.np_random)[0]), np.float32).reshape(-1)
-        self._goal_state = np.asarray(options.get("goal_state", self.env.sample_states(
-            1, rng=self.np_random)[0]), np.float32).reshape(-1)
+        self._state = np.asarray(
+            options.get("state", self.env.sample_states(1, rng=self.np_random)[0]), np.float32
+        ).reshape(-1)
+        self._goal_state = np.asarray(
+            options.get("goal_state", self.env.sample_states(1, rng=self.np_random)[0]), np.float32
+        ).reshape(-1)
         self.env.set_state(self._state[None], style=style[None])
         # The goal frame is this same renderer at a different state — which is exactly how the
         # official envs produce theirs (TwoRoomEnv renders the agent AT the target position), so a
@@ -560,7 +619,8 @@ class StableEnvGym(gym.Env):
                 f"{self.se_name} ships a renderer and no batched GPU simulator, so this facade "
                 f"cannot advance it. Use stable_envs.interop.swap_renderer to keep the "
                 f"official env's dynamics and replace only its pixels, or drive it from states you "
-                f"already have.")
+                f"already have."
+            )
         a = np.asarray(action, np.float32).reshape(1, -1)
         # ``step`` is stateful and its return type is the env's business (Step 9 made it a StepResult
         # TensorDict for migrated cells, a packed tensor for the rest); ``get_state()`` is the packed
@@ -592,10 +652,14 @@ class StableEnvGym(gym.Env):
         present here, and the example reports the key set as a superset rather than as identical.
         """
         s = self._state.astype(np.float32)
-        return {"env_name": self.env_name, "goal": self._goal,
-                "state": s.copy(), "proprio": s.copy(),
-                "goal_state": self._goal_state.astype(np.float32).copy(),
-                "distance_to_target": float(np.linalg.norm(s - self._goal_state))}
+        return {
+            "env_name": self.env_name,
+            "goal": self._goal,
+            "state": s.copy(),
+            "proprio": s.copy(),
+            "goal_state": self._goal_state.astype(np.float32).copy(),
+            "distance_to_target": float(np.linalg.norm(s - self._goal_state)),
+        }
 
     def _set_state(self, state) -> None:
         """``swm`` drives envs from a dataset through ``evaluate(callables=...)``, which calls this."""
@@ -632,8 +696,7 @@ def register_gym_ids(names=None, prefix: str = "stable_envs", **kwargs) -> dict[
         GYM_IDS[env_id] = name
         if env_id in registration.registry:
             continue
-        registration.register(id=env_id, entry_point=_entry_point,
-                              kwargs={"se_name": name, **kwargs})
+        registration.register(id=env_id, entry_point=_entry_point, kwargs={"se_name": name, **kwargs})
     return out
 
 
@@ -654,7 +717,7 @@ class _PoolSlot:
     both while owning no renderer of its own.
     """
 
-    def __init__(self, pool: "BatchedEnvPool", index: int):
+    def __init__(self, pool: BatchedEnvPool, index: int):
         self.pool = pool
         self.index = index
         self.variation_space = pool.renderer.make_variation_space()
@@ -662,7 +725,7 @@ class _PoolSlot:
         self.env_name = pool.se_name
 
     @property
-    def unwrapped(self) -> "_PoolSlot":
+    def unwrapped(self) -> _PoolSlot:
         return self
 
     @property
@@ -720,9 +783,18 @@ class BatchedEnvPool:
         ``World``, so every key is produced on both paths.
     """
 
-    def __init__(self, se_name: str, num_envs: int, size: int | None = None, device: str = "cuda",
-                 success_radius: float = 0.0, default_variations: tuple[str, ...] = (),
-                 watch_variations: tuple[str, ...] = (), image_shape=None, **kwargs):
+    def __init__(
+        self,
+        se_name: str,
+        num_envs: int,
+        size: int | None = None,
+        device: str = "cuda",
+        success_radius: float = 0.0,
+        default_variations: tuple[str, ...] = (),
+        watch_variations: tuple[str, ...] = (),
+        image_shape=None,
+        **kwargs,
+    ):
         from gymnasium.vector.utils import batch_space
 
         self.se_name = se_name
@@ -730,14 +802,14 @@ class BatchedEnvPool:
         self.success_radius = float(success_radius)
         self.default_variations = tuple(default_variations)
         self.watch_variations = tuple(watch_variations)
-        if image_shape is not None and tuple(image_shape)[:2] != (self.renderer.size,
-                                                                  self.renderer.size):
+        if image_shape is not None and tuple(image_shape)[:2] != (self.renderer.size, self.renderer.size):
             raise ValueError(
                 f"image_shape={tuple(image_shape)} is not the renderer's native "
                 f"{self.renderer.size}x{self.renderer.size}. A stock World resizes with PIL on the "
                 f"CPU per environment per step, which is neither batched nor bit-reproducible on "
                 f"another Pillow; this pool renders at the native size on purpose. Construct the "
-                f"renderer at the size you want (size=) or resize the returned frames yourself.")
+                f"renderer at the size you want (size=) or resize the returned frames yourself."
+            )
 
         self.envs = [_PoolSlot(self, i) for i in range(int(num_envs))]
         self.single_action_space, self.single_observation_space = _spaces_for(self.renderer)
@@ -795,13 +867,14 @@ class BatchedEnvPool:
                 slot.np_random = np.random.default_rng(seeds[i])
                 self.seeds[i] = seeds[i]
             o = opts[i] or {}
-            se_spaces.reset_variation_space(slot.variation_space, seeds[i], o,
-                                            self.default_variations)
+            se_spaces.reset_variation_space(slot.variation_space, seeds[i], o, self.default_variations)
             self.style[i] = slot.variation_space.pack()
-            self.states[i] = np.asarray(o.get("state", self.renderer.sample_states(
-                1, rng=slot.np_random)[0]), np.float32).reshape(-1)
-            self.goal_states[i] = np.asarray(o.get("goal_state", self.renderer.sample_states(
-                1, rng=slot.np_random)[0]), np.float32).reshape(-1)
+            self.states[i] = np.asarray(
+                o.get("state", self.renderer.sample_states(1, rng=slot.np_random)[0]), np.float32
+            ).reshape(-1)
+            self.goal_states[i] = np.asarray(
+                o.get("goal_state", self.renderer.sample_states(1, rng=slot.np_random)[0]), np.float32
+            ).reshape(-1)
             self._step_idx[i] = 0
             self._reward[i] = 0.0
             self._terminated[i] = False
@@ -822,7 +895,8 @@ class BatchedEnvPool:
             raise NotImplementedError(
                 f"{self.se_name} ships a renderer and no batched GPU simulator, so a pool of them "
                 f"cannot be stepped. Keep the official envs and swap only their renderer "
-                f"(swap_renderer), or render states you already have.")
+                f"(swap_renderer), or render states you already have."
+            )
         prev = self.renderer.get_state().clone()
         act = np.where(sel[:, None], a, 0.0).astype(np.float32)
         self.renderer.step(torch.as_tensor(act, device=self.renderer.device))
@@ -851,14 +925,12 @@ class BatchedEnvPool:
 
     def _render_goals(self, sel) -> None:
         g = self.renderer.render(self.goal_states, style=self.style).detach().cpu().numpy()
-        self.goals = g if self.goals is None else np.where(
-            np.asarray(sel, bool).reshape(-1, 1, 1, 1), g, self.goals)
+        self.goals = g if self.goals is None else np.where(np.asarray(sel, bool).reshape(-1, 1, 1, 1), g, self.goals)
         self._push_states()
 
     def _render_frames(self) -> None:
         t0 = time.perf_counter()
-        self.frames = self.renderer.render(self.states,
-                                           style=self.style).detach().cpu().numpy()
+        self.frames = self.renderer.render(self.states, style=self.style).detach().cpu().numpy()
         self._render_time[:] = (time.perf_counter() - t0) / max(1, self.num_envs)
 
     def _infos(self) -> dict:
@@ -881,8 +953,7 @@ class BatchedEnvPool:
             "observation": self.states,
             "state": self.states,
             "proprio": self.states,
-            "distance_to_target": np.linalg.norm(self.states - self.goal_states,
-                                                 axis=1).astype(np.float32),
+            "distance_to_target": np.linalg.norm(self.states - self.goal_states, axis=1).astype(np.float32),
             "reward": self._reward,
             "terminated": self._terminated,
             "truncated": np.zeros(self.num_envs, bool),
@@ -898,12 +969,14 @@ class BatchedEnvPool:
             for part in path.split("."):
                 node = node[part]
             rows[f"variation.{path}"] = np.stack(
-                [np.asarray(_leaf_value(self.envs[i].variation_space, path), np.float32).reshape(-1)
-                 for i in range(self.num_envs)])
+                [
+                    np.asarray(_leaf_value(self.envs[i].variation_space, path), np.float32).reshape(-1)
+                    for i in range(self.num_envs)
+                ]
+            )
         stacked = {}
         for k, v in rows.items():
-            stacked[k] = ([[x] for x in v] if isinstance(v, list)
-                          else np.asarray(v)[:, None, ...])
+            stacked[k] = [[x] for x in v] if isinstance(v, list) else np.asarray(v)[:, None, ...]
         self._stacked = stacked
         return stacked
 
@@ -951,7 +1024,8 @@ def attach_batched_pool(world, **kwargs) -> BatchedEnvPool:
         raise TypeError(
             f"{type(slot).__name__} is not a stable-envs facade, so there is no batched renderer to "
             f"attach. Build the World on a stable_envs/<Name>-v0 id (register_gym_ids), or pass the "
-            f"name explicitly to BatchedEnvPool.")
+            f"name explicitly to BatchedEnvPool."
+        )
     kwargs.setdefault("size", slot.env.size)
     kwargs.setdefault("device", str(slot.env.device))
     kwargs.setdefault("success_radius", slot.success_radius)
@@ -964,8 +1038,14 @@ def attach_batched_pool(world, **kwargs) -> BatchedEnvPool:
 # ====================================================================== renderer swap
 
 
-def swap_renderer(gym_env, se_name: str, read_state: Callable[[Any], np.ndarray],
-                  style=None, size: int | None = None, device: str = "cuda"):
+def swap_renderer(
+    gym_env,
+    se_name: str,
+    read_state: Callable[[Any], np.ndarray],
+    style=None,
+    size: int | None = None,
+    device: str = "cuda",
+):
     """Keep an OFFICIAL swm env's dynamics and replace only its ``render()``.
 
     The strongest evidence available for a renderer, and the reason it is worth a separate adapter:

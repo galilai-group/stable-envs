@@ -22,6 +22,7 @@ encoder and the ratio is a property of the renderer.
 
     python examples/dino_agreement.py --out examples/results/dino
 """
+
 from __future__ import annotations
 
 import argparse
@@ -64,10 +65,11 @@ def _embed(m, mean, std, size, frames: np.ndarray, device: str, chunk: int = 32)
     """
     out = []
     for i in range(0, len(frames), chunk):
-        x = torch.as_tensor(frames[i:i + chunk], device=device).permute(0, 3, 1, 2).float() / 255.0
+        x = torch.as_tensor(frames[i : i + chunk], device=device).permute(0, 3, 1, 2).float() / 255.0
         if x.shape[-1] != size or x.shape[-2] != size:
-            x = torch.nn.functional.interpolate(x, size=(size, size), mode="bilinear",
-                                                align_corners=False, antialias=True)
+            x = torch.nn.functional.interpolate(
+                x, size=(size, size), mode="bilinear", align_corners=False, antialias=True
+            )
         f = m((x - mean) / std)
         out.append(torch.nn.functional.normalize(f, dim=-1))
     return torch.cat(out)
@@ -104,7 +106,7 @@ def measure(name: str, n: int, model, device: str) -> dict:
     m, mean, std, size = model
     cls = se.registry.REGISTRY[name]
     env = se.make(name, num_envs=n, device=device)
-    ref = C.reference_env(cls, env.size)                    # cached: never bind an EGL context locally
+    ref = C.reference_env(cls, env.size)  # cached: never bind an EGL context locally
 
     states = env.sample_states(n, rng=np.random.default_rng(STATE_SEED))
     official = cls.reference_render(ref, states)
@@ -116,8 +118,7 @@ def measure(name: str, n: int, model, device: str) -> dict:
     blank = np.zeros_like(official)
     stored = _jpeg_roundtrip(official)
 
-    f_ours, f_off, f_blank, f_jpg = (_embed(m, mean, std, size, a, device)
-                                     for a in (ours, official, blank, stored))
+    f_ours, f_off, f_blank, f_jpg = (_embed(m, mean, std, size, a, device) for a in (ours, official, blank, stored))
     # The scale control: official_i against official_j, i != j, one fixed derangement (roll by 1) so
     # the pairing is deterministic and every frame is used exactly once on each side.
     roll = torch.roll(f_off, 1, dims=0)
@@ -132,10 +133,14 @@ def measure(name: str, n: int, model, device: str) -> dict:
     mse_jpeg = float(((j16 - f16) ** 2).mean())
 
     return {
-        "env": name, "n": n, "size": int(env.size), "tier": env.fidelity_tier,
+        "env": name,
+        "n": n,
+        "size": int(env.size),
+        "tier": env.fidelity_tier,
         "reference_id": cls.reference_id,
         "interior_exact_frac": px.get("interior_exact_frac"),
-        "all_exact_frac": px.get("exact_frac"), "max_abs": px.get("max_abs"),
+        "all_exact_frac": px.get("exact_frac"),
+        "max_abs": px.get("max_abs"),
         "pixel_mse_ours_vs_official": mse_claim,
         "pixel_mse_state_vs_state": mse_scale,
         "dino_cos_ours_vs_official": float(d_claim.mean()),
@@ -163,31 +168,43 @@ def main() -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = _encoder(a.model, device)
-    wanted = [n for n in sorted(se.registry.REGISTRY)
-              if (not a.envs or n in a.envs.split(","))
-              and getattr(se.registry.REGISTRY[n], "reference_id", None)
-              and hasattr(se.registry.REGISTRY[n], "reference_env")]
+    wanted = [
+        n
+        for n in sorted(se.registry.REGISTRY)
+        if (not a.envs or n in a.envs.split(","))
+        and getattr(se.registry.REGISTRY[n], "reference_id", None)
+        and hasattr(se.registry.REGISTRY[n], "reference_env")
+    ]
     print(f"{len(wanted)} env(s) declare a reference renderer; encoder {a.model} on {device}")
 
-    outdir = Path(a.out); outdir.mkdir(parents=True, exist_ok=True)
-    res = {"model": a.model, "n": a.n, "state_seed": STATE_SEED,
-           "device": torch.cuda.get_device_name(0) if device == "cuda" else "cpu", "envs": {}}
+    outdir = Path(a.out)
+    outdir.mkdir(parents=True, exist_ok=True)
+    res = {
+        "model": a.model,
+        "n": a.n,
+        "state_seed": STATE_SEED,
+        "device": torch.cuda.get_device_name(0) if device == "cuda" else "cpu",
+        "envs": {},
+    }
     for name in wanted:
         t0 = time.perf_counter()
         try:
             r = measure(name, a.n, model, device)
         except ImportError as e:
             r = {"env": name, "skipped": f"reference not installed: {e}"}
-        except Exception as e:                                              # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             r = {"env": name, "error": f"{type(e).__name__}: {e}"}
         r["seconds"] = round(time.perf_counter() - t0, 2)
         res["envs"][name] = r
         if "dino_cos_ours_vs_official" in r:
-            print(f"[{name}] ours {r['dino_cos_ours_vs_official']:.6f} | jpeg95 "
-                  f"{r['dino_cos_jpeg95_vs_official']:.6f} | ours/jpeg "
-                  f"{r['ratio_ours_over_jpeg95']:.3f}x | state-scale "
-                  f"{r['dino_cos_state_vs_state']:.4f} | blank "
-                  f"{r['dino_cos_blank_vs_official']:.4f}", flush=True)
+            print(
+                f"[{name}] ours {r['dino_cos_ours_vs_official']:.6f} | jpeg95 "
+                f"{r['dino_cos_jpeg95_vs_official']:.6f} | ours/jpeg "
+                f"{r['ratio_ours_over_jpeg95']:.3f}x | state-scale "
+                f"{r['dino_cos_state_vs_state']:.4f} | blank "
+                f"{r['dino_cos_blank_vs_official']:.4f}",
+                flush=True,
+            )
         else:
             print(f"[{name}] {r.get('skipped') or r.get('error')}", flush=True)
         (outdir / "dino_agreement.json").write_text(json.dumps(res, indent=2))
@@ -208,10 +225,8 @@ def main() -> None:
             "ratio_median": float(np.median(claim / np.maximum(scale, 1e-12))),
             "pixel_mse_median": float(np.median(mse)),
             "n_exact_zero_mse": int((mse == 0).sum()),
-            "cos_jpeg95_vs_official_median": float(np.median(
-                [r["dino_cos_jpeg95_vs_official"] for r in ok])),
-            "ratio_ours_over_jpeg95_median": float(np.median(
-                [r["ratio_ours_over_jpeg95"] for r in ok])),
+            "cos_jpeg95_vs_official_median": float(np.median([r["dino_cos_jpeg95_vs_official"] for r in ok])),
+            "ratio_ours_over_jpeg95_median": float(np.median([r["ratio_ours_over_jpeg95"] for r in ok])),
             "n_closer_than_jpeg95": int(sum(r["ratio_ours_over_jpeg95"] < 1.0 for r in ok)),
         }
         print("\n" + json.dumps(res["summary"], indent=2))

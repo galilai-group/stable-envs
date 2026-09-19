@@ -7,6 +7,7 @@ they are the pixel values Bullet's TinyRenderer produced on synthetic scenes
 ``phase0_light_sweep.json``), so a change to the law is caught by the renderer it emulates rather than
 by a number somebody typed.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -33,8 +34,25 @@ def test_from_triangles_builds_the_same_members_as_the_model_path():
     assert S.V == len(vert) and S.G == 2 and S.geoms == [0, 1]
     assert tuple(S.face.shape) == (len(face), 3) and S.fgeom.tolist() == vg[face[:, 0]].tolist()
     assert S.mat_rgb.tolist() == [[1, 0, 0], [0, 1, 0]] and S.alpha.tolist() == [1, 1]
-    for name in ("vert", "norm", "uv", "vgeom", "face", "fgeom", "mat_rgb", "alpha", "spec", "shininess",
-                 "emission", "texid", "S4", "S3", "S3p", "textures", "mjgeom"):
+    for name in (
+        "vert",
+        "norm",
+        "uv",
+        "vgeom",
+        "face",
+        "fgeom",
+        "mat_rgb",
+        "alpha",
+        "spec",
+        "shininess",
+        "emission",
+        "texid",
+        "S4",
+        "S3",
+        "S3p",
+        "textures",
+        "mjgeom",
+    ):
         assert hasattr(S, name), name
 
 
@@ -47,7 +65,8 @@ def test_from_triangles_clip_matches_a_dense_transform():
     q = rng.normal(size=(B, 4))
     q /= np.linalg.norm(q, axis=1, keepdims=True)
     from scipy.spatial.transform import Rotation as Rt
-    xmat = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]        # (B,1,3,3)
+
+    xmat = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]  # (B,1,3,3)
     xpos = torch.as_tensor(rng.normal(size=(B, 1, 3)), dtype=torch.float32)
     cam = ND.Camera(np.array([0.0, -5.0, 1.0]), np.eye(3), 60.0, 0.1, 50.0)
     view, proj = cam.matrices()
@@ -75,9 +94,17 @@ def test_from_triangles_carries_a_texture_through_the_shared_preparation():
     v, n, f = ND._plane([1.0, 1.0, 0.0], 1.0)
     tex = np.zeros((64, 64, 4), np.uint8)
     tex[..., 0] = 255
-    S = ND.Scene.from_triangles(v, n, f, np.zeros(len(v), np.int64), rgba=[[1, 1, 1, 1]],
-                                uv=[[0, 0], [1, 0], [1, 1], [0, 1]], textures={7: tex}, tex_of_geom=[7],
-                                device="cpu")
+    S = ND.Scene.from_triangles(
+        v,
+        n,
+        f,
+        np.zeros(len(v), np.int64),
+        rgba=[[1, 1, 1, 1]],
+        uv=[[0, 0], [1, 0], [1, 1], [0, 1]],
+        textures={7: tex},
+        tex_of_geom=[7],
+        device="cpu",
+    )
     assert S.texid.tolist() == [7] and 7 in S.textures
     spec = S.textures[7]
     assert spec["shape"] == (64, 64, 3) and spec["mipmap_ok"] and spec["resampled"] is None
@@ -86,15 +113,15 @@ def test_from_triangles_carries_a_texture_through_the_shared_preparation():
 
 
 def test_gather_material_shared_and_per_row():
-    gid = torch.tensor([[[0, 1], [1, 0]], [[1, 1], [0, 0]]])                                 # (B=2,2,2)
+    gid = torch.tensor([[[0, 1], [1, 0]], [[1, 1], [0, 0]]])  # (B=2,2,2)
     shared = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
     out = ND.gather_material(shared, gid)
     assert out[0, 0, 0].tolist() == [1, 0, 0] and out[0, 0, 1].tolist() == [0, 1, 0]
-    per_row = torch.stack([shared, shared[[1, 0]]])                                          # row 1 swaps
+    per_row = torch.stack([shared, shared[[1, 0]]])  # row 1 swaps
     out = ND.gather_material(per_row, gid)
     assert out[0, 0, 0].tolist() == [1, 0, 0]
-    assert out[1, 0, 0].tolist() == [1, 0, 0]          # row 1, geom 1 -> swapped table -> red
-    assert out[1, 1, 0].tolist() == [0, 1, 0]          # row 1, geom 0 -> green
+    assert out[1, 0, 0].tolist() == [1, 0, 0]  # row 1, geom 1 -> swapped table -> red
+    assert out[1, 1, 0].tolist() == [0, 1, 0]  # row 1, geom 0 -> green
 
 
 def _px(col):
@@ -102,24 +129,28 @@ def _px(col):
     return int(ND.QUANT(col, "trunc").reshape(-1)[0])
 
 
-@pytest.mark.parametrize("law,normal,expected", [
-    # phase0_light_sweep.json / tiny_law.json: a horizontal white surface under the DEFAULT law reads 239
-    (ND.TinyShading(), (0, 0, 1), 239),
-    # tiny_law2.json tilt 0: diffuse only -> int(255 * 0.8639) = 220; specular only -> int(255 * 0.8639^2) = 190
-    (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), (0, 0, 1), 220),
-    (ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0), (0, 0, 1), 190),
-    # tilt 10 deg about y: r_z 0.664 -> 112 (specular only), n.l 0.7757 -> 197 (diffuse only)
-    (ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0), "tilt10y", 112),
-    (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), "tilt10y", 197),
-    # a face turned AWAY from the light is not ambient-only (153): TinyRenderer builds the reflection
-    # from the UNCLAMPED n.l, so r_z is +0.8639 on the downward face and the specular term survives.
-    # Measured 162 and 158 (tiny_law4_backface.json), predicted 153 by the clamped law, 162 / 158 here.
-    (ND.TinyShading(), (0, 0, -1), 162),
-    (ND.TinyShading(), "away150x", 158),
-])
+@pytest.mark.parametrize(
+    "law,normal,expected",
+    [
+        # phase0_light_sweep.json / tiny_law.json: a horizontal white surface under the DEFAULT law reads 239
+        (ND.TinyShading(), (0, 0, 1), 239),
+        # tiny_law2.json tilt 0: diffuse only -> int(255 * 0.8639) = 220; specular only -> int(255 * 0.8639^2) = 190
+        (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), (0, 0, 1), 220),
+        (ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0), (0, 0, 1), 190),
+        # tilt 10 deg about y: r_z 0.664 -> 112 (specular only), n.l 0.7757 -> 197 (diffuse only)
+        (ND.TinyShading(ambient=0.0, diffuse=0.0, specular=1.0), "tilt10y", 112),
+        (ND.TinyShading(ambient=0.0, diffuse=1.0, specular=0.0), "tilt10y", 197),
+        # a face turned AWAY from the light is not ambient-only (153): TinyRenderer builds the reflection
+        # from the UNCLAMPED n.l, so r_z is +0.8639 on the downward face and the specular term survives.
+        # Measured 162 and 158 (tiny_law4_backface.json), predicted 153 by the clamped law, 162 / 158 here.
+        (ND.TinyShading(), (0, 0, -1), 162),
+        (ND.TinyShading(), "away150x", 158),
+    ],
+)
 def test_shade_tiny_reproduces_the_measured_tinyrenderer_pixels(law, normal, expected):
     if normal in ("tilt10y", "away150x"):
         from scipy.spatial.transform import Rotation as Rt
+
         rv = [0.0, np.radians(10.0), 0.0] if normal == "tilt10y" else [np.radians(150.0), 0.0, 0.0]
         normal = Rt.from_rotvec(rv).apply([0.0, 0.0, 1.0])
     n = torch.as_tensor(np.asarray(normal, np.float32)).view(1, 1, 1, 3)
@@ -139,11 +170,11 @@ def test_shade_tiny_is_world_fixed_and_multiplies_the_specular_into_the_material
 
 def test_offset_clip_moves_by_exactly_the_requested_pixels():
     R = 480
-    pos = torch.tensor([[[0.0, 0.0, 0.5, 2.0]]])                   # ndc (0, 0) after the divide
+    pos = torch.tensor([[[0.0, 0.0, 0.5, 2.0]]])  # ndc (0, 0) after the divide
     out = ND.offset_clip(pos, R, (0.5, 0.5))
     ndc = out[..., :2] / out[..., 3:4]
     assert torch.allclose(ndc, torch.tensor([[[0.5 * 2 / R, 0.5 * 2 / R]]]))
-    assert ND.offset_clip(pos, R, (0.0, 0.0)) is pos                # the default is a no-op, not a copy
+    assert ND.offset_clip(pos, R, (0.0, 0.0)) is pos  # the default is a no-op, not a copy
 
 
 def test_quant_trunc_is_what_tinyrenderer_does():
@@ -176,7 +207,7 @@ def test_mvp_rows_is_bitwise_independent_of_batch_composition():
         assert torch.equal(part, full[:b]), f"prefix batch {b} differs from the full batch"
     # a row in the middle, alone vs in place
     i = 1234
-    assert torch.equal(ND.mvp_rows(proj, view[i:i + 1], M[i:i + 1])[0], full[i])
+    assert torch.equal(ND.mvp_rows(proj, view[i : i + 1], M[i : i + 1])[0], full[i])
     # and it IS the product, correctly rounded from float64
     ref = (proj.double() @ view.double())[:, None] @ M.double()
     assert torch.equal(full, ref.to(torch.float32))
@@ -235,12 +266,12 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     rng = np.random.default_rng(5)
     B = 64
     from scipy.spatial.transform import Rotation as Rt
+
     q = rng.normal(size=(B, 4))
     q /= np.linalg.norm(q, axis=1, keepdims=True)
     mats = torch.as_tensor(Rt.from_quat(q).as_matrix(), dtype=torch.float32)[:, None]
     poss = torch.as_tensor(rng.normal(size=(B, 1, 3)) * 300.0, dtype=torch.float32)
-    cam = ND.Camera(rng.normal(size=(B, 3)) * 300.0,
-                    np.broadcast_to(np.eye(3), (B, 3, 3)).copy(), 90.0, 0.1, 255.0)
+    cam = ND.Camera(rng.normal(size=(B, 3)) * 300.0, np.broadcast_to(np.eye(3), (B, 3, 3)).copy(), 90.0, 0.1, 255.0)
     view, proj = cam.matrices()
 
     for dev in ["cpu"] + (["cuda"] if torch.cuda.is_available() else []):
@@ -256,7 +287,8 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
                 if dev == "cuda":
                     assert torch.equal(g, ref), (
                         f"cuda: clip {name} depend on the batch width at {b} -- this is a "
-                        f"certification failure; check_batch_size_invariance enforces it per env")
+                        f"certification failure; check_batch_size_invariance enforces it per env"
+                    )
                 else:
                     # the portable CPU claim: one float32 ulp at the quantity's own scale. An
                     # assertion, not an exemption -- it fails the moment the residual grows past what
@@ -266,4 +298,5 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
                     assert d <= ulp, (
                         f"cpu: clip {name} moved by {d:.3e} at width {b}, more than the one float32 "
                         f"ulp ({ulp:.3e}) the sparse kernel's summation order can account for -- that "
-                        f"is no longer the documented limitation, it is a defect")
+                        f"is no longer the documented limitation, it is a defect"
+                    )

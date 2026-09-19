@@ -10,6 +10,7 @@ So these are the tests that must not need a GPU, a cache directory or a trained 
 they build their own two-parameter checkpoints to make sure of it. ``tests/gpu/test_rendernet.py``
 asserts the same properties on the real thing.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,18 +22,39 @@ torch = pytest.importorskip("torch")
 from stable_envs.render import rendernet as RN
 
 NET = "espcn_112t128_w48_d4_u2"
-CELL_A = {"env_class": "AlphaCorrected", "family": "robocasa", "scene": "L52S03",
-          "camera": "robot0_agentview_left", "scene_sha": "0123456789abcdef"}
+CELL_A = {
+    "env_class": "AlphaCorrected",
+    "family": "robocasa",
+    "scene": "L52S03",
+    "camera": "robot0_agentview_left",
+    "scene_sha": "0123456789abcdef",
+}
 CELL_B = dict(CELL_A, env_class="BetaCorrected", camera="robot0_agentview_right")
 RENDER = {"render_size": 112, "out_size": 256, "tex_lod": 2, "backface_cull": False}
-VF = {"mean_abs": 2.45, "within8_frac": 0.935, "ssim": 0.97, "mean_abs_max": 3.2,
-      "within8_min": 0.88, "ssim_min": 0.92, "measured_at": "a test", "decoder": NET}
+VF = {
+    "mean_abs": 2.45,
+    "within8_frac": 0.935,
+    "ssim": 0.97,
+    "mean_abs_max": 3.2,
+    "within8_min": 0.88,
+    "ssim_min": 0.92,
+    "measured_at": "a test",
+    "decoder": NET,
+}
 
 
 def _seal(tmp_path, cell=CELL_A, net=NET, **over):
     m = RN.build(net)
-    kw = dict(cell=cell, render=RENDER, net=net, state_dict=m.state_dict(), visual_fidelity=VF,
-              variation_fidelity=VF, baseline={"mean_abs": 6.41}, provenance={"test": True})
+    kw = dict(
+        cell=cell,
+        render=RENDER,
+        net=net,
+        state_dict=m.state_dict(),
+        visual_fidelity=VF,
+        variation_fidelity=VF,
+        baseline={"mean_abs": 6.41},
+        provenance={"test": True},
+    )
     kw.update(over)
     return RN.seal(str(tmp_path / f"{cell['env_class']}.pt"), **kw)
 
@@ -45,13 +67,16 @@ def test_a_sealed_corrector_loads_for_the_cell_it_was_sealed_for(tmp_path):
     assert c.visual_fidelity["mean_abs"] == 2.45
 
 
-@pytest.mark.parametrize("field,value", [
-    ("camera", "robot0_eye_in_hand"),
-    ("scene", "L45S33"),
-    ("scene_sha", "deadbeefdeadbeef"),
-    ("env_class", "SomethingElseCorrected"),
-    ("family", "humanoidbench"),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("camera", "robot0_eye_in_hand"),
+        ("scene", "L45S33"),
+        ("scene_sha", "deadbeefdeadbeef"),
+        ("env_class", "SomethingElseCorrected"),
+        ("family", "humanoidbench"),
+    ],
+)
 def test_a_corrector_refuses_every_cell_it_was_not_fitted_on(tmp_path, field, value):
     """THE property. One field wrong is enough, and it must be fatal rather than approximate.
 
@@ -78,6 +103,7 @@ def test_two_cells_cannot_share_one_checkpoint_by_renaming_the_file(tmp_path):
     """
     p = _seal(tmp_path)
     import shutil
+
     q = str(tmp_path / "BetaCorrected.pt")
     shutil.copy(p, q)
     shutil.copy(p[:-3] + ".json", q[:-3] + ".json")
@@ -156,6 +182,7 @@ def test_the_network_starts_exactly_at_the_bilinear_baseline():
     tensor somebody can look at.
     """
     import torch.nn.functional as F
+
     m = RN.build(NET).eval()
     u8 = torch.randint(0, 256, (2, 112, 112, 3), dtype=torch.uint8)
     got = m(u8)
@@ -163,11 +190,11 @@ def test_the_network_starts_exactly_at_the_bilinear_baseline():
     # on a contiguous one are different kernels and disagree by an ulp, which lands on the far side of
     # a rounding for about one pixel in 100k. That is a fact about the resize, not about the head, and
     # this test is about the head.
-    x = u8.permute(0, 3, 1, 2).float().mul_(1.0 / 255.0).contiguous(
-        memory_format=torch.channels_last)
+    x = u8.permute(0, 3, 1, 2).float().mul_(1.0 / 255.0).contiguous(memory_format=torch.channels_last)
     anchor = F.interpolate(x, size=(256, 256), mode="bilinear", align_corners=False)
     assert float(m.head.weight.abs().max()) == 0.0 and float(m.head.bias.abs().max()) == 0.0, (
-        "the residual head is not zero-initialised, so training would start somewhere unmeasured")
+        "the residual head is not zero-initialised, so training would start somewhere unmeasured"
+    )
     ref = anchor.mul_(255.0).round_().clamp_(0, 255).to(torch.uint8).permute(0, 2, 3, 1)
     assert torch.equal(got, ref)
 

@@ -4,6 +4,7 @@ The stable-envs arm includes packed host-state ingress and the public ``env.rend
 ``--jpeg-dir`` adds a separately labelled, single-process Pillow baseline over real files. Neither
 arm imports or requires stable_worldmodel.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -17,28 +18,53 @@ import torch
 import stable_envs as snv
 
 try:  # Support both module and path execution.
-    from ._common import (add_common_arguments, checked_device, configure_threads, env_kwargs,
-                          error_record, finish_provenance, measure, positive_int, provenance,
-                          public_env, write_json)
+    from ._common import (
+        add_common_arguments,
+        checked_device,
+        configure_threads,
+        env_kwargs,
+        error_record,
+        finish_provenance,
+        measure,
+        positive_int,
+        provenance,
+        public_env,
+        write_json,
+    )
 except ImportError:  # pragma: no cover - exercised by CLI smoke tests
-    from _common import (add_common_arguments, checked_device, configure_threads, env_kwargs,
-                         error_record, finish_provenance, measure, positive_int, provenance,
-                         public_env, write_json)
+    from _common import (
+        add_common_arguments,
+        checked_device,
+        configure_threads,
+        env_kwargs,
+        error_record,
+        finish_provenance,
+        measure,
+        positive_int,
+        provenance,
+        public_env,
+        write_json,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     add_common_arguments(parser, batches=False)
-    parser.add_argument("--state-file", default=None,
-                        help=".npy or .npz packed-state corpus; default uses env.reset(seed)")
+    parser.add_argument(
+        "--state-file", default=None, help=".npy or .npz packed-state corpus; default uses env.reset(seed)"
+    )
     parser.add_argument("--state-key", default="states", help="array key for an .npz state corpus")
     parser.add_argument(
-        "--jpeg-dir", default=None,
-        help="optional directory of real .jpg/.jpeg files; with multiple envs, use one subdir per env")
+        "--jpeg-dir",
+        default=None,
+        help="optional directory of real .jpg/.jpeg files; with multiple envs, use one subdir per env",
+    )
     parser.add_argument(
-        "--max-output-mib", type=positive_int, default=2048,
-        help="skip an env whose uint8 output alone exceeds this budget (default: 2048)")
+        "--max-output-mib",
+        type=positive_int,
+        default=2048,
+        help="skip an env whose uint8 output alone exceeds this budget (default: 2048)",
+    )
     return parser
 
 
@@ -55,34 +81,32 @@ def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray, st
     if isinstance(loaded, np.lib.npyio.NpzFile):
         try:
             if args.state_key not in loaded.files:
-                raise KeyError(
-                    f"{path} has keys {loaded.files}, not --state-key={args.state_key!r}")
+                raise KeyError(f"{path} has keys {loaded.files}, not --state-key={args.state_key!r}")
             rows = np.asarray(loaded[args.state_key])
         finally:
             loaded.close()
     else:
         rows = np.asarray(loaded)
     if rows.ndim != 2 or rows.shape[1] != int(env.state_dim):
-        raise ValueError(
-            f"{path}: expected packed states shaped (N, {env.state_dim}), got {rows.shape}")
+        raise ValueError(f"{path}: expected packed states shaped (N, {env.state_dim}), got {rows.shape}")
     if len(rows) < args.batch:
         raise ValueError(
             f"{path}: contains {len(rows)} states, fewer than --batch={args.batch}; "
-            "the benchmark will not duplicate rows silently")
-    return np.ascontiguousarray(rows[:args.batch], dtype=np.float32), "state-file"
+            "the benchmark will not duplicate rows silently"
+        )
+    return np.ascontiguousarray(rows[: args.batch], dtype=np.float32), "state-file"
 
 
 def _jpeg_paths(root: Path, name: str, multi_env: bool, batch: int) -> list[Path]:
     directory = root / name if multi_env else root
     if not directory.is_dir():
         raise FileNotFoundError(f"JPEG directory does not exist: {directory}")
-    paths = sorted(
-        path for path in directory.iterdir()
-        if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg"})
+    paths = sorted(path for path in directory.iterdir() if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg"})
     if len(paths) < batch:
         raise ValueError(
             f"{directory}: found {len(paths)} JPEGs, fewer than --batch={batch}; "
-            "the comparison will not repeatedly decode one cached image")
+            "the comparison will not repeatedly decode one cached image"
+        )
     return paths[:batch]
 
 
@@ -90,8 +114,7 @@ def _jpeg_baseline(paths: list[Path], args: argparse.Namespace) -> dict[str, Any
     try:
         from PIL import Image
     except ImportError as exc:
-        raise ImportError(
-            "--jpeg-dir requires Pillow; install it with `python -m pip install Pillow`") from exc
+        raise ImportError("--jpeg-dir requires Pillow; install it with `python -m pip install Pillow`") from exc
 
     decoded_shapes: list[list[int]] = []
 
@@ -102,8 +125,7 @@ def _jpeg_baseline(paths: list[Path], args: argparse.Namespace) -> dict[str, Any
                 if not decoded_shapes:
                     decoded_shapes.append(list(array.shape))
 
-    timing = measure(
-        decode, device=torch.device("cpu"), warmup=args.warmup, repeats=args.repeats)
+    timing = measure(decode, device=torch.device("cpu"), warmup=args.warmup, repeats=args.repeats)
     median_ms = timing["median_ms"]
     return {
         "status": "ok",
@@ -115,26 +137,29 @@ def _jpeg_baseline(paths: list[Path], args: argparse.Namespace) -> dict[str, Any
         "timing": timing,
         "cache_note": (
             "Files are real and reopened on every call; warmup normally leaves them in the OS page "
-            "cache. This is not a cold object-store or sharded-loader measurement."),
+            "cache. This is not a cold object-store or sharded-loader measurement."
+        ),
     }
 
 
-def _environment(name: str, args: argparse.Namespace,
-                 device: torch.device) -> tuple[dict[str, Any], int]:
+def _environment(name: str, args: argparse.Namespace, device: torch.device) -> tuple[dict[str, Any], int]:
     env = None
     try:
         env = public_env(name, env_kwargs(args, args.batch))
         shape = tuple(int(x) for x in env.observation_spec.shape)
         output_mib = args.batch * shape[0] * shape[1] * shape[2] / 2**20
         if output_mib > args.max_output_mib:
-            return ({
-                "status": "skipped",
-                "batch": args.batch,
-                "reason": (
-                    f"uint8 output would be {output_mib:.1f} MiB, above "
-                    f"--max-output-mib={args.max_output_mib}"),
-                "estimated_output_mib": output_mib,
-            }, 0)
+            return (
+                {
+                    "status": "skipped",
+                    "batch": args.batch,
+                    "reason": (
+                        f"uint8 output would be {output_mib:.1f} MiB, above --max-output-mib={args.max_output_mib}"
+                    ),
+                    "estimated_output_mib": output_mib,
+                },
+                0,
+            )
 
         host_rows, source = _load_states(env, args)
         setup_rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
@@ -145,8 +170,7 @@ def _environment(name: str, args: argparse.Namespace,
             rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
             env.render(rows, out=out)
 
-        timing = measure(
-            ingest_and_render, device=device, warmup=args.warmup, repeats=args.repeats)
+        timing = measure(ingest_and_render, device=device, warmup=args.warmup, repeats=args.repeats)
         median_ms = timing["median_ms"]
         result: dict[str, Any] = {
             "status": "ok",
@@ -168,8 +192,7 @@ def _environment(name: str, args: argparse.Namespace,
         status = 0
         if args.jpeg_dir:
             try:
-                paths = _jpeg_paths(
-                    Path(args.jpeg_dir), name, len(args.envs) > 1, args.batch)
+                paths = _jpeg_paths(Path(args.jpeg_dir), name, len(args.envs) > 1, args.batch)
                 result["jpeg_comparison"] = _jpeg_baseline(paths, args)
                 baseline_fps = result["jpeg_comparison"]["frames_per_second"]
                 result["render_fps_over_jpeg_fps"] = result["frames_per_second"] / baseline_fps
@@ -189,15 +212,16 @@ def _environment(name: str, args: argparse.Namespace,
 def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     device = checked_device(args.device)
     configure_threads(args.threads)
-    record = provenance(
-        benchmark="host-state-render-pipeline", args=args, snv_version=snv.__version__)
+    record = provenance(benchmark="host-state-render-pipeline", args=args, snv_version=snv.__version__)
     record["resolved_device"] = str(device)
     record["methodology"] = {
         "timed_operation": (
-            "torch.as_tensor(host packed rows).to(device) -> "
-            "env.render(rows, out=reused_uint8_buffer)"),
+            "torch.as_tensor(host packed rows).to(device) -> env.render(rows, out=reused_uint8_buffer)"
+        ),
         "setup_excluded": [
-            "environment construction", "state corpus load/reset", "first lazy render",
+            "environment construction",
+            "state corpus load/reset",
+            "first lazy render",
             "output allocation",
         ],
         "synchronized": device.type in {"cuda", "mps"},

@@ -80,6 +80,7 @@ reference that is installed and can be driven state for state. Neither holds her
 The renderer stands on its own and is unaffected: supply states from the official CPU env, or from any
 other source, and ``render`` draws them.
 """
+
 from __future__ import annotations
 
 import math
@@ -95,13 +96,13 @@ from ..render.scene import Scene2D, SceneBuilder
 from ..spaces import Box, Dict, Discrete, RGBBox
 
 # --- palette, straight from highway_env.vehicle.graphics / road.graphics -------------------------
-GREY = (100, 100, 100)              # WorldSurface.GREY, the road plane and the whole background
-WHITE = (255, 255, 255)             # lane markings
-BLACK = (60, 60, 60)                # VehicleGraphics.BLACK, the 1 px vehicle outline
-BLUE = (100, 200, 255)              # IDMVehicle
-GREEN = (50, 200, 0)                # EGO_COLOR (MDPVehicle)
-YELLOW = (200, 200, 0)              # DEFAULT_COLOR, and Obstacle
-RED = (255, 100, 100)               # crashed
+GREY = (100, 100, 100)  # WorldSurface.GREY, the road plane and the whole background
+WHITE = (255, 255, 255)  # lane markings
+BLACK = (60, 60, 60)  # VehicleGraphics.BLACK, the 1 px vehicle outline
+BLUE = (100, 200, 255)  # IDMVehicle
+GREEN = (50, 200, 0)  # EGO_COLOR (MDPVehicle)
+YELLOW = (200, 200, 0)  # DEFAULT_COLOR, and Obstacle
+RED = (255, 100, 100)  # crashed
 
 
 def lighten(c, ratio: float = 0.68):
@@ -151,8 +152,7 @@ class Straight(_Lane):
 class Sine(Straight):
     """``SineLane``: a straight lane whose lateral offset oscillates. Used by the merge ramp."""
 
-    def __init__(self, start, end, amplitude, pulsation, phase, width=4.0,
-                 line_types=(STRIPED, STRIPED)):
+    def __init__(self, start, end, amplitude, pulsation, phase, width=4.0, line_types=(STRIPED, STRIPED)):
         super().__init__(start, end, width, line_types)
         self.amplitude, self.pulsation, self.phase = float(amplitude), float(pulsation), float(phase)
 
@@ -162,8 +162,9 @@ class Sine(Straight):
 
 
 class Circular(_Lane):
-    def __init__(self, center, radius, start_phase, end_phase, clockwise=True, width=4.0,
-                 line_types=(STRIPED, STRIPED)):
+    def __init__(
+        self, center, radius, start_phase, end_phase, clockwise=True, width=4.0, line_types=(STRIPED, STRIPED)
+    ):
         super().__init__(width, line_types)
         self.center = np.asarray(center, dtype=np.float64)
         self.radius = float(radius)
@@ -193,8 +194,7 @@ def straight_road_network(lanes: int, length: float = 10000.0, width: float = 4.
     for i in range(lanes):
         origin = (0.0, i * width)
         end = (length, i * width)
-        line = (CONTINUOUS_LINE if i == 0 else STRIPED,
-                CONTINUOUS_LINE if i == lanes - 1 else NONE)
+        line = (CONTINUOUS_LINE if i == 0 else STRIPED, CONTINUOUS_LINE if i == lanes - 1 else NONE)
         out.append(Straight(origin, end, width, line))
     return out
 
@@ -295,9 +295,8 @@ class HighwayEnvBase(Env):
         self.steer_off = self.veh_dim * self.N_VEHICLES
         self.obj_off = self.steer_off + (1 if self.EGO_HAS_TIRES else 0)
         self.state_dim = self.obj_off + 3 * n_obj
-        fields = ("x", "y", "heading", "crashed")[:self.veh_dim]
-        names = [f"{'ego' if i == self.EGO_INDEX else f'v{i}'}_{f}"
-                 for i in range(self.N_VEHICLES) for f in fields]
+        fields = ("x", "y", "heading", "crashed")[: self.veh_dim]
+        names = [f"{'ego' if i == self.EGO_INDEX else f'v{i}'}_{f}" for i in range(self.N_VEHICLES) for f in fields]
         if self.EGO_HAS_TIRES:
             names.append("ego_steering")
         for k, (kind, _, _) in enumerate(self.STATE_OBJECTS):
@@ -314,9 +313,11 @@ class HighwayEnvBase(Env):
         # the vehicles are a homogeneous array whose rows differ only by index, and a state with
         # ``v0``..``v14`` as separate keys would be fifteen names for one fact. Nothing is hidden --
         # every column is covered, so ``pack``/``unpack`` round-trip the frozen layout bit for bit.
-        self.state_layout = ((("vehicles",), self.veh_dim * self.N_VEHICLES, 0),) + (
-            ((("ego", "steering"), 1, self.steer_off),) if self.EGO_HAS_TIRES else ()) + (
-            ((("objects",), 3 * n_obj, self.obj_off),) if n_obj else ())
+        self.state_layout = (
+            ((("vehicles",), self.veh_dim * self.N_VEHICLES, 0),)
+            + (((("ego", "steering"), 1, self.steer_off),) if self.EGO_HAS_TIRES else ())
+            + (((("objects",), 3 * n_obj, self.obj_off),) if n_obj else ())
+        )
         #: per output size, the lane-marking tables ``_plan`` builds. Keyed on the frame geometry
         #: because ``stripes_count`` and ``_slots_for`` are functions of it, and NOT stored as
         #: attributes for the reason ``_Screen`` exists: a preview at another size must not change
@@ -350,10 +351,11 @@ class HighwayEnvBase(Env):
         W = int(round(H * self.SCREEN_W / self.SCREEN_H))
         sc = self.SCALING
         return _Screen(
-            H=H, W=W,
+            H=H,
+            W=W,
             cam_off=(float(self.CENTERING[0] * W) / sc, float(self.CENTERING[1] * H) / sc),
             stripes_count=int(2 * (H + W) / (STRIPE_SPACING * sc)),
-            line_w=max(int(STRIPE_WIDTH * sc), 1),            # WorldSurface.pix(STRIPE_WIDTH), min 1
+            line_w=max(int(STRIPE_WIDTH * sc), 1),  # WorldSurface.pix(STRIPE_WIDTH), min 1
         )
 
     @property
@@ -386,7 +388,7 @@ class HighwayEnvBase(Env):
     def _sprite(self, length: float, width: float, with_tires_pad: bool):
         """Sprite-pixel rectangles for one vehicle or road object, exactly as the reference builds them."""
         sc = self.SCALING
-        pix = lambda v: int(v * sc)                                    # WorldSurface.pix
+        pix = lambda v: int(v * sc)  # WorldSurface.pix
         if with_tires_pad:
             span = length + 2 * self.TIRE_LENGTH
             S = pix(span)
@@ -420,29 +422,35 @@ class HighwayEnvBase(Env):
         if self.STATE_OBJECTS:
             space["landmark"] = Dict({"color": RGBBox(init_value=BLUE)})
         space["background"] = Dict({"color": RGBBox(init_value=GREY)})
-        space["road"] = Dict({
-            "line_color": RGBBox(init_value=WHITE),
-            "show_lines": Discrete(2, init_value=1),
-        })
-        space["ego"] = Dict({
-            "color": RGBBox(init_value=self.EGO_COLOR_DEFAULT),
-            "headlight_color": RGBBox(init_value=lighten(self.EGO_COLOR_DEFAULT)),
-        })
+        space["road"] = Dict(
+            {
+                "line_color": RGBBox(init_value=WHITE),
+                "show_lines": Discrete(2, init_value=1),
+            }
+        )
+        space["ego"] = Dict(
+            {
+                "color": RGBBox(init_value=self.EGO_COLOR_DEFAULT),
+                "headlight_color": RGBBox(init_value=lighten(self.EGO_COLOR_DEFAULT)),
+            }
+        )
         if self.N_VEHICLES > 1:
-            space["traffic"] = Dict({"color": RGBBox(init_value=BLUE),
-                                     "headlight_color": RGBBox(init_value=lighten(BLUE))})
+            space["traffic"] = Dict(
+                {"color": RGBBox(init_value=BLUE), "headlight_color": RGBBox(init_value=lighten(BLUE))}
+            )
         if self.CRASHED_VISIBLE:
             space["crashed"] = Dict({"color": RGBBox(init_value=RED)})
-        space["vehicle"] = Dict({
-            "outline_color": RGBBox(init_value=BLACK),
-            "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
-        })
+        space["vehicle"] = Dict(
+            {
+                "outline_color": RGBBox(init_value=BLACK),
+                "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
+            }
+        )
         return Dict(space)
 
     # --- the scene ---------------------------------------------------------------------------------
 
-    def scene(self, states, variation: dict | None = None, style=None, size: int | None = None
-              ) -> Scene2D:
+    def scene(self, states, variation: dict | None = None, style=None, size: int | None = None) -> Scene2D:
         """``size`` is declared here, and its presence is a statement about this family.
 
         The world rectangle below is ``(0, 0, W, H)`` in SCREEN PIXELS at a fixed ``scaling``, so a
@@ -462,7 +470,7 @@ class HighwayEnvBase(Env):
 
         # Camera. float64 throughout: pos2pix truncates, and the ego sits exactly on a pixel boundary.
         e0 = self.veh_dim * self.EGO_INDEX
-        ego = s[:, e0:e0 + 2].double()
+        ego = s[:, e0 : e0 + 2].double()
         origin = torch.stack([ego[:, 0] - scr.cam_off[0], ego[:, 1] - scr.cam_off[1]], -1)
 
         self._add_lane_markings(sb, origin, sty, B, scr)
@@ -470,9 +478,22 @@ class HighwayEnvBase(Env):
         # landmark before the walls), then the static furniture.
         for k, (kind, length, width) in enumerate(self.STATE_OBJECTS):
             o = self.obj_off + 3 * k
-            self._add_boxes(sb, origin, s[:, o:o + 1].double(), s[:, o + 1:o + 2].double(),
-                            s[:, o + 2:o + 3], length, width, False, sty[f"{kind}.color"], None,
-                            sty, B, scr, cull=False)
+            self._add_boxes(
+                sb,
+                origin,
+                s[:, o : o + 1].double(),
+                s[:, o + 1 : o + 2].double(),
+                s[:, o + 2 : o + 3],
+                length,
+                width,
+                False,
+                sty[f"{kind}.color"],
+                None,
+                sty,
+                B,
+                scr,
+                cull=False,
+            )
         # Static furniture, in class order, batched over the runs that share a sprite. float64, and
         # NOT because more precision is nicer: ``_pivot``'s first question is whether the angle is an
         # exact multiple of 90 degrees, and parking-v0's walls are built at exactly ``np.pi/2``.
@@ -483,11 +504,24 @@ class HighwayEnvBase(Env):
         for (length, width), poses in self._object_runs():
             p = torch.tensor(poses, device=self.device, dtype=torch.float64).unsqueeze(0)
             p = p.expand(B, len(poses), 3)
-            self._add_boxes(sb, origin, p[..., 0], p[..., 1], p[..., 2], length, width, False,
-                            sty["object.color"], None, sty, B, scr, cull=False)
+            self._add_boxes(
+                sb,
+                origin,
+                p[..., 0],
+                p[..., 1],
+                p[..., 2],
+                length,
+                width,
+                False,
+                sty["object.color"],
+                None,
+                sty,
+                B,
+                scr,
+                cull=False,
+            )
         self._add_vehicles(sb, origin, s, sty, B, scr)
-        return sb.build(background=sty["background.color"],
-                        world=(0.0, 0.0, float(scr.W), float(scr.H)), flip_y=False)
+        return sb.build(background=sty["background.color"], world=(0.0, 0.0, float(scr.W), float(scr.H)), flip_y=False)
 
     def _pos2pix(self, origin: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
         """``WorldSurface.pos2pix``: ``int((p - origin) * scaling)``, truncating toward zero."""
@@ -543,9 +577,14 @@ class HighwayEnvBase(Env):
             supplies harmless stand-ins, because its rows are selected away."""
             if isinstance(l, Circular):
                 return (0.0, 0.0), (1.0, 0.0), (0.0, 1.0), 0.0, 0.0, 0.0
-            return (tuple(l.start), tuple(l.direction), tuple(l.lateral),
-                    getattr(l, "amplitude", 0.0), getattr(l, "pulsation", 0.0),
-                    getattr(l, "phase", 0.0))
+            return (
+                tuple(l.start),
+                tuple(l.direction),
+                tuple(l.lateral),
+                getattr(l, "amplitude", 0.0),
+                getattr(l, "pulsation", 0.0),
+                getattr(l, "phase", 0.0),
+            )
 
         def circular_of(l):
             """``(centre, radius, start_phase, dir)``; radius 1 for a straight lane so the division
@@ -558,7 +597,7 @@ class HighwayEnvBase(Env):
         ci_p = [circular_of(l) for l in lanes]
         # groups: one per (lane, side) that draws DASHED stripes, i.e. that needs a slot window
         g_lane, g_len, g_nslots, g_half = [], [], [], []
-        rows = []                                   # (lane, group or -1, j, lat, span, continuous)
+        rows = []  # (lane, group or -1, j, lat, span, continuous)
         for li, lane in enumerate(lanes):
             n_slots = self._slots_for(lane, scr)
             for side in (0, 1):
@@ -578,7 +617,7 @@ class HighwayEnvBase(Env):
                 rows += [(li, gi, float(j), lat, span, False) for j in range(n_slots)]
         lane_of = [r[0] for r in rows]
         t = lambda v, d=torch.float64: torch.tensor(v, device=self.device, dtype=d)  # noqa: E731
-        sel = lambda seq, idx: [seq[i] for i in idx]                                 # noqa: E731
+        sel = lambda seq, idx: [seq[i] for i in idx]  # noqa: E731
         plan = dict(
             S=len(rows),
             lane_of=torch.tensor(lane_of, device=self.device, dtype=torch.int64),
@@ -632,9 +671,7 @@ class HighwayEnvBase(Env):
     def _stripe_pos(self, P: dict, s: torch.Tensor) -> torch.Tensor:
         """``lane.position(s, lat)`` for every stripe at once: ``(B,S)`` -> ``(B,S,2)``."""
         lat = P["lat"]
-        lat_e = torch.where(P["p_sine"],
-                            lat + P["p_amp"] * torch.sin(P["p_puls"] * s + P["p_phase"]),
-                            lat)
+        lat_e = torch.where(P["p_sine"], lat + P["p_amp"] * torch.sin(P["p_puls"] * s + P["p_phase"]), lat)
         p_str = P["p_start"] + s.unsqueeze(-1) * P["p_dir"] + lat_e.unsqueeze(-1) * P["p_lateral"]
         phi = P["p_cdir"] * s / P["p_rad"] + P["p_sph"]
         r = P["p_rad"] - lat * P["p_cdir"]
@@ -648,25 +685,24 @@ class HighwayEnvBase(Env):
         col = sty["road.line_color"]
         show = sty["road.show_lines"] > 0.5
         # window centre, so the slot window follows the camera rather than the reference's s0
-        centre = origin + torch.tensor([scr.W / 2.0 / self.SCALING, scr.H / 2.0 / self.SCALING],
-                                       device=origin.device, dtype=origin.dtype)
-        s_org = self._local_s(P, origin)                                        # (B,L)
+        centre = origin + torch.tensor(
+            [scr.W / 2.0 / self.SCALING, scr.H / 2.0 / self.SCALING], device=origin.device, dtype=origin.dtype
+        )
+        s_org = self._local_s(P, origin)  # (B,L)
         s_ctr = self._local_s(P, centre)
-        s0 = (_py_floordiv(torch.trunc(s_org), STRIPE_SPACING)
-              - scr.stripes_count // 2) * STRIPE_SPACING
-        k0 = self._slot_window_all(P, s0, s_ctr)                                # (B,G)
+        s0 = (_py_floordiv(torch.trunc(s_org), STRIPE_SPACING) - scr.stripes_count // 2) * STRIPE_SPACING
+        k0 = self._slot_window_all(P, s0, s_ctr)  # (B,G)
 
-        s0s = s0.index_select(1, P["lane_of"])                                  # (B,S)
+        s0s = s0.index_select(1, P["lane_of"])  # (B,S)
         k = k0.index_select(1, P["grp_of"]) + P["j_of"]
         cont = P["cont"]
         st = torch.where(cont, s0s, s0s + k * STRIPE_SPACING)
-        en = torch.where(cont, (s0s + scr.stripes_count * STRIPE_SPACING) + STRIPE_LENGTH,
-                         st + P["span"])
+        en = torch.where(cont, (s0s + scr.stripes_count * STRIPE_SPACING) + STRIPE_LENGTH, st + P["span"])
         ok = show.unsqueeze(1) & (cont | ((k >= 0) & (k < scr.stripes_count)))
 
         st = torch.minimum(st.clamp_min(0.0), P["len_s"])
         en = torch.minimum(en.clamp_min(0.0), P["len_s"])
-        ok = ok & ((en - st).abs() > 0.5 * STRIPE_LENGTH)                # LaneGraphics.draw_stripes
+        ok = ok & ((en - st).abs() > 0.5 * STRIPE_LENGTH)  # LaneGraphics.draw_stripes
         o = origin.unsqueeze(1)
         a = (torch.trunc((self._stripe_pos(P, st) - o) * self.SCALING) + 0.5).float()
         b = (torch.trunc((self._stripe_pos(P, en) - o) * self.SCALING) + 0.5).float()
@@ -705,7 +741,7 @@ class HighwayEnvBase(Env):
         sc = self.SCALING
         if isinstance(lane, Straight):
             span = (scr.W * abs(lane.direction[0]) + scr.H * abs(lane.direction[1])) / sc
-            if isinstance(lane, Sine):                 # the ramp's tangent is not the chord's
+            if isinstance(lane, Sine):  # the ramp's tangent is not the chord's
                 span = math.hypot(scr.W, scr.H) / sc
         else:
             span = math.hypot(scr.W, scr.H) / sc
@@ -738,8 +774,7 @@ class HighwayEnvBase(Env):
         hw = (scr.line_w / 2.0) * e.abs().amax(dim=-1) / L
         if scr.line_w % 2 == 0:
             x_major = e[:, 0].abs() >= e[:, 1].abs()
-            shift = torch.stack([torch.where(x_major, 0.0, 0.5),
-                                 torch.where(x_major, 0.5, 0.0)], -1)
+            shift = torch.stack([torch.where(x_major, 0.0, 0.5), torch.where(x_major, 0.5, 0.0)], -1)
             a, b = a + shift, b + shift
         return a, b, hw
 
@@ -752,7 +787,7 @@ class HighwayEnvBase(Env):
         # VehicleGraphics.lighten, in tensor form, so recolouring a crash also recolours its headlights
         crash_h = None if crash is None else torch.clamp(torch.trunc(crash / 0.68), max=255.0)
         v, n = self.veh_dim, self.N_VEHICLES
-        cast = s[:, :v * n].reshape(B, n, v)
+        cast = s[:, : v * n].reshape(B, n, v)
         ego = torch.zeros(n, dtype=torch.bool, device=self.device)
         ego[self.EGO_INDEX] = True
         ego = ego.view(1, n, 1)
@@ -764,26 +799,68 @@ class HighwayEnvBase(Env):
             head = torch.where(crashed, crash_h.unsqueeze(1), head)
         x, y, hd = cast[..., 0].double(), cast[..., 1].double(), cast[..., 2]
         if not self.EGO_HAS_TIRES:
-            self._add_boxes(sb, origin, x, y, hd, self.VEHICLE_LENGTH, self.VEHICLE_WIDTH, True,
-                            body, head, sty, B, scr)
+            self._add_boxes(
+                sb, origin, x, y, hd, self.VEHICLE_LENGTH, self.VEHICLE_WIDTH, True, body, head, sty, B, scr
+            )
             return
         # ``road.vehicles`` order with the ego's four tyres in the middle of it: everything up to
         # and including the ego, then its tyres, then the rest. Draw order is the z-buffer, so the
         # tyres cannot be moved to the end of the cast even though only the ego has any.
         e = self.EGO_INDEX
-        sl = lambda t, a, b: t[:, a:b]                                            # noqa: E731
-        self._add_boxes(sb, origin, sl(x, 0, e + 1), sl(y, 0, e + 1), sl(hd, 0, e + 1),
-                        self.VEHICLE_LENGTH, self.VEHICLE_WIDTH, True, sl(body, 0, e + 1),
-                        sl(head, 0, e + 1), sty, B, scr,
-                        steering=s[:, self.steer_off], tire_slot=e)
+        sl = lambda t, a, b: t[:, a:b]  # noqa: E731
+        self._add_boxes(
+            sb,
+            origin,
+            sl(x, 0, e + 1),
+            sl(y, 0, e + 1),
+            sl(hd, 0, e + 1),
+            self.VEHICLE_LENGTH,
+            self.VEHICLE_WIDTH,
+            True,
+            sl(body, 0, e + 1),
+            sl(head, 0, e + 1),
+            sty,
+            B,
+            scr,
+            steering=s[:, self.steer_off],
+            tire_slot=e,
+        )
         if e + 1 < n:
-            self._add_boxes(sb, origin, sl(x, e + 1, n), sl(y, e + 1, n), sl(hd, e + 1, n),
-                            self.VEHICLE_LENGTH, self.VEHICLE_WIDTH, True, sl(body, e + 1, n),
-                            sl(head, e + 1, n), sty, B, scr)
+            self._add_boxes(
+                sb,
+                origin,
+                sl(x, e + 1, n),
+                sl(y, e + 1, n),
+                sl(hd, e + 1, n),
+                self.VEHICLE_LENGTH,
+                self.VEHICLE_WIDTH,
+                True,
+                sl(body, e + 1, n),
+                sl(head, e + 1, n),
+                sty,
+                B,
+                scr,
+            )
 
-    def _add_boxes(self, sb, origin, x, y, heading, length, width, is_vehicle, body_col, head_col,
-                   sty, B, scr: _Screen, steering=None, tire_slot: int = 0,
-                   cull: bool = True) -> None:
+    def _add_boxes(
+        self,
+        sb,
+        origin,
+        x,
+        y,
+        heading,
+        length,
+        width,
+        is_vehicle,
+        body_col,
+        head_col,
+        sty,
+        B,
+        scr: _Screen,
+        steering=None,
+        tire_slot: int = 0,
+        cull: bool = True,
+    ) -> None:
         """``n`` rotated sprites of ONE size: black footprint, inset body, two clipped headlights.
 
         ``x``/``y``/``heading`` are ``(B,n)`` and every box in the call shares the sprite, so its
@@ -802,8 +879,11 @@ class HighwayEnvBase(Env):
         px = self._pos2pix(origin[:, 0:1], x)
         py = self._pos2pix(origin[:, 1:2], y)
         # WorldSurface.is_visible(margin=50): off-screen VEHICLES are not drawn at all
-        vis = ((px > -50) & (px < scr.W + 50) & (py > -50) & (py < scr.H + 50) if cull
-               else torch.ones_like(px, dtype=torch.bool))
+        vis = (
+            (px > -50) & (px < scr.W + 50) & (py > -50) & (py < scr.H + 50)
+            if cull
+            else torch.ones_like(px, dtype=torch.bool)
+        )
         # VehicleGraphics.display: headings under 2 degrees are snapped to zero. The snap and the pivot
         # are evaluated in the heading's OWN dtype so a float64 class constant stays float64; the
         # geometry handed to the builder is float32 like every other primitive.
@@ -826,21 +906,38 @@ class HighwayEnvBase(Env):
         rot = torch.stack([torch.stack([ct, -st], -1), torch.stack([st, ct], -1)], -2).reshape(M, 2, 2)
         cs, szs, cols = [], [], []
         for r, colour in rects:
-            off = torch.tensor([r[0] + r[2] / 2.0 - S / 2.0, r[1] + r[3] / 2.0 - S / 2.0],
-                               device=self.device, dtype=torch.float32).reshape(1, 2) * scale
+            off = (
+                torch.tensor(
+                    [r[0] + r[2] / 2.0 - S / 2.0, r[1] + r[3] / 2.0 - S / 2.0], device=self.device, dtype=torch.float32
+                ).reshape(1, 2)
+                * scale
+            )
             cs.append((centre + torch.einsum("bij,bj->bi", rot, off)).reshape(B, n, 2))
             szs.append(torch.cat([r[2] * scale, r[3] * scale], dim=1).reshape(B, n, 2))
             cols.append(colour.reshape(B, 1, 3).expand(B, n, 3) if colour.ndim == 2 else colour)
         R = len(rects)
-        sb.add_rects(torch.stack(cs, 2).reshape(B, n * R, 2), torch.stack(szs, 2).reshape(B, n * R, 2),
-                     torch.stack(cols, 2).reshape(B, n * R, 3),
-                     angle=h.unsqueeze(2).expand(B, n, R).reshape(B, n * R),
-                     enabled=vis.unsqueeze(2).expand(B, n, R).reshape(B, n * R))
+        sb.add_rects(
+            torch.stack(cs, 2).reshape(B, n * R, 2),
+            torch.stack(szs, 2).reshape(B, n * R, 2),
+            torch.stack(cols, 2).reshape(B, n * R, 3),
+            angle=h.unsqueeze(2).expand(B, n, R).reshape(B, n * R),
+            enabled=vis.unsqueeze(2).expand(B, n, R).reshape(B, n * R),
+        )
         if steering is not None:
             k = tire_slot
-            self._add_tires(sb, centre.reshape(B, n, 2)[:, k], rot.reshape(B, n, 2, 2)[:, k],
-                            h[:, k], steering, S, length, width,
-                            scale.reshape(B, n, 1)[:, k], sty, vis[:, k])
+            self._add_tires(
+                sb,
+                centre.reshape(B, n, 2)[:, k],
+                rot.reshape(B, n, 2, 2)[:, k],
+                h[:, k],
+                steering,
+                S,
+                length,
+                width,
+                scale.reshape(B, n, 1)[:, k],
+                sty,
+                vis[:, k],
+            )
 
     def _add_tires(self, sb, centre, rot, h, steering, S, length, width, scale, sty, vis) -> None:
         """Four tyres, which is THE PIVOT RULE APPLIED TWICE.
@@ -870,37 +967,44 @@ class HighwayEnvBase(Env):
         pix = self._pix
         span = length + 2 * self.TIRE_LENGTH
         St = pix(self.TIRE_LENGTH)
-        rect = (0, pix(self.TIRE_LENGTH / 2 - self.TIRE_WIDTH / 2),
-                pix(self.TIRE_LENGTH), pix(self.TIRE_WIDTH))
-        if rect[2] <= 0 or rect[3] <= 0:                 # pix() truncates; nothing to draw below 1 px
+        rect = (0, pix(self.TIRE_LENGTH / 2 - self.TIRE_WIDTH / 2), pix(self.TIRE_LENGTH), pix(self.TIRE_WIDTH))
+        if rect[2] <= 0 or rect[3] <= 0:  # pix() truncates; nothing to draw below 1 px
             return
-        positions = ((pix(self.TIRE_LENGTH), pix(span / 2 - width / 2)),
-                     (pix(self.TIRE_LENGTH), pix(span / 2 + width / 2)),
-                     (pix(span - self.TIRE_LENGTH), pix(span / 2 - width / 2)),
-                     (pix(span - self.TIRE_LENGTH), pix(span / 2 + width / 2)))
+        positions = (
+            (pix(self.TIRE_LENGTH), pix(span / 2 - width / 2)),
+            (pix(self.TIRE_LENGTH), pix(span / 2 + width / 2)),
+            (pix(span - self.TIRE_LENGTH), pix(span / 2 - width / 2)),
+            (pix(span - self.TIRE_LENGTH), pix(span / 2 + width / 2)),
+        )
         black = sty["vehicle.outline_color"]
-        off_t = torch.tensor([rect[0] + rect[2] / 2.0 - St / 2.0, rect[1] + rect[3] / 2.0 - St / 2.0],
-                             device=self.device, dtype=torch.float32).reshape(1, 2)
+        off_t = torch.tensor(
+            [rect[0] + rect[2] / 2.0 - St / 2.0, rect[1] + rect[3] / 2.0 - St / 2.0],
+            device=self.device,
+            dtype=torch.float32,
+        ).reshape(1, 2)
         # The four tyres in one call, with the two rear ones at angle 0 -- ``tire_angles`` is
         # ``[0, 0, steering, steering]`` -- and the sprite offsets stacked alongside them.
         B, T = steering.shape[0], len(positions)
         M = B * T
-        a = torch.stack([torch.zeros_like(steering), torch.zeros_like(steering),
-                         steering, steering], dim=1).reshape(M)
-        pos = torch.tensor(positions, device=self.device, dtype=torch.float32)     # (T,2)
+        a = torch.stack([torch.zeros_like(steering), torch.zeros_like(steering), steering, steering], dim=1).reshape(M)
+        pos = torch.tensor(positions, device=self.device, dtype=torch.float32)  # (T,2)
         tcx, tcy = self._pivot(St, a)
         ca, sa = torch.cos(a), torch.sin(a)
         rot_t = torch.stack([torch.stack([ca, -sa], -1), torch.stack([sa, ca], -1)], -2)
         scale_m = scale.reshape(B, 1, 1).expand(B, T, 1).reshape(M, 1)
         local = (torch.stack([tcx, tcy], -1).reshape(B, T, 2) + pos).reshape(M, 2)
         local = (local + torch.einsum("bij,bj->bi", rot_t, off_t.expand(M, 2)) - S / 2.0) * scale_m
-        c = (centre.reshape(B, 1, 2).expand(B, T, 2).reshape(M, 2)
-             + torch.einsum("bij,bj->bi", rot.reshape(B, 1, 2, 2).expand(B, T, 2, 2).reshape(M, 2, 2),
-                            local))
+        c = centre.reshape(B, 1, 2).expand(B, T, 2).reshape(M, 2) + torch.einsum(
+            "bij,bj->bi", rot.reshape(B, 1, 2, 2).expand(B, T, 2, 2).reshape(M, 2, 2), local
+        )
         size = torch.cat([rect[2] * scale_m, rect[3] * scale_m], dim=1)
-        sb.add_rects(c.reshape(B, T, 2), size.reshape(B, T, 2), black,
-                     angle=(h.reshape(B, 1) + a.reshape(B, T)),
-                     enabled=vis.reshape(B, 1).expand(B, T))
+        sb.add_rects(
+            c.reshape(B, T, 2),
+            size.reshape(B, T, 2),
+            black,
+            angle=(h.reshape(B, 1) + a.reshape(B, T)),
+            enabled=vis.reshape(B, 1).expand(B, T),
+        )
 
     def _pivot(self, S: int, h: torch.Tensor):
         """Sub-pixel pivot of pygame's rotate + truncated blit.
@@ -929,22 +1033,29 @@ class HighwayEnvBase(Env):
         ``Wr`` branch instead -- worth 23 px a frame on parking-v0's 14x14 goal landmark alone.
         Measured in ``scratch/highway/probe_rot_tolerance.py``.
         """
-        a = -h.double()                       # VehicleGraphics passes rad2deg(-heading)
+        a = -h.double()  # VehicleGraphics passes rad2deg(-heading)
         deg = a * (180.0 / math.pi)
         axis = torch.remainder(deg.float().double(), 90.0) == 0
         wr = torch.trunc(S * (a.cos().abs() + a.sin().abs()))
         flat = torch.full_like(wr, -0.5 * (S % 2))
-        cx = torch.where(axis, flat, torch.where(torch.remainder(wr, 2) == 1,
-                                                 torch.full_like(wr, -0.5),
-                                                 torch.full_like(wr, -1.0)))
+        cx = torch.where(
+            axis, flat, torch.where(torch.remainder(wr, 2) == 1, torch.full_like(wr, -0.5), torch.full_like(wr, -1.0))
+        )
         cy = torch.where(axis, flat, torch.full_like(wr, -0.5))
         return cx.float(), cy.float()
 
     # --- rendering ---------------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``size`` is the frame HEIGHT; the width follows the env's own aspect ratio.
 
         highway-v0 is 600x150 and the intersection envs are square. Forcing a square frame would either
@@ -956,14 +1067,17 @@ class HighwayEnvBase(Env):
         change what the next ``render()`` returns.
         """
         scr = self.screen(size)
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         st = s.reshape(-1, self.state_dim)
         sty = self.resolve_style(style, variation, batch=int(st.shape[0]))
-        img = render_scene(self._scene(st, sty, scr), (scr.H, scr.W),
-                           supersample if supersample is not None else self.ss,
-                           backend=self.backend, out=out)
+        img = render_scene(
+            self._scene(st, sty, scr),
+            (scr.H, scr.W),
+            supersample if supersample is not None else self.ss,
+            backend=self.backend,
+            out=out,
+        )
         return img.view(*lead, *img.shape[1:]) if lead else img
 
     # --- states ------------------------------------------------------------------------------------
@@ -974,11 +1088,11 @@ class HighwayEnvBase(Env):
         v = self.veh_dim
         e0 = v * self.EGO_INDEX
         ego = self.ego_spawn(batch, rng)
-        out[:, e0:e0 + 3] = ego
+        out[:, e0 : e0 + 3] = ego
         for i in range(self.N_VEHICLES):
             if i == self.EGO_INDEX:
                 continue
-            out[:, v * i:v * i + 3] = self.traffic_spawn(batch, rng, ego)
+            out[:, v * i : v * i + 3] = self.traffic_spawn(batch, rng, ego)
         # Half the batch carries a crashed vehicle next to the ego, so the red-vehicle path is
         # exercised; without it the 'crashed.color' knob would look inert and the crashed state dims
         # would look dead, and both would be a test passing for the wrong reason.
@@ -986,7 +1100,7 @@ class HighwayEnvBase(Env):
             if self.N_VEHICLES > 1:
                 j = v * (1 if self.EGO_INDEX != 1 else 0)
                 out[::2, j + 3] = 1.0
-                out[::2, j:j + 2] = ego[::2, 0:2] + rng.uniform(-14, 14, (len(out[::2]), 2))
+                out[::2, j : j + 2] = ego[::2, 0:2] + rng.uniform(-14, 14, (len(out[::2]), 2))
             else:
                 # with one vehicle there is no neighbour to crash, so the ego's own flag is the only
                 # way the red path is ever drawn
@@ -994,7 +1108,7 @@ class HighwayEnvBase(Env):
         if self.EGO_HAS_TIRES:
             out[:, self.steer_off] = self.ego_steering_spawn(batch, rng)
         for k in range(len(self.STATE_OBJECTS)):
-            out[:, self.obj_off + 3 * k:self.obj_off + 3 * k + 3] = self.object_spawn(k, batch, rng)
+            out[:, self.obj_off + 3 * k : self.obj_off + 3 * k + 3] = self.object_spawn(k, batch, rng)
         return out
 
     def ego_spawn(self, batch, rng) -> np.ndarray:
@@ -1022,13 +1136,21 @@ class HighwayEnvBase(Env):
         or fail for reasons that have nothing to do with rendering.
         """
         import os
+
         import gymnasium
         import highway_env  # noqa: F401
+
         h = int(size or cls.default_size)
         w = int(round(h * cls.SCREEN_W / cls.SCREEN_H))
-        cfg = {"screen_width": w, "screen_height": h, "scaling": cls.SCALING,
-               "centering_position": list(cls.CENTERING), "offscreen_rendering": True,
-               "show_trajectories": False, "render_agent": False}
+        cfg = {
+            "screen_width": w,
+            "screen_height": h,
+            "scaling": cls.SCALING,
+            "centering_position": list(cls.CENTERING),
+            "offscreen_rendering": True,
+            "show_trajectories": False,
+            "render_agent": False,
+        }
         cfg.update(cls.reference_config)
         env = gymnasium.make(cls.reference_id, render_mode="rgb_array", config=cfg)
         env.reset(seed=0)
@@ -1036,7 +1158,7 @@ class HighwayEnvBase(Env):
         prev = os.environ.get("SDL_VIDEODRIVER")
         os.environ["SDL_VIDEODRIVER"] = "offscreen"
         try:
-            env.unwrapped.render()          # builds the viewer, which reads the variable once
+            env.unwrapped.render()  # builds the viewer, which reads the variable once
         finally:
             if prev is None:
                 os.environ.pop("SDL_VIDEODRIVER", None)
@@ -1045,20 +1167,32 @@ class HighwayEnvBase(Env):
         if not env.unwrapped.viewer.enabled:
             raise AssertionError(
                 "highway-env's viewer is disabled, so render() returns an untouched surface and every "
-                "parity number would be measured against a black image")
+                "parity number would be measured against a black image"
+            )
         return env
 
     @staticmethod
     def _lane_signature(l) -> tuple:
         """Everything about a lane that reaches a pixel, rounded to 1e-9, as one comparable tuple."""
         r = lambda v: round(float(v), 9)
-        head = (type(l).__name__.replace("Lane", "") or type(l).__name__,
-                r(l.width), tuple(int(t) for t in l.line_types), r(l.length))
+        head = (
+            type(l).__name__.replace("Lane", "") or type(l).__name__,
+            r(l.width),
+            tuple(int(t) for t in l.line_types),
+            r(l.length),
+        )
         if hasattr(l, "radius"):
             d = getattr(l, "dir", None)
             d = float(l.direction) if d is None else float(d)
-            return head + ("circular", r(l.center[0]), r(l.center[1]), r(l.radius),
-                           r(l.start_phase), r(l.end_phase), r(d))
+            return head + (
+                "circular",
+                r(l.center[0]),
+                r(l.center[1]),
+                r(l.radius),
+                r(l.start_phase),
+                r(l.end_phase),
+                r(d),
+            )
         tail = ("straight", r(l.start[0]), r(l.start[1]), r(l.end[0]), r(l.end[1]))
         if hasattr(l, "amplitude"):
             tail += (r(l.amplitude), r(l.pulsation), r(l.phase))
@@ -1081,8 +1215,7 @@ class HighwayEnvBase(Env):
         other in different colours, and they do not -- every marking is ``road.line_color`` -- so what
         has to agree is which lanes exist, not the sequence they are walked in.
         """
-        got = [l for f in u.road.network.graph for t in u.road.network.graph[f]
-               for l in u.road.network.graph[f][t]]
+        got = [l for f in u.road.network.graph for t in u.road.network.graph[f] for l in u.road.network.graph[f][t]]
         mine = sorted(cls._lane_signature(l) for l in cls.LANES)
         theirs = sorted(cls._lane_signature(l) for l in got)
         if mine == theirs:
@@ -1094,7 +1227,8 @@ class HighwayEnvBase(Env):
             f"({len(mine)} lanes transcribed, {len(theirs)} in the package). Transcribed but absent "
             f"from the package: {only_mine[:3]}; in the package but not transcribed: "
             f"{only_theirs[:3]}. Every lane marking would be drawn from a road the reference is not "
-            f"using, which presents as a rasterizer error rather than as a wrong constant.")
+            f"using, which presents as a rasterizer error rather than as a wrong constant."
+        )
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
@@ -1110,6 +1244,7 @@ class HighwayEnvBase(Env):
         """
         from highway_env.vehicle.behavior import IDMVehicle
         from highway_env.vehicle.kinematics import Vehicle
+
         ego = u.vehicle
         vd = 4 if cls.CRASHED_VISIBLE else 3
         cast = []
@@ -1129,7 +1264,8 @@ class HighwayEnvBase(Env):
                 f"{cls.__name__} declares CRASHED_VISIBLE = False, which is only true because "
                 f"{cls.reference_id} pins vehicle.color on its ego and VehicleGraphics.get_color reads "
                 f"that before it reads `crashed`. This reference's ego has no pinned colour, so a crash "
-                f"WOULD be visible and the state is missing a dimension.")
+                f"WOULD be visible and the state is missing a dimension."
+            )
         if cls.EGO_HAS_TIRES:
             # ``VehicleGraphics`` draws tyres for ``type(v) in [Vehicle, BicycleVehicle]`` -- an exact
             # type check -- so a reference whose ego has drifted to another class would silently draw
@@ -1137,7 +1273,8 @@ class HighwayEnvBase(Env):
             if type(ego) is not Vehicle:
                 raise AssertionError(
                     f"{cls.__name__}: the reference's ego is a {type(ego).__name__}, but this class "
-                    f"declares EGO_HAS_TIRES and VehicleGraphics draws tyres only for a plain Vehicle")
+                    f"declares EGO_HAS_TIRES and VehicleGraphics draws tyres only for a plain Vehicle"
+                )
             ego.action = {"steering": float(st[vd * cls.N_VEHICLES]), "acceleration": 0.0}
         n_obj = len(cls.STATE_OBJECTS)
         if n_obj:
@@ -1146,7 +1283,8 @@ class HighwayEnvBase(Env):
             if len(objs) < n_obj:
                 raise AssertionError(
                     f"{cls.__name__}: the reference holds {len(objs)} road objects and this class "
-                    f"drives {n_obj} of them from the state")
+                    f"drives {n_obj} of them from the state"
+                )
             for k in range(n_obj):
                 o = objs[k]
                 o.position = np.array([float(st[off + 3 * k]), float(st[off + 3 * k + 1])], np.float64)
@@ -1167,15 +1305,21 @@ class HighwayEnvBase(Env):
             want = np.asarray(st, np.float64)[:n].reshape(-1, vd)[:, :3]
             if cls.STATE_OBJECTS:
                 off = n + (1 if cls.EGO_HAS_TIRES else 0)
-                got = np.concatenate([got, np.array(
-                    [[*o.position, o.heading] for o in u.road.objects[:len(cls.STATE_OBJECTS)]],
-                    np.float64)])
+                got = np.concatenate(
+                    [
+                        got,
+                        np.array(
+                            [[*o.position, o.heading] for o in u.road.objects[: len(cls.STATE_OBJECTS)]], np.float64
+                        ),
+                    ]
+                )
                 want = np.concatenate([want, np.asarray(st, np.float64)[off:].reshape(-1, 3)])
             err = np.abs(got - want).max()
             if err > 1e-6:
                 raise AssertionError(
                     f"{cls.__name__}: the reference did not reach the requested state (max err "
-                    f"{err:.3e}); parity measured against this frame would compare two scenes")
+                    f"{err:.3e}); parity measured against this frame would compare two scenes"
+                )
             out.append(u.render().copy())
         return np.stack(out)
 
@@ -1193,14 +1337,20 @@ def lane_frames(lane, n: int, rng, jitter: float = 1.0) -> np.ndarray:
     if isinstance(lane, Circular):
         phi = lane.dir * s / lane.radius + lane.start_phase
         r = lane.radius - lat * lane.dir
-        return np.stack([lane.center[0] + r * np.cos(phi), lane.center[1] + r * np.sin(phi),
-                         phi + lane.dir * np.pi / 2], 1)
+        return np.stack(
+            [lane.center[0] + r * np.cos(phi), lane.center[1] + r * np.sin(phi), phi + lane.dir * np.pi / 2], 1
+        )
     if isinstance(lane, Sine):
         raise NotImplementedError("lane_frames does not cover SineLane; no registered env needs it")
     d, l = lane.direction, lane.lateral
-    return np.stack([lane.start[0] + s * d[0] + lat * l[0],
-                     lane.start[1] + s * d[1] + lat * l[1],
-                     np.full(n, math.atan2(d[1], d[0]))], 1)
+    return np.stack(
+        [
+            lane.start[0] + s * d[0] + lat * l[0],
+            lane.start[1] + s * d[1] + lat * l[1],
+            np.full(n, math.atan2(d[1], d[0])),
+        ],
+        1,
+    )
 
 
 def _on_track(lanes, batch, rng, jitter: float = 1.0, heading_jitter: float = 0.0) -> np.ndarray:
@@ -1262,7 +1412,7 @@ class Racetrack(HighwayEnvBase):
     SCREEN_W, SCREEN_H = 600, 600
     SCALING, CENTERING = 5.5, (0.5, 0.5)
     LANES = _racetrack_lanes()
-    N_VEHICLES = 2                          # RacetrackEnv._make_vehicles: ego + one front vehicle
+    N_VEHICLES = 2  # RacetrackEnv._make_vehicles: ego + one front vehicle
     EGO_HAS_TIRES = True
     #: measured, not assumed: racetrack-v0 does not pin ``vehicle.color`` and its ego is a plain
     #: ``Vehicle``, so ``get_color`` falls past LinearVehicle/IDMVehicle/MDPVehicle to DEFAULT_COLOR.
@@ -1279,8 +1429,7 @@ class Racetrack(HighwayEnvBase):
         return _on_track(self.LANES, batch, rng, jitter=1.4, heading_jitter=0.25)
 
 
-def _parking_lanes(spots: int = 14, width: float = 4.0, y_offset: float = 10.0,
-                   length: float = 8.0):
+def _parking_lanes(spots: int = 14, width: float = 4.0, y_offset: float = 10.0, length: float = 8.0):
     """``ParkingEnv._create_road``: two rows of ``spots`` bays, all four sides continuous.
 
     Built by the same loop the reference uses, and in the same ORDER -- ``RoadNetwork.graph`` groups
@@ -1289,10 +1438,10 @@ def _parking_lanes(spots: int = 14, width: float = 4.0, y_offset: float = 10.0,
     """
     xs = [(k + 1 - spots // 2) * width - width / 2 for k in range(spots)]
     lt = (CONTINUOUS, CONTINUOUS)
-    return tuple([Straight([x, y_offset], [x, y_offset + length], width=width, line_types=lt)
-                  for x in xs]
-                 + [Straight([x, -y_offset], [x, -y_offset - length], width=width, line_types=lt)
-                    for x in xs])
+    return tuple(
+        [Straight([x, y_offset], [x, y_offset + length], width=width, line_types=lt) for x in xs]
+        + [Straight([x, -y_offset], [x, -y_offset - length], width=width, line_types=lt) for x in xs]
+    )
 
 
 @register
@@ -1334,21 +1483,28 @@ class Parking(HighwayEnvBase):
     EGO_HAS_TIRES = True
     CRASHED_VISIBLE = False
     STATE_OBJECTS = (("landmark", 2.0, 2.0),)
-    OBJECTS = (("obstacle", 0.0, -21.0, 0.0, 70.0, 1.0),
-               ("obstacle", 0.0, 21.0, 0.0, 70.0, 1.0),
-               ("obstacle", -35.0, 0.0, math.pi / 2, 42.0, 1.0),
-               ("obstacle", 35.0, 0.0, math.pi / 2, 42.0, 1.0))
+    OBJECTS = (
+        ("obstacle", 0.0, -21.0, 0.0, 70.0, 1.0),
+        ("obstacle", 0.0, 21.0, 0.0, 70.0, 1.0),
+        ("obstacle", -35.0, 0.0, math.pi / 2, 42.0, 1.0),
+        ("obstacle", 35.0, 0.0, math.pi / 2, 42.0, 1.0),
+    )
     #: the 28 bay centres, ``lane.position(lane.length / 2, 0)`` with the lane's own heading
-    GOAL_POSES = tuple([(float(l.start[0]), float((l.start[1] + l.end[1]) / 2),
-                         math.atan2(float(l.end[1] - l.start[1]), 0.0)) for l in LANES])
+    GOAL_POSES = tuple(
+        [
+            (float(l.start[0]), float((l.start[1] + l.end[1]) / 2), math.atan2(float(l.end[1] - l.start[1]), 0.0))
+            for l in LANES
+        ]
+    )
     reference_id = "parking-v0"
     reference_config = {"controlled_vehicles": 1, "vehicles_count": 0, "add_walls": True}
 
     def ego_spawn(self, batch, rng):
         # ``_create_vehicles`` starts the ego at (0, 0) with a heading of 2*pi*U(0,1) and it then
         # drives around the lot, so the spawn is a point and the states are a region
-        return np.stack([rng.uniform(-30, 30, batch), rng.uniform(-18, 18, batch),
-                         rng.uniform(0, 2 * np.pi, batch)], 1).astype(np.float32)
+        return np.stack(
+            [rng.uniform(-30, 30, batch), rng.uniform(-18, 18, batch), rng.uniform(0, 2 * np.pi, batch)], 1
+        ).astype(np.float32)
 
     def traffic_spawn(self, batch, rng, ego):
         raise AssertionError("parking-v0 has one vehicle; traffic_spawn is unreachable")
@@ -1379,14 +1535,20 @@ class Highway(HighwayEnvBase):
 
     def ego_spawn(self, batch, rng):
         lane = rng.integers(0, 4, batch) * 4.0
-        return np.stack([rng.uniform(100, 900, batch), lane + rng.uniform(-1.2, 1.2, batch),
-                         rng.uniform(-0.35, 0.35, batch)], 1).astype(np.float32)
+        return np.stack(
+            [rng.uniform(100, 900, batch), lane + rng.uniform(-1.2, 1.2, batch), rng.uniform(-0.35, 0.35, batch)], 1
+        ).astype(np.float32)
 
     def traffic_spawn(self, batch, rng, ego):
         lane = rng.integers(0, 4, batch) * 4.0
-        return np.stack([ego[:, 0] + rng.uniform(-130, 130, batch),
-                         lane + rng.uniform(-1.2, 1.2, batch),
-                         rng.uniform(-0.35, 0.35, batch)], 1).astype(np.float32)
+        return np.stack(
+            [
+                ego[:, 0] + rng.uniform(-130, 130, batch),
+                lane + rng.uniform(-1.2, 1.2, batch),
+                rng.uniform(-0.35, 0.35, batch),
+            ],
+            1,
+        ).astype(np.float32)
 
 
 def _merge_lanes():
@@ -1403,8 +1565,14 @@ def _merge_lanes():
         out.append(Straight([sum(ends[:3]), y[i]], [sum(ends), y[i]], line_types=lt[i]))
     amplitude = 3.25
     ljk = Straight([0, 14.5], [ends[0], 14.5], line_types=(c, c))
-    lkb = Sine([ends[0], 14.5 - amplitude], [sum(ends[:2]), 14.5 - amplitude],
-               amplitude, 2 * np.pi / (2 * ends[1]), np.pi / 2, line_types=(c, c))
+    lkb = Sine(
+        [ends[0], 14.5 - amplitude],
+        [sum(ends[:2]), 14.5 - amplitude],
+        amplitude,
+        2 * np.pi / (2 * ends[1]),
+        np.pi / 2,
+        line_types=(c, c),
+    )
     # lbc starts where the ramp meets the highway: lkb.position(80, 0) = (230, 8)
     out += [ljk, lkb, Straight([sum(ends[:2]), 8.0], [sum(ends[:3]), 8.0], line_types=(n, c))]
     return tuple(out)
@@ -1419,8 +1587,8 @@ class Merge(HighwayEnvBase):
     SCREEN_W, SCREEN_H = 600, 150
     SCALING, CENTERING = 5.5, (0.3, 0.5)
     LANES = _merge_lanes()
-    OBJECTS = (("obstacle", 310.0, 8.0, 0.0, 2.0, 2.0),)      # Obstacle(road, lbc.position(80, 0))
-    N_VEHICLES = 5                                            # MergeEnv._make_vehicles: ego + 4
+    OBJECTS = (("obstacle", 310.0, 8.0, 0.0, 2.0, 2.0),)  # Obstacle(road, lbc.position(80, 0))
+    N_VEHICLES = 5  # MergeEnv._make_vehicles: ego + 4
     reference_id = "merge-v0"
 
     def ego_spawn(self, batch, rng):
@@ -1430,14 +1598,16 @@ class Merge(HighwayEnvBase):
         # 'object.color' knob would then be checked against batches that sometimes do not contain it —
         # a test whose verdict depends on the draw is not a test.
         x[::3] = rng.uniform(255, 330, len(x[::3]))
-        return np.stack([x, rng.integers(0, 2, batch) * 4.0 + rng.uniform(-1.2, 1.2, batch),
-                         rng.uniform(-0.3, 0.3, batch)], 1).astype(np.float32)
+        return np.stack(
+            [x, rng.integers(0, 2, batch) * 4.0 + rng.uniform(-1.2, 1.2, batch), rng.uniform(-0.3, 0.3, batch)], 1
+        ).astype(np.float32)
 
     def traffic_spawn(self, batch, rng, ego):
         on_ramp = rng.random(batch) < 0.35
         y = np.where(on_ramp, 14.5, rng.integers(0, 2, batch) * 4.0) + rng.uniform(-1.2, 1.2, batch)
-        return np.stack([ego[:, 0] + rng.uniform(-110, 110, batch), y,
-                         rng.uniform(-0.3, 0.3, batch)], 1).astype(np.float32)
+        return np.stack([ego[:, 0] + rng.uniform(-110, 110, batch), y, rng.uniform(-0.3, 0.3, batch)], 1).astype(
+            np.float32
+        )
 
 
 def _roundabout_lanes():
@@ -1447,13 +1617,21 @@ def _roundabout_lanes():
     radii = [radius, radius + 4]
     line = [(c, s), (n, c)]
     out = []
-    seq = [(90 - alpha, alpha), (alpha, -alpha), (-alpha, -90 + alpha), (-90 + alpha, -90 - alpha),
-           (-90 - alpha, -180 + alpha), (-180 + alpha, -180 - alpha), (180 - alpha, 90 + alpha),
-           (90 + alpha, 90 - alpha)]
+    seq = [
+        (90 - alpha, alpha),
+        (alpha, -alpha),
+        (-alpha, -90 + alpha),
+        (-90 + alpha, -90 - alpha),
+        (-90 - alpha, -180 + alpha),
+        (-180 + alpha, -180 - alpha),
+        (180 - alpha, 90 + alpha),
+        (90 + alpha, 90 - alpha),
+    ]
     for lane in (0, 1):
         for p0, p1 in seq:
-            out.append(Circular(center, radii[lane], np.deg2rad(p0), np.deg2rad(p1),
-                                clockwise=False, line_types=line[lane]))
+            out.append(
+                Circular(center, radii[lane], np.deg2rad(p0), np.deg2rad(p1), clockwise=False, line_types=line[lane])
+            )
     access, dev, a = 170.0, 85.0, 5.0
     delta_st = 0.2 * dev
     delta_en = dev - delta_st
@@ -1461,23 +1639,19 @@ def _roundabout_lanes():
     out += [
         Straight([2, access], [2, dev / 2], line_types=(s, c)),
         Sine([2 + a, dev / 2], [2 + a, dev / 2 - delta_st], a, w, -np.pi / 2, line_types=(c, c)),
-        Sine([-2 - a, -dev / 2 + delta_en], [-2 - a, dev / 2], a, w, -np.pi / 2 + w * delta_en,
-             line_types=(c, c)),
+        Sine([-2 - a, -dev / 2 + delta_en], [-2 - a, dev / 2], a, w, -np.pi / 2 + w * delta_en, line_types=(c, c)),
         Straight([-2, dev / 2], [-2, access], line_types=(n, c)),
         Straight([access, -2], [dev / 2, -2], line_types=(s, c)),
         Sine([dev / 2, -2 - a], [dev / 2 - delta_st, -2 - a], a, w, -np.pi / 2, line_types=(c, c)),
-        Sine([-dev / 2 + delta_en, 2 + a], [dev / 2, 2 + a], a, w, -np.pi / 2 + w * delta_en,
-             line_types=(c, c)),
+        Sine([-dev / 2 + delta_en, 2 + a], [dev / 2, 2 + a], a, w, -np.pi / 2 + w * delta_en, line_types=(c, c)),
         Straight([dev / 2, 2], [access, 2], line_types=(n, c)),
         Straight([-2, -access], [-2, -dev / 2], line_types=(s, c)),
         Sine([-2 - a, -dev / 2], [-2 - a, -dev / 2 + delta_st], a, w, -np.pi / 2, line_types=(c, c)),
-        Sine([2 + a, dev / 2 - delta_en], [2 + a, -dev / 2], a, w, -np.pi / 2 + w * delta_en,
-             line_types=(c, c)),
+        Sine([2 + a, dev / 2 - delta_en], [2 + a, -dev / 2], a, w, -np.pi / 2 + w * delta_en, line_types=(c, c)),
         Straight([2, -dev / 2], [2, -access], line_types=(n, c)),
         Straight([-access, 2], [-dev / 2, 2], line_types=(s, c)),
         Sine([-dev / 2, 2 + a], [-dev / 2 + delta_st, 2 + a], a, w, -np.pi / 2, line_types=(c, c)),
-        Sine([dev / 2 - delta_en, -2 - a], [-dev / 2, -2 - a], a, w, -np.pi / 2 + w * delta_en,
-             line_types=(c, c)),
+        Sine([dev / 2 - delta_en, -2 - a], [-dev / 2, -2 - a], a, w, -np.pi / 2 + w * delta_en, line_types=(c, c)),
         Straight([-dev / 2, -2], [-access, -2], line_types=(n, c)),
     ]
     return tuple(out)
@@ -1504,7 +1678,7 @@ class Roundabout(HighwayEnvBase):
     SCREEN_W, SCREEN_H = 600, 600
     SCALING, CENTERING = 5.5, (0.5, 0.6)
     LANES = _roundabout_lanes()
-    N_VEHICLES = 5                       # RoundaboutEnv._make_vehicles: ego + 4
+    N_VEHICLES = 5  # RoundaboutEnv._make_vehicles: ego + 4
     reference_id = "roundabout-v0"
 
     def ego_spawn(self, batch, rng):
@@ -1516,35 +1690,50 @@ class Roundabout(HighwayEnvBase):
         th = rng.uniform(-np.pi, np.pi, batch)
         ring = rng.random(batch) < 0.6
         r = np.where(ring, rng.uniform(20, 26, batch), rng.uniform(30, 70, batch))
-        return np.stack([r * np.cos(th), r * np.sin(th),
-                         th + np.pi / 2 + rng.uniform(-0.4, 0.4, batch)], 1).astype(np.float32)
+        return np.stack([r * np.cos(th), r * np.sin(th), th + np.pi / 2 + rng.uniform(-0.4, 0.4, batch)], 1).astype(
+            np.float32
+        )
 
 
 def _intersection_lanes():
     """``IntersectionEnv._make_road``: four corners, each an approach, two turns, a through and an exit."""
-    lw = 4.0                                   # AbstractLane.DEFAULT_WIDTH
-    r_turn = lw + 5.0                          # 9
-    l_turn = r_turn + lw                       # 13
-    outer = r_turn + lw / 2                    # 11
+    lw = 4.0  # AbstractLane.DEFAULT_WIDTH
+    r_turn = lw + 5.0  # 9
+    l_turn = r_turn + lw  # 13
+    outer = r_turn + lw / 2  # 11
     access = 100.0
     n, c, s = NONE, CONTINUOUS, STRIPED
     out = []
     for corner in range(4):
         a = np.radians(90 * corner)
         R = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
-        out.append(Straight(R @ np.array([lw / 2, access + outer]),
-                            R @ np.array([lw / 2, outer]), lw, (s, c)))
-        out.append(Circular(R @ np.array([outer, outer]), r_turn,
-                            a + np.radians(180), a + np.radians(270),
-                            clockwise=True, width=lw, line_types=(n, c)))
+        out.append(Straight(R @ np.array([lw / 2, access + outer]), R @ np.array([lw / 2, outer]), lw, (s, c)))
+        out.append(
+            Circular(
+                R @ np.array([outer, outer]),
+                r_turn,
+                a + np.radians(180),
+                a + np.radians(270),
+                clockwise=True,
+                width=lw,
+                line_types=(n, c),
+            )
+        )
         # the left turn carries no markings at all, so it contributes no primitives
-        out.append(Circular(R @ np.array([-l_turn + lw / 2, l_turn - lw / 2]), l_turn,
-                            a, a - np.radians(90), clockwise=False, width=lw, line_types=(n, n)))
-        out.append(Straight(R @ np.array([lw / 2, outer]),
-                            R @ np.array([lw / 2, -outer]), lw, (s, n)))
+        out.append(
+            Circular(
+                R @ np.array([-l_turn + lw / 2, l_turn - lw / 2]),
+                l_turn,
+                a,
+                a - np.radians(90),
+                clockwise=False,
+                width=lw,
+                line_types=(n, n),
+            )
+        )
+        out.append(Straight(R @ np.array([lw / 2, outer]), R @ np.array([lw / 2, -outer]), lw, (s, n)))
         # the exit is built as StraightLane(end, start), i.e. it runs outward from the box
-        out.append(Straight(R @ np.array([outer, lw / 2]),
-                            R @ np.array([access + outer, lw / 2]), lw, (n, c)))
+        out.append(Straight(R @ np.array([outer, lw / 2]), R @ np.array([access + outer, lw / 2]), lw, (n, c)))
     return tuple(out)
 
 
@@ -1579,10 +1768,9 @@ class Intersection(HighwayEnvBase):
         corner = rng.integers(0, 4, batch)
         a = np.radians(90.0 * corner)
         ca, sa = np.cos(a), np.sin(a)
-        t = rng.uniform(30, 95, batch)                      # metres down the approach lane
-        lx, ly = 2.0, 111.0 - t                             # lane frame, before the corner rotation
-        return np.stack([ca * lx - sa * ly, sa * lx + ca * ly,
-                         a - np.pi / 2], 1).astype(np.float32)
+        t = rng.uniform(30, 95, batch)  # metres down the approach lane
+        lx, ly = 2.0, 111.0 - t  # lane frame, before the corner rotation
+        return np.stack([ca * lx - sa * ly, sa * lx + ca * ly, a - np.pi / 2], 1).astype(np.float32)
 
     def traffic_spawn(self, batch, rng, ego):
         near_ego = rng.random(batch) < 0.6

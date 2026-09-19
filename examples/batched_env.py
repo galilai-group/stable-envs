@@ -1,8 +1,9 @@
 """Batched construction, specs, a short last batch, and explicit close.
 
-    python examples/batched_env.py
-    python examples/batched_env.py --num-envs 8 --short 3 --device cpu
+python examples/batched_env.py
+python examples/batched_env.py --num-envs 8 --short 3 --device cpu
 """
+
 from __future__ import annotations
 
 import argparse
@@ -11,17 +12,16 @@ import sys
 
 def resolve_device(requested: str) -> str:
     import torch
+
     if requested == "auto":
         return "cuda" if torch.cuda.is_available() else "cpu"
     if requested.startswith("cuda") and not torch.cuda.is_available():
-        raise SystemExit(
-            f"{requested} was requested but torch.cuda.is_available() is False. Pass --device cpu.")
+        raise SystemExit(f"{requested} was requested but torch.cuda.is_available() is False. Pass --device cpu.")
     return requested
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(
-        description="num_envs, specs, short batches, and the context-manager lifecycle.")
+    p = argparse.ArgumentParser(description="num_envs, specs, short batches, and the context-manager lifecycle.")
     p.add_argument("--env", default="PushT")
     p.add_argument("--num-envs", type=int, default=8)
     p.add_argument("--short", type=int, default=3, help="n <= num_envs to render as a short batch")
@@ -47,8 +47,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"stable-envs {snv.__version__}  {args.env}  num_envs={args.num_envs}  device={device}")
     print(f"this interpreter: {len(snv.list_envs())} envs, families={snv.list_families()}")
     spec = snv.spec(args.env)
-    print(f"spec family={spec['family']} tier={spec['fidelity_tier']} "
-          f"has_dynamics={spec['has_dynamics']} swm_ids={spec['swm_ids']}")
+    print(
+        f"spec family={spec['family']} tier={spec['fidelity_tier']} "
+        f"has_dynamics={spec['has_dynamics']} swm_ids={spec['swm_ids']}"
+    )
 
     try:
         env = cls(num_envs=args.num_envs, device=device)

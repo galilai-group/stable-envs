@@ -93,13 +93,13 @@ Two classes of environment are exposed, because they answer different questions:
     (``gen_obs()["image"]``), 49 numbers. The carried object needs no dimension of its own: ``gen_obs``
     already writes it into the view's centre-bottom cell before encoding.
 """
+
 from __future__ import annotations
 
 import math
 
 import numpy as np
 import torch
-
 from tensordict import TensorDict
 
 from ..env import Env
@@ -108,8 +108,8 @@ from ..render import tilemap as tm
 from ..spaces import Box, Dict, Discrete, RGBBox
 from . import _stepgraph
 
-VIEW_SIZE = 7                      #: agent_view_size; 7 for every registered MiniGrid/BabyAI env
-WALL_CODE = (tm.T_WALL, tm.C_GREY, 0)      #: Grid.slice pads out-of-bounds with a grey Wall()
+VIEW_SIZE = 7  #: agent_view_size; 7 for every registered MiniGrid/BabyAI env
+WALL_CODE = (tm.T_WALL, tm.C_GREY, 0)  #: Grid.slice pads out-of-bounds with a grey Wall()
 
 #: ``Grid.encode`` writes this triple for a cell holding ``None``, so it doubles as "the agent is
 #: carrying nothing": one alphabet for cells and for the carried object, and ``drop`` needs no special
@@ -134,6 +134,7 @@ def _transition_tables(device) -> dict:
     if key not in _RULES:
         from minigrid.core.actions import Actions
         from minigrid.core.constants import DIR_TO_VEC
+
         objs = [tm.make_obj(*c) for c in tm.REACHABLE]
         L = lambda v: torch.tensor(v, dtype=torch.long, device=device)
         B = lambda f: torch.tensor([bool(f(o)) for o in objs], dtype=torch.bool, device=device)
@@ -147,11 +148,11 @@ def _transition_tables(device) -> dict:
             "pickup": B(lambda o: o is not None and o.can_pickup()),
             "none": B(lambda o: o is None),
             #: (colour, state) -> code, for writing a door back after a toggle
-            "door": L([[tm.REACHABLE.index((tm.T_DOOR, c, s)) for s in range(tm.N_STATE)]
-                       for c in range(tm.N_COLOR)]),
+            "door": L([[tm.REACHABLE.index((tm.T_DOOR, c, s)) for s in range(tm.N_STATE)] for c in range(tm.N_COLOR)]),
             "dir_vec": L([list(v) for v in DIR_TO_VEC]),
-            "actions": {n: int(getattr(Actions, n)) for n in
-                        ("left", "right", "forward", "pickup", "drop", "toggle", "done")},
+            "actions": {
+                n: int(getattr(Actions, n)) for n in ("left", "right", "forward", "pickup", "drop", "toggle", "done")
+            },
         }
     return _RULES[key]
 
@@ -167,7 +168,7 @@ def _code_lookup(device) -> torch.Tensor:
     for i, (t, c, s) in enumerate(tm.REACHABLE):
         out[t, c, s] = i
         if t in (tm.T_UNSEEN, tm.T_EMPTY, tm.T_AGENT, tm.T_LAVA):
-            out[t] = i                      # colour/state are not encoded for these types
+            out[t] = i  # colour/state are not encoded for these types
     return out
 
 
@@ -208,7 +209,8 @@ class _TileEnv(Env):
         if r or t < 3:
             raise ValueError(
                 f"{type(self).__name__}: size {size} is not a whole tile size for a {self.grid_w}x"
-                f"{self.grid_h} grid; use a multiple of {self.grid_h} that is at least {3*self.grid_h}")
+                f"{self.grid_h} grid; use a multiple of {self.grid_h} that is at least {3 * self.grid_h}"
+            )
         return t
 
     # variation
@@ -239,18 +241,23 @@ class _TileEnv(Env):
         never painted, so its colour and its opacity only mean anything together.
         """
         space = {
-            "palette": Box(low=0, high=255, shape=(tm.N_COLOR, 3), dtype=np.uint8,
-                           init_value=tm.official_colors()),
+            "palette": Box(low=0, high=255, shape=(tm.N_COLOR, 3), dtype=np.uint8, init_value=tm.official_colors()),
             #: rows: background, grid line, agent
-            "chrome": Box(low=0, high=255, shape=(3, 3), dtype=np.uint8,
-                          init_value=np.array([tm.DEFAULT_BG, tm.DEFAULT_GRIDLINE,
-                                               tm.DEFAULT_AGENT], np.uint8)),
+            "chrome": Box(
+                low=0,
+                high=255,
+                shape=(3, 3),
+                dtype=np.uint8,
+                init_value=np.array([tm.DEFAULT_BG, tm.DEFAULT_GRIDLINE, tm.DEFAULT_AGENT], np.uint8),
+            ),
             "highlight": Discrete(2, init_value=1),
-            "highlight_overlay": Box(low=np.zeros(4, np.float32),
-                                     high=np.array([255.0, 255.0, 255.0, 1.0], np.float32),
-                                     shape=(4,), dtype=np.float32,
-                                     init_value=[*tm.DEFAULT_HIGHLIGHT,
-                                                 tm.DEFAULT_HIGHLIGHT_ALPHA]),
+            "highlight_overlay": Box(
+                low=np.zeros(4, np.float32),
+                high=np.array([255.0, 255.0, 255.0, 1.0], np.float32),
+                shape=(4,),
+                dtype=np.float32,
+                init_value=[*tm.DEFAULT_HIGHLIGHT, tm.DEFAULT_HIGHLIGHT_ALPHA],
+            ),
         }
         if self.has_lava:
             space["lava_color"] = RGBBox(init_value=tm.DEFAULT_LAVA)
@@ -268,10 +275,14 @@ class _TileEnv(Env):
         d = self.variation_space.unpack(row)
         chrome = np.trunc(np.asarray(d["chrome"], np.float64)).reshape(3, 3)
         ov = np.asarray(d["highlight_overlay"], np.float64).reshape(4)
-        out = {"palette": np.trunc(np.asarray(d["palette"], np.float64)).reshape(tm.N_COLOR, 3),
-               "background_color": chrome[0], "grid_line_color": chrome[1],
-               "agent_color": chrome[2],
-               "highlight_color": np.trunc(ov[:3]), "highlight_alpha": float(ov[3])}
+        out = {
+            "palette": np.trunc(np.asarray(d["palette"], np.float64)).reshape(tm.N_COLOR, 3),
+            "background_color": chrome[0],
+            "grid_line_color": chrome[1],
+            "agent_color": chrome[2],
+            "highlight_color": np.trunc(ov[:3]),
+            "highlight_alpha": float(ov[3]),
+        }
         if self.has_lava:
             out["lava_color"] = np.trunc(np.asarray(d["lava_color"], np.float64))
         return out
@@ -288,8 +299,7 @@ class _TileEnv(Env):
 
     def _is_default_style(self, sty) -> bool:
         if self._default_t is None:
-            self._default_t = torch.as_tensor(self.default_style(), device=self.device,
-                                              dtype=torch.float32)
+            self._default_t = torch.as_tensor(self.default_style(), device=self.device, dtype=torch.float32)
         return bool((sty.values[0] == self._default_t).all())
 
     def _label_palettes(self, sty) -> torch.Tensor:
@@ -307,12 +317,14 @@ class _TileEnv(Env):
         p[:, tm.LBL_BG] = chrome[:, 0]
         p[:, tm.LBL_GRID] = chrome[:, 1]
         p[:, tm.LBL_AGENT] = chrome[:, 2]
-        p[:, tm.LBL_LAVA] = (torch.trunc(sty["lava_color"].double()) if "lava_color" in sty
-                             else torch.tensor(tm.DEFAULT_LAVA, dtype=torch.float64,
-                                               device=dev).expand(B, 3))
-        p[:, tm.LBL_PAL:tm.LBL_PAL + tm.N_COLOR] = pal
-        p[:, tm.LBL_PAL_HALF:tm.LBL_PAL_HALF + tm.N_COLOR] = torch.trunc(pal / 2)
-        p[:, tm.LBL_PAL_45:tm.LBL_PAL_45 + tm.N_COLOR] = torch.trunc(0.45 * pal)
+        p[:, tm.LBL_LAVA] = (
+            torch.trunc(sty["lava_color"].double())
+            if "lava_color" in sty
+            else torch.tensor(tm.DEFAULT_LAVA, dtype=torch.float64, device=dev).expand(B, 3)
+        )
+        p[:, tm.LBL_PAL : tm.LBL_PAL + tm.N_COLOR] = pal
+        p[:, tm.LBL_PAL_HALF : tm.LBL_PAL_HALF + tm.N_COLOR] = torch.trunc(pal / 2)
+        p[:, tm.LBL_PAL_45 : tm.LBL_PAL_45 + tm.N_COLOR] = torch.trunc(0.45 * pal)
         ov = sty["highlight_overlay"].double()
         # the reference's uint8 subtraction, so a highlight darker than the pixel wraps exactly as
         # ``highlight_img`` makes it wrap rather than as it arguably meant to
@@ -323,29 +335,37 @@ class _TileEnv(Env):
     # rendering
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device, for arbitrary leading dims."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}: supersample={supersample} is not available. MiniGrid's own "
                 f"3x supersampling is already baked into the atlas by Grid.render_tile; sampling "
-                f"again on top of it would render something the reference never draws.")
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+                f"again on top of it would render something the reference never draws."
+            )
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         size = int(size or self.size)
         tile = self._tile(size)
-        atlas = (self.atlas if tile == self.atlas.T
-                 else tm.MiniGridAtlas.get(tile, device=self.device))
+        atlas = self.atlas if tile == self.atlas.T else tm.MiniGridAtlas.get(tile, device=self.device)
         sty = self.resolve_style(style, variation, batch=s.shape[0])
         idx = self._tile_indices(s, sty)
         flat_out = None
         if out is not None:
             if not out.is_contiguous():
-                raise ValueError(f"{type(self).__name__}.render: `out` must be contiguous — the "
-                                 f"kernel writes through a flat view of it")
+                raise ValueError(
+                    f"{type(self).__name__}.render: `out` must be contiguous — the "
+                    f"kernel writes through a flat view of it"
+                )
             # flatten the leading dims rather than dropping `out`; a reshape of a contiguous tensor
             # is a view, so the kernel still writes into the caller's buffer
             flat_out = out.reshape(-1, self.grid_h * tile, self.grid_w * tile, 3)
@@ -353,8 +373,11 @@ class _TileEnv(Env):
             # One appearance for the whole batch: recolour the 1980-tile atlas once and blit. This is
             # the fast path the throughput numbers were measured on, and the default style hits the
             # official atlas outright rather than reconstructing it.
-            rgb = (atlas.official if self._is_default_style(sty)
-                   else atlas.rgb(self._values(sty.values[0].detach().cpu().numpy())))
+            rgb = (
+                atlas.official
+                if self._is_default_style(sty)
+                else atlas.rgb(self._values(sty.values[0].detach().cpu().numpy()))
+            )
             img = tm.blit(rgb, idx, tile, out=flat_out)
         else:
             img = self._blit_styled(atlas, idx, sty, tile, flat_out)
@@ -373,7 +396,7 @@ class _TileEnv(Env):
         dev = self.device
         f = tm.SUBDIVS
         px = f * tile
-        pal = self._label_palettes(sty)                                   # (B, 2*N_LABEL, 3)
+        pal = self._label_palettes(sty)  # (B, 2*N_LABEL, 3)
         geom = idx.long() % tm.N_GEOM
         hl = idx.long() // tm.N_GEOM
         if out is None:
@@ -385,12 +408,12 @@ class _TileEnv(Env):
             b1 = min(B, b0 + step)
             bi = torch.arange(b0, b1, device=dev).view(-1, 1, 1)
             for j in range(H):
-                lab = atlas.labels[geom[b0:b1, j]].long()                 # (b, W, px, px)
+                lab = atlas.labels[geom[b0:b1, j]].long()  # (b, W, px, px)
                 key = lab + hl[b0:b1, j].view(-1, W, 1, 1) * tm.N_LABEL
                 key = key.permute(0, 2, 1, 3).reshape(b1 - b0, px, W * px)
-                col = pal[bi, key]                                        # (b, px, W*px, 3) f64
+                col = pal[bi, key]  # (b, px, W*px, 3) f64
                 col = col.reshape(b1 - b0, tile, f, W * tile, f, 3).mean(4).mean(2)
-                out[b0:b1, j * tile:(j + 1) * tile] = col.to(torch.uint8)
+                out[b0:b1, j * tile : (j + 1) * tile] = col.to(torch.uint8)
         return out
 
     def _tile_indices(self, s: torch.Tensor, sty) -> torch.Tensor:
@@ -428,6 +451,7 @@ class _TileEnv(Env):
     def _official(cls):
         import gymnasium as gym
         import minigrid  # noqa: F401  (registers the ids)
+
         e = gym.make(cls.reference_id)
         e.reset(seed=0)
         cls._check_source(e.unwrapped)
@@ -446,10 +470,12 @@ class _TileEnv(Env):
             raise AssertionError(
                 f"{cls.__name__} declares see_through_walls={cls.see_through_walls} but "
                 f"{cls.reference_id} uses {bool(u.see_through_walls)}; the visibility mask, and so "
-                f"the highlight, would be wrong")
+                f"the highlight, would be wrong"
+            )
 
 
 # ---------------------------------------------------------------- full top-down view
+
 
 class MiniGridTopDown(_TileEnv):
     """``get_full_render``: the whole layout, with the agent's field of view highlighted."""
@@ -502,7 +528,7 @@ class MiniGridTopDown(_TileEnv):
         super()._close()
         self._step_graph = None
 
-    def set_state(self, states, style=None) -> "MiniGridTopDown":
+    def set_state(self, states, style=None) -> MiniGridTopDown:
         """As the base class, and empty the agent's hands — the compact state does not carry them."""
         super().set_state(states, style=style)
         self._carry.fill_(CARRY_NONE)
@@ -520,7 +546,7 @@ class MiniGridTopDown(_TileEnv):
         would stop matching ``step(a)`` — a wrong number rather than a failure. ``Env.state`` does
         the splicing; this is the whole of what the cell has to say.
         """
-        return {("agent", "carrying"): self._carry[:self._live_rows].reshape(-1, 1).to(torch.float32)}
+        return {("agent", "carrying"): self._carry[: self._live_rows].reshape(-1, 1).to(torch.float32)}
 
     @torch.no_grad()
     def transition(self, state: TensorDict, action) -> TensorDict:
@@ -533,10 +559,8 @@ class MiniGridTopDown(_TileEnv):
         FIXED ADDRESSES and this call may not write the env's.
         """
         rows = self.pack(state).clone()
-        carry = torch.as_tensor(state["agent", "carrying"], device=self.device
-                                ).reshape(-1).round().to(torch.long)
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32
-                              ).reshape(-1, self.action_dim)
+        carry = torch.as_tensor(state["agent", "carrying"], device=self.device).reshape(-1).round().to(torch.long)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
         self._advance_into(rows, carry, act)
         out = self.unpack(rows)
         out["agent", "carrying"] = carry.reshape(-1, 1).to(torch.float32)
@@ -544,12 +568,11 @@ class MiniGridTopDown(_TileEnv):
 
     def sim_state(self) -> torch.Tensor:
         """``(B, state_dim + 1)`` — the compact state with ``carrying`` appended."""
-        return torch.cat([self._state.to(torch.float64),
-                          self._carry.to(torch.float64).unsqueeze(1)], 1)
+        return torch.cat([self._state.to(torch.float64), self._carry.to(torch.float64).unsqueeze(1)], 1)
 
-    def set_sim_state(self, v) -> "MiniGridTopDown":
+    def set_sim_state(self, v) -> MiniGridTopDown:
         v = torch.as_tensor(v, device=self.device, dtype=torch.float64).reshape(self.B, -1)
-        self.set_state(v[:, :self.state_dim])
+        self.set_state(v[:, : self.state_dim])
         self._carry.copy_(torch.round(v[:, self.state_dim]).long())
         return self
 
@@ -566,8 +589,8 @@ class MiniGridTopDown(_TileEnv):
             {
                 "grid": rows[:, :N],
                 "agent": {
-                    "position": rows[:, N:N + 2],
-                    "direction": rows[:, N + 2:N + 3],
+                    "position": rows[:, N : N + 2],
+                    "direction": rows[:, N + 2 : N + 3],
                     "carrying": self._carry[:n].reshape(-1, 1).to(torch.float32),
                 },
             },
@@ -600,7 +623,7 @@ class MiniGridTopDown(_TileEnv):
         ay = torch.round(s[:, N + 1]).long() % H
         ad = torch.round(s[:, N + 2]).long() % 4
 
-        d = R["dir_vec"][ad]                                        # front_pos = agent_pos + dir_vec
+        d = R["dir_vec"][ad]  # front_pos = agent_pos + dir_vec
         fx, fy = ax + d[:, 0], ay + d[:, 1]
         inb = (fx >= 0) & (fx < W) & (fy >= 0) & (fy < H)
         fi = (fx.clamp(0, W - 1) * H + fy.clamp(0, H - 1)).unsqueeze(1)
@@ -608,8 +631,7 @@ class MiniGridTopDown(_TileEnv):
         cell = torch.where(inb, held, self._wall)
         ctype, ccol, cstate = R["type"][cell], R["color"][cell], R["state"][cell]
 
-        ad_new = torch.where(a == A["left"], (ad - 1) % 4,
-                             torch.where(a == A["right"], (ad + 1) % 4, ad))
+        ad_new = torch.where(a == A["left"], (ad - 1) % 4, torch.where(a == A["right"], (ad + 1) % 4, ad))
         move = (a == A["forward"]) & R["overlap"][cell]
         ax_new, ay_new = torch.where(move, fx, ax), torch.where(move, fy, ay)
 
@@ -628,7 +650,7 @@ class MiniGridTopDown(_TileEnv):
         new = torch.where(unlock, R["door"][ccol, 0], new)
         new = torch.where(flip, R["door"][ccol, 1 - cstate], new)
         new = torch.where(openbox, self._empty, new)
-        new = torch.where(inb, new, held)              # off-grid: write the cell back unchanged
+        new = torch.where(inb, new, held)  # off-grid: write the cell back unchanged
 
         s[:, :N] = codes.scatter(1, fi, new.unsqueeze(1)).to(torch.float32)
         s[:, N] = ax_new.to(torch.float32)
@@ -652,12 +674,14 @@ class MiniGridTopDown(_TileEnv):
         its own continuation, exactly as it does not for PushT's agent velocity. It does determine every
         FRAME, which is the claim this repo makes.
         """
-        self._act.copy_(torch.as_tensor(action, device=self.device, dtype=torch.float32
-                                        ).reshape(self.B, self.action_dim))
+        self._act.copy_(
+            torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        )
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None and not self._step_graph_error:
                 self._step_graph, self._step_graph_error = _stepgraph.capture(
-                    self._advance, (self._state, self._carry))
+                    self._advance, (self._state, self._carry)
+                )
                 if self._step_graph is None:
                     self.use_step_graph = False
             if self._step_graph is not None:
@@ -702,7 +726,8 @@ class MiniGridTopDown(_TileEnv):
             raise NotImplementedError(
                 f"{cls.__name__}: {cls.reference_id} builds a Box with contents, and Box.toggle "
                 f"replaces the box by them. The contents are invisible to the renderer and so are not "
-                f"in the state, which makes that one transition unrepresentable here.")
+                f"in the state, which makes that one transition unrepresentable here."
+            )
         return cls.reference_sim_state(ref)
 
     @classmethod
@@ -711,23 +736,23 @@ class MiniGridTopDown(_TileEnv):
         if (u.width, u.height) != (cls.grid_w, cls.grid_h):
             raise AssertionError(
                 f"{cls.__name__} declares a {cls.grid_w}x{cls.grid_h} grid but {cls.reference_id} "
-                f"builds {u.width}x{u.height}; every rendered frame would be the wrong shape")
+                f"builds {u.width}x{u.height}; every rendered frame would be the wrong shape"
+            )
 
     def _tile_indices(self, s: torch.Tensor, sty) -> torch.Tensor:
         B, W, H = s.shape[0], self.grid_w, self.grid_h
         dev = self.device
-        tcs = self._decode_cells(s[:, :W * H]).reshape(B, W, H, 3)          # [b, i, j, 3]
+        tcs = self._decode_cells(s[:, : W * H]).reshape(B, W, H, 3)  # [b, i, j, 3]
         ax = torch.round(s[:, W * H + 0]).long() % W
         ay = torch.round(s[:, W * H + 1]).long() % H
         ad = torch.round(s[:, W * H + 2]).long() % 4
 
-        vis = self._visibility(tcs, ax, ay, ad)                            # (B,V,V) [b,vi,vj]
-        offs = tm.view_offsets(VIEW_SIZE, dev)[ad]                         # (B,V,V,2) [vj,vi]
+        vis = self._visibility(tcs, ax, ay, ad)  # (B,V,V) [b,vi,vj]
+        offs = tm.view_offsets(VIEW_SIZE, dev)[ad]  # (B,V,V,2) [vj,vi]
         wx = ax.view(B, 1, 1) + offs[..., 0]
         wy = ay.view(B, 1, 1) + offs[..., 1]
         keep = (wx >= 0) & (wx < W) & (wy >= 0) & (wy < H) & vis.permute(0, 2, 1)
-        flat = (torch.arange(B, device=dev).view(B, 1, 1) * (H * W)
-                + wy.clamp(0, H - 1) * W + wx.clamp(0, W - 1))
+        flat = torch.arange(B, device=dev).view(B, 1, 1) * (H * W) + wy.clamp(0, H - 1) * W + wx.clamp(0, W - 1)
         # Off-grid and occluded view cells are routed to a scratch slot instead of being
         # compacted, so the scatter needs no device-to-host sync and the pipeline stays
         # CUDA-graph capturable.
@@ -739,7 +764,7 @@ class MiniGridTopDown(_TileEnv):
         # legitimately hold both settings, and masking is what makes that one launch
         hl = acc[:scratch].reshape(B, H, W) * (sty["highlight"] > 0.5).long().view(B, 1, 1)
 
-        img = tcs.permute(0, 2, 1, 3)                                      # [b, j, i, 3]
+        img = tcs.permute(0, 2, 1, 3)  # [b, j, i, 3]
         d = torch.full((B, H, W), tm.NO_AGENT, dtype=torch.long, device=dev)
         d[torch.arange(B, device=dev), ay, ax] = ad
         return tm.atlas_flat_index(hl, d, img[..., 0], img[..., 1], img[..., 2]).to(torch.int32)
@@ -752,15 +777,14 @@ class MiniGridTopDown(_TileEnv):
         wx = ax.view(B, 1, 1) + offs[..., 0]
         wy = ay.view(B, 1, 1) + offs[..., 1]
         oob = (wx < 0) | (wx >= W) | (wy < 0) | (wy >= H)
-        flat = (torch.arange(B, device=dev).view(B, 1, 1) * (W * H)
-                + wx.clamp(0, W - 1) * H + wy.clamp(0, H - 1))
+        flat = torch.arange(B, device=dev).view(B, 1, 1) * (W * H) + wx.clamp(0, W - 1) * H + wy.clamp(0, H - 1)
         view = tcs.reshape(B * W * H, 3)[flat.reshape(-1)].reshape(B, V, V, 3)
         wall = torch.tensor(WALL_CODE, dtype=view.dtype, device=dev)
-        view = torch.where(oob.unsqueeze(-1), wall, view).permute(0, 2, 1, 3)   # [b, vi, vj]
+        view = torch.where(oob.unsqueeze(-1), wall, view).permute(0, 2, 1, 3)  # [b, vi, vj]
         if self.see_through_walls:
             return torch.ones(B, V, V, dtype=torch.bool, device=dev)
         t, st = view[..., 0], view[..., 2]
-        transp = ~((t == tm.T_WALL) | ((t == tm.T_DOOR) & (st != 0)))           # see_behind()
+        transp = ~((t == tm.T_WALL) | ((t == tm.T_DOOR) & (st != 0)))  # see_behind()
         return tm.visibility_scan(transp, V)
 
     def _build_pool(self, n: int) -> np.ndarray:
@@ -800,22 +824,24 @@ class MiniGridTopDown(_TileEnv):
         ``Grid.slice``, ``rotate_left``, ``process_vis``, the highlight scatter, and ``render_tile``.
         """
         from minigrid.core.grid import Grid
+
         u = env.unwrapped
         out = []
         for st in np.asarray(states):
-            codes = np.round(st[:cls.grid_w * cls.grid_h]).astype(np.int64) % tm.N_CODE
+            codes = np.round(st[: cls.grid_w * cls.grid_h]).astype(np.int64) % tm.N_CODE
             grid = Grid(cls.grid_w, cls.grid_h)
             for k, code in enumerate(codes):
                 grid.set(k // cls.grid_h, k % cls.grid_h, tm.make_obj(*tm.REACHABLE[code]))
             u.grid, u.width, u.height = grid, cls.grid_w, cls.grid_h
             u.agent_pos = (int(round(st[-3])) % cls.grid_w, int(round(st[-2])) % cls.grid_h)
             u.agent_dir = int(round(st[-1])) % 4
-            u.carrying = None                     # provably not read by get_full_render
+            u.carrying = None  # provably not read by get_full_render
             out.append(u.get_full_render(True, u._se_tile))
         return np.stack(out)
 
 
 # ---------------------------------------------------------------- agent-centric view
+
 
 class MiniGridPOVBase(_TileEnv):
     """``get_pov_render``: the agent's 7x7 window, state = MiniGrid's own observation.
@@ -845,11 +871,11 @@ class MiniGridPOVBase(_TileEnv):
     def _tile_indices(self, s: torch.Tensor, sty) -> torch.Tensor:
         B, V = s.shape[0], VIEW_SIZE
         dev = self.device
-        tcs = self._decode_cells(s).reshape(B, V, V, 3).permute(0, 2, 1, 3)   # [b, vj, vi, 3]
+        tcs = self._decode_cells(s).reshape(B, V, V, 3).permute(0, 2, 1, 3)  # [b, vj, vi, 3]
         t, c, st = tcs[..., 0], tcs[..., 1], tcs[..., 2]
         hl = (t != tm.T_UNSEEN).long() * (sty["highlight"] > 0.5).long().view(B, 1, 1)
         d = torch.full((B, V, V), tm.NO_AGENT, dtype=torch.long, device=dev)
-        d[:, V - 1, V // 2] = 3                        # the POV agent always points up
+        d[:, V - 1, V // 2] = 3  # the POV agent always points up
         return tm.atlas_flat_index(hl, d, t, c, st).to(torch.int32)
 
     def _build_pool(self, n: int) -> np.ndarray:
@@ -891,6 +917,7 @@ class MiniGridPOVBase(_TileEnv):
         the view's centre cell because ``gen_obs_grid`` overwrites that cell with ``self.carrying``.
         """
         from minigrid.core.grid import Grid
+
         u = env.unwrapped
         V = VIEW_SIZE
         out = []
@@ -908,12 +935,14 @@ class MiniGridPOVBase(_TileEnv):
 
 # ---------------------------------------------------------------- concrete registrations
 
+
 def _cell_names(w: int, h: int) -> tuple[str, ...]:
     return tuple(f"cell[{i},{j}]" for i in range(w) for j in range(h))
 
 
-def topdown(class_name: str, env_id: str, w: int, h: int, stw: bool, lava: bool = False,
-            tile: int = 32, doc: str = "") -> type:
+def topdown(
+    class_name: str, env_id: str, w: int, h: int, stw: bool, lava: bool = False, tile: int = 32, doc: str = ""
+) -> type:
     """Build and register a top-down class for one official env id.
 
     A class per id rather than one parameterised env: the registry is the conformance suite's
@@ -922,39 +951,51 @@ def topdown(class_name: str, env_id: str, w: int, h: int, stw: bool, lava: bool 
     time one is built.
     """
     n = w * h
-    cls = type(class_name, (MiniGridTopDown,), {
-        "__doc__": doc or f"{env_id}: {w}x{h} top-down view.",
-        "__module__": __name__,
-        "name": env_id, "reference_id": env_id,
-        "grid_w": w, "grid_h": h, "see_through_walls": stw, "has_lava": lava,
-        "state_dim": n + 3,
-        "state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir"),
-        # Step-9 state (contract §3). The packed row is unchanged — the grid, then the agent's cell
-        # and heading — and ``("agent", "carrying")`` carries offset ``None``: it is real dynamical
-        # state that the row has never carried, because ``get_full_render`` provably never reads it,
-        # which is what makes ``transition`` pure without moving one column of the frozen layout.
-        # ``sim_state_names`` above is the same fact in the reference bridge's vocabulary.
-        "state_layout": ((("grid",), n, 0),
-                         (("agent", "position"), 2, n),
-                         (("agent", "direction"), 1, n + 2),
-                         (("agent", "carrying"), 1, None)),
-        "default_size": h * tile,
-        # the dynamical state is the render state plus the carried object; see MiniGridTopDown
-        "sim_state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir", "carrying"),
-        # Reported as four groups rather than as w*h+4 one-dimensional ones: "which cell disagrees"
-        # is not a useful readout for a 361-cell grid, "does any cell disagree" is. The agent's
-        # position is euclidean so that a diagonal disagreement counts once.
-        "step_reference_groups": (("cells", tuple(range(n)), "abs"),
-                                  ("agent", (n, n + 1), "euclidean"),
-                                  ("dir", (n + 2,), "abs"),
-                                  ("carrying", (n + 3,), "abs")),
-        # The conformance suite requires the class that CLAIMS a batched simulator to DECLARE one,
-        # rather than to reach an unrelated ``step`` through a base class — that guard is what stops a
-        # checker driving an env it knows nothing about. These classes are built by a factory, so the
-        # declaration is made here explicitly; the seven actions are identical across every grid, so
-        # there is nothing per-class to say about them beyond ``MiniGridTopDown.step``'s docstring.
-        "step": MiniGridTopDown.step,
-    })
+    cls = type(
+        class_name,
+        (MiniGridTopDown,),
+        {
+            "__doc__": doc or f"{env_id}: {w}x{h} top-down view.",
+            "__module__": __name__,
+            "name": env_id,
+            "reference_id": env_id,
+            "grid_w": w,
+            "grid_h": h,
+            "see_through_walls": stw,
+            "has_lava": lava,
+            "state_dim": n + 3,
+            "state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir"),
+            # Step-9 state (contract §3). The packed row is unchanged — the grid, then the agent's cell
+            # and heading — and ``("agent", "carrying")`` carries offset ``None``: it is real dynamical
+            # state that the row has never carried, because ``get_full_render`` provably never reads it,
+            # which is what makes ``transition`` pure without moving one column of the frozen layout.
+            # ``sim_state_names`` above is the same fact in the reference bridge's vocabulary.
+            "state_layout": (
+                (("grid",), n, 0),
+                (("agent", "position"), 2, n),
+                (("agent", "direction"), 1, n + 2),
+                (("agent", "carrying"), 1, None),
+            ),
+            "default_size": h * tile,
+            # the dynamical state is the render state plus the carried object; see MiniGridTopDown
+            "sim_state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir", "carrying"),
+            # Reported as four groups rather than as w*h+4 one-dimensional ones: "which cell disagrees"
+            # is not a useful readout for a 361-cell grid, "does any cell disagree" is. The agent's
+            # position is euclidean so that a diagonal disagreement counts once.
+            "step_reference_groups": (
+                ("cells", tuple(range(n)), "abs"),
+                ("agent", (n, n + 1), "euclidean"),
+                ("dir", (n + 2,), "abs"),
+                ("carrying", (n + 3,), "abs"),
+            ),
+            # The conformance suite requires the class that CLAIMS a batched simulator to DECLARE one,
+            # rather than to reach an unrelated ``step`` through a base class — that guard is what stops a
+            # checker driving an env it knows nothing about. These classes are built by a factory, so the
+            # declaration is made here explicitly; the seven actions are identical across every grid, so
+            # there is nothing per-class to say about them beyond ``MiniGridTopDown.step``'s docstring.
+            "step": MiniGridTopDown.step,
+        },
+    )
     return register(cls)
 
 
@@ -966,39 +1007,76 @@ def pov(class_name: str, env_id: str, tile: int = 32, doc: str = "") -> type:
     occlusion on, an observation cannot be written back into a live env without ``gen_obs_grid``
     recomputing visibility over it and disagreeing.
     """
-    cls = type(class_name, (MiniGridPOVBase,), {
-        "__doc__": doc or f"{env_id}: agent-centric {VIEW_SIZE}x{VIEW_SIZE} view.",
-        "__module__": __name__,
-        "name": env_id + "-pov", "reference_id": env_id,
-        "state_dim": VIEW_SIZE * VIEW_SIZE,
-        "state_names": tuple(f"view[{i},{j}]" for i in range(VIEW_SIZE) for j in range(VIEW_SIZE)),
-        "default_size": VIEW_SIZE * tile,
-    })
+    cls = type(
+        class_name,
+        (MiniGridPOVBase,),
+        {
+            "__doc__": doc or f"{env_id}: agent-centric {VIEW_SIZE}x{VIEW_SIZE} view.",
+            "__module__": __name__,
+            "name": env_id + "-pov",
+            "reference_id": env_id,
+            "state_dim": VIEW_SIZE * VIEW_SIZE,
+            "state_names": tuple(f"view[{i},{j}]" for i in range(VIEW_SIZE) for j in range(VIEW_SIZE)),
+            "default_size": VIEW_SIZE * tile,
+        },
+    )
     return register(cls)
 
 
 MiniGridEmpty = topdown(
-    "MiniGridEmpty", "MiniGrid-Empty-8x8-v0", 8, 8, stw=True,
-    doc="Empty room, 8x8. The simplest layout in the family: walls, one goal, one agent.")
+    "MiniGridEmpty",
+    "MiniGrid-Empty-8x8-v0",
+    8,
+    8,
+    stw=True,
+    doc="Empty room, 8x8. The simplest layout in the family: walls, one goal, one agent.",
+)
 MiniGridDoorKey = topdown(
-    "MiniGridDoorKey", "MiniGrid-DoorKey-8x8-v0", 8, 8, stw=False,
-    doc="Locked door and key, 8x8. Exercises all three door states and occluded visibility.")
+    "MiniGridDoorKey",
+    "MiniGrid-DoorKey-8x8-v0",
+    8,
+    8,
+    stw=False,
+    doc="Locked door and key, 8x8. Exercises all three door states and occluded visibility.",
+)
 MiniGridFourRooms = topdown(
-    "MiniGridFourRooms", "MiniGrid-FourRooms-v0", 19, 19, stw=False,
-    doc="Four rooms joined by gaps, 19x19 — the large-grid case, 608x608 at the default tile size.")
+    "MiniGridFourRooms",
+    "MiniGrid-FourRooms-v0",
+    19,
+    19,
+    stw=False,
+    doc="Four rooms joined by gaps, 19x19 — the large-grid case, 608x608 at the default tile size.",
+)
 MiniGridLavaCrossing = topdown(
-    "MiniGridLavaCrossing", "MiniGrid-LavaCrossingS9N2-v0", 9, 9, stw=False, lava=True,
-    doc="Lava rivers with crossings, 9x9. The only registered env carrying the lava_color knob.")
+    "MiniGridLavaCrossing",
+    "MiniGrid-LavaCrossingS9N2-v0",
+    9,
+    9,
+    stw=False,
+    lava=True,
+    doc="Lava rivers with crossings, 9x9. The only registered env carrying the lava_color knob.",
+)
 MiniGridKeyCorridor = topdown(
-    "MiniGridKeyCorridor", "MiniGrid-KeyCorridorS4R3-v0", 10, 10, stw=False,
-    doc="Locked rooms off a corridor, 10x10: locked doors, keys and a ball behind them.")
+    "MiniGridKeyCorridor",
+    "MiniGrid-KeyCorridorS4R3-v0",
+    10,
+    10,
+    stw=False,
+    doc="Locked rooms off a corridor, 10x10: locked doors, keys and a ball behind them.",
+)
 BabyAIGoToLocal = topdown(
-    "BabyAIGoToLocal", "BabyAI-GoToLocal-v0", 8, 8, stw=False,
-    doc="BabyAI's instruction-following room, 8x8: keys, balls and boxes in six colours.")
+    "BabyAIGoToLocal",
+    "BabyAI-GoToLocal-v0",
+    8,
+    8,
+    stw=False,
+    doc="BabyAI's instruction-following room, 8x8: keys, balls and boxes in six colours.",
+)
 MiniGridPOVFetch = pov(
-    "MiniGridPOVFetch", "MiniGrid-Fetch-8x8-N3-v0",
-    doc="Agent-centric 7x7 view of the Fetch room — MiniGrid's standard partial observation, "
-        "224x224 from 49 numbers.")
+    "MiniGridPOVFetch",
+    "MiniGrid-Fetch-8x8-N3-v0",
+    doc="Agent-centric 7x7 view of the Fetch room — MiniGrid's standard partial observation, 224x224 from 49 numbers.",
+)
 
 
 def register_all(ids=None, tile: int = 32) -> list[str]:
@@ -1023,8 +1101,7 @@ def register_all(ids=None, tile: int = 32) -> list[str]:
     from minigrid.minigrid_env import MiniGridEnv as _MGE
 
     if ids is None:
-        ids = sorted(k for k in gym.registry
-                     if k.startswith("MiniGrid-") or k.startswith("BabyAI-"))
+        ids = sorted(k for k in gym.registry if k.startswith("MiniGrid-") or k.startswith("BabyAI-"))
     added = []
     for eid in ids:
         cname = "MG_" + eid.replace("-", "_").replace(".", "_")
@@ -1037,7 +1114,7 @@ def register_all(ids=None, tile: int = 32) -> list[str]:
             w, h, stw = u.width, u.height, bool(u.see_through_walls)
             lava = bool((u.grid.encode()[:, :, 0] == tm.T_LAVA).any())
             e.close()
-        except Exception:                                        # noqa: BLE001  e.g. missing WFC assets
+        except Exception:  # noqa: BLE001  e.g. missing WFC assets
             continue
         topdown(cname, eid, w, h, stw, lava=lava, tile=tile)
         added.append(cname)

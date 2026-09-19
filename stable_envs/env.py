@@ -30,6 +30,7 @@ The conformance suite in ``tests/gpu`` is parameterised over the registry, so an
 covered without editing a test: render parity against the official renderer, get/set round-trip,
 batch-invariance, variation coverage, and backend agreement.
 """
+
 from __future__ import annotations
 
 import functools
@@ -87,7 +88,7 @@ def require_contiguous_out(owner: str, out) -> None:
         return
     if torch.is_tensor(out):
         ok = out.is_contiguous()
-    else:                                            # numpy: reshape() of a strided array COPIES
+    else:  # numpy: reshape() of a strided array COPIES
         flags = getattr(out, "flags", None)
         ok = flags is None or bool(flags["C_CONTIGUOUS"])
     # Frames are uint8. A float destination is not refused by any backend's ``view``/``reshape`` — the
@@ -101,7 +102,8 @@ def require_contiguous_out(owner: str, out) -> None:
         raise ValueError(
             f"{owner}: `out` must be uint8 and this one is {dtype}. A frame is 3 bytes per pixel; a "
             f"float destination accepts the write without complaining and hands back 0..255 floats "
-            f"where pixels were asked for.")
+            f"where pixels were asked for."
+        )
     if ok:
         return
     raise ValueError(
@@ -112,7 +114,8 @@ def require_contiguous_out(owner: str, out) -> None:
         f"axis in front of the batch axis produces: `buf[:, t]` of a (B, T, H, W, 3) buffer is "
         f"strided. Either assign (`buf[:, t] = env.render(states)`), which costs one copy, or give "
         f"the buffer a layout whose frame axis is outermost (`buf[t]` of a (T, B, H, W, 3) buffer is "
-        f"contiguous and can be rendered into directly).")
+        f"contiguous and can be rendered into directly)."
+    )
 
 
 def _guard_render_out(fn):
@@ -140,6 +143,7 @@ def _guard_render_out(fn):
         CUDA-graph capture in ``envs/_stepgraph.py`` requires: rebinding it would leave a replayed
         graph pointing at dead memory. Editing 26 files instead would also leave env 27 wrong.
     """
+
     @functools.wraps(fn)
     def render(self, *args, **kw):
         out = kw.get("out", args[5] if len(args) > 5 else None)
@@ -150,6 +154,7 @@ def _guard_render_out(fn):
         else:
             kw["states"] = render_states_arg(self, kw.get("states"))
         return fn(self, *args, **kw)
+
     render._se_out_guarded = True
     return render
 
@@ -169,11 +174,15 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
         raise TypeError(
             f"{owner}: got a {type(states).__name__}, not an array of states. A TrajectoryDataset "
             f"batch is a dict — the states are under the 'states' key, so pass batch['states'] "
-            f"(and note it carries a time axis: (B, window, state_dim)).")
+            f"(and note it carries a time axis: (B, window, state_dim))."
+        )
     if torch.is_tensor(states):
         return states
-    if isinstance(states, (list, tuple)) and len(states) and all(
-            torch.is_tensor(x) or isinstance(x, np.ndarray) for x in states):
+    if (
+        isinstance(states, (list, tuple))
+        and len(states)
+        and all(torch.is_tensor(x) or isinstance(x, np.ndarray) for x in states)
+    ):
         parts = [torch.as_tensor(x if torch.is_tensor(x) else np.asarray(x)) for x in states]
         # A ONE-element sequence is unwrapped rather than stacked, because that is what it is: a
         # DataLoader over TensorDataset(states) yields ``[batch]``, and stacking would add a leading
@@ -182,11 +191,12 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
         return parts[0] if len(parts) == 1 else torch.stack(parts)
     try:
         return torch.as_tensor(states)
-    except Exception as e:                                   # noqa: BLE001 — re-raised with the fix
+    except Exception as e:  # noqa: BLE001 — re-raised with the fix
         raise TypeError(
             f"{owner}: could not read {type(states).__name__} as an array of states ({e}). It wants "
             f"a (batch, state_dim) float array — a torch tensor, a numpy array, or anything "
-            f"torch.as_tensor accepts.") from e
+            f"torch.as_tensor accepts."
+        ) from e
 
 
 def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
@@ -202,8 +212,7 @@ def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
         return None
     rows = torch.nonzero(bad.any(1), as_tuple=False).flatten().tolist()
     cols = torch.nonzero(bad.any(0), as_tuple=False).flatten().tolist()
-    named = [f"{names[c]} (column {c})" if c < len(names) else f"column {c}" for c in
-             cols[:_MAX_LISTED]]
+    named = [f"{names[c]} (column {c})" if c < len(names) else f"column {c}" for c in cols[:_MAX_LISTED]]
     kinds = []
     if bool(torch.isnan(s).any()):
         kinds.append("NaN")
@@ -211,8 +220,10 @@ def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
         kinds.append("inf")
     more_r = f" and {len(rows) - _MAX_LISTED} more" if len(rows) > _MAX_LISTED else ""
     more_c = f" and {len(cols) - _MAX_LISTED} more" if len(cols) > _MAX_LISTED else ""
-    return (f"{len(rows)} of {s.shape[0]} state(s) hold {'/'.join(kinds)}: "
-            f"row(s) {rows[:_MAX_LISTED]}{more_r}, in {', '.join(named)}{more_c}")
+    return (
+        f"{len(rows)} of {s.shape[0]} state(s) hold {'/'.join(kinds)}: "
+        f"row(s) {rows[:_MAX_LISTED]}{more_r}, in {', '.join(named)}{more_c}"
+    )
 
 
 def render_states_arg(env, states) -> torch.Tensor:
@@ -253,8 +264,9 @@ def _names_phrase(names: tuple[str, ...], limit: int = 8) -> str:
     return f" ({shown})"
 
 
-def check_states(env, states, owner: str | None = None, leading: bool = False,
-                 scan: bool = True, move: bool = True) -> torch.Tensor:
+def check_states(
+    env, states, owner: str | None = None, leading: bool = False, scan: bool = True, move: bool = True
+) -> torch.Tensor:
     """``states`` -> the same numbers as float32 on ``env.device``, SHAPE UNCHANGED, or a real message.
 
     THE SILENT-GARBAGE PATH THIS CLOSES. Every entry point that turns numbers into pixels used to go
@@ -297,26 +309,31 @@ def check_states(env, states, owner: str | None = None, leading: bool = False,
     dt = str(raw.dtype).replace("torch.", "")
 
     if raw.ndim == 0:
-        raise ValueError(f"{owner}: got a scalar. A state is {D} number(s)"
-                         f"{_names_phrase(names)}, and a batch of them is (batch, {D}).")
+        raise ValueError(
+            f"{owner}: got a scalar. A state is {D} number(s)"
+            f"{_names_phrase(names)}, and a batch of them is (batch, {D})."
+        )
 
     # A frame stack, named as one. Checked before the rank rule so the message is about what arrived
     # rather than about how many axes it has. Two independent signals, because neither alone covers
     # it: a channel-shaped last axis that is NOT the state width, and uint8 at rank 3 or more (states
     # are float, and for a 3-wide env a (H, W, 3) frame is indistinguishable from a corpus by shape).
-    if raw.ndim >= 3 and (raw.dtype == torch.uint8
-                          or (shape[-1] in (1, 3, 4) and shape[-1] != D)):
-        cast = (" If these really are states stored as uint8, say so: states.astype('float32')."
-                if raw.dtype == torch.uint8 else "")
+    if raw.ndim >= 3 and (raw.dtype == torch.uint8 or (shape[-1] in (1, 3, 4) and shape[-1] != D)):
+        cast = (
+            " If these really are states stored as uint8, say so: states.astype('float32')."
+            if raw.dtype == torch.uint8
+            else ""
+        )
         raise ValueError(
             f"{owner}: expected states shaped (batch, {D}) and got {shape} {dt}. That is a batch of "
             f"FRAMES, not states"
-            + (", and uint8 says so — states are float" if raw.dtype == torch.uint8 else "") +
-            f". set_state/render run in the other direction: they take the {D} number(s) a frame is "
+            + (", and uint8 says so — states are float" if raw.dtype == torch.uint8 else "")
+            + f". set_state/render run in the other direction: they take the {D} number(s) a frame is "
             f"drawn FROM{_names_phrase(names, 6)} and produce the pixels — "
             f"`frames = env.set_state(states).render()`. This used to be reshaped to (-1, {D}) and "
             f"rendered whenever the size happened to divide, which is a plausible-looking picture "
-            f"built from pixel bytes read as coordinates.{cast}")
+            f"built from pixel bytes read as coordinates.{cast}"
+        )
 
     if raw.ndim > 2 and not leading:
         raise ValueError(
@@ -325,7 +342,8 @@ def check_states(env, states, owner: str | None = None, leading: bool = False,
             f"exactly how a frame stack used to become a batch of states whenever its size happened "
             f"to divide by {D}. If this is a corpus with a time or trajectory axis, say so: "
             f"`states.reshape(-1, {D})` (and build the env at that batch). If it is frames, you want "
-            f"env.render, not env.set_state.")
+            f"env.render, not env.set_state."
+        )
 
     if raw.ndim >= 2 and shape[-1] != D:
         raise ValueError(
@@ -334,19 +352,22 @@ def check_states(env, states, owner: str | None = None, leading: bool = False,
             f"{_names_phrase(names, 12)}. This used to be reshaped to (-1, {D}), which regroups the "
             f"input into {raw.numel() // D if raw.numel() % D == 0 else 'a different number of'} "
             f"states that each straddle two of your rows, and renders without complaint. Check the "
-            f"state layout with env.state_names / env.describe().")
+            f"state layout with env.state_names / env.describe()."
+        )
 
     if raw.ndim == 1 and raw.numel() % D:
         raise ValueError(
             f"{owner}: a flat input must be a whole number of {D}-wide states, and {raw.numel()} is "
             f"not a multiple of {D} (input shape {shape}, dtype {dt}). One state is {D} number(s)"
-            f"{_names_phrase(names, 12)}; a batch is (batch, {D}).")
+            f"{_names_phrase(names, 12)}; a batch is (batch, {D})."
+        )
 
     if raw.numel() == 0:
         raise ValueError(
             f"{owner}: no states to render — got 0 of them (input shape {shape}). An empty batch "
             f"produces an empty frame buffer, which is almost never what a training step wants; "
-            f"check the sampler, or the slice that produced it.")
+            f"check the sampler, or the slice that produced it."
+        )
 
     if scan:
         bad = _nonfinite_report(raw.reshape(-1, D), names)
@@ -355,7 +376,8 @@ def check_states(env, states, owner: str | None = None, leading: bool = False,
                 f"{owner}: {bad}. A non-finite state renders SILENTLY — the rasterizer clamps it and "
                 f"draws somewhere plausible, or draws nothing — so the frame looks like data and the "
                 f"model trains on it. Check the step that produced these states (a diverged rollout "
-                f"and a divide-by-zero in a normalisation both land here).")
+                f"and a divide-by-zero in a normalisation both land here)."
+            )
     raw = raw.detach() if torch.is_tensor(raw) else raw
     return raw.to(device=env.device, dtype=torch.float32) if move else raw.to(dtype=torch.float32)
 
@@ -408,8 +430,15 @@ RENDER_DECODERS = ("renderer", "learned")
 #: the conformance suite asserts, and the conditions the measurement was taken under. The thresholds
 #: are separate from the measurements on purpose: a threshold equal to the measurement flakes on the
 #: next state draw, and a measurement inferred from a threshold is not a measurement.
-REQUIRED_VISUAL_FIDELITY = ("mean_abs", "within8_frac", "ssim",
-                            "mean_abs_max", "within8_min", "ssim_min", "measured_at")
+REQUIRED_VISUAL_FIDELITY = (
+    "mean_abs",
+    "within8_frac",
+    "ssim",
+    "mean_abs_max",
+    "within8_min",
+    "ssim_min",
+    "measured_at",
+)
 
 #: The reference package versions a declaration's numbers were measured AGAINST, as a field rather
 #: than as prose inside ``measured_at``. Optional, because most declarations predate it; validated
@@ -454,14 +483,16 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
     if not isinstance(rv, dict) or not rv:
         raise ValueError(
             f"{cls.__name__}: {where} must be a non-empty dict of package -> exact version string, "
-            f"got {rv!r}. An empty or non-dict value declares nothing; leave the field out instead.")
+            f"got {rv!r}. An empty or non-dict value declares nothing; leave the field out instead."
+        )
     for k, v in rv.items():
         if not (isinstance(k, str) and k and isinstance(v, str) and v.strip()):
             raise ValueError(
                 f"{cls.__name__}: {where}[{k!r}] = {v!r}; every entry is a package name mapped to the "
                 f"exact version string the declaration was measured against (e.g. 'mujoco': "
                 f"'3.11.0'), so the certifier can compare it with what the measuring interpreter "
-                f"recorded.")
+                f"recorded."
+            )
 
 
 class Env:
@@ -554,8 +585,15 @@ class Env:
     #: whose state is one vector (contract §3).
     state_layout: tuple[tuple, ...] = ()
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str | None = None, backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int = 1,
+        device: str | None = None,
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         """``num_envs`` environments on ``device``."""
         if device is None:
             device = _get_config()["default_device"] or "cuda"
@@ -617,8 +655,7 @@ class Env:
         compare ``world``. Envs that ignore resolution do not declare the keyword, and its absence is
         itself the answer.
         """
-        raise NotImplementedError(
-            f"{type(self).__name__} does not build a Scene2D; it must override render() instead")
+        raise NotImplementedError(f"{type(self).__name__} does not build a Scene2D; it must override render() instead")
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """``(batch, state_dim)`` states from the env's own reset distribution.
@@ -636,9 +673,9 @@ class Env:
         ``n`` is ``B`` unless the last ``set_state`` was given a short batch, in which case the rows
         beyond it are whatever was there before and are deliberately not handed back.
         """
-        return self._state if self._live_rows == self.B else self._state[:self._live_rows]
+        return self._state if self._live_rows == self.B else self._state[: self._live_rows]
 
-    def set_state(self, states, style=None) -> "Env":
+    def set_state(self, states, style=None) -> Env:
         """``(n, state_dim)`` states, ``n <= B``. Returns ``self``, so ``.render()`` chains off it.
 
         A batch SHORTER than the env's is supported rather than refused, and that is the important
@@ -667,7 +704,8 @@ class Env:
                 f"longer, because there is nowhere to put the extra {n - self.B}. Either build the env "
                 f"at the batch you feed it, se.make({type(self).__name__!r}, "
                 f"num_envs={n}), or render without touching the env's buffer: env.render(states), which "
-                f"takes any batch.")
+                f"takes any batch."
+            )
         self._state[:n].copy_(s)
         self._live_rows = n
         if style is not None:
@@ -675,8 +713,15 @@ class Env:
         return self
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Arbitrary leading dims."""
         require_contiguous_out(f"{type(self).__name__}.render", out)
         # The base implementation is NOT wrapped by __init_subclass__ (that hook only sees subclass
@@ -691,8 +736,10 @@ class Env:
         # of the package and its backends points one way and cannot become a cycle. ``render`` is the
         # one core method that genuinely needs a backend, and it needs it at call time.
         from .render.raster2d import render as render_scene
-        img = render_scene(sc, size or self.size, supersample if supersample is not None else self.ss,
-                           backend=self.backend, out=out)
+
+        img = render_scene(
+            sc, size or self.size, supersample if supersample is not None else self.ss, backend=self.backend, out=out
+        )
         return img.view(*lead, *img.shape[1:]) if lead else img
 
     # style (the appearance half of the state)
@@ -718,12 +765,12 @@ class Env:
         Built for ``self._live_rows`` rows rather than for ``B`` so that ``set_state(short, style=short)``
         pairs row for row. With the ordinary full batch the two are the same number.
         """
-        self._style = StyleTensor.from_space(self.variation_space, self._live_rows, device=self.device,
-                                             values=style, overrides=overrides or None)
+        self._style = StyleTensor.from_space(
+            self.variation_space, self._live_rows, device=self.device, values=style, overrides=overrides or None
+        )
         return self._style.values
 
-    def sample_style(self, batch: int | None = None, paths=None,
-                     rng: np.random.Generator | None = None) -> np.ndarray:
+    def sample_style(self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None) -> np.ndarray:
         """``(batch, style_dim)`` independent appearances — batched domain randomisation.
 
         ``paths`` restricts randomisation to named leaves; everything else stays at the official
@@ -744,7 +791,8 @@ class Env:
                     f"{type(self).__name__}.sample_style: unknown variation path(s) {unknown}. This "
                     f"used to match nothing and hand back the DEFAULT appearance for every "
                     f"environment, which is indistinguishable from a randomisation that had no "
-                    f"effect. Known paths: {known}")
+                    f"effect. Known paths: {known}"
+                )
         out = np.tile(self.default_style(), (B, 1))
         for path, off, w in self.variation_space.flat_layout():
             if paths is not None and path not in paths:
@@ -755,13 +803,12 @@ class Env:
             if hasattr(node, "low"):
                 lo = np.broadcast_to(node.low, node.shape).astype(np.float64).reshape(-1)
                 hi = np.broadcast_to(node.high, node.shape).astype(np.float64).reshape(-1)
-                out[:, off:off + w] = rng.uniform(lo, hi, size=(B, w))
+                out[:, off : off + w] = rng.uniform(lo, hi, size=(B, w))
             elif hasattr(node, "n"):
-                out[:, off:off + w] = rng.integers(0, int(node.n), size=(B, w))
+                out[:, off : off + w] = rng.integers(0, int(node.n), size=(B, w))
         return out.astype(np.float32)
 
-    def resolve_style(self, style=None, variation: dict | None = None, batch: int | None = None
-                      ) -> StyleTensor:
+    def resolve_style(self, style=None, variation: dict | None = None, batch: int | None = None) -> StyleTensor:
         """The style an env's ``scene`` should draw with: explicit tensor, dict overrides, or current.
 
         Every env in the registry funnels through this, and it is the one place that decides how a
@@ -780,8 +827,7 @@ class Env:
             if not variation:
                 return current
             style = current.values
-        return StyleTensor.from_space(self.variation_space, B, device=self.device,
-                                      values=style, overrides=variation)
+        return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
     def sample(self, steps: int = 100, batch: int | None = None, policy=None, **kw) -> dict:
         """``batch`` trajectories of ``steps`` steps under ``policy``. See ``stable_envs.rollout``.
@@ -791,6 +837,7 @@ class Env:
         ``env.set_state(batch).render()`` — which works on the whole registry.
         """
         from .rollout import sample as _sample
+
         return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
 
     def variation_values(self) -> dict:
@@ -805,18 +852,25 @@ class Env:
         agreement and the sentence that says what the tier does not license, so a caller who prints
         ``describe()`` and reads nothing else still cannot mistake it for a parity env.
         """
-        d = {"name": self.name or type(self).__name__, "state_dim": self.state_dim,
-             "state_names": list(self.state_names), "size": self.size,
-             "style_dim": self.style_dim, "style_names": self.style_names,
-             "reference_id": self.reference_id,
-             "fidelity_tier": self.fidelity_tier,
-             "render_decoder": self.render_decoder,
-             "variations": self.variation_space.names()}
+        d = {
+            "name": self.name or type(self).__name__,
+            "state_dim": self.state_dim,
+            "state_names": list(self.state_names),
+            "size": self.size,
+            "style_dim": self.style_dim,
+            "style_names": self.style_names,
+            "reference_id": self.reference_id,
+            "fidelity_tier": self.fidelity_tier,
+            "render_decoder": self.render_decoder,
+            "variations": self.variation_space.names(),
+        }
         if self.fidelity_tier == "visual":
             d["visual_fidelity"] = dict(self.visual_fidelity)
             d["visual_note"] = self.visual_note
-            d["not_for"] = ("evaluating a policy on official pixels after training on these — the "
-                            "frames are a different render of the same scene, not the same frame")
+            d["not_for"] = (
+                "evaluating a policy on official pixels after training on these — the "
+                "frames are a different render of the same scene, not the same frame"
+            )
         if self.variation_fidelity:
             d["variation_fidelity"] = dict(self.variation_fidelity)
         rv = reference_versions_of(type(self))
@@ -825,9 +879,11 @@ class Env:
         if self.render_decoder == "learned" and "not_for" in d:
             # Said separately from ``visual_note`` and in the caller's own words, because this is the
             # one thing about these frames that no amount of looking at them can reveal.
-            d["not_for"] += (", and here that different render is a LEARNED approximation: a fixed "
-                             "neural checkpoint drew part of it, so detail on textured surfaces is "
-                             "synthesised rather than measured")
+            d["not_for"] += (
+                ", and here that different render is a LEARNED approximation: a fixed "
+                "neural checkpoint drew part of it, so detail on textured surfaces is "
+                "synthesised rather than measured"
+            )
         else:
             d["parity_interior_min"] = self.parity_interior_min
         return d
@@ -855,8 +911,14 @@ class Env:
         model (DM Control, Fetch, RoboCasa) only knows ``state_dim`` once it is built.
         """
         if self.state_layout:
-            return tuple((tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],), int(e[1]),
-                          None if e[2] is None else int(e[2])) for e in self.state_layout)
+            return tuple(
+                (
+                    tuple(e[0]) if isinstance(e[0], (tuple, list)) else (e[0],),
+                    int(e[1]),
+                    None if e[2] is None else int(e[2]),
+                )
+                for e in self.state_layout
+            )
         return ((("state",), int(self.state_dim), 0),)
 
     def _layout_dtypes(self) -> dict[tuple[str, ...], torch.dtype]:
@@ -876,7 +938,8 @@ class Env:
                 f"{type(self).__name__}.state_layout covers {covered} of the {self.state_dim} "
                 f"column(s) of the packed row. Every packed column belongs to exactly one field, "
                 f"because pack/unpack must round-trip the frozen corpus layout unchanged; a field "
-                f"that is dynamical state the row does not carry declares offset None instead.")
+                f"that is dynamical state the row does not carry declares offset None instead."
+            )
         return lay
 
     def pack(self, state: TensorDict) -> torch.Tensor:
@@ -901,9 +964,9 @@ class Env:
             except KeyError as e:
                 raise KeyError(
                     f"{type(self).__name__}.pack: the state is missing {'.'.join(key)}. This env's "
-                    f"state keys are {[ '.'.join(k) for k, _, _ in lay ]}.") from e
-            out[:, off:off + w] = torch.as_tensor(v, device=self.device,
-                                                  dtype=torch.float32).reshape(n, w)
+                    f"state keys are {['.'.join(k) for k, _, _ in lay]}."
+                ) from e
+            out[:, off : off + w] = torch.as_tensor(v, device=self.device, dtype=torch.float32).reshape(n, w)
         return out
 
     def unpack(self, rows) -> TensorDict:
@@ -922,8 +985,11 @@ class Env:
             dt = dtypes.get(key, torch.float32)
             # ``copy=True``: ``.to`` on a same-dtype tensor returns the SAME storage, and a State that
             # aliases the env's packed buffer changes under the caller's feet at the next step.
-            v = (r[:, off:off + w].to(dt, copy=True) if off is not None
-                 else torch.zeros(n, w, device=self.device, dtype=dt))
+            v = (
+                r[:, off : off + w].to(dt, copy=True)
+                if off is not None
+                else torch.zeros(n, w, device=self.device, dtype=dt)
+            )
             node = out
             for part in key[:-1]:
                 node = node.setdefault(part, {})
@@ -969,16 +1035,19 @@ class Env:
         :meth:`_hidden_state`, because only the cell knows where it lives.
         """
         td = self.unpack(self.get_state())
-        hidden = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
-                  for k, v in (self._hidden_state() or {}).items()}
+        hidden = {
+            tuple(k) if isinstance(k, (tuple, list)) else (k,): v for k, v in (self._hidden_state() or {}).items()
+        }
         n = int(td.batch_size[0])
         dtypes = self._layout_dtypes()
-        live = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v
-                for k, v in (self._live_state() or {}).items()}
+        live = {tuple(k) if isinstance(k, (tuple, list)) else (k,): v for k, v in (self._live_state() or {}).items()}
         for key, w, off in self._layout():
             if off is not None and key in live:
-                td[key] = torch.as_tensor(live[key], device=self.device,
-                                          dtype=dtypes.get(key, torch.float32)).reshape(-1, w)[:n].clone()
+                td[key] = (
+                    torch.as_tensor(live[key], device=self.device, dtype=dtypes.get(key, torch.float32))
+                    .reshape(-1, w)[:n]
+                    .clone()
+                )
         missing = []
         for key, w, off in self._layout():
             if off is not None:
@@ -986,8 +1055,9 @@ class Env:
             if key not in hidden:
                 missing.append(".".join(key))
                 continue
-            td[key] = torch.as_tensor(hidden[key], device=self.device,
-                                      dtype=dtypes.get(key, torch.float32)).reshape(-1, w)[:n]
+            td[key] = torch.as_tensor(hidden[key], device=self.device, dtype=dtypes.get(key, torch.float32)).reshape(
+                -1, w
+            )[:n]
         if missing:
             raise NotImplementedError(
                 f"{type(self).__name__}.state: {missing} is declared in state_layout with offset "
@@ -995,7 +1065,8 @@ class Env:
                 f"{type(self).__name__}._hidden_state() does not return it. Unfilled, it would be "
                 f"reported as ZEROS, which is a wrong answer rather than a failure: env.state would "
                 f"look fine and transition(env.state, action) would stop matching step(action). "
-                f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state().")
+                f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state()."
+            )
         return td
 
     def _step_result(self, state: TensorDict, **extras) -> TensorDict:
@@ -1019,9 +1090,14 @@ class Env:
         key = tuple(key) if isinstance(key, (tuple, list)) else (key,)
         for k, w, off in self._layout():
             if k == key:
-                return ([] if off is None else
-                        [self.state_names[i] if i < len(self.state_names) else f"column {i}"
-                         for i in range(off, off + w)])
+                return (
+                    []
+                    if off is None
+                    else [
+                        self.state_names[i] if i < len(self.state_names) else f"column {i}"
+                        for i in range(off, off + w)
+                    ]
+                )
         raise KeyError(f"{type(self).__name__}: no state key {'.'.join(key)}")
 
     # ------------------------------------------------------------------ specs
@@ -1033,8 +1109,7 @@ class Env:
         out: dict = {}
         for key, w, _ in self._layout():
             lo, hi = bounds.get(key, (None, None))
-            names = tuple(self.state_names_of(key)) if len(key) and w == len(
-                self.state_names_of(key)) else ()
+            names = tuple(self.state_names_of(key)) if len(key) and w == len(self.state_names_of(key)) else ()
             spec = Spec(shape=(w,), low=lo, high=hi, device=self.device, names=names)
             node = out
             for part in key[:-1]:
@@ -1048,15 +1123,18 @@ class Env:
         dim = getattr(self, "action_dim", None)
         if dim is None:
             _dynamics.no_dynamics(self, "action_spec")
-        return Spec(shape=(int(dim),), low=getattr(self, "action_low", None),
-                    high=getattr(self, "action_high", None), device=self.device)
+        return Spec(
+            shape=(int(dim),),
+            low=getattr(self, "action_low", None),
+            high=getattr(self, "action_high", None),
+            device=self.device,
+        )
 
     @property
     def observation_spec(self) -> Spec:
         """The frames ``render`` produces: ``(H, W, 3)`` uint8. Square unless the env says otherwise."""
         h, w = getattr(self, "frame_shape", (self.size, self.size))
-        return Spec(shape=(int(h), int(w), 3), dtype=torch.uint8, low=0, high=255,
-                    device=self.device)
+        return Spec(shape=(int(h), int(w), 3), dtype=torch.uint8, low=0, high=255, device=self.device)
 
     @property
     def variation_spec(self) -> Spec:
@@ -1085,8 +1163,13 @@ class Env:
             else:
                 lo.extend([-np.inf] * w)
                 hi.extend([np.inf] * w)
-        return Spec(shape=(int(self.style_dim),), low=np.asarray(lo, np.float64),
-                    high=np.asarray(hi, np.float64), device=self.device, names=tuple(names))
+        return Spec(
+            shape=(int(self.style_dim),),
+            low=np.asarray(lo, np.float64),
+            high=np.asarray(hi, np.float64),
+            device=self.device,
+            names=tuple(names),
+        )
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -1133,7 +1216,8 @@ class Env:
                 f"renderer's resources (contexts, atlases, device buffers), so what came back would "
                 f"be drawn through something that no longer exists — or, worse, would look like a "
                 f"frame. Build a new env: {type(self).__name__}(num_envs={self.B}, "
-                f"device='{self.device.type}').")
+                f"device='{self.device.type}')."
+            )
 
     def close(self) -> None:
         """Release this env's resources. IDEMPOTENT, and correctness never depends on ``__del__``."""
@@ -1144,7 +1228,7 @@ class Env:
         if callable(closer):
             closer()
 
-    def __enter__(self) -> "Env":
+    def __enter__(self) -> Env:
         return self
 
     def __exit__(self, *exc) -> bool:

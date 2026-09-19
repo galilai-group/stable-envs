@@ -24,6 +24,7 @@ as SWM consumes ``Env`` natively.
 The implementation lives in the private package ``stable_envs/_interop/`` because it is ~2,450 lines
 across the facade and four variation-map tables; this module is its single public face.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -31,12 +32,25 @@ from typing import Any
 
 from .registry import SWM_IDS, SYMBOLIC_IDS, canonical_names  # noqa: F401
 
-_ADAPTER_EXPORTS = frozenset({
-    "INFO_KEYS", "VARIATION_MAPS", "BatchedEnvPool", "StableEnvGym", "VariationMap",
-    "attach_batched_pool", "check_mapping", "pusht_state", "register_gym_ids",
-    "style_from_swm_env", "style_from_variation", "swap_renderer", "swm_variation_space",
-    "variation_from_style", "variation_map",
-})
+_ADAPTER_EXPORTS = frozenset(
+    {
+        "INFO_KEYS",
+        "VARIATION_MAPS",
+        "BatchedEnvPool",
+        "StableEnvGym",
+        "VariationMap",
+        "attach_batched_pool",
+        "check_mapping",
+        "pusht_state",
+        "register_gym_ids",
+        "style_from_swm_env",
+        "style_from_variation",
+        "swap_renderer",
+        "swm_variation_space",
+        "variation_from_style",
+        "variation_map",
+    }
+)
 
 
 def __getattr__(name: str) -> Any:

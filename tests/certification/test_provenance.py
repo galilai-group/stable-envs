@@ -7,19 +7,23 @@ phase-shifted the reference's floor checker. Three renderer FAILs were recorded 
 The rule here is the existing one -- a dependency failure is not a fidelity failure -- applied one
 step later: the reference at the wrong version is a comparison that could not be made.
 """
+
 from __future__ import annotations
 
 import pytest
 
-from stable_envs.testing.provenance import (REFERENCE_JUDGED_CHECKS, block_on_reference_mismatch,
-                                             normalize_package, reference_version_mismatch)
+from stable_envs.testing.provenance import (
+    REFERENCE_JUDGED_CHECKS,
+    block_on_reference_mismatch,
+    normalize_package,
+    reference_version_mismatch,
+)
 
 DECLARED = {"mujoco": "3.11.0", "mujoco_warp": "3.11.0"}
 
 
 def test_matching_versions_are_not_a_mismatch():
-    assert reference_version_mismatch(DECLARED, {"mujoco": "3.11.0", "mujoco_warp": "3.11.0",
-                                                 "torch": "2.14.0"}) == []
+    assert reference_version_mismatch(DECLARED, {"mujoco": "3.11.0", "mujoco_warp": "3.11.0", "torch": "2.14.0"}) == []
 
 
 def test_a_different_version_is_named_with_both_sides():
@@ -92,8 +96,12 @@ def _repro_constants() -> dict:
     src = (ROOT / "tests" / "gpu" / "test_reproducibility.py").read_text()
     out = {}
     for n in ast.parse(src).body:
-        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name) \
-                and n.targets[0].id in ("N", "MEASURED_ON", "DOWNSAMPLE_MARGIN"):
+        if (
+            isinstance(n, ast.Assign)
+            and len(n.targets) == 1
+            and isinstance(n.targets[0], ast.Name)
+            and n.targets[0].id in ("N", "MEASURED_ON", "DOWNSAMPLE_MARGIN")
+        ):
             try:
                 out[n.targets[0].id] = ast.literal_eval(n.value)
             except ValueError:
@@ -116,34 +124,41 @@ def test_the_downsample_protocol_is_the_one_the_bound_was_measured_under():
 
 def test_the_protocol_states_are_the_fixture_draw():
     """Bit-for-bit what ``render_worker.sample_inputs`` gives, and nothing the caller passed."""
+
     class Env:
         style_dim = 0
+
         def sample_states(self, n, rng=None):
             return rng.standard_normal((n, 3)).astype(np.float32)
+
     env = Env()
     got = C.downsample_protocol_states(env)
     want, _ = W.sample_inputs(env, C.DOWNSAMPLE_PROTOCOL_N)
     assert got.shape == (C.DOWNSAMPLE_PROTOCOL_N, 3) and got.dtype == np.float32
     assert np.array_equal(got, want)
-    assert np.array_equal(got, C.downsample_protocol_states(env))       # deterministic
+    assert np.array_equal(got, C.downsample_protocol_states(env))  # deterministic
     rec = C.downsample_protocol(got)
     assert rec["states_sha256"] == C.frames_digest(got) and rec["n_states"] == C.DOWNSAMPLE_PROTOCOL_N
-    assert "states_sha256" not in C.downsample_protocol()                # nothing pinned without a draw
+    assert "states_sha256" not in C.downsample_protocol()  # nothing pinned without a draw
 
 
 def test_a_failing_protocol_draw_is_an_error_not_a_skip():
     """fidelity_step4._resolution maps ValueError to not_applicable because that is how an env says it
     renders at one size only; a ValueError from sample_states must not be reclassified as that skip."""
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("fidelity_step4", ROOT / "examples" / "fidelity_step4.py")
     F = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(F)
 
     class Env:
         style_dim, size = 0, 8
+
         def sample_states(self, n, rng=None):
             raise ValueError("a broken state sampler")
+
         def render(self, *a, **k):
             raise AssertionError("must not render when the draw failed")
+
     r = F._resolution(Env(), np.zeros((2, 3), np.float32))
     assert r["status"] == "error" and "protocol draw" in r["why"] and "broken state sampler" in r["why"]

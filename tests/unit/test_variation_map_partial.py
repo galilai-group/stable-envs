@@ -1,12 +1,16 @@
 """``VariationMap.partial``: a mapped leaf whose upstream effect is reproduced only in part."""
+
 import pytest
 
 from stable_envs.interop import VariationMap
 
 
 def test_partial_is_a_classification_on_a_mapped_leaf():
-    m = VariationMap(swm_id="swm/X-v0", renamed={"floor.color": "background.color"},
-                     partial={"background.color": "skybox half not reproduced (61.7-73.0 % of the frame)"})
+    m = VariationMap(
+        swm_id="swm/X-v0",
+        renamed={"floor.color": "background.color"},
+        partial={"background.color": "skybox half not reproduced (61.7-73.0 % of the frame)"},
+    )
     assert m.pairs() == {"floor.color": ("background.color", 1.0)}
     assert m.classification()["background.color"] == "partial"
     assert "background.color" in m.mapped_swm_paths()

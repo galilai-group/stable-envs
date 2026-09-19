@@ -9,6 +9,7 @@ what the strip is a function of, and what it is *not* a function of — rather t
 No jax: the parity run against the official renderer lives in the certification harness, and these
 run everywhere.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -16,9 +17,25 @@ import pytest
 import torch
 
 from stable_envs.envs.craftax import (
-    N_BLOCK, N_COUNT, N_FACING, N_MOB, N_STRIP, N_TILE, NO_PLAYER, OBS_H, OBS_W, PLAYER_ASLEEP,
-    STRIP_BASE, STRIP_H, STRIP_LAYOUT, STRIP_NAMES, CraftaxClassic, _Composite, _strip_cells,
-    strip_geometry)
+    N_BLOCK,
+    N_COUNT,
+    N_FACING,
+    N_MOB,
+    N_STRIP,
+    N_TILE,
+    NO_PLAYER,
+    OBS_H,
+    OBS_W,
+    PLAYER_ASLEEP,
+    STRIP_BASE,
+    STRIP_H,
+    STRIP_LAYOUT,
+    STRIP_NAMES,
+    CraftaxClassic,
+    _Composite,
+    _strip_cells,
+    strip_geometry,
+)
 
 SIZES = (7, 16, 32)
 DEV = torch.device("cpu")
@@ -93,9 +110,9 @@ def test_a_cells_writes_stay_inside_its_own_tile(t):
     assert 0 <= lo < hi <= t, (t, lo, hi)
     assert 0 <= dlo < dhi <= t, (t, dlo, dhi)
     occ = np.zeros((STRIP_H * t, OBS_W * t), np.int32)
-    for (r, c) in STRIP_LAYOUT:
-        occ[r * t + lo:r * t + hi, c * t + lo:c * t + hi] += 1
-        occ[r * t + dlo:r * t + dhi, c * t + dlo:c * t + dhi] += 1
+    for r, c in STRIP_LAYOUT:
+        occ[r * t + lo : r * t + hi, c * t + lo : c * t + hi] += 1
+        occ[r * t + dlo : r * t + dhi, c * t + dlo : c * t + dhi] += 1
     assert occ.max() <= 2, f"strip cells overlap at t={t}"
 
 
@@ -135,10 +152,10 @@ def test_each_count_reaches_its_own_cell_and_no_other(env, states, t):
     for i, name in enumerate(STRIP_NAMES):
         a = env.render(_set(states, **{name: 0}), size=t).numpy()
         b = env.render(_set(states, **{name: 7}), size=t).numpy()
-        d = (np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1) > 0)
+        d = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1) > 0
         assert d[:, :w].sum() == 0, f"{name} reached the world layer"
         r, c = lay[i]
-        mine = d[:, w + r * t:w + (r + 1) * t, c * t:(c + 1) * t]
+        mine = d[:, w + r * t : w + (r + 1) * t, c * t : (c + 1) * t]
         assert mine.any(), f"{name} did not reach its own cell {lay[i]}"
         rest = d[:, w:].sum() - mine.sum()
         assert rest == 0, f"{name} reached {rest} pixels outside cell {lay[i]}"
@@ -153,7 +170,7 @@ def test_the_two_unwritten_cells_stay_black_whatever_the_state(env, states, t):
         for c in range(OBS_W):
             if (r, c) in written:
                 continue
-            patch = f[:, w + r * t:w + (r + 1) * t, c * t:(c + 1) * t]
+            patch = f[:, w + r * t : w + (r + 1) * t, c * t : (c + 1) * t]
             assert int(patch.max()) == 0, f"cell ({r},{c}) is written but the reference never writes it"
 
 
@@ -184,7 +201,7 @@ def test_sleeping_changes_the_centre_tile_sprite_and_desaturates_everything_else
     # (a) the desaturation reaches the whole world layer, not only the player's tile
     d = np.abs(awake.astype(np.int16) - asleep.astype(np.int16)).max(-1) > 0
     off_centre = d.copy()
-    off_centre[:, cr * t:(cr + 1) * t, cc * t:(cc + 1) * t] = False
+    off_centre[:, cr * t : (cr + 1) * t, cc * t : (cc + 1) * t] = False
     assert off_centre.any(), "is_sleeping did not desaturate outside the player's tile"
 
     # (b) a sleeping world row is grey-plus-blue by construction: R == G everywhere
@@ -193,13 +210,13 @@ def test_sleeping_changes_the_centre_tile_sprite_and_desaturates_everything_else
 
     # (c) the SPRITE changed too, and not only the tint: composite the awake centre tile through the
     #     same desaturation and it must still differ from the sleeping one
-    a = awake[:, cr * t:(cr + 1) * t, cc * t:(cc + 1) * t].astype(np.float64)
+    a = awake[:, cr * t : (cr + 1) * t, cc * t : (cc + 1) * t].astype(np.float64)
     lum = 0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]
     tinted = np.stack([lum * 0.5, lum * 0.5, lum * 0.5 + 8], -1)
-    s = asleep[:, cr * t:(cr + 1) * t, cc * t:(cc + 1) * t].astype(np.float64)
+    s = asleep[:, cr * t : (cr + 1) * t, cc * t : (cc + 1) * t].astype(np.float64)
     assert np.abs(tinted - s).max() > 2.0, (
-        "desaturating the awake centre tile reproduces the sleeping one, so the fifth player "
-        "sprite is not being drawn")
+        "desaturating the awake centre tile reproduces the sleeping one, so the fifth player sprite is not being drawn"
+    )
 
 
 def test_the_facing_slot_wraps_mod_four_not_mod_five(env, states):
@@ -236,10 +253,10 @@ def test_the_first_127_slots_kept_their_meaning(env, states):
     assert env.state_names[:127] == (
         tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
         + tuple(f"mob_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
-        + ("player_facing",))
+        + ("player_facing",)
+    )
     assert env.state_names[127:143] == tuple(f"inv_{n}" for n in STRIP_NAMES)
-    assert env.state_names[143:] == ("is_sleeping", "light_level",
-                                     "rng_half0", "rng_half1", "rng_half2", "rng_half3")
+    assert env.state_names[143:] == ("is_sleeping", "light_level", "rng_half0", "rng_half1", "rng_half2", "rng_half3")
 
 
 def test_a_step4_shaped_row_reproduces_the_old_world_layer(env):
@@ -252,8 +269,8 @@ def test_a_step4_shaped_row_reproduces_the_old_world_layer(env):
     rng = np.random.default_rng(4)
     st = env.sample_states(8, rng)
     old = np.zeros_like(st)
-    old[:, :127] = st[:, :127]                      # counts 0, not sleeping, light_level 0...
-    old[:, 127 + N_STRIP + 1] = 1.0                 # ...except daylight, which is the Step-4 state
+    old[:, :127] = st[:, :127]  # counts 0, not sleeping, light_level 0...
+    old[:, 127 + N_STRIP + 1] = 1.0  # ...except daylight, which is the Step-4 state
     for t in (7, 16):
         f = env.render(old, size=t).numpy()
         w = OBS_H * t
@@ -287,9 +304,10 @@ def test_every_new_state_dimension_reaches_a_pixel(env):
     ref = env.render(st, size=16)
     for j in range(base, env.state_dim):
         probe = np.array(st, copy=True)
-        probe[:, j] = (probe[:, j] + 25.0)
+        probe[:, j] = probe[:, j] + 25.0
         assert not torch.equal(ref, env.render(probe, size=16)), (
-            f"state dim {j} ({env.state_names[j]}) reaches no pixel under a +25 probe")
+            f"state dim {j} ({env.state_names[j]}) reaches no pixel under a +25 probe"
+        )
 
 
 # ---------------------------------------------------------------- night
@@ -322,7 +340,7 @@ def test_no_noise_is_drawn_at_or_above_half_daylight(env, states, light):
     a = _set(states, light=light)
     b = np.array(a, copy=True)
     assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
-    b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP:] = 12345.0
+    b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP :] = 12345.0
     assert torch.equal(env.render(a, size=16), env.render(b, size=16))
 
 
@@ -331,10 +349,10 @@ def test_the_key_reaches_the_world_layer_below_half_daylight(env, states):
     a = _set(states, light=0.1)
     b = np.array(a, copy=True)
     assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
-    b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP:] = 4321.0
+    b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP :] = 4321.0
     fa, fb = env.render(a, size=16).numpy(), env.render(b, size=16).numpy()
     w = OBS_H * 16
-    changed = (np.abs(fa.astype(np.int16) - fb.astype(np.int16)).max(-1) > 0)
+    changed = np.abs(fa.astype(np.int16) - fb.astype(np.int16)).max(-1) > 0
     assert changed[:, :w].mean() > 0.3, "the night noise field barely reaches the frame"
     assert changed[:, w:].sum() == 0, "the PRNG key reached the inventory strip"
 
@@ -366,8 +384,7 @@ def test_light_level_decodes_by_a_tent_that_is_the_identity_in_range(env, states
     # 1.0 + 25 = 26; 26 % 2 == 0; tent(0) == 0 -> full night, so the probe reaches the frame
     _, _, _, _, _, probed, _ = env._decode(torch.as_tensor(_set(states, light=26.0)), len(states))
     assert float(probed.max()) == 0.0
-    assert not torch.equal(env.render(_set(states, light=1.0), size=16),
-                           env.render(_set(states, light=26.0), size=16))
+    assert not torch.equal(env.render(_set(states, light=1.0), size=16), env.render(_set(states, light=26.0), size=16))
 
 
 def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
@@ -384,17 +401,21 @@ def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
     mixed[:, j + 1] = np.tile([1.0, 0.75, 0.3, 0.0], n // 4 + 1)[:n]
     together = env.render(mixed, size=16)
     for i in range(n):
-        assert torch.equal(together[i], env.render(mixed[i:i + 1], size=16)[0]), i
+        assert torch.equal(together[i], env.render(mixed[i : i + 1], size=16)[0]), i
 
 
 def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
     """W2 consumes ``night_and_sleep`` verbatim at its own window size, so it must not be 7x9-bound."""
     from stable_envs.envs.craftax import night_and_sleep, night_vignette
-    for (h, w) in ((49, 63), (112, 144), (63, 77), (90, 110)):
+
+    for h, w in ((49, 63), (112, 144), (63, 77), (90, 110)):
         world = torch.rand(3, h, w, 3) * 255
-        out = night_and_sleep(world, torch.tensor([1.0, 0.75, 0.1]),
-                              torch.tensor([False, True, False]),
-                              torch.tensor([[1, 2], [3, 4], [5, 6]], dtype=torch.int32))
+        out = night_and_sleep(
+            world,
+            torch.tensor([1.0, 0.75, 0.1]),
+            torch.tensor([False, True, False]),
+            torch.tensor([[1, 2], [3, 4], [5, 6]], dtype=torch.int32),
+        )
         assert out.shape == world.shape
         assert torch.equal(out[0], world[0]), "light=1.0 is not the identity"
         assert night_vignette(DEV, h, w).shape == (h, w, 1)
@@ -404,8 +425,10 @@ def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
     keys = torch.tensor([[7, 8], [9, 10]], dtype=torch.int32)
     lit = torch.tensor([0.2, 0.2])
     slp = torch.tensor([False, False])
-    assert torch.equal(night_and_sleep(world, lit, slp, keys),
-                       night_and_sleep(world, lit, slp, keys, light_map=torch.ones(1, 1, 1, 1)))
+    assert torch.equal(
+        night_and_sleep(world, lit, slp, keys),
+        night_and_sleep(world, lit, slp, keys, light_map=torch.ones(1, 1, 1, 1)),
+    )
 
 
 def test_the_strip_grid_cache_is_not_written_through(env, states):
@@ -451,6 +474,7 @@ def test_the_declared_resolution_applicability_matches_measurement(env, states):
     it says the check does not apply.
     """
     from stable_envs.testing.conformance import check_resolution_consistency
+
     d = CraftaxClassic.resolution_consistency_applicability
     assert set(d) >= {"light_level >= 0.5", "light_level < 0.5", "evidence", "measured_against"}
     assert "not_applicable" in d["light_level < 0.5"]
@@ -460,7 +484,9 @@ def test_the_declared_resolution_applicability_matches_measurement(env, states):
     for light in (0.45, 0.1):
         r = check_resolution_consistency(env, _set(states, light=light))
         assert r["exact_frac"] < 1.0 - 0.005, (
-            f"light={light} now meets the bound; the declared non-applicability is stale", r)
+            f"light={light} now meets the bound; the declared non-applicability is stale",
+            r,
+        )
 
 
 def test_the_strip_is_resolution_consistent_in_every_band(env, states):
@@ -471,11 +497,12 @@ def test_the_strip_is_resolution_consistent_in_every_band(env, states):
     instead keeps this side at 1.000, which is what makes the frozen bound meetable at all.
     """
     from stable_envs.testing.conformance import _box_downsample
+
     w = OBS_H * 16
     for light in (1.0, 0.75, 0.1):
         st = _set(states, light=light)
         a = env.render(st, size=16).numpy()[:, w:]
-        b = env.render(st, size=32).numpy()[:, OBS_H * 32:]
+        b = env.render(st, size=32).numpy()[:, OBS_H * 32 :]
         d = np.abs(_box_downsample(b, 2).astype(np.int16) - a.astype(np.int16))
         assert float((d.max(-1) == 0).mean()) == 1.0, (light, int(d.max()))
 
@@ -488,6 +515,7 @@ def test_the_declared_certification_distribution_is_the_one_the_sampler_produces
     declared shares must move with it or the tier is being read against the wrong mix.
     """
     from stable_envs.envs.craftax import CraftaxClassic as C
+
     d = C.certification_state_distribution
     assert d["daylight_share"] == 0.25
     for seed in range(20):
@@ -512,19 +540,22 @@ def test_the_performance_record_says_what_it_does_not_certify():
     that is ruled on, and the record has to say so in the record rather than only in a findings file.
     """
     from stable_envs.envs.craftax import CraftaxClassic as C
+
     p, n = C.performance_record_cpu, C.s_cpu_note
     assert p["tier"] == "CPU_FASTER"
     assert abs(p["cores_cpu"] - p["mixed_default_fps"] / p["decode_bar_fps"]) < 0.005
     assert p["daylight_diagnostic_cores_cpu"] > 10 > p["cores_cpu"], (
-        "the diagnostic and the tier must stay visibly different numbers")
-    assert abs(p["daylight_over_night"]
-               - p["daylight_diagnostic_fps"] / p["night_diagnostic_fps"]) < 60
+        "the diagnostic and the tier must stay visibly different numbers"
+    )
+    assert abs(p["daylight_over_night"] - p["daylight_diagnostic_fps"] / p["night_diagnostic_fps"]) < 60
     assert n["status"].startswith("RULED")
     assert n["ruled_labels"] == {"cpu": "CPU_FASTER", "gpu": "GPU_FASTER"}
     assert len(n["rejected_reference_timings"]) == 3, (
-        "the rejected reference timings are the evidence that the conditions were checked")
+        "the rejected reference timings are the evidence that the conditions were checked"
+    )
     assert n["s_cpu_vs_unjitted"] / n["s_cpu_vs_jitted"] > 100, (
-        "the whole point of the note is that the two references disagree by orders of magnitude")
+        "the whole point of the note is that the two references disagree by orders of magnitude"
+    )
     # the labels the frozen evaluator produces three ways, and the two that must never be quoted
     assert n["labels_cpu"]["no_reference"] == "CPU_REGRESSION"
     assert n["labels_gpu"]["no_reference"] == "GPU_FAST"

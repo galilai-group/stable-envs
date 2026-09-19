@@ -25,6 +25,7 @@ envs are not square (highway-env draws 150x600, Craftax 112x144) and a compressi
 ``size**2`` is wrong by up to 4x for them, in the flattering direction. The convention of standing in
 for an env with a small recording class is the one ``tests/unit/test_benchmarks.py`` already uses.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,7 +33,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from stable_envs.data import (StateDataset, TrajectoryDataset, collate_batched, render_states)
+from stable_envs.data import StateDataset, TrajectoryDataset, collate_batched, render_states
 
 #: The frame is uint8, so the identity a pixel can carry is taken modulo this. A prime, so that
 #: "state 3 got style 3" cannot come out true by a coincidence with the batch size — and any fixture
@@ -159,7 +160,8 @@ def test_the_chunk_bounds_memory_and_does_not_change_the_answer(chunk):
     assert _style_id(got).tolist() == [100 + i for i in range(12)], (
         f"at chunk={chunk} the style rows are not the ones belonging to those states — a style sliced "
         f"with the CORPUS index instead of the chunk index gives every chunk after the first the "
-        f"appearance of the rows before it")
+        f"appearance of the rows before it"
+    )
 
 
 def test_a_single_style_row_is_shared_by_every_state():
@@ -229,14 +231,17 @@ def test_a_state_dataset_renders_the_rows_it_was_indexed_with():
     ds = StateDataset(env, _states(10), device="cpu")
     got = ds.__getitems__([7, 2, 2, 0])
     assert _state_id(got).tolist() == [7, 2, 2, 0], (
-        "the batched hook rendered rows other than the ones asked for, or in another order")
+        "the batched hook rendered rows other than the ones asked for, or in another order"
+    )
     assert _state_id(ds[[7, 2, 2, 0]]).tolist() == [7, 2, 2, 0], (
         "``ds[list]`` must reach the same batched hook — that is what lets a BatchSampler drive this "
-        "dataset with torch's own collate and no argument from this package")
+        "dataset with torch's own collate and no argument from this package"
+    )
     assert _state_id(ds[5]).tolist() == [5]
     assert ds[5].shape == (env.H, env.W, 3), (
         "an integer index must give ONE sample, not a batch of one; a caller who writes ds[i] and gets "
-        "(1, H, W, 3) back stacks it into a time axis that is not there")
+        "(1, H, W, 3) back stacks it into a time axis that is not there"
+    )
 
 
 def test_a_state_dataset_pairs_each_row_with_ITS_OWN_style():
@@ -281,13 +286,14 @@ def test_a_style_row_count_that_is_neither_is_refused():
 
 def test_compression_measures_the_frame_rather_than_assuming_it_is_square():
     """``size**2`` is wrong by up to 4x, in the flattering direction, for every non-square env."""
-    env = RecordingEnv()                                        # 3x5, size 5
+    env = RecordingEnv()  # 3x5, size 5
     ds = StateDataset(env, _states(100), device="cpu")
     c = ds.compression
     assert c["frame_shape"] == (3, 5, 3)
     assert c["frame_bytes"] == 100 * 3 * 5 * 3
     assert c["frame_bytes"] != 100 * env.size * env.size * 3, (
-        "the frame size was assumed square; for this env that would overstate the saving by 1.7x")
+        "the frame size was assumed square; for this env that would overstate the saving by 1.7x"
+    )
     assert c["state_bytes"] == 100 * 2 * 4 and c["stored_bytes"] == c["state_bytes"]
     assert c["ratio"] == pytest.approx(c["frame_bytes"] / c["stored_bytes"])
 
@@ -308,7 +314,8 @@ def test_compression_works_on_a_dataset_whose_style_is_per_row():
     assert ds.compression["style_bytes"] == 20 * 2 * 4
     probe_style = env.calls[0][1]
     assert probe_style is not None and probe_style.shape[0] == 1, (
-        "the shape probe must pass exactly one style row; leaving it to the env is what raised")
+        "the shape probe must pass exactly one style row; leaving it to the env is what raised"
+    )
 
 
 def test_the_caller_s_own_dataloader_iterates_the_dataset_in_order():
@@ -385,15 +392,18 @@ def test_a_state_width_the_env_does_not_take_is_refused_at_construction():
 # ------------------------------------------------------------------ TrajectoryDataset: the clip index
 
 
-@pytest.mark.parametrize("window,stride,frameskip,expect", [
-    (1, 1, 1, 12),
-    (2, 1, 1, 9),          # 3 clips per 4-step episode
-    (4, 1, 1, 3),          # exactly one clip per episode
-    (5, 1, 1, 0),          # longer than every episode: all dropped
-    (2, 2, 1, 6),
-    (2, 1, 2, 6),          # span 3, so 2 clips per episode
-    (2, 1, 3, 3),          # span 4, so 1 clip per episode
-])
+@pytest.mark.parametrize(
+    "window,stride,frameskip,expect",
+    [
+        (1, 1, 1, 12),
+        (2, 1, 1, 9),  # 3 clips per 4-step episode
+        (4, 1, 1, 3),  # exactly one clip per episode
+        (5, 1, 1, 0),  # longer than every episode: all dropped
+        (2, 2, 1, 6),
+        (2, 1, 2, 6),  # span 3, so 2 clips per episode
+        (2, 1, 3, 3),  # span 4, so 1 clip per episode
+    ],
+)
 def test_the_clip_count_follows_from_window_stride_and_frameskip(window, stride, frameskip, expect):
     """Three knobs that interact, and the span they imply is ``(window-1)*frameskip + 1``.
 
@@ -401,8 +411,9 @@ def test_the_clip_count_follows_from_window_stride_and_frameskip(window, stride,
     matches the arithmetic somebody expects when they set these — an off-by-one here does not raise, it
     quietly drops the last transition of every episode or reads one past it.
     """
-    ds = TrajectoryDataset(RecordingEnv(), _states(12).reshape(3, 4, 2),
-                           window=window, stride=stride, frameskip=frameskip, device="cpu")
+    ds = TrajectoryDataset(
+        RecordingEnv(), _states(12).reshape(3, 4, 2), window=window, stride=stride, frameskip=frameskip, device="cpu"
+    )
     assert len(ds) == expect
 
 
@@ -421,7 +432,8 @@ def test_a_window_never_straddles_an_episode_boundary_even_when_episodes_are_rag
         # The episodes start at 0, 100 and 200, so a clip that crossed a boundary reads
         # e.g. [4.0, 100.0, 101.0] and fails the consecutiveness check by a hundred.
         assert rows == [rows[0] + k for k in range(3)], (
-            f"clip {i} is not three consecutive steps of ONE episode: {rows}")
+            f"clip {i} is not three consecutive steps of ONE episode: {rows}"
+        )
 
 
 def test_an_episode_shorter_than_the_window_is_dropped_and_counted():
@@ -493,24 +505,25 @@ def test_style_travels_with_the_trajectory_through_ragged_episodes():
 
 
 def test_a_single_style_row_is_given_to_every_trajectory():
-    ds = TrajectoryDataset(RecordingEnv(), _states(12).reshape(3, 4, 2),
-                           style=np.full(2, 66, np.float32), window=1, device="cpu")
+    ds = TrajectoryDataset(
+        RecordingEnv(), _states(12).reshape(3, 4, 2), style=np.full(2, 66, np.float32), window=1, device="cpu"
+    )
     assert ds.style.shape == (3, 2) and ds.per_row_style[:, 0].tolist() == [66] * 12
 
 
 def test_a_style_that_is_not_one_row_per_trajectory_is_refused():
     with pytest.raises(ValueError, match="1 or 3 rows \\(one per trajectory\\)"):
-        TrajectoryDataset(RecordingEnv(), _states(12).reshape(3, 4, 2),
-                          style=np.zeros((12, 2), np.float32), device="cpu")
+        TrajectoryDataset(
+            RecordingEnv(), _states(12).reshape(3, 4, 2), style=np.zeros((12, 2), np.float32), device="cpu"
+        )
 
 
 def test_frames_true_renders_each_window_under_its_own_trajectory_s_style():
     """The per-clip version of the same expansion: ``B`` styles over ``B*window`` states."""
     env = RecordingEnv()
     sty = np.stack([np.full(2, 70 + i, np.float32) for i in range(3)])
-    ds = TrajectoryDataset(env, _states(12).reshape(3, 4, 2), style=sty, window=2, frames=True,
-                           device="cpu")
-    out = ds.__getitems__([0, 5])                    # clip 0 is traj 0, clip 5 is traj 1
+    ds = TrajectoryDataset(env, _states(12).reshape(3, 4, 2), style=sty, window=2, frames=True, device="cpu")
+    out = ds.__getitems__([0, 5])  # clip 0 is traj 0, clip 5 is traj 1
     assert out["frames"].shape == (2, 2, 3, 5, 3)
     assert _state_id(out["frames"]).tolist() == [0, 1, 6, 7]
     assert _style_id(out["frames"]).tolist() == [70, 70, 71, 71]
@@ -520,8 +533,7 @@ def test_episode_returns_a_whole_trajectory_ignoring_the_window_index():
     """For evaluation and video, where a clip is the wrong unit."""
     env = RecordingEnv()
     sty = np.stack([np.full(2, 80 + i, np.float32) for i in range(3)])
-    ds = TrajectoryDataset(env, _states(12).reshape(3, 4, 2), style=sty, window=2, frames=True,
-                           device="cpu")
+    ds = TrajectoryDataset(env, _states(12).reshape(3, 4, 2), style=sty, window=2, frames=True, device="cpu")
     ep = ds.episode(2)
     assert ep["states"].shape == (4, 2) and ep["states"][:, 0].tolist() == [8, 9, 10, 11]
     assert _style_id(ep["frames"]).tolist() == [82] * 4
@@ -591,6 +603,7 @@ def test_the_corpus_names_its_own_env_in_a_COLUMN_not_only_in_the_description(hf
     hfds = ds.to_hf()
     assert HF_META_KEY in hfds.column_names
     import json
+
     meta = json.loads(hfds[HF_META_KEY][0])
     assert meta["env"] == "RecordingEnv" and meta["state_dim"] == 2
     assert meta["state_names"] == ["x", "y"] and meta["style_dim"] == 2
@@ -600,6 +613,7 @@ def test_a_corpus_that_names_no_env_is_refused_rather_than_guessed(hf):
     """Guessing from ``state_dim`` picks the wrong env the moment two envs share a width."""
     ds = TrajectoryDataset(RecordingEnv(), _states(8).reshape(2, 4, 2), window=1, device="cpu")
     from stable_envs.data import HF_META_KEY
+
     stripped = ds.to_hf().remove_columns([HF_META_KEY])
     stripped.info.description = ""
     with pytest.raises(ValueError, match="does not name its env"):
@@ -621,7 +635,7 @@ def test_a_missing_datasets_package_explains_itself_instead_of_tracebacking(monk
 
     import stable_envs.data as D
 
-    monkeypatch.setitem(sys.modules, "datasets", None)      # `import datasets` now raises ImportError
+    monkeypatch.setitem(sys.modules, "datasets", None)  # `import datasets` now raises ImportError
     ds = TrajectoryDataset(RecordingEnv(), _states(8).reshape(2, 4, 2), window=1, device="cpu")
     with pytest.raises(ImportError) as e:
         ds.to_hf()
@@ -629,5 +643,6 @@ def test_a_missing_datasets_package_explains_itself_instead_of_tracebacking(monk
     assert "pip install datasets" in msg, "the message must name the install command"
     assert "np.savez" in msg, (
         "the message must offer the way out that needs no new dependency; without it a reader "
-        "concludes the corpus format itself requires `datasets`")
+        "concludes the corpus format itself requires `datasets`"
+    )
     assert D._require_datasets is not None

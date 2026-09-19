@@ -23,6 +23,7 @@ Nothing here asserts a VALUE. What the counts are depends on which workstreams h
 test that pinned them would have to be edited on every merge, which is the same failure as
 maintaining the page by hand.
 """
+
 from __future__ import annotations
 
 import ast
@@ -67,7 +68,8 @@ def test_every_frozen_configuration_is_in_the_summary(report):
     missing = [c for c in configs if f"`{c}`" not in report]
     assert not missing, (
         f"{len(missing)} of the {len(configs)} frozen configurations never reach the page, so the "
-        f"counts below the table are sums over an incomplete corpus: {missing}")
+        f"counts below the table are sums over an incomplete corpus: {missing}"
+    )
 
 
 def _counts(report: str) -> dict[str, tuple[int, int]]:
@@ -92,14 +94,18 @@ def test_correctness_is_counted_over_all_49_and_performance_over_the_registered_
     c = _counts(report)
 
     assert c["Gate-A pass"][1] == n, "Gate A must be counted over every render-distinct cell"
-    for label in ("registered/default CPU_FAST+", "registered/default GPU_FAST+",
-                  "registered/default rows with CPU missing",
-                  "registered/default rows below the GPU target",
-                  "remaining registered/default blockers"):
+    for label in (
+        "registered/default CPU_FAST+",
+        "registered/default GPU_FAST+",
+        "registered/default rows with CPU missing",
+        "registered/default rows below the GPU target",
+        "remaining registered/default blockers",
+    ):
         assert label in c, f"the summary does not report {label!r}"
         assert c[label][1] == m, (
             f"{label} is counted out of {c[label][1]}, not the {m} registered/default rows; "
-            f"performance completion is owed only on the registered SWM default")
+            f"performance completion is owed only on the registered SWM default"
+        )
         assert c[label][0] <= m
 
 
@@ -112,9 +118,11 @@ def test_no_parameter_space_cell_is_counted_as_a_performance_blocker(report):
     named = [c for c in others if f"`{c}`" in section]
     assert not named, (
         f"parameter-space cells are listed as remaining performance blockers: {named}; the frozen "
-        f"contract asks them for no tier")
+        f"contract asks them for no tier"
+    )
     assert "not required by the frozen contract" in report, (
-        "the parameter-space table must say that performance is not owed there")
+        "the parameter-space table must say that performance is not owed there"
+    )
     for c in others:
         assert f"`{c}`" in report
 
@@ -128,8 +136,9 @@ def test_the_performance_bar_is_read_from_the_frozen_spec_not_restated():
     frozen = json.loads((ROOT / "scratch" / "certification.json").read_text())
     assert bar == frozen["ladder"]["environment_done_min_tiers"]
     src = GEN.read_text()
-    assert 'CPU_OK = (' not in src and 'GPU_OK = (' not in src, (
-        "the generator carries its own copy of the tier bar; it must read the frozen one")
+    assert "CPU_OK = (" not in src and "GPU_OK = (" not in src, (
+        "the generator carries its own copy of the tier bar; it must read the frozen one"
+    )
 
 
 def test_the_deferred_work_and_demonstrated_blocker_sections_exist(report):
@@ -142,9 +151,9 @@ def test_the_deferred_work_and_demonstrated_blocker_sections_exist(report):
     assert "## Deferred possible work" in report
     assert "## Demonstrated blockers" in report
     tail = report.split("## Deferred possible work", 1)[1]
-    assert ("dashboard records no `deferred_work` entries" in tail
-            or re.search(r"\|\s*deferred\s*\|", tail)), (
-        "the deferred-work section neither lists entries nor says the field is empty")
+    assert "dashboard records no `deferred_work` entries" in tail or re.search(r"\|\s*deferred\s*\|", tail), (
+        "the deferred-work section neither lists entries nor says the field is empty"
+    )
 
 
 def test_no_cluster_path_reaches_the_page(report):
@@ -152,7 +161,8 @@ def test_no_cluster_path_reaches_the_page(report):
     bad = sorted({m for m in re.findall(r"\S*(?:/oscar/|\$SCR)\S*", report)})
     assert not bad, (
         "cluster paths reached the generated page; `tests/unit/test_repo_contracts.py` extracts the "
-        "`scratch/...` inside them as a citation and it will not resolve:\n  " + "\n  ".join(bad))
+        "`scratch/...` inside them as a citation and it will not resolve:\n  " + "\n  ".join(bad)
+    )
 
 
 def test_every_scratch_path_the_page_cites_resolves(report):
@@ -165,11 +175,11 @@ def test_every_scratch_path_the_page_cites_resolves(report):
 def test_the_appendix_accounts_for_every_json_artifact(report):
     """Unknown shapes are listed, not dropped: the appendix is the generator's own to-do list."""
     assert "artifacts not summarised" in report
-    unknown = [p for p in RESULTS.rglob("*.json")
-               if f"`{p.relative_to(ROOT)}`" not in report]
+    unknown = [p for p in RESULTS.rglob("*.json") if f"`{p.relative_to(ROOT)}`" not in report]
     assert not unknown, (
         f"{len(unknown)} JSON artifact(s) are neither summarised nor listed in the appendix, which "
-        f"means the page is silently ignoring them: {[str(p.relative_to(ROOT)) for p in unknown[:8]]}")
+        f"means the page is silently ignoring them: {[str(p.relative_to(ROOT)) for p in unknown[:8]]}"
+    )
 
 
 def test_no_count_or_measurement_is_hardcoded_in_the_generator():
@@ -187,7 +197,8 @@ def test_no_count_or_measurement_is_hardcoded_in_the_generator():
                 bad.append(f"line {node.lineno}: {node.value}")
     assert not bad, (
         "numeric literals that are too large to be structural appear in the generator; a count or a "
-        "measurement must be read from an artifact:\n  " + "\n  ".join(bad))
+        "measurement must be read from an artifact:\n  " + "\n  ".join(bad)
+    )
 
 
 def test_the_generator_survives_a_tree_with_no_git_and_an_unreadable_artifact(tmp_path):
@@ -200,15 +211,17 @@ def test_the_generator_survives_a_tree_with_no_git_and_an_unreadable_artifact(tm
     junk = RESULTS / "_test_unreadable.json"
     junk.write_text("{ this is not json")
     try:
+
         class Args:
             baseline_sha = "0" * 40
             integration_sha = "deadbeef"
 
-        page = mod.build(RESULTS, tmp_path, Args())          # tmp_path is not a checkout
+        page = mod.build(RESULTS, tmp_path, Args())  # tmp_path is not a checkout
     finally:
         junk.unlink()
     assert "deadbeef" in page and "_test_unreadable.json" in page, (
-        "an unparseable artifact must appear in the appendix rather than stopping the report")
+        "an unparseable artifact must appear in the appendix rather than stopping the report"
+    )
 
 
 def test_a_superseded_shard_is_excluded_and_listed_with_its_reason(tmp_path):
@@ -234,6 +247,7 @@ def test_a_superseded_shard_is_excluded_and_listed_with_its_reason(tmp_path):
     stamped = ws / "sweep" / "gpu_after.json"
     stamped.write_text(json.dumps(dict(live, unusable="the before leg ran on a different card")))
     try:
+
         class Args:
             baseline_sha = None
             integration_sha = None
@@ -249,9 +263,9 @@ def test_a_superseded_shard_is_excluded_and_listed_with_its_reason(tmp_path):
     paths = {p for p, _ in A.superseded}
     assert "examples/results/step6/_test_supersession/sweep/superseded_loaded_node/cpu_after.json" in paths
     assert "examples/results/step6/_test_supersession/sweep/gpu_after.json" in paths
-    assert not any(o["ws"] == "_test_supersession"
-                   for v in A.tier_observations().values() for o in v), (
-        "a withdrawn shard was still labelled with a tier")
+    assert not any(o["ws"] == "_test_supersession" for v in A.tier_observations().values() for o in v), (
+        "a withdrawn shard was still labelled with a tier"
+    )
     assert "load average 44 on a shared node." in page, "the README's reason did not reach the page"
     assert "the before leg ran on a different card" in page, "the `unusable` reason did not reach the page"
 
@@ -314,7 +328,8 @@ def test_the_current_gate_a_record_is_the_newest_by_ancestry(report):
     if not stamped:
         pytest.skip("no Gate-A certification carries a stamped git_commit in this checkout")
     assert all(o.get("ref") for o in stamped), (
-        "a certification with no declared reference version cannot be grouped into an arm")
+        "a certification with no declared reference version cannot be grouped into an arm"
+    )
 
     checked = 0
     for cfg, rows in obs.items():
@@ -330,9 +345,11 @@ def test_the_current_gate_a_record_is_the_newest_by_ancestry(report):
                 if order.on_tree(o["commit"]) and order.on_tree(cur["commit"]) and o["commit"] != cur["commit"]:
                     assert not order._is_ancestor(cur["commit"], o["commit"]), (
                         f"{cfg}/{ref}: the record chosen as current ({cur['commit'][:8]}) is an "
-                        f"ancestor of one it superseded ({o['commit'][:8]})")
+                        f"ancestor of one it superseded ({o['commit'][:8]})"
+                    )
                 assert f"`{o['path']}`" in report, (
-                    f"{cfg}/{ref}: the superseded record {o['path']} is not listed on the page")
+                    f"{cfg}/{ref}: the superseded record {o['path']} is not listed on the page"
+                )
     assert checked, "no configuration has two records under one reference; the rule went untested"
     assert "## Correctness after Step 6" in report
     assert "Superseded certification records" in report

@@ -12,6 +12,7 @@ the declarations, the variation space (which needs only the cached bundle) and t
 public state. Their frames are owed to the GPU oracle and are recorded as owed in
 ``examples/results/step9/envs-ogbench/findings.md``.
 """
+
 from __future__ import annotations
 
 import inspect
@@ -31,8 +32,7 @@ from stable_envs.envs.ogbench import maze as MAZE  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
-MAZE_CELLS = tuple(f"{lo.capitalize()}maze{mz.capitalize()}{ds.capitalize()}"
-                   for lo, mz, ds in MAZE.CELLS)
+MAZE_CELLS = tuple(f"{lo.capitalize()}maze{mz.capitalize()}{ds.capitalize()}" for lo, mz, ds in MAZE.CELLS)
 MANIP_CELLS = ("OGBCube", "OGBScene")
 
 #: A representative maze cell per BODY, so the behavioural half exercises all three state shapes and
@@ -40,12 +40,14 @@ MANIP_CELLS = ("OGBCube", "OGBScene")
 #: bodies) without paying for 25 MuJoCo bakes in a unit run.
 BODY_SAMPLE = ("PointmazeMediumNavigate", "AntmazeMediumExplore", "HumanoidmazeMediumNavigate")
 
+
 def _needs_ogbench():
     pytest.importorskip("mujoco")
     pytest.importorskip("ogbench")
 
 
 # ===================================================================== structural: where things live
+
 
 def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
     """``envs/ogbench.py`` became the PACKAGE ``envs/ogbench/``, so there is no second path to alias.
@@ -57,11 +59,29 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
     in a 27-cell replay.
     """
     assert hasattr(OGB, "__path__"), "stable_envs.envs.ogbench must be the package"
-    for name in ("OGBenchMaze", "BODY_STATE", "CELLS", "MAT_SPECULAR", "SHADE_AMBIENT",
-                 "SHADE_DIFFUSE", "SHADE_SPECULAR", "SHADE_EXPONENT", "_NOMINAL", "_FREE",
-                 "_ANT_JOINTS", "_HUMANOID_JOINTS", "_SCENE_CACHE", "_SCENE_CACHE_MAX",
-                 "_ENV_CACHE", "_Scene", "_offsets", "_mat_and_tex", "_build_reference",
-                 "_scene_env", "_make_classes"):
+    for name in (
+        "OGBenchMaze",
+        "BODY_STATE",
+        "CELLS",
+        "MAT_SPECULAR",
+        "SHADE_AMBIENT",
+        "SHADE_DIFFUSE",
+        "SHADE_SPECULAR",
+        "SHADE_EXPONENT",
+        "_NOMINAL",
+        "_FREE",
+        "_ANT_JOINTS",
+        "_HUMANOID_JOINTS",
+        "_SCENE_CACHE",
+        "_SCENE_CACHE_MAX",
+        "_ENV_CACHE",
+        "_Scene",
+        "_offsets",
+        "_mat_and_tex",
+        "_build_reference",
+        "_scene_env",
+        "_make_classes",
+    ):
         assert hasattr(OGB, name), f"the Step-8 name {name} no longer resolves off the package"
     for cell in MAZE_CELLS:
         assert getattr(OGB, cell) is R.REGISTRY[cell], f"{cell} is not the registered class"
@@ -69,11 +89,32 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
 
 def test_the_manipulation_module_exposes_the_names_the_tests_reach_for():
     """Canonical path: ``stable_envs.envs.ogbench.manipulation``."""
-    for name in ("OGBManipBase", "SPEC", "VISIBLE_GROUPS", "IDENTITY_QUAT", "MJW_CHUNK",
-                 "_bundle", "_reference_env", "_button_tables", "_ctx_button_tables", "_context",
-                 "_appearance_digest", "_plate_rig", "_PlateRig", "_movers", "_cube_geoms",
-                 "_grid_texture", "_variation_defaults", "mj_quantise", "_seeded_action_space",
-                 "_PLATE_CACHE", "_CTX_CACHE", "_BUNDLE_CACHE", "_PLATE_RIGS", "_KEEPALIVE"):
+    for name in (
+        "OGBManipBase",
+        "SPEC",
+        "VISIBLE_GROUPS",
+        "IDENTITY_QUAT",
+        "MJW_CHUNK",
+        "_bundle",
+        "_reference_env",
+        "_button_tables",
+        "_ctx_button_tables",
+        "_context",
+        "_appearance_digest",
+        "_plate_rig",
+        "_PlateRig",
+        "_movers",
+        "_cube_geoms",
+        "_grid_texture",
+        "_variation_defaults",
+        "mj_quantise",
+        "_seeded_action_space",
+        "_PLATE_CACHE",
+        "_CTX_CACHE",
+        "_BUNDLE_CACHE",
+        "_PLATE_RIGS",
+        "_KEEPALIVE",
+    ):
         assert hasattr(MANIP, name), f"{name} no longer resolves off ogbench.manipulation"
     assert "zero_bits" in inspect.getsource(MANIP._context)
 
@@ -109,6 +150,7 @@ def test_every_cell_reports_its_canonical_module():
         assert cls.__module__ == "stable_envs.envs.ogbench.manipulation"
         assert R.spec(cell)["family"] == "manipulation"
         import importlib
+
         assert getattr(importlib.import_module(cls.__module__), cell) is cls
     assert set(R.list_envs(family="ogbench")) == set(MAZE_CELLS)
     assert set(R.list_envs(family="manipulation")) == set(MANIP_CELLS)
@@ -127,6 +169,7 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
 
 # ============================================================ structural: the preserved declarations
 
+
 @pytest.mark.parametrize("cell", MAZE_CELLS)
 def test_the_maze_declarations_are_still_exactly_what_step_8_declared(cell):
     """``parity_interior_min`` is NOT relaxed anywhere, and the shipped knobs did not move.
@@ -141,8 +184,13 @@ def test_the_maze_declarations_are_still_exactly_what_step_8_declared(cell):
     assert cls.default_size == 224
     assert cls.default_supersample == 2, "the supersample every parity number was measured at"
     assert cls.TILE == 32
-    assert cls.PLATE_PATHS == ("floor.tint", "walls.color", "camera.distance_scale",
-                              "camera.elevation", "rendering.decolor_floor")
+    assert cls.PLATE_PATHS == (
+        "floor.tint",
+        "walls.color",
+        "camera.distance_scale",
+        "camera.elevation",
+        "rendering.decolor_floor",
+    )
     assert "AGENT-PIXEL PARITY" in cls.parity_note
     assert cls.reference_id == f"ogbench/{cls.LOCO}maze-{cls.MAZE}-v0"
 
@@ -150,7 +198,11 @@ def test_the_maze_declarations_are_still_exactly_what_step_8_declared(cell):
 def test_the_fitted_shading_law_constants_did_not_move():
     """The four numbers the whole agent-pixel claim rests on, and the per-light split beside them."""
     assert (MAZE.SHADE_AMBIENT, MAZE.SHADE_DIFFUSE, MAZE.SHADE_SPECULAR, MAZE.SHADE_EXPONENT) == (
-        0.078438, 1.416189, 0.230554, 45.0)
+        0.078438,
+        1.416189,
+        0.230554,
+        45.0,
+    )
     assert MAZE._NOMINAL == dict(amb=(0.1, 0.0), dif=(0.4, 1.0), spec=(0.5, 0.1))
     assert MAZE.MAT_SPECULAR == 0.5
 
@@ -162,9 +214,21 @@ def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
     assert cls.fidelity_tier == "visual"
     assert cls.parity_interior_min is None
     vf = cls.visual_fidelity
-    for k in ("mean_abs", "within8_frac", "ssim", "mean_abs_max", "within8_min", "ssim_min",
-              "measured_at", "reference_versions", "measured_with", "interior_frac",
-              "interior_exact_frac", "all_exact_frac", "draw_spread"):
+    for k in (
+        "mean_abs",
+        "within8_frac",
+        "ssim",
+        "mean_abs_max",
+        "within8_min",
+        "ssim_min",
+        "measured_at",
+        "reference_versions",
+        "measured_with",
+        "interior_frac",
+        "interior_exact_frac",
+        "all_exact_frac",
+        "draw_spread",
+    ):
         assert k in vf, f"{cell}: visual_fidelity is missing {k}"
     assert vf["mean_abs_max"] > vf["mean_abs"], "a ceiling must sit above the measurement"
     assert vf["within8_min"] < vf["within8_frac"] and vf["ssim_min"] < vf["ssim"]
@@ -194,12 +258,14 @@ def test_cpu_is_refused_rather_than_served_from_the_gpu(cell):
     msg = str(e.value)
     assert "no CPU backend" in msg and "Use device='cuda'" in msg
     assert f"{MANIP.SPEC[cell.replace('OGB', '')]['visible_tri']:,}" in msg, (
-        "the refusal must quote THIS cell's triangle count, not its sibling's")
+        "the refusal must quote THIS cell's triangle count, not its sibling's"
+    )
     with pytest.raises(ValueError, match="CPU3D-OGB-1"):
         snv.make(cell, num_envs=1, device="cpu")
 
 
 # =========================================================== structural: the shared texel substitution
+
 
 def test_the_plate_texel_helpers_are_the_shared_module_and_not_a_second_copy():
     """Step 8 lifted this code OUT of ``ogb_manip`` for ``dmcontrol`` to share and left the copy here.
@@ -210,16 +276,18 @@ def test_the_plate_texel_helpers_are_the_shared_module_and_not_a_second_copy():
     those functions carry is unchanged and is checked by ``tests/unit/test_plate_texels.py``.
     """
     from stable_envs.envs import _plate_texels as PX
+
     assert MANIP.mj_quantise is PX.quantise
     assert "_texel_slots(" in inspect.getsource(MANIP._grid_texture)
     assert "_substitute(" in inspect.getsource(MANIP.OGBManipBase._apply_floor)
     assert "_texel_key(" in inspect.getsource(MANIP.OGBManipBase._floor_key)
     # The GL-context-current fix (Step-8 38150c3) must still be on the path a bake takes. It lives in
     # ``substitute`` now; a version of it that forgot the line would put back a 219/255 plate.
-    body = inspect.getsource(PX.substitute).split('"""')[-1]      # the code, not the prose above it
+    body = inspect.getsource(PX.substitute).split('"""')[-1]  # the code, not the prose above it
     assert "make_current()" in body and "mjr_uploadTexture" in body
     assert body.index("make_current()") < body.index("mjr_uploadTexture"), (
-        "the upload must be made under the renderer's OWN context")
+        "the upload must be made under the renderer's OWN context"
+    )
 
 
 def test_the_manipulation_plate_is_grouped_by_floor_colour_and_nothing_else():
@@ -228,6 +296,7 @@ def test_the_manipulation_plate_is_grouped_by_floor_colour_and_nothing_else():
 
 
 # =============================================================== structural: the Step-9 state layout
+
 
 @pytest.mark.parametrize("loco,dim", [("point", 2), ("ant", 15), ("humanoid", 28)])
 def test_the_maze_state_layout_covers_the_packed_row_and_hides_nothing(loco, dim):
@@ -246,8 +315,7 @@ def test_the_maze_state_layout_covers_the_packed_row_and_hides_nothing(loco, dim
         off += w
     assert layout[0][0] == ("root", "position")
     if loco != "point":
-        assert [k for k, _, _ in layout] == [("root", "position"), ("root", "orientation"),
-                                             ("joints",)]
+        assert [k for k, _, _ in layout] == [("root", "position"), ("root", "orientation"), ("joints",)]
 
 
 def test_the_maze_variation_taxonomy_is_the_step8_one():
@@ -259,12 +327,17 @@ def test_the_maze_variation_taxonomy_is_the_step8_one():
     here as well as compared by the oracle.
     """
     for loco in ("point", "ant", "humanoid"):
-        space = MAZE.OGBenchMaze.make_variation_space(
-            types.SimpleNamespace(LOCO=loco, MAZE="medium"))
+        space = MAZE.OGBenchMaze.make_variation_space(types.SimpleNamespace(LOCO=loco, MAZE="medium"))
         # ``names()`` is sorted, which is the Step-8 order the oracle compares against the baseline.
-        assert list(space.names()) == ["agent.color", "agent.scale", "camera.distance_scale",
-                                       "camera.elevation", "floor.tint",
-                                       "rendering.decolor_floor", "walls.color"]
+        assert list(space.names()) == [
+            "agent.color",
+            "agent.scale",
+            "camera.distance_scale",
+            "camera.elevation",
+            "floor.tint",
+            "rendering.decolor_floor",
+            "walls.color",
+        ]
         assert np.allclose(space["agent"]["color"].value, [0.7, 0.5, 0.3])
         assert np.allclose(space["walls"]["color"].value, [0.6, 0.6, 0.6])
         assert np.allclose(space["camera"]["elevation"].value, [-90.0])
@@ -289,6 +362,7 @@ def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
 
 # ===================================================================== behavioural: the maze cells
 
+
 @pytest.fixture(scope="module")
 def _ogbench():
     _needs_ogbench()
@@ -302,7 +376,7 @@ def test_takes_the_step9_constructor_and_the_lifecycle(_ogbench, cell):
         assert env.size == 224 and env.ss == 2
     finally:
         env.close()
-    env.close()                                   # idempotent
+    env.close()  # idempotent
     with pytest.raises(RuntimeError, match="closed"):
         env.render()
     with R.REGISTRY[cell](num_envs=2, device="cpu") as e:
@@ -324,7 +398,7 @@ def test_the_public_state_is_the_bodys_own_structure_and_packs_back_to_the_froze
         # the keys name the packed columns in order, which is what makes the grouping a VIEW
         names, i = list(env.state_names), 0
         for key, w, _ in env._layout():
-            assert env.state_names_of(key) == names[i:i + w]
+            assert env.state_names_of(key) == names[i : i + w]
             i += w
 
 
@@ -339,7 +413,7 @@ def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(_ogbench,
             msg = str(e.value)
             assert cell in msg and "no batched simulator" in msg
             assert "env.render(states)" in msg, "the refusal must say what DOES work"
-        assert env.render().shape == (2, 224, 224, 3)     # reset and render still work
+        assert env.render().shape == (2, 224, 224, 3)  # reset and render still work
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)

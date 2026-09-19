@@ -102,6 +102,7 @@ art at whatever tile size is asked for. An atlas embedded at 7 px and resampled 
 render would be a picture of a picture, and only the one embedded size would be comparable to a
 reference.
 """
+
 from __future__ import annotations
 
 import base64
@@ -115,37 +116,67 @@ from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict, Discrete
 
-VIEW = 9                          #: ``Env(view=(9, 9))`` — the default, and what every paper uses
-GRID_W = VIEW                     #: world columns
-N_ITEM = 16                       #: ``len(constants.items)``
-ITEM_ROWS = -(-N_ITEM // VIEW)    #: ``ceil(len(items) / view[0])`` — 2
-GRID_H = VIEW - ITEM_ROWS         #: world rows — 7
-OFF_X, OFF_Y = GRID_W // 2, GRID_H // 2      #: ``LocalView._offset``: the player's cell
-AREA = 64                         #: ``Env(area=(64, 64))``
-N_CELL = GRID_W * GRID_H          #: 63
+VIEW = 9  #: ``Env(view=(9, 9))`` — the default, and what every paper uses
+GRID_W = VIEW  #: world columns
+N_ITEM = 16  #: ``len(constants.items)``
+ITEM_ROWS = -(-N_ITEM // VIEW)  #: ``ceil(len(items) / view[0])`` — 2
+GRID_H = VIEW - ITEM_ROWS  #: world rows — 7
+OFF_X, OFF_Y = GRID_W // 2, GRID_H // 2  #: ``LocalView._offset``: the player's cell
+AREA = 64  #: ``Env(area=(64, 64))``
+N_CELL = GRID_W * GRID_H  #: 63
 
 #: material id -> asset name; id 0 is ``World._mat_names[0] = None``, which ``Textures.get`` draws as
 #: ``unknown``. Straight from ``crafter.constants.materials``, in its order.
-MATERIALS = ("water", "grass", "stone", "path", "sand", "tree", "lava", "coal", "iron", "diamond",
-             "table", "furnace")
+MATERIALS = ("water", "grass", "stone", "path", "sand", "tree", "lava", "coal", "iron", "diamond", "table", "furnace")
 #: object-texture id -> asset name; 0 is "no object". Every ``Object.texture`` an env can produce.
-OBJTEX = (None, "player-left", "player-right", "player-up", "player-down", "player-sleep",
-          "cow", "zombie", "skeleton", "arrow-left", "arrow-right", "arrow-up", "arrow-down",
-          "plant", "plant-ripe", "fence")
-ITEMS = ("health", "food", "drink", "energy", "sapling", "wood", "stone", "coal", "iron", "diamond",
-         "wood_pickaxe", "stone_pickaxe", "iron_pickaxe", "wood_sword", "stone_sword", "iron_sword")
+OBJTEX = (
+    None,
+    "player-left",
+    "player-right",
+    "player-up",
+    "player-down",
+    "player-sleep",
+    "cow",
+    "zombie",
+    "skeleton",
+    "arrow-left",
+    "arrow-right",
+    "arrow-up",
+    "arrow-down",
+    "plant",
+    "plant-ripe",
+    "fence",
+)
+ITEMS = (
+    "health",
+    "food",
+    "drink",
+    "energy",
+    "sapling",
+    "wood",
+    "stone",
+    "coal",
+    "iron",
+    "diamond",
+    "wood_pickaxe",
+    "stone_pickaxe",
+    "iron_pickaxe",
+    "wood_sword",
+    "stone_sword",
+    "iron_sword",
+)
 
-N_MAT = len(MATERIALS) + 1        # 13, including the ``None`` material
-N_OBJ = len(OBJTEX)               # 16
-OUTSIDE = N_MAT * N_OBJ           # 208: the cell is off the 64x64 world; LocalView leaves it grey
-N_CODE = OUTSIDE + 1              # 209
+N_MAT = len(MATERIALS) + 1  # 13, including the ``None`` material
+N_OBJ = len(OBJTEX)  # 16
+OUTSIDE = N_MAT * N_OBJ  # 208: the cell is off the 64x64 world; LocalView leaves it grey
+N_CODE = OUTSIDE + 1  # 209
 OBJ_SLEEP = OBJTEX.index("player-sleep")
 #: object id -> the facing ``Player.texture`` was reading, for the reference bridge
 FACING = {1: (-1, 0), 2: (1, 0), 3: (0, -1), 4: (0, 1)}
 
-ITEM_BASE = N_CODE                #: atlas slot of (item 0, amount 0)
+ITEM_BASE = N_CODE  #: atlas slot of (item 0, amount 0)
 BLACK_TILE = ITEM_BASE + N_ITEM * 10
-N_TILE = BLACK_TILE + 1           # 370
+N_TILE = BLACK_TILE + 1  # 370
 
 #: ``LocalView`` fills its canvas with this before drawing, so an out-of-world cell stays flat grey.
 DEFAULT_OUTSIDE = (127, 127, 127)
@@ -172,19 +203,126 @@ DAYLIGHT_MIN = 0.5
 #: PIL's ITU-R 601-2 luma, in the fixed point ``convert("L")`` actually uses
 LUMA = (19595, 38470, 7471)
 
-MIN_UNIT, MAX_UNIT = 3, 64        #: tile sizes the embedded resize table covers
+MIN_UNIT, MAX_UNIT = 3, 64  #: tile sizes the embedded resize table covers
 
-TEX_NAMES = ('1', '2', '3', '4', '5', '6', '7', '8', '9', 'arrow-down', 'arrow-left', 'arrow-right',
-             'arrow-up', 'coal', 'cow', 'debug', 'debug-2', 'debug-3', 'diamond', 'drink', 'energy',
-             'fence', 'food', 'furnace', 'grass', 'health', 'iron', 'iron_pickaxe', 'iron_sword',
-             'lava', 'leaves', 'log', 'path', 'plant', 'plant-ripe', 'plant-young', 'player',
-             'player-down', 'player-left', 'player-right', 'player-sleep', 'player-up', 'sand',
-             'sapling', 'skeleton', 'stone', 'stone_pickaxe', 'stone_sword', 'table', 'tree',
-             'unknown', 'water', 'wood', 'wood_pickaxe', 'wood_sword', 'zombie')
+TEX_NAMES = (
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "arrow-down",
+    "arrow-left",
+    "arrow-right",
+    "arrow-up",
+    "coal",
+    "cow",
+    "debug",
+    "debug-2",
+    "debug-3",
+    "diamond",
+    "drink",
+    "energy",
+    "fence",
+    "food",
+    "furnace",
+    "grass",
+    "health",
+    "iron",
+    "iron_pickaxe",
+    "iron_sword",
+    "lava",
+    "leaves",
+    "log",
+    "path",
+    "plant",
+    "plant-ripe",
+    "plant-young",
+    "player",
+    "player-down",
+    "player-left",
+    "player-right",
+    "player-sleep",
+    "player-up",
+    "sand",
+    "sapling",
+    "skeleton",
+    "stone",
+    "stone_pickaxe",
+    "stone_sword",
+    "table",
+    "tree",
+    "unknown",
+    "water",
+    "wood",
+    "wood_pickaxe",
+    "wood_sword",
+    "zombie",
+)
 #: which of them carry a real alpha channel — ``_draw_alpha`` blends only those, and writes the rest
 #: over the background
-TEX_HAS_ALPHA = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1,
-                 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1)
+TEX_HAS_ALPHA = (
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+)
 
 _TEX_SHAPE = (56, 16, 16, 4)
 _TEX_B64 = (
@@ -327,12 +465,12 @@ def _draw_alpha(canvas: np.ndarray, off, t: np.ndarray, has_alpha: bool) -> None
     x, y = off
     w, h = t.shape[:2]
     if not has_alpha:
-        canvas[x:x + w, y:y + h] = t[..., :3]
+        canvas[x : x + w, y : y + h] = t[..., :3]
         return
     a = t[..., 3:].astype(np.float32) / 255
     c = t[..., :3].astype(np.float32) / 255
-    cur = canvas[x:x + w, y:y + h].astype(np.float32) / 255
-    canvas[x:x + w, y:y + h] = (255 * (a * c + (1 - a) * cur)).astype(np.uint8)
+    cur = canvas[x : x + w, y : y + h].astype(np.float32) / 255
+    canvas[x : x + w, y : y + h] = (255 * (a * c + (1 - a) * cur)).astype(np.uint8)
 
 
 class _Atlas:
@@ -383,10 +521,9 @@ class _Atlas:
             mt = _resize(tex[idx[mat]], nearest, unit)
             for o, ob in enumerate(OBJTEX):
                 c = np.zeros((unit, unit, 3), np.uint8) + DEFAULT_OUTSIDE[0]
-                c[:] = mt[..., :3]                       # _draw: alpha DISCARDED, never blended
+                c[:] = mt[..., :3]  # _draw: alpha DISCARDED, never blended
                 if o:
-                    _draw_alpha(c, (0, 0), _resize(tex[idx[ob]], nearest, unit),
-                                bool(TEX_HAS_ALPHA[idx[ob]]))
+                    _draw_alpha(c, (0, 0), _resize(tex[idx[ob]], nearest, unit), bool(TEX_HAS_ALPHA[idx[ob]]))
                 out[m * N_OBJ + o] = c.swapaxes(0, 1)
         out[OUTSIDE] = np.asarray(DEFAULT_OUTSIDE, np.uint8)
         ui, ua = int(0.8 * unit), int(0.6 * unit)
@@ -395,11 +532,9 @@ class _Atlas:
             for a in range(1, 10):
                 c = np.zeros((unit, unit, 3), np.uint8)
                 if ui:
-                    _draw_alpha(c, (oi, oi), _resize(tex[idx[name]], nearest, ui),
-                                bool(TEX_HAS_ALPHA[idx[name]]))
+                    _draw_alpha(c, (oi, oi), _resize(tex[idx[name]], nearest, ui), bool(TEX_HAS_ALPHA[idx[name]]))
                 if ua:
-                    _draw_alpha(c, (oa, oa), _resize(tex[idx[str(a)]], nearest, ua),
-                                bool(TEX_HAS_ALPHA[idx[str(a)]]))
+                    _draw_alpha(c, (oa, oa), _resize(tex[idx[str(a)]], nearest, ua), bool(TEX_HAS_ALPHA[idx[str(a)]]))
                 out[ITEM_BASE + i * 10 + a] = c.swapaxes(0, 1)
         return out
 
@@ -410,8 +545,7 @@ def _luma(x: torch.Tensor) -> torch.Tensor:
     ``>> 16`` of a non-negative integer is ``floor(/65536)``, and the largest value reachable is
     255*65536 + 32768, so float64 carries it exactly.
     """
-    return torch.floor((x[..., 0:1] * LUMA[0] + x[..., 1:2] * LUMA[1] + x[..., 2:3] * LUMA[2]
-                        + 32768.0) / 65536.0)
+    return torch.floor((x[..., 0:1] * LUMA[0] + x[..., 1:2] * LUMA[1] + x[..., 2:3] * LUMA[2] + 32768.0) / 65536.0)
 
 
 @register
@@ -420,18 +554,18 @@ class Crafter(Env):
 
     name = "crafter"
     state_dim = N_CELL + N_ITEM + 1
-    state_names = (tuple(f"cell[{x},{y}]" for x in range(GRID_W) for y in range(GRID_H))
-                   + tuple(f"inv_{n}" for n in ITEMS)
-                   + ("daylight",))
+    state_names = (
+        tuple(f"cell[{x},{y}]" for x in range(GRID_W) for y in range(GRID_H))
+        + tuple(f"inv_{n}" for n in ITEMS)
+        + ("daylight",)
+    )
     #: Step-9 state (contract §3). Three keys because the row is genuinely three things -- the lit
     #: world window, the inventory strip below it, and the scalar that decides how the world half is
     #: tinted -- drawn by three different parts of the renderer. The packed row and its column order
     #: are unchanged, every column is covered, so nothing is hidden and the frozen layout does not
     #: move. ``cells`` stays ONE key of ``N_CELL`` columns rather than a 9x7 nest: the public State
     #: describes the environment, and a per-cell key would be 63 names for one grid.
-    state_layout = ((("cells",), N_CELL, 0),
-                    (("inventory",), N_ITEM, N_CELL),
-                    (("daylight",), 1, N_CELL + N_ITEM))
+    state_layout = ((("cells",), N_CELL, 0), (("inventory",), N_ITEM, N_CELL), (("daylight",), 1, N_CELL + N_ITEM))
     default_size = 64
     reference_id = "CrafterReward-v1"
 
@@ -444,7 +578,8 @@ class Crafter(Env):
             raise ValueError(
                 f"Crafter: size {size} gives {u} px per tile, outside the {MIN_UNIT}-{MAX_UNIT} px "
                 f"range the embedded resize table covers; use a size in "
-                f"[{MIN_UNIT * VIEW}, {MAX_UNIT * VIEW + VIEW - 1}]")
+                f"[{MIN_UNIT * VIEW}, {MAX_UNIT * VIEW + VIEW - 1}]"
+            )
         return u
 
     # ---- variation -------------------------------------------------------
@@ -467,26 +602,43 @@ class Crafter(Env):
         contain a sleeping player (measured: 14% of steps under a uniform policy), and a knob that is
         inert on most batches is what ``check_variations_do_something`` exists to reject.
         """
-        return Dict({
-            #: rows: the fill LocalView leaves where the window is off the world, and the canvas
-            #: colour Env.render pastes the view onto
-            "chrome": Box(low=0, high=255, shape=(2, 3), dtype=np.uint8,
-                          init_value=np.array([DEFAULT_OUTSIDE, DEFAULT_PAD], np.uint8)),
-            #: tint r, g, b, then SCALES on ``_light``'s saturation (0.4) and tint amount (0.5)
-            "night": Box(low=np.array([0, 0, 0, 0, 0], np.float32),
-                         high=np.array([255, 255, 255, 2, 2], np.float32),
-                         shape=(5,), dtype=np.float32, init_value=DEFAULT_NIGHT),
-            "channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32,
-                                init_value=[1.0, 1.0, 1.0]),
-            "objects_visible": Discrete(2, init_value=1),
-            "inventory_visible": Discrete(2, init_value=1),
-        })
+        return Dict(
+            {
+                #: rows: the fill LocalView leaves where the window is off the world, and the canvas
+                #: colour Env.render pastes the view onto
+                "chrome": Box(
+                    low=0,
+                    high=255,
+                    shape=(2, 3),
+                    dtype=np.uint8,
+                    init_value=np.array([DEFAULT_OUTSIDE, DEFAULT_PAD], np.uint8),
+                ),
+                #: tint r, g, b, then SCALES on ``_light``'s saturation (0.4) and tint amount (0.5)
+                "night": Box(
+                    low=np.array([0, 0, 0, 0, 0], np.float32),
+                    high=np.array([255, 255, 255, 2, 2], np.float32),
+                    shape=(5,),
+                    dtype=np.float32,
+                    init_value=DEFAULT_NIGHT,
+                ),
+                "channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0]),
+                "objects_visible": Discrete(2, init_value=1),
+                "inventory_visible": Discrete(2, init_value=1),
+            }
+        )
 
     # ---- rendering -------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,80)`` -> ``(...,size,size,3)`` uint8 on device, in the reference's own order.
 
         There is no ``scene()``: the frame is a gather from a texture atlas followed by two per-pixel
@@ -495,9 +647,9 @@ class Crafter(Env):
         if supersample not in (None, 1):
             raise ValueError(
                 f"Crafter.render: supersample={supersample} is meaningless here — the frame is a "
-                f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate.")
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+                f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate."
+            )
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = s.shape[0]
@@ -507,35 +659,36 @@ class Crafter(Env):
         sty = self.resolve_style(style, variation, batch=n)
 
         codes = torch.round(s[:, :N_CELL]).long().remainder(N_CODE).view(n, GRID_W, GRID_H)
-        inv = torch.round(s[:, N_CELL:N_CELL + N_ITEM]).long().clamp_(0, 9)
+        inv = torch.round(s[:, N_CELL : N_CELL + N_ITEM]).long().clamp_(0, 9)
         day = s[:, -1].double()
 
-        world = codes.permute(0, 2, 1).contiguous()                    # (n, GRID_H, GRID_W)
+        world = codes.permute(0, 2, 1).contiguous()  # (n, GRID_H, GRID_W)
         # objects off: fall back to the same material with object id 0. OUTSIDE (=13*16) is congruent
         # to 0 modulo N_OBJ, so it survives this untouched and needs no special case.
         keep = (sty["objects_visible"] > 0.5).view(n, 1, 1)
         world = torch.where(keep, world, world - world % N_OBJ)
 
         slot = ITEM_BASE + torch.arange(N_ITEM, device=self.device) * 10 + inv
-        slot = torch.where((sty["inventory_visible"] > 0.5).view(n, 1), slot,
-                           torch.full_like(slot, BLACK_TILE))
+        slot = torch.where((sty["inventory_visible"] > 0.5).view(n, 1), slot, torch.full_like(slot, BLACK_TILE))
         strip = torch.full((n, ITEM_ROWS * GRID_W), BLACK_TILE, dtype=torch.long, device=self.device)
-        strip[:, :N_ITEM] = slot                       # ItemView: index i -> (i // VIEW, i % VIEW)
+        strip[:, :N_ITEM] = slot  # ItemView: index i -> (i // VIEW, i % VIEW)
         idx = torch.cat([world, strip.view(n, ITEM_ROWS, GRID_W)], 1).to(torch.int32)
-        tiles = tm.blit(atlas, idx, unit)                              # (n, VIEW*u, VIEW*u, 3) uint8
+        tiles = tm.blit(atlas, idx, unit)  # (n, VIEW*u, VIEW*u, 3) uint8
 
-        view = self._post(tiles, world, day, sty, unit)                # (n, VIEW*u, VIEW*u, 3) uint8
+        view = self._post(tiles, world, day, sty, unit)  # (n, VIEW*u, VIEW*u, 3) uint8
         if out is None:
             out = torch.empty(n, size, size, 3, dtype=torch.uint8, device=self.device)
         buf = out.view(n, size, size, 3)
-        buf[:] = torch.trunc(sty["chrome"].view(n, 2, 3)[:, 1].double()).clamp_(0, 255).to(
-            torch.uint8).view(n, 1, 1, 3)
+        buf[:] = (
+            torch.trunc(sty["chrome"].view(n, 2, 3)[:, 1].double()).clamp_(0, 255).to(torch.uint8).view(n, 1, 1, 3)
+        )
         b = (size - unit * VIEW) // 2
-        buf[:, b:b + unit * VIEW, b:b + unit * VIEW] = view
+        buf[:, b : b + unit * VIEW, b : b + unit * VIEW] = view
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    def _post(self, tiles: torch.Tensor, world: torch.Tensor, day: torch.Tensor, sty,
-              unit: int, budget: int = 256 << 20) -> torch.Tensor:
+    def _post(
+        self, tiles: torch.Tensor, world: torch.Tensor, day: torch.Tensor, sty, unit: int, budget: int = 256 << 20
+    ) -> torch.Tensor:
         """``_light``, then ``_sleep``, then the channel gain, then the truncation ``render`` does.
 
         Chunked over the batch because the arithmetic is float64 and must be: the reference's last
@@ -548,9 +701,8 @@ class Crafter(Env):
         chrome = torch.trunc(sty["chrome"].view(n, 2, 3).double())
         night = sty["night"].double()
         gain = sty["channel_gain"].double()
-        asleep = ((world[:, OFF_Y, OFF_X] % N_OBJ == OBJ_SLEEP)
-                  & (world[:, OFF_Y, OFF_X] != OUTSIDE))
-        outside = (world == OUTSIDE)
+        asleep = (world[:, OFF_Y, OFF_X] % N_OBJ == OBJ_SLEEP) & (world[:, OFF_Y, OFF_X] != OUTSIDE)
+        outside = world == OUTSIDE
         step = max(1, int(budget // max(1, H * tiles.shape[2] * 3 * 8 * 4)))
         frame = torch.empty_like(tiles)
         for b0 in range(0, n, step):
@@ -572,9 +724,9 @@ class Crafter(Env):
 
             if bool(asleep[b0:b1].any()):
                 sl = torch.trunc(lit)
-                sl = ((1 - SLEEP_AMOUNT) * _luma(sl).expand_as(sl)
-                      + SLEEP_AMOUNT * torch.tensor(SLEEP_TINT, dtype=torch.float64,
-                                                    device=lit.device))
+                sl = (1 - SLEEP_AMOUNT) * _luma(sl).expand_as(sl) + SLEEP_AMOUNT * torch.tensor(
+                    SLEEP_TINT, dtype=torch.float64, device=lit.device
+                )
                 lit = torch.where(asleep[b0:b1].view(k, 1, 1, 1), sl, lit)
 
             v = torch.cat([lit, tiles[b0:b1, H:].double()], 1) * gain[b0:b1].view(k, 1, 1, 3)
@@ -610,11 +762,12 @@ class Crafter(Env):
     def reference_env(cls, size: int | None = None):
         """The official ``crafter.Env`` at the requested frame size. Needs ``crafter`` installed."""
         import crafter
+
         n = int(size or cls.default_size)
         env = crafter.Env(area=(AREA, AREA), view=(VIEW, VIEW), size=(n, n), seed=0)
         assert tuple(env._local_view._grid) == (GRID_W, GRID_H), (
-            f"crafter builds a {tuple(env._local_view._grid)} world view; this env assumes "
-            f"({GRID_W}, {GRID_H})")
+            f"crafter builds a {tuple(env._local_view._grid)} world view; this env assumes ({GRID_W}, {GRID_H})"
+        )
         return env
 
     @classmethod
@@ -628,24 +781,27 @@ class Crafter(Env):
         ``x = 4 - k``, and there is exactly one such position.
         """
         from crafter import objects
+
         names = (None,) + MATERIALS
         w = env._world
         out = []
         for st in np.asarray(states, np.float64):
             codes = np.round(st[:N_CELL]).astype(np.int64).reshape(GRID_W, GRID_H) % N_CODE
-            inv = np.round(st[N_CELL:N_CELL + N_ITEM]).astype(np.int64).clip(0, 9)
+            inv = np.round(st[N_CELL : N_CELL + N_ITEM]).astype(np.int64).clip(0, 9)
             day = float(st[-1])
             if day < DAYLIGHT_MIN:
                 raise NotImplementedError(
                     f"Crafter: daylight {day:.4f} is below {DAYLIGHT_MIN}, where LocalView._light "
                     f"mixes in noise drawn from the world RNG. That frame is not a function of any "
-                    f"state, so there is nothing to compare against.")
+                    f"state, so there is nothing to compare against."
+                )
             cx, cy = cls._player_pos(codes)
             centre = int(codes[OFF_X, OFF_Y])
             if centre == OUTSIDE or centre % N_OBJ not in FACING and centre % N_OBJ != OBJ_SLEEP:
                 raise NotImplementedError(
                     f"Crafter: the centre cell holds {OBJTEX[centre % N_OBJ]!r} rather than the "
-                    f"player. LocalView is centred on a player, so such a window has no reference.")
+                    f"player. LocalView is centred on a player, so such a window has no reference."
+                )
 
             w.reset(seed=0)
             p = objects.Player(w, (cx, cy))
@@ -688,7 +844,8 @@ class Crafter(Env):
             return pl
         raise NotImplementedError(
             f"Crafter: {name!r} is a player texture on a cell that is not the window's centre; "
-            f"crafter's world holds exactly one player and it stands at the centre by construction.")
+            f"crafter's world holds exactly one player and it stands at the centre by construction."
+        )
 
     @staticmethod
     def _player_pos(codes: np.ndarray) -> tuple[int, int]:
@@ -704,19 +861,20 @@ class Crafter(Env):
         if not np.array_equal(m, cols[:, None] | rows[None, :]):
             raise NotImplementedError(
                 "Crafter: the out-of-world cells in this state are not a border of whole rows and "
-                "columns, so no player position produces them.")
+                "columns, so no player position produces them."
+            )
 
         def span(flags, off, n, limit):
             k0 = int(np.argmin(flags)) if flags[0] else 0
             k1 = int(np.argmin(flags[::-1])) if flags[-1] else 0
             if k0 and k1:
                 raise NotImplementedError("Crafter: the window cannot leave the world on both sides")
-            if flags[k0:n - k1].any():
+            if flags[k0 : n - k1].any():
                 raise NotImplementedError("Crafter: out-of-world cells are not a contiguous border")
             if max(k0, k1) > limit:
                 raise NotImplementedError(
-                    f"Crafter: {max(k0, k1)} out-of-world lines exceeds the {limit} a "
-                    f"{n}-wide window can have")
+                    f"Crafter: {max(k0, k1)} out-of-world lines exceeds the {limit} a {n}-wide window can have"
+                )
             if k0:
                 return off - k0
             if k1:

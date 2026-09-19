@@ -19,6 +19,7 @@ turning the knob back on reproduces the corpus, which is what would identify how
 
     python examples/downstream_step5/reacher/corpus_probe.py --n 32 --out examples/results/step5/reacher
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,8 +39,7 @@ def compare(ours: np.ndarray, ref: np.ndarray, C) -> dict:
     a = C.pixel_agreement(ours, ref)
     return {
         "exact_frac": float(a["exact_frac"]),
-        "interior_exact_frac": (None if a["interior_exact_frac"] is None
-                                else float(a["interior_exact_frac"])),
+        "interior_exact_frac": (None if a["interior_exact_frac"] is None else float(a["interior_exact_frac"])),
         "interior_px": int(a["interior_px"]),
         "mean_abs": float(a["mean_abs"]),
         "max_abs": int(a["max_abs"]),
@@ -65,14 +65,16 @@ def main() -> None:
     args = ap.parse_args()
 
     os.environ.setdefault("MUJOCO_GL", "egl")
+    import sys
+
     import mujoco
-    import torch  # noqa: F401
-    import stable_envs as se
-    from stable_envs.testing import conformance as C
     import stable_worldmodel as swm
+    import torch  # noqa: F401
     from stable_worldmodel.envs.dmcontrol.reacher import ReacherDMControlWrapper
 
-    import sys
+    import stable_envs as se
+    from stable_envs.testing import conformance as C
+
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from state_bridge import slot_names
 
@@ -83,7 +85,7 @@ def main() -> None:
 
     def arr(k):
         v = data[k]
-        return (v.numpy() if hasattr(v, "numpy") else np.asarray(v))
+        return v.numpy() if hasattr(v, "numpy") else np.asarray(v)
 
     stored = arr("pixels")
     if stored.ndim == 4 and stored.shape[1] in (1, 3):
@@ -97,7 +99,7 @@ def main() -> None:
 
     def render_ours(placement: str) -> np.ndarray:
         st = np.zeros((len(stored), ours.state_dim), np.float32)
-        st[:, :ours.nq] = qpos[:, :ours.nq]
+        st[:, : ours.nq] = qpos[:, : ours.nq]
         for j, (_a, name, comp) in enumerate(slots):
             if placement == "offscreen":
                 st[:, ours.nq + j] = OFFSCREEN[comp] if name == "target" else 0.0
@@ -125,19 +127,28 @@ def main() -> None:
             out.append(env.render(args.size, args.size).copy())
         return np.stack(out)
 
-    res = {"dataset": args.dataset, "n": int(args.n), "size": args.size,
-           "stored_red_px_per_frame": reddish(stored), "comparisons": {}}
+    res = {
+        "dataset": args.dataset,
+        "n": int(args.n),
+        "size": args.size,
+        "stored_red_px_per_frame": reddish(stored),
+        "comparisons": {},
+    }
     panels = {}
-    for label, frames in (("ours_as_placed", render_ours("as_placed")),
-                          ("ours_offscreen", render_ours("offscreen")),
-                          ("official_default", render_official(0)),
-                          ("official_target_on", render_official(1))):
+    for label, frames in (
+        ("ours_as_placed", render_ours("as_placed")),
+        ("ours_offscreen", render_ours("offscreen")),
+        ("official_default", render_official(0)),
+        ("official_target_on", render_official(1)),
+    ):
         res["comparisons"][label] = compare(frames, stored, C)
         res["comparisons"][label]["red_px_per_frame"] = reddish(frames)
         panels[label] = frames
         r = res["comparisons"][label]
-        print(f"{label:20s} vs stored: exact {r['exact_frac']:.4f}  mean|d| {r['mean_abs']:7.3f}  "
-              f"ssim {r['ssim']:.4f}  red {r['red_px_per_frame']:6.0f}")
+        print(
+            f"{label:20s} vs stored: exact {r['exact_frac']:.4f}  mean|d| {r['mean_abs']:7.3f}  "
+            f"ssim {r['ssim']:.4f}  red {r['red_px_per_frame']:6.0f}"
+        )
 
     best = min(res["comparisons"], key=lambda k: res["comparisons"][k]["mean_abs"])
     res["closest_to_stored"] = best
@@ -145,10 +156,15 @@ def main() -> None:
     (args.out / "corpus_probe.json").write_text(json.dumps(res, indent=2))
     try:
         import imageio.v2 as imageio
+
         k = min(3, len(stored))
-        rows_img = [np.concatenate([stored[i], panels["ours_as_placed"][i],
-                                    panels["ours_offscreen"][i], panels["official_default"][i]],
-                                   axis=1) for i in range(k)]
+        rows_img = [
+            np.concatenate(
+                [stored[i], panels["ours_as_placed"][i], panels["ours_offscreen"][i], panels["official_default"][i]],
+                axis=1,
+            )
+            for i in range(k)
+        ]
         imageio.imwrite(args.out / "corpus_probe.png", np.concatenate(rows_img, axis=0))
         print(f"wrote {args.out / 'corpus_probe.png'} (stored | ours as_placed | ours offscreen | official)")
     except Exception as e:

@@ -18,6 +18,7 @@ model is free to order its geoms differently from ``suite.load``'s. Indices are 
 to NAMES on our model once, and looked up by name on theirs -- an ordering difference then produces
 a KeyError instead of a target drawn at the arm's coordinates.
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -186,6 +186,7 @@ difference in the table is resolution, not cells.
 
 go_19x19 is BUILT and deliberately NOT REGISTERED; see ``NOT_REGISTERED`` below for the number.
 """
+
 from __future__ import annotations
 
 import io
@@ -214,22 +215,26 @@ try:
     import pgx as _pgx
     import resvg_py as _resvg
     from PIL import Image as _Image
-except Exception as _e:                                                       # pragma: no cover
+except Exception as _e:  # pragma: no cover
     raise ImportError(
         f"the PGX family needs pgx (which brings jax), resvg_py and Pillow, and this interpreter "
         f"cannot provide them: {type(_e).__name__}: {_e}. The envs were measured in {_VENV}, built "
         f"with a CLEAN `python -m venv` -- NOT --system-site-packages, which breaks jax's CUDA plugin "
-        f"discovery. See docs/research/pgx.md") from _e
+        f"discovery. See docs/research/pgx.md"
+    ) from _e
 
-try:                                       # the path cairosvg would have passed and then failed on
-    _resvg.svg_to_bytes(svg_string='<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">'
-                                   '<rect width="1" height="1" fill="black"/></svg>')
-except Exception as _e:                                                       # pragma: no cover
+try:  # the path cairosvg would have passed and then failed on
+    _resvg.svg_to_bytes(
+        svg_string='<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">'
+        '<rect width="1" height="1" fill="black"/></svg>'
+    )
+except Exception as _e:  # pragma: no cover
     raise ImportError(
         f"resvg_py imports but cannot rasterize ({type(_e).__name__}: {_e}). This is the failure mode "
         f"cairosvg has on this cluster's login node -- the import succeeds and every call raises -- "
         f"which is why this check renders a document instead of importing a name. See "
-        f"docs/research/pgx.md") from _e
+        f"docs/research/pgx.md"
+    ) from _e
 
 from ..env import Env
 from ..registry import register
@@ -258,9 +263,12 @@ def _rgb_of(name: str) -> tuple[int, int, int]:
     """
     hit = _COLOR_CACHE.get(name)
     if hit is None:
-        png = bytes(_resvg.svg_to_bytes(
-            svg_string=f'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">'
-                       f'<rect width="1" height="1" fill="{name}"/></svg>'))
+        png = bytes(
+            _resvg.svg_to_bytes(
+                svg_string=f'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">'
+                f'<rect width="1" height="1" fill="{name}"/></svg>'
+            )
+        )
         a = np.array(_Image.open(io.BytesIO(png)).convert("RGB"))
         hit = _COLOR_CACHE[name] = tuple(int(v) for v in a.reshape(3))
     return hit
@@ -296,6 +304,7 @@ def _empty_state(game: str):
     """
     import jax
     import jax.numpy as jnp
+
     env = _pgx.make(game)
     st = jax.jit(env.init)(jax.random.PRNGKey(0))
     spec = GAMES[game]
@@ -339,6 +348,7 @@ def _mark_colors(game: str, empty_svg: str) -> dict:
     reference the question directly, so the answer cannot drift from the drawing.
     """
     import jax.numpy as jnp
+
     spec = GAMES[game]
     base = _empty_state(game)
     empty = _drawables(empty_svg)
@@ -348,8 +358,7 @@ def _mark_colors(game: str, empty_svg: str) -> dict:
         board[0] = spec[who]
         st = base.replace(_x=base._x._replace(board=jnp.asarray(board)))
         got = _drawables(st.to_svg())
-        new = got[len(empty):] if len(got) > len(empty) else [
-            g for g in got if g not in empty]
+        new = got[len(empty) :] if len(got) > len(empty) else [g for g in got if g not in empty]
         assert new, f"{game}: placing a {who} mark added no drawable to the document"
         # A stone is one circle (fill + stroke); an X is two identically-stroked lines.
         fills = {g[1] for g in new}
@@ -370,6 +379,7 @@ def _bundle(game: str) -> _Bundle:
     if hit is not None:
         return hit
     from pgx._src.visualizer import Visualizer
+
     spec = GAMES[game]
     st = _empty_state(game)
     # The resolved ColorSet is READ OFF the reference's own config resolution rather than copied out
@@ -400,7 +410,8 @@ def _bundle(game: str) -> _Bundle:
         pal["line.color"] = rest.pop()
     assert set(pal.values()) == names, (
         f"{game}: static colours {names} are not covered by {pal} -- a knob that owns no colour is "
-        f"inert, and a colour that no knob owns cannot be varied")
+        f"inert, and a colour that no knob owns cannot be varied"
+    )
     b.palette = pal
     b.marks = _mark_colors(game, b.empty_svg)
     _BUNDLE_CACHE[game] = b
@@ -418,16 +429,21 @@ def _bundle(game: str) -> _Bundle:
 #:   mark               "stone" (filled disc + 1 px stroke) or "xo" (tic_tac_toe)
 #:   radius             the SVG ``r`` BEFORE the stroke is accounted for
 GAMES: dict[str, dict] = {
-    "tic_tac_toe": dict(cells=9, ncols=3, nrows=3, grid=60.0, empty=-1, p1=0, p2=1,
-                        mark="xo", radius=24.0, stroke=3.0, arm=0.8),
-    "connect_four": dict(cells=42, ncols=7, nrows=6, grid=35.0, empty=-1, p1=0, p2=1,
-                         mark="stone", radius=35.0 / 3.0, stroke=1.0),
-    "othello": dict(cells=64, ncols=8, nrows=8, grid=30.0, empty=0, p1=1, p2=-1,
-                    mark="stone", radius=30.0 / 2.4, stroke=1.0),
-    "go_9x9": dict(cells=81, ncols=9, nrows=9, grid=25.0, empty=0, p1=1, p2=-1,
-                   mark="stone", radius=25.0 / 2.2, stroke=1.0),
-    "go_19x19": dict(cells=361, ncols=19, nrows=19, grid=25.0, empty=0, p1=1, p2=-1,
-                     mark="stone", radius=25.0 / 2.2, stroke=1.0),
+    "tic_tac_toe": dict(
+        cells=9, ncols=3, nrows=3, grid=60.0, empty=-1, p1=0, p2=1, mark="xo", radius=24.0, stroke=3.0, arm=0.8
+    ),
+    "connect_four": dict(
+        cells=42, ncols=7, nrows=6, grid=35.0, empty=-1, p1=0, p2=1, mark="stone", radius=35.0 / 3.0, stroke=1.0
+    ),
+    "othello": dict(
+        cells=64, ncols=8, nrows=8, grid=30.0, empty=0, p1=1, p2=-1, mark="stone", radius=30.0 / 2.4, stroke=1.0
+    ),
+    "go_9x9": dict(
+        cells=81, ncols=9, nrows=9, grid=25.0, empty=0, p1=1, p2=-1, mark="stone", radius=25.0 / 2.2, stroke=1.0
+    ),
+    "go_19x19": dict(
+        cells=361, ncols=19, nrows=19, grid=25.0, empty=0, p1=1, p2=-1, mark="stone", radius=25.0 / 2.2, stroke=1.0
+    ),
 }
 
 
@@ -446,6 +462,7 @@ def _state_pool(game: str, n: int = 512) -> np.ndarray:
     if hit is not None:
         return hit
     import jax
+
     spec = GAMES[game]
     env = _pgx.make(game)
     init, step = jax.jit(env.init), jax.jit(env.step)
@@ -515,21 +532,32 @@ class PgxBoardBase(Env):
     parity_interior_min = 1.0
     parity_note = ""
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         b = _bundle(self.GAME)
         spec = GAMES[self.GAME]
         self._b = b
         self._spec = spec
         self.state_dim = int(spec["cells"])
-        self.state_names = tuple(
-            f"cell_r{i // spec['ncols']}c{i % spec['ncols']}" for i in range(spec["cells"]))
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        self.state_names = tuple(f"cell_r{i // spec['ncols']}c{i % spec['ncols']}" for i in range(spec["cells"]))
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         assert self.default_size == b.native, (
-            f"{type(self).__name__}: default_size {self.default_size} is not the document's own "
-            f"canvas {b.native}")
+            f"{type(self).__name__}: default_size {self.default_size} is not the document's own canvas {b.native}"
+        )
         self._check_plate_is_constant()
 
     def _close(self) -> None:
@@ -560,7 +588,8 @@ class PgxBoardBase(Env):
         assert d == 0, (
             f"{type(self).__name__}: the baked plate differs by {d}/255 between two states, so the "
             f"board furniture is NOT a function of the appearance alone and the plate design is "
-            f"unsound for this game")
+            f"unsound for this game"
+        )
 
     # ---- variation ---------------------------------------------------------------------------
 
@@ -606,16 +635,19 @@ class PgxBoardBase(Env):
         hit = cache.get(who)
         if hit is None:
             hit = cache[who] = torch.tensor(
-                _rgb_of(self._b.marks[f"{who}.outline"]), device=self.device,
-                dtype=torch.float32).reshape(1, 1, 1, 3)
+                _rgb_of(self._b.marks[f"{who}.outline"]), device=self.device, dtype=torch.float32
+            ).reshape(1, 1, 1, 3)
         return hit
 
     # ---- the plate ---------------------------------------------------------------------------
 
     def _plate(self, res: int, colors: dict) -> torch.Tensor:
-        key = (self.GAME, int(res), str(self.device),
-               tuple(sorted((k, tuple(np.round(np.asarray(v, np.float64), 4).tolist()))
-                            for k, v in colors.items())))
+        key = (
+            self.GAME,
+            int(res),
+            str(self.device),
+            tuple(sorted((k, tuple(np.round(np.asarray(v, np.float64), 4).tolist())) for k, v in colors.items())),
+        )
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
@@ -649,16 +681,22 @@ class PgxBoardBase(Env):
     # ---- render ------------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,cells)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
 
         Two passes. The plate is shared per distinct appearance and gathered per row; the marks are
         composited in ONE pass over the batch, because the lattice makes every pixel's cell lookup a
         gather rather than a loop over pieces.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])
@@ -681,7 +719,7 @@ class PgxBoardBase(Env):
             over = {}
             for p in paths:
                 w = int(sty.layout[p][1])
-                over[p] = row[o:o + w]
+                over[p] = row[o : o + w]
                 o += w
             plates.append(self._plate(res, over))
         pl = torch.stack(plates)[torch.as_tensor(inv, device=self.device, dtype=torch.long)]
@@ -690,8 +728,7 @@ class PgxBoardBase(Env):
         if ss == 1:
             buf.copy_(img.round_().clamp_(0, 255).to(torch.uint8))
         else:
-            small = (img.reshape(B, size, ss, size, ss, 3).mean((2, 4))
-                     .round_().clamp_(0, 255).to(torch.uint8))
+            small = img.reshape(B, size, ss, size, ss, 3).mean((2, 4)).round_().clamp_(0, 255).to(torch.uint8)
             buf.copy_(small)
         return buf.view(*lead, size, size, 3) if lead else buf
 
@@ -721,7 +758,7 @@ class PgxBoardBase(Env):
             return hit
         b, spec = self._b, self._spec
         G = b.grid
-        sc = res / float(b.native)                      # canvas units -> pixels
+        sc = res / float(b.native)  # canvas units -> pixels
         px = (torch.arange(res, device=self.device, dtype=torch.float32) + 0.5) / sc
         out = {}
         for axis, n in (("x", spec["ncols"]), ("y", spec["nrows"])):
@@ -733,7 +770,7 @@ class PgxBoardBase(Env):
         # A pixel whose nearest lattice point is OUTSIDE the board must not pick up the clamped
         # neighbour's mark; the clamp keeps the gather in range and this mask keeps it from painting.
         idx = (rowc.reshape(-1, 1) * spec["ncols"] + colc.reshape(1, -1)).reshape(-1)
-        inside = (iny.reshape(-1, 1) & inx.reshape(1, -1))
+        inside = iny.reshape(-1, 1) & inx.reshape(1, -1)
         hit = (idx, u, v, inside, sc)
         cache[res] = hit
         return hit
@@ -773,11 +810,12 @@ class PgxBoardBase(Env):
         G = b.grid
         sc = res / float(b.native)
         S = int(self.COV_SUB)
-        base = (torch.arange(res, device=self.device, dtype=torch.float32) + 0.5)
+        base = torch.arange(res, device=self.device, dtype=torch.float32) + 0.5
         r = float(spec["radius"]) * float(scale)
         half = 0.5 * float(spec["stroke"])
         nmap = 2 if spec["mark"] == "stone" else 3
         acc = [torch.zeros((res, res), device=self.device, dtype=torch.float32) for _ in range(nmap)]
+
         # The cell index is ``round(t / G) - 1`` and then clamped, exactly as in ``_lattice``. Writing
         # the clamp without the ``- 1`` shifts every local coordinate by a full grid, which reads as a
         # renderer that has forgotten how to draw rather than as an index error: it took go_19x19's
@@ -795,16 +833,15 @@ class PgxBoardBase(Env):
         # so this cost is paid once.
         if spec["mark"] == "stone":
             return self._stone_alpha(res, r, half, sc, base, _local, key, cache)
-        offs = ((torch.arange(S, device=self.device, dtype=torch.float32) + 0.5) / S - 0.5)
-        uu = _local((base.reshape(-1, 1) + offs.reshape(1, -1)) / sc,
-                    spec["ncols"]).reshape(1, res * S)                  # (1, res*S)
+        offs = (torch.arange(S, device=self.device, dtype=torch.float32) + 0.5) / S - 0.5
+        uu = _local((base.reshape(-1, 1) + offs.reshape(1, -1)) / sc, spec["ncols"]).reshape(1, res * S)  # (1, res*S)
         for iy in range(S):
             ys = (base + offs[iy]) / sc
-            vv = _local(ys, spec["nrows"]).reshape(-1, 1)               # (res, 1)
+            vv = _local(ys, spec["nrows"]).reshape(-1, 1)  # (res, 1)
             d = torch.sqrt(uu * uu + vv * vv).reshape(res, res, S)
             if spec["mark"] == "stone":
-                acc[0] += (d < r).to(torch.float32).sum(-1)             # fill, out to the PATH
-                acc[1] += ((d - r).abs() <= half).to(torch.float32).sum(-1)   # stroke, straddling it
+                acc[0] += (d < r).to(torch.float32).sum(-1)  # fill, out to the PATH
+                acc[1] += ((d - r).abs() <= half).to(torch.float32).sum(-1)  # stroke, straddling it
             else:
                 uu2 = uu.reshape(1, res, S)
                 vv2 = vv.reshape(-1, 1, 1)
@@ -819,7 +856,7 @@ class PgxBoardBase(Env):
                     p = ((uu2 + sgn * vv2) * inv).abs() <= halfL
                     q = ((uu2 - sgn * vv2) * inv).abs() <= half
                     acc[k] += (p & q).to(torch.float32).sum(-1)
-                acc[2] += ((d - r).abs() <= half).to(torch.float32).sum(-1)   # the O, an annulus
+                acc[2] += ((d - r).abs() <= half).to(torch.float32).sum(-1)  # the O, an annulus
         hit = tuple(a / float(S * S) for a in acc)
         cache[key] = hit
         return hit
@@ -844,9 +881,9 @@ class PgxBoardBase(Env):
         quantising to 1/(2S).
         """
         N = int(self.SCAN_ROWS)
-        hpx = 0.5 / sc                                   # half a pixel, in canvas units
-        u = _local(base / sc, self._spec["ncols"]).reshape(1, -1)        # (1, res)
-        v = _local(base / sc, self._spec["nrows"]).reshape(-1, 1)        # (res, 1)
+        hpx = 0.5 / sc  # half a pixel, in canvas units
+        u = _local(base / sc, self._spec["ncols"]).reshape(1, -1)  # (1, res)
+        v = _local(base / sc, self._spec["nrows"]).reshape(-1, 1)  # (res, 1)
         x0, x1 = u - hpx, u + hpx
         acc = [torch.zeros((res, res), device=self.device, dtype=torch.float32) for _ in range(2)]
 
@@ -890,11 +927,10 @@ class PgxBoardBase(Env):
         is2 = ((val == float(spec["p2"])) & inside).to(plate.dtype)
 
         msc = sty["mark.scale"].reshape(-1)
-        uniq, inv = np.unique(np.round(msc.detach().cpu().numpy().astype(np.float64), 6),
-                              return_inverse=True)
+        uniq, inv = np.unique(np.round(msc.detach().cpu().numpy().astype(np.float64), 6), return_inverse=True)
         maps = [self._alpha_maps(res, g) for g in uniq]
         g = torch.as_tensor(inv, device=self.device, dtype=torch.long)
-        a = [torch.stack([m[k] for m in maps])[g] for k in range(len(maps[0]))]   # each (B,H,W)
+        a = [torch.stack([m[k] for m in maps])[g] for k in range(len(maps[0]))]  # each (B,H,W)
 
         c1 = self._mark_color(sty, "p1", "color", B)
         c2 = self._mark_color(sty, "p2", "color", B)
@@ -907,11 +943,10 @@ class PgxBoardBase(Env):
             # plate's remainder sum to one and no compositing order can double-count anything.
             wf1, ws1 = (a[0] * is1).unsqueeze(-1), (a[1] * is1).unsqueeze(-1)
             wf2, ws2 = (a[0] * is2).unsqueeze(-1), (a[1] * is2).unsqueeze(-1)
-            return (plate * (1.0 - wf1 - ws1 - wf2 - ws2)
-                    + c1 * wf1 + o1 * ws1 + c2 * wf2 + o2 * ws2)
-        img = self._over(img, c1, a[0] * is1)          # X, first stroke
-        img = self._over(img, c1, a[1] * is1)          # X, second stroke
-        return self._over(img, c2, a[2] * is2)         # O, an annulus over the plate
+            return plate * (1.0 - wf1 - ws1 - wf2 - ws2) + c1 * wf1 + o1 * ws1 + c2 * wf2 + o2 * ws2
+        img = self._over(img, c1, a[0] * is1)  # X, first stroke
+        img = self._over(img, c1, a[1] * is1)  # X, second stroke
+        return self._over(img, c2, a[2] * is2)  # O, an annulus over the plate
 
     @staticmethod
     def _over(dst: torch.Tensor, color: torch.Tensor, alpha: torch.Tensor) -> torch.Tensor:
@@ -945,6 +980,7 @@ class PgxBoardBase(Env):
         """
         import jax
         import jax.numpy as jnp
+
         game = env["game"]
         size = int(env["size"])
         spec = GAMES[game]
@@ -964,7 +1000,8 @@ class PgxBoardBase(Env):
                 raise AssertionError(
                     f"{cls.__name__}: the reference did not reach the requested position (max "
                     f"{err}); every parity number computed from it would compare two different "
-                    f"boards")
+                    f"boards"
+                )
             svg = st.to_svg(scale=scale)
             out.append(_raster(svg, size, size))
         return np.stack(out)
@@ -997,18 +1034,26 @@ def _make_classes():
         cname = "Pgx" + "".join(p.capitalize() for p in game.split("_"))
         b = _bundle(game)
         keep = register if game not in NOT_REGISTERED else (lambda c: c)
-        made[cname] = keep(type(cname, (PgxBoardBase,), dict(
-            GAME=game,
-            name=f"pgx-{game.replace('_', '-')}",
-            reference_id=f"pgx/{game}",
-            # The document's own canvas, so parity is measured at the resolution PGX draws at, and
-            # the plate paths the palette actually resolved -- both read off the reference at import
-            # rather than written down here, where they would be one upstream theme edit from wrong.
-            default_size=b.native,
-            PLATE_PATHS=tuple(b.palette),
-            __doc__=(f"PGX {game}: state is one ternary per board cell, rendered as a resvg-baked "
-                     f"plate of the board furniture plus a lattice gather for the marks."),
-        )))
+        made[cname] = keep(
+            type(
+                cname,
+                (PgxBoardBase,),
+                dict(
+                    GAME=game,
+                    name=f"pgx-{game.replace('_', '-')}",
+                    reference_id=f"pgx/{game}",
+                    # The document's own canvas, so parity is measured at the resolution PGX draws at, and
+                    # the plate paths the palette actually resolved -- both read off the reference at import
+                    # rather than written down here, where they would be one upstream theme edit from wrong.
+                    default_size=b.native,
+                    PLATE_PATHS=tuple(b.palette),
+                    __doc__=(
+                        f"PGX {game}: state is one ternary per board cell, rendered as a resvg-baked "
+                        f"plate of the board furniture plus a lattice gather for the marks."
+                    ),
+                ),
+            )
+        )
     return made
 
 

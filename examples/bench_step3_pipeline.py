@@ -23,6 +23,7 @@ hardware and adds the render and transfer terms beside them.
 
     python examples/bench_step3_pipeline.py --device cuda --out examples/results/step3/pipeline/3090.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,12 +39,12 @@ from torch.utils.data import BatchSampler, DataLoader, SequentialSampler, Tensor
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import bench_gpu_vs_cpu as B
+from bench_gpu_vs_cpu import set_device
+from bench_step3 import provenance
+
 import stable_envs as se
 from stable_envs.data import collate_batched
-
-from bench_gpu_vs_cpu import set_device
-import bench_gpu_vs_cpu as B
-from bench_step3 import provenance
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -102,14 +103,22 @@ def time_arm(make_iter, env, device: str, reps: int) -> dict:
             t0 = time.perf_counter()
         _sync()
         tot.append(time.perf_counter() - t_all0)
-        load.append(t_load); xfer.append(t_xfer); rend.append(t_rend)
+        load.append(t_load)
+        xfer.append(t_xfer)
+        rend.append(t_rend)
     med = statistics.median(tot)
     frames = n / len(tot)
-    return {"seconds_total": med, "fps": frames / med, "frames": frames,
-            "loader_s": statistics.median(load), "transfer_s": statistics.median(xfer),
-            "render_s": statistics.median(rend),
-            "loader_frac": statistics.median(load) / med, "transfer_frac": statistics.median(xfer) / med,
-            "render_frac": statistics.median(rend) / med}
+    return {
+        "seconds_total": med,
+        "fps": frames / med,
+        "frames": frames,
+        "loader_s": statistics.median(load),
+        "transfer_s": statistics.median(xfer),
+        "render_s": statistics.median(rend),
+        "loader_frac": statistics.median(load) / med,
+        "transfer_frac": statistics.median(xfer) / med,
+        "render_frac": statistics.median(rend) / med,
+    }
 
 
 def run_env(name: str, device: str, batches: list[int], n_states: int, reps: int) -> dict:
@@ -118,8 +127,14 @@ def run_env(name: str, device: str, batches: list[int], n_states: int, reps: int
         env = se.make(name, num_envs=max(batches), device=device)
         pool = np.asarray(env.sample_states(min(n_states, 4096)), np.float32)
         states = torch.as_tensor(np.resize(pool, (n_states, pool.shape[1])))
-        rec.update({"size": int(env.size), "supersample": int(env.ss), "n_states": n_states,
-                    "state_dim": int(states.shape[1])})
+        rec.update(
+            {
+                "size": int(env.size),
+                "supersample": int(env.ss),
+                "n_states": n_states,
+                "state_dim": int(states.shape[1]),
+            }
+        )
     except Exception as e:
         rec["blocked"] = {"reason": f"{type(e).__name__}: {e}"[:300], "kind": "blocked_environment"}
         return rec
@@ -130,13 +145,17 @@ def run_env(name: str, device: str, batches: list[int], n_states: int, reps: int
     for b in batches:
         cells = {}
         arms = {
-            "no_loader": lambda b=b: (states[i:i + b] for i in range(0, len(states), b)),
+            "no_loader": lambda b=b: (states[i : i + b] for i in range(0, len(states), b)),
             "default_collate": lambda b=b: DataLoader(ds_peritem, batch_size=b, num_workers=0),
             "batch_sampler": lambda b=b: DataLoader(
-                ds_batched, batch_size=None, num_workers=0,
-                sampler=BatchSampler(SequentialSampler(range(len(states))), batch_size=b, drop_last=False)),
-            "collate_batched": lambda b=b: DataLoader(ds_batched, batch_size=b, num_workers=0,
-                                                      collate_fn=collate_batched),
+                ds_batched,
+                batch_size=None,
+                num_workers=0,
+                sampler=BatchSampler(SequentialSampler(range(len(states))), batch_size=b, drop_last=False),
+            ),
+            "collate_batched": lambda b=b: DataLoader(
+                ds_batched, batch_size=b, num_workers=0, collate_fn=collate_batched
+            ),
         }
         for arm, mk in arms.items():
             try:
@@ -149,9 +168,14 @@ def run_env(name: str, device: str, batches: list[int], n_states: int, reps: int
                 c["frac_of_ceiling"] = c["fps"] / ceiling
         rec["arms"][str(b)] = cells
         best = (cells.get("no_loader") or {}).get("fps") or 0
-        print(f"    B={b:5d}  ceiling {best:10,.0f} f/s   "
-              + "  ".join(f"{a}={(cells[a].get('frac_of_ceiling') or float('nan')):.2f}"
-                          for a in ("default_collate", "batch_sampler", "collate_batched")), flush=True)
+        print(
+            f"    B={b:5d}  ceiling {best:10,.0f} f/s   "
+            + "  ".join(
+                f"{a}={(cells[a].get('frac_of_ceiling') or float('nan')):.2f}"
+                for a in ("default_collate", "batch_sampler", "collate_batched")
+            ),
+            flush=True,
+        )
     del env
     if device == "cuda":
         torch.cuda.empty_cache()
@@ -175,10 +199,16 @@ def main() -> None:
     if a.device == "cuda" and not torch.cuda.is_available():
         raise SystemExit("--device cuda but no CUDA is available")
     batches = [int(x) for x in a.batches.split(",")]
-    out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)
-    res = {"what": "Step 3 product C: end-to-end input pipeline, NOT a renderer certification number",
-           "provenance": provenance(a.device, torch.get_num_threads()),
-           "batches": batches, "n_states": a.n_states, "reps": a.reps, "envs": []}
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    res = {
+        "what": "Step 3 product C: end-to-end input pipeline, NOT a renderer certification number",
+        "provenance": provenance(a.device, torch.get_num_threads()),
+        "batches": batches,
+        "n_states": a.n_states,
+        "reps": a.reps,
+        "envs": [],
+    }
     for n in [x.strip() for x in a.envs.split(",") if x.strip()]:
         print(f"  {n}:", flush=True)
         res["envs"].append(run_env(n, a.device, batches, a.n_states, a.reps))

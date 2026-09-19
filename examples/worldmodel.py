@@ -10,6 +10,7 @@ on the arms that need them.
     python examples/worldmodel.py --mode gym --device cpu
     python examples/worldmodel.py --mode swap --device cpu
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,16 +33,17 @@ NATIVE WORLD LIMITATION
 
 def resolve_device(requested: str) -> str:
     import torch
+
     if requested == "auto":
         return "cuda" if torch.cuda.is_available() else "cpu"
     if requested.startswith("cuda") and not torch.cuda.is_available():
-        raise SystemExit(
-            f"{requested} was requested but torch.cuda.is_available() is False. Pass --device cpu.")
+        raise SystemExit(f"{requested} was requested but torch.cuda.is_available() is False. Pass --device cpu.")
     return requested
 
 
 def cmd_ids() -> int:
     import stable_envs as snv
+
     print(f"stable-envs {snv.__version__}")
     print(f"SWM_IDS {len(snv.SWM_IDS)}  (snv.SWM_IDS; 40 pixel + 2 symbolic)")
     print(f"spec('swm/PushT-v1')['name'] = {snv.spec('swm/PushT-v1')['name']}")
@@ -95,6 +97,7 @@ def cmd_swap(device: str) -> int:
     try:
         import gymnasium as gym
         import numpy as np
+
         import stable_envs.interop as interop
     except ImportError as e:
         print(f"swap arm needs gymnasium (+ numpy): {e}")
@@ -106,8 +109,7 @@ def cmd_swap(device: str) -> int:
         return 0
     print(NATIVE_WORLD_LIMITATION)
     try:
-        wrapped = interop.swap_renderer(official, "PushT", read_state=interop.pusht_state,
-                                        device=device)
+        wrapped = interop.swap_renderer(official, "PushT", read_state=interop.pusht_state, device=device)
         wrapped.reset(seed=0)
         frame = wrapped.render()
         print(f"swap_renderer frame {np.asarray(frame).shape} — official dynamics, our pixels")
@@ -117,8 +119,7 @@ def cmd_swap(device: str) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(
-        description="Frozen SWM interop. Native World(env=snv.Env) is not shipped.")
+    p = argparse.ArgumentParser(description="Frozen SWM interop. Native World(env=snv.Env) is not shipped.")
     p.add_argument("--mode", choices=("ids", "gym", "swap", "all"), default="ids")
     p.add_argument("--device", default="auto")
     args = p.parse_args(argv)

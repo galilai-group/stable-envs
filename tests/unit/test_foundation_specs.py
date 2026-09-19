@@ -4,6 +4,7 @@ CPU only, no device and no reference package. The refusal is the part worth test
 continuous spec does not invent a distribution to sample from, because a state spec with no declared
 bounds is a statement that the reachable set is not a box and the env — not this class — knows it.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -67,8 +68,9 @@ def test_the_batch_axis_is_free_and_everything_after_it_is_not():
 
 
 def test_a_composite_mirrors_tensordict_keys_and_samples_a_tensordict():
-    spec = CompositeSpec({"agent": {"position": Spec((2,), low=0, high=512)},
-                          "block": {"angle": Spec((1,), low=-3.2, high=3.2)}})
+    spec = CompositeSpec(
+        {"agent": {"position": Spec((2,), low=0, high=512)}, "block": {"angle": Spec((1,), low=-3.2, high=3.2)}}
+    )
     td = spec.sample(5, np.random.default_rng(0))
     assert list(td.batch_size) == [5]
     assert td["agent", "position"].shape == (5, 2)
@@ -80,12 +82,14 @@ def test_a_composite_mirrors_tensordict_keys_and_samples_a_tensordict():
 
 def test_a_composite_refuses_a_state_whose_keys_do_not_match():
     from tensordict import TensorDict
+
     spec = CompositeSpec({"a": Spec((1,)), "b": Spec((1,))})
     with pytest.raises(ValueError, match="missing"):
         spec.validate(TensorDict({"a": torch.zeros(2, 1)}, batch_size=[2]))
     with pytest.raises(ValueError, match="unexpected"):
-        spec.validate(TensorDict({"a": torch.zeros(2, 1), "b": torch.zeros(2, 1),
-                                  "c": torch.zeros(2, 1)}, batch_size=[2]))
+        spec.validate(
+            TensorDict({"a": torch.zeros(2, 1), "b": torch.zeros(2, 1), "c": torch.zeros(2, 1)}, batch_size=[2])
+        )
 
 
 def test_to_device_is_a_copy_and_leaves_the_original_alone():

@@ -32,6 +32,7 @@ one line among a dozen other import notes. ``test_conformance.py`` closed that a
 (``SE_REQUIRE_ENV_MODULES``) and ``tests/gpu/_shared.py`` closes it at the SWEEP level
 (``resolve_family``). This closes it at the RUN level, which neither of those can see.
 """
+
 from __future__ import annotations
 
 import os
@@ -75,6 +76,7 @@ def pytest_collection_modifyitems(config, items):
             if path.name in _GPU_CERTIFICATION:
                 item.add_marker(pytest.mark.certification)
 
+
 #: Set to anything to allow a run in which nothing passed or failed. For a deliberately narrow
 #: selection on a machine that cannot service it — ``pytest tests/gpu -k RoboCasa`` in an interpreter
 #: without robocasa — "everything skipped" is the honest answer rather than a fault.
@@ -98,7 +100,7 @@ def pytest_runtest_logreport(report):
     """
     if report.when == "call" or (report.when == "setup" and report.outcome == "skipped"):
         _COUNTS[report.outcome] = _COUNTS.get(report.outcome, 0) + 1
-    elif report.failed:                                  # a setup or teardown error is a real outcome
+    elif report.failed:  # a setup or teardown error is a real outcome
         _COUNTS["error"] = _COUNTS.get("error", 0) + 1
 
 
@@ -117,17 +119,21 @@ def _verdict(session, exitstatus) -> str | None:
 
     n = len(getattr(session, "items", []) or [])
     if n == 0:
-        return ("this run selected NO tests at all. That is not a pass: pytest exits 5 for it, a shell "
-                "that only checks for zero reads 5 as failure and 0 as success, and both sbatch "
-                "launchers pass their arguments straight through to pytest — so a mistyped -k or -m "
-                "comes back looking like a run that finished. Check the selection, or set "
-                f"{ALLOW_EMPTY}=1 if selecting nothing is genuinely the right answer here.")
-    return (f"this run collected {n} test(s), {_COUNTS.get('skipped', 0)} of them SKIPPED, and NOTHING "
-            f"passed, failed or errored. pytest reports that as success, and it is the exact shape of "
-            f"both coverage incidents this suite has had: the tests existed, they were parameterised "
-            f"over envs this interpreter does not have, and the run was green having measured nothing. "
-            f"Run with -rs to see the reasons; set SE_REQUIRE_ENV_MODULES to make a named family's "
-            f"absence fatal, or {ALLOW_EMPTY}=1 if an all-skipped run is what was wanted.")
+        return (
+            "this run selected NO tests at all. That is not a pass: pytest exits 5 for it, a shell "
+            "that only checks for zero reads 5 as failure and 0 as success, and both sbatch "
+            "launchers pass their arguments straight through to pytest — so a mistyped -k or -m "
+            "comes back looking like a run that finished. Check the selection, or set "
+            f"{ALLOW_EMPTY}=1 if selecting nothing is genuinely the right answer here."
+        )
+    return (
+        f"this run collected {n} test(s), {_COUNTS.get('skipped', 0)} of them SKIPPED, and NOTHING "
+        f"passed, failed or errored. pytest reports that as success, and it is the exact shape of "
+        f"both coverage incidents this suite has had: the tests existed, they were parameterised "
+        f"over envs this interpreter does not have, and the run was green having measured nothing. "
+        f"Run with -rs to see the reasons; set SE_REQUIRE_ENV_MODULES to make a named family's "
+        f"absence fatal, or {ALLOW_EMPTY}=1 if an all-skipped run is what was wanted."
+    )
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):

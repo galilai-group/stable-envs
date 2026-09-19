@@ -25,6 +25,7 @@ Four read paths, all from the same table:
   ``local_gpu``  node-local, nvJPEG decode on the GPU. Not what stable-worldmodel does today, measured
                  because it is the strongest thing the baseline could become.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -50,11 +51,13 @@ def build_table(blobs, root: Path, name: str):
     root.mkdir(parents=True, exist_ok=True)
     db = lancedb.connect(str(root))
     n = len(blobs)
-    tbl = pa.table({
-        "episode_idx": pa.array(np.zeros(n, np.int32)),
-        "step_idx": pa.array(np.arange(n, dtype=np.int32)),
-        "pixels": pa.array([bytes(b) for b in blobs], type=pa.binary()),
-    })
+    tbl = pa.table(
+        {
+            "episode_idx": pa.array(np.zeros(n, np.int32)),
+            "step_idx": pa.array(np.arange(n, dtype=np.int32)),
+            "pixels": pa.array([bytes(b) for b in blobs], type=pa.binary()),
+        }
+    )
     try:
         db.drop_table(name)
     except Exception:
@@ -64,6 +67,7 @@ def build_table(blobs, root: Path, name: str):
 
 def _decode(byte_list, device=None):
     from torchvision.io import ImageReadMode, decode_jpeg
+
     ts = [torch.frombuffer(b, dtype=torch.uint8) for b in byte_list]
     if device is None:
         return torch.stack(decode_jpeg(ts, mode=ImageReadMode.RGB))
@@ -92,8 +96,12 @@ def time_path(tbl, n: int, chunk: int, reps: int, device=None) -> dict:
         best_read = rd if best_read is None else min(best_read, rd)
         best_dec = dc if best_dec is None else min(best_dec, dc)
         del frames, blobs, batch
-    return {"fps": 1 / best_total, "read_fps": 1 / best_read, "decode_fps": 1 / best_dec,
-            "read_frac": best_read / best_total}
+    return {
+        "fps": 1 / best_total,
+        "read_fps": 1 / best_read,
+        "decode_fps": 1 / best_dec,
+        "read_frac": best_read / best_total,
+    }
 
 
 def _worker(args):
@@ -104,6 +112,7 @@ def _worker(args):
     # adding workers, which is thread thrashing rather than anything about Lance or JPEG.
     torch.set_num_threads(1)
     import lancedb
+
     db = lancedb.connect(root)
     tbl = db.open_table(name)
     starts = [((i + seed) * chunk) % max(n - chunk, 1) for i in range(reps)]
@@ -135,6 +144,7 @@ def get_pool(workers: int):
     global _POOL
     if _POOL is None:
         import multiprocessing as mp
+
         _POOL = mp.get_context("spawn").Pool(workers)
     return _POOL
 
@@ -151,9 +161,14 @@ def time_parallel(root: str, name: str, n: int, chunk: int, reps: int, workers: 
     args = [(root, name, n, chunk, reps, w) for w in range(workers)]
     res = get_pool(workers).map(_worker, args)
     total = sum(r[0] for r in res)
-    span = max(r[1] for r in res)          # the slowest worker bounds the epoch
-    return {"fps": total / span, "workers": workers, "slowest_worker_s": span, "frames": total,
-            "per_worker_fps": [r[0] / r[1] for r in res]}
+    span = max(r[1] for r in res)  # the slowest worker bounds the epoch
+    return {
+        "fps": total / span,
+        "workers": workers,
+        "slowest_worker_s": span,
+        "frames": total,
+        "per_worker_fps": [r[0] / r[1] for r in res],
+    }
 
 
 def main() -> None:
@@ -170,15 +185,24 @@ def main() -> None:
     a = ap.parse_args()
 
     try:
-        cpu_name = subprocess.run(["bash", "-c", "lscpu | grep 'Model name' | head -1"],
-                                  capture_output=True, text=True).stdout.split(":", 1)[-1].strip()
+        cpu_name = (
+            subprocess.run(["bash", "-c", "lscpu | grep 'Model name' | head -1"], capture_output=True, text=True)
+            .stdout.split(":", 1)[-1]
+            .strip()
+        )
     except Exception:
         cpu_name = platform.processor()
 
-    res = {"cpu": cpu_name, "node": platform.node(), "chunk": a.chunk, "workers": a.workers,
-           "loadavg": os.getloadavg()[0], "cpu_count": len(os.sched_getaffinity(0)),
-           "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
-           "envs": {}}
+    res = {
+        "cpu": cpu_name,
+        "node": platform.node(),
+        "chunk": a.chunk,
+        "workers": a.workers,
+        "loadavg": os.getloadavg()[0],
+        "cpu_count": len(os.sched_getaffinity(0)),
+        "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "envs": {},
+    }
     outp = Path(a.out)
     outp.parent.mkdir(parents=True, exist_ok=True)
     if outp.exists():
@@ -201,9 +225,12 @@ def main() -> None:
         meta = json.loads(str(z["meta"]))
         blobs = list(z["blobs"])
         n = len(blobs)
-        entry = {"meta": meta, "n": n,
-                 "jpeg_bytes_per_frame": meta["jpeg_bytes_total"] / n,
-                 "raw_bytes_per_frame": meta["raw_bytes_per_frame"]}
+        entry = {
+            "meta": meta,
+            "n": n,
+            "jpeg_bytes_per_frame": meta["jpeg_bytes_total"] / n,
+            "raw_bytes_per_frame": meta["raw_bytes_per_frame"],
+        }
         for label, root in (("local", a.local), ("shared", a.shared)):
             r = Path(root)
             try:
@@ -226,22 +253,26 @@ def main() -> None:
         s1 = entry.get("shared_1", {}).get("fps")
         ln = entry.get("local_n", {}).get("fps")
         lg = entry.get("local_gpu", {}).get("fps")
-        print(f"[{name}] {meta['h']}x{meta['w']} {entry['jpeg_bytes_per_frame']:,.0f} B/frame  "
-              f"local {l1:,.0f}  shared {s1:,.0f}  {a.workers}proc {ln:,.0f}  "
-              f"gpu {lg:,.0f}" if lg else
-              f"[{name}] {meta['h']}x{meta['w']} {entry['jpeg_bytes_per_frame']:,.0f} B/frame  "
-              f"local {l1:,.0f}  shared {s1:,.0f}  {a.workers}proc {ln:,.0f}", flush=True)
+        print(
+            f"[{name}] {meta['h']}x{meta['w']} {entry['jpeg_bytes_per_frame']:,.0f} B/frame  "
+            f"local {l1:,.0f}  shared {s1:,.0f}  {a.workers}proc {ln:,.0f}  "
+            f"gpu {lg:,.0f}"
+            if lg
+            else f"[{name}] {meta['h']}x{meta['w']} {entry['jpeg_bytes_per_frame']:,.0f} B/frame  "
+            f"local {l1:,.0f}  shared {s1:,.0f}  {a.workers}proc {ln:,.0f}",
+            flush=True,
+        )
         outp.write_text(json.dumps(res, indent=2))
 
     outp.write_text(json.dumps(res, indent=2))
     ok = [e for e in res["envs"].values() if e.get("local_1", {}).get("fps")]
     if ok:
         import statistics as st
+
         for k in ("local_1", "shared_1", "local_n", "local_gpu"):
             v = [e[k]["fps"] for e in ok if e.get(k, {}).get("fps")]
             if v:
-                print(f"{k:10s} median {st.median(v):>10,.0f} f/s   "
-                      f"range {min(v):,.0f}-{max(v):,.0f}   n={len(v)}")
+                print(f"{k:10s} median {st.median(v):>10,.0f} f/s   range {min(v):,.0f}-{max(v):,.0f}   n={len(v)}")
 
 
 if __name__ == "__main__":

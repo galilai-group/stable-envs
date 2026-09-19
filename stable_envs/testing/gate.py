@@ -15,6 +15,7 @@ the mechanism, and ``tests/certification/test_declarations.py`` asserts every en
 NOT remove an env from the library — the module, its parity numbers and its docs all stay, and the env
 registers normally in an interpreter that can install it.
 """
+
 from __future__ import annotations
 
 #: ``env-name prefix -> why it cannot be in the same interpreter as the rest``.
@@ -31,7 +32,8 @@ EXCLUDED: dict[str, str] = {
         "interpreter; these 5 need their own, and stable_envs/envs/overcooked.py says so at the top. "
         "The permanent fix is to embed the atlas the way craftax/crafter/minihack embed theirs, which "
         "would make jaxmarl build-time-only; until then this is an honest carve-out rather than a "
-        "silent skip."),
+        "silent skip."
+    ),
 }
 
 
@@ -48,12 +50,13 @@ def gate_envs(names) -> list[str]:
     return sorted(n for n in names if not is_excluded(n))
 
 
-if __name__ == "__main__":                      # the launcher's way in: no imports, no GPU, one line
+if __name__ == "__main__":  # the launcher's way in: no imports, no GPU, one line
     import json
     import pathlib
     import sys
 
-    cover = json.loads((pathlib.Path(__file__).resolve().parents[2]
-                        / "scratch" / "census" / "assignment.json").read_text())
+    cover = json.loads(
+        (pathlib.Path(__file__).resolve().parents[2] / "scratch" / "census" / "assignment.json").read_text()
+    )
     print(",".join(gate_envs({e for es in cover.values() for e in es})))
     sys.exit(0)

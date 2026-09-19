@@ -32,6 +32,7 @@ column. And it compares one GPU against one core by construction, which is the r
 
     python examples/bench_vs_decode.py --out examples/results
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,19 +43,16 @@ import platform
 import subprocess
 import tempfile
 import time
-import traceback
 from pathlib import Path
 
 import numpy as np
 import torch
+from bench_gpu_vs_cpu import _err, cpu_throughput, gpu_throughput, parse_ss, states_for  # noqa: F401
 
 import stable_envs as se
-from bench_gpu_vs_cpu import (_err, cpu_throughput, gpu_throughput,  # noqa: F401
-                              parse_ss, states_for)
 
 
-def decode_baseline(frame: np.ndarray, quality: int, min_frames: int,
-                    scratch: Path) -> dict:
+def decode_baseline(frame: np.ndarray, quality: int, min_frames: int, scratch: Path) -> dict:
     """Time ``bytes -> uint8 array`` for one real frame, from memory and from a warm local file.
 
     Encoded once at ``quality`` and decoded ``n`` times; ``n`` scales inversely with pixel count so a
@@ -91,11 +89,17 @@ def decode_baseline(frame: np.ndarray, quality: int, min_frames: int,
     except Exception:
         dt_file = None
 
-    return {"h": h, "w": w, "jpeg_quality": quality, "jpeg_bytes": len(blob),
-            "raw_bytes": h * w * 3, "n": n,
-            "decode_fps_per_core": 1.0 / dt_mem,
-            "decode_MBps_raw": h * w * 3 / dt_mem / 1e6,
-            "load_decode_fps_per_core": (1.0 / dt_file) if dt_file else None}
+    return {
+        "h": h,
+        "w": w,
+        "jpeg_quality": quality,
+        "jpeg_bytes": len(blob),
+        "raw_bytes": h * w * 3,
+        "n": n,
+        "decode_fps_per_core": 1.0 / dt_mem,
+        "decode_MBps_raw": h * w * 3 / dt_mem / 1e6,
+        "load_decode_fps_per_core": (1.0 / dt_file) if dt_file else None,
+    }
 
 
 def _cpu_pending(entry: dict) -> bool:
@@ -127,51 +131,73 @@ def markdown(res: dict) -> str:
         d, g = e["decode"], e.get("gpu_best")
         if not g:
             continue
-        rows.append({
-            "name": name, "shape": f"{d['h']}x{d['w']}", "batch": g["batch"],
-            "gpu": g["fps"], "dec": d["decode_fps_per_core"], "cpu": _cpu_fps(e),
-            "file": d.get("load_decode_fps_per_core"),
-            "cores": g["fps"] / d["decode_fps_per_core"],
-            "state_b": e.get("state_bytes"), "jpeg_b": d["jpeg_bytes"],
-            "ss": g.get("supersample"), "cpu_frac": g.get("cpu_frac"),
-        })
+        rows.append(
+            {
+                "name": name,
+                "shape": f"{d['h']}x{d['w']}",
+                "batch": g["batch"],
+                "gpu": g["fps"],
+                "dec": d["decode_fps_per_core"],
+                "cpu": _cpu_fps(e),
+                "file": d.get("load_decode_fps_per_core"),
+                "cores": g["fps"] / d["decode_fps_per_core"],
+                "state_b": e.get("state_bytes"),
+                "jpeg_b": d["jpeg_bytes"],
+                "ss": g.get("supersample"),
+                "cpu_frac": g.get("cpu_frac"),
+            }
+        )
     rows.sort(key=lambda r: -r["cores"])
 
-    L = [f"# Three ways to get a frame: {len(rows)} envs", "",
-         f"Device: {res.get('device')} · CPU: {res.get('cpu')} · "
-         f"{res.get('cpu_count')} cores visible · load {res.get('loadavg')}", "",
-         "All three columns are frames/s for the same transformation, `state -> uint8 frame`.", "",
-         "* **default** — the env's own official renderer, one frame at a time, which is the only entry",
-         "  point it offers. Blank where no reference package is installed in this interpreter.",
-         "* **ours** — the GPU path at its best batch.",
-         "* **stored** — one CPU core decoding this env's own frame as JPEG "
-         f"q{res.get('jpeg_quality')} from memory.", "",
-         "The last column is `ours / stored`: **CPU cores of decode that one GPU replaces.**", "",
-         "`ss` is the supersample each env RESOLVED to, not the one the flag asked for. It belongs in",
-         "the table because 44 of the classes declare `default_supersample = 2` and a sweep that forces",
-         "1 on them reports a cheaper picture than `se.make(name)` produces: 1.16x on",
-         "DMCBallInCupCatch, 1.26x on AntmazeLargeNavigate and 3.3x on MujocoPusher, measured idle.", "",
-         "`cpu%` is the process CPU seconds per wall second of the timed loop. Near 0 the device is",
-         "the limit and the row travels between nodes; at or above 100% the host is busy for the whole",
-         "render, and that row is a measurement of this node's processor under this node's load —",
-         "DMCBallInCupCatch measures 196% and has produced 3,664 f/s idle against 271 contended.", "",
-         "| env | frame | ss | default f/s | ours f/s (batch) | cpu% | stored f/s/core |"
-         " **cores replaced** | state B | JPEG B |",
-         "|---|---|---|---|---|---|---|---|---|---|"]
+    L = [
+        f"# Three ways to get a frame: {len(rows)} envs",
+        "",
+        f"Device: {res.get('device')} · CPU: {res.get('cpu')} · "
+        f"{res.get('cpu_count')} cores visible · load {res.get('loadavg')}",
+        "",
+        "All three columns are frames/s for the same transformation, `state -> uint8 frame`.",
+        "",
+        "* **default** — the env's own official renderer, one frame at a time, which is the only entry",
+        "  point it offers. Blank where no reference package is installed in this interpreter.",
+        "* **ours** — the GPU path at its best batch.",
+        f"* **stored** — one CPU core decoding this env's own frame as JPEG q{res.get('jpeg_quality')} from memory.",
+        "",
+        "The last column is `ours / stored`: **CPU cores of decode that one GPU replaces.**",
+        "",
+        "`ss` is the supersample each env RESOLVED to, not the one the flag asked for. It belongs in",
+        "the table because 44 of the classes declare `default_supersample = 2` and a sweep that forces",
+        "1 on them reports a cheaper picture than `se.make(name)` produces: 1.16x on",
+        "DMCBallInCupCatch, 1.26x on AntmazeLargeNavigate and 3.3x on MujocoPusher, measured idle.",
+        "",
+        "`cpu%` is the process CPU seconds per wall second of the timed loop. Near 0 the device is",
+        "the limit and the row travels between nodes; at or above 100% the host is busy for the whole",
+        "render, and that row is a measurement of this node's processor under this node's load —",
+        "DMCBallInCupCatch measures 196% and has produced 3,664 f/s idle against 271 contended.",
+        "",
+        "| env | frame | ss | default f/s | ours f/s (batch) | cpu% | stored f/s/core |"
+        " **cores replaced** | state B | JPEG B |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
     for r in rows:
         cpu = f"{r['cpu']:,.0f}" if r["cpu"] else "—"
         cf = r.get("cpu_frac")
-        L.append(f"| {r['name']} | {r['shape']} | {r['ss'] or '?'} | {cpu} | "
-                 f"{r['gpu']:,.0f} ({r['batch']:,}) | "
-                 f"{'—' if cf is None else format(100 * cf, '.0f') + '%'} | "
-                 f"{r['dec']:,.0f} | **{r['cores']:,.1f}x** | "
-                 f"{r['state_b'] or '?'} | {r['jpeg_b']:,} |")
-    L += ["", "## Load-and-decode (warm local file) against decode-from-memory", "",
-          "| env | memory f/s | file f/s | file/memory |", "|---|---|---|---|"]
+        L.append(
+            f"| {r['name']} | {r['shape']} | {r['ss'] or '?'} | {cpu} | "
+            f"{r['gpu']:,.0f} ({r['batch']:,}) | "
+            f"{'—' if cf is None else format(100 * cf, '.0f') + '%'} | "
+            f"{r['dec']:,.0f} | **{r['cores']:,.1f}x** | "
+            f"{r['state_b'] or '?'} | {r['jpeg_b']:,} |"
+        )
+    L += [
+        "",
+        "## Load-and-decode (warm local file) against decode-from-memory",
+        "",
+        "| env | memory f/s | file f/s | file/memory |",
+        "|---|---|---|---|",
+    ]
     for r in rows:
         if r["file"]:
-            L.append(f"| {r['name']} | {r['dec']:,.0f} | {r['file']:,.0f} | "
-                     f"{r['file'] / r['dec']:.3f} |")
+            L.append(f"| {r['name']} | {r['dec']:,.0f} | {r['file']:,.0f} | {r['file'] / r['dec']:.3f} |")
     errs = {k: v["error"] for k, v in res["envs"].items() if "error" in v}
     if errs:
         L += ["", "## Envs that did not measure", ""]
@@ -186,16 +212,23 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--batches", default="1,64,256,1024,4096,16384")
     ap.add_argument("--reps", type=int, default=15)
-    ap.add_argument("--ss", default="native",
-                    help="'native' lets each env use its own default_supersample — the picture "
-                         "se.make(name) gives. A number forces it on every env and measures something "
-                         "else; the old default of 1 quietly quartered the rays for 44 classes")
+    ap.add_argument(
+        "--ss",
+        default="native",
+        help="'native' lets each env use its own default_supersample — the picture "
+        "se.make(name) gives. A number forces it on every env and measures something "
+        "else; the old default of 1 quietly quartered the rays for 44 classes",
+    )
     ap.add_argument("--max-out-gb", type=float, default=8.0)
     ap.add_argument("--pool", type=int, default=4096)
     ap.add_argument("--jpeg-quality", type=int, default=90)
     ap.add_argument("--decode-frames", type=int, default=300)
-    ap.add_argument("--cpu-frames", type=int, default=0,
-                    help="frames through the env's OFFICIAL renderer; 0 leaves that column blank")
+    ap.add_argument(
+        "--cpu-frames",
+        type=int,
+        default=0,
+        help="frames through the env's OFFICIAL renderer; 0 leaves that column blank",
+    )
     ap.add_argument("--envs", default="")
     ap.add_argument("--skip", default="")
     ap.add_argument("--tag", default="", help="suffix for the output files, e.g. the venv name")
@@ -212,16 +245,26 @@ def main() -> None:
     tag = f"_{a.tag}" if a.tag else ""
 
     try:
-        cpu_name = subprocess.run(["bash", "-c", "lscpu | grep 'Model name' | head -1"],
-                                  capture_output=True, text=True).stdout.split(":", 1)[-1].strip()
+        cpu_name = (
+            subprocess.run(["bash", "-c", "lscpu | grep 'Model name' | head -1"], capture_output=True, text=True)
+            .stdout.split(":", 1)[-1]
+            .strip()
+        )
     except Exception:
         cpu_name = platform.processor()
 
-    res = {"device": torch.cuda.get_device_name(0), "cpu": cpu_name or "unknown",
-           "cpu_count": len(os.sched_getaffinity(0)), "torch": torch.__version__,
-           "jpeg_quality": a.jpeg_quality, "loadavg": [os.getloadavg()[0]],
-           "registry_size": len(se.registry.REGISTRY), "registry": sorted(se.registry.REGISTRY),
-           "import_errors": se.import_errors(), "envs": {}}
+    res = {
+        "device": torch.cuda.get_device_name(0),
+        "cpu": cpu_name or "unknown",
+        "cpu_count": len(os.sched_getaffinity(0)),
+        "torch": torch.__version__,
+        "jpeg_quality": a.jpeg_quality,
+        "loadavg": [os.getloadavg()[0]],
+        "registry_size": len(se.registry.REGISTRY),
+        "registry": sorted(se.registry.REGISTRY),
+        "import_errors": se.import_errors(),
+        "envs": {},
+    }
 
     prev = outdir / f"bench_vs_decode{tag}.json"
     if prev.exists():
@@ -236,8 +279,7 @@ def main() -> None:
         (outdir / f"bench_vs_decode{tag}.md").write_text(markdown(res))
 
     skip = {s for s in a.skip.split(",") if s}
-    wanted = [n for n in sorted(se.registry.REGISTRY)
-              if (not a.envs or n in a.envs.split(",")) and n not in skip]
+    wanted = [n for n in sorted(se.registry.REGISTRY) if (not a.envs or n in a.envs.split(",")) and n not in skip]
     print(f"registry {len(se.registry.REGISTRY)}, measuring {len(wanted)}", flush=True)
 
     for name in wanted:
@@ -264,9 +306,12 @@ def main() -> None:
         # already has. Re-measuring them would put two different allocations' timings in one row.
         entry = done if done.get("gpu_best") else None
         if entry is None:
-            entry = {"size": size, "state_bytes": state_bytes,
-                     "decode": decode_baseline(frame, a.jpeg_quality, a.decode_frames, scratch),
-                     "gpu": []}
+            entry = {
+                "size": size,
+                "state_bytes": state_bytes,
+                "decode": decode_baseline(frame, a.jpeg_quality, a.decode_frames, scratch),
+                "gpu": [],
+            }
             best = None
             for B in batches:
                 r = gpu_throughput(name, B, size, ss, a.reps, a.max_out_gb, pool, hw)
@@ -276,8 +321,13 @@ def main() -> None:
                     # The resolved supersample travels with the number. Without it a row cannot be
                     # compared against bench_storage.py's, which never forced one — so the two
                     # tables described different pictures for the same 44 envs.
-                    best = {"batch": B, "fps": r["fps"], "supersample": r.get("supersample"),
-                            "cpu_frac": r.get("cpu_frac"), "loadavg": r.get("loadavg")}
+                    best = {
+                        "batch": B,
+                        "fps": r["fps"],
+                        "supersample": r.get("supersample"),
+                        "cpu_frac": r.get("cpu_frac"),
+                        "loadavg": r.get("loadavg"),
+                    }
             entry["gpu_best"] = best
         best = entry["gpu_best"]
 
@@ -298,9 +348,12 @@ def main() -> None:
         res["envs"][name] = entry
         if best:
             ratio = best["fps"] / entry["decode"]["decode_fps_per_core"]
-            print(f"[{name}] {hw[0]}x{hw[1]}  gpu {best['fps']:,.0f} f/s @b{best['batch']}  "
-                  f"decode {entry['decode']['decode_fps_per_core']:,.0f} f/s/core  "
-                  f"= {ratio:,.1f} cores", flush=True)
+            print(
+                f"[{name}] {hw[0]}x{hw[1]}  gpu {best['fps']:,.0f} f/s @b{best['batch']}  "
+                f"decode {entry['decode']['decode_fps_per_core']:,.0f} f/s/core  "
+                f"= {ratio:,.1f} cores",
+                flush=True,
+            )
         else:
             print(f"[{name}] no GPU point measured", flush=True)
         flush()

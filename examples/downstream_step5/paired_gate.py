@@ -16,6 +16,7 @@ from there.
     python examples/downstream_step5/paired_gate.py --runs examples/results/step5/reacher/runs \
         --out examples/results/step5/reacher
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,10 +30,19 @@ ROOT = Path(__file__).resolve().parents[2]
 #: bookkeeping rather than part of what is being held fixed.
 # NOTE: "tf32" is deliberately NOT here. Precision is part of the experiment: if one arm ran with
 # TF32 matmul and another without, they are not the same computation and the paired test is void.
-ALLOWED_DIFF = ("arm", "renderer_target_mode", "renderer_dataset_target_mode",
-                "renderer_surfaces", "eval_seconds",
-                "render_calls", "success_rate", "episode_successes", "provenance.host",
-                "provenance.gpu", "provenance.slurm_job")
+ALLOWED_DIFF = (
+    "arm",
+    "renderer_target_mode",
+    "renderer_dataset_target_mode",
+    "renderer_surfaces",
+    "eval_seconds",
+    "render_calls",
+    "success_rate",
+    "episode_successes",
+    "provenance.host",
+    "provenance.gpu",
+    "provenance.slurm_job",
+)
 
 
 def flat(d, prefix: str = "") -> dict:
@@ -69,9 +79,16 @@ def compare_arms(runs: list[dict]) -> dict:
         if ref is None:
             problems.append(f"seed {seed}: no official arm")
             continue
-        rf = flat({"config": ref.get("config"), "provenance": ref.get("provenance"),
-                   "goal_offset": ref.get("goal_offset"), "eval_budget": ref.get("eval_budget"),
-                   "task": ref.get("task"), "num_eval": ref.get("num_eval")})
+        rf = flat(
+            {
+                "config": ref.get("config"),
+                "provenance": ref.get("provenance"),
+                "goal_offset": ref.get("goal_offset"),
+                "eval_budget": ref.get("eval_budget"),
+                "task": ref.get("task"),
+                "num_eval": ref.get("num_eval"),
+            }
+        )
         for g in group:
             if g["arm"] == "official":
                 continue
@@ -80,20 +97,28 @@ def compare_arms(runs: list[dict]) -> dict:
                 problems.append(f"seed {seed} {g['arm']}: different episode indices")
             if g["start_steps"] != ref["start_steps"]:
                 problems.append(f"seed {seed} {g['arm']}: different start steps")
-            gf = flat({"config": g.get("config"), "provenance": g.get("provenance"),
-                       "goal_offset": g.get("goal_offset"), "eval_budget": g.get("eval_budget"),
-                       "task": g.get("task"), "num_eval": g.get("num_eval")})
+            gf = flat(
+                {
+                    "config": g.get("config"),
+                    "provenance": g.get("provenance"),
+                    "goal_offset": g.get("goal_offset"),
+                    "eval_budget": g.get("eval_budget"),
+                    "task": g.get("task"),
+                    "num_eval": g.get("num_eval"),
+                }
+            )
             for k in sorted(set(rf) | set(gf)):
                 if any(k.endswith(a) or k == a for a in ALLOWED_DIFF):
                     continue
                 if rf.get(k) != gf.get(k):
                     msg = f"seed {seed} {g['arm']}: {k} = {gf.get(k)!r} vs official {rf.get(k)!r}"
                     # A checkpoint or planner difference is not a note, it is the experiment failing.
-                    (problems if any(t in k for t in ("checkpoint", "solver", "plan_config",
-                                                      "policy", "dataset", "eval.")) else notes
-                     ).append(msg)
-    return {"arm_runs_checked": checked, "problems": problems, "benign_differences": notes,
-            "comparable": not problems}
+                    (
+                        problems
+                        if any(t in k for t in ("checkpoint", "solver", "plan_config", "policy", "dataset", "eval."))
+                        else notes
+                    ).append(msg)
+    return {"arm_runs_checked": checked, "problems": problems, "benign_differences": notes, "comparable": not problems}
 
 
 def arm_name(r: dict) -> str:
@@ -109,16 +134,25 @@ def arm_name(r: dict) -> str:
 def episodes(runs: list[dict]) -> list[dict]:
     rows = []
     for r in runs:
-        for i, (ep, st, ok) in enumerate(zip(r["episodes_idx"], r["start_steps"],
-                                             r["episode_successes"])):
-            rows.append({
-                "env": r["env"], "task": r.get("task"), "model_family": r.get("model_family"),
-                "checkpoint": (r.get("provenance", {}).get("checkpoint", {}) or {}).get("policy"),
-                "planner": "cem", "arm": arm_name(r), "seed": int(r["seed"]),
-                "episode_id": int(ep), "start_step": int(st),
-                "goal_offset": r.get("goal_offset"), "eval_budget": r.get("eval_budget"),
-                "slot": i, "success": int(ok), "source": r["_path"],
-            })
+        for i, (ep, st, ok) in enumerate(zip(r["episodes_idx"], r["start_steps"], r["episode_successes"])):
+            rows.append(
+                {
+                    "env": r["env"],
+                    "task": r.get("task"),
+                    "model_family": r.get("model_family"),
+                    "checkpoint": (r.get("provenance", {}).get("checkpoint", {}) or {}).get("policy"),
+                    "planner": "cem",
+                    "arm": arm_name(r),
+                    "seed": int(r["seed"]),
+                    "episode_id": int(ep),
+                    "start_step": int(st),
+                    "goal_offset": r.get("goal_offset"),
+                    "eval_budget": r.get("eval_budget"),
+                    "slot": i,
+                    "success": int(ok),
+                    "source": r["_path"],
+                }
+            )
     return rows
 
 
@@ -136,6 +170,7 @@ def main() -> None:
     args = ap.parse_args()
 
     import sys
+
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import step5_stats as S
 
@@ -168,8 +203,11 @@ def main() -> None:
     for a in sorted({r["arm"] for r in rows} - {"official", "stable_envs", args.control}):
         sa, ss, se = series(rows, a)
         oa, os_, oe = series(rows, "official", seeds=sorted(set(ss)))
-        secondary[a] = ({"error": "not aligned with official"} if (ss, se) != (os_, oe)
-                        else {"arm": S.arm(sa), "paired": S.paired(oa, sa), "seeds": sorted(set(ss))})
+        secondary[a] = (
+            {"error": "not aligned with official"}
+            if (ss, se) != (os_, oe)
+            else {"arm": S.arm(sa), "paired": S.paired(oa, sa), "seeds": sorted(set(ss))}
+        )
 
     # THE RENDERER ARM, gated in its own right.
     #
@@ -187,20 +225,34 @@ def main() -> None:
         if (sl, el) == (osl, oel):
             cl, cs2, ce2 = series(rows, args.control, seeds=seeds_l)
             oc2, ocs2, oce2 = series(rows, "official", seeds=sorted({s for s in cs2}))
-            gate_live = S.gate_h(ol, xl, cl if (cs2, ce2) == (ocs2, oce2) else None,
-                                 seeds=sl, per_seed_n=[sl.count(sd) for sd in seeds_l])
+            gate_live = S.gate_h(
+                ol,
+                xl,
+                cl if (cs2, ce2) == (ocs2, oce2) else None,
+                seeds=sl,
+                per_seed_n=[sl.count(sd) for sd in seeds_l],
+            )
 
     out = {
-        "env": runs[0]["env"], "task": runs[0].get("task"),
+        "env": runs[0]["env"],
+        "task": runs[0].get("task"),
         "gate_h_renderer_arm": gate_live,
         "model_family": runs[0].get("model_family"),
         "arms": {a: sum(1 for r in rows if r["arm"] == a) for a in sorted({r["arm"] for r in rows})},
         "comparability": comp,
         "gate_h": gate,
         "secondary_arms": secondary,
-        "runs": [{"path": r["_path"], "arm": r["arm"], "seed": r["seed"],
-                  "success_rate": r["success_rate"], "seconds": round(r.get("eval_seconds", 0), 1),
-                  "render_calls": r.get("render_calls")} for r in runs],
+        "runs": [
+            {
+                "path": r["_path"],
+                "arm": r["arm"],
+                "seed": r["seed"],
+                "success_rate": r["success_rate"],
+                "seconds": round(r.get("eval_seconds", 0), 1),
+                "render_calls": r.get("render_calls"),
+            }
+            for r in runs
+        ],
         "provenance": runs[0].get("provenance"),
     }
     args.out.mkdir(parents=True, exist_ok=True)
@@ -210,23 +262,28 @@ def main() -> None:
     out["episodes_sha256"] = hashlib.sha256(jl.read_bytes()).hexdigest()[:12]
     (args.out / "gate_h.json").write_text(json.dumps(out, indent=2))
 
-    print(f"comparability: {'OK' if comp['comparable'] else 'PROBLEMS'} "
-          f"({comp['arm_runs_checked']} arm-runs checked)")
+    print(f"comparability: {'OK' if comp['comparable'] else 'PROBLEMS'} ({comp['arm_runs_checked']} arm-runs checked)")
     for p in comp["problems"]:
         print("  !", p)
     for n in comp["benign_differences"][:10]:
         print("  ~", n)
     g = gate
     print(f"official    {g['official']['successes']}/{g['official']['n']} = {g['official']['success_rate']:.1f}%")
-    print(f"stable-envs {g['stable_envs']['successes']}/{g['stable_envs']['n']} = {g['stable_envs']['success_rate']:.1f}%")
+    print(
+        f"stable-envs {g['stable_envs']['successes']}/{g['stable_envs']['n']} = {g['stable_envs']['success_rate']:.1f}%"
+    )
     e = g["equivalence"]
-    print(f"paired      b={e['b']} c={e['c']} delta={e['delta_points']:+.2f} pts "
-          f"CI [{e['ci'][0]:.2f}, {e['ci'][1]:.2f}] McNemar p={e['mcnemar_p']:.3f}")
+    print(
+        f"paired      b={e['b']} c={e['c']} delta={e['delta_points']:+.2f} pts "
+        f"CI [{e['ci'][0]:.2f}, {e['ci'][1]:.2f}] McNemar p={e['mcnemar_p']:.3f}"
+    )
     if g["control"]["present"]:
         c = g["control"]
-        print(f"control     {c['arm']['successes']}/{c['arm']['n']} "
-              f"delta={c['paired']['delta_points']:+.1f} pts p={c['paired']['mcnemar_p']:.2e} "
-              f"degraded={c['degraded']}")
+        print(
+            f"control     {c['arm']['successes']}/{c['arm']['n']} "
+            f"delta={c['paired']['delta_points']:+.1f} pts p={c['paired']['mcnemar_p']:.2e} "
+            f"degraded={c['degraded']}"
+        )
     print(f"VERDICT     {g['verdict']} -- {g['verdict_reason']}")
 
 

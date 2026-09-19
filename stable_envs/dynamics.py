@@ -16,6 +16,7 @@ gap: rendering and simulation are separable, and an env earns a simulator only w
 be ported AND checked against the reference. Those cells raise from ``step``/``transition`` with the
 exact reason and keep ``reset``/``render`` working, which is what ``no_dynamics`` below writes.
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
@@ -48,8 +49,7 @@ def has_dynamics(env) -> bool:
     if base is None:
         return hasattr(env, "step")
     cls = type(env)
-    return any(getattr(cls, m, None) is not getattr(base, m, None)
-               for m in ("step", "transition"))
+    return any(getattr(cls, m, None) is not getattr(base, m, None) for m in ("step", "transition"))
 
 
 def no_dynamics(env, what: str):
@@ -61,7 +61,8 @@ def no_dynamics(env, what: str):
         f"separable in this package and a cell earns a simulator only where its dynamics can be "
         f"ported AND checked against the reference. reset() and render() work as usual; to produce "
         f"trajectories, roll out the official CPU environment and render the states it gives you "
-        f"(env.render(states) takes any batch).")
+        f"(env.render(states) takes any batch)."
+    )
 
 
 def unroll_from_transition(env, state: TensorDict, actions) -> TensorDict:
@@ -83,8 +84,9 @@ def unroll_from_transition(env, state: TensorDict, actions) -> TensorDict:
             f"{type(env).__name__}.unroll: actions are (T, num_envs, ...) — time first — and this "
             f"input has shape {tuple(acts.shape)} for {n or 'num_envs'} environment(s). One action "
             f"for every environment at every one of the T steps; there is no policy here to fill "
-            f"them in. A single step's actions are what `transition(state, action)` takes.")
-    out = [ ]
+            f"them in. A single step's actions are what `transition(state, action)` takes."
+        )
+    out = []
     s = state
     for t in range(int(acts.shape[0])):
         s = env.transition(s, acts[t])

@@ -27,6 +27,7 @@ distance to the goal (is it any good at the task).
     python examples/rollout_with_policy.py
     python examples/rollout_with_policy.py --batch 4096 --steps 100 --skip-cpu
 """
+
 from __future__ import annotations
 
 import argparse
@@ -60,7 +61,7 @@ class ReferencePushT(se.registry.REGISTRY["PushT"]):
     ``set_state`` writes through to the reference bodies, so the two paths start from the same state.
     """
 
-    use_step_graph = False                # the state is written by pymunk each step, not by a kernel
+    use_step_graph = False  # the state is written by pymunk each step, not by a kernel
 
     def __init__(self, num_envs: int = 256, **kw):
         super().__init__(num_envs=num_envs, **kw)
@@ -138,12 +139,16 @@ def rollout_stats(out: dict, sim_s: float, batch: int, steps: int) -> dict:
     # action IS a target position, so this says whether the policy is in control of the agent at all —
     # a metric that does not depend on the controller being any good at the task.
     track = (out["states"][:, 1:, 0:2] - out["actions"]).norm(dim=-1).mean()
-    return {"sim_s": sim_s, "env_steps_per_s": batch * steps / sim_s,
-            "us_per_env_step": sim_s / (batch * steps) * 1e6,
-            "block_dist_to_goal_start": float(d0.mean()), "block_dist_to_goal_end": float(dT.mean()),
-            "block_dist_median_change": float((dT - d0).median()),
-            "improved_fraction": float((dT < d0).float().mean()),
-            "tracking_error_px": float(track)}
+    return {
+        "sim_s": sim_s,
+        "env_steps_per_s": batch * steps / sim_s,
+        "us_per_env_step": sim_s / (batch * steps) * 1e6,
+        "block_dist_to_goal_start": float(d0.mean()),
+        "block_dist_to_goal_end": float(dT.mean()),
+        "block_dist_median_change": float((dT - d0).median()),
+        "improved_fraction": float((dT < d0).float().mean()),
+        "tracking_error_px": float(track),
+    }
 
 
 def show_unsupported(size: int) -> tuple[str, str]:
@@ -157,8 +162,8 @@ def show_unsupported(size: int) -> tuple[str, str]:
             return name, "NO ERROR RAISED"
         except NotImplementedError as e:
             return name, str(e)
-        except Exception:                      # an env that cannot even be constructed here proves
-            continue                           # nothing about sample(); try the next one
+        except Exception:  # an env that cannot even be constructed here proves
+            continue  # nothing about sample(); try the next one
     return "", "every registered env implements step()"
 
 
@@ -168,11 +173,18 @@ def bytes_report(out: dict, frame_shape: tuple[int, int, int]) -> dict:
     action_b = 0 if out.get("actions") is None else out["actions"].numel() * 4
     style_b = out["style"].numel() * 4
     frame_b = B * T * int(np.prod(frame_shape))
-    return {"trajectories": B, "steps_per_trajectory": T, "state_dim": D,
-            "state_bytes": state_b, "action_bytes": action_b, "style_bytes": style_b,
-            "stored_bytes": state_b + action_b + style_b, "frame_bytes": frame_b,
-            "frame_shape": list(frame_shape),
-            "ratio": frame_b / (state_b + action_b + style_b)}
+    return {
+        "trajectories": B,
+        "steps_per_trajectory": T,
+        "state_dim": D,
+        "state_bytes": state_b,
+        "action_bytes": action_b,
+        "style_bytes": style_b,
+        "stored_bytes": state_b + action_b + style_b,
+        "frame_bytes": frame_b,
+        "frame_shape": list(frame_shape),
+        "ratio": frame_b / (state_b + action_b + style_b),
+    }
 
 
 def main() -> None:
@@ -192,9 +204,14 @@ def main() -> None:
     print(f"registry: {len(se.registry.REGISTRY)} envs, {len(steppable)} of which implement step(): {steppable}")
     only_render, msg = show_unsupported(args.size)
     print(f"\n{only_render}.sample(steps=2, batch=4) raises NotImplementedError:\n  {msg}\n")
-    results = {"registry_size": len(se.registry.REGISTRY), "steppable": steppable,
-               "renderer_only_example": only_render, "not_implemented_message": msg,
-               "batch": args.batch, "steps": args.steps}
+    results = {
+        "registry_size": len(se.registry.REGISTRY),
+        "steppable": steppable,
+        "renderer_only_example": only_render,
+        "not_implemented_message": msg,
+        "batch": args.batch,
+        "steps": args.steps,
+    }
 
     env = se.make("PushT", num_envs=args.batch, size=args.size, device="cuda", seed=args.seed)
     init = env.sample_states(args.batch, np.random.default_rng(args.seed))
@@ -202,97 +219,126 @@ def main() -> None:
     # randomising those would change what the picture MEANS relative to the simulator, whose goal pose
     # is fixed at (256, 256, pi/4) — the frame would advertise a target the dynamics and the scripted
     # policy do not share. Appearance is free to vary; geometry is not, once a simulator is attached.
-    style = env.sample_style(args.batch, paths=["agent.color", "block.color", "background.color"],
-                             rng=np.random.default_rng(args.seed + 1))
+    style = env.sample_style(
+        args.batch, paths=["agent.color", "block.color", "background.color"], rng=np.random.default_rng(args.seed + 1)
+    )
 
     # ---------------------------------------------------------------- native GPU rollouts
     runs = {}
-    for label, policy in [("random", se.RandomPolicy(seed=args.seed)),         # no bounds needed:
-                          ("scripted", se.ScriptedPolicy(push_towards_goal))]:  # the env declares them
+    for label, policy in [
+        ("random", se.RandomPolicy(seed=args.seed)),  # no bounds needed:
+        ("scripted", se.ScriptedPolicy(push_towards_goal)),
+    ]:  # the env declares them
         env.sample(steps=2, batch=args.batch, policy=policy, style=style, init_states=init)  # warm up
         torch.cuda.synchronize()
         t0 = time.perf_counter()
-        out = env.sample(steps=args.steps, batch=args.batch, policy=policy, style=style,
-                         init_states=init, seed=args.seed)
+        out = env.sample(
+            steps=args.steps, batch=args.batch, policy=policy, style=style, init_states=init, seed=args.seed
+        )
         torch.cuda.synchronize()
         runs[label] = rollout_stats(out, time.perf_counter() - t0, args.batch, args.steps)
-        runs[label]["keys"] = {k: (list(v.shape), str(v.dtype), str(v.device))
-                               for k, v in out.items() if torch.is_tensor(v)}
-        print(f"sample(steps={args.steps}, batch={args.batch}, policy={type(policy).__name__}) "
-              f"native GPU")
+        runs[label]["keys"] = {
+            k: (list(v.shape), str(v.dtype), str(v.device)) for k, v in out.items() if torch.is_tensor(v)
+        }
+        print(f"sample(steps={args.steps}, batch={args.batch}, policy={type(policy).__name__}) native GPU")
         for k, v in out.items():
-            print(f"  {k:<8s} {tuple(v.shape) if torch.is_tensor(v) else v}"
-                  f"{'' if not torch.is_tensor(v) else f'  {v.dtype}  {v.device}'}")
+            print(
+                f"  {k:<8s} {tuple(v.shape) if torch.is_tensor(v) else v}"
+                f"{'' if not torch.is_tensor(v) else f'  {v.dtype}  {v.device}'}"
+            )
         r = runs[label]
-        print(f"  {r['sim_s']:.3f} s   {r['env_steps_per_s']:,.0f} env-steps/s   "
-              f"{r['us_per_env_step']:.2f} us per env-step")
-        print(f"  command tracking error {r['tracking_error_px']:.1f} px; block distance to goal "
-              f"{r['block_dist_to_goal_start']:.1f} -> {r['block_dist_to_goal_end']:.1f} px mean, "
-              f"median change {r['block_dist_median_change']:+.1f} px, closer in "
-              f"{r['improved_fraction'] * 100:.0f}%\n")
+        print(
+            f"  {r['sim_s']:.3f} s   {r['env_steps_per_s']:,.0f} env-steps/s   "
+            f"{r['us_per_env_step']:.2f} us per env-step"
+        )
+        print(
+            f"  command tracking error {r['tracking_error_px']:.1f} px; block distance to goal "
+            f"{r['block_dist_to_goal_start']:.1f} -> {r['block_dist_to_goal_end']:.1f} px mean, "
+            f"median change {r['block_dist_median_change']:+.1f} px, closer in "
+            f"{r['improved_fraction'] * 100:.0f}%\n"
+        )
         if label == "scripted":
             last = out
 
     a, b = runs["random"], runs["scripted"]
-    print("neither policy solves PushT. The scripted controller holds the block near where it found it "
-          "and follows its\ncommands to "
-          f"{b['tracking_error_px']:.0f} px; random actions scatter it "
-          f"{a['block_dist_median_change']:+.0f} px in the median against "
-          f"{b['block_dist_median_change']:+.0f}. That is a policy argument being load-bearing, "
-          "measured;\nit is not a control result.")
+    print(
+        "neither policy solves PushT. The scripted controller holds the block near where it found it "
+        "and follows its\ncommands to "
+        f"{b['tracking_error_px']:.0f} px; random actions scatter it "
+        f"{a['block_dist_median_change']:+.0f} px in the median against "
+        f"{b['block_dist_median_change']:+.0f}. That is a policy argument being load-bearing, "
+        "measured;\nit is not a control result."
+    )
 
     # ---------------------------------------------------------------- does the solver track pymunk?
-    print(f"\nsolver agreement with the official CPU simulator "
-          f"({args.agree_episodes} episodes x {args.steps} steps, identical actions and start states):")
+    print(
+        f"\nsolver agreement with the official CPU simulator "
+        f"({args.agree_episodes} episodes x {args.steps} steps, identical actions and start states):"
+    )
     t0 = time.perf_counter()
-    agree = check_step_matches_reference(env, steps=args.steps, episodes=args.agree_episodes,
-                                         seed=args.seed)
-    print(f"  block touched in {agree['block_touched']}/{agree['episodes']} episodes "
-          f"(an untouched block agrees trivially and is excluded)")
-    print(f"  agent position error   max {agree['agent_max_err']:.2e} px, "
-          f"mean {agree['agent_mean_err']:.2e} px   <- kinematic: the integrator check")
-    print(f"  block position error   median {agree['block_median_err']:.2f} px, "
-          f"mean {agree['block_mean_err']:.1f} px, p90 {agree['block_p90_err']:.1f} px "
-          f"after {args.steps} steps")
-    print(f"                         median {agree['block_median_err_at_25']:.2f} px at 25 steps; "
-          f"angle median {agree['angle_median_err']:.4f} rad")
+    agree = check_step_matches_reference(env, steps=args.steps, episodes=args.agree_episodes, seed=args.seed)
+    print(
+        f"  block touched in {agree['block_touched']}/{agree['episodes']} episodes "
+        f"(an untouched block agrees trivially and is excluded)"
+    )
+    print(
+        f"  agent position error   max {agree['agent_max_err']:.2e} px, "
+        f"mean {agree['agent_mean_err']:.2e} px   <- kinematic: the integrator check"
+    )
+    print(
+        f"  block position error   median {agree['block_median_err']:.2f} px, "
+        f"mean {agree['block_mean_err']:.1f} px, p90 {agree['block_p90_err']:.1f} px "
+        f"after {args.steps} steps"
+    )
+    print(
+        f"                         median {agree['block_median_err_at_25']:.2f} px at 25 steps; "
+        f"angle median {agree['angle_median_err']:.4f} rad"
+    )
     print(f"  measured in {time.perf_counter() - t0:.0f} s")
     assert agree["agent_max_err"] < AGENT_TOLERANCE_PX, (
         f"the kinematic agent diverged by {agree['agent_max_err']:.3e} px, over the "
         f"{AGENT_TOLERANCE_PX} px integrator tolerance. No contact acts on the agent, so this is an "
-        f"integration bug, not a solver difference.")
+        f"integration bug, not a solver difference."
+    )
     assert agree["block_median_err"] < MEDIAN_TOLERANCE_PX, (
         f"median block divergence {agree['block_median_err']:.2f} px exceeds the documented "
         f"{MEDIAN_TOLERANCE_PX} px. The mean is expected to be large (chaotic contact); the median "
-        f"moving is a regression.")
-    print(f"  within the documented tolerance (median < {MEDIAN_TOLERANCE_PX} px, "
-          f"agent < {AGENT_TOLERANCE_PX} px)")
+        f"moving is a regression."
+    )
+    print(f"  within the documented tolerance (median < {MEDIAN_TOLERANCE_PX} px, agent < {AGENT_TOLERANCE_PX} px)")
     results["agreement"] = agree
     results["tolerances"] = {"median_px": MEDIAN_TOLERANCE_PX, "agent_px": AGENT_TOLERANCE_PX}
 
     # ---------------------------------------------------------------- the CPU fallback, as a baseline
     if not args.skip_cpu:
-        print(f"\nfallback path: {args.batch} official gym_pusht envs behind one batched step() ...",
-              flush=True)
+        print(f"\nfallback path: {args.batch} official gym_pusht envs behind one batched step() ...", flush=True)
         t0 = time.perf_counter()
         cpu_env = ReferencePushT(num_envs=args.batch, size=args.size, device="cuda", seed=args.seed)
         build_s = time.perf_counter() - t0
         t0 = time.perf_counter()
-        cpu_out = cpu_env.sample(steps=args.steps, batch=args.batch,
-                                 policy=se.ScriptedPolicy(push_towards_goal), style=style,
-                                 init_states=init, seed=args.seed)
+        cpu_out = cpu_env.sample(
+            steps=args.steps,
+            batch=args.batch,
+            policy=se.ScriptedPolicy(push_towards_goal),
+            style=style,
+            init_states=init,
+            seed=args.seed,
+        )
         cpu = rollout_stats(cpu_out, time.perf_counter() - t0, args.batch, args.steps)
         cpu_env.close()
         print(f"  built in {build_s:.1f} s ({build_s / args.batch * 1e3:.1f} ms per env)")
-        print(f"  {cpu['sim_s']:.1f} s   {cpu['env_steps_per_s']:,.0f} env-steps/s   "
-              f"{cpu['us_per_env_step']:.0f} us per env-step")
-        print(f"  same policy, same starts: block {cpu['block_dist_to_goal_start']:.1f} -> "
-              f"{cpu['block_dist_to_goal_end']:.1f} px mean "
-              f"(GPU: {b['block_dist_to_goal_end']:.1f}), tracking {cpu['tracking_error_px']:.1f} px "
-              f"(GPU: {b['tracking_error_px']:.1f})")
+        print(
+            f"  {cpu['sim_s']:.1f} s   {cpu['env_steps_per_s']:,.0f} env-steps/s   "
+            f"{cpu['us_per_env_step']:.0f} us per env-step"
+        )
+        print(
+            f"  same policy, same starts: block {cpu['block_dist_to_goal_start']:.1f} -> "
+            f"{cpu['block_dist_to_goal_end']:.1f} px mean "
+            f"(GPU: {b['block_dist_to_goal_end']:.1f}), tracking {cpu['tracking_error_px']:.1f} px "
+            f"(GPU: {b['tracking_error_px']:.1f})"
+        )
         print(f"  native GPU is {cpu['sim_s'] / b['sim_s']:.1f}x faster at batch {args.batch}")
-        results["cpu_fallback"] = {**cpu, "build_s": build_s,
-                                   "speedup_native_vs_cpu": cpu["sim_s"] / b["sim_s"]}
+        results["cpu_fallback"] = {**cpu, "build_s": build_s, "speedup_native_vs_cpu": cpu["sim_s"] / b["sim_s"]}
 
     # ------------------------------------------------- how the native step scales, and why it matters
     # The CPU path costs one pymunk step per environment, so it is linear in B and its per-env-step cost
@@ -321,68 +367,104 @@ def main() -> None:
         eager.use_step_graph = False
         eager.set_state(eager.sample_states(B))
         dt_eager = time_step(eager, 5)
-        scale.append({"batch": B, "step_ms": dt * 1e3, "env_steps_per_s": B / dt,
-                      "us_per_env_step": dt / B * 1e6, "eager_step_ms": dt_eager * 1e3,
-                      "graph_speedup": dt_eager / dt})
+        scale.append(
+            {
+                "batch": B,
+                "step_ms": dt * 1e3,
+                "env_steps_per_s": B / dt,
+                "us_per_env_step": dt / B * 1e6,
+                "eager_step_ms": dt_eager * 1e3,
+                "graph_speedup": dt_eager / dt,
+            }
+        )
         del e, eager
         torch.cuda.empty_cache()
     print("\nnative step cost against batch size:")
     print("| batch | ms / step | env-steps/s | µs per env-step | uncaptured ms | graph speedup |")
     print("|---|---|---|---|---|---|")
     for r in scale:
-        print(f"| {r['batch']:,} | {r['step_ms']:.2f} | {r['env_steps_per_s']:,.0f} | "
-              f"{r['us_per_env_step']:.3f} | {r['eager_step_ms']:.1f} | {r['graph_speedup']:.1f}x |")
+        print(
+            f"| {r['batch']:,} | {r['step_ms']:.2f} | {r['env_steps_per_s']:,.0f} | "
+            f"{r['us_per_env_step']:.3f} | {r['eager_step_ms']:.1f} | {r['graph_speedup']:.1f}x |"
+        )
     results["scale"] = scale
 
     # ---------------------------------------------------------------- storage
     rep = bytes_report(last, (args.size, args.size, 3))
     print(f"\nstorage for {rep['trajectories']} x {rep['steps_per_trajectory']} steps:")
-    print(f"  states {rep['state_bytes']:,} B + actions {rep['action_bytes']:,} B + "
-          f"style {rep['style_bytes']:,} B = {rep['stored_bytes'] / 1e3:.0f} kB")
-    print(f"  the frames they replace: {rep['frame_bytes'] / 1e6:.0f} MB at "
-          f"{args.size}x{args.size}x3  ->  {rep['ratio']:.0f}x")
+    print(
+        f"  states {rep['state_bytes']:,} B + actions {rep['action_bytes']:,} B + "
+        f"style {rep['style_bytes']:,} B = {rep['stored_bytes'] / 1e3:.0f} kB"
+    )
+    print(
+        f"  the frames they replace: {rep['frame_bytes'] / 1e6:.0f} MB at "
+        f"{args.size}x{args.size}x3  ->  {rep['ratio']:.0f}x"
+    )
     for s in (224, 512):
         n = rep["trajectories"] * rep["steps_per_trajectory"] * s * s * 3
-        print(f"  at {s}x{s}: {n / 1e6:.0f} MB -> {n / rep['stored_bytes']:.0f}x "
-              f"(the states do not change; the resolution is chosen at render time)")
+        print(
+            f"  at {s}x{s}: {n / 1e6:.0f} MB -> {n / rep['stored_bytes']:.0f}x "
+            f"(the states do not change; the resolution is chosen at render time)"
+        )
     results["storage"] = rep
 
     # ------------------------------------------------- frames now vs frames regenerated from states
     t0 = time.perf_counter()
-    live = env.sample(steps=args.steps, batch=args.batch, policy=se.ScriptedPolicy(push_towards_goal),
-                      style=style, init_states=init, seed=args.seed, render=True)
+    live = env.sample(
+        steps=args.steps,
+        batch=args.batch,
+        policy=se.ScriptedPolicy(push_towards_goal),
+        style=style,
+        init_states=init,
+        seed=args.seed,
+        render=True,
+    )
     torch.cuda.synchronize()
     with_render_s = time.perf_counter() - t0
     t0 = time.perf_counter()
-    regen = se.render_states(env, live["states"], size=args.size,
-                             style=live["style"].repeat_interleave(args.steps + 1, 0), chunk=8192)
+    regen = se.render_states(
+        env, live["states"], size=args.size, style=live["style"].repeat_interleave(args.steps + 1, 0), chunk=8192
+    )
     torch.cuda.synchronize()
     regen_s = time.perf_counter() - t0
     identical = torch.equal(live["frames"], regen)
     n_frames = live["frames"].shape[0] * live["frames"].shape[1]
-    print(f"\nregeneration: {n_frames:,} frames re-rendered from the stored states in "
-          f"{regen_s * 1e3:.0f} ms ({n_frames / regen_s:,.0f} frames/s)")
+    print(
+        f"\nregeneration: {n_frames:,} frames re-rendered from the stored states in "
+        f"{regen_s * 1e3:.0f} ms ({n_frames / regen_s:,.0f} frames/s)"
+    )
     print(f"  identical to the frames collected during the rollout: {identical}")
-    print(f"  the same rollout with render=True took {with_render_s:.2f} s against "
-          f"{b['sim_s']:.2f} s without frames")
+    print(f"  the same rollout with render=True took {with_render_s:.2f} s against {b['sim_s']:.2f} s without frames")
     assert identical, "re-rendering the stored states did not reproduce the collected frames"
-    results["regeneration"] = {"frames": int(n_frames), "regen_s": regen_s,
-                               "frames_per_s": n_frames / regen_s, "identical": identical,
-                               "rollout_with_render_s": with_render_s}
+    results["regeneration"] = {
+        "frames": int(n_frames),
+        "regen_s": regen_s,
+        "frames_per_s": n_frames / regen_s,
+        "identical": identical,
+        "rollout_with_render_s": with_render_s,
+    }
     results["runs"] = runs
 
     # ---------------------------------------------------------------- the corpus
-    ds = se.TrajectoryDataset(env, last["states"].cpu().numpy(), style=last["style"].cpu().numpy(),
-                              window=8, stride=4, size=args.size)
+    ds = se.TrajectoryDataset(
+        env, last["states"].cpu().numpy(), style=last["style"].cpu().numpy(), window=8, stride=4, size=args.size
+    )
     print(f"\n{ds}")
     print(f"  compression {ds.compression['ratio']:.0f}x on the stored steps")
     args.corpus.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(args.corpus, states=last["states"].cpu().numpy(),
-                        actions=last["actions"].cpu().numpy(), style=last["style"].cpu().numpy())
-    print(f"  wrote {args.corpus} ({args.corpus.stat().st_size / 1e3:.0f} kB) "
-          f"— feed it to hf_roundtrip.py --corpus")
-    results["corpus"] = {"path": str(args.corpus), "bytes": args.corpus.stat().st_size,
-                         "dataset": ds.describe(), "compression": ds.compression}
+    np.savez_compressed(
+        args.corpus,
+        states=last["states"].cpu().numpy(),
+        actions=last["actions"].cpu().numpy(),
+        style=last["style"].cpu().numpy(),
+    )
+    print(f"  wrote {args.corpus} ({args.corpus.stat().st_size / 1e3:.0f} kB) — feed it to hf_roundtrip.py --corpus")
+    results["corpus"] = {
+        "path": str(args.corpus),
+        "bytes": args.corpus.stat().st_size,
+        "dataset": ds.describe(),
+        "compression": ds.compression,
+    }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=2, default=str))

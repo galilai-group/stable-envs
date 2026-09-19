@@ -20,6 +20,7 @@ differ, and the difference would be the pixels it truncated.
 
 CPU, seconds, no GPU: these are properties of the geometry, not of a device.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,17 +33,16 @@ from stable_envs.envs import classic_control as CC
 
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 
+
 #: Far outside anything ``sample_states`` draws. CartPole's cart leaves the 600 px surface at
 #: |x| > 2.5 and these reach 9; the angles are 24 turns wide; MountainCar's positions put the car
 #: off both ends of the track. Fixed, not random-seeded per run: a bound that fails intermittently
 #: is a bound that fails.
 def _extreme(name, n, rng):
     if name == "CartPole":
-        return np.stack([rng.uniform(-9.0, 9.0, n), rng.uniform(-24 * np.pi, 24 * np.pi, n)],
-                        1).astype(np.float32)
+        return np.stack([rng.uniform(-9.0, 9.0, n), rng.uniform(-24 * np.pi, 24 * np.pi, n)], 1).astype(np.float32)
     if name == "Pendulum":
-        return np.stack([rng.uniform(-24 * np.pi, 24 * np.pi, n), rng.uniform(-2.0, 2.0, n)],
-                        1).astype(np.float32)
+        return np.stack([rng.uniform(-24 * np.pi, 24 * np.pi, n), rng.uniform(-2.0, 2.0, n)], 1).astype(np.float32)
     if name == "Acrobot":
         return rng.uniform(-24 * np.pi, 24 * np.pi, (n, 2)).astype(np.float32)
     return rng.uniform(-6.0, 5.0, (n, 1)).astype(np.float32)
@@ -67,12 +67,13 @@ def unbounded(monkeypatch):
 
     def poly(cv, verts, color, bidx, kmax, win=None):
         from stable_envs.render import gfxdraw as G
+
         G.polygon(cv.use(color), verts, None, None, bidx, KMAX, True, window=None)
 
     def circ(cv, cx, cy, r, color, bidx, gfx):
         from stable_envs.render import gfxdraw as G
-        G.circle(cv.use(color), cx, cy, r, None, None, bidx, gfx.hw(r), gfx.stencil(r), True,
-                 window=None, disc=None)
+
+        G.circle(cv.use(color), cx, cy, r, None, None, bidx, gfx.hw(r), gfx.stencil(r), True, window=None, disc=None)
 
     monkeypatch.setattr(CC, "_poly", poly)
     monkeypatch.setattr(CC, "_circ", circ)
@@ -88,7 +89,7 @@ def test_the_windows_and_kmax_are_bounds_on_extreme_states(name, unbounded, monk
 
     env = se.make(name, num_envs=len(states), device="cpu")
     loose = _render(env, states)
-    monkeypatch.undo()                      # put the real _poly/_circ back
+    monkeypatch.undo()  # put the real _poly/_circ back
     env2 = se.make(name, num_envs=len(states), device="cpu")
     tight = _render(env2, states)
 
@@ -99,7 +100,8 @@ def test_the_windows_and_kmax_are_bounds_on_extreme_states(name, unbounded, monk
         f"{d[..., 0].numel():,d} pixels over states outside the reachable set (max |diff| "
         f"{int(d.max())}). Either a WIN_* window is not a superset of its primitive's footprint for "
         f"every state, or a per-edge KMAX_* is under that edge's step count, or the disc stencil "
-        f"paints a different set than fill_circle_mask.")
+        f"paints a different set than fill_circle_mask."
+    )
 
 
 #: Which envs an extreme state can push OFF the surface, and what that exercises. Pendulum is not
@@ -130,16 +132,17 @@ def test_the_extreme_states_actually_exercise_something(name):
     distinct = len({f.numpy().tobytes() for f in frames})
     assert distinct >= 3, (
         f"{name}: {distinct} distinct frames from {len(states)} extreme states; they are not "
-        f"moving the picture, so the bound check above is comparing one scene with itself")
+        f"moving the picture, so the bound check above is comparing one scene with itself"
+    )
     if name not in LEAVES_SURFACE:
         return
     bg = frames[:, 0, 0, :].to(torch.int16)
     ink = (frames.to(torch.int16) - bg.view(-1, 1, 1, 3)).abs().amax(-1) > 0
-    touches_edge = (ink[:, 0, :].any(1) | ink[:, H - 1, :].any(1)
-                    | ink[:, :, 0].any(1) | ink[:, :, W - 1].any(1))
+    touches_edge = ink[:, 0, :].any(1) | ink[:, H - 1, :].any(1) | ink[:, :, 0].any(1) | ink[:, :, W - 1].any(1)
     assert bool(touches_edge.any()), (
         f"{name}: no extreme state drew anything on the border, although {LEAVES_SURFACE[name]}. "
-        f"SDL_gfx's clipping and the window clamps are therefore not being exercised.")
+        f"SDL_gfx's clipping and the window clamps are therefore not being exercised."
+    )
 
 
 def test_a_deliberately_short_kmax_is_caught(monkeypatch):
@@ -156,4 +159,5 @@ def test_a_deliberately_short_kmax_is_caught(monkeypatch):
     bad = _render(se.make("CartPole", num_envs=len(states), device="cpu"), states)
     assert not torch.equal(good, bad), (
         "shrinking CartPole's pole kmax to 8 changed no pixels, so the comparison in this file is "
-        "not sensitive to the bound it claims to check")
+        "not sensitive to the bound it claims to check"
+    )

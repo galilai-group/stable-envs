@@ -95,6 +95,7 @@ NO DYNAMICS, declared rather than omitted: there is no batched simulator for the
 package, so ``has_dynamics`` is False and ``step``/``transition`` raise ``Env``'s precise refusal.
 ``reset`` and ``render`` work — on CUDA; ``device="cpu"`` is refused outright (``CPU3D-OGB-1``).
 """
+
 from __future__ import annotations
 
 import copy
@@ -104,11 +105,13 @@ import torch
 
 from ...env import Env
 from ...registry import register
-from ...spaces import Box, Dict
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
-from .._plate_texels import quantise as _quantise, substitute as _substitute
-from .._plate_texels import texel_key as _texel_key, texel_slots as _texel_slots
+from ...spaces import Box, Dict
+from .._plate_texels import quantise as _quantise
+from .._plate_texels import substitute as _substitute
+from .._plate_texels import texel_key as _texel_key
+from .._plate_texels import texel_slots as _texel_slots
 
 #: Groups ``mujoco.Renderer`` draws at the env's own ``MjvOption`` (``geomgroup = [1,1,1,0,0,0]``).
 VISIBLE_GROUPS = (0, 1, 2)
@@ -119,6 +122,8 @@ def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
     q = np.zeros((int(nmocap), 4), np.float64)
     q[:, 0] = 1.0
     return q
+
+
 #: MJWarp worlds per launch. Same constant and the same reason as Fetch: a context is per (res,
 #: nworld) and an unbounded batch would build one per batch size.
 MJW_CHUNK = 256
@@ -182,7 +187,6 @@ def _seeded_action_space(u, seed: int):
     it; the override has to be on the class that defines it, and is undone in `finally`. Scoped to
     this block only, so nothing outside state sampling sees a changed env.
     """
-    import gymnasium as gym
     owner = next((k for k in type(u).__mro__ if "action_space" in k.__dict__), None)
     if owner is None:
         yield
@@ -223,6 +227,7 @@ def _reference_env(cell: str, size: int | None = None, role: str = "render"):
         return hit
     import gymnasium
     import stable_worldmodel  # noqa: F401  (registers swm/*)
+
     kw = {}
     if size:
         kw = {"width": int(size), "height": int(size)}
@@ -247,9 +252,22 @@ class _Bundle:
     layout. Only the array handles move.
     """
 
-    __slots__ = ("cam", "movers", "nq", "nv", "nmocap", "nbuttons",
-                 "state_names", "pristine", "size", "unwrapped", "button_tables",
-                 "cube_geoms", "grid_tex", "var_defaults")
+    __slots__ = (
+        "cam",
+        "movers",
+        "nq",
+        "nv",
+        "nmocap",
+        "nbuttons",
+        "state_names",
+        "pristine",
+        "size",
+        "unwrapped",
+        "button_tables",
+        "cube_geoms",
+        "grid_tex",
+        "var_defaults",
+    )
 
     @property
     def model(self):
@@ -282,6 +300,7 @@ def _bundle(cell: str) -> _Bundle:
     if hit is not None:
         return hit
     import mujoco
+
     spec = SPEC[cell]
     env = _reference_env(cell, role="sample")
     u = env.unwrapped
@@ -309,13 +328,17 @@ def _bundle(cell: str) -> _Bundle:
     # would correctly fail that, and fetch.py made the same call for the same reason when it dropped
     # mocap from ITS state. swm's own `reset(options={'state'})` contract is concat(qpos, qvel), which
     # is why the split helper still understands qvel; the RENDER state is the part that reaches a pixel.
-    names = ([f"qpos[{i}]" for i in range(b.nq)]
-             + [f"mocap_pos[{i}]" for i in range(3 * b.nmocap)]
-             + [f"button_state_{i}" for i in range(b.nbuttons)])
+    names = (
+        [f"qpos[{i}]" for i in range(b.nq)]
+        + [f"mocap_pos[{i}]" for i in range(3 * b.nmocap)]
+        + [f"button_state_{i}" for i in range(b.nbuttons)]
+    )
     b.state_names = tuple(names)
-    b.pristine = {"geom_group": np.array(m.geom_group, copy=True),
-                  "geom_rgba": np.array(m.geom_rgba, copy=True),
-                  "mat_rgba": np.array(m.mat_rgba, copy=True)}
+    b.pristine = {
+        "geom_group": np.array(m.geom_group, copy=True),
+        "geom_rgba": np.array(m.geom_rgba, copy=True),
+        "mat_rgba": np.array(m.mat_rgba, copy=True),
+    }
     b.button_tables = _button_tables(u, m, b.nbuttons)
     b.var_defaults = _variation_defaults(u)
     b.cube_geoms = _cube_geoms(u, m)
@@ -363,10 +386,13 @@ def _variation_defaults(u) -> dict:
     assert ncube == 1, (
         f"this cell has {ncube} cubes, and the (3,) cube.color contract assumes one. A multi-cube "
         f"configuration needs the leaf widened to (num_cubes, 3) on BOTH sides, plus per-cube geom "
-        f"groups in _cube_geoms; it is not a shape that can be fixed at the Box alone")
+        f"groups in _cube_geoms; it is not a shape that can be fixed at the Box alone"
+    )
     out = {}
-    for path, fallback in (("cube.color", [[0.96, 0.26, 0.33]]),
-                           ("floor.color", [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]])):
+    for path, fallback in (
+        ("cube.color", [[0.96, 0.26, 0.33]]),
+        ("floor.color", [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]]),
+    ):
         val = None
         if vs is not None:
             node = vs
@@ -394,6 +420,7 @@ def _cube_geoms(u, m) -> np.ndarray:
     goal marker at alpha 0.2, and swm preserves each geom's own alpha while writing only rgb.
     """
     import mujoco
+
     ids = []
     for lst in getattr(u, "_cube_geom_ids_list", []) or []:
         ids.extend(int(g) for g in lst)
@@ -459,18 +486,31 @@ def _button_tables(u, m, nbuttons: int) -> dict | None:
     u._apply_button_states()
     # The tables must actually DIFFER, or the bits are not colours and this design is wrong.
     first = out[tuple([0] * nbuttons)]
-    assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1])
-               for v in out.values()), (
+    assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1]) for v in out.values()), (
         "button states produce identical colour tables: either swm's rule changed or this cell is "
-        "capturing the wrong arrays, and carrying the bits in the state would be a lie either way")
+        "capturing the wrong arrays, and carrying the bits in the state would be a lie either way"
+    )
     return out
 
 
 class _Ctx:
     """An MJWarp render context plus the device views a render writes through."""
 
-    __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw",
-                 "prepared", "baked", "button_tables")
+    __slots__ = (
+        "wm",
+        "wd",
+        "rc",
+        "bgra",
+        "seg",
+        "graph",
+        "nworld",
+        "res",
+        "wp",
+        "mjw",
+        "prepared",
+        "baked",
+        "button_tables",
+    )
 
 
 def _frame(c: _Ctx) -> None:
@@ -482,9 +522,8 @@ def _frame(c: _Ctx) -> None:
 
 def _context(cell: str, res: int, nworld: int) -> _Ctx:
     import mujoco
-    import warp as wp
-
     import mujoco_warp as mjw
+    import warp as wp
 
     key = (cell, int(res), int(nworld))
     hit = _CTX_CACHE.get(key)
@@ -522,8 +561,7 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     d0 = mujoco.MjData(m)
     mujoco.mj_forward(m, d0)
     c = _Ctx()
-    c.wp, c.mjw, c.nworld, c.res, c.prepared, c.baked = (
-        wp, mjw, int(nworld), int(res), prepared, baked)
+    c.wp, c.mjw, c.nworld, c.res, c.prepared, c.baked = (wp, mjw, int(nworld), int(res), prepared, baked)
     # geom_rgba and mat_rgba are PER WORLD, so the Scene's button bits can differ across the batch.
     # Without this they are one shared array and every world in a launch would wear the same button
     # colours whatever its state said.
@@ -535,17 +573,23 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     # warm-up frame.
     with MW.gl_rounding():
         c.rc = MW.create_render_context(
-            m, nworld=int(nworld), cam_res=(int(res), int(res)), render_rgb=True, render_seg=True,
+            m,
+            nworld=int(nworld),
+            cam_res=(int(res), int(res)),
+            render_rgb=True,
+            render_seg=True,
             cam_active=[i == b.cam for i in range(m.ncam)],
-            enabled_geom_groups=list(VISIBLE_GROUPS), use_textures=True, use_shadows=True,
-            render_skybox=True)
+            enabled_geom_groups=list(VISIBLE_GROUPS),
+            use_textures=True,
+            use_shadows=True,
+            render_skybox=True,
+        )
         _frame(c)
         wp.synchronize()
         # VIEWS of the warp buffers. The channel swap is applied per render rather than here:
         # `[..., [2,1,0]]` at construction is advanced indexing, which copies, and the object would
         # then hold one frozen frame while every later render wrote into the buffer behind it.
-        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(
-            int(nworld), int(res), int(res), 4)
+        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
         c.seg = wp.to_torch(c.rc.seg_data).reshape(int(nworld), int(res), int(res), 2)[..., 0]
         with wp.ScopedCapture() as cap:
             _frame(c)
@@ -555,7 +599,7 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     return c
 
 
-def _ctx_button_tables(b: "_Bundle", m, res: int, device: str = "cuda") -> dict | None:
+def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | None:
     """``{bit code: (geom_rgba, mat_rgba)}`` on the CONTEXT's model, as device tensors.
 
     The tables in ``_bundle`` were captured from swm's own ``_apply_button_states`` on the REFERENCE
@@ -577,11 +621,13 @@ def _ctx_button_tables(b: "_Bundle", m, res: int, device: str = "cuda") -> dict 
     base_m = np.array(m.mat_rgba, copy=True)
     zero = tuple([0] * b.nbuttons)
     ref_g0, ref_m0 = b.button_tables[zero]
-    touched = sorted({int(i) for bits, (rg, rm) in b.button_tables.items()
-                      for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]})
+    touched = sorted(
+        {int(i) for bits, (rg, rm) in b.button_tables.items() for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]}
+    )
     assert np.array_equal(base_g[touched], ref_g0[touched]), (
         "the context model was copied at button bits other than all-zero, so every delta below "
-        "would be applied to the wrong base; see _context's forced-zero block")
+        "would be applied to the wrong base; see _context's forced-zero block"
+    )
     # WHAT THE BAKE CHANGED, measured against the right baseline. `base_m` is the context copy:
     # all-zero bits PLUS the bake. `ref_m0` is all-zero bits WITHOUT it. Their difference is
     # therefore exactly the bake, and nothing else.
@@ -599,10 +645,13 @@ def _ctx_button_tables(b: "_Bundle", m, res: int, device: str = "cuda") -> dict 
             assert not np.any(dm[baked_rows]), (
                 f"the texture bake and the button colour rule both write material rows "
                 f"{sorted(set(baked_rows) & set(np.nonzero(np.any(dm, axis=1))[0]))}; applying one "
-                f"as a delta over the other would undo it")
+                f"as a delta over the other would undo it"
+            )
         code = sum(bit << k for k, bit in enumerate(bits))
-        out[code] = (torch.as_tensor(base_g + dg, dtype=torch.float32, device=device),
-                     torch.as_tensor(base_m + dm, dtype=torch.float32, device=device))
+        out[code] = (
+            torch.as_tensor(base_g + dg, dtype=torch.float32, device=device),
+            torch.as_tensor(base_m + dm, dtype=torch.float32, device=device),
+        )
     return out
 
 
@@ -616,10 +665,22 @@ SPEC = {
     # and without `stable_worldmodel` installed the module raised and BOTH ids vanished from the
     # registry (76 instead of 78). A docstring is not worth either. `tests/unit/test_ogb_manip.py`
     # asserts these agree with what `_bundle` computes, wherever swm IS importable.
-    "Cube": {"swm_id": "swm/OGBCube-v0", "camera": "front_pixels", "size": 224,
-             "swm_ref": "swm/OGBCube-v0", "visible_tri": 193113, "state_dim": 24},
-    "Scene": {"swm_id": "swm/OGBScene-v0", "camera": "front_pixels", "size": 200,
-              "swm_ref": "swm/OGBScene-v0", "visible_tri": 196633, "state_dim": 30},
+    "Cube": {
+        "swm_id": "swm/OGBCube-v0",
+        "camera": "front_pixels",
+        "size": 224,
+        "swm_ref": "swm/OGBCube-v0",
+        "visible_tri": 193113,
+        "state_dim": 24,
+    },
+    "Scene": {
+        "swm_id": "swm/OGBScene-v0",
+        "camera": "front_pixels",
+        "size": 200,
+        "swm_ref": "swm/OGBScene-v0",
+        "visible_tri": 196633,
+        "state_dim": 30,
+    },
 }
 
 
@@ -630,8 +691,15 @@ class OGBManipBase(Env):
     default_supersample = 1
     fidelity_tier = "visual"
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         """``num_envs`` environments on ``device`` (contract §2).
 
         ``device`` is checked FIRST, before anything is built, because the CPU refusal is this
@@ -657,7 +725,8 @@ class OGBManipBase(Env):
                 f"certification CPU bar leaves under a nanosecond per triangle against a "
                 f"24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is "
                 f"filled. See examples/results/step7/ogb-manipulation/findings.md. "
-                f"Use device='cuda'.")
+                f"Use device='cuda'."
+            )
         b = _bundle(self.CELL)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
@@ -669,12 +738,17 @@ class OGBManipBase(Env):
         # no field has offset ``None``, ``_hidden_state`` is never consulted, and ``pack``/``unpack``
         # round-trip the frozen layout bit for bit. There is no ``_live_state`` either -- the packed
         # row IS this family's live state, since ``set_state`` writes it and ``render`` reads it.
-        self.state_layout = ((("qpos",), b.nq, 0),
-                             (("mocap", "position"), 3 * b.nmocap, b.nq)) + (
-            ((("buttons",), b.nbuttons, b.nq + 3 * b.nmocap),) if b.nbuttons else ())
-        super().__init__(num_envs=num_envs, size=size or b.size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        self.state_layout = ((("qpos",), b.nq, 0), (("mocap", "position"), 3 * b.nmocap, b.nq)) + (
+            ((("buttons",), b.nbuttons, b.nq + 3 * b.nmocap),) if b.nbuttons else ()
+        )
+        super().__init__(
+            num_envs=num_envs,
+            size=size or b.size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         self._b = b
         self._check_plate_is_constant()
 
@@ -708,7 +782,8 @@ class OGBManipBase(Env):
         assert d == 0, (
             f"{type(self).__name__}: the baked static plate differs by {d}/255 between two states "
             f"with every mover hidden, so the floor and skybox are NOT a function of the appearance "
-            f"alone and the plate design is unsound for this scene")
+            f"alone and the plate design is unsound for this scene"
+        )
 
     # ---- state ----------------------------------------------------------------------------
 
@@ -716,9 +791,11 @@ class OGBManipBase(Env):
         """``(state_dim,)`` -> qpos, mocap_pos, mocap_quat, button bits. No qvel: see ``_bundle``."""
         b = self._b
         i = 0
-        qpos = s[i:i + b.nq]; i += b.nq
-        mp = s[i:i + 3 * b.nmocap].reshape(b.nmocap, 3); i += 3 * b.nmocap
-        bits = s[i:i + b.nbuttons]
+        qpos = s[i : i + b.nq]
+        i += b.nq
+        mp = s[i : i + 3 * b.nmocap].reshape(b.nmocap, 3)
+        i += 3 * b.nmocap
+        bits = s[i : i + b.nbuttons]
         return qpos, mp, IDENTITY_QUAT(b.nmocap), bits
 
     def _variation_values(self, rng: np.random.Generator) -> dict:
@@ -753,10 +830,9 @@ class OGBManipBase(Env):
         only the cube moved -- so a fidelity number computed from them would say nothing about the
         14 arm joints that are most of the picture. The same argument fetch.py records.
         """
-        import mujoco
         rng = np.random.default_rng(0) if rng is None else rng
         b = self._b
-        env = _reference_env(self.CELL, role="sample")   # reset many times; never rendered
+        env = _reference_env(self.CELL, role="sample")  # reset many times; never rendered
         u = env.unwrapped
         out = []
         # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. swm's
@@ -783,9 +859,8 @@ class OGBManipBase(Env):
                     m, d = u.model, u.data
                     for _ in range(int(rng.integers(0, 26))):
                         env.step(u.action_space.sample())
-                bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[:b.nbuttons]]
-                out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(),
-                                           np.asarray(bits, np.float64)]))
+                bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[: b.nbuttons]]
+                out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(), np.asarray(bits, np.float64)]))
         finally:
             np.random.set_state(gstate)
         # FLOAT32, and this is a correctness requirement rather than a memory one.
@@ -821,12 +896,12 @@ class OGBManipBase(Env):
         registered default" is true by construction rather than by a copied literal.
         """
         d = _bundle(self.CELL).var_defaults
-        return Dict({
-            "cube": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                       init_value=d["cube.color"])}),
-            "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3),
-                                        init_value=d["floor.color"])}),
-        })
+        return Dict(
+            {
+                "cube": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=d["cube.color"])}),
+                "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3), init_value=d["floor.color"])}),
+            }
+        )
 
     #: Style leaves that change the STATIC scene, so the batch is grouped by them and each group
     #: gets its own baked plate. Everything else is a mover property, applied per world in the
@@ -856,7 +931,7 @@ class OGBManipBase(Env):
         if hit is not None and hit[0] is v and hit[1] == v._version:
             return hit[2]
         host = np.asarray(v.detach().cpu(), np.float64)
-        out = {p: host[:, o:o + w] for p, (o, w) in sty.layout.items()}
+        out = {p: host[:, o : o + w] for p, (o, w) in sty.layout.items()}
         self.__dict__["_style_host_cache"] = (v, v._version, out)
         return out
 
@@ -901,19 +976,22 @@ class OGBManipBase(Env):
         cached plate rests on is asserted here rather than assumed.
         """
         import mujoco
+
         b = self._b
         rig = _plate_rig(self.CELL, int(res))
         live = b.model
         shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
         assert shape == rig.shape, (
             f"{self.CELL}: the env recompiled to a different model shape {shape} than the plate rig "
-            f"was built for {rig.shape}; the cached plate would be a picture of the old scene")
+            f"was built for {rig.shape}; the cached plate would be a picture of the old scene"
+        )
         now = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
         assert now == rig.appearance, (
             f"{self.CELL}: an appearance array changed since the plate rig was built "
             f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
             f"it is now wrong; phase 0 measured these arrays identical across resets and this "
-            f"assertion is what keeps that measurement honest")
+            f"assertion is what keeps that measurement honest"
+        )
         self._apply_floor(rig, floor)
         d = rig.data
         if states is None:
@@ -992,16 +1070,22 @@ class OGBManipBase(Env):
     # ---- render ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device.
 
         One MJWarp launch per chunk for the movers, composited over the single baked plate by
         MJWarp's own segmentation buffer -- not by a depth heuristic, so the arm being occluded by
         the cube is resolved by the ray-caster that drew them.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])
@@ -1044,7 +1128,7 @@ class OGBManipBase(Env):
                 # than sliced out of a state vector that no longer carries it. Slicing it anyway is
                 # how job 6405900 died: `chunk[:, nq+3*nmoc : nq+7*nmoc]` is empty once the dim is
                 # dropped, and the reshape raised `shape '[64, 1, 4]' is invalid for input of size 0`.
-                mp = chunk[:, nq: nq + 3 * nmoc].reshape(n, nmoc, 3)
+                mp = chunk[:, nq : nq + 3 * nmoc].reshape(n, nmoc, 3)
                 wp.to_torch(c.wd.mocap_pos)[:n] = mp
                 wp.to_torch(c.wd.mocap_quat)[:n] = self._identity_quat(nmoc, n)
             if b.nbuttons:
@@ -1079,9 +1163,14 @@ class OGBManipBase(Env):
             if ss == 1:
                 buf[lo:hi] = comp
             else:
-                small = (comp.to(torch.float32)
-                         .reshape(n, size, ss, size, ss, 3).mean((2, 4)).round_()
-                         .clamp_(0, 255).to(torch.uint8))
+                small = (
+                    comp.to(torch.float32)
+                    .reshape(n, size, ss, size, ss, 3)
+                    .mean((2, 4))
+                    .round_()
+                    .clamp_(0, 255)
+                    .to(torch.uint8)
+                )
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
@@ -1132,19 +1221,19 @@ class OGBManipBase(Env):
         land one byte low (0.16 -> 40 -> 0.15686 -> 39), which would bake a plate one level off the
         colour that keyed it. Bytes group; floats bake; the two never swap roles.
         """
-        f = host["floor.color"]                                        # (B, 6)
+        f = host["floor.color"]  # (B, 6)
         q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6)
         uniq, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
         reps = [f[i].reshape(2, 3) for i in first]
         if len(uniq) == 1:
             return reps, None
-        inv = np.asarray(inv, np.int64).reshape(-1)    # numpy >= 2.0 shapes this per input, not flat
+        inv = np.asarray(inv, np.int64).reshape(-1)  # numpy >= 2.0 shapes this per input, not flat
         return reps, torch.as_tensor(inv, device=self.device)
 
     def _floor_plates(self, reps, res: int) -> torch.Tensor:
         """``(G, res, res, 3)``: the baked plate for each floor group, from the module plate cache."""
         if len(reps) == 1:
-            return self._plate(res, floor=reps[0]).unsqueeze(0)   # a VIEW: no copy on the hot path
+            return self._plate(res, floor=reps[0]).unsqueeze(0)  # a VIEW: no copy on the hot path
         return torch.stack([self._plate(res, floor=r) for r in reps])
 
     def _cube_colours(self, host, B: int):
@@ -1166,8 +1255,8 @@ class OGBManipBase(Env):
         gids = b.cube_geoms
         if gids is None or not len(gids):
             return None
-        rgb = host["cube.color"]                                        # (B, 3)
-        base = np.asarray(b.pristine["geom_rgba"], np.float64)[gids]    # (G, 4), own alphas
+        rgb = host["cube.color"]  # (B, 3)
+        base = np.asarray(b.pristine["geom_rgba"], np.float64)[gids]  # (G, 4), own alphas
         out = np.broadcast_to(base, (B, len(gids), 4)).copy()
         out[:, :, :3] = rgb[:, None, :]
         return torch.as_tensor(out, dtype=torch.float32, device=self.device)
@@ -1176,8 +1265,7 @@ class OGBManipBase(Env):
         cache = self.__dict__.setdefault("_idx_cache", {})
         hit = cache.get("cube_geoms")
         if hit is None:
-            hit = cache["cube_geoms"] = torch.as_tensor(
-                np.asarray(self._b.cube_geoms, np.int64), device=self.device)
+            hit = cache["cube_geoms"] = torch.as_tensor(np.asarray(self._b.cube_geoms, np.int64), device=self.device)
         return hit
 
     def _upload_cube_colours(self, c, rgba, n: int) -> None:
@@ -1200,7 +1288,7 @@ class OGBManipBase(Env):
         reference's by the baked button texture.
         """
         b = self._b
-        bits = chunk[:, -b.nbuttons:].round().clamp(0, 1).to(torch.int64).cpu().numpy()
+        bits = chunk[:, -b.nbuttons :].round().clamp(0, 1).to(torch.int64).cpu().numpy()
         codes = (bits * (1 << np.arange(b.nbuttons))).sum(1)
         geom = c.wp.to_torch(c.wm.geom_rgba)
         mat = c.wp.to_torch(c.wm.mat_rgba)
@@ -1225,20 +1313,21 @@ class OGBManipBase(Env):
         in swm's API takes them.
         """
         import mujoco
+
         u = env.unwrapped
         b = _bundle(cls.CELL)
         out = []
         for s in np.asarray(states, np.float64).reshape(-1, len(b.state_names)):
             i = 0
-            qpos = s[i:i + b.nq]; i += b.nq
+            qpos = s[i : i + b.nq]
+            i += b.nq
             qvel = np.zeros(b.nv)
-            mp = s[i:i + 3 * b.nmocap].reshape(b.nmocap, 3); i += 3 * b.nmocap
+            mp = s[i : i + 3 * b.nmocap].reshape(b.nmocap, 3)
+            i += 3 * b.nmocap
             mq = IDENTITY_QUAT(b.nmocap)
-            bits = s[i:i + b.nbuttons]
+            bits = s[i : i + b.nbuttons]
             if b.nbuttons:
-                u.set_state(qpos, qvel,
-                            **{f"button_state_{k}": int(round(float(bits[k])))
-                               for k in range(b.nbuttons)})
+                u.set_state(qpos, qvel, **{f"button_state_{k}": int(round(float(bits[k]))) for k in range(b.nbuttons)})
             else:
                 u.set_state(qpos, qvel)
             u.data.mocap_pos[:] = mp
@@ -1269,8 +1358,7 @@ _KEEPALIVE: list = []
 #: Model arrays the plate depends on, by prefix. `geom_rgba` and `mat_rgba` are EXCLUDED because
 #: swm's `_apply_button_states` writes them into the live model on every button change -- they are
 #: state wearing the shape of appearance, and the rig pins them itself (see `_plate_rig`).
-_APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_",
-                        "hfield_", "skin_")
+_APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_", "hfield_", "skin_")
 _APPEARANCE_SKIP = ("geom_rgba", "mat_rgba", "geom_group")
 
 
@@ -1283,6 +1371,7 @@ def _appearance_digest(m, sitegroup=None) -> str:
     assertion that fires loudly instead of baking a plate from geometry the env has since changed.
     """
     import hashlib
+
     h = hashlib.blake2b(digest_size=16)
     n = 0
     # SITES THE RENDERER NEVER DRAWS ARE NOT APPEARANCE. `SceneEnv.reset` writes `site_pos` for the
@@ -1304,7 +1393,7 @@ def _appearance_digest(m, sitegroup=None) -> str:
             continue
         try:
             v = getattr(m, name)
-        except Exception:                      # pragma: no cover - MjModel exposes only arrays here
+        except Exception:  # pragma: no cover - MjModel exposes only arrays here
             continue
         if isinstance(v, np.ndarray):
             a = np.ascontiguousarray(v)
@@ -1314,8 +1403,9 @@ def _appearance_digest(m, sitegroup=None) -> str:
             h.update(repr(a.shape).encode())
             h.update(a.tobytes())
             n += 1
-    assert n >= 20, (f"appearance digest covered only {n} arrays -- an empty hash would certify "
-                     f"staleness it never looked at")
+    assert n >= 20, (
+        f"appearance digest covered only {n} arrays -- an empty hash would certify staleness it never looked at"
+    )
     return h.hexdigest()
 
 
@@ -1347,6 +1437,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     import copy
 
     import mujoco
+
     key = (cell, int(res))
     hit = _PLATE_RIGS.get(key)
     if hit is not None:
@@ -1354,7 +1445,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     b = _bundle(cell)
     live = b.model
     rig = _PlateRig()
-    rig.floor = None                       # which floor.color the GL context currently holds
+    rig.floor = None  # which floor.color the GL context currently holds
     rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
     rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
     rig.model = copy.deepcopy(live)
@@ -1391,14 +1482,17 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
     rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
     rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
-    _KEEPALIVE.append(rig.renderer)             # the rule, enforced directly: never released
-    _PLATE_RIGS[key] = rig                      # never evicted; the renderer is never closed
-    if __debug__ and _os.environ.get("SE7_OGB_RIGDEBUG") == "1":   # diagnostics, off unless asked
+    _KEEPALIVE.append(rig.renderer)  # the rule, enforced directly: never released
+    _PLATE_RIGS[key] = rig  # never evicted; the renderer is never closed
+    if __debug__ and _os.environ.get("SE7_OGB_RIGDEBUG") == "1":  # diagnostics, off unless asked
         import sys
-        mods = [n for n, m in sys.modules.items()
-                if getattr(m, "__name__", None) == __name__ and m is not None]
-        print(f"[rigdebug] built {key}: rigs={len(_PLATE_RIGS)} keepalive={len(_KEEPALIVE)} "
-              f"dict_id={id(_PLATE_RIGS)} module_copies={len(mods)} {mods}", flush=True)
+
+        mods = [n for n, m in sys.modules.items() if getattr(m, "__name__", None) == __name__ and m is not None]
+        print(
+            f"[rigdebug] built {key}: rigs={len(_PLATE_RIGS)} keepalive={len(_KEEPALIVE)} "
+            f"dict_id={id(_PLATE_RIGS)} module_copies={len(mods)} {mods}",
+            flush=True,
+        )
     return rig
 
 
@@ -1426,55 +1520,37 @@ import os as _os
 #: composite that never used its own baked plate on the floor, and the difference is the measure of
 #: that defect: interior-exact 0.351 -> 0.958 and all-exact 0.278 -> 0.872 on the Cube.
 _MEASURED: dict = {
-        "Cube": {
-            "all_exact_frac": 0.870012,
-            "draw_spread": {
-                "mean_abs": [
-                    3.265277,
-                    3.309378
-                ],
-                "ssim": [
-                    0.919219,
-                    0.926569
-                ],
-                "within8_frac": [
-                    0.91581,
-                    0.917723
-                ]
-            },
-            "gate_draw_mean_abs": 3.295483,
-            "interior_exact_frac": 0.9578,
-            "interior_frac": 0.412552,
-            "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
-            "mean_abs": 3.309378,
-            "ssim": 0.919219,
-            "within8_frac": 0.91581
+    "Cube": {
+        "all_exact_frac": 0.870012,
+        "draw_spread": {
+            "mean_abs": [3.265277, 3.309378],
+            "ssim": [0.919219, 0.926569],
+            "within8_frac": [0.91581, 0.917723],
         },
-        "Scene": {
-            "all_exact_frac": 0.773417,
-            "draw_spread": {
-                "mean_abs": [
-                    6.493273,
-                    6.691589
-                ],
-                "ssim": [
-                    0.892792,
-                    0.898809
-                ],
-                "within8_frac": [
-                    0.855483,
-                    0.860345
-                ]
-            },
-            "gate_draw_mean_abs": 6.602667,
-            "interior_exact_frac": 0.912032,
-            "interior_frac": 0.278728,
-            "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
-            "mean_abs": 6.691589,
-            "ssim": 0.892792,
-            "within8_frac": 0.855483
-        }
-    }
+        "gate_draw_mean_abs": 3.295483,
+        "interior_exact_frac": 0.9578,
+        "interior_frac": 0.412552,
+        "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+        "mean_abs": 3.309378,
+        "ssim": 0.919219,
+        "within8_frac": 0.91581,
+    },
+    "Scene": {
+        "all_exact_frac": 0.773417,
+        "draw_spread": {
+            "mean_abs": [6.493273, 6.691589],
+            "ssim": [0.892792, 0.898809],
+            "within8_frac": [0.855483, 0.860345],
+        },
+        "gate_draw_mean_abs": 6.602667,
+        "interior_exact_frac": 0.912032,
+        "interior_frac": 0.278728,
+        "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+        "mean_abs": 6.691589,
+        "ssim": 0.892792,
+        "within8_frac": 0.855483,
+    },
+}
 #: OUR side: the batch raytracer that drew the movers.
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
@@ -1496,11 +1572,18 @@ def _fidelity(cell: str) -> dict:
                 f"ogb_manip: {cell} has no MEASURED visual_fidelity. This module refuses to register "
                 f"a visual cell with invented numbers. Run "
                 f"scratch/step7/ogb-manipulation/probe_gate_fidelity.py, paste its worst-of-eight into "
-                f"_MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only inside that measuring job.")
-        return {"mean_abs": -1.0, "within8_frac": -1.0, "ssim": -1.0,
-                "mean_abs_max": -1.0, "within8_min": -1.0, "ssim_min": -1.0,
-                "measured_at": "UNMEASURED PLACEHOLDER - SE7_OGB_UNMEASURED=1 is set, so these are "
-                               "NOT measurements and this build must not ship or be certified."}
+                f"_MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only inside that measuring job."
+            )
+        return {
+            "mean_abs": -1.0,
+            "within8_frac": -1.0,
+            "ssim": -1.0,
+            "mean_abs_max": -1.0,
+            "within8_min": -1.0,
+            "ssim_min": -1.0,
+            "measured_at": "UNMEASURED PLACEHOLDER - SE7_OGB_UNMEASURED=1 is set, so these are "
+            "NOT measurements and this build must not ship or be certified.",
+        }
     d = _MEASURED[cell]
     spec = SPEC[cell]
     lo_w, hi_w = d["draw_spread"]["within8_frac"]
@@ -1552,7 +1635,8 @@ def _fidelity(cell: str) -> dict:
             f"frame is a baked MuJoCo "
             f"plate composited with "
             f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
-            f"out-of-range-spot correction applied. {d['job']}"),
+            f"out-of-range-spot correction applied. {d['job']}"
+        ),
         # The REFERENCE side, which the certifier compares: mujoco is what swm's render() draws with.
         "reference_versions": _REFERENCE_VERSIONS,
         # OUR side, recorded and never compared: a bump of our own renderer that moves these numbers
@@ -1582,7 +1666,8 @@ _RESIDUAL_NOTE = (
     "0.922 (Scene) and whole-frame 0.872 / 0.775 over three independent 64-state draws. An earlier "
     "version of this cell masked with `seg >= 0` -- true wherever MJWarp hit ANYTHING, floor "
     "included -- so the plate reached only the sky and the same scene scored 0.351 interior-exact. "
-    "That composite bug was worth more than every lighting term above combined.")
+    "That composite bug was worth more than every lighting term above combined."
+)
 
 
 #: The Scene carries one residual the Cube does not, and it is declared per geom because that is what
@@ -1600,39 +1685,47 @@ _SCENE_BAKE_NOTE = (
     "residual is invisible to the interior metric. For scale, the alpha note Fetch already declares "
     "is 1.2-1.5% of pixels. THE ZERO-PIXEL ALTERNATIVE EXISTS AND IS NOT TAKEN HERE: upstream "
     "mujoco_warp guards that branch from 3.13.0 (58d8c77, PR #1608), so a venv bump removes the need "
-    "for this bake entirely -- to be measured, not assumed, since 3.13.0 moves more than one thing.")
+    "for this bake entirely -- to be measured, not assumed, since 3.13.0 moves more than one thing."
+)
 
 
 def _make_classes():
     made = {}
     for cell, spec in SPEC.items():
         cname = f"OGB{cell}"
-        made[cname] = register(type(cname, (OGBManipBase,), dict(
-            CELL=cell,
-            name=f"ogb-{cell.lower()}",
-            reference_id=spec["swm_ref"],
-            default_size=spec["size"],
-            visual_fidelity=_fidelity(cell),
-            visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),
-            parity_interior_min=None,
-            __doc__=(
-                f"OGBench manipulation {cell} ({spec['swm_ref']}), fidelity_tier='visual'.\n\n"
-                f"The frame is a MuJoCo-baked static plate composited with mujoco_warp's batch "
-                f"ray-caster for the movers, at swm's registered {spec['size']} px from the model "
-                f"camera {spec['camera']!r}. State is (qpos, mocap_pos"
-                + (", button bits)" if cell == "Scene" else ")")
-                + f", {spec['state_dim']} dimensions. qvel is excluded because it "
-                  f"reaches no pixel and mocap_quat because it is the identity everywhere in the "
-                  f"registered distribution.\n\n"
-                f"THIS IS A VISUAL TIER CELL, NOT A PARITY ONE. Three lighting terms in mujoco_warp "
-                f"disagree with MuJoCo and are declared in visual_fidelity and visual_note rather "
-                f"than chased: the global directional light, the spot's distance attenuation, and "
-                f"the headlight on mover pixels. A fourth, the out-of-range spot cutoff, WAS fixed "
-                f"and now lives in the shared render/mjwarp.py path. The translucent goal marker is "
-                f"a fifth, separate residual: mujoco_warp has no alpha path.\n\n"
-                f"There is NO CPU backend: device='cpu' raises rather than silently using the GPU "
-                f"(CPU3D-OGB-1)."),
-        )))
+        made[cname] = register(
+            type(
+                cname,
+                (OGBManipBase,),
+                dict(
+                    CELL=cell,
+                    name=f"ogb-{cell.lower()}",
+                    reference_id=spec["swm_ref"],
+                    default_size=spec["size"],
+                    visual_fidelity=_fidelity(cell),
+                    visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),
+                    parity_interior_min=None,
+                    __doc__=(
+                        f"OGBench manipulation {cell} ({spec['swm_ref']}), fidelity_tier='visual'.\n\n"
+                        f"The frame is a MuJoCo-baked static plate composited with mujoco_warp's batch "
+                        f"ray-caster for the movers, at swm's registered {spec['size']} px from the model "
+                        f"camera {spec['camera']!r}. State is (qpos, mocap_pos"
+                        + (", button bits)" if cell == "Scene" else ")")
+                        + f", {spec['state_dim']} dimensions. qvel is excluded because it "
+                        f"reaches no pixel and mocap_quat because it is the identity everywhere in the "
+                        f"registered distribution.\n\n"
+                        f"THIS IS A VISUAL TIER CELL, NOT A PARITY ONE. Three lighting terms in mujoco_warp "
+                        f"disagree with MuJoCo and are declared in visual_fidelity and visual_note rather "
+                        f"than chased: the global directional light, the spot's distance attenuation, and "
+                        f"the headlight on mover pixels. A fourth, the out-of-range spot cutoff, WAS fixed "
+                        f"and now lives in the shared render/mjwarp.py path. The translucent goal marker is "
+                        f"a fifth, separate residual: mujoco_warp has no alpha path.\n\n"
+                        f"There is NO CPU backend: device='cpu' raises rather than silently using the GPU "
+                        f"(CPU3D-OGB-1)."
+                    ),
+                ),
+            )
+        )
     return made
 
 

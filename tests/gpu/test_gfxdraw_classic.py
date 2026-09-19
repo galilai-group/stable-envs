@@ -20,6 +20,7 @@ guards, the Wu fringe's clipping and its two-pixel pair, the axis-aligned short-
 anti-aliasing at all, the two-pass ``aacircle`` fringe, SDL's blit rule against SDL_gfx's pixel
 writer, and painter's order between primitives that overlap.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -51,11 +52,11 @@ def _wide(env, n, rng, k):
     """States scaled ``k`` times past the reachable range, so bounds are tested rather than assumed."""
     name = type(env).__name__
     if name == "CartPole":
-        return np.stack([rng.uniform(-2.4 * k, 2.4 * k, n),
-                         rng.uniform(-0.21 * k, 0.21 * k, n)], 1).astype(np.float32)
+        return np.stack([rng.uniform(-2.4 * k, 2.4 * k, n), rng.uniform(-0.21 * k, 0.21 * k, n)], 1).astype(np.float32)
     if name == "Pendulum":
-        return np.stack([rng.uniform(-np.pi * k, np.pi * k, n),
-                         rng.uniform(-2.0 * k, 2.0 * k, n)], 1).astype(np.float32)
+        return np.stack([rng.uniform(-np.pi * k, np.pi * k, n), rng.uniform(-2.0 * k, 2.0 * k, n)], 1).astype(
+            np.float32
+        )
     if name == "Acrobot":
         return rng.uniform(-np.pi * k, np.pi * k, (n, 2)).astype(np.float32)
     lo, hi = env.MINP, env.MAXP
@@ -66,8 +67,8 @@ def _wide(env, n, rng, k):
 def _states(env, kind, n, seed):
     if kind == "corpus":
         from pathlib import Path
-        npz = (Path(__file__).resolve().parents[2] / "examples/results/step4/states"
-               / f"{type(env).__name__}.npz")
+
+        npz = Path(__file__).resolve().parents[2] / "examples/results/step4/states" / f"{type(env).__name__}.npz"
         if not npz.is_file():
             pytest.skip(f"no frozen corpus for {type(env).__name__} in this checkout")
         pool = np.load(npz)["states"]
@@ -128,10 +129,12 @@ def test_the_described_frame_is_the_drawn_frame(name, kind):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, kind, env.B, seed=SEEDS[kind])
     assert_frames_identical(
-        _described(env, states), _per_primitive(env, states),
+        _described(env, states),
+        _per_primitive(env, states),
         what=f"{name} [{kind}] described vs drawn",
         why="render_classic_torch is the per-pixel form of gfxdraw.py's rules; a difference here is "
-            "a mis-described frame (geometry, colour, order or window in Ops), not a kernel bug")
+        "a mis-described frame (geometry, colour, order or window in Ops), not a kernel bug",
+    )
 
 
 @pytest.mark.parametrize("name", CLASSIC)
@@ -149,10 +152,12 @@ def test_the_description_carries_per_row_appearance(name):
     if style is None:
         pytest.skip(f"{name} declares no variation")
     assert_frames_identical(
-        _described(env, states, style), _per_primitive(env, states, style),
+        _described(env, states, style),
+        _per_primitive(env, states, style),
         what=f"{name} per-row style, mixed antialias",
         why="every appearance knob must flow through the op list as data; a cached stencil or a "
-            "batch-wide colour would show up only here")
+        "batch-wide colour would show up only here",
+    )
 
 
 # ------------------------------------------------------------------ joint 2: the kernel
@@ -192,18 +197,21 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
         # and for MountainCar a plate with one row PER ENVIRONMENT, which is the PLATE_B = B
         # specialisation of the kernel and is otherwise never reached.
         assert len(set(ops.aa.tolist())) == 2, f"{name}: the batch does not hold both aa settings"
-        cols = ops.meta_t[..., FC.CM_R:FC.CM_B + 1]
+        cols = ops.meta_t[..., FC.CM_R : FC.CM_B + 1]
         assert int((cols != cols[:1]).any()), f"{name}: every environment drew the same colours"
         if ops.plate is not None:
             assert int(ops.plate.shape[1]) == env.B, (
                 f"{name}: the baked plate has {ops.plate.shape[1]} row(s) for {env.B} environments, "
-                f"so the kernel's PLATE_B = B path is not being exercised")
+                f"so the kernel's PLATE_B = B path is not being exercised"
+            )
 
     assert_frames_identical(
-        FC.render_classic(ops), FC.render_classic_torch(ops),
+        FC.render_classic(ops),
+        FC.render_classic_torch(ops),
         what=f"{name} [{kind}, {style_kind}] kernel vs description",
         why="the two evaluate the same per-pixel expression; a difference is a Triton coding fault "
-            "(a shape, an integer width, a branch), not a rule")
+        "(a shape, an integer width, a branch), not a rule",
+    )
 
 
 @pytest.mark.gpu
@@ -232,8 +240,12 @@ def test_env_render_agrees_under_a_per_row_style(name):
         slow = env.render(states, style=style).clone()
     finally:
         env.use_fused_render = was
-    assert_frames_identical(fast, slow, what=f"{name} per-row style, kernel on vs off",
-                            why="every appearance knob must reach the kernel as data")
+    assert_frames_identical(
+        fast,
+        slow,
+        what=f"{name} per-row style, kernel on vs off",
+        why="every appearance knob must reach the kernel as data",
+    )
 
 
 @pytest.mark.gpu
@@ -252,14 +264,17 @@ def test_the_kernel_is_batch_and_chunk_invariant(name):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, "corpus", 12, seed=0)
     whole = env.render(states).clone()
-    chunks = torch.cat([se.make(name, num_envs=k, device="cuda").render(states[i:i + k])
-                        for i, k in ((0, 4), (4, 8))])
-    assert_frames_identical(chunks, whole, what=f"{name} chunked vs whole (fused)",
-                            why="the fused kernel must be batch-size invariant")
+    chunks = torch.cat(
+        [se.make(name, num_envs=k, device="cuda").render(states[i : i + k]) for i, k in ((0, 4), (4, 8))]
+    )
+    assert_frames_identical(
+        chunks, whole, what=f"{name} chunked vs whole (fused)", why="the fused kernel must be batch-size invariant"
+    )
     perm = np.array([7, 0, 11, 3, 5, 1, 9, 2, 10, 4, 8, 6])
     shuffled = env.render(states[perm]).clone()
-    assert_frames_identical(shuffled, whole[perm], what=f"{name} permuted (fused)",
-                            why="the fused kernel must be order-independent")
+    assert_frames_identical(
+        shuffled, whole[perm], what=f"{name} permuted (fused)", why="the fused kernel must be order-independent"
+    )
 
 
 @pytest.mark.gpu
@@ -273,4 +288,5 @@ def test_the_cpu_path_is_untouched_by_the_kernel(name):
     cpu = make_or_skip(name, num_envs=4, device="cpu")
     assert cpu._use_fused() is False, (
         f"{name} on device='cpu' selected the fused kernel; the CPU path must stay the "
-        f"per-primitive one, whose pixels this ticket does not change")
+        f"per-primitive one, whose pixels this ticket does not change"
+    )

@@ -76,6 +76,7 @@ is 14.9 ms at B=4096. A ``BatchSampler`` removes it with no custom collate at al
 measured at 2.886 ms/batch against 2.907 for the assembled-``__getitems__`` path and 2.774 for no
 loader at all, where a plain per-item ``DataLoader`` takes 5.637.
 """
+
 from __future__ import annotations
 
 import json
@@ -120,16 +121,17 @@ def check_style(env, style, rows: int, owner: str, per: str = "state") -> torch.
             f"this one is {int(k.shape[-1])} (shape {tuple(k.shape)}). Flattening it by size would "
             f"succeed on a transpose and give each row a mixture of other rows' knobs, so it is "
             f"refused. Pass ({rows}, {dim}) — one row per {per} — or ({dim},) to share one "
-            f"appearance.")
+            f"appearance."
+        )
     t = _states_tensor(style)
     if dim and t.numel() % dim:
         raise ValueError(
             f"{owner}: a flat style must be a whole number of {dim}-wide rows, and {t.numel()} is "
-            f"not a multiple of {dim}.")
+            f"not a multiple of {dim}."
+        )
     t = t.reshape(-1, dim) if dim else t.reshape(-1, 0)
     if t.shape[0] not in (1, rows):
-        raise ValueError(f"{owner}: style must have 1 or {rows} rows (one per {per}), got "
-                         f"{t.shape[0]}")
+        raise ValueError(f"{owner}: style must have 1 or {rows} rows (one per {per}), got {t.shape[0]}")
     return t.contiguous()
 
 
@@ -162,12 +164,22 @@ def collate_batched(batch):
     if isinstance(batch, dict):
         return batch
     from torch.utils.data._utils.collate import default_collate
+
     return default_collate(batch)
 
 
 @torch.no_grad()
-def render_states(env: Env | str, states, size: int | None = None, chunk: int = 8192,
-                  variation: dict | None = None, style=None, out=None, device: str = "cuda", **env_kw):
+def render_states(
+    env: Env | str,
+    states,
+    size: int | None = None,
+    chunk: int = 8192,
+    variation: dict | None = None,
+    style=None,
+    out=None,
+    device: str = "cuda",
+    **env_kw,
+):
     """``(...,state_dim)`` states -> ``(...,H,W,3)`` uint8 frames.
 
     ``env`` may be a live env or a registry name. Leading dims are preserved, so a ``(n_traj, T, D)``
@@ -182,8 +194,7 @@ def render_states(env: Env | str, states, size: int | None = None, chunk: int = 
     # The env has to exist before the states can be checked (only it knows ``state_dim``), and the
     # states have to be sized before the env can be built at a sensible batch. So: a provisional row
     # count from the input's own shape, then the env, then the real check.
-    probe_shape = tuple(getattr(states if torch.is_tensor(states) else np.asarray(states), "shape",
-                                ()))
+    probe_shape = tuple(getattr(states if torch.is_tensor(states) else np.asarray(states), "shape", ()))
     n_guess = int(np.prod(probe_shape[:-1])) if len(probe_shape) >= 1 else 1
     if isinstance(env, str):
         env = make(env, num_envs=max(1, min(chunk, n_guess or 1)), size=size, device=device, **env_kw)
@@ -201,8 +212,9 @@ def render_states(env: Env | str, states, size: int | None = None, chunk: int = 
     if style is not None:
         sty = check_style(env, style, N, "render_states(style=)")
 
-    probe = env.render(st[:1].to(device), size=S, variation=variation,
-                       style=None if sty is None else sty[:1].to(device))
+    probe = env.render(
+        st[:1].to(device), size=S, variation=variation, style=None if sty is None else sty[:1].to(device)
+    )
     H, W = int(probe.shape[1]), int(probe.shape[2])
 
     if out is None:
@@ -219,12 +231,12 @@ def render_states(env: Env | str, states, size: int | None = None, chunk: int = 
     on_device = torch.is_tensor(flat) and flat.device.type == torch.device(device).type
 
     for i in range(0, N, chunk):
-        s = st[i:i + chunk].to(device, non_blocking=True)
-        k = None if sty is None else (sty if sty.shape[0] == 1 else sty[i:i + chunk]).to(device)
+        s = st[i : i + chunk].to(device, non_blocking=True)
+        k = None if sty is None else (sty if sty.shape[0] == 1 else sty[i : i + chunk]).to(device)
         if on_device:
-            env.render(s, size=S, variation=variation, style=k, out=flat[i:i + chunk])
+            env.render(s, size=S, variation=variation, style=k, out=flat[i : i + chunk])
         else:
-            flat[i:i + chunk] = env.render(s, size=S, variation=variation, style=k).cpu()
+            flat[i : i + chunk] = env.render(s, size=S, variation=variation, style=k).cpu()
     return flat.reshape(*lead, H, W, 3) if lead else flat
 
 
@@ -262,7 +274,8 @@ class _RenderingDataset(torch.utils.data.Dataset):
                     f"{type(self).__name__}.render: style rows are {self.env.style_dim} number(s) "
                     f"wide and the last axis of this one is {int(k.shape[-1])} (shape "
                     f"{tuple(k.shape)}). Flattening it by size succeeds on a transpose and gives each "
-                    f"row a mixture of other rows' knobs, so it is refused.")
+                    f"row a mixture of other rows' knobs, so it is refused."
+                )
             k = k.reshape(-1, self.env.style_dim)
             if k.shape[0] != s.shape[0]:
                 # One style row per window, states flattened over time: repeat_interleave, not repeat.
@@ -292,14 +305,15 @@ class _RenderingDataset(torch.utils.data.Dataset):
         if self._frame_hw is None:
             style = getattr(self, "style", None)
             if style is not None:
-                style = torch.as_tensor(style, device=self.device,
-                                        dtype=torch.float32).reshape(-1, self.env.style_dim)[:1]
+                style = torch.as_tensor(style, device=self.device, dtype=torch.float32).reshape(
+                    -1, self.env.style_dim
+                )[:1]
             elif self.env.style_dim:
-                style = torch.as_tensor(self.env.default_style(), device=self.device,
-                                        dtype=torch.float32).reshape(1, -1)
+                style = torch.as_tensor(self.env.default_style(), device=self.device, dtype=torch.float32).reshape(
+                    1, -1
+                )
             with torch.no_grad():
-                f = self.env.render(self._probe_state(), size=self.size, variation=self.variation,
-                                    style=style)
+                f = self.env.render(self._probe_state(), size=self.size, variation=self.variation, style=style)
             self._frame_hw = (int(f.shape[-3]), int(f.shape[-2]))
         return (*self._frame_hw, 3)
 
@@ -337,8 +351,17 @@ class StateDataset(_RenderingDataset):
     ``BatchSampler`` recipe in this module's docstring work on it with the DEFAULT collate function.
     """
 
-    def __init__(self, env: Env | str, states, style=None, size: int | None = None,
-                 variation: dict | None = None, frames: bool = True, device: str = "cuda", **env_kw):
+    def __init__(
+        self,
+        env: Env | str,
+        states,
+        style=None,
+        size: int | None = None,
+        variation: dict | None = None,
+        frames: bool = True,
+        device: str = "cuda",
+        **env_kw,
+    ):
         self.frames = bool(frames)
         # The env FIRST: it is the only thing that knows ``state_dim``, and without that this
         # constructor used to accept any array at all — ``reshape(-1, st.shape[-1])`` takes its width
@@ -388,9 +411,15 @@ class StateDataset(_RenderingDataset):
         state_b = n * d * 4
         style_b = 0 if self.style is None else int(self.style.numel()) * 4
         frame_b = n * h * w * c
-        return {"n": n, "state_bytes": state_b, "style_bytes": style_b,
-                "stored_bytes": state_b + style_b, "frame_bytes": frame_b,
-                "frame_shape": (h, w, c), "ratio": frame_b / max(state_b + style_b, 1)}
+        return {
+            "n": n,
+            "state_bytes": state_b,
+            "style_bytes": style_b,
+            "stored_bytes": state_b + style_b,
+            "frame_bytes": frame_b,
+            "frame_shape": (h, w, c),
+            "ratio": frame_b / max(state_b + style_b, 1),
+        }
 
 
 class TrajectoryDataset(_RenderingDataset):
@@ -421,10 +450,21 @@ class TrajectoryDataset(_RenderingDataset):
     transposes time into batch.
     """
 
-    def __init__(self, env: Env | str, states, style=None, lengths=None,
-                 window: int = 1, stride: int = 1, frameskip: int = 1, frames: bool = False,
-                 size: int | None = None, variation: dict | None = None, device: str = "cuda",
-                 **env_kw):
+    def __init__(
+        self,
+        env: Env | str,
+        states,
+        style=None,
+        lengths=None,
+        window: int = 1,
+        stride: int = 1,
+        frameskip: int = 1,
+        frames: bool = False,
+        size: int | None = None,
+        variation: dict | None = None,
+        device: str = "cuda",
+        **env_kw,
+    ):
         self._init_env(env, size, variation, device, env_kw)
         self.window = int(window)
         self.stride = int(stride)
@@ -443,13 +483,11 @@ class TrajectoryDataset(_RenderingDataset):
         self.offsets = np.concatenate([[0], np.cumsum(self.lengths)[:-1]]).astype(np.int64)
         D = int(self.states.shape[-1])
         if D != self.env.state_dim:
-            raise ValueError(f"{type(self.env).__name__} expects state_dim {self.env.state_dim}, "
-                             f"got {D}")
+            raise ValueError(f"{type(self.env).__name__} expects state_dim {self.env.state_dim}, got {D}")
 
         self.style = None
         if style is not None:
-            k = check_style(self.env, style, len(self.lengths), "TrajectoryDataset(style=)",
-                            per="trajectory")
+            k = check_style(self.env, style, len(self.lengths), "TrajectoryDataset(style=)", per="trajectory")
             if k.shape[0] == 1:
                 k = k.repeat(len(self.lengths), 1)
             self.style = k.contiguous()
@@ -476,12 +514,14 @@ class TrajectoryDataset(_RenderingDataset):
             if lens.shape != (n,) or lens.max(initial=0) > T:
                 raise ValueError(f"lengths must be ({n},) with max <= {T}, got {lens.shape}")
             # Padded input: keep only the live prefix of each row so the padding can never be indexed.
-            return torch.cat([st[i, :int(L)] for i, L in enumerate(lens)], dim=0).contiguous(), lens
+            return torch.cat([st[i, : int(L)] for i, L in enumerate(lens)], dim=0).contiguous(), lens
         if st.ndim != 2:
             raise ValueError(f"states must be (n_traj,T,D), (N,D) or a list of (T_i,D); got {tuple(st.shape)}")
         if lengths is None:
-            raise ValueError("flat (N, state_dim) states need `lengths` — without episode boundaries a "
-                             "window would silently span two trajectories")
+            raise ValueError(
+                "flat (N, state_dim) states need `lengths` — without episode boundaries a "
+                "window would silently span two trajectories"
+            )
         lens = np.asarray(lengths, dtype=np.int64)
         if int(lens.sum()) != int(st.shape[0]):
             raise ValueError(f"lengths sum to {int(lens.sum())} but states hold {int(st.shape[0])} rows")
@@ -507,8 +547,10 @@ class TrajectoryDataset(_RenderingDataset):
         end = (self.offsets + self.lengths - 1)[self.clip_traj] if len(self.clip_traj) else np.zeros(0)
         if len(last) and (last > end).any():
             bad = int(np.argmax(last > end))
-            raise AssertionError(f"clip {bad} would read row {int(last[bad])} past the end of "
-                                 f"trajectory {int(self.clip_traj[bad])} (last row {int(end[bad])})")
+            raise AssertionError(
+                f"clip {bad} would read row {int(last[bad])} past the end of "
+                f"trajectory {int(self.clip_traj[bad])} (last row {int(end[bad])})"
+            )
         self._clip_rows_cache = None
 
     # indexing
@@ -548,30 +590,33 @@ class TrajectoryDataset(_RenderingDataset):
         the flatten/reshape around it is why the caller does not have to do it.
         """
         ix = np.asarray(idxs, dtype=np.int64)
-        rows = self._rows(ix)                                        # (B, window)
+        rows = self._rows(ix)  # (B, window)
         s = self.states[rows.reshape(-1)].reshape(len(ix), self.window, -1)
         s = s.to(self.device, non_blocking=True)
         traj = torch.as_tensor(self.clip_traj[ix])
-        out = {"states": s,
-               "traj": traj,
-               "start": torch.as_tensor(self.clip_start[ix] - self.offsets[self.clip_traj[ix]])}
+        out = {
+            "states": s,
+            "traj": traj,
+            "start": torch.as_tensor(self.clip_start[ix] - self.offsets[self.clip_traj[ix]]),
+        }
         k = None
         if self.style is not None:
-            k = self.style[traj].to(self.device, non_blocking=True)   # (B, style_dim)
+            k = self.style[traj].to(self.device, non_blocking=True)  # (B, style_dim)
             out["style"] = k
         if self.frames:
             kk = None if k is None else k.repeat_interleave(self.window, dim=0)
             out["frames"] = self.render(s.reshape(-1, s.shape[-1]), style=kk).reshape(
-                len(ix), self.window, *self.frame_shape())
+                len(ix), self.window, *self.frame_shape()
+            )
         return out
 
     def episode(self, i: int) -> dict:
         """The whole trajectory ``i``, ignoring the window/stride index. For evaluation and video."""
         off, L = int(self.offsets[i]), int(self.lengths[i])
-        s = self.states[off:off + L].to(self.device)
+        s = self.states[off : off + L].to(self.device)
         out = {"states": s, "traj": torch.tensor(i), "start": torch.tensor(0)}
         if self.style is not None:
-            out["style"] = self.style[i:i + 1].to(self.device)
+            out["style"] = self.style[i : i + 1].to(self.device)
         if self.frames:
             out["frames"] = self.render(s, style=out.get("style"))
         return out
@@ -596,9 +641,16 @@ class TrajectoryDataset(_RenderingDataset):
         dataset it replaces — and it is chunked, so the frames it produces may be far larger than the
         device memory that produces them.
         """
-        return render_states(self.env, self.states, size=self.size, chunk=chunk,
-                             variation=self.variation, style=self.per_row_style, out=out,
-                             device=self.device)
+        return render_states(
+            self.env,
+            self.states,
+            size=self.size,
+            chunk=chunk,
+            variation=self.variation,
+            style=self.per_row_style,
+            out=out,
+            device=self.device,
+        )
 
     @property
     def compression(self) -> dict:
@@ -613,24 +665,42 @@ class TrajectoryDataset(_RenderingDataset):
         state_b = int(n) * int(d) * 4
         style_b = 0 if self.style is None else int(self.style.numel()) * 4
         frame_b = int(n) * h * w * c
-        return {"n_trajectories": self.n_trajectories, "n_steps": int(n), "state_dim": int(d),
-                "state_bytes": state_b, "style_bytes": style_b, "stored_bytes": state_b + style_b,
-                "frame_bytes": frame_b, "frame_shape": (h, w, c),
-                "ratio": frame_b / max(state_b + style_b, 1)}
+        return {
+            "n_trajectories": self.n_trajectories,
+            "n_steps": int(n),
+            "state_dim": int(d),
+            "state_bytes": state_b,
+            "style_bytes": style_b,
+            "stored_bytes": state_b + style_b,
+            "frame_bytes": frame_b,
+            "frame_shape": (h, w, c),
+            "ratio": frame_b / max(state_b + style_b, 1),
+        }
 
     def describe(self) -> dict:
-        return {"env": type(self.env).__name__, "size": self.size,
-                "n_trajectories": self.n_trajectories, "n_steps": int(self.states.shape[0]),
-                "state_dim": int(self.states.shape[-1]), "style_dim": int(self.env.style_dim),
-                "window": self.window, "stride": self.stride, "frameskip": self.frameskip,
-                "n_clips": len(self), "dropped_trajectories": self.dropped_trajectories,
-                "has_style": self.style is not None, "frames": self.frames}
+        return {
+            "env": type(self.env).__name__,
+            "size": self.size,
+            "n_trajectories": self.n_trajectories,
+            "n_steps": int(self.states.shape[0]),
+            "state_dim": int(self.states.shape[-1]),
+            "style_dim": int(self.env.style_dim),
+            "window": self.window,
+            "stride": self.stride,
+            "frameskip": self.frameskip,
+            "n_clips": len(self),
+            "dropped_trajectories": self.dropped_trajectories,
+            "has_style": self.style is not None,
+            "frames": self.frames,
+        }
 
     def __repr__(self) -> str:
         d = self.describe()
-        return (f"TrajectoryDataset({d['env']}, {d['n_trajectories']} traj x ~"
-                f"{d['n_steps'] // max(d['n_trajectories'], 1)} steps, window={d['window']}, "
-                f"stride={d['stride']}, {len(self)} clips)")
+        return (
+            f"TrajectoryDataset({d['env']}, {d['n_trajectories']} traj x ~"
+            f"{d['n_steps'] // max(d['n_trajectories'], 1)} steps, window={d['window']}, "
+            f"stride={d['stride']}, {len(self)} clips)"
+        )
 
     # HuggingFace
 
@@ -655,18 +725,20 @@ class TrajectoryDataset(_RenderingDataset):
         survives every serialization at a cost parquet dictionary-encodes to a few hundred bytes.
         """
         ds_mod = _require_datasets()
-        feat = ds_mod.Features({
-            "states": ds_mod.Sequence(ds_mod.Sequence(ds_mod.Value(features_dtype))),
-            "style": ds_mod.Sequence(ds_mod.Value(features_dtype)),
-            "length": ds_mod.Value("int32"),
-            HF_META_KEY: ds_mod.Value("string"),
-        })
+        feat = ds_mod.Features(
+            {
+                "states": ds_mod.Sequence(ds_mod.Sequence(ds_mod.Value(features_dtype))),
+                "style": ds_mod.Sequence(ds_mod.Value(features_dtype)),
+                "length": ds_mod.Value("int32"),
+                HF_META_KEY: ds_mod.Value("string"),
+            }
+        )
         default_style = np.asarray(self.env.default_style(), np.float32)
         meta = json.dumps(self._meta())
         rows = {"states": [], "style": [], "length": [], HF_META_KEY: []}
         for i in range(self.n_trajectories):
             off, L = int(self.offsets[i]), int(self.lengths[i])
-            rows["states"].append(self.states[off:off + L].numpy())
+            rows["states"].append(self.states[off : off + L].numpy())
             rows["style"].append(default_style if self.style is None else self.style[i].numpy())
             rows["length"].append(L)
             rows[HF_META_KEY].append(meta)
@@ -675,12 +747,16 @@ class TrajectoryDataset(_RenderingDataset):
         return out
 
     def _meta(self) -> dict:
-        return {"env": type(self.env).__name__, "size": int(self.size),
-                "state_dim": int(self.states.shape[-1]), "style_dim": int(self.env.style_dim),
-                "state_names": list(self.env.state_names),
-                "style_names": list(self.env.style_names),
-                "has_style": self.style is not None,
-                "stable_envs_version": _version()}
+        return {
+            "env": type(self.env).__name__,
+            "size": int(self.size),
+            "state_dim": int(self.states.shape[-1]),
+            "style_dim": int(self.env.style_dim),
+            "state_names": list(self.env.state_names),
+            "style_names": list(self.env.style_names),
+            "has_style": self.style is not None,
+            "stable_envs_version": _version(),
+        }
 
     def save_to_disk(self, path: str | os.PathLike, **kw) -> str:
         """Arrow directory via ``datasets.Dataset.save_to_disk``. Round-trips ``(states, style)``."""
@@ -699,8 +775,7 @@ class TrajectoryDataset(_RenderingDataset):
         return self.to_hf().push_to_hub(repo_id, **kw)
 
     @classmethod
-    def from_hf(cls, source, env: Env | str | None = None, split: str = "train",
-                **kw) -> "TrajectoryDataset":
+    def from_hf(cls, source, env: Env | str | None = None, split: str = "train", **kw) -> TrajectoryDataset:
         """Load from a hub repo id, a ``save_to_disk`` directory, or an in-memory ``datasets.Dataset``.
 
         ``env`` is optional when the description carries the metadata this class writes; a corpus from
@@ -714,7 +789,7 @@ class TrajectoryDataset(_RenderingDataset):
             hf = ds_mod.load_dataset(str(source), split=split)
         else:
             hf = source
-        if hasattr(hf, "keys") and not hasattr(hf, "features"):        # a DatasetDict
+        if hasattr(hf, "keys") and not hasattr(hf, "features"):  # a DatasetDict
             hf = hf[split]
 
         # The column first: it is the copy that survives push_to_hub (see ``to_hf``). The description is
@@ -731,7 +806,8 @@ class TrajectoryDataset(_RenderingDataset):
         if env is None:
             raise ValueError(
                 "this dataset does not name its env (no stable-envs metadata in the description) — "
-                "pass env=\"PushT\" or a live env. The states alone do not say what they mean.")
+                'pass env="PushT" or a live env. The states alone do not say what they mean.'
+            )
         kw.setdefault("size", meta.get("size"))
 
         cols = hf.column_names
@@ -742,7 +818,7 @@ class TrajectoryDataset(_RenderingDataset):
         return cls(env, arrs, style=style, **kw)
 
     @classmethod
-    def load_from_disk(cls, path: str | os.PathLike, env=None, **kw) -> "TrajectoryDataset":
+    def load_from_disk(cls, path: str | os.PathLike, env=None, **kw) -> TrajectoryDataset:
         return cls.from_hf(path, env=env, **kw)
 
 
@@ -767,4 +843,5 @@ def _require_datasets():
 
 def _version() -> str:
     from . import __version__
+
     return __version__

@@ -14,6 +14,7 @@ matches must not be promoted to full configuration coverage.
 
 The generator is a script in ``scratch/``, so it is loaded by path rather than imported as a package.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -38,6 +39,7 @@ def mx():
 
 # ============================================================ 1. unknown is not absent
 
+
 def test_failed_construction_is_unknown_not_absent(mx):
     """The bug that made the first matrix wrong about sixteen ids.
 
@@ -46,16 +48,19 @@ def test_failed_construction_is_unknown_not_absent(mx):
     came back ``absent`` because they did not construct at all. Both are now ``unknown_probe_failed``
     or a measured ``present``; neither may silently become ``absent`` again.
     """
-    probe = {"make": "ERR AssertionError: ", "variation_space_status": "unknown_probe_failed",
-             "frame_status_probe": "unknown_probe_failed", "variation_names": None}
+    probe = {
+        "make": "ERR AssertionError: ",
+        "variation_space_status": "unknown_probe_failed",
+        "frame_status_probe": "unknown_probe_failed",
+        "variation_names": None,
+    }
     status, why = mx.classify_frame(probe)
     assert status == "unknown", why
     assert "did not construct" in why
 
-    default, params, _sem = mx.collect_default_and_params("swm/Whatever-v0", probe,
-                                                          {"envs": [], "rung": None,
-                                                           "confidence": "none", "evidence": ""},
-                                                          {}, {})
+    default, params, _sem = mx.collect_default_and_params(
+        "swm/Whatever-v0", probe, {"envs": [], "rung": None, "confidence": "none", "evidence": ""}, {}, {}
+    )
     assert default["covered"] == "unknown"
     assert default["kind"] == "unknown_probe_failed"
     assert params["level"] == "unknown"
@@ -67,8 +72,13 @@ def test_declared_none_variation_space_is_absent_not_unknown(mx):
     The Craftax wrappers define ``variation_space`` and set it to ``None``; that is a real answer and
     must not be laundered into "we could not tell", or a settled row would grow a fake next action.
     """
-    probe = {"make": "ok", "variation_space_status": "absent", "variation_names": None,
-             "frame_status_probe": "pixels", "frame_shape": [63, 63, 3]}
+    probe = {
+        "make": "ok",
+        "variation_space_status": "absent",
+        "variation_names": None,
+        "frame_status_probe": "pixels",
+        "frame_shape": [63, 63, 3],
+    }
     status, _ = mx.classify_frame(probe)
     assert status == "pixels"
     assert probe["variation_space_status"] == "absent"
@@ -76,24 +86,31 @@ def test_declared_none_variation_space_is_absent_not_unknown(mx):
 
 def test_symbolic_env_is_not_a_renderer_gap(mx):
     """No frame to draw is a classification, not a hole in coverage."""
-    probe = {"make": "ok", "frame_shape": None,
-             "frame_status_probe": "symbolic_no_frame",
-             "reset": "ERR NotImplementedError: render is only supported for Pixels variants; "
-                      "symbolic envs do not produce a frame."}
+    probe = {
+        "make": "ok",
+        "frame_shape": None,
+        "frame_status_probe": "symbolic_no_frame",
+        "reset": "ERR NotImplementedError: render is only supported for Pixels variants; "
+        "symbolic envs do not produce a frame.",
+    }
     status, _ = mx.classify_frame(probe)
     assert status == "symbolic_no_frame"
-    default, params, _sem = mx.collect_default_and_params("swm/X-v0", probe,
-                                                          {"envs": [], "rung": None,
-                                                           "confidence": "none", "evidence": ""},
-                                                          {}, {})
+    default, params, _sem = mx.collect_default_and_params(
+        "swm/X-v0", probe, {"envs": [], "rung": None, "confidence": "none", "evidence": ""}, {}, {}
+    )
     assert default["covered"] == "n/a" and params["level"] == "n/a"
 
 
 # ============================================================ 2. physics taxonomy
 
+
 def _dec(**kw):
-    base = {"has_step": False, "step_reference_exact": None, "step_reference_gate": None,
-            "step_reference_control": None}
+    base = {
+        "has_step": False,
+        "step_reference_exact": None,
+        "step_reference_gate": None,
+        "step_reference_control": None,
+    }
     base.update(kw)
     return base
 
@@ -107,9 +124,9 @@ def test_analytic_integrator_and_contact_solver_are_different_classes(mx):
     dynamics are an approximation, which they are not.
     """
     near = mx.classify_physics(["CartPole"], {"CartPole": _dec(has_step=True)})
-    approx = mx.classify_physics(["PushT"], {"PushT": _dec(has_step=True,
-                                                           step_reference_gate="block",
-                                                           step_reference_control="agent")})
+    approx = mx.classify_physics(
+        ["PushT"], {"PushT": _dec(has_step=True, step_reference_gate="block", step_reference_control="agent")}
+    )
     assert near["class"] == "near_exact_fast_step"
     assert approx["class"] == "approximate_fast_step"
     assert near["class"] != approx["class"]
@@ -117,9 +134,12 @@ def test_analytic_integrator_and_contact_solver_are_different_classes(mx):
 
 def test_exact_step_requires_the_declaration(mx):
     """``exact`` is a claim an env makes and the conformance suite enforces, never an inference."""
-    assert mx.classify_physics(
-        ["TwoRoom"], {"TwoRoom": _dec(has_step=True, step_reference_exact=True,
-                                      step_reference_control="agent")})["class"] == "exact_fast_step"
+    assert (
+        mx.classify_physics(
+            ["TwoRoom"], {"TwoRoom": _dec(has_step=True, step_reference_exact=True, step_reference_control="agent")}
+        )["class"]
+        == "exact_fast_step"
+    )
     # ... and a bare `step` with no declaration is not promoted to exact
     assert mx.classify_physics(["X"], {"X": _dec(has_step=True)})["class"] != "exact_fast_step"
 
@@ -132,15 +152,27 @@ def test_no_step_and_no_declaration_are_different_answers(mx):
 
 
 def test_physics_classes_are_the_declared_vocabulary(mx):
-    assert set(mx.PHYSICS_CLASSES) == {"exact_fast_step", "near_exact_fast_step",
-                                       "approximate_fast_step", "reference_only", "unknown", "n/a"}
+    assert set(mx.PHYSICS_CLASSES) == {
+        "exact_fast_step",
+        "near_exact_fast_step",
+        "approximate_fast_step",
+        "reference_only",
+        "unknown",
+        "n/a",
+    }
 
 
 # ============================================================ 3. multi-census merge is monotonic
 
+
 def _census(tag: str, envs: dict) -> Path:
-    return {"python": f"/fake/{tag}", "registry": sorted(envs), "n": len(envs),
-            "import_errors": {}, "declarations": envs}
+    return {
+        "python": f"/fake/{tag}",
+        "registry": sorted(envs),
+        "n": len(envs),
+        "import_errors": {},
+        "declarations": envs,
+    }
 
 
 def test_second_census_enriches_and_never_deletes(mx, tmp_path):
@@ -151,10 +183,24 @@ def test_second_census_enriches_and_never_deletes(mx, tmp_path):
     """
     a = tmp_path / "census_a.json"
     b = tmp_path / "census_b.json"
-    a.write_text(json.dumps(_census("a", {"DMCWalkerWalk": {"reference_id": "dm_control/walker-walk"},
-                                          "PushT": {"reference_id": "gym_pusht/PushT-v0"}})))
-    b.write_text(json.dumps(_census("b", {"FetchPush": {"reference_id": "FetchPush-v4"},
-                                          "PushT": {"reference_id": "gym_pusht/PushT-v0"}})))
+    a.write_text(
+        json.dumps(
+            _census(
+                "a",
+                {
+                    "DMCWalkerWalk": {"reference_id": "dm_control/walker-walk"},
+                    "PushT": {"reference_id": "gym_pusht/PushT-v0"},
+                },
+            )
+        )
+    )
+    b.write_text(
+        json.dumps(
+            _census(
+                "b", {"FetchPush": {"reference_id": "FetchPush-v4"}, "PushT": {"reference_id": "gym_pusht/PushT-v0"}}
+            )
+        )
+    )
 
     one = mx.read_censuses([a])
     both = mx.read_censuses(sorted([a, b]))
@@ -171,10 +217,10 @@ def test_census_merge_is_order_independent(mx, tmp_path):
     a = tmp_path / "census_a.json"
     b = tmp_path / "census_b.json"
     a.write_text(json.dumps(_census("a", {"X": {"reference_id": "x", "fidelity_tier": "parity"}})))
-    b.write_text(json.dumps(_census("b", {"X": {"reference_id": "x", "fidelity_tier": "parity"},
-                                          "Y": {"reference_id": "y"}})))
-    assert mx.read_censuses(sorted([a, b]))["declarations"] == \
-           mx.read_censuses(sorted([b, a]))["declarations"]
+    b.write_text(
+        json.dumps(_census("b", {"X": {"reference_id": "x", "fidelity_tier": "parity"}, "Y": {"reference_id": "y"}}))
+    )
+    assert mx.read_censuses(sorted([a, b]))["declarations"] == mx.read_censuses(sorted([b, a]))["declarations"]
 
 
 def test_swm_probes_must_agree_on_the_id_list(mx, tmp_path):
@@ -183,10 +229,13 @@ def test_swm_probes_must_agree_on_the_id_list(mx, tmp_path):
     Merging probes is only sound because the registry is built at import time from one source: what
     differs between interpreters is how far each could construct an id, never which ids exist.
     """
+
     def _probe(path, ids):
-        path.write_text(json.dumps({"ids": ids, "probe": {i: {"make": "ok"} for i in ids},
-                                    "entry_points": {}, "kwargs": {}}))
+        path.write_text(
+            json.dumps({"ids": ids, "probe": {i: {"make": "ok"} for i in ids}, "entry_points": {}, "kwargs": {}})
+        )
         return path
+
     p1 = _probe(tmp_path / "p1.json", ["swm/A-v0", "swm/B-v0"])
     p2 = _probe(tmp_path / "p2.json", ["swm/A-v0"])
     with pytest.raises(SystemExit, match="disagree"):
@@ -198,14 +247,40 @@ def test_swm_probe_merge_keeps_the_record_that_learned_most(mx, tmp_path):
     blind = tmp_path / "a_blind.json"
     seeing = tmp_path / "b_seeing.json"
     ids = ["swm/FetchPush-v3"]
-    blind.write_text(json.dumps({"ids": ids, "entry_points": {}, "kwargs": {}, "probe": {
-        "swm/FetchPush-v3": {"make": "ERR AssertionError",
-                             "variation_space_status": "unknown_probe_failed",
-                             "frame_status_probe": "unknown_probe_failed"}}}))
-    seeing.write_text(json.dumps({"ids": ids, "entry_points": {}, "kwargs": {}, "probe": {
-        "swm/FetchPush-v3": {"make": "ok", "variation_space_status": "present",
-                             "frame_status_probe": "pixels", "frame_shape": [224, 224, 3],
-                             "variation_names": ["object.color"]}}}))
+    blind.write_text(
+        json.dumps(
+            {
+                "ids": ids,
+                "entry_points": {},
+                "kwargs": {},
+                "probe": {
+                    "swm/FetchPush-v3": {
+                        "make": "ERR AssertionError",
+                        "variation_space_status": "unknown_probe_failed",
+                        "frame_status_probe": "unknown_probe_failed",
+                    }
+                },
+            }
+        )
+    )
+    seeing.write_text(
+        json.dumps(
+            {
+                "ids": ids,
+                "entry_points": {},
+                "kwargs": {},
+                "probe": {
+                    "swm/FetchPush-v3": {
+                        "make": "ok",
+                        "variation_space_status": "present",
+                        "frame_status_probe": "pixels",
+                        "frame_shape": [224, 224, 3],
+                        "variation_names": ["object.color"],
+                    }
+                },
+            }
+        )
+    )
     merged = mx.read_swm_registries(sorted([blind, seeing]))
     rec = merged["probe"]["swm/FetchPush-v3"]
     assert rec["variation_space_status"] == "present"
@@ -214,6 +289,7 @@ def test_swm_probe_merge_keeps_the_record_that_learned_most(mx, tmp_path):
 
 
 # ============================================================ 4. parameter coverage
+
 
 def test_default_match_does_not_imply_full_parameter_coverage(mx):
     """One registered id can build many scenes; rendering its default says nothing about the rest.
@@ -227,8 +303,13 @@ def test_default_match_does_not_imply_full_parameter_coverage(mx):
     # declare only the registered default, and nothing else
     decls = {"PointmazeLargeNavigate": {"reference_id": "ogbench/pointmaze-large-v0"}}
     probe = {"make": "ok", "frame_status_probe": "pixels"}
-    match = {"envs": ["PointmazeLargeNavigate"], "rung": "documented_manual",
-             "confidence": "verified", "evidence": "", "primary": "PointmazeLargeNavigate"}
+    match = {
+        "envs": ["PointmazeLargeNavigate"],
+        "rung": "documented_manual",
+        "confidence": "verified",
+        "evidence": "",
+        "primary": "PointmazeLargeNavigate",
+    }
     default, params, _sem = mx.collect_default_and_params("swm/OGBMaze-v0", probe, match, decls, {})
     assert default["covered"] is True
     assert params["level"] == "partial"
@@ -246,9 +327,12 @@ def test_parameter_coverage_is_computed_from_declarations(mx):
             ref = meta["reference_pattern"].format(loco=loco, maze=maze)
             decls[f"{loco}{maze}"] = {"reference_id": ref}
     _, params, _sem = mx.collect_default_and_params(
-        "swm/OGBMaze-v0", {"make": "ok", "frame_status_probe": "pixels"},
+        "swm/OGBMaze-v0",
+        {"make": "ok", "frame_status_probe": "pixels"},
         {"envs": ["x"], "rung": "documented_manual", "confidence": "verified", "evidence": ""},
-        decls, {})
+        decls,
+        {},
+    )
     assert params["level"] == "full"
     assert params["missing_configurations"] == []
 
@@ -263,17 +347,28 @@ def test_reward_difference_does_not_reduce_render_coverage(mx):
     recorded on its own axis, where it informs anyone stepping the stable-envs env standalone
     without blocking renderer validation.
     """
-    probe = {"make": "ok", "frame_status_probe": "pixels",
-             "dmc_reference": {"reference_id": "dm_control/humanoid-walk", "how": "exact"},
-             "swm_task_space": {"accepts_task": True, "default_task": "walk",
-                                "tasks": ["run", "stand", "walk"],
-                                "render_equivalence_classes": [["run", "stand", "walk"]],
-                                "distinct_render_configs": 1, "source": "humanoid._TASKS"}}
+    probe = {
+        "make": "ok",
+        "frame_status_probe": "pixels",
+        "dmc_reference": {"reference_id": "dm_control/humanoid-walk", "how": "exact"},
+        "swm_task_space": {
+            "accepts_task": True,
+            "default_task": "walk",
+            "tasks": ["run", "stand", "walk"],
+            "render_equivalence_classes": [["run", "stand", "walk"]],
+            "distinct_render_configs": 1,
+            "source": "humanoid._TASKS",
+        },
+    }
     decls = {"DMCHumanoidStand": {"reference_id": "dm_control/humanoid-stand"}}
-    match = {"envs": ["DMCHumanoidStand"], "rung": "same_dmc_appearance",
-             "confidence": "verified", "evidence": "", "primary": "DMCHumanoidStand"}
-    default, params, sem = mx.collect_default_and_params("swm/HumanoidDMControl-v0", probe, match,
-                                                         decls, {})
+    match = {
+        "envs": ["DMCHumanoidStand"],
+        "rung": "same_dmc_appearance",
+        "confidence": "verified",
+        "evidence": "",
+        "primary": "DMCHumanoidStand",
+    }
+    default, params, sem = mx.collect_default_and_params("swm/HumanoidDMControl-v0", probe, match, decls, {})
     assert default["covered"] is True, "a reward-name difference must not reduce render coverage"
     assert default["kind"] == "same_scene_reward_differs"
     # ... and the difference is not swept away either
@@ -288,18 +383,23 @@ def test_render_shared_tasks_collapse_to_one_configuration(mx):
     equivalence classes come from constructing each task and digesting its render model, so the
     collapse is measured.
     """
-    probe = {"make": "ok", "frame_status_probe": "pixels",
-             "dmc_reference": {"reference_id": "dm_control/walker-walk", "how": "by_class"},
-             "swm_task_space": {"accepts_task": True, "default_task": "walk",
-                                "tasks": ["arabesque", "flip", "legs_up", "lie_down", "run",
-                                          "stand", "walk", "walk-backward"],
-                                "render_equivalence_classes": [["arabesque", "flip", "legs_up",
-                                                                "lie_down", "run", "stand", "walk",
-                                                                "walk-backward"]],
-                                "distinct_render_configs": 1, "source": "walker._TASKS"}}
+    probe = {
+        "make": "ok",
+        "frame_status_probe": "pixels",
+        "dmc_reference": {"reference_id": "dm_control/walker-walk", "how": "by_class"},
+        "swm_task_space": {
+            "accepts_task": True,
+            "default_task": "walk",
+            "tasks": ["arabesque", "flip", "legs_up", "lie_down", "run", "stand", "walk", "walk-backward"],
+            "render_equivalence_classes": [
+                ["arabesque", "flip", "legs_up", "lie_down", "run", "stand", "walk", "walk-backward"]
+            ],
+            "distinct_render_configs": 1,
+            "source": "walker._TASKS",
+        },
+    }
     decls = {"DMCWalkerWalk": {"reference_id": "dm_control/walker-walk"}}
-    match = {"envs": ["DMCWalkerWalk"], "rung": "reference_id", "confidence": "verified",
-             "evidence": ""}
+    match = {"envs": ["DMCWalkerWalk"], "rung": "reference_id", "confidence": "verified", "evidence": ""}
     _, params, _ = mx.collect_default_and_params("swm/WalkerDMControl-v0", probe, match, decls, {})
     assert params["configs_total"] == 1
     assert params["missing_configurations"] == []
@@ -312,24 +412,29 @@ def test_render_changing_tasks_stay_separate(mx):
     ``reacher``'s ``easy`` draws a bigger target than ``hard``, so the two are separate renderer
     configurations and a renderer for one does not cover the other.
     """
-    probe = {"make": "ok", "frame_status_probe": "pixels",
-             "dmc_reference": {"reference_id": "dm_control/reacher-hard", "how": "exact"},
-             "swm_task_space": {"accepts_task": True, "default_task": "hard",
-                                "tasks": ["easy", "hard", "qpos_match"],
-                                "render_equivalence_classes": [["easy"], ["hard", "qpos_match"]],
-                                "distinct_render_configs": 2, "source": "reacher._TASKS"}}
-    match = {"envs": ["DMCReacherHard"], "rung": "reference_id", "confidence": "verified",
-             "evidence": ""}
+    probe = {
+        "make": "ok",
+        "frame_status_probe": "pixels",
+        "dmc_reference": {"reference_id": "dm_control/reacher-hard", "how": "exact"},
+        "swm_task_space": {
+            "accepts_task": True,
+            "default_task": "hard",
+            "tasks": ["easy", "hard", "qpos_match"],
+            "render_equivalence_classes": [["easy"], ["hard", "qpos_match"]],
+            "distinct_render_configs": 2,
+            "source": "reacher._TASKS",
+        },
+    }
+    match = {"envs": ["DMCReacherHard"], "rung": "reference_id", "confidence": "verified", "evidence": ""}
     only_hard = {"DMCReacherHard": {"reference_id": "dm_control/reacher-hard"}}
-    _, partial, _ = mx.collect_default_and_params("swm/ReacherDMControl-v0", probe, match,
-                                                  only_hard, {})
+    _, partial, _ = mx.collect_default_and_params("swm/ReacherDMControl-v0", probe, match, only_hard, {})
     assert partial["level"] == "partial"
     assert partial["missing_configurations"] == [["easy"]]
 
     both = dict(only_hard, DMCReacherEasy={"reference_id": "dm_control/reacher-easy"})
-    _, full, _ = mx.collect_default_and_params("swm/ReacherDMControl-v0", probe,
-                                               dict(match, envs=["DMCReacherHard",
-                                                                 "DMCReacherEasy"]), both, {})
+    _, full, _ = mx.collect_default_and_params(
+        "swm/ReacherDMControl-v0", probe, dict(match, envs=["DMCReacherHard", "DMCReacherEasy"]), both, {}
+    )
     assert full["level"] == "full"
 
 
@@ -339,22 +444,29 @@ def test_parameter_space_comes_from_the_swm_wrapper_not_the_suite(mx):
     ``AcrobotDMControlWrapper`` takes none while dm_control's suite lists two acrobot tasks; reading
     the suite invented a missing configuration that the registered id cannot even build.
     """
-    probe = {"make": "ok", "frame_status_probe": "pixels",
-             "dmc_reference": {"reference_id": "dm_control/acrobot-swingup_sparse", "how": "exact"},
-             "swm_task_space": {"accepts_task": False,
-                                "why": "AcrobotDMControlWrapper.__init__ takes no `task` argument"}}
+    probe = {
+        "make": "ok",
+        "frame_status_probe": "pixels",
+        "dmc_reference": {"reference_id": "dm_control/acrobot-swingup_sparse", "how": "exact"},
+        "swm_task_space": {"accepts_task": False, "why": "AcrobotDMControlWrapper.__init__ takes no `task` argument"},
+    }
     decls = {"DMCAcrobotSwingup": {"reference_id": "dm_control/acrobot-swingup"}}
-    match = {"envs": ["DMCAcrobotSwingup"], "rung": "same_dmc_appearance",
-             "confidence": "verified", "evidence": "", "primary": "DMCAcrobotSwingup"}
+    match = {
+        "envs": ["DMCAcrobotSwingup"],
+        "rung": "same_dmc_appearance",
+        "confidence": "verified",
+        "evidence": "",
+        "primary": "DMCAcrobotSwingup",
+    }
     # a suite index that DOES list a second acrobot task must not create a missing configuration
     suite = {"acrobot": {"swingup": "aaa", "swingup_sparse": "aaa"}}
-    _, params, _ = mx.collect_default_and_params("swm/AcrobotDMControl-v0", probe, match, decls,
-                                                 suite)
+    _, params, _ = mx.collect_default_and_params("swm/AcrobotDMControl-v0", probe, match, decls, suite)
     assert params["level"] == "not_parameterized"
     assert "missing_configurations" not in params
 
 
 # ============================================================ 5. the refusals stay refused
+
 
 def test_cpu_throughput_is_never_inferred(mx):
     """A CPU path that runs is not a CPU benchmark, and nothing may quietly turn one into the other."""
@@ -364,15 +476,22 @@ def test_cpu_throughput_is_never_inferred(mx):
 
 def test_dino_evidence_does_not_reach_downstream_level(mx):
     """Representation agreement is not task success, however good the cosine is."""
-    dino = {"E": {"dino_cos_ours_vs_official": 0.0, "dino_cos_state_vs_state": 0.2,
-                  "dino_cos_blank_vs_official": 0.8, "dino_cos_jpeg95_vs_official": 0.03,
-                  "source": "x"}}
+    dino = {
+        "E": {
+            "dino_cos_ours_vs_official": 0.0,
+            "dino_cos_state_vs_state": 0.2,
+            "dino_cos_blank_vs_official": 0.8,
+            "dino_cos_jpeg95_vs_official": 0.03,
+            "source": "x",
+        }
+    }
     got = mx.collect_validation(["E"], dino, None, "swm/NotPushT-v0")
     assert got["level"] == "dino_feature"
     assert all(e["kind"] != "downstream_task_success" for e in got["evidence"])
 
 
 # ============================================================ 6. determinism, on the real inputs
+
 
 def test_generation_is_byte_identical_on_repeat(mx, tmp_path):
     """The property that makes a diff on the generated page mean something.

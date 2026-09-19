@@ -8,6 +8,7 @@ away exactly the structure that makes this a controlled experiment.
 
     python summarize.py
 """
+
 from __future__ import annotations
 
 import glob
@@ -21,11 +22,12 @@ import numpy as np
 def mcnemar_exact(b: int, c: int) -> float:
     """Two-sided exact p for b vs c discordant pairs (binomial, p=0.5)."""
     from math import comb
+
     n = b + c
     if n == 0:
         return 1.0
     k = min(b, c)
-    tail = sum(comb(n, i) for i in range(k + 1)) / 2 ** n
+    tail = sum(comb(n, i) for i in range(k + 1)) / 2**n
     return min(1.0, 2 * tail)
 
 
@@ -51,8 +53,7 @@ def main() -> None:
             continue
         runs[d["renderer"]][d["seed"]] = d
 
-    order = ["official", "stable_envs", "stable_envs_resize512", "stable_envs_live",
-             "stable_envs_dataset", "blank"]
+    order = ["official", "stable_envs", "stable_envs_resize512", "stable_envs_live", "stable_envs_dataset", "blank"]
     names = [r for r in order if r in runs] + [r for r in runs if r not in order]
 
     print(f"{'renderer':24s} {'seeds':>22s} {'succ/n':>10s} {'SR %':>7s} {'95% CI':>16s}")
@@ -63,8 +64,10 @@ def main() -> None:
         agg[r] = {s: np.asarray(runs[r][s]["episode_successes"]) for s in seeds}
         k, n = int(succ.sum()), len(succ)
         lo, hi = wilson(k, n)
-        print(f"{r:24s} {','.join(map(str, seeds)):>22s} {f'{k}/{n}':>10s} "
-              f"{100 * k / n:7.1f} {f'[{lo:.1f}, {hi:.1f}]':>16s}")
+        print(
+            f"{r:24s} {','.join(map(str, seeds)):>22s} {f'{k}/{n}':>10s} "
+            f"{100 * k / n:7.1f} {f'[{lo:.1f}, {hi:.1f}]':>16s}"
+        )
 
     print()
     if "official" not in agg:
@@ -80,9 +83,11 @@ def main() -> None:
         only_off = int((a & ~b).sum())
         only_new = int((~a & b).sum())
         p = mcnemar_exact(only_off, only_new)
-        print(f"official vs {r:24s} paired n={len(a):4d}  "
-              f"official-only wins={only_off:3d}  {r}-only wins={only_new:3d}  "
-              f"delta={100 * (b.mean() - a.mean()):+5.1f} pts  McNemar p={p:.3f}")
+        print(
+            f"official vs {r:24s} paired n={len(a):4d}  "
+            f"official-only wins={only_off:3d}  {r}-only wins={only_new:3d}  "
+            f"delta={100 * (b.mean() - a.mean()):+5.1f} pts  McNemar p={p:.3f}"
+        )
 
 
 if __name__ == "__main__":

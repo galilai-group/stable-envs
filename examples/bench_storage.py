@@ -21,6 +21,7 @@ The storage number is per CPU core, single-threaded, warm. That is deliberately 
 a stored dataset: no cold-cache seek, no decompression of a shard, no network. A pipeline that has to
 pull shards over a network will do worse than every number here.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,9 +36,9 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from bench_gpu_vs_cpu import _err, states_for
 
 import stable_envs as se
-from bench_gpu_vs_cpu import _err, states_for
 
 
 def write_jpegs(frames: np.ndarray, dest: Path, quality: int) -> tuple[list[Path], int]:
@@ -58,7 +59,7 @@ def read_decode(paths: list[Path], passes: int = 3) -> float:
     """Frames/s for ``open -> decode -> ndarray``, one core, best of ``passes``, page cache warm."""
     from PIL import Image
 
-    for p in paths[:32]:                                     # warm the cache for the timed set
+    for p in paths[:32]:  # warm the cache for the timed set
         np.asarray(Image.open(p).convert("RGB"))
     best = None
     for _ in range(passes):
@@ -96,9 +97,11 @@ def per_tile_note(hw: tuple[int, int], requested: int) -> str | None:
     Craftax is that NO edge is anywhere near the request: its short edge is 1792 for a request of 256.
     """
     if min(hw) > 2 * int(requested):
-        return (f"size={requested} produced a {hw[0]}x{hw[1]} frame — its SHORT edge alone is "
-                f"{min(hw)}: this env reads size per tile, not as the output edge; measured at its "
-                f"native size instead")
+        return (
+            f"size={requested} produced a {hw[0]}x{hw[1]} frame — its SHORT edge alone is "
+            f"{min(hw)}: this env reads size per tile, not as the output edge; measured at its "
+            f"native size instead"
+        )
     return None
 
 
@@ -113,7 +116,7 @@ def probe_at(name: str, size: int | None, n_frames: int, pool_max: int):
     probe = se.make(name, num_envs=1, device="cuda", **kw)
     try:
         pool = probe.sample_states(pool_max)
-        frames = probe.render(pool[:min(n_frames, len(pool))]).cpu().numpy()
+        frames = probe.render(pool[: min(n_frames, len(pool))]).cpu().numpy()
         return pool, frames, (int(frames.shape[1]), int(frames.shape[2])), int(probe.size)
     finally:
         del probe
@@ -142,7 +145,7 @@ def probe_frames(name: str, requested: int, n_frames: int, pool_max: int):
         note = per_tile_note(hw, requested)
         if note is None:
             return pool, frames, hw, size, None
-    except Exception as e:                                               # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         note = f"{type(e).__name__}: {e}"
     pool, frames, hw, size = probe_at(name, None, n_frames, pool_max)
     return pool, frames, hw, size, note
@@ -174,9 +177,14 @@ def gpu_fps(name: str, batch: int, size: int, hw, pool, reps: int) -> dict:
         # always measured each env's own default; bench_vs_decode.py forced 1, and the two tables
         # therefore described different pictures for the 44 classes that declare 2. Recording it is
         # what makes the two comparable at all.
-        return {"fps": batch / dt, "seconds_per_batch": dt, "batch": batch,
-                "supersample": int(env.ss), "cpu_frac": cpu_frac,
-                "loadavg": os.getloadavg()[0]}
+        return {
+            "fps": batch / dt,
+            "seconds_per_batch": dt,
+            "batch": batch,
+            "supersample": int(env.ss),
+            "cpu_frac": cpu_frac,
+            "loadavg": os.getloadavg()[0],
+        }
     except Exception as e:
         return _err(e)
     finally:
@@ -192,30 +200,46 @@ def main() -> None:
     ap.add_argument("--frames", type=int, default=512, help="distinct frames written and read back")
     ap.add_argument("--jpeg-quality", type=int, default=90)
     ap.add_argument("--local", default="/tmp", help="node-local scratch")
-    ap.add_argument("--shared", default="/mnt/vast/home/randall.balestriero/tmp_storage_bench",
-                    help="shared filesystem a cluster dataset would live on; '' to skip")
+    ap.add_argument(
+        "--shared",
+        default="/mnt/vast/home/randall.balestriero/tmp_storage_bench",
+        help="shared filesystem a cluster dataset would live on; '' to skip",
+    )
     ap.add_argument("--envs", default="")
     ap.add_argument("--skip", default="")
     ap.add_argument("--tag", default="")
     ap.add_argument("--out", default="examples/results/storage")
-    ap.add_argument("--fresh", action="store_true",
-                    help="re-measure every env instead of resuming; required after a renderer change, "
-                         "since resume treats an env already in the output file as done")
+    ap.add_argument(
+        "--fresh",
+        action="store_true",
+        help="re-measure every env instead of resuming; required after a renderer change, "
+        "since resume treats an env already in the output file as done",
+    )
     a = ap.parse_args()
 
     outdir = Path(a.out)
     outdir.mkdir(parents=True, exist_ok=True)
     tag = f"_{a.tag}" if a.tag else ""
     try:
-        cpu_name = subprocess.run(["bash", "-c", "lscpu | grep 'Model name' | head -1"],
-                                  capture_output=True, text=True).stdout.split(":", 1)[-1].strip()
+        cpu_name = (
+            subprocess.run(["bash", "-c", "lscpu | grep 'Model name' | head -1"], capture_output=True, text=True)
+            .stdout.split(":", 1)[-1]
+            .strip()
+        )
     except Exception:
         cpu_name = platform.processor()
 
-    res = {"device": torch.cuda.get_device_name(0), "cpu": cpu_name or "unknown",
-           "size": a.size, "batch": a.batch, "n_frames": a.frames,
-           "jpeg_quality": a.jpeg_quality, "loadavg": [os.getloadavg()[0]],
-           "registry_size": len(se.registry.REGISTRY), "envs": {}}
+    res = {
+        "device": torch.cuda.get_device_name(0),
+        "cpu": cpu_name or "unknown",
+        "size": a.size,
+        "batch": a.batch,
+        "n_frames": a.frames,
+        "jpeg_quality": a.jpeg_quality,
+        "loadavg": [os.getloadavg()[0]],
+        "registry_size": len(se.registry.REGISTRY),
+        "envs": {},
+    }
     # Resume, so a sweep killed at hour six does not start over. The failure mode this creates is worse
     # than the one it fixes if it is the only option: after a kernel lands, every env in the old file is
     # "done" and the sweep silently republishes the numbers the kernel was written to change. It has
@@ -232,10 +256,8 @@ def main() -> None:
         (outdir / f"storage{tag}.json").write_text(json.dumps(res, indent=2))
 
     skip = {s for s in a.skip.split(",") if s}
-    wanted = [n for n in sorted(se.registry.REGISTRY)
-              if (not a.envs or n in a.envs.split(",")) and n not in skip]
-    print(f"registry {len(se.registry.REGISTRY)}, measuring {len(wanted)} at {a.size}px batch {a.batch}",
-          flush=True)
+    wanted = [n for n in sorted(se.registry.REGISTRY) if (not a.envs or n in a.envs.split(",")) and n not in skip]
+    print(f"registry {len(se.registry.REGISTRY)}, measuring {len(wanted)} at {a.size}px batch {a.batch}", flush=True)
 
     for name in wanted:
         if name in res["envs"] and res["envs"][name].get("gpu"):
@@ -243,16 +265,15 @@ def main() -> None:
             continue
         entry: dict = {}
         try:
-            pool, frames, hw, size, note = probe_frames(name, a.size, a.frames,
-                                                        min(a.batch, 4096))
+            pool, frames, hw, size, note = probe_frames(name, a.size, a.frames, min(a.batch, 4096))
         except Exception as e:
             print(f"[{name}] cannot render at {a.size} or native: {e}", flush=True)
             res["envs"][name] = _err(e)
             flush()
             continue
 
-        if len(frames) < a.frames:                       # tile the pool up to the requested count
-            frames = np.concatenate([frames] * (a.frames // len(frames) + 1))[:a.frames]
+        if len(frames) < a.frames:  # tile the pool up to the requested count
+            frames = np.concatenate([frames] * (a.frames // len(frames) + 1))[: a.frames]
 
         entry["size"] = size
         entry["requested_size"] = a.size
@@ -268,8 +289,11 @@ def main() -> None:
             dest = Path(root) / f"se_store_{os.getpid()}" / name
             try:
                 paths, nbytes = write_jpegs(frames, dest, a.jpeg_quality)
-                storage[label] = {"fps": read_decode(paths), "bytes_on_disk": nbytes,
-                                  "bytes_per_frame": nbytes / len(paths)}
+                storage[label] = {
+                    "fps": read_decode(paths),
+                    "bytes_on_disk": nbytes,
+                    "bytes_per_frame": nbytes / len(paths),
+                }
             except Exception as e:
                 storage[label] = _err(e)
             finally:
@@ -277,6 +301,7 @@ def main() -> None:
 
         buf = io.BytesIO()
         from PIL import Image
+
         Image.fromarray(frames[0]).save(buf, format="JPEG", quality=a.jpeg_quality)
         storage["memory_one_frame"] = {"fps": decode_memory(buf.getvalue(), max(300, a.frames))}
         entry["storage"] = storage
@@ -286,9 +311,14 @@ def main() -> None:
         loc = storage.get("local", {}).get("fps")
         sh = storage.get("shared", {}).get("fps")
         if g and loc:
-            print(f"[{name}] {hw[0]}x{hw[1]}{'*' if note else ''}  ours {g:,.0f} f/s  "
-                  f"local-disk {loc:,.0f}  shared {sh:,.0f}  = {g / loc:,.1f}x local, "
-                  f"{g / sh:,.1f}x shared" if sh else f"= {g / loc:,.1f}x local", flush=True)
+            print(
+                f"[{name}] {hw[0]}x{hw[1]}{'*' if note else ''}  ours {g:,.0f} f/s  "
+                f"local-disk {loc:,.0f}  shared {sh:,.0f}  = {g / loc:,.1f}x local, "
+                f"{g / sh:,.1f}x shared"
+                if sh
+                else f"= {g / loc:,.1f}x local",
+                flush=True,
+            )
         else:
             print(f"[{name}] incomplete: gpu={entry['gpu']}", flush=True)
         flush()

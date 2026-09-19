@@ -21,6 +21,7 @@ is for the properties that only exist because a network is in the path:
 
 If no corrector is cached on this machine, everything here skips with the command that builds one.
 """
+
 from __future__ import annotations
 
 import json
@@ -34,13 +35,12 @@ pytestmark = pytest.mark.gpu
 if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
+from _shared import EMPTY, family_params
+
 import stable_envs as se
 from stable_envs.render import rendernet as RN
 
-from _shared import EMPTY, family_params
-
-LEARNED = sorted(n for n, c in se.registry.REGISTRY.items()
-                 if getattr(c, "render_decoder", "renderer") == "learned")
+LEARNED = sorted(n for n, c in se.registry.REGISTRY.items() if getattr(c, "render_decoder", "renderer") == "learned")
 
 
 #: The module whose absence EXPLAINS an empty family. RoboCasa is the only family that declares a
@@ -72,23 +72,27 @@ def env(request):
         errs = se.import_errors()
         blamed = {m: errs[m] for m in LEARNED_MODULES if m in errs}
         if blamed:
-            pytest.skip("learned-decoder: no env declares one here because "
-                        + "; ".join(f"{m} did not import ({e})" for m, e in blamed.items())
-                        + " — the corrector is checked in the interpreter that owns RoboCasa in "
-                          "scratch/census/assignment.json")
+            pytest.skip(
+                "learned-decoder: no env declares one here because "
+                + "; ".join(f"{m} did not import ({e})" for m, e in blamed.items())
+                + " — the corrector is checked in the interpreter that owns RoboCasa in "
+                "scratch/census/assignment.json"
+            )
         if not RN.available():
             pytest.skip(
                 f"learned-decoder: {', '.join(LEARNED_MODULES)} imported cleanly, so this is a "
                 f"missing ARTIFACT rather than a missing dependency — a learned class is gated on "
                 f"its checkpoint, so no sealed corrector means no class to sweep. Build one:\n    "
                 + RN.BUILD_CMD.format(env="RoboCasaCounterToSink")
-                + f"\n(the cache looked in is {RN.CACHE_ROOT})")
+                + f"\n(the cache looked in is {RN.CACHE_ROOT})"
+            )
         pytest.fail(
             f"learned-decoder: {', '.join(LEARNED_MODULES)} imported cleanly AND this machine has "
             f"sealed correctors for {sorted(RN.available())}, yet NO registered class declares "
             f"render_decoder='learned'. Nothing explains that, so it is a registration or naming "
             f"change rather than a missing dependency — and every test in this file would otherwise "
-            f"have collected zero cases and reported green.")
+            f"have collected zero cases and reported green."
+        )
     return se.make(request.param, num_envs=8, device="cuda")
 
 
@@ -96,9 +100,11 @@ def plain_sibling(env):
     """The same cell drawn by the renderer alone. Every learned class is derived from one."""
     name = type(env).__name__.removesuffix("Corrected")
     if name not in se.registry.REGISTRY:
-        pytest.fail(f"{type(env).__name__} has no plain sibling {name} in the registry; a learned "
-                    f"decoder is a second way to draw a cell that already exists, and without the "
-                    f"first one there is nothing to compare it against")
+        pytest.fail(
+            f"{type(env).__name__} has no plain sibling {name} in the registry; a learned "
+            f"decoder is a second way to draw a cell that already exists, and without the "
+            f"first one there is nothing to compare it against"
+        )
     return se.make(name, num_envs=env.B, size=env.size, device="cuda")
 
 
@@ -129,7 +135,8 @@ def test_the_frame_is_exactly_the_cheap_render_put_through_the_corrector(env):
         f"{type(env).__name__}.render is not render({corr.render_size} px, tex_lod {corr.tex_lod}) "
         f"followed by the corrector: they differ by max {int(d.max())}/255 on "
         f"{int((d > 0).any(-1).sum())} pixels. Something in the render path is not the configuration "
-        f"the weights were fitted on.")
+        f"the weights were fitted on."
+    )
 
 
 def test_the_corrector_is_actually_applied(env):
@@ -142,23 +149,33 @@ def test_the_corrector_is_actually_applied(env):
     network did anything.
     """
     import torch.nn.functional as F
+
     corr = env.corrector()
     states = env.sample_states(8, rng=np.random.default_rng(1))
     got = env.render(states)
     low = cheap_render(env, states)
-    anchor = F.interpolate(low.permute(0, 3, 1, 2).float().div(255.0),
-                           size=(corr.out_size, corr.out_size), mode="bilinear",
-                           align_corners=False).mul_(255.0).round_().clamp_(0, 255)
+    anchor = (
+        F.interpolate(
+            low.permute(0, 3, 1, 2).float().div(255.0),
+            size=(corr.out_size, corr.out_size),
+            mode="bilinear",
+            align_corners=False,
+        )
+        .mul_(255.0)
+        .round_()
+        .clamp_(0, 255)
+    )
     anchor = anchor.to(torch.uint8).permute(0, 2, 3, 1)
     moved = float(((got != anchor).any(-1)).float().mean())
     assert moved > 0.05, (
         f"the corrected frame differs from a bilinear upsample of its own input on only "
         f"{100 * moved:.2f}% of pixels. The residual head is zero-initialised, so 'exactly the "
-        f"bilinear baseline' is what an untrained, unloaded or misapplied corrector looks like.")
+        f"bilinear baseline' is what an untrained, unloaded or misapplied corrector looks like."
+    )
     plain = plain_sibling(env).render(states)
     assert not torch.equal(got, plain), (
-        "the learned frame is byte-identical to the plain class's frame, which cannot happen if a "
-        "network ran on it")
+        "the learned frame is byte-identical to the plain class's frame, which cannot happen if a network ran on it"
+    )
 
 
 def test_the_same_states_twice_give_the_same_bytes(env):
@@ -170,12 +187,12 @@ def test_the_same_states_twice_give_the_same_bytes(env):
     """
     states = env.sample_states(16, rng=np.random.default_rng(2))
     a = env.render(states).clone()
-    env.render(env.sample_states(16, rng=np.random.default_rng(3)))     # something else in between
+    env.render(env.sample_states(16, rng=np.random.default_rng(3)))  # something else in between
     b = env.render(states)
     d = (a.to(torch.int16) - b.to(torch.int16)).abs()
     assert int(d.max()) == 0, (
-        f"two renders of the same states differ by max {int(d.max())}/255 on "
-        f"{int((d > 0).any(-1).sum())} pixels")
+        f"two renders of the same states differ by max {int(d.max())}/255 on {int((d > 0).any(-1).sum())} pixels"
+    )
 
 
 @pytest.mark.parametrize("sizes", [(1, 3, 7, 8, 16, 129)])
@@ -197,7 +214,8 @@ def test_a_frame_does_not_depend_on_how_many_frames_were_asked_for(env, sizes):
         d = np.abs(got.astype(np.int16) - ref[:b].astype(np.int16))
         assert int(d.max()) == 0, (
             f"rendering {b} of the same states gives different pixels from rendering {n} "
-            f"(max {int(d.max())}/255 on {int((d > 0).any(-1).sum())} pixels)")
+            f"(max {int(d.max())}/255 on {int((d > 0).any(-1).sum())} pixels)"
+        )
 
 
 def test_a_size_the_checkpoint_was_not_fitted_for_is_refused(env):
@@ -218,11 +236,14 @@ def test_this_corrector_refuses_every_other_registered_cell(env):
     """
     corr = env.corrector()
     mine = type(env).corrector_cell_key()
-    others = [c for n, c in sorted(se.registry.REGISTRY.items())
-              if getattr(c, "render_decoder", "renderer") == "renderer"
-              and hasattr(c, "corrector_cell_key")
-              and c.corrector_cell_key().get("family") == mine["family"]
-              and c.__name__ != type(env).__name__.removesuffix("Corrected")]
+    others = [
+        c
+        for n, c in sorted(se.registry.REGISTRY.items())
+        if getattr(c, "render_decoder", "renderer") == "renderer"
+        and hasattr(c, "corrector_cell_key")
+        and c.corrector_cell_key().get("family") == mine["family"]
+        and c.__name__ != type(env).__name__.removesuffix("Corrected")
+    ]
     if not others:
         pytest.skip("no sibling cells of this family are registered in this interpreter")
     for cls in others:
@@ -247,7 +268,8 @@ def test_no_checkpoint_means_no_class(monkeypatch):
         assert se.registry.REGISTRY[n].render_decoder == "renderer"
         assert se.registry.REGISTRY[n].TEX_LOD == 1 and se.registry.REGISTRY[n].BACKFACE_CULL is None, (
             f"{n} is the plain class and its MJWarp render profile must be the one every number in "
-            f"FIDELITY was measured through")
+            f"FIDELITY was measured through"
+        )
 
 
 def test_the_declaration_travels_with_the_weights(env):
@@ -275,8 +297,10 @@ def test_the_declared_numbers_beat_the_render_they_replace(env):
     ``train_corrector.py``, whose gate is the same three comparisons.
     """
     corr = env.corrector()
-    for label, decl in (("at the default appearance", corr.visual_fidelity),
-                        ("under the declared variation", corr.variation_fidelity)):
+    for label, decl in (
+        ("at the default appearance", corr.visual_fidelity),
+        ("under the declared variation", corr.variation_fidelity),
+    ):
         assert decl, f"{label}: no measurement was declared"
         assert decl["mean_abs"] < decl["plain_mean_abs"], f"{label}: mean |diff| is not better"
         assert decl["within8_frac"] > decl["plain_within8_frac"], f"{label}: within-8 is not better"
@@ -296,4 +320,5 @@ def test_the_compiled_configuration_is_the_declared_one(env):
     assert RN.COMPILE_MODE in decl and str(RN.NET_BATCH) in decl, (
         f"this process is running the corrector at mode={RN.COMPILE_MODE!r} batch={RN.NET_BATCH} and "
         f"the declaration says {decl!r}. Those are different arithmetic; re-measure with "
-        f"examples/rendernet/train_corrector.py or put the settings back.")
+        f"examples/rendernet/train_corrector.py or put the settings back."
+    )

@@ -20,6 +20,7 @@ downsample, and see which one reproduces the stored bytes.
 
     python resize_probe.py --n 24
 """
+
 from __future__ import annotations
 
 import argparse
@@ -51,9 +52,13 @@ def downsamples(img512: np.ndarray, size: int) -> dict[str, np.ndarray]:
         "cv2_cubic": cv2.resize(img512, (size, size), interpolation=cv2.INTER_CUBIC),
     }
     pil = Image.fromarray(img512)
-    for name, flt in (("pil_bilinear", Image.BILINEAR), ("pil_bicubic", Image.BICUBIC),
-                      ("pil_nearest", Image.NEAREST), ("pil_box", Image.BOX),
-                      ("pil_lanczos", Image.LANCZOS)):
+    for name, flt in (
+        ("pil_bilinear", Image.BILINEAR),
+        ("pil_bicubic", Image.BICUBIC),
+        ("pil_nearest", Image.NEAREST),
+        ("pil_box", Image.BOX),
+        ("pil_lanczos", Image.LANCZOS),
+    ):
         out[name] = np.array(pil.resize((size, size), flt))
     return out
 
@@ -85,27 +90,32 @@ def main() -> None:
     canvases = np.stack(canvases)
     poses = np.stack(poses)
 
-    res: dict = {"n": a.n, "size": a.size,
-                 "stored_interior_frac": float(interior_mask(stored).mean())}
-    cands = {k: np.stack([downsamples(c, a.size)[k] for c in canvases])
-             for k in downsamples(canvases[0], a.size)}
+    res: dict = {"n": a.n, "size": a.size, "stored_interior_frac": float(interior_mask(stored).mean())}
+    cands = {k: np.stack([downsamples(c, a.size)[k] for c in canvases]) for k in downsamples(canvases[0], a.size)}
     for k, v in cands.items():
         m = pixel_agreement(v, stored)
         res[k] = m
-        print(f"[resize] {k:14s} vs stored: exact={m['exact_frac']:.4f} "
-              f"interior_exact={m['interior_exact_frac']:.4f} mean_abs={m['mean_abs']:.4f} "
-              f"own_interior_frac={float(interior_mask(v).mean()):.4f}", flush=True)
+        print(
+            f"[resize] {k:14s} vs stored: exact={m['exact_frac']:.4f} "
+            f"interior_exact={m['interior_exact_frac']:.4f} mean_abs={m['mean_abs']:.4f} "
+            f"own_interior_frac={float(interior_mask(v).mean()):.4f}",
+            flush=True,
+        )
 
     # And the same filters applied to OUR 512 raster, which is what the swap would use.
     from swap_renderer import _Renderer, _variation_from_env
+
     var = _variation_from_env(u)
     ours512 = _Renderer(size=512, mode="direct")(poses[:, :5], var)
     for k in cands:
         v = np.stack([downsamples(c, a.size)[k] for c in ours512])
         m = pixel_agreement(v, stored)
         res[f"ours_{k}"] = m
-        print(f"[resize] ours_{k:9s} vs stored: exact={m['exact_frac']:.4f} "
-              f"interior_exact={m['interior_exact_frac']:.4f} mean_abs={m['mean_abs']:.4f}", flush=True)
+        print(
+            f"[resize] ours_{k:9s} vs stored: exact={m['exact_frac']:.4f} "
+            f"interior_exact={m['interior_exact_frac']:.4f} mean_abs={m['mean_abs']:.4f}",
+            flush=True,
+        )
 
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(res, indent=2))

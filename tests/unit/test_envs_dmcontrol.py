@@ -18,6 +18,7 @@ The structural half needs no MuJoCo and runs everywhere. The behavioural half co
 is skipped where ``dm_control``/EGL is unavailable — which is the ordinary condition on a laptop and
 is why the file is written in two halves rather than one.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -35,17 +36,35 @@ import stable_envs as snv
 
 pytestmark = pytest.mark.unit
 
-dmc = pytest.importorskip("stable_envs.envs.dmcontrol",
-                          reason="the DM Control family needs dm_control and a GL backend")
+dmc = pytest.importorskip(
+    "stable_envs.envs.dmcontrol", reason="the DM Control family needs dm_control and a GL backend"
+)
 
 #: The twelve fixed-camera PARITY cells and the six ``trackcom`` VISUAL ones, written out rather than
 #: read off the package: a test that derives its own expectation from the thing under test cannot see
 #: a cell disappear.
-PARITY = ("DMCAcrobotSwingup", "DMCBallInCupCatch", "DMCCartpoleBalance", "DMCCartpoleSwingup",
-          "DMCFingerSpin", "DMCFingerTurnEasy", "DMCFingerTurnHard", "DMCManipulatorBringBall",
-          "DMCPendulumSwingup", "DMCPointMassEasy", "DMCReacherEasy", "DMCReacherHard")
-TRACKCOM = ("DMCCheetahRun", "DMCHopperHop", "DMCHumanoidStand", "DMCQuadrupedWalk",
-            "DMCSwimmerSwimmer6", "DMCWalkerWalk")
+PARITY = (
+    "DMCAcrobotSwingup",
+    "DMCBallInCupCatch",
+    "DMCCartpoleBalance",
+    "DMCCartpoleSwingup",
+    "DMCFingerSpin",
+    "DMCFingerTurnEasy",
+    "DMCFingerTurnHard",
+    "DMCManipulatorBringBall",
+    "DMCPendulumSwingup",
+    "DMCPointMassEasy",
+    "DMCReacherEasy",
+    "DMCReacherHard",
+)
+TRACKCOM = (
+    "DMCCheetahRun",
+    "DMCHopperHop",
+    "DMCHumanoidStand",
+    "DMCQuadrupedWalk",
+    "DMCSwimmerSwimmer6",
+    "DMCWalkerWalk",
+)
 ALL = PARITY + TRACKCOM
 
 #: Which domain module each cell is WRITTEN in. The registry reports the package for all eighteen
@@ -53,13 +72,24 @@ ALL = PARITY + TRACKCOM
 #: the cell is written where its domain is, which is what plan §3 asks for and what makes "what does
 #: cheetah claim" a one-file question.
 WRITTEN_IN = {
-    "DMCAcrobotSwingup": "acrobot", "DMCBallInCupCatch": "ball_in_cup",
-    "DMCCartpoleBalance": "cartpole", "DMCCartpoleSwingup": "cartpole",
-    "DMCFingerSpin": "finger", "DMCFingerTurnEasy": "finger", "DMCFingerTurnHard": "finger",
-    "DMCManipulatorBringBall": "manipulator", "DMCPendulumSwingup": "pendulum",
-    "DMCPointMassEasy": "point_mass", "DMCReacherEasy": "reacher", "DMCReacherHard": "reacher",
-    "DMCCheetahRun": "cheetah", "DMCHopperHop": "hopper", "DMCHumanoidStand": "humanoid",
-    "DMCQuadrupedWalk": "quadruped", "DMCSwimmerSwimmer6": "swimmer", "DMCWalkerWalk": "walker",
+    "DMCAcrobotSwingup": "acrobot",
+    "DMCBallInCupCatch": "ball_in_cup",
+    "DMCCartpoleBalance": "cartpole",
+    "DMCCartpoleSwingup": "cartpole",
+    "DMCFingerSpin": "finger",
+    "DMCFingerTurnEasy": "finger",
+    "DMCFingerTurnHard": "finger",
+    "DMCManipulatorBringBall": "manipulator",
+    "DMCPendulumSwingup": "pendulum",
+    "DMCPointMassEasy": "point_mass",
+    "DMCReacherEasy": "reacher",
+    "DMCReacherHard": "reacher",
+    "DMCCheetahRun": "cheetah",
+    "DMCHopperHop": "hopper",
+    "DMCHumanoidStand": "humanoid",
+    "DMCQuadrupedWalk": "quadruped",
+    "DMCSwimmerSwimmer6": "swimmer",
+    "DMCWalkerWalk": "walker",
 }
 
 #: Cells that refuse a device, and which. One cell, by name, with a reason — see ``swimmer.py``.
@@ -71,13 +101,14 @@ def _build(name, **kw):
     cls = snv.registry.REGISTRY[name]
     try:
         return cls(**kw)
-    except ValueError:                           # a declared device refusal; the caller handles it
+    except ValueError:  # a declared device refusal; the caller handles it
         raise
-    except Exception as exc:                     # noqa: BLE001 — no model, no EGL, no GPU
+    except Exception as exc:  # noqa: BLE001 — no model, no EGL, no GPU
         pytest.skip(f"{name} is not constructible here: {type(exc).__name__}: {exc}")
 
 
 # --------------------------------------------------------------- the shape of the migration
+
 
 def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
     """``stable_envs.envs.dmcontrol`` IS the package, and nothing that used the module lost a name.
@@ -87,14 +118,41 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
     tests, the probes and ``stable_worldmodel`` actually reach for; the oracle checks all 79.
     """
     assert hasattr(dmc, "__path__"), "stable_envs.envs.dmcontrol should be the package"
-    for name in ("DOMAINS", "TRACKCOM_DOMAINS", "VISUAL_FIDELITY", "DEFAULT_SIZES",
-                 "CPU_UNCERTIFIED", "TRACKCOM_BASES", "SHAPE_KNOB_SPECS", "RENDER_INVARIANT_DIMS",
-                 "STATE_DIMS_NOTE", "ALL_EXACT_FLOOR", "PARITY_NOTE", "VISUAL_NOTE",
-                 "SPECULAR_NOTE", "QUADRUPED_NOTE", "TRACKCOM_RENDER_FLAGS",
-                 "DMControlSuite", "DMControlTrackCom", "_DMCModel", "_SWMQuadrupedModel",
-                 "_swm_quadruped_env", "_tc_context", "_TCtx", "_episode_slots", "_shade",
-                 "catenary", "_chain_capsules_batch", "_MJMINVAL", "_solve_catenary",
-                 "_ENV_CACHE", "_TC_CACHE", "_SCENE_CACHE", "MJW_CHUNK", "SPECULAR_SCALE"):
+    for name in (
+        "DOMAINS",
+        "TRACKCOM_DOMAINS",
+        "VISUAL_FIDELITY",
+        "DEFAULT_SIZES",
+        "CPU_UNCERTIFIED",
+        "TRACKCOM_BASES",
+        "SHAPE_KNOB_SPECS",
+        "RENDER_INVARIANT_DIMS",
+        "STATE_DIMS_NOTE",
+        "ALL_EXACT_FLOOR",
+        "PARITY_NOTE",
+        "VISUAL_NOTE",
+        "SPECULAR_NOTE",
+        "QUADRUPED_NOTE",
+        "TRACKCOM_RENDER_FLAGS",
+        "DMControlSuite",
+        "DMControlTrackCom",
+        "_DMCModel",
+        "_SWMQuadrupedModel",
+        "_swm_quadruped_env",
+        "_tc_context",
+        "_TCtx",
+        "_episode_slots",
+        "_shade",
+        "catenary",
+        "_chain_capsules_batch",
+        "_MJMINVAL",
+        "_solve_catenary",
+        "_ENV_CACHE",
+        "_TC_CACHE",
+        "_SCENE_CACHE",
+        "MJW_CHUNK",
+        "SPECULAR_SCALE",
+    ):
         assert hasattr(dmc, name), f"stable_envs.envs.dmcontrol lost {name}"
 
 
@@ -157,8 +215,9 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
     tier = dmc.DMControlSuite if name in PARITY else dmc.DMControlTrackCom
     assert issubclass(cls, tier)
     own = {k: v for k, v in vars(cls).items() if not k.startswith("__")}
-    callables = sorted(k for k, v in own.items()
-                       if inspect.isfunction(v) or isinstance(v, (classmethod, staticmethod)))
+    callables = sorted(
+        k for k, v in own.items() if inspect.isfunction(v) or isinstance(v, (classmethod, staticmethod))
+    )
     assert not callables, f"{name} overrides {callables}; a cell should be a declaration"
     extra_bases = tuple(b for b in cls.__bases__ if b is not tier)
     assert extra_bases == ((dmc._SWMQuadrupedModel,) if name == "DMCQuadrupedWalk" else ())
@@ -187,10 +246,14 @@ def test_the_preserved_declarations_are_still_exactly_what_step_8_declared():
     assert dmc.ALL_EXACT_FLOOR == {"DMCFingerTurnEasy": 0.89}
     assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_all_exact_min == 0.89
     for n in PARITY:
-        assert snv.registry.REGISTRY[n].parity_interior_min == snv.registry.REGISTRY["DMCCartpoleBalance"].parity_interior_min
+        assert (
+            snv.registry.REGISTRY[n].parity_interior_min
+            == snv.registry.REGISTRY["DMCCartpoleBalance"].parity_interior_min
+        )
     # Manipulator's task-specific state exclusions, and nobody else's
     assert dmc.RENDER_INVARIANT_DIMS == {
-        "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")}
+        "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")
+    }
     for n in ALL:
         want = dmc.RENDER_INVARIANT_DIMS.get(n, ())
         assert tuple(getattr(snv.registry.REGISTRY[n], "RENDER_INVARIANT_DIMS", ()) or ()) == want, n
@@ -202,7 +265,8 @@ def test_the_preserved_declarations_are_still_exactly_what_step_8_declared():
         assert snv.registry.REGISTRY[n].visual_note.startswith(dmc.VISUAL_NOTE)
     # the trackcom cameras: quadruped is the one cell not at camera 0
     assert {n: snv.registry.REGISTRY[n].CAMERA for n in ALL if snv.registry.REGISTRY[n].CAMERA} == {
-        "DMCQuadrupedWalk": 2}
+        "DMCQuadrupedWalk": 2
+    }
 
 
 def test_the_one_renderer_per_domain_size_bundle_policy_is_still_a_module_level_cache():
@@ -215,6 +279,7 @@ def test_the_one_renderer_per_domain_size_bundle_policy_is_still_a_module_level_
     a re-declaration would not.
     """
     from stable_envs.envs.dmcontrol import _model, suite, trackcom
+
     assert dmc._ENV_CACHE is _model._ENV_CACHE
     assert suite._SCENE_CACHE is _model._SCENE_CACHE
     assert trackcom._TC_CACHE is _model._TC_CACHE
@@ -222,6 +287,7 @@ def test_the_one_renderer_per_domain_size_bundle_policy_is_still_a_module_level_
 
 
 # --------------------------------------------------------------- the Step-9 contract, live
+
 
 @pytest.mark.parametrize("name", ALL)
 def test_takes_the_step9_constructor_and_the_lifecycle(name):

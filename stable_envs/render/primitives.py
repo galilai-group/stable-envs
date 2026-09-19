@@ -27,6 +27,7 @@ the no-abstraction-without-demand rule (plan §16), every name below has at leas
 the two backends, or a backend and its tests -- and the module deliberately has no base classes,
 no registry and no dispatch: it is a vocabulary, not a framework.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -43,9 +44,17 @@ PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6
 PRIMITIVE_KINDS = (PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX)
 
 #: mjtGeom names, for error messages that name the geom a model actually carries rather than a code.
-GEOM_NAMES = {0: "mjGEOM_PLANE", 1: "mjGEOM_HFIELD", 2: "mjGEOM_SPHERE", 3: "mjGEOM_CAPSULE",
-              4: "mjGEOM_ELLIPSOID", 5: "mjGEOM_CYLINDER", 6: "mjGEOM_BOX", 7: "mjGEOM_MESH",
-              8: "mjGEOM_SDF"}
+GEOM_NAMES = {
+    0: "mjGEOM_PLANE",
+    1: "mjGEOM_HFIELD",
+    2: "mjGEOM_SPHERE",
+    3: "mjGEOM_CAPSULE",
+    4: "mjGEOM_ELLIPSOID",
+    5: "mjGEOM_CYLINDER",
+    6: "mjGEOM_BOX",
+    7: "mjGEOM_MESH",
+    8: "mjGEOM_SDF",
+}
 
 #: The ray parameter of a miss. Large enough to lose every comparison, finite so that arithmetic on
 #: it (a clamp, a ``min``) stays a number rather than becoming a NaN.
@@ -61,6 +70,7 @@ INF = 1e30
 # HIT/MISS decision. The full measurement is in ``raycast3d``'s "frame changes" note; this is where
 # the expressions live so that both backends inherit the property rather than re-deriving it.
 
+
 def dot3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     """``(a*b).sum(-1)`` for 3-vectors, written out for the reason above."""
     return a[..., 0] * b[..., 0] + a[..., 1] * b[..., 1] + a[..., 2] * b[..., 2]
@@ -68,18 +78,26 @@ def dot3(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 def mv3(M: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
     """``M @ v`` for 3-vectors. ``M`` (...,3,3), ``v`` (...,3), broadcasting against each other."""
-    return torch.stack([M[..., 0, 0] * v[..., 0] + M[..., 0, 1] * v[..., 1] + M[..., 0, 2] * v[..., 2],
-                        M[..., 1, 0] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 1, 2] * v[..., 2],
-                        M[..., 2, 0] * v[..., 0] + M[..., 2, 1] * v[..., 1] + M[..., 2, 2] * v[..., 2]],
-                       -1)
+    return torch.stack(
+        [
+            M[..., 0, 0] * v[..., 0] + M[..., 0, 1] * v[..., 1] + M[..., 0, 2] * v[..., 2],
+            M[..., 1, 0] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 1, 2] * v[..., 2],
+            M[..., 2, 0] * v[..., 0] + M[..., 2, 1] * v[..., 1] + M[..., 2, 2] * v[..., 2],
+        ],
+        -1,
+    )
 
 
 def mtv3(M: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
     """``M.T @ v``: world -> geom frame. Same argument as ``mv3``; the transpose is read off the index."""
-    return torch.stack([M[..., 0, 0] * v[..., 0] + M[..., 1, 0] * v[..., 1] + M[..., 2, 0] * v[..., 2],
-                        M[..., 0, 1] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 2, 1] * v[..., 2],
-                        M[..., 0, 2] * v[..., 0] + M[..., 1, 2] * v[..., 1] + M[..., 2, 2] * v[..., 2]],
-                       -1)
+    return torch.stack(
+        [
+            M[..., 0, 0] * v[..., 0] + M[..., 1, 0] * v[..., 1] + M[..., 2, 0] * v[..., 2],
+            M[..., 0, 1] * v[..., 0] + M[..., 1, 1] * v[..., 1] + M[..., 2, 1] * v[..., 2],
+            M[..., 0, 2] * v[..., 0] + M[..., 1, 2] * v[..., 1] + M[..., 2, 2] * v[..., 2],
+        ],
+        -1,
+    )
 
 
 # --------------------------------------------------------------------------- bounding radii
@@ -90,6 +108,7 @@ def mtv3(M: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
 # primitives whose sizes are fixed at bake time; the torch form answers per kind for sizes that a
 # per-environment ``size_scale`` may have scaled on the device. Same table of cases, deliberately
 # adjacent, so a kind cannot be added to one and forgotten in the other.
+
 
 def bound_radius(kind, size) -> np.ndarray:
     """``(P,)`` numpy: a radius containing each primitive about its own origin. Conservative.
@@ -109,7 +128,7 @@ def bound_radius(kind, size) -> np.ndarray:
         elif k == BOX:
             out[i] = float(np.linalg.norm(s[i]))
         elif k == ELLIPSOID:
-            out[i] = float(s[i].max())            # the largest semi-axis contains it
+            out[i] = float(s[i].max())  # the largest semi-axis contains it
         else:
             out[i] = INF
     return out
@@ -132,10 +151,11 @@ def bound_radius_tensor(kind: int, size: torch.Tensor) -> torch.Tensor | None:
         return torch.sqrt(size[..., 0] ** 2 + size[..., 1] ** 2 + size[..., 2] ** 2)
     if kind == ELLIPSOID:
         return torch.maximum(torch.maximum(size[..., 0], size[..., 1]), size[..., 2])
-    return None                       # PLANE, and any future unbounded kind: always tested
+    return None  # PLANE, and any future unbounded kind: always tested
 
 
 # --------------------------------------------------------------------------- the scene description
+
 
 @dataclass
 class Primitives:
@@ -146,11 +166,11 @@ class Primitives:
     tensor program that wants columns rather than records.
     """
 
-    kind: np.ndarray            # (P,) mjtGeom
-    size: np.ndarray            # (P,3)
-    mat_rgb: np.ndarray         # (P,3) in [0,1]
-    tex_rgb: np.ndarray         # (P,3) in [0,1]; ones when untextured
-    spec: np.ndarray            # (P,) material specular
+    kind: np.ndarray  # (P,) mjtGeom
+    size: np.ndarray  # (P,3)
+    mat_rgb: np.ndarray  # (P,3) in [0,1]
+    tex_rgb: np.ndarray  # (P,3) in [0,1]; ones when untextured
+    spec: np.ndarray  # (P,) material specular
 
     def __len__(self) -> int:
         return len(self.kind)
@@ -158,8 +178,13 @@ class Primitives:
     def to(self, device, dtype=torch.float32) -> dict:
         """The device-side form: kinds stay host-side ints (the cast loop branches on them)."""
         t = lambda x, d=dtype: torch.tensor(np.asarray(x), device=device, dtype=d)  # noqa: E731
-        return dict(kind=[int(k) for k in self.kind], size=t(self.size), mat=t(self.mat_rgb),
-                    tex=t(self.tex_rgb), spec=t(self.spec))
+        return dict(
+            kind=[int(k) for k in self.kind],
+            size=t(self.size),
+            mat=t(self.mat_rgb),
+            tex=t(self.tex_rgb),
+            spec=t(self.spec),
+        )
 
     def radii(self, device, dtype, scale: float) -> torch.Tensor | None:
         """``bound_radius() * scale`` as a device tensor, or None if any primitive is unbounded.
@@ -173,8 +198,7 @@ class Primitives:
         key = (str(device), dtype, float(scale))
         if key not in cache:
             r = self.bound_radius() * float(scale)
-            cache[key] = None if not np.isfinite(r).all() else \
-                torch.tensor(r, device=device, dtype=dtype)
+            cache[key] = None if not np.isfinite(r).all() else torch.tensor(r, device=device, dtype=dtype)
         return cache[key]
 
     def bound_radius(self) -> np.ndarray:

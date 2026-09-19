@@ -7,6 +7,7 @@ rather than as an intention.
 
 CPU only; PushT needs no reference package to be constructed and rendered.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -99,8 +100,12 @@ def test_reset_draws_from_the_envs_own_distribution(env):
 def test_the_specs_describe_the_state_the_actions_the_frames_and_the_style(env):
     ss = env.state_spec
     assert isinstance(ss, CompositeSpec)
-    assert ss.keys(nested=True) == [("agent", "position"), ("agent", "velocity"),
-                                    ("block", "position"), ("block", "angle")]
+    assert ss.keys(nested=True) == [
+        ("agent", "position"),
+        ("agent", "velocity"),
+        ("block", "position"),
+        ("block", "angle"),
+    ]
     assert ss.contains(env.reset(seed=0))
 
     a = env.action_spec
@@ -126,7 +131,7 @@ def test_num_envs_is_the_batch_and_len_agrees(env):
 def test_state_layout_entry_may_name_a_public_dtype():
     """A fourth ``state_layout`` element is the field's public dtype; pack still writes float32."""
     import torch
-    from tensordict import TensorDict
+
     from stable_envs.env import Env
 
     class F64(Env):
@@ -136,6 +141,7 @@ def test_state_layout_entry_may_name_a_public_dtype():
 
         def make_variation_space(self):
             from stable_envs.spaces import Dict
+
             return Dict({})
 
         def scene(self, states, variation=None, style=None):  # pragma: no cover - not rendered here
@@ -152,7 +158,9 @@ def test_state_layout_entry_may_name_a_public_dtype():
 def test_unpack_and_state_never_alias_the_env_buffer():
     """A StepResult or ``env.state`` must not change under the caller's feet at the next step."""
     import torch
+
     from stable_envs import PushT
+
     env = PushT(num_envs=4, device="cpu")
     env.reset(seed=0)
     a = torch.zeros(4, 2)
@@ -170,6 +178,7 @@ def test_unpack_and_state_never_alias_the_env_buffer():
 
 def test_live_state_hook_overrides_the_widened_row():
     import torch
+
     from stable_envs.env import Env
     from stable_envs.spaces import Dict
 

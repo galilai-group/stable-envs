@@ -28,42 +28,43 @@ binds the same object, so a mutation through either path is seen by both; only a
 and ``tests/unit/test_envs_ogbench.py`` asserts the identity so that a future re-export written as a
 copy fails loudly instead of quietly rendering the wrong thing.
 """
+
 from __future__ import annotations
 
 from . import manipulation, maze  # noqa: F401  (imported for their registrations)
 
+# ---- the manipulation half: the two cells and what a reader of this package would look for ----
+from .manipulation import (  # noqa: F401
+    IDENTITY_QUAT,
+    MJW_CHUNK,
+    SPEC,
+    VISIBLE_GROUPS,
+    OGBManipBase,
+)
+
 # ---- the maze half: every module-level name ``stable_envs/envs/ogbench.py`` exported ----------
 from .maze import (  # noqa: F401
+    _ANT_JOINTS,
+    _ENV_CACHE,
+    _FREE,
+    _HUMANOID_JOINTS,
+    _NOMINAL,
+    _SCENE_CACHE,
+    _SCENE_CACHE_MAX,
     BODY_STATE,
     CELLS,
     MAT_SPECULAR,
-    OGBenchMaze,
     SHADE_AMBIENT,
     SHADE_DIFFUSE,
     SHADE_EXPONENT,
     SHADE_SPECULAR,
-    _ANT_JOINTS,
+    OGBenchMaze,
     _build_reference,
-    _ENV_CACHE,
-    _FREE,
-    _HUMANOID_JOINTS,
     _make_classes,
     _mat_and_tex,
-    _NOMINAL,
     _offsets,
     _Scene,
-    _SCENE_CACHE,
-    _SCENE_CACHE_MAX,
     _scene_env,
-)
-
-# ---- the manipulation half: the two cells and what a reader of this package would look for ----
-from .manipulation import (  # noqa: F401
-    MJW_CHUNK,
-    OGBManipBase,
-    SPEC,
-    VISIBLE_GROUPS,
-    IDENTITY_QUAT,
 )
 
 #: The 25 maze cells and the two manipulation cells, by name, so ``stable_envs.envs.ogbench.<Cell>``

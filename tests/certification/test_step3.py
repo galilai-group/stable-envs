@@ -10,11 +10,11 @@ read from ``scratch/certification.json``, so these tests assert behaviour AGAINS
 than against numbers retyped here -- if the policy moves, they follow it, and if the evaluator grows a
 constant of its own, ``test_no_threshold_is_hardcoded`` fails.
 """
+
 from __future__ import annotations
 
 import importlib.util
 import json
-import re
 from pathlib import Path
 
 import pytest
@@ -39,9 +39,18 @@ def SPEC():
 
 
 def shard(tmp_path, name, envs, device="cuda", host="nodeA", threads=1, device_name="RTX 3090"):
-    d = {"provenance": {"device": device, "host": host, "torch_threads": threads,
-                        "device_name": device_name, "timestamp": "T", "git_commit": "abc"},
-         "batches": [1, 16, 64, 256, 1024, 4096], "envs": envs}
+    d = {
+        "provenance": {
+            "device": device,
+            "host": host,
+            "torch_threads": threads,
+            "device_name": device_name,
+            "timestamp": "T",
+            "git_commit": "abc",
+        },
+        "batches": [1, 16, 64, 256, 1024, 4096],
+        "envs": envs,
+    }
     p = tmp_path / f"{name}.json"
     p.write_text(json.dumps(d))
     return p
@@ -56,10 +65,18 @@ def env_rec(name, ids, fps_by_batch, official=1000.0, decode=5000.0, cpu_frac=1.
     c = cells(**{str(k): v for k, v in fps_by_batch.items()})
     for x in c:
         x["cpu_frac"] = cpu_frac
-    r = {"env": name, "projected_to": ids, "cells": c, "shape": "96x96", "size": 96, "supersample": 1,
-         "decode": {"decode_fps_per_core": decode} if decode else None}
-    r["official_cpu"] = ({"set_state_render": {"fps": official}} if official
-                         else {"absent": "no reference", "kind": "no_reference"})
+    r = {
+        "env": name,
+        "projected_to": ids,
+        "cells": c,
+        "shape": "96x96",
+        "size": 96,
+        "supersample": 1,
+        "decode": {"decode_fps_per_core": decode} if decode else None,
+    }
+    r["official_cpu"] = (
+        {"set_state_render": {"fps": official}} if official else {"absent": "no reference", "kind": "no_reference"}
+    )
     r.update(kw)
     return r
 
@@ -69,6 +86,7 @@ CENSUS_S = {"DMCReacherHard": {"backends": ["mjwarp", "raycast3d"]}}
 
 
 # ----------------------------------------------------------------- merge
+
 
 def test_merge_is_deterministic_and_byte_stable(C, tmp_path):
     """Two merges of the same shards must be identical, in content and in serialized bytes.
@@ -114,11 +132,18 @@ def test_projection_to_several_swm_rows_is_recorded_not_duplicated(C, tmp_path):
 
 # ----------------------------------------------------------------- classification
 
+
 def test_a_missing_dependency_is_never_a_regression(C, tmp_path):
     """The rule Step 1 spent the most effort on, restated where it is easiest to violate."""
-    blocked = {"env": "DMCCheetahRun", "projected_to": ["swm/CheetahDMControl-v0"],
-               "blocked": {"stage": "construct", "kind": "blocked_environment",
-                           "reason": "ModuleNotFoundError: No module named 'warp'"}}
+    blocked = {
+        "env": "DMCCheetahRun",
+        "projected_to": ["swm/CheetahDMControl-v0"],
+        "blocked": {
+            "stage": "construct",
+            "kind": "blocked_environment",
+            "reason": "ModuleNotFoundError: No module named 'warp'",
+        },
+    }
     lab = C.certify(C.merge([shard(tmp_path, "s", [blocked])]), {})["labels"][0]
     assert lab["tier"] == "GPU_UNMEASURED"
     assert "REGRESSION" not in lab["tier"] and "blocked" in lab
@@ -137,24 +162,28 @@ def test_b1_is_never_the_certified_throughput(C, tmp_path):
     assert lab["evidence"]["se_fps"] == 120
 
 
-@pytest.mark.parametrize("cls,census,ratio,expect", [
-    ("S", CENSUS_S, 50.0, "GPU_EXCEPTIONAL"),
-    ("S", CENSUS_S, 5.0, "GPU_FAST"),
-    ("S", CENSUS_S, 3.0, "GPU_FASTER"),
-    ("S", CENSUS_S, 1.5, "GPU_PARITY"),
-    ("S", CENSUS_S, 0.5, "GPU_REGRESSION"),
-    ("R", CENSUS_R, 6000.0, "GPU_EXCEPTIONAL"),
-    ("R", CENSUS_R, 600.0, "GPU_FAST"),
-    ("R", CENSUS_R, 50.0, "GPU_FASTER"),
-    ("R", CENSUS_R, 5.0, "GPU_PARITY"),
-])
+@pytest.mark.parametrize(
+    "cls,census,ratio,expect",
+    [
+        ("S", CENSUS_S, 50.0, "GPU_EXCEPTIONAL"),
+        ("S", CENSUS_S, 5.0, "GPU_FAST"),
+        ("S", CENSUS_S, 3.0, "GPU_FASTER"),
+        ("S", CENSUS_S, 1.5, "GPU_PARITY"),
+        ("S", CENSUS_S, 0.5, "GPU_REGRESSION"),
+        ("R", CENSUS_R, 6000.0, "GPU_EXCEPTIONAL"),
+        ("R", CENSUS_R, 600.0, "GPU_FAST"),
+        ("R", CENSUS_R, 50.0, "GPU_FASTER"),
+        ("R", CENSUS_R, 5.0, "GPU_PARITY"),
+    ],
+)
 def test_gpu_tiers_follow_the_frozen_class_ladder(C, tmp_path, cls, census, ratio, expect):
     """Both backend classes, every rung, read out of the spec rather than retyped."""
     name = "DMCReacherHard" if cls == "S" else "PushT"
     fps = 1000.0 * ratio
     # decode set low so `cores` never caps the tier; the cap has its own test
-    s = shard(tmp_path, "s", [env_rec(name, ["x"], {1: 1.0, 256: fps, 4096: fps},
-                                      official=1000.0, decode=fps / 1000.0)])
+    s = shard(
+        tmp_path, "s", [env_rec(name, ["x"], {1: 1.0, 256: fps, 4096: fps}, official=1000.0, decode=fps / 1000.0)]
+    )
     lab = C.certify(C.merge([s]), census)["labels"][0]
     assert lab["backend_class"] == cls
     assert lab["tier"] == expect, (lab["tier"], lab["evidence"])
@@ -166,8 +195,11 @@ def test_below_g4_caps_the_tier_at_faster(C, tmp_path, SPEC):
     Historically 12.5x the reference and 0.59 cores of decode -- the only row in the 196-env corpus
     under the G4 bar. Step 2 requires both facts to be sayable at once.
     """
-    s = shard(tmp_path, "s", [env_rec("DMCReacherHard", ["x"], {1: 1.0, 256: 12_500, 4096: 12_500},
-                                      official=1000.0, decode=21_000.0)])
+    s = shard(
+        tmp_path,
+        "s",
+        [env_rec("DMCReacherHard", ["x"], {1: 1.0, 256: 12_500, 4096: 12_500}, official=1000.0, decode=21_000.0)],
+    )
     lab = C.certify(C.merge([s]), CENSUS_S)["labels"][0]
     assert lab["evidence"]["ratio"] > SPEC["gpu"]["tiers"]["S"]["GPU_FAST"]["R_gte"]
     assert lab["evidence"]["cores"] < 1
@@ -178,8 +210,9 @@ def test_below_g4_caps_the_tier_at_faster(C, tmp_path, SPEC):
 def test_no_reference_uses_the_frozen_alternate_ladder(C, tmp_path, SPEC):
     """No installable official renderer means no ratio -- and no invented one."""
     fb = SPEC["gpu"]["no_reference_fallback"]
-    s = shard(tmp_path, "s", [env_rec("PushT", ["x"], {1: 1.0, 256: 50_000, 4096: 50_000},
-                                      official=None, decode=400.0)])
+    s = shard(
+        tmp_path, "s", [env_rec("PushT", ["x"], {1: 1.0, 256: 50_000, 4096: 50_000}, official=None, decode=400.0)]
+    )
     lab = C.certify(C.merge([s]), CENSUS_R)["labels"][0]
     assert "NO_REFERENCE" in lab["qualifiers"]
     assert lab["evidence"].get("ratio") is None, "a ratio was computed with no reference to divide by"
@@ -190,10 +223,8 @@ def test_no_reference_uses_the_frozen_alternate_ladder(C, tmp_path, SPEC):
 def test_host_bound_is_an_independent_qualifier(C, tmp_path, SPEC):
     """It labels the row, it does not lower it. Reacher is both fast and host-bound."""
     thr = SPEC["gpu"]["qualifiers"]["HOST_BOUND"]["threshold"]
-    hot = env_rec("DMCReacherHard", ["x"], {1: 1.0, 256: 50_000, 4096: 50_000}, decode=100.0,
-                  cpu_frac=thr + 0.5)
-    cool = env_rec("DMCReacherHard", ["x"], {1: 1.0, 256: 50_000, 4096: 50_000}, decode=100.0,
-                   cpu_frac=1.0)
+    hot = env_rec("DMCReacherHard", ["x"], {1: 1.0, 256: 50_000, 4096: 50_000}, decode=100.0, cpu_frac=thr + 0.5)
+    cool = env_rec("DMCReacherHard", ["x"], {1: 1.0, 256: 50_000, 4096: 50_000}, decode=100.0, cpu_frac=1.0)
     a = C.certify(C.merge([shard(tmp_path, "a", [hot], host="h1")]), CENSUS_S)["labels"][0]
     b = C.certify(C.merge([shard(tmp_path, "b", [cool], host="h2")]), CENSUS_S)["labels"][0]
     assert "HOST_BOUND" in a["qualifiers"] and "HOST_BOUND" not in b["qualifiers"]
@@ -224,8 +255,7 @@ def test_failing_batch_scales_caps_the_tier_not_just_the_badge(C, tmp_path, SPEC
     cap = q["required_above_tier"]
     # R = 50 clears class S GPU_EXCEPTIONAL (floor 40) and cores = 50 clears its cores conjunct;
     # scaling is 50,000/6,250 = 8x, well under the 20x bar.
-    rec = env_rec("DMCReacherHard", ["x"], {1: 6_250.0, 256: 50_000, 4096: 50_000},
-                  official=1_000.0, decode=1_000.0)
+    rec = env_rec("DMCReacherHard", ["x"], {1: 6_250.0, 256: 50_000, 4096: 50_000}, official=1_000.0, decode=1_000.0)
     lab = C.certify(C.merge([shard(tmp_path, "s", [rec])]), CENSUS_S)["labels"][0]
     assert lab["evidence"]["batch_scales"] == 8.0 < q["factor"]
     assert "BATCH_SCALES_FAIL" in lab["qualifiers"]
@@ -234,8 +264,7 @@ def test_failing_batch_scales_caps_the_tier_not_just_the_badge(C, tmp_path, SPEC
     assert "capped_by" in lab and "BATCH_SCALES" in lab["capped_by"]
 
     # and a renderer that DOES batch keeps its tier
-    ok = env_rec("DMCReacherHard", ["x"], {1: 1_000.0, 256: 50_000, 4096: 50_000},
-                 official=1_000.0, decode=1_000.0)
+    ok = env_rec("DMCReacherHard", ["x"], {1: 1_000.0, 256: 50_000, 4096: 50_000}, official=1_000.0, decode=1_000.0)
     good = C.certify(C.merge([shard(tmp_path, "t", [ok], host="h2")]), CENSUS_S)["labels"][0]
     assert good["evidence"]["batch_scales"] >= q["factor"]
     assert good["tier"] == "GPU_EXCEPTIONAL" and "capped_by" not in good
@@ -267,14 +296,18 @@ def test_no_threshold_is_hardcoded_in_the_evaluator(C):
     the code starts saying 4. Only the structural constants of the sweep (0, 1, indices) are allowed.
     """
     import ast
+
     tree = ast.parse(CERT_PY.read_text())
     # Strip every docstring before scanning: the prose legitimately quotes bounds ("2 <= R < 4") to
     # explain them, and a text scan cannot tell a quoted bound from an applied one. The AST can.
     for node in ast.walk(tree):
         if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            if (node.body and isinstance(node.body[0], ast.Expr)
-                    and isinstance(node.body[0].value, ast.Constant)
-                    and isinstance(node.body[0].value.value, str)):
+            if (
+                node.body
+                and isinstance(node.body[0], ast.Expr)
+                and isinstance(node.body[0].value, ast.Constant)
+                and isinstance(node.body[0].value.value, str)
+            ):
                 node.body = node.body[1:] or [ast.Pass()]
     # Only the functions that DECIDE a label. The reporting half of the module legitimately compares
     # against small integers for display ("name the first 3 envs, then an ellipsis"), and a scan that
@@ -286,15 +319,22 @@ def test_no_threshold_is_hardcoded_in_the_evaluator(C):
             continue
         for node in ast.walk(fn):
             if isinstance(node, ast.Compare) and any(
-                    isinstance(op, (ast.Lt, ast.LtE, ast.Gt, ast.GtE)) for op in node.ops):
+                isinstance(op, (ast.Lt, ast.LtE, ast.Gt, ast.GtE)) for op in node.ops
+            ):
                 for c in node.comparators:
-                    if isinstance(c, ast.Constant) and isinstance(c.value, (int, float)) \
-                            and float(c.value) not in (0.0, 1.0):
+                    if (
+                        isinstance(c, ast.Constant)
+                        and isinstance(c.value, (int, float))
+                        and float(c.value) not in (0.0, 1.0)
+                    ):
                         bad.append((fn.name, c.value))
     assert DECIDES <= {f.name for f in ast.walk(tree) if isinstance(f, ast.FunctionDef)}, (
-        "a label-deciding function was renamed; this guard now scans nothing")
-    assert not bad, (f"scratch/step3/certify.py compares against hardcoded number(s) {bad}; every "
-                     f"bound must be read from scratch/certification.json")
+        "a label-deciding function was renamed; this guard now scans nothing"
+    )
+    assert not bad, (
+        f"scratch/step3/certify.py compares against hardcoded number(s) {bad}; every "
+        f"bound must be read from scratch/certification.json"
+    )
 
 
 def test_partial_coverage_never_becomes_environment_done(C, tmp_path, SPEC):
@@ -307,8 +347,19 @@ def test_partial_coverage_never_becomes_environment_done(C, tmp_path, SPEC):
     row = next(r for r in matrix["rows"] if r["swm_id"] == "swm/CraftaxClassicPixels-v1")
     assert row["axes"]["registered_default_render_covered"]["covered"] is False
     assert "registered_default_coverage == full" in SPEC["ladder"]["environment_done_requires"]
-    s = shard(tmp_path, "s", [env_rec("CraftaxClassic", ["swm/CraftaxClassicPixels-v1"],
-                                      {1: 1.0, 256: 500_000, 4096: 500_000}, official=None, decode=5_000.0)])
+    s = shard(
+        tmp_path,
+        "s",
+        [
+            env_rec(
+                "CraftaxClassic",
+                ["swm/CraftaxClassicPixels-v1"],
+                {1: 1.0, 256: 500_000, 4096: 500_000},
+                official=None,
+                decode=5_000.0,
+            )
+        ],
+    )
     lab = C.certify(C.merge([s]), {"CraftaxClassic": {"backends": ["tilemap"]}})["labels"][0]
     assert lab["tier"] == "GPU_EXCEPTIONAL"
     # the label is per-device and carries no environment-level state at all -- that is the guard
@@ -330,13 +381,25 @@ def test_a_missing_cpu_backend_is_not_a_dependency_blocker(C, tmp_path):
     measures all of Fetch on the GPU -- and the CPU failure survived it, inside the renderer. One is
     an install; the other is a backend nobody wrote.
     """
-    gap = {"env": "FetchPush", "projected_to": ["swm/FetchPush-v3"],
-           "blocked": {"stage": "construct", "kind": "blocked_environment",
-                       "reason": "RuntimeError: Expected all tensors to be on the same device, "
-                                 "but found at least two devices, cuda:0 and cpu!"}}
-    dep = {"env": "DMCCheetahRun", "projected_to": ["swm/CheetahDMControl-v0"],
-           "blocked": {"stage": "construct", "kind": "blocked_environment",
-                       "reason": "ModuleNotFoundError: No module named 'warp'"}}
+    gap = {
+        "env": "FetchPush",
+        "projected_to": ["swm/FetchPush-v3"],
+        "blocked": {
+            "stage": "construct",
+            "kind": "blocked_environment",
+            "reason": "RuntimeError: Expected all tensors to be on the same device, "
+            "but found at least two devices, cuda:0 and cpu!",
+        },
+    }
+    dep = {
+        "env": "DMCCheetahRun",
+        "projected_to": ["swm/CheetahDMControl-v0"],
+        "blocked": {
+            "stage": "construct",
+            "kind": "blocked_environment",
+            "reason": "ModuleNotFoundError: No module named 'warp'",
+        },
+    }
     out = C.certify(C.merge([shard(tmp_path, "s", [gap, dep], device="cpu")]), {})["labels"]
     by = {l["env"]: l for l in out}
 
@@ -344,15 +407,15 @@ def test_a_missing_cpu_backend_is_not_a_dependency_blocker(C, tmp_path):
     assert by["FetchPush"]["blocked"]["kind"] == "backend_missing"
     assert by["FetchPush"]["tier"] == "CPU_UNMEASURED", "the frozen tier must not change"
 
-    assert C.CPU_BACKEND_MISSING not in by["DMCCheetahRun"]["qualifiers"], \
+    assert C.CPU_BACKEND_MISSING not in by["DMCCheetahRun"]["qualifiers"], (
         "a missing package was mistaken for a missing backend"
+    )
     assert by["DMCCheetahRun"]["blocked"]["kind"] == "blocked_environment"
 
     # and the queue must rank them apart rather than lumping both under one category
     assert C.bottleneck(None, by["FetchPush"], False)[0] == "GPU-only backend, no CPU path"
     assert C.bottleneck(None, by["DMCCheetahRun"], False)[0].startswith("dependency")
-    assert (C._CAT_RANK["GPU-only backend, no CPU path"]
-            > C._CAT_RANK["dependency / benchmark environment blocker"])
+    assert C._CAT_RANK["GPU-only backend, no CPU path"] > C._CAT_RANK["dependency / benchmark environment blocker"]
 
 
 def test_a_cpu_measurement_anywhere_refutes_a_missing_backend(C, tmp_path):
@@ -363,11 +426,24 @@ def test_a_cpu_measurement_anywhere_refutes_a_missing_backend(C, tmp_path):
     does not exist while its measured CPU throughput sat two rows above in the same table.
     """
     good = env_rec("PushT", ["x"], {256: 400.0}, official=1_000.0, decode=20_000.0)
-    bad = {"env": "PushT", "projected_to": ["x"],
-           "blocked": {"stage": "construct", "kind": "blocked_environment",
-                       "reason": "ValueError: Expected a cuda device, but got: cpu"}}
-    labels = C.certify(C.merge([shard(tmp_path, "m5", [good], device="cpu", host="m5"),
-                                shard(tmp_path, "ox", [bad], device="cpu", host="oscar")]),
-                       CENSUS_R)["labels"]
-    assert not any(C.CPU_BACKEND_MISSING in (l.get("qualifiers") or []) for l in labels), \
+    bad = {
+        "env": "PushT",
+        "projected_to": ["x"],
+        "blocked": {
+            "stage": "construct",
+            "kind": "blocked_environment",
+            "reason": "ValueError: Expected a cuda device, but got: cpu",
+        },
+    }
+    labels = C.certify(
+        C.merge(
+            [
+                shard(tmp_path, "m5", [good], device="cpu", host="m5"),
+                shard(tmp_path, "ox", [bad], device="cpu", host="oscar"),
+            ]
+        ),
+        CENSUS_R,
+    )["labels"]
+    assert not any(C.CPU_BACKEND_MISSING in (l.get("qualifiers") or []) for l in labels), (
         "an env with a real CPU measurement was labelled as having no CPU backend"
+    )

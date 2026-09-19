@@ -27,6 +27,7 @@ ten times with ten different messages, several of which reported only the max an
 moved — which is the number that says whether a difference is one rounding or a shape in the wrong
 place. :func:`assert_frames_identical` reports both, always.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -50,7 +51,7 @@ def import_or_skip(module: str, why: str):
 
     try:
         return importlib.import_module(module)
-    except ImportError as e:                                            # noqa: BLE001
+    except ImportError as e:  # noqa: BLE001
         pytest.skip(f"{module} is not importable in this interpreter ({e}); {why}")
 
 
@@ -93,16 +94,19 @@ def resolve_family(name: str, *, family: str, modules=(), subject: str) -> None:
     errs = se.import_errors()
     blamed = {m: errs[m] for m in modules if m in errs}
     if blamed:
-        pytest.skip(f"{family}: no env registered in this interpreter because "
-                    + "; ".join(f"{m} did not import ({e})" for m, e in blamed.items())
-                    + f" — so {subject} is not checked here, and is checked wherever that module works")
+        pytest.skip(
+            f"{family}: no env registered in this interpreter because "
+            + "; ".join(f"{m} did not import ({e})" for m, e in blamed.items())
+            + f" — so {subject} is not checked here, and is checked wherever that module works"
+        )
     expected = ", ".join(modules) if modules else "any env module"
     pytest.fail(
         f"{family}: {subject} has NO env to check it on, and {expected} imported cleanly, so nothing "
         f"explains that. The registry holds {len(se.registry.REGISTRY)} envs, which makes this a selection or a "
         f"naming change rather than a missing dependency — and a sweep that collects zero real cases "
         f"is GREEN and proves nothing, which is exactly how the DM Control family went uncovered for "
-        f"a week.")
+        f"a week."
+    )
 
 
 def sampled_states(env, n: int, seed: int):
@@ -135,6 +139,7 @@ def assert_frames_identical(got, want, *, what: str, why: str) -> None:
     them sends the reader to the wrong file.
     """
     assert tuple(got.shape) == tuple(want.shape), (
-        f"{what}: shapes differ, {tuple(got.shape)} against {tuple(want.shape)} — {why}")
+        f"{what}: shapes differ, {tuple(got.shape)} against {tuple(want.shape)} — {why}"
+    )
     mx, npx = frame_diff(got, want)
     assert mx == 0, f"{what}: differ by max {mx}/255 on {npx} pixels. {why}"

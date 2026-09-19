@@ -7,6 +7,7 @@ open-loop actions with time first — it is not a policy rollout.
     python examples/functional_dynamics.py --env CartPole --horizon 4
     python examples/functional_dynamics.py --env CraftaxClassic   # renderer-only refusal
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,16 +16,17 @@ import sys
 
 def resolve_device(requested: str) -> str:
     import torch
+
     if requested == "auto":
         return "cuda" if torch.cuda.is_available() else "cpu"
     if requested.startswith("cuda") and not torch.cuda.is_available():
-        raise SystemExit(
-            f"{requested} was requested but torch.cuda.is_available() is False. Pass --device cpu.")
+        raise SystemExit(f"{requested} was requested but torch.cuda.is_available() is False. Pass --device cpu.")
     return requested
 
 
 def _actions(env, n, seed: int):
     import torch
+
     spec = env.action_spec
     g = torch.Generator().manual_seed(seed)
     if spec.low is not None and spec.high is not None:
@@ -37,7 +39,8 @@ def _actions(env, n, seed: int):
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
-        description="step is stateful; transition/unroll are pure in state; no env.rollout(policy).")
+        description="step is stateful; transition/unroll are pure in state; no env.rollout(policy)."
+    )
     p.add_argument("--env", default="PushT")
     p.add_argument("--num-envs", type=int, default=4)
     p.add_argument("--horizon", type=int, default=5, help="T for unroll; actions are (T, num_envs, …)")
@@ -46,8 +49,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     try:
-        import stable_envs as snv
         import torch
+
+        import stable_envs as snv
     except ImportError as e:
         print(f"core dependency missing: {e}", file=sys.stderr)
         return 1

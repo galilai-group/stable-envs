@@ -10,6 +10,7 @@ two branches ever runs in anger.
 Without this, a divergence would surface as a GPU-only pixel difference in a renderer whose entire
 claim is that its frames are bit-identical to pygame's.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -42,10 +43,12 @@ def test_both_select_branches_draw_the_same_frame(name, monkeypatch):
 
     monkeypatch.setattr(G, "select_", _where_branch)
     assert torch.equal(env.render(states), native), (
-        f"{name}: the two select_ branches disagree on the default appearance")
+        f"{name}: the two select_ branches disagree on the default appearance"
+    )
     if native_styled is not None:
         assert torch.equal(env.render(states, style=style), native_styled), (
-            f"{name}: the two select_ branches disagree under a per-environment style")
+            f"{name}: the two select_ branches disagree under a per-environment style"
+        )
 
 
 @pytest.mark.parametrize("shape", [(3, 2, 5, 7), (3, 1, 1, 4)])

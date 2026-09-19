@@ -286,9 +286,8 @@ anti-aliased grey spine lines cross, Agg composites them twice and gets (227,227
 flat over-paint gets 241. Four pixels per frame, all four at the extreme corners, and all four
 outside the interior mask because their 3x3 neighbourhood is not flat in the reference either.
 """
-from __future__ import annotations
 
-import math
+from __future__ import annotations
 
 import numpy as np
 import torch
@@ -313,7 +312,7 @@ MAX_DOOR = 3
 DOOR_MARGIN = 1.75
 #: the pushback the reference applies when it clamps the agent against the central wall
 WALL_PUSHBACK = 0.5
-GRID_N = 2                       # PiecewiseEnv's default grid_n
+GRID_N = 2  # PiecewiseEnv's default grid_n
 N_ZONES = GRID_N * GRID_N
 
 AGENT_C = (255, 0, 0)
@@ -326,7 +325,7 @@ AGENT_R = 7.0
 TARGET_R = 7.0
 AGENT_SPEED = 5.0
 WALL_THICKNESS = 10
-WALL_AXIS = 1                    # 1 = vertical wall, 0 = horizontal
+WALL_AXIS = 1  # 1 = vertical wall, 0 = horizontal
 N_DOORS = 1
 DOOR_POS = (49.0, 49.0, 49.0)
 DOOR_SIZE = (14.0, 14.0, 14.0)
@@ -361,10 +360,10 @@ def _border_mask(device) -> torch.Tensor:
     """``(H,W)`` bool: the four 4 px strokes at rows/cols 10..13 and 210..213."""
     m = torch.zeros(IMG, IMG, dtype=torch.bool, device=device)
     b, t = BORDER, BORDER_T
-    m[:, b - t:b] = True
-    m[:, IMG - b:IMG - b + t] = True
-    m[b - t:b, :] = True
-    m[IMG - b:IMG - b + t, :] = True
+    m[:, b - t : b] = True
+    m[:, IMG - b : IMG - b + t] = True
+    m[b - t : b, :] = True
+    m[IMG - b : IMG - b + t, :] = True
     return m
 
 
@@ -544,6 +543,7 @@ class _SWMPort(Env):
         """The official env. ``size`` is ignored: none of these three has a configurable canvas."""
         import gymnasium
         import stable_worldmodel  # noqa: F401  (registers the swm/* ids)
+
         return gymnasium.make(cls.reference_id, **cls.reference_kwargs)
 
     @classmethod
@@ -567,13 +567,13 @@ class _SWMPort(Env):
         for st in np.asarray(states):
             cls.reference_set_state(u, st)
             got = cls.reference_sim_state(u)
-            err = float(np.abs(np.asarray(got, np.float64)
-                               - np.asarray(st, np.float64)).max())
+            err = float(np.abs(np.asarray(got, np.float64) - np.asarray(st, np.float64)).max())
             if err > 1e-6:
                 raise AssertionError(
                     f"the reference env did not reach the requested state (max err {err:.3e}); asked "
                     f"{np.asarray(st)}, got {np.asarray(got)}. Parity measured against this frame "
-                    f"would be comparing two different scenes.")
+                    f"would be comparing two different scenes."
+                )
             out.append(np.ascontiguousarray(u.render(*cls.reference_render_args)))
         return np.stack(out)
 
@@ -597,11 +597,13 @@ class _SWMPort(Env):
 
     def _rows_and_style(self, state, owner: str):
         """``(state, ...) -> ((n, state_dim) float32 rows, the style for those n rows)``."""
-        rows = self.pack(state) if isinstance(state, TensorDict) else check_states(
-            self, state, f"{type(self).__name__}.{owner}")
+        rows = (
+            self.pack(state)
+            if isinstance(state, TensorDict)
+            else check_states(self, state, f"{type(self).__name__}.{owner}")
+        )
         rows = rows.reshape(-1, self.state_dim)
-        return rows, self._style.for_batch(int(rows.shape[0]),
-                                           owner=f"{type(self).__name__}.{owner}")
+        return rows, self._style.for_batch(int(rows.shape[0]), owner=f"{type(self).__name__}.{owner}")
 
     @torch.no_grad()
     def transition(self, state, action) -> TensorDict:
@@ -611,8 +613,7 @@ class _SWMPort(Env):
         two agree to the bit by construction rather than by resemblance.
         """
         rows, sty = self._rows_and_style(state, "transition")
-        act = torch.as_tensor(action, device=self.device,
-                              dtype=torch.float32).reshape(-1, self.action_dim)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
         return self.unpack(self._advance_rows(rows, act, sty))
 
     #: EVERY CONCRETE CELL RE-DECLARES ``step`` as a one-line ``super().step(action)``, and that is
@@ -632,13 +633,11 @@ class _SWMPort(Env):
         wearing the same name, and a zero would read as a measured one (contract §5).
         """
         self._check_open("step")
-        act = torch.as_tensor(action, device=self.device,
-                              dtype=torch.float32).reshape(self.B, self.action_dim)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
         self._state.copy_(self._advance_rows(self._state, act, self._style))
         return self._step_result(self.state)
 
-    def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor,
-                      sty) -> torch.Tensor:
+    def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor, sty) -> torch.Tensor:
         """``(n, state_dim)`` + a clipped action + the style -> the next packed rows. Pure."""
         raise NotImplementedError
 
@@ -670,7 +669,8 @@ class _SWMNavBase(_SWMPort):
         "colour equals the background, because 255*(1-a)+255*a is the identity in exact arithmetic "
         "and not in float32, and the 41 px Gaussian tail is flat enough that the reference's own 3x3 "
         "neighbourhood cannot see the quantisation contour. Worst of 800 seeded draws: 2 pixels of "
-        "2.3 million, 1/255, one channel. See the module docstring.")
+        "2.3 million, 1/255, one channel. See the module docstring."
+    )
     action_dim = 2
     action_low = -1.0
     action_high = 1.0
@@ -687,8 +687,10 @@ class _SWMNavBase(_SWMPort):
     # ---------------------------------------------------------------- appearance
 
     def _agent_space(self) -> dict:
-        return {"color": RGBBox(init_value=AGENT_C),
-                "radius": Box(low=7.0, high=14.0, shape=(1,), init_value=[AGENT_R])}
+        return {
+            "color": RGBBox(init_value=AGENT_C),
+            "radius": Box(low=7.0, high=14.0, shape=(1,), init_value=[AGENT_R]),
+        }
 
     def base_image(self, sty, n: int) -> torch.Tensor:
         """``(n,H,W,3)`` **uint8**: everything drawn before the first alpha blend.
@@ -704,15 +706,22 @@ class _SWMNavBase(_SWMPort):
             f"{type(self).__name__} is not drawn from vector primitives. The official renderer "
             f"composites a normalised Gaussian alpha mask over the whole frame, which is a per-pixel "
             f"function rather than a set of flat-coloured shapes; a Scene2D disc would reproduce the "
-            f"7-pixel core and none of the 40-pixel tail. It overrides render() instead.")
+            f"7-pixel core and none of the 40-pixel tail. It overrides render() instead."
+        )
 
     # ---------------------------------------------------------------- rendering
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = int(s.shape[0])
@@ -724,12 +733,14 @@ class _SWMNavBase(_SWMPort):
                 f"border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column "
                 f"112 — with no world-unit description underneath, so there is nothing to re-sample. "
                 f"Resize the frames afterwards if a different size is wanted; that is what "
-                f"stable_worldmodel's own pipeline does.")
+                f"stable_worldmodel's own pipeline does."
+            )
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}.render: supersample={supersample} has nothing to estimate. "
                 f"Supersampling exists to approximate sub-pixel coverage of analytic geometry; this "
-                f"frame is an exact per-pixel formula evaluated on the reference's own lattice.")
+                f"frame is an exact per-pixel formula evaluated on the reference's own lattice."
+            )
         sty = self.resolve_style(style, variation, batch=n)
 
         if out is not None:
@@ -737,14 +748,14 @@ class _SWMNavBase(_SWMPort):
                 raise ValueError(
                     f"{type(self).__name__}.render(out=): the destination must be contiguous. A "
                     f"strided view (frames[:, t] in a rollout buffer) would be written linearly from "
-                    f"its own offset and the frames would land across neighbouring slices.")
+                    f"its own offset and the frames would land across neighbouring slices."
+                )
             img = out.view(n, IMG, IMG, 3)
         else:
             img = torch.empty((n, IMG, IMG, 3), dtype=torch.uint8, device=self.device)
 
         for lo in range(0, n, RENDER_CHUNK):
-            img[lo:min(lo + RENDER_CHUNK, n)] = self._render_chunk(
-                s, sty, lo, min(lo + RENDER_CHUNK, n))
+            img[lo : min(lo + RENDER_CHUNK, n)] = self._render_chunk(s, sty, lo, min(lo + RENDER_CHUNK, n))
         return img.view(*lead, IMG, IMG, 3) if lead else img
 
     def _render_chunk(self, s, sty, lo: int, hi: int) -> torch.Tensor:
@@ -764,8 +775,7 @@ class _SWMNavBase(_SWMPort):
         overlap. One method per family rather than a flag, so a subclass that adds a dot declares it
         in the same place it declares how to draw it.
         """
-        return (s[:, 0:2].reshape(k, 1, 2), sl("agent.radius").reshape(k, 1),
-                sl("agent.color").reshape(k, 1, 3))
+        return (s[:, 0:2].reshape(k, 1, 2), sl("agent.radius").reshape(k, 1), sl("agent.color").reshape(k, 1, 3))
 
     #: Baked base images, keyed on the bytes of the style row that produced them. Bounded LRU —
     #: the same shape as ``render/raster2d.py``'s ``_BASE_CACHE``.
@@ -805,14 +815,14 @@ class _SWMNavBase(_SWMPort):
         """
         k = hi - lo
         if self.device.type == "cuda":
-            return self.base_image(lambda p: sty[p][lo:hi], k)          # see _CUDA_IS_NOT_THE_CPU
+            return self.base_image(lambda p: sty[p][lo:hi], k)  # see _CUDA_IS_NOT_THE_CPU
         rows = sty.values[lo:hi]
         # ONE host transfer, the same trick ``raster2d._static_base`` uses: the bytes are needed for
         # the key anyway, so the grouping comes free with them. On the CPU the transfer is a copy; on
         # a GPU it is a SYNCHRONISATION, which is why the branch above exists.
         blob = rows.detach().cpu().contiguous().numpy().tobytes()
         w = blob and len(blob) // k or 0
-        keys = [blob[i * w:(i + 1) * w] for i in range(k)] if w else [b""] * k
+        keys = [blob[i * w : (i + 1) * w] for i in range(k)] if w else [b""] * k
         order: dict = {}
         for i, key in enumerate(keys):
             order.setdefault(key, []).append(i)
@@ -827,8 +837,7 @@ class _SWMNavBase(_SWMPort):
             hit = _SWMNavBase._BAKE_CACHE.get(ck)
             if hit is None:
                 first = lo + idx[0]
-                hit = _SWMNavBase._BAKE_CACHE.put(
-                    ck, self.base_image(lambda p, a=first: sty[p][a:a + 1], 1))
+                hit = _SWMNavBase._BAKE_CACHE.put(ck, self.base_image(lambda p, a=first: sty[p][a : a + 1], 1))
             plates.append(hit)
         if len(plates) == 1:
             return plates[0].expand(k, IMG, IMG, 3)
@@ -870,8 +879,9 @@ class _SWMNavBase(_SWMPort):
         if self.device.type == "cuda":
             return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
         win = _dot_window(pos, sigma)
-        wins = _row_groups(win.cpu().numpy(), *(int(v) for v in
-                           (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max())))
+        wins = _row_groups(
+            win.cpu().numpy(), *(int(v) for v in (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max()))
+        )
         if len(wins) == 1 and wins[0][0] is None:
             r0, r1, c0, c1 = wins[0][1:]
             if (r1 - r0) * (c1 - c0) >= IMG * IMG:
@@ -941,21 +951,25 @@ class _TwoRoomBase(_SWMNavBase):
     def _structure_space(self) -> dict:
         return {
             "background": Dict({"color": RGBBox(init_value=BG_C)}),
-            "wall": Dict({
-                "color": RGBBox(init_value=WALL_C),
-                # swm declares these Discrete/MultiDiscrete. The stored form is a float32 row either
-                # way (that is what makes style storable), and the renderer reads the number, so they
-                # are Boxes with the same bounds here and the compat layer converts. ``wall.axis``
-                # stays Discrete because it selects a branch rather than a length.
-                "thickness": Discrete(35, start=7, init_value=WALL_THICKNESS),
-                "axis": Discrete(2, init_value=WALL_AXIS),
-            }),
-            "door": Dict({
-                "color": RGBBox(init_value=DOOR_C),
-                "number": Discrete(3, start=1, init_value=N_DOORS),
-                "position": Box(low=0.0, high=223.0, shape=(MAX_DOOR,), init_value=list(DOOR_POS)),
-                "size": Box(low=1.0, high=21.0, shape=(MAX_DOOR,), init_value=list(DOOR_SIZE)),
-            }),
+            "wall": Dict(
+                {
+                    "color": RGBBox(init_value=WALL_C),
+                    # swm declares these Discrete/MultiDiscrete. The stored form is a float32 row either
+                    # way (that is what makes style storable), and the renderer reads the number, so they
+                    # are Boxes with the same bounds here and the compat layer converts. ``wall.axis``
+                    # stays Discrete because it selects a branch rather than a length.
+                    "thickness": Discrete(35, start=7, init_value=WALL_THICKNESS),
+                    "axis": Discrete(2, init_value=WALL_AXIS),
+                }
+            ),
+            "door": Dict(
+                {
+                    "color": RGBBox(init_value=DOOR_C),
+                    "number": Discrete(3, start=1, init_value=N_DOORS),
+                    "position": Box(low=0.0, high=223.0, shape=(MAX_DOOR,), init_value=list(DOOR_POS)),
+                    "size": Box(low=1.0, high=21.0, shape=(MAX_DOOR,), init_value=list(DOOR_SIZE)),
+                }
+            ),
         }
 
     def _masks(self, sl, k):
@@ -997,8 +1011,7 @@ class _TwoRoomBase(_SWMNavBase):
         pos, size, num = sl("door.position"), sl("door.size"), sl("door.number").trunc()
         hit = torch.zeros_like(coord, dtype=torch.bool)
         for i in range(MAX_DOOR):
-            inside = (coord >= pos[:, i] - size[:, i] - DOOR_MARGIN) & \
-                     (coord <= pos[:, i] + size[:, i] + DOOR_MARGIN)
+            inside = (coord >= pos[:, i] - size[:, i] - DOOR_MARGIN) & (coord <= pos[:, i] + size[:, i] + DOOR_MARGIN)
             hit |= inside & (num > i)
         return hit
 
@@ -1030,10 +1043,8 @@ class _TwoRoomBase(_SWMNavBase):
         open_door = self._in_any_door(other, sl)
         block_lo = started & (moving > eff_lo) & ~open_door
         block_hi = (~started) & (moving < eff_hi) & ~open_door
-        moved = torch.where(block_lo, eff_lo - WALL_PUSHBACK,
-                            torch.where(block_hi, eff_hi + WALL_PUSHBACK, moving))
-        new = torch.stack([torch.where(axis1, moved, nxt[:, 0]),
-                           torch.where(axis1, nxt[:, 1], moved)], dim=1)
+        moved = torch.where(block_lo, eff_lo - WALL_PUSHBACK, torch.where(block_hi, eff_hi + WALL_PUSHBACK, moving))
+        new = torch.stack([torch.where(axis1, moved, nxt[:, 0]), torch.where(axis1, nxt[:, 1], moved)], dim=1)
         out = rows.clone()
         out[:, 0:2] = new
         return out
@@ -1089,7 +1100,7 @@ class TwoRoom(_TwoRoomBase):
             cand = rng.uniform(POS_LO, POS_HI, n).astype(np.float32)
             cand = cand[(cand < lo) | (cand > hi)]
             take = min(n - filled, cand.size)
-            xs[filled:filled + take] = cand[:take]
+            xs[filled : filled + take] = cand[:take]
             filled += take
         ys = rng.uniform(POS_LO, POS_HI, n).astype(np.float32)
         return np.stack([xs, ys], axis=1)
@@ -1110,17 +1121,22 @@ class TwoRoomTarget(_TwoRoomBase):
     state_names = ("agent_x", "agent_y", "target_x", "target_y")
     reference_kwargs = {"render_target": True}
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, 2))
-    state_bounds = {("agent", "position"): (POS_LO, POS_HI),
-                    ("target", "position"): (POS_LO, POS_HI)}
+    state_bounds = {("agent", "position"): (POS_LO, POS_HI), ("target", "position"): (POS_LO, POS_HI)}
     step_reference_groups = (("agent", (0, 1), "euclidean"), ("target", (2, 3), "euclidean"))
 
     def make_variation_space(self) -> Dict:
-        return Dict({
-            "agent": Dict(self._agent_space()),
-            "target": Dict({"color": RGBBox(init_value=TARGET_C),
-                            "radius": Box(low=7.0, high=14.0, shape=(1,), init_value=[TARGET_R])}),
-            **self._structure_space(),
-        })
+        return Dict(
+            {
+                "agent": Dict(self._agent_space()),
+                "target": Dict(
+                    {
+                        "color": RGBBox(init_value=TARGET_C),
+                        "radius": Box(low=7.0, high=14.0, shape=(1,), init_value=[TARGET_R]),
+                    }
+                ),
+                **self._structure_space(),
+            }
+        )
 
     def step(self, action) -> TensorDict:
         """One control step; the implementation is :meth:`_SWMPort.step`. Declared here because the
@@ -1130,11 +1146,11 @@ class TwoRoomTarget(_TwoRoomBase):
 
     def _dots(self, s, sl, k):
         """Target then agent: the reference's order, and visible where the two overlap."""
-        return (torch.cat([s[:, 2:4].reshape(k, 1, 2), s[:, 0:2].reshape(k, 1, 2)], dim=1),
-                torch.cat([sl("target.radius").reshape(k, 1),
-                           sl("agent.radius").reshape(k, 1)], dim=1),
-                torch.cat([sl("target.color").reshape(k, 1, 3),
-                           sl("agent.color").reshape(k, 1, 3)], dim=1))
+        return (
+            torch.cat([s[:, 2:4].reshape(k, 1, 2), s[:, 0:2].reshape(k, 1, 2)], dim=1),
+            torch.cat([sl("target.radius").reshape(k, 1), sl("agent.radius").reshape(k, 1)], dim=1),
+            torch.cat([sl("target.color").reshape(k, 1, 3), sl("agent.color").reshape(k, 1, 3)], dim=1),
+        )
 
     def blend_dots(self, img, s, sl, k) -> torch.Tensor:
         """Target first, agent over it — the reference's order, and visible where the two overlap.
@@ -1156,8 +1172,9 @@ class TwoRoomTarget(_TwoRoomBase):
     @staticmethod
     def reference_sim_state(env) -> np.ndarray:
         u = _u(env)
-        return np.concatenate([u.agent_position.detach().cpu().numpy(),
-                               u.target_position.detach().cpu().numpy()]).astype(np.float64)
+        return np.concatenate(
+            [u.agent_position.detach().cpu().numpy(), u.target_position.detach().cpu().numpy()]
+        ).astype(np.float64)
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
@@ -1180,9 +1197,11 @@ class _PiecewiseBase(_SWMNavBase):
     zone_bias = ZONE_BIAS
 
     def _common_space(self) -> dict:
-        return {"agent": Dict(self._agent_space()),
-                "background": Dict({"color": RGBBox(init_value=BG_C)}),
-                "border": Dict({"color": RGBBox(init_value=BORDER_C)})}
+        return {
+            "agent": Dict(self._agent_space()),
+            "background": Dict({"color": RGBBox(init_value=BG_C)}),
+            "border": Dict({"color": RGBBox(init_value=BORDER_C)}),
+        }
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """``Box(14, 209)^2`` — PiecewiseEnv puts no constraint on ``agent.position``."""
@@ -1284,6 +1303,7 @@ class PiecewiseZones(_PiecewiseBase):
         """
         import gymnasium
         import stable_worldmodel  # noqa: F401
+
         env = gymnasium.make(cls.reference_id)
         env.unwrapped.variation_space["rendering"]["render_zones"].set_init_value(1)
         return env
@@ -1293,7 +1313,7 @@ class PiecewiseZones(_PiecewiseBase):
 SIZE = 500
 #: the data extent of the axes; ``ax.set_xlim(0, width)`` / ``set_ylim(0, height)``
 WORLD = 5.0
-PX_PER_UNIT = SIZE / WORLD                       # 100.0, measured
+PX_PER_UNIT = SIZE / WORLD  # 100.0, measured
 MAX_WALLS = 6
 MIN_WALLS = 4
 
@@ -1356,21 +1376,25 @@ class SimplePointMaze(_SWMPort):
     speed = MAZE_AGENT_SPEED
 
     def make_variation_space(self) -> Dict:
-        return Dict({
-            "agent": Dict({
-                "color": RGBBox(init_value=MAZE_AGENT_C),
-                "radius": Box(low=0.05, high=0.5, shape=(1,), init_value=[MAZE_AGENT_R]),
-            }),
-            "walls": Dict({
-                "number": Discrete(MAX_WALLS - MIN_WALLS + 1, start=MIN_WALLS, init_value=N_WALLS),
-                "color": RGBBox(init_value=MAZE_WALL_C),
-                "shape": Box(low=0.5, high=1.5, shape=(MAX_WALLS, 2),
-                             init_value=DEFAULT_WALL_SHAPE),
-                "positions": Box(low=0.0, high=WORLD, shape=(MAX_WALLS, 2),
-                                 init_value=DEFAULT_WALL_POS),
-            }),
-            "background": Dict({"color": RGBBox(init_value=MAZE_BG_C)}),
-        })
+        return Dict(
+            {
+                "agent": Dict(
+                    {
+                        "color": RGBBox(init_value=MAZE_AGENT_C),
+                        "radius": Box(low=0.05, high=0.5, shape=(1,), init_value=[MAZE_AGENT_R]),
+                    }
+                ),
+                "walls": Dict(
+                    {
+                        "number": Discrete(MAX_WALLS - MIN_WALLS + 1, start=MIN_WALLS, init_value=N_WALLS),
+                        "color": RGBBox(init_value=MAZE_WALL_C),
+                        "shape": Box(low=0.5, high=1.5, shape=(MAX_WALLS, 2), init_value=DEFAULT_WALL_SHAPE),
+                        "positions": Box(low=0.0, high=WORLD, shape=(MAX_WALLS, 2), init_value=DEFAULT_WALL_POS),
+                    }
+                ),
+                "background": Dict({"color": RGBBox(init_value=MAZE_BG_C)}),
+            }
+        )
 
     # ---------------------------------------------------------------- scene
 
@@ -1404,20 +1428,28 @@ class SimplePointMaze(_SWMPort):
         # row 1 as background — measured as 24,089 disagreeing border pixels before this comment
         # existed, which is what the pixel diff is for.
         grey = bg * (1.0 - SPINE_AA)
-        edges = ((0.0, WORLD - 2 * PX, WORLD, WORLD - PX, grey),   # row 1
-                 (0.0, 0.0, WORLD, PX, grey),                      # row 499
-                 (PX, 0.0, 2 * PX, WORLD, grey),                   # col 1
-                 (WORLD - PX, 0.0, WORLD, WORLD, grey),            # col 499
-                 (0.0, WORLD - PX, WORLD, WORLD, None),            # row 0   (black)
-                 (0.0, 0.0, PX, WORLD, None))                      # col 0   (black)
+        edges = (
+            (0.0, WORLD - 2 * PX, WORLD, WORLD - PX, grey),  # row 1
+            (0.0, 0.0, WORLD, PX, grey),  # row 499
+            (PX, 0.0, 2 * PX, WORLD, grey),  # col 1
+            (WORLD - PX, 0.0, WORLD, WORLD, grey),  # col 499
+            (0.0, WORLD - PX, WORLD, WORLD, None),  # row 0   (black)
+            (0.0, 0.0, PX, WORLD, None),
+        )  # col 0   (black)
         black = torch.zeros(n, 3, device=self.device, dtype=torch.float32)
         for x0, y0, x1, y1, col in edges:
-            sb.add_rect(((x0 + x1) * 0.5, (y0 + y1) * 0.5), (x1 - x0, y1 - y0),
-                        black if col is None else col)
+            sb.add_rect(((x0 + x1) * 0.5, (y0 + y1) * 0.5), (x1 - x0, y1 - y0), black if col is None else col)
         return sb.build(background=bg, world=(0.0, 0.0, WORLD, WORLD), flip_y=True)
 
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """As the base class, but at 500px only.
 
         The world is in data units and would scale happily; the SPINE is defined in output pixels (a
@@ -1430,9 +1462,9 @@ class SimplePointMaze(_SWMPort):
             raise ValueError(
                 f"SimplePointMaze renders at {SIZE}px only: the reference is a 5x5 inch matplotlib "
                 f"figure at 100 dpi and its axes spine is a 0.8 pt line, i.e. a constant in OUTPUT "
-                f"PIXELS with no world-unit description. Asked for {t}.")
-        return super().render(states, size=t, supersample=supersample, variation=variation,
-                              style=style, out=out)
+                f"PIXELS with no world-unit description. Asked for {t}."
+            )
+        return super().render(states, size=t, supersample=supersample, variation=variation, style=style, out=out)
 
     # ---------------------------------------------------------------- states and dynamics
 
@@ -1480,11 +1512,12 @@ class SimplePointMaze(_SWMPort):
             ok = ~self._collides(t, sty.for_batch(n, owner="SimplePointMaze.sample_states"), n)
             keep = cand[ok.cpu().numpy()]
             take = min(n - filled, len(keep))
-            out[filled:filled + take] = keep[:take]
+            out[filled : filled + take] = keep[:take]
             filled += take
         if filled < n:
-            raise RuntimeError("agent.position rejection sampling did not converge; the wall layout "
-                               "leaves no free space")
+            raise RuntimeError(
+                "agent.position rejection sampling did not converge; the wall layout leaves no free space"
+            )
         return out
 
     def _advance_rows(self, rows, action, sty) -> torch.Tensor:

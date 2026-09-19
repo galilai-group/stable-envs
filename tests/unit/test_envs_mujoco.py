@@ -22,6 +22,7 @@ have no baseline to compare against, across the seventeen families this workstre
 Only the cells this interpreter can actually construct are exercised for the last three; the
 constructor property is enforced for all of them. Sizes are small (2-4 envs).
 """
+
 from __future__ import annotations
 
 import inspect
@@ -34,16 +35,31 @@ pytest.importorskip("tensordict")
 
 import torch
 
-import stable_envs as snv
 from stable_envs import dynamics as D
 from stable_envs.registry import REGISTRY
 
 pytestmark = pytest.mark.unit
 
 #: The seventeen modules this workstream owns, by the last component of their import path.
-FAMILIES = ("mujoco_locomotion", "humanoidbench", "metaworld", "robocasa", "maze2d", "carracing",
-            "crafter", "griddly", "highway", "jumanji", "lunarlander", "minigrid", "minihack",
-            "overcooked", "pgx", "procgen", "sokoban")
+FAMILIES = (
+    "mujoco_locomotion",
+    "humanoidbench",
+    "metaworld",
+    "robocasa",
+    "maze2d",
+    "carracing",
+    "crafter",
+    "griddly",
+    "highway",
+    "jumanji",
+    "lunarlander",
+    "minigrid",
+    "minihack",
+    "overcooked",
+    "pgx",
+    "procgen",
+    "sokoban",
+)
 
 #: The two cells in these families that ship a batched simulator. Everything else is a renderer over
 #: someone else's physics and says so by raising.
@@ -57,15 +73,14 @@ def _owned_classes() -> dict:
     dependency is missing simply contributes nothing instead of erroring — and so a class that is
     added to one of these modules tomorrow is covered without editing a list here.
     """
-    return {n: c for n, c in REGISTRY.items()
-            if getattr(c, "__module__", "").rsplit(".", 1)[-1] in FAMILIES}
+    return {n: c for n, c in REGISTRY.items() if getattr(c, "__module__", "").rsplit(".", 1)[-1] in FAMILIES}
 
 
 def _constructible(name: str, cls, **kw):
     """One CPU env, or a skip naming the dependency this host does not have."""
     try:
         return cls(num_envs=kw.pop("num_envs", 2), device="cpu", **kw)
-    except Exception as e:                       # noqa: BLE001 — the reason is the skip message
+    except Exception as e:  # noqa: BLE001 — the reason is the skip message
         if isinstance(e, (ImportError, ModuleNotFoundError, OSError, FileNotFoundError)):
             pytest.skip(f"{name} is not constructible on this host: {type(e).__name__}: {e}")
         raise
@@ -76,19 +91,20 @@ OWNED = sorted(_owned_classes())
 
 def test_this_workstream_owns_some_registered_classes():
     """A guard on the guard: if discovery silently stopped, every test below would vacuously pass."""
-    assert OWNED, ("no registered class resolves to a Workstream-F family; the tests below "
-                   "parametrise over this list and would all pass on an empty one")
+    assert OWNED, (
+        "no registered class resolves to a Workstream-F family; the tests below "
+        "parametrise over this list and would all pass on an empty one"
+    )
 
 
 @pytest.mark.parametrize("name", OWNED)
 def test_every_owned_class_takes_the_step9_constructor(name):
     """``num_envs=`` reaches the class, from the SIGNATURE — no construction, so no optional dep."""
     params = inspect.signature(REGISTRY[name].__init__).parameters
-    assert "num_envs" in params or "kw" in params or any(
-        p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()), (
-        f"{name} does not accept num_envs=; its signature is {params}")
-    assert "batch" not in params, (
-        f"{name} declares batch= as a constructor spelling")
+    assert (
+        "num_envs" in params or "kw" in params or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+    ), f"{name} does not accept num_envs=; its signature is {params}"
+    assert "batch" not in params, f"{name} declares batch= as a constructor spelling"
 
 
 @pytest.mark.parametrize("name", OWNED)
@@ -148,15 +164,18 @@ def test_a_cell_without_a_simulator_refuses_step_and_transition_by_name(name):
             out = env.step(torch.zeros(env.num_envs, env.action_dim))
             assert list(out.keys()) == ["state"], (
                 f"{name}: step fabricated {set(out.keys()) - {'state'}}; a cell with no reward or "
-                f"termination semantics omits the key (contract §5)")
+                f"termination semantics omits the key (contract §5)"
+            )
             return
         assert not D.has_dynamics(env)
-        for call in (lambda: env.step(torch.zeros(env.num_envs, 1)),
-                     lambda: env.transition(env.state, torch.zeros(env.num_envs, 1))):
+        for call in (
+            lambda: env.step(torch.zeros(env.num_envs, 1)),
+            lambda: env.transition(env.state, torch.zeros(env.num_envs, 1)),
+        ):
             with pytest.raises(NotImplementedError) as e:
                 call()
             assert type(env).__name__ in str(e.value) and "has dynamics" in str(e.value)
-        assert env.render().shape[0] == env.num_envs        # render still works after the refusal
+        assert env.render().shape[0] == env.num_envs  # render still works after the refusal
     finally:
         env.close()
 
@@ -178,8 +197,7 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render(name):
 
 # --------------------------------------------------------------------------- the two steppable cells
 
-STEPPABLE = [n for n in OWNED
-             if any(b.__name__ in WITH_DYNAMICS for b in REGISTRY[n].__mro__)]
+STEPPABLE = [n for n in OWNED if any(b.__name__ in WITH_DYNAMICS for b in REGISTRY[n].__mro__)]
 
 
 @pytest.mark.skipif(not STEPPABLE, reason="neither steppable family is constructible on this host")
@@ -267,8 +285,7 @@ def test_minigrids_carried_object_is_hidden_state_the_packed_row_does_not_carry(
         # pickup is action 3; whatever it does to the four environments, env.state must report the
         # env's OWN carried codes and not the zeros unpack would fill in.
         env.step(torch.full((4, 1), 3.0))
-        assert torch.equal(env.state["agent", "carrying"],
-                           env._carry.reshape(-1, 1).to(torch.float32))
+        assert torch.equal(env.state["agent", "carrying"], env._carry.reshape(-1, 1).to(torch.float32))
         # and the functional path must still agree with the stateful one MID-TRAJECTORY
         a = torch.full((4, 1), 2.0)
         functional = env.transition(env.state, a)

@@ -12,15 +12,21 @@ classes do not produce — they declare 2, because their reference is MSAA'd —
 live in this repo's published decode table until it was found by two of its own benchmarks disagreeing
 on the same env.
 """
-import argparse, statistics, time
+
+import argparse
+import statistics
+import time
+
 import torch
+
 import stable_envs as se
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--sizes", default="96,224")
 ap.add_argument("--batches", default="256,1024,4096,16384")
-ap.add_argument("--ss", default="native",
-                help="'native' uses each env's own default_supersample; a number forces that value")
+ap.add_argument(
+    "--ss", default="native", help="'native' uses each env's own default_supersample; a number forces that value"
+)
 ap.add_argument("--reps", type=int, default=10)
 a = ap.parse_args()
 SS = None if str(a.ss).lower() in ("native", "default", "env", "none") else int(a.ss)
@@ -38,16 +44,23 @@ for name in sorted(se.registry.REGISTRY):
                 out = torch.empty((B, size, size, 3), dtype=torch.uint8, device="cuda")
                 for _ in range(3):
                     env.render(st, out=out)
-                torch.cuda.synchronize(); torch.cuda.reset_peak_memory_stats()
+                torch.cuda.synchronize()
+                torch.cuda.reset_peak_memory_stats()
                 ts = []
                 for _ in range(a.reps):
-                    torch.cuda.synchronize(); t0 = time.perf_counter()
+                    torch.cuda.synchronize()
+                    t0 = time.perf_counter()
                     env.render(st, out=out)
-                    torch.cuda.synchronize(); ts.append(time.perf_counter() - t0)
+                    torch.cuda.synchronize()
+                    ts.append(time.perf_counter() - t0)
                 dt = statistics.median(ts)
                 gb = B * size * size * 3 / 1e9
-                print(f"  {B:>7} {dt/B*1e3:10.5f} {B/dt:13,.0f} {gb/dt:8.1f} "
-                      f"{torch.cuda.max_memory_allocated()/1e9:9.2f} {env.ss:>3}")
-                del env, st, out; torch.cuda.empty_cache()
+                print(
+                    f"  {B:>7} {dt / B * 1e3:10.5f} {B / dt:13,.0f} {gb / dt:8.1f} "
+                    f"{torch.cuda.max_memory_allocated() / 1e9:9.2f} {env.ss:>3}"
+                )
+                del env, st, out
+                torch.cuda.empty_cache()
             except torch.OutOfMemoryError:
-                print(f"  {B:>7} {'OOM':>10}"); torch.cuda.empty_cache()
+                print(f"  {B:>7} {'OOM':>10}")
+                torch.cuda.empty_cache()

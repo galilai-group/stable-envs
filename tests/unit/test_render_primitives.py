@@ -6,6 +6,7 @@ them only helps if it is checked that the copies are really gone and that the on
 exist in two spellings -- numpy for a baked scene, torch for sizes a per-environment scale may have
 moved -- cannot drift apart. Each of these was a way the two backends could have disagreed.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -106,9 +107,13 @@ def test_an_unbounded_kind_says_so_in_each_spellings_own_way():
 def test_the_radius_actually_contains_the_primitive():
     """A bound is a claim that nothing outside it can be hit, so sample the surface and check it."""
     rng = np.random.default_rng(3)
-    for kind, size in ((P.SPHERE, [0.3, 0, 0]), (P.CAPSULE, [0.1, 0.4, 0]),
-                       (P.CYLINDER, [0.2, 0.5, 0]), (P.BOX, [0.2, 0.3, 0.4]),
-                       (P.ELLIPSOID, [0.1, 0.5, 0.25])):
+    for kind, size in (
+        (P.SPHERE, [0.3, 0, 0]),
+        (P.CAPSULE, [0.1, 0.4, 0]),
+        (P.CYLINDER, [0.2, 0.5, 0]),
+        (P.BOX, [0.2, 0.3, 0.4]),
+        (P.ELLIPSOID, [0.1, 0.5, 0.25]),
+    ):
         r = float(P.bound_radius(np.array([kind]), np.array([size], float))[0])
         s = np.asarray(size, float)
         if kind == P.SPHERE:
@@ -117,9 +122,15 @@ def test_the_radius_actually_contains_the_primitive():
             pts = _unit(rng) * s
         elif kind in (P.CAPSULE, P.CYLINDER):
             u = _unit(rng)
-            pts = np.stack([s[0] * u[:, 0], s[0] * u[:, 1],
-                            np.clip(2 * s[1] * (rng.random(len(u)) - 0.5) * 2, -s[1], s[1])
-                            + (s[0] * u[:, 2] if kind == P.CAPSULE else 0.0)], -1)
+            pts = np.stack(
+                [
+                    s[0] * u[:, 0],
+                    s[0] * u[:, 1],
+                    np.clip(2 * s[1] * (rng.random(len(u)) - 0.5) * 2, -s[1], s[1])
+                    + (s[0] * u[:, 2] if kind == P.CAPSULE else 0.0),
+                ],
+                -1,
+            )
         else:
             pts = (2 * rng.random((512, 3)) - 1) * s
         assert np.linalg.norm(pts, axis=-1).max() <= r + 1e-9, f"kind {kind} escapes its bound"
@@ -134,14 +145,12 @@ def _unit(rng, n: int = 512) -> np.ndarray:
 def test_primitives_bound_radius_is_the_free_function():
     kinds = np.array([P.SPHERE, P.CAPSULE, P.BOX, P.ELLIPSOID, P.PLANE])
     size = np.array([[0.2, 0, 0], [0.1, 0.3, 0], [0.2, 0.3, 0.4], [0.1, 0.5, 0.2], [1.0, 1.0, 0.1]])
-    prims = P.Primitives(kind=kinds, size=size, mat_rgb=np.zeros((5, 3)),
-                         tex_rgb=np.ones((5, 3)), spec=np.zeros(5))
+    prims = P.Primitives(kind=kinds, size=size, mat_rgb=np.zeros((5, 3)), tex_rgb=np.ones((5, 3)), spec=np.zeros(5))
     assert np.array_equal(prims.bound_radius(), P.bound_radius(kinds, size))
     # the memoised device form is the same numbers scaled, INF and all (see the test above for why
     # the plane is not filtered out here), and it is memoised per (device, dtype, scale)
     radii = prims.radii("cpu", torch.float32, 2.0)
-    assert torch.allclose(radii, torch.as_tensor(P.bound_radius(kinds, size) * 2.0,
-                                                 dtype=torch.float32))
+    assert torch.allclose(radii, torch.as_tensor(P.bound_radius(kinds, size) * 2.0, dtype=torch.float32))
     assert prims.radii("cpu", torch.float32, 2.0) is radii
     assert prims.radii("cpu", torch.float32, 1.0) is not radii
 
@@ -152,7 +161,7 @@ def test_the_memo_evicts_lru_at_its_cap():
     for i in range(4):
         m.put(i, i * i)
     assert len(m) == 4 and m.get(3) == 9
-    m.put(99, 1)                      # at the cap: the least recently used key goes, the rest stay
+    m.put(99, 1)  # at the cap: the least recently used key goes, the rest stay
     assert len(m) == 4 and m.get(99) == 1 and m.get(3) == 9 and m.get(0) is None
 
 
@@ -171,7 +180,6 @@ def test_an_unknown_geom_is_refused_by_both_dispatchers_with_the_same_reason():
     d = torch.zeros(1, 4, 3)
     d[..., 0] = 1.0
     with pytest.raises(ValueError, match="no intersector for mjtGeom"):
-        R3.intersect(7, torch.ones(1, 1, 3), torch.zeros(1, 1, 3), torch.eye(3).view(1, 1, 3, 3),
-                     o, d)
+        R3.intersect(7, torch.ones(1, 1, 3), torch.zeros(1, 1, 3), torch.eye(3).view(1, 1, 3, 3), o, d)
     with pytest.raises(ValueError, match="no intersector for mjtGeom"):
         R3._kind_tensor([7], "cpu")

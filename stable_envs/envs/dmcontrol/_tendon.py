@@ -12,6 +12,7 @@ Patching for a test: each callable is looked up in the module that CALLS it, so
 ``stable_envs.envs.dmcontrol.suite`` (which calls it) and ``catenary`` on this module (which
 ``_tendon_polyline`` calls it from). Patching the package attribute reaches neither.
 """
+
 from __future__ import annotations
 
 import math
@@ -93,8 +94,8 @@ def catenary(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
     ac = x01 - up * (up[0] * x01[0] + up[1] * x01[1] + up[2] * x01[2])
     n = math.sqrt(ac[0] * ac[0] + ac[1] * ac[1] + ac[2] * ac[2])
     ac = np.zeros(3) if n < _MJMINVAL else ac * (1.0 / n)
-    h = x01[0] * ac[0] + x01[1] * ac[1] + x01[2] * ac[2]        # horizontal extent
-    v = x01[0] * up[0] + x01[1] * up[1] + x01[2] * up[2]        # vertical rise
+    h = x01[0] * ac[0] + x01[1] * ac[1] + x01[2] * ac[2]  # horizontal extent
+    v = x01[0] * up[0] + x01[1] * up[1] + x01[2] * up[2]  # vertical rise
     if length > 100 * h:
         d_up = -0.5 * (math.sqrt(length * length - h * h) - v)
         return np.stack([x0, x0 + up * d_up + ac * (h * d_up / (2 * d_up - v)), x1])
@@ -112,9 +113,8 @@ def catenary(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
     # Measured on DMCBallInCupCatch at batch 256: 24.5 ms -> ~8 ms of a 88 ms ``_fk``.
     if npoints > 2:
         hor = np.arange(1, npoints - 1, dtype=np.float64) * h / npoints
-        w = np.fromiter((bh * _cosh_sinh((hh - h_off) / bh)[0] + v_off for hh in hor),
-                        np.float64, npoints - 2)
-        pts[1:npoints - 1] = x0 + ac * hor[:, None] + up * w[:, None]
+        w = np.fromiter((bh * _cosh_sinh((hh - h_off) / bh)[0] + v_off for hh in hor), np.float64, npoints - 2)
+        pts[1 : npoints - 1] = x0 + ac * hor[:, None] + up * w[:, None]
     return pts
 
 
@@ -135,9 +135,11 @@ def _chain_capsules(pts: np.ndarray, nseg: int):
     """
     K = len(pts) - 1
     if nseg % K:
-        raise RuntimeError(f"a tendon drawn as {K} segments cannot be split into {nseg} pieces "
-                           f"without resampling it; {nseg} must be a multiple of every branch's "
-                           f"segment count")
+        raise RuntimeError(
+            f"a tendon drawn as {K} segments cannot be split into {nseg} pieces "
+            f"without resampling it; {nseg} must be a multiple of every branch's "
+            f"segment count"
+        )
     per = nseg // K
     p0 = np.asarray(pts[:-1], np.float64).reshape(K, 1, 3)
     p1 = np.asarray(pts[1:], np.float64).reshape(K, 1, 3)
@@ -177,9 +179,11 @@ def _chain_capsules_batch(pts: np.ndarray, nseg: int):
     M, npts, _ = pts.shape
     K = npts - 1
     if nseg % K:
-        raise RuntimeError(f"a tendon drawn as {K} segments cannot be split into {nseg} pieces "
-                           f"without resampling it; {nseg} must be a multiple of every branch's "
-                           f"segment count")
+        raise RuntimeError(
+            f"a tendon drawn as {K} segments cannot be split into {nseg} pieces "
+            f"without resampling it; {nseg} must be a multiple of every branch's "
+            f"segment count"
+        )
     per = nseg // K
     p0 = np.asarray(pts[:, :-1], np.float64).reshape(M, K, 1, 3)
     p1 = np.asarray(pts[:, 1:], np.float64).reshape(M, K, 1, 3)
@@ -203,7 +207,7 @@ class _Tendon:
     __slots__ = ("id", "radius", "nseg", "ncat", "grey", "constraint", "upper", "gravity")
 
 
-def _find_tendon(m) -> "_Tendon | None":
+def _find_tendon(m) -> _Tendon | None:
     """The scene's drawn spatial tendon, or ``None``. Refuses anything it cannot draw exactly.
 
     ``ntendon > 0`` is not the question: ``point_mass`` and ``fish`` both carry two tendons and draw
@@ -211,6 +215,7 @@ def _find_tendon(m) -> "_Tendon | None":
     reaches the frame only if it wraps SITES or wrapping objects.
     """
     import mujoco
+
     spatial = []
     for t in range(int(m.ntendon)):
         a = int(m.tendon_adr[t])
@@ -221,15 +226,16 @@ def _find_tendon(m) -> "_Tendon | None":
     if not spatial:
         return None
     if len(spatial) > 1:
-        raise RuntimeError(f"this scene draws {len(spatial)} spatial tendons; the mover set here "
-                           f"carries one")
+        raise RuntimeError(f"this scene draws {len(spatial)} spatial tendons; the mover set here carries one")
     t, kinds = spatial[0]
     site = int(mujoco.mjtWrap.mjWRAP_SITE)
     if kinds != [site, site] or not int(m.tendon_limited[t]):
         # ``mjv_isCatenary`` needs exactly two sites and a length constraint (or a spring with a
         # deadband); anything else takes MuJoCo's wrapping path, which computes a different polyline.
-        raise RuntimeError(f"tendon {t} wraps {kinds} and limited={int(m.tendon_limited[t])}; the "
-                           f"catenary path here covers a two-site, length-limited tendon only")
+        raise RuntimeError(
+            f"tendon {t} wraps {kinds} and limited={int(m.tendon_limited[t])}; the "
+            f"catenary path here covers a two-site, length-limited tendon only"
+        )
     td = _Tendon()
     td.id = t
     td.radius = float(m.tendon_width[t])
@@ -266,7 +272,7 @@ def _tendon_frame(m, d, td: _Tendon):
     return pos, mat, half, rgb
 
 
-def _tendon_polyline(m, d, td: "_Tendon"):
+def _tendon_polyline(m, d, td: _Tendon):
     """``(pts, rgb)``: the chain's POLYLINE and its colour, for one state. ``mj_forward`` must have run.
 
     Split out of ``_tendon_frame`` so that the part which must run per environment (it reads ``d``,
@@ -278,8 +284,9 @@ def _tendon_polyline(m, d, td: "_Tendon"):
     groups the batch by point count before batching the chain.
     """
     import mujoco
+
     adr, num = int(d.ten_wrapadr[td.id]), int(d.ten_wrapnum[td.id])
-    w = np.asarray(d.wrap_xpos, np.float64).reshape(-1, 3)[adr:adr + num]
+    w = np.asarray(d.wrap_xpos, np.float64).reshape(-1, 3)[adr : adr + num]
     if float(d.ten_length[td.id]) < td.upper:
         return catenary(w[0], w[1], td.gravity, td.upper, td.ncat), td.grey
     # A COPY, not ``w[:2]``. ``np.asarray(d.wrap_xpos, np.float64)`` returns the MjData buffer itself
@@ -291,8 +298,7 @@ def _tendon_polyline(m, d, td: "_Tendon"):
     if int(d.nefc):
         et = np.asarray(d.efc_type, np.int64)
         ei = np.asarray(d.efc_id, np.int64)
-        hit = np.flatnonzero((et == int(mujoco.mjtConstraint.mjCNSTR_LIMIT_TENDON))
-                             & (ei == td.id))
+        hit = np.flatnonzero((et == int(mujoco.mjtConstraint.mjCNSTR_LIMIT_TENDON)) & (ei == td.id))
         if len(hit):
             imp = float(np.asarray(d.efc_KBIP)[hit[0], 2])
     return pts, (1.0 - imp) * td.grey + imp * td.constraint

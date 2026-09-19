@@ -10,6 +10,7 @@ module's globals, which is where ``tests/unit/test_dmcontrol_tendon.py`` substit
 checks the vectorised chain against the scalar reference (``catenary`` is substituted on
 ``._tendon``, which is where ``_tendon_polyline`` calls it from).
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -20,10 +21,21 @@ from ...spaces import Box, Dict
 from .._plate_texels import substitute as _substitute_texels
 from .._plate_texels import texel_key as _texel_key
 from .._plate_texels import texel_slots as _texel_slots
-from ._model import (HIDDEN_GROUP, LIGHT_DIRECTIONAL, VISIBLE_GROUPS, _GRID_SLOTS, _SCENE_CACHE,
-                     _SCENE_CACHE_MAX, _effective_alpha, _grid_defaults, _grid_masks, _mat_rgb,
-                     _mat_spec_shin, _slot_element, _tex_rgb)
-from ._shading import _Lights, _Scene, _dot, _norm, _shade, _upsample_rgb
+from ._model import (
+    _GRID_SLOTS,
+    _SCENE_CACHE,
+    HIDDEN_GROUP,
+    LIGHT_DIRECTIONAL,
+    VISIBLE_GROUPS,
+    _effective_alpha,
+    _grid_defaults,
+    _grid_masks,
+    _mat_rgb,
+    _mat_spec_shin,
+    _slot_element,
+    _tex_rgb,
+)
+from ._shading import _dot, _Lights, _norm, _Scene, _shade, _upsample_rgb
 from ._tendon import _chain_capsules_batch, _find_tendon, _tendon_polyline
 from .base import _DMCModel
 
@@ -105,6 +117,7 @@ class DMControlSuite(_DMCModel):
         if key in _GRID_SLOTS:
             return _GRID_SLOTS[key]
         import mujoco
+
         m = cls._model()
         t = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_TEXTURE, "grid")
         if t < 0:
@@ -138,12 +151,15 @@ class DMControlSuite(_DMCModel):
         if slots is None:
             return space
         d = slots["default"]
-        return Dict({**{k: space[k] for k in space},
-                     "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3),
-                                                 init_value=d.tolist())})})
+        return Dict(
+            {
+                **{k: space[k] for k in space},
+                "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3), init_value=d.tolist())}),
+            }
+        )
 
     @property
-    def PLATE_PATHS(self) -> tuple[str, ...]:                          # noqa: N802
+    def PLATE_PATHS(self) -> tuple[str, ...]:  # noqa: N802
         """Style leaves that change the STATIC scene and therefore the three baked plates.
 
         EVERY leaf is one, and that is a property of the suite rather than laziness: DM Control
@@ -168,8 +184,7 @@ class DMControlSuite(_DMCModel):
         out = [(self.DOMAIN, self.TASK, int(self.CAMERA), int(size), str(self.device))]
         for p in self.PLATE_PATHS:
             if p == "floor.color":
-                out.append(_texel_key(self._grid_slots(),
-                                      self._var(variation, p).reshape(2, 3)))
+                out.append(_texel_key(self._grid_slots(), self._var(variation, p).reshape(2, 3)))
             else:
                 out.append(tuple(np.round(self._var(variation, p), 6)))
         return tuple(out)
@@ -187,6 +202,7 @@ class DMControlSuite(_DMCModel):
         gives the same model as baking B first. ``cam_fovy`` and the light scale are MULTIPLIERS and
         are exactly the two that would otherwise compound."""
         import mujoco
+
         m.mat_rgba[:] = pr["mat_rgba"]
         m.geom_rgba[:] = pr["geom_rgba"]
         m.site_rgba[:] = pr["site_rgba"]
@@ -206,8 +222,7 @@ class DMControlSuite(_DMCModel):
             if i >= 0:
                 m.mat_rgba[i, :3] = self._var(variation, f"material.{name}")
         m.cam_fovy[:] = pr["cam_fovy"] * float(self._var(variation, "camera.fovy_scale")[0])
-        m.light_diffuse[:] = np.clip(
-            pr["light_diffuse"] * float(self._var(variation, "light.diffuse_scale")[0]), 0, 1)
+        m.light_diffuse[:] = np.clip(pr["light_diffuse"] * float(self._var(variation, "light.diffuse_scale")[0]), 0, 1)
         m.light_specular[:] = pr["light_specular"]
         # SHAPE, before visibility so that hiding still wins. Absolute assignment from the pristine
         # arrays restored above, so baking B after A gives the same model as baking B first.
@@ -229,8 +244,7 @@ class DMControlSuite(_DMCModel):
             gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, gname)
             k = int(round(float(self._var(variation, f"{gname}.shape")[0])))
             if not 0 <= k < len(alts):
-                raise ValueError(f"{type(self).__name__}: {gname}.shape = {k} is outside "
-                                 f"[0, {len(alts)})")
+                raise ValueError(f"{type(self).__name__}: {gname}.shape = {k} is outside [0, {len(alts)})")
             t, s = alts[k]
             m.geom_type[gid] = int(t)
             m.geom_size[gid] = np.asarray(s, np.float64)
@@ -249,7 +263,7 @@ class DMControlSuite(_DMCModel):
             # Discrete leaf only ever holds 0 or 1, so the threshold is a guard on a caller who writes
             # a style row by hand rather than a semantic.
             if float(self._var(variation, f"visibility.{name}")[0]) < 0.5:
-                for eid in eids:                      # one id for an element leaf, N for a body leaf
+                for eid in eids:  # one id for an element leaf, N for a body leaf
                     getattr(m, f"{kind}_rgba")[eid, 3] = 0.0
 
     @staticmethod
@@ -306,10 +320,8 @@ class DMControlSuite(_DMCModel):
             elif kind == "site":
                 ep_s.add(eid)
             # body / light: see the docstring -- different id space, and nothing to rescue
-        g = [i for i in self._visible(m, "geom")
-             if int(m.geom_bodyid[i]) != 0 or i in ep_g]
-        s = [i for i in self._visible(m, "site")
-             if int(m.site_bodyid[i]) != 0 or i in ep_s]
+        g = [i for i in self._visible(m, "geom") if int(m.geom_bodyid[i]) != 0 or i in ep_g]
+        s = [i for i in self._visible(m, "site") if int(m.site_bodyid[i]) != 0 or i in ep_s]
         return g, s
 
     def _apply_floor(self, m, r, variation) -> None:
@@ -338,6 +350,7 @@ class DMControlSuite(_DMCModel):
 
     def _bake(self, size: int, variation) -> _Scene:
         import mujoco
+
         env, m, d, pr, r, _ = self._bundle(size)
         self._apply_variation(m, pr, variation)
         self._apply_floor(m, r, variation)
@@ -351,7 +364,7 @@ class DMControlSuite(_DMCModel):
         d.qpos[:] = m.qpos0
         d.qvel[:] = 0
         mujoco.mj_forward(m, d)
-        opt = mujoco.MjvOption()                     # the default: exactly what dm_control renders at
+        opt = mujoco.MjvOption()  # the default: exactly what dm_control renders at
         if tendon is not None:
             # The tendon is a MOVER and has to leave the plate with the rest of them, and it is the
             # one mover that cannot be hidden by a geom group because it is not a geom. Measured:
@@ -437,9 +450,11 @@ class DMControlSuite(_DMCModel):
             mid = int(m.geom_matid[i])
             if int(m.geom_type[i]) == R3.PLANE and mid >= 0 and float(m.mat_reflectance[mid]) > 0:
                 sc.reflectance = float(m.mat_reflectance[mid])
-                sc.floor = (np.asarray(m.geom_size[i], np.float64),
-                            np.asarray(d.geom_xpos[i], np.float64),
-                            np.asarray(d.geom_xmat[i], np.float64).reshape(3, 3))
+                sc.floor = (
+                    np.asarray(m.geom_size[i], np.float64),
+                    np.asarray(d.geom_xpos[i], np.float64),
+                    np.asarray(d.geom_xmat[i], np.float64).reshape(3, 3),
+                )
                 break
         # a length scale for ray offsets, taken from the scene rather than assumed: cartpole is 8 m
         # across and point_mass 0.6, so one absolute epsilon cannot serve both
@@ -448,7 +463,7 @@ class DMControlSuite(_DMCModel):
         sc.prims, _, _ = self._prims(m, d, gmov, smov, tendon)
         return sc
 
-    def _prims(self, m, d, geoms, sites, tendon: "_Tendon | None" = None):
+    def _prims(self, m, d, geoms, sites, tendon: _Tendon | None = None):
         """``(Primitives, xpos (P,3), xmat (P,3,3))`` for a set of geoms AND sites, then the tendon.
 
         Sites carry their own type/size/rgba arrays, so they go through a parallel path rather than
@@ -493,13 +508,18 @@ class DMControlSuite(_DMCModel):
                 pos.append(np.zeros(3))
                 mat.append(np.eye(3))
         if not kind:
-            prims = R3.Primitives(kind=np.zeros(0, int), size=np.zeros((0, 3)),
-                                  mat_rgb=np.zeros((0, 3)), tex_rgb=np.zeros((0, 3)),
-                                  spec=np.zeros(0))
+            prims = R3.Primitives(
+                kind=np.zeros(0, int),
+                size=np.zeros((0, 3)),
+                mat_rgb=np.zeros((0, 3)),
+                tex_rgb=np.zeros((0, 3)),
+                spec=np.zeros(0),
+            )
             prims.shininess = np.zeros(0)
             return prims, np.zeros((0, 3)), np.zeros((0, 3, 3))
-        prims = R3.Primitives(kind=np.array(kind), size=np.stack(size), mat_rgb=np.stack(rgb),
-                              tex_rgb=np.stack(tex), spec=np.array(spec))
+        prims = R3.Primitives(
+            kind=np.array(kind), size=np.stack(size), mat_rgb=np.stack(rgb), tex_rgb=np.stack(tex), spec=np.array(spec)
+        )
         prims.shininess = np.array(shin)
         return prims, np.stack(pos), np.stack(mat)
 
@@ -526,7 +546,7 @@ class DMControlSuite(_DMCModel):
             cand = (a != b).any(-1) & (self._static_t(sc, ss).view(-1) < R3.INF)
             idx = torch.nonzero(cand, as_tuple=False).reshape(-1)
         else:
-            idx = torch.arange(a.shape[0], device=a.device)     # the pass this compaction replaced
+            idx = torch.arange(a.shape[0], device=a.device)  # the pass this compaction replaced
         rows = _upsample_rgb(sc.plate_shadow, ss).reshape(-1, 3).to(torch.float32)[idx]
         sc.shadow_candidates[key] = hit = (idx, rows.unsqueeze(0))
         return hit
@@ -549,8 +569,7 @@ class DMControlSuite(_DMCModel):
         o, d = self._per_chunk_constants(sc, ss)[:2]
         N = (sc.size * int(ss)) ** 2
         st = self._static_t(sc, ss).view(1, N)
-        p = o.expand(1, N, 3)[:, cand] + st[:, cand].clamp(max=1e6).unsqueeze(-1) \
-            * d.view(1, N, 3)[:, cand]
+        p = o.expand(1, N, 3)[:, cand] + st[:, cand].clamp(max=1e6).unsqueeze(-1) * d.view(1, N, 3)[:, cand]
         L = sc.lights.to(self.device)
         sl = sc.shadow_light
         shape = (1,) * (p.dim() - 1) + (3,)
@@ -592,18 +611,17 @@ class DMControlSuite(_DMCModel):
         # parameters, not by testing whether the hit point lies in the plane: at cartpole's 8 m scale
         # a float32 hit point carries ~1e-6 of slack and any absolute tolerance either misses the
         # floor or claims the rails as well.
-        t_f, n = R3.intersect(R3.PLANE, fsize.view(1, 1, 3), fpos.view(1, 1, 3),
-                              fmat.view(1, 1, 3, 3), oo, dd)
+        t_f, n = R3.intersect(R3.PLANE, fsize.view(1, 1, 3), fpos.view(1, 1, 3), fmat.view(1, 1, 3, 3), oo, dd)
         on_plane = (t_f < R3.INF) & (st < R3.INF) & (torch.abs(t_f - st) <= 1e-4 * (1.0 + st))
         idx = torch.nonzero(on_plane.reshape(-1), as_tuple=False).reshape(-1)
         rd = dd - 2 * _dot(dd, n.expand_as(dd)).unsqueeze(-1) * n
         ro = oo + st.clamp(max=1e6).unsqueeze(-1) * dd + rd * sc.eps
         surf = sc.const.get(("norefl", int(ss)))
         if surf is None:
-            surf = sc.const[("norefl", int(ss))] = \
+            surf = sc.const[("norefl", int(ss))] = (
                 _upsample_rgb(sc.plate_norefl, ss).reshape(1, N, 3).to(torch.float32)
-        hit = sc.const[key] = (idx, ro[:, idx].contiguous(), rd[:, idx].contiguous(),
-                               surf[:, idx].contiguous())
+            )
+        hit = sc.const[key] = (idx, ro[:, idx].contiguous(), rd[:, idx].contiguous(), surf[:, idx].contiguous())
         return hit
 
     def _static_t(self, sc: _Scene, ss: int) -> torch.Tensor:
@@ -622,6 +640,7 @@ class DMControlSuite(_DMCModel):
         # scene's visibility.
         gstat, sstat = sc.statics
         import mujoco
+
         d.qpos[:] = m.qpos0
         d.qvel[:] = 0
         mujoco.mj_forward(m, d)
@@ -670,6 +689,7 @@ class DMControlSuite(_DMCModel):
         non-sphere, the validation refuses, and the dimensions are live again.
         """
         import mujoco
+
         m, d = self._bundle(self.size)[1], self._bundle(self.size)[2]
         slots = self._slots()
         pr = self._pristine()
@@ -685,30 +705,38 @@ class DMControlSuite(_DMCModel):
             # and ``_static_t`` defects this file already records; ``_apply_variation`` restores from
             # the pristine snapshot first, so this is absolute rather than incremental.
             self._apply_variation(m, pr, variation)
-            for (arr, k), v in zip(slots, st[self.nq:]):
+            for (arr, k), v in zip(slots, st[self.nq :]):
                 getattr(m, arr).reshape(-1)[k] = v
-            d.qpos[:] = st[:self.nq]
+            d.qpos[:] = st[: self.nq]
             d.qvel[:] = 0
             mujoco.mj_forward(m, d)
             g = self._visible(m, "geom")
             si = self._visible(m, "site")
-            names = ([mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, i) or f"geom{i}" for i in g]
-                     + [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_SITE, i) or f"site{i}" for i in si])
+            names = [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, i) or f"geom{i}" for i in g] + [
+                mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_SITE, i) or f"site{i}" for i in si
+            ]
+
             def stack(rows, dtype=np.float64):
-                return (np.asarray(rows, dtype) if len(rows)
-                        else np.zeros((0,), dtype))
-            xpos = stack([np.asarray(d.geom_xpos[i], np.float64) for i in g]
-                         + [np.asarray(d.site_xpos[i], np.float64) for i in si])
-            xmat = stack([np.asarray(d.geom_xmat[i], np.float64).reshape(3, 3) for i in g]
-                         + [np.asarray(d.site_xmat[i], np.float64).reshape(3, 3) for i in si])
-            size = stack([np.asarray(m.geom_size[i], np.float64) for i in g]
-                         + [np.asarray(m.site_size[i], np.float64) for i in si])
-            kind = np.asarray([int(m.geom_type[i]) for i in g]
-                              + [int(m.site_type[i]) for i in si], np.int64)
-            rgba = stack([np.asarray(m.geom_rgba[i], np.float64) for i in g]
-                         + [np.asarray(m.site_rgba[i], np.float64) for i in si])
-            matid = np.asarray([int(m.geom_matid[i]) for i in g]
-                               + [int(m.site_matid[i]) for i in si], np.int64)
+                return np.asarray(rows, dtype) if len(rows) else np.zeros((0,), dtype)
+
+            xpos = stack(
+                [np.asarray(d.geom_xpos[i], np.float64) for i in g]
+                + [np.asarray(d.site_xpos[i], np.float64) for i in si]
+            )
+            xmat = stack(
+                [np.asarray(d.geom_xmat[i], np.float64).reshape(3, 3) for i in g]
+                + [np.asarray(d.site_xmat[i], np.float64).reshape(3, 3) for i in si]
+            )
+            size = stack(
+                [np.asarray(m.geom_size[i], np.float64) for i in g]
+                + [np.asarray(m.site_size[i], np.float64) for i in si]
+            )
+            kind = np.asarray([int(m.geom_type[i]) for i in g] + [int(m.site_type[i]) for i in si], np.int64)
+            rgba = stack(
+                [np.asarray(m.geom_rgba[i], np.float64) for i in g]
+                + [np.asarray(m.site_rgba[i], np.float64) for i in si]
+            )
+            matid = np.asarray([int(m.geom_matid[i]) for i in g] + [int(m.site_matid[i]) for i in si], np.int64)
             out = {
                 # the DRAWN primitive list, geoms then sites, as _prims assembles it
                 "geom_names": names,
@@ -791,13 +819,14 @@ class DMControlSuite(_DMCModel):
         this path.
         """
         import mujoco
+
         gmov, smov = sc.movers
         td = sc.tendon
         nmov = len(gmov) + len(smov)
         P = nmov + (td.nseg if td is not None else 0)
         B = states.shape[0]
         st = states.detach().cpu().numpy().astype(np.float64)
-        q, ep = st[:, :self.nq], st[:, self.nq:]
+        q, ep = st[:, : self.nq], st[:, self.nq :]
         xp = np.empty((B, P, 3))
         xm = np.empty((B, P, 3, 3))
         size = np.tile(np.asarray(sc.prims.size, np.float64), (B, 1, 1))
@@ -829,11 +858,11 @@ class DMControlSuite(_DMCModel):
                 # bytes straight into the destination row. Identical values, no temporaries; the same
                 # change ``ogbench._fk`` already documents having made.
                 if gmov:
-                    np.take(d.geom_xpos, gid, axis=0, out=xp[i, :len(gmov)])
-                    np.take(d.geom_xmat, gid, axis=0, out=xm[i, :len(gmov)].reshape(-1, 9))
+                    np.take(d.geom_xpos, gid, axis=0, out=xp[i, : len(gmov)])
+                    np.take(d.geom_xmat, gid, axis=0, out=xm[i, : len(gmov)].reshape(-1, 9))
                 if smov:
-                    np.take(d.site_xpos, sid, axis=0, out=xp[i, len(gmov):nmov])
-                    np.take(d.site_xmat, sid, axis=0, out=xm[i, len(gmov):nmov].reshape(-1, 9))
+                    np.take(d.site_xpos, sid, axis=0, out=xp[i, len(gmov) : nmov])
+                    np.take(d.site_xmat, sid, axis=0, out=xm[i, len(gmov) : nmov].reshape(-1, 9))
                 if td is not None:
                     # ONLY the polyline here. The chain of capsules it becomes is the same arithmetic
                     # for every row and is built once for the whole batch below -- see
@@ -842,7 +871,7 @@ class DMControlSuite(_DMCModel):
                     polys.append(pts)
                     rgb[i, nmov:] = trgb
         finally:
-            for arr in {a for a, _ in slots}:                 # never leave a state row in the model
+            for arr in {a for a, _ in slots}:  # never leave a state row in the model
                 getattr(m, arr)[:] = pr[arr]
         if td is not None:
             # Grouped by point count, because the three branches of ``mjv_catenary`` produce polylines
@@ -857,7 +886,7 @@ class DMControlSuite(_DMCModel):
                 xp[idx, nmov:] = tp
                 xm[idx, nmov:] = tm
                 size[idx, nmov:, 1] = half
-        t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)   # noqa: E731
+        t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)  # noqa: E731
         return t(xp), t(xm), t(size), t(rgb)
 
     # ---- ray-cast helpers -------------------------------------------------
@@ -892,15 +921,21 @@ class DMControlSuite(_DMCModel):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment.
 
         The batch is grouped by style, because every leaf changes the baked plates. Environments that
         share an appearance share one bake and are rendered in one call.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
@@ -921,12 +956,12 @@ class DMControlSuite(_DMCModel):
             o += w
         for gi in range(len(uniq)):
             sub = np.flatnonzero(inv == gi)
-            over = {p: uniq[gi][a:a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
+            over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
             sc = self._scene(size, over)
             idx = torch.as_tensor(sub, device=self.device, dtype=torch.long)
             step = max(1, int(self.RAY_BUDGET // max(1, size * size * ss * ss)))
             for a in range(0, len(sub), step):
-                part = idx[a:a + step]
+                part = idx[a : a + step]
                 buf[part] = self._render_group(sc, s[part], size, ss)
         return buf.view(*lead, size, size, 3) if lead else buf
 
@@ -989,12 +1024,14 @@ class DMControlSuite(_DMCModel):
             R = sc.size * int(ss)
             o, d = sc.cam.rays(R, R, dev)
             hit = sc.const[int(ss)] = (
-                o, d,
+                o,
+                d,
                 _upsample_rgb(sc.plate, ss).reshape(1, -1, 3).to(torch.float32),
                 torch.tensor(sc.prims.tex_rgb, device=dev, dtype=torch.float32),
                 torch.tensor(sc.prims.spec, device=dev, dtype=torch.float32),
                 torch.tensor(sc.prims.shininess, device=dev, dtype=torch.float32),
-                sc.lights.to(dev))
+                sc.lights.to(dev),
+            )
         return hit
 
     def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int) -> torch.Tensor:
@@ -1057,29 +1094,25 @@ class DMControlSuite(_DMCModel):
         unlit_w = None
         if sl >= 0 and P > 1:
             unlit_w = self._occluded(sc, pm_w, L, sl, xpos, xmat, sizes, skip=i_w, eps=sc.eps)
-        col_w = _shade(pm_w, n_w, -dd_w, L, mat_rgb[bi, i_w], spec[i_w], shin[i_w], unlit_w) \
-            * tex_rgb[i_w] * 255.0
+        col_w = _shade(pm_w, n_w, -dd_w, L, mat_rgb[bi, i_w], spec[i_w], shin[i_w], unlit_w) * tex_rgb[i_w] * 255.0
         if sl >= 0:
             cand, dark = self._shadow_candidates(sc, ss)
             if cand.numel():
                 stc = st[:, cand]
                 ps = oo[:, cand] + stc.clamp(max=1e6).unsqueeze(-1) * dd[:, cand]
-                occ = self._occluded(sc, ps, L, sl, xpos, xmat, sizes, eps=sc.eps) \
-                    & (stc < R3.INF)
+                occ = self._occluded(sc, ps, L, sl, xpos, xmat, sizes, eps=sc.eps) & (stc < R3.INF)
                 base[:, cand] = torch.where(occ.unsqueeze(-1), dark, base[:, cand])
         if sc.reflectance > 0:
-            base = self._reflect(sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec,
-                                 shin, L, ss, bi)
+            base = self._reflect(sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi)
 
         # The movers go on LAST, over the shadowed and mirrored plate, and they go straight into it:
         # ``where(cover, col, base)`` is the identity wherever ``cover`` is False, and outside the
         # index set — a screen window or the union of covered rays — it provably is. So the composite
         # is a scatter of the set, without a second full-size canvas and a full-frame select.
-        if widx is None:                       # nothing was restricted: no index to scatter through
+        if widx is None:  # nothing was restricted: no index to scatter through
             frame = torch.where(cover_w.unsqueeze(-1), col_w, base)
         else:
-            frame = base.scatter_(1, w3, torch.where(cover_w.unsqueeze(-1), col_w,
-                                                     base.gather(1, w3)))
+            frame = base.scatter_(1, w3, torch.where(cover_w.unsqueeze(-1), col_w, base.gather(1, w3)))
         frame = frame.view(B, size, ss, size, ss, 3).sum((2, 4)) / (ss * ss)
         return torch.clamp(torch.round(frame), 0, 255).to(torch.uint8)
 
@@ -1092,7 +1125,7 @@ class DMControlSuite(_DMCModel):
         hit = sc.const.get("floor")
         if hit is None:
             fsize, fpos, fmat = sc.floor
-            t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)   # noqa: E731
+            t = lambda x: torch.tensor(x, device=self.device, dtype=torch.float32)  # noqa: E731
             hit = sc.const["floor"] = (t(fsize), t(fpos), t(fmat))
         return hit
 
@@ -1125,8 +1158,7 @@ class DMControlSuite(_DMCModel):
             widx, seen, ro, rd = widx[:, js], seen[:, js], ro[:, js], rd[:, js]
             surf, t_r, n_r, i_r = surf[:, js], t_r[:, js], n_r[:, js], i_r[:, js]
         pr = ro + t_r.clamp(max=1e6).unsqueeze(-1) * rd
-        colr = _shade(pr, n_r, -rd, L, mat_rgb[bi, i_r], spec[i_r], shin[i_r], None) \
-            * tex_rgb[i_r] * 255.0
+        colr = _shade(pr, n_r, -rd, L, mat_rgb[bi, i_r], spec[i_r], shin[i_r], None) * tex_rgb[i_r] * 255.0
         r = float(sc.reflectance)
         val = r * colr + (1.0 - r) * surf
         w3 = widx.unsqueeze(-1).expand(-1, -1, 3)

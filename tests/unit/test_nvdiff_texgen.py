@@ -14,6 +14,7 @@ The texgen law:
 with ``half_extent`` the per-axis ``geom_size`` for box / ellipsoid / plane, ``(r, r, r)`` for a
 sphere, and the RADIUS on both texture axes for a capsule and a cylinder.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -38,8 +39,8 @@ XML = """
 
 def _geom(gtype, size, rx=1.0, ry=1.0, uni=False, ttype="2d"):
     m = mujoco.MjModel.from_xml_string(
-        XML.format(gtype=gtype, size=size, rx=rx, ry=ry, uni="true" if uni else "false",
-                   ttype=ttype))
+        XML.format(gtype=gtype, size=size, rx=rx, ry=ry, uni="true" if uni else "false", ttype=ttype)
+    )
     return m, mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, "g")
 
 

@@ -37,6 +37,7 @@ what a "floor" is and does not decide when to re-bake. The families keep their o
 their own keys; this module supplies the one key HELPER (``texel_key``) so that two requests which
 compile to the same bytes share one bake, and the substitution itself.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -82,14 +83,14 @@ def texel_slots(model, texture: str | int, default_colours, masks=None) -> dict 
     function still owns the addressing, the assertions and the bookkeeping.
     """
     import mujoco
-    t = (mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_TEXTURE, texture)
-         if isinstance(texture, str) else int(texture))
+
+    t = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_TEXTURE, texture) if isinstance(texture, str) else int(texture)
     if t < 0:
         return None
     adr = int(model.tex_adr[t])
     nch = int(model.tex_nchannel[t]) if hasattr(model, "tex_nchannel") else 3
     n = int(model.tex_height[t]) * int(model.tex_width[t]) * nch
-    flat = np.asarray(model.tex_data[adr:adr + n]).reshape(-1, nch)
+    flat = np.asarray(model.tex_data[adr : adr + n]).reshape(-1, nch)
     cols = np.asarray(default_colours, np.float64).reshape(-1, 3)
     if masks is None:
         masks = [np.all(flat[:, :3] == quantise(c)[None, :], axis=1) for c in cols]
@@ -98,19 +99,29 @@ def texel_slots(model, texture: str | int, default_colours, masks=None) -> dict 
         assert len(masks) == len(cols), f"{len(masks)} masks for {len(cols)} colours"
         for i, mk in enumerate(masks):
             assert mk.shape[0] == flat.shape[0], (
-                f"mask {i} is {mk.shape[0]} texels, texture {texture!r} is {flat.shape[0]}")
+                f"mask {i} is {mk.shape[0]} texels, texture {texture!r} is {flat.shape[0]}"
+            )
             bad = int((flat[mk, :3] != quantise(cols[i])[None, :]).any(1).sum())
             assert bad == 0, (
                 f"mask {i} selects {bad} texels that do not hold default colour {i} "
                 f"({list(cols[i])}); the masks and the compiled texture disagree, so a substitution "
-                f"would paint texels swm does not paint")
+                f"would paint texels swm does not paint"
+            )
     for i, mk in enumerate(masks):
         assert mk.any(), (
             f"texture {texture!r} carries none of default colour {i} ({list(cols[i])}), so the texel "
-            f"mask would be empty and the leaf would silently do nothing")
-    return {"texid": t, "adr": adr, "n": n, "nch": nch, "masks": tuple(masks),
-            "default": cols.copy(), "covered": int(sum(int(mk.sum()) for mk in masks)),
-            "texels": int(flat.shape[0])}
+            f"mask would be empty and the leaf would silently do nothing"
+        )
+    return {
+        "texid": t,
+        "adr": adr,
+        "n": n,
+        "nch": nch,
+        "masks": tuple(masks),
+        "default": cols.copy(),
+        "covered": int(sum(int(mk.sum()) for mk in masks)),
+        "texels": int(flat.shape[0]),
+    }
 
 
 def substitute(model, renderer, slots: dict, colours) -> None:
@@ -125,11 +136,12 @@ def substitute(model, renderer, slots: dict, colours) -> None:
     render.
     """
     import mujoco
+
     want = np.asarray(colours, np.float64).reshape(-1, 3)
     assert want.shape == slots["default"].shape, (
-        f"substitute got {want.shape[0]} colours for a texture whose masks were taken for "
-        f"{slots['default'].shape[0]}")
-    flat = model.tex_data[slots["adr"]:slots["adr"] + slots["n"]].reshape(-1, slots["nch"])
+        f"substitute got {want.shape[0]} colours for a texture whose masks were taken for {slots['default'].shape[0]}"
+    )
+    flat = model.tex_data[slots["adr"] : slots["adr"] + slots["n"]].reshape(-1, slots["nch"])
     for mk, c in zip(slots["masks"], want):
         flat[mk, :3] = quantise(c)
     renderer._gl_context.make_current()

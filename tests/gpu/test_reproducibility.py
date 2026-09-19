@@ -48,13 +48,14 @@ test asks for more than TWO distinct static-scene style values, because the plat
 re-render a MuJoCo plate per distinct appearance and an n-wide ramp turns a one-second check into
 minutes.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import subprocess
-import time
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -66,8 +67,9 @@ pytestmark = pytest.mark.gpu
 if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
-import stable_envs as se
 from _shared import family_params, make_or_skip, resolve_family, sampled_states
+
+import stable_envs as se
 from stable_envs.testing import conformance as C
 from stable_envs.testing import render_worker as W
 
@@ -147,6 +149,7 @@ def _continuous_leaf(env):
 
 # ------------------------------------------------------------------ fixtures
 
+
 @pytest.fixture(scope="module", params=ENV_NAMES)
 def env(request):
     return se.make(request.param, num_envs=N, device="cuda")
@@ -188,16 +191,31 @@ def fresh_process(request, tmp_path_factory):
     subprocess too. Without that, narrowing the run to debug one env would still pay for all 44 and
     the obvious reaction would be to stop running the cross-process check at all.
     """
-    selected = sorted({item.callspec.params["env"] for item in request.session.items
-                       if hasattr(item, "callspec") and "env" in item.callspec.params})
+    selected = sorted(
+        {
+            item.callspec.params["env"]
+            for item in request.session.items
+            if hasattr(item, "callspec") and "env" in item.callspec.params
+        }
+    )
     d = tmp_path_factory.mktemp("xproc")
     npz, js = d / "inputs.npz", d / "digests.json"
     root = str(Path(se.__file__).resolve().parents[1])
     env_vars = dict(os.environ)
     env_vars["PYTHONPATH"] = os.pathsep.join([root, env_vars.get("PYTHONPATH", "")]).rstrip(os.pathsep)
-    cmd = [sys.executable, "-m", "stable_envs.testing.render_worker",
-           "--out-npz", str(npz), "--out-json", str(js), "--n", str(N),
-           "--envs", ",".join(selected)]
+    cmd = [
+        sys.executable,
+        "-m",
+        "stable_envs.testing.render_worker",
+        "--out-npz",
+        str(npz),
+        "--out-json",
+        str(js),
+        "--n",
+        str(N),
+        "--envs",
+        ",".join(selected),
+    ]
     # STREAMED, not captured, and each line becomes an event. This fixture builds and renders EVERY
     # selected env in one subprocess, which is the right trade (a fresh interpreter costs a CUDA
     # context and, for the MuJoCo mazes, a plate bake) -- but it means the parent sits in one call for
@@ -209,19 +227,19 @@ def fresh_process(request, tmp_path_factory):
     # from a wedged one, which is the distinction the watchdog exists to make.
     try:
         from stable_envs.testing.safety_plugin import _emit
-    except Exception:                                                        # noqa: BLE001
-        def _emit(**_rec):                                                   # pragma: no cover
+    except Exception:  # noqa: BLE001
+
+        def _emit(**_rec):  # pragma: no cover
             return
+
     _emit(kind="fixture_start", fixture="fresh_process", n_envs=len(selected))
     out: list[str] = []
-    proc = subprocess.Popen(cmd, env=env_vars, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, text=True, bufsize=1)
+    proc = subprocess.Popen(cmd, env=env_vars, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     deadline = time.time() + 3600
     for line in proc.stdout:
         out.append(line)
         if line.startswith("render_worker: done "):
-            _emit(kind="fixture_progress", fixture="fresh_process",
-                  env=line.split("done ", 1)[1].strip(), i=len(out))
+            _emit(kind="fixture_progress", fixture="fresh_process", env=line.split("done ", 1)[1].strip(), i=len(out))
         if time.time() > deadline:
             proc.kill()
             raise RuntimeError(f"the cross-process render worker exceeded 3600s after {len(out)} envs")
@@ -230,7 +248,8 @@ def fresh_process(request, tmp_path_factory):
     if rc != 0 or not js.exists():
         raise RuntimeError(
             f"the cross-process render worker did not produce its digests (exit {rc}).\n"
-            f"command: {' '.join(cmd)}\n--- output ---\n{''.join(out)[-6000:]}")
+            f"command: {' '.join(cmd)}\n--- output ---\n{''.join(out)[-6000:]}"
+        )
     with open(js) as f:
         report = json.load(f)
     return report, np.load(npz)
@@ -241,10 +260,13 @@ def _record(fresh_process, name: str) -> dict:
     rec = report["envs"].get(name)
     assert rec is not None, (
         f"{name} is registered in this process but the fresh process did not report it — the two "
-        f"interpreters do not agree on the registry, so nothing below is comparing like with like")
+        f"interpreters do not agree on the registry, so nothing below is comparing like with like"
+    )
     if "error" in rec:
-        pytest.fail(f"{name} could not be built or rendered in a fresh process, while it builds here. "
-                    f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}")
+        pytest.fail(
+            f"{name} could not be built or rendered in a fresh process, while it builds here. "
+            f"That asymmetry is the bug, not a missing dependency:\n{rec['error']}"
+        )
     return rec
 
 
@@ -253,6 +275,7 @@ def _digest(x) -> str:
 
 
 # ------------------------------------------------------------------ 1. cross-process
+
 
 def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
     """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
@@ -268,10 +291,12 @@ def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
         f"{type(env).__name__}.sample_states(rng=default_rng({W.STATE_SEED})) gave different numbers "
         f"in this process than in a fresh one — the seeded sampler reads something other than its "
         f"generator (a global RNG, the env's own advanced state, a hash seed), so a caller who "
-        f"recorded the seed cannot regenerate the corpus")
+        f"recorded the seed cannot regenerate the corpus"
+    )
     assert _digest(style) == rec["style_sha"], (
         f"{type(env).__name__}.sample_style(rng=default_rng({W.STYLE_SEED})) is not reproducible "
-        f"across processes; the appearance half of the state cannot be regenerated from its seed")
+        f"across processes; the appearance half of the state cannot be regenerated from its seed"
+    )
 
 
 def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
@@ -291,15 +316,18 @@ def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
     style = arrays[f"{name}::style"]
     frames = env.render(states)
     assert list(frames.shape) == rec["shape"], (
-        f"{name}: frame shape {list(frames.shape)} here, {rec['shape']} in a fresh process")
+        f"{name}: frame shape {list(frames.shape)} here, {rec['shape']} in a fresh process"
+    )
     assert _digest(frames) == rec["frames_sha"], (
         f"{name}: rendering the SAME states in a fresh process gave different pixels. The frame is "
         f"not a function of the state alone — it depends on something this interpreter accumulated, "
-        f"which means a stored corpus does not regenerate")
+        f"which means a stored corpus does not regenerate"
+    )
     if env.style_dim:
         assert _digest(env.render(states, style=style)) == rec["frames_styled_sha"], (
             f"{name}: frames agree under the default appearance but not under a stored style, so the "
-            f"style half of the state does not survive a process boundary")
+            f"style half of the state does not survive a process boundary"
+        )
 
 
 def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
@@ -317,13 +345,16 @@ def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
     tr = env.sample(steps=W.ROLLOUT_STEPS, batch=N, seed=W.ROLLOUT_SEED)
     assert _digest(tr["states"].detach().cpu().numpy()) == rec["rollout_states_sha"], (
         f"{name}.sample(seed={W.ROLLOUT_SEED}) produced a different trajectory in a fresh process — "
-        f"the rollout reads randomness the seed does not reach")
+        f"the rollout reads randomness the seed does not reach"
+    )
     if tr.get("actions") is not None and "rollout_actions_sha" in rec:
         assert _digest(tr["actions"].detach().cpu().numpy()) == rec["rollout_actions_sha"], (
-            f"{name}: the seeded policy chose different actions in a fresh process")
+            f"{name}: the seeded policy chose different actions in a fresh process"
+        )
 
 
 # ------------------------------------------------------------------ 2. batch size and chunking
+
 
 def _big_batch(env) -> int:
     """The largest batch from ``BIG_BATCHES`` whose frames fit ``BIG_FRAME_BUDGET``."""
@@ -354,7 +385,8 @@ def test_frame_i_is_independent_of_batch_size(env):
     assert r["max_abs_diff"] == 0, (
         f"{type(env).__name__}: the same state renders differently depending on how many other "
         f"environments share the launch (max {r['max_abs_diff']}/255, {r['worst_case']}) — a loader's "
-        f"last partial batch would then produce different pixels from every batch before it: {r}")
+        f"last partial batch would then produce different pixels from every batch before it: {r}"
+    )
 
 
 def test_chunked_render_states_is_chunk_independent(env, inputs):
@@ -371,7 +403,8 @@ def test_chunked_render_states_is_chunk_independent(env, inputs):
     assert r["max_abs_diff"] == 0, (
         f"{type(env).__name__}: render_states gives different pixels at different chunk sizes "
         f"({r['worst_case']}, max {r['max_abs_diff']}/255) — the chunk is supposed to bound memory, "
-        f"not to change the answer: {r}")
+        f"not to change the answer: {r}"
+    )
 
 
 # ------------------------------------------------------------------ 3. resolution
@@ -386,8 +419,10 @@ def test_chunked_render_states_is_chunk_independent(env, inputs):
 #: Recorded by ``stable_envs.testing.conformance.check_resolution_consistency`` over 8 sampled states
 #: per env; see MEASURED_ON for provenance. A regression that MOVES a shape drops ``exact_frac``
 #: immediately, which is what the floor is for; anti-aliasing does not move it at all.
-MEASURED_ON = ("H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env "
-               "from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance")
+MEASURED_ON = (
+    "H200, driver 590.48.01, torch 2.11+cu130, triton 3.6, mujoco 3.9; 8 states per env "
+    "from sample_states(rng=default_rng(render_worker.STATE_SEED)), default appearance"
+)
 #: The floor is the measured value less this. A different GPU may land an edge pixel on the other side
 #: of a rounding, and half a percentage point is comfortably more than that and far less than any
 #: geometry change: the numbers below span 0.708 to 1.000, and moving a shape by one pixel costs whole
@@ -430,18 +465,18 @@ DOWNSAMPLE_MARGIN = 0.005
 #: Both numbers live with their provenance in
 #: ``examples/results/step8/certification/downsample_provenance.json``.
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
-    "AntmazeGiantNavigate":       0.708287,   # mean 1.1419/255
-    "AntmazeGiantStitch":         0.708287,   # mean 1.1419/255
-    "AntmazeLargeExplore":        0.722699,   # mean 0.9589/255
-    "AntmazeLargeNavigate":       0.722699,   # mean 0.9589/255
-    "AntmazeLargeStitch":         0.722699,   # mean 0.9589/255
-    "AntmazeMediumExplore":       0.722771,   # mean 0.6205/255
-    "AntmazeMediumNavigate":      0.722771,   # mean 0.6205/255
-    "AntmazeMediumStitch":        0.722771,   # mean 0.6205/255
-    "AntmazeTeleportExplore":     0.717594,   # mean 1.1558/255
-    "AntmazeTeleportNavigate":    0.717594,   # mean 1.1558/255
-    "AntmazeTeleportStitch":      0.717594,   # mean 1.1558/255
-    "BabyAIGoToLocal":            0.987213,   # mean 0.1315/255
+    "AntmazeGiantNavigate": 0.708287,  # mean 1.1419/255
+    "AntmazeGiantStitch": 0.708287,  # mean 1.1419/255
+    "AntmazeLargeExplore": 0.722699,  # mean 0.9589/255
+    "AntmazeLargeNavigate": 0.722699,  # mean 0.9589/255
+    "AntmazeLargeStitch": 0.722699,  # mean 0.9589/255
+    "AntmazeMediumExplore": 0.722771,  # mean 0.6205/255
+    "AntmazeMediumNavigate": 0.722771,  # mean 0.6205/255
+    "AntmazeMediumStitch": 0.722771,  # mean 0.6205/255
+    "AntmazeTeleportExplore": 0.717594,  # mean 1.1558/255
+    "AntmazeTeleportNavigate": 0.717594,  # mean 1.1558/255
+    "AntmazeTeleportStitch": 0.717594,  # mean 1.1558/255
+    "BabyAIGoToLocal": 0.987213,  # mean 0.1315/255
     #: Crafter is the outlier of the tile families and the reason is arithmetic, not geometry.
     #: ``Env.render`` CENTRES the 9-tile view inside the frame — ``border = (size - (size // 9) * 9)
     #: // 2`` — so 64 px puts the view at offset 0 and 128 px puts it at offset 1. The 2S picture is
@@ -449,7 +484,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: shift; on top of that the atlas is resampled from 16x16 source art at each tile size, so 14 px
     #: tiles are not 7 px tiles doubled. Both are properties of the reference. The floor is low and it
     #: is still a live regression detector: it moves the moment a tile lands in a different place.
-    "Crafter":                    0.382263,   # mean 12.5190/255
+    "Crafter": 0.382263,  # mean 12.5190/255
     #: STILL 1.000000, unchanged, and now asserted only where it can be. Step 7 measured the night
     #: band: the noise field is drawn at the FRAME's resolution, so 2S draws a different field and
     #: not a finer sampling of the same one -- 0.282 at light 0.45 and 0.035 at light 0.1 against
@@ -459,16 +494,16 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: protocol's own 8-state draw that is 6 states and they measure exactly 1.000000.
     #: Oracle: examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
     #: Ruling: Sami 2026-09-15 (examples/results/step7/dashboard.yaml, decisions).
-    "CraftaxClassic":             1.000000,   # mean 0.0000/255 on light >= 0.5; see applicability
-    "DMCCartpoleSwingup":         0.282065,   # mean 1.4428/255  see DM Control note below
-    "DMCPointMassEasy":           0.730424,   # mean 0.2418/255
+    "CraftaxClassic": 1.000000,  # mean 0.0000/255 on light >= 0.5; see applicability
+    "DMCCartpoleSwingup": 0.282065,  # mean 1.4428/255  see DM Control note below
+    "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
     #: The five VISUAL-tier DM Control cells draw the whole scene through MJWarp with no plate, so
     #: PLATE_REPRESENTATIVES does not cover them and each one is measured in its own right. They sit
     #: together at 0.53-0.63 for one reason: 2S resolves the speckled skybox and the checker floor at a
     #: finer rate and the box filter does not invert either, so the number is a property of those two
     #: textures rather than of the geometry. It is still a live detector — the bodies and the camera
     #: are what a regression would move, and moving them collapses it.
-    "DMCCheetahRun":              0.533850,   # mean 3.0869/255
+    "DMCCheetahRun": 0.533850,  # mean 3.0869/255
     #: Step 7 added a sixth cell to that VISUAL-tier group and it belongs here for the same reason:
     #: DMCQuadrupedWalk draws the whole scene through MJWarp with no plate, so PLATE_REPRESENTATIVES
     #: does not cover it. It sits ABOVE the other five because its camera is much closer to the body
@@ -478,11 +513,11 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: (closure), cuda 0.8120117 and 0.8120217, at mujoco 3.11.0 and 3.12.0 -- so the floor holds on
     #: every device and reference pair measured, and the whole spread is 2.5e-05 wide inside a
     #: 0.005 margin. Artifacts: examples/results/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
-    "DMCQuadrupedWalk":           0.811877,   # mean 0.6329/255
-    "DMCHopperHop":               0.550220,   # mean 2.9202/255
-    "DMCHumanoidStand":           0.603650,   # mean 2.4394/255
-    "DMCSwimmerSwimmer6":         0.609800,   # mean 0.8424/255
-    "DMCWalkerWalk":              0.628950,   # mean 2.5596/255
+    "DMCQuadrupedWalk": 0.811877,  # mean 0.6329/255
+    "DMCHopperHop": 0.550220,  # mean 2.9202/255
+    "DMCHumanoidStand": 0.603650,  # mean 2.4394/255
+    "DMCSwimmerSwimmer6": 0.609800,  # mean 0.8424/255
+    "DMCWalkerWalk": 0.628950,  # mean 2.5596/255
     #: Griddly is the low end of the TILE families and the mechanism is the reference's, not ours.
     #: `size` here means `Observers.Sprite2D.TileSize`, and griddly RESAMPLES its 24 px sprite PNGs to
     #: whatever tile size is asked for -- so the 2S atlas is a finer resampling of the same source art
@@ -492,14 +527,14 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: (Butterflies 0.70). Mean absolute difference stays at 1.1-2.9/255 throughout -- the two pictures
     #: agree, it is exact-pixel agreement that the resample costs. Still a live detector: the number is
     #: fixed for a fixed sampling grid and moves the moment a tile lands somewhere else.
-    "GriddlyBait":                0.432180,   # mean 1.7029/255
-    "GriddlyButterflies":         0.704126,   # mean 1.2416/255
-    "GriddlyClusters":            0.392938,   # mean 1.4342/255
-    "GriddlyCookMePasta":         0.298415,   # mean 1.0666/255
-    "GriddlyLabyrinth":           0.354689,   # mean 2.1506/255
-    "GriddlySokoban":             0.222717,   # mean 2.9219/255
-    "GriddlySokoban2":            0.248369,   # mean 2.8664/255
-    "Highway":                    0.922090,   # mean 7.6935/255  size re-frames; recorded, not asserted
+    "GriddlyBait": 0.432180,  # mean 1.7029/255
+    "GriddlyButterflies": 0.704126,  # mean 1.2416/255
+    "GriddlyClusters": 0.392938,  # mean 1.4342/255
+    "GriddlyCookMePasta": 0.298415,  # mean 1.0666/255
+    "GriddlyLabyrinth": 0.354689,  # mean 2.1506/255
+    "GriddlySokoban": 0.222717,  # mean 2.9219/255
+    "GriddlySokoban2": 0.248369,  # mean 2.8664/255
+    "Highway": 0.922090,  # mean 7.6935/255  size re-frames; recorded, not asserted
     #: HumanoidBench draws the whole scene through MJWarp with no plate (its camera is TRACKCOM,
     #: so no static plate exists), and it carries no PLATE_PATHS -- so every cell is measured in
     #: its own right. They sit together at 0.95-0.97 because the two things 2S resamples
@@ -507,30 +542,30 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: (docs/research/humanoidbench.md Section 3.4), so the only rate-dependent content left is
     #: the H1's mesh silhouettes and its shadow edge. Spoon is the low end because it is the one
     #: cell here with textured primitives on the table, which 2S resamples at a finer rate.
-    "HumanoidBenchH1BalanceSimple":  0.967609,   # mean 0.8579/255
-    "HumanoidBenchH1HandBalanceSimple": 0.963911,   # mean 0.9218/255
-    "HumanoidBenchH1HandRun":        0.970247,   # mean 0.8162/255
-    "HumanoidBenchH1HandSitHard":    0.963375,   # mean 1.0008/255
-    "HumanoidBenchH1HandSitSimple":  0.964001,   # mean 0.9794/255
-    "HumanoidBenchH1HandSlide":      0.967253,   # mean 0.8828/255
-    "HumanoidBenchH1HandSpoon":      0.959507,   # mean 1.2295/255
-    "HumanoidBenchH1HandStair":      0.967337,   # mean 0.8099/255
-    "HumanoidBenchH1HandStand":      0.970247,   # mean 0.8162/255
-    "HumanoidBenchH1HandWalk":       0.970247,   # mean 0.8162/255
-    "HumanoidBenchH1Run":            0.972082,   # mean 0.7091/255
-    "HumanoidBenchH1SitHard":        0.966482,   # mean 0.8928/255
-    "HumanoidBenchH1SitSimple":      0.967659,   # mean 0.8467/255
-    "HumanoidBenchH1Slide":          0.969963,   # mean 0.7793/255
-    "HumanoidBenchH1Stair":          0.971107,   # mean 0.6661/255
-    "HumanoidBenchH1Stand":          0.972082,   # mean 0.7091/255
-    "HumanoidBenchH1Walk":           0.972082,   # mean 0.7091/255
-    "HumanoidmazeGiantNavigate":  0.712624,   # mean 1.1539/255
-    "HumanoidmazeGiantStitch":    0.712624,   # mean 1.1539/255
-    "HumanoidmazeLargeNavigate":  0.725895,   # mean 0.9690/255
-    "HumanoidmazeLargeStitch":    0.725895,   # mean 0.9690/255
-    "HumanoidmazeMediumNavigate": 0.723503,   # mean 0.6133/255
-    "HumanoidmazeMediumStitch":   0.723503,   # mean 0.6133/255
-    "Intersection":               0.958981,   # mean 4.5107/255  size re-frames; recorded, not asserted
+    "HumanoidBenchH1BalanceSimple": 0.967609,  # mean 0.8579/255
+    "HumanoidBenchH1HandBalanceSimple": 0.963911,  # mean 0.9218/255
+    "HumanoidBenchH1HandRun": 0.970247,  # mean 0.8162/255
+    "HumanoidBenchH1HandSitHard": 0.963375,  # mean 1.0008/255
+    "HumanoidBenchH1HandSitSimple": 0.964001,  # mean 0.9794/255
+    "HumanoidBenchH1HandSlide": 0.967253,  # mean 0.8828/255
+    "HumanoidBenchH1HandSpoon": 0.959507,  # mean 1.2295/255
+    "HumanoidBenchH1HandStair": 0.967337,  # mean 0.8099/255
+    "HumanoidBenchH1HandStand": 0.970247,  # mean 0.8162/255
+    "HumanoidBenchH1HandWalk": 0.970247,  # mean 0.8162/255
+    "HumanoidBenchH1Run": 0.972082,  # mean 0.7091/255
+    "HumanoidBenchH1SitHard": 0.966482,  # mean 0.8928/255
+    "HumanoidBenchH1SitSimple": 0.967659,  # mean 0.8467/255
+    "HumanoidBenchH1Slide": 0.969963,  # mean 0.7793/255
+    "HumanoidBenchH1Stair": 0.971107,  # mean 0.6661/255
+    "HumanoidBenchH1Stand": 0.972082,  # mean 0.7091/255
+    "HumanoidBenchH1Walk": 0.972082,  # mean 0.7091/255
+    "HumanoidmazeGiantNavigate": 0.712624,  # mean 1.1539/255
+    "HumanoidmazeGiantStitch": 0.712624,  # mean 1.1539/255
+    "HumanoidmazeLargeNavigate": 0.725895,  # mean 0.9690/255
+    "HumanoidmazeLargeStitch": 0.725895,  # mean 0.9690/255
+    "HumanoidmazeMediumNavigate": 0.723503,  # mean 0.6133/255
+    "HumanoidmazeMediumStitch": 0.723503,  # mean 0.6133/255
+    "Intersection": 0.958981,  # mean 4.5107/255  size re-frames; recorded, not asserted
     #: Jumanji renders through matplotlib at ``dpi = size / 10``, so 2S is a genuinely DIFFERENT
     #: rasterization rather than a supersample of S: text is laid out in points and re-hinted at the new
     #: dpi, and patch edges are re-antialiased at a different sub-pixel coverage. Maze is the exception
@@ -542,21 +577,21 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: fully-black pixels at dpi 20 and to a two-cell blend at dpi 40, so the per-cell model is false at
     #: 400 px and the env raises ValueError rather than render there. This test skips it for that
     #: reason -- see docs/research/jumanji.md.
-    "JumanjiMaze":                    1.000000,   # mean 0.0000/255
-    "JumanjiMinesweeper":             0.832503,   # mean 9.0860/255
-    "JumanjiRubiksCube":              0.855150,   # mean 4.1042/255
+    "JumanjiMaze": 1.000000,  # mean 0.0000/255
+    "JumanjiMinesweeper": 0.832503,  # mean 9.0860/255
+    "JumanjiRubiksCube": 0.855150,  # mean 4.1042/255
     "JumanjiRubiksCubePartlyScrambled": 0.855150,  # mean 4.0577/255
-    "JumanjiSokoban":                 0.711994,   # mean 0.7419/255
-    "JumanjiSudoku":                  0.831450,   # mean 7.5042/255
-    "JumanjiSudokuVeryEasy":          0.822840,   # mean 7.8610/255
-    "Merge":                      0.945075,   # mean 5.8377/255  size re-frames; recorded, not asserted
-    "MiniGridDoorKey":            0.997700,   # mean 0.0228/255
-    "MiniGridEmpty":              0.998932,   # mean 0.0048/255
-    "MiniGridFourRooms":          0.999811,   # mean 0.0008/255
-    "MiniGridKeyCorridor":        0.982485,   # mean 0.2123/255
-    "MiniGridLavaCrossing":       0.974085,   # mean 0.1360/255
-    "MiniGridPOVFetch":           0.997429,   # mean 0.0121/255
-    "MiniHack":                   1.000000,   # mean 0.0000/255
+    "JumanjiSokoban": 0.711994,  # mean 0.7419/255
+    "JumanjiSudoku": 0.831450,  # mean 7.5042/255
+    "JumanjiSudokuVeryEasy": 0.822840,  # mean 7.8610/255
+    "Merge": 0.945075,  # mean 5.8377/255  size re-frames; recorded, not asserted
+    "MiniGridDoorKey": 0.997700,  # mean 0.0228/255
+    "MiniGridEmpty": 0.998932,  # mean 0.0048/255
+    "MiniGridFourRooms": 0.999811,  # mean 0.0008/255
+    "MiniGridKeyCorridor": 0.982485,  # mean 0.2123/255
+    "MiniGridLavaCrossing": 0.974085,  # mean 0.1360/255
+    "MiniGridPOVFetch": 0.997429,  # mean 0.0121/255
+    "MiniHack": 1.000000,  # mean 0.0000/255
     #: The six VISUAL-tier Gymnasium locomotion domains, which are here rather than skipped by
     #: PLATE_REPRESENTATIVES because they bake no plate: they are re-rasterized whole by nvdiffrast at
     #: whatever resolution is asked for. What sets the number is the minified checker floor —
@@ -565,12 +600,12 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: of the S one. It tracks how much floor each camera sees, which is why Swimmer (94.9% floor,
     #: MAGNIFIED rather than minified, so no mip level changes) is 0.909 while Humanoid is 0.682.
     #: The four PARITY envs of the same family are not in this table: they carry PLATE_PATHS.
-    "MujocoAnt":                  0.771469,   # mean 1.6888/255
-    "MujocoHalfCheetah":          0.758811,   # mean 2.0481/255
-    "MujocoHopper":               0.694054,   # mean 2.5325/255
-    "MujocoHumanoid":             0.681649,   # mean 2.7766/255
-    "MujocoSwimmer":              0.909481,   # mean 0.7384/255
-    "MujocoWalker2d":             0.755514,   # mean 1.9871/255
+    "MujocoAnt": 0.771469,  # mean 1.6888/255
+    "MujocoHalfCheetah": 0.758811,  # mean 2.0481/255
+    "MujocoHopper": 0.694054,  # mean 2.5325/255
+    "MujocoHumanoid": 0.681649,  # mean 2.7766/255
+    "MujocoSwimmer": 0.909481,  # mean 0.7384/255
+    "MujocoWalker2d": 0.755514,  # mean 1.9871/255
     #: Overcooked sits with MiniGrid at the top of the tile families and for the same reason: the
     #: atlas is RE-RENDERED by jaxmarl at the requested tile size with its own 3x supersample, so 2S is
     #: close to a supersample of S rather than a resample of fixed source art (which is what puts
@@ -582,13 +617,13 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: two are a baked MuJoCo plate composited with MJWarp movers, so the 2S picture rebakes
     #: the plate at 2S rather than doubling it -- the plate agrees with itself to the same
     #: point sampling everything else in this table does.
-    "OGBCube":                    0.885782,   # mean 1.0329/255
-    "OGBScene":                   0.805306,   # mean 2.0163/255
-    "OvercookedAsymmAdvantages":  0.985520,   # mean 0.1493/255
-    "OvercookedCoordRing":        0.981630,   # mean 0.1787/255
-    "OvercookedCounterCircuit":   0.987140,   # mean 0.1251/255
-    "OvercookedCrampedRoom":      0.980990,   # mean 0.1720/255
-    "OvercookedForcedCoord":      0.981630,   # mean 0.1787/255
+    "OGBCube": 0.885782,  # mean 1.0329/255
+    "OGBScene": 0.805306,  # mean 2.0163/255
+    "OvercookedAsymmAdvantages": 0.985520,  # mean 0.1493/255
+    "OvercookedCoordRing": 0.981630,  # mean 0.1787/255
+    "OvercookedCounterCircuit": 0.987140,  # mean 0.1251/255
+    "OvercookedCrampedRoom": 0.980990,  # mean 0.1720/255
+    "OvercookedForcedCoord": 0.981630,  # mean 0.1787/255
     #: gymnasium-robotics PointMaze. Much higher than the OGBench mazes (0.708-0.726) for one
     #: reason: its camera looks along the ground at elevation -45, so the plate's re-bake at 2S
     #: re-renders a scene that is mostly flat sky and flat floor, where the OGBench top-down camera
@@ -602,20 +637,20 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: closure and closure2 sweeps. 0.956137 is 0.95614 to five decimals, which is the value the
     #: Step-7 carry-over recorded. There is no cpu row: PFRocketLanding raises on device="cpu" by
     #: design. Artifact: examples/results/step7/closure2/gate_a/cuda_rocket.json.
-    "PFRocketLanding":            0.956137,   # mean 0.9923/255
-    "PointMazeLarge":             0.913387,   # mean 0.2794/255  (measured on PointMazeMedium)
-    "PointMazeMedium":            0.913387,   # mean 0.2794/255
-    "PointMazeOpen":              0.913387,   # mean 0.2794/255
-    "PointMazeUMaze":             0.913387,   # mean 0.2794/255
-    "PointmazeGiantNavigate":     0.708274,   # mean 1.1385/255
-    "PointmazeGiantStitch":       0.708274,   # mean 1.1385/255
-    "PointmazeLargeNavigate":     0.722781,   # mean 0.9528/255
-    "PointmazeLargeStitch":       0.722781,   # mean 0.9528/255
-    "PointmazeMediumNavigate":    0.723306,   # mean 0.6111/255
-    "PointmazeMediumStitch":      0.723306,   # mean 0.6111/255
-    "PointmazeTeleportNavigate":  0.717602,   # mean 1.1505/255
-    "PointmazeTeleportStitch":    0.717602,   # mean 1.1505/255
-    "Parking":                    0.931908,   # mean 6.2932/255  size re-frames; recorded, not asserted
+    "PFRocketLanding": 0.956137,  # mean 0.9923/255
+    "PointMazeLarge": 0.913387,  # mean 0.2794/255  (measured on PointMazeMedium)
+    "PointMazeMedium": 0.913387,  # mean 0.2794/255
+    "PointMazeOpen": 0.913387,  # mean 0.2794/255
+    "PointMazeUMaze": 0.913387,  # mean 0.2794/255
+    "PointmazeGiantNavigate": 0.708274,  # mean 1.1385/255
+    "PointmazeGiantStitch": 0.708274,  # mean 1.1385/255
+    "PointmazeLargeNavigate": 0.722781,  # mean 0.9528/255
+    "PointmazeLargeStitch": 0.722781,  # mean 0.9528/255
+    "PointmazeMediumNavigate": 0.723306,  # mean 0.6111/255
+    "PointmazeMediumStitch": 0.723306,  # mean 0.6111/255
+    "PointmazeTeleportNavigate": 0.717602,  # mean 1.1505/255
+    "PointmazeTeleportStitch": 0.717602,  # mean 1.1505/255
+    "Parking": 0.931908,  # mean 6.2932/255  size re-frames; recorded, not asserted
     #: Procgen is the low end of this table, and the mechanism is the reference's, not ours. A cell
     #: is 2.56 output px at 64 and 5.12 at 128, so the 2S frame takes a nearest-neighbour sample of
     #: the SAME 128x128 source art at twice the rate — it is a finer resampling of the texture, not a
@@ -625,12 +660,12 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: observation for exactly this reason (and additionally turns antialiasing on). The floor is
     #: still a live detector: it is a fixed number for a fixed sampling grid and moves as soon as a
     #: rect lands somewhere else.
-    "ProcgenChaser":              0.092380,   # mean 12.6856/255
-    "ProcgenHeist":               0.061981,   # mean 7.7011/255
-    "ProcgenMaze":                0.007202,   # mean 9.2941/255
-    "ProcgenMiner":               0.092468,   # mean 9.7574/255
-    "PushT":                      0.897163,   # mean 2.2749/255
-    "Racetrack":                  0.983442,   # mean 1.7873/255  size re-frames; recorded, not asserted
+    "ProcgenChaser": 0.092380,  # mean 12.6856/255
+    "ProcgenHeist": 0.061981,  # mean 7.7011/255
+    "ProcgenMaze": 0.007202,  # mean 9.2941/255
+    "ProcgenMiner": 0.092468,  # mean 9.7574/255
+    "PushT": 0.897163,  # mean 2.2749/255
+    "Racetrack": 0.983442,  # mean 1.7873/255  size re-frames; recorded, not asserted
     #: RoboCasa. These four were failing this test with "has no measured downsample bound recorded",
     #: and the failure was invisible in the main run because the suite's interpreter cannot import
     #: robocasa (it pins mujoco 3.3.1 against mujoco_warp's >= 3.11), so the whole family was skipped.
@@ -640,12 +675,12 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: each pixel of a photographic wood or granite surface filters over. The wrist camera is the
     #: highest because it fills the frame with a few large near surfaces rather than a room of small
     #: ones.
-    "RoboCasaCounterToSink":      0.756603,   # mean 2.0074/255, max 205/255
+    "RoboCasaCounterToSink": 0.756603,  # mean 2.0074/255, max 205/255
     "RoboCasaCounterToSinkL45S33": 0.787102,  # mean 2.0138/255, max 216/255
-    "RoboCasaCounterToSinkRight": 0.740753,   # mean 2.0634/255, max 233/255
-    "RoboCasaCounterToSinkWrist": 0.871983,   # mean 0.7108/255, max 207/255
-    "Roundabout":                 0.974241,   # mean 2.7201/255  size re-frames; recorded, not asserted
-    "Sokoban":                    1.000000,   # mean 0.0000/255  16 px art replicated k x k, exactly
+    "RoboCasaCounterToSinkRight": 0.740753,  # mean 2.0634/255, max 233/255
+    "RoboCasaCounterToSinkWrist": 0.871983,  # mean 0.7108/255, max 207/255
+    "Roundabout": 0.974241,  # mean 2.7201/255  size re-frames; recorded, not asserted
+    "Sokoban": 1.000000,  # mean 0.0000/255  16 px art replicated k x k, exactly
 }
 #: Envs whose renderer must be rebuilt from scratch at a new output size. Each additional (scene,
 #: size) pair for the maze family constructs another ogbench env and another ``mujoco.Renderer``, so
@@ -655,14 +690,20 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
 #: DM Control adds two rather than one because its two camera geometries are different pictures, not
 #: two sizes of the same one: cartpole looks along the ground under a speckled sky, point_mass looks
 #: straight down at a floor that fills the frame, and the 2S re-bake costs them 0.282 and 0.730.
-PLATE_REPRESENTATIVES = frozenset({"PointmazeMediumNavigate", "AntmazeMediumNavigate",
-                                   "HumanoidmazeMediumNavigate",
-                                   "DMCCartpoleSwingup", "DMCPointMassEasy",
-                                   # gymnasium-robotics PointMaze: a DIFFERENT camera geometry from
-                                   # OGBench's (elevation -45 against straight down) and a different
-                                   # bake path (gymnasium's viewer, not mujoco.Renderer), so one of
-                                   # the four scenes has to stand for it in its own right.
-                                   "PointMazeMedium"})
+PLATE_REPRESENTATIVES = frozenset(
+    {
+        "PointmazeMediumNavigate",
+        "AntmazeMediumNavigate",
+        "HumanoidmazeMediumNavigate",
+        "DMCCartpoleSwingup",
+        "DMCPointMassEasy",
+        # gymnasium-robotics PointMaze: a DIFFERENT camera geometry from
+        # OGBench's (elevation -45 against straight down) and a different
+        # bake path (gymnasium's viewer, not mujoco.Renderer), so one of
+        # the four scenes has to stand for it in its own right.
+        "PointMazeMedium",
+    }
+)
 
 
 def _skip_if_size_is_not_resolution(env) -> None:
@@ -685,19 +726,22 @@ def _skip_if_size_is_not_resolution(env) -> None:
     is now a pure question that mutates nothing.
     """
     import inspect
+
     dev = env.device
     st = torch.as_tensor(env.sample_states(1, rng=np.random.default_rng(0)), device=dev)
     if "size" not in inspect.signature(env.scene).parameters:
-        return                              # world units: size is a sampling rate, nothing to re-frame
+        return  # world units: size is a sampling rate, nothing to re-frame
     try:
         w1 = tuple(env.scene(st, size=int(env.size)).world)
         w2 = tuple(env.scene(st, size=2 * int(env.size)).world)
     except NotImplementedError:
-        return                                    # no Scene2D to probe; the tile/raycast paths re-sample
+        return  # no Scene2D to probe; the tile/raycast paths re-sample
     if w1 != w2:
-        pytest.skip(f"{type(env).__name__}: size= re-frames the camera (world rect {w1} at S, {w2} at "
-                    f"2S), so a downsample comparison would be comparing two different views rather "
-                    f"than two resolutions")
+        pytest.skip(
+            f"{type(env).__name__}: size= re-frames the camera (world rect {w1} at S, {w2} at "
+            f"2S), so a downsample comparison would be comparing two different views rather "
+            f"than two resolutions"
+        )
 
 
 def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_bound():
@@ -716,6 +760,7 @@ def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_boun
     # 1. no declaration at all: every state, and the caller may skip subsetting entirely.
     class Bare:
         state_names = names
+
     r = C.resolution_consistency_applicability(Bare(), st)
     assert r["applicable"] and r["indices"] is None, r
 
@@ -725,7 +770,9 @@ def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_boun
         resolution_consistency_applicability = {
             "light_level >= 0.5": "asserted at the frozen bound",
             "light_level < 0.5": "not_applicable: the reference is itself inconsistent there",
-            "evidence": "oracle.json"}
+            "evidence": "oracle.json",
+        }
+
     r = C.resolution_consistency_applicability(Banded(), st)
     assert r["applicable"] and r["indices"] == [2, 3], r
     assert r["declaration"] == {"evidence": "oracle.json"}, "the cited evidence must survive"
@@ -734,14 +781,17 @@ def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_boun
     class OnlyBad:
         state_names = names
         resolution_consistency_applicability = {
-            "light_level < 0.5": "not_applicable: mechanism", "evidence": "oracle.json"}
+            "light_level < 0.5": "not_applicable: mechanism",
+            "evidence": "oracle.json",
+        }
+
     assert C.resolution_consistency_applicability(OnlyBad(), st)["indices"] == [2, 3]
 
     # 4. the CraftaxFull shape: the whole cell, answered without looking at a state.
     class AllBands:
         state_names = names
-        resolution_consistency_applicability = {"all bands": "not_applicable: mechanism",
-                                                "evidence": "oracle.json"}
+        resolution_consistency_applicability = {"all bands": "not_applicable: mechanism", "evidence": "oracle.json"}
+
     r = C.resolution_consistency_applicability(AllBands(), st)
     assert r["applicable"] is False and r["indices"] == [], r
     assert C.resolution_consistency_applicability(AllBands(), None)["applicable"] is False
@@ -750,8 +800,8 @@ def test_resolution_applicability_is_read_from_the_declaration_and_moves_no_boun
     #    silently dropped states would look like a pass.
     class Typo:
         state_names = names
-        resolution_consistency_applicability = {"lightlevel >= 0.5": "asserted",
-                                                "evidence": "oracle.json"}
+        resolution_consistency_applicability = {"lightlevel >= 0.5": "asserted", "evidence": "oracle.json"}
+
     r = C.resolution_consistency_applicability(Typo(), st)
     assert r["applicable"] and r["indices"] is None and "could not be resolved" in r["why"], r
 
@@ -789,25 +839,27 @@ def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
     try:
         _skip_if_size_is_not_resolution(env)
         r = C.check_resolution_consistency(env, states)
-    except ValueError as e:                       # an env that renders at one size only says so
+    except ValueError as e:  # an env that renders at one size only says so
         pytest.skip(f"{name} cannot render at another size: {e}")
     if "skipped" in r:
         pytest.skip(f"{name}: {r['skipped']}")
-    print(f"\n{name} 2S->S: exact {100*r['exact_frac']:.3f}%  mean {r['mean_abs']:.4f}/255  "
-          f"max {r['max_abs']}/255")
+    print(f"\n{name} 2S->S: exact {100 * r['exact_frac']:.3f}%  mean {r['mean_abs']:.4f}/255  max {r['max_abs']}/255")
     measured = DOWNSAMPLE_EXACT_FRAC.get(name)
     assert measured is not None, (
         f"{name} has no measured downsample bound recorded. Run "
         f"stable_envs.testing.conformance.check_resolution_consistency on it and add the number to "
         f"DOWNSAMPLE_EXACT_FRAC with its provenance — a guessed bound is worse than no test, because "
-        f"it either fails on a correct renderer or passes on a broken one")
+        f"it either fails on a correct renderer or passes on a broken one"
+    )
     assert r["exact_frac"] >= measured - DOWNSAMPLE_MARGIN, (
-        f"{name}: only {100*r['exact_frac']:.3f}% of pixels survive a 2x render-and-box-downsample "
-        f"against a measured {100*measured:.3f}% ({MEASURED_ON}). Anti-aliasing does not move this "
-        f"number by half a point; a shape landing in a different place does: {r}")
+        f"{name}: only {100 * r['exact_frac']:.3f}% of pixels survive a 2x render-and-box-downsample "
+        f"against a measured {100 * measured:.3f}% ({MEASURED_ON}). Anti-aliasing does not move this "
+        f"number by half a point; a shape landing in a different place does: {r}"
+    )
 
 
 # ------------------------------------------------------------------ 4. input forms
+
 
 def test_every_input_form_gives_the_same_frame(env, inputs):
     """numpy or torch, CPU or CUDA, float32 or float64, contiguous or strided — one answer.
@@ -823,7 +875,8 @@ def test_every_input_form_gives_the_same_frame(env, inputs):
     assert not r["disagreements"], (
         f"{type(env).__name__}: these input forms did not give the frame that plain float32 numpy "
         f"gives: {r['disagreements']} — a caller whose states arrive as a CUDA tensor, as float64 out "
-        f"of parquet, or as a strided slice of a trajectory buffer gets different pixels")
+        f"of parquet, or as a strided slice of a trajectory buffer gets different pixels"
+    )
 
 
 def test_leading_dimensions_are_preserved(env, inputs):
@@ -835,13 +888,14 @@ def test_leading_dimensions_are_preserved(env, inputs):
     """
     states, style = inputs
     flat = env.render(states, style=style).detach().cpu().numpy()
-    nested = env.render(states.reshape(2, N // 2, -1),
-                        style=style).detach().cpu().numpy()
+    nested = env.render(states.reshape(2, N // 2, -1), style=style).detach().cpu().numpy()
     assert nested.shape == (2, N // 2, *flat.shape[1:]), (
-        f"{type(env).__name__}: leading dims not preserved — got {nested.shape}")
+        f"{type(env).__name__}: leading dims not preserved — got {nested.shape}"
+    )
     assert np.array_equal(nested.reshape(flat.shape), flat), (
         f"{type(env).__name__}: the nested render holds the same frames in different cells, i.e. the "
-        f"leading dimensions were flattened in one order and restored in another")
+        f"leading dimensions were flattened in one order and restored in another"
+    )
 
 
 def test_out_buffer_receives_the_same_frames(env, inputs):
@@ -857,9 +911,11 @@ def test_out_buffer_receives_the_same_frames(env, inputs):
     got = env.render(states, style=style, out=buf)
     assert np.array_equal(buf.detach().cpu().numpy(), ref), (
         f"{type(env).__name__}: render(out=buf) did not put the frames in buf — the documented "
-        f"zero-allocation path hands back a buffer that is not the picture")
+        f"zero-allocation path hands back a buffer that is not the picture"
+    )
     assert np.array_equal(got.detach().cpu().numpy().reshape(ref.shape), ref), (
-        f"{type(env).__name__}: render(out=buf) returned something other than what it wrote")
+        f"{type(env).__name__}: render(out=buf) returned something other than what it wrote"
+    )
 
 
 def test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted(env, inputs):
@@ -889,10 +945,12 @@ def test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted(e
         env.render(states[:n], style=None if style is None else style[:n], out=view)
     assert int(buf.max()) == 0, (
         f"{type(env).__name__}: render(out=<non-contiguous>) reported an error but had already "
-        f"written into the caller's buffer — a refusal that scribbles first is not a refusal")
+        f"written into the caller's buffer — a refusal that scribbles first is not a refusal"
+    )
 
 
 # ------------------------------------------------------------------ 4b. the per-environment style contract
+
 
 def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
     """A per-environment appearance must never be replaced by environment 0's when the batch shrinks.
@@ -917,7 +975,7 @@ def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
     if env.style_dim == 0:
         pytest.skip(f"{type(env).__name__} declares no style, so there is nothing to collapse")
     states, _ = inputs
-    sty = C.uniform_style(env, N, groups=2)          # two distinct rows; see uniform_style on the cost
+    sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
     env.set_state(states, style=sty)
     full = env.render().detach().cpu().numpy()
 
@@ -929,7 +987,8 @@ def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
     assert d == 0, (
         f"{type(env).__name__}: rendering row 3 on its own WITH row 3's style gave a frame {d}/255 "
         f"away from row 3 of the full batch — the indexed call is the one the error message tells "
-        f"callers to make, so it has to be the right answer")
+        f"callers to make, so it has to be the right answer"
+    )
 
 
 def test_a_shared_style_broadcasts_to_any_batch(env, inputs):
@@ -948,14 +1007,15 @@ def test_a_shared_style_broadcasts_to_any_batch(env, inputs):
         got = env.render(states[:b]).detach().cpu().numpy()
         assert np.array_equal(got, ref[:b]), (
             f"{type(env).__name__}: under the default appearance, rendering {b} of {N} rows differs "
-            f"from those rows of the full batch — a shared style must broadcast unchanged")
+            f"from those rows of the full batch — a shared style must broadcast unchanged"
+        )
     if env.style_dim:
         one = env.sample_style(1, rng=np.random.default_rng(3))
         a = env.render(states, style=one).detach().cpu().numpy()
         b_ = env.render(states[:1], style=one).detach().cpu().numpy()[0]
         assert np.array_equal(b_, a[0]), (
-            f"{type(env).__name__}: a single explicit style row did not broadcast identically at two "
-            f"batch sizes")
+            f"{type(env).__name__}: a single explicit style row did not broadcast identically at two batch sizes"
+        )
 
 
 def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, inputs):
@@ -974,11 +1034,11 @@ def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, in
         pytest.skip(f"{type(env).__name__} declares no continuous variation leaf")
     path, off, w, v = chosen
     states, _ = inputs
-    sty = C.uniform_style(env, N, groups=2)          # two distinct rows; see uniform_style on the cost
+    sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
     env.set_state(states, style=sty)
 
     want = np.array(sty, np.float32)
-    want[:, off:off + w] = v
+    want[:, off : off + w] = v
     a = env.render(states, variation={path: v}).detach().cpu().numpy()
     b = env.render(states, style=want).detach().cpu().numpy()
     assert np.array_equal(a, b), (
@@ -986,10 +1046,12 @@ def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, in
         f"render(variation={{{path!r}: v}}) drew something other than the same rows with that one "
         f"column replaced (max {int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}/255) — the "
         f"columns the override does not touch came from environment 0 instead of from each "
-        f"environment's own row")
+        f"environment's own row"
+    )
 
 
 # ------------------------------------------------------------------ 5. purity, idempotence, ordering
+
 
 def test_render_is_pure_and_set_state_is_idempotent(env, inputs):
     """Rendering changes nothing, and restoring a state twice is the same as once.
@@ -1002,16 +1064,20 @@ def test_render_is_pure_and_set_state_is_idempotent(env, inputs):
     r = C.check_render_is_pure(env, states, style=style)
     assert r["state_changed_by_render"] == 0.0, (
         f"{type(env).__name__}: render() mutated the env's state by {r['state_changed_by_render']} — "
-        f"rendering is a read")
+        f"rendering is a read"
+    )
     assert r["style_changed_by_render"] == 0.0, (
-        f"{type(env).__name__}: render() mutated the env's style by {r['style_changed_by_render']}")
+        f"{type(env).__name__}: render() mutated the env's style by {r['style_changed_by_render']}"
+    )
     assert r["state_changed_by_double_set"] == 0.0, (
         f"{type(env).__name__}: set_state(get_state()) twice changed the state by "
-        f"{r['state_changed_by_double_set']} — restoring a stored state is not idempotent")
+        f"{r['state_changed_by_double_set']} — restoring a stored state is not idempotent"
+    )
     assert r["frame_changed_by_double_set"] == 0, (
         f"{type(env).__name__}: set_state(get_state()) twice changed the FRAME by "
         f"{r['frame_changed_by_double_set']}/255 while leaving the state alone, so the frame depends "
-        f"on something set_state carries besides the state")
+        f"on something set_state carries besides the state"
+    )
 
 
 def test_set_state_copies_its_input(env):
@@ -1025,11 +1091,13 @@ def test_set_state_copies_its_input(env):
     r = C.check_set_state_copies(env)
     assert r["aliased_caller_buffer"] == 0.0, (
         f"{type(env).__name__}: zeroing the array that was handed to set_state changed the env's own "
-        f"state by {r['aliased_caller_buffer']} — the env aliases the caller's memory")
+        f"state by {r['aliased_caller_buffer']} — the env aliases the caller's memory"
+    )
     assert not r["state_tensor_rebound"], (
         f"{type(env).__name__}: set_state REBOUND the state tensor instead of writing through it. Any "
         f"CUDA graph capturing this env's step reads the old address, so every later set_state would "
-        f"be silently ignored")
+        f"be silently ignored"
+    )
 
 
 def test_batch_order_does_not_change_the_frames(env, inputs):
@@ -1047,11 +1115,13 @@ def test_batch_order_does_not_change_the_frames(env, inputs):
     assert r["permutation_max_abs_diff"] == 0, (
         f"{type(env).__name__}: permuting the batch did not permute the frames (max "
         f"{r['permutation_max_abs_diff']}/255) — one environment's pixels depend on its neighbours, "
-        f"so a shuffled loader renders a different dataset")
+        f"so a shuffled loader renders a different dataset"
+    )
     assert r["duplicate_max_abs_diff"] == 0, (
         f"{type(env).__name__}: the same state twice in one batch rendered two different frames (max "
         f"{r['duplicate_max_abs_diff']}/255) — the output buffer is not fully written, or a slot "
-        f"carries something from its position")
+        f"carries something from its position"
+    )
 
 
 def test_render_size_does_not_leak_into_later_calls(env, inputs):
@@ -1076,8 +1146,7 @@ def test_render_size_does_not_leak_into_later_calls(env, inputs):
     states, style = inputs
     before = env.render(states, style=style).shape
     try:
-        env.render(states[:1], size=2 * int(env.size),
-                   style=None if style is None else style[:1])
+        env.render(states[:1], size=2 * int(env.size), style=None if style is None else style[:1])
     except ValueError as e:
         pytest.skip(f"{name} renders at one size only, so no size can leak: {e}")
     after = env.render(states, style=style).shape
@@ -1087,9 +1156,10 @@ def test_render_size_does_not_leak_into_later_calls(env, inputs):
     # existed: four dataset round-trip failures whose actual cause was three tests earlier.
     env.render(states[:1], size=int(env.size), style=None if style is None else style[:1])
     assert tuple(after) == tuple(before), (
-        f"{name}: after one render(size={2*int(env.size)}), a plain render() returns {tuple(after)} "
+        f"{name}: after one render(size={2 * int(env.size)}), a plain render() returns {tuple(after)} "
         f"instead of {tuple(before)} while env.size is still {env.size}. The size argument is being "
-        f"stored on the env, so a single differently-sized call rewrites every later frame")
+        f"stored on the env, so a single differently-sized call rewrites every later frame"
+    )
 
 
 @pytest.mark.parametrize("name", ["Highway", "Merge", "Roundabout", "Intersection"])
@@ -1116,16 +1186,20 @@ def test_highway_render_size_is_an_argument_not_a_mode(name):
     big = tuple(env.render(st, size=2 * int(env.size)).shape)
     after = tuple(env.render(st).shape)
     assert big == (before[0], 2 * before[1], 2 * before[2], 3), (
-        f"{name}: render(size=2S) returned {big}, which is not twice {before}")
+        f"{name}: render(size=2S) returned {big}, which is not twice {before}"
+    )
     assert after == before, (
-        f"{name}: a plain render() returns {after} after one render(size={2*int(env.size)}), against "
-        f"{before} before it — the requested size outlived the call that requested it")
+        f"{name}: a plain render() returns {after} after one render(size={2 * int(env.size)}), against "
+        f"{before} before it — the requested size outlived the call that requested it"
+    )
     assert (int(env.size), int(env.H), int(env.W)) == (before[1], before[1], before[2]), (
         f"{name}: env.size/H/W report ({env.size}, {env.H}, {env.W}) but the frame is {before} — the "
-        f"env's advertised geometry and the geometry it renders at have come apart")
+        f"env's advertised geometry and the geometry it renders at have come apart"
+    )
 
 
 # ------------------------------------------------------------------ 6. serialization
+
 
 def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
     """States and style through ``np.save``/``np.load`` and ``torch.save``/``torch.load``, byte-exact.
@@ -1144,13 +1218,16 @@ def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
         np.save(tmp_path / "k.npy", style)
         nk = np.load(tmp_path / "k.npy")
     assert _digest(env.render(ns, style=nk)) == ref, (
-        f"{type(env).__name__}: frames differ after a numpy save/load of the states")
+        f"{type(env).__name__}: frames differ after a numpy save/load of the states"
+    )
 
-    torch.save({"s": torch.as_tensor(states),
-                "k": None if style is None else torch.as_tensor(style)}, tmp_path / "t.pt")
+    torch.save(
+        {"s": torch.as_tensor(states), "k": None if style is None else torch.as_tensor(style)}, tmp_path / "t.pt"
+    )
     got = torch.load(tmp_path / "t.pt", weights_only=True)
     assert _digest(env.render(got["s"], style=got["k"])) == ref, (
-        f"{type(env).__name__}: frames differ after a torch save/load of the states")
+        f"{type(env).__name__}: frames differ after a torch save/load of the states"
+    )
 
 
 def test_dataset_paths_regenerate_identical_frames(env, inputs):
@@ -1167,25 +1244,33 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
 
     ds = se.StateDataset(env, states, style=style, size=env.size, device=str(env.device))
     assert np.array_equal(ds.__getitems__(list(range(N))).detach().cpu().numpy(), ref), (
-        f"{type(env).__name__}: StateDataset renders different pixels from env.render")
+        f"{type(env).__name__}: StateDataset renders different pixels from env.render"
+    )
 
     # The caller's own DataLoader; ``ds.loader()`` was dropped. ``collate_batched`` is the one argument
     # a rendering dataset needs, because ``__getitems__`` hands back an assembled batch.
     from torch.utils.data import DataLoader
-    loaded = next(iter(DataLoader(ds, batch_size=N, shuffle=False, num_workers=0,
-                                  collate_fn=se.collate_batched)))
+
+    loaded = next(iter(DataLoader(ds, batch_size=N, shuffle=False, num_workers=0, collate_fn=se.collate_batched)))
     assert np.array_equal(loaded.detach().cpu().numpy(), ref), (
-        f"{type(env).__name__}: the DataLoader path renders different pixels from env.render")
+        f"{type(env).__name__}: the DataLoader path renders different pixels from env.render"
+    )
 
     # one trajectory of N steps, so the per-trajectory style has to be expanded over its own rows
-    traj = se.TrajectoryDataset(env, states.reshape(1, N, -1),
-                                style=None if style is None else style[:1],
-                                window=1, size=env.size, device=str(env.device))
+    traj = se.TrajectoryDataset(
+        env,
+        states.reshape(1, N, -1),
+        style=None if style is None else style[:1],
+        window=1,
+        size=env.size,
+        device=str(env.device),
+    )
     got = traj.all_frames().detach().cpu().numpy()
     want = env.render(states, style=None if style is None else np.repeat(style[:1], N, 0))
     assert np.array_equal(got, want.detach().cpu().numpy()), (
         f"{type(env).__name__}: TrajectoryDataset.all_frames does not reproduce env.render on the "
-        f"same states and the trajectory's own style")
+        f"same states and the trajectory's own style"
+    )
 
 
 def test_huggingface_round_trip_regenerates_identical_frames(env, inputs, tmp_path):
@@ -1198,22 +1283,28 @@ def test_huggingface_round_trip_regenerates_identical_frames(env, inputs, tmp_pa
     """
     pytest.importorskip("datasets", reason="the HuggingFace round-trip needs `datasets`")
     states, style = inputs
-    ds = se.TrajectoryDataset(env, states.reshape(1, N, -1),
-                              style=None if style is None else style[:1],
-                              window=1, size=env.size, device=str(env.device))
+    ds = se.TrajectoryDataset(
+        env,
+        states.reshape(1, N, -1),
+        style=None if style is None else style[:1],
+        window=1,
+        size=env.size,
+        device=str(env.device),
+    )
     ref = _digest(ds.all_frames())
 
     back = se.TrajectoryDataset.from_hf(ds.to_hf(), env=env, window=1, device=str(env.device))
     assert _digest(back.all_frames()) == ref, (
-        f"{type(env).__name__}: an in-memory HuggingFace round-trip does not re-render the same "
-        f"frames")
+        f"{type(env).__name__}: an in-memory HuggingFace round-trip does not re-render the same frames"
+    )
 
     path = str(tmp_path / "corpus")
     ds.save_to_disk(path)
     disk = se.TrajectoryDataset.load_from_disk(path, env=env, window=1, device=str(env.device))
     assert _digest(disk.all_frames()) == ref, (
         f"{type(env).__name__}: a corpus written with save_to_disk and read back renders different "
-        f"frames — the stored corpus is not the corpus")
+        f"frames — the stored corpus is not the corpus"
+    )
 
 
 def test_variation_dict_and_style_tensor_agree(env, inputs):
@@ -1230,17 +1321,19 @@ def test_variation_dict_and_style_tensor_agree(env, inputs):
     path, off, w, v = chosen
 
     sty = np.tile(env.default_style(), (N, 1))
-    sty[:, off:off + w] = v
+    sty[:, off : off + w] = v
     a = env.render(states, variation={path: v}).detach().cpu().numpy()
     b = env.render(states, style=sty).detach().cpu().numpy()
     assert np.array_equal(a, b), (
         f"{type(env).__name__}: render(variation={{{path!r}: v}}) and the equivalent flat style row "
         f"draw different pictures (max "
         f"{int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}/255) — the dict API and the "
-        f"stored form address different spaces")
+        f"stored form address different spaces"
+    )
 
 
 # ------------------------------------------------------------------ 7. CUDA graphs
+
 
 def test_cuda_graph_step_matches_eager(env):
     """Where a step is captured into a CUDA graph, the graph and the eager path must agree exactly.
@@ -1276,12 +1369,15 @@ def test_cuda_graph_step_matches_eager(env):
         se_ = eager.get_state().detach().cpu().numpy().copy()
         worst = max(worst, float(np.abs(sg - se_).max()))
     if getattr(graphed, "_step_graph", None) is None:
-        pytest.skip(f"{cls.__name__}: graph capture did not happen "
-                    f"({getattr(graphed, '_step_graph_error', 'no reason recorded')})")
+        pytest.skip(
+            f"{cls.__name__}: graph capture did not happen "
+            f"({getattr(graphed, '_step_graph_error', 'no reason recorded')})"
+        )
     assert worst == 0.0, (
         f"{cls.__name__}: the CUDA-graph step and the eager step disagree by {worst} — a replayed "
         f"graph runs the same kernels on the same memory, so a difference means the capture did not "
-        f"close over the same inputs")
+        f"close over the same inputs"
+    )
 
     # set_state must still reach a captured graph
     st2 = env.sample_states(N, rng=np.random.default_rng(77))
@@ -1289,18 +1385,22 @@ def test_cuda_graph_step_matches_eager(env):
     got = graphed.get_state().detach().cpu().numpy()
     assert np.abs(got - st2).max() == 0.0, (
         f"{cls.__name__}: set_state after graph capture did not take effect — the graph is reading a "
-        f"buffer the setter no longer writes")
+        f"buffer the setter no longer writes"
+    )
     eager.set_state(st2)
     a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
     graphed.step(a)
     eager.step(a)
-    assert np.abs(graphed.get_state().detach().cpu().numpy()
-                  - eager.get_state().detach().cpu().numpy()).max() == 0.0, (
+    assert (
+        np.abs(graphed.get_state().detach().cpu().numpy() - eager.get_state().detach().cpu().numpy()).max() == 0.0
+    ), (
         f"{cls.__name__}: after set_state, the graphed step diverges from the eager one — the replay "
-        f"is running on stale state")
+        f"is running on stale state"
+    )
 
 
 # ------------------------------------------------------------------ 8. the node itself
+
 
 @pytest.mark.reference
 def test_the_reference_renderer_on_this_machine_is_deterministic(env):
@@ -1323,10 +1423,12 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
         f"{cls.__name__}: the OFFICIAL renderer gave two different frames for the same states on this "
         f"machine (max {r['max_abs_diff']}/255), before any of our code was involved. This is a node "
         f"fault, not a repo fault — rerun elsewhere and exclude this host; every parity number "
-        f"measured here is meaningless")
+        f"measured here is meaningless"
+    )
 
 
 # ------------------------------------------------------------------ 9. what a SCENE is a function of
+
 
 def _visibility_capable_envs():
     """Envs whose RENDERER can carry a visibility knob, resolved without building anything.
@@ -1338,8 +1440,11 @@ def _visibility_capable_envs():
     COLLECTION time would create an EGL context per domain for a run that may deselect every one of
     them. The test body asks the precise question once it has the env.
     """
-    return [name for name, cls in sorted(se.registry.REGISTRY.items())
-            if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable")]
+    return [
+        name
+        for name, cls in sorted(se.registry.REGISTRY.items())
+        if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable")
+    ]
 
 
 def _declared_visibility_leaves(names) -> dict:
@@ -1352,7 +1457,7 @@ def _declared_visibility_leaves(names) -> dict:
         cls = se.registry.REGISTRY[name]
         try:
             out[name] = [f"visibility.{el[1]}" for el in cls._hideable()]
-        except ImportError:                                # the family is not installed here
+        except ImportError:  # the family is not installed here
             continue
     return out
 
@@ -1371,21 +1476,21 @@ def test_some_env_actually_declares_a_hideable_task_object():
     if not names:
         errs = se.import_errors()
         if "dmcontrol" in errs:
-            pytest.skip(f"no env can carry a visibility knob here: dmcontrol did not import "
-                        f"({errs['dmcontrol']})")
+            pytest.skip(f"no env can carry a visibility knob here: dmcontrol did not import ({errs['dmcontrol']})")
         pytest.fail("no registered env sets VISIBILITY_KNOB, and every env module imported cleanly")
     declared = _declared_visibility_leaves(names)
     if not declared:
-        pytest.skip("the visibility-capable envs are registered but their models are not reachable "
-                    "in this interpreter")
+        pytest.skip(
+            "the visibility-capable envs are registered but their models are not reachable in this interpreter"
+        )
     with_leaf = {n: v for n, v in declared.items() if v}
     assert with_leaf, (
         f"{len(declared)} env(s) advertise VISIBILITY_KNOB and NOT ONE declares a visibility.* leaf, "
         f"so the scene-cache check below skips on every one of them and asserts nothing. Either "
         f"_episode_slots has stopped finding the per-episode draw or _hideable has stopped turning it "
-        f"into a leaf; both are silent, and both make this file green: {declared}")
-    print(f"\nvisibility leaves declared by {len(with_leaf)} of {len(declared)} capable env(s): "
-          f"{with_leaf}")
+        f"into a leaf; both are silent, and both make this file green: {declared}"
+    )
+    print(f"\nvisibility leaves declared by {len(with_leaf)} of {len(declared)} capable env(s): {with_leaf}")
 
 
 @pytest.mark.parametrize("name", family_params(_visibility_capable_envs(), family="visibility"))
@@ -1411,8 +1516,7 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
     cache is cleared between the two halves because it is process-global and a previous test may
     already hold the entry this is about.
     """
-    resolve_family(name, family="visibility", modules=("dm_control",),
-                   subject="the scene-cache visibility check")
+    resolve_family(name, family="visibility", modules=("dm_control",), subject="the scene-cache visibility check")
     env = make_or_skip(name, num_envs=8, device="cuda")
     paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
     if not paths:
@@ -1422,23 +1526,25 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
         # them so that a cell which STARTS drawing one is covered the day it does; that the family is
         # not entirely leaf-less is asserted by
         # test_some_env_actually_declares_a_hideable_task_object above.
-        pytest.skip(f"{name} draws no task object per episode, so it declares no visibility.* leaf "
-                    f"and has nothing for this check to hide")
+        pytest.skip(
+            f"{name} draws no task object per episode, so it declares no visibility.* leaf "
+            f"and has nothing for this check to hide"
+        )
     hidden = {p: 0 for p in paths}
-    other = {p: [0.2, 0.9, 0.4] for p in env.variation_space.names()
-             if p.split(".")[0] == "material"}
+    other = {p: [0.2, 0.9, 0.4] for p in env.variation_space.names() if p.split(".")[0] == "material"}
     assert other, f"{name} has no second appearance to bake in between"
 
     from stable_envs.envs import dmcontrol as D
+
     st = sampled_states(env, 8, seed=0)
-    ss = env.ss + 1                        # a supersample nothing has cached for this scene
+    ss = env.ss + 1  # a supersample nothing has cached for this scene
 
     D._SCENE_CACHE.clear()
     alone = env.render(st, variation=hidden, supersample=ss).cpu().numpy()
 
     D._SCENE_CACHE.clear()
-    env.render(st, variation=hidden)                   # bake the hidden scene at the default ss
-    env.render(st, variation=other)                    # ... then bake a DIFFERENT appearance
+    env.render(st, variation=hidden)  # bake the hidden scene at the default ss
+    env.render(st, variation=other)  # ... then bake a DIFFERENT appearance
     after = env.render(st, variation=hidden, supersample=ss).cpu().numpy()
 
     d = np.abs(alone.astype(np.int16) - after.astype(np.int16)).max(-1)
@@ -1447,4 +1553,5 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
         f"{int(d.max())}/255 over {int((d > 0).sum())} pixel(s) in "
         f"{int((d.reshape(len(st), -1) > 0).any(1).sum())} of {len(st)} frames depending on whether "
         f"another appearance was baked first. A cached scene is reading the LIVE model instead of "
-        f"what it was baked from; see _bake's `sc.statics`")
+        f"what it was baked from; see _bake's `sc.statics`"
+    )

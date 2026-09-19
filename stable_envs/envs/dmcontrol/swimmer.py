@@ -8,19 +8,21 @@ no intersector — and the intersector now exists (``raycast3d._ellipsoid``, add
 torso), so without an explicit refusal swimmer would be DRAWN on CPU with no certification behind the
 frames. The refusal is therefore BY NAME, with the reason, and the GPU path is unaffected.
 """
+
 from __future__ import annotations
 
 from ._cells import trackcom_cell
-
 
 #: Conditions every ``visual_fidelity`` below was measured under. One string, so a reader cannot get a
 #: number without the conditions that produced it.
 #: swimmer's entry is measured under its own render context (``enable_specular=False``) and over four
 #: draws rather than three, so it carries its own provenance string rather than borrowing ``_AT``.
-_SWIMMER_AT = ("84 px, 64 states x 4 independent draws from sample_states, WORST of the four, "
-               "default appearance, enable_specular=False, one H200, mujoco 3.11.0 / warp 1.16.0, "
-               "against dm_control's physics.render at camera 0 "
-               "(scratch/altrender/probe_declare.py --config nospec_native --size 84 --draws 4)")
+_SWIMMER_AT = (
+    "84 px, 64 states x 4 independent draws from sample_states, WORST of the four, "
+    "default appearance, enable_specular=False, one H200, mujoco 3.11.0 / warp 1.16.0, "
+    "against dm_control's physics.render at camera 0 "
+    "(scratch/altrender/probe_declare.py --config nospec_native --size 84 --draws 4)"
+)
 
 
 #: The versions ``_SWIMMER_AT`` names, as fields. ``reference_versions`` holds the REFERENCE
@@ -46,10 +48,12 @@ _SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
 #: between its agentview and wrist cameras (``scratch/altrender/README.md``). Swimmer is the one
 #: domain where the gain is large (mean |diff| down 37%) rather than in the third decimal, so it is
 #: the one domain that sets the flag.
-SPECULAR_NOTE = ("This domain renders with enable_specular=False, which is measured to be BETTER "
-                 "than the default on all four declared metrics as well as 1.30x faster (see "
-                 "SPECULAR_NOTE in stable_envs/envs/dmcontrol.py for the per-domain table and for "
-                 "why hopper does not get it).")
+SPECULAR_NOTE = (
+    "This domain renders with enable_specular=False, which is measured to be BETTER "
+    "than the default on all four declared metrics as well as 1.30x faster (see "
+    "SPECULAR_NOTE in stable_envs/envs/dmcontrol.py for the per-domain table and for "
+    "why hopper does not get it)."
+)
 
 #: The one domain that overrides ``create_render_context``. Keyed by class name so the table above and
 #: the switch cannot drift apart.
@@ -72,18 +76,31 @@ VISUAL_FIDELITY: dict[str, dict] = {
     # 1.37x the measurement, floors 0.93x / 0.95x of it) rather than being tightened onto the
     # measurement, so they are far below the old ones without being fragile.
     "DMCSwimmerSwimmer6": {
-        "mean_abs": 3.45, "within8_frac": 0.917, "ssim": 0.986,
-        "interior_exact_frac": 0.515, "interior_mean_abs": 0.91,
-        "interior_frac": 0.0059, "all_exact_frac": 0.148,
-        "skybox_share": 0.000, "floor_share": 0.981,
+        "mean_abs": 3.45,
+        "within8_frac": 0.917,
+        "ssim": 0.986,
+        "interior_exact_frac": 0.515,
+        "interior_mean_abs": 0.91,
+        "interior_frac": 0.0059,
+        "all_exact_frac": 0.148,
+        "skybox_share": 0.000,
+        "floor_share": 0.981,
         # the widest spread of the five, and it is the widened state doing it: swimmer draws its
         # target geom AND its target light per episode, so two draws differ in the scene and not only
         # in the pose. The ceiling is set from the worst of the four rather than from the mean.
-        "draw_spread": {"mean_abs": [3.223, 3.452], "within8_frac": [0.917, 0.921],
-                        "ssim": [0.986, 0.986], "interior_exact_frac": [0.515, 0.657]},
-        "mean_abs_max": 4.8, "within8_min": 0.85, "ssim_min": 0.94, "measured_at": _SWIMMER_AT,
+        "draw_spread": {
+            "mean_abs": [3.223, 3.452],
+            "within8_frac": [0.917, 0.921],
+            "ssim": [0.986, 0.986],
+            "interior_exact_frac": [0.515, 0.657],
+        },
+        "mean_abs_max": 4.8,
+        "within8_min": 0.85,
+        "ssim_min": 0.94,
+        "measured_at": _SWIMMER_AT,
         "reference_versions": _SWIMMER_AT_VERSIONS,
-        "measured_with": _SWIMMER_AT_MEASURED_WITH},
+        "measured_with": _SWIMMER_AT_MEASURED_WITH,
+    },
     # quadruped at the registered SWM default (camera 2, 224 px). Three residuals, per surface off the
     # segmentation buffer (examples/results/step7/dmc-quadruped/findings.md S5): the floor near the
     # body -- the body's REFLECTION in the reflectance-0.2 floor and its shadow -- carries ~half of
@@ -92,8 +109,12 @@ VISUAL_FIDELITY: dict[str, dict] = {
 }
 
 DMCSwimmerSwimmer6 = trackcom_cell(
-    "DMCSwimmerSwimmer6", "swimmer", "swimmer6", 0,
+    "DMCSwimmerSwimmer6",
+    "swimmer",
+    "swimmer6",
+    0,
     VISUAL_FIDELITY["DMCSwimmerSwimmer6"],
     render_flags=TRACKCOM_RENDER_FLAGS["DMCSwimmerSwimmer6"],
     note_suffix=SPECULAR_NOTE,
-    CPU_UNCERTIFIED_REASON=CPU_UNCERTIFIED_REASON)
+    CPU_UNCERTIFIED_REASON=CPU_UNCERTIFIED_REASON,
+)

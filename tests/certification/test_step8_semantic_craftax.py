@@ -10,6 +10,7 @@ document cannot be edited away from its own numbers without the suite failing.
 They assert nothing about the renderer — that is Gate A's job — and they run no render, so they
 stay fast and need no reference interpreter.
 """
+
 from __future__ import annotations
 
 import json
@@ -22,8 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REC = ROOT / "examples" / "results" / "step8" / "semantic"
 DOC = ROOT / "docs" / "research" / "step8_semantic_craftax.md"
 
-SIZES = {("CraftaxClassic", "7"), ("CraftaxClassic", "16"),
-         ("CraftaxFull", "10"), ("CraftaxFull", "16")}
+SIZES = {("CraftaxClassic", "7"), ("CraftaxClassic", "16"), ("CraftaxFull", "10"), ("CraftaxFull", "16")}
 
 
 def load(name: str) -> dict:
@@ -81,8 +81,12 @@ def test_the_reference_is_the_declared_one(identity):
 def test_every_digest_quoted_in_the_findings_is_one_the_recheck_measured(findings, identity):
     quoted = set(re.findall(r"\b[0-9a-f]{64}\b", findings))
     assert quoted, "the findings quote no digest at all"
-    measured = {e[k] for row in identity["cells"].values() for e in row["sizes"].values()
-                for k in ("digest_ours", "digest_official")}
+    measured = {
+        e[k]
+        for row in identity["cells"].values()
+        for e in row["sizes"].values()
+        for k in ("digest_ours", "digest_official")
+    }
     assert quoted <= measured, quoted - measured
 
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Print working-tree sizes for the v0 weight trees. Classification only; deletes nothing."""
+
 from __future__ import annotations
 
 import subprocess

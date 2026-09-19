@@ -1,4 +1,5 @@
 """Shared measurement and provenance helpers for the two public benchmark scripts."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,9 +10,10 @@ import platform
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import torch
 
@@ -59,29 +61,36 @@ def native_int(value: str) -> int | None:
 
 
 def add_common_arguments(parser: argparse.ArgumentParser, *, batches: bool) -> None:
-    parser.add_argument("--envs", type=names, default=["PushT"],
-                        help="comma-separated canonical environment names (default: PushT)")
+    parser.add_argument(
+        "--envs", type=names, default=["PushT"], help="comma-separated canonical environment names (default: PushT)"
+    )
     if batches:
-        parser.add_argument("--batches", type=positive_ints, default=[1, 16, 64, 256],
-                            help="comma-separated batch sizes")
+        parser.add_argument(
+            "--batches", type=positive_ints, default=[1, 16, 64, 256], help="comma-separated batch sizes"
+        )
     else:
         parser.add_argument("--batch", type=positive_int, default=64)
-    parser.add_argument("--device", default="cpu",
-                        help="torch device, for example cpu, cuda, or cuda:1")
-    parser.add_argument("--warmup", type=nonnegative_int, default=5,
-                        help="untimed calls before measurement")
-    parser.add_argument("--repeats", type=positive_int, default=10,
-                        help="synchronized timed calls")
+    parser.add_argument("--device", default="cpu", help="torch device, for example cpu, cuda, or cuda:1")
+    parser.add_argument("--warmup", type=nonnegative_int, default=5, help="untimed calls before measurement")
+    parser.add_argument("--repeats", type=positive_int, default=10, help="synchronized timed calls")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--threads", type=positive_int, default=1,
-                        help="torch/OpenMP/MKL CPU thread budget (recorded on every device)")
-    parser.add_argument("--size", type=native_int, default=None,
-                        help="output size, or native to leave the environment default unchanged")
-    parser.add_argument("--supersample", type=native_int, default=None,
-                        help="supersampling factor, or native to leave the environment default unchanged")
+    parser.add_argument(
+        "--threads", type=positive_int, default=1, help="torch/OpenMP/MKL CPU thread budget (recorded on every device)"
+    )
+    parser.add_argument(
+        "--size",
+        type=native_int,
+        default=None,
+        help="output size, or native to leave the environment default unchanged",
+    )
+    parser.add_argument(
+        "--supersample",
+        type=native_int,
+        default=None,
+        help="supersampling factor, or native to leave the environment default unchanged",
+    )
     parser.add_argument("--backend", default="auto")
-    parser.add_argument("--output", default="-",
-                        help="JSON path, or - for stdout (default)")
+    parser.add_argument("--output", default="-", help="JSON path, or - for stdout (default)")
     parser.add_argument("--pretty", action="store_true", help="indent JSON output")
 
 
@@ -94,17 +103,16 @@ def checked_device(value: str) -> torch.device:
         if not torch.cuda.is_available():
             raise ValueError(
                 f"device {value!r} requested, but torch.cuda.is_available() is false; "
-                "choose --device cpu or run in a CUDA-enabled interpreter")
+                "choose --device cpu or run in a CUDA-enabled interpreter"
+            )
         index = 0 if device.index is None else device.index
         visible = torch.cuda.device_count()
         if index >= visible:
-            raise ValueError(
-                f"device {value!r} requested, but torch.cuda.device_count() is {visible}")
+            raise ValueError(f"device {value!r} requested, but torch.cuda.device_count() is {visible}")
     if device.type == "mps":
         available = getattr(torch.backends, "mps", None)
         if available is None or not torch.backends.mps.is_available():
-            raise ValueError(
-                "device 'mps' requested, but torch.backends.mps.is_available() is false")
+            raise ValueError("device 'mps' requested, but torch.backends.mps.is_available() is false")
     return device
 
 
@@ -133,8 +141,7 @@ def _percentile(samples: list[float], fraction: float) -> float:
     return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
 
 
-def measure(fn: Callable[[], Any], *, device: torch.device, warmup: int,
-            repeats: int) -> dict[str, Any]:
+def measure(fn: Callable[[], Any], *, device: torch.device, warmup: int, repeats: int) -> dict[str, Any]:
     """Measure synchronized caller-visible wall time; keep samples so spread remains visible."""
     for _ in range(warmup):
         fn()
@@ -187,6 +194,7 @@ def env_kwargs(args: argparse.Namespace, batch: int) -> dict[str, Any]:
 def public_env(name: str, kwargs: dict[str, Any]):
     """Construct via the canonical class when ``name`` is public; otherwise ``snv.make``."""
     import stable_envs as snv
+
     cls = getattr(snv, name, None)
     if isinstance(cls, type) and issubclass(cls, snv.Env) and cls is not snv.Env:
         return cls(**kwargs)
@@ -206,8 +214,7 @@ def _version(distribution: str) -> str | None:
 
 def _git_revision() -> str | None:
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, timeout=5)
+        result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, timeout=5)
     except (OSError, subprocess.SubprocessError):
         return None
     return result.stdout.strip() if result.returncode == 0 else None
@@ -233,16 +240,12 @@ def provenance(*, benchmark: str, args: argparse.Namespace, snv_version: str) ->
         "cpu_count_affinity": affinity,
         "load_average_start": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
         "argv": [sys.executable, *sys.argv],
-        "config": {
-            key: value for key, value in vars(args).items()
-            if key not in {"output", "pretty"}
-        },
+        "config": {key: value for key, value in vars(args).items() if key not in {"output", "pretty"}},
     }
 
 
 def write_json(record: dict[str, Any], output: str, *, pretty: bool) -> None:
-    text = json.dumps(
-        record, indent=2 if pretty else None, sort_keys=True, allow_nan=False) + "\n"
+    text = json.dumps(record, indent=2 if pretty else None, sort_keys=True, allow_nan=False) + "\n"
     if output == "-":
         sys.stdout.write(text)
         return

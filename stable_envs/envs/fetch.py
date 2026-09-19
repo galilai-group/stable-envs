@@ -100,6 +100,7 @@ and the table reports what a caller gets. Supersampling was measured and is NOT 
 2.9x the time and moves whole-frame exactness by +0.0016 (0.92313 -> 0.92472 on Reach), because the
 residual is shading rather than coverage.
 """
+
 from __future__ import annotations
 
 import os
@@ -133,15 +134,16 @@ import mujoco as _mj
 _VENV = "/mnt/vast/home/randall.balestriero/venvs/se-fetch"
 _missing = [_m for _m in ("warp", "mujoco_warp") if _ilu.find_spec(_m) is None]
 _mjver = tuple(int(x) for x in str(_mj.__version__).split(".")[:2])
-if _missing or _mjver < (3, 11):                                              # pragma: no cover
+if _missing or _mjver < (3, 11):  # pragma: no cover
     raise ImportError(
-        f"the Fetch family renders its 18 robot meshes with mujoco_warp's batch raytracer, which this "
-        f"interpreter cannot run: "
+        "the Fetch family renders its 18 robot meshes with mujoco_warp's batch raytracer, which this "
+        "interpreter cannot run: "
         + (f"missing {', '.join(_missing)}; " if _missing else "")
         + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11. The envs were measured in "
         f"{_VENV}, built with `python -m venv --system-site-packages` so that only mujoco is shadowed "
         f"and gymnasium, gymnasium-robotics, torch, triton and scipy stay shared. See "
-        f"docs/research/fetch.md")
+        f"docs/research/fetch.md"
+    )
 
 from ..env import Env
 from ..registry import register
@@ -150,17 +152,29 @@ from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
 #: The four distinct scenes, and the MJCF each is compiled from.
-SCENE_XML = {"Reach": "reach.xml", "Push": "push.xml", "Slide": "slide.xml",
-             "PickAndPlace": "pick_and_place.xml"}
+SCENE_XML = {"Reach": "reach.xml", "Push": "push.xml", "Slide": "slide.xml", "PickAndPlace": "pick_and_place.xml"}
 
 #: ``qpos`` layout, from the body tree in ``fetch/robot.xml``. Asserted against the compiled model at
 #: construction — a mislabelled state vector is worse than an unlabelled one, because everything
 #: downstream silently indexes the wrong number.
-ROBOT_JOINTS = ("slide0", "slide1", "slide2", "torso_lift", "head_pan", "head_tilt",
-                "shoulder_pan", "shoulder_lift", "upperarm_roll", "elbow_flex", "forearm_roll",
-                "wrist_flex", "wrist_roll", "r_gripper_finger", "l_gripper_finger")
-OBJECT_JOINT = ("object_x", "object_y", "object_z",
-                "object_quat_w", "object_quat_x", "object_quat_y", "object_quat_z")
+ROBOT_JOINTS = (
+    "slide0",
+    "slide1",
+    "slide2",
+    "torso_lift",
+    "head_pan",
+    "head_tilt",
+    "shoulder_pan",
+    "shoulder_lift",
+    "upperarm_roll",
+    "elbow_flex",
+    "forearm_roll",
+    "wrist_flex",
+    "wrist_roll",
+    "r_gripper_finger",
+    "l_gripper_finger",
+)
+OBJECT_JOINT = ("object_x", "object_y", "object_z", "object_quat_w", "object_quat_x", "object_quat_y", "object_quat_z")
 GOAL_NAMES = ("goal_x", "goal_y", "goal_z")
 
 #: The blue the MJCF's ``robot0:blue`` default class paints five links, used to identify the geoms the
@@ -217,6 +231,7 @@ _CAM_CACHE = _RES.BoundedCache(256, name="fetch.cam")
 
 def _asset_dir() -> str:
     import gymnasium_robotics as gr
+
     return os.path.join(os.path.dirname(gr.__file__), "envs", "assets", "fetch")
 
 
@@ -279,8 +294,14 @@ def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
     convention away from a picture that looks right and is not the reference's.
     """
     import mujoco
-    key = (id(m), tuple(np.round(np.asarray(lookat, np.float64), 9).tolist()),
-           round(float(distance), 9), round(float(azimuth), 9), round(float(elevation), 9))
+
+    key = (
+        id(m),
+        tuple(np.round(np.asarray(lookat, np.float64), 9).tolist()),
+        round(float(distance), 9),
+        round(float(azimuth), 9),
+        round(float(elevation), 9),
+    )
     hit = _CAM_CACHE.get(key)
     if hit is not None:
         return hit
@@ -289,8 +310,7 @@ def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
     cam.lookat[:] = np.asarray(lookat, np.float64)
     cam.distance, cam.azimuth, cam.elevation = float(distance), float(azimuth), float(elevation)
     scn = mujoco.MjvScene(m, maxgeom=int(m.ngeom) + int(m.nsite) + 8)
-    mujoco.mjv_updateScene(m, d, mujoco.MjvOption(), mujoco.MjvPerturb(), cam,
-                           mujoco.mjtCatBit.mjCAT_STATIC, scn)
+    mujoco.mjv_updateScene(m, d, mujoco.MjvOption(), mujoco.MjvPerturb(), cam, mujoco.mjtCatBit.mjCAT_STATIC, scn)
     e0, e1 = scn.camera[0], scn.camera[1]
     pos = 0.5 * (np.array(e0.pos, np.float64) + np.array(e1.pos, np.float64))
     fwd = np.array(e0.forward, np.float64)
@@ -308,8 +328,18 @@ def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
 class _Bundle:
     """Everything a Fetch scene needs that does not depend on the state, resolution or appearance."""
 
-    __slots__ = ("model", "data", "info", "pristine", "cam_defaults", "static", "movers",
-                 "nq", "has_object", "state_names")
+    __slots__ = (
+        "model",
+        "data",
+        "info",
+        "pristine",
+        "cam_defaults",
+        "static",
+        "movers",
+        "nq",
+        "has_object",
+        "state_names",
+    )
 
 
 def _build_bundle(scene: str) -> _Bundle:
@@ -328,11 +358,17 @@ def _build_bundle(scene: str) -> _Bundle:
     # The official env's camera, from ``MujocoFetchEnv.DEFAULT_CAMERA_CONFIG``, read off the reference
     # class rather than transcribed.
     from gymnasium_robotics.envs.fetch.fetch_env import DEFAULT_CAMERA_CONFIG as CC
-    cam_defaults = dict(lookat=np.asarray(CC["lookat"], np.float64),
-                        distance=float(CC["distance"]), azimuth=float(CC["azimuth"]),
-                        elevation=float(CC["elevation"]), fovy=float(base.vis.global_.fovy))
-    pos, quat = _free_cam_pose(base, d0, cam_defaults["lookat"], cam_defaults["distance"],
-                               cam_defaults["azimuth"], cam_defaults["elevation"])
+
+    cam_defaults = dict(
+        lookat=np.asarray(CC["lookat"], np.float64),
+        distance=float(CC["distance"]),
+        azimuth=float(CC["azimuth"]),
+        elevation=float(CC["elevation"]),
+        fovy=float(base.vis.global_.fovy),
+    )
+    pos, quat = _free_cam_pose(
+        base, d0, cam_defaults["lookat"], cam_defaults["distance"], cam_defaults["azimuth"], cam_defaults["elevation"]
+    )
 
     for i in range(base.ngeom + 1):
         spec.add_material(name=f"se:mat{i}")
@@ -405,8 +441,10 @@ def _build_bundle(scene: str) -> _Bundle:
                 obj = g
             elif np.allclose(rgba[:3], BLUE, atol=2e-3):
                 arm.append(g)
-            elif int(base.geom_matid[b]) >= 0 and mujoco.mj_id2name(
-                    base, mujoco.mjtObj.mjOBJ_MATERIAL, int(base.geom_matid[b])) == "table_mat":
+            elif (
+                int(base.geom_matid[b]) >= 0
+                and mujoco.mj_id2name(base, mujoco.mjtObj.mjOBJ_MATERIAL, int(base.geom_matid[b])) == "table_mat"
+            ):
                 table = g
             if rgba[3] < 1.0:
                 translucent.append(g)
@@ -441,24 +479,34 @@ def _build_bundle(scene: str) -> _Bundle:
     b.model, b.data = m, mujoco.MjData(m)
     b.nq = int(m.nq)
     b.has_object = obj >= 0
-    b.info = dict(cam=mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, "se:cam"),
-                  target=target, mat0=mat0, floor=floor, table=table, object=obj, arm=arm,
-                  goal_mocap=int(m.body_mocapid[
-                      mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "se:goalbody")]),
-                  translucent=translucent,
-                  names={g: (gname(g) or f"geom{g}") for g in range(m.ngeom)})
+    b.info = dict(
+        cam=mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, "se:cam"),
+        target=target,
+        mat0=mat0,
+        floor=floor,
+        table=table,
+        object=obj,
+        arm=arm,
+        goal_mocap=int(m.body_mocapid[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "se:goalbody")]),
+        translucent=translucent,
+        names={g: (gname(g) or f"geom{g}") for g in range(m.ngeom)},
+    )
     b.cam_defaults = cam_defaults
-    b.pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
-                      geom_rgba=np.array(m.geom_rgba, copy=True),
-                      light_diffuse=np.array(m.light_diffuse, copy=True),
-                      geom_group=np.array(m.geom_group, copy=True),
-                      cam_pos=np.array(m.cam_pos, copy=True),
-                      cam_quat=np.array(m.cam_quat, copy=True))
+    b.pristine = dict(
+        mat_rgba=np.array(m.mat_rgba, copy=True),
+        geom_rgba=np.array(m.geom_rgba, copy=True),
+        light_diffuse=np.array(m.light_diffuse, copy=True),
+        geom_group=np.array(m.geom_group, copy=True),
+        cam_pos=np.array(m.cam_pos, copy=True),
+        cam_quat=np.array(m.cam_quat, copy=True),
+    )
     # A geom is static iff its body is welded to the world and is not a mocap body. The goal sphere
     # lives on the worldbody but MOVES (its ``geom_pos`` is the goal), so it is named out explicitly.
-    b.static = [g for g in range(m.ngeom)
-                if g != target and int(m.body_weldid[m.geom_bodyid[g]]) == 0
-                and int(m.body_mocapid[m.geom_bodyid[g]]) < 0]
+    b.static = [
+        g
+        for g in range(m.ngeom)
+        if g != target and int(m.body_weldid[m.geom_bodyid[g]]) == 0 and int(m.body_mocapid[m.geom_bodyid[g]]) < 0
+    ]
     b.movers = np.array([g for g in range(m.ngeom) if g not in b.static], np.int64)
 
     names = list(ROBOT_JOINTS) + (list(OBJECT_JOINT) if b.has_object else []) + list(GOAL_NAMES)
@@ -470,8 +518,8 @@ def _build_bundle(scene: str) -> _Bundle:
         else:
             got.append(nm.replace("_joint", ""))
     assert tuple(got) == tuple(names[:-3]), (
-        f"{scene}: declared joint names {tuple(names[:-3])} do not match the model's layout "
-        f"{tuple(got)}")
+        f"{scene}: declared joint names {tuple(names[:-3])} do not match the model's layout {tuple(got)}"
+    )
     b.state_names = tuple(names)
     _MODEL_CACHE[scene] = b
     return b
@@ -485,9 +533,10 @@ def _renderer(scene: str, res: int):
     every LATER official render into a single flat colour.
     """
     import mujoco
+
     return _RENDERER_CACHE.get_or_build(
-        (scene, int(res)),
-        lambda: mujoco.Renderer(_build_bundle(scene).model, width=int(res), height=int(res)))
+        (scene, int(res)), lambda: mujoco.Renderer(_build_bundle(scene).model, width=int(res), height=int(res))
+    )
 
 
 class _Ctx:
@@ -498,9 +547,8 @@ class _Ctx:
 
 def _context(scene: str, res: int, nworld: int) -> _Ctx:
     import mujoco
-    import warp as wp
-
     import mujoco_warp as mjw
+    import warp as wp
 
     key = (scene, int(res), int(nworld))
     hit = _CTX_CACHE.get(key)
@@ -522,17 +570,24 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
     # (``scratch/perf/rounding.py``), against the 0.791 -> 0.9988 interior parity the rule is worth.
     with MW.gl_rounding():
         c.rc = MW.create_render_context(
-            m, nworld=int(nworld), cam_res=(int(res), int(res)), render_rgb=True, render_seg=True,
+            m,
+            nworld=int(nworld),
+            cam_res=(int(res), int(res)),
+            render_rgb=True,
+            render_seg=True,
             cam_active=[i == b.info["cam"] for i in range(m.ncam)],
-            enabled_geom_groups=list(VISIBLE_GROUPS), use_textures=True, use_shadows=False,
-            render_skybox=True, enable_specular=True)
+            enabled_geom_groups=list(VISIBLE_GROUPS),
+            use_textures=True,
+            use_shadows=False,
+            render_skybox=True,
+            enable_specular=True,
+        )
         _frame(c)
         wp.synchronize()
         # A VIEW of the warp buffer, and the channel swap is applied per render rather than here.
         # Doing ``[..., [2,1,0]]`` at construction is advanced indexing, which COPIES: the object would
         # hold one frozen frame while every later render wrote into the buffer behind it.
-        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(
-            int(nworld), int(res), int(res), 4)
+        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
         c.seg = wp.to_torch(c.rc.seg_data).reshape(int(nworld), int(res), int(res), 2)[..., 0]
         with c.wp.ScopedCapture() as cap:
             _frame(c)
@@ -575,13 +630,19 @@ class FetchBase(Env):
 
     SCENE: str = ""
     REF_ID: str = ""
-    default_size = 480                        # gymnasium-robotics' own DEFAULT_SIZE
+    default_size = 480  # gymnasium-robotics' own DEFAULT_SIZE
     default_supersample = 1
     #: Style leaves that change the STATIC scene and therefore the baked plate. Everything else is a
     #: property of a mover and is applied per environment inside the ray-cast, so the common case —
     #: randomise the goal or the arm colour, keep the room — never re-bakes anything.
-    PLATE_PATHS = ("floor.color", "table.color", "light.diffuse", "camera.distance_scale",
-                   "camera.azimuth_delta", "camera.elevation_delta")
+    PLATE_PATHS = (
+        "floor.color",
+        "table.color",
+        "light.diffuse",
+        "camera.distance_scale",
+        "camera.azimuth_delta",
+        "camera.elevation_delta",
+    )
     #: MEASURED, not chosen, and RE-MEASURED 2026-08-11 after the ``gl_rounding`` capture fix below.
     #: Over 64 states per scene from the env's own pool, interior agreement is 0.998814 (Push),
     #: 0.998800 (PickAndPlace), 0.998782 (Reach); the floor sits below the worst of those so a state
@@ -620,10 +681,18 @@ class FetchBase(Env):
         "other pixel. What is NOT in these numbers, because it was found and fixed: the float->uint8 "
         "quantisation rule (mujoco_warp truncates, GL rounds), worth interior 0.791 -> 0.9988 on its "
         "own. The static 91% of the frame -- floor, table, skybox -- is exact by construction, because "
-        "it is baked through MuJoCo itself.")
+        "it is baked through MuJoCo itself."
+    )
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         """``num_envs`` environments on ``device`` (contract §2).
 
         ``state_dim``, ``state_names`` and ``state_layout`` are read off the COMPILED MODEL here and
@@ -641,12 +710,16 @@ class FetchBase(Env):
         # configuration, and ``goal`` is the task target the env writes to a MOCAP body rather than
         # to the simulator — a different kind of quantity, and the one the goal sphere is drawn from.
         self.state_layout = ((("qpos",), int(b.nq), 0), (("goal",), 3, int(b.nq)))
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         self._b = b
-        assert b.nq + 3 == self.state_dim, (
-            f"{type(self).__name__}: model nq={b.nq} but state_dim={self.state_dim}")
+        assert b.nq + 3 == self.state_dim, f"{type(self).__name__}: model nq={b.nq} but state_dim={self.state_dim}"
         self._check_plate_is_constant()
 
     # ---- Step-9 state -----------------------------------------------------
@@ -691,7 +764,8 @@ class FetchBase(Env):
         assert d == 0, (
             f"{type(self).__name__}: the baked static plate differs by {d}/255 between two states with "
             f"every mover hidden, so the floor/table/skybox are NOT a function of the appearance alone "
-            f"and the plate design is unsound for this scene")
+            f"and the plate design is unsound for this scene"
+        )
 
     # ---- variation ------------------------------------------------------------------------
 
@@ -732,25 +806,51 @@ class FetchBase(Env):
         m, info = b.model, b.info
         base = b.pristine["mat_rgba"]
         space = {
-            "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                        init_value=base[info["mat0"] + info["floor"], :3].tolist())}),
-            "table": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                        init_value=base[info["mat0"] + info["table"], :3].tolist())}),
-            "goal": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                       init_value=base[info["mat0"] + info["target"], :3].tolist())}),
-            "arm": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                      init_value=base[info["mat0"] + info["arm"][0], :3].tolist())}),
+            "floor": Dict(
+                {
+                    "color": Box(
+                        low=0.0, high=1.0, shape=(3,), init_value=base[info["mat0"] + info["floor"], :3].tolist()
+                    )
+                }
+            ),
+            "table": Dict(
+                {
+                    "color": Box(
+                        low=0.0, high=1.0, shape=(3,), init_value=base[info["mat0"] + info["table"], :3].tolist()
+                    )
+                }
+            ),
+            "goal": Dict(
+                {
+                    "color": Box(
+                        low=0.0, high=1.0, shape=(3,), init_value=base[info["mat0"] + info["target"], :3].tolist()
+                    )
+                }
+            ),
+            "arm": Dict(
+                {
+                    "color": Box(
+                        low=0.0, high=1.0, shape=(3,), init_value=base[info["mat0"] + info["arm"][0], :3].tolist()
+                    )
+                }
+            ),
             "light": Dict({"diffuse": Box(low=0.0, high=2.0, shape=(1,), init_value=[1.0])}),
-            "camera": Dict({
-                "distance_scale": Box(low=0.6, high=1.6, shape=(1,), init_value=[1.0]),
-                "azimuth_delta": Box(low=-25.0, high=25.0, shape=(1,), init_value=[0.0]),
-                "elevation_delta": Box(low=-20.0, high=20.0, shape=(1,), init_value=[0.0]),
-            }),
+            "camera": Dict(
+                {
+                    "distance_scale": Box(low=0.6, high=1.6, shape=(1,), init_value=[1.0]),
+                    "azimuth_delta": Box(low=-25.0, high=25.0, shape=(1,), init_value=[0.0]),
+                    "elevation_delta": Box(low=-20.0, high=20.0, shape=(1,), init_value=[0.0]),
+                }
+            ),
         }
         if b.has_object:
-            space["object"] = Dict({"color": Box(
-                low=0.0, high=1.0, shape=(3,),
-                init_value=base[info["mat0"] + info["object"], :3].tolist())})
+            space["object"] = Dict(
+                {
+                    "color": Box(
+                        low=0.0, high=1.0, shape=(3,), init_value=base[info["mat0"] + info["object"], :3].tolist()
+                    )
+                }
+            )
         return Dict(space)
 
     def _var(self, variation, path) -> np.ndarray:
@@ -765,16 +865,23 @@ class FetchBase(Env):
         b = self._b if hasattr(self, "_b") else _build_bundle(self.SCENE)
         c = b.cam_defaults
         return _free_cam_pose(
-            b.model, b.data, c["lookat"],
+            b.model,
+            b.data,
+            c["lookat"],
             c["distance"] * float(self._var(variation, "camera.distance_scale")[0]),
             c["azimuth"] + float(self._var(variation, "camera.azimuth_delta")[0]),
-            c["elevation"] + float(self._var(variation, "camera.elevation_delta")[0]))
+            c["elevation"] + float(self._var(variation, "camera.elevation_delta")[0]),
+        )
 
     # ---- the plate ------------------------------------------------------------------------
 
     def _plate_key(self, res, variation):
-        return (self.SCENE, int(res), str(self.device),
-                *[tuple(np.round(self._var(variation, p), 6).tolist()) for p in self.PLATE_PATHS])
+        return (
+            self.SCENE,
+            int(res),
+            str(self.device),
+            *[tuple(np.round(self._var(variation, p), 6).tolist()) for p in self.PLATE_PATHS],
+        )
 
     def _plate(self, res, variation) -> torch.Tensor:
         key = self._plate_key(res, variation)
@@ -791,6 +898,7 @@ class FetchBase(Env):
         MULTIPLIER and would otherwise compound.
         """
         import mujoco
+
         b = _build_bundle(self.SCENE)
         m, d, info = b.model, b.data, b.info
         pr = b.pristine
@@ -812,7 +920,7 @@ class FetchBase(Env):
         keep = np.array(m.geom_group, copy=True)
         m.geom_group[b.movers] = HIDDEN_GROUP
         if states is not None:
-            d.qpos[:] = np.asarray(states, np.float64)[:b.nq]
+            d.qpos[:] = np.asarray(states, np.float64)[: b.nq]
         d.qvel[:] = 0.0
         mujoco.mj_forward(m, d)
         r = _renderer(self.SCENE, int(res))
@@ -825,16 +933,22 @@ class FetchBase(Env):
     # ---- render ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
 
         The MJWarp pass is ONE call for the whole batch — colours, light and camera are per-world model
         fields, so nothing about a per-environment appearance splits it. Only the baked plate is shared
         per appearance, and it is gathered per row afterwards.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])
@@ -850,10 +964,10 @@ class FetchBase(Env):
         uniq, inv, offs = _style_groups(sty, self.PLATE_PATHS, B)
         plates, plates1 = [], []
         for row in uniq:
-            over = {p: row[a:a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
+            over = {p: row[a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
             plates.append(self._plate(res, over))
             plates1.append(plates[-1] if ss == 1 else self._plate(size, over))
-        plates_t = torch.stack(plates)                        # (G, res, res, 3)
+        plates_t = torch.stack(plates)  # (G, res, res, 3)
         plates1_t = plates_t if ss == 1 else torch.stack(plates1)
         grp = torch.as_tensor(inv, device=self.device, dtype=torch.long)
         # HOISTED OUT OF THE CHUNK LOOP. Both are functions of the batch and the style, not of the
@@ -885,9 +999,14 @@ class FetchBase(Env):
             if ss == 1:
                 buf[lo:hi] = comp
             else:
-                small = (comp.to(torch.float32)
-                         .reshape(n, size, ss, size, ss, 3).mean((2, 4)).round_()
-                         .clamp_(0, 255).to(torch.uint8))
+                small = (
+                    comp.to(torch.float32)
+                    .reshape(n, size, ss, size, ss, 3)
+                    .mean((2, 4))
+                    .round_()
+                    .clamp_(0, 255)
+                    .to(torch.uint8)
+                )
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 pl1 = plates1_t[0] if len(uniq) == 1 else plates1_t[g]
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
@@ -904,23 +1023,22 @@ class FetchBase(Env):
         """
         keys = ("camera.distance_scale", "camera.azimuth_delta", "camera.elevation_delta")
         uniq, inv, offs = _style_groups(sty, keys, B)
-        poses = [self._camera({k: r[a:a + w] for k, (a, w) in zip(keys, offs)}) for r in uniq]
-        pos = torch.as_tensor(np.stack([p for p, _ in poses])[inv], device=self.device,
-                              dtype=torch.float32)
-        quat = torch.as_tensor(np.stack([q for _, q in poses])[inv], device=self.device,
-                               dtype=torch.float32)
+        poses = [self._camera({k: r[a : a + w] for k, (a, w) in zip(keys, offs)}) for r in uniq]
+        pos = torch.as_tensor(np.stack([p for p, _ in poses])[inv], device=self.device, dtype=torch.float32)
+        quat = torch.as_tensor(np.stack([q for _, q in poses])[inv], device=self.device, dtype=torch.float32)
         return pos, quat
 
-    def _upload(self, c: _Ctx, s: torch.Tensor, sty, lo: int, hi: int, nw: int,
-                campos: torch.Tensor, camquat: torch.Tensor) -> None:
+    def _upload(
+        self, c: _Ctx, s: torch.Tensor, sty, lo: int, hi: int, nw: int, campos: torch.Tensor, camquat: torch.Tensor
+    ) -> None:
         """Write the batch's state and appearance into the context's per-world model/data arrays."""
         b = self._b
         info = b.info
         n = hi - lo
         wp = c.wp
         qpos = wp.to_torch(c.wd.qpos)
-        qpos[:n] = s[:, :b.nq]
-        wp.to_torch(c.wd.mocap_pos)[:n, info["goal_mocap"]] = s[:, b.nq:b.nq + 3]
+        qpos[:n] = s[:, : b.nq]
+        wp.to_torch(c.wd.mocap_pos)[:n, info["goal_mocap"]] = s[:, b.nq : b.nq + 3]
         mat = wp.to_torch(c.wm.mat_rgba)
         m0 = info["mat0"]
         mat[:n, m0 + info["floor"], :3] = sty["floor.color"][lo:hi]
@@ -928,12 +1046,14 @@ class FetchBase(Env):
         mat[:n, m0 + info["target"], :3] = sty["goal.color"][lo:hi]
         # ONE indexed write for the arm's materials rather than one per material: the loop issued a
         # kernel per arm geom (11 on the Fetch scenes) to broadcast the same colour into each.
-        mat[:n, self._idx("arm.mats", m0 + np.asarray(info["arm"], np.int64)), :3] = (
-            sty["arm.color"][lo:hi].unsqueeze(1))
+        mat[:n, self._idx("arm.mats", m0 + np.asarray(info["arm"], np.int64)), :3] = sty["arm.color"][lo:hi].unsqueeze(
+            1
+        )
         if b.has_object:
             mat[:n, m0 + info["object"], :3] = sty["object.color"][lo:hi]
-        wp.to_torch(c.wm.light_diffuse)[:n] = (
-            self._light0().unsqueeze(0) * sty["light.diffuse"][lo:hi].reshape(n, 1, 1))
+        wp.to_torch(c.wm.light_diffuse)[:n] = self._light0().unsqueeze(0) * sty["light.diffuse"][lo:hi].reshape(
+            n, 1, 1
+        )
         cam = info["cam"]
         wp.to_torch(c.wm.cam_pos)[:n, cam] = campos[lo:hi]
         wp.to_torch(c.wm.cam_quat)[:n, cam] = camquat[lo:hi]
@@ -953,13 +1073,14 @@ class FetchBase(Env):
 
     def _idx(self, key: str, values) -> torch.Tensor:
         """A device index tensor, built once per env. ``as_tensor`` per chunk is a host copy each."""
-        return self._cached(key, lambda: torch.as_tensor(np.asarray(values, np.int64),
-                                                         device=self.device))
+        return self._cached(key, lambda: torch.as_tensor(np.asarray(values, np.int64), device=self.device))
 
     def _light0(self) -> torch.Tensor:
         """The model's pristine ``light_diffuse``, on device: what ``light.diffuse`` scales."""
-        return self._cached("light0", lambda: torch.as_tensor(
-            self._b.pristine["light_diffuse"], device=self.device, dtype=torch.float32))
+        return self._cached(
+            "light0",
+            lambda: torch.as_tensor(self._b.pristine["light_diffuse"], device=self.device, dtype=torch.float32),
+        )
 
     def _mover_lut(self) -> torch.Tensor:
         """``(ngeom+1,)`` bool: is this segmentation id a mover? Indexed, not searched.
@@ -969,6 +1090,7 @@ class FetchBase(Env):
         at 1.07 ms per chunk before and 0.05 ms after, which on a batch of 1024 is 16 ms of a 73 ms
         render. The table is one bool per geom, built once per env.
         """
+
         def build():
             lut = torch.zeros(int(self._b.model.ngeom) + 1, dtype=torch.bool, device=self.device)
             lut[torch.as_tensor(np.asarray(self._b.movers, np.int64) + 1, device=self.device)] = True
@@ -998,6 +1120,7 @@ class FetchBase(Env):
         """A FRESH official env at the requested resolution. Never closed — see ``_renderer``."""
         import gymnasium
         import gymnasium_robotics  # noqa: F401
+
         gymnasium.register_envs(gymnasium_robotics)
         return gymnasium.make(cls.REF_ID, render_mode="rgb_array", width=int(size), height=int(size))
 
@@ -1023,7 +1146,7 @@ class FetchBase(Env):
         for st in np.asarray(states, np.float64):
             d.qpos[:] = st[:nq]
             d.qvel[:] = 0.0
-            u.goal = st[nq:nq + 3].copy()
+            u.goal = st[nq : nq + 3].copy()
             mujoco.mj_forward(m, d)
             mujoco_utils.reset_mocap2body_xpos(m, d)
             mujoco.mj_forward(m, d)
@@ -1036,7 +1159,8 @@ class FetchBase(Env):
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested state (max "
                     f"{err:.3e}); every parity number computed from it would be comparing two "
-                    f"different scenes")
+                    f"different scenes"
+                )
             out.append(np.ascontiguousarray(u.render()))
             if not checked:
                 checked = True
@@ -1060,16 +1184,20 @@ class FetchBase(Env):
         want = _build_bundle(cls.SCENE).cam_defaults
         got = (float(c.distance), float(c.azimuth), float(c.elevation))
         exp = (want["distance"], want["azimuth"], want["elevation"])
-        bad = (int(c.type) != 0 or int(c.fixedcamid) != -1
-               or max(abs(a - b) for a, b in zip(got, exp)) > 1e-9
-               or float(np.abs(np.asarray(c.lookat) - want["lookat"]).max()) > 1e-9)
+        bad = (
+            int(c.type) != 0
+            or int(c.fixedcamid) != -1
+            or max(abs(a - b) for a, b in zip(got, exp)) > 1e-9
+            or float(np.abs(np.asarray(c.lookat) - want["lookat"]).max()) > 1e-9
+        )
         if bad:
             raise AssertionError(
                 f"{cls.__name__}: the official renderer's camera is "
                 f"(type {int(c.type)}, fixed {int(c.fixedcamid)}, distance {got[0]}, azimuth "
                 f"{got[1]}, elevation {got[2]}, lookat {np.asarray(c.lookat).tolist()}) but se:cam was "
                 f"built from (FREE, {exp}, lookat {want['lookat'].tolist()}). Every parity number "
-                f"would be comparing two different viewpoints")
+                f"would be comparing two different viewpoints"
+            )
 
 
 def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) -> np.ndarray:
@@ -1082,6 +1210,7 @@ def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) 
         return hit
     import gymnasium
     import gymnasium_robotics  # noqa: F401
+
     gymnasium.register_envs(gymnasium_robotics)
     env = gymnasium.make(ref_id)
     u = env.unwrapped
@@ -1107,9 +1236,9 @@ def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) 
             # the moment the gripper touches it, and it is what an offline dataset contains.
             yaw = float(rng.uniform(-np.pi, np.pi))
             adr = len(ROBOT_JOINTS)
-            q[adr + 3:adr + 7] = [np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2)]
+            q[adr + 3 : adr + 7] = [np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2)]
         out[i, :nq] = q
-        out[i, nq:nq + 3] = np.asarray(u.goal, np.float64)
+        out[i, nq : nq + 3] = np.asarray(u.goal, np.float64)
     env.close()
     _POOL_CACHE[scene] = out
     return out
@@ -1141,17 +1270,26 @@ def _make_classes() -> dict[str, type]:
     """
     made = {}
     for cname, scene, ref in CELLS:
-        suffix = cname[len(f"Fetch{scene}"):]
-        made[cname] = register(type(cname, (FetchBase,), dict(
-            SCENE=scene, REF_ID=ref,
-            name=f"fetch-{scene.lower()}" + (f"-{suffix.lower()}" if suffix else ""),
-            reference_id=ref,
-            __module__=__name__,
-            __doc__=(f"gymnasium-robotics {ref} (swm/Fetch{scene}{suffix}-v3). State is qpos plus the "
-                     f"3-D goal; the {suffix or 'sparse'} variant differs from its siblings in the "
-                     f"reward and the observation container, neither of which reaches the renderer, so "
-                     f"it shares the {scene} plate and model."),
-        )))
+        suffix = cname[len(f"Fetch{scene}") :]
+        made[cname] = register(
+            type(
+                cname,
+                (FetchBase,),
+                dict(
+                    SCENE=scene,
+                    REF_ID=ref,
+                    name=f"fetch-{scene.lower()}" + (f"-{suffix.lower()}" if suffix else ""),
+                    reference_id=ref,
+                    __module__=__name__,
+                    __doc__=(
+                        f"gymnasium-robotics {ref} (swm/Fetch{scene}{suffix}-v3). State is qpos plus the "
+                        f"3-D goal; the {suffix or 'sparse'} variant differs from its siblings in the "
+                        f"reward and the observation container, neither of which reaches the renderer, so "
+                        f"it shares the {scene} plate and model."
+                    ),
+                ),
+            )
+        )
     return made
 
 

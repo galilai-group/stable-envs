@@ -5,6 +5,10 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      - id: trailing-whitespace
+        exclude: ^(docs/|scratch/|examples/results/|examples/paper/|docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/|.*\.md$|.*\.json$)
+      - id: end-of-file-fixer
+        exclude: ^(docs/|scratch/|examples/results/|examples/paper/|docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/|.*\.md$|.*\.json$)
       - id: check-ast
       - id: check-case-conflict
       - id: check-json
@@ -19,13 +23,24 @@ repos:
         args: [--maxkb=1000]
         exclude: ^(docs/assets/media/|examples/results/|examples/paper/)
 
-  # Step 9 deliberately does not reformat the research history. This safety
-  # ruleset catches syntax errors and undefined names across maintained Python
-  # without creating a repository-wide style migration.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.0
     hooks:
       - id: ruff
-        args: [--no-fix]
+        args: [--fix, --exit-non-zero-on-fix]
         types_or: [python, pyi]
-        files: ^(stable_envs/|tests/|scratch/step9/packaging-ci/)
+        files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
+        exclude: ^(examples/results/|examples/paper/)
+      - id: ruff-format
+        types_or: [python, pyi]
+        files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
+        exclude: ^(examples/results/|examples/paper/)
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        require_serial: true
+        # Cluster launchers trip info/warning on intentional word-splitting and `cd`.
+        args: [--severity=error]
+        exclude: ^(scratch/|docs/)

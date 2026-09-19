@@ -22,6 +22,7 @@ env it builds lands in the process-wide cache and the parity tests that follow p
 
 Run standalone:  python -m stable_envs.testing.node_health
 """
+
 from __future__ import annotations
 
 import os
@@ -34,8 +35,24 @@ import subprocess
 #: ``resv`` is deliberately NOT here: a node inside a reservation is a perfectly healthy node that your
 #: job is entitled to be on, and refusing it would be a gate that fires on a good machine — which gets
 #: the gate disabled, which is worse than not having one.
-CONDEMNED_STATES = frozenset({"down", "drain", "drng", "draining", "drained", "fail", "failing",
-                              "maint", "err", "error", "unk", "unknown", "boot", "reboot"})
+CONDEMNED_STATES = frozenset(
+    {
+        "down",
+        "drain",
+        "drng",
+        "draining",
+        "drained",
+        "fail",
+        "failing",
+        "maint",
+        "err",
+        "error",
+        "unk",
+        "unknown",
+        "boot",
+        "reboot",
+    }
+)
 
 
 def hostname() -> str:
@@ -52,9 +69,8 @@ def slurm_node_status(host: str | None = None, timeout: float = 20.0) -> dict:
     """
     host = host or hostname()
     try:
-        p = subprocess.run(["sinfo", "-h", "-n", host, "-o", "%t|%E"],
-                           capture_output=True, text=True, timeout=timeout)
-    except Exception as e:                                                   # noqa: BLE001
+        p = subprocess.run(["sinfo", "-h", "-n", host, "-o", "%t|%E"], capture_output=True, text=True, timeout=timeout)
+    except Exception as e:  # noqa: BLE001
         return {"state": "", "reason": "", "source": f"sinfo unavailable ({type(e).__name__}: {e})"}
     if p.returncode != 0 or not p.stdout.strip():
         return {"state": "", "reason": "", "source": f"sinfo exit {p.returncode}"}
@@ -79,19 +95,22 @@ def _egl_probe_class(candidates=None):
     it is asked about.
     """
     import stable_envs as se
+
     names = list(candidates) if candidates else sorted(se.registry.REGISTRY)
     scored = []
     for n in names:
         cls = se.registry.REGISTRY.get(n)
         if cls is None or not hasattr(cls, "reference_env") or getattr(cls, "reference_id", None) is None:
             continue
-        egl = hasattr(cls, "PLATE_PATHS") or "ogbench" in cls.__module__ or "mujoco" in str(
-            getattr(cls, "reference_id", ""))
+        egl = (
+            hasattr(cls, "PLATE_PATHS")
+            or "ogbench" in cls.__module__
+            or "mujoco" in str(getattr(cls, "reference_id", ""))
+        )
         if not egl:
             continue
         # smaller mazes first, then a stable alphabetical tiebreak
-        rank = {"medium": 0, "teleport": 1, "large": 2, "giant": 3}.get(
-            str(getattr(cls, "MAZE", "")).lower(), 1)
+        rank = {"medium": 0, "teleport": 1, "large": 2, "giant": 3}.get(str(getattr(cls, "MAZE", "")).lower(), 1)
         loco = {"point": 0, "ant": 1, "humanoid": 2}.get(str(getattr(cls, "LOCO", "")).lower(), 1)
         scored.append((rank, loco, n, cls))
     if not scored:
@@ -106,6 +125,7 @@ def reference_renderer_probe(candidates=None) -> dict:
     if cls is None:
         return {"skipped": "no EGL-backed reference env in this selection"}
     from . import conformance as C
+
     size = int(getattr(cls, "default_size", 224))
     try:
         r = C.check_reference_renderer_is_stable(cls, size)
@@ -132,7 +152,8 @@ def gate(candidates=None, check_scheduler: bool = True, check_renderer: bool = T
                 f"reason={st.get('reason') or '(none given)'!r}. A host the cluster's own health "
                 f"checker has flagged is not a host to measure a renderer on — this exact situation "
                 f"once produced 25 parity failures and a SIGABRT that were read as a repo bug for "
-                f"hours. Resubmit elsewhere: --exclude={host}")
+                f"hours. Resubmit elsewhere: --exclude={host}"
+            )
             return out
     if check_renderer:
         r = reference_renderer_probe(candidates)
@@ -144,13 +165,19 @@ def gate(candidates=None, check_scheduler: bool = True, check_renderer: bool = T
                 f"states on {host} (max {r['max_abs_diff']}/255), before any stable-envs code was "
                 f"involved. This is a node fault, not a repo fault. Every parity number measurable "
                 f"here is meaningless; rerun with --exclude={host}"
-                + (f". Scheduler says state={out['scheduler'].get('state')!r} "
-                   f"reason={out['scheduler'].get('reason')!r}" if out["scheduler"] else ""))
+                + (
+                    f". Scheduler says state={out['scheduler'].get('state')!r} "
+                    f"reason={out['scheduler'].get('reason')!r}"
+                    if out["scheduler"]
+                    else ""
+                )
+            )
     return out
 
 
 def main(argv=None) -> int:
     import json
+
     g = gate()
     print(json.dumps(g, indent=2))
     return 0 if g["ok"] else 78

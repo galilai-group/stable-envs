@@ -20,6 +20,7 @@ So both hops are measured here, against frames ``dump_trajectory.py`` recorded f
 Run the first in the ``robocasa`` conda env and the second in ``~/venvs/se3d``; each prints the max
 absolute difference over the whole trajectory, and only ``0`` licenses the bridge.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -43,6 +44,7 @@ def group1_option():
     the visual meshes -- a frame RoboCasa never produces.
     """
     import mujoco
+
     vopt = mujoco.MjvOption()
     vopt.geomgroup[:] = 0
     vopt.geomgroup[1] = 1
@@ -51,9 +53,10 @@ def group1_option():
 
 def render_group1(xml: str, qpos: np.ndarray, cam: str, res: int, n: int) -> np.ndarray:
     import mujoco
+
     m = mujoco.MjModel.from_xml_path(xml)
     d = mujoco.MjData(m)
-    r = mujoco.Renderer(m, width=res, height=res)          # never closed; see conformance.py's rule
+    r = mujoco.Renderer(m, width=res, height=res)  # never closed; see conformance.py's rule
     vopt = group1_option()
     cid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, cam)
     assert cid >= 0, f"camera {cam!r} not in the model"
@@ -81,6 +84,7 @@ def bench_official(xml: str, qpos: np.ndarray, cam: str, res: int, reps: int = 3
     import time
 
     import mujoco
+
     m = mujoco.MjModel.from_xml_path(xml)
     d = mujoco.MjData(m)
     r = mujoco.Renderer(m, width=res, height=res)
@@ -104,7 +108,7 @@ def bench_official(xml: str, qpos: np.ndarray, cam: str, res: int, reps: int = 3
 
     out = {}
     for name, fn in (("raster", raster), ("restore", restore)):
-        fn(reps // 3)                                        # warm-up, discarded
+        fn(reps // 3)  # warm-up, discarded
         best = 0.0
         for _ in range(2):
             t0 = time.perf_counter()
@@ -124,24 +128,34 @@ def main() -> None:
     args = ap.parse_args()
 
     import mujoco
+
     d = os.path.join(args.out, args.kitchen)
     meta = json.load(open(os.path.join(d, "meta.json")))
     qpos = np.load(os.path.join(d, "qpos.npy"))
     res = int(meta["res"])
     n = min(args.n, len(qpos))
-    rec = {"kitchen": args.kitchen, "mujoco": mujoco.__version__, "tag": args.tag,
-           "recorded_under_mujoco": meta["mujoco"], "n": n, "res": res, "cameras": {}}
+    rec = {
+        "kitchen": args.kitchen,
+        "mujoco": mujoco.__version__,
+        "tag": args.tag,
+        "recorded_under_mujoco": meta["mujoco"],
+        "n": n,
+        "res": res,
+        "cameras": {},
+    }
     for cam in meta["cameras"]:
         official = np.load(os.path.join(d, f"official_{cam}.npy"))[:n]
         ours = render_group1(os.path.join(d, "scene.xml"), qpos, cam, res, n)
         diff = np.abs(official.astype(np.int16) - ours.astype(np.int16))
-        rec["cameras"][cam] = {"max_abs": int(diff.max()), "mean_abs": float(diff.mean()),
-                               "exact_frac": float((diff.max(-1) == 0).mean())}
-        print(f"{cam}: max {diff.max()}  mean {diff.mean():.5f}  exact "
-              f"{(diff.max(-1) == 0).mean():.6f}", flush=True)
-    rec["official_fps"] = {str(r): bench_official(os.path.join(d, "scene.xml"), qpos,
-                                                  meta["cameras"][0], int(r))
-                           for r in args.bench_res}
+        rec["cameras"][cam] = {
+            "max_abs": int(diff.max()),
+            "mean_abs": float(diff.mean()),
+            "exact_frac": float((diff.max(-1) == 0).mean()),
+        }
+        print(f"{cam}: max {diff.max()}  mean {diff.mean():.5f}  exact {(diff.max(-1) == 0).mean():.6f}", flush=True)
+    rec["official_fps"] = {
+        str(r): bench_official(os.path.join(d, "scene.xml"), qpos, meta["cameras"][0], int(r)) for r in args.bench_res
+    }
     print("official fps:", json.dumps(rec["official_fps"]), flush=True)
     p = os.path.join(args.out, f"refbridge_{args.tag}_{args.kitchen}.json")
     with open(p, "w") as f:

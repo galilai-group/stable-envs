@@ -1,4 +1,5 @@
 """Fast guards for the OSS benchmark CLI, configuration, and JSON contract."""
+
 from __future__ import annotations
 
 import argparse
@@ -27,8 +28,9 @@ FORBIDDEN_IMPORT_PREFIXES = (
 )
 
 
-def _run(script: str, output: Path | str, *args: str,
-         extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def _run(
+    script: str, output: Path | str, *args: str, extra_env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join([str(ROOT), env.get("PYTHONPATH", "")]).rstrip(os.pathsep)
     env["MUJOCO_GL"] = "glfw"
@@ -37,7 +39,12 @@ def _run(script: str, output: Path | str, *args: str,
         env.update(extra_env)
     return subprocess.run(
         [sys.executable, str(ROOT / "benchmarks" / script), *args, "--output", str(output)],
-        cwd=ROOT, env=env, capture_output=True, text=True, timeout=120)
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
 
 
 def _all_keys(value):
@@ -52,14 +59,8 @@ def _all_keys(value):
 
 def _imported_modules(path: Path) -> set[str]:
     tree = ast.parse(path.read_text())
-    imported = {
-        alias.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Import)
-        for alias in node.names
-    }
-    imported.update(
-        node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom))
+    imported = {alias.name for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
+    imported.update(node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom))
     return imported
 
 
@@ -78,15 +79,20 @@ def test_common_parsers_reject_ambiguous_or_invalid_configuration():
 
 
 def test_native_settings_are_omitted_from_public_constructor():
-    args = argparse.Namespace(
-        device="cpu", backend="auto", seed=7, size=None, supersample=None)
+    args = argparse.Namespace(device="cpu", backend="auto", seed=7, size=None, supersample=None)
     kwargs = _common.env_kwargs(args, 8)
     assert kwargs == {"num_envs": 8, "device": "cpu", "seed": 7}
     args.backend = "cuda"
     args.size = 96
     args.supersample = 2
     assert _common.env_kwargs(args, 8) == {
-        "num_envs": 8, "device": "cpu", "seed": 7, "size": 96, "supersample": 2, "backend": "cuda"}
+        "num_envs": 8,
+        "device": "cpu",
+        "seed": 7,
+        "size": 96,
+        "supersample": 2,
+        "backend": "cuda",
+    }
 
 
 def test_unavailable_requested_cuda_is_an_error(monkeypatch):
@@ -158,9 +164,21 @@ def test_public_env_uses_canonical_class_not_make(monkeypatch):
 def test_renderer_cli_cpu_smoke_and_machine_output(tmp_path):
     output = tmp_path / "render.json"
     result = _run(
-        "render.py", output,
-        "--envs", "PushT", "--device", "cpu", "--batches", "1,2",
-        "--warmup", "0", "--repeats", "2", "--threads", "1")
+        "render.py",
+        output,
+        "--envs",
+        "PushT",
+        "--device",
+        "cpu",
+        "--batches",
+        "1,2",
+        "--warmup",
+        "0",
+        "--repeats",
+        "2",
+        "--threads",
+        "1",
+    )
     assert result.returncode == 0, result.stderr
     record = json.loads(output.read_text())
     assert record["schema"] == _common.SCHEMA
@@ -179,9 +197,21 @@ def test_renderer_cli_cpu_smoke_and_machine_output(tmp_path):
 def test_pipeline_cli_cpu_smoke_uses_public_state_contract(tmp_path):
     output = tmp_path / "pipeline.json"
     result = _run(
-        "pipeline.py", output,
-        "--envs", "PushT", "--device", "cpu", "--batch", "2",
-        "--warmup", "0", "--repeats", "1", "--threads", "1")
+        "pipeline.py",
+        output,
+        "--envs",
+        "PushT",
+        "--device",
+        "cpu",
+        "--batch",
+        "2",
+        "--warmup",
+        "0",
+        "--repeats",
+        "1",
+        "--threads",
+        "1",
+    )
     assert result.returncode == 0, result.stderr
     record = json.loads(output.read_text())
     row = record["environments"]["PushT"]
@@ -197,9 +227,17 @@ def test_pipeline_cli_cpu_smoke_uses_public_state_contract(tmp_path):
 def test_unknown_environment_is_recorded_and_exits_nonzero(tmp_path):
     output = tmp_path / "error.json"
     result = _run(
-        "render.py", output,
-        "--envs", "DefinitelyNotAnEnvironment", "--batches", "1",
-        "--warmup", "0", "--repeats", "1")
+        "render.py",
+        output,
+        "--envs",
+        "DefinitelyNotAnEnvironment",
+        "--batches",
+        "1",
+        "--warmup",
+        "0",
+        "--repeats",
+        "1",
+    )
     assert result.returncode == 1
     row = json.loads(output.read_text())["environments"]["DefinitelyNotAnEnvironment"]["points"][0]
     assert row["status"] == "error"
@@ -220,9 +258,19 @@ def test_short_state_corpus_is_not_duplicated(tmp_path):
 def test_oversized_point_is_skipped_not_failed(tmp_path):
     output = tmp_path / "skip.json"
     result = _run(
-        "render.py", output,
-        "--envs", "PushT", "--batches", "64", "--max-output-mib", "1",
-        "--warmup", "0", "--repeats", "1")
+        "render.py",
+        output,
+        "--envs",
+        "PushT",
+        "--batches",
+        "64",
+        "--max-output-mib",
+        "1",
+        "--warmup",
+        "0",
+        "--repeats",
+        "1",
+    )
     assert result.returncode == 0, result.stderr
     point = json.loads(output.read_text())["environments"]["PushT"]["points"][0]
     assert point["status"] == "skipped"
@@ -232,9 +280,8 @@ def test_oversized_point_is_skipped_not_failed(tmp_path):
 
 def test_stdout_output_keeps_diagnostics_on_stderr(tmp_path):
     result = _run(
-        "render.py", "-",
-        "--envs", "DefinitelyNotAnEnvironment", "--batches", "1",
-        "--warmup", "0", "--repeats", "1")
+        "render.py", "-", "--envs", "DefinitelyNotAnEnvironment", "--batches", "1", "--warmup", "0", "--repeats", "1"
+    )
     assert result.returncode == 1
     record = json.loads(result.stdout)
     assert record["environments"]["DefinitelyNotAnEnvironment"]["points"][0]["status"] == "error"
@@ -244,9 +291,21 @@ def test_stdout_output_keeps_diagnostics_on_stderr(tmp_path):
 def test_optional_jpeg_dir_is_recorded_without_erasing_render(tmp_path):
     output = tmp_path / "pipeline.json"
     result = _run(
-        "pipeline.py", output,
-        "--envs", "PushT", "--device", "cpu", "--batch", "1",
-        "--warmup", "0", "--repeats", "1", "--jpeg-dir", str(tmp_path / "missing"))
+        "pipeline.py",
+        output,
+        "--envs",
+        "PushT",
+        "--device",
+        "cpu",
+        "--batch",
+        "1",
+        "--warmup",
+        "0",
+        "--repeats",
+        "1",
+        "--jpeg-dir",
+        str(tmp_path / "missing"),
+    )
     assert result.returncode == 1
     row = json.loads(output.read_text())["environments"]["PushT"]
     assert row["status"] == "ok"
@@ -264,9 +323,21 @@ def test_optional_jpeg_baseline_uses_real_files(tmp_path):
         Image.new("RGB", (8, 8), color=(index, 0, 0)).save(jpeg_dir / f"{index}.jpg")
     output = tmp_path / "pipeline.json"
     result = _run(
-        "pipeline.py", output,
-        "--envs", "PushT", "--device", "cpu", "--batch", "2",
-        "--warmup", "0", "--repeats", "1", "--jpeg-dir", str(jpeg_dir))
+        "pipeline.py",
+        output,
+        "--envs",
+        "PushT",
+        "--device",
+        "cpu",
+        "--batch",
+        "2",
+        "--warmup",
+        "0",
+        "--repeats",
+        "1",
+        "--jpeg-dir",
+        str(jpeg_dir),
+    )
     assert result.returncode == 0, result.stderr
     row = json.loads(output.read_text())["environments"]["PushT"]
     comparison = row["jpeg_comparison"]
@@ -279,10 +350,22 @@ def test_optional_jpeg_baseline_uses_real_files(tmp_path):
 def test_cli_refuses_unavailable_cuda_without_json(tmp_path, monkeypatch):
     monkeypatch.setattr(render_benchmark.torch.cuda, "is_available", lambda: False)
     with pytest.raises(SystemExit) as exc:
-        render_benchmark.main([
-            "--device", "cuda", "--envs", "PushT", "--batches", "1",
-            "--warmup", "0", "--repeats", "1", "--output", str(tmp_path / "no.json"),
-        ])
+        render_benchmark.main(
+            [
+                "--device",
+                "cuda",
+                "--envs",
+                "PushT",
+                "--batches",
+                "1",
+                "--warmup",
+                "0",
+                "--repeats",
+                "1",
+                "--output",
+                str(tmp_path / "no.json"),
+            ]
+        )
     assert exc.value.code == 2
     assert not (tmp_path / "no.json").exists()
 
@@ -291,15 +374,17 @@ def test_cli_refuses_unavailable_cuda_without_json(tmp_path, monkeypatch):
 def test_scripts_do_not_import_worldmodel_testing_or_render_internals(script):
     imported = _imported_modules(ROOT / "benchmarks" / script)
     assert not any(
-        name == prefix or name.startswith(prefix + ".")
-        for name in imported
-        for prefix in FORBIDDEN_IMPORT_PREFIXES)
+        name == prefix or name.startswith(prefix + ".") for name in imported for prefix in FORBIDDEN_IMPORT_PREFIXES
+    )
 
 
-@pytest.mark.parametrize("filename,benchmark", [
-    ("render_cpu_local.json", "renderer-throughput"),
-    ("pipeline_cpu_local.json", "host-state-render-pipeline"),
-])
+@pytest.mark.parametrize(
+    "filename,benchmark",
+    [
+        ("render_cpu_local.json", "renderer-throughput"),
+        ("pipeline_cpu_local.json", "host-state-render-pipeline"),
+    ],
+)
 def test_committed_cpu_evidence_matches_schema(filename, benchmark):
     path = EVIDENCE / filename
     if not path.is_file():

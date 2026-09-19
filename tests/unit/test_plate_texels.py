@@ -14,6 +14,7 @@ asserted where it is observable: ``tests/unit/test_variation_maps_dmc_control.py
 byte-equality evidence against a full recompile is in
 ``examples/results/step8/capability/bake_vs_recompile_probe*.json``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -65,6 +66,7 @@ def uploads(monkeypatch):
     """``mujoco.mjr_uploadTexture`` calls, recorded. The import is inside ``substitute``."""
     seen = []
     import types
+
     fake = types.SimpleNamespace(mjr_uploadTexture=lambda m, con, t: seen.append(t))
     monkeypatch.setitem(__import__("sys").modules, "mujoco", fake)
     return seen
@@ -72,12 +74,18 @@ def uploads(monkeypatch):
 
 # ----------------------------------------------------------------------------- quantisation
 
-@pytest.mark.parametrize("v,want", [
-    (0.1, 25),        # 25.5 -> 25, where rounding gives 26: the DM Control grid's own rgb1[0]
-    (0.3, 76),        # 76.5 -> 76
-    (0.16, 40),       # the OGB floor's own value, 40.8 -> 40
-    (0.0, 0), (1.0, 255), (0.5, 127),
-])
+
+@pytest.mark.parametrize(
+    "v,want",
+    [
+        (0.1, 25),  # 25.5 -> 25, where rounding gives 26: the DM Control grid's own rgb1[0]
+        (0.3, 76),  # 76.5 -> 76
+        (0.16, 40),  # the OGB floor's own value, 40.8 -> 40
+        (0.0, 0),
+        (1.0, 255),
+        (0.5, 127),
+    ],
+)
 def test_quantise_truncates_it_does_not_round(v, want):
     assert int(quantise([v, v, v])[0]) == want
 
@@ -90,11 +98,11 @@ def test_quantise_is_what_swm_writes():
     """swm's Fetch skybox write is ``(bg * 255).astype(np.uint8)`` — the same truncation, by a
     different route. If these ever disagree, our texture is not swm's texture."""
     v = np.linspace(0.0, 1.0, 101)
-    assert np.array_equal(quantise(np.stack([v, v, v], 1)),
-                          (np.stack([v, v, v], 1) * 255).astype(np.uint8))
+    assert np.array_equal(quantise(np.stack([v, v, v], 1)), (np.stack([v, v, v], 1) * 255).astype(np.uint8))
 
 
 # ----------------------------------------------------------------------------------- slots
+
 
 def test_slots_are_none_when_the_texture_is_absent():
     assert texel_slots(_checker(), -1, [A, B]) is None
@@ -103,7 +111,7 @@ def test_slots_are_none_when_the_texture_is_absent():
 def test_masks_default_to_equality_and_report_their_coverage():
     s = texel_slots(_checker(), 0, [A, B])
     assert [int(m.sum()) for m in s["masks"]] == [4, 3]
-    assert (s["covered"], s["texels"]) == (7, 9)     # the two mark texels are NOT covered
+    assert (s["covered"], s["texels"]) == (7, 9)  # the two mark texels are NOT covered
 
 
 def test_an_empty_mask_is_refused():
@@ -122,7 +130,7 @@ def test_explicit_masks_are_checked_against_the_texture():
     good = [np.array([1, 1, 1, 1, 0, 0, 0, 0, 0], bool), np.array([0, 0, 0, 0, 1, 1, 1, 0, 0], bool)]
     s = texel_slots(m, 0, [A, B], masks=good)
     assert [int(x.sum()) for x in s["masks"]] == [4, 3]
-    bad = [good[0], np.array([0, 0, 0, 0, 1, 1, 1, 1, 0], bool)]   # reaches into the marks
+    bad = [good[0], np.array([0, 0, 0, 0, 1, 1, 1, 1, 0], bool)]  # reaches into the marks
     with pytest.raises(AssertionError, match="do not hold default colour"):
         texel_slots(m, 0, [A, B], masks=bad)
 
@@ -134,16 +142,17 @@ def test_a_mask_of_the_wrong_length_is_refused():
 
 # ------------------------------------------------------------------------------ substitute
 
+
 def test_substitute_writes_the_masked_texels_and_nothing_else(uploads):
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
     before = m.tex_data.copy()
     substitute(m, r, s, [[0.9, 0.1, 0.1], [0.0, 0.0, 1.0]])
-    body = m.tex_data[m.lead:].reshape(-1, 3)
+    body = m.tex_data[m.lead :].reshape(-1, 3)
     assert np.array_equal(body[:4], np.tile(quantise([0.9, 0.1, 0.1]), (4, 1)))
     assert np.array_equal(body[4:7], np.tile(quantise([0.0, 0.0, 1.0]), (3, 1)))
     assert np.array_equal(body[7:], np.tile(quantise(MARK), (2, 1))), "markrgb texels were painted"
-    assert np.array_equal(m.tex_data[:m.lead], before[:m.lead]), "wrote outside tex_adr"
+    assert np.array_equal(m.tex_data[: m.lead], before[: m.lead]), "wrote outside tex_adr"
 
 
 def test_substitute_makes_the_context_current_before_every_upload(uploads):
@@ -163,9 +172,9 @@ def test_substitute_is_unconditional_even_at_the_default(uploads):
     render's floor into this one."""
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
-    substitute(m, r, s, [[0.9, 0.1, 0.1], B])         # a custom bake
-    substitute(m, r, s, s["default"])                 # then the default
-    body = m.tex_data[m.lead:].reshape(-1, 3)
+    substitute(m, r, s, [[0.9, 0.1, 0.1], B])  # a custom bake
+    substitute(m, r, s, s["default"])  # then the default
+    body = m.tex_data[m.lead :].reshape(-1, 3)
     assert np.array_equal(body, _checker().tex_data[7:].reshape(-1, 3))
     assert len(uploads) == 2
 
@@ -205,11 +214,12 @@ def test_a_four_channel_texture_keeps_its_fourth_channel(uploads):
     r = _Renderer()
     s = texel_slots(m, 0, [A, B])
     substitute(m, r, s, [[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
-    body = m.tex_data[m.lead:].reshape(-1, 4)
+    body = m.tex_data[m.lead :].reshape(-1, 4)
     assert list(body[:, 3]) == [11, 22]
 
 
 # -------------------------------------------------------------------------------- cache key
+
 
 def test_the_key_is_none_at_the_default_by_whatever_route():
     s = texel_slots(_checker(), 0, [A, B])

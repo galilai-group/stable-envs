@@ -5,6 +5,7 @@ slack tendon hangs as a chain of 28 capsules along a catenary and a taut one is 
 recoloured by its limit constraint. ``_tendon`` is that mover kind, ported from ``mjv_catenary``
 to 0 ULP.
 """
+
 from __future__ import annotations
 
 from ._cells import parity_cell

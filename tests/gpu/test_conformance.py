@@ -6,6 +6,7 @@ weakening into something that can pass without the hardware.
 
 Run:  pytest tests/gpu -v          (on a GPU node; see scripts/run_gpu_tests.sbatch)
 """
+
 from __future__ import annotations
 
 import os
@@ -125,13 +126,16 @@ def test_required_env_modules_actually_imported():
     if not want:
         pytest.skip("SE_REQUIRE_ENV_MODULES is not set; import failures are reported, not asserted")
     errs = se.import_errors()
-    missing = {m: errs.get(m, "imported but registered no envs") for m in want
-               if m in errs or not any(cls.__module__.endswith(f".{m}")
-                                       for cls in se.registry.REGISTRY.values())}
+    missing = {
+        m: errs.get(m, "imported but registered no envs")
+        for m in want
+        if m in errs or not any(cls.__module__.endswith(f".{m}") for cls in se.registry.REGISTRY.values())
+    }
     assert not missing, (
         "this run was launched to cover env modules it does not have, so every test for them "
         "collected zero cases and the run would have been green anyway:\n  "
-        + "\n  ".join(f"{k}: {v}" for k, v in missing.items()))
+        + "\n  ".join(f"{k}: {v}" for k, v in missing.items())
+    )
 
 
 def test_required_envs_are_all_reachable():
@@ -153,8 +157,10 @@ def test_required_envs_are_all_reachable():
     """
     want = [n.strip() for n in os.environ.get("SE_REQUIRE_ENVS", "").split(",") if n.strip()]
     if not want:
-        pytest.skip("SE_REQUIRE_ENVS is not set; this interpreter was not launched to cover a "
-                    "named set of envs, so there is no assignment to hold it to")
+        pytest.skip(
+            "SE_REQUIRE_ENVS is not set; this interpreter was not launched to cover a "
+            "named set of envs, so there is no assignment to hold it to"
+        )
     errs = se.import_errors()
     missing = sorted(n for n in want if n not in se.registry.REGISTRY)
     assert not missing, (
@@ -165,8 +171,9 @@ def test_required_envs_are_all_reachable():
         + (f"\n  ... and {len(missing) - 20} more" if len(missing) > 20 else "")
         + f"\n\nenv-module import errors here: {errs or 'none'}\n"
         + "If the assignment is what changed, edit scratch/census/assignment.json — it is the one "
-          "definition of the cover, shared with the throughput census, so that the envs that are "
-          "MEASURED and the envs that are TESTED cannot drift apart.")
+        "definition of the cover, shared with the throughput census, so that the envs that are "
+        "MEASURED and the envs that are TESTED cannot drift apart."
+    )
 
 
 def test_relaxed_parity_floors_are_all_explained():
@@ -183,14 +190,17 @@ def test_relaxed_parity_floors_are_all_explained():
     bad = []
     for name, cls in sorted(se.registry.REGISTRY.items()):
         floors = {k: getattr(cls, k, None) for k in ("parity_interior_min", "parity_all_exact_min")}
-        lowered = {k: v for k, v in floors.items()
-                   if v is not None and float(v) < (INTERIOR_EXACT_MIN if k == "parity_interior_min"
-                                                    else ALL_EXACT_MIN)}
+        lowered = {
+            k: v
+            for k, v in floors.items()
+            if v is not None and float(v) < (INTERIOR_EXACT_MIN if k == "parity_interior_min" else ALL_EXACT_MIN)
+        }
         if lowered and len(str(getattr(cls, "parity_note", "") or "").strip()) < 40:
             bad.append(f"{name} lowers {lowered} with no usable parity_note")
     assert not bad, (
         "a tolerance without a stated mechanism is indistinguishable from a bug being tolerated:\n  "
-        + "\n  ".join(bad))
+        + "\n  ".join(bad)
+    )
 
 
 def test_describe_is_complete(env):
@@ -198,7 +208,8 @@ def test_describe_is_complete(env):
     assert d["state_dim"] > 0, f"{d['name']}: state_dim must be positive"
     assert len(d["state_names"]) == d["state_dim"], (
         f"{d['name']}: {len(d['state_names'])} state_names for {d['state_dim']} dims — a state vector "
-        f"whose fields are unnamed cannot be checked or reused by anyone")
+        f"whose fields are unnamed cannot be checked or reused by anyone"
+    )
 
 
 def test_state_roundtrip(env):
@@ -210,14 +221,16 @@ def test_every_state_dim_reaches_the_render(env):
     r = C.check_state_dims_matter(env)
     assert not r["dead_dims"], (
         f"state dims {r['dead_dims']} change nothing in the frame — either the state is not minimal "
-        f"or the renderer ignores them; both make the state->frame claim false")
+        f"or the renderer ignores them; both make the state->frame claim false"
+    )
 
 
 def test_batch_invariance(env):
     r = C.check_batch_invariance(env)
     assert r["max_abs_diff"] == 0, (
         f"frame differs when rendered in a batch vs alone (max {r['max_abs_diff']}/255) — every "
-        f"throughput number in this repo assumes batching is semantically free")
+        f"throughput number in this repo assumes batching is semantically free"
+    )
 
 
 def test_per_env_variation_is_per_env(env):
@@ -227,7 +240,8 @@ def test_per_env_variation_is_per_env(env):
     assert not r["collapsed_variations"], (
         f"variations {r['collapsed_variations']} collapse to one value across the batch — passing one "
         f"value per environment must give one appearance per environment, which is the whole point of "
-        f"batched domain randomisation")
+        f"batched domain randomisation"
+    )
 
 
 def test_style_is_state(env):
@@ -237,7 +251,8 @@ def test_style_is_state(env):
     assert r["max_abs_diff"] == 0, (
         f"a fresh env given the stored (state, style) renders differently (max {r['max_abs_diff']}/255) "
         f"— the frame depends on something a dataset would not have recorded, so 'store states, "
-        f"regenerate live' does not hold for this env")
+        f"regenerate live' does not hold for this env"
+    )
 
 
 def test_default_style_is_the_official_appearance(env):
@@ -247,7 +262,8 @@ def test_default_style_is_the_official_appearance(env):
     assert r["max_abs_diff"] == 0, (
         f"render(style=default_style()) differs from render() by {r['max_abs_diff']}/255 — parity is "
         f"measured under the default, so these two paths disagreeing makes every parity number describe "
-        f"an appearance nobody gets")
+        f"an appearance nobody gets"
+    )
 
 
 def test_color_knobs_apply_the_requested_color(env):
@@ -270,16 +286,21 @@ def test_color_knobs_apply_the_requested_color(env):
         f"colour knobs that did not put the requested colour in the frame: {part['asserted']} — "
         f"a knob wired to the wrong primitive, scaled, or channel-swapped still passes the weaker "
         f"'does it change anything' check"
-        + (f" (these are NOT covered by the class's colour-exactness declaration, which covers "
-           f"{[d['probe'] for d in part['not_applicable']]})" if part["honoured"] else ""))
+        + (
+            f" (these are NOT covered by the class's colour-exactness declaration, which covers "
+            f"{[d['probe'] for d in part['not_applicable']]})"
+            if part["honoured"]
+            else ""
+        )
+    )
     for declared in part["not_applicable"]:
         assert declared["best_abs_diff"] is not None, (
             f"{declared['probe']} is declared not_applicable but the probe recorded no "
             f"best_abs_diff — the declaration is only allowed to stop the ASSERTION, never the "
-            f"measurement, or a wiring regression on this leaf would move no number at all")
+            f"measurement, or a wiring regression on this leaf would move no number at all"
+        )
     if part["not_applicable"]:
-        print(f"declared not_applicable, measured and reported: {part['not_applicable']} "
-              f"({part['why']})")
+        print(f"declared not_applicable, measured and reported: {part['not_applicable']} ({part['why']})")
 
 
 def test_determinism(env):
@@ -291,15 +312,17 @@ def test_backend_agreement(env):
     if "skipped" in r:
         pytest.skip(r["skipped"])
     assert r["exact_frac"] >= 0.99, (
-        f"the fused Triton kernel and the torch reference disagree on {100*(1-r['exact_frac']):.2f}% "
-        f"of pixels (mean {r['mean_abs']:.3f}) — they must draw the same picture: {r}")
+        f"the fused Triton kernel and the torch reference disagree on {100 * (1 - r['exact_frac']):.2f}% "
+        f"of pixels (mean {r['mean_abs']:.3f}) — they must draw the same picture: {r}"
+    )
 
 
 def test_variations_all_do_something(env):
     r = C.check_variations_do_something(env)
     assert not r["inert_variations"], (
         f"declared variations that change nothing: {r['inert_variations']} — a knob in the space but "
-        f"not in scene() advertises support that does not exist")
+        f"not in scene() advertises support that does not exist"
+    )
 
 
 @pytest.mark.reference
@@ -326,22 +349,24 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
     for path, o in r["objects"].items():
         assert o["footprint_px"] > 0, (
             f"{path} changes no pixel on any of {r['n_states']} states, so the env declares a "
-            f"task-relevant object it cannot actually draw or hide")
+            f"task-relevant object it cannot actually draw or hide"
+        )
         assert o["per_row_max_abs_diff"] == 0, (
             f"{path} does not survive a PER-ROW style: a batch with the knob alternating down the "
             f"rows differs from the two uniform renders by {o['per_row_max_abs_diff']}/255. "
-            f"check_per_env_variation cannot ask this of a Discrete leaf, which is why it is here")
-        assert "why_no_margin" not in o, (
-            f"{path}: {o['why_no_margin']} — {o}")
+            f"check_per_env_variation cannot ask this of a Discrete leaf, which is why it is here"
+        )
+        assert "why_no_margin" not in o, f"{path}: {o['why_no_margin']} — {o}"
         if o["presence_margin"] is None:
-            continue                                   # no official renderer to agree with
+            continue  # no official renderer to agree with
         assert o["presence_margin"] >= TASK_OBJECT_PRESENCE_MARGIN, (
             f"inside {path}'s own {o['footprint_px']} pixels our DECLARED appearance sits "
             f"{o['presence_mean_abs_declared']:.2f}/255 from the official frame and the FLIPPED one "
             f"sits {o['presence_mean_abs_flipped']:.2f}/255 — margin {o['presence_margin']:.4f} "
             f"against a floor of {TASK_OBJECT_PRESENCE_MARGIN}. A margin at or below zero means we "
             f"draw an object the reference does not draw (or the reverse), which is exactly what the "
-            f"interior-pixel metric is blind to on a textured surface: {o}")
+            f"interior-pixel metric is blind to on a textured surface: {o}"
+        )
 
 
 def test_fidelity_tier_is_fully_declared(env):
@@ -353,10 +378,12 @@ def test_fidelity_tier_is_fully_declared(env):
     applies, so an env with an under-specified tier would silently be checked by neither.
     """
     from stable_envs.registry import check_fidelity_declaration
+
     check_fidelity_declaration(type(env))
     assert env.describe()["fidelity_tier"] == env.fidelity_tier, (
         "describe() must report the tier — it is how a consumer finds out that these frames are not "
-        "the official pixels without reading the source")
+        "the official pixels without reading the source"
+    )
 
 
 @pytest.mark.reference
@@ -371,8 +398,10 @@ def test_render_parity_with_official_renderer(env):
     """
     cls = type(env)
     if env.fidelity_tier == "visual":
-        pytest.skip(f"{cls.__name__} declares the VISUAL tier: it is a different render of the same "
-                    f"scene and is asserted by test_visual_tier_matches_its_declared_fidelity")
+        pytest.skip(
+            f"{cls.__name__} declares the VISUAL tier: it is a different render of the same "
+            f"scene and is asserted by test_visual_tier_matches_its_declared_fidelity"
+        )
     if not hasattr(cls, "reference_env") or env.reference_id is None:
         pytest.skip(f"{cls.__name__}: no official reference renderer to compare against")
     try:
@@ -396,20 +425,22 @@ def test_render_parity_with_official_renderer(env):
     if floor < 1.0:
         assert getattr(env, "parity_note", ""), (
             f"{cls.__name__} relaxes parity_interior_min to {floor} but gives no parity_note — a "
-            f"tolerance without a stated mechanism is indistinguishable from a bug being tolerated")
+            f"tolerance without a stated mechanism is indistinguishable from a bug being tolerated"
+        )
         print(f"  relaxed to {floor}: {env.parity_note}")
     if r["interior_exact_frac"] is not None:
         assert r["interior_exact_frac"] >= floor, (
             f"{r.get('interior_bad_px')} of {r.get('interior_px')} interior pixels disagree "
-            f"(max |delta| {r['max_abs']}/255), i.e. {100*r['interior_exact_frac']:.5f}% exact against "
-            f"a floor of {100*floor:.5f}% — an interior disagreement is normally a real "
+            f"(max |delta| {r['max_abs']}/255), i.e. {100 * r['interior_exact_frac']:.5f}% exact against "
+            f"a floor of {100 * floor:.5f}% — an interior disagreement is normally a real "
             f"geometry/colour error rather than anti-aliasing. The states are drawn from "
             f"default_rng({PARITY_STATE_SEED}), so this is reproducible; if a HANDFUL of pixels "
             f"disagree by 1/255 the next question is whether they sit on a quantisation boundary "
             f"inside a smoothly shaded region, which the 3x3 interior mask cannot see (see "
             f"conformance.interior_mask). That case is declared with parity_interior_min AND a "
             f"parity_note naming the mechanism, measured over many draws — never by moving the "
-            f"seed: {r}")
+            f"seed: {r}"
+        )
     # The all-pixel bar is shared unless an env DECLARES a different one, with a note, the same way the
     # interior bar works. The distinction the two make is the point: interior exactness describes the
     # renderer, all-pixel exactness describes the renderer weighted by how much of the frame moves — a
@@ -420,10 +451,12 @@ def test_render_parity_with_official_renderer(env):
     all_floor = ALL_EXACT_MIN if all_floor is None else float(all_floor)
     if all_floor < ALL_EXACT_MIN:
         assert getattr(env, "parity_note", ""), (
-            f"{cls.__name__} relaxes parity_all_exact_min to {all_floor} but gives no parity_note")
+            f"{cls.__name__} relaxes parity_all_exact_min to {all_floor} but gives no parity_note"
+        )
         print(f"  all-pixel floor relaxed to {all_floor}")
     assert r["exact_frac"] >= all_floor, (
-        f"only {100*r['exact_frac']:.1f}% of pixels exact (floor {100*all_floor:.1f}%): {r}")
+        f"only {100 * r['exact_frac']:.1f}% of pixels exact (floor {100 * all_floor:.1f}%): {r}"
+    )
     assert r["mean_abs"] <= MEAN_ABS_MAX, f"mean |diff| {r['mean_abs']:.3f}/255 too high: {r}"
 
 
@@ -445,8 +478,7 @@ def test_visual_tier_matches_its_declared_fidelity(env):
     """
     cls = type(env)
     if env.fidelity_tier != "visual":
-        pytest.skip(f"{cls.__name__} is a parity env; test_render_parity_with_official_renderer "
-                    f"applies to it")
+        pytest.skip(f"{cls.__name__} is a parity env; test_render_parity_with_official_renderer applies to it")
     try:
         r = C.check_visual_fidelity(env)
     except ImportError as e:
@@ -456,14 +488,17 @@ def test_visual_tier_matches_its_declared_fidelity(env):
     print(f"  declared: {vf}")
     assert r["mean_abs"] <= vf["mean_abs_max"], (
         f"mean |diff| {r['mean_abs']:.3f}/255 exceeds the declared ceiling {vf['mean_abs_max']} — the "
-        f"visual tier is a measured claim, and this env is no longer meeting it: {r}")
+        f"visual tier is a measured claim, and this env is no longer meeting it: {r}"
+    )
     assert r["within8_frac"] >= vf["within8_min"], (
-        f"only {100*r['within8_frac']:.1f}% of pixels are within 8/255 (declared floor "
-        f"{100*vf['within8_min']:.1f}%) — a region of the frame is wrong even though the mean may not "
-        f"show it: {r}")
+        f"only {100 * r['within8_frac']:.1f}% of pixels are within 8/255 (declared floor "
+        f"{100 * vf['within8_min']:.1f}%) — a region of the frame is wrong even though the mean may not "
+        f"show it: {r}"
+    )
     assert r["ssim"] >= vf["ssim_min"], (
         f"SSIM {r['ssim']:.4f} below the declared floor {vf['ssim_min']} — the frame has lost "
-        f"structure the official one has, which is the failure a pixel mean is worst at seeing: {r}")
+        f"structure the official one has, which is the failure a pixel mean is worst at seeing: {r}"
+    )
 
 
 @pytest.mark.reference
@@ -485,12 +520,14 @@ def test_a_learned_decoder_beats_the_render_it_replaces(env):
     """
     cls = type(env)
     if getattr(env, "render_decoder", "renderer") != "learned":
-        pytest.skip(f"{cls.__name__} draws its frames with a renderer; there is nothing to compare "
-                    f"a learned decoder against")
+        pytest.skip(
+            f"{cls.__name__} draws its frames with a renderer; there is nothing to compare a learned decoder against"
+        )
     base = cls.__name__.removesuffix("Corrected")
     assert base in se.registry.REGISTRY, (
         f"{cls.__name__} has no plain sibling {base}: a learned decoder is a second way to draw a "
-        f"cell that already exists, and the claim it makes is relative to the first one")
+        f"cell that already exists, and the claim it makes is relative to the first one"
+    )
     try:
         ref = C.reference_env(cls, env.size)
     except ImportError as e:
@@ -510,8 +547,10 @@ def test_a_learned_decoder_beats_the_render_it_replaces(env):
             worse.append(f"{k}: {a[k]:.4f} vs the plain render's {b[k]:.4f}")
     assert not worse, (
         f"{cls.__name__} runs a network over {base}'s frames and comes out no better on: "
-        + "; ".join(worse) + ". A learned decoder that does not beat the renderer it replaces is a "
-        "hallucination budget spent for nothing, and the way it fails is invisible in the picture.")
+        + "; ".join(worse)
+        + ". A learned decoder that does not beat the renderer it replaces is a "
+        "hallucination budget spent for nothing, and the way it fails is invisible in the picture."
+    )
 
 
 @pytest.mark.reference
@@ -527,8 +566,10 @@ def test_a_learned_decoder_holds_up_under_its_declared_variation(env):
     learned decoder without it — and this is where it is checked.
     """
     if getattr(env, "render_decoder", "renderer") != "learned":
-        pytest.skip("a renderer's agreement does not depend on where the camera is pointed; this "
-                    "measurement exists for decoders that were FITTED at one appearance")
+        pytest.skip(
+            "a renderer's agreement does not depend on where the camera is pointed; this "
+            "measurement exists for decoders that were FITTED at one appearance"
+        )
     vf = env.variation_fidelity
     try:
         r = C.check_visual_fidelity_under_variation(env, n=64, seed=0)
@@ -537,18 +578,22 @@ def test_a_learned_decoder_holds_up_under_its_declared_variation(env):
     assert "skipped" not in r, (
         f"{type(env).__name__} carries a variation_fidelity declaration that cannot be re-measured "
         f"here ({r['skipped']}). A declaration nothing can check is the shape of the failure this "
-        f"whole path is guarding against.")
+        f"whole path is guarding against."
+    )
     print(f"\n{type(env).__name__} under its declared variation: {r}\n  declared: {vf}")
     assert r["mean_abs"] <= vf["mean_abs_max"], (
         f"mean |diff| {r['mean_abs']:.3f}/255 under the declared variation exceeds the declared "
-        f"ceiling {vf['mean_abs_max']} — the network is being shown appearances it does not cover: {r}")
+        f"ceiling {vf['mean_abs_max']} — the network is being shown appearances it does not cover: {r}"
+    )
     assert r["within8_frac"] >= vf["within8_min"], (
-        f"only {100*r['within8_frac']:.1f}% of pixels within 8/255 under the declared variation "
-        f"(floor {100*vf['within8_min']:.1f}%): {r}")
+        f"only {100 * r['within8_frac']:.1f}% of pixels within 8/255 under the declared variation "
+        f"(floor {100 * vf['within8_min']:.1f}%): {r}"
+    )
     assert r["ssim"] >= vf["ssim_min"], (
         f"SSIM {r['ssim']:.4f} under the declared variation is below the declared floor "
         f"{vf['ssim_min']} — structure is the first thing a decoder loses off its training "
-        f"distribution, and it is the thing the pixel mean does not report: {r}")
+        f"distribution, and it is the thing the pixel mean does not report: {r}"
+    )
 
 
 @pytest.mark.reference
@@ -572,8 +617,10 @@ def test_gpu_step_tracks_the_reference_simulator(env):
     # rather than one failure. So require the class to DECLARE step itself and to be checkable.
     cls = type(env)
     if "step" not in cls.__dict__ or not getattr(cls, "step_reference_checkable", False):
-        pytest.skip(f"{cls.__name__}: no batched GPU simulator declared as checkable against a "
-                    f"reference (set step_reference_checkable = True on the class to opt in)")
+        pytest.skip(
+            f"{cls.__name__}: no batched GPU simulator declared as checkable against a "
+            f"reference (set step_reference_checkable = True on the class to opt in)"
+        )
     try:
         r = C.check_step_matches_reference(env)
     except (ImportError, NotImplementedError) as e:
@@ -581,10 +628,12 @@ def test_gpu_step_tracks_the_reference_simulator(env):
     print(f"\n{type(env).__name__} step vs reference: {r}")
     assert r["agent_max_err"] < 1e-3, (
         f"the kinematic agent drifts {r['agent_max_err']:.3e} px from the reference integrator — with no "
-        f"contacts acting on it this is an integration bug, not solver divergence: {r}")
+        f"contacts acting on it this is an integration bug, not solver divergence: {r}"
+    )
     assert r["block_median_err"] < 2.0, (
         f"block position tracks the reference to a median {r['block_median_err']:.2f} px after "
-        f"{r.get('steps', '?')} steps, above the 2.0 px bound: {r}")
+        f"{r.get('steps', '?')} steps, above the 2.0 px bound: {r}"
+    )
 
 
 @pytest.mark.reference
@@ -622,4 +671,5 @@ def test_state_is_sufficient(env):
     assert d == 0, (
         f"the official renderer gives different pixels for the same state depending on history "
         f"(max {d}/255) — the compact state does NOT determine the frame for {cls.__name__}, and no "
-        f"GPU renderer can fix that")
+        f"GPU renderer can fix that"
+    )

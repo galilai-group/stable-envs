@@ -60,6 +60,7 @@ is exit-time noise after the test report is written, not a run-time fault: measu
 conformance run (16 envs, venvs/dmc) the suite finished 208 passed / 48 skipped, rc 0, 16 contexts
 created and 0 released. A DM Control family with no parity coverage is a MISSING IMPORT, not this.
 """
+
 from __future__ import annotations
 
 import os
@@ -81,6 +82,7 @@ SITE_DEPTH = 12
 @dataclass
 class Counts:
     """Cumulative creation/release counts, per kind."""
+
     context_created: int = 0
     context_freed: int = 0
     renderer_created: int = 0
@@ -110,8 +112,7 @@ def _record(kind: str, action: str) -> None:
             # The two innermost frames are this function and the patched wrapper; drop them so the
             # site names the CALLER, which is the thing a failure message has to point at.
             stack = traceback.extract_stack(limit=SITE_DEPTH + 2)[:-2]
-            _COUNTS.sites.append((f"{kind}.{action}",
-                                  [f"{f.filename}:{f.lineno} {f.name}" for f in stack[-6:]]))
+            _COUNTS.sites.append((f"{kind}.{action}", [f"{f.filename}:{f.lineno} {f.name}" for f in stack[-6:]]))
 
 
 def _count_one(obj, kind: str, action: str) -> None:
@@ -125,8 +126,8 @@ def _count_one(obj, kind: str, action: str) -> None:
             if getattr(obj, "_se_released", False):
                 return
             obj._se_released = True
-        except Exception:                                                    # noqa: BLE001
-            pass                                  # __slots__ or a C type: fall back to counting
+        except Exception:  # noqa: BLE001
+            pass  # __slots__ or a C type: fall back to counting
     _record(kind, action)
 
 
@@ -140,7 +141,7 @@ def _wrap(cls, name: str, kind: str, action: str) -> None:
         out = __fn(self, *a, **k)
         try:
             _count_one(self, __kind, __action)
-        except Exception:                                                    # noqa: BLE001
+        except Exception:  # noqa: BLE001
             # Never let accounting change what the program does. These wrappers run from ``__del__``
             # during interpreter shutdown, when module globals have already been set to None, and an
             # exception raised there is printed as "Exception ignored in" noise that looks like a
@@ -148,7 +149,7 @@ def _wrap(cls, name: str, kind: str, action: str) -> None:
             pass
         return out
 
-    wrapper._se_guarded = True                                               # type: ignore[attr-defined]
+    wrapper._se_guarded = True  # type: ignore[attr-defined]
     wrapper.__name__ = name
     wrapper.__qualname__ = f"{cls.__name__}.{name}"
     setattr(cls, name, wrapper)
@@ -204,7 +205,7 @@ def install() -> list[str]:
     _wrap_dm_control()
     try:
         import mujoco
-    except Exception:                                                        # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return list(_PATCHED)
 
     wrap = _wrap
@@ -216,7 +217,7 @@ def install() -> list[str]:
     for modname in ("egl", "osmesa", "glfw"):
         try:
             mod = __import__(f"mujoco.{modname}", fromlist=["GLContext"])
-        except Exception:                                                    # noqa: BLE001
+        except Exception:  # noqa: BLE001
             continue
         cls = getattr(mod, "GLContext", None)
         if cls is None or id(cls) in seen:
@@ -242,9 +243,13 @@ def install() -> list[str]:
 def take() -> Counts:
     """A snapshot of the counters, safe to hold across arbitrary work."""
     with _LOCK:
-        return Counts(_COUNTS.context_created, _COUNTS.context_freed,
-                      _COUNTS.renderer_created, _COUNTS.renderer_closed,
-                      list(_COUNTS.sites))
+        return Counts(
+            _COUNTS.context_created,
+            _COUNTS.context_freed,
+            _COUNTS.renderer_created,
+            _COUNTS.renderer_closed,
+            list(_COUNTS.sites),
+        )
 
 
 def delta(before: Counts, after: Counts | None = None) -> dict:
@@ -256,7 +261,7 @@ def delta(before: Counts, after: Counts | None = None) -> dict:
         "renderer_created": after.renderer_created - before.renderer_created,
         "renderer_closed": after.renderer_closed - before.renderer_closed,
         "context_live": after.context_live,
-        "sites": after.sites[len(before.sites):],
+        "sites": after.sites[len(before.sites) :],
     }
 
 
@@ -266,10 +271,15 @@ def peak_live() -> int:
 
 def totals() -> dict:
     c = take()
-    return {"context_created": c.context_created, "context_freed": c.context_freed,
-            "context_live": c.context_live, "context_peak_live": _PEAK_LIVE,
-            "renderer_created": c.renderer_created, "renderer_closed": c.renderer_closed,
-            "patched": list(_PATCHED)}
+    return {
+        "context_created": c.context_created,
+        "context_freed": c.context_freed,
+        "context_live": c.context_live,
+        "context_peak_live": _PEAK_LIVE,
+        "renderer_created": c.renderer_created,
+        "renderer_closed": c.renderer_closed,
+        "patched": list(_PATCHED),
+    }
 
 
 def format_sites(sites, limit: int = 3) -> str:
@@ -284,6 +294,7 @@ def format_sites(sites, limit: int = 3) -> str:
 
 
 # ------------------------------------------------------------------ policy
+
 
 def _int_env(name: str, default: int) -> int:
     try:
@@ -319,15 +330,18 @@ def limits() -> dict:
 
     ``freed`` has no knob. Zero is the rule.
     """
-    try:                                    # import here: this module must not need the registry
+    try:  # import here: this module must not need the registry
         from stable_envs import REGISTRY
+
         n_envs = len(REGISTRY)
-    except Exception:                       # noqa: BLE001  — a guard must never be the thing that fails
+    except Exception:  # noqa: BLE001  — a guard must never be the thing that fails
         n_envs = 0
     # One per env, plus reference envs and plate renderers for the families that bake them, plus slack.
     scaled = max(192, 2 * n_envs + 64)
-    return {"per_test": _int_env("SE_MAX_CONTEXTS_PER_TEST", 8),
-            "session_live": _int_env("SE_MAX_LIVE_CONTEXTS", scaled)}
+    return {
+        "per_test": _int_env("SE_MAX_CONTEXTS_PER_TEST", 8),
+        "session_live": _int_env("SE_MAX_LIVE_CONTEXTS", scaled),
+    }
 
 
 def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
@@ -339,40 +353,70 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
     lim = limits()
     out = []
     if d["context_freed"]:
-        out.append(("EGL_CONTEXT_RELEASED", (
-            f"this test RELEASED {d['context_freed']} EGL context(s). Releasing one corrupts rendering "
-            f"in every other live context in the process, silently, and the damage surfaces later as "
-            f"pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-"
-            f"per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache "
-            f"the object and keep it for the life of the process; do not close it.\n"
-            f"  released at:\n{format_sites([s for s in d['sites'] if s[0].endswith('freed')])}")))
+        out.append(
+            (
+                "EGL_CONTEXT_RELEASED",
+                (
+                    f"this test RELEASED {d['context_freed']} EGL context(s). Releasing one corrupts rendering "
+                    f"in every other live context in the process, silently, and the damage surfaces later as "
+                    f"pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-"
+                    f"per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache "
+                    f"the object and keep it for the life of the process; do not close it.\n"
+                    f"  released at:\n{format_sites([s for s in d['sites'] if s[0].endswith('freed')])}"
+                ),
+            )
+        )
     if d["renderer_closed"]:
-        out.append(("MUJOCO_RENDERER_CLOSED", (
-            f"this test closed {d['renderer_closed']} mujoco.Renderer(s). A Renderer owns an EGL "
-            f"context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported "
-            f"separately because the shape it took here before was a renderer constructed and closed "
-            f"per baked plate, ~175 releases across 25 envs.\n"
-            f"  closed at:\n{format_sites([s for s in d['sites'] if s[0].endswith('closed')])}")))
+        out.append(
+            (
+                "MUJOCO_RENDERER_CLOSED",
+                (
+                    f"this test closed {d['renderer_closed']} mujoco.Renderer(s). A Renderer owns an EGL "
+                    f"context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported "
+                    f"separately because the shape it took here before was a renderer constructed and closed "
+                    f"per baked plate, ~175 releases across 25 envs.\n"
+                    f"  closed at:\n{format_sites([s for s in d['sites'] if s[0].endswith('closed')])}"
+                ),
+            )
+        )
     n = d["context_created"]
     if batch and batch >= 4 and n >= batch:
-        out.append(("EGL_CONTEXTS_SCALE_WITH_BATCH", (
-            f"this test created {n} EGL contexts with a batch of {batch}. Context creation that "
-            f"tracks the batch size means a per-environment value is being turned into a per-"
-            f"environment SCENE — a B-wide ramp of distinct style values re-bakes a MuJoCo plate per "
-            f"row. Two distinct values falsify a collapse to environment 0 just as well and cost two "
-            f"bakes; see check_per_env_variation and uniform_style.\n"
-            f"  created at:\n{format_sites([s for s in d['sites'] if s[0].endswith('created')])}")))
+        out.append(
+            (
+                "EGL_CONTEXTS_SCALE_WITH_BATCH",
+                (
+                    f"this test created {n} EGL contexts with a batch of {batch}. Context creation that "
+                    f"tracks the batch size means a per-environment value is being turned into a per-"
+                    f"environment SCENE — a B-wide ramp of distinct style values re-bakes a MuJoCo plate per "
+                    f"row. Two distinct values falsify a collapse to environment 0 just as well and cost two "
+                    f"bakes; see check_per_env_variation and uniform_style.\n"
+                    f"  created at:\n{format_sites([s for s in d['sites'] if s[0].endswith('created')])}"
+                ),
+            )
+        )
     elif n > lim["per_test"]:
-        out.append(("EGL_CONTEXTS_PER_TEST", (
-            f"this test created {n} EGL contexts, over the limit of {lim['per_test']} "
-            f"(SE_MAX_CONTEXTS_PER_TEST). Nothing in a healthy run needs that many: the most expensive "
-            f"legitimate test builds one cached ogbench env, its plate renderers and one reference "
-            f"env. Creating them per state, per style value or per call is the bug.\n"
-            f"  created at:\n{format_sites([s for s in d['sites'] if s[0].endswith('created')])}")))
+        out.append(
+            (
+                "EGL_CONTEXTS_PER_TEST",
+                (
+                    f"this test created {n} EGL contexts, over the limit of {lim['per_test']} "
+                    f"(SE_MAX_CONTEXTS_PER_TEST). Nothing in a healthy run needs that many: the most expensive "
+                    f"legitimate test builds one cached ogbench env, its plate renderers and one reference "
+                    f"env. Creating them per state, per style value or per call is the bug.\n"
+                    f"  created at:\n{format_sites([s for s in d['sites'] if s[0].endswith('created')])}"
+                ),
+            )
+        )
     if d["context_live"] > lim["session_live"]:
-        out.append(("EGL_CONTEXTS_RUNAWAY", (
-            f"{d['context_live']} EGL contexts are live, over {lim['session_live']} "
-            f"(SE_MAX_LIVE_CONTEXTS). 96 simultaneous contexts were measured to be harmless on this "
-            f"hardware, so this bound is not a safety margin — it is a tripwire for something creating "
-            f"contexts in a loop.")))
+        out.append(
+            (
+                "EGL_CONTEXTS_RUNAWAY",
+                (
+                    f"{d['context_live']} EGL contexts are live, over {lim['session_live']} "
+                    f"(SE_MAX_LIVE_CONTEXTS). 96 simultaneous contexts were measured to be harmless on this "
+                    f"hardware, so this bound is not a safety margin — it is a tripwire for something creating "
+                    f"contexts in a loop."
+                ),
+            )
+        )
     return out

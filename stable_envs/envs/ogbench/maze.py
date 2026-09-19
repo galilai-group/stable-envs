@@ -78,6 +78,7 @@ The module is one half of the ``stable_envs.envs.ogbench`` PACKAGE; ``manipulati
 Every Step-8 module-level name still resolves off the package, which is what the ``__init__``
 re-exports are for and what the oracle checks name by name.
 """
+
 from __future__ import annotations
 
 import os
@@ -111,17 +112,34 @@ SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.41618
 #: 'global' light (amb 0, dif 1, spec .1). The fitted totals above are distributed in these proportions
 #: so the law still holds when the camera moves and the two directions stop coinciding.
 _NOMINAL = dict(amb=(0.1, 0.0), dif=(0.4, 1.0), spec=(0.5, 0.1))
-MAT_SPECULAR = 0.5           # every material in every OGBench maze scene
+MAT_SPECULAR = 0.5  # every material in every OGBench maze scene
 
 #: locomotion body -> (state_dim, state_names). Verified against the compiled model at construction.
 _FREE = ("root_x", "root_y", "root_z", "root_quat_w", "root_quat_x", "root_quat_y", "root_quat_z")
 _ANT_JOINTS = ("hip_1", "ankle_1", "hip_2", "ankle_2", "hip_3", "ankle_3", "hip_4", "ankle_4")
 _HUMANOID_JOINTS = (
-    "abdomen_z", "abdomen_y", "abdomen_x",
-    "right_hip_x", "right_hip_z", "right_hip_y", "right_knee", "right_ankle_y", "right_ankle_x",
-    "left_hip_x", "left_hip_z", "left_hip_y", "left_knee", "left_ankle_y", "left_ankle_x",
-    "right_shoulder1", "right_shoulder2", "right_elbow",
-    "left_shoulder1", "left_shoulder2", "left_elbow")
+    "abdomen_z",
+    "abdomen_y",
+    "abdomen_x",
+    "right_hip_x",
+    "right_hip_z",
+    "right_hip_y",
+    "right_knee",
+    "right_ankle_y",
+    "right_ankle_x",
+    "left_hip_x",
+    "left_hip_z",
+    "left_hip_y",
+    "left_knee",
+    "left_ankle_y",
+    "left_ankle_x",
+    "right_shoulder1",
+    "right_shoulder2",
+    "right_elbow",
+    "left_shoulder1",
+    "left_shoulder2",
+    "left_elbow",
+)
 BODY_STATE = {
     "point": ("x", "y"),
     "ant": _FREE + _ANT_JOINTS,
@@ -152,7 +170,7 @@ CELLS = (
 #: LRU does NOT make the bake deterministic -- a genuinely cold key still lands on either image, and
 #: the fix for that is above this module (see the findings note). What it removes is cache pressure
 #: as the trigger: a key that is being used is never the one evicted.
-_SCENE_CACHE_MAX = 256      # a plate is 150 kB and a depth buffer 200 kB; re-baking costs far more
+_SCENE_CACHE_MAX = 256  # a plate is 150 kB and a depth buffer 200 kB; re-baking costs far more
 _SCENE_CACHE = _RES.BoundedCache(_SCENE_CACHE_MAX, name="ogbench.maze")
 
 
@@ -169,9 +187,23 @@ def _offsets(paths, sty):
 class _Scene:
     """Everything a render needs that does not depend on the state: plate, depth, camera, model."""
 
-    __slots__ = ("plate", "plate_t", "cam", "model", "data", "agent_ids", "lights", "size",
-                 "geom_local_pos", "maze_map", "maze_unit", "offset", "agent_base", "agent_is_self",
-                 "prims_base")
+    __slots__ = (
+        "plate",
+        "plate_t",
+        "cam",
+        "model",
+        "data",
+        "agent_ids",
+        "lights",
+        "size",
+        "geom_local_pos",
+        "maze_map",
+        "maze_unit",
+        "offset",
+        "agent_base",
+        "agent_is_self",
+        "prims_base",
+    )
 
 
 def _mat_and_tex(m, g):
@@ -180,7 +212,7 @@ def _mat_and_tex(m, g):
     mat = np.asarray(m.geom_rgba[g], np.float64)[:3]
     tex = np.ones(3)
     if mid >= 0:
-        if np.allclose(m.geom_rgba[g], [0.5, 0.5, 0.5, 1.0]):     # compiler default -> material colour
+        if np.allclose(m.geom_rgba[g], [0.5, 0.5, 0.5, 1.0]):  # compiler default -> material colour
             mat = np.asarray(m.mat_rgba[mid], np.float64)[:3]
         tid = m.mat_texid[mid]
         tid = int(np.max(tid)) if np.ndim(tid) else int(tid)
@@ -189,7 +221,7 @@ def _mat_and_tex(m, g):
             buf = getattr(m, attr)
             a0 = int(m.tex_adr[tid])
             h, w = int(m.tex_height[tid]), int(m.tex_width[tid])
-            reg = np.asarray(buf[a0:a0 + 3 * h * w], np.float64).reshape(h, w, 3) / 255.0
+            reg = np.asarray(buf[a0 : a0 + 3 * h * w], np.float64).reshape(h, w, 3) / 255.0
             u = np.unique(reg.reshape(-1, 3), axis=0)
             tex = u[0] if len(u) == 1 else reg.reshape(-1, 3).mean(0)
     return mat, tex
@@ -199,8 +231,10 @@ def _build_reference(loco: str, maze: str, size: int):
     """The official env, at ``ob_type='pixels'`` and the requested resolution. Needs EGL."""
     import gymnasium
     import ogbench  # noqa: F401
-    env = gymnasium.make(f"{loco}maze-{maze}-v0", render_mode="rgb_array", ob_type="pixels",
-                         width=int(size), height=int(size))
+
+    env = gymnasium.make(
+        f"{loco}maze-{maze}-v0", render_mode="rgb_array", ob_type="pixels", width=int(size), height=int(size)
+    )
     env.reset(options={"task_id": 1})
     return env
 
@@ -218,28 +252,34 @@ def _scene_env(loco: str, maze: str, size: int):
     if hit is not None:
         return hit
     import mujoco
+
     env = _build_reference(loco, maze, size)
     u = env.unwrapped
     m = u.model
-    m.vis.quality.offsamples = 4                       # MuJoCo's default; what OGBench datasets hold
+    m.vis.quality.offsamples = 4  # MuJoCo's default; what OGBench datasets hold
     tex = m.tex("grid")
     a0, th, tw = int(tex.adr[0]), int(tex.height[0]), int(tex.width[0])
     attr = "tex_rgb" if hasattr(m, "tex_rgb") else "tex_data"
     pristine = dict(
-        tex=np.array(getattr(m, attr)[a0:a0 + 3 * th * tw], copy=True), tex_adr=a0, tex_n=3 * th * tw,
+        tex=np.array(getattr(m, attr)[a0 : a0 + 3 * th * tw], copy=True),
+        tex_adr=a0,
+        tex_n=3 * th * tw,
         cam_distance=float(u.custom_camera.distance),
         cam_elevation=float(u.custom_camera.elevation),
-        mat_rgba=np.array(m.mat_rgba, copy=True), geom_rgba=np.array(m.geom_rgba, copy=True),
+        mat_rgba=np.array(m.mat_rgba, copy=True),
+        geom_rgba=np.array(m.geom_rgba, copy=True),
         # One Renderer per texture STATE, kept forever. A renderer uploads texture data when its GL
         # context is built, so a texture edit needs a new one -- but only the texture does; material
         # colours, geom colours and the camera are read per frame. Renderers are never closed:
         # releasing an EGL context corrupts rendering in every other live renderer in the process,
         # which is how a batch of maze cells once came back 69-90/255 apart on identical states.
         renderers={},
-        agent=[g for g in range(m.ngeom)
-               if not (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or "")
-               .startswith(("block_", "teleport"))
-               and mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) != "floor"],
+        agent=[
+            g
+            for g in range(m.ngeom)
+            if not (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or "").startswith(("block_", "teleport"))
+            and mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) != "floor"
+        ],
     )
     _ENV_CACHE[key] = (env, u, pristine)
     return _ENV_CACHE[key]
@@ -307,7 +347,8 @@ class OGBenchMaze(Env):
         "per-pixel, which is also what sub-pixel triangles predict); and a mis-shaped specular lobe "
         "(REFUTED - a 24-knot piecewise-linear lobe fitted under four light/specular geometries, "
         "headlight directional or point crossed with Blinn or Phong, could not explain floor and "
-        "agent with one curve).")
+        "agent with one curve)."
+    )
 
     #: The public :data:`State`, declared per BODY rather than per cell, because the packed row is
     #: ``qpos`` and ``qpos``'s structure is a property of the MJCF body: a point is two slide joints,
@@ -319,12 +360,18 @@ class OGBenchMaze(Env):
     STATE_LAYOUT = {
         "point": ((("root", "position"), 2, 0),),
         "ant": ((("root", "position"), 3, 0), (("root", "orientation"), 4, 3), (("joints",), 8, 7)),
-        "humanoid": ((("root", "position"), 3, 0), (("root", "orientation"), 4, 3),
-                     (("joints",), 21, 7)),
+        "humanoid": ((("root", "position"), 3, 0), (("root", "orientation"), 4, 3), (("joints",), 21, 7)),
     }
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         """``num_envs`` environments on ``device`` (contract §2).
 
         ``state_layout`` is assigned here rather than declared on the class only because it depends on
@@ -334,12 +381,18 @@ class OGBenchMaze(Env):
         self.state_dim = len(BODY_STATE[self.LOCO])
         self.state_names = BODY_STATE[self.LOCO]
         self.state_layout = self.STATE_LAYOUT[self.LOCO]
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         sc = self._scene()
         assert sc.model.nq == self.state_dim, (
-            f"{type(self).__name__}: model has nq={sc.model.nq} but state_dim={self.state_dim}")
+            f"{type(self).__name__}: model has nq={sc.model.nq} but state_dim={self.state_dim}"
+        )
         self._check_names(sc)
         if self.LOCO == "point":
             self._check_point_fk(sc)
@@ -352,6 +405,7 @@ class OGBenchMaze(Env):
         everything downstream silently indexes the wrong number.
         """
         import mujoco
+
         m = sc.model
         got = []
         for j in range(m.njnt):
@@ -363,14 +417,15 @@ class OGBenchMaze(Env):
             else:
                 got.append(nm)
         if self.LOCO == "point":
-            got = list(BODY_STATE["point"])         # slide joints are named ballx/bally in the XML
+            got = list(BODY_STATE["point"])  # slide joints are named ballx/bally in the XML
         assert tuple(got) == tuple(self.state_names), (
-            f"{type(self).__name__}: state_names {self.state_names} do not match the model's joint "
-            f"layout {tuple(got)}")
+            f"{type(self).__name__}: state_names {self.state_names} do not match the model's joint layout {tuple(got)}"
+        )
 
     def _check_point_fk(self, sc) -> None:
         """pointmaze's closed-form FK, checked once against ``mj_kinematics`` rather than assumed."""
         import mujoco
+
         m, d = sc.model, sc.data
         rng = np.random.default_rng(0)
         for _ in range(4):
@@ -381,7 +436,8 @@ class OGBenchMaze(Env):
             got = sc.geom_local_pos + np.concatenate([q[:2], [0.0]])
             assert np.abs(want - got).max() < 1e-9, (
                 f"pointmaze FK shortcut is wrong by {np.abs(want - got).max():.3e}; "
-                f"the sphere is not simply translated by qpos")
+                f"the sphere is not simply translated by qpos"
+            )
 
     # ---- variation -------------------------------------------------------
 
@@ -391,29 +447,34 @@ class OGBenchMaze(Env):
         0.3) and a uint8 channel cannot hold 0.7 — the nearest, 179/255, shifts the agent by one level.
         """
         agent_rgb = [0.7, 0.5, 0.3] if self.LOCO in ("point", "ant") else [0.7, 0.5, 0.3]
-        return Dict({
-            "agent": Dict({
-                "color": Box(low=0.0, high=1.0, shape=(3,), init_value=agent_rgb),
-                # 1.0 is the official body; rjepa's `mark_agent_red` is scale 4 plus a red colour, which
-                # is how a 6-pixel humanoid is made findable by a fixed sky camera.
-                "scale": Box(low=0.25, high=6.0, shape=(1,), init_value=[1.0]),
-            }),
-            "floor": Dict({"tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
-            "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=[0.6, 0.6, 0.6])}),
-            "camera": Dict({
-                "distance_scale": Box(low=0.6, high=1.8, shape=(1,), init_value=[1.0]),
-                "elevation": Box(low=-90.0, high=-35.0, shape=(1,), init_value=[-90.0]),
-            }),
-            # OGBench fills the floor texture with a per-texel [r, g, 128] position ramp so a pixel agent
-            # can read its own coordinates off the ground. Flipping this replaces it with flat slate,
-            # which is the leak-free condition; 0 is the official appearance.
-            "rendering": Dict({"decolor_floor": Discrete(2, init_value=0)}),
-        })
+        return Dict(
+            {
+                "agent": Dict(
+                    {
+                        "color": Box(low=0.0, high=1.0, shape=(3,), init_value=agent_rgb),
+                        # 1.0 is the official body; rjepa's `mark_agent_red` is scale 4 plus a red colour, which
+                        # is how a 6-pixel humanoid is made findable by a fixed sky camera.
+                        "scale": Box(low=0.25, high=6.0, shape=(1,), init_value=[1.0]),
+                    }
+                ),
+                "floor": Dict({"tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
+                "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=[0.6, 0.6, 0.6])}),
+                "camera": Dict(
+                    {
+                        "distance_scale": Box(low=0.6, high=1.8, shape=(1,), init_value=[1.0]),
+                        "elevation": Box(low=-90.0, high=-35.0, shape=(1,), init_value=[-90.0]),
+                    }
+                ),
+                # OGBench fills the floor texture with a per-texel [r, g, 128] position ramp so a pixel agent
+                # can read its own coordinates off the ground. Flipping this replaces it with flat slate,
+                # which is the leak-free condition; 0 is the official appearance.
+                "rendering": Dict({"decolor_floor": Discrete(2, init_value=0)}),
+            }
+        )
 
     #: Style leaves that change the STATIC scene and therefore the baked plate. Everything else is a
     #: property of the agent's primitives and is applied per environment inside the ray-cast.
-    PLATE_PATHS = ("floor.tint", "walls.color", "camera.distance_scale", "camera.elevation",
-                   "rendering.decolor_floor")
+    PLATE_PATHS = ("floor.tint", "walls.color", "camera.distance_scale", "camera.elevation", "rendering.decolor_floor")
 
     def _var(self, variation, path):
         if variation is not None and path in variation:
@@ -426,13 +487,17 @@ class OGBenchMaze(Env):
     # ---- scene (plate + camera + model), cached per static appearance -----
 
     def _plate_key(self, size, variation):
-        return (self.LOCO, self.MAZE, int(size),
-                tuple(np.round(self._var(variation, "floor.tint"), 6)),
-                tuple(np.round(self._var(variation, "walls.color"), 6)),
-                float(np.round(self._var(variation, "camera.distance_scale")[0], 6)),
-                float(np.round(self._var(variation, "camera.elevation")[0], 6)),
-                int(self._var(variation, "rendering.decolor_floor")[0]),
-                str(self.device))
+        return (
+            self.LOCO,
+            self.MAZE,
+            int(size),
+            tuple(np.round(self._var(variation, "floor.tint"), 6)),
+            tuple(np.round(self._var(variation, "walls.color"), 6)),
+            float(np.round(self._var(variation, "camera.distance_scale")[0], 6)),
+            float(np.round(self._var(variation, "camera.elevation")[0], 6)),
+            int(self._var(variation, "rendering.decolor_floor")[0]),
+            str(self.device),
+        )
 
     def _scene(self, size=None, variation=None) -> _Scene:
         size = int(size or self.size)
@@ -451,6 +516,7 @@ class OGBenchMaze(Env):
         ``cam.distance *= scale`` twice is a different camera.
         """
         import mujoco
+
         env, u, pr = _scene_env(self.LOCO, self.MAZE, size)
         m, d = u.model, u.data
         attr = "tex_rgb" if hasattr(m, "tex_rgb") else "tex_data"
@@ -470,10 +536,11 @@ class OGBenchMaze(Env):
                 m.geom_rgba[g, :3] = wall
         buf = getattr(m, attr)
         if int(self._var(variation, "rendering.decolor_floor")[0]):
-            buf[pr["tex_adr"]:pr["tex_adr"] + pr["tex_n"]] = np.tile(
-                np.array([60, 64, 72], buf.dtype), pr["tex_n"] // 3)
+            buf[pr["tex_adr"] : pr["tex_adr"] + pr["tex_n"]] = np.tile(
+                np.array([60, 64, 72], buf.dtype), pr["tex_n"] // 3
+            )
         else:
-            buf[pr["tex_adr"]:pr["tex_adr"] + pr["tex_n"]] = pr["tex"]
+            buf[pr["tex_adr"] : pr["tex_adr"] + pr["tex_n"]] = pr["tex"]
 
         cam = u.custom_camera
         cam.distance = pr["cam_distance"] * float(self._var(variation, "camera.distance_scale")[0])
@@ -505,7 +572,7 @@ class OGBenchMaze(Env):
         mujoco.mj_forward(m, d)
 
         keep = m.geom_rgba[agent].copy()
-        m.geom_rgba[agent, 3] = 0.0                       # hide the agent, bake what is left
+        m.geom_rgba[agent, 3] = 0.0  # hide the agent, bake what is left
         rkey = int(self._var(variation, "rendering.decolor_floor")[0])
         r = pr["renderers"].get(rkey)
         if r is None:
@@ -532,11 +599,17 @@ class OGBenchMaze(Env):
             size=np.stack([m.geom_size[g] for g in static]),
             mat_rgb=np.stack([_mat_and_tex(m, g)[0] for g in static]),
             tex_rgb=np.stack([_mat_and_tex(m, g)[1] for g in static]),
-            spec=np.full(len(static), MAT_SPECULAR))
-        sc.plate_t = R3.static_depth(camera, sprims,
-                                     np.stack([d.geom_xpos[g] for g in static]),
-                                     np.stack([d.geom_xmat[g] for g in static]),
-                                     size, size, self.device)
+            spec=np.full(len(static), MAT_SPECULAR),
+        )
+        sc.plate_t = R3.static_depth(
+            camera,
+            sprims,
+            np.stack([d.geom_xpos[g] for g in static]),
+            np.stack([d.geom_xmat[g] for g in static]),
+            size,
+            size,
+            self.device,
+        )
         sc.geom_local_pos = np.stack([m.geom_pos[g] for g in agent])
         # Per-geom base colour, because the agent is NOT one colour: OGBench recolours three of the
         # ant's leg geoms to `self_white` in pixels mode specifically to break the ant's 4-fold
@@ -547,19 +620,23 @@ class OGBenchMaze(Env):
         sc.prims_base = R3.Primitives(
             kind=np.array([int(m.geom_type[g]) for g in agent]),
             size=np.stack([m.geom_size[g] for g in agent]),
-            mat_rgb=sc.agent_base, tex_rgb=np.ones((len(agent), 3)),
-            spec=np.full(len(agent), MAT_SPECULAR))
+            mat_rgb=sc.agent_base,
+            tex_rgb=np.ones((len(agent), 3)),
+            spec=np.full(len(agent), MAT_SPECULAR),
+        )
         # two lights, both from the scene MuJoCo actually hands the rasterizer
         L = nlight
         dirs = ldir / np.linalg.norm(ldir, axis=1, keepdims=True)
         ka = SHADE_AMBIENT / max(sum(_NOMINAL["amb"]), 1e-9)
         kd = SHADE_DIFFUSE / max(sum(_NOMINAL["dif"]), 1e-9)
         ks = SHADE_SPECULAR / max(sum(_NOMINAL["spec"]) * MAT_SPECULAR, 1e-9)
-        sc.lights = R3.Lights(dirs=dirs,
-                              ambient=np.array(_NOMINAL["amb"][:L]) * ka,
-                              diffuse=np.array(_NOMINAL["dif"][:L]) * kd,
-                              specular=np.array(_NOMINAL["spec"][:L]) * ks,
-                              exponent=SHADE_EXPONENT)
+        sc.lights = R3.Lights(
+            dirs=dirs,
+            ambient=np.array(_NOMINAL["amb"][:L]) * ka,
+            diffuse=np.array(_NOMINAL["dif"][:L]) * kd,
+            specular=np.array(_NOMINAL["spec"][:L]) * ks,
+            exponent=SHADE_EXPONENT,
+        )
         return sc
 
     # ---- forward kinematics ----------------------------------------------
@@ -587,6 +664,7 @@ class OGBenchMaze(Env):
         surrounds it holds the GIL throughout, so adding workers buys contention.
         """
         import mujoco
+
         B = states.shape[0]
         P = len(sc.agent_ids)
         if self.LOCO == "point":
@@ -608,14 +686,23 @@ class OGBenchMaze(Env):
             mujoco.mj_kinematics(m, d)
             take(gp, ids, axis=0, out=xp[i])
             take(gm, ids, axis=0, out=xm[i])
-        return (torch.tensor(xp, device=self.device, dtype=torch.float32),
-                torch.tensor(xm.reshape(B, P, 3, 3), device=self.device, dtype=torch.float32))
+        return (
+            torch.tensor(xp, device=self.device, dtype=torch.float32),
+            torch.tensor(xm.reshape(B, P, 3, 3), device=self.device, dtype=torch.float32),
+        )
 
     # ---- render ----------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment.
 
         The batch is grouped by the plate-affecting half of the style: environments that share a floor,
@@ -623,8 +710,7 @@ class OGBenchMaze(Env):
         one call. Agent colour and scale are per environment inside the ray-cast, so the common case —
         randomise the agent, keep the maze — never splits the batch at all.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
@@ -640,8 +726,7 @@ class OGBenchMaze(Env):
         uniq, inv = np.unique(np.round(plate_key.astype(np.float64), 6), axis=0, return_inverse=True)
         for gi in range(len(uniq)):
             idx = np.flatnonzero(inv == gi)
-            over = {p: uniq[gi][o:o + w] for p, (o, w) in
-                    zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
+            over = {p: uniq[gi][o : o + w] for p, (o, w) in zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
             sc = self._scene(size, over)
             sub = torch.as_tensor(idx, device=self.device, dtype=torch.long)
             mat, scale = self._agent_appearance(sc, sty, sub)
@@ -651,9 +736,22 @@ class OGBenchMaze(Env):
             # an advanced-indexing COPY, so rendering into it would write to a temporary and drop the
             # frames on the floor.
             dst = buf if len(uniq) == 1 else None
-            got = R3.composite(sc.plate, sc.plate_t, sc.cam, sc.prims_base, xpos, xmat, sc.lights,
-                               size, size, supersample=ss, out=dst, tile=self.TILE,
-                               mat_rgb=mat, size_scale=scale)
+            got = R3.composite(
+                sc.plate,
+                sc.plate_t,
+                sc.cam,
+                sc.prims_base,
+                xpos,
+                xmat,
+                sc.lights,
+                size,
+                size,
+                supersample=ss,
+                out=dst,
+                tile=self.TILE,
+                mat_rgb=mat,
+                size_scale=scale,
+            )
             if dst is None:
                 buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
@@ -667,7 +765,7 @@ class OGBenchMaze(Env):
         """
         base = torch.as_tensor(sc.agent_base, device=self.device, dtype=torch.float32)
         is_self = torch.as_tensor(sc.agent_is_self, device=self.device)
-        acol = sty["agent.color"][sub].to(torch.float32)                      # (b,3)
+        acol = sty["agent.color"][sub].to(torch.float32)  # (b,3)
         mat = base.unsqueeze(0).expand(len(sub), *base.shape).clone()
         mat[:, is_self] = acol.unsqueeze(1).expand(-1, int(is_self.sum()), 3)
         return mat, sty["agent.scale"][sub].to(torch.float32).reshape(-1)
@@ -688,8 +786,9 @@ class OGBenchMaze(Env):
         sc = self._scene()
         cells = np.argwhere(sc.maze_map == 0)
         pick = cells[rng.integers(0, len(cells), batch)]
-        xy = np.stack([pick[:, 1] * sc.maze_unit - sc.offset[0],
-                       pick[:, 0] * sc.maze_unit - sc.offset[1]], 1).astype(np.float64)
+        xy = np.stack([pick[:, 1] * sc.maze_unit - sc.offset[0], pick[:, 0] * sc.maze_unit - sc.offset[1]], 1).astype(
+            np.float64
+        )
         xy += rng.uniform(-1.0, 1.0, xy.shape)
         q = np.tile(np.asarray(sc.model.qpos0, np.float64), (batch, 1))
         q[:, :2] = xy
@@ -742,17 +841,27 @@ def _make_classes():
     made = {}
     for loco, maze, dataset in CELLS:
         cname = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
-        cls = register(type(cname, (OGBenchMaze,), dict(
-            LOCO=loco, MAZE=maze, __module__=_MODULE,
-            name=f"{loco}maze-{maze}-{dataset}",
-            reference_id=f"ogbench/{loco}maze-{maze}-v0",
-            state_dim=len(BODY_STATE[loco]),
-            state_names=BODY_STATE[loco],
-            __doc__=(f"OGBench {loco}maze-{maze}-{dataset}. State is qpos "
-                     f"({len(BODY_STATE[loco])} floats); the dataset suffix selects a task and does not "
-                     f"reach the renderer, so it shares a baked plate with the other "
-                     f"{loco}maze-{maze} cells."),
-        )))
+        cls = register(
+            type(
+                cname,
+                (OGBenchMaze,),
+                dict(
+                    LOCO=loco,
+                    MAZE=maze,
+                    __module__=_MODULE,
+                    name=f"{loco}maze-{maze}-{dataset}",
+                    reference_id=f"ogbench/{loco}maze-{maze}-v0",
+                    state_dim=len(BODY_STATE[loco]),
+                    state_names=BODY_STATE[loco],
+                    __doc__=(
+                        f"OGBench {loco}maze-{maze}-{dataset}. State is qpos "
+                        f"({len(BODY_STATE[loco])} floats); the dataset suffix selects a task and does not "
+                        f"reach the renderer, so it shares a baked plate with the other "
+                        f"{loco}maze-{maze} cells."
+                    ),
+                ),
+            )
+        )
         made[cname] = cls
     return made
 

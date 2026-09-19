@@ -22,6 +22,7 @@ The parent process then does two independent things with that, and keeping them 
 
 Run:  python -m stable_envs.testing.render_worker --out-npz S.npz --out-json S.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,6 +46,7 @@ ROLLOUT_STEPS = 4
 
 def _digest(a) -> str:
     from .conformance import frames_digest
+
     return frames_digest(a)
 
 
@@ -56,8 +58,11 @@ def sample_inputs(env, n: int):
     experiments that both pass.
     """
     states = np.asarray(env.sample_states(n, rng=np.random.default_rng(STATE_SEED)), np.float32)
-    style = (np.asarray(env.sample_style(n, rng=np.random.default_rng(STYLE_SEED)), np.float32)
-             if env.style_dim else np.zeros((n, 0), np.float32))
+    style = (
+        np.asarray(env.sample_style(n, rng=np.random.default_rng(STYLE_SEED)), np.float32)
+        if env.style_dim
+        else np.zeros((n, 0), np.float32)
+    )
     return states, style
 
 
@@ -70,6 +75,7 @@ def rollout_digests(env, n: int) -> dict:
     going to differ differs at step one.
     """
     from stable_envs.dynamics import has_dynamics
+
     if not has_dynamics(env):
         return {}
     tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
@@ -91,16 +97,20 @@ def run(names, n: int, device: str = "cuda") -> tuple[dict, dict]:
             frames = env.render(states)
             frames_styled = env.render(states, style=sty)
             rec = {
-                "states_sha": _digest(states), "style_sha": _digest(style),
-                "frames_sha": _digest(frames), "frames_styled_sha": _digest(frames_styled),
-                "shape": list(frames.shape), "size": int(env.size),
-                "state_dim": int(env.state_dim), "style_dim": int(env.style_dim),
+                "states_sha": _digest(states),
+                "style_sha": _digest(style),
+                "frames_sha": _digest(frames),
+                "frames_styled_sha": _digest(frames_styled),
+                "shape": list(frames.shape),
+                "size": int(env.size),
+                "state_dim": int(env.state_dim),
+                "style_dim": int(env.style_dim),
             }
             rec.update(rollout_digests(env, n))
             report[name] = rec
             arrays[f"{name}::states"] = states
             arrays[f"{name}::style"] = style
-        except Exception:                                               # noqa: BLE001
+        except Exception:  # noqa: BLE001
             # One env that cannot be built must not cost the other 43 their cross-process check, and a
             # silent omission would read to the parent as "this env has no result" rather than as a
             # failure. The traceback travels back so the skip message names a cause.
@@ -126,12 +136,14 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
 
     import stable_envs as se
+
     names = [s for s in a.envs.split(",") if s] or sorted(se.registry.REGISTRY)
     report, arrays = run(names, a.n, a.device)
     np.savez(a.out_npz, **arrays)
     with open(a.out_json, "w") as f:
-        json.dump({"envs": report, "n": a.n, "device": a.device,
-                   "state_seed": STATE_SEED, "style_seed": STYLE_SEED}, f)
+        json.dump(
+            {"envs": report, "n": a.n, "device": a.device, "state_seed": STATE_SEED, "style_seed": STYLE_SEED}, f
+        )
     n_err = sum("error" in v for v in report.values())
     print(f"render_worker: {len(report) - n_err}/{len(report)} envs rendered, {n_err} errors")
     return 0

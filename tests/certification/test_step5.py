@@ -15,6 +15,7 @@ Three invariants run under all of it:
   * **the arms must be the same experiment.** Different episodes, different start steps or a
     different checkpoint make the discordant counts a comparison of two different things.
 """
+
 from __future__ import annotations
 
 import ast
@@ -46,6 +47,7 @@ def S():
 @pytest.fixture(scope="module")
 def P():
     import sys
+
     sys.path.insert(0, str(STEP5))
     return _load("ingest_pusht.py", "ingest_pusht")
 
@@ -53,6 +55,7 @@ def P():
 @pytest.fixture(scope="module")
 def G():
     import sys
+
     sys.path.insert(0, str(STEP5))
     return _load("paired_gate.py", "paired_gate")
 
@@ -85,11 +88,14 @@ def test_no_threshold_is_hardcoded(S):
     offenders = []
     for fn in [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]:
         for node in ast.walk(fn):
-            if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) \
-                    and not isinstance(node.value, bool) and node.value in banned:
+            if (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, (int, float))
+                and not isinstance(node.value, bool)
+                and node.value in banned
+            ):
                 offenders.append((fn.name, node.value, node.lineno))
-    assert not offenders, (
-        f"threshold literals inside functions: {offenders}. Read them from SPEC instead")
+    assert not offenders, f"threshold literals inside functions: {offenders}. Read them from SPEC instead"
 
 
 def test_mcnemar_is_exact_at_the_corner_the_control_lands_in(S):
@@ -98,7 +104,7 @@ def test_mcnemar_is_exact_at_the_corner_the_control_lands_in(S):
     assert S.mcnemar_exact(0, 0) == 1.0
     assert S.mcnemar_exact(12, 11) == pytest.approx(1.0)
     assert S.mcnemar_exact(46, 0) == pytest.approx(2.84e-14, rel=0.02)
-    assert S.mcnemar_exact(10, 0) == pytest.approx(2 * 0.5 ** 10)
+    assert S.mcnemar_exact(10, 0) == pytest.approx(2 * 0.5**10)
 
 
 def test_the_interval_reproduces_step_2s_own_worked_example(S, SPEC):
@@ -108,9 +114,9 @@ def test_the_interval_reproduces_step_2s_own_worked_example(S, SPEC):
     n, b, c = v["n"], v["b"], v["c"]
     off, ours = [1] * n, [1] * n
     for i in range(b):
-        ours[i] = 0                      # official won, ours lost
+        ours[i] = 0  # official won, ours lost
     for i in range(b, b + c):
-        off[i] = 0                       # ours won, official lost
+        off[i] = 0  # ours won, official lost
     r = S.paired(off, ours)
     assert (r["b"], r["c"], r["n"]) == (v["b"], v["c"], 300)
     assert r["delta_points"] == pytest.approx(v["delta_points"], abs=0.01)
@@ -144,8 +150,7 @@ def _arms(n=300, b=0, c=0):
 def test_equivalence_passes_only_with_a_degraded_control(S):
     off, ours = _arms(300, 12, 11)
     ctrl = [0] * 300
-    assert S.gate_h(off, ours, ctrl, seeds=[i // 50 for i in range(300)],
-                    per_seed_n=[50] * 6)["verdict"] == "PASS"
+    assert S.gate_h(off, ours, ctrl, seeds=[i // 50 for i in range(300)], per_seed_n=[50] * 6)["verdict"] == "PASS"
 
 
 def test_without_a_degraded_control_the_result_is_inconclusive_not_a_pass(S):
@@ -261,15 +266,26 @@ def test_the_control_arm_degradation_is_measured_paired(P, S):
 
 def _run(arm, seed=42, n=4, succ=None, ckpt="abc", horizon=5):
     return {
-        "env": "swm/ReacherDMControl-v0", "task": "qpos_match", "model_family": "prejepa",
-        "arm": arm, "seed": seed, "num_eval": n,
+        "env": "swm/ReacherDMControl-v0",
+        "task": "qpos_match",
+        "model_family": "prejepa",
+        "arm": arm,
+        "seed": seed,
+        "num_eval": n,
         "success_rate": 100.0 * sum(succ or [1] * n) / n,
         "episode_successes": succ or [1] * n,
-        "episodes_idx": list(range(n)), "start_steps": [10] * n,
-        "goal_offset": 25, "eval_budget": 50, "eval_seconds": 1.0,
+        "episodes_idx": list(range(n)),
+        "start_steps": [10] * n,
+        "goal_offset": 25,
+        "eval_budget": 50,
+        "eval_seconds": 1.0,
         "config": {"plan_config": {"horizon": horizon}, "solver": {"num_samples": 300}},
-        "provenance": {"checkpoint": {"policy": "reacher/prejepa", "files": {"w.pt": ckpt}},
-                       "versions": {"torch": "2.14.0"}, "host": "node1", "gpu": "3090"},
+        "provenance": {
+            "checkpoint": {"policy": "reacher/prejepa", "files": {"w.pt": ckpt}},
+            "versions": {"torch": "2.14.0"},
+            "host": "node1",
+            "gpu": "3090",
+        },
     }
 
 
@@ -316,6 +332,7 @@ def R():
     if not p.is_file():
         pytest.skip(f"{p} is not present in this checkout")
     import sys
+
     sys.path.insert(0, str(STEP5))
     spec = importlib.util.spec_from_file_location("step5_report", p)
     mod = importlib.util.module_from_spec(spec)
@@ -350,6 +367,7 @@ def test_both_passing_is_the_only_pass(R):
 @pytest.fixture(scope="module")
 def SW():
     import sys
+
     sys.path.insert(0, str(STEP5 / "reacher"))
     return _load("reacher/swap_renderer.py", "step5_swap_renderer")
 
@@ -358,7 +376,7 @@ def test_the_blank_arm_keeps_the_tensor_contract_it_is_supposed_to_break_nothing
     """Section 10: the control removes the INFORMATION and leaves shape, dtype and pipeline alone.
     A control that also changed the frame's shape would be testing the transform stack instead."""
     r = SW.Renderer(size=224, mode="blank")
-    live = r.from_live_env(object())          # never touches the env in blank mode
+    live = r.from_live_env(object())  # never touches the env in blank mode
     stored = r.from_state([[0.1, 0.2], [0.3, 0.4]])
     assert live.shape == (224, 224, 3) and live.dtype.name == "uint8"
     assert stored.shape == (2, 224, 224, 3) and stored.dtype.name == "uint8"
@@ -402,7 +420,7 @@ def test_hiding_the_target_is_a_style_leaf_rather_than_a_placement(SW):
     r = SW.Renderer(size=84, mode="blank", target_mode="hidden")
     assert r._variation("hidden") == {SW.VISIBILITY: 0}
     assert r._variation("as_placed") is None
-    assert r._variation("offscreen") is None        # the placement does the work in that mode
+    assert r._variation("offscreen") is None  # the placement does the work in that mode
 
 
 def test_the_default_target_mode_is_the_representation_not_the_workaround(SW):
@@ -425,21 +443,21 @@ def test_the_placements_and_modes_are_the_ones_the_arms_record(SW):
 def test_the_official_regeneration_control_builds_no_stable_envs_renderer(SW):
     """It must draw with MuJoCo and nothing else, or it is not a control."""
     import inspect
+
     src = inspect.getsource(SW.Renderer.__init__)
     i_official = src.index("official_regen")
     i_se = src.index("import stable_envs")
     assert i_official < i_se, (
         "the official_regen branch must be taken before the stable_envs import, or the control "
-        "arm quietly constructs the renderer it exists to exclude")
-
+        "arm quietly constructs the renderer it exists to exclude"
+    )
 
 
 def test_the_two_surfaces_can_place_the_target_differently(SW):
     """The live env hides its target and the stored corpus draws it. One policy for both surfaces
     would regenerate a goal image without the landmark the model steers by -- which is a change to
     the planner's objective wearing a renderer's name."""
-    r = SW.Renderer(size=84, mode="blank", target_mode="offscreen",
-                    dataset_target_mode="as_placed")
+    r = SW.Renderer(size=84, mode="blank", target_mode="offscreen", dataset_target_mode="as_placed")
     assert r.target_mode == "offscreen" and r.dataset_target_mode == "as_placed"
 
 
@@ -459,7 +477,7 @@ def test_the_power_guard_is_about_n_not_about_a_constant(S):
     """0.19 is the discordance a 300-episode run can resolve -- 3.8416*0.19/0.05^2 = 292 -- not a
     universal ceiling. Comparing against it at any n turns a powered FAIL into an INCONCLUSIVE,
     which is the comfortable answer rather than the true one."""
-    off, ours = _arms(600, 132, 78)                      # discordance 0.35, required n = 538
+    off, ours = _arms(600, 132, 78)  # discordance 0.35, required n = 538
     g = S.gate_h(off, ours, [0] * 600, seeds=[i // 50 for i in range(600)], per_seed_n=[50] * 12)
     assert g["power_guard"]["required_n"] == 538
     assert g["power_guard"]["underpowered"] is False, "600 >= 538 is powered"

@@ -103,6 +103,7 @@ process. It is not a substitute for the supervisor, which is still how the suite
 stops the supervisor being asked to tell a real crash apart from an exit-time one. End to end:
 ``supervisor -- tests/ -k Griddly`` returns **238 passed, 35 skipped, 1 segment, rc 0**.
 """
+
 from __future__ import annotations
 
 import collections
@@ -138,34 +139,40 @@ def _require_griddly():
     what makes the family cleanly ABSENT rather than present and failing inside a fixture.
     """
     try:
-        import griddly                                                  # noqa: F401
-        from griddly import GymWrapper, gd                              # noqa: F401
-    except Exception as e:                                              # noqa: BLE001
+        import griddly  # noqa: F401
+        from griddly import GymWrapper, gd  # noqa: F401
+    except Exception as e:  # noqa: BLE001
         raise ImportError(
             f"griddly is not importable ({type(e).__name__}: {e}). The atlas is composed of tiles "
             f"griddly's own Vulkan renderer draws, so there is no degraded mode. "
             f"`pip install griddly==1.6.7` — the only release, from 2023-03-15; upstream's last commit "
-            f"is 2024-04-07 and there is no successor.") from e
+            f"is 2024-04-07 and there is no successor."
+        ) from e
     try:
         env = _open("Single-Player/GVGAI/sokoban.yaml", DEFAULT_TILE)
         env.reset(level_id=0)
         fr = np.array(env.game.observe(), copy=True)
-    except Exception as e:                                              # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         raise ImportError(
             f"griddly is installed but cannot render: {type(e).__name__}: {e}. It renders headlessly "
-            f"through Vulkan, so this is a driver/device problem rather than a packaging one.") from e
+            f"through Vulkan, so this is a driver/device problem rather than a packaging one."
+        ) from e
     if fr.ndim != 3 or len(np.unique(fr)) < 2:
-        raise ImportError(f"griddly returned a {fr.shape} frame with {len(np.unique(fr))} distinct "
-                          f"values; a uniform frame means the renderer is not drawing")
+        raise ImportError(
+            f"griddly returned a {fr.shape} frame with {len(np.unique(fr))} distinct "
+            f"values; a uniform frame means the renderer is not drawing"
+        )
 
 
 def _games_dir() -> str:
     import griddly
+
     return os.path.join(os.path.dirname(griddly.__file__), "resources", "games")
 
 
 def _read_yaml(rel: str):
     import yaml as pyyaml
+
     with open(os.path.join(_games_dir(), rel)) as f:
         src = f.read()
     return src, pyyaml.load(src, Loader=pyyaml.FullLoader)
@@ -179,6 +186,7 @@ def _yaml_at(rel: str, tile_size: int) -> str:
     T in {4, 8, 12, 16, 24, 32, 48, 64}.
     """
     import yaml as pyyaml
+
     src, g = _read_yaml(rel)
     g["Environment"].setdefault("Observers", {}).setdefault("Sprite2D", {})["TileSize"] = int(tile_size)
     return pyyaml.dump(g, sort_keys=False)
@@ -205,7 +213,7 @@ def _no_release_wrapper():
         from griddly import GymWrapper
 
         class _NoReleaseGymWrapper(GymWrapper):
-            def __del__(self):                       # noqa: D105  — see ``_open``
+            def __del__(self):  # noqa: D105  — see ``_open``
                 pass
 
         _NO_RELEASE.append(_NoReleaseGymWrapper)
@@ -223,10 +231,13 @@ def _open(rel: str, tile_size: int):
     key = (rel, int(tile_size))
     if key not in _WRAPPERS:
         from griddly import gd
+
         _WRAPPERS[key] = _no_release_wrapper()(
-            yaml_string=_yaml_at(rel, tile_size), level=0,
+            yaml_string=_yaml_at(rel, tile_size),
+            level=0,
             global_observer_type=gd.ObserverType.SPRITE_2D,
-            player_observer_type=gd.ObserverType.SPRITE_2D)
+            player_observer_type=gd.ObserverType.SPRITE_2D,
+        )
     return _WRAPPERS[key]
 
 
@@ -260,15 +271,14 @@ def _sample_action(env, rng):
         return [int(rng.integers(k)) for k in sp.nvec]
     if hasattr(sp, "n"):
         return int(rng.integers(sp.n))
-    return [([int(rng.integers(k)) for k in s.nvec] if hasattr(s, "nvec") else int(rng.integers(s.n)))
-            for s in sp]
+    return [([int(rng.integers(k)) for k in s.nvec] if hasattr(s, "nvec") else int(rng.integers(s.n))) for s in sp]
 
 
 def level_string(grid: dict, W: int, H: int, chars: dict) -> str:
     """``{(x, y): code}`` -> a griddly level string; space separated, ``/`` inside a cell."""
     return "\n".join(
-        " ".join("/".join(chars[n] for n in grid.get((x, y), ())) or EMPTY_CHAR for x in range(W))
-        for y in range(H))
+        " ".join("/".join(chars[n] for n in grid.get((x, y), ())) or EMPTY_CHAR for x in range(W)) for y in range(H)
+    )
 
 
 def _cache_path(name: str, tile: int) -> str:
@@ -284,7 +294,7 @@ class GriddlyDecoder:
     of composed tiles, and which class an out-of-grid neighbour counts as.
     """
 
-    _mem: dict[tuple[str, int, str], "GriddlyDecoder"] = {}
+    _mem: dict[tuple[str, int, str], GriddlyDecoder] = {}
 
     def __init__(self, name: str, rel: str, tile: int, device="cuda"):
         self.name, self.rel, self.T = name, rel, int(tile)
@@ -303,7 +313,7 @@ class GriddlyDecoder:
         self._rgb_cache = _RES.BoundedCache(8, name="griddly.rgb")
 
     @classmethod
-    def get(cls, name: str, rel: str, tile: int, device="cuda") -> "GriddlyDecoder":
+    def get(cls, name: str, rel: str, tile: int, device="cuda") -> GriddlyDecoder:
         key = (name, int(tile), str(device))
         if key not in cls._mem:
             cls._mem[key] = cls(name, rel, tile, device)
@@ -314,7 +324,7 @@ class GriddlyDecoder:
         if os.path.exists(path):
             try:
                 return dict(np.load(path, allow_pickle=False))
-            except Exception:                                           # noqa: BLE001  partial/corrupt
+            except Exception:  # noqa: BLE001  partial/corrupt
                 pass
         d = build_decoder(self.name, self.rel, self.T)
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -337,8 +347,7 @@ class GriddlyDecoder:
         hit = self._rgb_cache.get(key)
         if hit is None:
             t = torch.as_tensor(g, dtype=torch.float32, device=self.device)
-            hit = self._rgb_cache.put(
-                key, (self.official.float() * t).clamp_(0, 255).to(torch.uint8).contiguous())
+            hit = self._rgb_cache.put(key, (self.official.float() * t).clamp_(0, 255).to(torch.uint8).contiguous())
         return hit
 
 
@@ -358,7 +367,7 @@ class _Canvas:
     def render(self, configs) -> list[bytes]:
         out = []
         for i in range(0, len(configs), len(self.slots)):
-            chunk = configs[i:i + len(self.slots)]
+            chunk = configs[i : i + len(self.slots)]
             grid = {}
             for (cx, cy), (centre, nbs) in zip(self.slots, chunk):
                 if centre:
@@ -375,16 +384,14 @@ class _Canvas:
             self.loads += 1
             fr = _frame(self.env)
             for (cx, cy), _ in zip(self.slots, chunk):
-                out.append(fr[cy * self.T:(cy + 1) * self.T,
-                              cx * self.T:(cx + 1) * self.T].tobytes())
+                out.append(fr[cy * self.T : (cy + 1) * self.T, cx * self.T : (cx + 1) * self.T].tobytes())
         return out
 
 
 def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     """Ask griddly for the whole decoder, then refuse it unless it reproduces real frames exactly."""
     _src, g = _read_yaml(rel)
-    chars = {o["Name"]: str(o["MapCharacter"]) for o in g.get("Objects", [])
-             if o.get("MapCharacter") is not None}
+    chars = {o["Name"]: str(o["MapCharacter"]) for o in g.get("Objects", []) if o.get("MapCharacter") is not None}
     avatar = (g["Environment"].get("Player") or {}).get("AvatarObject")
     env = _open(rel, tile)
     env.seed(0)
@@ -402,7 +409,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
             recs.append((cell_codes(env.get_state()), _frame(env)))
             try:
                 _obs, _r, done, _info = env.step(_sample_action(env, rng))
-            except Exception:                                           # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 break
             if np.any(done) or len(recs) >= BUILD_FRAMES:
                 break
@@ -414,14 +421,14 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
         raise RuntimeError(
             f"griddly game {name}: the objects {no_char} occur on the board and declare no "
             f"MapCharacter, so no level string can place them and this game cannot be written back "
-            f"into griddly at all")
+            f"into griddly at all"
+        )
     cid = {c: i for i, c in enumerate(alphabet)}
     n = len(alphabet)
     canvas = _Canvas(env, tile, chars, avatar)
 
     # --- every code must survive a level-string round trip, or the reference bridge is a fiction
-    grid = {(3 * (i % canvas.k) + 1, 3 * (i // canvas.k) + 1): c
-            for i, c in enumerate(alphabet) if c}
+    grid = {(3 * (i % canvas.k) + 1, 3 * (i // canvas.k) + 1): c for i, c in enumerate(alphabet) if c}
     env.reset(level_string=level_string(grid, canvas.W, canvas.H, chars))
     back = cell_codes(env.get_state())
     wrong = {k: (v, back.get(k)) for k, v in grid.items() if back.get(k) != v}
@@ -430,7 +437,8 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
         raise RuntimeError(
             f"griddly game {name}: {len(wrong)} cell codes do not round-trip through a level string "
             f"(cell {k} was written as {want} and reads back as {got}). The state could not be put "
-            f"back into griddly, so no parity number could be measured")
+            f"back into griddly, so no parity number could be measured"
+        )
 
     # --- which codes are distinguishable AS a neighbour, and which offsets matter at all
     base = dict(zip(alphabet, canvas.render([(c, {}) for c in alphabet])))
@@ -454,7 +462,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     # --- enumerate (code, mask) -> tile
     cfgs, keys = [], []
     for c in alphabet:
-        for mask in range(m ** K):
+        for mask in range(m**K):
             nbs, v = {}, mask
             for k in live:
                 nbs[k] = rep[v % m]
@@ -464,7 +472,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     tiles = canvas.render(cfgs)
     uniq = sorted(set(tiles))
     tidx = {t: i for i, t in enumerate(uniq)}
-    table = np.zeros((n, m ** K), np.int32)
+    table = np.zeros((n, m**K), np.int32)
     for (ci, mask), t in zip(keys, tiles):
         table[ci, mask] = tidx[t]
     atlas = np.stack([np.frombuffer(t, np.uint8).reshape(tile, tile, 3) for t in uniq])
@@ -482,8 +490,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     oob_class, worst = None, None
     for oob in range(m):
         idx = _mask_index_np(grids, cls, live, m, oob)
-        got = atlas[table[grids, idx]].transpose(0, 1, 3, 2, 4, 5).reshape(
-            len(recs), GH * tile, GW * tile, 3)
+        got = atlas[table[grids, idx]].transpose(0, 1, 3, 2, 4, 5).reshape(len(recs), GH * tile, GW * tile, 3)
         d = int(np.abs(got.astype(np.int32) - ref.astype(np.int32)).max())
         worst = d if worst is None else min(worst, d)
         if d == 0:
@@ -494,12 +501,22 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
             f"griddly game {name}: the (cell code, neighbour class) table does not reproduce griddly's "
             f"own frames (best max abs {worst}/255 over {len(recs)} frames). The picture depends on "
             f"something the cell code does not carry — an Orientation, a RenderTileId or a PlayerId, "
-            f"none of which a level string can set — so this game is not renderable from this state")
+            f"none of which a level string can set — so this game is not renderable from this state"
+        )
     env.reset(level_id=level)
-    return {"alphabet": json.dumps([list(c) for c in alphabet]), "chars": json.dumps(chars),
-            "atlas": atlas, "table": table, "cls": cls, "live": np.array(live, np.int32),
-            "m": m, "oob_class": oob_class, "grid_w": GW, "grid_h": GH,
-            "canvas_loads": canvas.loads}
+    return {
+        "alphabet": json.dumps([list(c) for c in alphabet]),
+        "chars": json.dumps(chars),
+        "atlas": atlas,
+        "table": table,
+        "cls": cls,
+        "live": np.array(live, np.int32),
+        "m": m,
+        "oob_class": oob_class,
+        "grid_w": GW,
+        "grid_h": GH,
+        "canvas_loads": canvas.loads,
+    }
 
 
 def _mask_index_np(grids: np.ndarray, cls: np.ndarray, live, m: int, oob: int) -> np.ndarray:
@@ -509,7 +526,7 @@ def _mask_index_np(grids: np.ndarray, cls: np.ndarray, live, m: int, oob: int) -
     out = np.zeros((B, H, W), np.int64)
     for bit, k in enumerate(live):
         dx, dy = OFFSETS[k]
-        out += pad[:, 1 + dy:1 + dy + H, 1 + dx:1 + dx + W] * (m ** bit)
+        out += pad[:, 1 + dy : 1 + dy + H, 1 + dx : 1 + dx + W] * (m**bit)
     return out
 
 
@@ -538,8 +555,9 @@ class _GriddlyGame(Env):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self.dec = GriddlyDecoder.get(type(self).__name__, self.game_yaml, self._tile(self.size),
-                                      device=str(self.device))
+        self.dec = GriddlyDecoder.get(
+            type(self).__name__, self.game_yaml, self._tile(self.size), device=str(self.device)
+        )
         self._check_grid(self.dec)
         self._pool: np.ndarray | None = None
 
@@ -559,14 +577,16 @@ class _GriddlyGame(Env):
             raise AssertionError(
                 f"{type(self).__name__} declares a {self.grid_w}x{self.grid_h} grid but griddly builds "
                 f"{dec.grid_w}x{dec.grid_h} for level {self.level} of {self.game_yaml}; every rendered "
-                f"frame would be the wrong shape")
+                f"frame would be the wrong shape"
+            )
 
     def _tile(self, size: int) -> int:
         t, r = divmod(int(size), self.grid_h)
         if r or t < 4:
             raise ValueError(
                 f"{type(self).__name__}: size {size} is not a whole tile size for a {self.grid_w}x"
-                f"{self.grid_h} grid; use a multiple of {self.grid_h} that is at least {4*self.grid_h}")
+                f"{self.grid_h} grid; use a multiple of {self.grid_h} that is at least {4 * self.grid_h}"
+            )
         return t
 
     # variation
@@ -581,28 +601,36 @@ class _GriddlyGame(Env):
         agreement, and it is applied to the 9-25 tile ATLAS rather than to the frame, which is the same
         arithmetic for a fraction of the work.
         """
-        return Dict({"channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32,
-                                         init_value=[1.0, 1.0, 1.0])})
+        return Dict({"channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0])})
 
     # rendering
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,grid_w*grid_h)`` -> ``(...,grid_h*T,grid_w*T,3)`` uint8 on device."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}: supersample={supersample} is not available. The frame is a "
                 f"gather from tiles griddly composed at TileSize, so there is no sub-pixel coverage to "
-                f"estimate — ask for a larger `size`, which rebuilds the atlas at that TileSize.")
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+                f"estimate — ask for a larger `size`, which rebuilds the atlas at that TileSize."
+            )
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         tile = self._tile(int(size or self.size))
-        dec = (self.dec if tile == self.dec.T
-               else GriddlyDecoder.get(type(self).__name__, self.game_yaml, tile,
-                                       device=str(self.device)))
+        dec = (
+            self.dec
+            if tile == self.dec.T
+            else GriddlyDecoder.get(type(self).__name__, self.game_yaml, tile, device=str(self.device))
+        )
         sty = self.resolve_style(style, variation, batch=int(s.shape[0]))
         idx = self._tile_indices(s, dec)
         flat = None
@@ -638,7 +666,7 @@ class _GriddlyGame(Env):
         mask = torch.zeros((B, H, W), dtype=torch.long, device=s.device)
         for bit, k in enumerate(dec.live):
             dx, dy = OFFSETS[k]
-            mask += pad[:, 1 + dy:1 + dy + H, 1 + dx:1 + dx + W] * (dec.m ** bit)
+            mask += pad[:, 1 + dy : 1 + dy + H, 1 + dx : 1 + dx + W] * (dec.m**bit)
         return dec.table[codes, mask].to(torch.int32)
 
     # states
@@ -670,7 +698,7 @@ class _GriddlyGame(Env):
                     break
                 try:
                     _o, _rw, done, _i = env.step(_sample_action(env, r))
-                except Exception:                                       # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     break
                 if np.any(done):
                     break
@@ -685,8 +713,10 @@ class _GriddlyGame(Env):
             for x in range(self.grid_w):
                 c = cm.get((x, y), ())
                 if c not in dec.code_of:
-                    raise ValueError(f"{type(self).__name__}: griddly produced the cell {c}, which is "
-                                     f"not in the alphabet the decoder was built for")
+                    raise ValueError(
+                        f"{type(self).__name__}: griddly produced the cell {c}, which is "
+                        f"not in the alphabet the decoder was built for"
+                    )
                 out[y * self.grid_w + x] = dec.code_of[c]
         return out
 
@@ -727,7 +757,8 @@ class _GriddlyGame(Env):
                     f"{cls.__name__}: the reference did not reach the requested state "
                     f"({len(wrong)} cells differ, e.g. {wrong[0]} asked for "
                     f"{grid.get(wrong[0], ())} and holds {back.get(wrong[0], ())}); parity measured "
-                    f"against this frame would compare two scenes")
+                    f"against this frame would compare two scenes"
+                )
             out.append(_frame(env))
         return np.stack(out)
 
@@ -745,46 +776,81 @@ def game(class_name: str, rel: str, w: int, h: int, doc: str = "", level: int = 
     because a hardcoded one can drift when the package changes a level and a wrong one is silent.
     """
     tile = native_tile_size(rel)
-    cls = type(class_name, (_GriddlyGame,), {
-        "__doc__": doc or f"griddly {rel}, level {level}: a {w}x{h} grid.",
-        "__module__": __name__,
-        "name": "griddly-" + os.path.basename(rel)[:-5].replace("_", "-"),
-        "reference_id": f"griddly/{rel}#level{level}",
-        "game_yaml": rel, "level": level, "grid_w": w, "grid_h": h,
-        "state_dim": w * h,
-        "state_names": _cell_names(w, h),
-        "default_size": h * tile,
-    })
+    cls = type(
+        class_name,
+        (_GriddlyGame,),
+        {
+            "__doc__": doc or f"griddly {rel}, level {level}: a {w}x{h} grid.",
+            "__module__": __name__,
+            "name": "griddly-" + os.path.basename(rel)[:-5].replace("_", "-"),
+            "reference_id": f"griddly/{rel}#level{level}",
+            "game_yaml": rel,
+            "level": level,
+            "grid_w": w,
+            "grid_h": h,
+            "state_dim": w * h,
+            "state_names": _cell_names(w, h),
+            "default_size": h * tile,
+        },
+    )
     return register(cls)
 
 
 GriddlySokoban = game(
-    "GriddlySokoban", "Single-Player/GVGAI/sokoban.yaml", 13, 9,
+    "GriddlySokoban",
+    "Single-Player/GVGAI/sokoban.yaml",
+    13,
+    9,
     doc="GVGAI Sokoban: push every box into a hole. 6 cell codes, WALL_16 walls, and the one game "
-        "whose avatar shares a cell with another object (it walks over holes).")
+    "whose avatar shares a cell with another object (it walks over holes).",
+)
 GriddlySokoban2 = game(
-    "GriddlySokoban2", "Single-Player/GVGAI/sokoban2.yaml", 8, 7,
+    "GriddlySokoban2",
+    "Single-Player/GVGAI/sokoban2.yaml",
+    8,
+    7,
     doc="GVGAI Sokoban2: boxes that stay on the board once placed, so the alphabet carries two "
-        "stacked cell codes rather than one.")
+    "stacked cell codes rather than one.",
+)
 GriddlyLabyrinth = game(
-    "GriddlyLabyrinth", "Single-Player/GVGAI/labyrinth.yaml", 16, 14,
+    "GriddlyLabyrinth",
+    "Single-Player/GVGAI/labyrinth.yaml",
+    16,
+    14,
     doc="GVGAI Labyrinth: reach the exit without stepping in a trap. The densest wall map in the "
-        "family, so the WALL_16 neighbour table is fully exercised.")
+    "family, so the WALL_16 neighbour table is fully exercised.",
+)
 GriddlyButterflies = game(
-    "GriddlyButterflies", "Single-Player/GVGAI/butterflies.yaml", 28, 11,
+    "GriddlyButterflies",
+    "Single-Player/GVGAI/butterflies.yaml",
+    28,
+    11,
     doc="GVGAI Butterflies: catch the butterflies before they hatch every cocoon. The widest grid "
-        "here, 264x672 at the native tile size.")
+    "here, 264x672 at the native tile size.",
+)
 GriddlyBait = game(
-    "GriddlyBait", "Single-Player/GVGAI/bait.yaml", 5, 6,
+    "GriddlyBait",
+    "Single-Player/GVGAI/bait.yaml",
+    5,
+    6,
     doc="GVGAI Bait: keys, boxes and holes on the smallest shipped grid — the case where a whole "
-        "frame is 30 cells and the state is 30 numbers.")
+    "frame is 30 cells and the state is 30 numbers.",
+)
 GriddlyClusters = game(
-    "GriddlyClusters", "Single-Player/GVGAI/clusters.yaml", 13, 10,
+    "GriddlyClusters",
+    "Single-Player/GVGAI/clusters.yaml",
+    13,
+    10,
     doc="GVGAI Clusters: push coloured blocks together. Its MapCharacters are the DIGITS 1/2/3, "
-        "which is the case a naive level-string writer gets wrong (a digit after a character is a "
-        "player id) and the round-trip assertion catches.")
+    "which is the case a naive level-string writer gets wrong (a digit after a character is a "
+    "player id) and the round-trip assertion catches.",
+)
 GriddlyCookMePasta = game(
-    "GriddlyCookMePasta", "Single-Player/GVGAI/cookmepasta.yaml", 14, 11,
+    "GriddlyCookMePasta",
+    "Single-Player/GVGAI/cookmepasta.yaml",
+    14,
+    11,
     doc="GVGAI CookMePasta: fetch and combine ingredients. The one registered game that declares no "
-        "TilingMode at all, so its table has a single mask column and the frame is a plain per-cell "
-        "gather — the control that shows the neighbour term is measured, not assumed.")
+    "TilingMode at all, so its table has a single mask column and the frame is a plain per-cell "
+    "gather — the control that shows the neighbour term is measured, not assumed.",
+)
