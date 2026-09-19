@@ -1,4 +1,4 @@
-APPROVE-WITH-CHANGES
+APPROVE
 
 # Step 9 Wave 2 — independent review of Workstream N (OSS benchmarks)
 
@@ -199,3 +199,40 @@ is the alias path only. README and `public_env` already say that. One-line docst
   tip should be an ancestor; N files do not overlap.
 
 No other defects found. Dashboard row `N_benchmarks` remains coordinator-owned.
+
+---
+
+## Re-review at `f170cd0` (delta `e23c975..f170cd0`)
+
+**APPROVE.** I reviewed only `git diff e23c975..f170cd0` (one commit,
+`benchmarks: correct reconstructed provenance`, author/committer `sami-bg <samibghanem@gmail.com>`,
+empty body, **no** AI trailer). Three paths: `benchmarks/render.py`,
+`examples/results/step9/benchmarks/findings.md`, `scratch/step9/benchmarks/run_cpu.sh` (+49/−11).
+No library, test, JSON, or dashboard edit.
+
+**N-1 closed.** Findings header now names reachable `b879a40` / `3ff917b` / `ff30e8f` / `71e7d92`.
+Those four are ancestors of HEAD. The Limitations bullet states the reconstruction preserved the
+original trees and that every reachable N commit is `sami-bg` with zero AI trailers. `findings.md`
+no longer contains `4d2e0da`, `89a7ab0`, or `Co-authored-by` / `Cursor`. Evidence JSON is described
+as tree-identical to `b879a40`, not as a live trailer-bearing commit.
+
+**N-2 closed.** `benchmarks/render.py` docstring now times the class-first
+``snv.<Environment> -> reset -> render`` surface for canonical names and `snv.make` only for
+dynamic aliases.
+
+**`run_cpu.sh`.** The previously untracked local reproducer is now committed under
+`scratch/step9/benchmarks/`. Header and flags match the preserved take (`cpu`, warmup 2, repeats 7,
+threads 1, same envs/batches) and label the numbers as performance samples, not certification.
+
+**Tests (this re-review, at `f170cd0`):**
+
+```
+MUJOCO_GL=glfw se6-venv pytest -q -p no:cacheprovider tests/unit/test_benchmark_surface.py
+-> 23 passed in 13.94s
+   resources: 0 EGL contexts created, 0 released, 0 live
+```
+
+Reachable `4feceba..HEAD` commit messages still have zero `Co-authored-by` / `cursoragent` /
+`Generated with`. Product and findings were not edited in this re-review.
+
+Nothing above reopens N-1 or N-2. **APPROVE.**
