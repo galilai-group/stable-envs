@@ -2,7 +2,7 @@
 
 The repo ships no jax and no interpreter outside ``$SCR/venvs/se7-craftax`` has one, so a test that
 imported jax would skip everywhere and assert nothing. The facts that *come from* craftax are frozen
-into ``tests/data/craftax_full_golden.json`` by ``scratch/step7/craftax-full/gen_golden.py``, which
+into ``tests/fixtures/craftax_full_golden.json`` by ``scratch/step7/craftax-full/gen_golden.py``, which
 records the craftax and jax versions it was frozen under -- a golden vector that does not say where it
 came from is worthless.
 
@@ -23,7 +23,7 @@ import torch
 from stable_envs.envs import craftax_full as CF
 from stable_envs.envs.craftax_full import CraftaxFull
 
-GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "data"
+GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "fixtures"
                      / "craftax_full_golden.json").read_text())
 
 

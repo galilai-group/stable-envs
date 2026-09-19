@@ -1,7 +1,7 @@
 """Freeze golden vectors for ``stable_envs/render/prng.py`` out of a real jax.
 
 Run in the reference venv (`/Users/samib/se7-craftax-venv`, jax 0.11.1). Writes
-``tests/data/prng_threefry_golden.json``, which ``tests/unit/test_craftax_prng.py`` asserts against
+``tests/fixtures/prng_threefry_golden.json``, which ``tests/unit/test_craftax_prng.py`` asserts against
 so the test needs no jax at all — the repo ships no jax and the Oscar interpreters have none, so a
 test that imported jax would simply skip everywhere and assert nothing.
 
@@ -19,7 +19,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-OUT = "tests/data/prng_threefry_golden.json"
+OUT = "tests/fixtures/prng_threefry_golden.json"
 
 FULL_SHAPES = [(1, 1), (2, 2), (3, 5), (8,), (7, 9)]
 DIGEST_SHAPES = [(49, 63), (112, 144), (63, 77), (90, 110)]

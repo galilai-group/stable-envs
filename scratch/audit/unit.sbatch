@@ -13,5 +13,5 @@ set -uo pipefail
 cd /mnt/vast/home/randall.balestriero/code/stable-envs
 export PYTHONPATH=. MUJOCO_GL=egl SDL_VIDEODRIVER=dummy
 PY=/mnt/vast/home/randall.balestriero/miniconda3/envs/test/bin/python
-"$PY" -m pytest tests/unit tests/test_safety_net.py -v -rs --no-header -x -q "$@"
+"$PY" -m pytest tests/unit tests/certification tests/integration/test_safety_net.py -v -rs --no-header -x -q "$@"
 echo "unit rc=$? node=$(hostname)"

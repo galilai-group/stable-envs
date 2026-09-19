@@ -13,7 +13,7 @@ same scene reports ``interior_frac = 0.000000``, so the assertion does not even 
 
 ``check_task_object_visibility`` is the complement. This file proves it FIRES, which is the only thing
 a guard has to prove and the thing no passing run can show. The instrument is synthetic on purpose,
-for the reason ``tests/unit/test_declarations.py`` gives: a rule is proved by something that breaks
+for the reason ``tests/certification/test_declarations.py`` gives: a rule is proved by something that breaks
 it, and no env in this repository does. A fake env draws a disc over a checkerboard, a fake official
 renderer decides independently whether IT draws one, and the four combinations are put through both
 metrics side by side — so the test also records, as an assertion rather than as a claim, that the

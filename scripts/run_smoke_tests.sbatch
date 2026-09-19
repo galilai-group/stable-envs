@@ -26,7 +26,7 @@
 #
 # What NEITHER covers: the cross-process reproducibility check (it boots a second interpreter and
 # rebuilds every selected env in it, which is most of its runtime and answers a release question, not a
-# pre-commit one), the harness's own crash self-tests in tests/test_safety_net.py (~80s of spawning
+# pre-commit one), the harness's own crash self-tests in tests/integration/test_safety_net.py (~80s of spawning
 # interpreters, and they do not change when a renderer does), and the other 40 registered envs. Green
 # here is not a release; scripts/run_gpu_tests.sbatch is.
 #SBATCH --job-name=se-smoke

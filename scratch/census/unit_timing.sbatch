@@ -23,7 +23,7 @@ print(f'  import torch        {t1-t:6.2f}s')
 print(f'  import stable_envs  {t2-t1:6.2f}s   (registry {len(se.REGISTRY)})')" 2>&1 | grep -v WARNING
 
 echo; echo "-- the new collision guard, alone --"
-"$PY" -u -m pytest tests/unit/test_declarations.py -q -p no:randomly -k "shadow" -rA --no-header 2>&1 | tail -8
+"$PY" -u -m pytest tests/certification/test_declarations.py -q -p no:randomly -k "shadow" -rA --no-header 2>&1 | tail -8
 
 echo; echo "-- whole unit suite, with the 15 slowest --"
 "$PY" -u -m pytest tests/unit -q -p no:randomly --durations=15 --no-header 2>&1 | tail -25
