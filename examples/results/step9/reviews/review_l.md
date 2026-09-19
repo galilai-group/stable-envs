@@ -1,4 +1,4 @@
-APPROVE-WITH-CHANGES
+APPROVE
 
 # Step 9 — independent review of Workstream L (packaging / dependencies / CI)
 
@@ -241,3 +241,40 @@ $ /tmp/se9-l-dev/bin/python -m pytest tests/unit -m unit --deselect …fetch ray
 $ MUJOCO_GL=glfw se6-venv pytest tests/unit/test_envs_mujoco.py -k "MujocoInverted or MujocoPusher or MujocoReacher"
 20 passed, 109 deselected in 0.44s
 ```
+
+---
+
+## Re-review of `cd966da..c78c433`
+
+**Tip reviewed:** `c78c4334e930f7a19578da6630b2472fd53798d2` (`step9: make packaging CI dependency profile green`).
+One commit, `sami-bg <samibghanem@gmail.com>`, empty trailers. Delta is four files only:
+`testing.yml`, `pyproject.toml` (`tomli>=2; python_version < '3.11'`),
+`scratch/step9/packaging-ci/test_packaging.py` (tomllib → tomli fallback), and the author's
+findings note. No `stable_envs/` edits. `.github` has **zero** `--deselect`.
+
+C1: unit installs `.[dev,mujoco-locomotion]`; integration installs
+`.[dev,interop,mujoco-locomotion]`. MuJoCo is present so the four locomotion cells construct,
+and Fetch's recorded miss is `missing warp, mujoco_warp` — the assertion is satisfied without
+hiding the test.
+
+C2: confirmed on CPython 3.10.18 (`tomllib` absent, `tomli==2.4.1`): packaging module **11 passed**.
+The 3.12 workflow venv has no `tomli` and uses stdlib `tomllib`; same **11 passed**.
+
+### Final verdict
+
+**APPROVE.** I reproduced the author's workflow extra set in a fresh editable venv
+`/tmp/se9-review-l-ci` (Python 3.12.11, `mujoco==3.12.0`, no warp / mujoco_warp):
+
+```text
+pytest tests/unit -m unit                              403 passed, 88 skipped
+pytest tests/unit -m "unit or integration"             403 passed, 88 skipped
+pytest scratch/step9/packaging-ci/test_packaging.py    11 passed
+test_envs_fetch.py::…without_the_raytracer             1 passed
+```
+
+C1 and C2 are closed. Mergeable.
+
+Residual, not required: `testing.yml` still does not set `MUJOCO_GL` (only `certification.yml`
+does). Unverified on ubuntu-latest from this Mac; first Actions run should be watched.
+
+Nothing else in this repo was edited for this re-review.
