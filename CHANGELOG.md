@@ -1,37 +1,34 @@
 # Changelog
 
-## 0.1.0 — v0 draft
+## 0.1.0
 
-First public-shaped cut of `stable-envs` after the Step 8 functional-completion milestone
-(`21cb306`) and the Step 9 refactor.
+First public release of `stable-envs`: famous research environments as GPU-batched, state-driven
+renderers. Store compact states, choose the camera and the appearance afterwards.
 
-### Added
+### What you get
 
 - Class-first public API: `snv.PushT(num_envs=..., device=...)`, plus `snv.make` / `snv.spec` /
-  `snv.list_envs` for configs and interop.
-- TensorDict `State` with `pack` / `unpack` to the unchanged Step-8 packed row.
-- Stateful `step` and functional `transition` / `unroll` (known actions only).
+  `snv.list_envs` / `snv.list_families` for configs and interop.
+- TensorDict `State` with `pack` / `unpack` to the frozen packed row every renderer and
+  certification corpus uses.
+- Stateful `step` and functional `transition` / `unroll` (known actions only). There is no
+  `env.rollout(policy=...)`.
 - `close()` / context-manager lifecycle on every environment.
-- Public `stable_envs.testing` measurement library and `stable_envs.interop` SWM facade.
+- Public developer libraries: `stable_envs.testing` (measurement, numpy.testing-style) and
+  `stable_envs.interop` (stable-worldmodel adapters). Neither is advertised at `snv.*`.
+- Optional family extras. A missing extra costs that family; `snv.import_errors()` names it.
 - Explicit renderer resource ownership (`Closeable`, `BoundedCache`) for MJWarp / nvdiffrast /
-  rendernet, including family-cache eviction (`release_cached_ctx` / `close_cached_renderer`)
-  and LRU CPU working-set caches (plates, terrains, RGB, raycast memos).
-- Packaging extras, GitHub Actions, MkDocs, and OSS example / benchmark CLIs.
+  rendernet, including family-cache eviction and LRU CPU working-set caches.
+- MkDocs, example CLIs, and the `benchmarks/` harness. Throughput numbers are tied to
+  [benchmark methodology](docs/benchmarks.md).
 
-### Changed
+### Limitations
 
-- Environment families and render backends were reorganized without changing certified pixels.
-- `batch=` remains accepted as a deprecated spelling of `num_envs=`.
-- `StableEnv`, `REGISTRY`, and `register` still resolve once-per-process with a warning.
-
-### Limitations carried from Step 8
-
-- Fetch `background.color` stays partial (no re-freeze).
-- `HumanoidmazeGiantNavigate` on CUDA is not process-reproducible on some Oscar nodes
-  (`DOCUMENTED_LIMITATION`).
+- Fetch `background.color` is partial (floor mapped; skybox residual measured).
+- `HumanoidmazeGiantNavigate` on CUDA is not process-reproducible on some measured nodes.
 - Native `swm.World(env=snv.PushT(...))` is unsupported by the installed `stable-worldmodel`;
   registered-gym and `swap_renderer` paths remain.
+- OGBCube, OGBScene and PFRocketLanding refuse CPU rather than silently falling back.
+- Fetch has no CPU backend.
 
-Compatibility shims (`stable_envs.core`, `stable_envs.compat`, `envs/swm_nav.py`,
-`envs/ogb_manip.py`, `envs/craftax_full.py`) stay importable in this draft so historical tests and
-research scripts keep working. They are classified, not advertised.
+See [limitations](docs/concepts/limitations.md).

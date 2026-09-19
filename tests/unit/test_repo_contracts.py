@@ -251,24 +251,54 @@ def test_every_page_in_the_mkdocs_nav_exists():
     assert not missing, f"mkdocs.yml lists pages that are not there: {missing}"
 
 
-def test_every_docs_page_is_reachable_from_the_nav():
-    """The other direction: a page nobody can navigate to is a page nobody reads.
+# Historical research notes and internal API pages are linked from the archive
+# landing page / contributor docs rather than listed in the main nav.
+_NAV_OPTIONAL = {
+    "api/data.md",
+    "api/rollout.md",
+    "api/style.md",
+    "api/scene.md",
+    "api/raster2d.md",
+    "api/gfxdraw.md",
+    "api/tilemap.md",
+    "api/raycast3d.md",
+    "api/mjwarp.md",
+    "api/rendernet.md",
+    "api/spaces.md",
+}
 
-    ``validation.omitted_files`` is left at its default (info) in ``mkdocs.yml`` on purpose — research
-    notes are added by separate work and a new file appearing before it reaches the nav should not
-    break someone else's build — so the check that it EVENTUALLY reaches the nav has to live here.
+
+def test_every_docs_page_is_reachable_from_the_nav():
+    """User-guide and contributor pages must be in the nav. Research archive pages
+    other than the landing page are linked from ``docs/research/index.md``.
     """
     yaml = pytest.importorskip("yaml")
     cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yml").read_text()))
-    targets: set[str] = set()
     listed: list[str] = []
     _nav_targets(cfg.get("nav", []), listed)
-    targets.update(listed)
+    targets = set(listed)
+    assert "research/index.md" in targets, "the research archive landing page must be in the nav"
     pages = {str(p.relative_to(ROOT / "docs")) for p in (ROOT / "docs").rglob("*.md")}
-    orphans = sorted(pages - targets)
+    allowed_orphans = {
+        p for p in pages
+        if (p.startswith("research/") and p != "research/index.md") or p in _NAV_OPTIONAL
+    }
+    orphans = sorted(pages - targets - allowed_orphans)
     assert not orphans, (
         f"these pages exist under docs/ and are in no nav section, so the site builds them and nothing "
         f"links to them: {orphans}")
+
+
+def test_research_archive_landing_page_links_evergreen_and_history():
+    landing = (ROOT / "docs" / "research" / "index.md").read_text()
+    for needle in (
+        "when_does_this_pay_off.md",
+        "certification.md",
+        "step8_semantic_craftax.md",
+        "step8_closure.md",
+        "step9_closure.md",
+    ):
+        assert needle in landing, f"research archive landing page does not link to {needle}"
 
 
 # ------------------------------------------------------------------ the launchers

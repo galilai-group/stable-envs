@@ -15,14 +15,18 @@ Authors: **Randall Balestriero**, **Sami BuGhanem**.
 ## Install
 
 ```bash
-pip install -e .                       # numpy, torch, gymnasium, tensordict, loguru
-pip install -e ".[pusht]"              # gym_pusht + pymunk + pygame — parity tests only
-pip install -e ".[dmcontrol,ogbench]"  # add family extras as needed
+pip install stable-envs
+pip install "stable-envs[pusht]"              # gym_pusht + pymunk + pygame — parity tests only
+pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
 ```
 
-There is no `[all]` extra: Fetch needs `mujoco<3.12`, Overcooked needs its own interpreter, and nvdiffrast is not expressible as PyPI metadata. A missing optional extra costs **that family**, not the package. `snv.import_errors()` names the modules that did not load. Extras that need `--no-deps` are documented next to those extras in `pyproject.toml`.
+A missing optional extra costs **that family**, not the package. `snv.import_errors()` names the modules that did not load.
 
 CUDA is required for the 3-D and most MuJoCo families. PushT, classic control, navigation and several 2-D families run on CPU.
+
+Family extras that cannot share an interpreter, the Fetch MuJoCo pin, and the nvdiffrast source build: [Install](docs/install.md).
+
+Editable install (from a clone) lives under [Contributing](CONTRIBUTING.md).
 
 ## Quickstart
 
@@ -53,13 +57,14 @@ Full walkthrough: [Quickstart](docs/quickstart.md).
 ## What the public API is
 
 ```text
-snv.PushT / snv.CartPole / snv.DMCReacherHard / …   concrete env classes
-snv.make / snv.spec / snv.list_envs / snv.list_families
-snv.set / snv.get_config / snv.import_errors / snv.__version__
-snv.Env, snv.State, snv.Spec
+snv.Env, snv.State, snv.StepResult
+snv.Dynamics, snv.Spec, snv.CompositeSpec
+snv.make, snv.spec, snv.list_envs, snv.list_families, snv.import_errors
+snv.set, snv.get_config, snv.SWM_IDS, snv.__version__
+snv.PushT / snv.CartPole / …                  concrete env classes
 ```
 
-Nothing from `render/`, `testing/` or `interop.py` is advertised at top level.
+`stable_envs.testing` and `stable_envs.interop` are public developer APIs; they are not advertised at `snv.*`.
 
 | topic | page |
 |---|---|
@@ -67,7 +72,6 @@ Nothing from `render/`, `testing/` or `interop.py` is advertised at top level.
 | State, specs, TensorDict keys | [docs/concepts/state.md](docs/concepts/state.md) |
 | Stateful `step` vs functional `transition`/`unroll` | [docs/concepts/dynamics.md](docs/concepts/dynamics.md) |
 | `close()` / context manager | [docs/concepts/lifecycle.md](docs/concepts/lifecycle.md) |
-| Registry and SWM id aliases | [docs/concepts/registry.md](docs/concepts/registry.md) |
 | What stable-envs owns vs stable-worldmodel | [docs/concepts/worldmodel.md](docs/concepts/worldmodel.md) |
 | Backend and device limitations | [docs/concepts/limitations.md](docs/concepts/limitations.md) |
 | How throughput numbers were taken | [docs/benchmarks.md](docs/benchmarks.md) |
@@ -116,16 +120,17 @@ Device honesty is part of the contract: OGBCube, OGBScene and PFRocketLanding re
 ## Documentation
 
 ```bash
-pip install mkdocs mkdocs-material "mkdocstrings[python]"
+pip install "stable-envs[docs]"
 mkdocs serve
 ```
 
 | | |
 |---|---|
 | [Home](docs/index.md) | claim, quickstart, where to go |
+| [Install](docs/install.md) | extras, pins, nvdiffrast |
 | [Adding an environment](docs/adding-an-env.md) | the worked PushT port |
 | [Testing](docs/testing.md) | what each check rules out |
-| [Research notes](docs/research/) | per-family studies, including the no-gos |
+| [Research archive](docs/research/index.md) | per-family studies, including the no-gos |
 
 ## License
 

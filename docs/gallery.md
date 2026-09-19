@@ -1,7 +1,7 @@
 # Gallery
 
 Produced by [`examples/gallery.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/gallery.py),
-which walks `stable_envs.REGISTRY` and writes one directory of media per env. Nothing here is upscaled
+which walks `snv.list_envs()` and writes one directory of media per env. Nothing here is upscaled
 except the videos, and those use nearest-neighbour so the pixels on screen are the pixels the renderer
 produced.
 

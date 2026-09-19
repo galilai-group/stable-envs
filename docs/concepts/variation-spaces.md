@@ -77,7 +77,7 @@ it cannot be honoured and never pixels. See
 [baking the static prefix](scene-ir.md#baking-the-static-prefix) for what that costs and what it buys.
 
 The third collapse in that list is not a variation at all and is recorded here for completeness:
-`StableEnv.resolve_style` fell back to `self._style.values[:1]` whenever the render batch differed from
+`Env.resolve_style` fell back to `self._style.values[:1]` whenever the render batch differed from
 the env's, so `render(states[:3])` under a per-environment appearance drew three copies of
 environment 0. All three had the same shape — "make this style fit that batch" open-coded per call
 site — which is why there is now exactly one operation allowed to do it, `StyleTensor.for_batch`.

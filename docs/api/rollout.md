@@ -1,6 +1,8 @@
 # `stable_envs.rollout`
 
-`env.sample(steps=100, batch=256, policy=...)`: batched trajectories generated on device, never touching
+Not a first-class API: kept for tests and notebooks, not listed in the README or the API nav.
+
+`env.sample(steps=100, policy=...)`: batched trajectories generated on device, never touching
 disk. The policy interface mirrors `stable_worldmodel.policy.BasePolicy`, with the one deliberate change
 that `get_action` receives a batch and returns `(B, action_dim)`.
 

@@ -3,8 +3,10 @@
 Install the core, construct an environment by **class name**, and render. Optional extras add families; they are not required to draw PushT.
 
 ```bash
-pip install -e .
+pip install stable-envs
 ```
+
+Family extras, pins, and the nvdiffrast source build: [Install](install.md). From a clone, `pip install -e .` — see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
 
 ```python
 import stable_envs as snv
@@ -58,7 +60,7 @@ env.observation_spec    # (H, W, 3) uint8
 env.variation_spec      # flat style row
 ```
 
-PushT's public state is grouped by entity — `state["agent", "position"]`, `state["agent", "velocity"]`, `state["block", "position"]`, `state["block", "angle"]` — not the packed float32 row the renderer uses internally. `env.pack(state)` / `env.unpack(rows)` convert; the packed layout is the Step-8 corpus layout, unchanged.
+PushT's public state is grouped by entity — `state["agent", "position"]`, `state["agent", "velocity"]`, `state["block", "position"]`, `state["block", "angle"]` — not the packed float32 row the renderer uses internally. `env.pack(state)` / `env.unpack(rows)` convert; the packed layout is the frozen certification layout.
 
 ## Appearance
 
@@ -73,7 +75,7 @@ Defaults are the official appearance. Domain randomisation is a tensor, not a lo
 
 ```python
 snv.set(verbose="INFO")          # TRACE, DEBUG, INFO, WARNING, ERROR
-cfg = snv.get_config()           # verbose, default_device, warn_on_deprecated
+cfg = snv.get_config()           # verbose, default_device
 ```
 
 ## Next

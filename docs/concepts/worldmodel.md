@@ -23,11 +23,14 @@ async orchestration
 auto-reset policy semantics
 ```
 
-Do not look for `env.rollout(policy, …)` here. `stable_envs.rollout` remains `snv.sample` / `BasePolicy` for existing tests; it is not `env.rollout(policy)`.
+Do not look for `env.rollout(policy, …)` here. Planning and policy rollouts belong to
+`stable-worldmodel`.
 
-## Frozen interop (what is shipped today)
+## Shipped interop
 
-Workstream J merged the public `stable_envs.interop` facade (not advertised at `snv.*` top level). Native `swm.World(env=snv.PushT(...))` is still **unsupported** by the installed `stable-worldmodel` (`World` takes `env_name: str` and always `gym.make`s it). The shipped contract is:
+`stable_envs.interop` is a public developer API (not advertised at `snv.*`). Native
+`swm.World(env=snv.PushT(...))` is **unsupported** by the installed `stable-worldmodel`
+(`World` takes `env_name: str` and always `gym.make`s it). The shipped contract is:
 
 ```python
 from stable_envs import interop
@@ -53,8 +56,6 @@ interop.variation_map / style_from_variation / variation_from_style / check_mapp
 
 `swap_renderer` is the honest path when the simulator is the reference and only the renderer is ours. `StableEnvGym` does **not** carry an official reward function: a reward is a task, and this package defines what a frame is.
 
-The Step-8 `stable_envs.compat.worldmodel` import path still resolves to the same module objects.
-
 ## Native `World(env=…)` — not a public API
 
 ```python
@@ -62,6 +63,6 @@ The Step-8 `stable_envs.compat.worldmodel` import path still resolves to the sam
 world = swm.World(env=snv.PushT(num_envs=64, device="cuda"))
 ```
 
-That remains the long-term direction (interop shrinks as SWM consumes `Env` natively). Installed SWM still requires `env_name: str`. `examples/worldmodel.py` prints this limitation rather than inventing the call.
+Installed SWM still requires `env_name: str`. `examples/worldmodel.py` prints this limitation rather than inventing the call.
 
-Worked evidence that the frozen adapters run an unmodified SWM workflow: [`examples/swm_compat/`](https://github.com/galilai-group/stable-envs/tree/main/examples/swm_compat).
+Worked evidence that the adapters run an unmodified SWM workflow: [`examples/swm_compat/`](https://github.com/galilai-group/stable-envs/tree/main/examples/swm_compat).
