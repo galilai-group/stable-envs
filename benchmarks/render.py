@@ -1,7 +1,8 @@
 """Measure stable-envs renderer throughput and batch scaling.
 
 This is a performance benchmark, not a correctness or fidelity check. It times the public
-``snv.make -> reset -> render`` surface and never imports renderer internals.
+class-first ``snv.<Environment> -> reset -> render`` surface for canonical names, using
+``snv.make`` only for dynamic aliases, and never imports renderer internals.
 """
 from __future__ import annotations
 

@@ -2,8 +2,9 @@
 
 **Workstream:** `step9/benchmarks`
 **Step-8 baseline:** `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc`
-**Implementation:** `4d2e0da09b1835d0b58a1b89e5954bf8cb8dbe28` (`benchmarks: add OSS performance harnesses`)
-**Integration merge:** `d3cb4a81cced123d767661bf485f0c5059a0dd73` merged as `89a7ab06ff377d8f2c23ccb3791d577f7b092b07` (no rebase)
+**Implementation:** `b879a4074577e28b15be368cc7a028b161005189` (`benchmarks: add OSS performance harnesses`)
+**Integration merges:** `d3cb4a8` as `3ff917b`, then latest `4feceba` as `71e7d92`
+**Audit/evidence:** `ff30e8f997d07b9e777c477ca8e1116f4d8350c9`
 **Host:** Apple M5 Mac (`cis1b1zs2j3.ad.brown.edu`), CPU only — no CUDA device in this ticket
 **Interpreter:** `/Users/samib/se6-venv` (Python 3.12.11, torch 2.14.0 CPU, numpy 2.5.3, tensordict, loguru)
 **MUJOCO_GL:** `glfw`
@@ -17,19 +18,20 @@ pass/fail tiers.
 
 ## 1. Files moved / created / removed
 
-Created on `4d2e0da`, then audited and tightened on this branch:
+Created on `b879a40`, then audited and tightened on this branch:
 
 | path | role |
 |---|---|
 | `benchmarks/README.md` | OSS-facing methodology and CLI |
 | `benchmarks/__init__.py` | package marker; performance-only disclaimer |
 | `benchmarks/_common.py` | parsers, device/thread pinning, timing, provenance, JSON |
-| `benchmarks/render.py` | `snv.<Class>` / `snv.make` → `reset` → `render(public State)` |
+| `benchmarks/render.py` | class-first `snv.<Class>` (dynamic aliases through `snv.make`) → `reset` → `render(public State)` |
 | `benchmarks/pipeline.py` | packed host-state ingress + `render`; optional JPEG arm |
 | `tests/unit/test_benchmark_surface.py` | CLI/config/JSON/API/error/certification-separation guards |
-| `examples/results/step9/benchmarks/render_cpu_local.json` | preserved CPU evidence (4d2e0da) |
-| `examples/results/step9/benchmarks/pipeline_cpu_local.json` | preserved CPU evidence (4d2e0da) |
+| `examples/results/step9/benchmarks/render_cpu_local.json` | preserved CPU evidence (tree-identical to `b879a40`) |
+| `examples/results/step9/benchmarks/pipeline_cpu_local.json` | preserved CPU evidence (tree-identical to `b879a40`) |
 | `examples/results/step9/benchmarks/findings.md` | this file |
+| `scratch/step9/benchmarks/run_cpu.sh` | reproducible command for the preserved local CPU take |
 
 Removed: nothing. The historical `examples/bench_*.py` scripts and `tests/unit/test_benchmarks.py`
 remain for Workstream O; N does not replace their published tables.
@@ -107,7 +109,8 @@ These numbers are **local CPU measurements on a loaded laptop**, not certificati
 before/after of a hot path. Load average around the preserved take was ~6.5–7.1. `--threads 1`,
 `--warmup 2`, `--repeats 7`. Median wall time; raw samples retained in the JSON.
 
-Preserved renderer throughput (`render_cpu_local.json`, git revision `4d2e0da`):
+Preserved renderer throughput (`render_cpu_local.json`; measured before the attribution-only history
+reconstruction, with a tree identical to `b879a40`):
 
 | env | batch | frame | fps | µs/frame | cpu s / wall s |
 |---|---|---|---|---|---|
@@ -155,7 +158,7 @@ Zero. No oracle was run; none is owed by this workstream.
 
 ---
 
-## Audit of `4d2e0da` and fixes retained
+## Audit of `b879a40` and fixes retained
 
 What already held:
 
@@ -203,8 +206,9 @@ Gaps closed on this branch:
   mention third-party install paths; they are library text, not N-owned.
 - **Families that still only accept `batch=`** will record a constructor error if selected. N uses
   `num_envs=` only (Wave-0 contract). That is a family leftover, not a benchmark bug.
-- **Implementation commit `4d2e0da` carries a `Co-authored-by: Cursor` trailer.** It was already on
-  the branch; this workstream does not amend it. Later commits on this branch have no AI trailers.
+- **History hygiene:** the attribution-only reconstruction preserved all three original trees and
+  merge topology under `b879a40` / `3ff917b` / `ff30e8f`. Every reachable Workstream-N commit is
+  authored by `sami-bg` and has zero AI attribution trailers.
 
 ---
 
