@@ -19,6 +19,7 @@ deliberately asserts nothing. The dependency runs one way: everything here impor
       certification/              frozen Step-3/4/5/6/8 corpora, digests, declarations, provenance,
                                   and the Gate-F matrix. CPU unless also under ``gpu/``.
       fixtures/                   golden JSON the unit/certification readers assert against.
+      packaging/                  wheel/sdist metadata, extras, and GitHub Actions safety.
 
 Directory markers are applied below so ``pytest -m unit`` / ``-m integration`` /
 ``-m "certification and not gpu"`` / ``-m "certification and gpu"`` select the matching

@@ -1,43 +1,11 @@
-"""Smoke-test an installed distribution without importing from the repository root."""
+"""Moved to scripts/ci/smoke_installed.py. Kept so Oscar notes still resolve."""
 
 from __future__ import annotations
 
-import importlib.metadata
-import json
+import runpy
+import sys
 from pathlib import Path
 
-import stable_envs as snv
-
-
-def main() -> None:
-    assert importlib.metadata.version("stable-envs") == snv.__version__
-    assert Path(snv.__file__).name == "__init__.py"
-    assert "PushT" in snv.list_envs()
-
-    # These modules must import without their optional CUDA/MuJoCo implementations.
-    from stable_envs.render import mjwarp, nvdiff
-
-    assert mjwarp is not None and nvdiff is not None
-
-    with snv.PushT(num_envs=2, device="cpu", size=32, seed=7) as env:
-        state = env.reset(seed=7)
-        pixels = env.render(state)
-        assert tuple(pixels.shape) == (2, 32, 32, 3)
-        assert str(pixels.dtype).endswith("uint8")
-
-    print(
-        json.dumps(
-            {
-                "distribution_version": snv.__version__,
-                "package": str(Path(snv.__file__).resolve()),
-                "registered_envs": len(snv.list_envs()),
-                "optional_import_errors": sorted(snv.import_errors()),
-                "pusht_shape": list(pixels.shape),
-            },
-            sort_keys=True,
-        )
-    )
-
-
-if __name__ == "__main__":
-    main()
+_CANONICAL = Path(__file__).resolve().parents[3] / "scripts" / "ci" / "smoke_installed.py"
+sys.argv[0] = str(_CANONICAL)
+runpy.run_path(str(_CANONICAL), run_name="__main__")
