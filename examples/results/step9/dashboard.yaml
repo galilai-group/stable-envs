@@ -523,4 +523,5 @@ buckets:
   UPSTREAM_FINDING: []
   STEP9_CLEANUP:
   - craftax_full.py remains a sys.modules alias so auto-discovery can load _craftax_full
+  - leftover-item tracker: docs/research/step9_open_items.md (Fetch skybox, World(env=...), GiantNavigate CUDA, EGL, craftax_full)
   DEFERRED_OPTIMIZATION: []

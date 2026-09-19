@@ -44,7 +44,7 @@ OGBench `light.intensity` / `camera.angle_delta` / `cube.size` and Scene `lock_c
 - `HumanoidmazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`); classified `DOCUMENTED_LIMITATION`, not a Step-9 regression.
 - Craftax's live SWM wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. The class attribute `SWM_WRAPPER_GATE_F` declares that.
 
-The full lists: [Step 8 closure](../research/step8_closure.md) §12, [support matrix](../research/step8_support_matrix.md), [upstream findings](../research/step8_upstream_findings.md).
+The full lists: [Step 8 closure](../research/step8_closure.md) §12, [support matrix](../research/step8_support_matrix.md), [upstream findings](../research/step8_upstream_findings.md). Post-v0 tracker for the five leftover items: [step9_open_items](../research/step9_open_items.md).
 
 ## Interop
 

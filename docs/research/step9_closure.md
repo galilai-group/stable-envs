@@ -220,7 +220,9 @@ Step-9 documented:
 - Pre-existing citation-scanner and robocasa-example-help deselects.
 
 `dashboard.yaml` buckets: `RELEASE_BLOCKING` empty; `STEP9_CLEANUP` holds the
-`craftax_full.py` auto-discovery alias.
+`craftax_full.py` auto-discovery alias. Tracker for the five leftover items
+(Fetch skybox, native `World(env=...)`, GiantNavigate CUDA, EGL never-release,
+craftax_full alias): [step9_open_items.md](step9_open_items.md).
 
 ## 15. Suggested first OSS release notes
 
