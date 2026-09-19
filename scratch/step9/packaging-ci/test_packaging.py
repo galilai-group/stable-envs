@@ -8,7 +8,10 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-tomllib = pytest.importorskip("tomllib")
+try:
+    import tomllib
+except ImportError:  # Python 3.10
+    import tomli as tomllib
 yaml = pytest.importorskip("yaml")
 
 EXPECTED_AUTHORS = ["Randall Balestriero", "Sami BuGhanem"]

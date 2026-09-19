@@ -11,6 +11,22 @@ cover unit/integration/package/docs/pre-commit, tag-only trusted publishing, and
 certification matrix. **Unexplained oracle differences: zero** (no renderer or environment semantics
 changed).
 
+### Independent-review response
+
+`review_l.md` initially returned `APPROVE-WITH-CHANGES` because the post-F CI environment did not
+install MuJoCo, the integration job repeated the Fetch assertion without the unit-job deselect, and
+the packaging checks skipped wholesale on Python 3.10. The corrected workflow installs
+`.[dev,mujoco-locomotion]` (plus `interop` in the integration job), so the same test command has the
+dependency profile its collected locomotion cells require and no Fetch exception is hidden by a
+deselect. The `dev` extra now supplies `tomli` on Python 3.10 and the packaging test falls back to it.
+
+Reproduced in the workflow's clean editable venv after the fix:
+
+```text
+pytest tests/unit -m unit                         403 passed, 88 skipped
+pytest scratch/step9/packaging-ci/test_packaging.py    11 passed
+```
+
 ---
 
 ## 1. Files moved / created / removed
@@ -55,7 +71,7 @@ None. Discovery still records a missing optional stack as that family's `import_
 
 ```text
 scratch/step9/packaging-ci/test_packaging.py          11 passed
-tests/unit -m unit (clean .[dev], one fetch deselect) 330 passed / 35 skipped
+tests/unit -m unit (clean .[dev,mujoco-locomotion])   403 passed / 88 skipped
 tests/unit/test_repo_contracts.py mkdocs nav           2 passed via the yml symlink
 ```
 
